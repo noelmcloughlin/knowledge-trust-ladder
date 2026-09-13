@@ -35,7 +35,9 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`just lokf-link`** recreates the visible layout's link where a sync service drops it, follows a new `visible` variable for a vault nested inside its repository (e.g. `../vault/knowledge_bundle`), and refuses a dangling link instead of failing on `ln`.
 - **`scripts/test-sidecar-layouts.sh`**, run by the repository-contract check: builds throwaway hosts in both layouts and pins the wrapper's boundary check, the librarian workflow's change detection and packaging, the registrar's triggers, and `lokf-link`, all against both bundle names.
 - **`lokf-librarian`** now leaves LOKF Registrar's Obsidian affordances alone by rule - the `<!-- lokf:related -->` block and the `diataxis.md` map - and addresses the bundle by both paths when scoping a diff or PR.
-- **Semantic release**, version and changelog only: the version is computed from Conventional Commits on `main` and `CHANGELOG.md`'s `## [Unreleased]` section promoted into a dated heading. It never tags - `gh skill publish` remains the one tag creator - and `publish.yml` now refuses a typed version that disagrees with what was promoted. See [CONTRIBUTING.md](CONTRIBUTING.md#release-process).
+- **Semantic release**, version and changelog only: the version is computed from Conventional Commits on `main` and `CHANGELOG.md`'s `## [Unreleased]
+
+## [0.15.0] - 2026-09-12` section promoted into a dated heading. It never tags - `gh skill publish` remains the one tag creator - and `publish.yml` now refuses a typed version that disagrees with what was promoted. See [CONTRIBUTING.md](CONTRIBUTING.md#release-process).
 
 ### Fixed
 
