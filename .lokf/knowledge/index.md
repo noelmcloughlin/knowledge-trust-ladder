@@ -18,7 +18,7 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for LOKF Agent Skills. E
 
 # Playbooks
 
-* [lokf-sidecar skill](playbooks/lokf-sidecar-skill.md) - one-shot bootstrap of a `.lokf/` sidecar from templates.
+* [lokf-sidecar skill](playbooks/lokf-sidecar-skill.md) - creates a `.lokf/` sidecar from templates, or repairs a single missing sidecar file.
 * [Open the knowledge bundle in Obsidian](playbooks/open-bundle-in-obsidian.md) - two vaults: the workshop someone keeps, and the bundle opened as its own vault through the root `knowledge_bundle` link.
 * [lokf-librarian skill](playbooks/lokf-librarian-skill.md) - derives and maintains the concepts; facts, never verdicts.
 * [lokf-curator skill](playbooks/lokf-curator-skill.md) - a human curator's assistant; verdicts, never facts.

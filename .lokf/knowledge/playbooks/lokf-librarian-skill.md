@@ -7,7 +7,8 @@ genre: how-to
 resource: skills/lokf-librarian/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-13T12:00:00Z"
+  at: "2026-09-13T23:00:00Z"
+status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
 about:
@@ -19,7 +20,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/okf-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  at: "2026-09-13T23:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
 stale_after: 2027-09-09
@@ -29,7 +30,8 @@ stale_after: 2027-09-09
 
 Runs **often**, including on a schedule. It carries the seven LOKF Golden Rules
 (OKF-first; the bundle-root semantic header and `base_iri` authority test; the
-15-class type vocabulary plus the Diátaxis `genre` facet; typed relationships
+type vocabulary - fourteen classes as Rule 3 lists them, see the open
+question below - plus the Diátaxis `genre` facet; typed relationships
 over bare links; core field-to-ontology mapping; trust, provenance and
 lifecycle; permissiveness), then four sections: scrape and build, audit,
 hand off for review, and the scheduled task.
@@ -63,3 +65,11 @@ of that same path boundary in `knowledge-librarian.yaml`'s privileged
 never trusting the `refresh` job's own check alone), plus harden-runner and
 `.git/config`/`.git/hooks/` snapshot-and-restore around the agent call in
 the wrapper script. See `policies/security.md` for the detail.
+
+## Open questions
+
+- `README.md` and `docs/for-the-curious.md` say LOKF has fifteen classes,
+  but Rule 3's list in this tree names fourteen and omits `Role`. Commit
+  `312190e` on the unmerged branch `update` adds it; until that lands, or
+  the count is corrected the other way, which number the skill should teach
+  is unsettled.

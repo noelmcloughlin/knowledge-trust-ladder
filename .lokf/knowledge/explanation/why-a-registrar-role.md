@@ -7,14 +7,14 @@ genre: explanation
 resource: README.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-12T17:00:00Z"
+  at: "2026-09-13T22:00:00Z"
 relatedTo:
 - https://lokf-agent-skills.example/knowledge/explanation/why-four-roles
 about:
 - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-13T15:00:00Z"
+  at: "2026-09-13T22:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -54,4 +54,7 @@ plugin that carry that name are that person's assistants. Both directions are op
 a dependency: the plugins work on any LOKF bundle however it was produced,
 and these four skills need no plugin, since `lokf validate` remains the gate
 they rely on. The only thing every path shares is the LOKF specification
-itself.
+itself. Optional is not the same as general-purpose, though: the plugins
+are extensions of the skills' output, not plugins for a vault in general,
+and a vault with no bundle in it is left alone (`docs/obsidian.md`, the
+README's Obsidian page, 2026-09-13).

@@ -1,5 +1,64 @@
 # Change Log
 
+## 2026-09-13 (5)
+
+* **Steady-state refresh** (librarian pass, no feedback pending), after a
+  `lokf-sidecar` health check that found nothing to repair here. Withdrawn:
+  the third pass's additions that described commit `312190e`, namely the
+  sidecar's *refresh* mode and `automation.md`'s GPG-or-SSH and
+  required-checks-off text (`playbooks/lokf-sidecar-skill.md`, and the
+  `index.md` bullet), the **Drift** audit heading and `Role` in Rule 3
+  (`playbooks/lokf-librarian-skill.md`), and `SECURITY.md`'s "documented
+  once, here" paragraph (`policies/security.md`, which now cites the
+  librarian-PR wrinkle to `automation.md`, where this tree states it). That
+  commit is on the unmerged branch `update`, not in the checked-out
+  `skills/`. `playbooks/lokf-librarian-skill.md` is `status: draft` again
+  with an open question: `README.md` counts fifteen LOKF classes, Rule 3
+  lists fourteen. Re-verified, no change: `explanation/why-four-roles.md`,
+  `explanation/why-a-distribution-repository.md`, `glossary/lokf.md`.
+  `playbooks/knowledge-sources.md`: run note added.
+
+## 2026-09-13 (4)
+
+* `playbooks/knowledge-sources.md`: the `docs/` row now covers the new
+  `docs/obsidian.md` - the README's Obsidian section, moved out as a page of
+  its own with the two-vaults picture - and names the two files it must agree
+  with. `explanation/why-a-registrar-role.md`: the "extensions of the skills'
+  output" sentence is now cited to `docs/obsidian.md`, where it lives. No
+  other concept changed: the README polish moved emphasis and order, not
+  facts.
+
+## 2026-09-13 (3)
+
+* **Steady-state refresh** (librarian pass, no feedback pending), against the
+  commits since `3399203` and this session's uncommitted `README.md` (three
+  more `.assets/` images, one sentence on the plugin READMEs). Content
+  corrected or extended: `policies/security.md` (`main` is protected but not
+  by a merge gate - required status checks deliberately off; the template's
+  `validate`/`provenance` jobs never run on the librarian's own PR; a
+  consumer's `SECURITY.md` links here rather than restating; the closing
+  "branch protection" claim replaced by review-before-merge, as `SECURITY.md`
+  now says), `policies/versioning.md` (tags carry the `v`, changelog
+  headings never do), `playbooks/contributing.md` (required checks off; sign
+  your commits), `playbooks/releasing.md` (the `v` the cross-check strips),
+  `playbooks/lokf-librarian-skill.md` (the new **Drift** audit heading, and
+  `Role` restoring the fifteenth class), `playbooks/lokf-sidecar-skill.md`
+  (the new *refresh* mode; `automation.md`'s GPG-or-SSH signing, its advice
+  against required status checks, and its "Keeping a host's copies in step"
+  section; the Step 6 handoff line on a host's `SECURITY.md`) and
+  `explanation/why-a-registrar-role.md` (the plugins are extensions of the
+  skills' output, not plugins for a vault in general). Re-verified, no
+  change: `explanation/why-four-roles.md`,
+  `explanation/why-a-distribution-repository.md`, `glossary/lokf.md`,
+  `playbooks/open-bundle-in-obsidian.md`. `playbooks/knowledge-sources.md`:
+  the dogfooded-workflows row no longer claims byte-identity - this
+  repository's `knowledge-librarian.yaml` deliberately omits the template's
+  "Install the pinned lokf-librarian skill" step, since it publishes the
+  skills it uses - and a run note added. **Drift audit:** that omission plus
+  a two-line comment is the only difference; `knowledge-registrar.yaml`,
+  the wrapper and the justfile match their templates. `lokf` on PyPI is
+  still `0.7.0`, matching the floor.
+
 ## 2026-09-13 (2)
 
 * **Steady-state refresh** (librarian pass, no feedback pending): re-verified
