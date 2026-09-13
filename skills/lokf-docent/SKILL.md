@@ -36,7 +36,9 @@ run and a person confirms after that.
 6. **Fall back deliberately.** When no concept is relevant, or the only one is retired or stale and the question hinges on being current, explore the repository directly - and say the bundle didn't cover it.
 7. **Record the miss or the disagreement.** Once per session ask: "Record bundle gaps in `.lokf/feedback.md` for the librarian?" If yes, append a **Miss** (the question, and where you found the answer) or a **Disagreement** (the concept, and what its source says instead). Format: [references/feedback.md](references/feedback.md). Never fix the concept yourself.
 
-The full procedure, question-type hints, and edge cases: [references/answering.md](references/answering.md).
+The full procedure, question-type hints, and edge cases: [references/answering.md](references/answering.md). Asked how to open the bundle in
+Obsidian, or whether it belongs inside a vault: [references/obsidian.md](references/obsidian.md) - the answer is the same on every host, so the
+bundle will not carry it.
 
 ## Trust labels (the same words lokf-curator uses)
 

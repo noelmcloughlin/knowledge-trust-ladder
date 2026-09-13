@@ -2,12 +2,12 @@
 type: Explanation
 id: https://lokf-agent-skills.example/knowledge/explanation/hosts-and-doorways
 title: Hosts and doorways - where the bundle's real folder lives
-description: The sidecar has two names, `.lokf/knowledge` for tools and `knowledge_bundle` for people, and one of them is a link. In a code repository the hidden name is the real folder; in a notes vault or shared folder the visible one is, and the tools reach it through the link. Adopted in lokf-sidecar on 2026-09-12.
+description: The bundle is `.lokf/knowledge`, one real folder on every host, and `knowledge_bundle` beside it is a link - the doorway for people and folder pickers. Why there is one layout, what the visible layout of 2026-09-12 tried and why it was retired the next day, and what a shared folder that is not a vault may still do by hand.
 genre: explanation
 resource: skills/lokf-sidecar/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-12T15:30:00Z"
+  at: "2026-09-13T12:00:00Z"
 status: draft
 about:
   - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
@@ -16,8 +16,8 @@ relatedTo:
   - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
   - https://lokf-agent-skills.example/knowledge/explanation/why-a-registrar-role
 verified:
-- by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  - by: process:lokf-librarian
+    at: "2026-09-13T15:00:00Z"
 ---
 
 # The pattern
@@ -28,61 +28,63 @@ bundle is `.lokf/knowledge/`; the tooling (`pyproject.toml`, `justfile`, `script
 sits next to the bundle. This is the same shape as `.git/`, `.github/`, `.devcontainer/` - and, for an
 Obsidian user, `.obsidian/`: a dot-folder the tools own, kept beside the content people own.
 
-Because the dot-folder is hidden from folder pickers, `lokf-sidecar` Step 2 adds a **doorway**:
-`knowledge_bundle`, a link at the host root onto the bundle. The bundle therefore has **two names**:
+Because the dot-folder is hidden from Finder, from most folder pickers and, in effect, from a
+repository listing, `lokf-sidecar` Step 2 adds a **doorway**: `knowledge_bundle`, a link at the host
+root onto the bundle. The bundle therefore has **two names**:
 
-| Name | Who addresses it | Today |
+| Name | Who addresses it | What it is |
 | --- | --- | --- |
-| `.lokf/knowledge` | the four skills, the `lokf` toolkit, CI's `knowledge-registrar.yaml`, `llms.txt` | the real folder |
-| `knowledge_bundle` | people, and Obsidian's *Open folder as vault* | a symlink (junction on Windows) |
+| `.lokf/knowledge` | the four skills, the `lokf` toolkit, CI's `knowledge-registrar.yaml`, `llms.txt` | the real folder, on every host |
+| `knowledge_bundle` | people, folder pickers, file managers, Obsidian's *Open folder as vault* | a symlink (junction on Windows), laid down by default |
 
-Every tool and every person finds the bundle at the name they know. Which of the two is the real
-folder is an implementation choice, and today it is always the hidden one.
+Every tool and every person finds the bundle at the name they know, and which of the two is the real
+folder is not a choice the sidecar makes any more: it is always the hidden one.
 
 # Hosts
 
-- **Code repository** - readers are developers, agents, and CI. The hidden real folder keeps the
-  bundle out of the way; Obsidian is an occasional desk, reached through the doorway. Right as it is.
-- **Notes vault kept in git** (the maintainer's own MSc-AI case) - the sidecar lands beside the notes.
-  The main vault never indexes `.lokf/`, and skips the doorway too (its target resolves inside the vault
-  being indexed - see [Open the knowledge bundle in Obsidian](../playbooks/open-bundle-in-obsidian.md)),
-  so notes and bundle never collide; the person curates in a second, focused vault opened through the
-  doorway. Works, and is in daily use. What it does *not* give is the bundle inside the main vault's
-  graph, search, Obsidian Sync, or mobile.
+- **Code repository** - readers are developers, agents, and CI, most of whom never open Obsidian. The
+  hidden real folder keeps the bundle out of the way; the doorway is how a person browses to it, and
+  how Obsidian opens it as a vault of its own.
+- **Notes vault** - the sidecar lands beside the notes. The vault
+  never indexes `.lokf/`, and skips the doorway too (its target resolves inside the vault being
+  indexed - see [Open the knowledge bundle in Obsidian](../playbooks/open-bundle-in-obsidian.md)), so
+  the **workshop** and the **exhibition** never collide: the person curates in a second vault opened
+  through the doorway. What the vault does *not* get is the bundle in its own graph, search, Sync or
+  mobile - and, it turned out, that is the point.
 - **Shared drive or SharePoint library** - readers are whoever the service shows the folder to.
-  Microsoft's restricted-name list has nothing against a leading dot, so `.lokf/` syncs; but OneDrive
-  syncs neither symbolic links nor junctions, so the doorway is per-machine and the visible thing the
-  service shows is a hidden folder nobody browses to.
+  `.lokf/` syncs (Microsoft's restricted-name list has nothing against a leading dot), so the real
+  folder is the same on every machine; OneDrive syncs neither symbolic links nor junctions, so the
+  doorway is per machine (`just lokf-link`) or the bundle is opened by path. A library nobody reaches
+  through git may be rearranged by hand for a synced visible name - the sidecar's
+  `references/portability.md` says how; a shared folder that is also a vault must not be.
 
-# The rule, as adopted on 2026-09-12: the host decides which name is real
+# The rule: one layout, and how it was settled
 
-Both names always exist. `lokf-sidecar` Step 0 now asks which kind of host it is in, and lays the
-sidecar down accordingly:
+On 2026-09-12 the sidecar's Step 0 began asking which kind of host it was in and, for a notes vault
+or a shared folder, laid the bundle down the other way round - the **visible layout**:
+`knowledge_bundle/` a real folder at the host root (or inside the vault, when the vault was a
+subfolder of the host), `.lokf/knowledge` a link onto it. The intent was that an Obsidian user would
+see the bundle in their own vault's explorer, graph, search and Sync, and that both plugins would
+detect it with nothing to configure. What it cost the tooling: a `visible` variable and a
+`lokf-link` recipe that recreated the tools' link where a sync service dropped it, `▸` markers
+through the skill, two extra layout test cases, and both workflows and the wrapper naming the bundle
+under both paths, because a git pathspec never traverses a symlink.
 
-| Host | Real folder | Link |
-| --- | --- | --- |
-| Code repository (default) | `.lokf/knowledge/` | `knowledge_bundle` → `.lokf/knowledge` |
-| Notes vault or shared folder (an `.obsidian/` at the host root, or a synced path) | `knowledge_bundle/` at the host root | `.lokf/knowledge` → `../knowledge_bundle` |
-| Vault in a subfolder of the host (a repository whose root holds the README and skills, the vault in `MSc-AI/`) | `MSc-AI/knowledge_bundle/`, inside the vault so Obsidian sees it | `.lokf/knowledge` → `../MSc-AI/knowledge_bundle`; `visible := "../MSc-AI/knowledge_bundle"` in the justfile |
+A day later, in daily use of the maintainer's own vault, the intent turned out to be the problem.
+Obsidian indexes a real folder inside a vault like any other, so the exhibition leaked into the
+workshop: link suggestions, the quick switcher, graph and search all mixed exhibits with everyday
+notes, and *Settings → Files and links → Excluded files* only makes an excluded folder less
+noticeable in the quick switcher and link suggestions. The natural Obsidian workflow is two vaults -
+the one someone already has for the workshop, the bundle opened as its own for the exhibition, which
+is where the plugins do their work - and a doorway link supports that on every host without ever
+appearing in the workshop. So on 2026-09-13 the visible layout was retired: one layout, the doorway
+by default, Step 0's host decision and the `visible` variable gone, `lokf-link` repurposed to create
+or recreate the doorway. What the reversal keeps, because it costs nothing and still covers a shared
+folder rearranged by hand: the dual pathspecs in the Step 5 templates, the plugins' auto-detection of
+a top-level `knowledge_bundle/` and their *Bundle root folders* setting, and the junction guidance
+for Windows.
 
-In the visible layout the bundle is a plain folder in the vault - explorer, graph, search, Sync,
-mobile - and the two plugins detect it with nothing to configure: a top-level `knowledge_bundle/`
-with its own `index.md`, in a vault whose root `index.md` carries no LOKF header, becomes the bundle
-root and every other note is left alone. It can still be opened on its own as the focused curator's
-vault, now with no link involved. The skills and toolkit are unchanged - they address `.lokf/knowledge`
-and follow the link, which git carries and `just lokf-link` recreates where a sync service drops it (its `visible` variable names the folder when it is not `../knowledge_bundle`).
-
-What it cost: the wrapper's boundary check and both workflows' pathspecs (`git status`, `git add`,
-`git diff`, `git log`, `git show`) name `knowledge_bundle` as well as `.lokf/knowledge`, because a git
-pathspec never traverses a symlink (and `git add` refuses a pathspec that matches nothing, hence a
-guard); the registrar workflow also triggers on `knowledge_bundle/**`; the root `.gitignore` gains
-`knowledge_bundle/.obsidian/`; `scripts/test-sidecar-layouts.sh` pins all of that against both layouts (the
-wrapper, both workflows, and the recipe) and runs from the repository-contract check; the plugins gained the auto-detection above, and their *Bundle root
-folders* setting now accepts a dot-folder entry (warning if Obsidian's index does not list it today,
-so a vault running the community plugin *Hidden Folders Access* can name `.lokf/knowledge` directly)
-instead of refusing it. On Windows a junction (`mklink /J`, no elevated rights) is the preferred
-link in either direction.
-
-The alternative the maintainer floated - renaming the whole sidecar `.lokf/` to `knowledge_bundle/`
-on such hosts - would keep one name instead of two but need the skills to accept a configurable
-sidecar path; the two-name form needs no such knob, which is why it was chosen.
+The alternative the maintainer floated earlier - renaming the whole sidecar `.lokf/` to
+`knowledge_bundle/` on some hosts - would keep one name instead of two but need the skills to accept
+a configurable sidecar path; the two-name form needs no such knob, which is why it was chosen, and why
+it survived the reversal unchanged.

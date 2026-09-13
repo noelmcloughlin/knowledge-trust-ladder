@@ -1,6 +1,6 @@
 ---
 name: lokf-sidecar
-description: 'Lay down a `.lokf/` LOKF knowledge-bundle sidecar (tooling, docs, dummy skeleton, and a visible `knowledge_bundle` entry point for Obsidian) in the repository this skill sits in, from bundled templates. Use when: a repo has no `.lokf/` yet and someone asks to add, scaffold, bootstrap, or set up a LOKF/lokf sidecar, knowledge bundle, or machine-readable, SPARQL-queryable knowledge; or to repair a missing/broken sidecar file. Not for authoring or maintaining concepts - that is the lokf-librarian skill, which this one hands off to when done.'
+description: 'Lay down a `.lokf/` LOKF knowledge-bundle sidecar (tooling, docs, dummy skeleton, and a `knowledge_bundle` doorway link beside it) in the repository this skill sits in, from bundled templates. Use when: a repo has no `.lokf/` yet and someone asks to add, scaffold, bootstrap, or set up a LOKF/lokf sidecar, knowledge bundle, or machine-readable, SPARQL-queryable knowledge; or to repair a missing/broken sidecar file. Not for authoring or maintaining concepts - that is the lokf-librarian skill, which this one hands off to when done.'
 license: Apache-2.0
 ---
 
@@ -49,16 +49,7 @@ Resolve every placeholder from real project sources before writing anything; nev
 
 **Tracked or gitignored - decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default four skills assume; gitignoring it is equally valid (personal bundle, or a policy against committing agent-authored content) but changes four things: still create every file (the bundle is filesystem-based either way); skip the commit in Step 4 and all of Step 5; add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it; say so in the Step 6 handoff. This is unrelated to `.lokf/.gitignore` below, which only excludes tool build noise.
 
-**Which name is real - decide now.** The bundle has two names: `.lokf/knowledge` (what every skill, the toolkit, CI and `llms.txt` address) and `knowledge_bundle` at the host root (what people, and Obsidian's *Open folder as vault*, open). One is the real folder, the other a link onto it, and the host decides which:
-
-| Host | Real folder | Link | Why |
-| --- | --- | --- | --- |
-| **Code repository** (the default) | `.lokf/knowledge/` | `knowledge_bundle` → `.lokf/knowledge` (Step 2) | readers are developers, agents and CI; the bundle stays out of the way, and Obsidian is an occasional desk reached through the doorway |
-| **Notes vault or shared folder** - an `.obsidian/` at the host root, or a path inside OneDrive/SharePoint, Dropbox, Drive or iCloud | `knowledge_bundle/` at the host root | `.lokf/knowledge` → `../knowledge_bundle` | readers live in Obsidian or a sync client: the bundle is an ordinary visible folder (explorer, graph, search, Sync, mobile), the LOKF Registrar and LOKF Curator plugins detect it with nothing to configure, and the tools still find it at the name they know |
-
-Ask when the signals conflict. Everything below is written for the default; the **visible layout** differs only where marked ▸.
-
-▸ **Vault in a subfolder of the host.** A repository whose root holds the README and the skills, with the vault one level down (`MSc-AI/`, say), is still the vault case: the real folder goes *inside the vault* - `MSc-AI/knowledge_bundle/`, so Obsidian sees it - and the link is `.lokf/knowledge` → `../MSc-AI/knowledge_bundle`. Set `visible := "../MSc-AI/knowledge_bundle"` in `.lokf/justfile` so `just lokf-link` knows the path, and write that path wherever Step 5's three files say `knowledge_bundle`.
+**One layout, every host.** `.lokf/knowledge/` is the real folder wherever the sidecar lands - a code repository, a notes vault, a shared folder - and it is the name every skill, the toolkit, CI and `llms.txt` address. Step 2 adds `knowledge_bundle` beside it: a link, so people and folder pickers have an ordinary name to open. Never lay the bundle down as a *real* folder inside an Obsidian vault: the vault indexes it like any other folder, and the exhibition leaks into the workshop's link suggestions, graph and search. A shared folder that is not a vault is covered in [references/portability.md](references/portability.md).
 
 > Repo hygiene note: if the host repo installs AI skills locally, the generated runtime directories `.agents/`, `.claude/`, and the lockfile `skills-lock.json` are not source content and should be excluded from the root `.gitignore` rather than committed as project changes.
 
@@ -98,8 +89,6 @@ open(path, "w", encoding="utf-8").write(text)
 ' {}
 ```
 
-▸ **Visible layout:** create the real folder and the tools' link onto it *before* copying - `mkdir knowledge_bundle && ln -s ../knowledge_bundle .lokf/knowledge` (Windows: `mklink /J .lokf\knowledge %CD%\knowledge_bundle`) - then copy the `templates/knowledge/*` rows to their listed `.lokf/knowledge/...` destinations exactly as written; the link puts them in `knowledge_bundle/`. Every recipe, script and workflow addresses `.lokf/knowledge` and follows the link, and `just lokf-link` recreates it on a machine where a sync service dropped it (its `visible` variable names the folder; the default is `../knowledge_bundle`).
-
 ## Step 2 - Point agents and humans at the bundle (optional, root-level)
 
 Three additions at the **repo root**, outside `.lokf/`. Add only, never overwrite, and check for an existing item first. All three stay true
@@ -110,33 +99,28 @@ symlink is harmless and easy to spot).
   section, and only if the file doesn't already mention `.lokf/`.
 - **README pointer** - if `README.md` exists and doesn't already link to `.lokf/knowledge/` anywhere (check the path, not a heading string), insert
   `templates/readme-for-ai-agents.md` after the intro, before the first `##`. It is a one-paragraph blockquote aside, not a section, and it speaks to both readers a README has: a person, who learns there is a second way in - install `lokf-docent` and ask - and an agent, which reads the top of a README and is told to read the bundle first; the trust-weighing detail lives in `llms.txt` rather than being repeated here. If one question this host's readers keep asking comes to mind, put it in the aside as the example - a concrete question is what makes a person try it. Don't invent a README on a host that has none.
-- **`knowledge_bundle` symlink** - a visible, ordinary-looking doorway into the hidden `.lokf/` directory for humans and their tools, most
-  concretely Obsidian's **File → Open folder as vault**: OS folder pickers (Obsidian's included) hide dot-directories, so `.lokf/knowledge` is easy
-  to open by typing the path but awkward to browse to. If nothing named `knowledge_bundle` already exists at the repo root:
+- **`knowledge_bundle` symlink** - the bundle under an ordinary, visible name, beside the hidden `.lokf/`. Finder and most folder pickers hide
+  dot-directories, a repository listing shows nothing else, and a double-click in a file manager should land in the bundle - so the doorway is the
+  one name a person needs to know, whatever they open it with. If nothing named `knowledge_bundle` already exists at the repo root:
 
   ```bash
   ln -s .lokf/knowledge knowledge_bundle
   ```
 
-  Run from the repo root - the target is relative, which keeps the link valid after a clone or move. Mirror the Step 0 tracked/gitignored decision:
-  commit it alongside a tracked `.lokf/`, or add `knowledge_bundle` to the root `.gitignore` alongside a gitignored one. POSIX only - on Windows
-  without WSL/Git Bash, or on a filesystem without symlink support, skip it (see [references/portability.md](references/portability.md)); the
-  bundle works identically without it.
+  Run from the repo root - the target is relative, which keeps the link valid after a clone or move (`just lokf-link` from `.lokf/` does the same,
+  and recreates it on a machine where a sync service dropped it). Mirror the Step 0 tracked/gitignored decision: commit it alongside a tracked
+  `.lokf/`, or add `knowledge_bundle` to the root `.gitignore` alongside a gitignored one. POSIX only - on Windows a junction does the job with no
+  elevated rights (`mklink /J knowledge_bundle .lokf\knowledge`); on a filesystem without links, skip it (see
+  [references/portability.md](references/portability.md)); the bundle works identically without it. If the host repo lints, spell-checks, or
+  link-checks `**/*.md` repo-wide, exclude `knowledge_bundle/` from that config - otherwise the same files under `.lokf/knowledge/` are processed
+  twice, once at each path.
 
-  **How it is used.** The person opens `knowledge_bundle` *itself* as a vault (File → Open folder as vault): the bundle becomes a small vault of
-  its own, and Obsidian writes its workspace state through the link into the real `.lokf/knowledge/.obsidian/` - invisible to `lokf validate`
-  (Step 4 reads only `*.md`) and already excluded by `templates/gitignore`. A vault opened at the *repository root* does not list the bundle -
-  Obsidian never indexes a dot-directory and skips a link that resolves back inside the vault it is indexing - so point people at the doorway, not
-  the root; when the host is itself a notes vault, that same rule is what lets the sidecar sit inside it without the two ever indexing one file
-  twice. On Windows a junction does the job with no elevated rights (`mklink /J knowledge_bundle .lokf\knowledge`); sync services such as OneDrive
-  carry folders but not links, so on a synced host the doorway is recreated per machine or the bundle opened by path (see
-  [references/portability.md](references/portability.md)). If the host repo lints, spell-checks, or link-checks `**/*.md` repo-wide, exclude
-  `knowledge_bundle/` from that config - otherwise the same files under `.lokf/knowledge/` are processed twice, once at each path.
-
-  ▸ **Visible layout:** no doorway link is needed - the bundle *is* the visible folder - so instead add `knowledge_bundle/.obsidian/` to the root
-  `.gitignore` (add only, never overwrite): that is where Obsidian keeps its workspace state when someone opens the bundle as its own vault, and
-  `templates/gitignore` covers only the default layout's `.lokf/knowledge/.obsidian/`. Opened as part of the host vault, the plugins detect
-  `knowledge_bundle/` on their own (a top-level folder of that name with an `index.md`, in a vault whose root `index.md` carries no LOKF header).
+  **If the person uses Obsidian** (optional; every step here is the same without it), they open `knowledge_bundle` *itself* as a vault (File → Open
+  folder as vault) - the exhibition, beside whatever vault they already keep, the workshop. Obsidian writes that vault's workspace state through the
+  link into `.lokf/knowledge/.obsidian/`, which `templates/gitignore` excludes and `lokf validate` ignores (Step 4 reads only `*.md`). A vault opened
+  at the host root never lists a dot-directory or a link that resolves inside it, which is what keeps the workshop clean when the host is itself a
+  vault - so point people at the doorway, not the root. The rule against a real folder inside a vault is in Step 0; the mechanics are in
+  [references/portability.md](references/portability.md).
 
 ## Step 3 - Verify the skeleton
 
@@ -146,7 +130,7 @@ Placeholder tokens only - the files legitimately contain other angle brackets:
 grep -rn -e '<PROJ_' -e '<BASE_IRI>' -e '<OWNER_' -e '<TODAY>' .lokf/ knowledge_bundle/ llms.txt 2>/dev/null
 ```
 
-Zero hits means fully resolved. (`knowledge_bundle/` is named because `grep -r` does not descend into a symlinked `.lokf/knowledge`; in the default layout it is the same files listed twice, harmlessly.) Leave the `example-service-*.md` dummies as dummies (or delete them for an empty bundle) - don't enumerate real services.
+Zero hits means fully resolved. (`knowledge_bundle/` is the same files listed twice, harmlessly; it is named so the check still holds on a host where someone has turned `.lokf/knowledge` into a link, since `grep -r` does not descend into one.) Leave the `example-service-*.md` dummies as dummies (or delete them for an empty bundle) - don't enumerate real services.
 
 ## Step 4 - Validate the skeleton
 
@@ -171,7 +155,7 @@ silently reports "no changes" for an ignored path forever. GitHub-only; other ho
 | `templates/github/knowledge-librarian.yaml` | `.github/workflows/knowledge-librarian.yaml` |
 | `templates/scripts/knowledge-librarian.sh` | `.lokf/scripts/knowledge-librarian.sh` (`chmod +x`) |
 
-Both workflows and the wrapper name the bundle under both of its names (`.lokf/knowledge` and `knowledge_bundle`), because a git pathspec never traverses a symlink - nothing here differs between the layouts, except when the real folder sits inside a vault subfolder (Step 0 ▸): then replace `knowledge_bundle` in all three files with that path. The registrar's `provenance` job needs no wiring, but check one thing and report it here: `git config --get commit.gpgsign`, and whether `HEAD` carries a signature (`git cat-file commit HEAD | grep -qE '^gpgsig'`). If signing is off, say so now - GitHub blocks self-approval, so a **solo maintainer**'s own curation PRs pass only if they sign, and otherwise every confirmation lokf-curator records will be rejected at the gate. Show the three `git config` lines from [references/automation.md](references/automation.md) and let them run those; do not run them yourself and never touch their `--global` config. The optional `KNOWLEDGE_CURATION_ENVIRONMENT` escape hatch is in the same file; it requires creating an Environment *with required reviewers* first, and is a no-op if that part is skipped.
+Both workflows and the wrapper name the bundle under both of its names (`.lokf/knowledge` and `knowledge_bundle`): with the Step 2 doorway the second pathspec matches nothing, harmlessly, and it still covers a shared folder a team has rearranged by hand into a real `knowledge_bundle/` (see [references/portability.md](references/portability.md)), because a git pathspec never traverses a symlink. Nothing to edit. The registrar's `provenance` job needs no wiring, but check one thing and report it here: `git config --get commit.gpgsign`, and whether `HEAD` carries a signature (`git cat-file commit HEAD | grep -qE '^gpgsig'`). If signing is off, say so now - GitHub blocks self-approval, so a **solo maintainer**'s own curation PRs pass only if they sign, and otherwise every confirmation lokf-curator records will be rejected at the gate. Show the three `git config` lines from [references/automation.md](references/automation.md) and let them run those; do not run them yourself and never touch their `--global` config. The optional `KNOWLEDGE_CURATION_ENVIRONMENT` escape hatch is in the same file; it requires creating an Environment *with required reviewers* first, and is a no-op if that part is skipped.
 
 The wrapper looks for `lokf-librarian/SKILL.md` under `.claude/skills/`, `.github/skills/`, `.agents/skills/`, then bare `skills/` (a repo that
 publishes the skills it also uses) - if this repo uses another directory, add it to the script's `candidate` list now, and run the script once to confirm:
@@ -195,4 +179,4 @@ handoff, tell the user:
 - whether Step 4 validation ran, ran as the manual fallback, or was skipped;
 - which optional pieces (`queries.http`, Step 2 pointers, Step 5 automation) were added, appended to, or left alone because they already existed;
 - whether `.lokf/` is **git-tracked or gitignored** - this decides whether lokf-librarian's PR-based review and any Step 5 automation apply at all;
-- which **layout** was laid down - the default, or the visible layout with `.lokf/knowledge` as the link - and, for the latter on a sync service that drops links, that `just lokf-link` recreates the tools' link per machine.
+- whether the **`knowledge_bundle` doorway** was created and, if not (Windows, no symlink support, a name already taken), the one command that makes it: `ln -s .lokf/knowledge knowledge_bundle`, `just lokf-link` from `.lokf/`, or `mklink /J knowledge_bundle .lokf\knowledge`. On a synced host, that sync services carry `.lokf/` but drop links, so the doorway is per machine; on an Obsidian vault host, that the bundle is opened by picking `knowledge_bundle` *itself* as a vault, and the vault they already have never lists it.

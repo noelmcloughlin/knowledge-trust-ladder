@@ -22,12 +22,10 @@ You write normal Markdown; you get a validated, queryable graph for free.
 |-- feedback.md           # appears once a reader's agent records a gap; input for the librarian, not knowledge
 ```
 
-If a `knowledge_bundle` symlink sits at the repo root, that's this same `knowledge/` directory under an ordinary, visible name - open *it* as an
-Obsidian vault ("Open folder as vault") rather than hunting for the hidden `.lokf/` directory in the file picker. Open the link itself, not the
-repository root: Obsidian ignores a symlink whose target is inside the same vault, and never indexes a dot-folder, so a repo-root vault cannot see
-this bundle. (In lokf-sidecar's *visible layout* - a notes vault or a shared folder as the host - it is the other way round: `knowledge_bundle/` is
-the real folder and `.lokf/knowledge` the link; every command below still works, and `just lokf-link` recreates the link on a machine where a sync
-service dropped it, onto `../knowledge_bundle` or the path its `visible` variable names.)
+The `knowledge_bundle` link at the repo root is this same `knowledge/` directory under an ordinary, visible name - for folder pickers and file
+managers that hide dot-directories, and, for Obsidian users, its "Open folder as vault": open the link *itself* as a vault, never the repository root, which
+cannot see a dot-folder or a link that resolves inside it. Git carries the link; a sync service does not, so `just lokf-link` recreates it on a
+machine where it is missing (Windows: `mklink /J knowledge_bundle .lokf\knowledge`). Every command below works without it.
 
 ## Prerequisites
 

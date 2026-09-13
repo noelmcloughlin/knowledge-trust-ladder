@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-librarian/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  at: "2026-09-13T12:00:00Z"
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
 about:
@@ -47,9 +47,10 @@ affordances LOKF Registrar may write into a bundle - a marker-delimited
 Content (`type: Document`, `generated.by: lokf-registrar/<version>`, or
 `lokf-enforcer/<version>` from a build before the plugin's rename), which it
 never edits, lists, audits as orphans, or counts - and the bundle's second
-name: in lokf-sidecar's visible layout `.lokf/knowledge` is a link onto
-`knowledge_bundle/`, so it addresses the bundle by the tools' name and names
-both paths when scoping a diff or a PR.
+name: `.lokf/knowledge` is the real folder lokf-sidecar lays down, with a
+`knowledge_bundle` link beside it, but a host rearranged by hand may have the
+link the other way round, so it addresses the bundle by the tools' name and
+names both paths when scoping a diff or a PR.
 
 The tooling-version check (rule 6) now runs **only in interactive
 sessions**: the scheduled workflow's wrapper permits edits solely under

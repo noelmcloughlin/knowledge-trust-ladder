@@ -95,8 +95,9 @@ else
   say "shellcheck not installed locally - CI runs it; skipping here (${#scripts[@]} script(s) found: ${scripts[*]:-none})"
 fi
 
-# 7. Both bundle layouts behave the same for every template that scopes a diff
-#    to the bundle (the wrapper and both workflows), and for the lokf-link recipe.
+# 7. Every template that scopes a diff to the bundle (the wrapper and both
+#    workflows) behaves as documented with and without the doorway link, and
+#    the lokf-link recipe creates it.
 say ""
 say "Running the layout tests..."
 if bash scripts/test-sidecar-layouts.sh; then

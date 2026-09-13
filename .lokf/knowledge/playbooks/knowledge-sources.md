@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:lokf-librarian
-  at: "2026-09-10T18:00:00Z"
+  at: "2026-09-13T15:00:00Z"
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-11T09:42:00Z"
+  at: "2026-09-13T15:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -24,6 +24,7 @@ stale_after: 2027-09-10
 | `skills/*/references/*.md` | detail behind each skill Playbook | diff against the claims in the corresponding concept body |
 | `skills/lokf-sidecar/templates/` | what the sidecar skill actually writes; the toolkit dependency and its `[build]` extra | diff `pyproject.toml` (the `lokf` floor) and the template list in the skill's Step 1 table |
 | `README.md` | project identity, the four-role narrative, versioning policy, install commands | diff the roles table and the Versioning section |
+| `docs/for-the-curious.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md` |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist |
 | `SECURITY.md` | the security policy | diff the hardening bullets |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |

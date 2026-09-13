@@ -1,5 +1,61 @@
 # Change Log
 
+## 2026-09-13 (2)
+
+* **Steady-state refresh** (librarian pass, no feedback pending): re-verified
+  `playbooks/lokf-sidecar-skill.md`, `explanation/hosts-and-doorways.md`,
+  `playbooks/open-bundle-in-obsidian.md`, `explanation/why-four-roles.md` and
+  `explanation/why-a-registrar-role.md` against `skills/lokf-sidecar/SKILL.md`
+  and the compacted `README.md` from this session's "For the curious" move
+  and prose-compaction pass. All five already matched - no content changed,
+  only each concept's own `process:lokf-librarian` `verified` event, the two
+  hosts-and-doorways/open-bundle-in-obsidian concepts gaining their first
+  one. `playbooks/knowledge-sources.md` gained its own `docs/for-the-curious.md`
+  row (added this session) and its `generated`/`verified` refreshed to match.
+  `glossary/knowledge-bundle.md` was not re-checked - `templates/README.md`'s
+  wording tweak this session didn't touch what the term means.
+
+## 2026-09-13
+
+* **The visible layout is retired; one layout, the doorway by default.**
+  Hand-edited in session alongside the `lokf-sidecar` change, not a librarian
+  run - the librarian's next pass re-verifies. `playbooks/open-bundle-in-obsidian.md`
+  and `explanation/hosts-and-doorways.md` rewritten (`generated` refreshed,
+  their process `verified` events dropped, since the text they checked is
+  gone): the bundle is `.lokf/knowledge` on every host, `knowledge_bundle` a
+  link beside it; an Obsidian user keeps two vaults - the workshop they have,
+  and the bundle opened as its own vault through the link - and the bundle is
+  never laid down as a real folder inside a vault, because a day of use in the
+  maintainer's own vault showed the exhibition leaking into the workshop's
+  link suggestions, quick switcher, graph and search (Obsidian's *Excluded
+  files* only makes that less noticeable). The playbook keeps the 1.13.7
+  reconciler findings and now names the cost of linking a repository's bundle
+  *into* a vault; the explanation records the 2026-09-12 attempt, its cost,
+  and what the reversal keeps (dual pathspecs, plugin auto-detection, junction
+  guidance). `glossary/knowledge-bundle.md` (`generated` refreshed; its human
+  confirmation of 2026-09-09 stands, so the curator will show it as edited
+  since) no longer claims "three pictures": a bundle is a folder of notes
+  opened as its own vault, or, at a cost, a folder inside a vault or a whole
+  vault. `playbooks/lokf-sidecar-skill.md` (`generated` refreshed) drops the
+  Step 0 layout decision; `playbooks/lokf-librarian-skill.md` (`generated`
+  refreshed) restates the second-name rule without the visible layout.
+  `index.md`'s two TOC lines follow.
+* **Later the same day.** The names of the maintainer's private projects were
+  removed from this bundle's notes and from this log: the family this bundle
+  describes is the four skills and the two Obsidian plugins, and no host
+  outside it is a reference. `README.md`'s Obsidian section was cut back to the
+  value of the pairing - Obsidian optional, the exhibition as the workshop's
+  output - and the mechanics it carried (what the file reconciler does with a
+  link, the second vault, the linked-in arrangement and its cost) moved to
+  `lokf-sidecar/references/portability.md`, so that
+  `playbooks/open-bundle-in-obsidian.md` derives from a source that states them.
+  Every passing mention of Obsidian in the skills and templates now says it is
+  optional. `README.md`'s "For the curious" moved to `docs/for-the-curious.md`,
+  mirroring the plugin READMEs (`playbooks/knowledge-sources.md` lists it), and
+  duplicated prose was compacted in the README, the sidecar skill's Steps 2 and
+  6, `portability.md` and this bundle's `open-bundle-in-obsidian.md`, whose
+  history section now defers to `explanation/hosts-and-doorways.md`.
+
 ## 2026-09-12 (3)
 
 * **Steady-state refresh against the security-hardening pass** (uncommitted
@@ -105,7 +161,7 @@
   installed application bundle): a link is skipped when its resolved path
   equals, contains, or lies inside a folder already being watched, the vault
   root included - so the doorway opened *as* a vault works exactly as Step 2
-  intends (the maintainer's own MSc-AI vault does this daily), and a host-root
+  intends (the maintainer's own vault does this daily), and a host-root
   vault merely does not list it, which for a notes-vault host is the property
   that keeps the sidecar safe inside the vault. Added the Windows junction
   (`mklink /J`, no elevated rights) and the OneDrive note (syncs neither
@@ -135,8 +191,8 @@
   and this sidecar's `README.md` explain the layout in one sentence.
 * **Fourth pass - the vault-in-a-subfolder host, and layout tests.** `lokf-sidecar` Step 0
   gained the case of a vault one level below the repository root (the maintainer's
-  `msc-ai-galway-2026`, vault `MSc-AI/`): the real folder goes inside the vault,
-  `MSc-AI/knowledge_bundle/`, the link is `.lokf/knowledge -> ../MSc-AI/knowledge_bundle`, the
+  own notes vault, `vault/` here): the real folder goes inside the vault,
+  `vault/knowledge_bundle/`, the link is `.lokf/knowledge -> ../vault/knowledge_bundle`, the
   justfile's new `visible` variable names that path for `just lokf-link`, and Step 5's three files
   name it in place of `knowledge_bundle`. `explanation/hosts-and-doorways.md` gained the table row
   and the note that `scripts/test-sidecar-layouts.sh` now pins both layouts - the wrapper's

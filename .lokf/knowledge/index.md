@@ -19,7 +19,7 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for LOKF Agent Skills. E
 # Playbooks
 
 * [lokf-sidecar skill](playbooks/lokf-sidecar-skill.md) - one-shot bootstrap of a `.lokf/` sidecar from templates.
-* [Open the knowledge bundle in Obsidian](playbooks/open-bundle-in-obsidian.md) - the root `knowledge_bundle` symlink as an Obsidian vault entry point.
+* [Open the knowledge bundle in Obsidian](playbooks/open-bundle-in-obsidian.md) - two vaults: the workshop someone keeps, and the bundle opened as its own vault through the root `knowledge_bundle` link.
 * [lokf-librarian skill](playbooks/lokf-librarian-skill.md) - derives and maintains the concepts; facts, never verdicts.
 * [lokf-curator skill](playbooks/lokf-curator-skill.md) - a human curator's assistant; verdicts, never facts.
 * [lokf-docent skill](playbooks/lokf-docent-skill.md) - answers from the bundle and records what it lacked.
@@ -57,4 +57,4 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for LOKF Agent Skills. E
 * [Why four skill roles rather than one skill](explanation/why-four-roles.md)
 * [Why a registrar role, and why it is not a fifth skill](explanation/why-a-registrar-role.md)
 * [Why the skills live in their own repository](explanation/why-a-distribution-repository.md)
-* [Hosts and doorways - where the bundle's real folder lives](explanation/hosts-and-doorways.md) - the two-name rule, and the open layout question for vault and shared-drive hosts.
+* [Hosts and doorways - where the bundle's real folder lives](explanation/hosts-and-doorways.md) - one real folder, a doorway link beside it on every host, and why the visible layout was retired.

@@ -30,7 +30,7 @@ Four [Agent Skills](https://agentskills.io/home) that turn a repository's scatte
 
 The knowledge already exists - in code, documents, diagrams, policies, operational records. What's missing is a layer that sits between those sources and whoever needs them next, and stays put. Without it, every task starts the same way: find the material, work out how it connects, judge what's still true. That's real work, and the collected context dies with the task - the next person, or next conversation with an assistant, pays for it again.
 
-A **knowledge bundle** - that folder of concept files - is that catalogue: it keeps the work instead of discarding it. Two more words this README keeps coming back to: the bundle is the **exhibition**, the hall visitors are shown into, and each concept in it an exhibit, as against the workshop of sources and notes it was distilled from. But an exhibition is only worth keeping if you can tell what's sound - otherwise you re-verify everything yourself, the very thing you were trying to avoid, and the files quietly rot.
+A **knowledge bundle** - that folder of concept files - is that catalogue: it keeps the work instead of discarding it. Two more words this README keeps coming back to: the bundle is the **exhibition**, the hall visitors are shown into, and each concept in it an exhibit, as against the **workshop** of sources and notes it was distilled from. But an exhibition is only worth keeping if you can tell what's sound - otherwise you re-verify everything yourself, the very thing you were trying to avoid, and the files quietly rot.
 
 So ask a question and the answer tells you where it came from and how far it has been checked, in plain words - *confirmed by a person*, or *nobody has checked this yet*. Those labels are computed from the files on every read, never stored, so they cannot drift from what they describe: against an unchanged bundle they are deterministic.
 
@@ -43,9 +43,7 @@ So ask a question and the answer tells you where it came from and how far it has
 | [`lokf-curator`](skills/lokf-curator/SKILL.md) | **Holds the scales.** A human curator's assistant. Shows what needs a person's look, puts the source next to the claim, and records the person's verdict - confirm, correct, retire, send back - in the bundle's own frontmatter. It deals in *judgments a person made*, never in facts it derived. | a little, regularly |
 | [`lokf-docent`](skills/lokf-docent/SKILL.md) ([examples](EXAMPLES.md)) | **Guides the visitors** - the role the poem leaves implicit, because the library exists for them. Answers questions from the bundle first, says how far each concept used has been trusted, verifies exact values at the source, and when the bundle has no answer explores the repository and records the miss so it becomes the librarian's next task. Read-only on the bundle. | whenever anyone asks |
 
-*Curator* here is the museum sense - the one who authenticates, weighs provenance, and decides what is put on **exhibit**; not the data-management sense, which describes the librarian's job.
-
-A *docent* is the museum's guide - the one who walks visitors through the exhibition and explains what they are seeing, without moving anything on the shelves. If it helps to place yourself: the librarian reports, the curator fact-checks and edits, the docent reads - and writes back with corrections.
+*Curator* here is the museum sense - the one who authenticates, weighs provenance, and decides what is put on **exhibit**; not the data-management sense, which is the librarian's job. A *docent* is the museum's guide, who explains the exhibition without moving anything on the shelves. In short: the librarian reports, the curator fact-checks and edits, the docent reads - and writes back with corrections.
 
 On a fresh repository they run in that order: the sidecar once, then the librarian filling the bundle and marking everything it creates a draft, then the curator, where a person turns drafts into confirmed knowledge a few at a time. After that it stops being a sequence and becomes a loop - the librarian refreshes on a schedule, readers send back what the bundle missed, and the curator works through whatever that surfaces.
 
@@ -55,18 +53,24 @@ The one job none of the four does is the **registrar's**: keeping the records th
 
 In a repository the `lokf` toolkit does that on every change, and CI's [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) does it again on every pull request.
 
-In [Obsidian](https://obsidian.md/), where people edit bundles by hand and there is no CI to catch them, one plugin does it in the editor - and a second brings the curator's session to the same desk:
+For anyone who edits a bundle by hand in [Obsidian](https://obsidian.md/) - optional, and covered [below](#and-where-it-meets-an-obsidian-vault) - there is no CI to catch a malformed record, so one plugin does it in the editor, and a second brings the curator's session to the same desk:
 
 | Plugin | Role at the desk |
 | --- | --- |
 | [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar) | The **registrar**: checks each record is well-formed as it is written - the schema-valid row below, live in the editor. |
 | [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) | The **curator's assistant**, not the curator: puts the source beside the claim and writes down what the person decided - the human-confirmed row below, running this repository's `lokf-curator` review session without an agent in the loop. |
 
-The curator is always a person; the skill and the plugin that carry the name are that person's assistants, in a terminal and in Obsidian. Neither plugin reaches a verdict of its own: the registrar keeps the paperwork honest, the assistant keeps the record of the decisions, and the judging stays with the person. Both are optional companions in either direction - the plugins work on any LOKF bundle however it was produced, and these skills need no plugin, since `lokf validate` remains the gate they rely on. The only thing all of it shares is the LOKF specification.
+The curator is always a person; the skill and the plugin that carry the name are that person's assistants, in a terminal and in Obsidian. Neither plugin reaches a verdict of its own: the registrar keeps the paperwork honest, the assistant keeps the record of the decisions, and the judging stays with the person.
 
-### Where the skills meet an Obsidian vault
+### Where the bundle lives
 
-The four skills are built around a **sidecar**: `.lokf/` sits beside the raw sources it distils - the code in a repository, the notes in a vault, the documents in a shared folder - in the same tree and, almost always, the same git repository. The bundle inside it has two names: `.lokf/knowledge`, which the skills, the toolkit, CI and `llms.txt` address, and `knowledge_bundle`, which people and Obsidian's **File → Open folder as vault** open. One is the real folder and the other a link onto it, and `lokf-sidecar` decides which by the host (its Step 0): in a code repository the hidden folder is real and `knowledge_bundle` is the doorway, opened *itself* as a small vault with nothing to configure; in a notes vault or a shared folder `knowledge_bundle/` is a real folder among the notes - explorer, graph, search, sync - and `.lokf/knowledge` is the link the tools follow. Obsidian users already live with a sidecar - `.obsidian/` is one - so `.lokf/` beside the notes is a familiar shape, not a new one. The vault someone already has is never migrated: it stays the **workshop**, and the bundle is the **exhibition** beside it - the curated front door for teammates, CI, and agents alike. Plugin for skill:
+The four skills are built around a **sidecar**: `.lokf/` sits beside the raw sources it distils - code in a repository, notes in an Obsidian vault, documents in a shared folder - in the same tree and, almost always, the same git repository, the shape of `.git/` or `.obsidian/`. The bundle is `.lokf/knowledge/`, one real folder on every host and the name the skills, the toolkit, CI and `llms.txt` address. Beside it `lokf-sidecar` lays a `knowledge_bundle` link (a junction on Windows): the same folder under a visible name, because Finder and most folder pickers hide dot-folders and a repository listing shows nothing else. Git carries the link; sync services - OneDrive, SharePoint, Dropbox, Drive, iCloud - carry `.lokf/` as ordinary files but drop links, so there `just lokf-link` recreates it per machine, or the bundle is opened by path. An Obsidian vault with the sidecar beside its notes lists neither the dot-folder nor the link. The mechanics, host by host - Windows, shared folders and a team that wants a synced visible name, exactly what Obsidian does with a link - are in [`portability.md`](skills/lokf-sidecar/references/portability.md).
+
+### …and where it meets an Obsidian vault
+
+Obsidian is optional, in either direction: the skills need no plugin, `lokf validate` being the gate they rely on, and the plugins work on any LOKF bundle however it was produced - the LOKF specification is all they share. Most people who run the skills never open Obsidian; this section is for those who do. It is worth a section because the two fit without adaptation - a bundle is a folder of Markdown notes with a few properties each, which is exactly what Obsidian edits, so the skills' output opens there as it is - and because the people who confirm knowledge are often not the people who run agents or terminals: for them a plugin in an editor they already use is the desk, and a prompt is not.
+
+An Obsidian user keeps two vaults. The one they already have is the workshop and is never migrated. The bundle is the exhibition of that workshop's output - the checked part of what it knows, and the front door teammates, CI and agents come through - opened *itself* as a small vault through the `knowledge_bundle` link (**File → Open folder as vault**), with the two plugins installed there and nothing to configure. The two vaults never share an index, so the sidecar can live beside an Obsidian vault without the exhibition leaking into the workshop. Plugin for skill:
 
 | Role | Skill or tool | Obsidian plugin |
 | --- | --- | --- |
@@ -76,7 +80,7 @@ The four skills are built around a **sidecar**: `.lokf/` sits beside the raw sou
 | Curator - always a person | `lokf-curator`, the person's assistant | LOKF Curator - the same assistant, at the desk |
 | Docent | `lokf-docent`, `lokf serve` | - |
 
-The plugin READMEs walk an Obsidian user through it host by host; this repository's own [Open the knowledge bundle in Obsidian](.lokf/knowledge/playbooks/open-bundle-in-obsidian.md) playbook records what Obsidian does with each layout, and [Hosts and doorways](.lokf/knowledge/explanation/hosts-and-doorways.md) why the rule is what it is.
+The plugin READMEs walk an Obsidian user through it arrangement by arrangement. This repository's own [Open the knowledge bundle in Obsidian](.lokf/knowledge/playbooks/open-bundle-in-obsidian.md) playbook is the same story as the docent tells it, with what Obsidian does with a link on each host, and [Hosts and doorways](.lokf/knowledge/explanation/hosts-and-doorways.md) records why there is one layout.
 
 ## Trust stays visible
 
@@ -114,26 +118,9 @@ npx skills add noelmcloughlin/lokf-agent-skills \
   --skill lokf-docent --yes
 ```
 
-## For the curious: how a claim gets checked, and where the vocabulary ends
+## For the curious
 
-The sections above are everything you need to decide whether to install these. What follows is the mechanics, for anyone who wants to know exactly what "confirmed by a person" is standing on - and what to do when a bundle outgrows the built-in vocabulary.
-
-### Four levels of checking
-
-Each proves less than its name suggests. Only the third yields a claim someone has agreed to stand behind.
-
-| Check | Who, when | What it proves | What it can't |
-| --- | --- | --- | --- |
-| Schema-valid | the `lokf` toolkit on every change (`just lokf-validate`, and `just lokf-check-refs` for relation targets); `lokf validate` again as the CI gate on every pull request that touches the bundle | the frontmatter is well-formed, the types and relations are ones the schema knows, and every typed relation points at a concept that exists | that anything in it is true |
-| Source-consistent | `lokf-librarian` on every scheduled refresh - shown as *checked by automation only* | the concept still matches what its source says today | that the source is right, or that the concept says what the team means |
-| Human-confirmed | a named person, through `lokf-curator` or the LOKF Curator plugin - shown as *confirmed by a person* | someone accountable read the source and agreed | that it stays true - which is what review dates are for |
-| Proven in use | readers, through `lokf-docent`, which records misses and disagreements in `.lokf/feedback.md` | the bundle answered a real question - or didn't, and the gap became the librarian's next task | nothing further - this is the feedback loop that feeds the other three |
-
-The first and third rows also run live, outside these skills and the CLI, for anyone maintaining a bundle in Obsidian rather than through an agent: LOKF Registrar for the first, LOKF Curator for the third - see [the fifth role](#the-fifth-role-which-is-not-a-skill).
-
-### When the vocabulary stops fitting
-
-LOKF's vocabulary is deliberately small - 15 classes, ten typed relations - which is what keeps bundles portable. When concepts stop fitting those classes, typically in a deep or safety-critical domain (medicine, law, finance, safety engineering), the answer is a domain schema written in [LinkML](https://linkml.io) that extends LOKF's, not a looser bundle. The curator flags the drift; the team decides; the librarian applies it. What it costs (no new tooling), how to write one, what to do when the domain already has a LinkML vocabulary of its own, and how to validate values it binds to an external domain ontology: [`lokf-curator/references/domain-schemas.md`](skills/lokf-curator/references/domain-schemas.md).
+The sections above are everything you need to decide whether to install these. The mechanics - the four levels of checking and what each proves (only the third, a named person reading the source, yields a claim someone has agreed to stand behind), which of them the plugins run live, and what to do when a bundle outgrows LOKF's 15 classes and ten relations - are in [docs/for-the-curious.md](docs/for-the-curious.md).
 
 ## Repository layout
 
@@ -146,10 +133,14 @@ skills/
 .github/workflows/
   validate.yml          repository contract + Agent Skills spec + Markdown/link checks (every PR)
   publish.yml           maintainer-gated release (workflow_dispatch only)
+docs/
+  for-the-curious.md    the mechanics behind this README: four levels of checking, domain schemas
 scripts/
   validate-repository.sh   the checks validate.yml runs
   smoke-test-install.sh    installs all four skills into a throwaway consumer repo and asserts the result
-  test-sidecar-layouts.sh  both bundle layouts against the wrapper, both workflows, and the lokf-link recipe
+  test-sidecar-layouts.sh  the wrapper, both workflows and the lokf-link recipe, with and without the doorway link
+.lokf/                  this repository's own sidecar: the bundle the docent answers from, and its tooling
+knowledge_bundle        -> .lokf/knowledge, the doorway link lokf-sidecar lays down (Step 2)
 ```
 
 Each `SKILL.md` is a lean router; anything not needed on every invocation lives in that skill's `references/` (loaded only when the router points to it) so the always-resident cost stays small. `lokf-sidecar/templates/` holds the actual files it lays down - copied verbatim, never retyped inline.
@@ -166,6 +157,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: see [SECURITY.md](SECUR
 
 - [Nolan Nichols](https://lokf.nolan-nichols.com/), creator of [LOKF](https://lokf.nolan-nichols.com/specification/) (Linked Open Knowledge Format) and its [toolkit](https://github.com/nicholsn/lokf).
 - The [LinkML Community](https://linkml.io/), creators of [LinkML](https://linkml.io/linkml/), the schema language LOKF is written in.
+- [Introducing the Open Knowledge Bundle, Google blog](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing), creator of Open Knowledge Format specification.
+- [LLM Wiki, Karpaty](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), a pattern for building personal knowledge bases using LLMs.
 
 ## License
 
