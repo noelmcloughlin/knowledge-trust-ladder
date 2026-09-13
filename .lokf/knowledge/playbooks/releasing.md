@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  at: "2026-09-13T19:00:00Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/references/gh-skill-cli
@@ -16,7 +16,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/repository-validation
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  at: "2026-09-13T19:00:00Z"
 ---
 
 # Overview
@@ -47,8 +47,10 @@ Each `publish.yml` run validates that the input is `vMAJOR.MINOR.PATCH`, that
 the tag does not already exist, and - new - that the bare version matches
 CHANGELOG.md's top heading (catching a typed version nobody wrote release
 notes for), then re-runs the repository contract and `gh skill publish
---dry-run`, and only then publishes. All four skills ship together under one
-tag, so a consumer can pin them to a single release.
+--dry-run`, and only then publishes. The version is typed *with* the `v`
+(`v0.16.0`); the changelog heading never carries one, and the cross-check
+strips it before comparing (`CONTRIBUTING.md`, 2026-09-13). All four skills
+ship together under one tag, so a consumer can pin them to a single release.
 
 Both checks read the `workflow_dispatch` version input through an `env:`
 var rather than interpolating `${{ inputs.version }}` straight into the

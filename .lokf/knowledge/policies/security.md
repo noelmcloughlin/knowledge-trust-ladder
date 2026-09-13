@@ -7,12 +7,12 @@ genre: reference
 resource: SECURITY.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  at: "2026-09-13T23:00:00Z"
 references:
   - https://lokf-agent-skills.example/knowledge/playbooks/repository-validation
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  at: "2026-09-13T23:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-03-10
@@ -54,11 +54,36 @@ what gets installed), and hands its proposed bundle change to `publish` as a
 patch artifact; only `publish`, which runs no agent code, holds
 `contents: write` / `pull-requests: write`, so a compromised agent cannot
 reach a write-scoped credential. Top-level workflow permissions default to
-none. The run stays inert until the `KNOWLEDGE_LIBRARIAN_ENABLED` repository
-variable is set to `true`. Dependabot covers this repository's own workflows
+none. The template's agent step is gated on the consumer's
+`KNOWLEDGE_LIBRARIAN_ENABLED` repository variable, so a freshly installed
+copy stays inert until a maintainer arms it, and the workflow triggers only
+on `schedule` and `workflow_dispatch`, never on an event an outside
+contributor can fire. Dependabot covers this repository's own workflows
 but cannot reach the templates - a documented upstream limitation, so those
 pins are bumped by hand. Dependency review and CodeQL are deliberately
 absent: there is no dependency manifest or compiled code here to scan.
+
+`main` is protected, but not by a merge gate (recorded 2026-09-13):
+deletions and force-pushes are blocked and linear history is required, but
+a rule requiring pull requests, or requiring status checks to pass, is
+deliberately *not* enabled - rulesets apply to direct pushes as well as to
+merges, and the release workflow's own commit to `main` cannot be exempted
+from them (a bypass list accepts roles, teams, GitHub Apps and Dependabot,
+and `github-actions[bot]` is none of those). What gates a change is access
+control - only the maintainer can write - plus CI run on every pull request
+and read before merging. Secret scanning and push protection are on. All
+of these are GitHub settings, not files in the tree, so nothing in CI can
+assert they still hold.
+
+One consequence the sidecar's `references/automation.md` states and this
+policy leaves implicit: the template's `publish` job opens the librarian's
+review pull request with the default `GITHUB_TOKEN`, and GitHub does not
+start `pull_request`-triggered workflows for a pull request opened that way,
+so `knowledge-registrar.yaml`'s `validate`/`provenance` jobs never run on
+it; `publish`'s own checks (below) are that pull request's backstop, and a
+consumer that has marked those checks required sees them sit at "Expected"
+until a person fires a fresh `pull_request` event (close/reopen, or an empty
+commit).
 
 ## `human:` attribution is a claim, not a credential
 
@@ -122,5 +147,5 @@ reached either way. Commits, when they happen, still touch only those same
 paths (`git add -A --` scoped to the three pathspecs, never unscoped), never
 push to the default branch, and always end at a human-reviewed PR. Ordinary
 repository content the librarian scrapes has no equivalent per-entry guard -
-it relies on the same branch protection gating every other change to
-`main`, a materially higher trust level than unreviewed reader feedback.
+it relies on the same review-before-merge every other change to `main` goes
+through, a materially higher trust level than unreviewed reader feedback.

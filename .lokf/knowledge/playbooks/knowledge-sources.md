@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:lokf-librarian
-  at: "2026-09-13T15:00:00Z"
+  at: "2026-09-13T23:00:00Z"
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-13T15:00:00Z"
+  at: "2026-09-13T23:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -24,13 +24,13 @@ stale_after: 2027-09-10
 | `skills/*/references/*.md` | detail behind each skill Playbook | diff against the claims in the corresponding concept body |
 | `skills/lokf-sidecar/templates/` | what the sidecar skill actually writes; the toolkit dependency and its `[build]` extra | diff `pyproject.toml` (the `lokf` floor) and the template list in the skill's Step 1 table |
 | `README.md` | project identity, the four-role narrative, versioning policy, install commands | diff the roles table and the Versioning section |
-| `docs/for-the-curious.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md` |
+| `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `lokf-docent/references/obsidian.md`, which must agree with it |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist |
 | `SECURITY.md` | the security policy | diff the hardening bullets |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
 | `.github/workflows/semantic-release.yml`, `.github/scripts/changelog-release.mjs`, `.releaserc.json` | the version-and-changelog automation `playbooks/releasing.md` describes | diff the `release` job's steps, the script's `verifyRelease`/`generateNotes` behaviour, and `.releaserc.json`'s `releaseRules` (which commit types map to which bump) against the concept's Overview; all three sit behind the `release` Environment along with `publish.yml` |
-| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml` | this repository's dogfooded copies of the two workflow templates the sidecar skill ships | diff each against its counterpart under `skills/lokf-sidecar/templates/github/`; they are deliberately kept byte-identical, so any difference is either a template bump not yet copied across or a divergence `.github/dependabot.yml` should explain |
+| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `.lokf/scripts/knowledge-librarian.sh` | this repository's dogfooded copies of the workflow templates and wrapper the sidecar skill ships | diff each against its counterpart under `skills/lokf-sidecar/templates/`; `knowledge-registrar.yaml` and the wrapper are kept byte-identical, and `knowledge-librarian.yaml` differs only by design - it omits the template's "Install the pinned lokf-librarian skill" step, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`, and words one comment for itself. Any other difference is a template bump not yet copied across |
 | `.github/ISSUE_TEMPLATE/*.md`, `.github/pull_request_template.md`, `.github/dependabot.yml` | contributor intake forms and pin maintenance | consciously excluded as concepts - see note below; re-check only that each template still names all four skills and that its `AI_COVENANT.md` link is absolute |
 | `scripts/*.sh` | what the validation playbook claims CI enforces | re-read the assertions; a new check is a gap in the playbook |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
@@ -40,6 +40,38 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-13, fourth pass)**, preceded by a
+  `lokf-sidecar` health check: every Step 1/2/5 file is present, the doorway
+  resolves, no placeholder survives, signing is on, and the only template
+  difference beyond placeholders is `knowledge-librarian.yaml`'s deliberate
+  omission of the install step. The template `pyproject.toml` itself still
+  floors `lokf` at `>=0.5.0` while every host laid down from it has moved to
+  `>=0.7.0`: a template bump for the maintainer, not a sidecar repair.
+  Withdrawn this pass: the claims the third pass derived from commit
+  `312190e` (the sidecar *refresh* mode, GPG-or-SSH signing and
+  required-checks-off advice in `automation.md`, the librarian's **Drift**
+  audit heading, `Role` in Rule 3). That commit sits on the unmerged branch
+  `update`, and the checked-out `skills/` does not carry it; restore them
+  when it lands. `playbooks/lokf-librarian-skill.md` is a draft again with an
+  open question, since `README.md`'s fifteen classes and Rule 3's fourteen
+  disagree on this tree. Re-verified against the polished `README.md` and
+  the new `docs/obsidian.md`: `explanation/why-four-roles.md`,
+  `explanation/why-a-distribution-repository.md`,
+  `explanation/why-a-registrar-role.md`, `glossary/lokf.md`. `lokf` on PyPI
+  is still `0.7.0`; `.lokf/feedback.md` has no entries.
+- **Steady-state refresh (2026-09-13, third pass)**: swept the commits since
+  the prior pass plus the uncommitted `README.md` (three more decorative
+  `.assets/*.svg`, covered by the existing row, and one sentence on what the
+  plugin READMEs now do). Corrected drift in `policies/security.md`,
+  `policies/versioning.md`, `playbooks/contributing.md`,
+  `playbooks/releasing.md`, `playbooks/lokf-librarian-skill.md`,
+  `playbooks/lokf-sidecar-skill.md` and `explanation/why-a-registrar-role.md`
+  (see `log.md`). The dogfooded-workflows row above stopped claiming
+  byte-identity for `knowledge-librarian.yaml` - the omission of the
+  install step is deliberate here, not drift. `lokf` on PyPI is still
+  `0.7.0` (PyPI's JSON API; `uv pip index` is still not a subcommand of
+  this environment's `uv`), matching the floor; no bump. `.lokf/feedback.md`
+  had no entries.
 - **Rename and correction (2026-09-12)**: `skills/lokf-scaffolding/` is now
   `skills/lokf-sidecar/` (frontmatter `name: lokf-sidecar`); every row above
   already uses the new path. `open-bundle-in-obsidian.md` was rewritten to
