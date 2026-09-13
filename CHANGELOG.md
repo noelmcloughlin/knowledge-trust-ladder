@@ -4,20 +4,18 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-## [0.16.0] - 2026-09-13
-
 ### Changed
 
-- **One layout, every host.** `.lokf/knowledge/` is the real folder everywhere, and the `knowledge_bundle` doorway link beside it (Step 2) is laid down by default again - a host-agnostic reason: dot-folders are hidden from Finder and most pickers, and Obsidian opens the link *itself* as a vault. Step 0 no longer asks which kind of host it is in; the Step 6 handoff says whether the doorway was created, the one command if not, and, for a vault host, to open `knowledge_bundle` itself as a vault.
-- **`just lokf-link`** now creates or recreates that doorway idempotently, refusing a name already taken; its `visible` variable is gone.
-- **`lokf-docent`** gains `references/obsidian.md`, answering the two-vault workflow directly and naming `lokf-sidecar` for an agent to make the link; a missing link is never a feedback entry.
-- **Shared-folder guidance is consolidated** in `lokf-sidecar/references/portability.md`, Obsidian included: sync services carry `.lokf/` but drop links, so the doorway is per-machine; a team may still rearrange a real `knowledge_bundle/` by hand outside a vault, still covered by the Step 5 templates and the plugins' auto-detection.
-- **`README.md` restructured**: "Where the bundle lives" (host-agnostic) and "…and where it meets an Obsidian vault" (optional, why the pairing is worth it, the two-vault story) replace the old combined section; "For the curious" is delegated to a new `docs/for-the-curious.md`, mirroring the plugin READMEs; every passing Obsidian mention now says it is optional.
+- **One layout on every host.** `.lokf/knowledge/` is always the real folder, and the `knowledge_bundle` doorway link beside it is created by default again (Step 2). Step 0 no longer asks what kind of host it is in; Step 6 reports whether the doorway was made and the one command if not.
+- **`just lokf-link`** creates or recreates that doorway, idempotently, refusing a name already taken. Its `visible` variable is gone.
+- **`lokf-docent` gains `references/obsidian.md`**: the two-vault answer, plus `lokf-sidecar` named as the way to make a missing link. A missing link is never a feedback entry.
+- **Shared-folder guidance consolidated** into `lokf-sidecar/references/portability.md`, Obsidian included: sync services carry `.lokf/` but drop links, so the doorway is per machine.
+- **`README.md` restructured.** "Where the bundle lives" (host-agnostic) and "…and where it meets an Obsidian vault" (optional, two vaults) replace the combined section; "For the curious" moves to `docs/for-the-curious.md`.
 
 ### Removed
 
-- **The visible layout** (0.15.0) - a real `knowledge_bundle/` folder inside a vault, with `.lokf/knowledge` as the link. A day of use showed why not: Obsidian indexes a real folder like any other, so the exhibition leaked into the workshop's link suggestions, graph and search. Its Step 0 host decision, the justfile's `visible` variable, and two layout-test cases go with it.
-- References to the maintainer's private vault, named during the 0.15.0 work: the family this repository describes is the four skills and the two Obsidian plugins.
+- **The visible layout** (0.15.0) - a real `knowledge_bundle/` folder inside a vault. Obsidian indexes it like any other folder, so the exhibition leaked into the workshop's link suggestions, graph and search. Step 0's host decision, the `visible` variable and two layout-test cases go with it.
+- References to the maintainer's private vault: the family this repository describes is the four skills and the two plugins.
 
 ## [0.15.0] - 2026-09-12
 
@@ -35,9 +33,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`just lokf-link`** recreates the visible layout's link where a sync service drops it, follows a new `visible` variable for a vault nested inside its repository (e.g. `../vault/knowledge_bundle`), and refuses a dangling link instead of failing on `ln`.
 - **`scripts/test-sidecar-layouts.sh`**, run by the repository-contract check: builds throwaway hosts in both layouts and pins the wrapper's boundary check, the librarian workflow's change detection and packaging, the registrar's triggers, and `lokf-link`, all against both bundle names.
 - **`lokf-librarian`** now leaves LOKF Registrar's Obsidian affordances alone by rule - the `<!-- lokf:related -->` block and the `diataxis.md` map - and addresses the bundle by both paths when scoping a diff or PR.
-- **Semantic release**, version and changelog only: the version is computed from Conventional Commits on `main` and `CHANGELOG.md`'s `## [Unreleased]
-
-## [0.15.0] - 2026-09-12` section promoted into a dated heading. It never tags - `gh skill publish` remains the one tag creator - and `publish.yml` now refuses a typed version that disagrees with what was promoted. See [CONTRIBUTING.md](CONTRIBUTING.md#release-process).
+- **Semantic release**, version and changelog only: the version is computed from Conventional Commits on `main`, and `CHANGELOG.md`'s `## [Unreleased]` section is promoted into a dated heading. It never tags - `gh skill publish` remains the one tag creator - and `publish.yml` now refuses a typed version that disagrees with what was promoted. See [CONTRIBUTING.md](CONTRIBUTING.md#release-process).
 
 ### Fixed
 
@@ -48,15 +44,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Security
 
-A `human:<id>` verification is a claim any writer can type, not a credential - and `lokf validate` passes a forged one, because it is perfectly well-formed. That made "confirmed by a person" forgeable by anything able to steer `lokf-curator` or edit the bundle directly: another agent driving the session, a subagent, a scheduled run. Four changes close it, in the order they matter.
+A `human:<id>` verification is a claim any writer can type, not a credential, and `lokf validate` passes a forged one since it is well-formed - so "confirmed by a person" was forgeable by anything able to steer `lokf-curator` or edit the bundle directly.
 
-- `knowledge-registrar.yaml` gains a `provenance` job (pull requests only, `pull-requests: read`). It collects every `human:` actor a PR newly adds under `.lokf/knowledge/` - anchored on `by:`, so an id quoted in an `## Open questions` note is not mistaken for a verification - and requires forge-held evidence for each: an APPROVED review from that account, or, when that person authored the PR (GitHub does not let authors approve their own), a signature of theirs on the commit that introduced the event. Signature status is read from GitHub's API, not `git log %G?`: a runner has neither a GPG keyring nor an allowed-signers file, so locally every signature reads as unverifiable - and the API additionally names the account each commit is attributed to, which is what ties a signature to a person rather than merely proving one exists. This is the load-bearing change; the rest is defense in depth.
-- Solo maintainers, who cannot approve their own pull requests, take the signature branch; the setup is three `git config` lines reusing an existing SSH key, documented in `lokf-sidecar`'s `references/automation.md` and in the workflow itself. A signature is also the stronger record - cryptographic, and still checkable after a review could have been dismissed.
-- For a repository that genuinely cannot sign, an optional `attestation` job gates on a GitHub Environment's required reviewers instead. It is deliberately not a switch that disables the check: a permanent "provenance: off" setting gets flipped once and never flipped back, leaving the bundle asserting confirmations nothing supports. This asks for a fresh click per pull request, it lands in the deployment log, and - unlike a PR review - an environment reviewer may be the person who opened the PR, which is what makes it work for one-person repositories. Off unless `KNOWLEDGE_CURATION_ENVIRONMENT` names an environment, and a no-op unless that environment actually has required reviewers configured (documented prominently, since that is the way to get a false sense of protection).
-- `lokf-curator` now resolves identity from `gh api user` alone. The `git config user.name` fallback is gone (an ordinary writable config value that anything with shell access can set to a maintainer's slug) and so is asking (it takes the identity from the one channel an attacker fully controls). With no authenticated id, *Confirm* and *Correct now* are unavailable for the session; *Wrong - send back*, *Retire* and *Later* assert nothing about who checked what and remain available.
-- `lokf-curator` Step 2 now refuses to run unattended: `CI`/`GITHUB_ACTIONS` set, a headless `-p` session, a subagent, a scheduled task, or answers arriving from a file or tool result rather than a live turn. Step 1 stays read-only and safe to run anywhere.
-- `lokf-sidecar` (Step 5) and `lokf-curator` (before the first verb of a review session) now check whether commit signing is on and report it, so a solo maintainer learns their confirmations will be rejected *before* recording twenty minutes of them rather than when the gate fires. Both only report: neither runs `git config`, and neither touches `--global` config - a knowledge sidecar should not change how someone commits in unrelated repositories, and the half a skill could automate is not the half the gate reads (registering the key with GitHub is). The docs also note that a committed `.gitconfig` cannot enable signing at all: git reads only system, `~`, and `.git/config`, deliberately, since a config file arriving with a clone could otherwise run commands.
-- `lokf-curator` Step 1 reports a new *Not tied to a signed commit* count - `human:` events whose introducing commit (found with `git log -S`) carries no `gpgsig` header. It deliberately tests for a signature's *presence*, not its validity: verifying one needs an allowed-signers file or keyring that a typical checkout lacks even for its own user's commits, so `%G?` would report good signatures as absent and the count would accuse everybody. It is worded as a question worth asking, never an accusation, since unsigned commits are ordinary. Excluded: uncommitted events, a gitignored `.lokf/`, and events predating the file's history.
+- `knowledge-registrar.yaml` gains a `provenance` job: every `human:` actor a PR newly adds under `.lokf/knowledge/` needs forge-held evidence - an APPROVED review from that account, or, when they authored the PR, a signature of theirs on the introducing commit, checked via GitHub's API (a runner has no keyring, so `git log %G?` can't do this locally). The load-bearing change; the rest is defence in depth.
+- Solo maintainers take the signature branch (three `git config` lines, documented in `references/automation.md`); an optional `attestation` job gates on a GitHub Environment's required reviewers instead for a repository that can't sign - deliberately not a switch that disables the check, since an environment reviewer may be the PR's own author.
+- `lokf-curator` resolves identity from `gh api user` only - the spoofable `git config user.name` fallback is gone - and Step 2 now refuses to run unattended (CI, a headless session, a subagent, a scheduled task); Step 1 stays read-only and safe anywhere.
+- `lokf-sidecar` and `lokf-curator` now report whether commit signing is on before a solo maintainer spends twenty minutes on confirmations the gate will reject, and `lokf-curator` Step 1 reports a *Not tied to a signed commit* count on existing `human:` events - both report only, never touch `git config`.
 
 ### Fixed
 
