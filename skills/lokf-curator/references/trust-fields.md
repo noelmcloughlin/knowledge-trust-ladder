@@ -13,7 +13,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | Past its review date | `stale_after` <= today | `stale_after` | `schema:expires` |
 | Due soon | today < `stale_after` <= today + 30 days | `stale_after` | same |
 | *N* other concepts rely on this | count of concepts whose typed relations target this concept's `id` | the ten relation fields + `relations[].target` | various |
-| Doesn't fit the built-in vocabulary | `type` not one of the 15 classes | `type` | `@type` |
+| Doesn't fit the known vocabulary | `type` not one of the 15 classes, nor a class of the host's domain schema | `type` | `@type` |
 | Not tied to a signed commit | a `human:` `verified` event whose introducing commit carries no good signature | `verified` + git history | - |
 
 ## Parsing notes
@@ -24,6 +24,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 - **Missing `generated.at`**: fall back to the v0.1 `timestamp`; if neither exists, the concept cannot be "edited since confirmed" - leave it out of that label rather than guessing.
 - **Relation targets** may be full IRIs or bundle-relative ids. Normalise by resolving relative values against `base_iri` in `knowledge/index.md` before counting. The ten relation fields: `isPartOf`, `hasPart`, `references`, `dependsOn`, `derivedFrom`, `about`, `sameAs`, `relatedTo`, `definedBy`, `source`; plus each `relations[].target`.
 - **The 15 classes**: `Dataset`, `Table`, `Metric`, `Service`, `Playbook`, `Tutorial`, `Explanation`, `Policy`, `GlossaryTerm`, `Reference`, `Document`, `Role`, `Person`, `Organization`, `AttestedComputation`. Compare after removing spaces (`Attested Computation` normalises to `AttestedComputation`).
+- **A host may have extended that list**, and the vocabulary line must respect it or it reports every domain class as a misfit for good. Read `.lokf/justfile`: where `lokf-validate` passes `--schema <slug>.yaml`, open that file and add every class descending from `Concept`, directly or through a built-in (`is_a: Concept`, `is_a: Reference`, ...). Reading the file is enough - no toolkit, as everywhere else in Step 1. This is the same widening the librarian's Golden Rule 3 applies when it chooses a class; the Obsidian plugins, which cannot read a schema outside the vault, are told the list by hand in their *Known LOKF types* setting.
 - Skip `index.md` and `log.md` at every level; they are reserved files, not concepts.
 - **`## Open questions` is a heading, not a substring.** Match a line that *is* the heading (start of line, nothing else on it) - never a mention of it anywhere in the text. Concept bodies legitimately quote the string in prose (a bundle describing these very skills does it repeatedly), and a substring match then invents open questions that don't exist and pushes those concepts up the queue. The same applies when extracting the first bullet: read the lines *after* that heading, not around the match.
 - **Retired concepts** (`status: deprecated`) are counted once, under *Retired*, and excluded from every other label and from the queue - nobody needs to re-check something that is no longer current. `N` in "*a* of *N*" counts every concept, retired ones included.
@@ -58,7 +59,7 @@ Open questions the librarian left
 
 Feedback from readers: <k> entries waiting in .lokf/feedback.md   | or: none
 
-Vocabulary fit: <n> concept(s) don't fit the built-in vocabulary (<types>)   | or: fine
+Vocabulary fit: <n> concept(s) don't fit the known vocabulary (<types>)   | or: fine
 
 Not tied to a signed commit: <h> - <titles>. Recorded as confirmed by a person, but no signed commit stands behind it.   | omit this line entirely when h is 0, or when .lokf/ isn't git-tracked
 

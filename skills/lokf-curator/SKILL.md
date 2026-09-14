@@ -41,7 +41,7 @@ Say these to the human. Don't say RDF, IRI, SPARQL, predicate, or tier. The fiel
 | Retired | kept for links and history; no longer current |
 | Not tied to a signed commit | the confirmation is recorded, but git holds no signature behind it - it may have been written by something other than that person |
 | *N* other concepts rely on this | how many concepts link to it - the more, the further a mistake spreads |
-| Doesn't fit the built-in vocabulary | its type isn't one of LOKF's 15 classes - see [references/domain-schemas.md](references/domain-schemas.md) |
+| Doesn't fit the known vocabulary | its type is neither one of LOKF's 15 classes nor a class of the host's own domain schema, where it has one - see [references/domain-schemas.md](references/domain-schemas.md) |
 
 ## Step 1 - Report (always; read-only; one screen)
 
@@ -51,7 +51,7 @@ Read every concept's frontmatter under `.lokf/knowledge/` (skip `index.md` and `
 2. **Worth ten minutes today** - at most 5 items, ranked: past review date or edited-since-confirmed first; then drafts with open questions; then nobody-has-checked, most-relied-upon first; then newest. One line each: title (class) - why it's here - its source.
 3. **Open questions the librarian left** - title and the first bullet of each.
 4. **Feedback from readers** - `k entries waiting in .lokf/feedback.md` (misses and disagreements lokf-docent recorded; the librarian consumes them on its next run), or "none".
-5. **Vocabulary fit** - `n concepts don't fit the built-in vocabulary`, or "fine".
+5. **Vocabulary fit** - `n concepts don't fit the known vocabulary`, or "fine". Where `.lokf/justfile` validates with `--schema <slug>.yaml`, that schema's classes are part of the vocabulary too ([references/trust-fields.md](references/trust-fields.md)).
 6. **Confirmations git can't back** - only when the count is above zero: name the concepts and say what it means in one line ("recorded as confirmed by a person, but no signed commit stands behind it - worth asking whether that person really checked it"). How to compute it: [references/trust-fields.md](references/trust-fields.md). Skip the whole check when `.lokf/` isn't git-tracked, and say so instead.
 7. `N more not yet checked. Run again anytime - every confirmation counts.`
 8. Offer Step 2: "Want to go through these now?"
