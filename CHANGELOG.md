@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **Rule 3 in `lokf-librarian/SKILL.md` listed fourteen classes, omitting `Role`**, while `README.md` and `docs/for-the-curious.md` said fifteen. Confirmed against the raw schema and corrected; the skills now teach one number.
+
 ### Changed
 
 - **`README.md` polished, not restructured.** Role names carry the emphasis; the docent's job and the trust labels are each said once; the plugin table maps onto the four levels of checking; *Where the bundle lives* is a section of its own; the layout lists every workflow and the measured size of each `SKILL.md`. The Obsidian section moves to `docs/obsidian.md`, with the two-vaults picture the plugin READMEs use, and the README keeps one paragraph and a link.
