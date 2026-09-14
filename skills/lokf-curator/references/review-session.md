@@ -121,7 +121,7 @@ Keep or set `status: draft`. If they name a date, write `stale_after`. No other 
 
 ## Log lines
 
-Prepend under today's `## YYYY-MM-DD` heading in `.lokf/knowledge/log.md` (newest first, ISO date, matching the librarian's convention). One line for the session and one per retirement:
+Prepend under today's `## YYYY-MM-DD` heading in `.lokf/knowledge/log.md` (newest first, ISO date, matching the librarian's convention). Today's heading is the bare date and there is exactly one of it: reuse it if the librarian or an earlier session already wrote it today, create it at the top only if absent, and never a suffixed variant such as `## 2026-09-08 (2)` - the LOKF Curator plugin finds the day by the bare date and would open a second section beside one it cannot see. One line for the session and one per retirement:
 
 ```markdown
 ## 2026-09-08

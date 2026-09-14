@@ -154,6 +154,7 @@ silently reports "no changes" for an ignored path forever. GitHub-only; other ho
 | `templates/github/knowledge-registrar.yaml` | `.github/workflows/knowledge-registrar.yaml` |
 | `templates/github/knowledge-librarian.yaml` | `.github/workflows/knowledge-librarian.yaml` |
 | `templates/scripts/knowledge-librarian.sh` | `.lokf/scripts/knowledge-librarian.sh` (`chmod +x`) |
+| `templates/scripts/knowledge-conventions.sh` | `.lokf/scripts/knowledge-conventions.sh` (`chmod +x`) - the gate runs it; so does lokf-librarian's audit |
 
 Both workflows and the wrapper name the bundle under both of its names (`.lokf/knowledge` and `knowledge_bundle`): with the Step 2 doorway the second pathspec matches nothing, harmlessly, and it still covers a shared folder a team has rearranged by hand into a real `knowledge_bundle/` (see [references/portability.md](references/portability.md)), because a git pathspec never traverses a symlink. Nothing to edit. The registrar's `provenance` job needs no wiring, but check one thing and report it here: `git config --get commit.gpgsign`, and whether `HEAD` carries a signature (`git cat-file commit HEAD | grep -qE '^gpgsig'`). If signing is off, say so now - GitHub blocks self-approval, so a **solo maintainer**'s own curation PRs pass only if they sign, and otherwise every confirmation lokf-curator records will be rejected at the gate. Show the three `git config` lines from [references/automation.md](references/automation.md) and let them run those; do not run them yourself and never touch their `--global` config. The optional `KNOWLEDGE_CURATION_ENVIRONMENT` escape hatch is in the same file; it requires creating an Environment *with required reviewers* first, and is a no-op if that part is skipped.
 
@@ -162,8 +163,8 @@ publishes the skills it also uses) - if this repo uses another directory, add it
 a mismatch otherwise fails at scheduled-run time, not now. What each file does, the repo variables to wire, and the runner/SHA-pin notes:
 [references/automation.md](references/automation.md).
 
-These three files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
-so and suggest adding coverage for `scripts/knowledge-librarian.sh` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
+These four files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
+so and suggest adding coverage for the two `scripts/*.sh` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
 scheduled agent's own wrapper unchecked indefinitely. That's a one-line suggestion, not a scaffold: a full lint/release CI setup is outside this
 skill's scope and every host's own choice to make - see `lint-and-docs.yaml` in this skill's home repository for one example shape, adapted to
 what that repository actually ships, not copied wholesale.

@@ -47,6 +47,25 @@ jobs:
         run: uv run lokf validate knowledge
         working-directory: .lokf
 
+      # `lokf validate` reads a concept body as an opaque string and never
+      # opens log.md, so the conventions the skills and both Obsidian plugins
+      # rely on - one ISO-date heading per day, quoted timestamps, `verified`
+      # as a list with one librarian event, open questions in the shape the
+      # curator reads - are checked by the script the sidecar lays down beside
+      # the agent wrapper. Each of them has been broken by an agent that had
+      # the rule in prose.
+      - name: Check the conventions lokf validate cannot see
+        run: bash scripts/knowledge-conventions.sh knowledge
+        working-directory: .lokf
+
+      # A typed relation whose target is not a concept in the bundle is still
+      # a well-formed IRI, so `lokf validate` passes it. The justfile's
+      # lokf-check-refs recipe closes that gap with a SPARQL query; `just`
+      # itself comes from PyPI through uvx so the runner needs nothing else.
+      - name: Every typed-relation target resolves to a concept
+        run: uvx --from 'rust-just==1.47.0' just lokf-check-refs
+        working-directory: .lokf
+
   provenance:
     name: Check new human confirmations
     # A `human:<id>` verification claims that a named person checked a concept

@@ -159,6 +159,131 @@ else
   err "layout tests failed"
 fi
 
+# 9. Three sibling repositories deep-link into files here by URL
+#    (github.com/noelmcloughlin/lokf-agent-skills/blob/main/<path>), and their
+#    link checks follow those for real. Moving or renaming one of these paths
+#    passes every check in this repo and breaks the build in obsidian-lokf-
+#    curator, and obsidian-lokf-registrar - (The mirror image happened on
+#    2026-09-14: the curator referenced domain-schema.md while it was still on
+#    a branch here, and its build 404'd until this side landed. CONTRIBUTING.md
+#    carries the ordering rule; this check carries the paths.)
+say ""
+say "Checking the paths sibling repositories link into..."
+sibling_paths=(
+  "AI_COVENANT.md"
+  "SECURITY.md"
+  ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md"
+  "docs/releasing.md"
+  "docs/signing-commits.md"
+  "docs/three-lines.md"
+  "skills/lokf-librarian/references/domain-schema.md"
+)
+for p in "${sibling_paths[@]}"; do
+  if [[ -e "$p" ]]; then
+    ok "sibling-linked path exists: $p"
+  else
+    err "sibling-linked path is gone: $p - obsidian-lokf-curator, and obsidian-lokf-registrar link to it by URL; restore it, or update their links in the same change"
+  fi
+done
+
+# 9a. When the siblings are cloned beside this repo, confirm the list above is
+#     still complete: a sibling that adds a deep link should record the path
+#     here in the same breath, or the check silently stops covering it. CI has
+#     no siblings checked out, so this half only runs locally - the recorded
+#     list is the contract either way.
+mapfile -t cloned < <(for s in obsidian-lokf-curator obsidian-lokf-registrar; do
+  [[ -d "../$s/.git" ]] && printf '%s\n' "../$s"
+done || true)
+if [[ ${#cloned[@]} -eq 0 ]]; then
+  say "      (no sibling clones beside this repo - skipping the completeness cross-check)"
+else
+  # Each sibling installs these skills under .agents/skills (with .claude/skills
+  # symlinked to it), so those trees are copies of this repository - their
+  # self-links are not a sibling depending on us, and counting them reports
+  # every page the skills link to internally. Skip them, and .venv, which is
+  # only slow. (git-aware greps hide these via .gitignore; plain grep does not.)
+  mapfile -t linked < <(grep -rhoE 'https://github\.com/noelmcloughlin/lokf-agent-skills/blob/main/[^)"#[:space:]]+' \
+    "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
+    --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
+    --exclude-dir=.claude --exclude-dir=.venv 2>/dev/null \
+    | sed 's|.*/blob/main/||; s/[.,]$//' | sort -u || true)
+  unrecorded=0
+  for l in "${linked[@]}"; do
+    found=0
+    for p in "${sibling_paths[@]}"; do
+      [[ "$l" == "$p" ]] && { found=1; break; }
+    done
+    if [[ "$found" -eq 0 ]]; then
+      err "a sibling links to '$l', which check 9's list does not record - add it there"
+      unrecorded=1
+    fi
+  done
+  [[ "$unrecorded" -eq 0 ]] && ok "every path the ${#cloned[@]} cloned sibling(s) link to is recorded here (${#linked[@]} target(s))"
+fi
+
+# 10. CONTRIBUTING.md is a checklist, not a design log: each rule is a line or
+#     two that links to where its reasoning lives - a code comment, a workflow
+#     header, a page under docs/. A word budget is the one signal every
+#     contributor, person or agent, reliably reads: the file sits near 700,
+#     the four repositories' files between 700 and 850, and 1000 is where
+#     one has started to become a design log again. The siblings hold the
+#     same budget from their own test scripts.
+say ""
+say "Checking CONTRIBUTING.md stays a checklist..."
+words="$(wc -w < CONTRIBUTING.md)"
+if (( words <= 1000 )); then
+  ok "CONTRIBUTING.md is $words words (budget 1000)"
+else
+  err "CONTRIBUTING.md is $words words; the budget is 1000 - move the reasoning next to the code or workflow it explains, and link to it"
+fi
+
+# 11. This repository dogfoods its own sidecar templates, and CI lints the
+#     copies under .github/ and .lokf/scripts/ rather than the templates
+#     themselves (actionlint is pointed at both, ShellCheck scans the tree),
+#     so the copies must stay byte-identical or a template change ships
+#     unlinted. knowledge-librarian.yaml is the one deliberate exception: the
+#     repository that publishes the skill does not install it from itself.
+#     Then the conventions script itself is exercised: it must pass on this
+#     repository's own bundle and fail on a bundle that breaks each rule -
+#     a checker that cannot fail is not covering anything.
+say ""
+say "Checking the sidecar templates are the copies CI lints..."
+templates="skills/lokf-sidecar/templates"
+for pair in \
+  "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
+  "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
+  "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh"; do
+  src="${pair%%:*}"; dst="${pair##*:}"
+  if cmp -s "$src" "$dst"; then
+    ok "$dst matches its template"
+  else
+    err "$dst differs from $src - copy the template over it (this repository dogfoods its own sidecar)"
+  fi
+done
+
+say ""
+say "Exercising knowledge-conventions.sh..."
+if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge >/dev/null); then
+  ok "this repository's bundle keeps the conventions"
+else
+  err "this repository's bundle breaks a convention knowledge-conventions.sh checks - run it from .lokf/ to see which"
+fi
+bad="$(mktemp -d)"
+mkdir -p "$bad/k/x"
+# A suffixed heading, then two bare dates in ascending order: one finding each.
+printf '# Change Log\n\n## 2026-09-14 (2)\n\n* **A**: b.\n\n## 2026-09-13\n\n* **C**: d.\n\n## 2026-09-15\n\n* **E**: f.\n' > "$bad/k/log.md"
+printf -- '---\ntype: Service\nverified:\n  by: process:lokf-librarian\n  at: 2026-09-14T00:00:00Z\n---\n\n## Open questions\n\n- unclear (process:lokf-librarian, 2026-09-12)\n' > "$bad/k/x/a.md"
+printf -- '---\ntype: Service\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-13T00:00:00Z"\n  - by: process:lokf-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n' > "$bad/k/x/b.md"
+findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
+rm -rf "$bad"
+for want in "not a bare ISO date" "not newest-first" "unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events"; do
+  if grep -q "$want" <<<"$findings"; then
+    ok "conventions script reports: $want"
+  else
+    err "conventions script failed to report '$want' on a bundle that breaks it"
+  fi
+done
+
 say ""
 if [[ "$fail" -eq 0 ]]; then
   say "Repository contract: PASS"

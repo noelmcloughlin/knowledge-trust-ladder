@@ -4,6 +4,20 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`validate-repository.sh` check 9: the paths sibling repositories link into.** LOKF Curator and LOKF Registrar deep-link files here and their link checks follow those URLs for real, so moving one passed every check here and broke their builds; the check now fails instead, and confirms its list is complete when the siblings are cloned alongside.
+- **`docs/releasing.md` and `docs/signing-commits.md`** carry the release pipeline, the repository settings it depends on, and the signing walkthrough once for all four repositories; every `CONTRIBUTING.md` links there instead of repeating them. Check 10 holds this repository's `CONTRIBUTING.md` to a word budget, and CI fails an action not pinned to a commit.
+- **`docs/three-lines.md`** maps the cast onto the three lines of defence for readers who work under that model, and says what an auditor can check and what the evidence does not show; the README and both plugins link to it.
+- **`templates/scripts/knowledge-conventions.sh`, and the registrar gate runs it.** `lokf validate` reads a body as an opaque string and never opens `log.md`, so the four conventions the skills and plugins rely on - one ISO-date log heading per day, quoted timestamps, `verified` as a list with one librarian event, open questions in the curator's shape - are now a script the sidecar lays down and `knowledge-registrar.yaml` runs on every `.lokf/**` pull request, alongside the justfile's `lokf-check-refs`. Check 11 of the repository contract holds this repository's copies identical to the templates and proves the script fails on a bundle that breaks each rule; actionlint is pointed at the templates by path.
+
+### Fixed
+
+- **The librarian now lints the Markdown it writes.** Its rule against letting a wrapped punctuation dash start a line was advice only, and a pass tripped `MD032` in a host's lint gate anyway; the audit step now runs the host's markdownlint config over the bundle, since `lokf validate` reads a concept body as an opaque string and cannot see this class of fault at all.
+- **One `log.md` heading per day, the bare date.** The librarian had been opening a fresh `## 2026-09-14 (2)` heading for each run in a day; that is not the ISO-date heading OKF §9 requires, passes the registrar's date check unseen, and the curator plugin cannot find the day through it. The librarian and the curator's review session now both reuse the day's heading, and the librarian's log bullets are held to a few sentences.
+- **The librarian's open questions take the curator's shape**, `- YYYY-MM-DD, process:lokf-librarian: ...`, so the date and actor lead and the first bullet the curator reads is the question.
+- **The docent no longer takes a reader's identity from `git config user.name`** for a feedback entry - `gh api user` or nothing, the same rule the curator holds to.
+
 ## [0.16.1] - 2026-09-14
 
 ### Added
@@ -51,7 +65,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`just lokf-link`** recreates the visible layout's link where a sync service drops it, follows a new `visible` variable for a vault nested inside its repository (e.g. `../vault/knowledge_bundle`), and refuses a dangling link instead of failing on `ln`.
 - **`scripts/test-sidecar-layouts.sh`**, run by the repository-contract check: builds throwaway hosts in both layouts and pins the wrapper's boundary check, the librarian workflow's change detection and packaging, the registrar's triggers, and `lokf-link`, all against both bundle names.
 - **`lokf-librarian`** now leaves LOKF Registrar's Obsidian affordances alone by rule - the `<!-- lokf:related -->` block and the `diataxis.md` map - and addresses the bundle by both paths when scoping a diff or PR.
-- **Semantic release**, version and changelog only: the version is computed from Conventional Commits on `main`, and `CHANGELOG.md`'s `## [Unreleased]` section is promoted into a dated heading. It never tags - `gh skill publish` remains the one tag creator - and `publish.yml` now refuses a typed version that disagrees with what was promoted. See [CONTRIBUTING.md](CONTRIBUTING.md#release-process).
+- **Semantic release**, version and changelog only: the version is computed from Conventional Commits on `main`, and `CHANGELOG.md`'s `## [Unreleased]` section is promoted into a dated heading. It never tags - `gh skill publish` remains the one tag creator - and `publish.yml` now refuses a typed version that disagrees with what was promoted. See [docs/releasing.md](docs/releasing.md).
 
 ### Fixed
 

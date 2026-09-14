@@ -12,8 +12,8 @@
 
 - [ ] `bash scripts/validate-repository.sh` passes locally
 - [ ] `gh skill publish --dry-run` passes locally (or CI's `validate-skills` job is green)
-- [ ] If `SKILL.md` frontmatter or a `references/`/`templates/` cross-reference changed, links still resolve
-- [ ] `CHANGELOG.md` updated under `[Unreleased]` if this changes skill behavior
+- [ ] If a file the sibling repositories deep-link moved (check 9 lists them), their links change too, with this side landing first
+- [ ] `CHANGELOG.md` has a line or two under `[Unreleased]` if this changes skill behavior
 
 ## AI Assistance
 

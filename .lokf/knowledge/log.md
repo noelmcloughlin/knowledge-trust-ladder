@@ -1,6 +1,61 @@
 # Change Log
 
-## 2026-09-14 (2)
+## 2026-09-14
+
+* **Steady-state refresh (eighth pass)**, against the two commits landed since
+  the seventh pass. Twelve concepts re-checked against their current sources
+  and found unchanged (content matches; `verified` refreshed only):
+  `explanation/why-four-roles.md`, `why-a-registrar-role.md`,
+  `why-a-distribution-repository.md`, `glossary/lokf.md`, `glossary/okf.md`,
+  `glossary/trust-label.md`, `glossary/knowledge-bundle.md`,
+  `explanation/hosts-and-doorways.md`, `playbooks/open-bundle-in-obsidian.md`,
+  `playbooks/lokf-sidecar-skill.md`, `playbooks/lokf-docent-skill.md`,
+  `playbooks/lokf-librarian-skill.md`. **Orphan fixed**:
+  `playbooks/knowledge-sources.md`'s dogfooded-workflows row had no entry for
+  `.lokf/scripts/knowledge-conventions.sh` (added earlier today), now listed
+  alongside `knowledge-librarian.sh` as byte-identical to its template.
+  `.lokf/feedback.md` had no entries.
+
+* **`playbooks/repository-validation.md`**: check 11 added (template copies
+  identical, `knowledge-conventions.sh` exercised), the sibling count corrected
+  to the two plugin repositories, and actionlint's explicit paths noted.
+* **Steady-state refresh against this session's uncommitted repository
+  changes**: `CONTRIBUTING.md` was trimmed to a checklist, its release
+  process and commit-signing walkthrough moved to two new pages,
+  `docs/releasing.md` and `docs/signing-commits.md`; a third new page,
+  `docs/three-lines.md`, maps the four-skill-plus-registrar cast onto the
+  Three Lines Model; `validate.yml` gained an action-pinning check;
+  `scripts/validate-repository.sh` gained checks 9/9a (the paths sibling
+  repositories deep-link into, and completeness when they're cloned
+  alongside) and 10 (a 1000-word budget on `CONTRIBUTING.md`); `README.md`
+  gained a section pointing at `docs/three-lines.md`.
+  `playbooks/contributing.md` rewritten to match the trimmed file, its
+  Code-of-conduct/AI/Releasing sections, and the new `docs/` links.
+  `policies/versioning.md` re-sourced from `CONTRIBUTING.md` to
+  `docs/releasing.md` and rewritten: its qualitative patch/minor/major
+  definition ("does not materially change expected behaviour") no longer
+  exists anywhere in the repository, superseded by the Conventional-Commits
+  table `docs/releasing.md`/`playbooks/releasing.md` already state - the
+  2026-09-10 human confirmation left standing, per rule, since the concept
+  was not human-*authored*. `playbooks/releasing.md`'s stale
+  `CONTRIBUTING.md` citation repointed to `docs/releasing.md`.
+  `playbooks/repository-validation.md` gained the new action-pinning check
+  and, closing a pre-existing gap this pass found (checks 6-8 were never
+  described either), the full ten-check enumeration. **Added**
+  `explanation/three-lines-of-defence.md` for the new page, linked from
+  `why-four-roles.md` and `why-a-registrar-role.md` via `about`.
+  **Orphan sweep**, also fixing two pre-existing gaps unrelated to this
+  diff: `explanation/index.md` was missing a bullet for
+  `why-a-registrar-role.md` (present in the root `index.md` and in `log.md`
+  since 2026-09-10, never added here), and its first bullet's title had
+  drifted from the concept's own ("Why four roles" vs "Why four skill
+  roles"); both fixed. `index.md` gained the new explanation's bullet.
+  `playbooks/knowledge-sources.md`: the `CONTRIBUTING.md` row updated, two
+  new rows added for the `docs/` pages, and a run note added. `lokf` on
+  PyPI is still `0.7.0` (checked via PyPI's JSON API; `uv pip index` is
+  still not a subcommand here), matching the sidecar's floor - no bump.
+  `.lokf/feedback.md` has no entries. Not re-checked this pass: concepts
+  whose resource is untouched by this diff.
 
 * **Two reference concepts corrected** on a librarian pass over the whole
   repository. `references/linkml.md` still said the vocabulary it describes
@@ -9,8 +64,6 @@
   at `lokf validate --schema` and the recipe. `references/lokf-toolkit.md`
   described `lokf validate` without the `--schema` flag the recipe rests on.
   `lokf` on PyPI is `0.7.0`, matching the floor; `.lokf/feedback.md` is empty.
-
-## 2026-09-14 (1)
 
 * **Steady-state refresh**, against branch `docs/domain-schema-extension`
   (uncommitted): reframed the domain-schema-extension material added this
@@ -44,7 +97,7 @@
   telling, the plugins do) follow. `playbooks/lokf-curator-skill.md` records
   it.
 
-## 2026-09-13 (5)
+## 2026-09-13
 
 * **Steady-state refresh** (librarian pass, no feedback pending), after a
   `lokf-sidecar` health check that found nothing to repair here. Withdrawn:
@@ -62,8 +115,6 @@
   `explanation/why-a-distribution-repository.md`, `glossary/lokf.md`.
   `playbooks/knowledge-sources.md`: run note added.
 
-## 2026-09-13 (4)
-
 * `playbooks/knowledge-sources.md`: the `docs/` row now covers the new
   `docs/obsidian.md` - the README's Obsidian section, moved out as a page of
   its own with the two-vaults picture - and names the two files it must agree
@@ -71,8 +122,6 @@
   output" sentence is now cited to `docs/obsidian.md`, where it lives. No
   other concept changed: the README polish moved emphasis and order, not
   facts.
-
-## 2026-09-13 (3)
 
 * **Steady-state refresh** (librarian pass, no feedback pending), against the
   commits since `3399203` and this session's uncommitted `README.md` (three
@@ -103,8 +152,6 @@
   the wrapper and the justfile match their templates. `lokf` on PyPI is
   still `0.7.0`, matching the floor.
 
-## 2026-09-13 (2)
-
 * **Steady-state refresh** (librarian pass, no feedback pending): re-verified
   `playbooks/lokf-sidecar-skill.md`, `explanation/hosts-and-doorways.md`,
   `playbooks/open-bundle-in-obsidian.md`, `explanation/why-four-roles.md` and
@@ -117,8 +164,6 @@
   row (added this session) and its `generated`/`verified` refreshed to match.
   `glossary/knowledge-bundle.md` was not re-checked - `templates/README.md`'s
   wording tweak this session didn't touch what the term means.
-
-## 2026-09-13
 
 * **The visible layout is retired; one layout, the doorway by default.**
   Hand-edited in session alongside the `lokf-sidecar` change, not a librarian
@@ -159,7 +204,7 @@
   6, `portability.md` and this bundle's `open-bundle-in-obsidian.md`, whose
   history section now defers to `explanation/hosts-and-doorways.md`.
 
-## 2026-09-12 (3)
+## 2026-09-12
 
 * **Steady-state refresh against the security-hardening pass** (uncommitted
   at the time of this run: 19 files touched, none of them `.lokf/`).
@@ -203,8 +248,6 @@
   seven external `Reference` concepts - none of their resources appear
   among this pass's changed files, so they were left as last verified.
 
-## 2026-09-12 (2)
-
 * **Semantic-release, hardened - version and changelog only** (maintainer
   decision): `playbooks/releasing.md` rewritten (`generated`/`verified`
   refreshed). `semantic-release.yml`'s `release` job, behind the `release`
@@ -216,8 +259,6 @@
   `## [Unreleased]` section itself, and commits directly. `publish.yml` gains
   a cross-check: the maintainer's typed version must match what got
   promoted, or the run fails before touching the registry.
-
-## 2026-09-12
 
 * **LOKF Enforcer is now LOKF Registrar** (maintainer decision; the plugin
   was renamed for its role before its first release):

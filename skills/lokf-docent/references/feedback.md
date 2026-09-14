@@ -14,7 +14,9 @@ lokf-librarian by hand for it to be consumed.
 ## Format
 
 Create the file with the heading if it doesn't exist. Newest date first; one entry per line; bold kind first. Attribute as `docent`, plus the asker's
-`human:<id>` only if it is already known (a GitHub login or `git config user.name` slug - never an email).
+`human:<id>` only when it comes from `gh api user --jq .login` - never from `git config user.name`, which anything with shell access to the
+checkout can set, never from a name typed in the conversation, and never an email. With no authenticated login, `docent` alone is the whole
+attribution: an entry here is a report for the librarian, not a verdict, so it loses nothing by naming no person.
 
 ```markdown
 # Reader feedback for the librarian
