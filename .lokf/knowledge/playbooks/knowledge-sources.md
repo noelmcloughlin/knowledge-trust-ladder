@@ -28,7 +28,8 @@ stale_after: 2027-09-10
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
 | `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
 | `docs/three-lines.md` | the three-lines-of-defence mapping of the cast | diff `explanation/three-lines-of-defence.md` |
-| `SECURITY.md` | the security policy | diff the hardening bullets |
+| `SECURITY.md` | the slim security policy (reporting, supported versions, a surface table) | diff the surface table and the reporting/supported-versions text |
+| `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the other three repositories' `SECURITY.md`, so a heading rename here is a breaking change there |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
 | `.github/workflows/semantic-release.yml`, `.github/scripts/changelog-release.mjs`, `.releaserc.json` | the version-and-changelog automation `playbooks/releasing.md` describes | diff the `release` job's steps, the script's `verifyRelease`/`generateNotes` behaviour, and `.releaserc.json`'s `releaseRules` (which commit types map to which bump) against the concept's Overview; all three sit behind the `release` Environment along with `publish.yml` |
@@ -42,6 +43,25 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-14, ninth pass)**, against commit `b94a299`
+  ("docs(security): improved layout"), landed since the eighth pass.
+  `SECURITY.md` shrank from ~1,900 to 471 words: reporting, supported
+  versions, and a `Surface | What holds it` table, with the design it used to
+  carry moved to a new page, `docs/threat-model.md`. `policies/security.md`
+  rewritten to match, and a new concept, `policies/threat-model.md`, added
+  for the design page - its four section headings kept as the concept's own
+  structure, since the sibling repositories' `SECURITY.md` files deep-link
+  them. `playbooks/repository-validation.md`'s check-10 description extended
+  (the word budget now covers `SECURITY.md` too, at 900 words) and the
+  source-map row above split in two. **Correctness bug found, not fixed
+  here**: `README.md`'s own docs-layout listing (`docs/releasing.md`'s row)
+  still says "how the **four** repositories release", while the same commit
+  fixed `docs/releasing.md`'s own heading and body to say **three** (it never
+  covered `msc-ai-galway-2026`, which doesn't share this release pipeline) -
+  a one-word README fix outside this skill's `.lokf/`-only scope; flagging
+  for the maintainer. `lokf` on PyPI is still `0.7.0`, matching the floor;
+  `.lokf/feedback.md` has no entries; no other concept referenced the old
+  `policies/security.md` structure.
 - **Steady-state refresh (2026-09-14, eighth pass)**, against the two commits
   landed since the seventh pass (`423a982`, the log-heading/Open-questions-shape/attribution
   wording fixes now already reflected in `skills/lokf-librarian/SKILL.md`, and `12e5570`, which

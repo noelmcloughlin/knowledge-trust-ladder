@@ -30,8 +30,10 @@ agreeing with `lokf-librarian/SKILL.md` Rule 3 (and with
 `lokf-curator/references/trust-fields.md`'s own enumeration), the sidecar
 layout tests, the paths the two sibling plugin repositories deep-link into by
 URL still existing - and, when those siblings are cloned beside this repo,
-that the list of them is complete - `CONTRIBUTING.md` staying under its
-1000-word budget, and (check 11, added 2026-09-14) this repository's copies
+that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
+staying under their own word budget (1000 and 900, check 10, extended
+2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`), and
+(check 11, added 2026-09-14) this repository's copies
 of the registrar gate and both sidecar scripts staying byte-identical to
 their templates, with `knowledge-conventions.sh` shown to pass on this
 bundle and to fail on a synthetic bundle breaking each rule it checks. Then
