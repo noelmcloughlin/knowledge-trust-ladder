@@ -108,6 +108,9 @@ else
   # The list ends where the domain-schema sentence begins; that sentence names
   # `Concept` and a sample parent class, neither of which is part of the list.
   rule3_list="${rule3_line%%\*\*A host may have extended*}"
+  # shellcheck disable=SC2016 # literal backticks for grep to match (markdown
+  # code spans around a class name), not a command substitution - double
+  # quotes here would make the shell try to run `[A-Z][A-Za-z]*` as a command.
   canonical="$(printf '%s' "$rule3_list" | grep -o '`[A-Z][A-Za-z]*`' | tr -d '`' | grep -vx 'Concept' | sort -u)"
   canonical_count="$(printf '%s\n' "$canonical" | grep -c .)"
   ok "Rule 3 names $canonical_count classes"
@@ -117,6 +120,7 @@ else
   if [[ -z "$tf_line" ]]; then
     err "could not find the class enumeration in lokf-curator/references/trust-fields.md"
   else
+    # shellcheck disable=SC2016 # same literal-backtick grep pattern as above.
     tf_classes="$(printf '%s' "$tf_line" | grep -o '`[A-Z][A-Za-z]*`' | tr -d '`' | sort -u)"
     if [[ "$tf_classes" == "$canonical" ]]; then
       ok "trust-fields.md enumerates the same classes as Rule 3"
