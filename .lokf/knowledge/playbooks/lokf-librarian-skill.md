@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-librarian/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-13T23:00:00Z"
+  at: "2026-09-14T07:47:56Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
@@ -20,7 +20,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/okf-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-13T23:00:00Z"
+  at: "2026-09-14T07:47:56Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
 stale_after: 2027-09-09
@@ -30,11 +30,10 @@ stale_after: 2027-09-09
 
 Runs **often**, including on a schedule. It carries the seven LOKF Golden Rules
 (OKF-first; the bundle-root semantic header and `base_iri` authority test; the
-type vocabulary - fourteen classes as Rule 3 lists them, see the open
-question below - plus the Diátaxis `genre` facet; typed relationships
-over bare links; core field-to-ontology mapping; trust, provenance and
-lifecycle; permissiveness), then four sections: scrape and build, audit,
-hand off for review, and the scheduled task.
+type vocabulary - fifteen classes - plus the Diátaxis `genre` facet; typed
+relationships over bare links; core field-to-ontology mapping; trust,
+provenance and lifecycle; permissiveness), then four sections: scrape and
+build, audit, hand off for review, and the scheduled task.
 
 It deals in **facts about the repository, never verdicts about truth**: it may
 record that it re-checked a concept against its source (`verified` by
@@ -66,10 +65,14 @@ never trusting the `refresh` job's own check alone), plus harden-runner and
 `.git/config`/`.git/hooks/` snapshot-and-restore around the agent call in
 the wrapper script. See `policies/security.md` for the detail.
 
-## Open questions
-
-- `README.md` and `docs/for-the-curious.md` say LOKF has fifteen classes,
-  but Rule 3's list in this tree names fourteen and omits `Role`. Commit
-  `312190e` on the unmerged branch `update` adds it; until that lands, or
-  the count is corrected the other way, which number the skill should teach
-  is unsettled.
+**Extending the vocabulary (added 2026-09-14).** Rule 3's fifteen classes are
+deliberately small and portable. A domain needing more of its own gets a
+LinkML schema that imports LOKF's and validates with `lokf validate --schema
+<file>`, which the toolkit has always accepted - no loosening of Rule 7.
+`lokf-librarian/references/domain-schema.md` is the recipe: a pinned copy of
+the core schema, the domain schema, frontmatter naming the class exactly, and
+the flag wired into the justfile and both workflow templates. Rule 3 reads
+that wiring back - where the justfile passes `--schema`, that schema's
+`Concept` descendants are part of the vocabulary, and a record names the
+subclass. The tooling-version step (rule 6) refreshes the pinned copy.
+`lokf-curator/references/domain-schemas.md` covers when; this covers how.
