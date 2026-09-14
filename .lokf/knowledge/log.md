@@ -2,6 +2,20 @@
 
 ## 2026-09-14
 
+* **Steady-state refresh (ninth pass)**, against commit `b94a299`.
+  `policies/security.md` rewritten to match the slimmed `SECURITY.md`
+  (reporting, supported versions, a surface table), and a new concept,
+  `policies/threat-model.md`, added for the shared design page
+  `docs/threat-model.md` moved it to - hardening, the `human:` attribution
+  gate, prompt-injection guards - keeping that page's section headings
+  stable since the other three repositories deep-link them.
+  `playbooks/knowledge-sources.md` and `playbooks/repository-validation.md`
+  updated to match; `index.md` and `policies/index.md` gained the new
+  concept's bullet. Flagged, not fixed (outside this skill's `.lokf/`-only
+  scope): `README.md`'s docs-layout listing still says "four repositories
+  release" where the same commit corrected `docs/releasing.md` itself to
+  "three". See `playbooks/knowledge-sources.md`'s note for detail.
+
 * **Steady-state refresh (eighth pass)**, against the two commits landed since
   the seventh pass. Twelve concepts re-checked against their current sources
   and found unchanged (content matches; `verified` refreshed only):

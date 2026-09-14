@@ -49,6 +49,7 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for LOKF Agent Skills. E
 
 * [AI covenant](policies/ai-covenant.md)
 * [Security policy](policies/security.md)
+* [Threat model](policies/threat-model.md) - the security design shared by all four LOKF repositories.
 * [Versioning policy](policies/versioning.md)
 * [Code of conduct](policies/code-of-conduct.md)
 
