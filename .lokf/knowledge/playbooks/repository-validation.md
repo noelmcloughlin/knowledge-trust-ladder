@@ -21,8 +21,8 @@ verified:
 # Overview
 
 `validate.yml` runs five jobs on every pull request, every push to `main`,
-weekly, and on demand. `validate-skills` runs `scripts/validate-repository.sh`
-- ten numbered checks: exactly four skill directories with a case-correct
+weekly, and on demand. `validate-skills` runs `scripts/validate-repository.sh` -
+ten numbered checks: exactly four skill directories with a case-correct
 `SKILL.md` in each, frontmatter `name` matching its directory, no duplicate
 `SKILL.md`, every relative Markdown link under `skills/` resolving (fenced
 examples excluded), ShellCheck-clean scripts, every stated LOKF class count

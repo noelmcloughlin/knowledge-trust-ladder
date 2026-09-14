@@ -24,8 +24,8 @@ verified:
 
 Added 2026-09-14: the README gained a "Three lines of a poem, three lines of
 defence" section pointing at this page. LOKF was not designed from the
-[Three Lines Model](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/)
-- the model regulated industries use to say who owns a risk, who makes sure
+[Three Lines Model](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) -
+the model regulated industries use to say who owns a risk, who makes sure
 the rules are kept, and who checks independently - but the cast maps onto it
 cleanly. First line: the **librarian**, who derives every record from a
 named source and marks what it cannot settle `status: draft`, and the
