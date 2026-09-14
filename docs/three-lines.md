@@ -1,6 +1,6 @@
 # Three lines of defence: where each LOKF role sits, and what an auditor can check
 
-The README's three lines are Amy Lowell's. These are the other three: the model regulated industries use to say who owns a risk, who makes sure the rules are kept, and who checks independently - the [Three Lines Model](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/), as the IIA has called the **three lines of defence** since 2020. LOKF was not designed from it, but reading the cast through it answers the three questions a governance reader brings: who is accountable for a claim, what is checked mechanically, and what can be examined afterwards. Nothing here adds a mechanism; every row names one that already exists.
+Regulated industries use the **three lines of defence** to say who owns a risk, who keeps the rules, and who checks independently - the [Three Lines Model](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/), as the IIA has called it since 2020. LOKF was not designed from it, but reading the cast through it answers the three questions a governance reader brings: who is accountable for a claim, what is checked mechanically, and what can be examined afterwards. Nothing here adds a mechanism; every row names one that already exists.
 
 | Line | In the model | In a LOKF bundle |
 | --- | --- | --- |
@@ -12,7 +12,7 @@ The **docent** sits where the customer does, outside the lines: it reads, and wh
 
 ## Lines are roles, not people
 
-The model's own revision says so, and it matters here because a small team, or one person, plays every line. What keeps the lines apart is then tooling, not headcount. The curator's identity comes from the forge (`gh api user`), never from git config or from the conversation, since both can be set by whoever is steering the agent. The gate accepts no `human:` event on anyone's say-so: the named person approves the pull request or signs the commit, and because GitHub will not let an author approve their own, a solo maintainer signs. An Environment with required reviewers is the logged exception - one click per pull request, never a switch.
+The model's own revision says so, and it matters here because a small team, or one person, plays every line. What keeps the lines apart is then tooling, not headcount. The curator's identity comes from the forge (`gh api user`), never from git config or from the conversation, since both can be set by whoever is steering the agent. The gate accepts no `human:` event on anyone's say-so, and because GitHub will not let an author approve their own pull request, a solo maintainer signs. An Environment with required reviewers is the logged exception - one click per pull request, never a switch.
 
 ## What an auditor can check
 
@@ -28,4 +28,4 @@ Every trust label is computed from the frontmatter on each read and never stored
 | What changed, and why? | `log.md`, and git |
 | Is the checker independent of the checked? | the JSON Schema and SHACL shapes are generated from the upstream `lokf.yaml`, not written here; the bundle projects to RDF and answers [SPARQL](../skills/lokf-curator/references/queries.md) |
 
-Three limits, so that nobody reads more into the evidence than it holds. A confirmation records who and when, not what the source said at that moment: when the source is a file in the same repository, the commit that recorded the confirmation pins it; when it is a URL, nothing does. The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person to confirm a policy - who may confirm what is for `policies/knowledge-curation.md` and review to settle. And an Environment attestation records that someone with access to the repository's settings vouched, not that anything was read; the job's own log says as much.
+Three limits on what the evidence holds. A confirmation records who and when, not what the source said at that moment: when the source is a file in the same repository, the commit that recorded the confirmation pins it; when it is a URL, nothing does. The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person to confirm a policy - who may confirm what is for `policies/knowledge-curation.md` and review to settle. And an Environment attestation records that someone with access to the repository's settings vouched, not that anything was read; the job's own log says as much.

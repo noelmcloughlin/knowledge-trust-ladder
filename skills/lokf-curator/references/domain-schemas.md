@@ -1,10 +1,10 @@
 # When the built-in vocabulary stops fitting
 
-LOKF ships a deliberately small vocabulary: 15 classes, ten typed relations, and a handful of trust fields. That is enough for most repositories and is what keeps bundles portable. It is not enough forever.
+LOKF ships a deliberately small vocabulary: a short list of classes, the typed relations, and a handful of trust fields. That is enough for most repositories and is what keeps bundles portable. It is not enough forever.
 
 ## The signs
 
-- The report's **vocabulary fit** line keeps growing - concepts whose `type` isn't one of the 15 classes, tolerated as generic concepts (Golden Rule 7) but carrying no agreed meaning. (Once a domain schema is wired into `just lokf-validate`, the line counts only what falls outside core *and* domain, so it goes quiet again rather than staying a permanent complaint.)
+- The report's **vocabulary fit** line keeps growing - concepts whose `type` isn't one of the core classes, tolerated as generic concepts (Golden Rule 7) but carrying no agreed meaning. (Once a domain schema is wired into `just lokf-validate`, the line counts only what falls outside core *and* domain, so it goes quiet again rather than staying a permanent complaint.)
 - Concepts sprout many producer-defined keys (`dosage`, `contraindication`, `jurisdiction`, `failure_mode`) that no validator checks and no other bundle understands.
 - The domain is one where a wrong or ambiguous field has real consequences: medicine, law, finance, safety engineering, anything regulated.
 

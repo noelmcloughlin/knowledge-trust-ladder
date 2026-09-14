@@ -2,6 +2,16 @@
 
 ## 2026-09-14
 
+* **Maintainer polish after the ninth pass**: the README's tree moved to
+  `docs/repository-layout.md` and says *three* repositories, the count the
+  ninth pass flagged, and `index.md`, `policies/index.md`,
+  `policies/threat-model.md`, `playbooks/releasing.md` and
+  `playbooks/knowledge-sources.md` now count the same three.
+  `explanation/three-lines-of-defence.md` names the README's renamed section;
+  prose counts of LOKF's classes and relations left the README, `docs/` and
+  the skills' references, with Rule 3 and `trust-fields.md` still enumerating
+  them under check 7.
+
 * **Steady-state refresh (ninth pass)**, against commit `b94a299`.
   `policies/security.md` rewritten to match the slimmed `SECURITY.md`
   (reporting, supported versions, a surface table), and a new concept,

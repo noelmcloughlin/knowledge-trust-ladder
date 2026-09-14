@@ -2,28 +2,27 @@
 type: Policy
 id: https://lokf-agent-skills.example/knowledge/policies/threat-model
 title: Threat model
-description: "The security design all four LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each skill's own input path - carried once here so each SECURITY.md can link instead of restate."
+description: "The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each skill's own input path - carried once here so each SECURITY.md can link instead of restate."
 genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T17:00:00Z"
+  at: "2026-09-14T23:10:00Z"
 references:
 - https://lokf-agent-skills.example/knowledge/policies/security
 - https://lokf-agent-skills.example/knowledge/policies/ai-covenant
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T17:00:00Z"
+  at: "2026-09-14T23:10:00Z"
 ---
 
 # Overview
 
 Added 2026-09-14, when `policies/security.md`'s ~1,900-word design moved out
-of `SECURITY.md` and into this page across all four LOKF repositories
-(`lokf-agent-skills`, LOKF Registrar, LOKF Curator, `msc-ai-galway-2026`).
-Its section headings are kept stable on purpose - `#interactive-use-scope-is-
-advisory-not-enforced`, `#repository-hardening`,
-`#human-attribution-human-is-a-claim-not-a-credential`,
+of `SECURITY.md` and into this page across the three LOKF repositories
+(`lokf-agent-skills`, LOKF Registrar, LOKF Curator). Its section headings are
+kept stable on purpose - `#interactive-use-scope-is-advisory-not-enforced`,
+`#repository-hardening`, `#human-attribution-human-is-a-claim-not-a-credential`,
 `#prompt-injection-guards` - because every sibling repository's `SECURITY.md`
 deep-links them by URL; `scripts/validate-repository.sh` check 9 records this
 path among the ones a sibling depends on.

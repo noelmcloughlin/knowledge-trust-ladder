@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T16:00:00Z"
+  at: "2026-09-14T23:10:00Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/references/gh-skill-cli
@@ -17,7 +17,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T16:00:00Z"
+  at: "2026-09-14T23:10:00Z"
 ---
 
 # Overview
@@ -52,7 +52,7 @@ notes for), then re-runs the repository contract and `gh skill publish
 (`v0.16.0`); the changelog heading never carries one, and the cross-check
 strips it before comparing. This release-process detail moved out of
 `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for
-all four LOKF repositories in one place. All four skills ship together
+the three LOKF repositories in one place. All four skills ship together
 under one tag, so a consumer can pin them to a single release.
 
 Both checks read the `workflow_dispatch` version input through an `env:`

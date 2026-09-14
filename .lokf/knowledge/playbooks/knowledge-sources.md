@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T19:00:00Z"
+  at: "2026-09-14T23:10:00Z"
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T19:00:00Z"
+  at: "2026-09-14T23:10:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -23,13 +23,13 @@ stale_after: 2027-09-10
 | `skills/*/SKILL.md` | the four skill Playbooks | re-read each router; a changed step list, guardrail, or frontmatter `description` is a drift signal |
 | `skills/*/references/*.md` | detail behind each skill Playbook | diff against the claims in the corresponding concept body |
 | `skills/lokf-sidecar/templates/` | what the sidecar skill actually writes; the toolkit dependency and its `[build]` extra | diff `pyproject.toml` (the `lokf` floor) and the template list in the skill's Step 1 table |
-| `README.md` | project identity, the four-role narrative, versioning policy, install commands | diff the roles table and the Versioning section |
+| `README.md`, `docs/repository-layout.md` | project identity, the four-role narrative, versioning policy, install commands; the repository tree, on its own page since the README stopped carrying it | diff the roles table and the Versioning section; diff the tree against the working copy |
 | `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `lokf-docent/references/obsidian.md`, which must agree with it |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
 | `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
 | `docs/three-lines.md` | the three-lines-of-defence mapping of the cast | diff `explanation/three-lines-of-defence.md` |
 | `SECURITY.md` | the slim security policy (reporting, supported versions, a surface table) | diff the surface table and the reporting/supported-versions text |
-| `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the other three repositories' `SECURITY.md`, so a heading rename here is a breaking change there |
+| `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the other two repositories' `SECURITY.md`, so a heading rename here is a breaking change there |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
 | `.github/workflows/semantic-release.yml`, `.github/scripts/changelog-release.mjs`, `.releaserc.json` | the version-and-changelog automation `playbooks/releasing.md` describes | diff the `release` job's steps, the script's `verifyRelease`/`generateNotes` behaviour, and `.releaserc.json`'s `releaseRules` (which commit types map to which bump) against the concept's Overview; all three sit behind the `release` Environment along with `publish.yml` |
@@ -43,6 +43,14 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Maintainer edits (2026-09-14, after the ninth pass)**, not a refresh: the
+  README count the ninth pass flagged is fixed - the tree moved to
+  `docs/repository-layout.md` and says three - and every page and record
+  that counted four LOKF repositories now counts three (`lokf-agent-skills`,
+  LOKF Registrar, LOKF Curator; a host that installs the skills is not one).
+  Prose counts of LOKF's classes and relations left `README.md`, `docs/` and
+  the skills' references, so the sixth pass's "grep for the number" lesson
+  has only Rule 3 and `trust-fields.md` left to find.
 - **Steady-state refresh (2026-09-14, ninth pass)**, against commit `b94a299`
   ("docs(security): improved layout"), landed since the eighth pass.
   `SECURITY.md` shrank from ~1,900 to 471 words: reporting, supported
@@ -56,8 +64,7 @@ stale_after: 2027-09-10
   source-map row above split in two. **Correctness bug found, not fixed
   here**: `README.md`'s own docs-layout listing (`docs/releasing.md`'s row)
   still says "how the **four** repositories release", while the same commit
-  fixed `docs/releasing.md`'s own heading and body to say **three** (it never
-  covered `msc-ai-galway-2026`, which doesn't share this release pipeline) -
+  fixed `docs/releasing.md`'s own heading and body to say **three** -
   a one-word README fix outside this skill's `.lokf/`-only scope; flagging
   for the maintainer. `lokf` on PyPI is still `0.7.0`, matching the floor;
   `.lokf/feedback.md` has no entries; no other concept referenced the old

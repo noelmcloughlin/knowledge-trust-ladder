@@ -34,6 +34,8 @@ npx skills add ./lokf-agent-skills --skill lokf-sidecar
 | `skills/*/references/*.md` | Detail loaded only when the router points to it, which keeps each `SKILL.md` small. |
 | `scripts/` | The repository contract CI runs on every PR. `validate-repository.sh` is the entry point and runs the layout tests; `smoke-test-install.sh` installs all four skills into a throwaway repo. |
 
+The whole tree, workflows and docs included: [docs/repository-layout.md](docs/repository-layout.md).
+
 ## Before opening a pull request
 
 - Run `bash scripts/validate-repository.sh`. It names each check as it runs, and CI runs the same script plus ShellCheck, `actionlint`, markdownlint, lychee and codespell.
