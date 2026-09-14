@@ -139,6 +139,7 @@ docs/
   three-lines.md        the cast mapped onto the three lines of defence, and what an auditor can check
   releasing.md          how the four repositories release, and the repository settings it depends on
   signing-commits.md    signing commits, which the provenance gate reads
+  threat-model.md       the four repositories' shared security design: what an agent can reach, what holds it, and what a human: confirmation proves
 scripts/
   validate-repository.sh   the checks validate.yml runs
   smoke-test-install.sh    installs all four skills into a throwaway consumer repo and asserts the result

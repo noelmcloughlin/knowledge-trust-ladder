@@ -175,6 +175,7 @@ sibling_paths=(
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md"
   "docs/releasing.md"
   "docs/signing-commits.md"
+  "docs/threat-model.md"
   "docs/three-lines.md"
   "skills/lokf-librarian/references/domain-schema.md"
 )
@@ -221,21 +222,26 @@ else
   [[ "$unrecorded" -eq 0 ]] && ok "every path the ${#cloned[@]} cloned sibling(s) link to is recorded here (${#linked[@]} target(s))"
 fi
 
-# 10. CONTRIBUTING.md is a checklist, not a design log: each rule is a line or
-#     two that links to where its reasoning lives - a code comment, a workflow
-#     header, a page under docs/. A word budget is the one signal every
-#     contributor, person or agent, reliably reads: the file sits near 700,
-#     the four repositories' files between 700 and 850, and 1000 is where
-#     one has started to become a design log again. The siblings hold the
-#     same budget from their own test scripts.
+# 10. CONTRIBUTING.md is a checklist, not a design log, and SECURITY.md is a
+#     policy, not a threat model: each rule or surface is a line or two that
+#     links to where its reasoning lives - a code comment, a workflow header,
+#     a page under docs/. A word budget is the one signal every contributor,
+#     person or agent, reliably reads. CONTRIBUTING sits between 700 and 850
+#     across the four repositories and 1000 is where one has started to
+#     become a design log again; SECURITY sits between 450 and 800 and was
+#     1,400 to 1,900 before docs/threat-model.md took the design, so 900
+#     is its line. The siblings hold the same budgets from their own checks.
 say ""
-say "Checking CONTRIBUTING.md stays a checklist..."
-words="$(wc -w < CONTRIBUTING.md)"
-if (( words <= 1000 )); then
-  ok "CONTRIBUTING.md is $words words (budget 1000)"
-else
-  err "CONTRIBUTING.md is $words words; the budget is 1000 - move the reasoning next to the code or workflow it explains, and link to it"
-fi
+say "Checking CONTRIBUTING.md and SECURITY.md stay short..."
+for spec in "CONTRIBUTING.md:1000:a checklist" "SECURITY.md:900:a policy"; do
+  IFS=: read -r file budget kind <<< "$spec"
+  words="$(wc -w < "$file")"
+  if (( words <= budget )); then
+    ok "$file is $words words (budget $budget)"
+  else
+    err "$file is $words words; the budget is $budget - it is $kind, so move the reasoning next to the code or workflow it explains, or into docs/, and link to it"
+  fi
+done
 
 # 11. This repository dogfoods its own sidecar templates, and CI lints the
 #     copies under .github/ and .lokf/scripts/ rather than the templates
