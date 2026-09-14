@@ -63,6 +63,10 @@ The **curator** is always a person. The skill and the plugin that carry the name
   <img src=".assets/lokf-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
 </p>
 
+### Three lines of a poem, three lines of defence
+
+The poem's three lines are Lowell's. The other three are the **three lines of defence**, the model regulated industries use to say who owns a risk, who makes sure the rules are kept, and who checks independently - and the cast sorts into them: the **librarian** and the **curator** in the first line, the **registrar** in the second, and for the third not an auditor but the evidence one needs. Where each role sits, and what can be checked afterwards: [docs/three-lines.md](docs/three-lines.md).
+
 ## Where the bundle lives
 
 The four skills are built around a **sidecar**: `.lokf/` sits beside the sources it distils - code in a repository, notes in a vault, documents in a shared folder - in the same tree and, almost always, the same git repository, the way `.git/` or `.obsidian/` do. The bundle is `.lokf/knowledge/`: one real folder on every host, and the name the skills, the toolkit, CI and `llms.txt` address.
@@ -132,6 +136,9 @@ skills/
 docs/
   for-the-curious.md    the mechanics behind this README: four levels of checking, domain schemas
   obsidian.md           the bundle as a vault of its own, and the two plugins
+  three-lines.md        the cast mapped onto the three lines of defence, and what an auditor can check
+  releasing.md          how the four repositories release, and the repository settings it depends on
+  signing-commits.md    signing commits, which the provenance gate reads
 scripts/
   validate-repository.sh   the checks validate.yml runs
   smoke-test-install.sh    installs all four skills into a throwaway consumer repo and asserts the result
@@ -144,7 +151,7 @@ Each `SKILL.md` is a lean router; anything not needed on every invocation lives 
 
 ## Versioning
 
-All four skills ship from this repository under one semantic version - `vMAJOR.MINOR.PATCH` - released together, so pinning them to the same tag always gives you a set that agrees with itself. What each level means: [CONTRIBUTING.md](CONTRIBUTING.md#release-process). What changed in each release: [CHANGELOG.md](CHANGELOG.md).
+All four skills ship from this repository under one semantic version - `vMAJOR.MINOR.PATCH` - released together, so pinning them to the same tag always gives you a set that agrees with itself. What each level means, and how a release is cut: [docs/releasing.md](docs/releasing.md). What changed in each release: [CHANGELOG.md](CHANGELOG.md).
 
 ## Contributing
 

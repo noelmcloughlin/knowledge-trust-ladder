@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T11:30:00Z"
+  at: "2026-09-14T16:00:00Z"
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T11:30:00Z"
+  at: "2026-09-14T16:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -25,7 +25,9 @@ stale_after: 2027-09-10
 | `skills/lokf-sidecar/templates/` | what the sidecar skill actually writes; the toolkit dependency and its `[build]` extra | diff `pyproject.toml` (the `lokf` floor) and the template list in the skill's Step 1 table |
 | `README.md` | project identity, the four-role narrative, versioning policy, install commands | diff the roles table and the Versioning section |
 | `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `lokf-docent/references/obsidian.md`, which must agree with it |
-| `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist |
+| `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
+| `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
+| `docs/three-lines.md` | the three-lines-of-defence mapping of the cast | diff `explanation/three-lines-of-defence.md` |
 | `SECURITY.md` | the security policy | diff the hardening bullets |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
@@ -40,6 +42,29 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-14, seventh pass)**, against this session's
+  uncommitted repository changes (`CONTRIBUTING.md` trimmed to a checklist;
+  new `docs/releasing.md`, `docs/signing-commits.md`, `docs/three-lines.md`;
+  `validate.yml` gained an action-pinning check; `scripts/validate-repository.sh`
+  gained checks 9/9a (sibling deep-link paths) and 10 (word budget); `README.md`
+  gained the three-lines-of-defence section). `playbooks/contributing.md`
+  rewritten to match the trimmed file and its two new `docs/` links.
+  `policies/versioning.md` re-pointed from `CONTRIBUTING.md` to
+  `docs/releasing.md` and rewritten: the qualitative patch/minor/major
+  definition it carried no longer exists anywhere in the repository, replaced
+  by the Conventional-Commits table `docs/releasing.md` and
+  `playbooks/releasing.md` already state - human confirmation of 2026-09-10
+  left standing per rule. `playbooks/releasing.md`'s stale `CONTRIBUTING.md`
+  citation repointed. `playbooks/repository-validation.md` gained the
+  action-pinning check and the full ten-check enumeration it had never
+  carried (a pre-existing gap, not new drift). Added
+  `explanation/three-lines-of-defence.md` for the new page. Orphan sweep also
+  fixed two pre-existing `explanation/index.md` gaps unrelated to this diff:
+  a missing `why-a-registrar-role.md` bullet, and a title that had drifted
+  from the concept's own ("Why four roles" vs "Why four skill roles"). `lokf`
+  on PyPI is still `0.7.0` (PyPI's JSON API; `uv pip index` is still not a
+  subcommand here), matching the floor - no bump. `.lokf/feedback.md` has no
+  entries.
 - **Steady-state refresh (2026-09-14, sixth pass)**, whole-repository sweep
   on the same branch. Two `references/` concepts had drifted from the sources
   they describe and were corrected: `linkml.md` (a stale fourteen-class count,

@@ -1,5 +1,45 @@
 # Change Log
 
+## 2026-09-14 (3)
+
+* **Steady-state refresh against this session's uncommitted repository
+  changes**: `CONTRIBUTING.md` was trimmed to a checklist, its release
+  process and commit-signing walkthrough moved to two new pages,
+  `docs/releasing.md` and `docs/signing-commits.md`; a third new page,
+  `docs/three-lines.md`, maps the four-skill-plus-registrar cast onto the
+  Three Lines Model; `validate.yml` gained an action-pinning check;
+  `scripts/validate-repository.sh` gained checks 9/9a (the paths sibling
+  repositories deep-link into, and completeness when they're cloned
+  alongside) and 10 (a 1000-word budget on `CONTRIBUTING.md`); `README.md`
+  gained a section pointing at `docs/three-lines.md`.
+  `playbooks/contributing.md` rewritten to match the trimmed file, its
+  Code-of-conduct/AI/Releasing sections, and the new `docs/` links.
+  `policies/versioning.md` re-sourced from `CONTRIBUTING.md` to
+  `docs/releasing.md` and rewritten: its qualitative patch/minor/major
+  definition ("does not materially change expected behaviour") no longer
+  exists anywhere in the repository, superseded by the Conventional-Commits
+  table `docs/releasing.md`/`playbooks/releasing.md` already state - the
+  2026-09-10 human confirmation left standing, per rule, since the concept
+  was not human-*authored*. `playbooks/releasing.md`'s stale
+  `CONTRIBUTING.md` citation repointed to `docs/releasing.md`.
+  `playbooks/repository-validation.md` gained the new action-pinning check
+  and, closing a pre-existing gap this pass found (checks 6-8 were never
+  described either), the full ten-check enumeration. **Added**
+  `explanation/three-lines-of-defence.md` for the new page, linked from
+  `why-four-roles.md` and `why-a-registrar-role.md` via `about`.
+  **Orphan sweep**, also fixing two pre-existing gaps unrelated to this
+  diff: `explanation/index.md` was missing a bullet for
+  `why-a-registrar-role.md` (present in the root `index.md` and in `log.md`
+  since 2026-09-10, never added here), and its first bullet's title had
+  drifted from the concept's own ("Why four roles" vs "Why four skill
+  roles"); both fixed. `index.md` gained the new explanation's bullet.
+  `playbooks/knowledge-sources.md`: the `CONTRIBUTING.md` row updated, two
+  new rows added for the `docs/` pages, and a run note added. `lokf` on
+  PyPI is still `0.7.0` (checked via PyPI's JSON API; `uv pip index` is
+  still not a subcommand here), matching the sidecar's floor - no bump.
+  `.lokf/feedback.md` has no entries. Not re-checked this pass: concepts
+  whose resource is untouched by this diff.
+
 ## 2026-09-14 (2)
 
 * **Two reference concepts corrected** on a librarian pass over the whole

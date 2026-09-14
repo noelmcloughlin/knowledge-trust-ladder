@@ -99,6 +99,19 @@ jobs:
         with:
           args: -color
 
+      # actionlint checks syntax, not pinning. A tag or branch ref floats, so
+      # every `uses:` - here and in the templates hosts copy - must name a
+      # commit SHA (or an image digest), with the version in a trailing
+      # comment for Dependabot to bump.
+      - name: Every action is pinned to a commit
+        run: |
+          if grep -rnE '^\s*-?\s*uses:' .github/workflows/ skills/lokf-sidecar/templates/github/ \
+            | grep -vE '@([0-9a-f]{40}|sha256:[0-9a-f]{64})\b' \
+            | grep -vE 'uses:\s*\./'; then
+            echo '::error::the action(s) above are not pinned to a commit SHA' >&2
+            exit 1
+          fi
+
   smoke-test:
     name: Smoke-test the install path
     runs-on: ubuntu-latest
