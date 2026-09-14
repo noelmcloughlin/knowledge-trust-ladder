@@ -15,7 +15,7 @@ about:
   - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-09T17:00:00Z"
+  at: "2026-09-14T19:00:00Z"
 ---
 
 # Overview

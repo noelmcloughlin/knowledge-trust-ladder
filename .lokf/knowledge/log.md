@@ -2,6 +2,20 @@
 
 ## 2026-09-14
 
+* **Steady-state refresh (eighth pass)**, against the two commits landed since
+  the seventh pass. Twelve concepts re-checked against their current sources
+  and found unchanged (content matches; `verified` refreshed only):
+  `explanation/why-four-roles.md`, `why-a-registrar-role.md`,
+  `why-a-distribution-repository.md`, `glossary/lokf.md`, `glossary/okf.md`,
+  `glossary/trust-label.md`, `glossary/knowledge-bundle.md`,
+  `explanation/hosts-and-doorways.md`, `playbooks/open-bundle-in-obsidian.md`,
+  `playbooks/lokf-sidecar-skill.md`, `playbooks/lokf-docent-skill.md`,
+  `playbooks/lokf-librarian-skill.md`. **Orphan fixed**:
+  `playbooks/knowledge-sources.md`'s dogfooded-workflows row had no entry for
+  `.lokf/scripts/knowledge-conventions.sh` (added earlier today), now listed
+  alongside `knowledge-librarian.sh` as byte-identical to its template.
+  `.lokf/feedback.md` had no entries.
+
 * **`playbooks/repository-validation.md`**: check 11 added (template copies
   identical, `knowledge-conventions.sh` exercised), the sibling count corrected
   to the two plugin repositories, and actionlint's explicit paths noted.

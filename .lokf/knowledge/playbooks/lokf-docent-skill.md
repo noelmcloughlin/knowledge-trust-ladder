@@ -19,7 +19,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/lokf-curator-skill
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  at: "2026-09-14T19:00:00Z"
 ---
 
 # Overview
