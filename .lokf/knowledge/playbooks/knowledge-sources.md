@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:lokf-librarian
-  at: "2026-09-13T23:00:00Z"
+  at: "2026-09-14T11:30:00Z"
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-13T23:00:00Z"
+  at: "2026-09-14T11:30:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -40,6 +40,48 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-14, sixth pass)**, whole-repository sweep
+  on the same branch. Two `references/` concepts had drifted from the sources
+  they describe and were corrected: `linkml.md` (a stale fourteen-class count,
+  and no mention of `--schema`) and `lokf-toolkit.md` (same missing flag). The
+  lesson for the next run: a class count or a toolkit flag repeated in a
+  second concept is drift waiting to happen, so grep the bundle for the number
+  and the command whenever either changes upstream. Re-checked and unchanged:
+  `lokf-specification.md`, `okf-specification.md`, `glossary/lokf.md`. `lokf`
+  on PyPI is `0.7.0`, matching the floor; `.lokf/feedback.md` has no entries.
+- **Steady-state refresh (2026-09-14, fifth pass)**, on branch
+  `docs/domain-schema-extension`, uncommitted. Swept: a new reference file,
+  `skills/lokf-librarian/references/domain-schema.md` (the extending-the-vocabulary
+  recipe: a pinned core-schema copy, a LinkML domain schema, frontmatter
+  naming the class exactly, the flag wired into the justfile and both
+  workflows), and edits to `skills/lokf-librarian/SKILL.md` (Rule 7, the
+  audit section, the tooling-version step), `skills/lokf-curator/references/domain-schemas.md`,
+  `docs/for-the-curious.md`, `skills/lokf-sidecar/templates/justfile` and
+  `CHANGELOG.md` reframing an earlier, more defensive draft of the same
+  material - dropped the validator-internals digression and the two
+  citations of a named consumer project, in favour of one recipe stated on
+  its own terms. `playbooks/lokf-librarian-skill.md` gained a paragraph
+  describing this; `playbooks/lokf-curator-skill.md` re-verified, no body
+  change (its "domain-schema guidance" line already covers it). **Correctness
+  bug found and fixed (this run):** Rule 3's class list named fourteen
+  classes, omitting `Role`, while `README.md` and `docs/for-the-curious.md`
+  both said fifteen - the standing open question on
+  `playbooks/lokf-librarian-skill.md`. Fetched the raw schema
+  (`raw.githubusercontent.com/nicholsn/lokf/main/lokf.yaml`) and counted the
+  fifteen concept-designating classes directly: `Role` is one of them. Fixed
+  Rule 3 in `skills/lokf-librarian/SKILL.md` and closed the open question;
+  no other concept named a class count. `lokf` on PyPI is still `0.7.0`;
+  `.lokf/feedback.md` has no entries. **Later the same day**, two further
+  passes over `skills/lokf-curator/`: `references/review-session.md` states
+  how the curation-policy table binds a row to a class, and
+  `references/trust-fields.md` (with `SKILL.md`, `references/domain-schemas.md`
+  and the librarian's `references/domain-schema.md`) has the vocabulary-fit
+  line respect a host's domain schema. Both came from the Obsidian plugins:
+  the first from a defect their tests found in this document's own template,
+  the second from an open question the curator plugin's bundle raised. So the
+  plugin repositories are a live source for this bundle, not only consumers -
+  re-read their `CHANGELOG.md` and bundle logs on a pass that touches
+  `skills/lokf-curator/`. `playbooks/lokf-curator-skill.md` carries both.
 - **Steady-state refresh (2026-09-13, fourth pass)**, preceded by a
   `lokf-sidecar` health check: every Step 1/2/5 file is present, the doorway
   resolves, no placeholder survives, signing is on, and the only template

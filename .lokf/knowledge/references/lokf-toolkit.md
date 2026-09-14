@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:lokf-librarian
-  at: "2026-09-09T10:00:00Z"
+  at: "2026-09-14T12:00:00Z"
 status: draft
 definedBy:
 - https://lokf-agent-skills.example/knowledge/references/lokf-specification
@@ -15,13 +15,15 @@ relatedTo:
 - https://lokf-agent-skills.example/knowledge/references/linkml
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-09T17:00:00Z"
+  at: "2026-09-14T12:00:00Z"
 ---
 
 # Overview
 
 The implementation, not the specification. `lokf validate` checks frontmatter
-and bundle shape against the generated JSON Schema; the generated SHACL shapes
+and bundle shape against the generated JSON Schema, and `--schema <file>.yaml`
+checks against a domain schema that imports LOKF's instead, which is the flag
+the extension recipe rests on; the generated SHACL shapes
 catch cardinality, datatype, and range violations on the projected graph;
 `lokf convert` projects to RDF and `lokf serve` exposes a SPARQL endpoint.
 `lokf query` runs a SPARQL query against the bundle and is what this

@@ -1,5 +1,49 @@
 # Change Log
 
+## 2026-09-14 (2)
+
+* **Two reference concepts corrected** on a librarian pass over the whole
+  repository. `references/linkml.md` still said the vocabulary it describes
+  has fourteen classes - the same stale count fixed in Rule 3 earlier today -
+  and named no way to validate an extension; it now says fifteen and points
+  at `lokf validate --schema` and the recipe. `references/lokf-toolkit.md`
+  described `lokf validate` without the `--schema` flag the recipe rests on.
+  `lokf` on PyPI is `0.7.0`, matching the floor; `.lokf/feedback.md` is empty.
+
+## 2026-09-14 (1)
+
+* **Steady-state refresh**, against branch `docs/domain-schema-extension`
+  (uncommitted): reframed the domain-schema-extension material added this
+  session - `skills/lokf-librarian/references/domain-schema.md` now states
+  the recipe (pin the core schema, write a domain schema, name the class
+  exactly, wire `--schema` in) without the validator-internals digression or
+  the two citations of a named consumer project the first draft carried.
+  `playbooks/lokf-librarian-skill.md` gained a paragraph on it; re-verified,
+  no change: `playbooks/lokf-curator-skill.md`. **Correctness bug fixed:**
+  Rule 3 in `skills/lokf-librarian/SKILL.md` listed fourteen classes,
+  omitting `Role`, against `README.md`/`docs/for-the-curious.md`'s fifteen -
+  the open question this concept carried since 2026-09-13. Confirmed against
+  the raw schema (fifteen concept classes, `Role` among them), fixed Rule 3,
+  closed the question. `playbooks/knowledge-sources.md`: run note added.
+* **Curation-policy table: how a row binds to a class is now stated.**
+  `lokf-curator/references/review-session.md` defined the template but not
+  the match. The LOKF Curator plugin, which implements this document, read
+  it literally, so the template's own prose rows ("Glossary terms",
+  "people") bound nothing. The skill now states the tolerant match - spaces
+  and plural form ignored - and `playbooks/lokf-curator-skill.md` records it.
+* **The curator skill now reads a host's domain schema too**, closing the
+  asymmetry the `lokf-curator` plugin's bundle raised as an open question:
+  the librarian's Rule 3 widened its class list from `.lokf/justfile`'s
+  `--schema`, while the curator still counted vocabulary fit against the
+  fifteen built-ins, so a host with a domain schema saw every domain class
+  reported as a misfit for good. `references/trust-fields.md` states the
+  widening (read the file; no toolkit, as everywhere else in Step 1), the
+  label becomes "doesn't fit the known vocabulary" as the plugin already
+  words it, and `SKILL.md`, `references/domain-schemas.md` and the
+  librarian's `references/domain-schema.md` (step 5: the skills need no
+  telling, the plugins do) follow. `playbooks/lokf-curator-skill.md` records
+  it.
+
 ## 2026-09-13 (5)
 
 * **Steady-state refresh** (librarian pass, no feedback pending), after a

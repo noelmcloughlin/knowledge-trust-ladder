@@ -169,7 +169,7 @@ The lokf-curator skill proposes `stale_after` from this table when a person conf
 A named person opened the concept's source and agreed the concept still says what the source says. Automation re-checking that a file still exists is recorded separately and is not confirmation.
 ```
 
-Derive `stale_after` as *confirmation date + the row's interval*, and always show the date before writing it.
+Derive `stale_after` as *confirmation date + the row's interval*, and always show the date before writing it. Read the table tolerantly: a row names its classes in prose, so match ignoring spaces and plural form - "Glossary terms" is `GlossaryTerm`, "attested computations" is `AttestedComputation`, "Policies" is `Policy`, "people" is `Person` - and a row naming a class you do not know binds nothing. A host that extends the vocabulary with a domain schema may set an interval for its own classes the same way.
 
 ## Recording something missing
 
