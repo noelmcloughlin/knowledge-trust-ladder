@@ -1,6 +1,6 @@
 # Threat model
 
-The four repositories - [`lokf-agent-skills`](https://github.com/noelmcloughlin/lokf-agent-skills), [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar), [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) and [msc-ai-galway-2026](https://github.com/noelmcloughlin/msc-ai-galway-2026) - run the same scheduled agent from the same `lokf-sidecar` templates and release the same way, so they share one threat model. This page is it. Each repository's `SECURITY.md` says how to report, what that repository owns, and what it inherits from here.
+The three LOKF repositories - [`lokf-agent-skills`](https://github.com/noelmcloughlin/lokf-agent-skills), [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar), and [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) - run the same scheduled agent from the same `lokf-sidecar` templates and release the same way, so they share one threat model. This page is it. Each repository's `SECURITY.md` says how to report, what that repository owns, and what it inherits from here.
 
 Two facts shape everything below. The skills are prose executed by whichever LLM agent runs them, so anywhere a skill sends the agent to read content it did not author is a prompt-injection surface. And the bundle's central trust signal - a `verified` event whose actor starts with `human:` - is a string in a Markdown file that any writer can type.
 

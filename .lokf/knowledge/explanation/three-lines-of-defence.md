@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T16:00:00Z"
+  at: "2026-09-14T23:10:00Z"
 status: draft
 about:
 - https://lokf-agent-skills.example/knowledge/explanation/why-four-roles
@@ -17,13 +17,13 @@ relatedTo:
 - https://lokf-agent-skills.example/knowledge/glossary/trust-label
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T16:00:00Z"
+  at: "2026-09-14T23:10:00Z"
 ---
 
 # Overview
 
-Added 2026-09-14: the README gained a "Three lines of a poem, three lines of
-defence" section pointing at this page. LOKF was not designed from the
+Added 2026-09-14: the README gained a "Three lines of defence" section
+pointing at this page. LOKF was not designed from the
 [Three Lines Model](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) -
 the model regulated industries use to say who owns a risk, who makes sure
 the rules are kept, and who checks independently - but the cast maps onto it

@@ -95,9 +95,11 @@ else
   say "shellcheck not installed locally - CI runs it; skipping here (${#scripts[@]} script(s) found: ${scripts[*]:-none})"
 fi
 
-# 7. The LOKF class vocabulary is stated as prose in several files, with no
+# 7. The LOKF class vocabulary is enumerated as prose in two files, with no
 #    generator behind it. Rule 3 in lokf-librarian/SKILL.md is the canonical
-#    list; every other enumeration and every stated count must agree with it.
+#    list; the other enumeration, and any count a page still states, must
+#    agree with it. Prose elsewhere says "small" rather than a number: the
+#    count is the schema's to change, not this repository's.
 #    (On 2026-09-14 Rule 3 said fourteen and omitted Role while README.md and
 #    docs/for-the-curious.md said fifteen - undetected until a person read
 #    both. This check is why that cannot happen twice.)
@@ -227,7 +229,7 @@ fi
 #     links to where its reasoning lives - a code comment, a workflow header,
 #     a page under docs/. A word budget is the one signal every contributor,
 #     person or agent, reliably reads. CONTRIBUTING sits between 700 and 850
-#     across the four repositories and 1000 is where one has started to
+#     across the three repositories and 1000 is where one has started to
 #     become a design log again; SECURITY sits between 450 and 800 and was
 #     1,400 to 1,900 before docs/threat-model.md took the design, so 900
 #     is its line. The siblings hold the same budgets from their own checks.
