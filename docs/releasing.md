@@ -2,7 +2,7 @@
 
 The three repositories - [`lokf-agent-skills`](https://github.com/noelmcloughlin/lokf-agent-skills), [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar), and the [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) - release the same way, from the same pinned [semantic-release](https://semantic-release.gitbook.io/) tool, run by each repository's `semantic-release.yml`. This page is the shared part. Each workflow's own header comment carries that repository's detail and the reasons behind it.
 
-## The version is computed, the notes are written by hand
+## The version is computed, you write commit message
 
 Nobody picks a version number. Commits typed with [Conventional Commits](https://www.conventionalcommits.org/) decide it:
 
