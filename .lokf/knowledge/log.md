@@ -2,6 +2,9 @@
 
 ## 2026-09-14
 
+* **`playbooks/repository-validation.md`**: check 11 added (template copies
+  identical, `knowledge-conventions.sh` exercised), the sibling count corrected
+  to the two plugin repositories, and actionlint's explicit paths noted.
 * **Steady-state refresh against this session's uncommitted repository
   changes**: `CONTRIBUTING.md` was trimmed to a checklist, its release
   process and commit-signing walkthrough moved to two new pages,

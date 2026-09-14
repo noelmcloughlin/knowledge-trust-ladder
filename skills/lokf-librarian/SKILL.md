@@ -50,7 +50,7 @@ Maintain `.lokf/` - the host repository's knowledge captured as a [**Linked Open
 |   |-- playbooks/  glossary/  person/
 |-- pyproject.toml        # declares the `lokf` toolkit dependency
 |-- justfile              # lokf-install / lokf-validate / lokf-convert / lokf-serve
-|-- scripts/              # (optional) knowledge-librarian.sh, the scheduled-agent wrapper (references/scheduled-task.md)
+|-- scripts/              # (optional) knowledge-librarian.sh, the scheduled-agent wrapper (references/scheduled-task.md); knowledge-conventions.sh, what the gate checks that lokf validate cannot (section 2)
 ```
 
 `.lokf/knowledge` is a real folder in the layout lokf-sidecar lays down, with a `knowledge_bundle` link beside it for people. If a host has turned it into a link instead (a shared folder rearranged by hand - see the sidecar's `references/portability.md`), address the bundle as `.lokf/knowledge` regardless and let the link resolve - but expect git to report your changes under the real folder's name, and name both paths when you scope a diff or a PR.
@@ -199,9 +199,12 @@ Use the toolkit - it gives you two independent, generated validators. From
 just lokf-install          # uv sync  (first time)
 just lokf-validate         # JSON Schema on frontmatter + assembled bundle
 just lokf-check-refs       # every typed-relation target resolves to a real concept
+bash scripts/knowledge-conventions.sh   # log headings, quoted timestamps, verified lists, open-question shape
 just lokf-convert          # project to Turtle/RDF; eyeball the triples
 just lokf-serve            # SPARQL endpoint + live graph explorer (optional)
 ```
+
+The third line is the one the toolkit cannot stand in for: `lokf validate` reads a body as an opaque string and never opens `log.md`, so the conventions in section 1 that this skill and both Obsidian plugins rely on are checked by that script, laid down by lokf-sidecar and run by the registrar gate on every `.lokf/**` pull request. Run it before handing off; a bundle it rejects fails the gate.
 
 `lokf validate` catches frontmatter/bundle-shape errors against the declared vocabulary; a bundle that extends the vocabulary validates with `--schema` ([references/domain-schema.md](references/domain-schema.md)). The generated SHACL shapes catch cardinality/datatype/range violations on the projected graph. Neither checks that a relation target actually exists - a fabricated or stale IRI in `dependsOn` et al. passes both silently, since it's still a syntactically valid IRI. `just lokf-check-refs` closes that one gap with a SPARQL query over the same graph `lokf-serve` exposes: any typed-relation target that is never itself the subject of an `a` triple is reported and fails the check. It cannot tell you a target is *wrong*, only that it is *missing* - a `dependsOn` pointed at the right concept's evil twin still passes. Beyond that, audit for:
 

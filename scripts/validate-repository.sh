@@ -237,6 +237,53 @@ else
   err "CONTRIBUTING.md is $words words; the budget is 1000 - move the reasoning next to the code or workflow it explains, and link to it"
 fi
 
+# 11. This repository dogfoods its own sidecar templates, and CI lints the
+#     copies under .github/ and .lokf/scripts/ rather than the templates
+#     themselves (actionlint is pointed at both, ShellCheck scans the tree),
+#     so the copies must stay byte-identical or a template change ships
+#     unlinted. knowledge-librarian.yaml is the one deliberate exception: the
+#     repository that publishes the skill does not install it from itself.
+#     Then the conventions script itself is exercised: it must pass on this
+#     repository's own bundle and fail on a bundle that breaks each rule -
+#     a checker that cannot fail is not covering anything.
+say ""
+say "Checking the sidecar templates are the copies CI lints..."
+templates="skills/lokf-sidecar/templates"
+for pair in \
+  "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
+  "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
+  "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh"; do
+  src="${pair%%:*}"; dst="${pair##*:}"
+  if cmp -s "$src" "$dst"; then
+    ok "$dst matches its template"
+  else
+    err "$dst differs from $src - copy the template over it (this repository dogfoods its own sidecar)"
+  fi
+done
+
+say ""
+say "Exercising knowledge-conventions.sh..."
+if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge >/dev/null); then
+  ok "this repository's bundle keeps the conventions"
+else
+  err "this repository's bundle breaks a convention knowledge-conventions.sh checks - run it from .lokf/ to see which"
+fi
+bad="$(mktemp -d)"
+mkdir -p "$bad/k/x"
+# A suffixed heading, then two bare dates in ascending order: one finding each.
+printf '# Change Log\n\n## 2026-09-14 (2)\n\n* **A**: b.\n\n## 2026-09-13\n\n* **C**: d.\n\n## 2026-09-15\n\n* **E**: f.\n' > "$bad/k/log.md"
+printf -- '---\ntype: Service\nverified:\n  by: process:lokf-librarian\n  at: 2026-09-14T00:00:00Z\n---\n\n## Open questions\n\n- unclear (process:lokf-librarian, 2026-09-12)\n' > "$bad/k/x/a.md"
+printf -- '---\ntype: Service\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-13T00:00:00Z"\n  - by: process:lokf-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n' > "$bad/k/x/b.md"
+findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
+rm -rf "$bad"
+for want in "not a bare ISO date" "not newest-first" "unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events"; do
+  if grep -q "$want" <<<"$findings"; then
+    ok "conventions script reports: $want"
+  else
+    err "conventions script failed to report '$want' on a bundle that breaks it"
+  fi
+done
+
 say ""
 if [[ "$fail" -eq 0 ]]; then
   say "Repository contract: PASS"

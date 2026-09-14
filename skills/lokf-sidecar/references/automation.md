@@ -1,4 +1,4 @@
-# Step 5 automation - what the three files do and how to wire them
+# Step 5 automation - what the four files do and how to wire them
 
 Laying these down is one-time setup; how they behave at run time is lokf-librarian's operating manual ([`../../lokf-librarian/references/scheduled-task.md`](../../lokf-librarian/references/scheduled-task.md)). Applies only to a **git-tracked** `.lokf/` on **GitHub** - see SKILL.md Step 5 for why a gitignored bundle makes both workflows a permanent no-op.
 
@@ -60,6 +60,10 @@ With `KNOWLEDGE_LIBRARIAN_ENABLED` unset (or not `true`) the agent step is skipp
 ## `knowledge-librarian.sh` - the agent wrapper
 
 Generic, no placeholders. Resolves the repo root from its own location, finds `lokf-librarian/SKILL.md` (`.claude/skills/`, `.github/skills/`, `.agents/skills/`, `skills/` - extend the `candidate` list if your repo differs, and run the script once to confirm), builds a prompt telling the agent to follow that skill, and calls `$AGENT_CLI -p`. Contract the workflow relies on: it only reads the repo and writes under `.lokf/knowledge/`; it never commits, pushes, or opens PRs; it exits 0 whether or not anything changed (the workflow diffs the tree to decide about a PR).
+
+## `knowledge-conventions.sh` - what the gate checks that `lokf validate` cannot
+
+Generic, no placeholders, no toolkit: bash, grep and awk over `knowledge/`. The `validate` job runs it after `lokf validate`, and lokf-librarian's audit runs it before handing off. It holds the bundle to four conventions the toolkit never sees because it reads a concept body as an opaque string and never opens `log.md`: one bare `## YYYY-MM-DD` heading per day in `log.md`, newest first (OKF §9, and how the LOKF Curator plugin finds today); every `at:` quoted; `verified` a list carrying at most one `process:lokf-librarian` event; and each `## Open questions` bullet in the `- YYYY-MM-DD, <actor>: ...` shape the curator quotes. Each rule has been broken by an agent that had it in prose, which is why it is a script. The same job also runs the justfile's `lokf-check-refs` through `uvx --from rust-just just`, so a typed relation pointing at no concept fails the gate too.
 
 ## Customising
 
