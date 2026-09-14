@@ -95,7 +95,60 @@ else
   say "shellcheck not installed locally - CI runs it; skipping here (${#scripts[@]} script(s) found: ${scripts[*]:-none})"
 fi
 
-# 7. Every template that scopes a diff to the bundle (the wrapper and both
+# 7. The LOKF class vocabulary is stated as prose in several files, with no
+#    generator behind it. Rule 3 in lokf-librarian/SKILL.md is the canonical
+#    list; every other enumeration and every stated count must agree with it.
+#    (On 2026-09-14 Rule 3 said fourteen and omitted Role while README.md and
+#    docs/for-the-curious.md said fifteen - undetected until a person read
+#    both. This check is why that cannot happen twice.)
+rule3_line="$(grep -m1 '^3\. \*\*Use a class from the LOKF type vocabulary' skills/lokf-librarian/SKILL.md || true)"
+if [[ -z "$rule3_line" ]]; then
+  err "could not find Rule 3's class list in skills/lokf-librarian/SKILL.md"
+else
+  # The list ends where the domain-schema sentence begins; that sentence names
+  # `Concept` and a sample parent class, neither of which is part of the list.
+  rule3_list="${rule3_line%%\*\*A host may have extended*}"
+  # shellcheck disable=SC2016 # literal backticks for grep to match (markdown
+  # code spans around a class name), not a command substitution - double
+  # quotes here would make the shell try to run `[A-Z][A-Za-z]*` as a command.
+  canonical="$(printf '%s' "$rule3_list" | grep -o '`[A-Z][A-Za-z]*`' | tr -d '`' | grep -vx 'Concept' | sort -u)"
+  canonical_count="$(printf '%s\n' "$canonical" | grep -c .)"
+  ok "Rule 3 names $canonical_count classes"
+
+  # 7a. The curator's trust-fields.md carries the other complete enumeration.
+  tf_line="$(grep -m1 '^- \*\*The 15 classes\*\*\|^- \*\*The [a-z]* classes\*\*' skills/lokf-curator/references/trust-fields.md || true)"
+  if [[ -z "$tf_line" ]]; then
+    err "could not find the class enumeration in lokf-curator/references/trust-fields.md"
+  else
+    # shellcheck disable=SC2016 # same literal-backtick grep pattern as above.
+    tf_classes="$(printf '%s' "$tf_line" | grep -o '`[A-Z][A-Za-z]*`' | tr -d '`' | sort -u)"
+    if [[ "$tf_classes" == "$canonical" ]]; then
+      ok "trust-fields.md enumerates the same classes as Rule 3"
+    else
+      err "trust-fields.md and Rule 3 disagree: $(comm -3 <(printf '%s\n' "$canonical") <(printf '%s\n' "$tf_classes") | tr -d '\t' | tr '\n' ' ')"
+    fi
+  fi
+
+  # 7b. Every stated count, in digits or words, must equal that number.
+  declare -A word_for=([14]=fourteen [15]=fifteen [16]=sixteen [17]=seventeen)
+  expected_word="${word_for[$canonical_count]:-}"
+  bad_counts=0
+  while IFS= read -r hit; do
+    file="${hit%%:*}"
+    stated="$(printf '%s' "${hit#*:}" | grep -oiE '([0-9]+|fourteen|fifteen|sixteen|seventeen)([ -](concept[ -])?class)' | grep -oiE '^[0-9]+|^fourteen|^fifteen|^sixteen|^seventeen' | head -1)"
+    [[ -z "$stated" ]] && continue
+    shopt -s nocasematch
+    if [[ "$stated" != "$canonical_count" && "$stated" != "$expected_word" ]]; then
+      err "$file states \"$stated classes\"; Rule 3 names $canonical_count"
+      bad_counts=1
+    fi
+    shopt -u nocasematch
+  done < <(grep -rniE '([0-9]+|fourteen|fifteen|sixteen|seventeen)[ -](concept[ -])?class(es)?' \
+             README.md docs skills --include='*.md' || true)
+  [[ "$bad_counts" -eq 0 ]] && ok "every stated class count agrees with Rule 3 ($canonical_count)"
+fi
+
+# 8. Every template that scopes a diff to the bundle (the wrapper and both
 #    workflows) behaves as documented with and without the doorway link, and
 #    the lokf-link recipe creates it.
 say ""
