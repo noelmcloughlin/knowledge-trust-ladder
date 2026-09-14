@@ -1,6 +1,6 @@
 # Change Log
 
-## 2026-09-14 (3)
+## 2026-09-14
 
 * **Steady-state refresh against this session's uncommitted repository
   changes**: `CONTRIBUTING.md` was trimmed to a checklist, its release
@@ -40,8 +40,6 @@
   `.lokf/feedback.md` has no entries. Not re-checked this pass: concepts
   whose resource is untouched by this diff.
 
-## 2026-09-14 (2)
-
 * **Two reference concepts corrected** on a librarian pass over the whole
   repository. `references/linkml.md` still said the vocabulary it describes
   has fourteen classes - the same stale count fixed in Rule 3 earlier today -
@@ -49,8 +47,6 @@
   at `lokf validate --schema` and the recipe. `references/lokf-toolkit.md`
   described `lokf validate` without the `--schema` flag the recipe rests on.
   `lokf` on PyPI is `0.7.0`, matching the floor; `.lokf/feedback.md` is empty.
-
-## 2026-09-14 (1)
 
 * **Steady-state refresh**, against branch `docs/domain-schema-extension`
   (uncommitted): reframed the domain-schema-extension material added this
@@ -84,7 +80,7 @@
   telling, the plugins do) follow. `playbooks/lokf-curator-skill.md` records
   it.
 
-## 2026-09-13 (5)
+## 2026-09-13
 
 * **Steady-state refresh** (librarian pass, no feedback pending), after a
   `lokf-sidecar` health check that found nothing to repair here. Withdrawn:
@@ -102,8 +98,6 @@
   `explanation/why-a-distribution-repository.md`, `glossary/lokf.md`.
   `playbooks/knowledge-sources.md`: run note added.
 
-## 2026-09-13 (4)
-
 * `playbooks/knowledge-sources.md`: the `docs/` row now covers the new
   `docs/obsidian.md` - the README's Obsidian section, moved out as a page of
   its own with the two-vaults picture - and names the two files it must agree
@@ -111,8 +105,6 @@
   output" sentence is now cited to `docs/obsidian.md`, where it lives. No
   other concept changed: the README polish moved emphasis and order, not
   facts.
-
-## 2026-09-13 (3)
 
 * **Steady-state refresh** (librarian pass, no feedback pending), against the
   commits since `3399203` and this session's uncommitted `README.md` (three
@@ -143,8 +135,6 @@
   the wrapper and the justfile match their templates. `lokf` on PyPI is
   still `0.7.0`, matching the floor.
 
-## 2026-09-13 (2)
-
 * **Steady-state refresh** (librarian pass, no feedback pending): re-verified
   `playbooks/lokf-sidecar-skill.md`, `explanation/hosts-and-doorways.md`,
   `playbooks/open-bundle-in-obsidian.md`, `explanation/why-four-roles.md` and
@@ -157,8 +147,6 @@
   row (added this session) and its `generated`/`verified` refreshed to match.
   `glossary/knowledge-bundle.md` was not re-checked - `templates/README.md`'s
   wording tweak this session didn't touch what the term means.
-
-## 2026-09-13
 
 * **The visible layout is retired; one layout, the doorway by default.**
   Hand-edited in session alongside the `lokf-sidecar` change, not a librarian
@@ -199,7 +187,7 @@
   6, `portability.md` and this bundle's `open-bundle-in-obsidian.md`, whose
   history section now defers to `explanation/hosts-and-doorways.md`.
 
-## 2026-09-12 (3)
+## 2026-09-12
 
 * **Steady-state refresh against the security-hardening pass** (uncommitted
   at the time of this run: 19 files touched, none of them `.lokf/`).
@@ -243,8 +231,6 @@
   seven external `Reference` concepts - none of their resources appear
   among this pass's changed files, so they were left as last verified.
 
-## 2026-09-12 (2)
-
 * **Semantic-release, hardened - version and changelog only** (maintainer
   decision): `playbooks/releasing.md` rewritten (`generated`/`verified`
   refreshed). `semantic-release.yml`'s `release` job, behind the `release`
@@ -256,8 +242,6 @@
   `## [Unreleased]` section itself, and commits directly. `publish.yml` gains
   a cross-check: the maintainer's typed version must match what got
   promoted, or the run fails before touching the registry.
-
-## 2026-09-12
 
 * **LOKF Enforcer is now LOKF Registrar** (maintainer decision; the plugin
   was renamed for its role before its first release):

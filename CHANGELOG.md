@@ -13,6 +13,9 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **The librarian now lints the Markdown it writes.** Its rule against letting a wrapped punctuation dash start a line was advice only, and a pass tripped `MD032` in a host's lint gate anyway; the audit step now runs the host's markdownlint config over the bundle, since `lokf validate` reads a concept body as an opaque string and cannot see this class of fault at all.
+- **One `log.md` heading per day, the bare date.** The librarian had been opening a fresh `## 2026-09-14 (2)` heading for each run in a day; that is not the ISO-date heading OKF §9 requires, passes the registrar's date check unseen, and the curator plugin cannot find the day through it. The librarian and the curator's review session now both reuse the day's heading, and the librarian's log bullets are held to a few sentences.
+- **The librarian's open questions take the curator's shape**, `- YYYY-MM-DD, process:lokf-librarian: ...`, so the date and actor lead and the first bullet the curator reads is the question.
+- **The docent no longer takes a reader's identity from `git config user.name`** for a feedback entry - `gh api user` or nothing, the same rule the curator holds to.
 
 ## [0.16.1] - 2026-09-14
 
