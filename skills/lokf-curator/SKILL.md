@@ -41,7 +41,7 @@ Say these to the human. Don't say RDF, IRI, SPARQL, predicate, or tier. The fiel
 | Retired | kept for links and history; no longer current |
 | Not tied to a signed commit | the confirmation is recorded, but git holds no signature behind it - it may have been written by something other than that person |
 | *N* other concepts rely on this | how many concepts link to it - the more, the further a mistake spreads |
-| Doesn't fit the known vocabulary | its type is neither one of LOKF's 15 classes nor a class of the host's own domain schema, where it has one - see [references/domain-schemas.md](references/domain-schemas.md) |
+| Doesn't fit the known vocabulary | its type is neither one of LOKF's core classes nor a class of the host's own domain schema, where it has one - see [references/domain-schemas.md](references/domain-schemas.md) |
 
 ## Step 1 - Report (always; read-only; one screen)
 
