@@ -4,6 +4,17 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The registrar gate fails on a vanished source.** `knowledge-conventions.sh` gains a fifth rule: a `resource:` that is not a URL must name a file or directory that still exists under the repository root. Check 11 proves it on a bundle that breaks it; URLs are never fetched.
+- **Two switches in the curation policy, both off by default.** `Independent re-check: <n>` makes every curator report list n confirmed concepts, picked by a rule the curator cannot steer, with their sources for a second person; `Evidence first: yes` makes the docent quote the source before any answer that rests on a concept not yet confirmed by a person, and the docent reads that line from the policy alone. The sidecar's automation reference recommends a pull request template line asking a curation PR's approver to open the sources; this repository's template carries it.
+
+### Changed
+
+- **`docs/three-lines.md` is written for a governance reader.** It names The Institute of Internal Auditors in full, cites the 2026 Statement of Position, places each role in a new diagram (`.assets/lokf-three-lines.svg`), and ends with what remains open and whose it is. The model's critics, quoted from their own texts and marked as preliminary research, and a bundle's answer to each with every remaining gap labelled by kind, are on a page of their own, `docs/three-lines-critics.md`.
+- **Adopter-facing text no longer addresses "solo maintainers".** The sidecar's automation reference and the registrar workflow's comments describe the case - the confirming person also opens the pull request, so the gate's evidence is their signature - and the attestation environment's reviewers are "the people allowed to attest".
+- **`EXAMPLES.md` is now `docs/examples/docent.md`**, one page per skill's captured sessions; `docs/examples/curator.md` is a placeholder that lists what is still to capture, including a docent answer under each value of `Evidence first:`.
+
 ## [0.17.1] - 2026-09-14
 
 ### Changed
@@ -135,6 +146,6 @@ Initial release: four [Agent Skills](https://agentskills.io/home) that turn a re
 - `lokf-sidecar` - bootstraps a fresh `.lokf/` sidecar into a repository that has none: tooling, docs, and a dummy skeleton from bundled templates.
 - `lokf-librarian` - scrapes the repository, derives concepts with their sources, wires typed relationships, audits the bundle against the LOKF schema, and hands off for review. Runs often, including on a schedule; deals in facts about the repository, never in verdicts about truth.
 - `lokf-curator` - a human curator's assistant: a one-screen trust and freshness report, and an opt-in review session that records a person's confirm/correct/retire/send-back verdict directly in the bundle's frontmatter.
-- `lokf-docent` - the reader's entry point. Answers questions from the bundle first, states each concept's trust label in plain words, verifies exact values at the source, and - when the bundle has no answer - explores the repository directly and records the gap in `.lokf/feedback.md` for the librarian to pick up. See [`EXAMPLES.md`](EXAMPLES.md) for real question-and-answer transcripts.
+- `lokf-docent` - the reader's entry point. Answers questions from the bundle first, states each concept's trust label in plain words, verifies exact values at the source, and - when the bundle has no answer - explores the repository directly and records the gap in `.lokf/feedback.md` for the librarian to pick up. See [`docs/examples/docent.md`](docs/examples/docent.md) for real question-and-answer transcripts.
 
 This repository dogfoods its own skills: `.lokf/` here is a real bundle built by `lokf-sidecar` and `lokf-librarian`, self-describing all four skills, this repository's own governance, and its CI.

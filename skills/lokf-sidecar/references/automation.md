@@ -10,9 +10,9 @@ Its second job, `provenance`, runs on pull requests only and enforces the other 
 
 This is what makes lokf-curator's confirmations mean anything to a later reader: without it, "confirmed by a person" is only as good as whatever wrote the file. The cost is intended: a curation PR now needs its curator's approval or signature before it can merge.
 
-### Solo maintainers: sign your commits
+### When the confirming person opens the pull request: sign the commits
 
-GitHub will not let anyone approve their own pull request, so on a one-person repository the signature branch is the path - and it is the better one anyway. A signature is cryptographic and still checkable years later; a review approval is a mutable record that a force-push can dismiss. One-time setup, reusing the SSH key you already push with:
+GitHub will not let anyone approve their own pull request, so when the person whose confirmations a pull request carries is also the person opening it, the signature is the route - and it is the better one anyway. A signature is cryptographic and still checkable years later; a review approval is a mutable record that a force-push can dismiss. One-time setup, reusing the SSH key already used to push:
 
 ```sh
 git config --global gpg.format ssh
@@ -28,11 +28,11 @@ Then add that same key again at `github.com/settings/keys`, this time as a **sig
 
 ### If you genuinely cannot sign: the `attestation` job
 
-The third job is an opt-in escape hatch, and its shape is deliberate. It is **not** a setting that turns the check off. A permanent "provenance: off" switch gets flipped for one urgent afternoon and never flipped back, and from then on the bundle asserts confirmations nothing supports while the health line and these docs still promise otherwise - worse than never having built the gate. So instead of disabling anything, it asks for a fresh human action on each pull request that needs one: the run pauses, GitHub emails the environment's reviewers, and a person clicks Approve in a browser. Crucially, an environment reviewer **may** be the person who opened the pull request - environments do not carry the self-approval ban that pull-request reviews do - which is exactly what makes this usable by a lone maintainer. Each click is recorded in the deployment log, so it stays auditable afterwards.
+The third job is an opt-in escape hatch, and its shape is deliberate. It is **not** a setting that turns the check off. A permanent "provenance: off" switch gets flipped for one urgent afternoon and never flipped back, and from then on the bundle asserts confirmations nothing supports while the health line and these docs still promise otherwise - worse than never having built the gate. So instead of disabling anything, it asks for a fresh human action on each pull request that needs one: the run pauses, GitHub emails the environment's reviewers, and a person clicks Approve in a browser. Crucially, an environment reviewer **may** be the person who opened the pull request - environments do not carry the self-approval ban that pull-request reviews do - which is what makes this usable when the same person opens the pull request and attests. Each click is recorded in the deployment log, so it stays auditable afterwards.
 
 Enabling it takes two steps, and the first is the one that does the work:
 
-1. **Settings -> Environments -> New environment** (say `knowledge-curation`), tick **Required reviewers**, add yourself, save.
+1. **Settings -> Environments -> New environment** (say `knowledge-curation`), tick **Required reviewers**, add the people allowed to attest, save.
 2. **Settings -> Secrets and variables -> Actions -> Variables**: set `KNOWLEDGE_CURATION_ENVIRONMENT` to that environment's name.
 
 Do not do the second without the first. An environment with no required reviewers approves itself the instant it is reached, so setting the variable while skipping the reviewers silently disables the gate entirely - the failure mode this design exists to avoid. With the variable unset (the default), the `attestation` job never runs and `provenance` simply fails on an unbacked confirmation.
@@ -42,6 +42,8 @@ What the attestation does and does not mean is worth saying plainly to whoever c
 ### Marking the required checks
 
 Mark `validate` and `provenance` as required in branch protection, and `attestation` too if you enable it. When a confirmation is backed, `attestation` is skipped rather than run; if your branch-protection configuration treats a skipped required check as blocking, that errs toward a stuck pull request rather than a silent bypass - annoying, but the safe direction.
+
+Add one line to the repository's pull request template for whoever approves a curation pull request: *I opened the sources named by every confirmation I am approving.* An approval then records a task done, not only a click; the gate can prove who approved, never what they read.
 
 One wrinkle if you do: the librarian's own PR (below) never fires this workflow's `pull_request` trigger in the first place - GitHub does not start `pull_request` workflows for a PR opened with the default `GITHUB_TOKEN`, which is how `knowledge-librarian.yaml`'s `publish` job opens it. `publish` carries its own version of both checks before it ever opens that PR (path allow-list, no `by: human:` claim), so nothing unsafe merges - but a required `validate`/`provenance` will sit at "Expected" on this particular PR until a human fires a fresh event for it (close/reopen, or an empty commit). See lokf-librarian's scheduled-task.md for the detail.
 
@@ -63,7 +65,7 @@ Generic, no placeholders. Resolves the repo root from its own location, finds `l
 
 ## `knowledge-conventions.sh` - what the gate checks that `lokf validate` cannot
 
-Generic, no placeholders, no toolkit: bash, grep and awk over `knowledge/`. The `validate` job runs it after `lokf validate`, and lokf-librarian's audit runs it before handing off. It holds the bundle to four conventions the toolkit never sees because it reads a concept body as an opaque string and never opens `log.md`: one bare `## YYYY-MM-DD` heading per day in `log.md`, newest first (OKF §9, and how the LOKF Curator plugin finds today); every `at:` quoted; `verified` a list carrying at most one `process:lokf-librarian` event; and each `## Open questions` bullet in the `- YYYY-MM-DD, <actor>: ...` shape the curator quotes. Each rule has been broken by an agent that had it in prose, which is why it is a script. The same job also runs the justfile's `lokf-check-refs` through `uvx --from rust-just just`, so a typed relation pointing at no concept fails the gate too.
+Generic, no placeholders, no toolkit: bash, grep and awk over `knowledge/`. The `validate` job runs it after `lokf validate`, and lokf-librarian's audit runs it before handing off. It holds the bundle to five conventions the toolkit never sees because it reads a concept body as an opaque string and never opens `log.md`: one bare `## YYYY-MM-DD` heading per day in `log.md`, newest first (OKF §9, and how the LOKF Curator plugin finds today); every `at:` quoted; `verified` a list carrying at most one `process:lokf-librarian` event; each `## Open questions` bullet in the `- YYYY-MM-DD, <actor>: ...` shape the curator quotes; and every `resource:` that is not a URL naming a file or directory that still exists relative to the repository root, so a vanished source fails the gate rather than waiting for the librarian's next refresh (URLs are never fetched). Each rule has been broken by an agent that had it in prose, which is why it is a script. The same job also runs the justfile's `lokf-check-refs` through `uvx --from rust-just just`, so a typed relation pointing at no concept fails the gate too.
 
 ## Customising
 

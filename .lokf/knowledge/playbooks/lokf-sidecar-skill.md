@@ -17,7 +17,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/lokf-toolkit
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T19:00:00Z"
+  at: "2026-09-16T09:10:00Z"
 ---
 
 # Overview
@@ -39,10 +39,11 @@ the Step 5 files do) - so the router itself stays small. Every file it writes
 is copied from `templates/`, never retyped, which is what keeps a freshly
 laid-down bundle byte-identical to the reviewed template.
 
-`automation.md` also carries what Step 5 points a host at: the solo
-maintainer's signing setup (the SSH key already used to push, registered on
-GitHub a second time as a *signing* key, because GitHub blocks approving
-one's own pull request and the `provenance` gate then needs a signature),
+`automation.md` also carries what Step 5 points a host at: the signing
+setup for a curator who opens their own pull request (the SSH key already
+used to push, registered on GitHub a second time as a *signing* key,
+because GitHub blocks approving one's own pull request and the
+`provenance` gate then needs a signature),
 the advice to mark `validate` and `provenance` as required checks, and the
 wrinkle that the librarian's own review pull request never fires that gate:
 GitHub does not start `pull_request` workflows for a pull request opened

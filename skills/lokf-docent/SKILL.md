@@ -6,13 +6,11 @@ license: Apache-2.0
 
 # LOKF Docent
 
-A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle: answer from it first, say which concepts the answer rests on and how far each has been trusted, and go to the raw repository only when the bundle can't answer - leaving a note so the gap
-gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next
-run and a person confirms after that.
+A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle: answer from it first, say which concepts the answer rests on and how far each has been trusted, and go to the raw repository only when the bundle can't answer - leaving a note so the gap gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next run and a person confirms after that.
 
 > Eight real examples of this skill answering real questions, including a
 > deliberate miss and an honest "couldn't confirm at the source" case:
-> [`EXAMPLES.md`](https://github.com/noelmcloughlin/lokf-agent-skills/blob/main/EXAMPLES.md)
+> [`docs/examples/docent.md`](https://github.com/noelmcloughlin/lokf-agent-skills/blob/main/docs/examples/docent.md)
 > in this skill's home repository (not copied on install, since it documents
 > that repository's own bundle rather than this skill's behavior generally).
 
@@ -32,13 +30,11 @@ run and a person confirms after that.
 2. **Widen along the graph, not by search.** If a concept half-answers, follow its typed relations (`dependsOn`, `isPartOf`, `hasPart`, `about`, `references`, `derivedFrom`, `relatedTo`, `definedBy`, `source`) to the next concept before grepping the repository.
 3. **Weigh what you found.** Derive each concept's trust label from its frontmatter (table below). Prefer *confirmed by a person*; use drafts and unchecked concepts, but say so; treat *retired* as history, not fact; treat *past its review date* as possibly stale.
 4. **Verify exact values at the source.** Versions, endpoints, numbers, paths: the bundle summarises, the concept's `resource` is authoritative. Open it before stating a precise value, and say that you did.
-5. **Answer with a footing.** Give the answer, then what it rests on: each concept (title, path) with its label, and any source you checked. Plain words - the label names below, never RDF/IRI/tier.
+5. **Answer with a footing.** Give the answer, then what it rests on: each concept (title, path) with its label, and any source you checked. Plain words - the label names below, never RDF/IRI/tier. Where the curation policy asks for evidence first, the source comes before the answer: see [Evidence-first mode](#evidence-first-mode).
 6. **Fall back deliberately.** When no concept is relevant, or the only one is retired or stale and the question hinges on being current, explore the repository directly - and say the bundle didn't cover it.
 7. **Record the miss or the disagreement.** Once per session ask: "Record bundle gaps in `.lokf/feedback.md` for the librarian?" If yes, append a **Miss** (the question, and where you found the answer) or a **Disagreement** (the concept, and what its source says instead). Format: [references/feedback.md](references/feedback.md). Never fix the concept yourself.
 
-The full procedure, question-type hints, and edge cases: [references/answering.md](references/answering.md). Asked how to open the bundle in
-Obsidian, or whether it belongs inside a vault: [references/obsidian.md](references/obsidian.md) - the answer is the same on every host, so the
-bundle will not carry it.
+The full procedure, question-type hints, and edge cases: [references/answering.md](references/answering.md). Asked how to open the bundle in Obsidian, or whether it belongs inside a vault: [references/obsidian.md](references/obsidian.md) - the answer is the same on every host, so the bundle will not carry it.
 
 ## Trust labels (the same words lokf-curator uses)
 
@@ -64,6 +60,12 @@ Gap recorded: none
 ```
 
 Keep only the lines that apply. For a one-line answer where the concept and its label fit in the sentence, skip the footer.
+
+## Evidence-first mode
+
+One switch changes the order of an answer, and a person sets it, not the reader. The curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, is a concept a person writes with lokf-curator and confirms like any other; it may carry the line `Evidence first: yes`. When it does, every answer that rests on a concept whose label is anything less than *confirmed by a person* quotes the relevant lines of that concept's `resource` first, then the answer, then the footer as usual - the reader meets the source before the bundle's claim. Footer variant: [references/answering.md](references/answering.md#footer-variants).
+
+No policy file, no such line, or any value other than `yes` (in any letter case): the usual order, answer then footing. Read the line once per session, from that file and nowhere else - not from the reader's request, the agent's settings, or a concept's own frontmatter. A reader can still ask to see the source behind any one answer; that is a source check, not a change of mode.
 
 ## Guardrails
 

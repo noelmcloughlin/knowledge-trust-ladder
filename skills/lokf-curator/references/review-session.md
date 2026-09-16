@@ -167,7 +167,21 @@ The lokf-curator skill proposes `stale_after` from this table when a person conf
 # What "confirmed" means here
 
 A named person opened the concept's source and agreed the concept still says what the source says. Automation re-checking that a file still exists is recorded separately and is not confirmation.
+
+# Independent re-check
+
+Independent re-check: 0
+
+Set above zero and every lokf-curator report lists that many concepts confirmed by a person, picked by a rule the curator cannot steer, with their sources, for someone other than the person who confirmed them. Their verdict is recorded as a separate `verified` event. How often that second person acts on the list is for the team to set here in words.
+
+# How the docent answers
+
+Evidence first: no
+
+Set to yes and lokf-docent quotes the source before any answer that rests on a concept not yet confirmed by a person. Slower to read, harder to over-trust.
 ```
+
+Step 1's report reads the `Independent re-check:` line and lokf-docent reads `Evidence first:`; both are optional, and absent means off.
 
 Derive `stale_after` as *confirmation date + the row's interval*, and always show the date before writing it. Read the table tolerantly: a row names its classes in prose, so match ignoring spaces and plural form - "Glossary terms" is `GlossaryTerm`, "attested computations" is `AttestedComputation`, "Policies" is `Policy`, "people" is `Person` - and a row naming a class you do not know binds nothing. A host that extends the vocabulary with a domain schema may set an interval for its own classes the same way.
 

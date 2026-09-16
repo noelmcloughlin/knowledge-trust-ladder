@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-curator/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T11:30:00Z"
+  at: "2026-09-16T09:10:00Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
@@ -17,7 +17,7 @@ definedBy:
 - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T11:30:00Z"
+  at: "2026-09-16T09:10:00Z"
 ---
 
 # Overview
@@ -25,7 +25,10 @@ verified:
 Runs **a little, regularly**. Step 1 is always a read-only one-screen report
 computed from frontmatter alone (no toolkit needed): a health line, at most
 five items "worth ten minutes today", the librarian's open questions, waiting
-reader feedback, and vocabulary fit. Step 2 is an opt-in review session that
+reader feedback, vocabulary fit, and (only when the curation policy sets
+`Independent re-check: <n>`) n confirmed concepts,
+picked by a rule the curator cannot steer, with their sources for a second
+person to re-check. Step 2 is an opt-in review session that
 shows the source *before* the claim and takes one verb per item. Step 3 covers
 the curation policy, gap intake, and domain-schema guidance.
 

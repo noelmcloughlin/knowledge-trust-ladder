@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T23:10:00Z"
+  at: "2026-09-16T09:10:00Z"
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T23:10:00Z"
+  at: "2026-09-16T09:10:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -27,7 +27,7 @@ stale_after: 2027-09-10
 | `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `lokf-docent/references/obsidian.md`, which must agree with it |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
 | `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
-| `docs/three-lines.md` | the three-lines-of-defence mapping of the cast | diff `explanation/three-lines-of-defence.md` |
+| `docs/three-lines.md`, `docs/three-lines-critics.md` | the roles placed in the three lines of defence, what an auditor can check and what remains to do and who does it; the critics, quoted, and what a bundle answers and leaves open, on the second page | diff `explanation/three-lines-of-defence.md`; confirm every external link on both pages still resolves and still says what is quoted, and that the cross-links between the two pages still meet their headings |
 | `SECURITY.md` | the slim security policy (reporting, supported versions, a surface table) | diff the surface table and the reporting/supported-versions text |
 | `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the other two repositories' `SECURITY.md`, so a heading rename here is a breaking change there |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
@@ -38,11 +38,21 @@ stale_after: 2027-09-10
 | `scripts/*.sh` | what the validation playbook claims CI enforces | re-read the assertions; a new check is a gap in the playbook |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
 | external URLs cited across the repo | the seven Reference concepts | confirm each still resolves and still says what the concept claims |
-| `.assets/*.svg` | decorative images (e.g. the README social-preview card) | consciously excluded - see note below; re-check only that the row still applies if the asset's purpose changes |
-| `LICENSE`, `llms.txt`, `EXAMPLES.md` | licensing boilerplate, the agent-facing pointer file, and captured docent transcripts | consciously excluded as concepts - see note below; re-check that `llms.txt` still matches the "For AI agents" callout in `README.md`, and that `EXAMPLES.md`'s trust-label claims still match `glossary/trust-label.md` |
+| `.assets/*.svg` | the README social-preview card and the diagrams the README and `docs/` pages embed | consciously excluded - see note below; re-check only that each diagram still matches the page that embeds it |
+| `LICENSE`, `llms.txt`, `docs/examples/` | licensing boilerplate, the agent-facing pointer file, and captured skill transcripts (the docent's; the curator's page is a placeholder) | consciously excluded as concepts - see note below; re-check that `llms.txt` still matches the "For AI agents" callout in `README.md`, and that `docs/examples/docent.md`'s trust-label claims still match `glossary/trust-label.md` |
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-16, tenth pass)**, against the working
+  tree's uncommitted changes (nothing has landed since `e52267d`, the
+  0.17.1 release). Fifteen concepts re-checked against their current
+  sources and found to match, `verified` refreshed; the four re-generated
+  today to follow their sources carry today's `generated.at`. Rows above
+  follow `EXAMPLES.md` to `docs/examples/docent.md` and admit the new
+  `.assets/lokf-three-lines.svg` diagram; the mirror follows the page's
+  renamed closing heading, "What remains to do, and who does it". `lokf` on PyPI
+  is still `0.7.0`, matching the floor; `.lokf/feedback.md` has no entries;
+  all seven Reference URLs resolve.
 - **Maintainer edits (2026-09-14, after the ninth pass)**, not a refresh: the
   README count the ninth pass flagged is fixed - the tree moved to
   `docs/repository-layout.md` and says three - and every page and record

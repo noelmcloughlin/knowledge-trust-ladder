@@ -17,6 +17,11 @@
 #   4. A bullet under `## Open questions` is `- YYYY-MM-DD, <actor>: ...`, the
 #      shape the curator and both plugins write and read; the curator quotes
 #      the first bullet, so a trailing signature would become the question.
+#   5. Every `resource:` that is not a URL names a file or directory that
+#      exists, relative to the repository root (the nearest directory holding
+#      `.lokf/`; failing that, the bundle's parent). A source that has gone
+#      should fail the gate now, not wait for the librarian's next refresh.
+#      URLs are never fetched.
 #
 # Usage: knowledge-conventions.sh [bundle-dir]   (default: knowledge, i.e. run
 # from .lokf/). Exit 1 with one line per finding; nothing else is written.
@@ -44,7 +49,16 @@ if [ -f "$log" ]; then
   fi
 fi
 
-# ---- 2-4. concept files -----------------------------------------------------
+# ---- 2-5. concept files -----------------------------------------------------
+# Repository root for rule 5: the nearest ancestor holding `.lokf/`, else the
+# bundle's parent (a bare bundle handed to this script on its own).
+real="$(cd "$bundle" && pwd -P)"
+root="$(dirname "$real")"
+d="$real"
+while [ "$d" != "/" ]; do
+  if [ -d "$d/.lokf" ]; then root="$d"; break; fi
+  d="$(dirname "$d")"
+done
 while IFS= read -r f; do
   case "$(basename "$f")" in index.md|log.md|diataxis.md) continue ;; esac
   # Frontmatter only for 2 and 3: the text between the first two `---` lines.
@@ -72,6 +86,17 @@ while IFS= read -r f; do
     inq && /^#/ {inq=0}
     inq && /^- / && $0 !~ /^- [0-9]{4}-[0-9]{2}-[0-9]{2}, (human|process):[^ :]+: / {print}
   ' "$f")
+  # 5. local resource paths exist: top-level `resource:` and `sources[].resource`
+  while IFS= read -r res; do
+    [ -z "$res" ] && continue
+    case "$res" in *://*) continue ;; esac
+    res="${res%%#*}"
+    res="${res#\"}"; res="${res%\"}"; res="${res#\'}"; res="${res%\'}"
+    res="${res%"${res##*[![:space:]]}"}"
+    [ -z "$res" ] && continue
+    case "$res" in /*) target="$res" ;; *) target="$root/$res" ;; esac
+    [ -e "$target" ] || say "$f: resource not found: $res (looked at $target)"
+  done < <(printf '%s\n' "$fm" | sed -nE 's/^[[:space:]]*(- )?resource:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\2/p')
 done < <(find "$bundle" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
 if [ "$fail" -eq 0 ]; then

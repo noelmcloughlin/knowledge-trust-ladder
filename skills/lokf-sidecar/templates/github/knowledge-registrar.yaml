@@ -76,10 +76,11 @@ jobs:
     # the only evidence the forge actually holds: who approved the pull
     # request, and who signed the commits.
     #
-    # Solo maintainers: GitHub will not let you approve your own pull request,
-    # so signing your commits is the path here - it is also the stronger claim,
-    # being cryptographic and checkable long after a review could be dismissed.
-    # One-time setup with the SSH key you already push with:
+    # When the confirming person also opens the pull request: GitHub will not
+    # let anyone approve their own pull request, so their signature on the
+    # commits is the path here - it is also the stronger claim, being
+    # cryptographic and checkable long after a review could be dismissed.
+    # One-time setup with the SSH key already used to push:
     #
     #   git config --global gpg.format ssh
     #   git config --global user.signingkey ~/.ssh/id_ed25519.pub
@@ -174,8 +175,8 @@ jobs:
 
             # No approval from them. The remaining evidence is their own
             # signature on the commit that introduced the event - the only
-            # path open to a solo maintainer, since GitHub will not let
-            # anyone approve their own pull request.
+            # path open when they opened the pull request themselves, since
+            # GitHub will not let anyone approve their own pull request.
             introducing=()
             for sha in "${bundle_shas[@]}"; do
               if git show --unified=0 --format= "$sha" -- .lokf/knowledge knowledge_bundle \
@@ -248,7 +249,7 @@ jobs:
   attestation:
     name: Attest to an unbacked confirmation
     # The escape hatch for a repository that cannot sign commits and has
-    # nobody available to approve - typically a solo maintainer.
+    # nobody else available to approve.
     #
     # It is deliberately NOT a switch that turns the check off. A permanent
     # "provenance: off" setting gets flipped for one urgent afternoon and
@@ -257,12 +258,13 @@ jobs:
     # request that needs one: the run pauses, GitHub emails the environment's
     # reviewers, and someone clicks Approve in a browser. Unlike a pull
     # request review, an environment reviewer MAY be the person who opened
-    # the pull request, which is what makes this work for a lone maintainer.
+    # the pull request, which is what makes this work when the same person
+    # opens the pull request and attests.
     # The click lands in the deployment log, so it stays auditable.
     #
     # To enable, both steps are required:
     #   1. Settings -> Environments -> New environment (e.g. "knowledge-curation"),
-    #      tick "Required reviewers", and add yourself.
+    #      tick "Required reviewers", and add the people allowed to attest.
     #   2. Settings -> Secrets and variables -> Actions -> Variables: set
     #      KNOWLEDGE_CURATION_ENVIRONMENT to that environment's name.
     #

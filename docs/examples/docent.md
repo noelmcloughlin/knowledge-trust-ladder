@@ -2,7 +2,7 @@
 
 Eight questions actually asked against this repository's own `.lokf/knowledge/` bundle, following `skills/lokf-docent/SKILL.md` exactly: read the bundle first, widen along typed relations before searching the repo, verify exact values at the source before stating them, state each concept's trust label, and fall back - deliberately, and out loud - only when the bundle has no answer. These are real captured output, not invented transcripts.
 
-Trust labels here mean what `skills/lokf-curator/references/trust-fields.md` defines. At the time these were run, no concept in this bundle had been confirmed by a person yet (`lokf-curator` hadn't been run), so every answer below is at most "checked by automation only" or "nobody has checked this yet" - which is itself demonstrated in examples 2 and 6.
+Trust labels here mean what `skills/lokf-curator/references/trust-fields.md` defines. At the time these were run, no concept in this bundle had been confirmed by a person yet (`lokf-curator` hadn't been run), so every answer below is at most "checked by automation only" or "nobody has checked this yet" - which is itself demonstrated in examples 2 and 6. The answers are what the docent said then; some of the pages it checked have been rewritten since (`CONTRIBUTING.md` is now a shorter checklist), so take the sources named as current, not the values quoted.
 
 ## 1. "What is LOKF?"
 
@@ -92,7 +92,7 @@ Checked at source: cli.github.com/manual/gh_skill_install - does not state a ver
 Gap recorded: none - the bundle's claim isn't contradicted, just unconfirmable at this page
 ```
 
-*This is honest version of "verify exact values at the source": the source didn't have the value to confirm, and the answer says so instead of quietly repeating the bundle's number as fact.*
+*This is the honest version of "verify exact values at the source": the source didn't have the value to confirm, and the answer says so instead of quietly repeating the bundle's number as fact.*
 
 ## 7. "What's the roadmap for a fifth skill after lokf-docent?"
 
@@ -109,7 +109,7 @@ Gap recorded: Miss - "What's the roadmap for a fifth skill after lokf-docent?" -
 ```
 
 Asked once this session whether to record gaps in `.lokf/feedback.md`; the answer was yes, so this one was written there for real - see
-[`.lokf/feedback.md`](.lokf/feedback.md). `lokf-librarian`'s next run will either turn it into a real concept or note that no roadmap exists.
+[`.lokf/feedback.md`](../../.lokf/feedback.md). `lokf-librarian`'s next run will either turn it into a real concept or note that no roadmap exists.
 
 ## 8. "Who do I contact to report a security issue, and is that policy confirmed by a person?"
 
