@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T18:00:00Z"
+  at: "2026-09-16T09:10:00Z"
 status: draft
 references:
   - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
@@ -15,7 +15,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T16:00:00Z"
+  at: "2026-09-16T09:10:00Z"
 ---
 
 # Overview
@@ -36,7 +36,8 @@ staying under their own word budget (1000 and 900, check 10, extended
 (check 11, added 2026-09-14) this repository's copies
 of the registrar gate and both sidecar scripts staying byte-identical to
 their templates, with `knowledge-conventions.sh` shown to pass on this
-bundle and to fail on a synthetic bundle breaking each rule it checks. Then
+bundle and to fail on a synthetic bundle breaking each rule it checks (five
+rules, the fifth that every local `resource` still exists). Then
 `gh skill publish --dry-run` runs.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs

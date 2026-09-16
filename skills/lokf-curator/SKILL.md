@@ -53,8 +53,9 @@ Read every concept's frontmatter under `.lokf/knowledge/` (skip `index.md` and `
 4. **Feedback from readers** - `k entries waiting in .lokf/feedback.md` (misses and disagreements lokf-docent recorded; the librarian consumes them on its next run), or "none".
 5. **Vocabulary fit** - `n concepts don't fit the known vocabulary`, or "fine". Where `.lokf/justfile` validates with `--schema <slug>.yaml`, that schema's classes are part of the vocabulary too ([references/trust-fields.md](references/trust-fields.md)).
 6. **Confirmations git can't back** - only when the count is above zero: name the concepts and say what it means in one line ("recorded as confirmed by a person, but no signed commit stands behind it - worth asking whether that person really checked it"). How to compute it: [references/trust-fields.md](references/trust-fields.md). Skip the whole check when `.lokf/` isn't git-tracked, and say so instead.
-7. `N more not yet checked. Run again anytime - every confirmation counts.`
-8. Offer Step 2: "Want to go through these now?"
+7. **Sample for a second person** - only when the curation policy carries a line `Independent re-check: <n>` with n above zero: list n concepts confirmed by a person, picked by a rule the curator cannot steer - sort their paths by the `sha256sum` of path plus today's date and take the first n - each as title (path) - its `resource`, for someone other than the person who confirmed it to re-check. Their verdict goes through the same verbs and lands as a separate `verified` event; independent checks accumulate, they do not replace. Say nothing when the policy has no such line.
+8. `N more not yet checked. Run again anytime - every confirmation counts.`
+9. Offer Step 2: "Want to go through these now?"
 
 Write nothing in Step 1. If `.lokf/knowledge/` doesn't exist, stop and point at lokf-sidecar. The full template is in [references/trust-fields.md](references/trust-fields.md).
 
@@ -93,7 +94,7 @@ Write nothing in Step 1. If `.lokf/knowledge/` doesn't exist, stop and point at 
 
 Two of these write `human:<id>` into a concept (the curation policy, and a gap placeholder), so they need the same authenticated id as *Confirm* - see **Who** above. Without one, describe what you would write and stop.
 
-- **Curation policy** - create or refresh `policies/knowledge-curation.md` (review cadence per kind of concept, who curates), in plain words with defaults the person edits. Template: [references/review-session.md](references/review-session.md).
+- **Curation policy** - create or refresh `policies/knowledge-curation.md` (review cadence per kind of concept, who curates, and the two optional switches `Independent re-check:` and `Evidence first:`), in plain words with defaults the person edits. Template: [references/review-session.md](references/review-session.md).
 - **Something missing** - record a `draft` placeholder (type, title, one open question) for the librarian to fill; same reference. (Gaps that *readers* hit arrive separately, via lokf-docent in `.lokf/feedback.md`; the librarian handles those.)
 - **Vocabulary drifting** into a deep or safety-critical domain: [references/domain-schemas.md](references/domain-schemas.md).
 - **Graph-savvy users** - the same labels as SPARQL for `lokf serve`: [references/queries.md](references/queries.md).

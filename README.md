@@ -11,7 +11,7 @@ Four [Agent Skills](https://agentskills.io/home) that turn a repository's scatte
   <img src=".assets/lokf-agent-skills-card.svg" alt="LOKF Agent Skills: from OKF's prose and structure to LOKF's meaning, schema and tools, kept by a librarian, a curator and a docent" width="720" />
 </p>
 
-> **Prefer to ask?** Install the docent skill into any agent you already use - `npx skills add noelmcloughlin/lokf-agent-skills --skill lokf-docent --yes` - and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. [EXAMPLES.md](EXAMPLES.md) shows eight such answers, captured, not invented. **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
+> **Prefer to ask?** Install the docent skill into any agent you already use - `npx skills add noelmcloughlin/lokf-agent-skills --skill lokf-docent --yes` - and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. [docs/examples/docent.md](docs/examples/docent.md) shows eight such answers, captured, not invented. **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
 
 ## Why libraries have catalogues
 
@@ -28,7 +28,7 @@ So every answer from the bundle says where it came from and how far it has been 
 | [`lokf-sidecar`](skills/lokf-sidecar/SKILL.md) | **Sidecar** - *lays the network*. Bootstraps a fresh `.lokf/` sidecar (tooling, docs, dummy skeleton) into a repository that doesn't have one, from bundled templates; repairs a broken sidecar file. | once |
 | [`lokf-librarian`](skills/lokf-librarian/SKILL.md) | **Librarian** - *binds it into order*. Scrapes the repository, derives concepts with their sources, classifies them, wires typed relationships, audits, and hands off for review. Like a real librarian it catalogues without vouching: it deals in *facts about the repository*, never in verdicts about truth. | often, including on a schedule |
 | [`lokf-curator`](skills/lokf-curator/SKILL.md) | **Curator** - *holds the scales*. A human curator's assistant. Shows what needs a person's look, puts the source next to the claim, and records the person's verdict - confirm, correct, retire, send back - in the bundle's own frontmatter. It deals in *judgments a person made*, never in facts it derived. | a little, regularly |
-| [`lokf-docent`](skills/lokf-docent/SKILL.md) ([examples](EXAMPLES.md)) | **Docent** - *guides the visitors*, the role the poem leaves implicit, because the library exists for them. Answers from the bundle first, says how far each concept used has been trusted, verifies exact values at the source, and when the bundle has no answer explores the repository and records the miss so it becomes the librarian's next task. Read-only on the bundle. | whenever anyone asks |
+| [`lokf-docent`](skills/lokf-docent/SKILL.md) ([examples](docs/examples/docent.md)) | **Docent** - *guides the visitors*, the role the poem leaves implicit, because the library exists for them. Answers from the bundle first, says how far each concept used has been trusted, verifies exact values at the source, and when the bundle has no answer explores the repository and records the miss so it becomes the librarian's next task. Read-only on the bundle. | whenever anyone asks |
 
 **Curator** is the museum sense of the word - the one who authenticates, weighs provenance, and decides what is put on exhibit - not the data-management sense, which is the **librarian**'s job. A **docent** is the museum's guide, who explains the exhibition without moving anything on the shelves.
 
@@ -42,7 +42,7 @@ On a fresh repository they run in order: the **sidecar** once, then the **librar
 
 ### Three lines of defence
 
-Regulated industries use the **three lines of defence** to say who owns a risk, who keeps the rules, and who checks independently. The cast sorts into them: the **librarian** and the **curator** in the first line, the **registrar** - the fifth role, below - in the second, and for the third not an auditor but the evidence one would need. Where each role sits, and what can be checked afterwards: [docs/three-lines.md](docs/three-lines.md).
+Regulated industries use the **three lines of defence** to say who owns a risk, who keeps the rules, and who checks independently. The **librarian** and the **curator** are the first line: one derives the records, the other confirms them. The **registrar**, described next, is the second: it keeps them well-formed and ties each confirmation to a real person. There is no third line, only the evidence an independent reviewer would need. [docs/three-lines.md](docs/three-lines.md) places each role with a diagram, lists what an auditor can check, and ends with what remains to do and who does it; [its critics page](docs/three-lines-critics.md) quotes the model's critics with a bundle's answer to each.
 
 ### The fifth role, which is not a skill
 

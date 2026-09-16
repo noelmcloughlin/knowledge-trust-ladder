@@ -67,6 +67,12 @@ Inline (one concept, one label, no source check):
 > The Orders API depends on the Orders DB (bundle: `services/orders-api.md`,
 > nobody has checked this yet).
 
+Evidence first (the curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, says `Evidence first: yes`, and the concept is anything less than *confirmed by a person*; no file, no line, or another value means the usual order): the source's lines come before the answer that rests on them, then the footer as usual.
+
+> From `services/orders/openapi.yaml`, lines 12-15: `paths: /orders: get: ...`.
+> So the Orders API exposes a read endpoint for orders (bundle:
+> `services/orders-api.md`, nobody has checked this yet).
+
 Repository fallback:
 
 > The bundle has no concept for this. From `workers/billing/config.yaml`: the

@@ -1,5 +1,39 @@
 # Change Log
 
+## 2026-09-16
+
+* **Steady-state refresh (tenth pass)**, against the uncommitted working
+  tree: fifteen concepts re-checked against their sources and found to
+  match (`verified` refreshed), the four re-generated today carry today's
+  `generated.at`, and the source map's excluded-files and images rows
+  follow `docs/examples/` and the new diagram. `explanation/three-lines-of-defence.md`
+  follows the page's renamed closing heading, "What remains to do, and who
+  does it". `explanation/index.md`'s hosts-and-doorways bullet
+  no longer calls the layout an open question. `.lokf/feedback.md` has no
+  entries; `lokf` on PyPI is still `0.7.0`.
+
+* **`explanation/three-lines-of-defence.md` refreshed against a rewritten
+  `docs/three-lines.md` and its new `docs/three-lines-critics.md`**: the
+  page names The Institute of Internal Auditors in full, cites the 2026
+  Statement of Position, places each role in a diagram and ends with what
+  remains open and whose it is; the critics page quotes the model's critics
+  and the research behind two partial critiques, marked preliminary, with a
+  bundle's answer to each and every remaining gap labelled by kind.
+  `index.md`, `playbooks/knowledge-sources.md` and `docs/repository-layout.md`
+  follow, and the source map's excluded-files row follows `EXAMPLES.md` to
+  `docs/examples/docent.md`.
+
+* **`playbooks/lokf-curator-skill.md`, `playbooks/lokf-docent-skill.md` and
+  `playbooks/repository-validation.md` follow their skills**: the
+  conventions script's fifth rule (a local `resource` must exist), the
+  curation policy's `Independent re-check:` and `Evidence first:` switches,
+  and that the docent reads the second from the policy alone.
+
+* **`playbooks/lokf-sidecar-skill.md` no longer says "the solo maintainer's
+  signing setup"**, matching `references/automation.md` and the registrar
+  workflow's comments, which describe the case - the confirming person opens
+  the pull request - rather than the person.
+
 ## 2026-09-14
 
 * **Maintainer polish after the ninth pass**: the README's tree moved to

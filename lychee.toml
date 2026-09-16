@@ -8,6 +8,18 @@ exclude = [
   # (checked 2026-09-08). Re-check periodically and drop this line once the
   # w3id.org redirect is registered.
   '^https://w3id\.org/lokf/context\.jsonld$',
+  # Publisher DOI resolvers (Wiley, ACM, SAGE, Elsevier) and parliament.uk
+  # answer automated clients with 403 while serving the same pages to a
+  # browser; docs/three-lines-critics.md cites them and each was opened
+  # and read by hand on 2026-09-16. A DOI is a persistent identifier, so
+  # re-check these by hand on the bundle's refresh, not here.
+  '^https://doi\.org/',
+  '^https://www\.parliament\.uk/',
+  # skills/lokf-docent/SKILL.md links its examples page on main by absolute
+  # URL, since installed copies have no relative path to it. The page moved
+  # from EXAMPLES.md to docs/examples/docent.md on 2026-09-16 and exists
+  # only on the branch until that lands; drop this line after the merge.
+  '^https://github\.com/noelmcloughlin/lokf-agent-skills/blob/main/docs/examples/docent\.md$',
 ]
 
 # knowledge_bundle is a symlink to .lokf/knowledge (the Obsidian vault entry

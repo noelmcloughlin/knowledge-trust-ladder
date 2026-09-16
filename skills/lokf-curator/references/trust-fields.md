@@ -63,6 +63,9 @@ Vocabulary fit: <n> concept(s) don't fit the known vocabulary (<types>)   | or: 
 
 Not tied to a signed commit: <h> - <titles>. Recorded as confirmed by a person, but no signed commit stands behind it.   | omit this line entirely when h is 0, or when .lokf/ isn't git-tracked
 
+For a second person to re-check (<n>, picked by a rule the curator cannot steer):
+- <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Independent re-check:` line above 0
+
 <remaining> more not yet checked. Run again anytime - every confirmation counts.
 Want to go through these now?
 ```

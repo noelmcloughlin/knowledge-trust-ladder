@@ -17,11 +17,15 @@ skills/
 docs/
   for-the-curious.md    the mechanics behind the README: four levels of checking, domain schemas
   obsidian.md           the bundle as a vault of its own, and the two plugins
-  three-lines.md        the cast mapped onto the three lines of defence, and what an auditor can check
+  three-lines.md        the roles placed in the three lines of defence, what an auditor can check, and what remains to do and who does it
+  three-lines-critics.md  what the model's critics say, quoted from their own texts, and what a bundle answers and leaves open
   releasing.md          how the three repositories release, and the repository settings it depends on
   signing-commits.md    signing commits, which the provenance gate reads
   threat-model.md       the three repositories' shared security design: what an agent can reach, what holds it, and what a human: confirmation proves
   repository-layout.md  this page
+  examples/
+    docent.md           eight captured docent answers against this repository's own bundle
+    curator.md          placeholder: the curator sessions still to capture
 scripts/
   validate-repository.sh   the checks validate.yml runs
   smoke-test-install.sh    installs all four skills into a throwaway consumer repo and asserts the result

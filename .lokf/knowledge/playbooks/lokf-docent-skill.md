@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-docent/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-12T19:00:00Z"
+  at: "2026-09-16T09:10:00Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
@@ -19,7 +19,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/lokf-curator-skill
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T19:00:00Z"
+  at: "2026-09-16T09:10:00Z"
 ---
 
 # Overview
@@ -28,7 +28,12 @@ Runs **whenever anyone asks**. Bundle first: read `knowledge/index.md`, open
 one to three candidate concepts, widen along typed relations rather than by
 grepping, and verify exact values (versions, endpoints, paths) at the
 concept's `resource` before stating them. Every answer carries a footing -
-which concepts it rests on and how far each has been trusted.
+which concepts it rests on and how far each has been trusted. One switch,
+set by a person in the curation policy (`policies/knowledge-curation.md`,
+the line `Evidence first: yes`), reverses the order for any concept not yet
+confirmed by a person: the quoted source first, then the answer that rests
+on it. No policy, no line, or another value means the usual order, and the
+reader cannot switch it from the conversation.
 
 It is **read-only on `knowledge/`**. Its single write is `.lokf/feedback.md`,
 after asking once per session: a **Miss** (a question the bundle could not
