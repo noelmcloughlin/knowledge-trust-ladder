@@ -67,7 +67,7 @@ Two critiques aim at the kind of solution LOKF is: a machine's output checked by
 - The curator gets a pause of the kind Buçinca describes. The review session opens the source and quotes it, then shows the concept's claim, and only then asks for a verdict.
 - Who confirms what, and how often, is a reviewed policy rather than a habit. That is the direction Green points.
 - The docent has an evidence-first mode. When the curation policy says `Evidence first: yes`, it quotes the source before any answer that rests on a concept not yet confirmed by a person. It is off by default, because Buçinca found such designs cost goodwill.
-- A confirmation says which state of the source it was made against. From lokf 0.9.0 the event carries `revision`: the commit of a file, or the ETag or content digest of a URL, as the curator skill fetched it. A source that changes the day after confirmation is then told apart from one that has not. OKF v0.2's own shape is `by` and `at` alone; LOKF has proposed the field upstream ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and a bundle that carries it is still a valid OKF bundle.
+- A confirmation says which state of the source it was made against, once `revision` lands: the commit of a file, or the ETag or content digest of a URL, as the curator skill fetched it. A source that changes the day after confirmation is then told apart from one that has not. OKF v0.2's own shape is `by` and `at` alone; the field is proposed upstream ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)) and for lokf 0.9.0, not yet released, and a bundle that carries it is still a valid OKF bundle.
 
 **What it leaves open.**
 
