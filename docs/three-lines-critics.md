@@ -73,4 +73,4 @@ Left open, by design: the registrar never judges truth, and the librarian's sche
 
 Not the bundle's role. LOKF does not ask its second line to judge content, so that judgement lands on the curator, a named person in the first line; the organisation assigns curators through the curation policy and answers for their incentives and skill.
 
-The gaps left open are collected, by owner, under [What remains to do, and who does it](three-lines.md#what-remains-to-do-and-who-does-it).
+The gaps left open across the three sections above are collected, by owner, under [What remains to do, and who does it](three-lines.md#what-remains-to-do-and-who-does-it).
