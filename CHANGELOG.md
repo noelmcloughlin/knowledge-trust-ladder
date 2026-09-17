@@ -6,24 +6,25 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
-- **Portability pages for the curator and the librarian, and the sidecar's rewritten as a host matrix.** GitHub, GitLab, Forgejo, no forge, no git, Windows and PowerShell, macOS, synced folders and an Obsidian vault: what works, what is lost, the substitute. The curator's page carries the signing-key identity route and the no-forge rule; the sidecar's carries the GitLab and Forgejo porting recipe, the PowerShell launch line and the forge-free gate.
-- **Every skill declares what it needs.** The Agent Skills `compatibility` field on each `SKILL.md` names the shell, git, `uv` and identity a skill depends on; contract check 3b holds it to the spec's 500 characters.
-- **A forge-free provenance gate.** `knowledge-provenance.sh` verifies each confirmation's commit signature against a public key the repository carries per curator id under `.lokf/curators/` - GPG as `<id>.asc`, subkeys included, or SSH as `<id>.pub` - with plain git and gpg or ssh-keygen on any host. Unsigned, another key, an expired or revoked key, or no key on file each fail it, and so does an id's key landing in the same change as that id's confirmation. The GitHub job runs it as a second opinion when a key file exists. Check 13 proves each outcome with throwaway GPG, subkey and SSH keys.
-- **A prerequisites page for people who cannot fix what the preflight reports.** `lokf-sidecar/references/prerequisites.md` gives each preflight line its plain meaning, what it stops, who normally fixes it and the request to send them; every skill writes that note for a person who cannot act on a line themselves, and check 12 holds the page to every line the preflight can print.
-- **A preflight every skill runs first.** `knowledge-preflight.sh`, laid down by the sidecar beside the conventions script, prints one read-only screen: host and shell, bundle, git and line endings, forge and gate, authenticated identity and signing, the keys on file for the forge-free gate and whether this machine's is among them, toolkit, which skill copies are installed and whether they differ, whether the host's copies still match the installed templates, and whether the session is attended. It ends on a summary naming what is missing and which steps that disables, so a missing `gh` or `uv` is said before a step is offered, never after. Check 12 runs it here, on a bare directory, and on a CRLF bundle.
-- **The sidecar lays down `.lokf/.gitattributes`**, keeping the bundle on LF on every machine so a Windows checkout gives the same verdict as CI.
-- **Three more conventions the gate checks.** One file per `id` (a sync client's conflict copy carries its original's and silently merged into it in the graph), lowercase paths (two paths differing only by case collide on Windows, macOS and SharePoint, and sync clients name conflict copies with spaces, parentheses or host names), and a closed frontmatter block with no byte order mark. Check 11 proves each.
+- **Portability pages for the curator and the librarian, and the sidecar's rewritten as a host matrix.** What works, what is lost and the substitute on GitHub, GitLab, Forgejo, no forge, no git, Windows and PowerShell, macOS, synced folders and an Obsidian vault.
+- **Every skill declares what it needs** in the Agent Skills `compatibility` field; check 3b holds it to the spec's 500 characters.
+- **A forge-free provenance gate.** `knowledge-provenance.sh` verifies each confirmation's commit signature against the curator's public key on file under `.lokf/curators/`, GPG with its subkeys or SSH, with plain git and gpg or ssh-keygen; check 13 proves each outcome with throwaway keys.
+- **A prerequisites page** gives each preflight line its plain meaning, who fixes it and what to send them, for a person who cannot act on it themselves; check 12 holds it to every line the preflight can print.
+- **A preflight every skill runs first.** `knowledge-preflight.sh` prints what this machine can do, from shell and git to identity, signing, keys on file and toolkit, and ends by naming what is missing and which steps that disables; check 12 exercises it.
+- **The sidecar lays down `.lokf/.gitattributes`**, keeping the bundle on LF so a Windows checkout gives CI's verdict.
+- **Three more conventions the gate checks**: one file per `id`, lowercase paths, and a closed frontmatter block with no byte order mark; check 11 proves each.
 
 ### Changed
 
-- **The curator says what it can record before offering a session.** Step 1 gains a *Ready to record* line from the preflight and offers only the verbs it allows; identity has three routes - `gh` on GitHub, `glab` on GitLab, the local signing key resolved through the forge's public key listing - and a rule for a host with no forge; the digest and sampling commands have a macOS fallback; the signing walkthrough is linked. The librarian names files in lowercase, leaves `revision` off an unversioned source, and hands off on a host without git; the docent's feedback attribution names the same routes.
+- **The curator says what it can record before offering a session**, from a *Ready to record* line with three identity routes - `gh`, `glab`, the signing key the forge lists - and a rule for a host with no forge. The librarian names files in lowercase and hands off on a host without git; the docent's feedback attribution names the same routes.
 
 ### Fixed
 
-- **The librarian's version check names a command that exists.** `uv pip index` is not a subcommand; the check now uses `uvx --from pip pip index versions lokf`, with PyPI's JSON as the fallback.
-- **A Windows checkout no longer blinds the conventions script.** CRLF line endings made it report every log heading as malformed and skip the frontmatter rules unread, and a byte order mark skipped a file the same way. It now reads files with both stripped, and check 11 holds a CRLF bundle to the same verdict as LF.
-- **A bundle reached through a link is read, not passed unread.** On the rearranged layout the portability page allows, `find` never entered the `.lokf/knowledge` link, so the conventions script printed OK over zero files and the preflight counted none; both now read through it, and checks 11 and 12 plant a linked bundle.
-- **The preflight reads `commit.gpgsign` as git does.** `yes` and `1` counted as off, and signing with no `user.signingkey` - git's default key - was reported as off too. All three scripts also stop on one line naming bash when run under `sh`, instead of failing mid-screen.
+- **The librarian's version check names a command that exists**: `uvx --from pip pip index versions lokf`, since `uv pip index` is not a subcommand.
+- **A Windows checkout no longer blinds the conventions script.** It reads files with CRLF and a byte order mark stripped, and check 11 holds a CRLF bundle to the same verdict as LF.
+- **A bundle reached through a link is read, not passed unread.** `find` never entered a linked `.lokf/knowledge`, so the conventions script and the preflight saw zero files; checks 11 and 12 plant one.
+- **The preflight reads `commit.gpgsign` as git does**, taking `yes` and `1` as on and no `user.signingkey` as git's default key; all three scripts stop on one line under `sh`.
+- **The gate refuses a `human:` id it cannot look up.** The schema accepts `human:-x`, and both the GitHub job and the forge-free script skipped such ids as unparseable, so an unsigned confirmation under one passed unseen.
 
 ## [0.19.0] - 2026-09-17
 

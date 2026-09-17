@@ -416,13 +416,13 @@ rm -rf "$bare"
 # sidecar's prerequisites page - the plain-words meaning, who fixes it and
 # what to send them - so a new preflight line cannot land without one.
 prereq="skills/lokf-sidecar/references/prerequisites.md"
-for key in $(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u); do
+while IFS= read -r key; do
   if grep -q "^| \`$key\` |" "$prereq"; then
     ok "prerequisites.md explains the preflight's '$key' line"
   else
     err "prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
   fi
-done
+done < <(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u)
 for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh; do
   if out="$(sh "$templates/scripts/$s" x 2>&1)"; then
     err "$s run under sh did not stop: $out"
@@ -484,6 +484,8 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
     expect_pv "HEAD~1" 1 'is unsigned' "report an unsigned confirmation"
     confirmed nobody > "$k/c.md" && pv_git add -A && pv_git commit -q -S -m nobody
     expect_pv "HEAD~1" 1 'no key on file' "report an id with no key on file"
+    confirmed '../odd' > "$k/c2.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'odd id'
+    expect_pv "HEAD~1" 1 'not a login this gate can check' "refuse an id it cannot look up rather than skip it"
     confirmed contract > "$k/d.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m wrongkey
     expect_pv "HEAD~1" 1 'signed by another key' "report a confirmation signed by a key that is not that curator's"
     pv_gpg --armor --export "$fpr2" > "$c/other.asc" && confirmed other > "$k/e.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m 'key and own confirmation'

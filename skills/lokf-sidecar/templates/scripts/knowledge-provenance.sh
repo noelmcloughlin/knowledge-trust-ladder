@@ -110,8 +110,10 @@ rekeyed_said=""
 
 checked=0
 for sha in $commits; do
+  # Every id the schema would accept (anything after `human:` up to a space
+  # or quote), so an id this script cannot check is a finding, never a skip.
   ids="$(git show --format= --unified=0 "$sha" -- "$bundle" knowledge_bundle 2>/dev/null \
-    | grep -E '^\+ *-? *by: *.?human:' | grep -oE 'human:[A-Za-z0-9][A-Za-z0-9._-]*' | sed 's/^human://' | sort -u)"
+    | grep -E '^\+ *-? *by: *.?human:' | grep -oE "human:[^[:space:]\"']+" | sed 's/^human://' | sort -u)"
   [ -n "$ids" ] || continue
   short="$(git rev-parse --short "$sha")"
   format="$(sig_format "$sha")"
@@ -122,6 +124,13 @@ for sha in $commits; do
   fi
   for id in $ids; do
     checked=$((checked + 1))
+    # A forge login is letters, digits, '.', '_' and '-'; anything else names
+    # nobody the gate can look up, and could name a path outside $curators.
+    case "$id" in
+      *[!A-Za-z0-9._-]*|[!A-Za-z0-9]*)
+        say "$short adds a confirmation by human:$id, which is not a login this gate can check (letters, digits, . _ - only)"
+        continue ;;
+    esac
     has_asc=0; has_pub=0
     [ -f "$curators/$id.asc" ] && has_asc=1
     [ -f "$curators/$id.pub" ] && has_pub=1

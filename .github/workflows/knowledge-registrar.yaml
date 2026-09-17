@@ -129,11 +129,13 @@ jobs:
           # individual commits. Anchored on `by:` so that a `human:<id>`
           # mentioned in prose - a send-back note under `## Open questions`
           # carries one by design - is not mistaken for a verification event.
-          # The `.?` tolerates a YAML quote before the actor.
+          # The `.?` tolerates a YAML quote before the actor. The id is taken
+          # as the schema takes it - anything up to a space or quote - so an
+          # id this job cannot look up is refused below, never skipped.
           actors_in() {
             grep -E '^\+' \
               | grep -E 'by:[[:space:]]*.?human:' \
-              | grep -oE 'human:[A-Za-z0-9][A-Za-z0-9._-]*' \
+              | grep -oE "human:[^[:space:]\"']+" \
               | sed 's/^human://' \
               | sort -u
           }
@@ -172,6 +174,14 @@ jobs:
 
           unbacked=()
           for actor in "${actors[@]}"; do
+            # A GitHub login is letters, digits and hyphens; the schema's actor
+            # pattern accepts more, and an id nobody can be looked up under
+            # must not read as a person's confirmation.
+            if ! printf '%s\n' "$actor" | grep -qE '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
+              echo "unbacked: human:${actor} is not a login this gate can check (letters, digits, . _ - only)."
+              unbacked+=("$actor")
+              continue
+            fi
             if printf '%s\n' "$approvers" | grep -qxF -- "$actor"; then
               echo "ok: human:${actor} approved this pull request."
               continue

@@ -22,10 +22,12 @@
 #      `.lokf/`; failing that, the bundle's parent). A source that has gone
 #      should fail the gate now, not wait for the librarian's next refresh.
 #      URLs are never fetched.
-#   6. A commit-shaped `revision` on a `generated` or `verified` event (lokf
-#      0.9.0+ records one) names a commit in this repository that holds the
-#      concept's local `resource`. ETags, digests and version labels pin URLs
-#      and are not checked. Needs the full history: a shallow clone is reported.
+#   6. A commit-shaped `revision` on a `generated` or `verified` event (a
+#      field proposed for lokf 0.9.0; the released 0.8.0 validator rejects it,
+#      so the skills write it only where `lokf validate` accepts it) names a
+#      commit in this repository that holds the concept's local `resource`.
+#      ETags, digests and version labels pin URLs and are not checked. Needs
+#      the full history: a shallow clone is reported.
 #   7. One file per `id`. A sync client's conflict copy (OneDrive, Dropbox,
 #      Drive, iCloud) or a pasted duplicate carries the same `id`, passes
 #      `lokf validate`, and silently merges into the original in the graph.
@@ -36,6 +38,13 @@
 #   9. Every concept starts with a `---` frontmatter block that closes, with no
 #      byte order mark in front of it. A BOM from a web editor or Notepad, or a
 #      file with no block at all, would otherwise pass this script unread.
+#
+# Rules 2, 3 and 8 are house rules, stricter than the format: OKF permits an
+# unquoted datetime, a bare `verified` mapping (which consumers MUST read as
+# a one-item list) and any file name. This bundle holds itself to more because
+# the toolkit and the two Obsidian plugins read those forms differently, and
+# because case-insensitive hosts do. A bundle written to the letter of OKF may
+# fail them; that is a policy of the gate, not a defect in the bundle.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
