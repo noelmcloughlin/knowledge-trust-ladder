@@ -25,6 +25,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A bundle reached through a link is read, not passed unread.** `find` never entered a linked `.lokf/knowledge`, so the conventions script and the preflight saw zero files; checks 11 and 12 plant one.
 - **The preflight reads `commit.gpgsign` as git does**, taking `yes` and `1` as on and no `user.signingkey` as git's default key; all three scripts stop on one line under `sh`.
 - **The gate refuses a `human:` id it cannot look up.** The schema accepts `human:-x`, and both the GitHub job and the forge-free script skipped such ids as unparseable, so an unsigned confirmation under one passed unseen.
+- **The gate reads a confirmation whole, not its `by:` line.** Re-dating an existing event, moving its `revision`, or writing it in flow style left no added `by: human:` line and passed both gates; events are now compared whole between base and head, keyed by the concept's `id`, so a renamed concept keeps its confirmations and a copied one does not. Check 13 proves each.
 
 ## [0.19.0] - 2026-09-17
 

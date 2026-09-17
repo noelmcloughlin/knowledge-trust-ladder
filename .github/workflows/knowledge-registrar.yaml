@@ -140,10 +140,55 @@ jobs:
               | sort -u
           }
 
+          # An added line is not the only way to claim a confirmation: a
+          # re-dated `at`, a moved `revision`, or an event written in flow
+          # style leaves no `+ by:` line behind. So the human events of every
+          # concept are read whole - `<id>\t<by>\t<at>\t<revision>`, keyed by
+          # the concept's id so a rename keeps them and a copy does not - and
+          # any event present at head and absent at base names an actor who
+          # must stand behind it. Same extractor as knowledge-provenance.sh.
+          human_events() {
+            awk -v path="$1" '
+            function val(s) { sub(/^[^:]*:[[:space:]]*/, "", s); gsub(/["'"'"']/, "", s); sub(/[[:space:]]+$/, "", s); return s }
+            function kv(l,  k) { k = l; sub(/:.*/, "", k); sub(/^[[:space:]]+/, "", k)
+              if (k == "by") by = val(l); else if (k == "at") at = val(l); else if (k == "revision") rev = val(l) }
+            function emit() { if (inev && by ~ /^human:/) { sub(/^human:/, "", by); out = out (cid ? cid : path) "\t" by "\t" at "\t" rev "\n" }
+              inev = 0; by = ""; at = ""; rev = "" }
+            function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ",")
+              for (i = 1; i <= n; i++) kv(parts[i]); emit() }
+            BEGIN { fm = 0; inv = 0; inev = 0; cid = ""; out = "" }
+            NR == 1 { if ($0 == "---") { fm = 1; next } else exit }
+            fm && $0 == "---" { emit(); exit }
+            /^id:/ { cid = val($0) }
+            /^verified:/ { emit(); inv = 1; rest = $0; sub(/^verified:[[:space:]]*/, "", rest)
+              if (rest ~ /^\{/) { flow(rest); inv = 0 }
+              else if (rest ~ /^\[/) { gsub(/[\[\]]/, "", rest); n = split(rest, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
+              next }
+            inv && /^[^[:space:]-]/ { emit(); inv = 0 }
+            inv && /^[[:space:]]*-[[:space:]]*\{/ { rest = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", rest); flow(rest); next }
+            inv && /^[[:space:]]*-[[:space:]]+/ { emit(); inev = 1; rest = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", rest); kv(rest); next }
+            inv && !inev && /^[[:space:]]+[a-z_]+:/ { inev = 1; kv($0); next }
+            inv && inev && /^[[:space:]]+[a-z_]+:/ { kv($0); next }
+            END { emit(); printf "%s", out }'
+          }
+          events_at() {  # ref -> every human event in the bundle at that ref, sorted
+            { git ls-tree -r --name-only "$1" -- .lokf/knowledge knowledge_bundle 2>/dev/null | grep '\.md$' | while IFS= read -r f; do
+                git show "$1:$f" 2>/dev/null | human_events "$f" || true
+              done | sort; } || true
+          }
+          changed_actors() {  # base head -> actors of events at head that base does not hold
+            { git diff --name-only "$1" "$2" -- .lokf/knowledge knowledge_bundle | grep '\.md$' | while IFS= read -r f; do
+                git show "$2:$f" 2>/dev/null | human_events "$f" || true
+              done | sort | comm -13 <(events_at "$1") - | cut -f2; } || true
+          }
+
           base="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
 
           mapfile -t actors < <(
-            git diff --unified=0 "$base" "$HEAD_SHA" -- .lokf/knowledge knowledge_bundle | actors_in
+            {
+              git diff --unified=0 "$base" "$HEAD_SHA" -- .lokf/knowledge knowledge_bundle | actors_in
+              changed_actors "$base" "$HEAD_SHA"
+            } | sort -u
           )
 
           if [ "${#actors[@]}" -eq 0 ]; then
@@ -193,8 +238,8 @@ jobs:
             # GitHub will not let anyone approve their own pull request.
             introducing=()
             for sha in "${bundle_shas[@]}"; do
-              if git show --unified=0 --format= "$sha" -- .lokf/knowledge knowledge_bundle \
-                   | actors_in | grep -qxF -- "$actor"; then
+              if { git show --unified=0 --format= "$sha" -- .lokf/knowledge knowledge_bundle | actors_in
+                   changed_actors "$sha^" "$sha"; } | grep -qxF -- "$actor"; then
                 introducing+=("$sha")
               fi
             done

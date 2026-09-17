@@ -480,6 +480,17 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
     pv_git add -A && pv_git commit -q --no-gpg-sign -m base
     confirmed contract > "$k/a.md" && pv_git commit -q -S -am confirm
     expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a confirmation signed by the curator on file"
+    # A confirmation is the whole event, not its `by:` line: re-dating an
+    # existing one, in a flow-style layout or a block one, is a claim by that
+    # curator; moving the concept is not, since events are keyed by its id.
+    sed -i 's/2026-09-17T00:00:00Z/2026-09-18T00:00:00Z/' "$k/a.md" && pv_git commit -q --no-gpg-sign -am 'redated, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "report a re-dated confirmation nobody signed"
+    sed -i 's/2026-09-18T00:00:00Z/2026-09-19T00:00:00Z/' "$k/a.md" && pv_git commit -q -S -am 'redated by its curator'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a re-dated confirmation its curator signed"
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/flow\nverified: [{ by: human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n' > "$k/flow.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'flow style, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "see a flow-style event that leaves no by: line in the diff"
+    pv_git mv "$k/flow.md" "$k/moved.md" && pv_git commit -q --no-gpg-sign -m 'moved, unsigned'
+    expect_pv "HEAD~1" 0 '^OK - 0 confirmation' "let a confirmed concept move under its id without a new claim"
     confirmed contract > "$k/b.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m unsigned
     expect_pv "HEAD~1" 1 'is unsigned' "report an unsigned confirmation"
     confirmed nobody > "$k/c.md" && pv_git add -A && pv_git commit -q -S -m nobody

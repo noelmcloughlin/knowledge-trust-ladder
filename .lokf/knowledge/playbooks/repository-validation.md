@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T15:49:14Z"
+  at: "2026-09-17T15:57:11Z"
 status: draft
 references:
   - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
@@ -15,7 +15,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T15:49:14Z"
+  at: "2026-09-17T15:57:11Z"
 ---
 
 # Overview
@@ -53,7 +53,11 @@ file - with a GPG key, a GPG signing subkey, or an SSH key - and failing an
 unsigned one, an unknown id, an id the gate cannot look up (which it used to
 skip), a wrong key of either kind and an id's own key registered in the same
 range as their confirmation, while another curator's key landing alongside
-passes, with throwaway keys. Then
+passes; and, since events are read whole and keyed by the concept's `id`
+rather than found as added `by:` lines, failing a re-dated confirmation
+nobody signed and an unsigned flow-style event, while passing the same
+re-date signed by its curator and a confirmed concept that merely moved -
+all with throwaway keys. Then
 `gh skill publish --dry-run` runs.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs

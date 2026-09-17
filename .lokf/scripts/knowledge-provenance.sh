@@ -8,19 +8,21 @@
 # one public key per curator id under `.lokf/curators/` - `<id>.asc`, a GPG
 # key as `gpg --armor --export` writes it, or `<id>.pub`, an OpenSSH public
 # key as `ssh-keygen` writes it, one key per line - and every commit in a
-# range that adds a `human:<id>` line under the bundle must be signed by a
-# key on file for exactly that id. A GPG key counts with every subkey it
-# carries, since most keys sign with a subkey; an SSH key is verified with
-# `ssh-keygen -Y verify` (OpenSSH 8.2+) against the commit's own payload.
+# range that adds or changes a `human:<id>` verification event under the
+# bundle must be signed by a key on file for exactly that id. A GPG key
+# counts with every subkey it carries, since most keys sign with a subkey; an
+# SSH key is verified with `ssh-keygen -Y verify` (OpenSSH 8.2+) against the
+# commit's own payload.
 #
 # Findings, one line each, exit 1:
 #   - the commit is unsigned, or its signature does not verify;
 #   - it is signed by a key other than the one on file for that id, or by a
 #     key that has expired or been revoked;
-#   - the id has no key on file (a stranger, or a curator not yet added);
-#   - the range adds, changes or removes that id's own key file *and* adds a
-#     confirmation by them - a key lands in its own reviewed change first, so
-#     nobody registers a key and vouches with it in one step.
+#   - the id has no key on file (a stranger, or a curator not yet added), or
+#     is not a login any forge could list;
+#   - the range adds, changes or removes that id's own key file *and* records
+#     a confirmation by them - a key lands in its own reviewed change first,
+#     so nobody registers a key and vouches with it in one step.
 # No `.lokf/curators/` directory: says so and exits 0 - nothing to verify
 # against, and the forge's gate, if any, is the only check.
 #
@@ -97,6 +99,43 @@ sig_format() {  # commit -> pgp | ssh | none
   esac
 }
 
+# Human verification events of a concept, `<id or path>\t<by>\t<at>\t<revision>`
+# one per line, whatever the YAML layout: a block list in any key order, a
+# flow-style item, a flow sequence, a bare mapping. Keyed by the concept's
+# `id` so a renamed concept keeps its events and a confirmation copied into
+# another concept does not. An event present in a commit's tree and absent
+# from its parent's is new or changed - a re-dated `at` or a moved `revision`
+# is as much a claim as a new line - and its actor must stand behind it.
+human_events() {  # path -> events, reading the concept on stdin
+  awk -v path="$1" '
+  function val(s) { sub(/^[^:]*:[[:space:]]*/, "", s); gsub(/["'"'"']/, "", s); sub(/[[:space:]]+$/, "", s); return s }
+  function kv(l,  k) { k = l; sub(/:.*/, "", k); sub(/^[[:space:]]+/, "", k)
+    if (k == "by") by = val(l); else if (k == "at") at = val(l); else if (k == "revision") rev = val(l) }
+  function emit() { if (inev && by ~ /^human:/) { sub(/^human:/, "", by); out = out (cid ? cid : path) "\t" by "\t" at "\t" rev "\n" }
+    inev = 0; by = ""; at = ""; rev = "" }
+  function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ",")
+    for (i = 1; i <= n; i++) kv(parts[i]); emit() }
+  BEGIN { fm = 0; inv = 0; inev = 0; cid = ""; out = "" }
+  NR == 1 { if ($0 == "---") { fm = 1; next } else exit }
+  fm && $0 == "---" { emit(); exit }
+  /^id:/ { cid = val($0) }
+  /^verified:/ { emit(); inv = 1; rest = $0; sub(/^verified:[[:space:]]*/, "", rest)
+    if (rest ~ /^\{/) { flow(rest); inv = 0 }
+    else if (rest ~ /^\[/) { gsub(/[\[\]]/, "", rest); n = split(rest, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
+    next }
+  inv && /^[^[:space:]-]/ { emit(); inv = 0 }
+  inv && /^[[:space:]]*-[[:space:]]*\{/ { rest = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", rest); flow(rest); next }
+  inv && /^[[:space:]]*-[[:space:]]+/ { emit(); inev = 1; rest = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", rest); kv(rest); next }
+  inv && !inev && /^[[:space:]]+[a-z_]+:/ { inev = 1; kv($0); next }
+  inv && inev && /^[[:space:]]+[a-z_]+:/ { kv($0); next }
+  END { emit(); printf "%s", out }'
+}
+events_at() {  # ref -> every human event in the bundle at that ref, sorted
+  git ls-tree -r --name-only "$1" -- "$bundle" knowledge_bundle 2>/dev/null | grep '\.md$' | while IFS= read -r f; do
+    git show "$1:$f" 2>/dev/null | human_events "$f"
+  done | sort
+}
+
 # The range, oldest first, and the ids whose key file it adds, changes or
 # removes: a confirmation by one of them in the same range fails outright.
 commits="$(git rev-list --reverse "$base..$head" 2>/dev/null)" || { echo "cannot resolve $base..$head" >&2; exit 2; }
@@ -111,9 +150,17 @@ rekeyed_said=""
 checked=0
 for sha in $commits; do
   # Every id the schema would accept (anything after `human:` up to a space
-  # or quote), so an id this script cannot check is a finding, never a skip.
-  ids="$(git show --format= --unified=0 "$sha" -- "$bundle" knowledge_bundle 2>/dev/null \
-    | grep -E '^\+ *-? *by: *.?human:' | grep -oE "human:[^[:space:]\"']+" | sed 's/^human://' | sort -u)"
+  # or quote) on an added line, plus the actor of every event new or changed
+  # against the parent tree; an id this script cannot check is a finding,
+  # never a skip.
+  events_at "$sha^" > "$home/parent.events"
+  ids="$( {
+    git show --format= --unified=0 "$sha" -- "$bundle" knowledge_bundle 2>/dev/null \
+      | grep -E '^\+ *-? *by: *.?human:' | grep -oE "human:[^[:space:]\"']+" | sed 's/^human://'
+    git diff-tree --no-commit-id --name-only -r "$sha" -- "$bundle" knowledge_bundle 2>/dev/null | grep '\.md$' | while IFS= read -r f; do
+      git show "$sha:$f" 2>/dev/null | human_events "$f"
+    done | sort | comm -13 "$home/parent.events" - | cut -f2
+  } | sort -u)"
   [ -n "$ids" ] || continue
   short="$(git rev-parse --short "$sha")"
   format="$(sig_format "$sha")"
@@ -128,7 +175,7 @@ for sha in $commits; do
     # nobody the gate can look up, and could name a path outside $curators.
     case "$id" in
       *[!A-Za-z0-9._-]*|[!A-Za-z0-9]*)
-        say "$short adds a confirmation by human:$id, which is not a login this gate can check (letters, digits, . _ - only)"
+        say "$short adds or changes a confirmation by human:$id, which is not a login this gate can check (letters, digits, . _ - only)"
         continue ;;
     esac
     has_asc=0; has_pub=0
@@ -143,38 +190,38 @@ for sha in $commits; do
         continue ;;
     esac
     if [ "$has_asc" -eq 0 ] && [ "$has_pub" -eq 0 ]; then
-      say "$short adds a confirmation by human:$id, who has no key on file at $curators/$id.asc or $id.pub"
+      say "$short adds or changes a confirmation by human:$id, who has no key on file at $curators/$id.asc or $id.pub"
       continue
     fi
     case "$format" in
       none)
-        say "$short adds a confirmation by human:$id but is unsigned" ;;
+        say "$short adds or changes a confirmation by human:$id but is unsigned" ;;
       pgp)
         if [ "$has_asc" -eq 0 ]; then
-          say "$short adds a confirmation by human:$id with a GPG signature, but the key on file for them is an SSH key ($id.pub)"
+          say "$short adds or changes a confirmation by human:$id with a GPG signature, but the key on file for them is an SSH key ($id.pub)"
         elif [ "$gpg_ok" -eq 0 ]; then
-          say "$short adds a confirmation by human:$id with a GPG signature, and gpg is not installed here to verify it"
+          say "$short adds or changes a confirmation by human:$id with a GPG signature, and gpg is not installed here to verify it"
         elif printf '%s\n' "$status" | grep -qE '^\[GNUPG:\] (EXPKEYSIG|REVKEYSIG|EXPSIG)'; then
-          say "$short adds a confirmation by human:$id signed by a key that has expired or been revoked"
+          say "$short adds or changes a confirmation by human:$id signed by a key that has expired or been revoked"
         elif [ -z "$signer" ]; then
           unknown="$(printf '%s\n' "$status" | awk '/^\[GNUPG:\] NO_PUBKEY/ {print $3; exit}')"
           if [ -n "$unknown" ]; then
-            say "$short adds a confirmation by human:$id but is signed by another key ($unknown, on file for nobody)"
+            say "$short adds or changes a confirmation by human:$id but is signed by another key ($unknown, on file for nobody)"
           else
-            say "$short adds a confirmation by human:$id but its signature does not verify (damaged, or made over different content)"
+            say "$short adds or changes a confirmation by human:$id but its signature does not verify (damaged, or made over different content)"
           fi
         elif ! gpg_fprs "$id" | grep -qx "$signer"; then
-          say "$short adds a confirmation by human:$id but is signed by another key (${signer#"${signer%????????????????}"} is not in $id.asc)"
+          say "$short adds or changes a confirmation by human:$id but is signed by another key (${signer#"${signer%????????????????}"} is not in $id.asc)"
         fi ;;
       ssh)
         if [ "$has_pub" -eq 0 ]; then
-          say "$short adds a confirmation by human:$id with an SSH signature, but the key on file for them is a GPG key ($id.asc)"
+          say "$short adds or changes a confirmation by human:$id with an SSH signature, but the key on file for them is a GPG key ($id.asc)"
         elif ! have ssh-keygen; then
-          say "$short adds a confirmation by human:$id with an SSH signature, and ssh-keygen is not installed here to verify it"
+          say "$short adds or changes a confirmation by human:$id with an SSH signature, and ssh-keygen is not installed here to verify it"
         else
           signature_of "$sha" > "$home/$sha.sig"
           if ! payload_of "$sha" | ssh-keygen -Y verify -f "$(allowed_of "$id")" -I "$id" -n git -s "$home/$sha.sig" >/dev/null 2>&1; then
-            say "$short adds a confirmation by human:$id but its SSH signature is not by a key in $id.pub"
+            say "$short adds or changes a confirmation by human:$id but its SSH signature is not by a key in $id.pub"
           fi
         fi ;;
     esac
@@ -182,6 +229,6 @@ for sha in $commits; do
 done
 
 if [ "$fail" -eq 0 ]; then
-  echo "OK - $checked confirmation(s) in $base..$head signed by the key on file for their curator"
+  echo "OK - $checked confirmation(s), new or changed, in $base..$head signed by the key on file for their curator"
 fi
 exit "$fail"

@@ -6,7 +6,8 @@
   its pruned page and the shortened critics page; the trust label and the
   curator and librarian playbooks now say `revision` is proposed for lokf
   0.9.0 and unreleased; the contract playbook adds the id the gate used to
-  skip.
+  skip, and the gate's reading of a confirmation whole - a re-dated event or
+  a flow-style one counts, a renamed concept does not.
 * **Audit follow-up (thirteenth pass)**: the sidecar, curator and docent
   playbooks, the contract and the threat model follow the forge-free gate's
   SSH and subkey support, the linked-bundle and `commit.gpgsign` fixes, and
