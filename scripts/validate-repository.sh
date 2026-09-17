@@ -599,7 +599,7 @@ dupes="$(printf '%s\n' "${headings[@]}" | sort | uniq -d)"
 if [[ -z "$dupes" ]]; then
   ok "every released version in CHANGELOG.md has exactly one heading"
 else
-  err "CHANGELOG.md has more than one heading for: $(printf '%s ' $dupes)"
+  err "CHANGELOG.md has more than one heading for: $(printf '%s' "$dupes" | tr '\n' ' ')"
 fi
 
 say ""
