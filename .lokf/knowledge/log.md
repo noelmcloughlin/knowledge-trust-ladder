@@ -2,6 +2,11 @@
 
 ## 2026-09-17
 
+* **Wrapper restore made unconditional**: `knowledge-librarian.sh` restored
+  `.git/config` and `.git/hooks/` only after a clean agent return, so a
+  failing agent or a cancelled job left a poisoned config in the checkout.
+  An `EXIT` trap now restores on every way out; the layout tests prove the
+  failing and cancelled cases. `playbooks/lokf-librarian-skill.md` follows.
 * **Schema fallback pinned**: the no-Python fallback URL in both skills'
   Sources notes, the sidecar README and `references/lokf-toolkit.md` now
   points at the `v0.8.0` tag matching the `lokf` floor, not `main`, which

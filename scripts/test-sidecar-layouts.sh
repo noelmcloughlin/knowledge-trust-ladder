@@ -12,7 +12,9 @@
 #
 #   1. the librarian wrapper's boundary check accepts an edit made under either
 #      name - with the doorway, without it, and in the rearranged shape - and
-#      still refuses one outside the bundle;
+#      still refuses one outside the bundle; and (1b) the wrapper puts
+#      .git/config and .git/hooks/ back when the agent fails or the job is
+#      cancelled, not only when it returns cleanly;
 #   2. the librarian workflow's change detection sees a bundle edit in each of
 #      those shapes, and its packaging step stages it without failing when the
 #      second name does not exist;
@@ -106,6 +108,36 @@ else err "no-doorway: an edit via .lokf/knowledge/a.md was refused (exit $status
 status="$(run_wrapper "$host" README.md)"
 if [ "$status" = 3 ]; then ok "no-doorway: an edit to README.md is refused (exit 3)"
 else err "no-doorway: an edit outside the bundle was not refused (exit $status)"; fi
+
+# 1b. The wrapper restores .git/config and .git/hooks/ on every way out, not
+# only after a clean return: an agent that poisons both and then exits non-zero
+# (set -e ends the wrapper there) or gets the job cancelled (SIGTERM, which
+# bash delivers once the agent has exited) must leave neither behind, and the
+# wrapper's own exit status must be the agent's, or the signal's.
+poison_agent="$work/poison-agent.sh"
+cat > "$poison_agent" <<'AGENT'
+#!/usr/bin/env bash
+git config core.hooksPath /nonexistent/hooks
+printf '#!/bin/sh\necho hooked\n' > .git/hooks/pre-commit
+case "${POISON_THEN:-fail}" in
+  fail) exit 7 ;;
+  term) kill -TERM "$PPID"; exit 0 ;;
+esac
+AGENT
+chmod +x "$poison_agent"
+for way in fail term; do
+  host="$work/wrapper-poison-$way"
+  make_host "$host" default
+  status=0
+  ( cd "$host" && AGENT_CLI="$poison_agent" POISON_THEN="$way" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+  case "$way" in fail) want=7 ;; term) want=143 ;; esac
+  if [ "$status" = "$want" ]; then ok "poison/$way: the wrapper exits with the agent's status ($want)"
+  else err "poison/$way: the wrapper exited $status, expected $want"; fi
+  if git -C "$host" config core.hooksPath >/dev/null 2>&1; then err "poison/$way: core.hooksPath survived the agent's exit"
+  else ok "poison/$way: .git/config was restored"; fi
+  if [ -e "$host/.git/hooks/pre-commit" ]; then err "poison/$way: the dropped hook survived the agent's exit"
+  else ok "poison/$way: .git/hooks/ was restored"; fi
+done
 
 echo "2. the librarian workflow's change detection and packaging"
 detect='git status --porcelain -- .lokf/knowledge knowledge_bundle'

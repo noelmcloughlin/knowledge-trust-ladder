@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Security
+
+- **The librarian wrapper restores `.git/config` and `.git/hooks/` on every exit.** The restore ran only after a clean return, so an agent that poisoned `core.hooksPath` or `core.fsmonitor` and then exited non-zero, or a cancelled job, left them in the checkout for the workflow's next steps to read. An `EXIT` trap now restores on failure and on the runner's signals; the layout tests prove both. Reported by a Socket audit on skills.sh.
+
 ## [0.19.1] - 2026-09-17
 
 ### Fixed
