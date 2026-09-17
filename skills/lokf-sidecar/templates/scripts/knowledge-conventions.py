@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import re
 import sys
-from datetime import date, datetime
 from pathlib import Path
 
 import yaml
@@ -97,7 +96,7 @@ def find_unquoted_at(node, where: str) -> list[str]:
     findings: list[str] = []
     if isinstance(node, dict):
         for key, value in node.items():
-            if key == "at" and isinstance(value, (date, datetime)):
+            if key == "at" and not isinstance(value, str):
                 findings.append(f"{where}at")
             findings.extend(find_unquoted_at(value, f"{where}{key}."))
     elif isinstance(node, list):
@@ -125,7 +124,10 @@ def check_file(path: Path, ids: dict[str, list[Path]]) -> list[str]:
     try:
         frontmatter = yaml.safe_load(fm_text)
     except yaml.YAMLError as exc:
-        findings.append(f"{path}: frontmatter is not valid YAML - {exc}")
+        problem = getattr(exc, "problem", None) or " ".join(str(exc).split())
+        mark = getattr(exc, "problem_mark", None)
+        where = f" at line {mark.line + 2}" if mark is not None else ""
+        findings.append(f"{path}: frontmatter is not valid YAML - {problem}{where}")
         return findings
     if not isinstance(frontmatter, dict):
         findings.append(f"{path}: frontmatter is not a mapping")
@@ -136,7 +138,8 @@ def check_file(path: Path, ids: dict[str, list[Path]]) -> list[str]:
     for what in plain_spellings(fm_text):
         findings.append(f"{path}: frontmatter uses {what} - write it plainly, so the gate reads the event a parser reads")
 
-    # 2. every `at:` quoted - unquoted, YAML resolves it to a date/datetime.
+    # 2. every `at:` quoted - unquoted, YAML resolves it to a datetime, a
+    #    date or a number, and only a string reaches every consumer the same.
     for where in find_unquoted_at(frontmatter, ""):
         findings.append(f"{path}: unquoted timestamp at {where}")
 

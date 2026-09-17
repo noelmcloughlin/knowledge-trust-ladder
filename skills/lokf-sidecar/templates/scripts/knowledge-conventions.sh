@@ -162,16 +162,18 @@ done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
 # ---- 2, 3, 4, 7, 9, 10. the parser's half ------------------------------------
 py="$(dirname "$0")/knowledge-conventions.py"
+skipped=""
 if command -v uv >/dev/null 2>&1; then
   if ! out="$(uv run --quiet "$py" "$bundle" 2>&1)"; then
     printf '%s\n' "$out"
     fail=1
   fi
 else
-  echo "uv not found - rules 2, 3, 4, 7, 9 and 10 (the parser's half) were not checked; install uv, or run $py directly with python3 and pyyaml" >&2
+  skipped="rules 2, 3, 4, 7, 9 and 10 not checked: uv not found"
+  echo "$skipped - install uv, or run $py directly with python3 and pyyaml" >&2
 fi
 
 if [ "$fail" -eq 0 ]; then
-  echo "OK - $bundle keeps the conventions lokf validate cannot check"
+  echo "OK - $bundle keeps the conventions lokf validate cannot check${skipped:+ ($skipped)}"
 fi
 exit "$fail"

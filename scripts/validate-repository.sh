@@ -336,22 +336,40 @@ mkdir -p "$bad/k/Upper" && printf -- '---\ntype: Service\n---\n' > "$bad/k/Upper
 # Rule 10: an event spelt so that the gates' line readers cannot see it.
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/q\nverified:\n  - "by": human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n' > "$bad/k/x/q-quotedkey.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/t\nverified: [{ by: !!str human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n' > "$bad/k/x/t-tag.md"
+# What only a parser sees: a multi-line flow item with an unquoted `at`, a
+# number where a timestamp should be, a block that does not parse (reported
+# on one line), and a block that is a list rather than a mapping. And what a
+# parser must not see: a second librarian event inside a body code fence.
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fl\nverified: [\n  { by: process:lokf-librarian,\n    at: 2026-09-14T00:00:00Z }\n]\n---\n' > "$bad/k/x/fl-flow.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/n\nverified:\n  - by: process:lokf-librarian\n    at: 20260914\n---\n' > "$bad/k/x/n-int.md"
+printf -- '---\ntype: Service\nverified: [unclosed\n---\n' > "$bad/k/x/y-bad.md"
+printf -- '---\n- just a list\n---\n' > "$bad/k/x/l-list.md"
+# shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n' > "$bad/k/x/fence.md"
 findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
 rm -rf "$bad"
 for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found" "does not hold" \
             "f-crlf.md: unquoted timestamp" "g-bom.md: starts with a byte order mark" "h-nofm.md: no closed frontmatter block" \
             "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase" \
-            "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on"; do
+            "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on" \
+            "fl-flow.md: unquoted timestamp" "n-int.md: unquoted timestamp" "y-bad.md: frontmatter is not valid YAML" "l-list.md: frontmatter is not a mapping"; do
   if grep -q "$want" <<<"$findings"; then
     ok "conventions script reports: $want"
   else
     err "conventions script failed to report '$want' on a bundle that breaks it"
   fi
 done
-if grep -q 'x/e.md' <<<"$findings"; then
-  err "conventions script reported x/e.md, whose revision holds its resource"
+for quiet in "x/e.md:whose revision holds its resource" "fence.md:whose second librarian event is only an example in a code fence"; do
+  if grep -q "${quiet%%:*}" <<<"$findings"; then
+    err "conventions script reported ${quiet%%:*}, ${quiet#*:}"
+  else
+    ok "conventions script accepts ${quiet%%:*}, ${quiet#*:}"
+  fi
+done
+if [[ "$(grep -c 'y-bad.md' <<<"$findings")" -eq 1 ]]; then
+  ok "conventions script reports a YAML parse error on one line"
 else
-  ok "conventions script accepts a revision that holds the resource"
+  err "conventions script spread a YAML parse error over several lines: $(grep 'y-bad.md' <<<"$findings")"
 fi
 # And a bundle that keeps every convention but was checked out with CRLF line
 # endings must pass outright: the script reads it exactly as CI reads LF. A
@@ -364,6 +382,14 @@ if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>&1)"; t
   ok "conventions script reads a CRLF checkout as CI reads LF"
 else
   err "conventions script misreads a CRLF checkout: $out"
+fi
+# Without uv the shell half still runs, and its OK line says what it skipped.
+if PATH=/usr/bin:/bin command -v uv >/dev/null 2>&1; then
+  say "uv is on /usr/bin - the without-uv case cannot be staged here"
+elif out="$(PATH=/usr/bin:/bin bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>/dev/null)" && grep -q '^OK - .*(rules 2, 3, 4, 7, 9 and 10 not checked: uv not found)' <<<"$out"; then
+  ok "conventions script without uv passes on its own rules and says which it skipped"
+else
+  err "conventions script without uv did not say what it skipped: $out"
 fi
 # A bundle reached through a link - the rearranged layout the sidecar's
 # portability page allows - must be read, not passed with zero files seen.
