@@ -2,6 +2,11 @@
 
 ## 2026-09-17
 
+* **Third audit (sixteenth pass)**: the sidecar and contract playbooks and
+  the threat model follow the audit's fixes - the sidecar lays down the
+  conventions script's Python half, both gates read merges against every
+  parent, human `generated` records and only the frontmatter, and rule 10
+  keeps the fields the gates read to plain spellings.
 * **Conventions script split (fifteenth pass)**: `knowledge-conventions.py`,
   run through `uv run`, takes over the five frontmatter-shape rules (quoted
   `at`, `verified` shape, open questions, duplicate `id`, closed frontmatter)

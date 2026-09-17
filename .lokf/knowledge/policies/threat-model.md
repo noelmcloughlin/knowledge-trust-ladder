@@ -7,13 +7,13 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T15:27:51Z"
+  at: "2026-09-17T17:30:00Z"
 references:
 - https://lokf-agent-skills.example/knowledge/policies/security
 - https://lokf-agent-skills.example/knowledge/policies/ai-covenant
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T15:27:51Z"
+  at: "2026-09-17T17:30:00Z"
 ---
 
 # Overview
@@ -44,12 +44,17 @@ commit; secret scanning and push protection as GitHub settings nothing in CI
 can assert still hold; CodeQL and dependency review skipped where there is
 nothing for them to scan.
 
-**Human attribution**: a `verified` event whose actor starts with `human:` is
-a claim, not a credential - just a string in Markdown that any writer can
-type. `knowledge-registrar.yaml`'s `provenance` job is the authority: it
-requires an approving review from the named account or their verified
-signature on the introducing commit, evidence GitHub holds rather than
-evidence the bundle asserts. lokf-curator writes `human:` only for
+**Human attribution**: a `verified` event whose actor starts with `human:`,
+or a `generated` record written that way, is a claim, not a credential - just
+a string in Markdown that any writer can type. `knowledge-registrar.yaml`'s
+`provenance` job is the authority: it requires an approving review from the
+named account or their verified signature on the introducing commit,
+evidence GitHub holds rather than evidence the bundle asserts. Both gates
+read the events themselves - whole, from the frontmatter, against every
+parent of a commit and keyed by the concept's `id` - so a re-dated event
+counts while a rename, a merge and an example in a body code fence do not,
+and conventions rule 10 keeps those fields to spellings a line reader and a
+parser agree on (2026-09-17). lokf-curator writes `human:` only for
 an authenticated identity - `gh api user`, `glab api user`, or a signing
 key the forge lists under the stated login - refuses to run a review session
 unattended, and its report flags an unsigned `human:` commit rather than
