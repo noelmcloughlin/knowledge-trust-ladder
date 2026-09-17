@@ -34,7 +34,7 @@ done
 for dir in "${expected_dirs[@]}"; do
   skill_file="$dir/SKILL.md"
   [[ -f "$skill_file" ]] || continue
-  declared="$(sed -n 's/^name:[[:space:]]*//p' "$skill_file" | head -1 | tr -d '"'"'"'')"
+  declared="$(sed -n 's/^name:[[:space:]]*//p' "$skill_file" | sed -n 1p | tr -d '"'"'"'')"
   expected="$(basename "$dir")"
   if [[ "$declared" == "$expected" ]]; then
     ok "$skill_file frontmatter name '$declared' matches directory"
@@ -506,9 +506,11 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
      && pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'other <other@example.invalid>' ed25519 sign 1d 2>/dev/null \
      && pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'sub <sub@example.invalid>' ed25519 cert 1d 2>/dev/null \
      && ssh-keygen -q -t ed25519 -N '' -C sshcur -f "$pv/sshcur" && ssh-keygen -q -t ed25519 -N '' -C stranger -f "$pv/stranger"; then
-    fpr="$(pv_gpg --with-colons --list-keys contract | awk -F: '$1=="fpr"{print $10;exit}')"
-    fpr2="$(pv_gpg --with-colons --list-keys other | awk -F: '$1=="fpr"{print $10;exit}')"
-    fpr3="$(pv_gpg --with-colons --list-keys sub@example.invalid | awk -F: '$1=="fpr"{print $10;exit}')"
+    # Read gpg's output whole: an awk that exits on the first match closes the
+    # pipe early, which a runner that ignores SIGPIPE reports as a write error.
+    fpr="$(pv_gpg --with-colons --list-keys contract | awk -F: '$1=="fpr" && !f {print $10; f=1}')"
+    fpr2="$(pv_gpg --with-colons --list-keys other | awk -F: '$1=="fpr" && !f {print $10; f=1}')"
+    fpr3="$(pv_gpg --with-colons --list-keys sub@example.invalid | awk -F: '$1=="fpr" && !f {print $10; f=1}')"
     # The third key certifies only and signs with a subkey, the common layout.
     pv_gpg --pinentry-mode loopback --passphrase '' --quick-add-key "$fpr3" ed25519 sign 1d 2>/dev/null
     git init -q "$pv/repo"

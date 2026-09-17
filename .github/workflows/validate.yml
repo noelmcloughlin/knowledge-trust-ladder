@@ -40,6 +40,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # The contract exercises knowledge-conventions.sh, whose parser's half
+      # runs through `uv run`; without uv it skips those rules and says so,
+      # and check 11 then fails to see them.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
       - name: Validate repository contract
         run: bash scripts/validate-repository.sh
 

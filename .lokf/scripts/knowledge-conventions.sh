@@ -128,8 +128,11 @@ while IFS= read -r f; do
   case "$(basename "$f")" in index.md|log.md|diataxis.md) continue ;; esac
   # Frontmatter only, best effort, for 5 and 6: the text between the first two
   # `---` lines. A missing or malformed block yields nothing here and is
-  # rules 2-4, 7 and 9's job below to report, not this loop's.
-  fm="$(clean "$f" | awk 'NR==1 && $0!="---" {exit} NR>1 && $0=="---" {exit} NR>1 {print}')"
+  # rules 2-4, 7 and 9's job below to report, not this loop's. The awk reads
+  # the whole file rather than exiting at the second `---`: a CI runner that
+  # ignores SIGPIPE (GitHub Actions does) turns an early-closed pipe into a
+  # `tr: write error` that pipefail then makes fatal.
+  fm="$(clean "$f" | awk 'NR==1 {if ($0!="---") stop=1; next} stop {next} $0=="---" {stop=1; next} {print}')"
   # 5. local resource paths exist: top-level `resource:` and `sources[].resource`
   while IFS= read -r res; do
     [ -z "$res" ] && continue
@@ -145,7 +148,7 @@ while IFS= read -r f; do
   #    local `resource`. Anything with a character outside [0-9a-f] - an ETag,
   #    a `sha256:` digest, a version label - pins a URL and is skipped, as is
   #    every revision on a concept whose `resource` is a URL, absolute or absent.
-  res="$(printf '%s\n' "$fm" | sed -nE 's/^resource:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\1/p' | head -n 1)"
+  res="$(printf '%s\n' "$fm" | sed -nE 's/^resource:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\1/p' | sed -n 1p)"
   res="${res%%#*}"
   res="${res#\"}"; res="${res%\"}"; res="${res#\'}"; res="${res%\'}"
   res="${res%"${res##*[![:space:]]}"}"
