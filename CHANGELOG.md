@@ -6,6 +6,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
+- **A pull request that would release must be titled to release.** A squash merge takes its subject from the pull request title, and GitHub's default title carries no type, so a typed `fix:` reached `main` untyped and released nothing. The `plan` job now refuses that combination and says how to retitle.
+
 - **The no-Python schema fallback is pinned to the toolkit's version.** Both skills, the sidecar README and the toolkit concept pointed at `lokf.yaml` on upstream `main`, which has already moved past the 0.8.0 floor, so a manual cross-check read a schema the installed validator does not enforce. The URL now names the `v0.8.0` tag and the librarian's tooling-version step moves it with the floor; this also answers a skills.sh audit finding about an unpinned runtime URL.
 
 - **A pull request that releases nothing is no longer failed for writing no release notes.** The `plan` job's new changelog check ran on every pull request, so a `chore:` or `docs:` one - a Dependabot action bump among them - failed against the empty `## [Unreleased]` a release had just emptied. It now reads the pull request's own commits and asks for notes only when one of them would release.

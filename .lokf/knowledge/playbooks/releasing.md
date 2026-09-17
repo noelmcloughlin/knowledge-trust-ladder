@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T22:20:00Z"
+  at: "2026-09-17T22:45:00Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/references/gh-skill-cli
@@ -17,7 +17,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T22:20:00Z"
+  at: "2026-09-17T22:45:00Z"
 ---
 
 # Overview
@@ -54,7 +54,11 @@ fix, and an empty `[Unreleased]` would have merged silently. That step reads
 the pull request's own commits first and runs `check` only when one of them
 would release - the types `.releaserc.json` acts on - so a `chore:` or
 `docs:` pull request, a Dependabot action bump among them, is not failed for
-notes it was never going to ship. Check 14 in
+notes it was never going to ship. When they would release, the same step
+also requires the pull request *title* to carry a releasing type, because a
+squash merge takes its subject from the title and GitHub's default title
+has none - pull request #46 merged that way on 2026-09-17 and released
+nothing, its notes left waiting in `[Unreleased]`. Check 14 in
 `playbooks/repository-validation.md` proves the fold and would have caught
 the original duplication.
 
