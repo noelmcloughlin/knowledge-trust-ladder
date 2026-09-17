@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-09-17
+
 ### Fixed
 
 - **A pull request that would release must be titled to release.** A squash merge takes its subject from the pull request title, and GitHub's default title carries no type, so a typed `fix:` reached `main` untyped and released nothing. The `plan` job now refuses that combination and says how to retitle.
