@@ -1,5 +1,14 @@
 # Change Log
 
+## 2026-09-18
+
+* **Skills pin held to the release**: the librarian template's
+  `LOKF_SKILLS_REF` sat at `v0.9.0` while this repository released `v0.19.2`,
+  so every host scaffolded from it installed a librarian ten minor versions
+  old. Bumped, and check 15 now holds the pin to `CHANGELOG.md`'s top
+  released heading so it cannot fall behind unnoticed.
+  `playbooks/repository-validation.md` follows.
+
 ## 2026-09-17
 
 * **Wrapper restore made unconditional**: `knowledge-librarian.sh` restored

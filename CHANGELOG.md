@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The librarian template installs the current skill, not a ten-version-old one.** `LOKF_SKILLS_REF` pinned `v0.9.0` while this repository released `v0.19.2`, so every host scaffolded from the template ran a librarian that far behind. Check 15 now holds the pin to the top released heading in the changelog, so it cannot fall behind in silence again.
+
 ## [0.19.2] - 2026-09-17
 
 ### Security
