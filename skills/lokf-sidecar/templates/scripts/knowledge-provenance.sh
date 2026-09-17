@@ -127,7 +127,7 @@ human_events() {  # path -> events, reading the concept on stdin
   /^id:/ { cid = val($0) }
   /^(verified|generated):/ { emit(); inv = 1; rest = $0; sub(/^(verified|generated):[[:space:]]*/, "", rest)
     if (rest ~ /^\{/) { flow(rest); inv = 0 }
-    else if (rest ~ /^\[/) { gsub(/[\[\]]/, "", rest); n = split(rest, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
+    else if (rest ~ /^\[/) { gsub(/[][]/, "", rest); n = split(rest, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
     next }
   inv && /^[^[:space:]-]/ { emit(); inv = 0 }
   inv && /^[[:space:]]*-[[:space:]]*\{/ { rest = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", rest); flow(rest); next }
