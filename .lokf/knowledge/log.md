@@ -2,6 +2,11 @@
 
 ## 2026-09-17
 
+* **Schema fallback pinned**: the no-Python fallback URL in both skills'
+  Sources notes, the sidecar README and `references/lokf-toolkit.md` now
+  points at the `v0.8.0` tag matching the `lokf` floor, not `main`, which
+  has already diverged from it. The librarian's tooling-version step moves
+  the pin with the floor.
 * **Duplicate-release fix (seventeenth pass)**: two merges to `main` between
   publishes computed the same next version twice, promoting `## [Unreleased]`
   onto a second `## [0.19.0]` heading above the first and orphaning the

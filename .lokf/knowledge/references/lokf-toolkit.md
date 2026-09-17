@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T12:00:00Z"
+  at: "2026-09-17T22:30:00Z"
 status: draft
 definedBy:
 - https://lokf-agent-skills.example/knowledge/references/lokf-specification
@@ -15,7 +15,7 @@ relatedTo:
 - https://lokf-agent-skills.example/knowledge/references/linkml
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T22:30:00Z"
 ---
 
 # Overview
@@ -33,6 +33,8 @@ targets with no matching concept - a gap `lokf validate` doesn't cover.
 Scaffolded bundles pin `lokf[build]`, and that `[build]` extra pulls in the full
 `linkml` package - so every sidecar already has the LinkML generators available
 for a domain-schema extension, with no extra installation. Where Python is
-unavailable, the skills fall back to the raw schema at
-`raw.githubusercontent.com/nicholsn/lokf/main/lokf.yaml` for a structural
-cross-check only, which is not a validation run.
+unavailable, the skills fall back to the raw schema at the tag matching the
+`lokf` floor, `raw.githubusercontent.com/nicholsn/lokf/v0.8.0/lokf.yaml`, for
+a structural cross-check only, which is not a validation run. The pin moves
+with the floor: upstream `main` has already diverged from 0.8.0, so a check
+against it would pass or fail things the installed toolkit does not.
