@@ -49,48 +49,28 @@ A bundle's answer: [answered in part](#the-machine-invents). Every record names 
 
 ## What a bundle answers, and what it leaves open
 
-Each answer below replies to one of the critics above, and each attribution leads to the critic's entry. Three of their points are met by construction.
+Three of the critics' points are met by construction:
 
-- **Accountability diluted** ([the Commission](#the-uk-parliamentary-commission-on-banking-standards-2013), and [Davies and Zhivitskaya](#davies-and-zhivitskaya-2018)). Every confirmation names one person in `verified[].by`. The librarian's own re-checks are recorded as `process:`, never as a person, and the trust label is computed from that record. Accountability is per claim, not per department.
-- **A second line without the status to challenge the first** ([the Commission](#the-uk-parliamentary-commission-on-banking-standards-2013), and [Arndorfer and Minto](#arndorfer-and-minto-2015)). In a bundle the second line is a program. `lokf validate` and the `provenance` job return the same verdict whoever opened the change, and write it on the pull request where anyone can read it. One caveat: whether a failed check blocks a merge is a setting of the repository that holds the bundle, not of the bundle. An organisation that needs the block sets it.
-- **A second line that sees only what the first line shows it** ([Zhivitskaya, as Schuett repeats it](#schuett-2023)). The gate reads the whole pull request and the repository's history, and asks GitHub, not the author, whether the named person approved or signed. The third-line evidence is the repository itself. The IIA's 2026 text makes unfiltered access the condition of independence: "independence is compromised when access to evidence is filtered or controlled". One limit: a form check sees everything the first line wrote, not what it never derived. A missing concept surfaces only as a docent miss.
+- **Accountability diluted** ([the Commission](#the-uk-parliamentary-commission-on-banking-standards-2013); [Davies and Zhivitskaya](#davies-and-zhivitskaya-2018)). Every confirmation names one person in `verified[].by`, and the librarian's own re-checks are `process:`, never a person. Accountability is per claim, not per department.
+- **A second line without the status to challenge the first** ([the Commission](#the-uk-parliamentary-commission-on-banking-standards-2013); [Arndorfer and Minto](#arndorfer-and-minto-2015)). The second line is a program: `lokf validate` and the `provenance` job return the same verdict whoever opened the change, written on the pull request where anyone can read it. Whether a failed check blocks a merge is a setting of the host repository, and an organisation that needs the block sets it.
+- **A second line that sees only what the first line shows it** ([Zhivitskaya, as Schuett repeats it](#schuett-2023)). The gate reads the whole pull request and the repository's history, and asks the forge, not the author, whether the named person approved or signed; the IIA's 2026 text makes such unfiltered access the condition of independence. It sees what the first line wrote, not what it never derived: a missing concept surfaces only as a docent miss.
 
-Two critiques aim at the kind of solution LOKF is: a machine's output checked by a person. Each is answered in part; for each, the critique in a line, what a bundle answers, and what it leaves open.
+Two critiques aim at the kind of solution LOKF is, a machine's output checked by a person, and are answered in part.
 
 ### Judgement absent while process is followed
 
-**The critique.** People accept a machine's output even when it is wrong, an explanation makes that more likely, and only a forced pause before the output reduces it: [the research on human oversight](#research-on-human-oversight-of-automated-systems).
+People accept a machine's output even when it is wrong, an explanation makes that more likely, and only a forced pause helps ([the research on human oversight](#research-on-human-oversight-of-automated-systems)). A bundle answers with four things: the curator records only what the person says and confirms nothing itself; the review session shows the source before the claim, the pause Buçinca describes; who confirms what, and how often, is a reviewed policy rather than a habit, the direction Green points; and the docent's evidence-first mode quotes the source before any answer that rests on an unconfirmed concept, off by default because Buçinca found such designs cost goodwill. Once `revision` ships (proposed for lokf 0.9.0 and for OKF in [knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), a confirmation will also say which state of the source it rested on.
 
-**What a bundle answers.**
-
-- The curator skill records only what the person says. It never confirms anything itself, and nothing counts as human-confirmed until a named person says so.
-- The curator gets a pause of the kind Buçinca describes. The review session opens the source and quotes it, then shows the concept's claim, and only then asks for a verdict.
-- Who confirms what, and how often, is a reviewed policy rather than a habit. That is the direction Green points.
-- The docent has an evidence-first mode. When the curation policy says `Evidence first: yes`, it quotes the source before any answer that rests on a concept not yet confirmed by a person. It is off by default, because Buçinca found such designs cost goodwill.
-- A confirmation says which state of the source it was made against, once `revision` lands: the commit of a file, or the ETag or content digest of a URL, as the curator skill fetched it. A source that changes the day after confirmation is then told apart from one that has not. OKF v0.2's own shape is `by` and `at` alone; the field is proposed upstream ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)) and for lokf 0.9.0, not yet released, and a bundle that carries it is still a valid OKF bundle.
-
-**What it leaves open.**
-
-- **Inherent.** Nothing shows that the person read the source. A signature or an approval proves who decided, not what they looked at, and `revision` names the state the skill fetched, not what the person looked at. No record can prove attention.
-- **A limit of the technique.** A content digest is a fingerprint of the bytes that were fetched: identical bytes give an identical fingerprint, and any difference at all gives a different one. It says that the page differs, never why. A page assembled afresh on every request, with a timestamp or a rotating banner in it, gets a new fingerprint on every fetch, so a later re-check reads it as changed even when the passage it was cited for has not moved. An ETag or version label is the server's own name for the current version of the page and changes only when the server says the page changed; where the server offers one, the skill prefers it.
-- **Not the bundle's role.** Green also asks for evidence that the oversight works. That evidence is third-line work: an independent re-check of a sample of confirmed concepts. A bundle should not produce it about itself. What it can do is hand over the sample: when the curation policy names a size, the curator's report lists that many confirmed concepts at random, with their sources, for a second person.
-- **Off by default.** Where the curation policy leaves evidence-first off, a docent answer arrives with its trust label attached and no pause. The most the docent does then is carry the label into the sentence when the concept is anything less than confirmed by a person.
+Left open: nothing shows that the person read the source, since a signature proves who decided and `revision` names what the skill fetched; a page assembled afresh on every request reads as changed on every re-check, which is why the skill prefers a server's ETag to a digest; and the evidence Green asks for, that oversight works, is third-line work a bundle should not produce about itself - the curator's report hands over a random sample of confirmed concepts when the policy names a size.
 
 ### The machine invents
 
-**The critique.** Text generation produces content unfaithful to its source: [the research on text generation](#research-on-text-generation).
+Text generation produces content unfaithful to its source ([the research on text generation](#research-on-text-generation)). A bundle answers with two things: every record names the source it was derived from, so faithfulness can be checked against something; and what the librarian cannot settle is marked `status: draft` with an open question until a person decides.
 
-**What a bundle answers.**
-
-- Every record names the source it was derived from, so faithfulness can be checked against something.
-- What the librarian cannot settle is marked `status: draft` with an open question, and stays below human-confirmed until a person decides.
-
-**What it leaves open.**
-
-- **By design.** The registrar never judges truth. The librarian does re-check every concept against its source on each scheduled refresh, but it is the same kind of tool that wrote the text, so that is self-review rather than an independent check; the independent judgement is the curator's. The registrar checks what can be checked without judgement: the conventions script it runs fails when a local `resource` no longer exists, so a vanished source fails the gate instead of waiting for a refresh, and when a commit-shaped `revision` names no commit that holds the resource. URLs are not fetched.
+Left open, by design: the registrar never judges truth, and the librarian's scheduled re-check is the same kind of tool that wrote the text, so it is self-review; the independent judgement is the curator's. What the registrar does check needs no judgement: a local `resource` that no longer exists, and a `revision` naming no commit that holds it. URLs are not fetched.
 
 ### Incentives and skill
 
-**Not the bundle's role.** LOKF does not ask its second line to judge content, so that judgement lands on the curator, a named person in the **first line**. The organisation assigns curators through the curation policy and answers for their incentives and skill; nothing in a bundle changes either.
+Not the bundle's role. LOKF does not ask its second line to judge content, so that judgement lands on the curator, a named person in the first line; the organisation assigns curators through the curation policy and answers for their incentives and skill.
 
-The gaps left open above are collected, labelled by whose they are, under [What remains, and whose it is](three-lines.md#what-remains-to-do-and-who-does-it) on the three lines page.
+The gaps left open are collected, by owner, under [What remains to do, and who does it](three-lines.md#what-remains-to-do-and-who-does-it).
