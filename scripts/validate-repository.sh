@@ -609,7 +609,14 @@ if command -v node >/dev/null 2>&1; then
   cl_git() { (cd "$cl/repo" && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git "$@"); }
   mkdir -p "$cl/repo/.github/scripts"
   cp "$repo_root/.github/scripts/changelog-release.mjs" "$cl/repo/.github/scripts/"
-  cl_git init -q && cl_git commit -q --allow-empty -m base && cl_git tag v0.18.0
+  # A blank identity falls back to the OS account's GECOS full name, which a
+  # CI runner's account does not carry - set one explicitly, as check 13's
+  # pv_git does, rather than depend on that fallback existing.
+  cl_git init -q \
+    && cl_git config user.name contract \
+    && cl_git config user.email contract@example.invalid \
+    && cl_git commit -q --allow-empty -m base \
+    && cl_git tag v0.18.0
   # The state right after the first push's promote landed and a second push
   # then wrote its own Unreleased entry above it, with v0.19.0 still untagged
   # - exactly main's state before publish.yml ever ran for it.
