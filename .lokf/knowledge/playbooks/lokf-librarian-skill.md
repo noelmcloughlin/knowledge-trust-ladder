@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-librarian/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T15:49:14Z"
+  at: "2026-09-17T23:05:00Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
@@ -20,7 +20,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/okf-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T15:49:14Z"
+  at: "2026-09-17T23:05:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
 stale_after: 2027-09-09
@@ -63,7 +63,9 @@ of that same path boundary in `knowledge-librarian.yaml`'s privileged
 `publish` job (re-derived from the proposed patch on a clean checkout,
 never trusting the `refresh` job's own check alone), plus harden-runner and
 `.git/config`/`.git/hooks/` snapshot-and-restore around the agent call in
-the wrapper script. See `policies/security.md` for the detail.
+the wrapper script - restored from an `EXIT` trap since 2026-09-17, after a
+Socket audit showed a failing agent or a cancelled job skipped the restore
+and left a poisoned config for the workflow's next steps. See `policies/security.md` for the detail.
 
 **Extending the vocabulary (added 2026-09-14).** Rule 3's classes are
 deliberately few and portable. A domain needing more of its own gets a

@@ -106,7 +106,8 @@ jobs:
         run: bash .lokf/scripts/knowledge-librarian.sh
 
       # The wrapper enforces this same boundary itself, immediately after the
-      # agent returns (and restores .git/config and .git/hooks around the call
+      # agent returns (and restores .git/config and .git/hooks around the call,
+      # from an EXIT trap so a failing agent or a cancelled job restores too,
       # so a poisoned core.fsmonitor/hooksPath can't blind either check - see
       # the wrapper's own comments). This is the second, independent layer: it
       # runs even when the wrapper didn't get to (agent disarmed, early exit),
