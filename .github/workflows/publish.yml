@@ -68,6 +68,13 @@ jobs:
             exit 1
           fi
 
+      # The contract exercises knowledge-conventions.sh, whose parser's half
+      # runs through `uv run`; without uv it skips those rules and check 11
+      # then fails to see them. validate.yml installs uv for the same reason
+      # - a release runs the same contract, so it needs the same tool.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
       - name: Verify repository contract
         run: bash scripts/validate-repository.sh
 
