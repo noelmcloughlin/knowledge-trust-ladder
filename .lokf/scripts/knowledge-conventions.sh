@@ -38,20 +38,28 @@
 #   9. Every concept starts with a `---` frontmatter block that closes, with no
 #      byte order mark in front of it. A BOM from a web editor or Notepad, or a
 #      file with no block at all, would otherwise pass this script unread.
+#  10. The fields the provenance gates read line by line - `id`, and `by`,
+#      `at` and `revision` on an event - are spelt so a line reader and a
+#      parser see the same thing: no tags, anchors, aliases, quoted keys,
+#      block scalars or values spanning lines. Each of those is valid YAML
+#      that `lokf validate` accepts and both gates cannot see, which is a
+#      confirmation nobody has to stand behind.
 #
-# Rules 2, 3 and 8 are house rules, stricter than the format: OKF permits an
-# unquoted datetime, a bare `verified` mapping (which consumers MUST read as
-# a one-item list) and any file name. This bundle holds itself to more because
-# the toolkit and the two Obsidian plugins read those forms differently, and
-# because case-insensitive hosts do. A bundle written to the letter of OKF may
-# fail them; that is a policy of the gate, not a defect in the bundle.
+# Rules 2, 3, 8 and 10 are house rules, stricter than the format: OKF permits
+# an unquoted datetime, a bare `verified` mapping (which consumers MUST read
+# as a one-item list), any file name and any YAML. This bundle holds itself to
+# more because the toolkit, the two Obsidian plugins and the gates read those
+# forms differently, and because case-insensitive hosts do. A bundle written
+# to the letter of OKF may fail them; that is a policy of the gate, not a
+# defect in the bundle.
 #
-# Rules 2, 3, 4, 7 and 9 are frontmatter-shape questions a real YAML parse
-# answers outright, so this script hands them to knowledge-conventions.py
-# (same directory) through `uv run`, which needs nothing preinstalled. Rules
-# 1, 5, 6 and 8 stay here: they are git and filesystem facts, not YAML shape,
-# and this half keeps running - grep and awk only - wherever bash and git do,
-# with no toolchain at all. Without uv, this half still runs and says so.
+# Rules 2, 3, 7, 9 and 10 are questions about a document's YAML that a real
+# parse answers outright, and rule 4 rides along, so this script hands them
+# to knowledge-conventions.py (same directory) through `uv run`, which needs
+# nothing preinstalled. Rules 1, 5, 6 and 8 stay here: they are git and
+# filesystem facts, and this half keeps running - grep and awk only -
+# wherever bash and git do, with no toolchain at all. Without uv, this half
+# still runs and says so.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
@@ -152,7 +160,7 @@ while IFS= read -r f; do
   done < <(printf '%s\n' "$fm" | sed -nE 's/^[[:space:]]*(- )?revision:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\2/p')
 done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
-# ---- 2, 3, 4, 7, 9. frontmatter shape (YAML), handed to the Python half ----
+# ---- 2, 3, 4, 7, 9, 10. the parser's half ------------------------------------
 py="$(dirname "$0")/knowledge-conventions.py"
 if command -v uv >/dev/null 2>&1; then
   if ! out="$(uv run --quiet "$py" "$bundle" 2>&1)"; then
@@ -160,7 +168,7 @@ if command -v uv >/dev/null 2>&1; then
     fail=1
   fi
 else
-  echo "uv not found - rules 2, 3, 4, 7 and 9 (frontmatter shape) were not checked; install uv, or run $py directly with python3 and pyyaml" >&2
+  echo "uv not found - rules 2, 3, 4, 7, 9 and 10 (the parser's half) were not checked; install uv, or run $py directly with python3 and pyyaml" >&2
 fi
 
 if [ "$fail" -eq 0 ]; then

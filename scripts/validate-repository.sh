@@ -333,11 +333,15 @@ printf 'type: Service\n' > "$bad/k/x/h-nofm.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/i\n---\n' > "$bad/k/x/i.md"
 cp "$bad/k/x/i.md" "$bad/k/x/i (conflicted copy 2026-09-17).md"
 mkdir -p "$bad/k/Upper" && printf -- '---\ntype: Service\n---\n' > "$bad/k/Upper/j.md"
+# Rule 10: an event spelt so that the gates' line readers cannot see it.
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/q\nverified:\n  - "by": human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n' > "$bad/k/x/q-quotedkey.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/t\nverified: [{ by: !!str human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n' > "$bad/k/x/t-tag.md"
 findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
 rm -rf "$bad"
 for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found" "does not hold" \
             "f-crlf.md: unquoted timestamp" "g-bom.md: starts with a byte order mark" "h-nofm.md: no closed frontmatter block" \
-            "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase"; do
+            "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase" \
+            "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on"; do
   if grep -q "$want" <<<"$findings"; then
     ok "conventions script reports: $want"
   else
@@ -350,11 +354,12 @@ else
   ok "conventions script accepts a revision that holds the resource"
 fi
 # And a bundle that keeps every convention but was checked out with CRLF line
-# endings must pass outright: the script reads it exactly as CI reads LF.
+# endings must pass outright: the script reads it exactly as CI reads LF. A
+# folded description is fine: rule 10 reads only the fields the gates read.
 good="$(mktemp -d)"
 mkdir -p "$good/k/x"
 printf '# Change Log\r\n\r\n## 2026-09-15\r\n\r\n* **A**: b.\r\n\r\n## 2026-09-14\r\n\r\n* **C**: d.\r\n' > "$good/k/log.md"
-printf -- '---\r\ntype: Service\r\nid: https://example.invalid/k/x/a\r\nverified:\r\n  - by: process:lokf-librarian\r\n    at: "2026-09-14T00:00:00Z"\r\n---\r\n\r\n## Open questions\r\n\r\n- 2026-09-14, process:lokf-librarian: fine\r\n' > "$good/k/x/a.md"
+printf -- '---\r\ntype: Service\r\nid: https://example.invalid/k/x/a\r\ndescription: >-\r\n  folded, which the gates\r\n  never read\r\nverified:\r\n  - by: process:lokf-librarian\r\n    at: "2026-09-14T00:00:00Z"\r\n---\r\n\r\n## Open questions\r\n\r\n- 2026-09-14, process:lokf-librarian: fine\r\n' > "$good/k/x/a.md"
 if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>&1)"; then
   ok "conventions script reads a CRLF checkout as CI reads LF"
 else

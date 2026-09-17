@@ -3,17 +3,18 @@
 # requires-python = ">=3.9"
 # dependencies = ["pyyaml"]
 # ///
-# The frontmatter-shape half of knowledge-conventions.sh: rules 2, 3, 4, 7 and
-# 9 (see that script's header for the full list of nine). Those five are
-# grep/awk approximations of a YAML question - is this scalar quoted, is this
-# key a list or a mapping, do two files share an id - that a real parser
-# answers outright instead of pattern-matching around. An unquoted `at:` is
-# only visible as a `datetime`/`date` object once something actually parses
-# the document; a flow-style `verified: { by: ... }`, a multi-line flow item,
-# or a `by:` inside a body code fence are exactly where the line-oriented
-# regex approach used to guess wrong. Rules 1, 5, 6 and 8 stay in the shell
-# script: they are git and filesystem facts, not frontmatter shape, and
-# needn't wait on uv.
+# The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9 and 10
+# (see that script's header for the list). Rules 2, 3, 7 and 9 are questions
+# about a document's YAML - is this scalar quoted, is this key a list or a
+# mapping, do two files share an id, does the block even parse - that a real
+# parser answers outright where grep and awk could only approximate: an
+# unquoted `at:` is only visible as a `datetime` once something parses the
+# document, and a flow-style `verified: { by: ... }` or a multi-line flow item
+# is where a line-oriented regex used to guess wrong. Rule 4 is a body rule
+# that rides along, and rule 10 exists because the provenance gates do read
+# the frontmatter line by line: it keeps the fields they read to spellings a
+# line reader and a parser agree on. Rules 1, 5, 6 and 8 stay in the shell
+# script: they are git and filesystem facts, and needn't wait on uv.
 #
 # Usage: knowledge-conventions.py <bundle-dir>. Same contract as the shell
 # half: one line per finding on stdout, exit 1 if any; "OK" and exit 0 if
@@ -32,6 +33,54 @@ import yaml
 
 RESERVED = {"index.md", "log.md", "diataxis.md"}
 OPEN_QUESTION = re.compile(r"^- \d{4}-\d{2}-\d{2}, (human|process):[^ :]+: ")
+# The fields the provenance gates read line by line: a concept's id, and the
+# actor, time and revision of each event.
+GATE_FIELDS = {"id", "by", "at", "revision"}
+
+
+def plain_spellings(fm_text: str) -> list[str]:
+    """Rule 10: what a line reader could not read the way a parser does."""
+    findings: list[str] = []
+    stack: list[dict] = []  # one entry per open collection
+
+    def at(ev) -> str:
+        return f"line {ev.start_mark.line + 2}"  # +1 for zero-based, +1 for the opening ---
+
+    for ev in yaml.parse(fm_text):
+        top = stack[-1] if stack else None
+        in_value = top is not None and top["kind"] == "map" and not top["expect_key"]
+        field = top["key"] if in_value else None
+        if isinstance(ev, yaml.AliasEvent):
+            findings.append(f"an alias (*{ev.anchor}) at {at(ev)}")
+        elif getattr(ev, "anchor", None):
+            findings.append(f"an anchor (&{ev.anchor}) at {at(ev)}")
+        if isinstance(ev, yaml.ScalarEvent):
+            if ev.tag is not None:
+                findings.append(f"a tag on '{ev.value}' at {at(ev)}")
+            if top is not None and top["kind"] == "map" and top["expect_key"]:
+                if ev.style is not None and ev.value in GATE_FIELDS:
+                    findings.append(f"a quoted key ({ev.value}) at {at(ev)}")
+                top["key"] = ev.value
+                top["expect_key"] = False
+                continue
+            if field in GATE_FIELDS:
+                if ev.style in ("|", ">"):
+                    findings.append(f"a block scalar for {field} at {at(ev)}")
+                elif ev.start_mark.line != ev.end_mark.line:
+                    findings.append(f"a {field} spanning lines at {at(ev)}")
+        if isinstance(ev, (yaml.MappingStartEvent, yaml.SequenceStartEvent)):
+            if field in GATE_FIELDS:
+                findings.append(f"a collection where {field} should be one scalar at {at(ev)}")
+            if in_value:
+                top["expect_key"] = True
+            stack.append({"kind": "map" if isinstance(ev, yaml.MappingStartEvent) else "seq", "expect_key": True, "key": None})
+            continue
+        if isinstance(ev, (yaml.MappingEndEvent, yaml.SequenceEndEvent)):
+            stack.pop()
+            continue
+        if in_value:
+            top["expect_key"] = True
+    return findings
 
 
 def split_frontmatter(text: str) -> tuple[str, str] | None:
@@ -81,6 +130,11 @@ def check_file(path: Path, ids: dict[str, list[Path]]) -> list[str]:
     if not isinstance(frontmatter, dict):
         findings.append(f"{path}: frontmatter is not a mapping")
         return findings
+
+    # 10. the fields the provenance gates read line by line are spelt so a
+    #     line reader and a parser see the same event.
+    for what in plain_spellings(fm_text):
+        findings.append(f"{path}: frontmatter uses {what} - write it plainly, so the gate reads the event a parser reads")
 
     # 2. every `at:` quoted - unquoted, YAML resolves it to a date/datetime.
     for where in find_unquoted_at(frontmatter, ""):
