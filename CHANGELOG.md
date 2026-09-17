@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **A pull request that releases nothing is no longer failed for writing no release notes.** The `plan` job's new changelog check ran on every pull request, so a `chore:` or `docs:` one - a Dependabot action bump among them - failed against the empty `## [Unreleased]` a release had just emptied. It now reads the pull request's own commits and asks for notes only when one of them would release.
+- **A Dependabot action bump no longer breaks the contract on its own.** The bot edits `.github/workflows/` and cannot see the copies under `skills/lokf-sidecar/templates/github/`, which check 11 holds byte-identical, so every bump failed until the template was synced by hand. The failure now names both directions instead of only "copy the template over it", which is the wrong one in that case.
+
 ## [0.19.0] - 2026-09-17
 
 ### Added

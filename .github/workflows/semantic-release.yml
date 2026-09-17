@@ -66,9 +66,22 @@ jobs:
       # running any plugin, including @semantic-release/exec's verifyRelease
       # hook - so the --dry-run below never calls changelog-release.mjs check
       # on this event, and an empty "## [Unreleased]" would otherwise pass a
-      # pull request and only fail at release time. Call it directly first.
-      - name: Refuse an empty changelog entry
-        run: node .github/scripts/changelog-release.mjs check
+      # pull request and only fail at release time. Call it directly - but
+      # only when these commits would actually release, or a chore-only pull
+      # request (a Dependabot bump, a docs tidy) fails for lacking notes it
+      # was never meant to write. The types are .releaserc.json's: the Angular
+      # preset's feat/fix plus this repository's `security`, and any type
+      # marked breaking by a `!` or a BREAKING CHANGE footer.
+      - name: Refuse an empty changelog entry when these commits would release
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if git log --format='%s%n%b' "$BASE..HEAD" \
+            | grep -qE '^((feat|fix|security)(\([^)]*\))?!?:|[a-z]+(\([^)]*\))?!:|BREAKING CHANGE:)'; then
+            node .github/scripts/changelog-release.mjs check
+          else
+            echo "No feat/fix/security or breaking commit here, so this pull request releases nothing and needs no '## [Unreleased]' entry."
+          fi
 
       - name: Preview the next version
         env:

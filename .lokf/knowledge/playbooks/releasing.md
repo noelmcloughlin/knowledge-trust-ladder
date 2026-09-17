@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T19:45:00Z"
+  at: "2026-09-17T22:20:00Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/references/gh-skill-cli
@@ -17,7 +17,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T19:45:00Z"
+  at: "2026-09-17T22:20:00Z"
 ---
 
 # Overview
@@ -50,7 +50,11 @@ calls `changelog-release.mjs check` as its own step, not only inside
 `--dry-run`: semantic-release detects a pull-request event and skips every
 plugin lifecycle hook, including `@semantic-release/exec`'s, so the `check`
 this page's next section describes never ran on a pull request until this
-fix, and an empty `[Unreleased]` would have merged silently. Check 14 in
+fix, and an empty `[Unreleased]` would have merged silently. That step reads
+the pull request's own commits first and runs `check` only when one of them
+would release - the types `.releaserc.json` acts on - so a `chore:` or
+`docs:` pull request, a Dependabot action bump among them, is not failed for
+notes it was never going to ship. Check 14 in
 `playbooks/repository-validation.md` proves the fold and would have caught
 the original duplication.
 
