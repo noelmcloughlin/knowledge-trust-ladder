@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The sidecar's toolkit floor is lokf 0.8.0**, here and in the `lokf-sidecar` template. The librarian's field tables now state its constraints: `sources[].author` is an actor string, `http_method` is one of seven uppercase verbs, and every timestamp including `stale_after` is a datetime, a bare date meaning midnight UTC.
+
 ## [0.18.0] - 2026-09-16
 
 ### Added

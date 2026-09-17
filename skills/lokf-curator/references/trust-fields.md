@@ -20,7 +20,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 
 - **Bare `verified` mapping** (`verified: { by, at }`) MUST be read as a one-element list (spec §5.2).
 - **Absent `status`** means stable. Only `draft`, `stable`, `deprecated` are valid; anything else counts as "doesn't fit" for the vocabulary line.
-- **Datetimes** are ISO 8601 with a UTC offset (`2026-09-08T14:00:00Z`); `stale_after` is a plain date (`YYYY-MM-DD`) in the LOKF schema. Compare dates as strings after normalising both to `YYYY-MM-DD` - it avoids timezone arithmetic and is exact for ISO forms.
+- **Datetimes** are ISO 8601 with a UTC offset (`2026-09-08T14:00:00Z`), `stale_after` included (OKF §5.5); a bare `YYYY-MM-DD` there is read as that day at 00:00:00Z, and is the form this skill writes. Compare dates as strings after normalising both to `YYYY-MM-DD` - it avoids timezone arithmetic and is exact for ISO forms.
 - **Missing `generated.at`**: fall back to the v0.1 `timestamp`; if neither exists, the concept cannot be "edited since confirmed" - leave it out of that label rather than guessing.
 - **Relation targets** may be full IRIs or bundle-relative ids. Normalise by resolving relative values against `base_iri` in `knowledge/index.md` before counting. The ten relation fields: `isPartOf`, `hasPart`, `references`, `dependsOn`, `derivedFrom`, `about`, `sameAs`, `relatedTo`, `definedBy`, `source`; plus each `relations[].target`.
 - **The core classes**: `Dataset`, `Table`, `Metric`, `Service`, `Playbook`, `Tutorial`, `Explanation`, `Policy`, `GlossaryTerm`, `Reference`, `Document`, `Role`, `Person`, `Organization`, `AttestedComputation`. Compare after removing spaces (`Attested Computation` normalises to `AttestedComputation`).

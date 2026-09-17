@@ -31,7 +31,7 @@ Same rules as lokf-curator's `references/trust-fields.md`; restated here so this
 - *Checked by automation only*: events exist, none human.
 - *Nobody has checked this yet*: no `verified` key.
 - *Still a draft*: `status: draft`. *Retired*: `status: deprecated`. Absent `status` means stable.
-- *Past its review date*: `stale_after` (a `YYYY-MM-DD` date) is on or before today. Compare as strings after trimming to ten characters.
+- *Past its review date*: `stale_after` (a datetime, or a bare `YYYY-MM-DD` date) is on or before today. Compare as strings after trimming to ten characters.
 - Labels overlap. Report every one that applies, most cautionary first.
 
 ## When to go to the source

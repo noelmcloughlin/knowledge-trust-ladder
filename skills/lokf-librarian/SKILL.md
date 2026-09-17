@@ -86,7 +86,7 @@ The LOKF **format** is defined once in LinkML (`lokf.yaml`); the JSON Schema, JS
    | ----- | ---------------------- |
    | `Table`, `Dataset` | `fields` - list of `Field` (`name?`, `description?`, `datatype?`, `is_key?`, `unit?`, `constraints?`); `distribution` - list of `Distribution` (`access_url`, `name?`, `description?`, `media_type?`). Structured objects, **never** plain strings or URLs |
    | `Metric` | `unit`, `formula`, `measures` |
-   | `Service` | `endpoint`, `http_method`, `documentation` |
+   | `Service` | `endpoint`, `documentation`; `http_method` only where one verb applies, and then one of `GET`/`POST`/`PUT`/`PATCH`/`DELETE`/`HEAD`/`OPTIONS`, uppercase (a closed enum since lokf 0.8.0) |
    | `GlossaryTerm` | `definition`, `abbreviation` |
 
    Optional Diátaxis facet `genre` (`tutorial`|`how-to`|`reference`|`explanation`) tags how a concept's *prose* serves the reader - orthogonal to `type`; one mode per concept (split and link with `references`/`about` if it drifts). Pick it with the compass - is the reader *studying or working*, and *doing or thinking*? study+do -> `tutorial`, work+do -> `how-to`, work+think -> `reference`, study+think -> `explanation`. The schema's `DiataxisMode` values carry `diataxis_action_cognition` / `diataxis_acquisition_application` annotations, so derive the mapping from the schema rather than guessing.
@@ -121,10 +121,10 @@ The LOKF **format** is defined once in LinkML (`lokf.yaml`); the JSON Schema, JS
    | ------ | ----- | ---------------------- | ------- |
    | provenance | `generated` | `{ by, at }` -> `prov:wasGeneratedBy` | who/what produced the current content, and when. **Supersedes `timestamp`** - prefer it on new/changed concepts. |
    | trust | `verified` | list of `{ by, at }` -> `lokf:verified` | verification events; a bare `{ by, at }` mapping MUST be read as a one-element list. |
-   | provenance | `sources` | list of Source -> `schema:isBasedOn` | materials the concept derives from: `resource` (REQUIRED), plus optional `id` (footnote/merge key), `title`, `author`, `usage_count`, `last_modified`. Supersedes `citations`. |
-   | usage | `usage_window` | `{ from, to }` (dates) -> `lokf:usageWindow` | window framing `usage_count` signals; sibling of `sources` (a Source entry MAY override). |
+   | provenance | `sources` | list of Source -> `schema:isBasedOn` | materials the concept derives from: `resource` (REQUIRED), plus optional `id` (footnote/merge key), `title`, `author` (an actor string: `<prefix>:<id>` such as `team:docs`, or `<producer>/<version>`), `usage_count`, `last_modified` (datetime). Supersedes `citations`. |
+   | usage | `usage_window` | `{ from, to }` (datetimes) -> `lokf:usageWindow` | window framing `usage_count` signals; sibling of `sources` (a Source entry MAY override). |
    | lifecycle | `status` | `draft`\|`stable`\|`deprecated` -> `schema:creativeWorkStatus` | absent ⇒ stable. |
-   | lifecycle | `stale_after` | date -> `schema:expires` | stale when `today >= stale_after`. |
+   | lifecycle | `stale_after` | datetime -> `schema:expires` | stale when `now >= stale_after`; a bare `YYYY-MM-DD` is read as that day at 00:00:00Z. |
 
    **Actors** (`generated.by`, `verified[].by`, `sources[].author`) are plain OKF §7 literal strings - `<producer>/<version>`, `human:<id>`, `process:<id>` - carried verbatim, never coerced to IRIs. **Trust tiers derive from them, never stored:** no `verified` ⇒ *unverified*; only non-human actors ⇒ *machine-confirmed*; any `human:` actor ⇒ *human-reviewed*.
 
