@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T15:00:00Z"
 status: draft
 about:
 - https://lokf-agent-skills.example/knowledge/explanation/why-four-roles
@@ -63,16 +63,22 @@ lets one person both author and confirm, the signature is the route, since
 GitHub will not let them approve their own pull request. An Environment's
 required reviewers are the one logged exception.
 
-An auditor's five questions each have a fixed place to look: provenance in
+An auditor's questions each have a fixed place to look: provenance in
 `resource`/`sources[].resource`/`derivedFrom`; who produced the current text
 and when in `generated.by`/`generated.at`; who confirmed it and when in
-`verified[].by`/`verified[].at`; whether that confirmation is really tied to
-the named person in the `provenance` gate's log (GitHub's verdict on the
-review or signature, not the runner's); and when it must be looked at again
-in `stale_after`. Three limits bound what that evidence proves: a
-confirmation records who and when, not what the source said at that instant
-(pinned by the commit when the source is in-repository, by nothing when it
-is a URL); the registrar gate checks identity, not entitlement - that
+`verified[].by`/`verified[].at`; which state of the source the check was
+made against in `verified[].revision`/`generated.revision` (lokf 0.9.0+:
+the full commit hash of a file, which the gate resolves against the tree,
+or an ETag or digest for a URL, which nothing checks); whether that
+confirmation is really tied to the named person in the `provenance` gate's
+log (GitHub's verdict on the review or signature, not the runner's); and
+when it must be looked at again in `stale_after`. Three limits bound what
+that evidence proves: a confirmation records who and when, and the state
+of the source only when the event carries `revision` (the curator skill
+writes it; the LOKF Curator plugin does not yet) - without it, pinned by
+the commit when the source is in-repository and by nothing when it is a
+URL, and `revision` names what the skill fetched, not what the person
+read; the registrar gate checks identity, not entitlement - that
 `human:ada` is ada, not that ada was the right person to confirm that
 concept; and a GitHub Environment attestation records only that a person
 on the environment's reviewer list clicked Approve, not that they opened
@@ -102,26 +108,30 @@ are answered in part, and each remaining gap is labelled by kind.
 recording only what the person says, by the review session showing the
 source before the claim, by curation being a reviewed policy, and by the
 docent's evidence-first mode (`Evidence first: yes` in the curation
-policy; off by default); left open - inherent, that nothing proves the
-person read; a specification gap, that a verification event carries only
-`by` and `at` (OKF v0.2) and so cannot record which version of the source
-was confirmed; not the bundle's role, the evidence Green asks for that
+policy; off by default), and by the event recording which state of the
+source the confirmation was made against (`revision`, lokf 0.9.0+, LOKF's
+own field until OKF adopts it); left open - inherent, that nothing proves
+the person read, and `revision` names what the skill fetched; a limit of
+the technique, that a page differing on every fetch reads as moved on
+every re-check; not the bundle's role, the evidence Green asks for that
 oversight works, which is third-line sampling - the curator's report hands
 over the sample when the policy sets `Independent re-check: <n>`; and off
 by default, that where the policy leaves evidence-first off a docent
 answer arrives with its label and no pause. *The machine invents*:
 answered by every record naming its source, by unsettled concepts staying
 `draft`, and by the conventions script the registrar runs failing when a
-local `resource` no longer exists; left open by design, since the
+local `resource` no longer exists or a commit-shaped `revision` names no
+commit holding it; left open by design, since the
 registrar never judges truth and the librarian's re-check is self-review.
 Incentives and skill in the lines are not the bundle's role: the
 organisation assigns curators through the curation policy.
 
 The main page closes with the gaps no control in a bundle closes, under
 the heading "What remains to do, and who does it", labelled by owner. Upstream, for
-OKF: a verification event
-that records the source's commit or content hash. This project, once a
-design is chosen: an entitlement check in the provenance job (needs a
+OKF: adopting `revision` (knowledge-catalog#437); LOKF carries it from
+0.9.0, and a bundle that uses it is still a valid OKF bundle. This
+project, once a design is chosen: writing `revision` from the LOKF Curator
+plugin, an entitlement check in the provenance job (needs a
 machine-readable "who may confirm what"), and an `lokf-auditor` skill for
 the third line, of which the curator's sampling step is the first half.
 The organisation's: naming the independent re-checker, whether a red check

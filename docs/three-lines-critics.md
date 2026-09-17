@@ -72,7 +72,7 @@ Two critiques aim at the kind of solution LOKF is: a machine's output checked by
 **What it leaves open.**
 
 - **Inherent.** Nothing shows that the person read the source. A signature or an approval proves who decided, not what they looked at, and `revision` names the state the skill fetched, not what the person looked at. No record can prove attention.
-- **A limit of the technique.** A page that differs on every fetch reads as moved on every re-check. A version label or ETag from the server, where one exists, tells such a page from one that has changed; a digest cannot.
+- **A limit of the technique.** A content digest is a fingerprint of the bytes that were fetched: identical bytes give an identical fingerprint, and any difference at all gives a different one. It says that the page differs, never why. A page assembled afresh on every request, with a timestamp or a rotating banner in it, gets a new fingerprint on every fetch, so a later re-check reads it as changed even when the passage it was cited for has not moved. An ETag or version label is the server's own name for the current version of the page and changes only when the server says the page changed; where the server offers one, the skill prefers it.
 - **Not the bundle's role.** Green also asks for evidence that the oversight works. That evidence is third-line work: an independent re-check of a sample of confirmed concepts. A bundle should not produce it about itself. What it can do is hand over the sample: when the curation policy names a size, the curator's report lists that many confirmed concepts at random, with their sources, for a second person.
 - **Off by default.** Where the curation policy leaves evidence-first off, a docent answer arrives with its trust label attached and no pause. The most the docent does then is carry the label into the sentence when the concept is anything less than confirmed by a person.
 
@@ -87,7 +87,7 @@ Two critiques aim at the kind of solution LOKF is: a machine's output checked by
 
 **What it leaves open.**
 
-- **By design.** The registrar never judges truth. The librarian does re-check every concept against its source on each scheduled refresh, but it is the same kind of tool that wrote the text, so that is self-review rather than an independent check; the independent judgement is the curator's. The registrar checks what can be checked without judgement: the conventions script it runs fails when a local `resource` no longer exists, so a vanished source fails the gate instead of waiting for a refresh. URLs are not fetched.
+- **By design.** The registrar never judges truth. The librarian does re-check every concept against its source on each scheduled refresh, but it is the same kind of tool that wrote the text, so that is self-review rather than an independent check; the independent judgement is the curator's. The registrar checks what can be checked without judgement: the conventions script it runs fails when a local `resource` no longer exists, so a vanished source fails the gate instead of waiting for a refresh, and when a commit-shaped `revision` names no commit that holds the resource. URLs are not fetched.
 
 ### Incentives and skill
 

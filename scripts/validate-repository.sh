@@ -284,15 +284,35 @@ printf -- '---\ntype: Service\nverified:\n  by: process:lokf-librarian\n  at: 20
 printf -- '---\ntype: Service\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-13T00:00:00Z"\n  - by: process:lokf-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n' > "$bad/k/x/b.md"
 # A local resource that does not exist (a URL would be skipped, never fetched).
 printf -- '---\ntype: Service\nresource: no-such-file.md\n---\n' > "$bad/k/x/c.md"
+# A commit-shaped `revision` must name a commit holding the resource: make the
+# temp directory a repository with one committed file, pin d.md to a commit
+# that does not exist and e.md to the one that does. Only d.md may be reported.
+# The user's git config stays out of it, so no signing key or hook is involved.
+tmpgit=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$bad"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid
+  -c commit.gpgsign=false)
+"${tmpgit[@]}" init -q
+printf 'pinned\n' > "$bad/pinned.md"
+"${tmpgit[@]}" add pinned.md
+"${tmpgit[@]}" commit -q -m pin
+real="$("${tmpgit[@]}" rev-parse HEAD)"
+pinned() { printf -- '---\ntype: Service\nresource: pinned.md\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "%s"\n---\n' "$1"; }
+pinned "0000000000000000000000000000000000000000" > "$bad/k/x/d.md"
+pinned "$real" > "$bad/k/x/e.md"
 findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
 rm -rf "$bad"
-for want in "not a bare ISO date" "not newest-first" "unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found"; do
+for want in "not a bare ISO date" "not newest-first" "unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found" "does not hold"; do
   if grep -q "$want" <<<"$findings"; then
     ok "conventions script reports: $want"
   else
     err "conventions script failed to report '$want' on a bundle that breaks it"
   fi
 done
+if grep -q 'x/e.md' <<<"$findings"; then
+  err "conventions script reported x/e.md, whose revision holds its resource"
+else
+  ok "conventions script accepts a revision that holds the resource"
+fi
 
 say ""
 if [[ "$fail" -eq 0 ]]; then
