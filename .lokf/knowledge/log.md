@@ -2,6 +2,11 @@
 
 ## 2026-09-18
 
+* **Tracked resources only**: Rule 5's field notes now say a local
+  `resource` must be a path git tracks. A gitignored install path under
+  `.agents/` resolves only on the machine holding it, and failed the
+  conventions gate in a clean CI checkout.
+
 * **Registrar template least-privilege**: the workflow had no top-level
   `permissions: {}` and left the checkout credential on disk in both
   read-only jobs, while `knowledge-librarian.yaml` and two host copies
