@@ -16,7 +16,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/policies/code-of-conduct
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T16:00:00Z"
+  at: "2026-09-17T14:02:11Z"
 ---
 
 # Overview

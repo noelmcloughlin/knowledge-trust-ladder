@@ -14,7 +14,7 @@ definedBy:
 - https://lokf-agent-skills.example/knowledge/references/okf-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 ---
 
 # Overview

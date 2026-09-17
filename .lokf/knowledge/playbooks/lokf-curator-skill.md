@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-curator/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
@@ -17,7 +17,7 @@ definedBy:
 - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 ---
 
 # Overview
@@ -52,3 +52,10 @@ It deals in **judgments a person made, never facts it derived**. It writes only
 `verified` (human events), `status`, `stale_after`, `generated` (on a dictated
 correction), and an `## Open questions` section - and never without an explicit
 per-item answer. There is deliberately no "confirm everything".
+
+From lokf 0.9.0 a confirmation event also carries `revision`, the state of
+the source the person was shown (`references/review-session.md`, added
+2026-09-17): the full commit hash for a file in the repository, or the ETag,
+else a `sha256:` digest, for a URL. The skill leaves it out when the file
+has uncommitted changes or the toolkit is older. It records what the skill
+fetched, not proof that the person read it.

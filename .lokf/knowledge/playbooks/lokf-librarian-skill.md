@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-librarian/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T07:47:56Z"
+  at: "2026-09-17T14:02:11Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
@@ -20,7 +20,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/okf-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
 stale_after: 2027-09-09
@@ -30,7 +30,7 @@ stale_after: 2027-09-09
 
 Runs **often**, including on a schedule. It carries the seven LOKF Golden Rules
 (OKF-first; the bundle-root semantic header and `base_iri` authority test; the
-type vocabulary - fifteen classes - plus the Diátaxis `genre` facet; typed
+type vocabulary plus the Diátaxis `genre` facet; typed
 relationships over bare links; core field-to-ontology mapping; trust,
 provenance and lifecycle; permissiveness), then four sections: scrape and
 build, audit, hand off for review, and the scheduled task.
@@ -65,8 +65,8 @@ never trusting the `refresh` job's own check alone), plus harden-runner and
 `.git/config`/`.git/hooks/` snapshot-and-restore around the agent call in
 the wrapper script. See `policies/security.md` for the detail.
 
-**Extending the vocabulary (added 2026-09-14).** Rule 3's fifteen classes are
-deliberately small and portable. A domain needing more of its own gets a
+**Extending the vocabulary (added 2026-09-14).** Rule 3's classes are
+deliberately few and portable. A domain needing more of its own gets a
 LinkML schema that imports LOKF's and validates with `lokf validate --schema
 <file>`, which the toolkit has always accepted - no loosening of Rule 7.
 `lokf-librarian/references/domain-schema.md` is the recipe: a pinned copy of
@@ -76,3 +76,14 @@ that wiring back - where the justfile passes `--schema`, that schema's
 `Concept` descendants are part of the vocabulary, and a record names the
 subclass. The tooling-version step (rule 6) refreshes the pinned copy.
 `lokf-curator/references/domain-schemas.md` covers when; this covers how.
+
+**The toolkit's constraints, and `revision` (added 2026-09-17).** The field
+tables state what lokf 0.8.0 enforces: `sources[].author` is an actor
+string, `http_method` is one uppercase verb from a closed list, and every
+timestamp, `stale_after` included, is a datetime, a bare date meaning
+midnight UTC. From lokf 0.9.0 the skill also writes `revision` on
+`generated`: the full commit hash of a file in the repository, or the ETag
+or a `sha256:` digest of a URL, always quoted. It leaves the key out on an
+older toolkit, on a file with uncommitted changes, or on a source it did
+not read that run. The registrar gate checks that a commit hash names a
+commit holding the concept's `resource`.

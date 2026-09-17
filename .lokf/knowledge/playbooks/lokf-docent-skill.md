@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-docent/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
@@ -19,7 +19,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/lokf-curator-skill
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 ---
 
 # Overview
@@ -28,7 +28,9 @@ Runs **whenever anyone asks**. Bundle first: read `knowledge/index.md`, open
 one to three candidate concepts, widen along typed relations rather than by
 grepping, and verify exact values (versions, endpoints, paths) at the
 concept's `resource` before stating them. Every answer carries a footing -
-which concepts it rests on and how far each has been trusted. One switch,
+which concepts it rests on and how far each has been trusted, with the
+`revision` a person's confirmation was checked against where the event
+records one ("against 3f9c2a1", a commit hash cut to seven characters). One switch,
 set by a person in the curation policy (`policies/knowledge-curation.md`,
 the line `Evidence first: yes`), reverses the order for any concept not yet
 confirmed by a person: the quoted source first, then the answer that rests

@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -43,6 +43,16 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-17, eleventh pass)**, on `main` at the
+  0.19.0 release, after #41 and #42 landed. Twenty concepts re-checked; six
+  follow their sources: the librarian, curator and docent skills and the
+  trust label now describe `revision`, the librarian skill no longer counts
+  its classes, and the releasing playbook says what `@semantic-release/exec`
+  calls and which changelog heading `publish.yml` compares. Two concepts'
+  `generated.at` were set to a time after the change that wrote them and now
+  carry #42's merge time. Rows above still hold. `lokf` on PyPI is `0.8.0`,
+  matching the floor; `.lokf/feedback.md` has no entries; all seven
+  Reference URLs resolve.
 - **Steady-state refresh (2026-09-16, tenth pass)**, against the working
   tree's uncommitted changes (nothing has landed since `e52267d`, the
   0.17.1 release). Fifteen concepts re-checked against their current

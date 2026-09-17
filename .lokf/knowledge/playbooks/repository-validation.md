@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T15:00:00Z"
+  at: "2026-09-17T13:53:11Z"
 status: draft
 references:
   - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
@@ -15,7 +15,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 ---
 
 # Overview

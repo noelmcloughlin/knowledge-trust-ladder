@@ -2,6 +2,16 @@
 
 ## 2026-09-17
 
+* **Steady-state refresh (eleventh pass)**: twenty concepts re-checked
+  against their sources. The librarian, curator and docent skills and the
+  trust label now describe `revision`, and the librarian skill no longer
+  counts its classes.
+* **Releasing** corrected: semantic-release runs with `--dry-run` and
+  `@semantic-release/exec` calls the changelog script's `check` and `notes`;
+  `publish.yml` compares against the top released heading, not Unreleased.
+* **Provenance fixed**: `repository-validation` and `three-lines-of-defence`
+  carried a `generated.at` later than the change that wrote them, and now
+  carry the time that change merged.
 * **Repository validation** follows check 11: the conventions script's
   sixth rule (a commit-shaped `revision` must name a commit holding the
   resource) is proved in a throwaway repository, failing and passing.
