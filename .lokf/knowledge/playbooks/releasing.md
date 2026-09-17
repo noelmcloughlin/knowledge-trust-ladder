@@ -2,12 +2,12 @@
 type: Playbook
 id: https://lokf-agent-skills.example/knowledge/playbooks/releasing
 title: Releasing
-description: semantic-release.yml computes the version and promotes CHANGELOG.md on merge to main but never tags; a workflow_dispatch run of publish.yml then validates that version against the promoted changelog, re-checks the contract and spec, and lets gh skill publish create the tag and release.
+description: semantic-release.yml computes the version and promotes CHANGELOG.md on merge to main but never tags, folding into a still-unpublished section rather than doubling it; a workflow_dispatch run of publish.yml then validates that version against the promoted changelog, re-checks the contract and spec, and lets gh skill publish create the tag and release.
 genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T19:45:00Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/references/gh-skill-cli
@@ -17,7 +17,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T19:45:00Z"
 ---
 
 # Overview
@@ -25,7 +25,7 @@ verified:
 A person no longer hand-picks the version, but two tools never race to tag
 it. `semantic-release.yml`'s `release` job runs on every push to `main`,
 behind the `release` GitHub Environment: `@semantic-release/commit-analyzer`
-computes the next version from Conventional Commits since the last tag,
+computes the next version from Conventional Commits since the last *tag*,
 using `.releaserc.json`'s `releaseRules` - the Angular preset's defaults
 (`fix:` -> patch, `feat:` -> minor, a `BREAKING CHANGE:` footer or `!` ->
 major) plus one addition, `security:` -> patch. Semantic-release always
@@ -37,6 +37,22 @@ supplies the release notes. A plain shell step
 afterward reads the version `--dry-run` computed, promotes that section to a
 dated heading itself, and commits the change directly - `gh skill publish`
 stays this repository's one and only tag creator, per the reasoning below.
+
+Because the next version is computed from the last tag and `gh skill publish`
+is a separate, later, human-triggered step, two qualifying merges to `main`
+between one `publish.yml` run and the next compute the *same* next version
+twice. `promote` now checks whether the top released heading's version is
+still untagged and, if so, folds the new entries into it by `###` subsection
+instead of inserting a second heading for the same version - the bug that
+shipped two `## [0.19.0] - 2026-09-17` headings on 2026-09-17, orphaning the
+second merge's entries above an empty `[Unreleased]`. The `plan` job also
+calls `changelog-release.mjs check` as its own step, not only inside
+`--dry-run`: semantic-release detects a pull-request event and skips every
+plugin lifecycle hook, including `@semantic-release/exec`'s, so the `check`
+this page's next section describes never ran on a pull request until this
+fix, and an empty `[Unreleased]` would have merged silently. Check 14 in
+`playbooks/repository-validation.md` proves the fold and would have caught
+the original duplication.
 
 Releases are still never tag-triggered. `gh skill publish` creates the tag
 *and* the GitHub release itself, so a tag-push trigger would race the tag the

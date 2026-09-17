@@ -4,10 +4,15 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **A push to `main` between releases no longer promotes `## [Unreleased]` a second time.** `semantic-release.yml` computes the version from the last *tag*, and only `publish.yml` tags, so two qualifying merges without a publish between them promoted the same version twice, leaving two `## [0.19.0]` headings and orphaning the second push's entries above an empty `[Unreleased]`. `changelog-release.mjs promote` now folds into the top released section instead of inserting a new one when that section's version carries no tag yet, merging by subsection in Keep a Changelog order. Check 14 proves it, and repairs the two headings this bug had already written. The `plan` job also runs `changelog-release.mjs check` directly, since semantic-release skips its own plugin hooks - including this one - on a pull request and would otherwise let an empty `[Unreleased]` merge, contrary to `docs/releasing.md`'s claim.
+
 ## [0.19.0] - 2026-09-17
 
 ### Added
 
+- **The registrar gate resolves a `revision`.** A sixth rule: a commit-shaped `revision` on an event must name a commit that holds the concept's local `resource`, so the skills pin with the full hash; the validate job checks out the full history, and a shallow clone is reported rather than passed. Check 11 proves both outcomes in a throwaway repository.
 - **Portability pages for the curator and the librarian, and the sidecar's rewritten as a host matrix.** What works, what is lost and the substitute on GitHub, GitLab, Forgejo, no forge, no git, Windows and PowerShell, macOS, synced folders and an Obsidian vault.
 - **Every skill declares what it needs** in the Agent Skills `compatibility` field; check 3b holds it to the spec's 500 characters.
 - **A forge-free provenance gate.** `knowledge-provenance.sh` verifies each confirmation's commit signature against the curator's public key on file under `.lokf/curators/`, GPG with its subkeys or SSH, with plain git and gpg or ssh-keygen; check 13 proves each outcome with throwaway keys.
@@ -18,6 +23,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
+- **The skills use lokf 0.9.0+'s `revision`.** The curator writes it on a confirmation and the librarian on `generated` (the full commit hash of a file, an ETag or digest for a URL), the docent quotes it beside the date, and `docs/three-lines.md` moves "which state of the source was the check made against" from an OKF gap to a recorded answer. On an older toolkit the key is left out. The librarian's field tables also name `excerpt` on a source, and the domain-schema page says an undeclared type now projects as `lokf:Concept`.
+- **The sidecar's toolkit floor is lokf 0.8.0**, here and in the `lokf-sidecar` template. The librarian's field tables now state its constraints: `sources[].author` is an actor string, `http_method` is one of seven uppercase verbs, and every timestamp including `stale_after` is a datetime, a bare date meaning midnight UTC.
 - **The curator says what it can record before offering a session**, from a *Ready to record* line with three identity routes - `gh`, `glab`, the signing key the forge lists - and a rule for a host with no forge. The librarian names files in lowercase and hands off on a host without git; the docent's feedback attribution names the same routes.
 - **Six of the conventions script's ten checks now parse YAML for real.** `knowledge-conventions.py`, run through `uv run`, takes over the quoted-`at`, `verified`-shape, open-question, duplicate-`id`, closed-frontmatter and plain-spelling rules from grep and awk, which missed a flow-style `verified` and a multi-line flow item; the other four stay shell, needing nothing but bash and git, and without `uv` the OK line says which rules were skipped. The sidecar lays it down beside the `.sh` (Step 5's seventh file), and the preflight reports a host holding one without the other. Check 11 proves each rule on the layouts that used to slip.
 
@@ -32,17 +39,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The conventions script no longer aborts on a runner that ignores SIGPIPE.** GitHub Actions starts every step that way, so an awk that closed the frontmatter pipe early turned into a `tr: write error` that `pipefail` made fatal on the first long concept; the script now reads each file whole, and the contract's own job installs `uv` so the parser's half runs there too.
 - **A confirmation spelt with a YAML tag, anchor, alias or quoted key was invisible to both gates** while `lokf validate` accepted it. Conventions rule 10 now holds `id`, `by`, `at` and `revision` to spellings a line reader and a parser agree on, so the `validate` check fails such a concept before the `provenance` check could miss it; check 11 proves it.
 - **Both gates read merges, `generated`, and only the frontmatter.** A merge commit listed no changed paths, so an event added in one passed the forge-free gate unseen; a human `generated` record - the curator's Correct writes one - was a claim only when written as a `by:` line; and a `by: human:` in a body code fence counted as one. Events are now read against every parent of a commit, from `verified` and `generated`, and from nowhere else. Check 13 proves each.
-
-## [0.19.0] - 2026-09-17
-
-### Added
-
-- **The registrar gate resolves a `revision`.** A sixth rule: a commit-shaped `revision` on an event must name a commit that holds the concept's local `resource`, so the skills pin with the full hash; the validate job checks out the full history, and a shallow clone is reported rather than passed. Check 11 proves both outcomes in a throwaway repository.
-
-### Changed
-
-- **The skills use lokf 0.9.0+'s `revision`.** The curator writes it on a confirmation and the librarian on `generated` (the full commit hash of a file, an ETag or digest for a URL), the docent quotes it beside the date, and `docs/three-lines.md` moves "which state of the source was the check made against" from an OKF gap to a recorded answer. On an older toolkit the key is left out. The librarian's field tables also name `excerpt` on a source, and the domain-schema page says an undeclared type now projects as `lokf:Concept`.
-- **The sidecar's toolkit floor is lokf 0.8.0**, here and in the `lokf-sidecar` template. The librarian's field tables now state its constraints: `sources[].author` is an actor string, `http_method` is one of seven uppercase verbs, and every timestamp including `stale_after` is a datetime, a bare date meaning midnight UTC.
 
 ## [0.18.0] - 2026-09-16
 

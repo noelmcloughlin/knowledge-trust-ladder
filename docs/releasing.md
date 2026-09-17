@@ -15,13 +15,13 @@ Nobody picks a version number. Commits typed with [Conventional Commits](https:/
 
 Type the commit for what the change *is*. A behaviour change is a `feat:` even when most of the diff is prose. If a pull request should release and its commits are typed too quietly, squash-merge it and give the squash commit the right type.
 
-The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you go: a line or two per change, with the detail left to the code's comments. The pipeline releases only what has already been written up. `changelog-release.mjs check` refuses an empty section, and because it runs in the `plan` job's dry run on every pull request into `main` as well as at release time, a forgotten entry fails the pull request rather than the release.
+The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you go: a line or two per change, with the detail left to the code's comments. The pipeline releases only what has already been written up. `changelog-release.mjs check` refuses an empty section; the `plan` job runs it directly on every pull request into `main`, not only inside the dry run, because semantic-release skips its own plugins' hooks - including this one - on a pull-request event, so a forgotten entry fails the pull request rather than the release.
 
 ## What happens on a merge to `main`
 
 1. `semantic-release` computes the next version from the commits since the last release, and stops if none warrant one.
 2. `changelog-release.mjs check` refuses to proceed if `## [Unreleased]` is empty.
-3. That section is retitled `## [X.Y.Z] - YYYY-MM-DD`, a fresh empty `## [Unreleased]` is inserted above it, and the result is committed to `main`.
+3. That section is retitled `## [X.Y.Z] - YYYY-MM-DD`, a fresh empty `## [Unreleased]` is inserted above it, and the result is committed to `main` - unless the top released section already carries that exact version with no matching tag, in which case the new entries fold into it by subsection instead of adding a second heading. That case is possible only in `lokf-agent-skills`, where tagging is a separate, later step (below): a second qualifying merge before a maintainer runs `publish.yml` computes the same next version again, since it is still derived from the last *tag*.
 4. From here the repositories differ:
 
 | Repository | Tag | Then |

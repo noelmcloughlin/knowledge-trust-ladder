@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T17:30:00Z"
+  at: "2026-09-17T19:45:00Z"
 status: draft
 references:
   - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
@@ -15,14 +15,14 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T17:30:00Z"
+  at: "2026-09-17T19:45:00Z"
 ---
 
 # Overview
 
 `validate.yml` runs five jobs on every pull request, every push to `main`,
 weekly, and on demand. `validate-skills` runs `scripts/validate-repository.sh` -
-thirteen numbered checks: exactly four skill directories with a case-correct
+fourteen numbered checks: exactly four skill directories with a case-correct
 `SKILL.md` in each, frontmatter `name` matching its directory and (check 3b,
 added 2026-09-17) a `compatibility` field of at most 500 characters naming
 what the skill needs, no duplicate `SKILL.md`, every relative Markdown link
@@ -68,7 +68,12 @@ flow-style event, a flow-style human `generated` record and an event a merge
 adds that neither side held, while passing the same re-date signed by its
 curator, a confirmed concept that merely moved, an example event in a body
 code fence and a merge that brings in a signed confirmation - all with
-throwaway keys. Then
+throwaway keys; and (check 14, added 2026-09-17) `CHANGELOG.md` never
+carrying two headings for one released version, and `changelog-release.mjs
+promote` folding a second qualifying push into the top released section by
+subsection, rather than adding a second heading for it, when that version
+carries no tag yet - proven in a throwaway repository, and left alone once a
+version is tagged. Then
 `gh skill publish --dry-run` runs.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs
