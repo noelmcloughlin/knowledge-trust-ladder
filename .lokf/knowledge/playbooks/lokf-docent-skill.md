@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-docent/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T14:57:49Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
@@ -19,7 +19,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/lokf-curator-skill
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T14:57:49Z"
 ---
 
 # Overview
@@ -42,6 +42,10 @@ after asking once per session: a **Miss** (a question the bundle could not
 answer, plus where the answer was found) or a **Disagreement** (a concept
 versus what its source now says). The librarian consumes and clears those
 entries on its next run, which closes the loop from reader back to bundle.
+An entry names the asker only from an authenticated login - `gh api user`,
+`glab api user`, or the signing-key route the curator describes - and is
+attributed to `docent` alone without one; the preflight's identity line
+says which applies (2026-09-17).
 It never carries a secret, credential, token, or connection string into an
 answer or a feedback entry, even to explain where one was found - it names
 the file and line and the kind of value, never the value itself, since the

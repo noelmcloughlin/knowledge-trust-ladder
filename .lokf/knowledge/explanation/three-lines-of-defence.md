@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T13:53:11Z"
+  at: "2026-09-17T14:57:49Z"
 status: draft
 about:
 - https://lokf-agent-skills.example/knowledge/explanation/why-four-roles
@@ -17,7 +17,7 @@ relatedTo:
 - https://lokf-agent-skills.example/knowledge/glossary/trust-label
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T14:57:49Z"
 ---
 
 # Overview
@@ -72,7 +72,7 @@ the full commit hash of a file, which the gate resolves against the tree,
 or an ETag or digest for a URL, which nothing checks); whether that
 confirmation is really tied to the named person in the `provenance` gate's
 log (GitHub's verdict on the review or signature, not the runner's); and
-when it must be looked at again in `stale_after`. Three limits bound what
+when it must be looked at again in `stale_after`. Four limits bound what
 that evidence proves: a confirmation records who and when, and the state
 of the source only when the event carries `revision` (the curator skill
 writes it; the LOKF Curator plugin does not yet) - without it, pinned by
@@ -80,9 +80,13 @@ the commit when the source is in-repository and by nothing when it is a
 URL, and `revision` names what the skill fetched, not what the person
 read; the registrar gate checks identity, not entitlement - that
 `human:ada` is ada, not that ada was the right person to confirm that
-concept; and a GitHub Environment attestation records only that a person
+concept (a repository carrying `.lokf/curators/` settles who may confirm,
+not yet what); a GitHub Environment attestation records only that a person
 on the environment's reviewer list clicked Approve, not that they opened
-the source.
+the source; and the `provenance` job is a GitHub Actions job - elsewhere
+the forge-free `knowledge-provenance.sh` does its signature half against
+the keys on file, and a host without git has only its platform's version
+history.
 
 The critics, and the answers to them, have a page of their own,
 `docs/three-lines-critics.md`; the main page keeps one paragraph that says
@@ -131,8 +135,10 @@ the heading "What remains to do, and who does it", labelled by owner. Upstream, 
 OKF: adopting `revision` (knowledge-catalog#437); LOKF carries it from
 0.9.0, and a bundle that uses it is still a valid OKF bundle. This
 project, once a design is chosen: writing `revision` from the LOKF Curator
-plugin, an entitlement check in the provenance job (needs a
-machine-readable "who may confirm what"), and an `lokf-auditor` skill for
+plugin, an entitlement check by kind of concept (`.lokf/curators/` now says
+who may confirm; which kinds each may confirm still lives in the curation
+policy's prose), the approval half of the gate on GitLab and Forgejo, and an
+`lokf-auditor` skill for
 the third line, of which the curator's sampling step is the first half.
 The organisation's: naming the independent re-checker, whether a red check
 blocks a merge, and the incentives and skill of whoever curates.

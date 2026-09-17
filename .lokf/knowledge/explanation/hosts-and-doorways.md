@@ -7,7 +7,7 @@ genre: explanation
 resource: skills/lokf-sidecar/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-13T12:00:00Z"
+  at: "2026-09-17T14:57:49Z"
 status: draft
 about:
   - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
@@ -17,7 +17,7 @@ relatedTo:
   - https://lokf-agent-skills.example/knowledge/explanation/why-a-registrar-role
 verified:
   - by: process:lokf-librarian
-    at: "2026-09-16T09:10:00Z"
+    at: "2026-09-17T14:57:49Z"
 ---
 
 # The pattern
@@ -57,6 +57,19 @@ folder is not a choice the sidecar makes any more: it is always the hidden one.
   doorway is per machine (`just lokf-link`) or the bundle is opened by path. A library nobody reaches
   through git may be rearranged by hand for a synced visible name - the sidecar's
   `references/portability.md` says how; a shared folder that is also a vault must not be.
+
+# What each host can do
+
+Since 2026-09-17 the sidecar's `references/portability.md` is a matrix, host by host, of what works,
+what is lost and the substitute: Linux; macOS on its stock bash 3.2, with `shasum -a 256` where
+`sha256sum` is named; Windows from Git for Windows' bash, or from PowerShell through a one-line
+launch of that bash; GitLab, Forgejo and Gitea, where the two GitHub Actions workflows are the only
+loss and the recipe names the two calls to rewrite; git with no forge; no git at all, where the
+platform's version history is the record of who changed what; and an Obsidian vault. A preflight the
+sidecar lays down, `.lokf/scripts/knowledge-preflight.sh`, reports which case a machine is, and every
+skill runs it first, so a missing tool is said before a step is offered. `.lokf/.gitattributes` keeps
+a tracked bundle on LF, and the conventions script reads a CRLF or byte-order-marked file the same
+as LF and reports a sync client's conflict copy as a duplicate `id`.
 
 # The rule: one layout, and how it was settled
 

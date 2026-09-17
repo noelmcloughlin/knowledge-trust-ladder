@@ -2,6 +2,12 @@
 
 ## 2026-09-17
 
+* **Portability work (twelfth pass)**: the contract, the four skill
+  playbooks, the threat model, the three lines page and the hosts
+  explanation follow their sources - a preflight every skill runs first, a
+  forge-free provenance gate, `.lokf/.gitattributes`, three new conventions
+  (one file per `id`, lowercase paths, a readable frontmatter block), each
+  skill's `compatibility` field, and three identity routes for the curator.
 * **Steady-state refresh (eleventh pass)**: twenty concepts re-checked
   against their sources. The librarian, curator and docent skills and the
   trust label now describe `revision`, and the librarian skill no longer

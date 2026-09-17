@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-librarian/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T14:57:49Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
@@ -20,7 +20,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/okf-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T14:57:49Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
 stale_after: 2027-09-09
@@ -87,3 +87,14 @@ or a `sha256:` digest of a URL, always quoted. It leaves the key out on an
 older toolkit, on a file with uncommitted changes, or on a source it did
 not read that run. The registrar gate checks that a commit hash names a
 commit holding the concept's `resource`.
+
+**Portability (added 2026-09-17).** `references/portability.md` says what
+the skill loses on each host and the substitute: without git, `revision` is
+left out and the hand-off names the platform's version history; on GitLab
+or Forgejo the wrapper ports and the merge request is opened there; from
+PowerShell the commands run through Git for Windows' bash; on macOS
+`shasum -a 256`. Files and directories are named in lowercase, since the
+path is the id and case-insensitive hosts collide. The audit runs the
+preflight first, and the tooling-version check now uses `uvx --from pip pip
+index versions lokf`: `uv pip` has no `index` subcommand, which every
+earlier refresh had noted and worked around.

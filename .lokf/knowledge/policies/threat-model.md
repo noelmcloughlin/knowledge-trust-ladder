@@ -7,13 +7,13 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T23:10:00Z"
+  at: "2026-09-17T14:57:49Z"
 references:
 - https://lokf-agent-skills.example/knowledge/policies/security
 - https://lokf-agent-skills.example/knowledge/policies/ai-covenant
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T14:57:49Z"
 ---
 
 # Overview
@@ -50,10 +50,15 @@ type. `knowledge-registrar.yaml`'s `provenance` job is the authority: it
 requires an approving review from the named account or their verified
 signature on the introducing commit, evidence GitHub holds rather than
 evidence the bundle asserts. lokf-curator writes `human:` only for
-`gh api user`'s authenticated identity, refuses to run a review session
+an authenticated identity - `gh api user`, `glab api user`, or a signing
+key the forge lists under the stated login - refuses to run a review session
 unattended, and its report flags an unsigned `human:` commit rather than
-trusting it silently. None of this proves anyone read the source - it raises
-the cost of forgery, not the truth of a confirmation.
+trusting it silently. Where GitHub is not the forge, or as a second opinion
+where it is, `knowledge-provenance.sh` (2026-09-17) does the signature half
+against public keys the repository carries under `.lokf/curators/`, one per
+curator id, and refuses a change that adds a key and a confirmation
+together. None of this proves anyone read the source - it raises the cost
+of forgery, not the truth of a confirmation.
 
 **Prompt-injection guards**, one per skill's input path: lokf-librarian
 resolves a `.lokf/feedback.md` entry only from the source it names, never its

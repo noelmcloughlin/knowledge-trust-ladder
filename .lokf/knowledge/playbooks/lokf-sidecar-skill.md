@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-sidecar/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-13T23:00:00Z"
+  at: "2026-09-17T14:57:49Z"
 status: draft
 about:
   - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
@@ -17,25 +17,32 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/lokf-toolkit
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T14:57:49Z"
 ---
 
 # Overview
 
 Runs **once** per repository, or to repair a single missing sidecar file;
-it never authors concepts. Six steps: gather the host project's facts (Step 0; the layout is
-the same on every host - `.lokf/knowledge` is the real folder, see
+it never authors concepts. Six steps: run the preflight and gather the host project's facts (Step 0;
+the preflight says what the machine can do, and the layout is the same on
+every host - `.lokf/knowledge` is the real folder, see
 [Hosts and doorways](../explanation/hosts-and-doorways.md)), copy each file
-from `templates/` and substitute placeholders (Step 1), add three root-level
-pointers - `llms.txt`, a README aside, and a `knowledge_bundle` symlink onto
-`.lokf/knowledge` for people, folder pickers and Obsidian (Step 2, see
-[Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)) - verify
+from `templates/` and substitute placeholders (Step 1, since 2026-09-17
+including `.lokf/.gitattributes`, which keeps the bundle on LF), add three
+root-level pointers - `llms.txt`, a README aside, and a `knowledge_bundle`
+symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian
+(Step 2, see [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)) - verify
 no placeholder survives (Step 3), validate (Step 4), optionally lay down the
-CI automation (Step 5), and hand off (Step 6).
+CI automation (Step 5: two workflows and four scripts, of which the
+preflight and the forge-free provenance gate need neither git nor GitHub to
+be laid down), and hand off (Step 6). Its frontmatter declares what it
+needs in the Agent Skills `compatibility` field, as every skill here does.
 
-Its detail lives in two reference files - `references/portability.md`
-(non-git, non-GitHub, non-POSIX hosts) and `references/automation.md` (what
-the Step 5 files do) - so the router itself stays small. Every file it writes
+Its detail lives in two reference files - `references/portability.md` (a
+matrix, host by host: git or none, GitHub, GitLab or Forgejo, Linux, macOS,
+Windows and PowerShell, synced folders, an Obsidian vault, and the
+forge-free gate) and `references/automation.md` (what the Step 5 files
+do) - so the router itself stays small. Every file it writes
 is copied from `templates/`, never retyped, which is what keeps a freshly
 laid-down bundle byte-identical to the reviewed template.
 
