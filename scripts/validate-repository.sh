@@ -43,6 +43,24 @@ for dir in "${expected_dirs[@]}"; do
   fi
 done
 
+# 3b. Each skill states what it needs in the spec's optional `compatibility`
+#     field (agentskills.io/specification: 1-500 characters), so git, a POSIX
+#     shell, uv or an authenticated identity is declared where every installer
+#     shows it, not discovered after a report has offered a step. (The curator
+#     used to name `gh` only inside its Step 2.)
+for dir in "${expected_dirs[@]}"; do
+  skill_file="$dir/SKILL.md"
+  [[ -f "$skill_file" ]] || continue
+  compat="$(awk 'NR>1 && /^---$/ {exit} /^compatibility:/ {sub(/^compatibility:[[:space:]]*/, ""); print}' "$skill_file")"
+  if [[ -z "$compat" ]]; then
+    err "$skill_file declares no compatibility field - say what the skill needs (shell, git, uv, an identity) in 1-500 characters"
+  elif (( ${#compat} > 500 )); then
+    err "$skill_file compatibility is ${#compat} characters; the Agent Skills spec allows 500"
+  else
+    ok "$skill_file declares compatibility (${#compat} characters)"
+  fi
+done
+
 # 4. No unexpected duplicate SKILL.md files in publishable paths.
 mapfile -t all_skill_md < <(find skills -iname 'SKILL.md' | sort)
 if [[ ${#all_skill_md[@]} -eq 4 ]]; then

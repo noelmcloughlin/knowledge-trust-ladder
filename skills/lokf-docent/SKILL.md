@@ -2,6 +2,7 @@
 name: lokf-docent
 description: 'Answer questions about this repository from its `.lokf/` knowledge bundle first, saying how far each concept used has been trusted, and explore the repository directly only when the bundle has no answer - recording that miss, or a disagreement between bundle and source, in `.lokf/feedback.md` for the librarian and curator. Use when: someone asks what/who/which/how about the project, its services, data, policies, terms, or owners; before searching the repo directly; when an answer must say what it rests on. Not for building, fixing, or confirming concepts - that is lokf-librarian / lokf-curator.'
 license: Apache-2.0
+compatibility: 'Reads files only, from any shell. The GitHub CLI (gh) logged in, or glab, lets a feedback entry name the asker; without one, entries are attributed to docent alone.'
 ---
 
 # LOKF Docent
@@ -32,7 +33,7 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 4. **Verify exact values at the source.** Versions, endpoints, numbers, paths: the bundle summarises, the concept's `resource` is authoritative. Open it before stating a precise value, and say that you did.
 5. **Answer with a footing.** Give the answer, then what it rests on: each concept (title, path) with its label, and any source you checked. Plain words - the label names below, never RDF/IRI/tier. Where the curation policy asks for evidence first, the source comes before the answer: see [Evidence-first mode](#evidence-first-mode).
 6. **Fall back deliberately.** When no concept is relevant, or the only one is retired or stale and the question hinges on being current, explore the repository directly - and say the bundle didn't cover it.
-7. **Record the miss or the disagreement.** Once per session ask: "Record bundle gaps in `.lokf/feedback.md` for the librarian?" If yes, append a **Miss** (the question, and where you found the answer) or a **Disagreement** (the concept, and what its source says instead). Format: [references/feedback.md](references/feedback.md). Never fix the concept yourself.
+7. **Record the miss or the disagreement.** Once per session ask: "Record bundle gaps in `.lokf/feedback.md` for the librarian?" If yes, append a **Miss** (the question, and where you found the answer) or a **Disagreement** (the concept, and what its source says instead). Format: [references/feedback.md](references/feedback.md); where `.lokf/scripts/knowledge-preflight.sh` exists, its identity line says whether the entry can name the asker. Never fix the concept yourself.
 
 The full procedure, question-type hints, and edge cases: [references/answering.md](references/answering.md). Asked how to open the bundle in Obsidian, or whether it belongs inside a vault: [references/obsidian.md](references/obsidian.md) - the answer is the same on every host, so the bundle will not carry it.
 

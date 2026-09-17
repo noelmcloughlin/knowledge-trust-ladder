@@ -67,6 +67,8 @@ Not tied to a signed commit: <h> - <titles>. Recorded as confirmed by a person, 
 For a second person to re-check (<n>, picked by a rule the curator cannot steer):
 - <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Independent re-check:` line above 0
 
+Ready to record: human:<id> via gh · signing on · attended   | or what is missing and which verbs that removes, from the preflight
+
 <remaining> more not yet checked. Run again anytime - every confirmation counts.
 Want to go through these now?
 ```

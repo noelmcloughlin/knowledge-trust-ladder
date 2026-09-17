@@ -6,12 +6,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
+- **Portability pages for the curator and the librarian, and the sidecar's rewritten as a host matrix.** GitHub, GitLab, Forgejo, no forge, no git, Windows and PowerShell, macOS, synced folders and an Obsidian vault: what works, what is lost, the substitute. The curator's page carries the signing-key identity route and the no-forge rule; the sidecar's carries the GitLab and Forgejo porting recipe, the PowerShell launch line and the forge-free gate.
+- **Every skill declares what it needs.** The Agent Skills `compatibility` field on each `SKILL.md` names the shell, git, `uv` and identity a skill depends on; contract check 3b holds it to the spec's 500 characters.
 - **A preflight every skill runs first.** `knowledge-preflight.sh`, laid down by the sidecar beside the conventions script, prints one read-only screen: host and shell, bundle, git and line endings, forge and gate, authenticated identity and signing, toolkit, which skill copies are installed and whether they differ, whether the host's copies still match the installed templates, and whether the session is attended. It ends on a summary naming what is missing and which steps that disables, so a missing `gh` or `uv` is said before a step is offered, never after. Check 12 runs it here, on a bare directory, and on a CRLF bundle.
 - **The sidecar lays down `.lokf/.gitattributes`**, keeping the bundle on LF on every machine so a Windows checkout gives the same verdict as CI.
 - **Three more conventions the gate checks.** One file per `id` (a sync client's conflict copy carries its original's and silently merged into it in the graph), lowercase paths (two paths differing only by case collide on Windows, macOS and SharePoint, and sync clients name conflict copies with spaces, parentheses or host names), and a closed frontmatter block with no byte order mark. Check 11 proves each.
 
+### Changed
+
+- **The curator says what it can record before offering a session.** Step 1 gains a *Ready to record* line from the preflight and offers only the verbs it allows; identity has three routes - `gh` on GitHub, `glab` on GitLab, the local signing key resolved through the forge's public key listing - and a rule for a host with no forge; the digest and sampling commands have a macOS fallback; the signing walkthrough is linked. The librarian names files in lowercase, leaves `revision` off an unversioned source, and hands off on a host without git; the docent's feedback attribution names the same routes.
+
 ### Fixed
 
+- **The librarian's version check names a command that exists.** `uv pip index` is not a subcommand; the check now uses `uvx --from pip pip index versions lokf`, with PyPI's JSON as the fallback.
 - **A Windows checkout no longer blinds the conventions script.** CRLF line endings made it report every log heading as malformed and skip the frontmatter rules unread, and a byte order mark skipped a file the same way. It now reads files with both stripped, and check 11 holds a CRLF bundle to the same verdict as LF.
 
 ## [0.19.0] - 2026-09-17
