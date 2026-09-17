@@ -293,6 +293,13 @@ done
 
 say ""
 say "Exercising knowledge-conventions.sh..."
+# Six of the ten rules run through `uv run`, so without uv the script reports
+# none of them and every expectation below fails saying only that it "failed
+# to report" something - never why. Name the cause once, up front: a job that
+# runs this contract installs uv (validate.yml and publish.yml both do).
+if ! command -v uv >/dev/null 2>&1; then
+  err "uv is not on PATH, so rules 2, 3, 4, 7, 9 and 10 cannot run and every expectation for them below will fail - install uv, or add the setup-uv step to the workflow running this"
+fi
 if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge >/dev/null); then
   ok "this repository's bundle keeps the conventions"
 else

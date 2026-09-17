@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **`publish.yml` installs `uv`, so a release can pass the contract it runs.** Six of the conventions script's ten rules run through `uv run`, and the publish job never installed it, so every expectation for those rules failed and no release could reach the tag - `validate.yml` had the same gap and was fixed, the release path was missed. The contract now also names that cause in one line up front, instead of leaving fifteen expectations reporting only that they "failed to report" something.
+
 ## [0.19.0] - 2026-09-17
 
 ### Added
