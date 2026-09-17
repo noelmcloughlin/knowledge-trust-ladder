@@ -584,6 +584,86 @@ else
   say "gpg or ssh-keygen not installed locally - CI runs check 13; skipping here"
 fi
 
+# 14. CHANGELOG.md never carries two headings for one released version, and
+#     changelog-release.mjs's promote folds a second qualifying push between
+#     publish.yml runs into the still-unpublished section instead of adding
+#     one - the bug that shipped two "## [0.19.0]" headings on 2026-09-17,
+#     because semantic-release.yml promotes on every push to main but only
+#     publish.yml tags. The first part needs nothing but the file on disk and
+#     always runs; the second exercises the fold in a throwaway repository
+#     and needs node.
+say ""
+say "Checking CHANGELOG.md for a version promoted twice..."
+mapfile -t headings < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md)
+dupes="$(printf '%s\n' "${headings[@]}" | sort | uniq -d)"
+if [[ -z "$dupes" ]]; then
+  ok "every released version in CHANGELOG.md has exactly one heading"
+else
+  err "CHANGELOG.md has more than one heading for: $(printf '%s' "$dupes" | tr '\n' ' ')"
+fi
+
+say ""
+say "Exercising changelog-release.mjs's fold..."
+if command -v node >/dev/null 2>&1; then
+  cl="$(mktemp -d)"
+  cl_git() { (cd "$cl/repo" && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git "$@"); }
+  mkdir -p "$cl/repo/.github/scripts"
+  cp "$repo_root/.github/scripts/changelog-release.mjs" "$cl/repo/.github/scripts/"
+  # A blank identity falls back to the OS account's GECOS full name, which a
+  # CI runner's account does not carry - set one explicitly, as check 13's
+  # pv_git does, rather than depend on that fallback existing.
+  cl_git init -q \
+    && cl_git config user.name contract \
+    && cl_git config user.email contract@example.invalid \
+    && cl_git commit -q --allow-empty -m base \
+    && cl_git tag v0.18.0
+  # The state right after the first push's promote landed and a second push
+  # then wrote its own Unreleased entry above it, with v0.19.0 still untagged
+  # - exactly main's state before publish.yml ever ran for it.
+  cat > "$cl/repo/CHANGELOG.md" <<'EOF'
+## [Unreleased]
+
+### Fixed
+
+- second push's entry, before publish.yml ever tagged 0.19.0
+
+## [0.19.0] - 2026-09-17
+
+### Added
+
+- first push's entry
+
+## [0.18.0] - 2026-09-16
+
+- older
+EOF
+  (cd "$cl/repo" && node .github/scripts/changelog-release.mjs promote 0.19.0 2026-09-18 >/dev/null 2>&1)
+  count="$(grep -cE '^## \[0\.19\.0\]' "$cl/repo/CHANGELOG.md")"
+  if [[ "$count" -eq 1 ]] \
+     && grep -q "first push's entry" "$cl/repo/CHANGELOG.md" \
+     && grep -q "second push's entry" "$cl/repo/CHANGELOG.md" \
+     && grep -qE '^## \[Unreleased\]$' "$cl/repo/CHANGELOG.md"; then
+    ok "a second push before publish.yml tags folds into the one pending section"
+  else
+    err "promote wrote $count heading(s) for 0.19.0 instead of folding"
+  fi
+  cl_git tag v0.19.0
+  # promote already left one empty "## [Unreleased]" at the top; fill it in
+  # place rather than appending a second one, which readUnreleased would
+  # never see (it reads the first "## [Unreleased]" in the file).
+  printf '\n### Fixed\n\n- a change after 0.19.0 shipped\n' \
+    | sed -i '/^## \[Unreleased\]$/r /dev/stdin' "$cl/repo/CHANGELOG.md"
+  (cd "$cl/repo" && node .github/scripts/changelog-release.mjs promote 0.19.1 2026-09-19 >/dev/null 2>&1)
+  if [[ "$(grep -cE '^## \[0\.19\.[01]\]' "$cl/repo/CHANGELOG.md")" -eq 2 ]]; then
+    ok "a version already tagged is left alone and the next one gets its own heading"
+  else
+    err "promote folded into 0.19.0 even though v0.19.0 is already tagged"
+  fi
+  rm -rf "$cl"
+else
+  say "node not installed locally - CI runs check 14; skipping here"
+fi
+
 say ""
 if [[ "$fail" -eq 0 ]]; then
   say "Repository contract: PASS"

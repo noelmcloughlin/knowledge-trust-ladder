@@ -19,15 +19,22 @@
 //
 //   node changelog-release.mjs promote <version> <date>
 //       Retitles "## [Unreleased]" to "## [<version>] - <date>" and
-//       inserts a fresh, empty "## [Unreleased]" above it. Used as
-//       semantic-release's prepareCmd (never called in --dry-run). Also
+//       inserts a fresh, empty "## [Unreleased]" above it. If the top
+//       released section is still pending - no tag `v<its version>` exists,
+//       because publish.yml has not been run since the last promotion - the
+//       Unreleased entries are folded into it, subsection by subsection,
+//       and it takes the new version and date, so two qualifying pushes
+//       between publishes never leave two headings for one release. Used
+//       as semantic-release's prepareCmd (never called in --dry-run). Also
 //       appends `released=true` and `version=<version>` to $GITHUB_OUTPUT
 //       if set.
 
 import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 
 const FILE = "CHANGELOG.md";
 const HEADING = "## [Unreleased]";
+const RELEASED = /^## \[(\d+\.\d+\.\d+)\] - \d{4}-\d{2}-\d{2}$/;
 
 function readUnreleased() {
   const text = readFileSync(FILE, "utf8");
@@ -38,7 +45,68 @@ function readUnreleased() {
   const bodyStart = start + HEADING.length;
   const next = text.indexOf("\n## [", bodyStart);
   const bodyEnd = next === -1 ? text.length : next;
-  return { text, body: text.slice(bodyStart, bodyEnd).trim() };
+  return { text, start, body: text.slice(bodyStart, bodyEnd).trim(), end: bodyEnd };
+}
+
+// The released section directly under Unreleased, when no tag carries its
+// version. publish.yml is this repository's one tag creator, so "no tag" is
+// exactly "promoted, not yet published".
+function pendingSection(text, from) {
+  if (from === text.length) return null;
+  const lineEnd = text.indexOf("\n", from + 1);
+  const heading = text.slice(from + 1, lineEnd === -1 ? text.length : lineEnd);
+  const m = RELEASED.exec(heading);
+  if (!m) return null;
+  let tagged;
+  try {
+    tagged = execFileSync("git", ["tag", "-l", `v${m[1]}`], { encoding: "utf8", stdio: "pipe" });
+  } catch (e) {
+    throw new Error(`could not list tags to tell whether ${m[1]} shipped - promote runs inside the repository checkout: ${e.message.split("\n")[0]}`);
+  }
+  if (tagged.trim()) return null;
+  const bodyStart = lineEnd === -1 ? text.length : lineEnd;
+  const next = text.indexOf("\n## [", bodyStart);
+  const end = next === -1 ? text.length : next;
+  return { version: m[1], body: text.slice(bodyStart, end).trim(), end };
+}
+
+// A section body as its "### " subsections, blank edges trimmed, so two
+// bodies merge by subsection title rather than by concatenation.
+function subsections(body) {
+  const parts = [];
+  let current = { title: null, lines: [] };
+  for (const line of body.split("\n")) {
+    if (line.startsWith("### ")) {
+      parts.push(current);
+      current = { title: line, lines: [] };
+    } else {
+      current.lines.push(line);
+    }
+  }
+  parts.push(current);
+  for (const p of parts) {
+    while (p.lines.length && !p.lines[0].trim()) p.lines.shift();
+    while (p.lines.length && !p.lines[p.lines.length - 1].trim()) p.lines.pop();
+  }
+  return parts.filter((p) => p.title !== null || p.lines.length);
+}
+
+// Keep a Changelog's order for the subsections; a preamble stays first and an
+// unlisted title goes last, in the order met.
+const ORDER = ["### Added", "### Changed", "### Deprecated", "### Removed", "### Fixed", "### Security"];
+const rank = (p) => (p.title === null ? -1 : ORDER.includes(p.title) ? ORDER.indexOf(p.title) : ORDER.length);
+
+function mergeBodies(older, newer) {
+  const merged = subsections(older);
+  for (const part of subsections(newer)) {
+    const same = merged.find((m) => m.title === part.title);
+    if (same) same.lines.push(...part.lines);
+    else merged.push(part);
+  }
+  merged.sort((a, b) => rank(a) - rank(b));
+  return merged
+    .map((p) => (p.title === null ? p.lines : [p.title, "", ...p.lines]).join("\n"))
+    .join("\n\n");
 }
 
 function writeOutput(line) {
@@ -75,17 +143,28 @@ switch (cmd) {
       console.error("usage: changelog-release.mjs promote <version> <date>");
       process.exit(1);
     }
-    const { text, body } = readUnreleased();
+    const { text, start, body, end } = readUnreleased();
     if (!body) {
       console.error(`${FILE}'s "${HEADING}" section is empty; refusing to promote nothing.`);
       process.exit(1);
     }
-    const promoted = text.replace(HEADING, `${HEADING}\n\n## [${version}] - ${date}`);
+    const pending = pendingSection(text, end);
+    let promoted;
+    if (pending) {
+      const section = `${HEADING}\n\n## [${version}] - ${date}\n\n${mergeBodies(pending.body, body)}\n`;
+      promoted = text.slice(0, start) + section + text.slice(pending.end);
+      console.error(
+        `folded "${HEADING}" into the unpublished "## [${pending.version}]" section, ` +
+          `now "## [${version}] - ${date}" in ${FILE}`
+      );
+    } else {
+      promoted = text.replace(HEADING, `${HEADING}\n\n## [${version}] - ${date}`);
+      console.error(`promoted "${HEADING}" to "## [${version}] - ${date}" in ${FILE}`);
+    }
     if (promoted === text) {
       throw new Error(`Replacement had no effect - is "${HEADING}" definitely in ${FILE}?`);
     }
     writeFileSync(FILE, promoted);
-    console.error(`promoted "${HEADING}" to "## [${version}] - ${date}" in ${FILE}`);
     writeOutput(`released=true\nversion=${version}\n`);
     break;
   }

@@ -2,6 +2,16 @@
 
 ## 2026-09-17
 
+* **Duplicate-release fix (seventeenth pass)**: two merges to `main` between
+  publishes computed the same next version twice, promoting `## [Unreleased]`
+  onto a second `## [0.19.0]` heading above the first and orphaning the
+  second push's entries. `changelog-release.mjs promote` now folds into the
+  top released section, by subsection, when its version carries no tag yet;
+  the `plan` job also runs `changelog-release.mjs check` directly, since
+  semantic-release skips its own plugins' hooks on a pull request and the
+  contract's claim that an empty `[Unreleased]` fails a pull request was not
+  true. Check 14 proves both, and repairs the changelog this bug had already
+  written twice. `playbooks/releasing.md` follows.
 * **Third audit (sixteenth pass)**: the sidecar and contract playbooks and
   the threat model follow the audit's fixes - the sidecar lays down the
   conventions script's Python half, both gates read merges against every
