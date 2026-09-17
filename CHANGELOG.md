@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **`publish.yml` installs `uv`, so a release can pass the contract it runs.** Six of the conventions script's ten rules run through `uv run`, and the publish job never installed it, so every expectation for those rules failed and no release could reach the tag - `validate.yml` had the same gap and was fixed, the release path was missed. The contract now also names that cause in one line up front, instead of leaving fifteen expectations reporting only that they "failed to report" something.
-
 ## [0.19.0] - 2026-09-17
 
 ### Added
@@ -40,6 +36,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A confirmation spelt with a YAML tag, anchor, alias or quoted key was invisible to both gates** while `lokf validate` accepted it. Conventions rule 10 now holds `id`, `by`, `at` and `revision` to spellings a line reader and a parser agree on, so the `validate` check fails such a concept before the `provenance` check could miss it; check 11 proves it.
 - **Both gates read merges, `generated`, and only the frontmatter.** A merge commit listed no changed paths, so an event added in one passed the forge-free gate unseen; a human `generated` record - the curator's Correct writes one - was a claim only when written as a `by:` line; and a `by: human:` in a body code fence counted as one. Events are now read against every parent of a commit, from `verified` and `generated`, and from nowhere else. Check 13 proves each.
 - **A push to `main` between releases no longer promotes `## [Unreleased]` a second time.** `semantic-release.yml` computes the version from the last *tag*, and only `publish.yml` tags, so two qualifying merges without a publish between them promoted the same version twice, leaving two `## [0.19.0]` headings and orphaning the second push's entries above an empty `[Unreleased]`. `changelog-release.mjs promote` now folds into the top released section instead of inserting a new one when that section's version carries no tag yet, merging by subsection in Keep a Changelog order. Check 14 proves it, and repairs the two headings this bug had already written. The `plan` job also runs `changelog-release.mjs check` directly, since semantic-release skips its own plugin hooks - including this one - on a pull request and would otherwise let an empty `[Unreleased]` merge, contrary to `docs/releasing.md`'s claim.
+- **`publish.yml` installs `uv`, so a release can pass the contract it runs.** Six of the conventions script's ten rules run through `uv run`, and the publish job never installed it, so every expectation for those rules failed and no release could reach the tag - `validate.yml` had the same gap and was fixed, the release path was missed. The contract now also names that cause in one line up front, instead of leaving fifteen expectations reporting only that they "failed to report" something.
 
 ## [0.18.0] - 2026-09-16
 
