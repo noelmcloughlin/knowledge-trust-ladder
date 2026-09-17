@@ -46,12 +46,14 @@
 #      confirmation nobody has to stand behind.
 #
 # Rules 2, 3, 8 and 10 are house rules, stricter than the format: OKF permits
-# an unquoted datetime, a bare `verified` mapping (which consumers MUST read
-# as a one-item list), any file name and any YAML. This bundle holds itself to
-# more because the toolkit, the two Obsidian plugins and the gates read those
-# forms differently, and because case-insensitive hosts do. A bundle written
-# to the letter of OKF may fail them; that is a policy of the gate, not a
-# defect in the bundle.
+# an unquoted datetime, a bare `verified` mapping (which every reader here -
+# the toolkit, both plugins, the gates - does read as a one-item list, as it
+# MUST), any file name and any YAML. This bundle holds itself to more so that
+# an event is always appended to a list and never converted first, a datetime
+# reaches every consumer as the same string, a name never collides on a
+# case-insensitive host, and an event reads the same to a line reader as to
+# a parser. A bundle written to the letter of OKF may fail them; that is a
+# policy of the gate, not a defect in the bundle.
 #
 # Rules 2, 3, 7, 9 and 10 are questions about a document's YAML that a real
 # parse answers outright, and rule 4 rides along, so this script hands them
