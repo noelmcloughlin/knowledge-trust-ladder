@@ -86,6 +86,8 @@ The labels are computed from the frontmatter on every read, never stored, so the
 
 **Install what you need - each skill stands alone.** The sidecar plus the librarian is enough to see the idea: the bundle gets built, everything in it marked a draft. Add the curator once there is a bundle worth trusting. Already have a healthy `.lokf/`? Skip the sidecar skill. The docent goes anywhere an agent only *reads* a bundle, this repository included.
 
+**What each skill needs.** Every skill runs from a POSIX shell (bash; Git for Windows on Windows) and says so in its `compatibility` line. The sidecar and the librarian validate with [`uv`](https://docs.astral.sh/uv/) and the `lokf` toolkit. The curator records a confirmation in your name only with an authenticated identity - `gh` logged in on GitHub, `glab` on GitLab, or a signing key the forge lists - and, when you open your own curation pull requests, signed commits ([docs/signing-commits.md](docs/signing-commits.md)). The docent needs nothing. Every bundle carries a preflight, `.lokf/scripts/knowledge-preflight.sh`, that says which of these the machine has before a skill offers a step it cannot finish; hosts that are not Linux, git or GitHub are in the sidecar's [portability page](skills/lokf-sidecar/references/portability.md).
+
 **GitHub CLI** ([`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+):
 
 ```bash

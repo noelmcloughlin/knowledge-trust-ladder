@@ -280,6 +280,7 @@ for pair in \
   "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
   "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
   "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
+  "$templates/scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
   "$templates/gitattributes:.lokf/.gitattributes"; do
   src="${pair%%:*}"; dst="${pair##*:}"
   if cmp -s "$src" "$dst"; then
@@ -385,6 +386,63 @@ else
   err "preflight did not warn about a CRLF file: $out"
 fi
 rm -rf "$bare"
+
+# 13. The forge-free provenance gate, with throwaway keys: a confirmation
+#     signed by the curator on file passes; an unsigned one, one by an id with
+#     no key, and a key registered in the same range as a confirmation each
+#     fail; a repository with no .lokf/curators/ is a stated skip. Needs gpg,
+#     which CI has.
+say ""
+say "Exercising knowledge-provenance.sh..."
+if command -v gpg >/dev/null 2>&1; then
+  pv="$(mktemp -d)"
+  mkdir -m 700 "$pv/gnupg"
+  script="$repo_root/$templates/scripts/knowledge-provenance.sh"
+  confirmed() { printf -- '---\ntype: Service\nverified:\n  - by: human:%s\n    at: "2026-09-17T00:00:00Z"\n---\n' "$1"; }
+  pv_git() { (cd "$pv/repo" && GNUPGHOME="$pv/gnupg" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git "$@"); }
+  pv_gpg() { GNUPGHOME="$pv/gnupg" gpg --batch --quiet "$@"; }
+  # Each case: the range to check, the exit status expected, the line expected, and the verdict wording.
+  # The keyring is read from the working tree, so each case runs as soon as its commit exists.
+  expect_pv() {
+    local range="$1" status="$2" want="$3" what="$4" out rc=0
+    # shellcheck disable=SC2086 # $range is one or two refs on purpose
+    out="$(cd "$pv/repo" && GNUPGHOME="$pv/gnupg" bash "$script" $range 2>&1)" || rc=$?
+    if [[ "$rc" -eq "$status" ]] && grep -q "$want" <<<"$out"; then
+      ok "provenance script: $what"
+    else
+      err "provenance script did not $what (exit $rc): $out"
+    fi
+  }
+  if pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'contract <contract@example.invalid>' ed25519 sign 1d 2>/dev/null \
+     && pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'other <other@example.invalid>' ed25519 sign 1d 2>/dev/null; then
+    fpr="$(pv_gpg --with-colons --list-keys contract | awk -F: '$1=="fpr"{print $10;exit}')"
+    fpr2="$(pv_gpg --with-colons --list-keys other | awk -F: '$1=="fpr"{print $10;exit}')"
+    git init -q "$pv/repo"
+    pv_git config user.name contract && pv_git config user.email contract@example.invalid
+    pv_git config gpg.format openpgp && pv_git config user.signingkey "$fpr"
+    mkdir -p "$pv/repo/.lokf/knowledge/x" "$pv/repo/.lokf/curators"
+    pv_gpg --armor --export "$fpr" > "$pv/repo/.lokf/curators/contract.asc"
+    printf -- '---\ntype: Service\n---\n' > "$pv/repo/.lokf/knowledge/x/a.md"
+    pv_git add -A && pv_git commit -q --no-gpg-sign -m base
+    confirmed contract > "$pv/repo/.lokf/knowledge/x/a.md" && pv_git commit -q -S -am confirm
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a confirmation signed by the curator on file"
+    confirmed contract > "$pv/repo/.lokf/knowledge/x/b.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m unsigned
+    expect_pv "HEAD~1" 1 'is unsigned' "report an unsigned confirmation"
+    confirmed nobody > "$pv/repo/.lokf/knowledge/x/c.md" && pv_git add -A && pv_git commit -q -S -m nobody
+    expect_pv "HEAD~1" 1 'no key on file' "report an id with no key on file"
+    confirmed contract > "$pv/repo/.lokf/knowledge/x/d.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m wrongkey
+    pv_gpg --armor --export "$fpr2" > "$pv/repo/.lokf/curators/other.asc" && pv_git add -A && pv_git commit -q -S -m addkey
+    expect_pv "HEAD~2" 1 'same range' "refuse a key and a confirmation in one range"
+    expect_pv "HEAD~2 HEAD~1" 1 'signed by another key' "report a confirmation signed by a key that is not that curator's"
+    pv_git rm -rq .lokf/curators && pv_git commit -q -S -m nokeys
+    expect_pv "HEAD~1" 0 '^skipped' "say so and pass with no .lokf/curators/"
+  else
+    err "could not generate the provenance fixture's keys (gpg --quick-generate-key failed)"
+  fi
+  rm -rf "$pv"
+else
+  say "gpg not installed locally - CI runs check 13; skipping here"
+fi
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

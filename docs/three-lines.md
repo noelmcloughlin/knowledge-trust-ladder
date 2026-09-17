@@ -48,11 +48,12 @@ Every trust label is computed from the frontmatter on each read and never stored
 | What changed, and why? | `log.md`, and git |
 | Is the checker independent of the checked? | the JSON Schema and SHACL shapes are generated from the upstream `lokf.yaml`, not written by the bundle's authors; the bundle projects to RDF and answers [SPARQL](../skills/lokf-curator/references/queries.md) |
 
-Three limits on what the evidence shows:
+Four limits on what the evidence shows:
 
 - A confirmation records who and when, and which state of the source only when the event carries `revision` (lokf 0.9.0+; the curator skill writes it when it confirms, the LOKF Curator plugin does not yet). Without it, a file in the same repository is pinned by the commit that recorded the confirmation, and a URL by nothing. `revision` names the state the skill fetched; it does not prove the person read it.
-- The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person to confirm a policy - who may confirm what is for the curation policy and review to settle.
+- The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person to confirm a policy - who may confirm what is for the curation policy and review to settle. A repository that carries `.lokf/curators/`, one public key per curator id, narrows the first half: an id with no key there cannot confirm at all, which settles who may confirm, not yet what.
 - When a confirmation is backed by a GitHub Environment attestation instead, the record shows only that a person on that environment's reviewer list clicked Approve. It does not show that they opened the concept's source. The job prints that caveat in its own log.
+- The `provenance` job is a GitHub Actions job. On another forge, or none, the forge-free `knowledge-provenance.sh` does its signature half against the keys on file and nothing does its approval half; a host without git has only its platform's version history, which the curator names as the record.
 
 ## What the critics say
 
@@ -63,5 +64,5 @@ The three lines model has critics, and so has the kind of tool a bundle is: a ma
 The gaps that no control in a bundle closes, as [the critics page](three-lines-critics.md#what-a-bundle-answers-and-what-it-leaves-open) sets them out, labelled by whose they are.
 
 - **Upstream, for OKF.** Adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)). LOKF carries the field from 0.9.0, and a bundle that uses it is still a valid OKF bundle, since OKF tolerates the key without reading it; until OKF adopts it, a consumer that reads only OKF's `{ by, at }` does not see it.
-- **This project, once a design is chosen.** Writing `revision` from the LOKF Curator plugin, which still records `by` and `at` alone. An entitlement check in the provenance job, which needs the curation policy's "who may confirm what" in a shape a machine can read. An `lokf-auditor` skill for the third line, which would walk a second person through the sampled concepts source-first and record their verdict as a separate `verified` event; the curator's sampling step, which hands a second person a random sample of confirmed concepts with their sources, is its first half. Neither confers independence: the person running it must be someone other than the authors.
+- **This project, once a design is chosen.** Writing `revision` from the LOKF Curator plugin, which still records `by` and `at` alone. An entitlement check by kind of concept in the provenance job: `.lokf/curators/` now says who may confirm in a shape a machine reads, and which kinds each may confirm still lives in the curation policy's prose. The approval half of the gate on GitLab and Forgejo, whose recipe the sidecar's portability page carries. An `lokf-auditor` skill for the third line, which would walk a second person through the sampled concepts source-first and record their verdict as a separate `verified` event; the curator's sampling step, which hands a second person a random sample of confirmed concepts with their sources, is its first half. Neither confers independence: the person running it must be someone other than the authors.
 - **The organisation's.** Naming that person. Whether a red check blocks a merge. The incentives and skill of whoever curates.
