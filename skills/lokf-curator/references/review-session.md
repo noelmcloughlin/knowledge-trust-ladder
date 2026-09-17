@@ -70,8 +70,11 @@ verified:
     at: "2026-09-07T05:00:00Z"
   - by: human:ada-lovelace
     at: "2026-09-08T14:00:00Z"
+    revision: "3f9c2a1b7e0d4c6a8f5e2d1c9b8a7f6e5d4c3b2a"
 stale_after: 2027-03-08
 ```
+
+`revision` is the state of the `resource` you quoted from in the evidence-first step, so a later reader can tell whether the page they see is the one the confirmation rested on. For a committed path in the repository, the last commit that touched it: `git log -1 --format=%H -- <path>`, the full hash, since an abbreviation can become ambiguous as the repository grows and the registrar gate resolves the pin against the tree; if the file has uncommitted changes, say so and leave the key out. For a URL, the `ETag` header if the server sends one, else `sha256:` plus the digest of the body you quoted from (`curl -sL <url> | sha256sum`) - and prefer the ETag, since a digest of a page that changes on every fetch cannot later tell "the source moved" from "the page is dynamic". Always quoted, like `at`: an all-digit commit id is otherwise read as a number and fails `lokf validate`, and an ETag carries its own double quotes (`revision: 'W/"33a64df5"'`). Several `sources`: the `resource`'s revision only. Leave the key out rather than guess, and leave it out on a toolkit older than lokf 0.9.0, whose validator rejects it (`uv run lokf --version` in `.lokf/`).
 
 If the body has an `## Open questions` section and the person says those are answered, delete the section. Otherwise leave it.
 

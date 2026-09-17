@@ -1,5 +1,15 @@
 # Change Log
 
+## 2026-09-17
+
+* **Repository validation** follows check 11: the conventions script's
+  sixth rule (a commit-shaped `revision` must name a commit holding the
+  resource) is proved in a throwaway repository, failing and passing.
+* **Three lines of defence** follows the page: the state a confirmation was
+  checked against is recorded in `revision` (lokf 0.9.0+), the gate resolves
+  a commit hash against the tree, and OKF's adoption of the field
+  (knowledge-catalog#437) is the remaining upstream item.
+
 ## 2026-09-16
 
 * **Steady-state refresh (tenth pass)**, against the uncommitted working

@@ -42,6 +42,7 @@ Every trust label is computed from the frontmatter on each read and never stored
 | Where did this come from? | `resource`, `sources[].resource`, `derivedFrom` |
 | Who produced the current text, and when? | `generated.by`, `generated.at` |
 | Who confirmed it, and when? | `verified[].by`, `verified[].at` |
+| Which state of the source was the check made against? | `verified[].revision` and `generated.revision` (lokf 0.9.0+): the full commit hash of a file in the repository, which the gate resolves against the tree; an ETag or content digest for a URL, which nothing checks. Absent means unrecorded, never unchanged |
 | Was that really them? | the `provenance` job's log on the pull request - GitHub's verdict on the approval or the signature, not the runner's; locally, the curator skill's *Not tied to a signed commit* count |
 | When must it be looked at again, and by what rule? | `stale_after`, proposed from `policies/knowledge-curation.md` |
 | What changed, and why? | `log.md`, and git |
@@ -49,7 +50,7 @@ Every trust label is computed from the frontmatter on each read and never stored
 
 Three limits on what the evidence shows:
 
-- A confirmation records who and when, not what the source said at that moment: when the source is a file in the same repository, the commit that recorded the confirmation pins it; when it is a URL, nothing does.
+- A confirmation records who and when, and which state of the source only when the event carries `revision` (lokf 0.9.0+; the curator skill writes it when it confirms, the LOKF Curator plugin does not yet). Without it, a file in the same repository is pinned by the commit that recorded the confirmation, and a URL by nothing. `revision` names the state the skill fetched; it does not prove the person read it.
 - The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person to confirm a policy - who may confirm what is for the curation policy and review to settle.
 - When a confirmation is backed by a GitHub Environment attestation instead, the record shows only that a person on that environment's reviewer list clicked Approve. It does not show that they opened the concept's source. The job prints that caveat in its own log.
 
@@ -61,6 +62,6 @@ The three lines model has critics, and so has the kind of tool a bundle is: a ma
 
 The gaps that no control in a bundle closes, as [the critics page](three-lines-critics.md#what-a-bundle-answers-and-what-it-leaves-open) sets them out, labelled by whose they are.
 
-- **Upstream, for OKF.** A verification event that records the source's commit, or a content hash for a URL, so a later reader can tell which version the person saw. The event's shape is OKF v0.2's; LOKF profiles it.
-- **This project, once a design is chosen.** An entitlement check in the provenance job, which needs the curation policy's "who may confirm what" in a shape a machine can read. An `lokf-auditor` skill for the third line, which would walk a second person through the sampled concepts source-first and record their verdict as a separate `verified` event; the curator's sampling step, which hands a second person a random sample of confirmed concepts with their sources, is its first half. Neither confers independence: the person running it must be someone other than the authors.
+- **Upstream, for OKF.** Adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)). LOKF carries the field from 0.9.0, and a bundle that uses it is still a valid OKF bundle, since OKF tolerates the key without reading it; until OKF adopts it, a consumer that reads only OKF's `{ by, at }` does not see it.
+- **This project, once a design is chosen.** Writing `revision` from the LOKF Curator plugin, which still records `by` and `at` alone. An entitlement check in the provenance job, which needs the curation policy's "who may confirm what" in a shape a machine can read. An `lokf-auditor` skill for the third line, which would walk a second person through the sampled concepts source-first and record their verdict as a separate `verified` event; the curator's sampling step, which hands a second person a random sample of confirmed concepts with their sources, is its first half. Neither confers independence: the person running it must be someone other than the authors.
 - **The organisation's.** Naming that person. Whether a red check blocks a merge. The incentives and skill of whoever curates.
