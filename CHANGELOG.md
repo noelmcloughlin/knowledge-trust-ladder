@@ -6,12 +6,13 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
+- **Retitling a pull request re-runs the title check.** The check that refuses a releasing pull request with a non-releasing title told the author to retitle, but the workflow listened only for the default pull-request types, so a title change fired nothing and the check stayed red whatever the author did. The trigger now names `edited`.
 - **The librarian no longer points a `resource` at gitignored runtime state.** A concept whose `resource` named an installed skill under `.agents/` resolved on a machine that had it and failed conventions rule 5 everywhere else, which is how it reached CI in the curator plugin. A local `resource` must be a path git tracks; the published copy, pinned to the version the host installs, is what to name instead.
 - **The librarian template installs the current skill, not a ten-version-old one.** `LOKF_SKILLS_REF` pinned `v0.9.0` while this repository released `v0.19.2`, so every host scaffolded from the template ran a librarian that far behind. Check 15 now holds the pin to the top released heading in the changelog, so it cannot fall behind in silence again.
+
 ### Security
 
 - **The registrar gate opts into token scope instead of inheriting it.** `knowledge-registrar.yaml` had no top-level `permissions: {}`, unlike the librarian workflow beside it, and both of its read-only jobs kept the checkout credential on disk although neither pushes. Both are now set in the template and this repository's copy.
-
 
 ## [0.19.2] - 2026-09-17
 

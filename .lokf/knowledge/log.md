@@ -2,6 +2,11 @@
 
 ## 2026-09-18
 
+* **Retitle now re-runs the check**: the squash-title check asks the author
+  to retitle, but `semantic-release.yml` listened only for the default
+  pull-request types, so a title edit fired no run and the check could not
+  be cleared. The trigger names `edited`. `playbooks/releasing.md` follows.
+
 * **Tracked resources only**: Rule 5's field notes now say a local
   `resource` must be a path git tracks. A gitignored install path under
   `.agents/` resolves only on the machine holding it, and failed the
