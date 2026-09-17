@@ -64,5 +64,5 @@ uv run lokf convert knowledge --format ttl
 
 - LOKF specification & Golden Rules: <https://lokf.nolan-nichols.com/>
 - `lokf` toolkit (PyPI): <https://pypi.org/project/lokf/>
-- LOKF schema, if Python isn't available: <https://github.com/nicholsn/lokf/blob/main/lokf.yaml>
+- LOKF schema, if Python isn't available, at the tag `pyproject.toml` floors: <https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml>
 - OKF spec: <https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md>

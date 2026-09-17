@@ -13,8 +13,10 @@ Create a fresh **`.lokf/` sidecar** - a machine-readable, SPARQL-queryable [LOKF
 > Sources: lokf.nolan-nichols.com is the canonical site for what LOKF *means*
 > (spec, Golden Rules). The tooling this skill installs comes from the
 > [`lokf` PyPI package](https://pypi.org/project/lokf/); with no Python, the
-> raw schema <https://raw.githubusercontent.com/nicholsn/lokf/main/lokf.yaml>
-> is the fallback (Step 4). Cite each for its own role in generated docs.
+> raw schema at the tag matching `templates/pyproject.toml`'s floor,
+> <https://raw.githubusercontent.com/nicholsn/lokf/v0.8.0/lokf.yaml>, is the
+> fallback (Step 4) - never `main`, which can be ahead of the toolkit. Cite
+> each for its own role in generated docs.
 
 > Model: a small/mid-tier model is enough here - Step 1 copies templates and
 > substitutes placeholders; Step 0 is structured file lookup. Mistakes are
