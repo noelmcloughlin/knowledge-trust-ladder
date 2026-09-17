@@ -159,6 +159,7 @@ silently reports "no changes" for an ignored path forever. GitHub-only; other ho
 | `templates/github/knowledge-librarian.yaml` | `.github/workflows/knowledge-librarian.yaml` |
 | `templates/scripts/knowledge-librarian.sh` | `.lokf/scripts/knowledge-librarian.sh` (`chmod +x`) |
 | `templates/scripts/knowledge-conventions.sh` | `.lokf/scripts/knowledge-conventions.sh` (`chmod +x`) - the gate runs it; so does lokf-librarian's audit |
+| `templates/scripts/knowledge-conventions.py` | `.lokf/scripts/knowledge-conventions.py` (`chmod +x`) - the half of the conventions script that parses YAML; the `.sh` runs it through `uv run` and fails without it, so the two land together |
 | `templates/scripts/knowledge-preflight.sh` | `.lokf/scripts/knowledge-preflight.sh` (`chmod +x`) - what this host can do; every skill runs it first (Step 0 here). Lay it down even when the rest of this step is skipped: it needs neither git nor GitHub |
 | `templates/scripts/knowledge-provenance.sh` | `.lokf/scripts/knowledge-provenance.sh` (`chmod +x`) - the signature half of the gate on any host with git, and gpg or ssh-keygen; verifies only once `.lokf/curators/<id>.asc` (GPG) or `<id>.pub` (SSH) keys exist ([references/portability.md](references/portability.md)) |
 
@@ -169,8 +170,8 @@ publishes the skills it also uses) - if this repo uses another directory, add it
 a mismatch otherwise fails at scheduled-run time, not now. What each file does, the repo variables to wire, and the runner/SHA-pin notes:
 [references/automation.md](references/automation.md).
 
-These six files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
-so and suggest adding coverage for the four `scripts/*.sh` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
+These seven files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
+so and suggest adding coverage for the four `scripts/*.sh`, the `scripts/*.py` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
 scheduled agent's own wrapper unchecked indefinitely. That's a one-line suggestion, not a scaffold: a full lint/release CI setup is outside this
 skill's scope and every host's own choice to make - see `lint-and-docs.yaml` in this skill's home repository for one example shape, adapted to
 what that repository actually ships, not copied wholesale.

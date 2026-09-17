@@ -230,9 +230,17 @@ else
 fi
 
 # ---- host copies of the sidecar's templates ----------------------------------
+# The conventions script runs its Python half, so a host holding the .sh
+# without the .py has a gate that fails outright, not a stale copy - said
+# whether or not a sidecar is installed to compare against.
+missing_py=""
+if [ -f "$root/.lokf/scripts/knowledge-conventions.sh" ] && [ ! -f "$root/.lokf/scripts/knowledge-conventions.py" ]; then
+  missing_py=".lokf/scripts/knowledge-conventions.py missing beside the .sh, which runs it"
+fi
 if [ -n "$templates" ] && [ -d "$root/.lokf" ]; then
-  drift=""
+  drift="$missing_py"
   for pair in "scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
+              "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py" \
               "scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
               "scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
               "scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
@@ -249,6 +257,8 @@ if [ -n "$templates" ] && [ -d "$root/.lokf" ]; then
   else
     warn copies "differ from ${templates#"$root"/}: $drift - a deliberate host edit, or a template bump not yet copied (lokf-sidecar repair)"
   fi
+elif [ -n "$missing_py" ]; then
+  warn copies "$missing_py - the lokf-sidecar repair lays it down"
 fi
 
 # ---- session ---------------------------------------------------------------

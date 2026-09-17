@@ -279,6 +279,7 @@ for pair in \
   "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
   "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
   "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
+  "$templates/scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py" \
   "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
   "$templates/scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
   "$templates/gitattributes:.lokf/.gitattributes"; do
@@ -410,6 +411,14 @@ if out="$(GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null bash "$templat
   ok "preflight reads commit.gpgsign = yes with no signing key as signing on"
 else
   err "preflight misread commit.gpgsign = yes: $out"
+fi
+# A host holding the conventions script without its Python half has a gate
+# that fails outright; the preflight says so even with no sidecar installed.
+mkdir -p "$bare/.lokf/scripts" && cp "$templates/scripts/knowledge-conventions.sh" "$bare/.lokf/scripts/"
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^warn    copies .*knowledge-conventions.py missing' <<<"$out"; then
+  ok "preflight warns when knowledge-conventions.py is missing beside the .sh"
+else
+  err "preflight did not report the missing knowledge-conventions.py: $out"
 fi
 rm -rf "$bare"
 # Every line the preflight can print as missing or a warning has a row on the
