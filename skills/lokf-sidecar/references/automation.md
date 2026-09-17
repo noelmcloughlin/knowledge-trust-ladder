@@ -1,4 +1,4 @@
-# Step 5 automation - what the four files do and how to wire them
+# Step 5 automation - what the files do and how to wire them
 
 Laying these down is one-time setup; how they behave at run time is lokf-librarian's operating manual ([`../../lokf-librarian/references/scheduled-task.md`](../../lokf-librarian/references/scheduled-task.md)). Applies only to a **git-tracked** `.lokf/` on **GitHub** - see SKILL.md Step 5 for why a gitignored bundle makes both workflows a permanent no-op.
 
