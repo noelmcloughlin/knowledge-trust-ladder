@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **A push to `main` between releases no longer promotes `## [Unreleased]` a second time.** `semantic-release.yml` computes the version from the last *tag*, and only `publish.yml` tags, so two qualifying merges without a publish between them promoted the same version twice, leaving two `## [0.19.0]` headings and orphaning the second push's entries above an empty `[Unreleased]`. `changelog-release.mjs promote` now folds into the top released section instead of inserting a new one when that section's version carries no tag yet, merging by subsection in Keep a Changelog order. Check 14 proves it, and repairs the two headings this bug had already written. The `plan` job also runs `changelog-release.mjs check` directly, since semantic-release skips its own plugin hooks - including this one - on a pull request and would otherwise let an empty `[Unreleased]` merge, contrary to `docs/releasing.md`'s claim.
-
 ## [0.19.0] - 2026-09-17
 
 ### Added
@@ -39,6 +35,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The conventions script no longer aborts on a runner that ignores SIGPIPE.** GitHub Actions starts every step that way, so an awk that closed the frontmatter pipe early turned into a `tr: write error` that `pipefail` made fatal on the first long concept; the script now reads each file whole, and the contract's own job installs `uv` so the parser's half runs there too.
 - **A confirmation spelt with a YAML tag, anchor, alias or quoted key was invisible to both gates** while `lokf validate` accepted it. Conventions rule 10 now holds `id`, `by`, `at` and `revision` to spellings a line reader and a parser agree on, so the `validate` check fails such a concept before the `provenance` check could miss it; check 11 proves it.
 - **Both gates read merges, `generated`, and only the frontmatter.** A merge commit listed no changed paths, so an event added in one passed the forge-free gate unseen; a human `generated` record - the curator's Correct writes one - was a claim only when written as a `by:` line; and a `by: human:` in a body code fence counted as one. Events are now read against every parent of a commit, from `verified` and `generated`, and from nowhere else. Check 13 proves each.
+- **A push to `main` between releases no longer promotes `## [Unreleased]` a second time.** `semantic-release.yml` computes the version from the last *tag*, and only `publish.yml` tags, so two qualifying merges without a publish between them promoted the same version twice, leaving two `## [0.19.0]` headings and orphaning the second push's entries above an empty `[Unreleased]`. `changelog-release.mjs promote` now folds into the top released section instead of inserting a new one when that section's version carries no tag yet, merging by subsection in Keep a Changelog order. Check 14 proves it, and repairs the two headings this bug had already written. The `plan` job also runs `changelog-release.mjs check` directly, since semantic-release skips its own plugin hooks - including this one - on a pull request and would otherwise let an empty `[Unreleased]` merge, contrary to `docs/releasing.md`'s claim.
 
 ## [0.18.0] - 2026-09-16
 
