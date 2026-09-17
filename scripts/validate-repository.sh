@@ -287,7 +287,7 @@ for pair in \
   if cmp -s "$src" "$dst"; then
     ok "$dst matches its template"
   else
-    err "$dst differs from $src - copy the template over it (this repository dogfoods its own sidecar)"
+    err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
   fi
 done
 

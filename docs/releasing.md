@@ -15,7 +15,7 @@ Nobody picks a version number. Commits typed with [Conventional Commits](https:/
 
 Type the commit for what the change *is*. A behaviour change is a `feat:` even when most of the diff is prose. If a pull request should release and its commits are typed too quietly, squash-merge it and give the squash commit the right type.
 
-The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you go: a line or two per change, with the detail left to the code's comments. The pipeline releases only what has already been written up. `changelog-release.mjs check` refuses an empty section; the `plan` job runs it directly on every pull request into `main`, not only inside the dry run, because semantic-release skips its own plugins' hooks - including this one - on a pull-request event, so a forgotten entry fails the pull request rather than the release.
+The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you go: a line or two per change, with the detail left to the code's comments. The pipeline releases only what has already been written up. `changelog-release.mjs check` refuses an empty section; the `plan` job runs it directly, not only inside the dry run, because semantic-release skips its own plugins' hooks - including this one - on a pull-request event, so a forgotten entry fails the pull request rather than the release. It runs only when the pull request's own commits would release, so a `chore:`, `docs:` or `ci:` pull request - a Dependabot bump among them - is not asked for notes it was never going to ship.
 
 ## What happens on a merge to `main`
 
