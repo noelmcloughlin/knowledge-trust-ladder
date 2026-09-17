@@ -26,6 +26,21 @@
 #      0.9.0+ records one) names a commit in this repository that holds the
 #      concept's local `resource`. ETags, digests and version labels pin URLs
 #      and are not checked. Needs the full history: a shallow clone is reported.
+#   7. One file per `id`. A sync client's conflict copy (OneDrive, Dropbox,
+#      Drive, iCloud) or a pasted duplicate carries the same `id`, passes
+#      `lokf validate`, and silently merges into the original in the graph.
+#   8. Every path in the bundle is lowercase: a-z, 0-9, `.`, `_`, `-`. Two
+#      paths that differ only by case collide on Windows, macOS and SharePoint,
+#      and a space, a parenthesis or an upper-case host name in a file name is
+#      how every sync client names a conflict copy.
+#   9. Every concept starts with a `---` frontmatter block that closes, with no
+#      byte order mark in front of it. A BOM from a web editor or Notepad, or a
+#      file with no block at all, would otherwise pass this script unread.
+#
+# Files are read with carriage returns removed and a leading byte order mark
+# stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
+# sidecar's `.lokf/.gitattributes` keeps tracked files on LF; rule 9 still
+# reports a BOM, because other readers do not strip it.
 #
 # Usage: knowledge-conventions.sh [bundle-dir]   (default: knowledge, i.e. run
 # from .lokf/). Exit 1 with one line per finding; nothing else is written.
@@ -36,13 +51,19 @@ bundle="${1:-knowledge}"
 fail=0
 say() { echo "$1"; fail=1; }
 
+# POSIX tools only (head -c, od, tail -c, tr), so this reads the same on
+# Linux, macOS and Git for Windows.
+has_bom() { [ "$(head -c 3 "$1" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ]; }
+clean() { if has_bom "$1"; then tail -c +4 "$1"; else cat "$1"; fi | tr -d '\r'; }
+
 # ---- 1. log.md headings ----------------------------------------------------
 log="$bundle/log.md"
 if [ -f "$log" ]; then
+  if has_bom "$log"; then say "$log: starts with a byte order mark - save as UTF-8 without BOM"; fi
   while IFS= read -r line; do
     say "$log: heading is not a bare ISO date: $line"
-  done < <(grep -E '^## ' "$log" | grep -vE '^## [0-9]{4}-[0-9]{2}-[0-9]{2}$' || true)
-  dates="$(grep -oE '^## [0-9]{4}-[0-9]{2}-[0-9]{2}$' "$log" | cut -c4- || true)"
+  done < <(clean "$log" | grep -E '^## ' | grep -vE '^## [0-9]{4}-[0-9]{2}-[0-9]{2}$' || true)
+  dates="$(clean "$log" | grep -oE '^## [0-9]{4}-[0-9]{2}-[0-9]{2}$' | cut -c4- || true)"
   if [ -n "$dates" ]; then
     if ! printf '%s\n' "$dates" | sort -rc 2>/dev/null; then
       say "$log: day headings are not newest-first"
@@ -53,7 +74,7 @@ if [ -f "$log" ]; then
   fi
 fi
 
-# ---- 2-6. concept files -----------------------------------------------------
+# ---- 2-9. concept files -----------------------------------------------------
 # Repository root for rule 5: the nearest ancestor holding `.lokf/`, else the
 # bundle's parent (a bare bundle handed to this script on its own).
 real="$(cd "$bundle" && pwd -P)"
@@ -68,10 +89,22 @@ done
 # reported, because a pin the script cannot resolve is not a pin it has checked.
 gitroot="$(git -C "$root" rev-parse --show-toplevel 2>/dev/null || true)"
 shallow="$(git -C "$root" rev-parse --is-shallow-repository 2>/dev/null || echo false)"
+ids=""
 while IFS= read -r f; do
+  # 8. path shape, checked on every Markdown file, reserved ones included
+  rel="${f#"$bundle"/}"
+  if ! printf '%s\n' "$rel" | grep -qE '^([a-z0-9][a-z0-9._-]*/)*[a-z0-9][a-z0-9._-]*$'; then
+    say "$f: path is not lowercase a-z, 0-9, '.', '_', '-' - case-insensitive hosts and sync conflict copies are why"
+  fi
   case "$(basename "$f")" in index.md|log.md|diataxis.md) continue ;; esac
-  # Frontmatter only for 2 and 3: the text between the first two `---` lines.
-  fm="$(awk 'NR==1 && $0!="---" {exit} NR>1 && $0=="---" {exit} NR>1 {print}' "$f")"
+  # 9. a readable, closed frontmatter block
+  if has_bom "$f"; then say "$f: starts with a byte order mark - save as UTF-8 without BOM"; fi
+  if [ "$(clean "$f" | head -n 1)" != "---" ] || [ "$(clean "$f" | grep -c '^---$')" -lt 2 ]; then
+    say "$f: no closed frontmatter block - a concept starts with '---' and closes it before the body"
+    continue
+  fi
+  # Frontmatter only for 2, 3, 6 and 7: the text between the first two `---` lines.
+  fm="$(clean "$f" | awk 'NR==1 && $0!="---" {exit} NR>1 && $0=="---" {exit} NR>1 {print}')"
   # 2. unquoted timestamps
   while IFS= read -r line; do
     [ -n "$line" ] && say "$f: unquoted timestamp: $line"
@@ -90,11 +123,11 @@ while IFS= read -r f; do
   # 4. open-question bullets, checked in the body
   while IFS= read -r line; do
     [ -n "$line" ] && say "$f: open question not '- YYYY-MM-DD, <actor>: ...': ${line:0:60}"
-  done < <(awk '
+  done < <(clean "$f" | awk '
     /^## Open questions$/ {inq=1; next}
     inq && /^#/ {inq=0}
     inq && /^- / && $0 !~ /^- [0-9]{4}-[0-9]{2}-[0-9]{2}, (human|process):[^ :]+: / {print}
-  ' "$f")
+  ')
   # 5. local resource paths exist: top-level `resource:` and `sources[].resource`
   while IFS= read -r res; do
     [ -z "$res" ] && continue
@@ -125,7 +158,18 @@ while IFS= read -r f; do
       say "$f: revision $rev does not hold $res - no such commit, or the path was absent in it"
     fi
   done < <(printf '%s\n' "$fm" | sed -nE 's/^[[:space:]]*(- )?revision:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\2/p')
+  # 7. collect the id; duplicates are reported once every file has been read
+  id="$(printf '%s\n' "$fm" | sed -nE 's/^id:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\1/p' | head -n 1)"
+  id="${id#\"}"; id="${id%\"}"; id="${id#\'}"; id="${id%\'}"
+  if [ -n "$id" ]; then ids="${ids}${id}"$'\t'"${f}"$'\n'; fi
 done < <(find "$bundle" -name '*.md' -not -path '*/.obsidian/*' | sort)
+
+# ---- 7. one file per id -----------------------------------------------------
+while IFS= read -r dup; do
+  [ -z "$dup" ] && continue
+  files="$(printf '%s' "$ids" | awk -F'\t' -v d="$dup" '$1==d {printf "%s ", $2}')"
+  say "id $dup is declared by more than one file: ${files}- a sync conflict copy or a pasted duplicate; keep one"
+done < <(printf '%s' "$ids" | cut -f1 | sort | uniq -d)
 
 if [ "$fail" -eq 0 ]; then
   echo "OK - $bundle keeps the conventions lokf validate cannot check"

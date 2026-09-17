@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **Three more conventions the gate checks.** One file per `id` (a sync client's conflict copy carries its original's and silently merged into it in the graph), lowercase paths (two paths differing only by case collide on Windows, macOS and SharePoint, and sync clients name conflict copies with spaces, parentheses or host names), and a closed frontmatter block with no byte order mark. Check 11 proves each.
+
+### Fixed
+
+- **A Windows checkout no longer blinds the conventions script.** CRLF line endings made it report every log heading as malformed and skip the frontmatter rules unread, and a byte order mark skipped a file the same way. It now reads files with both stripped, and check 11 holds a CRLF bundle to the same verdict as LF.
+
 ## [0.19.0] - 2026-09-17
 
 ### Added

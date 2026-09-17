@@ -299,9 +299,23 @@ real="$("${tmpgit[@]}" rev-parse HEAD)"
 pinned() { printf -- '---\ntype: Service\nresource: pinned.md\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "%s"\n---\n' "$1"; }
 pinned "0000000000000000000000000000000000000000" > "$bad/k/x/d.md"
 pinned "$real" > "$bad/k/x/e.md"
+# Rules 7-9 and the line-ending tolerance. A CRLF copy of a file that breaks
+# rule 2 must still be reported (a Windows checkout used to make the script
+# skip every frontmatter rule unread); a byte order mark and a file with no
+# frontmatter are findings; a sync client's conflict copy shares its
+# original's id and has a name no slug would; a directory whose case differs
+# is a path-shape finding.
+printf -- '---\r\ntype: Service\r\nverified:\r\n  - by: process:lokf-librarian\r\n    at: 2026-09-14T00:00:00Z\r\n---\r\n' > "$bad/k/x/f-crlf.md"
+printf '\357\273\277---\ntype: Service\n---\n' > "$bad/k/x/g-bom.md"
+printf 'type: Service\n' > "$bad/k/x/h-nofm.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/i\n---\n' > "$bad/k/x/i.md"
+cp "$bad/k/x/i.md" "$bad/k/x/i (conflicted copy 2026-09-17).md"
+mkdir -p "$bad/k/Upper" && printf -- '---\ntype: Service\n---\n' > "$bad/k/Upper/j.md"
 findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
 rm -rf "$bad"
-for want in "not a bare ISO date" "not newest-first" "unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found" "does not hold"; do
+for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found" "does not hold" \
+            "f-crlf.md: unquoted timestamp" "g-bom.md: starts with a byte order mark" "h-nofm.md: no closed frontmatter block" \
+            "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase"; do
   if grep -q "$want" <<<"$findings"; then
     ok "conventions script reports: $want"
   else
@@ -313,6 +327,18 @@ if grep -q 'x/e.md' <<<"$findings"; then
 else
   ok "conventions script accepts a revision that holds the resource"
 fi
+# And a bundle that keeps every convention but was checked out with CRLF line
+# endings must pass outright: the script reads it exactly as CI reads LF.
+good="$(mktemp -d)"
+mkdir -p "$good/k/x"
+printf '# Change Log\r\n\r\n## 2026-09-15\r\n\r\n* **A**: b.\r\n\r\n## 2026-09-14\r\n\r\n* **C**: d.\r\n' > "$good/k/log.md"
+printf -- '---\r\ntype: Service\r\nid: https://example.invalid/k/x/a\r\nverified:\r\n  - by: process:lokf-librarian\r\n    at: "2026-09-14T00:00:00Z"\r\n---\r\n\r\n## Open questions\r\n\r\n- 2026-09-14, process:lokf-librarian: fine\r\n' > "$good/k/x/a.md"
+if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>&1)"; then
+  ok "conventions script reads a CRLF checkout as CI reads LF"
+else
+  err "conventions script misreads a CRLF checkout: $out"
+fi
+rm -rf "$good"
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

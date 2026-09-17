@@ -199,7 +199,7 @@ Use the toolkit - it gives you two independent, generated validators. From
 just lokf-install          # uv sync  (first time)
 just lokf-validate         # JSON Schema on frontmatter + assembled bundle
 just lokf-check-refs       # every typed-relation target resolves to a real concept
-bash scripts/knowledge-conventions.sh   # log headings, quoted timestamps, verified lists, open-question shape, local resources exist, revisions hold their resource
+bash scripts/knowledge-conventions.sh   # log headings, quoted timestamps, verified lists, open-question shape, local resources exist, revisions hold their resource, one file per id, lowercase paths, readable frontmatter
 just lokf-convert          # project to Turtle/RDF; eyeball the triples
 just lokf-serve            # SPARQL endpoint + live graph explorer (optional)
 ```
