@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-librarian/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-17T15:49:14Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
@@ -20,7 +20,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/okf-specification
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-17T15:49:14Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
 stale_after: 2027-09-09
@@ -81,11 +81,12 @@ subclass. The tooling-version step (rule 6) refreshes the pinned copy.
 tables state what lokf 0.8.0 enforces: `sources[].author` is an actor
 string, `http_method` is one uppercase verb from a closed list, and every
 timestamp, `stale_after` included, is a datetime, a bare date meaning
-midnight UTC. From lokf 0.9.0 the skill also writes `revision` on
-`generated`: the full commit hash of a file in the repository, or the ETag
-or a `sha256:` digest of a URL, always quoted. It leaves the key out on an
-older toolkit, on a file with uncommitted changes, or on a source it did
-not read that run. The registrar gate checks that a commit hash names a
+midnight UTC. Where the toolkit accepts it, the skill also writes `revision`
+on `generated`: the full commit hash of a file in the repository, or the
+ETag or a `sha256:` digest of a URL, always quoted. The field is proposed
+for lokf 0.9.0 and not yet released, and the 0.8.0 validator rejects it, so
+the key is left out on every released toolkit, on a file with uncommitted
+changes, and on a source the skill did not read that run. The registrar gate checks that a commit hash names a
 commit holding the concept's `resource`.
 
 **Portability (added 2026-09-17).** `references/portability.md` says what

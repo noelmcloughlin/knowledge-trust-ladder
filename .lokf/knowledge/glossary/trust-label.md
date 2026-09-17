@@ -7,7 +7,7 @@ genre: reference
 resource: skills/lokf-curator/references/trust-fields.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T15:49:14Z"
 status: draft
 definedBy:
 - https://lokf-agent-skills.example/knowledge/references/okf-specification
@@ -15,7 +15,7 @@ about:
   - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-17T15:49:14Z"
 ---
 
 # Overview
@@ -26,8 +26,9 @@ and `stale_after`: any `verified` actor prefixed `human:` means confirmed by a
 person; events by non-human actors only mean checked by automation; no
 `verified` key at all means nobody has checked it.
 
-A `revision` on an event (lokf 0.9.0+) is shown beside that event's date but
-changes no label: its absence means unrecorded, never unchanged.
+A `revision` on an event (proposed for lokf 0.9.0, not yet released) is
+shown beside that event's date but changes no label: its absence means
+unrecorded, never unchanged.
 
 They deliberately overlap - a concept can be confirmed *and* past its review
 date - so the counts in a curator report are not a partition. Nothing is

@@ -2,6 +2,11 @@
 
 ## 2026-09-17
 
+* **Second audit (fourteenth pass)**: the three lines explanation follows
+  its pruned page and the shortened critics page; the trust label and the
+  curator and librarian playbooks now say `revision` is proposed for lokf
+  0.9.0 and unreleased; the contract playbook adds the id the gate used to
+  skip.
 * **Audit follow-up (thirteenth pass)**: the sidecar, curator and docent
   playbooks, the contract and the threat model follow the forge-free gate's
   SSH and subkey support, the linked-bundle and `commit.gpgsign` fixes, and

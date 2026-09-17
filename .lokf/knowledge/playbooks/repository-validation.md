@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T15:27:51Z"
+  at: "2026-09-17T15:49:14Z"
 status: draft
 references:
   - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
@@ -15,7 +15,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T15:27:51Z"
+  at: "2026-09-17T15:49:14Z"
 ---
 
 # Overview
@@ -50,9 +50,10 @@ line it can print as missing or a warning having a row on
 `lokf-sidecar/references/prerequisites.md`; and (check 13, same day)
 `knowledge-provenance.sh` passing a confirmation signed by the curator on
 file - with a GPG key, a GPG signing subkey, or an SSH key - and failing an
-unsigned one, an unknown id, a wrong key of either kind and an id's own key
-registered in the same range as their confirmation, while another curator's
-key landing alongside passes, with throwaway keys. Then
+unsigned one, an unknown id, an id the gate cannot look up (which it used to
+skip), a wrong key of either kind and an id's own key registered in the same
+range as their confirmation, while another curator's key landing alongside
+passes, with throwaway keys. Then
 `gh skill publish --dry-run` runs.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs
