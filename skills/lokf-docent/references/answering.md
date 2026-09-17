@@ -27,7 +27,7 @@ The point of a bundle is to *not* re-read the repository. Spend tokens in this o
 Same rules as lokf-curator's `references/trust-fields.md`; restated here so this skill stands alone:
 
 - `verified` may be a list or a bare `{ by, at }` mapping - a bare mapping is one event.
-- *Confirmed by a person*: any event's `by` starts with `human:`. Quote the latest such date in the footer.
+- *Confirmed by a person*: any event's `by` starts with `human:`. Quote the latest such date in the footer, and its `revision` when the event carries one ("against 3f9c2a1"): that is the state of the source the person saw, so a reader can tell whether the page in front of them is the one that was confirmed.
 - *Checked by automation only*: events exist, none human.
 - *Nobody has checked this yet*: no `verified` key.
 - *Still a draft*: `status: draft`. *Retired*: `status: deprecated`. Absent `status` means stable.
@@ -56,7 +56,7 @@ Full footer (several concepts, a source check, a gap):
 
 ```text
 From the bundle:
-- Orders API (services/orders-api.md) - confirmed by a person, 2026-09-01
+- Orders API (services/orders-api.md) - confirmed by a person, 2026-09-01, against 3f9c2a1
 - Data retention (policies/data-retention.md) - confirmed by a person, past its review date (2026-08-01)
 Checked at source: services/orders/openapi.yaml (the endpoint)
 Gap recorded: Miss - no concept for the billing worker

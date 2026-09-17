@@ -6,6 +6,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
+- **The skills use lokf 0.9.0+'s `revision`.** The curator writes it on a confirmation and the librarian on `generated` (a commit id for a file, an ETag or digest for a URL), the docent quotes it beside the date, and `docs/three-lines.md` moves "which state of the source was the check made against" from an OKF gap to a recorded answer. On an older toolkit the key is left out. The librarian's field tables also name `excerpt` on a source, and the domain-schema page says an undeclared type now projects as `lokf:Concept`.
 - **The sidecar's toolkit floor is lokf 0.8.0**, here and in the `lokf-sidecar` template. The librarian's field tables now state its constraints: `sources[].author` is an actor string, `http_method` is one of seven uppercase verbs, and every timestamp including `stale_after` is a datetime, a bare date meaning midnight UTC.
 
 ## [0.18.0] - 2026-09-16

@@ -67,11 +67,12 @@ Two critiques aim at the kind of solution LOKF is: a machine's output checked by
 - The curator gets a pause of the kind Buçinca describes. The review session opens the source and quotes it, then shows the concept's claim, and only then asks for a verdict.
 - Who confirms what, and how often, is a reviewed policy rather than a habit. That is the direction Green points.
 - The docent has an evidence-first mode. When the curation policy says `Evidence first: yes`, it quotes the source before any answer that rests on a concept not yet confirmed by a person. It is off by default, because Buçinca found such designs cost goodwill.
+- A confirmation says which state of the source it was made against. From lokf 0.9.0 the event carries `revision`: the commit of a file, or the ETag or content digest of a URL, as the curator skill fetched it. A source that changes the day after confirmation is then told apart from one that has not. OKF v0.2's own shape is `by` and `at` alone; LOKF has proposed the field upstream ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and a bundle that carries it is still a valid OKF bundle.
 
 **What it leaves open.**
 
-- **Inherent.** Nothing shows that the person read the source. A signature or an approval proves who decided, not what they looked at. No record can prove attention.
-- **A specification gap.** A confirmation event carries only `by` and `at`, the shape OKF v0.2 gives it, so it cannot record which version of the source was confirmed: the commit, or a content hash for a URL. A source that changes the day after confirmation leaves no trace in the event. That is a question for the OKF specification, which LOKF profiles.
+- **Inherent.** Nothing shows that the person read the source. A signature or an approval proves who decided, not what they looked at, and `revision` names the state the skill fetched, not what the person looked at. No record can prove attention.
+- **A limit of the technique.** A page that differs on every fetch reads as moved on every re-check. A version label or ETag from the server, where one exists, tells such a page from one that has changed; a digest cannot.
 - **Not the bundle's role.** Green also asks for evidence that the oversight works. That evidence is third-line work: an independent re-check of a sample of confirmed concepts. A bundle should not produce it about itself. What it can do is hand over the sample: when the curation policy names a size, the curator's report lists that many confirmed concepts at random, with their sources, for a second person.
 - **Off by default.** Where the curation policy leaves evidence-first off, a docent answer arrives with its trust label attached and no pause. The most the docent does then is carry the label into the sentence when the concept is anything less than confirmed by a person.
 
