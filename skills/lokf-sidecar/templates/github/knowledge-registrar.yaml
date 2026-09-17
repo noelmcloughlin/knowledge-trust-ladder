@@ -125,28 +125,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          # One extraction, used both for the whole pull request and for
-          # individual commits. Anchored on `by:` so that a `human:<id>`
-          # mentioned in prose - a send-back note under `## Open questions`
-          # carries one by design - is not mistaken for a verification event.
-          # The `.?` tolerates a YAML quote before the actor. The id is taken
-          # as the schema takes it - anything up to a space or quote - so an
-          # id this job cannot look up is refused below, never skipped.
-          actors_in() {
-            grep -E '^\+' \
-              | grep -E 'by:[[:space:]]*.?human:' \
-              | grep -oE "human:[^[:space:]\"']+" \
-              | sed 's/^human://' \
-              | sort -u
-          }
-
-          # An added line is not the only way to claim a confirmation: a
-          # re-dated `at`, a moved `revision`, or an event written in flow
-          # style leaves no `+ by:` line behind. So the human events of every
-          # concept are read whole - `<id>\t<by>\t<at>\t<revision>`, keyed by
-          # the concept's id so a rename keeps them and a copy does not - and
-          # any event present at head and absent at base names an actor who
-          # must stand behind it. Same extractor as knowledge-provenance.sh.
+          # A claim is an event in a concept's frontmatter - a `verified`
+          # entry, or the `generated` record the curator's Correct writes as
+          # `human:<id>` - read whole as `<id>\t<by>\t<at>\t<revision>`,
+          # whatever its YAML layout, and keyed by the concept's id so a rename
+          # keeps its events and a copy does not. An added line would not do:
+          # a re-dated `at`, a moved `revision` or a flow-style event adds no
+          # `by:` line, and a `by: human:` in a body code fence or a send-back
+          # note is not an event at all. Any event present at head and absent
+          # at base names an actor who must stand behind it. Same extractor as
+          # knowledge-provenance.sh; the id is taken as the schema takes it, so
+          # one this job cannot look up is refused below, never skipped.
           human_events() {
             awk -v path="$1" '
             function val(s) { sub(/^[^:]*:[[:space:]]*/, "", s); gsub(/["'"'"']/, "", s); sub(/[[:space:]]+$/, "", s); return s }
@@ -160,7 +149,7 @@ jobs:
             NR == 1 { if ($0 == "---") { fm = 1; next } else exit }
             fm && $0 == "---" { emit(); exit }
             /^id:/ { cid = val($0) }
-            /^verified:/ { emit(); inv = 1; rest = $0; sub(/^verified:[[:space:]]*/, "", rest)
+            /^(verified|generated):/ { emit(); inv = 1; rest = $0; sub(/^(verified|generated):[[:space:]]*/, "", rest)
               if (rest ~ /^\{/) { flow(rest); inv = 0 }
               else if (rest ~ /^\[/) { gsub(/[\[\]]/, "", rest); n = split(rest, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
               next }
@@ -171,25 +160,26 @@ jobs:
             inv && inev && /^[[:space:]]+[a-z_]+:/ { kv($0); next }
             END { emit(); printf "%s", out }'
           }
-          events_at() {  # ref -> every human event in the bundle at that ref, sorted
-            { git ls-tree -r --name-only "$1" -- .lokf/knowledge knowledge_bundle 2>/dev/null | grep '\.md$' | while IFS= read -r f; do
-                git show "$1:$f" 2>/dev/null | human_events "$f" || true
-              done | sort; } || true
+          paths="$(mktemp)"
+          events_in() {  # ref, paths on stdin -> the human events of those paths at that ref, sorted
+            { while IFS= read -r f; do git show "$1:$f" 2>/dev/null | human_events "$f" || true; done | sort; } || true
           }
           changed_actors() {  # base head -> actors of events at head that base does not hold
-            { git diff --name-only "$1" "$2" -- .lokf/knowledge knowledge_bundle | grep '\.md$' | while IFS= read -r f; do
-                git show "$2:$f" 2>/dev/null | human_events "$f" || true
-              done | sort | comm -13 <(events_at "$1") - | cut -f2; } || true
+            { git diff --name-only "$1" "$2" -- .lokf/knowledge knowledge_bundle | grep '\.md$' | sort -u > "$paths"
+              events_in "$2" < "$paths" | comm -13 <(events_in "$1" < "$paths") - | cut -f2; } || true
+          }
+          # Against every parent: a merge that brings in another curator's
+          # confirmation claims nothing, one that adds an event neither side
+          # held is read like any other commit - and without -m, git lists no
+          # paths at all for a merge.
+          new_in_commit() {  # sha -> actors of events at sha that none of its parents holds
+            { git diff-tree --no-commit-id --name-only -r -m "$1" -- .lokf/knowledge knowledge_bundle | grep '\.md$' | sort -u > "$paths"
+              events_in "$1" < "$paths" | comm -13 <(for p in $(git rev-parse "$1^@"); do events_in "$p" < "$paths"; done | sort -u) - | cut -f2; } || true
           }
 
           base="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
 
-          mapfile -t actors < <(
-            {
-              git diff --unified=0 "$base" "$HEAD_SHA" -- .lokf/knowledge knowledge_bundle | actors_in
-              changed_actors "$base" "$HEAD_SHA"
-            } | sort -u
-          )
+          mapfile -t actors < <(changed_actors "$base" "$HEAD_SHA" | sort -u)
 
           if [ "${#actors[@]}" -eq 0 ]; then
             echo "No new human confirmations in this pull request."
@@ -238,8 +228,7 @@ jobs:
             # GitHub will not let anyone approve their own pull request.
             introducing=()
             for sha in "${bundle_shas[@]}"; do
-              if { git show --unified=0 --format= "$sha" -- .lokf/knowledge knowledge_bundle | actors_in
-                   changed_actors "$sha^" "$sha"; } | grep -qxF -- "$actor"; then
+              if new_in_commit "$sha" | grep -qxF -- "$actor"; then
                 introducing+=("$sha")
               fi
             done

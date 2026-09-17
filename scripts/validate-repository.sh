@@ -522,6 +522,25 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
     expect_pv "HEAD~1" 1 'not by a key in sshcur.pub' "report an SSH signature by a key not on file for that id"
     cp "$pv/stranger.pub" "$c/stranger.pub" && confirmed contract > "$k/j.md" && pv_git add -A && pv_git commit -q -S -m 'another key lands beside a confirmation'
     expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "let another curator's key land beside a confirmation"
+    # Only the frontmatter is a claim: an example event in a body code fence
+    # is not, and a human `generated` record - the curator's Correct writes
+    # one - is, whatever its layout.
+    # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\n---\n\n```yaml\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n```\n' > "$k/fence.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'example in a fence, unsigned'
+    expect_pv "HEAD~1" 0 '^OK - 0 confirmation' "ignore an example event in a body code fence"
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: human:contract, at: "2026-09-17T00:00:00Z" }\n---\n' > "$k/gen.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'human generated, flow style, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "read a flow-style human generated record as a claim"
+    # A merge that brings in a confirmation its curator signed claims nothing;
+    # one that adds an event neither side held is a claim by whoever merged.
+    trunk="$(pv_git rev-parse --abbrev-ref HEAD)"
+    pv_git checkout -q -b side && printf 'side\n' > "$pv/repo/side.txt" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'side work'
+    pv_git checkout -q "$trunk" && confirmed contract > "$k/m.md" && pv_git add -A && pv_git commit -q -S -m 'confirmed on the trunk'
+    pv_git checkout -q side && pv_git merge -q --no-gpg-sign --no-edit "$trunk"
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "let a merge bring in a confirmation its curator signed"
+    pv_git checkout -q "$trunk" && printf 'more\n' > "$pv/repo/more.txt" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'unrelated on the trunk'
+    pv_git checkout -q side && pv_git merge -q --no-commit --no-ff "$trunk" >/dev/null && confirmed contract > "$k/evil.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'evil merge'
+    expect_pv "HEAD~1" 1 'is unsigned' "read an event a merge adds that neither side held"
+    pv_git checkout -q "$trunk"
     pv_git rm -rq .lokf/curators && pv_git commit -q -S -m nokeys
     expect_pv "HEAD~1" 0 '^skipped' "say so and pass with no .lokf/curators/"
   else

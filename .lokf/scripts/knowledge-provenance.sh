@@ -8,8 +8,9 @@
 # one public key per curator id under `.lokf/curators/` - `<id>.asc`, a GPG
 # key as `gpg --armor --export` writes it, or `<id>.pub`, an OpenSSH public
 # key as `ssh-keygen` writes it, one key per line - and every commit in a
-# range that adds or changes a `human:<id>` verification event under the
-# bundle must be signed by a key on file for exactly that id. A GPG key
+# range that adds or changes a `human:<id>` event under the bundle - a
+# `verified` entry, or the `generated` record the curator's Correct writes -
+# must be signed by a key on file for exactly that id. A GPG key
 # counts with every subkey it carries, since most keys sign with a subkey; an
 # SSH key is verified with `ssh-keygen -Y verify` (OpenSSH 8.2+) against the
 # commit's own payload.
@@ -99,13 +100,18 @@ sig_format() {  # commit -> pgp | ssh | none
   esac
 }
 
-# Human verification events of a concept, `<id or path>\t<by>\t<at>\t<revision>`
-# one per line, whatever the YAML layout: a block list in any key order, a
-# flow-style item, a flow sequence, a bare mapping. Keyed by the concept's
-# `id` so a renamed concept keeps its events and a confirmation copied into
-# another concept does not. An event present in a commit's tree and absent
-# from its parent's is new or changed - a re-dated `at` or a moved `revision`
-# is as much a claim as a new line - and its actor must stand behind it.
+# The human events of a concept - its `verified` list and its `generated`
+# record, since the curator's Correct writes `generated.by: human:<id>` - as
+# `<id or path>\t<by>\t<at>\t<revision>`, one per line, whatever the YAML
+# layout: a block list in any key order, a flow-style item, a flow sequence, a
+# bare mapping. Only the frontmatter is read, so an example event in a body
+# code fence is not a claim. Keyed by the concept's `id` so a renamed concept
+# keeps its events and a confirmation copied into another concept does not.
+# An event present in a commit's tree and absent from every parent's is new or
+# changed - a re-dated `at` or a moved `revision` is as much a claim as a new
+# line - and its actor must stand behind it. Every parent, so a merge that
+# brings in another curator's confirmation claims nothing, and one that adds
+# an event neither side held is read like any other commit.
 human_events() {  # path -> events, reading the concept on stdin
   awk -v path="$1" '
   function val(s) { sub(/^[^:]*:[[:space:]]*/, "", s); gsub(/["'"'"']/, "", s); sub(/[[:space:]]+$/, "", s); return s }
@@ -119,7 +125,7 @@ human_events() {  # path -> events, reading the concept on stdin
   NR == 1 { if ($0 == "---") { fm = 1; next } else exit }
   fm && $0 == "---" { emit(); exit }
   /^id:/ { cid = val($0) }
-  /^verified:/ { emit(); inv = 1; rest = $0; sub(/^verified:[[:space:]]*/, "", rest)
+  /^(verified|generated):/ { emit(); inv = 1; rest = $0; sub(/^(verified|generated):[[:space:]]*/, "", rest)
     if (rest ~ /^\{/) { flow(rest); inv = 0 }
     else if (rest ~ /^\[/) { gsub(/[\[\]]/, "", rest); n = split(rest, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
     next }
@@ -130,10 +136,15 @@ human_events() {  # path -> events, reading the concept on stdin
   inv && inev && /^[[:space:]]+[a-z_]+:/ { kv($0); next }
   END { emit(); printf "%s", out }'
 }
-events_at() {  # ref -> every human event in the bundle at that ref, sorted
-  git ls-tree -r --name-only "$1" -- "$bundle" knowledge_bundle 2>/dev/null | grep '\.md$' | while IFS= read -r f; do
+events_in() {  # ref, paths on stdin -> the human events of those paths at that ref, sorted
+  while IFS= read -r f; do
     git show "$1:$f" 2>/dev/null | human_events "$f"
   done | sort
+}
+# The paths a commit changes against any of its parents: without -m, git
+# lists nothing at all for a merge commit.
+changed_paths() {  # commit, pathspecs... -> paths, one per line
+  git diff-tree --no-commit-id --name-only -r -m "$@" 2>/dev/null | sort -u
 }
 
 # The range, oldest first, and the ids whose key file it adds, changes or
@@ -141,7 +152,7 @@ events_at() {  # ref -> every human event in the bundle at that ref, sorted
 commits="$(git rev-list --reverse "$base..$head" 2>/dev/null)" || { echo "cannot resolve $base..$head" >&2; exit 2; }
 rekeyed=""
 for sha in $commits; do
-  for f in $(git diff-tree --no-commit-id --name-only -r "$sha" -- "$curators" 2>/dev/null); do
+  for f in $(changed_paths "$sha" -- "$curators"); do
     f="${f##*/}"; rekeyed="$rekeyed ${f%.*}"
   done
 done
@@ -149,18 +160,15 @@ rekeyed_said=""
 
 checked=0
 for sha in $commits; do
-  # Every id the schema would accept (anything after `human:` up to a space
-  # or quote) on an added line, plus the actor of every event new or changed
-  # against the parent tree; an id this script cannot check is a finding,
-  # never a skip.
-  events_at "$sha^" > "$home/parent.events"
-  ids="$( {
-    git show --format= --unified=0 "$sha" -- "$bundle" knowledge_bundle 2>/dev/null \
-      | grep -E '^\+ *-? *by: *.?human:' | grep -oE "human:[^[:space:]\"']+" | sed 's/^human://'
-    git diff-tree --no-commit-id --name-only -r "$sha" -- "$bundle" knowledge_bundle 2>/dev/null | grep '\.md$' | while IFS= read -r f; do
-      git show "$sha:$f" 2>/dev/null | human_events "$f"
-    done | sort | comm -13 "$home/parent.events" - | cut -f2
-  } | sort -u)"
+  # The actor of every event new or changed against every parent, in the
+  # concepts this commit touches; an id this script cannot check is a
+  # finding below, never a skip.
+  files="$(changed_paths "$sha" -- "$bundle" knowledge_bundle | grep '\.md$' || true)"
+  [ -n "$files" ] || continue
+  for p in $(git rev-parse "$sha^@" 2>/dev/null); do
+    printf '%s\n' "$files" | events_in "$p"
+  done | sort -u > "$home/parent.events"
+  ids="$(printf '%s\n' "$files" | events_in "$sha" | comm -13 "$home/parent.events" - | cut -f2 | sort -u)"
   [ -n "$ids" ] || continue
   short="$(git rev-parse --short "$sha")"
   format="$(sig_format "$sha")"
