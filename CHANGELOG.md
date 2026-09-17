@@ -17,6 +17,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Changed
 
 - **The curator says what it can record before offering a session**, from a *Ready to record* line with three identity routes - `gh`, `glab`, the signing key the forge lists - and a rule for a host with no forge. The librarian names files in lowercase and hands off on a host without git; the docent's feedback attribution names the same routes.
+- **Five of the conventions script's nine checks now parse YAML for real.** `knowledge-conventions.py`, run through `uv run`, takes over the quoted-`at`, `verified`-shape, open-question, duplicate-`id` and closed-frontmatter rules from grep and awk, which missed a flow-style `verified` and a multi-line flow item; the other four stay shell, needing nothing but bash and git.
 
 ### Fixed
 

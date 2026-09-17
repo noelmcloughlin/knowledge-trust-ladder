@@ -2,6 +2,10 @@
 
 ## 2026-09-17
 
+* **Conventions script split (fifteenth pass)**: `knowledge-conventions.py`,
+  run through `uv run`, takes over the five frontmatter-shape rules (quoted
+  `at`, `verified` shape, open questions, duplicate `id`, closed frontmatter)
+  with a real YAML parse; the contract and sources playbooks follow.
 * **Second audit (fourteenth pass)**: the three lines explanation follows
   its pruned page and the shortened critics page; the trust label and the
   curator and librarian playbooks now say `revision` is proposed for lokf

@@ -46,6 +46,13 @@
 # because case-insensitive hosts do. A bundle written to the letter of OKF may
 # fail them; that is a policy of the gate, not a defect in the bundle.
 #
+# Rules 2, 3, 4, 7 and 9 are frontmatter-shape questions a real YAML parse
+# answers outright, so this script hands them to knowledge-conventions.py
+# (same directory) through `uv run`, which needs nothing preinstalled. Rules
+# 1, 5, 6 and 8 stay here: they are git and filesystem facts, not YAML shape,
+# and this half keeps running - grep and awk only - wherever bash and git do,
+# with no toolchain at all. Without uv, this half still runs and says so.
+#
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
 # sidecar's `.lokf/.gitattributes` keeps tracked files on LF; rule 9 still
@@ -102,7 +109,6 @@ done
 # reported, because a pin the script cannot resolve is not a pin it has checked.
 gitroot="$(git -C "$root" rev-parse --show-toplevel 2>/dev/null || true)"
 shallow="$(git -C "$root" rev-parse --is-shallow-repository 2>/dev/null || echo false)"
-ids=""
 while IFS= read -r f; do
   # 8. path shape, checked on every Markdown file, reserved ones included
   rel="${f#"$bundle"/}"
@@ -110,38 +116,10 @@ while IFS= read -r f; do
     say "$f: path is not lowercase a-z, 0-9, '.', '_', '-' - case-insensitive hosts and sync conflict copies are why"
   fi
   case "$(basename "$f")" in index.md|log.md|diataxis.md) continue ;; esac
-  # 9. a readable, closed frontmatter block
-  if has_bom "$f"; then say "$f: starts with a byte order mark - save as UTF-8 without BOM"; fi
-  if [ "$(clean "$f" | head -n 1)" != "---" ] || [ "$(clean "$f" | grep -c '^---$')" -lt 2 ]; then
-    say "$f: no closed frontmatter block - a concept starts with '---' and closes it before the body"
-    continue
-  fi
-  # Frontmatter only for 2, 3, 6 and 7: the text between the first two `---` lines.
+  # Frontmatter only, best effort, for 5 and 6: the text between the first two
+  # `---` lines. A missing or malformed block yields nothing here and is
+  # rules 2-4, 7 and 9's job below to report, not this loop's.
   fm="$(clean "$f" | awk 'NR==1 && $0!="---" {exit} NR>1 && $0=="---" {exit} NR>1 {print}')"
-  # 2. unquoted timestamps
-  while IFS= read -r line; do
-    [ -n "$line" ] && say "$f: unquoted timestamp: $line"
-  done < <(printf '%s\n' "$fm" | grep -E '^\s*(- )?at: [0-9]' || true)
-  # 3. verified as a bare mapping (inline or block form), and stacked events
-  if printf '%s\n' "$fm" | grep -qE '^verified:\s*\{'; then
-    say "$f: verified is an inline mapping - write a one-item list"
-  fi
-  if printf '%s\n' "$fm" | awk 'prev=="verified:" && $0 ~ /^  by:/ {found=1} {prev=$0} END {exit !found}'; then
-    say "$f: verified is a bare mapping - write a one-item list"
-  fi
-  n="$(printf '%s\n' "$fm" | grep -cE '^\s*- by: process:lokf-librarian$' || true)"
-  if [ "${n:-0}" -gt 1 ]; then
-    say "$f: $n process:lokf-librarian events - the librarian replaces its own, never stacks"
-  fi
-  # 4. open-question bullets, checked in the body. The date is spelt out
-  #    digit by digit because the awk on older macOS has no {n} intervals.
-  while IFS= read -r line; do
-    [ -n "$line" ] && say "$f: open question not '- YYYY-MM-DD, <actor>: ...': ${line:0:60}"
-  done < <(clean "$f" | awk '
-    /^## Open questions$/ {inq=1; next}
-    inq && /^#/ {inq=0}
-    inq && /^- / && $0 !~ /^- [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9], (human|process):[^ :]+: / {print}
-  ')
   # 5. local resource paths exist: top-level `resource:` and `sources[].resource`
   while IFS= read -r res; do
     [ -z "$res" ] && continue
@@ -172,18 +150,18 @@ while IFS= read -r f; do
       say "$f: revision $rev does not hold $res - no such commit, or the path was absent in it"
     fi
   done < <(printf '%s\n' "$fm" | sed -nE 's/^[[:space:]]*(- )?revision:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\2/p')
-  # 7. collect the id; duplicates are reported once every file has been read
-  id="$(printf '%s\n' "$fm" | sed -nE 's/^id:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\1/p' | head -n 1)"
-  id="${id#\"}"; id="${id%\"}"; id="${id#\'}"; id="${id%\'}"
-  if [ -n "$id" ]; then ids="${ids}${id}"$'\t'"${f}"$'\n'; fi
 done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
-# ---- 7. one file per id -----------------------------------------------------
-while IFS= read -r dup; do
-  [ -z "$dup" ] && continue
-  files="$(printf '%s' "$ids" | awk -F'\t' -v d="$dup" '$1==d {printf "%s ", $2}')"
-  say "id $dup is declared by more than one file: ${files}- a sync conflict copy or a pasted duplicate; keep one"
-done < <(printf '%s' "$ids" | cut -f1 | sort | uniq -d)
+# ---- 2, 3, 4, 7, 9. frontmatter shape (YAML), handed to the Python half ----
+py="$(dirname "$0")/knowledge-conventions.py"
+if command -v uv >/dev/null 2>&1; then
+  if ! out="$(uv run --quiet "$py" "$bundle" 2>&1)"; then
+    printf '%s\n' "$out"
+    fail=1
+  fi
+else
+  echo "uv not found - rules 2, 3, 4, 7 and 9 (frontmatter shape) were not checked; install uv, or run $py directly with python3 and pyyaml" >&2
+fi
 
 if [ "$fail" -eq 0 ]; then
   echo "OK - $bundle keeps the conventions lokf validate cannot check"

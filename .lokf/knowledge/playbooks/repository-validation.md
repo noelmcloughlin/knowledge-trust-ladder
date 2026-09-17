@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T15:57:11Z"
+  at: "2026-09-17T16:40:00Z"
 status: draft
 references:
   - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
@@ -15,7 +15,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T15:57:11Z"
+  at: "2026-09-17T16:40:00Z"
 ---
 
 # Overview
@@ -36,12 +36,14 @@ that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
 staying under their own word budget (1000 and 900, check 10, extended
 2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`),
 (check 11, added 2026-09-14) this repository's copies of the registrar gate,
-the four sidecar scripts and `.lokf/.gitattributes` staying byte-identical to
+the five sidecar scripts and `.lokf/.gitattributes` staying byte-identical to
 their templates, with `knowledge-conventions.sh` shown to pass on this
 bundle, to fail on a synthetic bundle breaking each of its nine rules (a
 vanished `resource`, a `revision` naming no commit, a duplicate `id`, an
 upper-case path, a byte order mark, a missing frontmatter block, and the
-first four), to read a CRLF bundle as it reads LF, and to read a bundle
+first four - the last five of which, since 2026-09-17, it delegates to
+`knowledge-conventions.py` through `uv run`, a real YAML parse in place of
+grep and awk), to read a CRLF bundle as it reads LF, and to read a bundle
 reached through a link; (check 12, added 2026-09-17) `knowledge-preflight.sh`
 ending on its summary line here, on a bare directory, and warning on a CRLF
 bundle, counting a linked bundle, reading `commit.gpgsign = yes` as signing
