@@ -251,13 +251,14 @@ jobs:
           exit 1
 
       # Second opinion where the repository carries curator keys: the same
-      # signature check with plain git and gpg against the keys on file
-      # rather than GitHub's verdict, so a signature from a key not on file
-      # for that id fails even when GitHub shows it as Verified. A repository
-      # with no .lokf/curators/ never runs it; the script itself says so and
-      # passes if run by hand. Laid down by lokf-sidecar Step 5.
+      # signature check with plain git, gpg and ssh-keygen against the keys
+      # on file (<id>.asc or <id>.pub) rather than GitHub's verdict, so a
+      # signature from a key not on file for that id fails even when GitHub
+      # shows it as Verified. A repository with no .lokf/curators/ never runs
+      # it; the script itself says so and passes if run by hand. Laid down by
+      # lokf-sidecar Step 5.
       - name: Verify signatures against the keys on file
-        if: hashFiles('.lokf/curators/*.asc') != ''
+        if: hashFiles('.lokf/curators/*.asc', '.lokf/curators/*.pub') != ''
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}

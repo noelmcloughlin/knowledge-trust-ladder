@@ -44,9 +44,13 @@
 #
 # Usage: knowledge-conventions.sh [bundle-dir]   (default: knowledge, i.e. run
 # from .lokf/). Exit 1 with one line per finding; nothing else is written.
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [bundle-dir]" >&2; exit 2; }
 set -euo pipefail
 
-bundle="${1:-knowledge}"
+# The bundle directory may be a link (a host that keeps the real folder as a
+# visible knowledge_bundle/), and find never enters a link it is handed bare:
+# the trailing slash below is what makes it read the files at all.
+bundle="${1:-knowledge}"; bundle="${bundle%/}"
 [ -d "$bundle" ] || { echo "no bundle directory at $bundle" >&2; exit 2; }
 fail=0
 say() { echo "$1"; fail=1; }
@@ -120,13 +124,14 @@ while IFS= read -r f; do
   if [ "${n:-0}" -gt 1 ]; then
     say "$f: $n process:lokf-librarian events - the librarian replaces its own, never stacks"
   fi
-  # 4. open-question bullets, checked in the body
+  # 4. open-question bullets, checked in the body. The date is spelt out
+  #    digit by digit because the awk on older macOS has no {n} intervals.
   while IFS= read -r line; do
     [ -n "$line" ] && say "$f: open question not '- YYYY-MM-DD, <actor>: ...': ${line:0:60}"
   done < <(clean "$f" | awk '
     /^## Open questions$/ {inq=1; next}
     inq && /^#/ {inq=0}
-    inq && /^- / && $0 !~ /^- [0-9]{4}-[0-9]{2}-[0-9]{2}, (human|process):[^ :]+: / {print}
+    inq && /^- / && $0 !~ /^- [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9], (human|process):[^ :]+: / {print}
   ')
   # 5. local resource paths exist: top-level `resource:` and `sources[].resource`
   while IFS= read -r res; do
@@ -162,7 +167,7 @@ while IFS= read -r f; do
   id="$(printf '%s\n' "$fm" | sed -nE 's/^id:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\1/p' | head -n 1)"
   id="${id#\"}"; id="${id%\"}"; id="${id#\'}"; id="${id%\'}"
   if [ -n "$id" ]; then ids="${ids}${id}"$'\t'"${f}"$'\n'; fi
-done < <(find "$bundle" -name '*.md' -not -path '*/.obsidian/*' | sort)
+done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
 # ---- 7. one file per id -----------------------------------------------------
 while IFS= read -r dup; do

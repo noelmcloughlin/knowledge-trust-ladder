@@ -27,7 +27,7 @@ Never use an email address - the bundle may be public. The actor string is `huma
 Only when `.lokf/` is git-tracked **and** `.github/workflows/knowledge-registrar.yaml` exists. Two cheap questions:
 
 ```sh
-git config --get commit.gpgsign                      # is signing on at all?
+git config --bool --get commit.gpgsign               # is signing on at all? (yes/on/1 read as true)
 git cat-file commit HEAD | grep -qE '^gpgsig' \
   && echo "HEAD is signed" || echo "HEAD is unsigned"
 ```

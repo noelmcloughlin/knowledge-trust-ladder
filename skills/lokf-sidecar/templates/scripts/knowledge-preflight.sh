@@ -14,6 +14,7 @@
 #
 # Usage: knowledge-preflight.sh [repo-root]   (default: the nearest ancestor of
 # the current directory holding `.lokf/`, else the current directory)
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [repo-root]" >&2; exit 2; }
 set -u
 
 missing=0; warns=0; disables=""
@@ -49,9 +50,12 @@ printf 'Preflight for %s\n' "$root"
 ok host "$host, bash ${BASH_VERSION%%(*}; digest: ${digest:-none (macOS: install coreutils, or use uv run python)}; python: ${py:-none (use uv run python)}"
 
 # ---- bundle ----------------------------------------------------------------
+# The trailing slash on every find: a host may have made .lokf/knowledge a link
+# onto a visible knowledge_bundle/ folder, and find never enters a link it is
+# handed bare - it would count zero concepts and say nothing.
 bundle="$root/.lokf/knowledge"
 if [ -d "$bundle" ]; then
-  n="$(find "$bundle" -name '*.md' -not -path '*/.obsidian/*' -not -name index.md -not -name log.md -not -name diataxis.md | wc -l | tr -d ' ')"
+  n="$(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' -not -name index.md -not -name log.md -not -name diataxis.md | wc -l | tr -d ' ')"
   door="$root/knowledge_bundle"
   if [ -L "$door" ]; then doorway="knowledge_bundle -> $(readlink "$door")"
   elif [ -d "$door" ]; then doorway="knowledge_bundle is a folder or junction"
@@ -80,7 +84,7 @@ if have git && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; t
   [ "$attrs" = absent ] && [ -d "$bundle" ] && warn git "no .lokf/.gitattributes: a Windows checkout may differ from CI - lokf-sidecar Step 1 lays it down"
   remote="$(git -C "$root" remote get-url origin 2>/dev/null || true)"
   case "$remote" in
-    *github.com*) forge=github ;;
+    *github*) forge=github ;;  # github.com, or an Enterprise Server host named after it
     *gitlab*) forge=gitlab ;;
     *codeberg*|*forgejo*|*gitea*) forge=forgejo ;;
     *bitbucket*) forge=bitbucket ;;
@@ -102,7 +106,7 @@ if [ -d "$bundle" ]; then
   bom_files=0
   while IFS= read -r f; do
     [ "$(head -c 3 "$f" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ] && bom_files=$((bom_files + 1))
-  done < <(find "$bundle" -name '*.md' -not -path '*/.obsidian/*')
+  done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*')
   [ "$bom_files" -gt 0 ] && warn endings "$bom_files file(s) start with a byte order mark - conventions rule 9 reports them"
 fi
 
@@ -112,7 +116,7 @@ if have gh; then
   if gh auth status >/dev/null 2>&1; then
     id="$(gh api user --jq .login 2>/dev/null || true)"
     [ -n "$id" ] && ok identity "gh logged in: confirmations record as human:$id"
-    [ -z "$id" ] && warn identity "gh logged in but the login could not be read (offline?)"
+    [ -z "$id" ] && warn identity "gh logged in but the login could not be read - a CI token has no user; otherwise offline"
   else
     warn identity "gh installed but not logged in - gh auth login"
   fi
@@ -127,20 +131,55 @@ fi
 if [ -z "$id" ]; then
   case "$forge" in
     github) miss identity "no authenticated login (gh) - the signing-key route in lokf-curator/references/portability.md is the alternative" "Confirm, Correct now (lokf-curator), named feedback (lokf-docent)" ;;
-    gitlab|forgejo|bitbucket|other) miss identity "no authenticated login (glab, or the signing-key route in lokf-curator/references/portability.md)" "Confirm, Correct now (lokf-curator)" ;;
+    gitlab|forgejo|bitbucket|other) miss identity "no authenticated login (glab, or the signing-key route in lokf-curator/references/portability.md)" "Confirm, Correct now (lokf-curator), named feedback (lokf-docent)" ;;
     none) info identity "no forge: on a synced folder the id is the account the platform's version history shows (lokf-curator/references/portability.md)" ;;
   esac
 fi
+key=""; fmt=openpgp
 if [ "$ingit" -eq 1 ]; then
-  sign="$(git -C "$root" config --get commit.gpgsign 2>/dev/null || echo false)"
+  # --bool reads yes/on/1 as git does; no user.signingkey means git picks the
+  # key by the committer's email, which is signing, not its absence.
+  sign="$(git -C "$root" config --bool --get commit.gpgsign 2>/dev/null || echo false)"
   key="$(git -C "$root" config --get user.signingkey 2>/dev/null || true)"
   fmt="$(git -C "$root" config --get gpg.format 2>/dev/null || echo openpgp)"
   headsig="unsigned"; git -C "$root" cat-file commit HEAD 2>/dev/null | grep -qE '^gpgsig' && headsig="signed"
-  if [ "$sign" = true ] && [ -n "$key" ]; then
-    ok signing "commit.gpgsign on ($fmt key ${key##*/}); HEAD $headsig"
+  if [ "$sign" = true ]; then
+    if [ -n "$key" ]; then keyshow="${key##*/}"; else keyshow="by committer email"; fi
+    ok signing "commit.gpgsign on ($fmt key $keyshow); HEAD $headsig"
+    if [ "$fmt" = ssh ]; then have ssh-keygen || warn signing "gpg.format is ssh but ssh-keygen is not installed - commits will fail to sign"
+    else have gpg || warn signing "gpg.format is $fmt but gpg is not installed - commits will fail to sign"; fi
   else
     warn signing "commit signing off - a curation pull request you open yourself fails the gate (docs/signing-commits.md in lokf-agent-skills)"
   fi
+fi
+
+# ---- the forge-free gate: keys on file under .lokf/curators/ ---------------
+if [ -d "$root/.lokf/curators" ]; then
+  nk="$(find "$root/.lokf/curators/" \( -name '*.asc' -o -name '*.pub' \) | wc -l | tr -d ' ')"
+  mine="your signing key is not checked (none configured)"
+  if [ -n "$key" ]; then
+    onfile=0
+    if [ "$fmt" = ssh ]; then
+      # user.signingkey is a public key file, the private key beside one, or the key itself
+      case "$key" in ssh-*|ecdsa-*|sk-*) pub="$key" ;; *.pub) pub="$(cat "$key" 2>/dev/null)" ;; *) pub="$(cat "$key.pub" 2>/dev/null)" ;; esac
+      blob="$(printf '%s\n' "$pub" | awk 'NR==1 {print $2}')"
+      [ -n "$blob" ] && grep -qsF -- "$blob" "$root/.lokf/curators"/*.pub && onfile=1
+    elif have gpg; then
+      for fp in $(gpg --batch --with-colons --list-keys "$key" 2>/dev/null | awk -F: '$1=="fpr" {print $10}'); do
+        for k in "$root/.lokf/curators"/*.asc; do
+          [ -f "$k" ] && gpg --batch --quiet --with-colons --import-options show-only --import "$k" 2>/dev/null | grep -q ":$fp:" && onfile=1
+        done
+      done
+    fi
+    if [ "$onfile" -eq 1 ]; then mine="yours is on file"; else mine="yours is not on file - confirmations you sign will fail it until a maintainer adds it in its own change"; fi
+  fi
+  if [ "${nk:-0}" -eq 0 ]; then warn curators ".lokf/curators/ exists but holds no .asc or .pub key - the forge-free gate fails every confirmation"
+  elif [ "$mine" = "yours is on file" ]; then ok curators "$nk key(s) on file; $mine"
+  else warn curators "$nk key(s) on file; $mine"; fi
+  if ! have gpg && ls "$root/.lokf/curators"/*.asc >/dev/null 2>&1; then warn curators "GPG keys on file but gpg is not installed - knowledge-provenance.sh cannot verify them here"; fi
+  if ! have ssh-keygen && ls "$root/.lokf/curators"/*.pub >/dev/null 2>&1; then warn curators "SSH keys on file but ssh-keygen is not installed - knowledge-provenance.sh cannot verify them here"; fi
+else
+  info curators "no .lokf/curators/ - the forge-free gate skips; only the forge's own gate, if any, checks a confirmation"
 fi
 
 # ---- toolkit ---------------------------------------------------------------
@@ -196,6 +235,7 @@ if [ -n "$templates" ] && [ -d "$root/.lokf" ]; then
   for pair in "scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
               "scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
               "scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
+              "scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
               "gitattributes:.lokf/.gitattributes" \
               "github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
               "github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml"; do
@@ -227,6 +267,8 @@ else
 fi
 if have curl; then
   if curl -sI --max-time 4 https://pypi.org/simple/lokf/ >/dev/null 2>&1; then info network "pypi.org reachable"; else warn network "pypi.org unreachable - version checks and skill installs will fail here"; fi
+else
+  warn network "curl not installed - the signing-key identity route and the version check need it"
 fi
 
 printf 'Preflight: %d missing, %d warning(s).%s\n' "$missing" "$warns" "${disables:+ Missing disables: $disables.}"

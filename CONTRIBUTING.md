@@ -43,6 +43,7 @@ The whole tree, workflows and docs included: [docs/repository-layout.md](docs/re
 - If a change alters what a skill *does*, not just its wording, add a line or two under `## [Unreleased]` in `CHANGELOG.md`. The reasoning belongs beside the code.
 - Files here are deep-linked from the sibling repositories, whose link checks follow those URLs for real; check 9 lists the paths. Move one only together with their links, and when a change *there* needs something new *here*, land this side first.
 - Pinned action SHAs are bumped by Dependabot, and CI fails an action that is not pinned to a commit.
+- A pull request that records a `human:` confirmation is signed, GPG or SSH ([signing your commits](docs/signing-commits.md)). A repository running the forge-free gate also carries your public key under `.lokf/curators/`, landed in its own pull request first; the same page says how to export it.
 - The PR template's checklist is the short form of this list.
 
 ## Editing scope

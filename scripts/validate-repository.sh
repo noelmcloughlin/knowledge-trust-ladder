@@ -359,6 +359,16 @@ if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>&1)"; t
 else
   err "conventions script misreads a CRLF checkout: $out"
 fi
+# A bundle reached through a link - the rearranged layout the sidecar's
+# portability page allows - must be read, not passed with zero files seen.
+ln -s "$good/k" "$good/linked" && printf 'x' > "$good/k/x/Bad.md"
+if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/linked" 2>&1)"; then
+  err "conventions script passed a linked bundle unread: $out"
+elif grep -q 'Bad.md: path is not lowercase' <<<"$out"; then
+  ok "conventions script reads a bundle reached through a link"
+else
+  err "conventions script misread a linked bundle: $out"
+fi
 rm -rf "$good"
 
 # 12. The preflight script every skill runs first must always end on its
@@ -385,16 +395,54 @@ if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && gre
 else
   err "preflight did not warn about a CRLF file: $out"
 fi
+# The same bundle behind a link is still counted; `commit.gpgsign = yes` is
+# signing on, with no user.signingkey meaning git's default key; and a run
+# under sh stops on one line naming bash rather than mid-screen.
+mv "$bare/.lokf/knowledge" "$bare/knowledge_bundle" && ln -s ../knowledge_bundle "$bare/.lokf/knowledge"
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^ok      bundle .*, 1 concepts' <<<"$out"; then
+  ok "preflight counts a bundle reached through a link"
+else
+  err "preflight did not read a linked bundle: $out"
+fi
+git init -q "$bare" && git -C "$bare" -c user.name=c -c user.email=c@example.invalid commit -q --allow-empty --no-gpg-sign -m x \
+  && git -C "$bare" config commit.gpgsign yes
+if out="$(GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^ok      signing .*by committer email' <<<"$out"; then
+  ok "preflight reads commit.gpgsign = yes with no signing key as signing on"
+else
+  err "preflight misread commit.gpgsign = yes: $out"
+fi
 rm -rf "$bare"
+# Every line the preflight can print as missing or a warning has a row on the
+# sidecar's prerequisites page - the plain-words meaning, who fixes it and
+# what to send them - so a new preflight line cannot land without one.
+prereq="skills/lokf-sidecar/references/prerequisites.md"
+for key in $(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u); do
+  if grep -q "^| \`$key\` |" "$prereq"; then
+    ok "prerequisites.md explains the preflight's '$key' line"
+  else
+    err "prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
+  fi
+done
+for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh; do
+  if out="$(sh "$templates/scripts/$s" x 2>&1)"; then
+    err "$s run under sh did not stop: $out"
+  elif grep -q '^run this with bash' <<<"$out"; then
+    ok "$s run under sh stops and names bash"
+  else
+    err "$s run under sh failed some other way: $out"
+  fi
+done
 
 # 13. The forge-free provenance gate, with throwaway keys: a confirmation
-#     signed by the curator on file passes; an unsigned one, one by an id with
-#     no key, and a key registered in the same range as a confirmation each
-#     fail; a repository with no .lokf/curators/ is a stated skip. Needs gpg,
-#     which CI has.
+#     signed by the curator on file passes - with a GPG primary key, a GPG
+#     signing subkey, or an SSH key; an unsigned one, one by an id with no
+#     key, one by another key, and one whose own key lands in the same range
+#     each fail, while another curator's key landing alongside does not; a
+#     repository with no .lokf/curators/ is a stated skip. Needs gpg and
+#     ssh-keygen, which CI has.
 say ""
 say "Exercising knowledge-provenance.sh..."
-if command -v gpg >/dev/null 2>&1; then
+if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
   pv="$(mktemp -d)"
   mkdir -m 700 "$pv/gnupg"
   script="$repo_root/$templates/scripts/knowledge-provenance.sh"
@@ -413,35 +461,53 @@ if command -v gpg >/dev/null 2>&1; then
       err "provenance script did not $what (exit $rc): $out"
     fi
   }
+  k="$pv/repo/.lokf/knowledge/x"; c="$pv/repo/.lokf/curators"
   if pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'contract <contract@example.invalid>' ed25519 sign 1d 2>/dev/null \
-     && pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'other <other@example.invalid>' ed25519 sign 1d 2>/dev/null; then
+     && pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'other <other@example.invalid>' ed25519 sign 1d 2>/dev/null \
+     && pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'sub <sub@example.invalid>' ed25519 cert 1d 2>/dev/null \
+     && ssh-keygen -q -t ed25519 -N '' -C sshcur -f "$pv/sshcur" && ssh-keygen -q -t ed25519 -N '' -C stranger -f "$pv/stranger"; then
     fpr="$(pv_gpg --with-colons --list-keys contract | awk -F: '$1=="fpr"{print $10;exit}')"
     fpr2="$(pv_gpg --with-colons --list-keys other | awk -F: '$1=="fpr"{print $10;exit}')"
+    fpr3="$(pv_gpg --with-colons --list-keys sub@example.invalid | awk -F: '$1=="fpr"{print $10;exit}')"
+    # The third key certifies only and signs with a subkey, the common layout.
+    pv_gpg --pinentry-mode loopback --passphrase '' --quick-add-key "$fpr3" ed25519 sign 1d 2>/dev/null
     git init -q "$pv/repo"
     pv_git config user.name contract && pv_git config user.email contract@example.invalid
     pv_git config gpg.format openpgp && pv_git config user.signingkey "$fpr"
-    mkdir -p "$pv/repo/.lokf/knowledge/x" "$pv/repo/.lokf/curators"
-    pv_gpg --armor --export "$fpr" > "$pv/repo/.lokf/curators/contract.asc"
-    printf -- '---\ntype: Service\n---\n' > "$pv/repo/.lokf/knowledge/x/a.md"
+    mkdir -p "$k" "$c"
+    pv_gpg --armor --export "$fpr" > "$c/contract.asc"
+    printf -- '---\ntype: Service\n---\n' > "$k/a.md"
     pv_git add -A && pv_git commit -q --no-gpg-sign -m base
-    confirmed contract > "$pv/repo/.lokf/knowledge/x/a.md" && pv_git commit -q -S -am confirm
+    confirmed contract > "$k/a.md" && pv_git commit -q -S -am confirm
     expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a confirmation signed by the curator on file"
-    confirmed contract > "$pv/repo/.lokf/knowledge/x/b.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m unsigned
+    confirmed contract > "$k/b.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m unsigned
     expect_pv "HEAD~1" 1 'is unsigned' "report an unsigned confirmation"
-    confirmed nobody > "$pv/repo/.lokf/knowledge/x/c.md" && pv_git add -A && pv_git commit -q -S -m nobody
+    confirmed nobody > "$k/c.md" && pv_git add -A && pv_git commit -q -S -m nobody
     expect_pv "HEAD~1" 1 'no key on file' "report an id with no key on file"
-    confirmed contract > "$pv/repo/.lokf/knowledge/x/d.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m wrongkey
-    pv_gpg --armor --export "$fpr2" > "$pv/repo/.lokf/curators/other.asc" && pv_git add -A && pv_git commit -q -S -m addkey
-    expect_pv "HEAD~2" 1 'same range' "refuse a key and a confirmation in one range"
-    expect_pv "HEAD~2 HEAD~1" 1 'signed by another key' "report a confirmation signed by a key that is not that curator's"
+    confirmed contract > "$k/d.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m wrongkey
+    expect_pv "HEAD~1" 1 'signed by another key' "report a confirmation signed by a key that is not that curator's"
+    pv_gpg --armor --export "$fpr2" > "$c/other.asc" && confirmed other > "$k/e.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m 'key and own confirmation'
+    expect_pv "HEAD~1" 1 'same range' "refuse a curator's own key and their confirmation in one range"
+    confirmed other > "$k/f.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m 'confirm after the key landed'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a confirmation once that key landed in an earlier range"
+    pv_gpg --armor --export "$fpr3" > "$c/sub.asc" && pv_git add -A && pv_git commit -q -S -m 'subkey curator'
+    confirmed sub > "$k/g.md" && pv_git add -A && pv_git -c user.signingkey="$fpr3" commit -q -S -m 'signed with the subkey'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "accept a signature made with a GPG signing subkey"
+    cp "$pv/sshcur.pub" "$c/sshcur.pub" && pv_git add -A && pv_git commit -q -S -m 'ssh curator'
+    confirmed sshcur > "$k/h.md" && pv_git add -A && pv_git -c gpg.format=ssh -c user.signingkey="$pv/sshcur.pub" commit -q -S -m 'ssh signed'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "accept an SSH signature by the key on file"
+    confirmed sshcur > "$k/i.md" && pv_git add -A && pv_git -c gpg.format=ssh -c user.signingkey="$pv/stranger.pub" commit -q -S -m 'ssh by a stranger'
+    expect_pv "HEAD~1" 1 'not by a key in sshcur.pub' "report an SSH signature by a key not on file for that id"
+    cp "$pv/stranger.pub" "$c/stranger.pub" && confirmed contract > "$k/j.md" && pv_git add -A && pv_git commit -q -S -m 'another key lands beside a confirmation'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "let another curator's key land beside a confirmation"
     pv_git rm -rq .lokf/curators && pv_git commit -q -S -m nokeys
     expect_pv "HEAD~1" 0 '^skipped' "say so and pass with no .lokf/curators/"
   else
-    err "could not generate the provenance fixture's keys (gpg --quick-generate-key failed)"
+    err "could not generate the provenance fixture's keys (gpg --quick-generate-key or ssh-keygen failed)"
   fi
   rm -rf "$pv"
 else
-  say "gpg not installed locally - CI runs check 13; skipping here"
+  say "gpg or ssh-keygen not installed locally - CI runs check 13; skipping here"
 fi
 
 say ""
