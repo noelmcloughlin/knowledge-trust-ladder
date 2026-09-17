@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-17T15:27:51Z"
 status: draft
 references:
   - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
@@ -15,7 +15,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-17T15:27:51Z"
 ---
 
 # Overview
@@ -41,12 +41,18 @@ their templates, with `knowledge-conventions.sh` shown to pass on this
 bundle, to fail on a synthetic bundle breaking each of its nine rules (a
 vanished `resource`, a `revision` naming no commit, a duplicate `id`, an
 upper-case path, a byte order mark, a missing frontmatter block, and the
-first four), and to read a CRLF bundle as it reads LF; (check 12, added
-2026-09-17) `knowledge-preflight.sh` ending on its summary line here, on a
-bare directory, and warning on a CRLF bundle; and (check 13, same day)
+first four), to read a CRLF bundle as it reads LF, and to read a bundle
+reached through a link; (check 12, added 2026-09-17) `knowledge-preflight.sh`
+ending on its summary line here, on a bare directory, and warning on a CRLF
+bundle, counting a linked bundle, reading `commit.gpgsign = yes` as signing
+on, stopping on one line under `sh` (as the other two scripts do), and every
+line it can print as missing or a warning having a row on
+`lokf-sidecar/references/prerequisites.md`; and (check 13, same day)
 `knowledge-provenance.sh` passing a confirmation signed by the curator on
-file and failing an unsigned one, an unknown id, a wrong key and a key
-registered in the same range, with throwaway GPG keys. Then
+file - with a GPG key, a GPG signing subkey, or an SSH key - and failing an
+unsigned one, an unknown id, a wrong key of either kind and an id's own key
+registered in the same range as their confirmation, while another curator's
+key landing alongside passes, with throwaway keys. Then
 `gh skill publish --dry-run` runs.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs

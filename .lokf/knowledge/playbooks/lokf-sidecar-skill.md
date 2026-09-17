@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-sidecar/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-17T15:27:51Z"
 status: draft
 about:
   - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
@@ -17,7 +17,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/references/lokf-toolkit
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-17T15:27:51Z"
 ---
 
 # Overview
@@ -38,11 +38,16 @@ preflight and the forge-free provenance gate need neither git nor GitHub to
 be laid down), and hand off (Step 6). Its frontmatter declares what it
 needs in the Agent Skills `compatibility` field, as every skill here does.
 
-Its detail lives in two reference files - `references/portability.md` (a
+Its detail lives in three reference files - `references/portability.md` (a
 matrix, host by host: git or none, GitHub, GitLab or Forgejo, Linux, macOS,
 Windows and PowerShell, synced folders, an Obsidian vault, and the
-forge-free gate) and `references/automation.md` (what the Step 5 files
-do) - so the router itself stays small. Every file it writes
+forge-free gate, which verifies GPG keys with their subkeys and SSH keys
+alike against `.lokf/curators/<id>.asc` or `.pub`), `references/automation.md`
+(what the Step 5 files do) and, since 2026-09-17, `references/prerequisites.md`
+(each preflight line in plain words: what it means, what it stops, who fixes
+it and what to send them, for a person who cannot act on it themselves; the
+contract holds it to every line the preflight can print) - so the router
+itself stays small. Every file it writes
 is copied from `templates/`, never retyped, which is what keeps a freshly
 laid-down bundle byte-identical to the reviewed template.
 

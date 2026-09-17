@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/lokf-docent/SKILL.md
 generated:
   by: process:lokf-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-17T15:27:51Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
@@ -19,7 +19,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/lokf-curator-skill
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-17T15:27:51Z"
 ---
 
 # Overview
@@ -45,7 +45,8 @@ entries on its next run, which closes the loop from reader back to bundle.
 An entry names the asker only from an authenticated login - `gh api user`,
 `glab api user`, or the signing-key route the curator describes - and is
 attributed to `docent` alone without one; the preflight's identity line
-says which applies (2026-09-17).
+says which applies (2026-09-17), and a reader is shown nothing else from
+the preflight - a missing bundle is the one thing worth a sentence.
 It never carries a secret, credential, token, or connection string into an
 answer or a feedback entry, even to explain where one was found - it names
 the file and line and the kind of value, never the value itself, since the

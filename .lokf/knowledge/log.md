@@ -2,6 +2,11 @@
 
 ## 2026-09-17
 
+* **Audit follow-up (thirteenth pass)**: the sidecar, curator and docent
+  playbooks, the contract and the threat model follow the forge-free gate's
+  SSH and subkey support, the linked-bundle and `commit.gpgsign` fixes, and
+  the new `prerequisites.md` that puts each preflight line in plain words
+  for a person who cannot act on it.
 * **Portability work (twelfth pass)**: the contract, the four skill
   playbooks, the threat model, the three lines page and the hosts
   explanation follow their sources - a preflight every skill runs first, a
