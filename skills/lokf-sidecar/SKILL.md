@@ -33,6 +33,8 @@ Create a fresh **`.lokf/` sidecar** - a machine-readable, SPARQL-queryable [LOKF
 
 ## Step 0 - Gather the host project's facts
 
+**First, the preflight.** Run `bash templates/scripts/knowledge-preflight.sh` from this skill's directory (the copy under `.lokf/scripts/` does not exist yet) and read its screen before anything else: the host and shell, whether the tree is under git and on which forge, whether `uv` is present, which skill copies are installed and whether they differ, and whether the session is attended. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. A host whose shell is PowerShell, or that is not Linux, git or GitHub, has its own bullet in [references/portability.md](references/portability.md), and the preflight tells you which one applies.
+
 Resolve every placeholder from real project sources before writing anything; never leave a `<...>` token or dummy value behind.
 
 | Placeholder | Meaning | Where to find it |
@@ -55,13 +57,14 @@ Resolve every placeholder from real project sources before writing anything; nev
 
 ## Step 1 - Create the skeleton and copy the templates
 
-Copy each template to its destination, then substitute the placeholders it lists. Only these placeholders exist; `templates/gitignore` is written as
-`.lokf/.gitignore`.
+Copy each template to its destination, then substitute the placeholders it lists. Only these placeholders exist; `templates/gitignore` and
+`templates/gitattributes` are written as `.lokf/.gitignore` and `.lokf/.gitattributes`.
 
 | Template | Destination | Placeholders |
 | --- | --- | --- |
 | `templates/pyproject.toml` | `.lokf/pyproject.toml` | PROJ_NAME, PROJ_SLUG |
 | `templates/gitignore` | `.lokf/.gitignore` | - |
+| `templates/gitattributes` | `.lokf/.gitattributes` (keeps the bundle on LF on every machine; inert without git) | - |
 | `templates/justfile` | `.lokf/justfile` | PROJ_NAME |
 | `templates/README.md` | `.lokf/README.md` | PROJ_NAME |
 | `templates/knowledge/index.md` | `.lokf/knowledge/index.md` (semantic header + TOC, reserved) | PROJ_NAME, PROJ_DESC, BASE_IRI, OWNER_NAME, OWNER_SLUG |
@@ -155,6 +158,7 @@ silently reports "no changes" for an ignored path forever. GitHub-only; other ho
 | `templates/github/knowledge-librarian.yaml` | `.github/workflows/knowledge-librarian.yaml` |
 | `templates/scripts/knowledge-librarian.sh` | `.lokf/scripts/knowledge-librarian.sh` (`chmod +x`) |
 | `templates/scripts/knowledge-conventions.sh` | `.lokf/scripts/knowledge-conventions.sh` (`chmod +x`) - the gate runs it; so does lokf-librarian's audit |
+| `templates/scripts/knowledge-preflight.sh` | `.lokf/scripts/knowledge-preflight.sh` (`chmod +x`) - what this host can do; every skill runs it first (Step 0 here). Lay it down even when the rest of this step is skipped: it needs neither git nor GitHub |
 
 Both workflows and the wrapper name the bundle under both of its names (`.lokf/knowledge` and `knowledge_bundle`): with the Step 2 doorway the second pathspec matches nothing, harmlessly, and it still covers a shared folder a team has rearranged by hand into a real `knowledge_bundle/` (see [references/portability.md](references/portability.md)), because a git pathspec never traverses a symlink. Nothing to edit. The registrar's `provenance` job needs no wiring, but check one thing and report it here: `git config --get commit.gpgsign`, and whether `HEAD` carries a signature (`git cat-file commit HEAD | grep -qE '^gpgsig'`). If signing is off, say so now - GitHub blocks self-approval, so a curator who opens their own curation PRs passes the gate only if they sign, and otherwise every confirmation lokf-curator records will be rejected at the gate. Show the three `git config` lines from [references/automation.md](references/automation.md) and let them run those; do not run them yourself and never touch their `--global` config. The optional `KNOWLEDGE_CURATION_ENVIRONMENT` escape hatch is in the same file; it requires creating an Environment *with required reviewers* first, and is a no-op if that part is skipped.
 

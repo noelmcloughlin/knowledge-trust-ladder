@@ -6,6 +6,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
+- **A preflight every skill runs first.** `knowledge-preflight.sh`, laid down by the sidecar beside the conventions script, prints one read-only screen: host and shell, bundle, git and line endings, forge and gate, authenticated identity and signing, toolkit, which skill copies are installed and whether they differ, whether the host's copies still match the installed templates, and whether the session is attended. It ends on a summary naming what is missing and which steps that disables, so a missing `gh` or `uv` is said before a step is offered, never after. Check 12 runs it here, on a bare directory, and on a CRLF bundle.
+- **The sidecar lays down `.lokf/.gitattributes`**, keeping the bundle on LF on every machine so a Windows checkout gives the same verdict as CI.
 - **Three more conventions the gate checks.** One file per `id` (a sync client's conflict copy carries its original's and silently merged into it in the graph), lowercase paths (two paths differing only by case collide on Windows, macOS and SharePoint, and sync clients name conflict copies with spaces, parentheses or host names), and a closed frontmatter block with no byte order mark. Check 11 proves each.
 
 ### Fixed

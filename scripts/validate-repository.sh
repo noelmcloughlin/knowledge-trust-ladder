@@ -260,7 +260,9 @@ templates="skills/lokf-sidecar/templates"
 for pair in \
   "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
   "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
-  "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh"; do
+  "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
+  "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
+  "$templates/gitattributes:.lokf/.gitattributes"; do
   src="${pair%%:*}"; dst="${pair##*:}"
   if cmp -s "$src" "$dst"; then
     ok "$dst matches its template"
@@ -339,6 +341,32 @@ else
   err "conventions script misreads a CRLF checkout: $out"
 fi
 rm -rf "$good"
+
+# 12. The preflight script every skill runs first must always end on its
+#     summary line and exit 0 - on this repository, and on a bare directory
+#     with no bundle, no git and no skills, where every section has to cope
+#     with absence rather than fail. A CRLF file must raise its warning.
+say ""
+say "Exercising knowledge-preflight.sh..."
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" . 2>&1)" && grep -q '^Preflight: ' <<<"$out"; then
+  ok "preflight runs on this repository and ends on its summary line"
+else
+  err "preflight failed on this repository: $out"
+fi
+bare="$(mktemp -d)"
+if out="$(cd "$bare" && bash "$repo_root/$templates/scripts/knowledge-preflight.sh" 2>&1)" \
+   && grep -q '^missing bundle' <<<"$out" && grep -q '^info    git ' <<<"$out" && grep -q '^Preflight: ' <<<"$out"; then
+  ok "preflight copes with a bare directory (no bundle, no git, no skills)"
+else
+  err "preflight misbehaves on a bare directory: $out"
+fi
+mkdir -p "$bare/.lokf/knowledge/x" && printf -- '---\r\ntype: Service\r\n---\r\n' > "$bare/.lokf/knowledge/x/a.md"
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^warn    endings .*CRLF' <<<"$out"; then
+  ok "preflight warns about CRLF files in the bundle"
+else
+  err "preflight did not warn about a CRLF file: $out"
+fi
+rm -rf "$bare"
 
 say ""
 if [[ "$fail" -eq 0 ]]; then
