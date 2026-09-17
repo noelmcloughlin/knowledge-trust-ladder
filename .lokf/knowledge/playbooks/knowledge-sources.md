@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T16:40:00Z"
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-16T09:10:00Z"
+  at: "2026-09-17T16:40:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -22,7 +22,7 @@ stale_after: 2027-09-10
 | --- | --- | --- |
 | `skills/*/SKILL.md` | the four skill Playbooks | re-read each router; a changed step list, guardrail, or frontmatter `description` is a drift signal |
 | `skills/*/references/*.md` | detail behind each skill Playbook | diff against the claims in the corresponding concept body |
-| `skills/lokf-sidecar/templates/` | what the sidecar skill actually writes; the toolkit dependency and its `[build]` extra | diff `pyproject.toml` (the `lokf` floor) and the template list in the skill's Step 1 table |
+| `skills/lokf-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, `.gitattributes`, and the five scripts (preflight, conventions and its Python half, librarian wrapper, provenance gate) | diff `pyproject.toml` (the `lokf` floor) and the template lists in the skill's Step 1 and Step 5 tables |
 | `README.md`, `docs/repository-layout.md` | project identity, the four-role narrative, versioning policy, install commands; the repository tree, on its own page since the README stopped carrying it | diff the roles table and the Versioning section; diff the tree against the working copy |
 | `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `lokf-docent/references/obsidian.md`, which must agree with it |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
@@ -33,7 +33,7 @@ stale_after: 2027-09-10
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
 | `.github/workflows/semantic-release.yml`, `.github/scripts/changelog-release.mjs`, `.releaserc.json` | the version-and-changelog automation `playbooks/releasing.md` describes | diff the `release` job's steps, the script's `verifyRelease`/`generateNotes` behaviour, and `.releaserc.json`'s `releaseRules` (which commit types map to which bump) against the concept's Overview; all three sit behind the `release` Environment along with `publish.yml` |
-| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `.lokf/scripts/knowledge-conventions.sh` | this repository's dogfooded copies of the workflow templates and wrapper the sidecar skill ships | diff each against its counterpart under `skills/lokf-sidecar/templates/`; `knowledge-registrar.yaml` and both scripts are kept byte-identical, and `knowledge-librarian.yaml` differs only by design - it omits the template's "Install the pinned lokf-librarian skill" step, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`, and words one comment for itself. Any other difference is a template bump not yet copied across |
+| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `knowledge-conventions.sh`, `knowledge-conventions.py`, `knowledge-preflight.sh`, `knowledge-provenance.sh`, `.lokf/.gitattributes` | this repository's dogfooded copies of the workflow templates, scripts and attributes the sidecar skill ships | diff each against its counterpart under `skills/lokf-sidecar/templates/`; `knowledge-registrar.yaml`, the five scripts and `.gitattributes` are kept byte-identical (the preflight reports any drift), and `knowledge-librarian.yaml` differs only by design - it omits the template's "Install the pinned lokf-librarian skill" step, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`, and words one comment for itself. Any other difference is a template bump not yet copied across |
 | `.github/ISSUE_TEMPLATE/*.md`, `.github/pull_request_template.md`, `.github/dependabot.yml` | contributor intake forms and pin maintenance | consciously excluded as concepts - see note below; re-check only that each template still names all four skills and that its `AI_COVENANT.md` link is absolute |
 | `scripts/*.sh` | what the validation playbook claims CI enforces | re-read the assertions; a new check is a gap in the playbook |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
@@ -43,6 +43,24 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Refresh after the portability work (2026-09-17, twelfth pass)**, on the
+  working tree before it merged. The contract, sidecar, curator, librarian,
+  docent, threat-model and three-lines concepts and the hosts explanation
+  follow their sources: the preflight and the forge-free gate, the
+  `.gitattributes` template, three new conventions, the `compatibility`
+  fields, the identity routes, and checks 3b, 12 and 13. The rows above
+  name the four scripts and the attributes file. `lokf` on PyPI is still
+  `0.8.0`; `.lokf/feedback.md` has no entries.
+- **Steady-state refresh (2026-09-17, eleventh pass)**, on `main` at the
+  0.19.0 release, after #41 and #42 landed. Twenty concepts re-checked; six
+  follow their sources: the librarian, curator and docent skills and the
+  trust label now describe `revision`, the librarian skill no longer counts
+  its classes, and the releasing playbook says what `@semantic-release/exec`
+  calls and which changelog heading `publish.yml` compares. Two concepts'
+  `generated.at` were set to a time after the change that wrote them and now
+  carry #42's merge time. Rows above still hold. `lokf` on PyPI is `0.8.0`,
+  matching the floor; `.lokf/feedback.md` has no entries; all seven
+  Reference URLs resolve.
 - **Steady-state refresh (2026-09-16, tenth pass)**, against the working
   tree's uncommitted changes (nothing has landed since `e52267d`, the
   0.17.1 release). Fifteen concepts re-checked against their current

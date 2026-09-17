@@ -2,6 +2,42 @@
 
 ## 2026-09-17
 
+* **Third audit (sixteenth pass)**: the sidecar and contract playbooks and
+  the threat model follow the audit's fixes - the sidecar lays down the
+  conventions script's Python half, both gates read merges against every
+  parent, human `generated` records and only the frontmatter, and rule 10
+  keeps the fields the gates read to plain spellings.
+* **Conventions script split (fifteenth pass)**: `knowledge-conventions.py`,
+  run through `uv run`, takes over the five frontmatter-shape rules (quoted
+  `at`, `verified` shape, open questions, duplicate `id`, closed frontmatter)
+  with a real YAML parse; the contract and sources playbooks follow.
+* **Second audit (fourteenth pass)**: the three lines explanation follows
+  its pruned page and the shortened critics page; the trust label and the
+  curator and librarian playbooks now say `revision` is proposed for lokf
+  0.9.0 and unreleased; the contract playbook adds the id the gate used to
+  skip, and the gate's reading of a confirmation whole - a re-dated event or
+  a flow-style one counts, a renamed concept does not.
+* **Audit follow-up (thirteenth pass)**: the sidecar, curator and docent
+  playbooks, the contract and the threat model follow the forge-free gate's
+  SSH and subkey support, the linked-bundle and `commit.gpgsign` fixes, and
+  the new `prerequisites.md` that puts each preflight line in plain words
+  for a person who cannot act on it.
+* **Portability work (twelfth pass)**: the contract, the four skill
+  playbooks, the threat model, the three lines page and the hosts
+  explanation follow their sources - a preflight every skill runs first, a
+  forge-free provenance gate, `.lokf/.gitattributes`, three new conventions
+  (one file per `id`, lowercase paths, a readable frontmatter block), each
+  skill's `compatibility` field, and three identity routes for the curator.
+* **Steady-state refresh (eleventh pass)**: twenty concepts re-checked
+  against their sources. The librarian, curator and docent skills and the
+  trust label now describe `revision`, and the librarian skill no longer
+  counts its classes.
+* **Releasing** corrected: semantic-release runs with `--dry-run` and
+  `@semantic-release/exec` calls the changelog script's `check` and `notes`;
+  `publish.yml` compares against the top released heading, not Unreleased.
+* **Provenance fixed**: `repository-validation` and `three-lines-of-defence`
+  carried a `generated.at` later than the change that wrote them, and now
+  carry the time that change merged.
 * **Repository validation** follows check 11: the conventions script's
   sixth rule (a commit-shaped `revision` must name a commit holding the
   resource) is proved in a throwaway repository, failing and passing.

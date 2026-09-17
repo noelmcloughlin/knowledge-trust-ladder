@@ -2,13 +2,14 @@
 
 ## Who is recording
 
-One source, resolved once per session, and confirmed aloud before the first write ("I'll record your answers as `human:<id>` - ok?"):
+One source, resolved once per session, and confirmed aloud before the first write ("I'll record your answers as `human:<id>` - ok?"). The preflight (`.lokf/scripts/knowledge-preflight.sh`) has already named it. The routes, in order of preference:
 
 ```sh
-gh api user --jq .login
+gh api user --jq .login        # GitHub
+glab api user                  # GitLab: the "username" field
 ```
 
-A GitHub login: stable, matching `CODEOWNERS`, and - the reason it is now the only accepted source - the identity that `knowledge-registrar.yaml`'s `provenance` job can check an event against afterwards, by asking whether that account approved the pull request carrying it.
+A forge login: stable, matching `CODEOWNERS`, and - the reason it is the accepted source - the identity the `provenance` gate can check an event against afterwards, by asking whether that account approved the pull request carrying it or signed the commit. With neither CLI, the third route resolves the local signing key to a forge account through the forge's public key listing; with no forge at all, the account the host platform's version history shows is the id. Both are spelled out, host by host, in [portability.md](portability.md).
 
 The two fallbacks this skill used to allow are gone, and it matters why:
 
@@ -17,7 +18,7 @@ The two fallbacks this skill used to allow are gone, and it matters why:
 
 **With no authenticated login**, *Confirm* and *Correct now* are unavailable for the session. Say so, and offer the three verbs that assert nothing about who checked what: *Wrong - send back*, *Retire*, *Later*. Do not fall back, do not guess, and never write a `human:` event whose id you cannot name a source for.
 
-**Non-GitHub forges**: use the identity behind signed commits (the key in `git config user.signingkey`, resolved to that forge's account) together with that forge's approval gate. The principle is the rule, not the tool - the id must be one that something outside the bundle can independently confirm.
+**Other forges, and no forge**: [portability.md](portability.md). The principle is the rule, not the tool - the id must be one that something outside the bundle can independently confirm.
 
 Never use an email address - the bundle may be public. The actor string is `human:<id>` exactly (OKF §7); it is a literal, never turned into a link.  Timestamps are UTC, ISO 8601, quoted in YAML: `"2026-09-08T14:00:00Z"`.
 
@@ -26,7 +27,7 @@ Never use an email address - the bundle may be public. The actor string is `huma
 Only when `.lokf/` is git-tracked **and** `.github/workflows/knowledge-registrar.yaml` exists. Two cheap questions:
 
 ```sh
-git config --get commit.gpgsign                      # is signing on at all?
+git config --bool --get commit.gpgsign               # is signing on at all? (yes/on/1 read as true)
 git cat-file commit HEAD | grep -qE '^gpgsig' \
   && echo "HEAD is signed" || echo "HEAD is unsigned"
 ```
@@ -74,7 +75,7 @@ verified:
 stale_after: 2027-03-08
 ```
 
-`revision` is the state of the `resource` you quoted from in the evidence-first step, so a later reader can tell whether the page they see is the one the confirmation rested on. For a committed path in the repository, the last commit that touched it: `git log -1 --format=%H -- <path>`, the full hash, since an abbreviation can become ambiguous as the repository grows and the registrar gate resolves the pin against the tree; if the file has uncommitted changes, say so and leave the key out. For a URL, the `ETag` header if the server sends one, else `sha256:` plus the digest of the body you quoted from (`curl -sL <url> | sha256sum`) - and prefer the ETag, since a digest of a page that changes on every fetch cannot later tell "the source moved" from "the page is dynamic". Always quoted, like `at`: an all-digit commit id is otherwise read as a number and fails `lokf validate`, and an ETag carries its own double quotes (`revision: 'W/"33a64df5"'`). Several `sources`: the `resource`'s revision only. Leave the key out rather than guess, and leave it out on a toolkit older than lokf 0.9.0, whose validator rejects it (`uv run lokf --version` in `.lokf/`).
+`revision` is the state of the `resource` you quoted from in the evidence-first step, so a later reader can tell whether the page they see is the one the confirmation rested on. For a committed path in the repository, the last commit that touched it: `git log -1 --format=%H -- <path>`, the full hash, since an abbreviation can become ambiguous as the repository grows and the registrar gate resolves the pin against the tree; if the file has uncommitted changes, or the host has no version control, say so and leave the key out. For a URL, the `ETag` header if the server sends one, else `sha256:` plus the digest of the body you quoted from (`curl -sL <url> | sha256sum`; `shasum -a 256` on macOS) - and prefer the ETag, since a digest of a page that changes on every fetch cannot later tell "the source moved" from "the page is dynamic". Always quoted, like `at`: an all-digit commit id is otherwise read as a number and fails `lokf validate`, and an ETag carries its own double quotes (`revision: 'W/"33a64df5"'`). Several `sources`: the `resource`'s revision only. Leave the key out rather than guess, and leave it out where the toolkit rejects it - every released version does, since the field is proposed for lokf 0.9.0 and not yet shipped (`uv run lokf --version` in `.lokf/`).
 
 If the body has an `## Open questions` section and the person says those are answered, delete the section. Otherwise leave it.
 

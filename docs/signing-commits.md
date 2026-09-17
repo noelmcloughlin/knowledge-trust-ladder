@@ -83,6 +83,17 @@ Two things worth knowing so you renew calmly rather than in a panic:
 - **Extending keeps the same key and fingerprint**, so past commits keep verifying and nothing else needs reconfiguring. Prefer it to making a new key.
 - **An expiry is not a compromise.** GitHub still shows commits signed before the key expired as `Verified`. What an expired key stops is *new* signatures. So renew whenever you notice - but if the key is ever actually stolen, revoke it instead, and do not extend it.
 
+## Put your key on file for the forge-free gate
+
+A repository that runs `knowledge-provenance.sh` (lokf-sidecar Step 5) checks each confirmation's signature against a public key it carries under `.lokf/curators/`, named after your forge login. Export the key you sign with and open a pull request holding only that file - the gate refuses a change that lands a key and a confirmation by its holder together:
+
+```bash
+gpg --armor --export YOUR_KEY_ID > .lokf/curators/YOUR_LOGIN.asc   # GPG (subkeys travel with it)
+cp ~/.ssh/id_ed25519.pub .lokf/curators/YOUR_LOGIN.pub               # SSH
+```
+
+One kind per login. When the key changes, replace the file in its own pull request the same way; a maintainer reviewing that change is what makes the key on file worth anything.
+
 ## If signing fails
 
 - `could not load public key` - `gpg.format` does not match the key `user.signingkey` points at. Check the file is what its name implies: a GPG export begins `-----BEGIN PGP PUBLIC KEY BLOCK-----`, an SSH key begins `ssh-ed25519`.

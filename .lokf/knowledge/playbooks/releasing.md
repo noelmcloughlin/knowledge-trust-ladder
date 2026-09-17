@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:lokf-librarian
-  at: "2026-09-14T23:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 status: draft
 dependsOn:
 - https://lokf-agent-skills.example/knowledge/references/gh-skill-cli
@@ -17,7 +17,7 @@ references:
   - https://lokf-agent-skills.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T23:10:00Z"
+  at: "2026-09-17T14:02:11Z"
 ---
 
 # Overview
@@ -28,11 +28,12 @@ behind the `release` GitHub Environment: `@semantic-release/commit-analyzer`
 computes the next version from Conventional Commits since the last tag,
 using `.releaserc.json`'s `releaseRules` - the Angular preset's defaults
 (`fix:` -> patch, `feat:` -> minor, a `BREAKING CHANGE:` footer or `!` ->
-major) plus one addition, `security:` -> patch - and
-`@semantic-release/exec` runs `.github/scripts/changelog-release.mjs`
-`--dry-run` only - refusing to proceed if `CHANGELOG.md`'s
-`## [Unreleased]` section is empty - which means semantic-release itself
-never writes, commits, tags, or publishes anything here. A plain shell step
+major) plus one addition, `security:` -> patch. Semantic-release always
+runs with `--dry-run`, so it never writes, commits, tags, or publishes
+anything here; `@semantic-release/exec` calls
+`.github/scripts/changelog-release.mjs check`, which refuses to proceed if
+`CHANGELOG.md`'s `## [Unreleased]` section is empty, and `notes`, which
+supplies the release notes. A plain shell step
 afterward reads the version `--dry-run` computed, promotes that section to a
 dated heading itself, and commits the change directly - `gh skill publish`
 stays this repository's one and only tag creator, per the reasoning below.
@@ -45,9 +46,9 @@ in front of the `contents: write` scope - the same Environment
 `semantic-release.yml`'s write-scoped job now sits behind too.
 
 Each `publish.yml` run validates that the input is `vMAJOR.MINOR.PATCH`, that
-the tag does not already exist, and - new - that the bare version matches
-CHANGELOG.md's top heading (catching a typed version nobody wrote release
-notes for), then re-runs the repository contract and `gh skill publish
+the tag does not already exist, and that the bare version matches the top
+released heading in CHANGELOG.md, skipping `## [Unreleased]` (catching a
+typed version nobody wrote release notes for), then re-runs the repository contract and `gh skill publish
 --dry-run`, and only then publishes. The version is typed *with* the `v`
 (`v0.16.0`); the changelog heading never carries one, and the cross-check
 strips it before comparing. This release-process detail moved out of

@@ -15,9 +15,9 @@ Four [Agent Skills](https://agentskills.io/home) that turn a repository's scatte
 
 ## Why libraries have catalogues
 
-The knowledge already exists - in code, documents, diagrams, policies, operational records. What's missing is a contextual layer that sits between those sources and consumers, and stays put. Without it, every task starts the same way: find the material, work out how it connects, judge what's still true. That's real work, and the collected context dies with the task - the next person, or next conversation with an assistant, pays for it again.
+The knowledge already exists - in code, documents, diagrams, policies, operational records. What's missing is a contextual layer that sits between those sources and consumers, and stays put. Without it, every task starts the same way: find the material, work out how it connects, judge what's still true. That work dies with the task, and the next person, or the next conversation with an assistant, pays for it again.
 
-A **knowledge bundle** - that folder of concept files - is the catalogue: it keeps the work instead of discarding it. But a catalogue is only worth keeping if you can tell which entries are sound. Otherwise you re-verify everything yourself, the very thing you were trying to avoid, and the files quietly rot.
+A **knowledge bundle** - that folder of concept files - is the catalogue: it keeps the work instead of discarding it. But a catalogue is only worth keeping if you can tell which entries are sound. Otherwise you re-verify everything yourself, and the files quietly rot.
 
 So every answer from the bundle says where it came from and how far it has been checked, in plain words: *confirmed by a person*, or *nobody has checked this yet*. The labels are listed under [Trust stays visible](#trust-stays-visible).
 
@@ -34,7 +34,7 @@ So every answer from the bundle says where it came from and how far it has been 
 
 In short: the **librarian** reports, the **curator** fact-checks and edits, the **docent** reads, and writes back what the bundle missed.
 
-On a fresh repository they run in order: the **sidecar** once, then the **librarian** filling the bundle and marking everything it creates a draft, then the **curator**, where a person turns drafts into confirmed knowledge a few at a time. After that it stops being a sequence and becomes a loop: the **librarian** refreshes on a schedule, readers send back what the bundle missed, and the **curator** works through whatever that surfaces.
+On a fresh repository they run in order: the **sidecar** once, then the **librarian** filling the bundle and marking everything it creates a draft, then the **curator**, where a person turns drafts into confirmed knowledge a few at a time. After that it becomes a loop: the **librarian** refreshes on a schedule, readers send back what the bundle missed, and the **curator** works through whatever that surfaces.
 
 <p align="center">
   <img src=".assets/lokf-lifecycle-loop.svg" alt="First a sequence, then a loop: sidecar, librarian and curator run once in order; then the librarian, registrar, curator and docent take turns around the bundle" width="720" />
@@ -42,20 +42,20 @@ On a fresh repository they run in order: the **sidecar** once, then the **librar
 
 ### Three lines of defence
 
-Regulated industries use the **three lines of defence** to say who owns a risk, who keeps the rules, and who checks independently. The **librarian** and the **curator** are the first line: one derives the records, the other confirms them. The **registrar**, described next, is the second: it keeps them well-formed and ties each confirmation to a real person. There is no third line, only the evidence an independent reviewer would need. [docs/three-lines.md](docs/three-lines.md) places each role with a diagram, lists what an auditor can check, and ends with what remains to do and who does it; [its critics page](docs/three-lines-critics.md) quotes the model's critics with a bundle's answer to each.
+Regulated industries use the **three lines of defence** to say who owns a risk, who keeps the rules, and who checks independently. The **librarian** and the **curator** are the first line, the **registrar** below is the second, and the bundle ships the evidence a third line would need. [docs/three-lines.md](docs/three-lines.md) places each role, lists what an auditor can check, and answers [the model's critics](docs/three-lines-critics.md).
 
 ### The fifth role, which is not a skill
 
-The hidden role is the **registrar**'s: keeping the records themselves in order - each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. It is clerical work, and no person has to do it. In a repository the `lokf` toolkit does it on every change, and CI's [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) does it again on every pull request that touches the bundle - where it also checks that each new confirmation is backed by that person's approval of the pull request, or their signature on the commit that recorded it, because a claim that a named person checked something has to be tied to that person.
+The **registrar** keeps the records themselves in order - each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit does it on every change, and CI's [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) does it again on every pull request that touches the bundle, where it also checks that each new confirmation is backed by that person's approval of the pull request or their signature on the commit.
 
-In [Obsidian](https://obsidian.md/) there is no CI, so for anyone who edits a bundle by hand there, two plugins do the desk work ([The bundle in Obsidian](docs/obsidian.md)):
+In [Obsidian](https://obsidian.md/) there is no CI, so two plugins do the desk work ([The bundle in Obsidian](docs/obsidian.md)):
 
 | Plugin | Role at the desk |
 | --- | --- |
 | [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar) | The **registrar**: checks each record is well-formed as it is typed - the first of the [four levels of checking](docs/for-the-curious.md#four-levels-of-checking), live in the editor. |
 | [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) | The **curator**'s assistant, not the curator: puts the source beside the claim and writes down what the person decided - the third level - running this repository's `lokf-curator` review session without an agent in the loop. |
 
-The **curator** is always a person. The skill and the plugin that carry the name are that person's assistants, in a terminal and in Obsidian, and neither reaches a verdict of its own.
+The **curator** is always a person. The skill and the plugin that carry the name are that person's assistants, and neither reaches a verdict of its own.
 
 <p align="center">
   <img src=".assets/lokf-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
@@ -63,9 +63,7 @@ The **curator** is always a person. The skill and the plugin that carry the name
 
 ## Where the bundle lives
 
-The four skills are built around a **sidecar**: `.lokf/` sits beside the sources it distils - code in a repository, notes in a vault, documents in a shared folder - in the same tree and, almost always, the same git repository, the way `.git/` or `.obsidian/` do. The bundle is `.lokf/knowledge/`: one real folder on every host, and the name the skills, the toolkit, CI and `llms.txt` address.
-
-Beside it `lokf-sidecar` lays a `knowledge_bundle` link: a visible name for Finder and most folder pickers that hide dot-folders. Git carries the link. Sync services - OneDrive, SharePoint, Dropbox, Drive, iCloud - carry `.lokf/` as ordinary files but drop links, so there `just lokf-link` recreates it per machine, or the bundle is opened by path. The mechanics, host by host, are in [`portability.md`](skills/lokf-sidecar/references/portability.md).
+`.lokf/` sits beside the sources it distils - code, notes, documents - in the same tree and almost always the same git repository, the way `.git/` does. The bundle is `.lokf/knowledge/`, one real folder on every host, with a `knowledge_bundle` link beside it for folder pickers that hide dot-folders. Windows, macOS, other forges, no git and synced folders are covered in the sidecar's [portability page](skills/lokf-sidecar/references/portability.md).
 
 ## Trust stays visible
 
@@ -85,6 +83,8 @@ The labels are computed from the frontmatter on every read, never stored, so the
 ## Install
 
 **Install what you need - each skill stands alone.** The sidecar plus the librarian is enough to see the idea: the bundle gets built, everything in it marked a draft. Add the curator once there is a bundle worth trusting. Already have a healthy `.lokf/`? Skip the sidecar skill. The docent goes anywhere an agent only *reads* a bundle, this repository included.
+
+**What each skill needs.** Every skill runs from a POSIX shell and starts with a preflight that prints what this machine can do and which steps that disables. The sidecar and the librarian need [`uv`](https://docs.astral.sh/uv/) for the `lokf` toolkit; the curator needs this machine signed in to the forge (`gh` or `glab`) to record a confirmation in your name, and signed commits when you open your own curation pull requests ([docs/signing-commits.md](docs/signing-commits.md)); the docent needs nothing. Someone who cannot act on a line the preflight prints - a curator who knows the subject, not the repository - gets a request note for whoever set the repository up, from the sidecar's [prerequisites page](skills/lokf-sidecar/references/prerequisites.md).
 
 **GitHub CLI** ([`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+):
 

@@ -19,7 +19,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 ## Parsing notes
 
 - **Bare `verified` mapping** (`verified: { by, at }`) MUST be read as a one-element list (spec §5.2).
-- **`revision` on an event** (lokf 0.9.0+): the state of the source that event checked - a full commit hash, an ETag or a `sha256:` digest. Show it beside the date where present, a commit hash cut to its first seven characters. Absent means unrecorded, never unchanged, so it changes no label.
+- **`revision` on an event** (proposed for lokf 0.9.0, unreleased; the 0.8.0 validator rejects it): the state of the source that event checked - a full commit hash, an ETag or a `sha256:` digest. Show it beside the date where present, a commit hash cut to its first seven characters. Absent means unrecorded, never unchanged, so it changes no label.
 - **Absent `status`** means stable. Only `draft`, `stable`, `deprecated` are valid; anything else counts as "doesn't fit" for the vocabulary line.
 - **Datetimes** are ISO 8601 with a UTC offset (`2026-09-08T14:00:00Z`), `stale_after` included (OKF §5.5); a bare `YYYY-MM-DD` there is read as that day at 00:00:00Z, and is the form this skill writes. Compare dates as strings after normalising both to `YYYY-MM-DD` - it avoids timezone arithmetic and is exact for ISO forms.
 - **Missing `generated.at`**: fall back to the v0.1 `timestamp`; if neither exists, the concept cannot be "edited since confirmed" - leave it out of that label rather than guessing.
@@ -66,6 +66,8 @@ Not tied to a signed commit: <h> - <titles>. Recorded as confirmed by a person, 
 
 For a second person to re-check (<n>, picked by a rule the curator cannot steer):
 - <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Independent re-check:` line above 0
+
+Ready to record: human:<id> via gh · signing on · attended   | or what is missing and which verbs that removes, from the preflight
 
 <remaining> more not yet checked. Run again anytime - every confirmation counts.
 Want to go through these now?

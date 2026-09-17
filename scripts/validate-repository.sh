@@ -34,12 +34,30 @@ done
 for dir in "${expected_dirs[@]}"; do
   skill_file="$dir/SKILL.md"
   [[ -f "$skill_file" ]] || continue
-  declared="$(sed -n 's/^name:[[:space:]]*//p' "$skill_file" | head -1 | tr -d '"'"'"'')"
+  declared="$(sed -n 's/^name:[[:space:]]*//p' "$skill_file" | sed -n 1p | tr -d '"'"'"'')"
   expected="$(basename "$dir")"
   if [[ "$declared" == "$expected" ]]; then
     ok "$skill_file frontmatter name '$declared' matches directory"
   else
     err "$skill_file frontmatter name '$declared' does not match directory '$expected'"
+  fi
+done
+
+# 3b. Each skill states what it needs in the spec's optional `compatibility`
+#     field (agentskills.io/specification: 1-500 characters), so git, a POSIX
+#     shell, uv or an authenticated identity is declared where every installer
+#     shows it, not discovered after a report has offered a step. (The curator
+#     used to name `gh` only inside its Step 2.)
+for dir in "${expected_dirs[@]}"; do
+  skill_file="$dir/SKILL.md"
+  [[ -f "$skill_file" ]] || continue
+  compat="$(awk 'NR>1 && /^---$/ {exit} /^compatibility:/ {sub(/^compatibility:[[:space:]]*/, ""); print}' "$skill_file")"
+  if [[ -z "$compat" ]]; then
+    err "$skill_file declares no compatibility field - say what the skill needs (shell, git, uv, an identity) in 1-500 characters"
+  elif (( ${#compat} > 500 )); then
+    err "$skill_file compatibility is ${#compat} characters; the Agent Skills spec allows 500"
+  else
+    ok "$skill_file declares compatibility (${#compat} characters)"
   fi
 done
 
@@ -260,7 +278,11 @@ templates="skills/lokf-sidecar/templates"
 for pair in \
   "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
   "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
-  "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh"; do
+  "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
+  "$templates/scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py" \
+  "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
+  "$templates/scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
+  "$templates/gitattributes:.lokf/.gitattributes"; do
   src="${pair%%:*}"; dst="${pair##*:}"
   if cmp -s "$src" "$dst"; then
     ok "$dst matches its template"
@@ -299,19 +321,267 @@ real="$("${tmpgit[@]}" rev-parse HEAD)"
 pinned() { printf -- '---\ntype: Service\nresource: pinned.md\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "%s"\n---\n' "$1"; }
 pinned "0000000000000000000000000000000000000000" > "$bad/k/x/d.md"
 pinned "$real" > "$bad/k/x/e.md"
+# Rules 7-9 and the line-ending tolerance. A CRLF copy of a file that breaks
+# rule 2 must still be reported (a Windows checkout used to make the script
+# skip every frontmatter rule unread); a byte order mark and a file with no
+# frontmatter are findings; a sync client's conflict copy shares its
+# original's id and has a name no slug would; a directory whose case differs
+# is a path-shape finding.
+printf -- '---\r\ntype: Service\r\nverified:\r\n  - by: process:lokf-librarian\r\n    at: 2026-09-14T00:00:00Z\r\n---\r\n' > "$bad/k/x/f-crlf.md"
+printf '\357\273\277---\ntype: Service\n---\n' > "$bad/k/x/g-bom.md"
+printf 'type: Service\n' > "$bad/k/x/h-nofm.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/i\n---\n' > "$bad/k/x/i.md"
+cp "$bad/k/x/i.md" "$bad/k/x/i (conflicted copy 2026-09-17).md"
+mkdir -p "$bad/k/Upper" && printf -- '---\ntype: Service\n---\n' > "$bad/k/Upper/j.md"
+# Rule 10: an event spelt so that the gates' line readers cannot see it.
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/q\nverified:\n  - "by": human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n' > "$bad/k/x/q-quotedkey.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/t\nverified: [{ by: !!str human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n' > "$bad/k/x/t-tag.md"
+# What only a parser sees: a multi-line flow item with an unquoted `at`, a
+# number where a timestamp should be, a block that does not parse (reported
+# on one line), and a block that is a list rather than a mapping. And what a
+# parser must not see: a second librarian event inside a body code fence.
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fl\nverified: [\n  { by: process:lokf-librarian,\n    at: 2026-09-14T00:00:00Z }\n]\n---\n' > "$bad/k/x/fl-flow.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/n\nverified:\n  - by: process:lokf-librarian\n    at: 20260914\n---\n' > "$bad/k/x/n-int.md"
+printf -- '---\ntype: Service\nverified: [unclosed\n---\n' > "$bad/k/x/y-bad.md"
+printf -- '---\n- just a list\n---\n' > "$bad/k/x/l-list.md"
+# shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n' > "$bad/k/x/fence.md"
 findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
 rm -rf "$bad"
-for want in "not a bare ISO date" "not newest-first" "unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found" "does not hold"; do
+for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found" "does not hold" \
+            "f-crlf.md: unquoted timestamp" "g-bom.md: starts with a byte order mark" "h-nofm.md: no closed frontmatter block" \
+            "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase" \
+            "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on" \
+            "fl-flow.md: unquoted timestamp" "n-int.md: unquoted timestamp" "y-bad.md: frontmatter is not valid YAML" "l-list.md: frontmatter is not a mapping"; do
   if grep -q "$want" <<<"$findings"; then
     ok "conventions script reports: $want"
   else
     err "conventions script failed to report '$want' on a bundle that breaks it"
   fi
 done
-if grep -q 'x/e.md' <<<"$findings"; then
-  err "conventions script reported x/e.md, whose revision holds its resource"
+for quiet in "x/e.md:whose revision holds its resource" "fence.md:whose second librarian event is only an example in a code fence"; do
+  if grep -q "${quiet%%:*}" <<<"$findings"; then
+    err "conventions script reported ${quiet%%:*}, ${quiet#*:}"
+  else
+    ok "conventions script accepts ${quiet%%:*}, ${quiet#*:}"
+  fi
+done
+if [[ "$(grep -c 'y-bad.md' <<<"$findings")" -eq 1 ]]; then
+  ok "conventions script reports a YAML parse error on one line"
 else
-  ok "conventions script accepts a revision that holds the resource"
+  err "conventions script spread a YAML parse error over several lines: $(grep 'y-bad.md' <<<"$findings")"
+fi
+# And a bundle that keeps every convention but was checked out with CRLF line
+# endings must pass outright: the script reads it exactly as CI reads LF. A
+# folded description is fine: rule 10 reads only the fields the gates read.
+good="$(mktemp -d)"
+mkdir -p "$good/k/x"
+printf '# Change Log\r\n\r\n## 2026-09-15\r\n\r\n* **A**: b.\r\n\r\n## 2026-09-14\r\n\r\n* **C**: d.\r\n' > "$good/k/log.md"
+printf -- '---\r\ntype: Service\r\nid: https://example.invalid/k/x/a\r\ndescription: >-\r\n  folded, which the gates\r\n  never read\r\nverified:\r\n  - by: process:lokf-librarian\r\n    at: "2026-09-14T00:00:00Z"\r\n---\r\n\r\n## Open questions\r\n\r\n- 2026-09-14, process:lokf-librarian: fine\r\n' > "$good/k/x/a.md"
+if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>&1)"; then
+  ok "conventions script reads a CRLF checkout as CI reads LF"
+else
+  err "conventions script misreads a CRLF checkout: $out"
+fi
+# Without uv the shell half still runs, and its OK line says what it skipped.
+if PATH=/usr/bin:/bin command -v uv >/dev/null 2>&1; then
+  say "uv is on /usr/bin - the without-uv case cannot be staged here"
+elif out="$(PATH=/usr/bin:/bin bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>/dev/null)" && grep -q '^OK - .*(rules 2, 3, 4, 7, 9 and 10 not checked: uv not found)' <<<"$out"; then
+  ok "conventions script without uv passes on its own rules and says which it skipped"
+else
+  err "conventions script without uv did not say what it skipped: $out"
+fi
+# A bundle reached through a link - the rearranged layout the sidecar's
+# portability page allows - must be read, not passed with zero files seen.
+ln -s "$good/k" "$good/linked" && printf 'x' > "$good/k/x/Bad.md"
+if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/linked" 2>&1)"; then
+  err "conventions script passed a linked bundle unread: $out"
+elif grep -q 'Bad.md: path is not lowercase' <<<"$out"; then
+  ok "conventions script reads a bundle reached through a link"
+else
+  err "conventions script misread a linked bundle: $out"
+fi
+rm -rf "$good"
+
+# 12. The preflight script every skill runs first must always end on its
+#     summary line and exit 0 - on this repository, and on a bare directory
+#     with no bundle, no git and no skills, where every section has to cope
+#     with absence rather than fail. A CRLF file must raise its warning.
+say ""
+say "Exercising knowledge-preflight.sh..."
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" . 2>&1)" && grep -q '^Preflight: ' <<<"$out"; then
+  ok "preflight runs on this repository and ends on its summary line"
+else
+  err "preflight failed on this repository: $out"
+fi
+bare="$(mktemp -d)"
+if out="$(cd "$bare" && bash "$repo_root/$templates/scripts/knowledge-preflight.sh" 2>&1)" \
+   && grep -q '^missing bundle' <<<"$out" && grep -q '^info    git ' <<<"$out" && grep -q '^Preflight: ' <<<"$out"; then
+  ok "preflight copes with a bare directory (no bundle, no git, no skills)"
+else
+  err "preflight misbehaves on a bare directory: $out"
+fi
+mkdir -p "$bare/.lokf/knowledge/x" && printf -- '---\r\ntype: Service\r\n---\r\n' > "$bare/.lokf/knowledge/x/a.md"
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^warn    endings .*CRLF' <<<"$out"; then
+  ok "preflight warns about CRLF files in the bundle"
+else
+  err "preflight did not warn about a CRLF file: $out"
+fi
+# The same bundle behind a link is still counted; `commit.gpgsign = yes` is
+# signing on, with no user.signingkey meaning git's default key; and a run
+# under sh stops on one line naming bash rather than mid-screen.
+mv "$bare/.lokf/knowledge" "$bare/knowledge_bundle" && ln -s ../knowledge_bundle "$bare/.lokf/knowledge"
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^ok      bundle .*, 1 concepts' <<<"$out"; then
+  ok "preflight counts a bundle reached through a link"
+else
+  err "preflight did not read a linked bundle: $out"
+fi
+git init -q "$bare" && git -C "$bare" -c user.name=c -c user.email=c@example.invalid commit -q --allow-empty --no-gpg-sign -m x \
+  && git -C "$bare" config commit.gpgsign yes
+if out="$(GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^ok      signing .*by committer email' <<<"$out"; then
+  ok "preflight reads commit.gpgsign = yes with no signing key as signing on"
+else
+  err "preflight misread commit.gpgsign = yes: $out"
+fi
+# A host holding the conventions script without its Python half has a gate
+# that fails outright; the preflight says so even with no sidecar installed.
+mkdir -p "$bare/.lokf/scripts" && cp "$templates/scripts/knowledge-conventions.sh" "$bare/.lokf/scripts/"
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^warn    copies .*knowledge-conventions.py missing' <<<"$out"; then
+  ok "preflight warns when knowledge-conventions.py is missing beside the .sh"
+else
+  err "preflight did not report the missing knowledge-conventions.py: $out"
+fi
+rm -rf "$bare"
+# Every line the preflight can print as missing or a warning has a row on the
+# sidecar's prerequisites page - the plain-words meaning, who fixes it and
+# what to send them - so a new preflight line cannot land without one.
+prereq="skills/lokf-sidecar/references/prerequisites.md"
+while IFS= read -r key; do
+  if grep -q "^| \`$key\` |" "$prereq"; then
+    ok "prerequisites.md explains the preflight's '$key' line"
+  else
+    err "prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
+  fi
+done < <(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u)
+for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh; do
+  if out="$(sh "$templates/scripts/$s" x 2>&1)"; then
+    err "$s run under sh did not stop: $out"
+  elif grep -q '^run this with bash' <<<"$out"; then
+    ok "$s run under sh stops and names bash"
+  else
+    err "$s run under sh failed some other way: $out"
+  fi
+done
+
+# 13. The forge-free provenance gate, with throwaway keys: a confirmation
+#     signed by the curator on file passes - with a GPG primary key, a GPG
+#     signing subkey, or an SSH key; an unsigned one, one by an id with no
+#     key, one by another key, and one whose own key lands in the same range
+#     each fail, while another curator's key landing alongside does not; a
+#     repository with no .lokf/curators/ is a stated skip. Needs gpg and
+#     ssh-keygen, which CI has.
+say ""
+say "Exercising knowledge-provenance.sh..."
+if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
+  pv="$(mktemp -d)"
+  mkdir -m 700 "$pv/gnupg"
+  script="$repo_root/$templates/scripts/knowledge-provenance.sh"
+  confirmed() { printf -- '---\ntype: Service\nverified:\n  - by: human:%s\n    at: "2026-09-17T00:00:00Z"\n---\n' "$1"; }
+  pv_git() { (cd "$pv/repo" && GNUPGHOME="$pv/gnupg" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git "$@"); }
+  pv_gpg() { GNUPGHOME="$pv/gnupg" gpg --batch --quiet "$@"; }
+  # Each case: the range to check, the exit status expected, the line expected, and the verdict wording.
+  # The keyring is read from the working tree, so each case runs as soon as its commit exists.
+  expect_pv() {
+    local range="$1" status="$2" want="$3" what="$4" out rc=0
+    # shellcheck disable=SC2086 # $range is one or two refs on purpose
+    out="$(cd "$pv/repo" && GNUPGHOME="$pv/gnupg" bash "$script" $range 2>&1)" || rc=$?
+    if [[ "$rc" -eq "$status" ]] && grep -q "$want" <<<"$out"; then
+      ok "provenance script: $what"
+    else
+      err "provenance script did not $what (exit $rc): $out"
+    fi
+  }
+  k="$pv/repo/.lokf/knowledge/x"; c="$pv/repo/.lokf/curators"
+  if pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'contract <contract@example.invalid>' ed25519 sign 1d 2>/dev/null \
+     && pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'other <other@example.invalid>' ed25519 sign 1d 2>/dev/null \
+     && pv_gpg --pinentry-mode loopback --passphrase '' --quick-generate-key 'sub <sub@example.invalid>' ed25519 cert 1d 2>/dev/null \
+     && ssh-keygen -q -t ed25519 -N '' -C sshcur -f "$pv/sshcur" && ssh-keygen -q -t ed25519 -N '' -C stranger -f "$pv/stranger"; then
+    # Read gpg's output whole: an awk that exits on the first match closes the
+    # pipe early, which a runner that ignores SIGPIPE reports as a write error.
+    fpr="$(pv_gpg --with-colons --list-keys contract | awk -F: '$1=="fpr" && !f {print $10; f=1}')"
+    fpr2="$(pv_gpg --with-colons --list-keys other | awk -F: '$1=="fpr" && !f {print $10; f=1}')"
+    fpr3="$(pv_gpg --with-colons --list-keys sub@example.invalid | awk -F: '$1=="fpr" && !f {print $10; f=1}')"
+    # The third key certifies only and signs with a subkey, the common layout.
+    pv_gpg --pinentry-mode loopback --passphrase '' --quick-add-key "$fpr3" ed25519 sign 1d 2>/dev/null
+    git init -q "$pv/repo"
+    pv_git config user.name contract && pv_git config user.email contract@example.invalid
+    pv_git config gpg.format openpgp && pv_git config user.signingkey "$fpr"
+    mkdir -p "$k" "$c"
+    pv_gpg --armor --export "$fpr" > "$c/contract.asc"
+    printf -- '---\ntype: Service\n---\n' > "$k/a.md"
+    pv_git add -A && pv_git commit -q --no-gpg-sign -m base
+    confirmed contract > "$k/a.md" && pv_git commit -q -S -am confirm
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a confirmation signed by the curator on file"
+    # A confirmation is the whole event, not its `by:` line: re-dating an
+    # existing one, in a flow-style layout or a block one, is a claim by that
+    # curator; moving the concept is not, since events are keyed by its id.
+    sed -i 's/2026-09-17T00:00:00Z/2026-09-18T00:00:00Z/' "$k/a.md" && pv_git commit -q --no-gpg-sign -am 'redated, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "report a re-dated confirmation nobody signed"
+    sed -i 's/2026-09-18T00:00:00Z/2026-09-19T00:00:00Z/' "$k/a.md" && pv_git commit -q -S -am 'redated by its curator'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a re-dated confirmation its curator signed"
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/flow\nverified: [{ by: human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n' > "$k/flow.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'flow style, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "see a flow-style event that leaves no by: line in the diff"
+    pv_git mv "$k/flow.md" "$k/moved.md" && pv_git commit -q --no-gpg-sign -m 'moved, unsigned'
+    expect_pv "HEAD~1" 0 '^OK - 0 confirmation' "let a confirmed concept move under its id without a new claim"
+    confirmed contract > "$k/b.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m unsigned
+    expect_pv "HEAD~1" 1 'is unsigned' "report an unsigned confirmation"
+    confirmed nobody > "$k/c.md" && pv_git add -A && pv_git commit -q -S -m nobody
+    expect_pv "HEAD~1" 1 'no key on file' "report an id with no key on file"
+    confirmed '../odd' > "$k/c2.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'odd id'
+    expect_pv "HEAD~1" 1 'not a login this gate can check' "refuse an id it cannot look up rather than skip it"
+    confirmed contract > "$k/d.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m wrongkey
+    expect_pv "HEAD~1" 1 'signed by another key' "report a confirmation signed by a key that is not that curator's"
+    pv_gpg --armor --export "$fpr2" > "$c/other.asc" && confirmed other > "$k/e.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m 'key and own confirmation'
+    expect_pv "HEAD~1" 1 'same range' "refuse a curator's own key and their confirmation in one range"
+    confirmed other > "$k/f.md" && pv_git add -A && pv_git -c user.signingkey="$fpr2" commit -q -S -m 'confirm after the key landed'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a confirmation once that key landed in an earlier range"
+    pv_gpg --armor --export "$fpr3" > "$c/sub.asc" && pv_git add -A && pv_git commit -q -S -m 'subkey curator'
+    confirmed sub > "$k/g.md" && pv_git add -A && pv_git -c user.signingkey="$fpr3" commit -q -S -m 'signed with the subkey'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "accept a signature made with a GPG signing subkey"
+    cp "$pv/sshcur.pub" "$c/sshcur.pub" && pv_git add -A && pv_git commit -q -S -m 'ssh curator'
+    confirmed sshcur > "$k/h.md" && pv_git add -A && pv_git -c gpg.format=ssh -c user.signingkey="$pv/sshcur.pub" commit -q -S -m 'ssh signed'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "accept an SSH signature by the key on file"
+    confirmed sshcur > "$k/i.md" && pv_git add -A && pv_git -c gpg.format=ssh -c user.signingkey="$pv/stranger.pub" commit -q -S -m 'ssh by a stranger'
+    expect_pv "HEAD~1" 1 'not by a key in sshcur.pub' "report an SSH signature by a key not on file for that id"
+    cp "$pv/stranger.pub" "$c/stranger.pub" && confirmed contract > "$k/j.md" && pv_git add -A && pv_git commit -q -S -m 'another key lands beside a confirmation'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "let another curator's key land beside a confirmation"
+    # Only the frontmatter is a claim: an example event in a body code fence
+    # is not, and a human `generated` record - the curator's Correct writes
+    # one - is, whatever its layout.
+    # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\n---\n\n```yaml\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n```\n' > "$k/fence.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'example in a fence, unsigned'
+    expect_pv "HEAD~1" 0 '^OK - 0 confirmation' "ignore an example event in a body code fence"
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: human:contract, at: "2026-09-17T00:00:00Z" }\n---\n' > "$k/gen.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'human generated, flow style, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "read a flow-style human generated record as a claim"
+    # A merge that brings in a confirmation its curator signed claims nothing;
+    # one that adds an event neither side held is a claim by whoever merged.
+    trunk="$(pv_git rev-parse --abbrev-ref HEAD)"
+    pv_git checkout -q -b side && printf 'side\n' > "$pv/repo/side.txt" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'side work'
+    pv_git checkout -q "$trunk" && confirmed contract > "$k/m.md" && pv_git add -A && pv_git commit -q -S -m 'confirmed on the trunk'
+    pv_git checkout -q side && pv_git merge -q --no-gpg-sign --no-edit "$trunk"
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "let a merge bring in a confirmation its curator signed"
+    pv_git checkout -q "$trunk" && printf 'more\n' > "$pv/repo/more.txt" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'unrelated on the trunk'
+    pv_git checkout -q side && pv_git merge -q --no-commit --no-ff "$trunk" >/dev/null && confirmed contract > "$k/evil.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'evil merge'
+    expect_pv "HEAD~1" 1 'is unsigned' "read an event a merge adds that neither side held"
+    pv_git checkout -q "$trunk"
+    pv_git rm -rq .lokf/curators && pv_git commit -q -S -m nokeys
+    expect_pv "HEAD~1" 0 '^skipped' "say so and pass with no .lokf/curators/"
+  else
+    err "could not generate the provenance fixture's keys (gpg --quick-generate-key or ssh-keygen failed)"
+  fi
+  rm -rf "$pv"
+else
+  say "gpg or ssh-keygen not installed locally - CI runs check 13; skipping here"
 fi
 
 say ""

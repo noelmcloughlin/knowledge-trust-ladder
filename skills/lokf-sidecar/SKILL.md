@@ -2,6 +2,7 @@
 name: lokf-sidecar
 description: 'Lay down a `.lokf/` LOKF knowledge-bundle sidecar (tooling, docs, dummy skeleton, and a `knowledge_bundle` doorway link beside it) in the repository this skill sits in, from bundled templates. Use when: a repo has no `.lokf/` yet and someone asks to add, scaffold, bootstrap, or set up a LOKF/lokf sidecar, knowledge bundle, or machine-readable, SPARQL-queryable knowledge; or to repair a missing/broken sidecar file. Not for authoring or maintaining concepts - that is the lokf-librarian skill, which this one hands off to when done.'
 license: Apache-2.0
+compatibility: 'Requires a POSIX shell (bash; Git for Windows on Windows) and python3 or uv for placeholder substitution; uv with the lokf toolkit to validate (a manual cross-check otherwise). Any host - git or none, GitHub or another forge, Linux, macOS or Windows, a synced folder - with references/portability.md saying what each loses. Step 5''s workflows are GitHub Actions.'
 ---
 
 # LOKF Sidecar
@@ -33,6 +34,8 @@ Create a fresh **`.lokf/` sidecar** - a machine-readable, SPARQL-queryable [LOKF
 
 ## Step 0 - Gather the host project's facts
 
+**First, the preflight.** Run `bash templates/scripts/knowledge-preflight.sh` from this skill's directory (the copy under `.lokf/scripts/` does not exist yet) and read its screen before anything else: the host and shell, whether the tree is under git and on which forge, whether `uv` is present, which skill copies are installed and whether they differ, and whether the session is attended. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. A host whose shell is PowerShell, or that is not Linux, git or GitHub, has its own bullet in [references/portability.md](references/portability.md), and the preflight tells you which one applies. When the person you are working with cannot act on a `missing` or `warn` line themselves, write them a request note for the maintainer from [references/prerequisites.md](references/prerequisites.md) - the plain meaning of each line, who fixes it, and what to send - and carry on with what remains.
+
 Resolve every placeholder from real project sources before writing anything; never leave a `<...>` token or dummy value behind.
 
 | Placeholder | Meaning | Where to find it |
@@ -55,13 +58,14 @@ Resolve every placeholder from real project sources before writing anything; nev
 
 ## Step 1 - Create the skeleton and copy the templates
 
-Copy each template to its destination, then substitute the placeholders it lists. Only these placeholders exist; `templates/gitignore` is written as
-`.lokf/.gitignore`.
+Copy each template to its destination, then substitute the placeholders it lists. Only these placeholders exist; `templates/gitignore` and
+`templates/gitattributes` are written as `.lokf/.gitignore` and `.lokf/.gitattributes`.
 
 | Template | Destination | Placeholders |
 | --- | --- | --- |
 | `templates/pyproject.toml` | `.lokf/pyproject.toml` | PROJ_NAME, PROJ_SLUG |
 | `templates/gitignore` | `.lokf/.gitignore` | - |
+| `templates/gitattributes` | `.lokf/.gitattributes` (keeps the bundle on LF on every machine; inert without git) | - |
 | `templates/justfile` | `.lokf/justfile` | PROJ_NAME |
 | `templates/README.md` | `.lokf/README.md` | PROJ_NAME |
 | `templates/knowledge/index.md` | `.lokf/knowledge/index.md` (semantic header + TOC, reserved) | PROJ_NAME, PROJ_DESC, BASE_IRI, OWNER_NAME, OWNER_SLUG |
@@ -155,6 +159,9 @@ silently reports "no changes" for an ignored path forever. GitHub-only; other ho
 | `templates/github/knowledge-librarian.yaml` | `.github/workflows/knowledge-librarian.yaml` |
 | `templates/scripts/knowledge-librarian.sh` | `.lokf/scripts/knowledge-librarian.sh` (`chmod +x`) |
 | `templates/scripts/knowledge-conventions.sh` | `.lokf/scripts/knowledge-conventions.sh` (`chmod +x`) - the gate runs it; so does lokf-librarian's audit |
+| `templates/scripts/knowledge-conventions.py` | `.lokf/scripts/knowledge-conventions.py` (`chmod +x`) - the half of the conventions script that parses YAML; the `.sh` runs it through `uv run` and fails without it, so the two land together |
+| `templates/scripts/knowledge-preflight.sh` | `.lokf/scripts/knowledge-preflight.sh` (`chmod +x`) - what this host can do; every skill runs it first (Step 0 here). Lay it down even when the rest of this step is skipped: it needs neither git nor GitHub |
+| `templates/scripts/knowledge-provenance.sh` | `.lokf/scripts/knowledge-provenance.sh` (`chmod +x`) - the signature half of the gate on any host with git, and gpg or ssh-keygen; verifies only once `.lokf/curators/<id>.asc` (GPG) or `<id>.pub` (SSH) keys exist ([references/portability.md](references/portability.md)) |
 
 Both workflows and the wrapper name the bundle under both of its names (`.lokf/knowledge` and `knowledge_bundle`): with the Step 2 doorway the second pathspec matches nothing, harmlessly, and it still covers a shared folder a team has rearranged by hand into a real `knowledge_bundle/` (see [references/portability.md](references/portability.md)), because a git pathspec never traverses a symlink. Nothing to edit. The registrar's `provenance` job needs no wiring, but check one thing and report it here: `git config --get commit.gpgsign`, and whether `HEAD` carries a signature (`git cat-file commit HEAD | grep -qE '^gpgsig'`). If signing is off, say so now - GitHub blocks self-approval, so a curator who opens their own curation PRs passes the gate only if they sign, and otherwise every confirmation lokf-curator records will be rejected at the gate. Show the three `git config` lines from [references/automation.md](references/automation.md) and let them run those; do not run them yourself and never touch their `--global` config. The optional `KNOWLEDGE_CURATION_ENVIRONMENT` escape hatch is in the same file; it requires creating an Environment *with required reviewers* first, and is a no-op if that part is skipped.
 
@@ -163,8 +170,8 @@ publishes the skills it also uses) - if this repo uses another directory, add it
 a mismatch otherwise fails at scheduled-run time, not now. What each file does, the repo variables to wire, and the runner/SHA-pin notes:
 [references/automation.md](references/automation.md).
 
-These four files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
-so and suggest adding coverage for the two `scripts/*.sh` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
+These seven files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
+so and suggest adding coverage for the four `scripts/*.sh`, the `scripts/*.py` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
 scheduled agent's own wrapper unchecked indefinitely. That's a one-line suggestion, not a scaffold: a full lint/release CI setup is outside this
 skill's scope and every host's own choice to make - see `lint-and-docs.yaml` in this skill's home repository for one example shape, adapted to
 what that repository actually ships, not copied wholesale.

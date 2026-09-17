@@ -15,7 +15,7 @@ relatedTo:
 - https://lokf-agent-skills.example/knowledge/references/linkml
 verified:
 - by: process:lokf-librarian
-  at: "2026-09-14T12:00:00Z"
+  at: "2026-09-17T14:02:11Z"
 ---
 
 # Overview
