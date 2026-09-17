@@ -2,6 +2,11 @@
 
 ## 2026-09-18
 
+* **Registrar template least-privilege**: the workflow had no top-level
+  `permissions: {}` and left the checkout credential on disk in both
+  read-only jobs, while `knowledge-librarian.yaml` and two host copies
+  already set the first. Both added to the template and this repository's
+  copy, so the gate's jobs opt into scope rather than inherit it.
 * **Skills pin held to the release**: the librarian template's
   `LOKF_SKILLS_REF` sat at `v0.9.0` while this repository released `v0.19.2`,
   so every host scaffolded from it installed a librarian ten minor versions
