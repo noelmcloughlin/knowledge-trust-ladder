@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The skills-pin check no longer fails every publish.** Check 15 held `LOKF_SKILLS_REF` to the newest released heading, but that heading is promoted on merge while its tag is created later by `publish.yml`, so during the publish the only pin a host could clone is the one below it. The check now accepts either of the two newest releases.
+
 ## [0.19.3] - 2026-09-18
 
 ### Fixed
