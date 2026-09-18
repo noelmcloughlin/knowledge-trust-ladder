@@ -2,6 +2,12 @@
 
 ## 2026-09-18
 
+* **Pin check given the publish window**: check 15 required the pin to equal
+  the newest released heading, which no publish can satisfy - the heading is
+  promoted on merge and the tag created later, so the pin can only name the
+  release below it. It now accepts either of the two newest, failing the
+  0.19.3 publish is what showed this.
+
 * **Retitle now re-runs the check**: the squash-title check asks the author
   to retitle, but `semantic-release.yml` listened only for the default
   pull-request types, so a title edit fired no run and the check could not

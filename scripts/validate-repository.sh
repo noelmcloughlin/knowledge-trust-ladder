@@ -675,20 +675,31 @@ fi
 #     repository that a host installs the skill from, so it goes stale
 #     silently: nothing fails when it falls behind, the host just keeps
 #     running an old librarian. It sat at v0.9.0 while this repository
-#     released v0.19.2. Hold it to the top released heading in CHANGELOG.md -
-#     the same source publish.yml cross-checks its version input against, so
-#     this needs no network and no tag to exist yet.
+#     released v0.19.2.
+#
+#     The pin must name a release that a host can actually clone, so it is
+#     held to one of the *two* newest released headings in CHANGELOG.md, not
+#     just the newest. The newest heading exists before its tag does:
+#     semantic-release.yml promotes it on merge to main, and publish.yml
+#     creates the tag later. During that window - which is exactly when
+#     publish.yml runs this contract - the only valid pin is the heading
+#     below the top one, so requiring the top one failed every release.
+#     Two headings of slack covers that window and still catches real rot,
+#     which is measured in many versions, not one.
 say ""
-say "Checking the librarian template's skills pin is this release..."
+say "Checking the librarian template's skills pin is a current release..."
 pin="$(grep -oE 'LOKF_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
          skills/lokf-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
-latest="v$(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '## []')"
+mapfile -t recent < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md \
+                        | head -2 | tr -d '#[] ' | sed 's/^/v/')
 if [[ -z "$pin" ]]; then
   err "no LOKF_SKILLS_REF pin found in the librarian template - check 15 cannot read what a host would install"
-elif [[ "$pin" == "$latest" ]]; then
-  ok "the librarian template pins $pin, this repository's latest release"
+elif [[ "${#recent[@]}" -eq 0 ]]; then
+  err "CHANGELOG.md has no released version heading, so check 15 cannot tell whether $pin is current"
+elif printf '%s\n' "${recent[@]}" | grep -qxF -- "$pin"; then
+  ok "the librarian template pins $pin, one of this repository's two newest releases"
 else
-  err "the librarian template pins LOKF_SKILLS_REF: $pin but CHANGELOG.md's latest release is $latest - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
+  err "the librarian template pins LOKF_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
 fi
 
 say ""
