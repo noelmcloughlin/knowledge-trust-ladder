@@ -14,6 +14,11 @@ on:
     - cron: "0 6 * * 1" # Mondays at 06:00 UTC
   workflow_dispatch:
 
+# Least-privilege default: no token scope at all unless a job opts in, the
+# same default knowledge-librarian.yaml already sets. Each job below names
+# exactly what it needs.
+permissions: {}
+
 # Cancel superseded runs on the same ref to save runner time.
 concurrency:
   group: knowledge-registrar-${{ github.ref }}
@@ -34,6 +39,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # Nothing in this job pushes, so the token never needs to reach the
+          # checkout's credential helper, where any later step could read it.
+          persist-credentials: false
           # Full history: knowledge-conventions.sh resolves each `revision`
           # against the tree, and reports a shallow clone instead of passing it.
           fetch-depth: 0
@@ -109,6 +117,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # This job only reads and compares history; it never pushes.
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Every new human confirmation must come from that person

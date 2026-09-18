@@ -1,5 +1,29 @@
 # Change Log
 
+## 2026-09-18
+
+* **Retitle now re-runs the check**: the squash-title check asks the author
+  to retitle, but `semantic-release.yml` listened only for the default
+  pull-request types, so a title edit fired no run and the check could not
+  be cleared. The trigger names `edited`. `playbooks/releasing.md` follows.
+
+* **Tracked resources only**: Rule 5's field notes now say a local
+  `resource` must be a path git tracks. A gitignored install path under
+  `.agents/` resolves only on the machine holding it, and failed the
+  conventions gate in a clean CI checkout.
+
+* **Registrar template least-privilege**: the workflow had no top-level
+  `permissions: {}` and left the checkout credential on disk in both
+  read-only jobs, while `knowledge-librarian.yaml` and two host copies
+  already set the first. Both added to the template and this repository's
+  copy, so the gate's jobs opt into scope rather than inherit it.
+* **Skills pin held to the release**: the librarian template's
+  `LOKF_SKILLS_REF` sat at `v0.9.0` while this repository released `v0.19.2`,
+  so every host scaffolded from it installed a librarian ten minor versions
+  old. Bumped, and check 15 now holds the pin to `CHANGELOG.md`'s top
+  released heading so it cannot fall behind unnoticed.
+  `playbooks/repository-validation.md` follows.
+
 ## 2026-09-17
 
 * **Wrapper restore made unconditional**: `knowledge-librarian.sh` restored

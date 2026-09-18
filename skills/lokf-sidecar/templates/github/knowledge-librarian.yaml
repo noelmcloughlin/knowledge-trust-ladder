@@ -68,7 +68,7 @@ jobs:
       - name: Install the pinned lokf-librarian skill
         env:
           LOKF_SKILLS_REPO: https://github.com/noelmcloughlin/lokf-agent-skills
-          LOKF_SKILLS_REF: v0.9.0 # the one pin; point your docs here instead of repeating it
+          LOKF_SKILLS_REF: v0.19.2 # the one pin; point your docs here instead of repeating it
         run: |
           set -euo pipefail
           tmp="$(mktemp -d)"

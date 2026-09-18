@@ -671,6 +671,26 @@ else
   say "node not installed locally - CI runs check 14; skipping here"
 fi
 
+# 15. The librarian template's LOKF_SKILLS_REF pins the release of *this*
+#     repository that a host installs the skill from, so it goes stale
+#     silently: nothing fails when it falls behind, the host just keeps
+#     running an old librarian. It sat at v0.9.0 while this repository
+#     released v0.19.2. Hold it to the top released heading in CHANGELOG.md -
+#     the same source publish.yml cross-checks its version input against, so
+#     this needs no network and no tag to exist yet.
+say ""
+say "Checking the librarian template's skills pin is this release..."
+pin="$(grep -oE 'LOKF_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
+         skills/lokf-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
+latest="v$(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '## []')"
+if [[ -z "$pin" ]]; then
+  err "no LOKF_SKILLS_REF pin found in the librarian template - check 15 cannot read what a host would install"
+elif [[ "$pin" == "$latest" ]]; then
+  ok "the librarian template pins $pin, this repository's latest release"
+else
+  err "the librarian template pins LOKF_SKILLS_REF: $pin but CHANGELOG.md's latest release is $latest - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
+fi
+
 say ""
 if [[ "$fail" -eq 0 ]]; then
   say "Repository contract: PASS"
