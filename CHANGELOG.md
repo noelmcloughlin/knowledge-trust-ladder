@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.19.3] - 2026-09-18
+
 ### Fixed
 
 - **Retitling a pull request re-runs the title check.** The check that refuses a releasing pull request with a non-releasing title told the author to retitle, but the workflow listened only for the default pull-request types, so a title change fired nothing and the check stayed red whatever the author did. The trigger now names `edited`.
