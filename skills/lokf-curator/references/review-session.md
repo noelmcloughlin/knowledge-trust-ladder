@@ -89,6 +89,8 @@ Content untouched. Set `status: draft` (add it if absent) and add the person's n
 - 2026-09-08, human:ada-lovelace: the endpoint moved to `/v2/orders` in July; this still shows the old path. Please re-derive from `services/orders/openapi.yaml`.
 ```
 
+With no authenticated login, the actor is the session: `- 2026-09-08, process:lokf-curator: ...`, any note about the missing login after the colon. `human:<id>` and `process:<name>` are the only actor shapes conventions rule 4 accepts; a typed name or a description of the session there fails the gate.
+
 The librarian's next run reads this, fixes the fact from the source, and the concept comes back to the queue as a draft for re-confirmation.
 
 ### Wrong - correct now
