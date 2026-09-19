@@ -4,12 +4,20 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The README says what this is, architecturally.** A short section near the top quotes OKF's fourth goal - the fields that make an agent-maintained corpus trustable "without prescribing any runtime" - and states that this is such a runtime; it then names the domain-schema practice OKF lists as a non-goal (when to reach for one, who decides, how) as something this project carries.
+- **A logo mark**, `.assets/knowledge-trust-ladder-logo.svg`: three rungs in the trust ladder's own grey, amber and blue, each reading heavier than the one below it. Shared byte-for-byte with both plugin repositories, and the mark to use for the repository avatar.
+
 ### Changed
 
 - **This repository is now `knowledge-trust-ladder`**, formerly `lokf-agent-skills`. Upstream LOKF ships its own bundled skills, and a third-party repository named after the format read as their official home.
 - **The four skill names are unchanged** - `lokf-sidecar`, `lokf-librarian`, `lokf-curator`, `lokf-docent` - because they are installed paths in every host. GitHub redirects the old clone and `npx skills add` paths.
 - **`LOKF_SKILLS_REPO` moves with the repository**, so a host's scheduled librarian installs from the new name. A host that copied the template earlier keeps working through the redirect until it copies again.
 - **The bundle's `base_iri` is `https://knowledge-trust-ladder.example/knowledge/`**, which re-ids all 30 concepts and every typed-relation target.
+- **The diagrams no longer glare.** Their canvas was pure white - the largest area on the page and the brightest thing on it, with the tinted cards sitting *below* it. All seven assets now use the warm `#E4E1D7`, a quarter less luminous and less saturated than the palette's own light surface, which gives an even three-step ramp: canvas, grouping panel, card, each about 1.15:1 above the last. Green and blue were considered for the canvas and rejected - in these diagrams green means agent work and blue a named person, so neither can also mean "background".
+- **Small grey labels are legible again.** The faint ink moved from `#888780` to `#6E6D66`, which clears 4.5:1 on a white card where it had been 3.6:1 - a contrast failure that predated the calmer canvas.
+- **`lokf-trust-ladder.svg` is now `trust-ladder.svg`**, since under the new repository name the old filename read as the project's mark rather than the diagram's.
 - **The repository contract refuses the old name** (check 16). A branch written before the rename merges without conflict and the old name simply reappears, so the check names the files; `CHANGELOG.md` history and one "formerly" line each in `README.md` and the bundle's log are the exceptions.
 
 ## [0.19.5] - 2026-09-19

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="t d">
+  <title id="t">Knowledge Trust Ladder</title>
+  <desc id="d">A ladder of three rungs on a warm canvas. Lowest to highest: grey for a draft nobody has checked, amber for a claim checked by automation, blue for one confirmed by a person. Each rung reads heavier than the one below it, the same three colours the trust-ladder diagram uses.</desc>
+  <!-- Canvas: the calmest layer, and the largest, so the mark does not glare. -->
+  <rect width="64" height="64" rx="12" fill="#E4E1D7"/>
+  <!-- Rails: structure, so they recede (2.8:1 against the canvas). -->
+  <rect x="13" y="10" width="5" height="44" rx="2.5" fill="#888780"/>
+  <rect x="46" y="10" width="5" height="44" rx="2.5" fill="#888780"/>
+  <!-- Rungs, lowest first. Contrast climbs with the rung: 4.0, 5.5, 7.5 to 1. -->
+  <rect x="13" y="43" width="38" height="6" rx="3" fill="#6E6D66"/>
+  <rect x="13" y="29" width="38" height="6" rx="3" fill="#7A4E0B"/>
+  <rect x="13" y="15" width="38" height="6" rx="3" fill="#0C447C"/>
+</svg>

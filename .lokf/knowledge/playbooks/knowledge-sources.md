@@ -38,7 +38,7 @@ stale_after: 2027-09-10
 | `scripts/*.sh` | what the validation playbook claims CI enforces | re-read the assertions; a new check is a gap in the playbook |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
 | external URLs cited across the repo | the seven Reference concepts | confirm each still resolves and still says what the concept claims |
-| `.assets/*.svg` | the README social-preview card and the diagrams the README and `docs/` pages embed | consciously excluded - see note below; re-check only that each diagram still matches the page that embeds it |
+| `.assets/*.svg` | the README social-preview card, the project's logo mark, and the diagrams the README and `docs/` pages embed | consciously excluded - see note below; re-check only that each diagram still matches the page that embeds it |
 | `LICENSE`, `llms.txt`, `docs/examples/` | licensing boilerplate, the agent-facing pointer file, and captured skill transcripts (the docent's; the curator's page is a placeholder) | consciously excluded as concepts - see note below; re-check that `llms.txt` still matches the "For AI agents" callout in `README.md`, and that `docs/examples/docent.md`'s trust-label claims still match `glossary/trust-label.md` |
 
 # Notes for the next run

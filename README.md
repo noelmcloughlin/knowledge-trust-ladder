@@ -1,3 +1,5 @@
+<img src=".assets/knowledge-trust-ladder-logo.svg" alt="" width="56" align="right" />
+
 # Knowledge Trust Ladder
 
 > "We lasso the world with networks of silver-coloured Italian hemp,\
@@ -5,13 +7,19 @@
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Four [Agent Skills](https://agentskills.io/home) that turn a repository's scattered knowledge into a maintained, trusted asset using **[LOKF](https://lokf.nolan-nichols.com/)** (Linked Open Knowledge Format) - a semantic profile of OKF in which a plain folder of Markdown concept files carries enough meaning to be validated by schema, queried as a graph, and read by people and agents alike. The [`lokf` toolkit](https://pypi.org/project/lokf) supplies the schema and the tooling. **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
+Four [Agent Skills](https://agentskills.io/home) that turn a repository's scattered knowledge into a maintained, trusted asset using **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format) - [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is a single LinkML file - in which a plain folder of Markdown concept files carries enough meaning to be validated by [the schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml), queried as a graph, and read by people and agents alike. **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
 <p align="center">
   <img src=".assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: from OKF's prose and structure to LOKF's meaning, schema and tools, kept by a librarian, a curator and a docent" width="720" />
 </p>
 
 > **Prefer to ask?** Install the docent skill into any agent you already use - `npx skills add noelmcloughlin/knowledge-trust-ladder --skill lokf-docent --yes` - and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. [docs/examples/docent.md](docs/examples/docent.md) shows eight such answers, captured, not invented. **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
+
+## The runtime OKF leaves open
+
+OKF's fourth goal is to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime" ([SPEC v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)). **This is such a runtime.** Those fields become a ladder each claim climbs, a CI gate that refuses a `human:` confirmation no person can be tied to, and an answer that tells its reader how far it has been checked.
+
+It also carries what OKF puts out of scope. "Defining a fixed taxonomy of concept types" and "replacing domain-specific schemas" are non-goals there, and LOKF supplies the mechanism in one flag, `lokf validate --schema`. The practice around it lives here: **when** to reach for a domain schema (the curator's vocabulary-fit line), **who** decides (the team, never an agent), and **how** (the librarian's [recipe](skills/lokf-librarian/references/domain-schema.md)) - which is what turns a domain's own types from knowledge that is merely tolerated into knowledge that is checked.
 
 ## Why libraries have catalogues
 
@@ -75,7 +83,7 @@ Every concept carries its own trust record, and the **curator** reports it in pl
 - **Still a draft**, **edited since a person last confirmed it**, **past its review date**, **retired** - and, for prioritising, how many other concepts rely on each one.
 
 <p align="center">
-  <img src=".assets/lokf-trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - and what drops a concept a rung" width="720" />
+  <img src=".assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - and what drops a concept a rung" width="720" />
 </p>
 
 The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**, and it is meant to rise slowly - a handful of concepts in a sitting, cumulative and partial by design. A small, young bundle can reach fully-confirmed quickly; a large or fast-growing one never quite does, and the report says so instead of pretending.

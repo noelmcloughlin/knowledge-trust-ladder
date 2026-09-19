@@ -3,10 +3,10 @@
   <desc id="d">Above the lines, the governing body: the owners of the repository that holds the bundle, with two instruments, the organisation's rules for AI-assisted work and the curation policy. First line: the librarian, an agent that derives each record from a named source, and the curator, a named person who confirms; the sidecar lays down their tools. Second line: the registrar, a program: lokf validate and the provenance gate; the sidecar lays down the gate. Third line: independent assurance, not shipped; what ships is the evidence a reviewer would need. Outside the lines: the docent and the reader; what the docent cannot answer goes back to the librarian as untrusted feedback.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#888780"/>
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6E6D66"/>
     </marker>
   </defs>
-  <rect width="720" height="536" fill="#FFFFFF"/>
+  <rect width="720" height="536" fill="#E4E1D7"/>
 
   <rect x="40" y="16" width="640" height="62" rx="8" fill="#FBF1DE" stroke="#7A4E0B" stroke-width="1.5"/>
   <text x="360" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#7A4E0B">Governing body - the owners of the repository that holds the bundle</text>
@@ -16,8 +16,8 @@
   <text x="56" y="124" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#27500A">FIRST LINE</text>
   <text x="56" y="142" font-family="Arial, sans-serif" font-size="11" fill="#27500A">owns the work</text>
   <text x="56" y="156" font-family="Arial, sans-serif" font-size="11" fill="#27500A">and its risk</text>
-  <text x="56" y="180" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#888780">the sidecar lays</text>
-  <text x="56" y="194" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#888780">down the tools</text>
+  <text x="56" y="180" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#6E6D66">the sidecar lays</text>
+  <text x="56" y="194" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#6E6D66">down the tools</text>
 
   <rect x="190" y="112" width="228" height="80" rx="6" fill="#FFFFFF" stroke="#3B6D11"/>
   <text x="304" y="132" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#27500A">Librarian (an agent)</text>
@@ -25,7 +25,7 @@
   <text x="304" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#27500A">re-checks as process:, never as a person</text>
   <text x="304" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#27500A">what it cannot settle: status: draft</text>
 
-  <line x1="418" y1="152" x2="446" y2="152" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="418" y1="152" x2="446" y2="152" stroke="#6E6D66" stroke-width="1.5" marker-end="url(#arrow)"/>
 
   <rect x="448" y="112" width="216" height="80" rx="6" fill="#FFFFFF" stroke="#3B6D11"/>
   <text x="556" y="132" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#27500A">Curator (a named person)</text>
@@ -33,37 +33,37 @@
   <text x="556" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#27500A">source first, then claim, then verdict</text>
   <text x="556" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#27500A">identity from GitHub (gh api user)</text>
 
-  <line x1="360" y1="204" x2="360" y2="232" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="370" y="222" font-family="Arial, sans-serif" font-size="11" fill="#888780">a pull request carrying the change and its human: verdicts</text>
+  <line x1="360" y1="204" x2="360" y2="232" stroke="#6E6D66" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="370" y="222" font-family="Arial, sans-serif" font-size="11" fill="#6E6D66">a pull request carrying the change and its human: verdicts</text>
 
   <rect x="40" y="236" width="640" height="104" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/>
   <text x="56" y="260" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#0C447C">SECOND LINE</text>
   <text x="56" y="278" font-family="Arial, sans-serif" font-size="11" fill="#0C447C">keeps the rules,</text>
   <text x="56" y="292" font-family="Arial, sans-serif" font-size="11" fill="#0C447C">judges no truth</text>
-  <text x="56" y="316" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#888780">the sidecar lays</text>
-  <text x="56" y="330" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#888780">down the gate</text>
+  <text x="56" y="316" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#6E6D66">the sidecar lays</text>
+  <text x="56" y="330" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#6E6D66">down the gate</text>
 
   <rect x="190" y="248" width="474" height="80" rx="6" fill="#FFFFFF" stroke="#185FA5"/>
   <text x="427" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#0C447C">Registrar (a program)</text>
   <text x="427" y="294" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#0C447C">lokf validate on every change, and again as the CI gate: every record well-formed</text>
   <text x="427" y="311" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#0C447C">provenance gate: a human: verdict needs that person's own approval or signature</text>
 
-  <line x1="360" y1="340" x2="360" y2="368" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="370" y="358" font-family="Arial, sans-serif" font-size="11" fill="#888780">the evidence, written where an auditor can find it</text>
+  <line x1="360" y1="340" x2="360" y2="368" stroke="#6E6D66" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="370" y="358" font-family="Arial, sans-serif" font-size="11" fill="#6E6D66">the evidence, written where an auditor can find it</text>
 
-  <rect x="40" y="372" width="640" height="72" rx="8" fill="#FFFFFF" stroke="#888780" stroke-width="1.5" stroke-dasharray="6 4"/>
-  <text x="56" y="396" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#888780">THIRD LINE</text>
-  <text x="56" y="414" font-family="Arial, sans-serif" font-size="11" fill="#888780">independent assurance</text>
-  <text x="56" y="428" font-family="Arial, sans-serif" font-size="11" fill="#888780">not shipped</text>
+  <rect x="40" y="372" width="640" height="72" rx="8" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="56" y="396" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#6E6D66">THIRD LINE</text>
+  <text x="56" y="414" font-family="Arial, sans-serif" font-size="11" fill="#6E6D66">independent assurance</text>
+  <text x="56" y="428" font-family="Arial, sans-serif" font-size="11" fill="#6E6D66">not shipped</text>
   <text x="427" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#3D3D3A">Review by someone other than the authors. What ships is what they would need:</text>
   <text x="427" y="418" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#3D3D3A">resource · generated · verified · stale_after · provenance log · log.md · git</text>
   <text x="427" y="434" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#3D3D3A">every trust label computed from these on each read, never stored</text>
 
-  <rect x="40" y="468" width="640" height="52" rx="8" fill="#FFFFFF" stroke="#888780" stroke-width="1.5"/>
+  <rect x="40" y="468" width="640" height="52" rx="8" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.5"/>
   <text x="56" y="490" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#3D3D3A">OUTSIDE THE LINES</text>
   <text x="56" y="508" font-family="Arial, sans-serif" font-size="11" fill="#3D3D3A">the docent and the reader</text>
   <text x="427" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#3D3D3A">Docent: answers from the bundle, each concept with its trust label</text>
   <text x="427" y="508" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#3D3D3A">what it cannot answer goes back to the librarian as untrusted feedback</text>
 
-  <path d="M 30 494 L 20 494 L 20 152 L 34 152" fill="none" stroke="#888780" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <path d="M 30 494 L 20 494 L 20 152 L 34 152" fill="none" stroke="#6E6D66" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
 </svg>

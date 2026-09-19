@@ -11,6 +11,24 @@
   GitHub URL, or the card asset were rewritten by the same pass. The four
   skill names stay as they are: they are installed paths in every host.
 
+* **The README states the architectural claim, and a logo joins the assets.**
+  A short section near the top quotes OKF's fourth goal - fields that make a
+  corpus trustable "without prescribing any runtime" - and says this is such
+  a runtime, then names the domain-schema practice OKF puts out of scope as
+  something this project carries (when, who decides, how). New
+  `.assets/knowledge-trust-ladder-logo.svg`, three rungs in the trust
+  ladder's own grey, amber and blue, shared byte-for-byte with both plugin
+  repositories; `lokf-trust-ladder.svg` renamed
+  `trust-ladder.svg`, since the old name now reads as the project's rather
+  than the diagram's. The source-map row for `.assets/*.svg` covers both.
+
+* **Assets restacked.** Every diagram's canvas was pure white while its cards
+  were tinted, so the largest area was the brightest and the cards read as
+  sunken rather than raised. The canvas is now `#E4E1D7` across all seven
+  assets, and the faint ink `#888780` is now `#6E6D66`, which also lifts the
+  10px grey labels past 4.5:1 - a contrast failure that predated the change.
+  The same restack was applied to both plugin repositories' assets.
+
 ## 2026-09-18
 
 * **Curation**: unauthenticated session (no `gh` login, so only
