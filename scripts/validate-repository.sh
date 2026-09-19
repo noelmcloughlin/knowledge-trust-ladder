@@ -677,7 +677,7 @@ else
   say "node not installed locally - CI runs check 14; skipping here"
 fi
 
-# 15. The librarian template's LOKF_SKILLS_REF pins the release of *this*
+# 15. The librarian template's TRUST_LADDER_SKILLS_REF pins the release of *this*
 #     repository that a host installs the skill from, so it goes stale
 #     silently: nothing fails when it falls behind, the host just keeps
 #     running an old librarian. It sat at v0.9.0 while this repository
@@ -694,18 +694,18 @@ fi
 #     which is measured in many versions, not one.
 say ""
 say "Checking the librarian template's skills pin is a current release..."
-pin="$(grep -oE 'LOKF_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
+pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
          skills/lokf-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
 mapfile -t recent < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md \
                         | head -2 | tr -d '#[] ' | sed 's/^/v/')
 if [[ -z "$pin" ]]; then
-  err "no LOKF_SKILLS_REF pin found in the librarian template - check 15 cannot read what a host would install"
+  err "no TRUST_LADDER_SKILLS_REF pin found in the librarian template - check 15 cannot read what a host would install"
 elif [[ "${#recent[@]}" -eq 0 ]]; then
   err "CHANGELOG.md has no released version heading, so check 15 cannot tell whether $pin is current"
 elif printf '%s\n' "${recent[@]}" | grep -qxF -- "$pin"; then
   ok "the librarian template pins $pin, one of this repository's two newest releases"
 else
-  err "the librarian template pins LOKF_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
+  err "the librarian template pins TRUST_LADDER_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
 fi
 
 # 16. The repository's old name stays gone from anything that still speaks in
