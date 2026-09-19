@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/knowledge-sources
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/knowledge-sources
 title: Knowledge sources
 description: Map of the repository locations this bundle was derived from, and how to re-check each on a future refresh.
 genre: how-to
@@ -23,7 +23,7 @@ stale_after: 2027-09-10
 | `skills/*/SKILL.md` | the four skill Playbooks | re-read each router; a changed step list, guardrail, or frontmatter `description` is a drift signal |
 | `skills/*/references/*.md` | detail behind each skill Playbook | diff against the claims in the corresponding concept body |
 | `skills/lokf-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, `.gitattributes`, and the five scripts (preflight, conventions and its Python half, librarian wrapper, provenance gate) | diff `pyproject.toml` (the `lokf` floor) and the template lists in the skill's Step 1 and Step 5 tables |
-| `README.md`, `docs/repository-layout.md` | project identity, the four-role narrative, versioning policy, install commands; the repository tree, on its own page since the README stopped carrying it | diff the roles table and the Versioning section; diff the tree against the working copy |
+| `README.md`, `docs/install.md`, `docs/repository-layout.md` | project identity and the four-role narrative; the install commands, prerequisites table and pinning rule, on their own page since 2026-09-19 when the README became a front door; the repository tree, likewise on its own page | diff the roles table and the `Read on` table; diff `docs/install.md` against `references/gh-skill-cli.md` and `references/open-skills-cli.md`; diff the tree against the working copy |
 | `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `lokf-docent/references/obsidian.md`, which must agree with it |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
 | `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
@@ -38,7 +38,7 @@ stale_after: 2027-09-10
 | `scripts/*.sh` | what the validation playbook claims CI enforces | re-read the assertions; a new check is a gap in the playbook |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
 | external URLs cited across the repo | the seven Reference concepts | confirm each still resolves and still says what the concept claims |
-| `.assets/*.svg` | the README social-preview card and the diagrams the README and `docs/` pages embed | consciously excluded - see note below; re-check only that each diagram still matches the page that embeds it |
+| `.assets/*.svg` | the README social-preview card, the project's logo mark, and the diagrams the README and `docs/` pages embed | consciously excluded - see note below; re-check only that each diagram still matches the page that embeds it |
 | `LICENSE`, `llms.txt`, `docs/examples/` | licensing boilerplate, the agent-facing pointer file, and captured skill transcripts (the docent's; the curator's page is a placeholder) | consciously excluded as concepts - see note below; re-check that `llms.txt` still matches the "For AI agents" callout in `README.md`, and that `docs/examples/docent.md`'s trust-label claims still match `glossary/trust-label.md` |
 
 # Notes for the next run
@@ -74,7 +74,7 @@ stale_after: 2027-09-10
 - **Maintainer edits (2026-09-14, after the ninth pass)**, not a refresh: the
   README count the ninth pass flagged is fixed - the tree moved to
   `docs/repository-layout.md` and says three - and every page and record
-  that counted four LOKF repositories now counts three (`lokf-agent-skills`,
+  that counted four LOKF repositories now counts three (`knowledge-trust-ladder`,
   LOKF Registrar, LOKF Curator; a host that installs the skills is not one).
   Prose counts of LOKF's classes and relations left `README.md`, `docs/` and
   the skills' references, so the sixth pass's "grep for the number" lesson
@@ -339,7 +339,7 @@ stale_after: 2027-09-10
 - **Steady-state refresh (2026-09-09, first pass)**: re-verified all 17
   internal-resource concepts against their current files - all still
   accurate; no body changes needed. Consciously skipped
-  `.assets/lokf-agent-skills-card.svg`, a new decorative image added to
+  `.assets/knowledge-trust-ladder-card.svg`, a new decorative image added to
   `README.md` since the bootstrap pass: it carries no reusable knowledge, so
   it gets a source-map row (above) instead of a concept, the same treatment
   as `.markdownlint-cli2.jsonc`/`lychee.toml`.
@@ -372,7 +372,7 @@ stale_after: 2027-09-10
 - **No `Person`/`Organization` concept.** The maintainer is recorded once as
   the bundle's `publisher` in `index.md`; nothing else links to a person, and
   the skill says to add such concepts only when something does.
-- **`base_iri` is a placeholder** (`lokf-agent-skills.example`, an RFC 2606
+- **`base_iri` is a placeholder** (`knowledge-trust-ladder.example`, an RFC 2606
   reserved domain) pending a namespace the project actually controls. It mints
   every concept `@id` here, so migrating it later rewrites all of them - cheap
   now, expensive once anything external links in.

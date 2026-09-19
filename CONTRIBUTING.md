@@ -1,25 +1,25 @@
-# Contributing to LOKF Agent Skills
+# Contributing to Knowledge Trust Ladder
 
 *This file is a checklist, not a design log. Each rule is a line or two that links to where its reasoning lives - a code comment, a workflow header, or a page under `docs/` - and `bash scripts/validate-repository.sh` holds the file to a word budget so it stays that way.*
 
-Thanks for your interest in improving `lokf-agent-skills`.
+Thanks for your interest in improving `knowledge-trust-ladder`.
 
 ## Development setup
 
 There is no build step: the skills are Markdown, YAML and shell.
 
 ```bash
-git clone https://github.com/noelmcloughlin/lokf-agent-skills.git
-cd lokf-agent-skills
+git clone https://github.com/noelmcloughlin/knowledge-trust-ladder.git
+cd knowledge-trust-ladder
 bash scripts/validate-repository.sh
 ```
 
 To try a change end-to-end before publishing, install from your local clone instead of GitHub:
 
 ```bash
-gh skill install ./lokf-agent-skills lokf-sidecar --from-local
+gh skill install ./knowledge-trust-ladder lokf-sidecar --from-local
 # or:
-npx skills add ./lokf-agent-skills --skill lokf-sidecar
+npx skills add ./knowledge-trust-ladder --skill lokf-sidecar
 ```
 
 ## Layout

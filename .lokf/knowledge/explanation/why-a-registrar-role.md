@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://lokf-agent-skills.example/knowledge/explanation/why-a-registrar-role
+id: https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 title: Why a registrar role, and why it is not a fifth skill
 description: The job none of the four skills does - keeping bundle records themselves well-formed and provenanced - and why it is enforced by tooling (the `lokf` toolkit, CI, and two companion Obsidian plugins) rather than by an agent.
 genre: explanation
@@ -10,9 +10,9 @@ generated:
   at: "2026-09-13T22:00:00Z"
 status: draft
 relatedTo:
-- https://lokf-agent-skills.example/knowledge/explanation/why-four-roles
+- https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
 about:
-- https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
+- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T14:02:11Z"

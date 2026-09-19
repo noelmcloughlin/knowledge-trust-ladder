@@ -1,6 +1,6 @@
-# `.lokf/` - LOKF Agent Skills's machine-readable knowledge base
+# `.lokf/` - Knowledge Trust Ladder's machine-readable knowledge base
 
-A small **sidecar** that captures LOKF Agent Skills's own knowledge - its services, metrics, policies, playbooks, and glossary - as plain Markdown files that are **also a queryable knowledge graph**. It does not touch the app build; it's independent tooling you can run on its own.
+A small **sidecar** that captures Knowledge Trust Ladder's own knowledge - its services, metrics, policies, playbooks, and glossary - as plain Markdown files that are **also a queryable knowledge graph**. It does not touch the app build; it's independent tooling you can run on its own.
 
 ## The 60-second version
 

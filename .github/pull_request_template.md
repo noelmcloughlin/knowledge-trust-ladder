@@ -18,4 +18,4 @@
 
 ## AI Assistance
 
-If you used AI tools while preparing this PR, you are still the author and responsible for understanding, verifying, and defending your submission. Please engage with reviewers personally rather than through your agent during feedback and revisions. Don't dump LLM output into this PR without curation. See our [AI Covenant](https://github.com/noelmcloughlin/lokf-agent-skills/blob/main/AI_COVENANT.md) for details.
+If you used AI tools while preparing this PR, you are still the author and responsible for understanding, verifying, and defending your submission. Please engage with reviewers personally rather than through your agent during feedback and revisions. Don't dump LLM output into this PR without curation. See our [AI Covenant](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/AI_COVENANT.md) for details.

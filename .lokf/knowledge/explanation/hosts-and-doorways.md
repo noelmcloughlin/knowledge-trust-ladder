@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://lokf-agent-skills.example/knowledge/explanation/hosts-and-doorways
+id: https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 title: Hosts and doorways - where the bundle's real folder lives
 description: The bundle is `.lokf/knowledge`, one real folder on every host, and `knowledge_bundle` beside it is a link - the doorway for people and folder pickers. Why there is one layout, what the visible layout of 2026-09-12 tried and why it was retired the next day, and what a shared folder that is not a vault may still do by hand.
 genre: explanation
@@ -10,11 +10,11 @@ generated:
   at: "2026-09-17T14:57:49Z"
 status: draft
 about:
-  - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
-  - https://lokf-agent-skills.example/knowledge/playbooks/open-bundle-in-obsidian
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-sidecar-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 relatedTo:
-  - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
-  - https://lokf-agent-skills.example/knowledge/explanation/why-a-registrar-role
+  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+  - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 verified:
   - by: process:lokf-librarian
     at: "2026-09-17T14:57:49Z"

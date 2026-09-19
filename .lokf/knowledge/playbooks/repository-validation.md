@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/repository-validation
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
 title: Repository validation
 description: What CI checks on every pull request and weekly - the repository contract, the Agent Skills spec, shell and workflow linting, the install smoke test, and Markdown/link/spelling checks.
 genre: how-to
@@ -10,9 +10,9 @@ generated:
   at: "2026-09-18T14:00:00Z"
 status: draft
 references:
-  - https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
-  - https://lokf-agent-skills.example/knowledge/references/open-skills-cli
-  - https://lokf-agent-skills.example/knowledge/playbooks/contributing
+  - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+  - https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
   at: "2026-09-18T14:00:00Z"

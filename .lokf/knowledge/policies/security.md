@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://lokf-agent-skills.example/knowledge/policies/security
+id: https://knowledge-trust-ladder.example/knowledge/policies/security
 title: Security policy
 description: How to report a vulnerability privately, supported versions, and a surface table (what executes here, what holds it) that links to the shared threat model instead of restating it.
 genre: reference
@@ -10,8 +10,8 @@ generated:
   at: "2026-09-14T17:00:00Z"
 status: draft
 references:
-- https://lokf-agent-skills.example/knowledge/policies/threat-model
-- https://lokf-agent-skills.example/knowledge/playbooks/repository-validation
+- https://knowledge-trust-ladder.example/knowledge/policies/threat-model
+- https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T14:02:11Z"

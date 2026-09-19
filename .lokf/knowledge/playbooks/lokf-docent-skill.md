@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/lokf-docent-skill
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-docent-skill
 title: lokf-docent skill
 description: The reader's side - answers questions from the bundle first with each concept's trust label, falls back to the repository deliberately, and records misses and disagreements for the librarian.
 genre: how-to
@@ -10,13 +10,13 @@ generated:
   at: "2026-09-17T15:27:51Z"
 status: draft
 dependsOn:
-- https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
+- https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-librarian-skill
 about:
-  - https://lokf-agent-skills.example/knowledge/glossary/trust-label
+  - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
-  - https://lokf-agent-skills.example/knowledge/playbooks/lokf-curator-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-curator-skill
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T15:27:51Z"

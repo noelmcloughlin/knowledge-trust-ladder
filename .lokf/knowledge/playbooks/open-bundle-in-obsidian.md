@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/open-bundle-in-obsidian
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 title: Open the knowledge bundle in Obsidian
 description: How a knowledge bundle meets an Obsidian vault - two vaults, the workshop someone already keeps and the bundle opened as its own vault through the root-level knowledge_bundle doorway - with what Obsidian does with a link on each host, verified against Obsidian 1.13.7's file reconciler, and why the bundle is never laid down as a real folder inside a vault.
 genre: how-to
@@ -10,11 +10,11 @@ generated:
   at: "2026-09-13T12:00:00Z"
 status: draft
 isPartOf:
-  - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-sidecar-skill
 about:
-  - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
+  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 relatedTo:
-  - https://lokf-agent-skills.example/knowledge/explanation/hosts-and-doorways
+  - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 verified:
   - by: process:lokf-librarian
     at: "2026-09-16T09:10:00Z"

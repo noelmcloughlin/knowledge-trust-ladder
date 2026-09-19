@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://lokf-agent-skills.example/knowledge/references/linkml
+id: https://knowledge-trust-ladder.example/knowledge/references/linkml
 title: LinkML
 description: The schema-modelling language LOKF is written in, and the generator suite that turns a schema into JSON Schema, Pydantic models, SHACL shapes, docs, and OWL.
 genre: reference

@@ -1,5 +1,71 @@
 # Change Log
 
+## 2026-09-19
+
+* **Repository renamed to `knowledge-trust-ladder`**, from `lokf-agent-skills`,
+  because upstream LOKF now ships its own bundled skills and a third-party
+  repository named after the format read as their official home. The bundle's
+  `base_iri` moves with it, re-iding all 30 concepts and every typed-relation
+  target in one mechanical pass; no `verified` event changed, so nothing a
+  person confirmed was touched. Concepts naming the repository in prose, its
+  GitHub URL, or the card asset were rewritten by the same pass. The four
+  skill names stay as they are: they are installed paths in every host.
+  Entries below this day keep the name the project had when they were
+  written, as `CHANGELOG.md` does: a log that renames its own past is no
+  longer a record of what happened.
+
+* **The README states the architectural claim, and a logo joins the assets.**
+  A short section near the top quotes OKF's fourth goal - fields that make a
+  corpus trustable "without prescribing any runtime" - and says this is such
+  a runtime, then says the domain schemas OKF puts out of scope are in scope
+  here by construction, pointing at the curator's domain-schemas page for the
+  flag and the recipe. New
+  `.assets/knowledge-trust-ladder-logo.svg`, three rungs in the trust
+  ladder's own grey, amber and blue, shared byte-for-byte with both plugin
+  repositories; `lokf-trust-ladder.svg` renamed
+  `trust-ladder.svg`, since the old name now reads as the project's rather
+  than the diagram's. The source-map row for `.assets/*.svg` covers both.
+
+* **The README became a front door.** Much the same length - 1,792 words to
+  1,864 - and a different shape: the opening
+  sentence carried four link-bearing clauses before saying what the project
+  does, and the install commands - two code blocks, a prerequisites paragraph
+  and the pinning rule - sat in the middle of the narrative. Commands moved to
+  a new `docs/install.md`, leaving one `npx skills add` line; the closing
+  sections collapsed into one `Read on` table. What the space bought: the
+  runtime claim, the context layer the bundle is, and the schema-first order
+  of work. The source-map row now names the new page.
+
+* **The logo carries knowledge and trust, not just a ladder.** The first mark
+  was three rungs alone: it drew *ladder* and left the other two words to the
+  filename. The ladder now rises out of an open book (knowledge, in the
+  agent-green of the diagrams' key) and its top rung *is* the check mark in
+  the curator's blue - so the mark reads draft, checked, vouched-for from
+  bottom to top. Rails lightened to `#A8A69D` so the grey draft rung is not
+  read as structure. Every diagram now carries the mark and the wordmark in
+  its top-left corner, from one shared definition.
+
+* **The three-lines diagram was keyed against its own legend.** Its bands
+  coloured the first line green and the second blue, while the legend the
+  other diagrams share reads green for agent work, amber for deterministic
+  checks, blue for a named person - so the registrar, a program, sat in the
+  person's colour and the curator, a person, sat in the agent's. The bands are
+  now neutral panels and each card takes the colour of who acts. It also
+  gained the title and legend the rest of the family has.
+
+* **Text that collided with its own box.** A headless-Chrome pass measured
+  every `<text>` against the smallest rect containing it: six labels across
+  four diagrams overflowed or came within 2px, including one in the siblings'
+  two-vaults copy that was hidden behind a card it was painted before. Fixed
+  by shortening the labels, widening one card, and correcting the paint order.
+
+* **Assets restacked.** Every diagram's canvas was pure white while its cards
+  were tinted, so the largest area was the brightest and the cards read as
+  sunken rather than raised. The canvas is now `#E4E1D7` across all seven
+  assets, and the faint ink `#888780` is now `#6E6D66`, which also lifts the
+  10px grey labels past 4.5:1 - a contrast failure that predated the change.
+  The same restack was applied to both plugin repositories' assets.
+
 ## 2026-09-18
 
 * **Curation**: unauthenticated session (no `gh` login, so only

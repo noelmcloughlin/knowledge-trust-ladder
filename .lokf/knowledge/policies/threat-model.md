@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://lokf-agent-skills.example/knowledge/policies/threat-model
+id: https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 title: Threat model
 description: "The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each skill's own input path - carried once here so each SECURITY.md can link instead of restate."
 genre: reference
@@ -9,8 +9,8 @@ generated:
   by: process:lokf-librarian
   at: "2026-09-17T17:30:00Z"
 references:
-- https://lokf-agent-skills.example/knowledge/policies/security
-- https://lokf-agent-skills.example/knowledge/policies/ai-covenant
+- https://knowledge-trust-ladder.example/knowledge/policies/security
+- https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T17:30:00Z"
@@ -20,7 +20,7 @@ verified:
 
 Added 2026-09-14, when `policies/security.md`'s ~1,900-word design moved out
 of `SECURITY.md` and into this page across the three LOKF repositories
-(`lokf-agent-skills`, LOKF Registrar, LOKF Curator). Its section headings are
+(`knowledge-trust-ladder`, LOKF Registrar, LOKF Curator). Its section headings are
 kept stable on purpose - `#interactive-use-scope-is-advisory-not-enforced`,
 `#repository-hardening`, `#human-attribution-human-is-a-claim-not-a-credential`,
 `#prompt-injection-guards` - because every sibling repository's `SECURITY.md`

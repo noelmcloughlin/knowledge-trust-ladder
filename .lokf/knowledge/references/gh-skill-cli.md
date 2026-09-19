@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://lokf-agent-skills.example/knowledge/references/gh-skill-cli
+id: https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
 title: gh skill (GitHub CLI)
 description: The GitHub CLI command group that installs, pins, and publishes agent skills from GitHub repositories; the publish path this repository uses for releases.
 genre: reference
@@ -10,7 +10,7 @@ generated:
   at: "2026-09-09T10:00:00Z"
 status: draft
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 verified:
 - by: process:lokf-librarian
   at: "2026-09-09T17:00:00Z"

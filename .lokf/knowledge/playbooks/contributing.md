@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/contributing
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
 title: Contributing
 description: How to work on the skills - no build step, the local checks to run before opening a pull request, the role boundary a change must respect, and where the release and signing detail now lives.
 genre: how-to
@@ -10,10 +10,10 @@ generated:
   at: "2026-09-14T16:00:00Z"
 status: draft
 references:
-  - https://lokf-agent-skills.example/knowledge/playbooks/repository-validation
-  - https://lokf-agent-skills.example/knowledge/playbooks/releasing
-  - https://lokf-agent-skills.example/knowledge/policies/ai-covenant
-  - https://lokf-agent-skills.example/knowledge/policies/code-of-conduct
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
+  - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
+  - https://knowledge-trust-ladder.example/knowledge/policies/code-of-conduct
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T14:02:11Z"
@@ -30,8 +30,8 @@ that way.
 There is no build step: the skills are Markdown, YAML, and shell. Clone,
 then run `bash scripts/validate-repository.sh`. To try a change end-to-end
 before publishing, install from the local clone (`gh skill install
-./lokf-agent-skills <skill> --from-local`, or `npx skills add
-./lokf-agent-skills --skill <skill>`).
+./knowledge-trust-ladder <skill> --from-local`, or `npx skills add
+./knowledge-trust-ladder --skill <skill>`).
 
 Before a pull request: `validate-repository.sh` (names each check as it
 runs; CI runs the same script plus ShellCheck, `actionlint`, markdownlint,

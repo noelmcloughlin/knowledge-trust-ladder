@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Repository-contract checks for the lokf-agent-skills distribution
+# Repository-contract checks for the knowledge-trust-ladder distribution
 # repo. Separate from specification/Markdown checks (workflows/validate.yml
 # runs those as their own jobs) so failures are easy to diagnose.
 set -euo pipefail
@@ -180,7 +180,7 @@ else
 fi
 
 # 9. Three sibling repositories deep-link into files here by URL
-#    (github.com/noelmcloughlin/lokf-agent-skills/blob/main/<path>), and their
+#    (github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path>), and their
 #    link checks follow those for real. Moving or renaming one of these paths
 #    passes every check in this repo and breaks the build in obsidian-lokf-
 #    curator, and obsidian-lokf-registrar - (The mirror image happened on
@@ -223,7 +223,7 @@ else
   # self-links are not a sibling depending on us, and counting them reports
   # every page the skills link to internally. Skip them, and .venv, which is
   # only slow. (git-aware greps hide these via .gitignore; plain grep does not.)
-  mapfile -t linked < <(grep -rhoE 'https://github\.com/noelmcloughlin/lokf-agent-skills/blob/main/[^)"#[:space:]]+' \
+  mapfile -t linked < <(grep -rhoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/[^)"#[:space:]]+' \
     "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
     --exclude-dir=.claude --exclude-dir=.venv 2>/dev/null \
@@ -706,6 +706,52 @@ elif printf '%s\n' "${recent[@]}" | grep -qxF -- "$pin"; then
   ok "the librarian template pins $pin, one of this repository's two newest releases"
 else
   err "the librarian template pins LOKF_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
+fi
+
+# 16. The repository's old name stays gone from anything that still speaks in
+#     the present tense. It was renamed from lokf-agent-skills on 2026-09-19,
+#     and a branch written before that merges without conflict - the old name
+#     simply reappears, in a clone URL or an `npx skills add` path that then
+#     depends on GitHub's redirect. Three files keep it on purpose, and they
+#     are the ones whose job is history: CHANGELOG.md, the bundle's log.md
+#     (whose entries describe the repository as it was on the day they were
+#     written - a log that renames its own past is no longer a record), and
+#     one "formerly" line in docs/install.md, where the install commands moved
+#     on 2026-09-19. Anywhere else is a merge that predates the rename; run
+#     the same replacement over it.
+say ""
+say "Checking the old repository name has not come back..."
+old_name="lokf-agent-skills"
+# Filter in bash, not with :!pathspecs: an exclude pathspec naming a file that
+# is absent or untracked (rename-plan.md, until someone commits it) makes git
+# grep exit 128, and a `|| true` around it would turn that into a silent pass.
+history_files=(CHANGELOG.md .lokf/knowledge/log.md rename-plan.md
+               scripts/validate-repository.sh)
+set +e
+hits="$(git grep -lI -- "$old_name")"
+grep_rc=$?
+set -e
+if [[ "$grep_rc" -gt 1 ]]; then
+  err "git grep exited $grep_rc while looking for $old_name, so this check did not run"
+else
+  unexpected=()
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    skip=""
+    for h in "${history_files[@]}"; do
+      if [[ "$f" == "$h" ]]; then skip=1; fi
+    done
+    # The install page names it on one line, as history; more is a stale merge.
+    if [[ "$f" == "docs/install.md" ]]; then
+      if [[ "$(git grep -c -- "$old_name" -- "$f" | cut -d: -f2)" -le 1 ]]; then skip=1; fi
+    fi
+    if [[ -z "$skip" ]]; then unexpected+=("$f"); fi
+  done <<<"$hits"
+  if [[ "${#unexpected[@]}" -eq 0 ]]; then
+    ok "no file outside the ones that record history reintroduces $old_name"
+  else
+    err "these files name $old_name again, which this repository was renamed from: ${unexpected[*]} - a branch written before the rename was merged; replace $old_name with knowledge-trust-ladder there (CHANGELOG.md, the bundle's log.md, the rename plan and one 'formerly' line in docs/install.md are the exceptions, because they record history)"
+  fi
 fi
 
 say ""

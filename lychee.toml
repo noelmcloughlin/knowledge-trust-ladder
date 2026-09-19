@@ -19,7 +19,7 @@ exclude = [
   # URL, since installed copies have no relative path to it. The page moved
   # from EXAMPLES.md to docs/examples/docent.md on 2026-09-16 and exists
   # only on the branch until that lands; drop this line after the merge.
-  '^https://github\.com/noelmcloughlin/lokf-agent-skills/blob/main/docs/examples/docent\.md$',
+  '^https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/docent\.md$',
 ]
 
 # knowledge_bundle is a symlink to .lokf/knowledge (the Obsidian vault entry

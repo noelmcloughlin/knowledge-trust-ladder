@@ -22,7 +22,7 @@ including `templates/` and `references/` - into whichever of those the new repo 
 
 Two copies of a skill in two of those directories drift: an installer updates one and not the other, and whichever an agent reads wins. The preflight compares every pair it finds and warns when they differ; keep one, or reinstall both from the same release.
 
-This repository ([`lokf-agent-skills`](https://github.com/noelmcloughlin/lokf-agent-skills)) is the sole, canonical source of all four LOKF skills - install from it via `gh skill install` / `npx skills add` rather than copy-pasting, and pin them all to the same release.
+This repository ([`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder)) is the sole, canonical source of all four LOKF skills - install from it via `gh skill install` / `npx skills add` rather than copy-pasting, and pin them all to the same release.
 
 ## Tooling
 

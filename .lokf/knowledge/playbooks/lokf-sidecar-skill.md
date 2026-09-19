@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-sidecar-skill
 title: lokf-sidecar skill
 description: Procedure that creates a .lokf/ sidecar - tooling, docs, a dummy skeleton, and the knowledge_bundle doorway link beside it - from bundled templates, or repairs a single missing sidecar file, then hands off to lokf-librarian. Formerly named lokf-scaffolding.
 genre: how-to
@@ -10,11 +10,11 @@ generated:
   at: "2026-09-17T17:30:00Z"
 status: draft
 about:
-  - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
+  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
-  - https://lokf-agent-skills.example/knowledge/references/lokf-toolkit
+  - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T17:30:00Z"

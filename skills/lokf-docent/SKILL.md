@@ -11,7 +11,7 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 
 > Eight real examples of this skill answering real questions, including a
 > deliberate miss and an honest "couldn't confirm at the source" case:
-> [`docs/examples/docent.md`](https://github.com/noelmcloughlin/lokf-agent-skills/blob/main/docs/examples/docent.md)
+> [`docs/examples/docent.md`](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/docent.md)
 > in this skill's home repository (not copied on install, since it documents
 > that repository's own bundle rather than this skill's behavior generally).
 

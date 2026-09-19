@@ -1,20 +1,20 @@
 ---
 lokf_version: "0.2"
 okf_version: "0.2"
-base_iri: https://lokf-agent-skills.example/knowledge/
+base_iri: https://knowledge-trust-ladder.example/knowledge/
 context: https://w3id.org/lokf/context.jsonld
-title: LOKF Agent Skills Knowledge Bundle
+title: Knowledge Trust Ladder Knowledge Bundle
 description: Four Agent Skills that turn a repository's scattered knowledge into a maintained, trusted LOKF knowledge bundle.
 license: https://creativecommons.org/licenses/by/4.0/
 publisher:
   type: Person
-  id: https://lokf-agent-skills.example/knowledge/person/noel-mcloughlin
+  id: https://knowledge-trust-ladder.example/knowledge/person/noel-mcloughlin
   name: Noel McLoughlin
 ---
 
-# LOKF Agent Skills Knowledge Bundle
+# Knowledge Trust Ladder Knowledge Bundle
 
-A [LOKF](https://lokf.nolan-nichols.com) knowledge base for LOKF Agent Skills. Every Markdown file under `knowledge/` is one concept; together they form a queryable knowledge graph, derived from this repository's code and docs.
+A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladder. Every Markdown file under `knowledge/` is one concept; together they form a queryable knowledge graph, derived from this repository's code and docs.
 
 # Playbooks
 

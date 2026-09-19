@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/releasing
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 title: Releasing
 description: semantic-release.yml computes the version and promotes CHANGELOG.md on merge to main but never tags, folding into a still-unpublished section rather than doubling it; a workflow_dispatch run of publish.yml then validates that version against the promoted changelog, re-checks the contract and spec, and lets gh skill publish create the tag and release.
 genre: how-to
@@ -10,11 +10,11 @@ generated:
   at: "2026-09-18T12:00:00Z"
 status: draft
 dependsOn:
-- https://lokf-agent-skills.example/knowledge/references/gh-skill-cli
+- https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
 references:
-  - https://lokf-agent-skills.example/knowledge/policies/versioning
-  - https://lokf-agent-skills.example/knowledge/playbooks/repository-validation
-  - https://lokf-agent-skills.example/knowledge/playbooks/contributing
+  - https://knowledge-trust-ladder.example/knowledge/policies/versioning
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
 verified:
 - by: process:lokf-librarian
   at: "2026-09-18T12:00:00Z"
