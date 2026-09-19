@@ -61,6 +61,29 @@ for dir in "${expected_dirs[@]}"; do
   fi
 done
 
+# 3c. Catalogs have no tag field: `gh skill search` matches name and
+#     description, skills.sh matches file text. So each description ends in a
+#     `Keywords:` list, inside the spec's 1024 characters, and the Claude Code
+#     plugin manifest and its marketplace entry carry one keyword list between
+#     them, written on one line in each so the two can be compared.
+for dir in "${expected_dirs[@]}"; do
+  skill_file="$dir/SKILL.md"
+  [[ -f "$skill_file" ]] || continue
+  desc="$(awk 'NR>1 && /^---$/ {exit} /^description:/ {sub(/^description:[[:space:]]*/, ""); print}' "$skill_file")"
+  if (( ${#desc} > 1024 )); then
+    err "$skill_file description is ${#desc} characters; the Agent Skills spec allows 1024"
+  elif ! grep -qE ' Keywords: [^.]+\.'"'"'?$' <<<"$desc"; then
+    err "$skill_file description does not end in a 'Keywords: a, b, c.' list - it is the only tag a skills catalog reads"
+  else
+    ok "$skill_file description ends in a Keywords list (${#desc} characters)"
+  fi
+done
+if [[ "$(grep '"keywords"' .claude-plugin/plugin.json | sed 's/^ *//')" == "$(grep '"keywords"' .claude-plugin/marketplace.json | sed 's/^ *//')" ]]; then
+  ok "plugin.json and marketplace.json carry the same keywords"
+else
+  err ".claude-plugin/plugin.json and marketplace.json list different keywords - keep the one-line arrays identical"
+fi
+
 # 4. No unexpected duplicate SKILL.md files in publishable paths.
 mapfile -t all_skill_md < <(find skills -iname 'SKILL.md' | sort)
 if [[ ${#all_skill_md[@]} -eq 4 ]]; then
