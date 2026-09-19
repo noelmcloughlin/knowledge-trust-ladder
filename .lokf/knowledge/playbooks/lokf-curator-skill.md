@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/lokf-curator-skill
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-curator-skill
 title: lokf-curator skill
 description: A human curator's assistant - reports what needs a person's attention, then records that person's confirm/correct/retire/send-back verdicts into the bundle's frontmatter.
 genre: how-to
@@ -10,11 +10,11 @@ generated:
   at: "2026-09-17T15:49:14Z"
 status: draft
 dependsOn:
-- https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
+- https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-librarian-skill
 about:
-  - https://lokf-agent-skills.example/knowledge/glossary/trust-label
+  - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T15:49:14Z"

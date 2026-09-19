@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
+id: https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 title: Agent Skills specification
 description: The specification defining a skill directory - a required SKILL.md with name/description frontmatter, plus optional scripts/, references/, and assets/.
 genre: reference

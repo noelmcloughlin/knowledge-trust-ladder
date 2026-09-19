@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://lokf-agent-skills.example/knowledge/policies/versioning
+id: https://knowledge-trust-ladder.example/knowledge/policies/versioning
 title: Versioning policy
 description: One repository-level semantic version covering all four skills, released together under a single tag, with patch/minor/major computed from Conventional Commits rather than hand-picked.
 genre: reference
@@ -10,7 +10,7 @@ generated:
   at: "2026-09-14T16:00:00Z"
 status: draft
 about:
-  - https://lokf-agent-skills.example/knowledge/playbooks/releasing
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T14:02:11Z"

@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **This repository is now `knowledge-trust-ladder`**, formerly `lokf-agent-skills`. Upstream LOKF ships its own bundled skills, and a third-party repository named after the format read as their official home.
+- **The four skill names are unchanged** - `lokf-sidecar`, `lokf-librarian`, `lokf-curator`, `lokf-docent` - because they are installed paths in every host. GitHub redirects the old clone and `npx skills add` paths.
+- **`LOKF_SKILLS_REPO` moves with the repository**, so a host's scheduled librarian installs from the new name. A host that copied the template earlier keeps working through the redirect until it copies again.
+- **The bundle's `base_iri` is `https://knowledge-trust-ladder.example/knowledge/`**, which re-ids all 30 concepts and every typed-relation target.
+- **The repository contract refuses the old name** (check 16). A branch written before the rename merges without conflict and the old name simply reappears, so the check names the files; `CHANGELOG.md` history and one "formerly" line each in `README.md` and the bundle's log are the exceptions.
+
 ## [0.19.5] - 2026-09-19
 
 ### Security

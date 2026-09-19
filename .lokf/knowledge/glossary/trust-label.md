@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://lokf-agent-skills.example/knowledge/glossary/trust-label
+id: https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 title: Trust label
 definition: The plain-language phrase a skill uses for how far a concept has been checked - "confirmed by a person", "checked by automation only", "nobody has checked this yet" - derived from frontmatter, never stored.
 genre: reference
@@ -10,9 +10,9 @@ generated:
   at: "2026-09-17T15:49:14Z"
 status: draft
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/okf-specification
+- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 about:
-  - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
+  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T15:49:14Z"

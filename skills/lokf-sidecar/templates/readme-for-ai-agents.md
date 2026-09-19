@@ -1,7 +1,7 @@
 > **Two ways in.** This README is one; the other is a docent. Install
-> [`lokf-docent`](https://github.com/noelmcloughlin/lokf-agent-skills) into
+> [`lokf-docent`](https://github.com/noelmcloughlin/knowledge-trust-ladder) into
 > whatever agent you already use -
-> `npx skills add noelmcloughlin/lokf-agent-skills --skill lokf-docent --yes` -
+> `npx skills add noelmcloughlin/knowledge-trust-ladder --skill lokf-docent --yes` -
 > and ask it anything about this project. It answers from `.lokf/knowledge/`,
 > the checked part of what the project knows, says how far each answer has been
 > trusted (still a draft, checked by automation only, or confirmed by a named

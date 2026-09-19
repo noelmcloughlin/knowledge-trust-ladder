@@ -1,5 +1,16 @@
 # Change Log
 
+## 2026-09-19
+
+* **Repository renamed to `knowledge-trust-ladder`**, from `lokf-agent-skills`,
+  because upstream LOKF now ships its own bundled skills and a third-party
+  repository named after the format read as their official home. The bundle's
+  `base_iri` moves with it, re-iding all 30 concepts and every typed-relation
+  target in one mechanical pass; no `verified` event changed, so nothing a
+  person confirmed was touched. Concepts naming the repository in prose, its
+  GitHub URL, or the card asset were rewritten by the same pass. The four
+  skill names stay as they are: they are installed paths in every host.
+
 ## 2026-09-18
 
 * **Curation**: unauthenticated session (no `gh` login, so only
@@ -669,13 +680,13 @@
 * **Orphan sweep**: `LICENSE`, `llms.txt`, and `EXAMPLES.md` had no
   source-map row; added one, all three staying excluded as concepts (see
   `playbooks/knowledge-sources.md` for why).
-* **Initialization**: Scaffolded the LOKF bundle for LOKF Agent Skills, then
+* **Initialization**: Scaffolded the LOKF bundle for Knowledge Trust Ladder, then
   ran a bootstrap discovery pass over the repository. Populated it with 25
   concepts: 8 playbooks (the four skills, the source map, contributing,
   releasing, repository validation), 7 references (the LOKF, OKF and Agent
   Skills specifications, the lokf toolkit, LinkML, and the two installer
   CLIs), 4 glossary terms, 4 policies, and 2 explanations. `base_iri` is a
-  placeholder (`lokf-agent-skills.example`) pending a namespace the project
+  placeholder (`knowledge-trust-ladder.example`) pending a namespace the project
   controls.
 * **Removed**: the scaffolded `services/` directory and its two dummy
   concepts - this repository ships documentation, agent skills, and CI, and
@@ -683,7 +694,7 @@
 * **Steady-state refresh**: re-verified all 17 internal-resource concepts
   against their current files (no factual drift found) and added a
   `process:lokf-librarian` `verified` event to each. Consciously excluded a
-  new decorative asset, `.assets/lokf-agent-skills-card.svg`, recording it
+  new decorative asset, `.assets/knowledge-trust-ladder-card.svg`, recording it
   in `playbooks/knowledge-sources.md` instead of as a concept.
 * **Audit**: `uv run lokf validate knowledge` (previously unavailable) found
   12 of 25 concepts using a bare scalar on a multivalued relation slot

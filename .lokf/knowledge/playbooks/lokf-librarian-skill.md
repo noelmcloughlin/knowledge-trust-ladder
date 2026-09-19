@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-librarian-skill
 title: lokf-librarian skill
 description: Recurring procedure that scrapes the host repository, derives and maintains the .lokf/ concepts and their typed relations, audits the bundle, and hands off for human review.
 genre: how-to
@@ -10,14 +10,14 @@ generated:
   at: "2026-09-17T23:05:00Z"
 status: draft
 dependsOn:
-- https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
+- https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-sidecar-skill
 about:
-  - https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
+  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
-  - https://lokf-agent-skills.example/knowledge/references/lokf-specification
-  - https://lokf-agent-skills.example/knowledge/references/okf-specification
+  - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
+  - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T23:05:00Z"

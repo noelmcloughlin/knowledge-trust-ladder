@@ -4,7 +4,7 @@
 
 ## Reporting a vulnerability
 
-Use GitHub's [private vulnerability reporting](https://github.com/noelmcloughlin/lokf-agent-skills/security/advisories/new), not a public issue or a pull request. Say which file is affected and why it is exploitable, and, for a template that gets copied into other repositories, whether the issue is in the template itself or appears only after a consumer customizes it. One person maintains this repository: expect a first reply in days, not hours, and no bounty.
+Use GitHub's [private vulnerability reporting](https://github.com/noelmcloughlin/knowledge-trust-ladder/security/advisories/new), not a public issue or a pull request. Say which file is affected and why it is exploitable, and, for a template that gets copied into other repositories, whether the issue is in the template itself or appears only after a consumer customizes it. One person maintains this repository: expect a first reply in days, not hours, and no bounty.
 
 ## Supported versions
 

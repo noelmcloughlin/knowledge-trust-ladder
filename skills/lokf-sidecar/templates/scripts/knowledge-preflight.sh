@@ -149,7 +149,7 @@ if [ "$ingit" -eq 1 ]; then
     if [ "$fmt" = ssh ]; then have ssh-keygen || warn signing "gpg.format is ssh but ssh-keygen is not installed - commits will fail to sign"
     else have gpg || warn signing "gpg.format is $fmt but gpg is not installed - commits will fail to sign"; fi
   else
-    warn signing "commit signing off - a curation pull request you open yourself fails the gate (docs/signing-commits.md in lokf-agent-skills)"
+    warn signing "commit signing off - a curation pull request you open yourself fails the gate (docs/signing-commits.md in knowledge-trust-ladder)"
   fi
 fi
 

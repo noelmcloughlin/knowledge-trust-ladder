@@ -1,4 +1,4 @@
-# LOKF Agent Skills
+# Knowledge Trust Ladder
 
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
@@ -8,10 +8,10 @@
 Four [Agent Skills](https://agentskills.io/home) that turn a repository's scattered knowledge into a maintained, trusted asset using **[LOKF](https://lokf.nolan-nichols.com/)** (Linked Open Knowledge Format) - a semantic profile of OKF in which a plain folder of Markdown concept files carries enough meaning to be validated by schema, queried as a graph, and read by people and agents alike. The [`lokf` toolkit](https://pypi.org/project/lokf) supplies the schema and the tooling. **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
 <p align="center">
-  <img src=".assets/lokf-agent-skills-card.svg" alt="LOKF Agent Skills: from OKF's prose and structure to LOKF's meaning, schema and tools, kept by a librarian, a curator and a docent" width="720" />
+  <img src=".assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: from OKF's prose and structure to LOKF's meaning, schema and tools, kept by a librarian, a curator and a docent" width="720" />
 </p>
 
-> **Prefer to ask?** Install the docent skill into any agent you already use - `npx skills add noelmcloughlin/lokf-agent-skills --skill lokf-docent --yes` - and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. [docs/examples/docent.md](docs/examples/docent.md) shows eight such answers, captured, not invented. **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
+> **Prefer to ask?** Install the docent skill into any agent you already use - `npx skills add noelmcloughlin/knowledge-trust-ladder --skill lokf-docent --yes` - and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. [docs/examples/docent.md](docs/examples/docent.md) shows eight such answers, captured, not invented. **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
 
 ## Why libraries have catalogues
 
@@ -82,6 +82,10 @@ The labels are computed from the frontmatter on every read, never stored, so the
 
 ## Install
 
+> Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
+> `npx skills add` paths, so an existing install keeps working; the skill
+> names are unchanged.
+
 **Install what you need - each skill stands alone.** The sidecar plus the librarian is enough to see the idea: the bundle gets built, everything in it marked a draft. Add the curator once there is a bundle worth trusting. Already have a healthy `.lokf/`? Skip the sidecar skill. The docent goes anywhere an agent only *reads* a bundle, this repository included.
 
 **What each skill needs.** Every skill runs from a POSIX shell and starts with a preflight that prints what this machine can do and which steps that disables. The sidecar and the librarian need [`uv`](https://docs.astral.sh/uv/) for the `lokf` toolkit; the curator needs this machine signed in to the forge (`gh` or `glab`) to record a confirmation in your name, and signed commits when you open your own curation pull requests ([docs/signing-commits.md](docs/signing-commits.md)); the docent needs nothing. Someone who cannot act on a line the preflight prints - a curator who knows the subject, not the repository - gets a request note for whoever set the repository up, from the sidecar's [prerequisites page](skills/lokf-sidecar/references/prerequisites.md).
@@ -89,10 +93,10 @@ The labels are computed from the frontmatter on every read, never stored, so the
 **GitHub CLI** ([`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+):
 
 ```bash
-gh skill install noelmcloughlin/lokf-agent-skills lokf-sidecar
-gh skill install noelmcloughlin/lokf-agent-skills lokf-librarian
-gh skill install noelmcloughlin/lokf-agent-skills lokf-curator
-gh skill install noelmcloughlin/lokf-agent-skills lokf-docent
+gh skill install noelmcloughlin/knowledge-trust-ladder lokf-sidecar
+gh skill install noelmcloughlin/knowledge-trust-ladder lokf-librarian
+gh skill install noelmcloughlin/knowledge-trust-ladder lokf-curator
+gh skill install noelmcloughlin/knowledge-trust-ladder lokf-docent
 ```
 
 All four skills release together under one tag, so pin them to the same one: append it to the skill name (`lokf-docent@v0.16.0`) or pass `--pin v0.16.0`.
@@ -100,7 +104,7 @@ All four skills release together under one tag, so pin them to the same one: app
 **Open Skills CLI** ([`npx skills`](https://github.com/vercel-labs/skills)):
 
 ```bash
-npx skills add noelmcloughlin/lokf-agent-skills \
+npx skills add noelmcloughlin/knowledge-trust-ladder \
   --skill lokf-sidecar \
   --skill lokf-librarian \
   --skill lokf-curator \
@@ -125,6 +129,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md); the tree is in [docs/repository-layout.m
 - The [LinkML Community](https://linkml.io/), creators of [LinkML](https://linkml.io/linkml/), the schema language LOKF is written in.
 - [Google Cloud](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing), creator of the Open Knowledge Format (OKF) specification that LOKF profiles.
 - [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), a pattern for building personal knowledge bases with LLMs.
+
+This is an independent project. It is not affiliated with, endorsed by, or an
+official distribution of LOKF or of the Open Knowledge Format. "LOKF" and
+"Linked Open Knowledge Format" refer to the format and toolkit published by
+Nolan Nichols; "OKF" and "Open Knowledge Format" to the specification
+published by Google Cloud. Both are used here as descriptors, under their own
+open terms.
 
 ## License
 

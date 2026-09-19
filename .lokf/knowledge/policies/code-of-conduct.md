@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://lokf-agent-skills.example/knowledge/policies/code-of-conduct
+id: https://knowledge-trust-ladder.example/knowledge/policies/code-of-conduct
 title: Code of conduct
 description: Contributor Covenant v2.1 - the behavioural standards for issues, pull requests, and discussions, and how to report unacceptable behaviour.
 genre: reference

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Repository-contract checks for the lokf-agent-skills distribution
+# Repository-contract checks for the knowledge-trust-ladder distribution
 # repo. Separate from specification/Markdown checks (workflows/validate.yml
 # runs those as their own jobs) so failures are easy to diagnose.
 set -euo pipefail
@@ -180,7 +180,7 @@ else
 fi
 
 # 9. Three sibling repositories deep-link into files here by URL
-#    (github.com/noelmcloughlin/lokf-agent-skills/blob/main/<path>), and their
+#    (github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path>), and their
 #    link checks follow those for real. Moving or renaming one of these paths
 #    passes every check in this repo and breaks the build in obsidian-lokf-
 #    curator, and obsidian-lokf-registrar - (The mirror image happened on
@@ -223,7 +223,7 @@ else
   # self-links are not a sibling depending on us, and counting them reports
   # every page the skills link to internally. Skip them, and .venv, which is
   # only slow. (git-aware greps hide these via .gitignore; plain grep does not.)
-  mapfile -t linked < <(grep -rhoE 'https://github\.com/noelmcloughlin/lokf-agent-skills/blob/main/[^)"#[:space:]]+' \
+  mapfile -t linked < <(grep -rhoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/[^)"#[:space:]]+' \
     "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
     --exclude-dir=.claude --exclude-dir=.venv 2>/dev/null \
@@ -706,6 +706,32 @@ elif printf '%s\n' "${recent[@]}" | grep -qxF -- "$pin"; then
   ok "the librarian template pins $pin, one of this repository's two newest releases"
 else
   err "the librarian template pins LOKF_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
+fi
+
+# 16. The repository's old name stays gone. It was renamed from
+#     lokf-agent-skills on 2026-09-19, and a branch written before that merges
+#     without conflict - the old name simply reappears, in a clone URL or an
+#     `npx skills add` path that then depends on GitHub's redirect. Two places
+#     keep it on purpose: CHANGELOG.md's history and the README's "formerly"
+#     line. Anywhere else is a merge that predates the rename; run the same
+#     replacement over it.
+say ""
+say "Checking the old repository name has not come back..."
+old_name="lokf-agent-skills"
+mapfile -t stale < <(git grep -lI -- "$old_name" \
+                       ':!CHANGELOG.md' ':!scripts/validate-repository.sh' 2>/dev/null || true)
+unexpected=()
+for f in "${stale[@]}"; do
+  # The README and the bundle's log each name it once, as history.
+  if [[ "$f" == "README.md" || "$f" == ".lokf/knowledge/log.md" ]]; then
+    [[ "$(git grep -c -- "$old_name" -- "$f" | cut -d: -f2)" -le 1 ]] && continue
+  fi
+  unexpected+=("$f")
+done
+if [[ "${#unexpected[@]}" -eq 0 ]]; then
+  ok "no file outside CHANGELOG.md history reintroduces $old_name"
+else
+  err "these files name $old_name again, which this repository was renamed from: ${unexpected[*]} - a branch written before the rename was merged; replace $old_name with knowledge-trust-ladder there (CHANGELOG.md history and one 'formerly' line each in README.md and the bundle's log.md are the exceptions)"
 fi
 
 say ""

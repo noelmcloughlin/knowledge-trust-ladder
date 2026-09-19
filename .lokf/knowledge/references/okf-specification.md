@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://lokf-agent-skills.example/knowledge/references/okf-specification
+id: https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 title: OKF specification (v0.2)
 description: Google's Open Knowledge Format - a folder of Markdown concept files with YAML frontmatter, requiring only `type`, plus the v0.2 provenance, trust, and lifecycle families.
 genre: reference

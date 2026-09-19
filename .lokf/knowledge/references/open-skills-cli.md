@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://lokf-agent-skills.example/knowledge/references/open-skills-cli
+id: https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
 title: Open Skills CLI (npx skills)
 description: The vendor-neutral installer for agent skills, supporting GitHub, git, and local sources with repeatable --skill and --agent selection.
 genre: reference
@@ -10,7 +10,7 @@ generated:
   at: "2026-09-09T10:00:00Z"
 status: draft
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/agent-skills-specification
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 verified:
 - by: process:lokf-librarian
   at: "2026-09-09T17:00:00Z"

@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://lokf-agent-skills.example/knowledge/playbooks/knowledge-sources
+id: https://knowledge-trust-ladder.example/knowledge/playbooks/knowledge-sources
 title: Knowledge sources
 description: Map of the repository locations this bundle was derived from, and how to re-check each on a future refresh.
 genre: how-to
@@ -74,7 +74,7 @@ stale_after: 2027-09-10
 - **Maintainer edits (2026-09-14, after the ninth pass)**, not a refresh: the
   README count the ninth pass flagged is fixed - the tree moved to
   `docs/repository-layout.md` and says three - and every page and record
-  that counted four LOKF repositories now counts three (`lokf-agent-skills`,
+  that counted four LOKF repositories now counts three (`knowledge-trust-ladder`,
   LOKF Registrar, LOKF Curator; a host that installs the skills is not one).
   Prose counts of LOKF's classes and relations left `README.md`, `docs/` and
   the skills' references, so the sixth pass's "grep for the number" lesson
@@ -339,7 +339,7 @@ stale_after: 2027-09-10
 - **Steady-state refresh (2026-09-09, first pass)**: re-verified all 17
   internal-resource concepts against their current files - all still
   accurate; no body changes needed. Consciously skipped
-  `.assets/lokf-agent-skills-card.svg`, a new decorative image added to
+  `.assets/knowledge-trust-ladder-card.svg`, a new decorative image added to
   `README.md` since the bootstrap pass: it carries no reusable knowledge, so
   it gets a source-map row (above) instead of a concept, the same treatment
   as `.markdownlint-cli2.jsonc`/`lychee.toml`.
@@ -372,7 +372,7 @@ stale_after: 2027-09-10
 - **No `Person`/`Organization` concept.** The maintainer is recorded once as
   the bundle's `publisher` in `index.md`; nothing else links to a person, and
   the skill says to add such concepts only when something does.
-- **`base_iri` is a placeholder** (`lokf-agent-skills.example`, an RFC 2606
+- **`base_iri` is a placeholder** (`knowledge-trust-ladder.example`, an RFC 2606
   reserved domain) pending a namespace the project actually controls. It mints
   every concept `@id` here, so migrating it later rewrites all of them - cheap
   now, expensive once anything external links in.

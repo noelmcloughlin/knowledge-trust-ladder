@@ -1,4 +1,4 @@
-# LOKF sidecar for LOKF Agent Skills.
+# LOKF sidecar for Knowledge Trust Ladder.
 #
 # A small Python "sidecar" that lets this repo validate and project its
 # knowledge/ bundle with the `lokf` toolkit. It does not affect the app build.
@@ -6,9 +6,9 @@
 #   uv sync             # install lokf into a local .venv
 #   just lokf-validate  # validate knowledge/ against the LOKF schema
 [project]
-name = "lokf-agent-skills-knowledge"
+name = "knowledge-trust-ladder-knowledge"
 version = "0.1.0"
-description = "LOKF knowledge-bundle tooling for LOKF Agent Skills."
+description = "LOKF knowledge-bundle tooling for Knowledge Trust Ladder."
 # Keep in sync with the `lokf` toolkit's own requires-python floor.
 requires-python = ">=3.10"
 dependencies = [

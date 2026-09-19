@@ -1069,7 +1069,7 @@ build = [
 ]
 
 [[package]]
-name = "lokf-agent-skills-knowledge"
+name = "knowledge-trust-ladder-knowledge"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

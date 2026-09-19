@@ -4,7 +4,7 @@ This covenant establishes community norms for responsible AI use in the project.
 
 It applies to the following repos central to the linked open knowledge mission:
 
-- <https://github.com/noelmcloughlin/lokf-agent-skills>
+- <https://github.com/noelmcloughlin/knowledge-trust-ladder>
 
 ## Core Principle: You Own Your Contributions
 
@@ -30,7 +30,7 @@ AI review tools (Claude, Copilot, CodeRabbit, etc.) provide **automated quality 
 
 ## AI-Assisted Discussions
 
-AI tools can be helpful **thinking aids** when preparing to participate in [issues](https://github.com/noelmcloughlin/lokf-agent-skills).
+AI tools can be helpful **thinking aids** when preparing to participate in [issues](https://github.com/noelmcloughlin/knowledge-trust-ladder).
 
 They may be used to:
 

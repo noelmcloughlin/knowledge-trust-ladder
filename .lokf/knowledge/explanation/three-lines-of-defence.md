@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://lokf-agent-skills.example/knowledge/explanation/three-lines-of-defence
+id: https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 title: Three lines of defence - where each role sits, and what an auditor can check
 description: Placing the librarian, curator, registrar, sidecar and docent roles in The Institute of Internal Auditors' Three Lines Model, with a diagram - who owns a claim, what a machine checks, and what a person can examine afterwards - the four limits on what that evidence shows, a pointer to the critics page, and what remains to do and who does it. The critics page quotes the model's critics (preliminary research) and says which of their points a LOKF bundle answers and what kind of gap each remainder is. Written for whoever adopts a bundle, not about this repository's own arrangements.
 genre: explanation
@@ -10,11 +10,11 @@ generated:
   at: "2026-09-17T15:49:14Z"
 status: draft
 about:
-- https://lokf-agent-skills.example/knowledge/explanation/why-four-roles
-- https://lokf-agent-skills.example/knowledge/explanation/why-a-registrar-role
+- https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
+- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 relatedTo:
-- https://lokf-agent-skills.example/knowledge/policies/ai-covenant
-- https://lokf-agent-skills.example/knowledge/glossary/trust-label
+- https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
+- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T15:49:14Z"

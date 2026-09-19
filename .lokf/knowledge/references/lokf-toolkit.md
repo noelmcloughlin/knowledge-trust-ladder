@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://lokf-agent-skills.example/knowledge/references/lokf-toolkit
+id: https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 title: LOKF toolkit (lokf on PyPI)
 description: The Python package that validates, converts, and serves a LOKF bundle - the dependency the scaffolded .lokf/pyproject.toml declares.
 genre: reference
@@ -10,9 +10,9 @@ generated:
   at: "2026-09-17T22:30:00Z"
 status: draft
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/lokf-specification
+- https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
 relatedTo:
-- https://lokf-agent-skills.example/knowledge/references/linkml
+- https://knowledge-trust-ladder.example/knowledge/references/linkml
 verified:
 - by: process:lokf-librarian
   at: "2026-09-17T22:30:00Z"

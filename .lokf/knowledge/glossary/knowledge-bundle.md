@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://lokf-agent-skills.example/knowledge/glossary/knowledge-bundle
+id: https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 title: Knowledge bundle
 definition: The `.lokf/` sidecar itself - a directory of one-concept-per-file Markdown under `knowledge/`, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph.
 genre: reference
@@ -9,7 +9,7 @@ generated:
   by: process:lokf-librarian
   at: "2026-09-13T12:00:00Z"
 about:
-  - https://lokf-agent-skills.example/knowledge/glossary/lokf
+  - https://knowledge-trust-ladder.example/knowledge/glossary/lokf
 status: draft
 verified:
 - by: process:lokf-librarian

@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://lokf-agent-skills.example/knowledge/explanation/why-four-roles
+id: https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
 title: Why four skill roles rather than one skill
 description: Why deriving, confirming, and reading knowledge are separated into four distinct skill roles - schema checks can make a bundle consistent, but only a person can make it trusted. A fifth, non-skill role (the registrar) also exists - see why-a-registrar-role.md.
 genre: explanation
@@ -10,14 +10,14 @@ generated:
   at: "2026-09-10T12:00:00Z"
 status: draft
 about:
-  - https://lokf-agent-skills.example/knowledge/playbooks/lokf-sidecar-skill
-  - https://lokf-agent-skills.example/knowledge/playbooks/lokf-librarian-skill
-  - https://lokf-agent-skills.example/knowledge/playbooks/lokf-curator-skill
-  - https://lokf-agent-skills.example/knowledge/playbooks/lokf-docent-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-sidecar-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-librarian-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-curator-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-docent-skill
 references:
-  - https://lokf-agent-skills.example/knowledge/glossary/trust-label
+  - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 relatedTo:
-- https://lokf-agent-skills.example/knowledge/explanation/why-a-registrar-role
+- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 verified:
 - by: process:lokf-librarian
   at: "2026-09-16T09:10:00Z"

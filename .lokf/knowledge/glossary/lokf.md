@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://lokf-agent-skills.example/knowledge/glossary/lokf
+id: https://knowledge-trust-ladder.example/knowledge/glossary/lokf
 title: LOKF
 definition: Linked Open Knowledge Format - a semantic profile of OKF in which every field, type, and relationship is bound to a public vocabulary, so the same Markdown expands losslessly to JSON-LD and RDF.
 abbreviation: LOKF
@@ -11,9 +11,9 @@ generated:
   at: "2026-09-09T10:00:00Z"
 status: draft
 definedBy:
-- https://lokf-agent-skills.example/knowledge/references/lokf-specification
+- https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
 relatedTo:
-- https://lokf-agent-skills.example/knowledge/glossary/okf
+- https://knowledge-trust-ladder.example/knowledge/glossary/okf
 verified:
 - by: process:lokf-librarian
   at: "2026-09-16T09:10:00Z"
