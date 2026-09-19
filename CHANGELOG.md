@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The relation audit uses the toolkit's own flag.** `just lokf-check-refs` ran a hand-written SPARQL query; both justfiles and both registrar workflows now call `lokf validate --check-refs`.
+- **An external `source` or `definedBy` is no longer a dangling target.** Both slots are documented as taking an off-site URL; the query reported them as missing concepts.
+- **The predicate list cannot go stale again.** `--check-refs` reads the relation slots from the schema, so reified `relations` and a domain schema's own slots are covered too.
+- **The registrar gate validates once.** `--check-refs` rides on the existing validate step, replacing a second `lokf validate` run through `uvx --from rust-just just`.
+- **A domain schema passes `--schema` to `lokf-check-refs` too.** The librarian's recipe said that audit was unaffected by one, which stopped being true when it moved onto `lokf validate`.
+
 ## [0.19.7] - 2026-09-19
 
 ### Fixed

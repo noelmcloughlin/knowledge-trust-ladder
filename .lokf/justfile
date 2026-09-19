@@ -13,7 +13,10 @@ default:
 lokf-install:
     uv sync
 
-# Assemble and validate the knowledge bundle against the LOKF schema
+# Assemble and validate the knowledge bundle against the LOKF schema.
+# A bundle that extends the vocabulary with a domain schema passes it here as
+# `--schema <slug>.yaml` (and in both workflows' validate steps);
+# see lokf-librarian/references/domain-schema.md for the recipe.
 lokf-validate:
     uv run lokf validate {{ bundle }}
 
@@ -26,21 +29,14 @@ lokf-serve:
     uv run lokf serve {{ bundle }}
 
 # Audit: every typed-relation target must resolve to a concept in the bundle.
-# lokf validate only checks frontmatter/bundle shape, not cross-concept
-# references, so a fabricated or stale target passes it silently - this
-# closes that gap with the same SPARQL interface `lokf-serve` exposes.
+# Schema validation alone reads a fabricated or stale IRI as a valid string.
+# --check-refs (lokf 0.8.0+) takes the relation slots from the schema, so
+# reified `relations` entries and a domain schema's own slots are covered too;
+# a host with a domain schema passes `--schema <slug>.yaml` here as well as on
+# lokf-validate. Targets outside base_iri are left alone - `source` and
+# `definedBy` are documented as taking an external resource.
 lokf-check-refs:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    q='SELECT DISTINCT ?target WHERE { ?s ?p ?target . FILTER(?p IN (dcterms:isPartOf, schema:hasPart, dcterms:references, dcterms:requires, prov:wasDerivedFrom, schema:about, schema:sameAs, dcterms:relation, rdfs:isDefinedBy, dcterms:source)) FILTER(isIRI(?target)) FILTER NOT EXISTS { ?target a ?anytype } }'
-    dangling="$(uv run lokf query {{ bundle }} "$q" --format csv | tail -n +2)"
-    if [ -z "$dangling" ]; then
-      echo "OK - every typed-relation target resolves to a concept in the bundle."
-    else
-      echo "FAIL - relation target(s) with no matching concept in the bundle:"
-      echo "$dangling"
-      exit 1
-    fi
+    uv run lokf validate --check-refs {{ bundle }}
 
 # The knowledge_bundle doorway: the bundle under an ordinary, visible name at the
 # host root, for folder pickers and file managers that hide dot-folders and, for

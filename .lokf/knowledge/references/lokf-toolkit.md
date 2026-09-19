@@ -26,9 +26,11 @@ checks against a domain schema that imports LOKF's instead, which is the flag
 the extension recipe rests on; the generated SHACL shapes
 catch cardinality, datatype, and range violations on the projected graph;
 `lokf convert` projects to RDF and `lokf serve` exposes a SPARQL endpoint.
-`lokf query` runs a SPARQL query against the bundle and is what this
-repository's own `just lokf-check-refs` recipe uses to find typed-relation
-targets with no matching concept - a gap `lokf validate` doesn't cover.
+`lokf query` runs a SPARQL query against the bundle. Typed-relation targets
+with no matching concept are `lokf validate --check-refs`, which this
+repository's own `just lokf-check-refs` recipe now calls: it takes the
+relation slots from the schema, so a domain schema's own slots are covered
+without the recipe restating a predicate list.
 
 Scaffolded bundles pin `lokf[build]`, and that `[build]` extra pulls in the full
 `linkml` package - so every sidecar already has the LinkML generators available

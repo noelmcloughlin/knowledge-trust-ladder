@@ -2,6 +2,17 @@
 
 ## 2026-09-19
 
+* **The relation audit moved onto the toolkit's own flag.** `just lokf-check-refs`
+  ran a hand-written SPARQL query naming ten predicates, which had drifted
+  against the schema and reported an external `source:` or `definedBy:` URL -
+  correct usage for both slots - as a dangling target. Both justfiles and both
+  registrar workflows now call `lokf validate --check-refs`, so the slot list
+  comes from the schema and the gate validates once instead of twice. The two
+  plugin repositories had already made this change in their own copies; the
+  template was the last holdout, which is what their preflight `copies` line
+  was reporting. `references/lokf-toolkit.md` no longer says the recipe runs
+  a SPARQL query.
+
 * **Repository renamed to `knowledge-trust-ladder`**, from `lokf-agent-skills`,
   because upstream LOKF now ships its own bundled skills and a third-party
   repository named after the format read as their official home. The bundle's

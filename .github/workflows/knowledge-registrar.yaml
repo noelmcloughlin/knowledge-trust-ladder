@@ -55,8 +55,14 @@ jobs:
         run: uv sync
         working-directory: .lokf
 
-      - name: Validate the knowledge bundle
-        run: uv run lokf validate knowledge
+      # A typed relation whose target is no concept in the bundle is still a
+      # well-formed IRI, so schema validation alone passes it. --check-refs
+      # resolves every target in the bundle's own namespace, taking the
+      # relation slots from the schema. It is part of `lokf validate`, so it
+      # rides on this step rather than validating the same bundle twice. A
+      # host with a domain schema passes `--schema` here too.
+      - name: Validate the knowledge bundle and its relation targets
+        run: uv run lokf validate --check-refs knowledge
         working-directory: .lokf
 
       # `lokf validate` reads a concept body as an opaque string and never
@@ -68,14 +74,6 @@ jobs:
       # the rule in prose.
       - name: Check the conventions lokf validate cannot see
         run: bash scripts/knowledge-conventions.sh knowledge
-        working-directory: .lokf
-
-      # A typed relation whose target is not a concept in the bundle is still
-      # a well-formed IRI, so `lokf validate` passes it. The justfile's
-      # lokf-check-refs recipe closes that gap with a SPARQL query; `just`
-      # itself comes from PyPI through uvx so the runner needs nothing else.
-      - name: Every typed-relation target resolves to a concept
-        run: uvx --from 'rust-just==1.47.0' just lokf-check-refs
         working-directory: .lokf
 
   provenance:
