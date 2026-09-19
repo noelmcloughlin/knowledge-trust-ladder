@@ -68,7 +68,7 @@ jobs:
       - name: Install the pinned lokf-librarian skill
         env:
           TRUST_LADDER_SKILLS_REPO: https://github.com/noelmcloughlin/knowledge-trust-ladder
-          TRUST_LADDER_SKILLS_REF: v0.19.7 # the one pin; point your docs here instead of repeating it
+          TRUST_LADDER_SKILLS_REF: v0.20.0 # the one pin; point your docs here instead of repeating it
         run: |
           set -euo pipefail
           tmp="$(mktemp -d)"

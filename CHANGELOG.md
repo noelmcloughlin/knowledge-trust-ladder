@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-09-19
+
 ### Added
 
 - **Skill descriptions end in a `Keywords:` list.** Skills catalogs have no tag field: `gh skill search` matches name and description, and skills.sh matches file text. OKF, Open Knowledge Format, knowledge graph, provenance and trust ladder now find these skills. Check 3c holds the list, and the spec's 1024 characters.
