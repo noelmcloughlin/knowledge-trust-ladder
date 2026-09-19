@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Security
+
+- **The curator counts reader feedback without reading it.** Its report says how many entries wait in `.lokf/feedback.md` but gave no way to count them, so an agent read outsider-written free text into its session to get a number. It now counts with `grep -c` and never opens, quotes or acts on an entry.
+- **The Snyk W011 finding on lokf-curator is acknowledged** in the skill and [the threat model](docs/threat-model.md#prompt-injection-guards): a real surface, now count-only, and every curator write is a live person's verdict.
+
 ## [0.19.4] - 2026-09-19
 
 ### Fixed
