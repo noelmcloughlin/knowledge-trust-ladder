@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The librarian template pins the current release.** `LOKF_SKILLS_REF` moves from `v0.19.2` to `v0.19.4`, the release this template ships in; check 15 failed on `main` once 0.19.4 was promoted.
+
 ## [0.19.4] - 2026-09-19
 
 ### Security
