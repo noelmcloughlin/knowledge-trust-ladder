@@ -7,7 +7,7 @@
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-A repository's scattered knowledge, kept as a **collection** - catalogued, authenticated and explained, with the trust in every claim left visible. Four [Agent Skills](https://agentskills.io/home) keep it, registrar automation serves the desk - checking every record and guarding every confirmation, in CI on each pull request - and the [`lokf` toolkit](https://pypi.org/project/lokf) underneath supplies the schema and the tooling. Two [Obsidian](https://obsidian.md/) plugins are optional, for a desk with no CI.
+Any repository's scattered knowledge, kept as a **collection** - catalogued, authenticated and explained, with the trust in every claim left visible. Four [Agent Skills](https://agentskills.io/home) keep it, registrar automation serves the desk - checking every record and guarding every confirmation, in CI on each pull request - and the [`lokf` toolkit](https://pypi.org/project/lokf) underneath supplies the schema and the tooling. Two [Obsidian](https://obsidian.md/) plugins are optional, for a desk with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
