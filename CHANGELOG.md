@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The librarian template pins `v0.19.7`**, the release it ships in. It pinned `v0.19.6` because `v0.20.0`'s tag did not exist while that release was being published; a host scaffolded now installs the current librarian.
+
 ## [0.20.0] - 2026-09-19
 
 ### Changed
