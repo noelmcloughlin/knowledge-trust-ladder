@@ -10,25 +10,31 @@
   person confirmed was touched. Concepts naming the repository in prose, its
   GitHub URL, or the card asset were rewritten by the same pass. The four
   skill names stay as they are: they are installed paths in every host.
+  Entries below this day keep the name the project had when they were
+  written, as `CHANGELOG.md` does: a log that renames its own past is no
+  longer a record of what happened.
 
 * **The README states the architectural claim, and a logo joins the assets.**
   A short section near the top quotes OKF's fourth goal - fields that make a
   corpus trustable "without prescribing any runtime" - and says this is such
-  a runtime, then names the domain-schema practice OKF puts out of scope as
-  something this project carries (when, who decides, how). New
+  a runtime, then says the domain schemas OKF puts out of scope are in scope
+  here by construction, pointing at the curator's domain-schemas page for the
+  flag and the recipe. New
   `.assets/knowledge-trust-ladder-logo.svg`, three rungs in the trust
   ladder's own grey, amber and blue, shared byte-for-byte with both plugin
   repositories; `lokf-trust-ladder.svg` renamed
   `trust-ladder.svg`, since the old name now reads as the project's rather
   than the diagram's. The source-map row for `.assets/*.svg` covers both.
 
-* **The README became a front door.** 2,038 words to 1,676: the opening
+* **The README became a front door.** Much the same length - 1,792 words to
+  1,864 - and a different shape: the opening
   sentence carried four link-bearing clauses before saying what the project
   does, and the install commands - two code blocks, a prerequisites paragraph
   and the pinning rule - sat in the middle of the narrative. Commands moved to
   a new `docs/install.md`, leaving one `npx skills add` line; the closing
-  sections collapsed into one `Read on` table. The source-map row now names
-  the new page.
+  sections collapsed into one `Read on` table. What the space bought: the
+  runtime claim, the context layer the bundle is, and the schema-first order
+  of work. The source-map row now names the new page.
 
 * **The logo carries knowledge and trust, not just a ladder.** The first mark
   was three rungs alone: it drew *ladder* and left the other two words to the
@@ -729,13 +735,13 @@
 * **Orphan sweep**: `LICENSE`, `llms.txt`, and `EXAMPLES.md` had no
   source-map row; added one, all three staying excluded as concepts (see
   `playbooks/knowledge-sources.md` for why).
-* **Initialization**: Scaffolded the LOKF bundle for Knowledge Trust Ladder, then
+* **Initialization**: Scaffolded the LOKF bundle for LOKF Agent Skills, then
   ran a bootstrap discovery pass over the repository. Populated it with 25
   concepts: 8 playbooks (the four skills, the source map, contributing,
   releasing, repository validation), 7 references (the LOKF, OKF and Agent
   Skills specifications, the lokf toolkit, LinkML, and the two installer
   CLIs), 4 glossary terms, 4 policies, and 2 explanations. `base_iri` is a
-  placeholder (`knowledge-trust-ladder.example`) pending a namespace the project
+  placeholder (`lokf-agent-skills.example`) pending a namespace the project
   controls.
 * **Removed**: the scaffolded `services/` directory and its two dummy
   concepts - this repository ships documentation, agent skills, and CI, and
@@ -743,7 +749,7 @@
 * **Steady-state refresh**: re-verified all 17 internal-resource concepts
   against their current files (no factual drift found) and added a
   `process:lokf-librarian` `verified` event to each. Consciously excluded a
-  new decorative asset, `.assets/knowledge-trust-ladder-card.svg`, recording it
+  new decorative asset, `.assets/lokf-agent-skills-card.svg`, recording it
   in `playbooks/knowledge-sources.md` instead of as a concept.
 * **Audit**: `uv run lokf validate knowledge` (previously unavailable) found
   12 of 25 concepts using a bare scalar on a multivalued relation slot
