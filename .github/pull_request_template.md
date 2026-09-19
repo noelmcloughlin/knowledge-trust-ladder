@@ -13,7 +13,9 @@
 - [ ] `bash scripts/validate-repository.sh` passes locally
 - [ ] `gh skill publish --dry-run` passes locally (or CI's `validate-skills` job is green)
 - [ ] If a file the sibling repositories deep-link moved (check 9 lists them), their links change too, with this side landing first
+- [ ] A changed template is copied over this repository's own copy (check 11)
 - [ ] `CHANGELOG.md` has a line or two under `[Unreleased]` if this changes skill behavior
+- [ ] If the commits would release, this pull request's title carries `feat:`, `fix:` or `security:` too
 - [ ] For a curation PR (confirmations under `.lokf/knowledge/`), the approver opened the sources named by every confirmation they approve
 
 ## AI Assistance
