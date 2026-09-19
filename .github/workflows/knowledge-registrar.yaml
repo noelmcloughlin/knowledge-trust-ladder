@@ -105,6 +105,24 @@ jobs:
     # also be a verified email on the account.
     #
     # If you genuinely cannot sign, see the `attestation` job below.
+    #
+    # SECURITY SCANNER NOTE - Snyk W011 "third-party content exposure /
+    # indirect prompt injection" is a FALSE POSITIVE for this job.
+    # This job reads github.event.pull_request fields and the pull request's
+    # reviews and commits from the GitHub API for one purpose: to verify that
+    # each person a new `human:<id>` confirmation names either approved this
+    # pull request or signed the commit that records it - the provenance and
+    # attestation check described above. It is a shell script only: no
+    # LLM, AI agent, or AI tool runs in this job, and nothing it reads is ever
+    # passed to one, so there is no prompt for injected content to reach.
+    # Untrusted input is also contained on its own terms:
+    #   - event fields reach the shell through `env:`, never by `${{ }}`
+    #     interpolation into a script (no script injection);
+    #   - API replies are reduced by `--jq` to logins, SHAs and a boolean;
+    #   - the one author-controlled string, `human:<id>` in a concept's
+    #     frontmatter, must match a login pattern before any use, and is
+    #     compared by fixed string only;
+    #   - token scope is read-only and no credential is persisted.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -123,6 +141,8 @@ jobs:
 
       - name: Every new human confirmation must come from that person
         id: check
+        # Pull-request data read here is covered by the SECURITY SCANNER NOTE
+        # on this job: no LLM or agent consumes it.
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -171,11 +191,17 @@ jobs:
             END { emit(); printf "%s", out }'
           }
           paths="$(mktemp)"
+          listed="$(mktemp)"  # every path git named under the bundle, quoted or not
           events_in() {  # ref, paths on stdin -> the human events of those paths at that ref, sorted
             { while IFS= read -r f; do git show "$1:$f" 2>/dev/null | human_events "$f" || true; done | sort; } || true
           }
+          # core.quotePath off: on, git C-quotes a name with a byte above
+          # 0x7f, `.md$` missed it and its events went unread. Git still
+          # quotes a name holding `"`, `\` or a control character, which no
+          # line reader can hold; $listed keeps every name so a quoted one
+          # is refused below rather than skipped.
           changed_actors() {  # base head -> actors of events at head that base does not hold
-            { git diff --name-only "$1" "$2" -- .lokf/knowledge knowledge_bundle | grep '\.md$' | sort -u > "$paths"
+            { git -c core.quotePath=false diff --name-only "$1" "$2" -- .lokf/knowledge knowledge_bundle | tee -a "$listed" | grep '\.md$' | sort -u > "$paths"
               events_in "$2" < "$paths" | comm -13 <(events_in "$1" < "$paths") - | cut -f2; } || true
           }
           # Against every parent: a merge that brings in another curator's
@@ -183,13 +209,20 @@ jobs:
           # held is read like any other commit - and without -m, git lists no
           # paths at all for a merge.
           new_in_commit() {  # sha -> actors of events at sha that none of its parents holds
-            { git diff-tree --no-commit-id --name-only -r -m "$1" -- .lokf/knowledge knowledge_bundle | grep '\.md$' | sort -u > "$paths"
+            { git -c core.quotePath=false diff-tree --no-commit-id --name-only -r -m "$1" -- .lokf/knowledge knowledge_bundle | tee -a "$listed" | grep '\.md$' | sort -u > "$paths"
               events_in "$1" < "$paths" | comm -13 <(for p in $(git rev-parse "$1^@"); do events_in "$p" < "$paths"; done | sort -u) - | cut -f2; } || true
           }
 
           base="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
 
           mapfile -t actors < <(changed_actors "$base" "$HEAD_SHA" | sort -u)
+
+          if grep -q '^"' "$listed"; then
+            echo "unreadable: git had to quote these bundle paths, so this gate cannot read them:"
+            grep '^"' "$listed" | sort -u | sed 's/^/  /'
+            echo "Rename them: no double quote, backslash or control character in a concept's path."
+            exit 1
+          fi
 
           if [ "${#actors[@]}" -eq 0 ]; then
             echo "No new human confirmations in this pull request."
@@ -284,8 +317,10 @@ jobs:
             echo "against its source, but neither an approval nor a signature of theirs"
             echo "backs them:"
             echo ""
+            # An id that failed the login pattern may hold a backtick, which
+            # would close this code span; the log line has it verbatim.
             for actor in "${unbacked[@]}"; do
-              printf -- "- \`human:%s\`\n" "$actor"
+              printf -- "- \`human:%s\`\n" "${actor//\`/}"
             done
           } >> "$GITHUB_STEP_SUMMARY"
 

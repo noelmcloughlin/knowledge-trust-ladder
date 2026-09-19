@@ -4,6 +4,17 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Security
+
+- **The provenance gates read a concept whatever its name.** Git's default quoting C-quotes a path holding a byte above 0x7f, so the `.md` filter in both gates dropped that concept and a `human:` confirmation inside it passed as "no new confirmations". `knowledge-registrar.yaml`'s `provenance` job and `knowledge-provenance.sh` now list paths with `core.quotePath` off.
+- **A path git still has to quote is refused, not skipped.** A double quote, a backslash or a control character in a name is a finding with the path named; check 13 proves both outcomes.
+- **The registrar's step summary strips backticks** from an id that failed the login pattern, so it cannot close the code span and render as Markdown.
+- **The Snyk W011 finding on lokf-sidecar is answered** in the `provenance` job's comments and [the threat model](docs/threat-model.md#prompt-injection-guards): the job reads pull-request metadata, and no agent runs in it.
+
+### Fixed
+
+- **An unauthenticated send-back is attributed to the session.** The curator's send-back note showed only the `human:<id>` shape, so a session with no `gh` login improvised a description of itself in the actor's place, and conventions rule 4 rejected every such note at the gate. The skill now says to write `process:lokf-curator` there.
+
 ## [0.19.3] - 2026-09-18
 
 ### Fixed

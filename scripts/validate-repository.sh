@@ -570,6 +570,12 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
     expect_pv "HEAD~1" 0 '^OK - 0 confirmation' "ignore an example event in a body code fence"
     printf -- '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: human:contract, at: "2026-09-17T00:00:00Z" }\n---\n' > "$k/gen.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'human generated, flow style, unsigned'
     expect_pv "HEAD~1" 1 'is unsigned' "read a flow-style human generated record as a claim"
+    # Names git would quote by default: a byte above 0x7f is read like any
+    # other concept; a double quote is refused. Neither is silently dropped.
+    confirmed contract > "$k/café.md" && pv_git add -A && pv_git commit -q -S -m 'utf-8 name, signed'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "read a concept whose name holds a byte above 0x7f"
+    confirmed contract > "$k/qu\"ote.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'quoted name, unsigned'
+    expect_pv "HEAD~1" 1 'cannot read' "refuse a concept path git has to quote rather than pass it unread"
     # A merge that brings in a confirmation its curator signed claims nothing;
     # one that adds an event neither side held is a claim by whoever merged.
     trunk="$(pv_git rev-parse --abbrev-ref HEAD)"
