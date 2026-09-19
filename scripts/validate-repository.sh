@@ -712,9 +712,10 @@ fi
 #     lokf-agent-skills on 2026-09-19, and a branch written before that merges
 #     without conflict - the old name simply reappears, in a clone URL or an
 #     `npx skills add` path that then depends on GitHub's redirect. Two places
-#     keep it on purpose: CHANGELOG.md's history and the README's "formerly"
-#     line. Anywhere else is a merge that predates the rename; run the same
-#     replacement over it.
+#     keep it on purpose: CHANGELOG.md's history, and one "formerly" line each
+#     in docs/install.md (it moved there with the install commands on
+#     2026-09-19) and the bundle's log. Anywhere else is a merge that predates
+#     the rename; run the same replacement over it.
 say ""
 say "Checking the old repository name has not come back..."
 old_name="lokf-agent-skills"
@@ -722,8 +723,8 @@ mapfile -t stale < <(git grep -lI -- "$old_name" \
                        ':!CHANGELOG.md' ':!scripts/validate-repository.sh' 2>/dev/null || true)
 unexpected=()
 for f in "${stale[@]}"; do
-  # The README and the bundle's log each name it once, as history.
-  if [[ "$f" == "README.md" || "$f" == ".lokf/knowledge/log.md" ]]; then
+  # The install page and the bundle's log each name it once, as history.
+  if [[ "$f" == "docs/install.md" || "$f" == ".lokf/knowledge/log.md" ]]; then
     [[ "$(git grep -c -- "$old_name" -- "$f" | cut -d: -f2)" -le 1 ]] && continue
   fi
   unexpected+=("$f")
@@ -731,7 +732,7 @@ done
 if [[ "${#unexpected[@]}" -eq 0 ]]; then
   ok "no file outside CHANGELOG.md history reintroduces $old_name"
 else
-  err "these files name $old_name again, which this repository was renamed from: ${unexpected[*]} - a branch written before the rename was merged; replace $old_name with knowledge-trust-ladder there (CHANGELOG.md history and one 'formerly' line each in README.md and the bundle's log.md are the exceptions)"
+  err "these files name $old_name again, which this repository was renamed from: ${unexpected[*]} - a branch written before the rename was merged; replace $old_name with knowledge-trust-ladder there (CHANGELOG.md history and one 'formerly' line each in docs/install.md and the bundle's log.md are the exceptions)"
 fi
 
 say ""

@@ -22,6 +22,37 @@
   `trust-ladder.svg`, since the old name now reads as the project's rather
   than the diagram's. The source-map row for `.assets/*.svg` covers both.
 
+* **The README became a front door.** 2,038 words to 1,676: the opening
+  sentence carried four link-bearing clauses before saying what the project
+  does, and the install commands - two code blocks, a prerequisites paragraph
+  and the pinning rule - sat in the middle of the narrative. Commands moved to
+  a new `docs/install.md`, leaving one `npx skills add` line; the closing
+  sections collapsed into one `Read on` table. The source-map row now names
+  the new page.
+
+* **The logo carries knowledge and trust, not just a ladder.** The first mark
+  was three rungs alone: it drew *ladder* and left the other two words to the
+  filename. The ladder now rises out of an open book (knowledge, in the
+  agent-green of the diagrams' key) and its top rung *is* the check mark in
+  the curator's blue - so the mark reads draft, checked, vouched-for from
+  bottom to top. Rails lightened to `#A8A69D` so the grey draft rung is not
+  read as structure. Every diagram now carries the mark and the wordmark in
+  its top-left corner, from one shared definition.
+
+* **The three-lines diagram was keyed against its own legend.** Its bands
+  coloured the first line green and the second blue, while the legend the
+  other diagrams share reads green for agent work, amber for deterministic
+  checks, blue for a named person - so the registrar, a program, sat in the
+  person's colour and the curator, a person, sat in the agent's. The bands are
+  now neutral panels and each card takes the colour of who acts. It also
+  gained the title and legend the rest of the family has.
+
+* **Text that collided with its own box.** A headless-Chrome pass measured
+  every `<text>` against the smallest rect containing it: six labels across
+  four diagrams overflowed or came within 2px, including one in the siblings'
+  two-vaults copy that was hidden behind a card it was painted before. Fixed
+  by shortening the labels, widening one card, and correcting the paint order.
+
 * **Assets restacked.** Every diagram's canvas was pure white while its cards
   were tinted, so the largest area was the brightest and the cards read as
   sunken rather than raised. The canvas is now `#E4E1D7` across all seven

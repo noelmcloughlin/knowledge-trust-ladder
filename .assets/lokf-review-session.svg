@@ -2,6 +2,7 @@
 <title id="t">The curator's review session</title>
 <desc id="d">Left, a queue titled Worth ten minutes today, up to five concepts ranked by what needs a person. Middle, the review card: the source opened beside the claim and its trust labels, then the question, does the source still say this, with Wrong send back focused by default. Right, the five verbs and what each writes into the concept: Confirm, Wrong send back, Wrong I corrected it, Retire, Later. A band below states that only the concept's frontmatter and one Curation line in log.md are written, nothing else, and there is no confirm-all. The same session runs in the lokf-curator skill and the LOKF Curator plugin.</desc>
 <rect width="720" height="412" fill="#E4E1D7"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#E4E1D7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Trust Ladder</text><!-- ktl-brand:end -->
 <text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#2C2C2A">The curator's review session</text>
 <rect x="20" y="48" width="680" height="272" rx="20" fill="#F1EFE8"/>
 <text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">One concept, one verb, one person's answer</text>
@@ -19,7 +20,7 @@
 <text x="60" y="226" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">most relied-upon first</text>
 <rect x="52" y="234" width="144" height="28" rx="6" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
 <text x="60" y="247" font-family="Arial, sans-serif" font-size="10.5" fill="#5F5E5A">draft, automation only</text>
-<text x="60" y="258" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66"></text>
+<text x="60" y="258" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">no person has looked</text>
 <rect x="52" y="266" width="144" height="28" rx="6" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
 <text x="60" y="279" font-family="Arial, sans-serif" font-size="10.5" fill="#5F5E5A">open questions</text>
 <text x="60" y="290" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">left by the librarian</text>
@@ -42,10 +43,10 @@
 <line x1="472" y1="196" x2="498" y2="196" stroke="#6E6D66" stroke-width="1.3"/><path d="M491.4 200.5 L498 196 L491.4 191.5" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="500" y="96" width="194" height="38" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
 <text x="510" y="111" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#0C447C">Confirm</text>
-<text x="510" y="125" font-family="Arial, sans-serif" font-size="9" fill="#0C447C">verified appended · draft cleared · review date</text>
+<text x="510" y="125" font-family="Arial, sans-serif" font-size="9" fill="#0C447C">verified event · draft cleared · review date</text>
 <rect x="500" y="138" width="194" height="38" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
 <text x="510" y="153" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#0C447C">Wrong - send back</text>
-<text x="510" y="167" font-family="Arial, sans-serif" font-size="9" fill="#0C447C">status: draft · your note under Open questions</text>
+<text x="510" y="167" font-family="Arial, sans-serif" font-size="9" fill="#0C447C">status: draft · note under Open questions</text>
 <rect x="500" y="180" width="194" height="38" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
 <text x="510" y="195" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#0C447C">Wrong - I corrected it</text>
 <text x="510" y="209" font-family="Arial, sans-serif" font-size="9" fill="#0C447C">records you as author, then confirms</text>

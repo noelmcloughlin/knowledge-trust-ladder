@@ -1,0 +1,56 @@
+# Install
+
+Four skills, each one standing alone. The sidecar plus the librarian is enough
+to see the idea: the bundle gets built, everything in it marked a draft. Add
+the curator once there is a bundle worth trusting. Already have a healthy
+`.lokf/`? Skip the sidecar. The docent goes anywhere an agent only *reads* a
+bundle, this repository included.
+
+> Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
+> `npx skills add` paths, so an existing install keeps working; the skill
+> names are unchanged.
+
+## GitHub CLI
+
+[`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+:
+
+```bash
+gh skill install noelmcloughlin/knowledge-trust-ladder lokf-sidecar
+gh skill install noelmcloughlin/knowledge-trust-ladder lokf-librarian
+gh skill install noelmcloughlin/knowledge-trust-ladder lokf-curator
+gh skill install noelmcloughlin/knowledge-trust-ladder lokf-docent
+```
+
+## Open Skills CLI
+
+[`npx skills`](https://github.com/vercel-labs/skills):
+
+```bash
+npx skills add noelmcloughlin/knowledge-trust-ladder \
+  --skill lokf-sidecar \
+  --skill lokf-librarian \
+  --skill lokf-curator \
+  --skill lokf-docent --yes
+```
+
+## Pinning
+
+All four skills release together under one tag, so pin them to the same one:
+append it to the skill name (`lokf-docent@v0.16.0`) or pass `--pin v0.16.0`.
+What each version level means: [releasing.md](releasing.md).
+
+## What each skill needs
+
+Every skill runs from a POSIX shell and starts with a preflight that prints
+what this machine can do and which steps that disables.
+
+| Skill | Needs |
+| --- | --- |
+| `lokf-sidecar`, `lokf-librarian` | [`uv`](https://docs.astral.sh/uv/), for the `lokf` toolkit |
+| `lokf-curator` | this machine signed in to the forge (`gh` or `glab`) to record a confirmation in your name, and signed commits when you open your own curation pull requests ([signing-commits.md](signing-commits.md)) |
+| `lokf-docent` | nothing |
+
+Someone who cannot act on a line the preflight prints - a curator who knows
+the subject, not the repository - gets a request note for whoever set the
+repository up, from the sidecar's
+[prerequisites page](../skills/lokf-sidecar/references/prerequisites.md).
