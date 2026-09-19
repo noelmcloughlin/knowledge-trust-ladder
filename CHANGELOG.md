@@ -6,24 +6,31 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
-- **The README says what this is, architecturally.** A short section near the top quotes OKF's fourth goal - the fields that make an agent-maintained corpus trustable "without prescribing any runtime" - and states that this is such a runtime; it then names the domain-schema practice OKF lists as a non-goal (when to reach for one, who decides, how) as something this project carries.
-- **A logo mark**, `.assets/knowledge-trust-ladder-logo.svg`: a ladder rising out of an open book, its top rung the check mark. The book is the diagrams' agent-green, the lower rungs grey then amber, the top rung the curator's blue - so the mark reads draft, checked, vouched-for from bottom to top, and carries all three words of the name rather than only "ladder". Shared byte-for-byte with both plugin repositories, and the mark to use for the repository avatar.
-- **Every diagram carries the mark and the wordmark** in its top-left corner, from one shared definition, so the set is recognisable away from the README. The social-preview card's title is now the wordmark and a one-line tagline in place of the bare repository slug.
-- **`docs/install.md`**, holding the `gh skill` commands, the per-skill prerequisites table and the pinning rule that used to sit mid-README.
+- **A logo mark**, `.assets/knowledge-trust-ladder-logo.svg`: a ladder rising out of an open book, its top rung the check mark, the rungs grey then amber then the curator's blue. Shared byte-for-byte with both plugin repositories, and the mark to use as the repository avatar.
+- **Every diagram carries the mark and the wordmark**, from one shared definition. The social-preview card's title is the wordmark and a tagline, not the repository slug.
+- **`docs/install.md`**: the `gh skill` commands, the per-skill prerequisites and the pinning rule, moved out of the README.
+- **The README states the runtime claim.** OKF's fourth goal asks for frontmatter that makes a corpus trustable "without prescribing any runtime"; this is such a runtime.
+- **The README names its order of work**: specification first, schema first, interoperability first - nothing here invents a field, a format or a validator.
+- **The README names the context layer**, and the question that layer comes back to - who is responsible for the quality of this context - as the one the trust ladder answers.
+- **The README claims the domain schemas OKF puts out of scope**, in scope here by construction, and points at the curator's `domain-schemas.md` for the flag and the recipe.
 
 ### Changed
 
-- **The README is a front door, not the manual.** 2,038 words to 1,676. The opening sentence carried four link-bearing clauses before it said what the project does; the install commands sat in the middle of the narrative and now live in `docs/install.md`, behind one `npx skills add` line. The closing sections collapsed into one `Read on` table.
-- **The three-lines diagram is keyed against the legend it shares.** Its bands coloured the first line green and the second blue, while the legend reads green for agent work, amber for deterministic checks, blue for a named person - so the registrar, a program, sat in the person's colour and the curator, a person, sat in the agent's. The bands are neutral panels now and each card takes the colour of whoever acts. It also gained the title and legend the other diagrams have.
-- **Labels no longer collide with their own boxes.** Measuring every `<text>` against the smallest rect containing it found six across four diagrams that overflowed or came within 2px, including one hidden behind a card it was painted before. Shortened, rewidened, and the paint order corrected; the siblings' copies are byte-identical again.
+- **The README is a front door, not the manual.** 1,792 words to 1,864: much the same length, a different shape. Install commands out to `docs/install.md`; the closing sections collapsed into one `Read on` table.
+- **The opening says "collection", not "library"**, which this audience reads as a code library. A collection is what a librarian, a registrar, a curator and a docent all serve.
+- **The opening names the whole system** - four skills, the registrar automation, the `lokf` toolkit underneath - and the two Obsidian plugins as optional.
+- **The sidecar bootstraps a fresh `knowledge_bundle`** in the README's words, the visible doorway, with `.lokf/` named as what lies behind it.
 - **This repository is now `knowledge-trust-ladder`**, formerly `lokf-agent-skills`. Upstream LOKF ships its own bundled skills, and a third-party repository named after the format read as their official home.
-- **The four skill names are unchanged** - `lokf-sidecar`, `lokf-librarian`, `lokf-curator`, `lokf-docent` - because they are installed paths in every host. GitHub redirects the old clone and `npx skills add` paths.
-- **`LOKF_SKILLS_REPO` moves with the repository**, so a host's scheduled librarian installs from the new name. A host that copied the template earlier keeps working through the redirect until it copies again.
+- **The four skill names are unchanged** - they are installed paths in every host. GitHub redirects the old clone and `npx skills add` paths.
+- **`LOKF_SKILLS_REPO` moves with the repository.** A host that copied the template earlier keeps working through the redirect until it copies again.
 - **The bundle's `base_iri` is `https://knowledge-trust-ladder.example/knowledge/`**, which re-ids all 30 concepts and every typed-relation target.
-- **The diagrams no longer glare.** Their canvas was pure white - the largest area on the page and the brightest thing on it, with the tinted cards sitting *below* it. All seven assets now use the warm `#E4E1D7`, a quarter less luminous and less saturated than the palette's own light surface, which gives an even three-step ramp: canvas, grouping panel, card, each about 1.15:1 above the last. Green and blue were considered for the canvas and rejected - in these diagrams green means agent work and blue a named person, so neither can also mean "background".
-- **Small grey labels are legible again.** The faint ink moved from `#888780` to `#6E6D66`, which clears 4.5:1 on a white card where it had been 3.6:1 - a contrast failure that predated the calmer canvas.
-- **`lokf-trust-ladder.svg` is now `trust-ladder.svg`**, since under the new repository name the old filename read as the project's mark rather than the diagram's.
-- **The repository contract refuses the old name** (check 16), and its one "formerly" exception now sits in `docs/install.md`, where the install commands moved. A branch written before the rename merges without conflict and the old name simply reappears, so the check names the files; `CHANGELOG.md` history and one "formerly" line each in `README.md` and the bundle's log are the exceptions.
+- **`lokf-trust-ladder.svg` is now `trust-ladder.svg`**: under the new repository name the old filename read as the project's mark rather than the diagram's.
+- **The bundle's log keeps the name the project had on each day.** The rename pass had rewritten entries written weeks earlier, including the one recording the old `base_iri`; `CHANGELOG.md` was left alone, and the log is the bundle's own record.
+- **The repository contract refuses the old name** (check 16). `CHANGELOG.md`, the bundle's `log.md` and one "formerly" line in `docs/install.md` are the exceptions, because they record history.
+- **The three-lines diagram is keyed to the legend it shares.** Its bands made the first line green and the second blue, where green means agent work and blue a named person - so the registrar sat in the person's colour and the curator in the agent's. Neutral bands now, and each card takes the colour of whoever acts.
+- **Labels no longer collide with their own boxes**: six across four diagrams overflowed or came within 2px, one of them hidden behind a card painted over it.
+- **The diagrams no longer glare.** A pure-white canvas was the brightest thing on the page, with the tinted cards below it; all seven assets now use the warm `#E4E1D7`, an even three-step ramp from canvas to panel to card. Green and blue were rejected for it - in these diagrams they mean agent work and a named person.
+- **Small grey labels are legible again**: the faint ink moved from `#888780` to `#6E6D66`, clearing 4.5:1 where it had been 3.6:1.
 
 ## [0.19.5] - 2026-09-19
 
