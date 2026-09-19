@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **The librarian template pins `v0.19.7`**, the release it ships in. It pinned `v0.19.6` because `v0.20.0`'s tag did not exist while that release was being published; a host scaffolded now installs the current librarian.
-
 ## [0.20.0] - 2026-09-19
 
 ### Changed
@@ -17,6 +13,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The predicate list cannot go stale again.** `--check-refs` reads the relation slots from the schema, so reified `relations` and a domain schema's own slots are covered too.
 - **The registrar gate validates once.** `--check-refs` rides on the existing validate step, replacing a second `lokf validate` run through `uvx --from rust-just just`.
 - **A domain schema passes `--schema` to `lokf-check-refs` too.** The librarian's recipe said that audit was unaffected by one, which stopped being true when it moved onto `lokf validate`.
+
+### Fixed
+
+- **The librarian template pins `v0.19.7`**, the release it ships in. It pinned `v0.19.6` because `v0.20.0`'s tag did not exist while that release was being published; a host scaffolded now installs the current librarian.
 
 ## [0.19.7] - 2026-09-19
 
