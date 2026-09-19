@@ -166,6 +166,25 @@ for shape in default no-doorway rearranged; do
   esac
 done
 
+# The publish job's path check: a concept named with a byte above 0x7f is
+# inside the bundle, and a file beside it is not.
+listing='git -c core.quotePath=false apply --numstat'
+if grep -qF "$listing" "$librarian_yaml"; then ok "template lists the patch's paths with: $listing"
+else err "knowledge-librarian.yaml no longer contains: $listing"; fi
+host="$work/publish-paths"
+make_host "$host" default
+allowed='^(\.lokf/knowledge/|knowledge_bundle/|\.lokf/feedback\.md$)'
+for case in "inside:.lokf/knowledge/café.md" "outside:notes-café.md"; do
+  printf 'x\n' > "$host/${case#*:}"
+  (cd "$host" && git add -A && git diff --cached --binary > "$work/p.patch" && git reset -q --hard)
+  bad="$(cd "$host" && { git -c core.quotePath=false apply --numstat "$work/p.patch" | cut -f3- | grep -Ev "$allowed" || true; })"
+  case "${case%%:*}:${bad:+refused}" in
+    inside:)         ok "publish accepts a non-ASCII concept path" ;;
+    outside:refused) ok "publish still refuses a non-ASCII path outside the bundle" ;;
+    *)               err "publish path check got ${case#*:} wrong (refused: ${bad:-nothing})" ;;
+  esac
+done
+
 echo "3. the registrar workflow"
 if grep -qE '^\s*-\s*"\.lokf/\*\*"' "$registrar_yaml" && grep -qE '^\s*-\s*"knowledge_bundle/\*\*"' "$registrar_yaml"; then
   ok "registrar triggers on .lokf/** and knowledge_bundle/**"
