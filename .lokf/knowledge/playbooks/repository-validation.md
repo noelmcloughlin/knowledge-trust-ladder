@@ -74,7 +74,7 @@ promote` folding a second qualifying push into the top released section by
 subsection, rather than adding a second heading for it, when that version
 carries no tag yet - proven in a throwaway repository, and left alone once a
 version is tagged; and (check 15, added 2026-09-18) the librarian
-template's `LOKF_SKILLS_REF` naming one of this repository's two newest
+template's `TRUST_LADDER_SKILLS_REF` naming one of this repository's two newest
 released versions, since a host installs the skill from that pin and it
 otherwise falls behind in silence - it sat at `v0.9.0` through `v0.19.2`.
 Two headings of slack, not one, because the newest heading exists before

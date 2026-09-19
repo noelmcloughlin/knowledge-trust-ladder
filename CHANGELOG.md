@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The librarian template pins a release that exists.** `publish.yml` promotes the top `CHANGELOG.md` heading before its tag exists, so pinning to that heading fails check 15's own clone test until the tag lands; the template now pins `v0.19.5`, the newest release a host can actually clone.
+
+### Changed
+
+- **`LOKF_SKILLS_REPO`/`LOKF_SKILLS_REF` are now `TRUST_LADDER_SKILLS_REPO`/`TRUST_LADDER_SKILLS_REF`.** The old names said "LOKF" for the repository itself, which is now `knowledge-trust-ladder`; the skills stay `lokf-*`, only the repository pointer is renamed. Each sibling's own copy of the workflow needs the same rename before it next syncs from the template.
+
 ## [0.19.6] - 2026-09-19
 
 ### Added
@@ -24,7 +32,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The sidecar bootstraps a fresh `knowledge_bundle`** in the README's words, the visible doorway, with `.lokf/` named as what lies behind it.
 - **This repository is now `knowledge-trust-ladder`**, formerly `lokf-agent-skills`. Upstream LOKF ships its own bundled skills, and a third-party repository named after the format read as their official home.
 - **The four skill names are unchanged** - they are installed paths in every host. GitHub redirects the old clone and `npx skills add` paths.
-- **`LOKF_SKILLS_REPO` moves with the repository.** A host that copied the template earlier keeps working through the redirect until it copies again.
+- **`TRUST_LADDER_SKILLS_REPO` moves with the repository** (renamed from `LOKF_SKILLS_REPO`, to match the repository's own name). A host that copied the template earlier keeps working through the redirect until it copies again.
 - **The bundle's `base_iri` is `https://knowledge-trust-ladder.example/knowledge/`**, which re-ids all 30 concepts and every typed-relation target.
 - **`lokf-trust-ladder.svg` is now `trust-ladder.svg`**: under the new repository name the old filename read as the project's mark rather than the diagram's.
 - **The bundle's log keeps the name the project had on each day.** The rename pass had rewritten entries written weeks earlier, including the one recording the old `base_iri`; `CHANGELOG.md` was left alone, and the log is the bundle's own record.
