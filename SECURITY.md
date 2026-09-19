@@ -10,13 +10,17 @@ Use GitHub's [private vulnerability reporting](https://github.com/noelmcloughlin
 
 Only the latest published tag receives fixes. A security fix ships as a patch release and is noted in [CHANGELOG.md](CHANGELOG.md).
 
+A fix to a template reaches a repository that already has a sidecar only when its copies are laid down again. Updating the skill, or moving `TRUST_LADDER_SKILLS_REF`, does not touch them. `knowledge-preflight.sh` reports the drift on its `copies` line, and lokf-sidecar's repair re-copies the files.
+
+A finding from an automated skill audit, such as Snyk's or Socket's on a skills catalog, is answered in the file it names and in the [threat model](docs/threat-model.md#prompt-injection-guards). Report one that looks unanswered the same way as any other.
+
 ## What executes here
 
 This repository is mostly Markdown. Three things in it run, or are run by other systems, and are the attack surface.
 
 | Surface | What holds it |
 | --- | --- |
-| `skills/lokf-sidecar/templates/` - four scripts and two workflows the sidecar **copies into other repositories**, which run there | The template's own design: two jobs so the agent never meets a write token, a `publish` job that confines the patch to the bundle and refuses a `human:` claim, and a preflight and a forge-free gate that only read git and gpg. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards). |
+| `skills/lokf-sidecar/templates/` - five scripts and two workflows the sidecar **copies into other repositories**, which run there | The template's own design: two jobs so the agent never meets a write token, a `publish` job that confines the patch to the bundle and refuses a `human:` claim, and a preflight and a forge-free gate that only read git and gpg. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards). |
 | `.github/workflows/` - `validate.yml` on every pull request; `knowledge-registrar.yaml` and `knowledge-librarian.yaml`, this repository's own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, harden-runner in audit mode. Each workflow's header comment says why it is shaped as it is. [Repository hardening](docs/threat-model.md#repository-hardening). |
 | The four skills' `SKILL.md` and `references/` prose - **executed by whichever LLM agent runs it**, here and in every consumer | Each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards) and [Human attribution](docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential). |
 
