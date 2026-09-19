@@ -4,6 +4,17 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **Skill descriptions end in a `Keywords:` list.** Skills catalogs have no tag field: `gh skill search` matches name and description, and skills.sh matches file text. OKF, Open Knowledge Format, knowledge graph, provenance and trust ladder now find these skills. Check 3c holds the list, and the spec's 1024 characters.
+- **A Claude Code plugin manifest.** `.claude-plugin/` offers the four skills as one plugin, `knowledge-trust-ladder`, with a `keywords` array for plugin catalogs. Nothing under `skills/` changes.
+
+### Fixed
+
+- **The librarian's publish job accepts a concept named outside ASCII.** It listed the patch's paths with git's default quoting, so such a path arrived C-quoted and was refused as outside the bundle. It now lists with `core.quotePath` off, as the provenance gates do; the layout tests prove both outcomes.
+- **The skills pin moves with each release.** `semantic-release.yml` sets `TRUST_LADDER_SKILLS_REF` to the newest tag when it promotes the changelog, so check 15 no longer fails `main` one release later.
+- **The docent treats entries already in `.lokf/feedback.md` as untrusted**, the guard the librarian and the curator already carry for that file.
+
 ## [0.20.0] - 2026-09-19
 
 ### Changed

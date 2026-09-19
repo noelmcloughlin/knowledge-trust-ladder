@@ -1,0 +1,16 @@
+{
+  "name": "knowledge-trust-ladder",
+  "owner": { "name": "Noel McLoughlin", "url": "https://github.com/noelmcloughlin" },
+  "metadata": {
+    "description": "Agent skills that keep a LOKF knowledge bundle true, and record who checked each claim."
+  },
+  "plugins": [
+    {
+      "name": "knowledge-trust-ladder",
+      "source": "./",
+      "description": "Four agent skills that keep a LOKF knowledge bundle true beside any repository, and record who checked each claim.",
+      "category": "knowledge-management",
+      "keywords": ["okf", "open-knowledge-format", "lokf", "linkml", "knowledge-graph", "linked-data", "json-ld", "rdf", "sparql", "provenance", "trust-ladder", "human-review", "agent-skills"]
+    }
+  ]
+}

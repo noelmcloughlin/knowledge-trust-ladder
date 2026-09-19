@@ -94,6 +94,13 @@ npx skills add noelmcloughlin/knowledge-trust-ladder \
 
 Add the curator once there is a bundle worth trusting; the docent goes anywhere an agent only *reads* one. The `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release: **[docs/install.md](docs/install.md)**.
 
+**Claude Code plugin** (the same four skills as one plugin, with keywords a plugin catalog can search):
+
+```text
+/plugin marketplace add noelmcloughlin/knowledge-trust-ladder
+/plugin install knowledge-trust-ladder@knowledge-trust-ladder
+```
+
 ## Read on
 
 | | |
