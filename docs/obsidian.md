@@ -9,7 +9,10 @@ Obsidian is optional in both directions. The skills rely on `lokf validate`, not
 The vault you already have is the **workshop**, and nothing in it is moved or migrated. The bundle is the **exhibition**: the checked part of what the workshop knows, and the front door teammates, CI and agents come through. It opens as a small vault of its own, and the two never index the same file.
 
 <p align="center">
-  <img src="../.assets/lokf-two-vaults.svg" alt="Workshop vault and exhibition vault: one folder, no shared index" width="720" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/lokf-two-vaults-dark.svg">
+    <img src="../.assets/lokf-two-vaults.svg" alt="Workshop vault and exhibition vault: one folder, no shared index" width="720" />
+  </picture>
 </p>
 
 1. **File → Open folder as vault**, and pick `knowledge_bundle` at the host root - the link `lokf-sidecar` lays beside `.lokf/` so the bundle has a name a folder picker can see. Open the link itself, never the host root: a vault opened at the root lists neither the dot-folder nor the link, which is exactly what keeps the workshop clean.
