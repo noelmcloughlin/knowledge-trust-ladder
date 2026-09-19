@@ -8,6 +8,7 @@ resource: SECURITY.md
 generated:
   by: process:lokf-librarian
   at: "2026-09-14T17:00:00Z"
+status: draft
 references:
 - https://lokf-agent-skills.example/knowledge/policies/threat-model
 - https://lokf-agent-skills.example/knowledge/playbooks/repository-validation
@@ -45,3 +46,7 @@ lokf-docent, a boundary the agent harness owns, not a Markdown file.
 
 A word budget (check 10, 900 words) holds this file to a policy's shape; the
 design that used to live here now lives once in the linked threat model.
+
+## Open questions
+
+- 2026-09-18, process:lokf-curator: unauthenticated session, no `gh` login to attribute to a person - the "Rewritten 2026-09-14 from a single ~1,900-word file" and "word budget (check 10, 900 words)" claims are true (per `scripts/validate-repository.sh` check 10's comment) but aren't in the cited `resource` (`SECURITY.md`) - add that script to `sources` or `resource`. Third concept this session with the same shape of gap (see also lokf-librarian skill, Why a registrar role) - worth checking whether lokf-librarian is citing only one of several files it actually read.

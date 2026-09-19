@@ -8,6 +8,7 @@ resource: README.md
 generated:
   by: process:lokf-librarian
   at: "2026-09-13T22:00:00Z"
+status: draft
 relatedTo:
 - https://lokf-agent-skills.example/knowledge/explanation/why-four-roles
 about:
@@ -58,3 +59,7 @@ itself. Optional is not the same as general-purpose, though: the plugins
 are extensions of the skills' output, not plugins for a vault in general,
 and a vault with no bundle in it is left alone (`docs/obsidian.md`, the
 README's Obsidian page, 2026-09-13).
+
+## Open questions
+
+- 2026-09-18, process:lokf-curator: unauthenticated session, no `gh` login to attribute to a person - the rename detail ("renamed from `knowledge-validate.yaml` to match this role by name") is true per git history (`skills/lokf-scaffolding/templates/github/knowledge-validate.yaml` -> `.github/workflows/knowledge-registrar.yaml`, commit `e4ae7dc`, 2026-09-10) but isn't stated in the cited `resource` (`README.md`), so a reader can't verify it from the citation given. Either drop the detail or cite the commit/rename alongside `resource`.

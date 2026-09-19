@@ -2,6 +2,17 @@
 
 ## 2026-09-18
 
+* **Curation**: unauthenticated session (no `gh` login, so only
+  send-back/retire/later were available - no `human:` events written) sent
+  back 5 concepts flagged as edited since a prior human confirmation:
+  Knowledge bundle, lokf-librarian skill, Why a registrar role, Security
+  policy, Versioning policy. Four of the five shared one root cause - the
+  concept cited a single `resource` but the disputed detail actually came
+  from a different file the librarian had read (a workflow wrapper,
+  `scripts/validate-repository.sh`, or a sibling doc) - worth lokf-librarian
+  tightening `resource`/`sources` citation discipline rather than
+  re-deriving each concept the same way again.
+
 * **Pin check given the publish window**: check 15 required the pin to equal
   the newest released heading, which no publish can satisfy - the heading is
   promoted on merge and the tag created later, so the pin can only name the

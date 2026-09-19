@@ -67,6 +67,10 @@ the wrapper script - restored from an `EXIT` trap since 2026-09-17, after a
 Socket audit showed a failing agent or a cancelled job skipped the restore
 and left a poisoned config for the workflow's next steps. See `policies/security.md` for the detail.
 
+## Open questions
+
+- 2026-09-18, process:lokf-curator: unauthenticated session, no `gh` login to attribute to a person - the paragraph above (harden-runner, `.git/config`/`.git/hooks/` snapshot-and-restore, the `EXIT` trap since 2026-09-17, the Socket audit finding, `knowledge-librarian.yaml`'s privileged `publish` job) cites terms found nowhere in this concept's `resource` (`skills/lokf-librarian/SKILL.md`). Re-derive with the actual source (workflow YAML / wrapper script) cited, or add it to `resource`/`sources`.
+
 **Extending the vocabulary (added 2026-09-14).** Rule 3's classes are
 deliberately few and portable. A domain needing more of its own gets a
 LinkML schema that imports LOKF's and validates with `lokf validate --schema

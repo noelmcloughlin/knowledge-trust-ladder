@@ -10,6 +10,7 @@ generated:
   at: "2026-09-13T12:00:00Z"
 about:
   - https://lokf-agent-skills.example/knowledge/glossary/lokf
+status: draft
 verified:
 - by: process:lokf-librarian
   at: "2026-09-14T19:00:00Z"
@@ -39,3 +40,7 @@ semantic header (`base_iri`, `context`, versions, publisher) plus the table
 of contents; `knowledge/log.md` records knowledge changes only. The bundle is
 the durable layer between scattered sources and the next task - the thing that
 stops each session re-finding, re-connecting, and re-judging the same material.
+
+## Open questions
+
+- 2026-09-18, process:lokf-curator: unauthenticated session, no `gh` login to attribute to a person - the `definition` field calls the bundle "the `.lokf/` sidecar itself", but the source's own file tree (`skills/lokf-sidecar/templates/README.md`) shows the sidecar (`.lokf/`) contains the bundle (`knowledge/`) plus non-concept tooling (`pyproject.toml`, `justfile`, `feedback.md`). The body text already draws this distinction correctly; tighten `definition` to match.
