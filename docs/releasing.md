@@ -31,6 +31,10 @@ The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you g
 
 Everything from step 3 on runs behind the `release` GitHub Environment. **Configure required reviewers on it once, in each repository's Settings → Environments**, or a qualifying merge ships unattended; creating the environment does not do that for you.
 
+## After a releasing merge to `knowledge-trust-ladder`, expect one follow-up
+
+The scaffolding template pins its own `TRUST_LADDER_SKILLS_REF` to the release it ships in - so every time a `feat:`, `fix:` or `security:` merge lands, the template that merged *is already one release behind itself*: the changelog heading exists (step 3, above) but its tag does not yet, so the newest pin a host could actually clone is the release before it. `validate-repository.sh`'s check 15 catches this and fails `publish.yml` with the version to pin. The fix is always the same one-line commit - bump `TRUST_LADDER_SKILLS_REF` to the newest tag that exists - and it folds into the same pending release rather than cutting another one (the step 3 rule above). This is expected, not a sign anything is broken; budget for it as the last step of every release that touches the template.
+
 ## What the repository settings mean for you
 
 Three settings explain what a pull request waits on, or refuses, in every one of these repositories:
