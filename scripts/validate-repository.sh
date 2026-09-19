@@ -78,7 +78,11 @@ for dir in "${expected_dirs[@]}"; do
     ok "$skill_file description ends in a Keywords list (${#desc} characters)"
   fi
 done
-if [[ "$(grep '"keywords"' .claude-plugin/plugin.json | sed 's/^ *//')" == "$(grep '"keywords"' .claude-plugin/marketplace.json | sed 's/^ *//')" ]]; then
+plugin_kw="$(grep '"keywords"' .claude-plugin/plugin.json 2>/dev/null | sed 's/^ *//' || true)"
+market_kw="$(grep '"keywords"' .claude-plugin/marketplace.json 2>/dev/null | sed 's/^ *//' || true)"
+if [[ -z "$plugin_kw" || -z "$market_kw" ]]; then
+  err ".claude-plugin/plugin.json or marketplace.json is missing, or has no one-line keywords array"
+elif [[ "$plugin_kw" == "$market_kw" ]]; then
   ok "plugin.json and marketplace.json carry the same keywords"
 else
   err ".claude-plugin/plugin.json and marketplace.json list different keywords - keep the one-line arrays identical"

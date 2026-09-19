@@ -8,6 +8,9 @@ skills/
   lokf-librarian/       SKILL.md + references/               (~7.5k tokens loaded on trigger)
   lokf-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
   lokf-docent/          SKILL.md + references/               (~1.5k tokens loaded on trigger)
+.claude-plugin/
+  plugin.json           the four skills as one Claude Code plugin, with the keywords a plugin catalog searches
+  marketplace.json      lets `/plugin marketplace add` find that plugin in this repository
 .github/workflows/
   validate.yml               repository contract + Agent Skills spec + Markdown/link checks (every PR)
   knowledge-registrar.yaml   this repository's copy of the gate the sidecar ships: schema-valid and provenance (every PR that touches the bundle)
