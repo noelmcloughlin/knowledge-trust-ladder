@@ -4,14 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **The librarian template pins a release that exists.** `publish.yml` promotes the top `CHANGELOG.md` heading before its tag exists, so pinning to that heading fails check 15's own clone test until the tag lands; the template now pins `v0.19.5`, the newest release a host can actually clone.
-
-### Changed
-
-- **`LOKF_SKILLS_REPO`/`LOKF_SKILLS_REF` are now `TRUST_LADDER_SKILLS_REPO`/`TRUST_LADDER_SKILLS_REF`.** The old names said "LOKF" for the repository itself, which is now `knowledge-trust-ladder`; the skills stay `lokf-*`, only the repository pointer is renamed. Each sibling's own copy of the workflow needs the same rename before it next syncs from the template.
-
 ## [0.19.6] - 2026-09-19
 
 ### Added
@@ -41,6 +33,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **Labels no longer collide with their own boxes**: six across four diagrams overflowed or came within 2px, one of them hidden behind a card painted over it.
 - **The diagrams no longer glare.** A pure-white canvas was the brightest thing on the page, with the tinted cards below it; all seven assets now use the warm `#E4E1D7`, an even three-step ramp from canvas to panel to card. Green and blue were rejected for it - in these diagrams they mean agent work and a named person.
 - **Small grey labels are legible again**: the faint ink moved from `#888780` to `#6E6D66`, clearing 4.5:1 where it had been 3.6:1.
+- **`LOKF_SKILLS_REPO`/`LOKF_SKILLS_REF` are now `TRUST_LADDER_SKILLS_REPO`/`TRUST_LADDER_SKILLS_REF`.** The old names said "LOKF" for the repository itself, which is now `knowledge-trust-ladder`; the skills stay `lokf-*`, only the repository pointer is renamed. Each sibling's own copy of the workflow needs the same rename before it next syncs from the template.
+
+### Fixed
+
+- **The librarian template pins a release that exists.** `publish.yml` promotes the top `CHANGELOG.md` heading before its tag exists, so pinning to that heading fails check 15's own clone test until the tag lands; the template now pins `v0.19.5`, the newest release a host can actually clone.
 
 ## [0.19.5] - 2026-09-19
 
