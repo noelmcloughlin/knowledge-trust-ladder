@@ -10,7 +10,7 @@ The vault you already have is the **workshop**, and nothing in it is moved or mi
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/lokf-two-vaults-dark.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/lokf-two-vaults-dimmed.svg">
     <img src="../.assets/lokf-two-vaults.svg" alt="Workshop vault and exhibition vault: one folder, no shared index" width="720" />
   </picture>
 </p>

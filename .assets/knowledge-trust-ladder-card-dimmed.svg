@@ -1,0 +1,62 @@
+<svg width="720" height="484" viewBox="0 0 720 484" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" xmlns:c2pa="http://c2pa.org/manifest">
+<title id="t">Knowledge Trust Ladder</title>
+<desc id="d">The Knowledge Trust Ladder mark: a ladder rising out of an open book, its top rung a check mark. Top: raw sources in the repository produce a LOKF knowledge bundle at .lokf/knowledge/, one Markdown note per concept. Bottom: five roles in the order they first run, left to right: Sidecar lays the network, Librarian binds it into order, Registrar keeps records straight (not a skill: lokf validate, CI, and the Obsidian plugin), Curator holds the scales and is always a person, Docent guides the visitors. A dashed feedback path returns from the Docent and the Curator to the Librarian: what a curator sends back or a reader finds missing becomes the librarian's next task. Green marks agent work, amber deterministic checks, blue a named person.</desc>
+<rect width="720" height="484" fill="#CBC8BE"/>
+<!-- ktl-brand:start --><g transform="translate(190,4) scale(0.53125)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#9C9A91"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#9C9A91"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#4D4C49"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#744A0A"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#CBC8BE" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#D9E5CA" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="232" y="22" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#2C2C2A">Knowledge Trust Ladder</text><text x="232" y="37" font-family="Arial, sans-serif" font-size="11.5" fill="#4D4C49">An agent derives it · tools check it · a person vouches for it</text><!-- ktl-brand:end -->
+<rect x="70" y="48" width="580" height="150" rx="20" fill="#D9D6CD"/>
+<text x="185" y="76" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C2C2A">Repository</text>
+<text x="520" y="76" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Knowledge bundle</text>
+<rect x="110" y="92" width="150" height="90" rx="12" fill="#E6E4DC" stroke="#BEBBB1" stroke-width="1"/>
+<g transform="translate(185,118)" stroke="#4D4C49" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-9" y="-11" width="18" height="22" rx="2"/><line x1="-5" y1="-3" x2="5" y2="-3"/><line x1="-5" y1="2" x2="5" y2="2"/><line x1="-5" y1="7" x2="2" y2="7"/></g>
+<text x="185" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C2C2A">raw sources</text>
+<text x="185" y="166" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#4D4C49">code · notes · documents</text>
+<line x1="268" y1="137" x2="402" y2="137" stroke="#55544F" stroke-width="1.3"/><path d="M395.4 141.5 L402 137 L395.4 132.5" fill="none" stroke="#55544F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><text x="335.0" y="129.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#55544F">produces</text>
+<rect x="410" y="92" width="220" height="90" rx="12" fill="#D9E5CA" stroke="#3B6D11" stroke-width="2"/>
+<g transform="translate(520,118)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#D9E5CA"/><circle cx="-8" cy="6" r="3" fill="#D9E5CA"/><circle cx="8" cy="6" r="3" fill="#D9E5CA"/></g>
+<text x="520" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">.lokf/knowledge/</text>
+<text x="520" y="166" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#27500A">One markdown per concept, linked</text>
+<line x1="360" y1="198" x2="360" y2="222" stroke="#55544F" stroke-width="1.3"/><path d="M355.5 215.4 L360 222 L364.5 215.4" fill="none" stroke="#55544F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="20" y="232" width="680" height="210" rx="20" fill="#D9D6CD"/>
+<text x="40" y="260" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">Five roles, in the order they first run</text>
+<rect x="32" y="276" width="108" height="104" rx="12" fill="#D9E5CA" stroke="#3B6D11" stroke-width="2"/>
+<g transform="translate(86,302)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-10 -6 h7 l3 3 h10 v11 h-20 z"/><line x1="0" y1="1" x2="0" y2="6"/><line x1="-2.5" y1="3.5" x2="2.5" y2="3.5"/></g>
+<text x="86" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#27500A">Sidecar</text>
+<text x="86" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#27500A">lays the network</text>
+<text x="86" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#55544F">lokf-sidecar · once</text>
+<line x1="143" y1="328" x2="151" y2="328" stroke="#55544F" stroke-width="1.3"/><path d="M144.4 332.5 L151 328 L144.4 323.5" fill="none" stroke="#55544F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="154" y="276" width="118" height="104" rx="12" fill="#D9E5CA" stroke="#3B6D11" stroke-width="2"/>
+<g transform="translate(213,302)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-8" width="20" height="16" rx="2"/><line x1="0" y1="-8" x2="0" y2="8"/></g>
+<text x="213" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#27500A">Librarian</text>
+<text x="213" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#27500A">binds it into order</text>
+<text x="213" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#55544F">lokf-librarian · scheduled</text>
+<line x1="275" y1="328" x2="283" y2="328" stroke="#55544F" stroke-width="1.3"/><path d="M276.4 332.5 L283 328 L276.4 323.5" fill="none" stroke="#55544F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="286" y="276" width="128" height="104" rx="12" fill="#EBE0C6" stroke="#B7791F" stroke-width="2"/>
+<g transform="translate(350,302)" stroke="#744A0A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-8" y="-8" width="16" height="18" rx="2"/><path d="M-3 -10 h6 v3 h-6 z" fill="#EBE0C6"/><path d="M-4 2 l3 3 l5 -6"/></g>
+<text x="350" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#744A0A">Registrar</text>
+<text x="350" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#744A0A">keeps records straight</text>
+<text x="350" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#55544F">lokf validate · CI · plugin</text>
+<line x1="417" y1="328" x2="425" y2="328" stroke="#55544F" stroke-width="1.3"/><path d="M418.4 332.5 L425 328 L418.4 323.5" fill="none" stroke="#55544F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="428" y="276" width="128" height="104" rx="12" fill="#D3E1EF" stroke="#185FA5" stroke-width="2"/>
+<g transform="translate(492,302)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="0" y1="-10" x2="0" y2="8"/><line x1="-10" y1="-10" x2="10" y2="-10"/><circle cx="-10" cy="-4" r="3" fill="#D3E1EF"/><circle cx="10" cy="-4" r="3" fill="#D3E1EF"/><line x1="-6" y1="8" x2="6" y2="8"/></g>
+<text x="492" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#0C447C">Curator</text>
+<text x="492" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#0C447C">holds the scales</text>
+<text x="492" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#55544F">lokf-curator · with a person</text>
+<line x1="559" y1="328" x2="567" y2="328" stroke="#55544F" stroke-width="1.3"/><path d="M560.4 332.5 L567 328 L560.4 323.5" fill="none" stroke="#55544F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="570" y="276" width="118" height="104" rx="12" fill="#D9E5CA" stroke="#3B6D11" stroke-width="2"/>
+<g transform="translate(629,302)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="10"/><polygon points="0,-6 3,0 0,6 -3,0" fill="#27500A" stroke="none"/></g>
+<text x="629" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#27500A">Docent</text>
+<text x="629" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#27500A">guides the visitors</text>
+<text x="629" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#55544F">lokf-docent · read-only</text>
+<path d="M629 380 v20 H213 v-6" fill="none" stroke="#55544F" stroke-width="1.3" stroke-dasharray="3 3"/>
+<path d="M492 380 v20" fill="none" stroke="#55544F" stroke-width="1.3" stroke-dasharray="3 3"/>
+<path d="M207 388 L213 380 L219 388" fill="none" stroke="#55544F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="421" y="414" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#4D4C49">sent back by the curator, or missed by a reader - the librarian's next task</text>
+<circle cx="40" cy="468" r="5" fill="#E6E4DC" stroke="#4D4C49" stroke-width="1"/>
+<text x="51" y="472" font-family="Arial, sans-serif" font-size="12" fill="#4D4C49">raw / unprocessed</text>
+<circle cx="173" cy="468" r="5" fill="#D9E5CA" stroke="#3B6D11" stroke-width="1"/>
+<text x="184" y="472" font-family="Arial, sans-serif" font-size="12" fill="#27500A">an agent derives it</text>
+<circle cx="319" cy="468" r="5" fill="#EBE0C6" stroke="#B7791F" stroke-width="1"/>
+<text x="330" y="472" font-family="Arial, sans-serif" font-size="12" fill="#744A0A">deterministic tools check it</text>
+<circle cx="523" cy="468" r="5" fill="#D3E1EF" stroke="#185FA5" stroke-width="1"/>
+<text x="534" y="472" font-family="Arial, sans-serif" font-size="12" fill="#0C447C">a named person vouches for it</text>
+</svg>

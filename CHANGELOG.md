@@ -7,11 +7,18 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Added
 
 - **A dark counterpart for all seven diagrams**, `*-dark.svg` beside each original. Same geometry and wording; only the palette differs, re-toned role for role from the light one.
+- **A dimmed counterpart too**, `*-dimmed.svg`: the same geometry on warm grey paper rather than a dark one.
 - **The markdown picks by theme.** Every diagram is a `<picture>` with a `prefers-color-scheme: dark` source over the existing file, so the light original stays the fallback and its path is unchanged.
+
+### Changed
+
+- **The dark-mode source is the dimmed set.** Every `prefers-color-scheme: dark` source now points at `*-dimmed.svg`; the `*-dark.svg` files stay in `.assets/` but nothing references them.
 
 ### Fixed
 
 - **A dark copy carries no stale content credential.** The originals embed a C2PA manifest that signs their own bytes; recolouring changes those, so the copies ship without one rather than with a signature that cannot verify.
+- **The dimmed ink follows the dimmed paper.** The light diagrams sit right on 4.5:1, so darkening only the backgrounds would have dropped every faint label under it.
+- **Two labels that never met 4.5:1 now do**, in the three-lines and plugin-card diagrams - the darker ink reaches them as well.
 
 ## [0.21.0] - 2026-09-19
 
