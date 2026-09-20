@@ -9,7 +9,10 @@ Regulated industries use the **three lines of defence** to say who owns a risk, 
 | **Third** - independent assurance | internal audit | The **bundle** ships the evidence an independent reviewer needs, listed below, and not the review, because assurance is independent only when it comes from someone other than the authors. |
 
 <p align="center">
-  <img src="../.assets/lokf-three-lines.svg" alt="The three lines of defence with each LOKF role in place: the governing body above, the librarian and curator in the first line, the registrar in the second, the evidence for an unshipped third line, and the docent outside the lines feeding back to the librarian" width="720" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/lokf-three-lines-dark.svg">
+    <img src="../.assets/lokf-three-lines.svg" alt="The three lines of defence with each LOKF role in place: the governing body above, the librarian and curator in the first line, the registrar in the second, the evidence for an unshipped third line, and the docent outside the lines feeding back to the librarian" width="720" />
+  </picture>
 </p>
 
 The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** lays down the tools and the gate.

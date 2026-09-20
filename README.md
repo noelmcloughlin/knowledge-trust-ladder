@@ -1,4 +1,7 @@
-<img src=".assets/knowledge-trust-ladder-logo.svg" alt="" width="56" align="right" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".assets/knowledge-trust-ladder-logo-dark.svg">
+  <img src=".assets/knowledge-trust-ladder-logo.svg" alt="" width="56" align="right" />
+</picture>
 
 # Knowledge Trust Ladder
 
@@ -12,7 +15,10 @@ Any repository's scattered knowledge, kept as a **collection** - catalogued, aut
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
 <p align="center">
-  <img src=".assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/knowledge-trust-ladder-card-dark.svg">
+    <img src=".assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
+  </picture>
 </p>
 
 > **Prefer to ask?** `npx skills add noelmcloughlin/knowledge-trust-ladder --skill lokf-docent --yes` installs the docent into any agent you already use; ask it about this project and it answers from this repository's own bundle, saying how far each answer has been checked. [Eight captured answers](docs/examples/docent.md). **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
@@ -45,7 +51,10 @@ OKF puts "a fixed taxonomy of concept types" and "replacing domain-specific sche
 On a fresh repository they run in order - **sidecar**, then **librarian** filling the bundle with drafts, then **curator**, where a person turns drafts into confirmed knowledge a few at a time. A fifth role, the **registrar**, is no skill at all - it is the toolkit and CI, [below](#the-fifth-role-which-is-not-a-skill). After that it is a loop: the **librarian** refreshes on a schedule, readers send back what the bundle missed, and the **curator** works through whatever that surfaces.
 
 <p align="center">
-  <img src=".assets/lokf-lifecycle-loop.svg" alt="First a sequence, then a loop: sidecar, librarian and curator run once in order; then the librarian, registrar, curator and docent take turns around the bundle" width="720" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/lokf-lifecycle-loop-dark.svg">
+    <img src=".assets/lokf-lifecycle-loop.svg" alt="First a sequence, then a loop: sidecar, librarian and curator run once in order; then the librarian, registrar, curator and docent take turns around the bundle" width="720" />
+  </picture>
 </p>
 
 ### Three lines of defence
@@ -61,7 +70,10 @@ In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins stan
 The **curator** is always a person. The skill and the plugin that carry the name are that person's assistants, and neither reaches a verdict of its own.
 
 <p align="center">
-  <img src=".assets/lokf-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/lokf-review-session-dark.svg">
+    <img src=".assets/lokf-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
+  </picture>
 </p>
 
 ## Where the bundle lives
@@ -78,7 +90,10 @@ Every concept carries its own trust record, and the **curator** reports it in pl
 - **Still a draft**, **edited since a person last confirmed it**, **past its review date**, **retired** - and, for prioritising, how many other concepts rely on each one.
 
 <p align="center">
-  <img src=".assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - and what drops a concept a rung" width="720" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/trust-ladder-dark.svg">
+    <img src=".assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - and what drops a concept a rung" width="720" />
+  </picture>
 </p>
 
 The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**, and it is meant to rise slowly - a handful of concepts in a sitting, cumulative and partial by design. A small, young bundle can reach fully-confirmed quickly; a large or fast-growing one never quite does, and the report says so instead of pretending.
