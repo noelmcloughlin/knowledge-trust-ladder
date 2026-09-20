@@ -1,22 +1,22 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".assets/knowledge-trust-ladder-logo-dark.svg">
+  <source media="(prefers-color-scheme: dark)" srcset=".assets/knowledge-trust-ladder-logo-dimmed.svg">
   <img src=".assets/knowledge-trust-ladder-logo.svg" alt="" width="56" align="right" />
 </picture>
 
-# Knowledge Trust Ladder
+# Knowledge Trust Ladder (ktl)
 
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Any repository's scattered knowledge, kept as a **collection** - catalogued, authenticated and explained, with the trust in every claim left visible. Four [Agent Skills](https://agentskills.io/home) keep it, registrar automation serves the desk - checking every record and guarding every confirmation, in CI on each pull request - and the [`lokf` toolkit](https://pypi.org/project/lokf) underneath supplies the schema and the tooling. Two [Obsidian](https://obsidian.md/) plugins are optional, for a desk with no CI.
+Any repository's scattered knowledge, kept as a **collection** - catalogued, authenticated and explained, with the trust in every claim left visible. Four [Agent Skills](https://agentskills.io/home) keep it, registrar automation serves the desk - checking every record and guarding every confirmation, in CI on each pull request - and the [toolkit](https://pypi.org/project/lokf) underneath supplies the schema and the tooling. Two [Obsidian](https://obsidian.md/) plugins are optional, for a desk with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".assets/knowledge-trust-ladder-card-dark.svg">
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/knowledge-trust-ladder-card-dimmed.svg">
     <img src=".assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
   </picture>
 </p>
@@ -29,11 +29,11 @@ The knowledge already exists - in code, documents, diagrams, policies, operation
 
 A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. But a catalogue is only worth keeping if you can tell which entries are sound. Otherwise you re-verify everything yourself, and the files quietly rot. A context layer always comes back to one question - *who is responsible for the quality of this context?* - and the trust ladder is the answer, written into each entry. So every concept says where it came from and how far it has been checked, in plain words: *confirmed by a person*, or *nobody has checked this yet* - the labels are under [Trust stays visible](#trust-stays-visible).
 
-## The runtime
+## Prose, Structure, Meaning, Tools
 
-**Specification first, schema first, interoperability first.** The bundle is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). Nothing here invents a field, a format or a validator, so a folder of Markdown can be validated, queried as a graph, and read by people, agents and any tool that speaks OKF, JSON Schema, JSON-LD or SHACL.
+**Specification first, schema first, interoperability first.** The bundle is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). Nothing here invents a field, a format or a validator, so a folder of Markdown can be validated, queried as a graph, and read by people, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL, and [other supported formats](https://linkml.io/linkml/generators/index.html).
 
-OKF's fourth goal is to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". **This is such a runtime**: those fields become a ladder each claim climbs, a CI gate that refuses a `human:` confirmation no person can be tied to, and an answer that says how far it has been checked.
+OKF's fourth goal is to "standardize the small set of frontmatter fields making an agent-maintained corpus **trustable**, without prescribing any runtime". **This is such a runtime**: those fields become a ladder each claim climbs, a CI gate that refuses a `human:` confirmation no person can be tied to, and an answer saying how far it has been checked.
 
 OKF puts "a fixed taxonomy of concept types" and "replacing domain-specific schemas" out of scope. **Here they are in scope** by construction: a domain's own types get a schema of their own, and go from merely tolerated to checked - [when the vocabulary stops fitting](skills/lokf-curator/references/domain-schemas.md).
 
@@ -52,7 +52,7 @@ On a fresh repository they run in order - **sidecar**, then **librarian** fillin
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".assets/lokf-lifecycle-loop-dark.svg">
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/lokf-lifecycle-loop-dimmed.svg">
     <img src=".assets/lokf-lifecycle-loop.svg" alt="First a sequence, then a loop: sidecar, librarian and curator run once in order; then the librarian, registrar, curator and docent take turns around the bundle" width="720" />
   </picture>
 </p>
@@ -71,7 +71,7 @@ The **curator** is always a person. The skill and the plugin that carry the name
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".assets/lokf-review-session-dark.svg">
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/lokf-review-session-dimmed.svg">
     <img src=".assets/lokf-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
   </picture>
 </p>
@@ -91,7 +91,7 @@ Every concept carries its own trust record, and the **curator** reports it in pl
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".assets/trust-ladder-dark.svg">
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/trust-ladder-dimmed.svg">
     <img src=".assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - and what drops a concept a rung" width="720" />
   </picture>
 </p>

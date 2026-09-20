@@ -10,7 +10,7 @@ Regulated industries use the **three lines of defence** to say who owns a risk, 
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/lokf-three-lines-dark.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/lokf-three-lines-dimmed.svg">
     <img src="../.assets/lokf-three-lines.svg" alt="The three lines of defence with each LOKF role in place: the governing body above, the librarian and curator in the first line, the registrar in the second, the evidence for an unshipped third line, and the docent outside the lines feeding back to the librarian" width="720" />
   </picture>
 </p>
