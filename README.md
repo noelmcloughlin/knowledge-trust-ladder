@@ -3,7 +3,7 @@
   <img src=".assets/knowledge-trust-ladder-logo.svg" alt="" width="56" align="right" />
 </picture>
 
-# Knowledge Trust Ladder
+# Knowledge Trust Ladder (ktl)
 
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
