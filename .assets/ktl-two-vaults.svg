@@ -1,0 +1,51 @@
+<svg width="720" height="368" viewBox="0 0 720 368" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">Where it meets an Obsidian vault</title>
+<desc id="d">Left, the workshop: a vault or repository tree with notes, .obsidian/, and a .lokf/knowledge/ sidecar plus a knowledge_bundle link pointing at it; Obsidian lists neither. An arrow labelled File, Open folder as vault leads right to the exhibition: the same folder opened as its own small vault, with index.md carrying the LOKF header, and the two plugins installed there: KTL Registrar showing LOKF check in the status bar, KTL Curator showing Confirmed 12 of 40. The curated knowledge bundle.</desc>
+<rect width="720" height="368" fill="#E4E1D7"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#E4E1D7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Trust Ladder</text><!-- ktl-brand:end -->
+<text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#2C2C2A">Where it meets an Obsidian vault</text>
+<rect x="20" y="48" width="680" height="280" rx="20" fill="#F1EFE8"/>
+<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">Two vaults, one folder, no shared index</text>
+<rect x="40" y="92" width="286" height="214" rx="12" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
+<g transform="translate(62,110)" stroke="#5F5E5A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-9" width="20" height="18" rx="2"/><line x1="-10" y1="-3" x2="10" y2="-3"/><line x1="-4" y1="-3" x2="-4" y2="9"/></g>
+<text x="80" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C2C2A">Workshop</text>
+<text x="150" y="114" font-family="Arial, sans-serif" font-size="10.5" fill="#6E6D66">your vault, or a repository</text>
+<text x="58" y="140" font-family="Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#2C2C2A">my-vault/</text>
+<text x="72" y="156" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5F5E5A">notes/  projects/  daily/</text>
+<text x="72" y="172" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5F5E5A">.obsidian/</text>
+<text x="72" y="188" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5F5E5A">.lokf/</text>
+<text x="86" y="204" font-family="Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#27500A">knowledge/</text>
+<text x="72" y="222" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5F5E5A">knowledge_bundle  ->  .lokf/knowledge</text>
+<text x="220" y="204" font-family="Arial, sans-serif" font-size="10" fill="#27500A">the exhibition</text>
+<text x="58" y="292" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#5F5E5A">The workshop is yours.</text>
+<line x1="334" y1="199" x2="402" y2="199" stroke="#6E6D66" stroke-width="1.3"/><path d="M395.4 203.5 L402 199 L395.4 194.5" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="368" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">File → Open</text>
+<text x="368" y="214" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">folder as vault</text>
+<rect x="410" y="92" width="278" height="214" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
+<g transform="translate(432,112)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
+<text x="450" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Exhibition</text>
+<text x="524" y="114" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">the bundle, opened as a vault</text>
+<text x="428" y="140" font-family="Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#27500A">index.md</text>
+<text x="500" y="140" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">carries the LOKF header</text>
+<text x="428" y="156" font-family="Menlo, Consolas, monospace" font-size="11" fill="#27500A">concepts/  playbooks/  log.md</text>
+<text x="428" y="178" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">Plugins installed here, nothing to configure:</text>
+<rect x="428" y="186" width="118" height="60" rx="8" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<text x="438" y="202" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#7A4E0B">KTL Registrar</text>
+<rect x="438" y="210" width="56" height="18" rx="9.0" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/><text x="466.0" y="223.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7A4E0B">LOKF   </text>
+<path d="M482 219 l3 3 l6 -7" fill="none" stroke="#7A4E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="438" y="241" font-family="Arial, sans-serif" font-size="9.5" fill="#7A4E0B">as you type</text>
+<rect x="554" y="186" width="118" height="60" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="564" y="202" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0C447C">KTL Curator</text>
+<rect x="564" y="210" width="100" height="18" rx="9.0" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/><text x="614.0" y="223.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#0C447C">Confirmed 12/40</text>
+<text x="564" y="241" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">a few at a time</text>
+<text x="428" y="268" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">Skills fill this folder from a terminal or CI.</text>
+<text x="428" y="292" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#27500A">The curated knowledge bundle.</text>
+<circle cx="40" cy="352" r="5" fill="#ffffff" stroke="#5F5E5A" stroke-width="1"/>
+<text x="51" y="356" font-family="Arial, sans-serif" font-size="12" fill="#5F5E5A">raw / unprocessed</text>
+<circle cx="171" cy="352" r="5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<text x="182" y="356" font-family="Arial, sans-serif" font-size="12" fill="#27500A">an agent derives it</text>
+<circle cx="315" cy="352" r="5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<text x="326" y="356" font-family="Arial, sans-serif" font-size="12" fill="#7A4E0B">deterministic tools check it</text>
+<circle cx="517" cy="352" r="5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="528" y="356" font-family="Arial, sans-serif" font-size="12" fill="#0C447C">a named person vouches for it</text>
+</svg>

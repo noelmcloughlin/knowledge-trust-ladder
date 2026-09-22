@@ -6,14 +6,14 @@ description: How to report a vulnerability privately, supported versions, and a 
 genre: reference
 resource: SECURITY.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-14T17:00:00Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T14:02:11Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -42,11 +42,11 @@ interactive session's guard is a person reviewing what the agent changed.
 Not covered: a compromised runner, upstream action, or agent harness (a
 baseline, not a sandbox - report a finding there anyway); whether a bundle is
 *true*, which `AI_COVENANT.md` addresses; and a reader's own words to
-lokf-docent, a boundary the agent harness owns, not a Markdown file.
+ktl-docent, a boundary the agent harness owns, not a Markdown file.
 
 A word budget (check 10, 900 words) holds this file to a policy's shape; the
 design that used to live here now lives once in the linked threat model.
 
 ## Open questions
 
-- 2026-09-18, process:lokf-curator: unauthenticated session, no `gh` login to attribute to a person - the "Rewritten 2026-09-14 from a single ~1,900-word file" and "word budget (check 10, 900 words)" claims are true (per `scripts/validate-repository.sh` check 10's comment) but aren't in the cited `resource` (`SECURITY.md`) - add that script to `sources` or `resource`. Third concept this session with the same shape of gap (see also lokf-librarian skill, Why a registrar role) - worth checking whether lokf-librarian is citing only one of several files it actually read.
+- 2026-09-18, process:ktl-curator: unauthenticated session, no `gh` login to attribute to a person - the "Rewritten 2026-09-14 from a single ~1,900-word file" and "word budget (check 10, 900 words)" claims are true (per `scripts/validate-repository.sh` check 10's comment) but aren't in the cited `resource` (`SECURITY.md`) - add that script to `sources` or `resource`. Third concept this session with the same shape of gap (see also ktl-librarian skill, Why a registrar role) - worth checking whether ktl-librarian is citing only one of several files it actually read.

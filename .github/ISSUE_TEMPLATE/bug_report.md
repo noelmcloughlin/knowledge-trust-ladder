@@ -7,7 +7,7 @@ assignees: ''
 ---
 
 **Which skill?**
-lokf-sidecar / lokf-librarian / lokf-curator / lokf-docent
+ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent
 
 **Installed via**
 `gh skill install` / `npx skills add` / manual copy - and which version/tag

@@ -5,7 +5,7 @@ updates:
   # opens a PR bumping both when a pinned action releases.
   #
   # This does NOT reach the two workflow templates under
-  # skills/lokf-sidecar/templates/github/ - Dependabot's github-actions
+  # skills/ktl-sidecar/templates/github/ - Dependabot's github-actions
   # ecosystem only scans .github/workflows/ (or a root action.yml), a known
   # limitation (dependabot/dependabot-core#5970). Those pins still need a
   # manual bump; lint-workflows' actionlint step catches syntax drift, not
@@ -16,7 +16,7 @@ updates:
   # copy rather than a judgement call, and staleness cheap to spot:
   #
   #   for f in knowledge-registrar knowledge-librarian; do
-  #     diff "skills/lokf-sidecar/templates/github/$f.yaml" \
+  #     diff "skills/ktl-sidecar/templates/github/$f.yaml" \
   #          ".github/workflows/$f.yaml"
   #   done
   #

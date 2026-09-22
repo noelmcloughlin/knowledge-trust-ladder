@@ -6,13 +6,13 @@ description: "The security design the three LOKF repositories share: repository 
 genre: reference
 resource: docs/threat-model.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-17T17:30:00Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/security
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T17:30:00Z"
 ---
 
@@ -20,7 +20,7 @@ verified:
 
 Added 2026-09-14, when `policies/security.md`'s ~1,900-word design moved out
 of `SECURITY.md` and into this page across the three LOKF repositories
-(`knowledge-trust-ladder`, LOKF Registrar, LOKF Curator). Its section headings are
+(`knowledge-trust-ladder`, KTL Registrar, KTL Curator). Its section headings are
 kept stable on purpose - `#interactive-use-scope-is-advisory-not-enforced`,
 `#repository-hardening`, `#human-attribution-human-is-a-claim-not-a-credential`,
 `#prompt-injection-guards` - because every sibling repository's `SECURITY.md`
@@ -54,7 +54,7 @@ read the events themselves - whole, from the frontmatter, against every
 parent of a commit and keyed by the concept's `id` - so a re-dated event
 counts while a rename, a merge and an example in a body code fence do not,
 and conventions rule 10 keeps those fields to spellings a line reader and a
-parser agree on (2026-09-17). lokf-curator writes `human:` only for
+parser agree on (2026-09-17). ktl-curator writes `human:` only for
 an authenticated identity - `gh api user`, `glab api user`, or a signing
 key the forge lists under the stated login - refuses to run a review session
 unattended, and its report flags an unsigned `human:` commit rather than
@@ -65,10 +65,10 @@ or SSH key per curator id, and refuses a change that adds an id's key and
 that id's confirmation together. None of this proves anyone read the source - it raises the cost
 of forgery, not the truth of a confirmation.
 
-**Prompt-injection guards**, one per skill's input path: lokf-librarian
+**Prompt-injection guards**, one per skill's input path: ktl-librarian
 resolves a `.lokf/feedback.md` entry only from the source it names, never its
-own wording; lokf-curator quotes a fetched source to a person rather than
-acting on it; lokf-docent treats fetched or repository content as text to
+own wording; ktl-curator quotes a fetched source to a person rather than
+acting on it; ktl-docent treats fetched or repository content as text to
 quote, never instructions, and is read-only on the bundle besides. If a guard
 fails, the only unattended write path is `knowledge-librarian.yaml`'s
 `publish` job, which re-derives the touched paths from the patch's own

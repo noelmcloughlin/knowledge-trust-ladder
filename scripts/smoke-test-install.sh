@@ -36,10 +36,10 @@ mkdir -p "$test_root/consumer"
   cd "$test_root/consumer"
   git init -q
   npx --yes skills add "$source_arg" \
-    --skill lokf-librarian \
-    --skill lokf-sidecar \
-    --skill lokf-curator \
-    --skill lokf-docent \
+    --skill ktl-librarian \
+    --skill ktl-sidecar \
+    --skill ktl-curator \
+    --skill ktl-docent \
     --yes
 )
 
@@ -57,24 +57,24 @@ assert() {
   fi
 }
 
-assert "lokf-librarian discovered by name" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/lokf-librarian\" -o -path \"*.claude/skills/lokf-librarian\" 2>/dev/null)\" ]]"
-assert "lokf-sidecar discovered by name" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/lokf-sidecar\" -o -path \"*.claude/skills/lokf-sidecar\" 2>/dev/null)\" ]]"
-assert "lokf-librarian SKILL.md installed" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/lokf-librarian/SKILL.md\" -o -path \"*.claude/skills/lokf-librarian/SKILL.md\" 2>/dev/null)\" ]]"
-assert "lokf-sidecar SKILL.md installed" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/lokf-sidecar/SKILL.md\" -o -path \"*.claude/skills/lokf-sidecar/SKILL.md\" 2>/dev/null)\" ]]"
-assert "lokf-sidecar templates/ carried along" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" \( -path \"*.agents/skills/lokf-sidecar/templates\" -o -path \"*.claude/skills/lokf-sidecar/templates\" \) -type d 2>/dev/null)\" ]]"
-assert "lokf-curator discovered by name" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/lokf-curator\" -o -path \"*.claude/skills/lokf-curator\" 2>/dev/null)\" ]]"
-assert "lokf-curator SKILL.md installed" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/lokf-curator/SKILL.md\" -o -path \"*.claude/skills/lokf-curator/SKILL.md\" 2>/dev/null)\" ]]"
-assert "lokf-docent discovered by name" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/lokf-docent\" -o -path \"*.claude/skills/lokf-docent\" 2>/dev/null)\" ]]"
-assert "lokf-docent SKILL.md installed" \
-  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/lokf-docent/SKILL.md\" -o -path \"*.claude/skills/lokf-docent/SKILL.md\" 2>/dev/null)\" ]]"
+assert "ktl-librarian discovered by name" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-librarian\" -o -path \"*.claude/skills/ktl-librarian\" 2>/dev/null)\" ]]"
+assert "ktl-sidecar discovered by name" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-sidecar\" -o -path \"*.claude/skills/ktl-sidecar\" 2>/dev/null)\" ]]"
+assert "ktl-librarian SKILL.md installed" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-librarian/SKILL.md\" -o -path \"*.claude/skills/ktl-librarian/SKILL.md\" 2>/dev/null)\" ]]"
+assert "ktl-sidecar SKILL.md installed" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-sidecar/SKILL.md\" -o -path \"*.claude/skills/ktl-sidecar/SKILL.md\" 2>/dev/null)\" ]]"
+assert "ktl-sidecar templates/ carried along" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" \( -path \"*.agents/skills/ktl-sidecar/templates\" -o -path \"*.claude/skills/ktl-sidecar/templates\" \) -type d 2>/dev/null)\" ]]"
+assert "ktl-curator discovered by name" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-curator\" -o -path \"*.claude/skills/ktl-curator\" 2>/dev/null)\" ]]"
+assert "ktl-curator SKILL.md installed" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-curator/SKILL.md\" -o -path \"*.claude/skills/ktl-curator/SKILL.md\" 2>/dev/null)\" ]]"
+assert "ktl-docent discovered by name" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-docent\" -o -path \"*.claude/skills/ktl-docent\" 2>/dev/null)\" ]]"
+assert "ktl-docent SKILL.md installed" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-docent/SKILL.md\" -o -path \"*.claude/skills/ktl-docent/SKILL.md\" 2>/dev/null)\" ]]"
 assert "no installer metadata leaked back into this source repo" \
   "[[ -z \"\$(git -C \"\$repo_root\" status --porcelain --untracked-files=all -- .agents .claude skills-lock.json 2>/dev/null)\" ]]"
 

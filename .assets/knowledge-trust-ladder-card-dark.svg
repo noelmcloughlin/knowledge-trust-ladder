@@ -1,4 +1,4 @@
-<svg width="720" height="484" viewBox="0 0 720 484" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" xmlns:c2pa="http://c2pa.org/manifest">
+<svg width="720" height="484" viewBox="0 0 720 484" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
 <title id="t">Knowledge Trust Ladder</title>
 <desc id="d">The Knowledge Trust Ladder mark: a ladder rising out of an open book, its top rung a check mark. Top: raw sources in the repository produce a LOKF knowledge bundle at .lokf/knowledge/, one Markdown note per concept. Bottom: five roles in the order they first run, left to right: Sidecar lays the network, Librarian binds it into order, Registrar keeps records straight (not a skill: lokf validate, CI, and the Obsidian plugin), Curator holds the scales and is always a person, Docent guides the visitors. A dashed feedback path returns from the Docent and the Curator to the Librarian: what a curator sends back or a reader finds missing becomes the librarian's next task. Green marks agent work, amber deterministic checks, blue a named person.</desc>
 <rect width="720" height="484" fill="#1C1C1A"/>
@@ -22,13 +22,13 @@
 <g transform="translate(86,302)" stroke="#A9D27C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-10 -6 h7 l3 3 h10 v11 h-20 z"/><line x1="0" y1="1" x2="0" y2="6"/><line x1="-2.5" y1="3.5" x2="2.5" y2="3.5"/></g>
 <text x="86" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#A9D27C">Sidecar</text>
 <text x="86" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#A9D27C">lays the network</text>
-<text x="86" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">lokf-sidecar · once</text>
+<text x="86" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">ktl-sidecar · once</text>
 <line x1="143" y1="328" x2="151" y2="328" stroke="#8F8E86" stroke-width="1.3"/><path d="M144.4 332.5 L151 328 L144.4 323.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="154" y="276" width="118" height="104" rx="12" fill="#23301B" stroke="#6FA33F" stroke-width="2"/>
 <g transform="translate(213,302)" stroke="#A9D27C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-8" width="20" height="16" rx="2"/><line x1="0" y1="-8" x2="0" y2="8"/></g>
 <text x="213" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#A9D27C">Librarian</text>
 <text x="213" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#A9D27C">binds it into order</text>
-<text x="213" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">lokf-librarian · scheduled</text>
+<text x="213" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">ktl-librarian · scheduled</text>
 <line x1="275" y1="328" x2="283" y2="328" stroke="#8F8E86" stroke-width="1.3"/><path d="M276.4 332.5 L283 328 L276.4 323.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="286" y="276" width="128" height="104" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
 <g transform="translate(350,302)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-8" y="-8" width="16" height="18" rx="2"/><path d="M-3 -10 h6 v3 h-6 z" fill="#33290F"/><path d="M-4 2 l3 3 l5 -6"/></g>
@@ -40,13 +40,13 @@
 <g transform="translate(492,302)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="0" y1="-10" x2="0" y2="8"/><line x1="-10" y1="-10" x2="10" y2="-10"/><circle cx="-10" cy="-4" r="3" fill="#142639"/><circle cx="10" cy="-4" r="3" fill="#142639"/><line x1="-6" y1="8" x2="6" y2="8"/></g>
 <text x="492" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#93C0F2">Curator</text>
 <text x="492" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#93C0F2">holds the scales</text>
-<text x="492" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">lokf-curator · with a person</text>
+<text x="492" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">ktl-curator · with a person</text>
 <line x1="559" y1="328" x2="567" y2="328" stroke="#8F8E86" stroke-width="1.3"/><path d="M560.4 332.5 L567 328 L560.4 323.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="570" y="276" width="118" height="104" rx="12" fill="#23301B" stroke="#6FA33F" stroke-width="2"/>
 <g transform="translate(629,302)" stroke="#A9D27C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="10"/><polygon points="0,-6 3,0 0,6 -3,0" fill="#A9D27C" stroke="none"/></g>
 <text x="629" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#A9D27C">Docent</text>
 <text x="629" y="351" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#A9D27C">guides the visitors</text>
-<text x="629" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">lokf-docent · read-only</text>
+<text x="629" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">ktl-docent · read-only</text>
 <path d="M629 380 v20 H213 v-6" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-dasharray="3 3"/>
 <path d="M492 380 v20" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-dasharray="3 3"/>
 <path d="M207 388 L213 380 L219 388" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>

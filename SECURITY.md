@@ -10,7 +10,7 @@ Use GitHub's [private vulnerability reporting](https://github.com/noelmcloughlin
 
 Only the latest published tag receives fixes. A security fix ships as a patch release and is noted in [CHANGELOG.md](CHANGELOG.md).
 
-A fix to a template reaches a repository that already has a sidecar only when its copies are laid down again. Updating the skill, or moving `TRUST_LADDER_SKILLS_REF`, does not touch them. `knowledge-preflight.sh` reports the drift on its `copies` line, and lokf-sidecar's repair re-copies the files.
+A fix to a template reaches a repository that already has a sidecar only when its copies are laid down again. Updating the skill, or moving `TRUST_LADDER_SKILLS_REF`, does not touch them. `knowledge-preflight.sh` reports the drift on its `copies` line, and ktl-sidecar's repair re-copies the files.
 
 A finding from an automated skill audit, such as Snyk's or Socket's on a skills catalog, is answered in the file it names and in the [threat model](docs/threat-model.md#prompt-injection-guards). Report one that looks unanswered the same way as any other.
 
@@ -20,7 +20,7 @@ This repository is mostly Markdown. Three things in it run, or are run by other 
 
 | Surface | What holds it |
 | --- | --- |
-| `skills/lokf-sidecar/templates/` - five scripts and two workflows the sidecar **copies into other repositories**, which run there | The template's own design: two jobs so the agent never meets a write token, a `publish` job that confines the patch to the bundle and refuses a `human:` claim, and a preflight and a forge-free gate that only read git and gpg. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards). |
+| `skills/ktl-sidecar/templates/` - five scripts and two workflows the sidecar **copies into other repositories**, which run there | The template's own design: two jobs so the agent never meets a write token, a `publish` job that confines the patch to the bundle and refuses a `human:` claim, and a preflight and a forge-free gate that only read git and gpg. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards). |
 | `.github/workflows/` - `validate.yml` on every pull request; `knowledge-registrar.yaml` and `knowledge-librarian.yaml`, this repository's own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, harden-runner in audit mode. Each workflow's header comment says why it is shaped as it is. [Repository hardening](docs/threat-model.md#repository-hardening). |
 | The four skills' `SKILL.md` and `references/` prose - **executed by whichever LLM agent runs it**, here and in every consumer | Each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards) and [Human attribution](docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential). |
 
@@ -30,4 +30,4 @@ A skill's `Scope:` line is prose, not a permission. Run interactively, an agent 
 
 - A compromised runner, upstream action or agent harness: this is a baseline, not a sandbox. Report a finding in one anyway, with scope and reproduction.
 - Whether a bundle is *true*. The gate proves who vouched, not what they read; [AI_COVENANT.md](AI_COVENANT.md) sets the human-accountability rules.
-- A reader's own words to lokf-docent. That boundary belongs to the agent harness, not to a Markdown file.
+- A reader's own words to ktl-docent. That boundary belongs to the agent harness, not to a Markdown file.

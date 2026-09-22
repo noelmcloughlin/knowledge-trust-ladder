@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Layout tests for the way lokf-sidecar lays a bundle down (SKILL.md Step 2).
+# Layout tests for the way ktl-sidecar lays a bundle down (SKILL.md Step 2).
 #
 # The bundle is `.lokf/knowledge`, which the tools address, and `knowledge_bundle`
 # beside it is the doorway link people and Obsidian open. A git pathspec never
@@ -27,7 +27,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-templates="$repo_root/skills/lokf-sidecar/templates"
+templates="$repo_root/skills/ktl-sidecar/templates"
 wrapper="$templates/scripts/knowledge-librarian.sh"
 librarian_yaml="$templates/github/knowledge-librarian.yaml"
 registrar_yaml="$templates/github/knowledge-registrar.yaml"
@@ -60,11 +60,11 @@ make_host() {
     git init -q -b main .
     git config user.email "layout-test@example.invalid"
     git config user.name "layout test"
-    mkdir -p .lokf/scripts skills/lokf-librarian
+    mkdir -p .lokf/scripts skills/ktl-librarian
     cp "$wrapper" .lokf/scripts/knowledge-librarian.sh
     chmod +x .lokf/scripts/knowledge-librarian.sh
     cp "$justfile" .lokf/justfile
-    printf '# stub skill\n' > skills/lokf-librarian/SKILL.md
+    printf '# stub skill\n' > skills/ktl-librarian/SKILL.md
     case "$shape" in
       default)     mkdir -p .lokf/knowledge; ln -s .lokf/knowledge knowledge_bundle ;;
       no-doorway)  mkdir -p .lokf/knowledge ;;

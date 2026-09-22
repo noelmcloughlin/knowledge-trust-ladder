@@ -6,11 +6,11 @@ description: The schema-modelling language LOKF is written in, and the generator
 genre: reference
 resource: https://linkml.io/linkml/
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-14T12:00:00Z"
 status: draft
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-14T12:00:00Z"
 ---
 

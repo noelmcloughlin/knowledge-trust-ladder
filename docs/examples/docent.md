@@ -1,8 +1,8 @@
-# Examples: `lokf-docent` answering real questions
+# Examples: `ktl-docent` answering real questions
 
-Eight questions actually asked against this repository's own `.lokf/knowledge/` bundle, following `skills/lokf-docent/SKILL.md` exactly: read the bundle first, widen along typed relations before searching the repo, verify exact values at the source before stating them, state each concept's trust label, and fall back - deliberately, and out loud - only when the bundle has no answer. These are real captured output, not invented transcripts.
+Eight questions actually asked against this repository's own `.lokf/knowledge/` bundle, following `skills/ktl-docent/SKILL.md` exactly: read the bundle first, widen along typed relations before searching the repo, verify exact values at the source before stating them, state each concept's trust label, and fall back - deliberately, and out loud - only when the bundle has no answer. These are real captured output, not invented transcripts.
 
-Trust labels here mean what `skills/lokf-curator/references/trust-fields.md` defines. At the time these were run, no concept in this bundle had been confirmed by a person yet (`lokf-curator` hadn't been run), so every answer below is at most "checked by automation only" or "nobody has checked this yet" - which is itself demonstrated in examples 2 and 6. The answers are what the docent said then; some of the pages it checked have been rewritten since (`CONTRIBUTING.md` is now a shorter checklist), so take the sources named as current, not the values quoted.
+Trust labels here mean what `skills/ktl-curator/references/trust-fields.md` defines. At the time these were run, no concept in this bundle had been confirmed by a person yet (`ktl-curator` hadn't been run), so every answer below is at most "checked by automation only" or "nobody has checked this yet" - which is itself demonstrated in examples 2 and 6. The answers are what the docent said then; some of the pages it checked have been rewritten since (`CONTRIBUTING.md` is now a shorter checklist), so take the sources named as current, not the values quoted.
 
 ## 1. "What is LOKF?"
 
@@ -30,19 +30,19 @@ From the bundle:
 
 ## 3. "I have a repo with no `.lokf/` yet - which skill do I run first?"
 
-> Run `lokf-sidecar` first. It's the one-shot bootstrap that creates the
+> Run `ktl-sidecar` first. It's the one-shot bootstrap that creates the
 > `.lokf/` sidecar - tooling, docs, and a dummy skeleton - from bundled
-> templates, then hands off to `lokf-librarian` to fill it with real
+> templates, then hands off to `ktl-librarian` to fill it with real
 > knowledge.
 
 ```text
 From the bundle:
-- lokf-sidecar skill (playbooks/lokf-sidecar-skill.md) - checked by automation only
+- ktl-sidecar skill (playbooks/ktl-sidecar-skill.md) - checked by automation only
 ```
 
-## 4. "How do lokf-librarian and lokf-curator relate?"
+## 4. "How do ktl-librarian and ktl-curator relate?"
 
-> `lokf-curator` `dependsOn` `lokf-librarian`: the curator's job - recording a
+> `ktl-curator` `dependsOn` `ktl-librarian`: the curator's job - recording a
 > person's verdicts - only makes sense once the librarian has derived
 > concepts to review. The relationship also marks the boundary between them:
 > the librarian deals in facts about the repository and never vouches for
@@ -51,9 +51,9 @@ From the bundle:
 
 ```text
 From the bundle:
-- lokf-librarian skill (playbooks/lokf-librarian-skill.md) - checked by automation only
-- lokf-curator skill (playbooks/lokf-curator-skill.md) - checked by automation only
-  (dependsOn -> lokf-librarian-skill)
+- ktl-librarian skill (playbooks/ktl-librarian-skill.md) - checked by automation only
+- ktl-curator skill (playbooks/ktl-curator-skill.md) - checked by automation only
+  (dependsOn -> ktl-librarian-skill)
 ```
 
 ## 5. "How do I contribute a change to these skills?"
@@ -63,7 +63,7 @@ From the bundle:
 > Before opening a pull request, run five checks: the repository-contract
 > script, `gh skill publish --dry-run` (if the GitHub CLI is installed),
 > `shellcheck` on any changed script, `actionlint` on any changed workflow
-> (including the templates under `skills/lokf-sidecar/templates/github/`),
+> (including the templates under `skills/ktl-sidecar/templates/github/`),
 > and a `CHANGELOG.md` entry under `[Unreleased]` if the change alters
 > behavior.
 
@@ -94,7 +94,7 @@ Gap recorded: none - the bundle's claim isn't contradicted, just unconfirmable a
 
 *This is the honest version of "verify exact values at the source": the source didn't have the value to confirm, and the answer says so instead of quietly repeating the bundle's number as fact.*
 
-## 7. "What's the roadmap for a fifth skill after lokf-docent?"
+## 7. "What's the roadmap for a fifth skill after ktl-docent?"
 
 > I don't see anything in the bundle about a planned fifth skill - the
 > Explanation concept on why there are four roles explains the current
@@ -104,12 +104,12 @@ Gap recorded: none - the bundle's claim isn't contradicted, just unconfirmable a
 
 ```text
 From the bundle: (none relevant)
-Gap recorded: Miss - "What's the roadmap for a fifth skill after lokf-docent?" -
+Gap recorded: Miss - "What's the roadmap for a fifth skill after ktl-docent?" -
   no answer found anywhere in the bundle or repository.
 ```
 
 Asked once this session whether to record gaps in `.lokf/feedback.md`; the answer was yes, so this one was written there for real - see
-[`.lokf/feedback.md`](../../.lokf/feedback.md). `lokf-librarian`'s next run will either turn it into a real concept or note that no roadmap exists.
+[`.lokf/feedback.md`](../../.lokf/feedback.md). `ktl-librarian`'s next run will either turn it into a real concept or note that no roadmap exists.
 
 ## 8. "Who do I contact to report a security issue, and is that policy confirmed by a person?"
 
@@ -128,4 +128,4 @@ Checked at source: SECURITY.md's "Reporting a vulnerability" section - matches e
 
 ---
 
-Try these yourself once `lokf-docent` is installed, or ask your own - that's the point of the skill.
+Try these yourself once `ktl-docent` is installed, or ask your own - that's the point of the skill.

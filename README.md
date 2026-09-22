@@ -21,7 +21,7 @@ Any repository's scattered knowledge, kept as a **collection** - catalogued, aut
   </picture>
 </p>
 
-> **Prefer to ask?** `npx skills add noelmcloughlin/knowledge-trust-ladder --skill lokf-docent --yes` installs the docent into any agent you already use; ask it about this project and it answers from this repository's own bundle, saying how far each answer has been checked. [Eight captured answers](docs/examples/docent.md). **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
+> **Prefer to ask?** `npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --yes` installs the docent into any agent you already use; ask it about this project and it answers from this repository's own bundle, saying how far each answer has been checked. [Eight captured answers](docs/examples/docent.md). **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
 
 ## Why libraries have catalogues
 
@@ -35,16 +35,16 @@ A **knowledge bundle** is the catalogue: a plain folder of Markdown concept file
 
 OKF's fourth goal is to "standardize the small set of frontmatter fields making an agent-maintained corpus **trustable**, without prescribing any runtime". **This is such a runtime**: those fields become a ladder each claim climbs, a CI gate that refuses a `human:` confirmation no person can be tied to, and an answer saying how far it has been checked.
 
-OKF puts "a fixed taxonomy of concept types" and "replacing domain-specific schemas" out of scope. **Here they are in scope** by construction: a domain's own types get a schema of their own, and go from merely tolerated to checked - [when the vocabulary stops fitting](skills/lokf-curator/references/domain-schemas.md).
+OKF puts "a fixed taxonomy of concept types" and "replacing domain-specific schemas" out of scope. **Here they are in scope** by construction: a domain's own types get a schema of their own, and go from merely tolerated to checked - [when the vocabulary stops fitting](skills/ktl-curator/references/domain-schemas.md).
 
 ## Four skills, three lines of the poem
 
 | Skill | Role | Runs |
 | --- | --- | --- |
-| [`lokf-sidecar`](skills/lokf-sidecar/SKILL.md) | **Sidecar** - *lays the network*. Bootstraps a fresh `knowledge_bundle` into a repository that doesn't have one - the visible doorway to the `.lokf/` sidecar (tooling, docs, dummy skeleton) it lays down from bundled templates; repairs a broken sidecar file. | once |
-| [`lokf-librarian`](skills/lokf-librarian/SKILL.md) | **Librarian** - *binds it into order*. Scrapes the repository, derives concepts with their sources, classifies them, wires typed relationships, audits, hands off for review. Like a real librarian it catalogues without vouching: *facts about the repository*, never verdicts about truth. | often, including on a schedule |
-| [`lokf-curator`](skills/lokf-curator/SKILL.md) | **Curator** - *holds the scales*. A person's assistant: shows what needs a look, puts the source next to the claim, records the verdict - confirm, correct, retire, send back - in the bundle's own frontmatter. *Judgments a person made*, never facts it derived. | a little, regularly |
-| [`lokf-docent`](skills/lokf-docent/SKILL.md) ([examples](docs/examples/docent.md)) | **Docent** - *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. Answers from the bundle, labels how far each concept has been trusted, checks exact values at the source, and when the bundle has no answer explores the repository and records the miss, so it becomes the librarian's next task. Read-only on the bundle. | whenever anyone asks |
+| [`ktl-sidecar`](skills/ktl-sidecar/SKILL.md) | **Sidecar** - *lays the network*. Bootstraps a fresh `knowledge_bundle` into a repository that doesn't have one - the visible doorway to the `.lokf/` sidecar (tooling, docs, dummy skeleton) it lays down from bundled templates; repairs a broken sidecar file. | once |
+| [`ktl-librarian`](skills/ktl-librarian/SKILL.md) | **Librarian** - *binds it into order*. Scrapes the repository, derives concepts with their sources, classifies them, wires typed relationships, audits, hands off for review. Like a real librarian it catalogues without vouching: *facts about the repository*, never verdicts about truth. | often, including on a schedule |
+| [`ktl-curator`](skills/ktl-curator/SKILL.md) | **Curator** - *holds the scales*. A person's assistant: shows what needs a look, puts the source next to the claim, records the verdict - confirm, correct, retire, send back - in the bundle's own frontmatter. *Judgments a person made*, never facts it derived. | a little, regularly |
+| [`ktl-docent`](skills/ktl-docent/SKILL.md) ([examples](docs/examples/docent.md)) | **Docent** - *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. Answers from the bundle, labels how far each concept has been trusted, checks exact values at the source, and when the bundle has no answer explores the repository and records the miss, so it becomes the librarian's next task. Read-only on the bundle. | whenever anyone asks |
 
 **Curator** is the museum sense - the one who authenticates, weighs provenance, decides what goes on exhibit - not the data-management sense, which is the **librarian**'s job. A **docent** is the museum's guide, who explains the exhibition without moving anything on the shelves. In short: the librarian reports, the curator fact-checks and edits, the docent reads and writes back what was missed.
 
@@ -52,8 +52,8 @@ On a fresh repository they run in order - **sidecar**, then **librarian** fillin
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".assets/lokf-lifecycle-loop-dimmed.svg">
-    <img src=".assets/lokf-lifecycle-loop.svg" alt="First a sequence, then a loop: sidecar, librarian and curator run once in order; then the librarian, registrar, curator and docent take turns around the bundle" width="720" />
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/ktl-lifecycle-loop-dimmed.svg">
+    <img src=".assets/ktl-lifecycle-loop.svg" alt="First a sequence, then a loop: sidecar, librarian and curator run once in order; then the librarian, registrar, curator and docent take turns around the bundle" width="720" />
   </picture>
 </p>
 
@@ -65,20 +65,20 @@ Regulated industries use the **three lines of defence** to say who owns a risk, 
 
 The **registrar** keeps the records themselves in order - each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit does it on every change, and CI's [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) does it again on every pull request that touches the bundle, where it also checks that each new confirmation is backed by that person's approval of the pull request or their signature on the commit.
 
-In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins stand in for the registrar automation at the desk: [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar) checks each record is well-formed as it is typed - the first of the [four levels of checking](docs/for-the-curious.md#four-levels-of-checking), live in the editor - and [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) runs this repository's `lokf-curator` review session - the third level, source beside claim, the person's decision written down - without an agent in the loop ([The bundle in Obsidian](docs/obsidian.md)).
+In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins stand in for the registrar automation at the desk: [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) checks each record is well-formed as it is typed - the first of the [four levels of checking](docs/for-the-curious.md#four-levels-of-checking), live in the editor - and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) runs this repository's `ktl-curator` review session - the third level, source beside claim, the person's decision written down - without an agent in the loop ([The bundle in Obsidian](docs/obsidian.md)).
 
 The **curator** is always a person. The skill and the plugin that carry the name are that person's assistants, and neither reaches a verdict of its own.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".assets/lokf-review-session-dimmed.svg">
-    <img src=".assets/lokf-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/ktl-review-session-dimmed.svg">
+    <img src=".assets/ktl-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
   </picture>
 </p>
 
 ## Where the bundle lives
 
-`.lokf/` sits beside the sources it distils - code, notes, documents - in the same tree and almost always the same git repository, the way `.git/` does. The bundle is `.lokf/knowledge/`, one real folder on every host, with a `knowledge_bundle` link beside it for folder pickers that hide dot-folders. Windows, macOS, other forges, no git and synced folders are covered in the sidecar's [portability page](skills/lokf-sidecar/references/portability.md).
+`.lokf/` sits beside the sources it distils - code, notes, documents - in the same tree and almost always the same git repository, the way `.git/` does. The bundle is `.lokf/knowledge/`, one real folder on every host, with a `knowledge_bundle` link beside it for folder pickers that hide dot-folders. Windows, macOS, other forges, no git and synced folders are covered in the sidecar's [portability page](skills/ktl-sidecar/references/portability.md).
 
 ## Trust stays visible
 
@@ -104,7 +104,7 @@ Each skill stands alone. The sidecar plus the librarian is enough to see the ide
 
 ```bash
 npx skills add noelmcloughlin/knowledge-trust-ladder \
-  --skill lokf-sidecar --skill lokf-librarian --yes
+  --skill ktl-sidecar --skill ktl-librarian --yes
 ```
 
 Add the curator once there is a bundle worth trusting; the docent goes anywhere an agent only *reads* one. The `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release: **[docs/install.md](docs/install.md)**.

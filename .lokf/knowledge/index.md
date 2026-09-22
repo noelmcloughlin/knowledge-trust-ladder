@@ -18,11 +18,11 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 
 # Playbooks
 
-* [lokf-sidecar skill](playbooks/lokf-sidecar-skill.md) - creates a `.lokf/` sidecar from templates, or repairs a single missing sidecar file.
+* [ktl-sidecar skill](playbooks/ktl-sidecar-skill.md) - creates a `.lokf/` sidecar from templates, or repairs a single missing sidecar file.
 * [Open the knowledge bundle in Obsidian](playbooks/open-bundle-in-obsidian.md) - two vaults: the workshop someone keeps, and the bundle opened as its own vault through the root `knowledge_bundle` link.
-* [lokf-librarian skill](playbooks/lokf-librarian-skill.md) - derives and maintains the concepts; facts, never verdicts.
-* [lokf-curator skill](playbooks/lokf-curator-skill.md) - a human curator's assistant; verdicts, never facts.
-* [lokf-docent skill](playbooks/lokf-docent-skill.md) - answers from the bundle and records what it lacked.
+* [ktl-librarian skill](playbooks/ktl-librarian-skill.md) - derives and maintains the concepts; facts, never verdicts.
+* [ktl-curator skill](playbooks/ktl-curator-skill.md) - a human curator's assistant; verdicts, never facts.
+* [ktl-docent skill](playbooks/ktl-docent-skill.md) - answers from the bundle and records what it lacked.
 * [Knowledge sources](playbooks/knowledge-sources.md) - where this bundle was derived from, and how to re-check it.
 * [Contributing](playbooks/contributing.md) - local checks and the role boundary a change must respect.
 * [Releasing](playbooks/releasing.md) - the maintainer-gated publish path.

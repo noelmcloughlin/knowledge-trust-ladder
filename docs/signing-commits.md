@@ -85,7 +85,7 @@ Two things worth knowing so you renew calmly rather than in a panic:
 
 ## Put your key on file for the forge-free gate
 
-A repository that runs `knowledge-provenance.sh` (lokf-sidecar Step 5) checks each confirmation's signature against a public key it carries under `.lokf/curators/`, named after your forge login. Export the key you sign with and open a pull request holding only that file - the gate refuses a change that lands a key and a confirmation by its holder together:
+A repository that runs `knowledge-provenance.sh` (ktl-sidecar Step 5) checks each confirmation's signature against a public key it carries under `.lokf/curators/`, named after your forge login. Export the key you sign with and open a pull request holding only that file - the gate refuses a change that lands a key and a confirmation by its holder together:
 
 ```bash
 gpg --armor --export YOUR_KEY_ID > .lokf/curators/YOUR_LOGIN.asc   # GPG (subkeys travel with it)

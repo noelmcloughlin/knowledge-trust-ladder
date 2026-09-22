@@ -2,10 +2,10 @@
 
 ## Which skill(s) changed?
 
-- [ ] lokf-librarian
-- [ ] lokf-sidecar
-- [ ] lokf-curator
-- [ ] lokf-docent
+- [ ] ktl-librarian
+- [ ] ktl-sidecar
+- [ ] ktl-curator
+- [ ] ktl-docent
 - [ ] repository packaging only (CI, docs, templates unrelated to skill content)
 
 ## Checklist

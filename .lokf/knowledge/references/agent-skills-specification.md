@@ -6,10 +6,10 @@ description: The specification defining a skill directory - a required SKILL.md 
 genre: reference
 resource: https://agentskills.io/home
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-09T10:00:00Z"
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-09T17:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:30:00Z"

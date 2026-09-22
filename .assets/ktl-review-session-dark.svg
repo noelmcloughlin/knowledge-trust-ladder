@@ -1,0 +1,66 @@
+<svg width="720" height="412" viewBox="0 0 720 412" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">The curator's review session</title>
+<desc id="d">Left, a queue titled Worth ten minutes today, up to five concepts ranked by what needs a person. Middle, the review card: the source opened beside the claim and its trust labels, then the question, does the source still say this, with Wrong send back focused by default. Right, the five verbs and what each writes into the concept: Confirm, Wrong send back, Wrong I corrected it, Retire, Later. A band below states that only the concept's frontmatter and one Curation line in log.md are written, nothing else, and there is no confirm-all. The same session runs in the ktl-curator skill and the KTL Curator plugin.</desc>
+<rect width="720" height="412" fill="#1C1C1A"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#ABA9A0"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#E4BD6E"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#1C1C1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#93C0F2" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#23301B" stroke="#6FA33F" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#6FA33F" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#6FA33F" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Trust Ladder</text><!-- ktl-brand:end -->
+<text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#E6E4DC">The curator's review session</text>
+<rect x="20" y="48" width="680" height="272" rx="20" fill="#262623"/>
+<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">One concept, one verb, one person's answer</text>
+<rect x="40" y="92" width="168" height="210" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<text x="124" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#E6E4DC">Worth ten minutes today</text>
+<text x="124" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">ranked by what needs a person</text>
+<rect x="52" y="138" width="144" height="28" rx="6" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<text x="60" y="151" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#E6E4DC">past review date</text>
+<text x="60" y="162" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">edited since confirmed</text>
+<rect x="52" y="170" width="144" height="28" rx="6" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<text x="60" y="183" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">draft + open question</text>
+<text x="60" y="194" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">librarian couldn't settle</text>
+<rect x="52" y="202" width="144" height="28" rx="6" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<text x="60" y="215" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">nobody has checked</text>
+<text x="60" y="226" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">most relied-upon first</text>
+<rect x="52" y="234" width="144" height="28" rx="6" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<text x="60" y="247" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">draft, automation only</text>
+<text x="60" y="258" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">no person has looked</text>
+<rect x="52" y="266" width="144" height="28" rx="6" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<text x="60" y="279" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">open questions</text>
+<text x="60" y="290" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">left by the librarian</text>
+<line x1="214" y1="196" x2="240" y2="196" stroke="#8F8E86" stroke-width="1.3"/><path d="M233.4 200.5 L240 196 L233.4 191.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><text x="227.0" y="188.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#8F8E86">click</text>
+<rect x="246" y="92" width="220" height="210" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
+<text x="356" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#93C0F2">Review card</text>
+<text x="356" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#93C0F2">evidence before question</text>
+<rect x="258" y="136" width="92" height="64" rx="8" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<g transform="translate(304,154)" stroke="#ABA9A0" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-9" y="-11" width="18" height="22" rx="2"/><line x1="-5" y1="-3" x2="5" y2="-3"/><line x1="-5" y1="2" x2="5" y2="2"/><line x1="-5" y1="7" x2="2" y2="7"/></g>
+<text x="304" y="181" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#E6E4DC">Source</text>
+<text x="304" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">opened beside</text>
+<rect x="362" y="136" width="92" height="64" rx="8" fill="#23301B" stroke="#6FA33F" stroke-width="1"/>
+<g transform="translate(408,156)" stroke="#A9D27C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#23301B"/><circle cx="-8" cy="6" r="3" fill="#23301B"/><circle cx="8" cy="6" r="3" fill="#23301B"/></g>
+<text x="408" y="181" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#A9D27C">Claim</text>
+<text x="408" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#A9D27C">+ trust labels</text>
+<text x="356" y="222" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#E6E4DC">does the source</text>
+<text x="356" y="237" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#E6E4DC">still say this?</text>
+<rect x="268" y="254" width="176" height="22" rx="11.0" fill="#142639" stroke="#5A9BE0" stroke-width="1"/><text x="356.0" y="269.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">Wrong - send back  (default focus)</text>
+<text x="356" y="292" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">a stray Enter never confirms something unread</text>
+<line x1="472" y1="196" x2="498" y2="196" stroke="#8F8E86" stroke-width="1.3"/><path d="M491.4 200.5 L498 196 L491.4 191.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="500" y="96" width="194" height="38" rx="8" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
+<text x="510" y="111" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#93C0F2">Confirm</text>
+<text x="510" y="125" font-family="Arial, sans-serif" font-size="9" fill="#93C0F2">verified event · draft cleared · review date</text>
+<rect x="500" y="138" width="194" height="38" rx="8" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
+<text x="510" y="153" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#93C0F2">Wrong - send back</text>
+<text x="510" y="167" font-family="Arial, sans-serif" font-size="9" fill="#93C0F2">status: draft · note under Open questions</text>
+<rect x="500" y="180" width="194" height="38" rx="8" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
+<text x="510" y="195" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#93C0F2">Wrong - I corrected it</text>
+<text x="510" y="209" font-family="Arial, sans-serif" font-size="9" fill="#93C0F2">records you as author, then confirms</text>
+<rect x="500" y="222" width="194" height="38" rx="8" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
+<text x="510" y="237" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#93C0F2">Retire</text>
+<text x="510" y="251" font-family="Arial, sans-serif" font-size="9" fill="#93C0F2">status: deprecated · dated line in log.md</text>
+<rect x="500" y="264" width="194" height="38" rx="8" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<text x="510" y="279" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#E6E4DC">Later</text>
+<text x="510" y="293" font-family="Arial, sans-serif" font-size="9" fill="#ABA9A0">stays a draft · writes nothing</text>
+<rect x="20" y="332" width="680" height="40" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<text x="40" y="349" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#E6E4DC">Written into the concept's own frontmatter, plus one Curation line in log.md - and nothing else:</text>
+<text x="40" y="364" font-family="Arial, sans-serif" font-size="10.5" fill="#8F8E86">never a type, never a relation, never body text outside Open questions, never an existing verified event. No confirm-all.</text>
+<circle cx="52" cy="396" r="5" fill="#23301B" stroke="#6FA33F" stroke-width="1"/>
+<text x="63" y="400" font-family="Arial, sans-serif" font-size="12" fill="#A9D27C">an agent derives it</text>
+<circle cx="206" cy="396" r="5" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
+<text x="217" y="400" font-family="Arial, sans-serif" font-size="12" fill="#93C0F2">a named person vouches for it</text>
+</svg>

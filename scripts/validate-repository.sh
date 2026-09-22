@@ -14,7 +14,7 @@ ok() { printf 'OK:   %s\n' "$*"; }
 
 # 1. Exactly the two intended published skill directories exist.
 mapfile -t skill_dirs < <(find skills -mindepth 1 -maxdepth 1 -type d | sort)
-expected_dirs=("skills/lokf-curator" "skills/lokf-docent" "skills/lokf-librarian" "skills/lokf-sidecar")
+expected_dirs=("skills/ktl-curator" "skills/ktl-docent" "skills/ktl-librarian" "skills/ktl-sidecar")
 if [[ "${skill_dirs[*]}" == "${expected_dirs[*]}" ]]; then
   ok "exactly the four intended skill directories exist (${expected_dirs[*]})"
 else
@@ -141,16 +141,16 @@ else
 fi
 
 # 7. The LOKF class vocabulary is enumerated as prose in two files, with no
-#    generator behind it. Rule 3 in lokf-librarian/SKILL.md is the canonical
+#    generator behind it. Rule 3 in ktl-librarian/SKILL.md is the canonical
 #    list; the other enumeration, and any count a page still states, must
 #    agree with it. Prose elsewhere says "small" rather than a number: the
 #    count is the schema's to change, not this repository's.
 #    (On 2026-09-14 Rule 3 said fourteen and omitted Role while README.md and
 #    docs/for-the-curious.md said fifteen - undetected until a person read
 #    both. This check is why that cannot happen twice.)
-rule3_line="$(grep -m1 '^3\. \*\*Use a class from the LOKF type vocabulary' skills/lokf-librarian/SKILL.md || true)"
+rule3_line="$(grep -m1 '^3\. \*\*Use a class from the LOKF type vocabulary' skills/ktl-librarian/SKILL.md || true)"
 if [[ -z "$rule3_line" ]]; then
-  err "could not find Rule 3's class list in skills/lokf-librarian/SKILL.md"
+  err "could not find Rule 3's class list in skills/ktl-librarian/SKILL.md"
 else
   # The list ends where the domain-schema sentence begins; that sentence names
   # `Concept` and a sample parent class, neither of which is part of the list.
@@ -163,9 +163,9 @@ else
   ok "Rule 3 names $canonical_count classes"
 
   # 7a. The curator's trust-fields.md carries the other complete enumeration.
-  tf_line="$(grep -m1 '^- \*\*The 15 classes\*\*\|^- \*\*The [a-z]* classes\*\*' skills/lokf-curator/references/trust-fields.md || true)"
+  tf_line="$(grep -m1 '^- \*\*The 15 classes\*\*\|^- \*\*The [a-z]* classes\*\*' skills/ktl-curator/references/trust-fields.md || true)"
   if [[ -z "$tf_line" ]]; then
-    err "could not find the class enumeration in lokf-curator/references/trust-fields.md"
+    err "could not find the class enumeration in ktl-curator/references/trust-fields.md"
   else
     # shellcheck disable=SC2016 # same literal-backtick grep pattern as above.
     tf_classes="$(printf '%s' "$tf_line" | grep -o '`[A-Z][A-Za-z]*`' | tr -d '`' | sort -u)"
@@ -209,11 +209,11 @@ fi
 # 9. Three sibling repositories deep-link into files here by URL
 #    (github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path>), and their
 #    link checks follow those for real. Moving or renaming one of these paths
-#    passes every check in this repo and breaks the build in obsidian-lokf-
-#    curator, and obsidian-lokf-registrar - (The mirror image happened on
-#    2026-09-14: the curator referenced domain-schema.md while it was still on
-#    a branch here, and its build 404'd until this side landed. CONTRIBUTING.md
-#    carries the ordering rule; this check carries the paths.)
+#    passes every check in this repo and breaks the build in obsidian-ktl-curator,
+#    and obsidian-ktl-registrar - (The mirror image happened on 2026-09-14: the
+#    curator referenced domain-schema.md while it was still on a branc here, and
+#    its build 404'd until this side landed. CONTRIBUTING.md carries the ordering
+#    rule; this check carries the paths.)
 say ""
 say "Checking the paths sibling repositories link into..."
 sibling_paths=(
@@ -224,13 +224,15 @@ sibling_paths=(
   "docs/signing-commits.md"
   "docs/threat-model.md"
   "docs/three-lines.md"
-  "skills/lokf-librarian/references/domain-schema.md"
+  "skills/ktl-librarian/references/domain-schema.md"
+  "skills/ktl-curator/references/review-session.md"
+  "skills/ktl-curator/references/trust-fields.md"
 )
 for p in "${sibling_paths[@]}"; do
   if [[ -e "$p" ]]; then
     ok "sibling-linked path exists: $p"
   else
-    err "sibling-linked path is gone: $p - obsidian-lokf-curator, and obsidian-lokf-registrar link to it by URL; restore it, or update their links in the same change"
+    err "sibling-linked path is gone: $p - obsidian-ktl-curator, and obsidian-ktl-registrar link to it by URL; restore it, or update their links in the same change"
   fi
 done
 
@@ -239,7 +241,7 @@ done
 #     here in the same breath, or the check silently stops covering it. CI has
 #     no siblings checked out, so this half only runs locally - the recorded
 #     list is the contract either way.
-mapfile -t cloned < <(for s in obsidian-lokf-curator obsidian-lokf-registrar; do
+mapfile -t cloned < <(for s in obsidian-ktl-curator obsidian-ktl-registrar; do
   [[ -d "../$s/.git" ]] && printf '%s\n' "../$s"
 done || true)
 if [[ ${#cloned[@]} -eq 0 ]]; then
@@ -301,7 +303,7 @@ done
 #     a checker that cannot fail is not covering anything.
 say ""
 say "Checking the sidecar templates are the copies CI lints..."
-templates="skills/lokf-sidecar/templates"
+templates="skills/ktl-sidecar/templates"
 for pair in \
   "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
   "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
@@ -336,8 +338,8 @@ bad="$(mktemp -d)"
 mkdir -p "$bad/k/x"
 # A suffixed heading, then two bare dates in ascending order: one finding each.
 printf '# Change Log\n\n## 2026-09-14 (2)\n\n* **A**: b.\n\n## 2026-09-13\n\n* **C**: d.\n\n## 2026-09-15\n\n* **E**: f.\n' > "$bad/k/log.md"
-printf -- '---\ntype: Service\nverified:\n  by: process:lokf-librarian\n  at: 2026-09-14T00:00:00Z\n---\n\n## Open questions\n\n- unclear (process:lokf-librarian, 2026-09-12)\n' > "$bad/k/x/a.md"
-printf -- '---\ntype: Service\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-13T00:00:00Z"\n  - by: process:lokf-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n' > "$bad/k/x/b.md"
+printf -- '---\ntype: Service\nverified:\n  by: process:ktl-librarian\n  at: 2026-09-14T00:00:00Z\n---\n\n## Open questions\n\n- unclear (process:ktl-librarian, 2026-09-12)\n' > "$bad/k/x/a.md"
+printf -- '---\ntype: Service\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-13T00:00:00Z"\n  - by: process:ktl-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n' > "$bad/k/x/b.md"
 # A local resource that does not exist (a URL would be skipped, never fetched).
 printf -- '---\ntype: Service\nresource: no-such-file.md\n---\n' > "$bad/k/x/c.md"
 # A commit-shaped `revision` must name a commit holding the resource: make the
@@ -361,7 +363,7 @@ pinned "$real" > "$bad/k/x/e.md"
 # frontmatter are findings; a sync client's conflict copy shares its
 # original's id and has a name no slug would; a directory whose case differs
 # is a path-shape finding.
-printf -- '---\r\ntype: Service\r\nverified:\r\n  - by: process:lokf-librarian\r\n    at: 2026-09-14T00:00:00Z\r\n---\r\n' > "$bad/k/x/f-crlf.md"
+printf -- '---\r\ntype: Service\r\nverified:\r\n  - by: process:ktl-librarian\r\n    at: 2026-09-14T00:00:00Z\r\n---\r\n' > "$bad/k/x/f-crlf.md"
 printf '\357\273\277---\ntype: Service\n---\n' > "$bad/k/x/g-bom.md"
 printf 'type: Service\n' > "$bad/k/x/h-nofm.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/i\n---\n' > "$bad/k/x/i.md"
@@ -374,15 +376,15 @@ printf -- '---\ntype: Service\nid: https://example.invalid/k/x/t\nverified: [{ b
 # number where a timestamp should be, a block that does not parse (reported
 # on one line), and a block that is a list rather than a mapping. And what a
 # parser must not see: a second librarian event inside a body code fence.
-printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fl\nverified: [\n  { by: process:lokf-librarian,\n    at: 2026-09-14T00:00:00Z }\n]\n---\n' > "$bad/k/x/fl-flow.md"
-printf -- '---\ntype: Service\nid: https://example.invalid/k/x/n\nverified:\n  - by: process:lokf-librarian\n    at: 20260914\n---\n' > "$bad/k/x/n-int.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fl\nverified: [\n  { by: process:ktl-librarian,\n    at: 2026-09-14T00:00:00Z }\n]\n---\n' > "$bad/k/x/fl-flow.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/n\nverified:\n  - by: process:ktl-librarian\n    at: 20260914\n---\n' > "$bad/k/x/n-int.md"
 printf -- '---\ntype: Service\nverified: [unclosed\n---\n' > "$bad/k/x/y-bad.md"
 printf -- '---\n- just a list\n---\n' > "$bad/k/x/l-list.md"
 # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
-printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:lokf-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n' > "$bad/k/x/fence.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n' > "$bad/k/x/fence.md"
 findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
 rm -rf "$bad"
-for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp" "bare mapping" "open question not" "2 process:lokf-librarian events" "resource not found" "does not hold" \
+for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp" "bare mapping" "open question not" "2 process:ktl-librarian events" "resource not found" "does not hold" \
             "f-crlf.md: unquoted timestamp" "g-bom.md: starts with a byte order mark" "h-nofm.md: no closed frontmatter block" \
             "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase" \
             "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on" \
@@ -411,7 +413,7 @@ fi
 good="$(mktemp -d)"
 mkdir -p "$good/k/x"
 printf '# Change Log\r\n\r\n## 2026-09-15\r\n\r\n* **A**: b.\r\n\r\n## 2026-09-14\r\n\r\n* **C**: d.\r\n' > "$good/k/log.md"
-printf -- '---\r\ntype: Service\r\nid: https://example.invalid/k/x/a\r\ndescription: >-\r\n  folded, which the gates\r\n  never read\r\nverified:\r\n  - by: process:lokf-librarian\r\n    at: "2026-09-14T00:00:00Z"\r\n---\r\n\r\n## Open questions\r\n\r\n- 2026-09-14, process:lokf-librarian: fine\r\n' > "$good/k/x/a.md"
+printf -- '---\r\ntype: Service\r\nid: https://example.invalid/k/x/a\r\ndescription: >-\r\n  folded, which the gates\r\n  never read\r\nverified:\r\n  - by: process:ktl-librarian\r\n    at: "2026-09-14T00:00:00Z"\r\n---\r\n\r\n## Open questions\r\n\r\n- 2026-09-14, process:ktl-librarian: fine\r\n' > "$good/k/x/a.md"
 if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>&1)"; then
   ok "conventions script reads a CRLF checkout as CI reads LF"
 else
@@ -489,7 +491,7 @@ rm -rf "$bare"
 # Every line the preflight can print as missing or a warning has a row on the
 # sidecar's prerequisites page - the plain-words meaning, who fixes it and
 # what to send them - so a new preflight line cannot land without one.
-prereq="skills/lokf-sidecar/references/prerequisites.md"
+prereq="skills/ktl-sidecar/references/prerequisites.md"
 while IFS= read -r key; do
   if grep -q "^| \`$key\` |" "$prereq"; then
     ok "prerequisites.md explains the preflight's '$key' line"
@@ -722,7 +724,7 @@ fi
 say ""
 say "Checking the librarian template's skills pin is a current release..."
 pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
-         skills/lokf-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
+         skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
 mapfile -t recent < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md \
                         | head -2 | tr -d '#[] ' | sed 's/^/v/')
 if [[ -z "$pin" ]]; then
@@ -778,6 +780,32 @@ else
     ok "no file outside the ones that record history reintroduces $old_name"
   else
     err "these files name $old_name again, which this repository was renamed from: ${unexpected[*]} - a branch written before the rename was merged; replace $old_name with knowledge-trust-ladder there (CHANGELOG.md, the bundle's log.md, the rename plan and one 'formerly' line in docs/install.md are the exceptions, because they record history)"
+  fi
+fi
+
+# 16a. The skills and plugins took the ktl- prefix on 2026-09-22; their lokf-
+#      names, and the ones before those, stay gone the same way. Only
+#      CHANGELOG.md keeps them, for the releases that shipped them and the one
+#      line telling a host what to remove.
+say ""
+say "Checking the old skill and plugin names have not come back..."
+old_names='lokf-(curator|docent|librarian|sidecar|registrar|enforcer|scaffolding)|LOKF (Curator|Registrar|Enforcer|Docent|Librarian|Sidecar)'
+set +e
+hits="$(git grep -lIE -- "$old_names")"
+grep_rc=$?
+set -e
+if [[ "$grep_rc" -gt 1 ]]; then
+  err "git grep exited $grep_rc while looking for the old skill and plugin names, so this check did not run"
+else
+  unexpected=()
+  while IFS= read -r f; do
+    [[ -z "$f" || "$f" == CHANGELOG.md || "$f" == scripts/validate-repository.sh ]] && continue
+    unexpected+=("$f")
+  done <<<"$hits"
+  if [[ "${#unexpected[@]}" -eq 0 ]]; then
+    ok "no file outside CHANGELOG.md names a lokf- skill or plugin"
+  else
+    err "these files name a lokf- skill or plugin: ${unexpected[*]} - use the ktl- name (only CHANGELOG.md keeps the old ones)"
   fi
 fi
 

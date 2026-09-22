@@ -6,10 +6,10 @@ description: Map of the repository locations this bundle was derived from, and h
 genre: how-to
 resource: .
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-17T16:40:00Z"
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T16:40:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -22,9 +22,9 @@ stale_after: 2027-09-10
 | --- | --- | --- |
 | `skills/*/SKILL.md` | the four skill Playbooks | re-read each router; a changed step list, guardrail, or frontmatter `description` is a drift signal |
 | `skills/*/references/*.md` | detail behind each skill Playbook | diff against the claims in the corresponding concept body |
-| `skills/lokf-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, `.gitattributes`, and the five scripts (preflight, conventions and its Python half, librarian wrapper, provenance gate) | diff `pyproject.toml` (the `lokf` floor) and the template lists in the skill's Step 1 and Step 5 tables |
+| `skills/ktl-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, `.gitattributes`, and the five scripts (preflight, conventions and its Python half, librarian wrapper, provenance gate) | diff `pyproject.toml` (the `lokf` floor) and the template lists in the skill's Step 1 and Step 5 tables |
 | `README.md`, `docs/install.md`, `docs/repository-layout.md` | project identity and the four-role narrative; the install commands, prerequisites table and pinning rule, on their own page since 2026-09-19 when the README became a front door; the repository tree, likewise on its own page | diff the roles table and the `Read on` table; diff `docs/install.md` against `references/gh-skill-cli.md` and `references/open-skills-cli.md`; diff the tree against the working copy |
-| `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `lokf-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `lokf-docent/references/obsidian.md`, which must agree with it |
+| `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `ktl-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `ktl-docent/references/obsidian.md`, which must agree with it |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
 | `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
 | `docs/three-lines.md`, `docs/three-lines-critics.md` | the roles placed in the three lines of defence, what an auditor can check and what remains to do and who does it; the critics, quoted, and what a bundle answers and leaves open, on the second page | diff `explanation/three-lines-of-defence.md`; confirm every external link on both pages still resolves and still says what is quoted, and that the cross-links between the two pages still meet their headings |
@@ -33,7 +33,7 @@ stale_after: 2027-09-10
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
 | `.github/workflows/semantic-release.yml`, `.github/scripts/changelog-release.mjs`, `.releaserc.json` | the version-and-changelog automation `playbooks/releasing.md` describes | diff the `release` job's steps, the script's `verifyRelease`/`generateNotes` behaviour, and `.releaserc.json`'s `releaseRules` (which commit types map to which bump) against the concept's Overview; all three sit behind the `release` Environment along with `publish.yml` |
-| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `knowledge-conventions.sh`, `knowledge-conventions.py`, `knowledge-preflight.sh`, `knowledge-provenance.sh`, `.lokf/.gitattributes` | this repository's dogfooded copies of the workflow templates, scripts and attributes the sidecar skill ships | diff each against its counterpart under `skills/lokf-sidecar/templates/`; `knowledge-registrar.yaml`, the five scripts and `.gitattributes` are kept byte-identical (the preflight reports any drift), and `knowledge-librarian.yaml` differs only by design - it omits the template's "Install the pinned lokf-librarian skill" step, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`, and words one comment for itself. Any other difference is a template bump not yet copied across |
+| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `knowledge-conventions.sh`, `knowledge-conventions.py`, `knowledge-preflight.sh`, `knowledge-provenance.sh`, `.lokf/.gitattributes` | this repository's dogfooded copies of the workflow templates, scripts and attributes the sidecar skill ships | diff each against its counterpart under `skills/ktl-sidecar/templates/`; `knowledge-registrar.yaml`, the five scripts and `.gitattributes` are kept byte-identical (the preflight reports any drift), and `knowledge-librarian.yaml` differs only by design - it omits the template's "Install the pinned ktl-librarian skill" step, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`, and words one comment for itself. Any other difference is a template bump not yet copied across |
 | `.github/ISSUE_TEMPLATE/*.md`, `.github/pull_request_template.md`, `.github/dependabot.yml` | contributor intake forms and pin maintenance | consciously excluded as concepts - see note below; re-check only that each template still names all four skills and that its `AI_COVENANT.md` link is absolute |
 | `scripts/*.sh` | what the validation playbook claims CI enforces | re-read the assertions; a new check is a gap in the playbook |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
@@ -67,7 +67,7 @@ stale_after: 2027-09-10
   sources and found to match, `verified` refreshed; the four re-generated
   today to follow their sources carry today's `generated.at`. Rows above
   follow `EXAMPLES.md` to `docs/examples/docent.md` and admit the new
-  `.assets/lokf-three-lines.svg` diagram; the mirror follows the page's
+  `.assets/ktl-three-lines.svg` diagram; the mirror follows the page's
   renamed closing heading, "What remains to do, and who does it". `lokf` on PyPI
   is still `0.7.0`, matching the floor; `.lokf/feedback.md` has no entries;
   all seven Reference URLs resolve.
@@ -75,7 +75,7 @@ stale_after: 2027-09-10
   README count the ninth pass flagged is fixed - the tree moved to
   `docs/repository-layout.md` and says three - and every page and record
   that counted four LOKF repositories now counts three (`knowledge-trust-ladder`,
-  LOKF Registrar, LOKF Curator; a host that installs the skills is not one).
+  KTL Registrar, KTL Curator; a host that installs the skills is not one).
   Prose counts of LOKF's classes and relations left `README.md`, `docs/` and
   the skills' references, so the sixth pass's "grep for the number" lesson
   has only Rule 3 and `trust-fields.md` left to find.
@@ -99,14 +99,14 @@ stale_after: 2027-09-10
   `policies/security.md` structure.
 - **Steady-state refresh (2026-09-14, eighth pass)**, against the two commits
   landed since the seventh pass (`423a982`, the log-heading/Open-questions-shape/attribution
-  wording fixes now already reflected in `skills/lokf-librarian/SKILL.md`, and `12e5570`, which
+  wording fixes now already reflected in `skills/ktl-librarian/SKILL.md`, and `12e5570`, which
   added `.lokf/scripts/knowledge-conventions.sh`). Content re-checked against current sources and
   found unchanged, `verified` refreshed only: `explanation/why-four-roles.md`,
   `explanation/why-a-registrar-role.md`, `explanation/why-a-distribution-repository.md`,
   `glossary/lokf.md`, `glossary/okf.md`, `glossary/trust-label.md`, `glossary/knowledge-bundle.md`,
   `explanation/hosts-and-doorways.md`, `playbooks/open-bundle-in-obsidian.md`,
-  `playbooks/lokf-sidecar-skill.md`, `playbooks/lokf-docent-skill.md`,
-  `playbooks/lokf-librarian-skill.md`. **Orphan found and fixed**: the dogfooded-workflows row above
+  `playbooks/ktl-sidecar-skill.md`, `playbooks/ktl-docent-skill.md`,
+  `playbooks/ktl-librarian-skill.md`. **Orphan found and fixed**: the dogfooded-workflows row above
   had no entry for the new `.lokf/scripts/knowledge-conventions.sh`, added this pass, byte-identical
   to its template. `.lokf/feedback.md` has no entries. `lokf` on PyPI is still `0.7.0`, matching the
   floor - no bump.
@@ -144,28 +144,28 @@ stale_after: 2027-09-10
   on PyPI is `0.7.0`, matching the floor; `.lokf/feedback.md` has no entries.
 - **Steady-state refresh (2026-09-14, fifth pass)**, on branch
   `docs/domain-schema-extension`, uncommitted. Swept: a new reference file,
-  `skills/lokf-librarian/references/domain-schema.md` (the extending-the-vocabulary
+  `skills/ktl-librarian/references/domain-schema.md` (the extending-the-vocabulary
   recipe: a pinned core-schema copy, a LinkML domain schema, frontmatter
   naming the class exactly, the flag wired into the justfile and both
-  workflows), and edits to `skills/lokf-librarian/SKILL.md` (Rule 7, the
-  audit section, the tooling-version step), `skills/lokf-curator/references/domain-schemas.md`,
-  `docs/for-the-curious.md`, `skills/lokf-sidecar/templates/justfile` and
+  workflows), and edits to `skills/ktl-librarian/SKILL.md` (Rule 7, the
+  audit section, the tooling-version step), `skills/ktl-curator/references/domain-schemas.md`,
+  `docs/for-the-curious.md`, `skills/ktl-sidecar/templates/justfile` and
   `CHANGELOG.md` reframing an earlier, more defensive draft of the same
   material - dropped the validator-internals digression and the two
   citations of a named consumer project, in favour of one recipe stated on
-  its own terms. `playbooks/lokf-librarian-skill.md` gained a paragraph
-  describing this; `playbooks/lokf-curator-skill.md` re-verified, no body
+  its own terms. `playbooks/ktl-librarian-skill.md` gained a paragraph
+  describing this; `playbooks/ktl-curator-skill.md` re-verified, no body
   change (its "domain-schema guidance" line already covers it). **Correctness
   bug found and fixed (this run):** Rule 3's class list named fourteen
   classes, omitting `Role`, while `README.md` and `docs/for-the-curious.md`
   both said fifteen - the standing open question on
-  `playbooks/lokf-librarian-skill.md`. Fetched the raw schema
+  `playbooks/ktl-librarian-skill.md`. Fetched the raw schema
   (`raw.githubusercontent.com/nicholsn/lokf/main/lokf.yaml`) and counted the
   fifteen concept-designating classes directly: `Role` is one of them. Fixed
-  Rule 3 in `skills/lokf-librarian/SKILL.md` and closed the open question;
+  Rule 3 in `skills/ktl-librarian/SKILL.md` and closed the open question;
   no other concept named a class count. `lokf` on PyPI is still `0.7.0`;
   `.lokf/feedback.md` has no entries. **Later the same day**, two further
-  passes over `skills/lokf-curator/`: `references/review-session.md` states
+  passes over `skills/ktl-curator/`: `references/review-session.md` states
   how the curation-policy table binds a row to a class, and
   `references/trust-fields.md` (with `SKILL.md`, `references/domain-schemas.md`
   and the librarian's `references/domain-schema.md`) has the vocabulary-fit
@@ -174,9 +174,9 @@ stale_after: 2027-09-10
   the second from an open question the curator plugin's bundle raised. So the
   plugin repositories are a live source for this bundle, not only consumers -
   re-read their `CHANGELOG.md` and bundle logs on a pass that touches
-  `skills/lokf-curator/`. `playbooks/lokf-curator-skill.md` carries both.
+  `skills/ktl-curator/`. `playbooks/ktl-curator-skill.md` carries both.
 - **Steady-state refresh (2026-09-13, fourth pass)**, preceded by a
-  `lokf-sidecar` health check: every Step 1/2/5 file is present, the doorway
+  `ktl-sidecar` health check: every Step 1/2/5 file is present, the doorway
   resolves, no placeholder survives, signing is on, and the only template
   difference beyond placeholders is `knowledge-librarian.yaml`'s deliberate
   omission of the install step. The template `pyproject.toml` itself still
@@ -187,7 +187,7 @@ stale_after: 2027-09-10
   required-checks-off advice in `automation.md`, the librarian's **Drift**
   audit heading, `Role` in Rule 3). That commit sits on the unmerged branch
   `update`, and the checked-out `skills/` does not carry it; restore them
-  when it lands. `playbooks/lokf-librarian-skill.md` is a draft again with an
+  when it lands. `playbooks/ktl-librarian-skill.md` is a draft again with an
   open question, since `README.md`'s fifteen classes and Rule 3's fourteen
   disagree on this tree. Re-verified against the polished `README.md` and
   the new `docs/obsidian.md`: `explanation/why-four-roles.md`,
@@ -199,34 +199,32 @@ stale_after: 2027-09-10
   `.assets/*.svg`, covered by the existing row, and one sentence on what the
   plugin READMEs now do). Corrected drift in `policies/security.md`,
   `policies/versioning.md`, `playbooks/contributing.md`,
-  `playbooks/releasing.md`, `playbooks/lokf-librarian-skill.md`,
-  `playbooks/lokf-sidecar-skill.md` and `explanation/why-a-registrar-role.md`
+  `playbooks/releasing.md`, `playbooks/ktl-librarian-skill.md`,
+  `playbooks/ktl-sidecar-skill.md` and `explanation/why-a-registrar-role.md`
   (see `log.md`). The dogfooded-workflows row above stopped claiming
   byte-identity for `knowledge-librarian.yaml` - the omission of the
   install step is deliberate here, not drift. `lokf` on PyPI is still
   `0.7.0` (PyPI's JSON API; `uv pip index` is still not a subcommand of
   this environment's `uv`), matching the floor; no bump. `.lokf/feedback.md`
   had no entries.
-- **Rename and correction (2026-09-12)**: `skills/lokf-scaffolding/` is now
-  `skills/lokf-sidecar/` (frontmatter `name: lokf-sidecar`); every row above
-  already uses the new path. `open-bundle-in-obsidian.md` was rewritten to
+- **Correction (2026-09-12)**: `open-bundle-in-obsidian.md` was rewritten to
   withdraw the "open the repository root as a vault" route (Obsidian ignores
   a symlink whose target is inside the same vault, per its own help) - the
-  next run should confirm `skills/lokf-sidecar/SKILL.md` Step 2 still says
+  next run should confirm `skills/ktl-sidecar/SKILL.md` Step 2 still says
   the same, and that the two plugin repositories' READMEs still agree.
   Later the same day the two-name layout rule landed in Step 0 (see
   `explanation/hosts-and-doorways.md`): the next run should check that the
   wrapper script, both workflow templates, and the three dogfooded copies
   still name both `.lokf/knowledge` and `knowledge_bundle` in every pathspec.
-- **Targeted addition, not committed (2026-09-11)**: `lokf-sidecar` Step 2
+- **Targeted addition, not committed (2026-09-11)**: `ktl-sidecar` Step 2
   gained a third root-level pointer - a `knowledge_bundle` symlink to
   `.lokf/knowledge`, so Obsidian's "Open folder as vault" (and any OS folder
   picker that hides dot-directories) has a visible entry point. Added
   `playbooks/open-bundle-in-obsidian.md`; refreshed
-  `playbooks/lokf-sidecar-skill.md`'s Overview (Step 2 now reads three
+  `playbooks/ktl-sidecar-skill.md`'s Overview (Step 2 now reads three
   additions, not two) and re-verified `glossary/knowledge-bundle.md` and
   `playbooks/repository-validation.md` against their now-touched resources
-  (`skills/lokf-sidecar/templates/README.md`; `.github/workflows/validate.yml`
+  (`skills/ktl-sidecar/templates/README.md`; `.github/workflows/validate.yml`
   plus new `knowledge_bundle`-excluding args in `.markdownlint-cli2.jsonc` and
   `lychee.toml`, both still consciously excluded as concepts per the note
   below) - no body drift in either, `verified` timestamps refreshed only.
@@ -243,21 +241,21 @@ stale_after: 2027-09-10
   the registrar's role named in `README.md` and
   `explanation/why-a-registrar-role.md`, so its filename should say so.
   Renamed `.github/workflows/knowledge-validate.yaml` and its byte-identical
-  template counterpart under `skills/lokf-sidecar/templates/github/` to
+  template counterpart under `skills/ktl-sidecar/templates/github/` to
   `knowledge-registrar.yaml` (workflow `name:`, self-referencing `paths:`
   filter, and `concurrency.group` updated to match; the `validate` job id/name
   left as-is - still an accurate description of what that job does). Updated
   every cross-reference: this file's source-map row, `explanation/why-a-registrar-role.md`,
   `.github/dependabot.yml`'s manual-bump comment, and the mentions in
-  `lokf-librarian/SKILL.md`, `lokf-librarian/references/scheduled-task.md`,
-  `lokf-sidecar/SKILL.md`, `lokf-sidecar/references/automation.md`,
-  and `lokf-curator/references/review-session.md`. Left historical `log.md`
+  `ktl-librarian/SKILL.md`, `ktl-librarian/references/scheduled-task.md`,
+  `ktl-sidecar/SKILL.md`, `ktl-sidecar/references/automation.md`,
+  and `ktl-curator/references/review-session.md`. Left historical `log.md`
   and source-map entries referring to the old name alone - they describe past
   events under the name the workflow had at the time. `.github/workflows/validate.yml`
   (the unrelated *repository* CI gate covered by `playbooks/repository-validation.md`)
   merely shares the word "validate" and was left untouched - out of scope for
   this rename.
-- **Feedback consumed (2026-09-10, second pass)**: lokf-docent recorded a
+- **Feedback consumed (2026-09-10, second pass)**: ktl-docent recorded a
   Disagreement - `explanation/why-four-roles.md`'s title/description read as
   the total count of roles, but `README.md`'s own "Four roles, three lines of
   the poem" / "The fifth role, which is not a skill" headers make clear there
@@ -281,16 +279,16 @@ stale_after: 2027-09-10
   place - flagged under that concept's `## Open questions` since fixing
   `SECURITY.md` itself is outside this skill's `.lokf/`-only scope. `README.md`
   gained a substantive new section, "The fifth role, which is not a skill" (the
-  registrar, plus two companion Obsidian plugins, LOKF Registrar and LOKF
+  registrar, plus two companion Obsidian plugins, KTL Registrar and LOKF
   Curator) - a real gap, not yet a concept, so added
-  `explanation/why-a-registrar-role.md`. Confirmed `skills/lokf-librarian/SKILL.md`'s
+  `explanation/why-a-registrar-role.md`. Confirmed `skills/ktl-librarian/SKILL.md`'s
   layout diagram and bundle-root `publisher` example already use `person/`/`Person`
   (an earlier fix, commit `dd74943`), consistent with this bundle's own
   `knowledge/index.md`. Version bump to v0.10.0 in `README.md`/`CHANGELOG.md`
   touches no concept - no literal version pin is asserted anywhere in the
   bundle. `lokf` on PyPI is still `0.7.0`, matching the sidecar's floor - no
   bump needed. Noticed but did not act on (out of scope - a prose consistency
-  issue between two non-`.lokf/` files, not a bundle fact): `skills/lokf-librarian/SKILL.md`
+  issue between two non-`.lokf/` files, not a bundle fact): `skills/ktl-librarian/SKILL.md`
   still says "For the CURATOR" (uppercase) while the actual
   `knowledge-librarian.yaml` PR body says "For the curator" (lowercase).
 - **Steady-state refresh (2026-09-09, second pass)**: re-verified all 18
@@ -306,14 +304,14 @@ stale_after: 2027-09-10
   `gh skill install` already existed by v2.91.0, consistent with v2.90.0
   without pinning it exactly; leaving as-is, flag if a future run finds the
   exact version.
-- **Correctness bug found and fixed (this run)**: `skills/lokf-librarian/SKILL.md`
+- **Correctness bug found and fixed (this run)**: `skills/ktl-librarian/SKILL.md`
   Golden Rule 4 mapped `sameAs` to `owl:sameAs`, changed from the correct
   `schema:sameAs` by commit `e6d5633` (self-described as "chore: minor updates
   and improvements", not a deliberate spec change). Cross-checked against both
   the LOKF specification site and the raw `lokf.yaml` schema on GitHub, which
   agree: `sameAs` maps to `schema:sameAs`. This wasn't just a documentation
   slip - `just lokf-check-refs`'s SPARQL query (in both `.lokf/justfile` and
-  the `skills/lokf-sidecar/templates/justfile` it was copied from) filters
+  the `skills/ktl-sidecar/templates/justfile` it was copied from) filters
   on the same predicate list, so any `sameAs` relation would have silently
   never been checked for a dangling target. Fixed in all three places, no
   `sameAs` relations exist in this bundle yet so nothing else changed;
@@ -349,7 +347,7 @@ stale_after: 2027-09-10
   validate knowledge` failed with exactly this error before the fix, and the
   same failure was independently visible in this repository's own
   `Knowledge Bundle Validation` GitHub Actions run. Fixed by wrapping each as
-  a one-item list (content unchanged); `lokf-librarian/SKILL.md` Golden Rule
+  a one-item list (content unchanged); `ktl-librarian/SKILL.md` Golden Rule
   4 and section 2 now say so explicitly, so it should not recur.
 - **Orphan sweep (this run)**: three `.github/` surfaces had no source-map row
   and no concept - the two dogfooded `knowledge-*.yaml` workflows, the issue
@@ -359,7 +357,7 @@ stale_after: 2027-09-10
   same run (not separately itemized in `CHANGELOG.md`, which for this
   first release describes the shipped feature rather than its pre-release
   fix history): both issue templates offered only
-  `lokf-librarian` and `lokf-sidecar` under "Which skill?", all three
+  `ktl-librarian` and `ktl-sidecar` under "Which skill?", all three
   templates linked `AI_COVENANT.md` relatively (which 404s in GitHub's
   rendered forms), and the two shipped workflow templates lagged the pins
   Dependabot had already applied to the dogfooded copies.

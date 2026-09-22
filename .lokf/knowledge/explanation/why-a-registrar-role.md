@@ -6,7 +6,7 @@ description: The job none of the four skills does - keeping bundle records thems
 genre: explanation
 resource: README.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-13T22:00:00Z"
 status: draft
 relatedTo:
@@ -14,7 +14,7 @@ relatedTo:
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T14:02:11Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -40,12 +40,12 @@ with no CI to catch a malformed record - one plugin does the same job at the
 desk rather than after a commit, and a second brings the curator's session
 to that desk:
 
-- [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar) -
+- [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) -
   the registrar in the editor: checks a record is well-formed as it is
   written.
-- [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) -
+- [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) -
   the curator's assistant, not the curator: puts a source beside a claim and
-  records what a person decided, running this repository's `lokf-curator`
+  records what a person decided, running this repository's `ktl-curator`
   review session without an agent in the loop.
 
 Neither plugin reaches a verdict of its own - the registrar keeps the
@@ -62,4 +62,4 @@ README's Obsidian page, 2026-09-13).
 
 ## Open questions
 
-- 2026-09-18, process:lokf-curator: unauthenticated session, no `gh` login to attribute to a person - the rename detail ("renamed from `knowledge-validate.yaml` to match this role by name") is true per git history (`skills/lokf-scaffolding/templates/github/knowledge-validate.yaml` -> `.github/workflows/knowledge-registrar.yaml`, commit `e4ae7dc`, 2026-09-10) but isn't stated in the cited `resource` (`README.md`), so a reader can't verify it from the citation given. Either drop the detail or cite the commit/rename alongside `resource`.
+- 2026-09-18, process:ktl-curator: unauthenticated session, no `gh` login to attribute to a person - the rename detail ("renamed from `knowledge-validate.yaml` to match this role by name") is true per git history (the sidecar template's `knowledge-validate.yaml` -> `.github/workflows/knowledge-registrar.yaml`, commit `e4ae7dc`, 2026-09-10) but isn't stated in the cited `resource` (`README.md`), so a reader can't verify it from the citation given. Either drop the detail or cite the commit/rename alongside `resource`.
