@@ -6,13 +6,13 @@ description: One repository-level semantic version covering all four skills, rel
 genre: reference
 resource: docs/releasing.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-14T16:00:00Z"
 status: draft
 about:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T14:02:11Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -44,4 +44,4 @@ the two.
 
 ## Open questions
 
-- 2026-09-18, process:lokf-curator: unauthenticated session, no `gh` login to attribute to a person - two claims aren't backed by the cited `resource` (`docs/releasing.md`) - (1) "superseded the previous qualitative definition... which CONTRIBUTING.md carried until this date and no longer states anywhere in the repository" (not verified true or false, just uncited here); (2) the "designed as a set... disagree about the frontmatter contract between them" reasoning for one shared tag (README.md states the "agrees with itself" conclusion but not this specific reasoning). Fourth concept this session with the same citation gap (see also lokf-librarian skill, Why a registrar role, Security policy) - worth raising with lokf-librarian as a general pattern rather than fixing per-concept.
+- 2026-09-18, process:ktl-curator: unauthenticated session, no `gh` login to attribute to a person - two claims aren't backed by the cited `resource` (`docs/releasing.md`) - (1) "superseded the previous qualitative definition... which CONTRIBUTING.md carried until this date and no longer states anywhere in the repository" (not verified true or false, just uncited here); (2) the "designed as a set... disagree about the frontmatter contract between them" reasoning for one shared tag (README.md states the "agrees with itself" conclusion but not this specific reasoning). Fourth concept this session with the same citation gap (see also ktl-librarian skill, Why a registrar role, Security policy) - worth raising with ktl-librarian as a general pattern rather than fixing per-concept.

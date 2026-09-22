@@ -4,25 +4,25 @@ id: https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-ob
 title: Open the knowledge bundle in Obsidian
 description: How a knowledge bundle meets an Obsidian vault - two vaults, the workshop someone already keeps and the bundle opened as its own vault through the root-level knowledge_bundle doorway - with what Obsidian does with a link on each host, verified against Obsidian 1.13.7's file reconciler, and why the bundle is never laid down as a real folder inside a vault.
 genre: how-to
-resource: skills/lokf-sidecar/SKILL.md
+resource: skills/ktl-sidecar/SKILL.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-13T12:00:00Z"
 status: draft
 isPartOf:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-sidecar-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 relatedTo:
   - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 verified:
-  - by: process:lokf-librarian
+  - by: process:ktl-librarian
     at: "2026-09-16T09:10:00Z"
 ---
 
 # Overview
 
-`lokf-sidecar` Step 2 creates a `knowledge_bundle` symlink at the host root, pointing at
+`ktl-sidecar` Step 2 creates a `knowledge_bundle` symlink at the host root, pointing at
 `.lokf/knowledge`. It exists because `.lokf/` is a dot-directory and Finder, most folder pickers -
 Obsidian's **File → Open folder as vault** included - and a repository listing hide or bury those, so
 `.lokf/knowledge` is easy to open by typing the path but awkward to browse to. The link is the
@@ -38,7 +38,7 @@ is migrated or reorganised. The bundle is the **exhibition**, and it is opened a
    a concept, the root `index.md` carrying the bundle's header - and Obsidian writes its workspace
    state through the link into the real `.lokf/knowledge/.obsidian/`, harmless to `lokf validate` (it
    reads only `*.md`) and excluded from git by `.lokf/.gitignore`.
-2. Install LOKF Registrar and LOKF Curator *in that vault* - Obsidian installs plugins per vault.
+2. Install KTL Registrar and KTL Curator *in that vault* - Obsidian installs plugins per vault.
    Nothing to configure: both default to "the vault root is the bundle root" when the root `index.md`
    carries a header.
 
@@ -85,7 +85,7 @@ indexed twice. Dot-directories are never indexed at all. Two consequences:
 Obsidian indexes a real folder inside a vault like any other, so the exhibition leaks into the
 workshop's link suggestions, quick switcher, graph and search, and *Settings → Files and links →
 Excluded files* only makes an excluded folder "less noticeable" in the quick switcher and link
-suggestions (hidden in search, graph view and unlinked mentions). `lokf-sidecar` laid the bundle down
+suggestions (hidden in search, graph view and unlinked mentions). `ktl-sidecar` laid the bundle down
 that way for a vault host for one day (2026-09-12) and retired it the next; the two-vault workflow
 above is the one the skills and the plugins assume. A shared folder that is *not* a vault may still be
 rearranged that way by hand, for a synced visible name - the sidecar's `references/portability.md`

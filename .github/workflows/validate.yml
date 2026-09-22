@@ -98,7 +98,7 @@ jobs:
       # Catches what YAML parsing alone misses (bad expressions, wrong
       # contexts, invalid `needs:`, shellcheck on `run:` blocks) - and,
       # unlike `gh skill publish --dry-run`, reaches the two workflow
-      # templates under skills/lokf-sidecar/templates/github/ that get
+      # templates under skills/ktl-sidecar/templates/github/ that get
       # copied into other repositories and run there. With no paths given
       # actionlint looks only under .github/workflows/, so the templates are
       # named explicitly; the repository contract separately holds this
@@ -106,7 +106,7 @@ jobs:
       - name: actionlint
         uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 # v1.7.12
         with:
-          args: -color .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml skills/lokf-sidecar/templates/github/knowledge-librarian.yaml skills/lokf-sidecar/templates/github/knowledge-registrar.yaml
+          args: -color .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml skills/ktl-sidecar/templates/github/knowledge-librarian.yaml skills/ktl-sidecar/templates/github/knowledge-registrar.yaml
 
       # actionlint checks syntax, not pinning. A tag or branch ref floats, so
       # every `uses:` - here and in the templates hosts copy - must name a
@@ -114,7 +114,7 @@ jobs:
       # comment for Dependabot to bump.
       - name: Every action is pinned to a commit
         run: |
-          if grep -rnE '^\s*-?\s*uses:' .github/workflows/ skills/lokf-sidecar/templates/github/ \
+          if grep -rnE '^\s*-?\s*uses:' .github/workflows/ skills/ktl-sidecar/templates/github/ \
             | grep -vE '@([0-9a-f]{40}|sha256:[0-9a-f]{64})\b' \
             | grep -vE 'uses:\s*\./'; then
             echo '::error::the action(s) above are not pinned to a commit SHA' >&2
@@ -181,6 +181,6 @@ jobs:
         with:
           path: '**/*.md'
           # knowledge_bundle is a symlink to .lokf/knowledge (Obsidian vault
-          # entry point, see lokf-sidecar Step 2) - already checked at
+          # entry point, see ktl-sidecar Step 2) - already checked at
           # its real path.
           skip: knowledge_bundle

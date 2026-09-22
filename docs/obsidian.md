@@ -10,12 +10,12 @@ The vault you already have is the **workshop**, and nothing in it is moved or mi
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/lokf-two-vaults-dimmed.svg">
-    <img src="../.assets/lokf-two-vaults.svg" alt="Workshop vault and exhibition vault: one folder, no shared index" width="720" />
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-two-vaults-dimmed.svg">
+    <img src="../.assets/ktl-two-vaults.svg" alt="Workshop vault and exhibition vault: one folder, no shared index" width="720" />
   </picture>
 </p>
 
-1. **File → Open folder as vault**, and pick `knowledge_bundle` at the host root - the link `lokf-sidecar` lays beside `.lokf/` so the bundle has a name a folder picker can see. Open the link itself, never the host root: a vault opened at the root lists neither the dot-folder nor the link, which is exactly what keeps the workshop clean.
+1. **File → Open folder as vault**, and pick `knowledge_bundle` at the host root - the link `ktl-sidecar` lays beside `.lokf/` so the bundle has a name a folder picker can see. Open the link itself, never the host root: a vault opened at the root lists neither the dot-folder nor the link, which is exactly what keeps the workshop clean.
 2. **Install the plugins in that vault.** Obsidian installs plugins per vault. Nothing to configure: the root `index.md` carries the bundle's header, so the whole vault is the bundle.
 3. **Edit and confirm there.** Obsidian writes that vault's workspace state through the link into `.lokf/knowledge/.obsidian/`, which the sidecar's `.gitignore` already excludes.
 
@@ -33,15 +33,15 @@ mklink /J knowledge_bundle .lokf\knowledge   # Windows: a junction, no administr
 
 | Role | Skill or tool | Obsidian plugin |
 | --- | --- | --- |
-| **Sidecar** | `lokf-sidecar` | - |
-| **Librarian** | `lokf-librarian` | - (deriving is an agent's job) |
-| **Registrar** | `lokf validate`, `knowledge-registrar.yaml` | [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar) - the same checks, as you type |
-| **Curator** - always a person | `lokf-curator`, the person's assistant | [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) - the same assistant, at the desk |
-| **Docent** | `lokf-docent`, `lokf serve` | - |
+| **Sidecar** | `ktl-sidecar` | - |
+| **Librarian** | `ktl-librarian` | - (deriving is an agent's job) |
+| **Registrar** | `lokf validate`, `knowledge-registrar.yaml` | [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) - the same checks, as you type |
+| **Curator** - always a person | `ktl-curator`, the person's assistant | [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) - the same assistant, at the desk |
+| **Docent** | `ktl-docent`, `lokf serve` | - |
 
 ## Where the rest is written
 
-- **Using each plugin** - the status bar, the report, the review card, the commands - is in the plugin READMEs: [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar#readme) and [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator#readme).
+- **Using each plugin** - the status bar, the report, the review card, the commands - is in the plugin READMEs: [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar#readme) and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator#readme).
 - **What Obsidian does with the link on each host**, why the bundle is never laid down as a real folder inside a vault, and the one arrangement that does put exhibits in the workshop (a link from your vault to a repository's bundle, listed under the plugins' *Bundle root folders* setting): this repository's playbook [Open the knowledge bundle in Obsidian](../.lokf/knowledge/playbooks/open-bundle-in-obsidian.md). [Hosts and doorways](../.lokf/knowledge/explanation/hosts-and-doorways.md) records why there is one layout.
-- **Shared folders, Windows, and hosts without git** are in the sidecar's [`portability.md`](../skills/lokf-sidecar/references/portability.md).
-- **An agent asked the same question** answers from [`lokf-docent/references/obsidian.md`](../skills/lokf-docent/references/obsidian.md), which says the same in fewer words.
+- **Shared folders, Windows, and hosts without git** are in the sidecar's [`portability.md`](../skills/ktl-sidecar/references/portability.md).
+- **An agent asked the same question** answers from [`ktl-docent/references/obsidian.md`](../skills/ktl-docent/references/obsidian.md), which says the same in fewer words.

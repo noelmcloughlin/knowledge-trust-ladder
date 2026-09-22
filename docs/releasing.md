@@ -1,6 +1,6 @@
 # How the three repositories release
 
-The three repositories - [`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder), [LOKF Registrar](https://github.com/noelmcloughlin/obsidian-lokf-registrar), and the [LOKF Curator](https://github.com/noelmcloughlin/obsidian-lokf-curator) - release the same way, from the same pinned [semantic-release](https://semantic-release.gitbook.io/) tool, run by each repository's `semantic-release.yml`. This page is the shared part. Each workflow's own header comment carries that repository's detail and the reasons behind it.
+The three repositories - [`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder), [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar), and the [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) - release the same way, from the same pinned [semantic-release](https://semantic-release.gitbook.io/) tool, run by each repository's `semantic-release.yml`. This page is the shared part. Each workflow's own header comment carries that repository's detail and the reasons behind it.
 
 ## The version is computed, you write commit message
 
@@ -27,7 +27,7 @@ The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you g
 | Repository | Tag | Then |
 | --- | --- | --- |
 | `knowledge-trust-ladder` | None from this workflow. `gh skill publish` is the one tag creator, so a maintainer runs `publish.yml` by hand with the version to ship, typed with its `v` (`v0.16.0`); the workflow cross-checks it against the promoted changelog first. Tags carry the `v`, changelog headings never do. | The four skills publish to the registry under that one tag. |
-| LOKF Registrar, LOKF Curator | Bare `X.Y.Z`, Obsidian's convention, after `package.json`, `manifest.json` and `versions.json` are bumped as `npm version` would. | `release.yml` builds, attests provenance and opens a **draft** release carrying `main.js`, `manifest.json` and `styles.css`; a maintainer reviews and publishes it. A hand-pushed tag takes the same path. |
+| KTL Registrar, KTL Curator | Bare `X.Y.Z`, Obsidian's convention, after `package.json`, `manifest.json` and `versions.json` are bumped as `npm version` would. | `release.yml` builds, attests provenance and opens a **draft** release carrying `main.js`, `manifest.json` and `styles.css`; a maintainer reviews and publishes it. A hand-pushed tag takes the same path. |
 
 Everything from step 3 on runs behind the `release` GitHub Environment. **Configure required reviewers on it once, in each repository's Settings → Environments**, or a qualifying merge ships unattended; creating the environment does not do that for you.
 

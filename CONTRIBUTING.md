@@ -17,20 +17,20 @@ bash scripts/validate-repository.sh
 To try a change end-to-end before publishing, install from your local clone instead of GitHub:
 
 ```bash
-gh skill install ./knowledge-trust-ladder lokf-sidecar --from-local
+gh skill install ./knowledge-trust-ladder ktl-sidecar --from-local
 # or:
-npx skills add ./knowledge-trust-ladder --skill lokf-sidecar
+npx skills add ./knowledge-trust-ladder --skill ktl-sidecar
 ```
 
 ## Layout
 
 | Path | Responsibility |
 | --- | --- |
-| `skills/lokf-sidecar/SKILL.md` | One-shot bootstrap: creates `.lokf/` from `templates/`. Router only; its `references/` carry the portability and automation detail. |
-| `skills/lokf-sidecar/templates/` | Every file the sidecar writes, copied verbatim, never inlined into `SKILL.md`. |
-| `skills/lokf-librarian/SKILL.md` | Day to day: scrape, build, audit and hand off `.lokf/` concepts. Facts, never verdicts. |
-| `skills/lokf-curator/SKILL.md` | A human curator's assistant: the trust report, and the review session that records a person's Confirm / Wrong / Retire / Later. Verdicts, never facts. |
-| `skills/lokf-docent/SKILL.md` | The reader's side: answers from the bundle with each concept's trust label, and records misses in `.lokf/feedback.md`. Read-only on the bundle. |
+| `skills/ktl-sidecar/SKILL.md` | One-shot bootstrap: creates `.lokf/` from `templates/`. Router only; its `references/` carry the portability and automation detail. |
+| `skills/ktl-sidecar/templates/` | Every file the sidecar writes, copied verbatim, never inlined into `SKILL.md`. |
+| `skills/ktl-librarian/SKILL.md` | Day to day: scrape, build, audit and hand off `.lokf/` concepts. Facts, never verdicts. |
+| `skills/ktl-curator/SKILL.md` | A human curator's assistant: the trust report, and the review session that records a person's Confirm / Wrong / Retire / Later. Verdicts, never facts. |
+| `skills/ktl-docent/SKILL.md` | The reader's side: answers from the bundle with each concept's trust label, and records misses in `.lokf/feedback.md`. Read-only on the bundle. |
 | `skills/*/references/*.md` | Detail loaded only when the router points to it, which keeps each `SKILL.md` small. |
 | `scripts/` | The repository contract CI runs on every PR. `validate-repository.sh` is the entry point and runs the layout tests; `smoke-test-install.sh` installs all four skills into a throwaway repo. |
 
@@ -42,7 +42,7 @@ The whole tree, workflows and docs included: [docs/repository-layout.md](docs/re
 - Run `gh skill publish --dry-run` if you have the GitHub CLI: the Agent Skills spec check `validate.yml` runs.
 - If a change alters what a skill *does*, not just its wording, add a line or two under `## [Unreleased]` in `CHANGELOG.md`. The reasoning belongs beside the code.
 - Files here are deep-linked from the sibling repositories, whose link checks follow those URLs for real; check 9 lists the paths. Move one only together with their links, and when a change *there* needs something new *here*, land this side first.
-- A change under `skills/lokf-sidecar/templates/` is copied over this repository's own copy in the same pull request; check 11 names the pairs, and `knowledge-librarian.yaml` is the one exception.
+- A change under `skills/ktl-sidecar/templates/` is copied over this repository's own copy in the same pull request; check 11 names the pairs, and `knowledge-librarian.yaml` is the one exception.
 - When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`): a squash merge takes its subject from the title, and the `plan` job refuses a mismatch.
 - Pinned action SHAs are bumped by Dependabot, and CI fails an action that is not pinned to a commit.
 - A pull request that records a `human:` confirmation is signed, GPG or SSH ([signing your commits](docs/signing-commits.md)). A repository running the forge-free gate also carries your public key under `.lokf/curators/`, landed in its own pull request first; the same page says how to export it.

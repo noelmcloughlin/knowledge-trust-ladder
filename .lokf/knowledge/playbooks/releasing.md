@@ -6,7 +6,7 @@ description: semantic-release.yml computes the version and promotes CHANGELOG.md
 genre: how-to
 resource: .github/workflows/publish.yml
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-18T12:00:00Z"
 status: draft
 dependsOn:
@@ -16,7 +16,7 @@ references:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
   - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-18T12:00:00Z"
 ---
 

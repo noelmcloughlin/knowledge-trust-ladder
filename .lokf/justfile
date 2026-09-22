@@ -16,7 +16,7 @@ lokf-install:
 # Assemble and validate the knowledge bundle against the LOKF schema.
 # A bundle that extends the vocabulary with a domain schema passes it here as
 # `--schema <slug>.yaml` (and in both workflows' validate steps);
-# see lokf-librarian/references/domain-schema.md for the recipe.
+# see ktl-librarian/references/domain-schema.md for the recipe.
 lokf-validate:
     uv run lokf validate {{ bundle }}
 

@@ -6,7 +6,7 @@ description: What CI checks on every pull request and weekly - the repository co
 genre: how-to
 resource: .github/workflows/validate.yml
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-18T14:00:00Z"
 status: draft
 references:
@@ -14,7 +14,7 @@ references:
   - https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
   - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-18T14:00:00Z"
 ---
 
@@ -28,8 +28,8 @@ added 2026-09-17) a `compatibility` field of at most 500 characters naming
 what the skill needs, no duplicate `SKILL.md`, every relative Markdown link
 under `skills/` resolving (fenced examples excluded), ShellCheck-clean
 scripts, every stated LOKF class count agreeing with
-`lokf-librarian/SKILL.md` Rule 3 (and with
-`lokf-curator/references/trust-fields.md`'s own enumeration), the sidecar
+`ktl-librarian/SKILL.md` Rule 3 (and with
+`ktl-curator/references/trust-fields.md`'s own enumeration), the sidecar
 layout tests, the paths the two sibling plugin repositories deep-link into by
 URL still existing - and, when those siblings are cloned beside this repo,
 that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
@@ -55,7 +55,7 @@ bundle, counting a linked bundle, reading `commit.gpgsign = yes` as signing
 on, warning when the conventions script's Python half is missing beside it,
 stopping on one line under `sh` (as the other two scripts do), and every
 line it can print as missing or a warning having a row on
-`lokf-sidecar/references/prerequisites.md`; and (check 13, same day)
+`ktl-sidecar/references/prerequisites.md`; and (check 13, same day)
 `knowledge-provenance.sh` passing a confirmation signed by the curator on
 file - with a GPG key, a GPG signing subkey, or an SSH key - and failing an
 unsigned one, an unknown id, an id the gate cannot look up (which it used to

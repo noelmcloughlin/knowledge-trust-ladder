@@ -6,10 +6,10 @@ description: Google's Open Knowledge Format - a folder of Markdown concept files
 genre: reference
 resource: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-09T10:00:00Z"
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T14:02:11Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:31:00Z"

@@ -6,7 +6,7 @@ description: Placing the librarian, curator, registrar, sidecar and docent roles
 genre: explanation
 resource: docs/three-lines.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-17T15:49:14Z"
 status: draft
 about:
@@ -16,7 +16,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T15:49:14Z"
 ---
 
@@ -29,13 +29,13 @@ Auditors (IIA), updated in
 and reissued as a
 [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf)
 in 2026. LOKF was not built to it, but each role fits, and the page shows
-where in a table and a diagram (`.assets/lokf-three-lines.svg`), for any
+where in a table and a diagram (`.assets/ktl-three-lines.svg`), for any
 organisation that adopts a bundle. First line: the **librarian**, which
 derives every record from a named source and marks what it cannot settle
 `status: draft`, and the **curator**, a named person who decides what the
 team accepts as true - maker and checker, since the agent cannot vouch and
 the person does not derive. Second line: the **registrar** - `lokf validate`
-on every change and in CI, plus the LOKF Registrar Obsidian plugin - which
+on every change and in CI, plus the KTL Registrar Obsidian plugin - which
 keeps records well-formed and ties a `human:` verdict to that person's
 approval or signature, without judging truth. Third line: the bundle ships
 the evidence an independent reviewer needs, not the review. The **docent**
@@ -101,7 +101,7 @@ is self-review); and incentives and skill, which are the organisation's.
 
 The main page closes with what remains and who owns it, in three lines:
 upstream, OKF adopting `revision` (knowledge-catalog#437) and LOKF's 0.9.0
-shipping it; this project, `revision` from the LOKF Curator plugin, an
+shipping it; this project, `revision` from the KTL Curator plugin, an
 entitlement check by kind of concept, the approval half of the gate on
 GitLab and Forgejo, and an auditor skill for the third line; the
 organisation, naming the independent re-checker, whether a red check blocks

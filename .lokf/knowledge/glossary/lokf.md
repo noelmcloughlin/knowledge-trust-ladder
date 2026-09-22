@@ -7,7 +7,7 @@ abbreviation: LOKF
 genre: reference
 resource: README.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-09T10:00:00Z"
 status: draft
 definedBy:
@@ -15,7 +15,7 @@ definedBy:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/okf
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-16T09:10:00Z"
 ---
 

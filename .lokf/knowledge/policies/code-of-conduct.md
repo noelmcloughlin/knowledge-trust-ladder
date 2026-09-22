@@ -6,11 +6,11 @@ description: Contributor Covenant v2.1 - the behavioural standards for issues, p
 genre: reference
 resource: CODE_OF_CONDUCT.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-09T10:00:00Z"
 status: draft
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T14:02:11Z"
 ---
 

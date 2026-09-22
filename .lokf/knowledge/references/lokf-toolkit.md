@@ -6,7 +6,7 @@ description: The Python package that validates, converts, and serves a LOKF bund
 genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-17T22:30:00Z"
 status: draft
 definedBy:
@@ -14,7 +14,7 @@ definedBy:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/references/linkml
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T22:30:00Z"
 ---
 

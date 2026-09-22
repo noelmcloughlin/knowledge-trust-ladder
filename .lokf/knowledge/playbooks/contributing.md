@@ -6,7 +6,7 @@ description: How to work on the skills - no build step, the local checks to run 
 genre: how-to
 resource: CONTRIBUTING.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-14T16:00:00Z"
 status: draft
 references:
@@ -15,7 +15,7 @@ references:
   - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
   - https://knowledge-trust-ladder.example/knowledge/policies/code-of-conduct
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T14:02:11Z"
 ---
 
@@ -39,7 +39,7 @@ lychee and codespell), `gh skill publish --dry-run` if the GitHub CLI is
 present, and a line or two under `CHANGELOG.md`'s `[Unreleased]` when
 behaviour changes - the reasoning belongs beside the code, not in the
 changelog entry. Files here are deep-linked from the sibling repositories
-(LOKF Registrar, and the LOKF Curator), whose own link checks
+(KTL Registrar, and the KTL Curator), whose own link checks
 follow those URLs for real - `validate-repository.sh` check 9 lists the
 paths; move one only together with its links, landing this side first.
 Pinned action SHAs are bumped by Dependabot, and CI now fails an action that

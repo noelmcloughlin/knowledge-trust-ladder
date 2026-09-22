@@ -6,14 +6,14 @@ description: Why the four skills are published from a dedicated, installable rep
 genre: explanation
 resource: README.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-09T10:00:00Z"
 status: draft
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
   - https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-16T09:10:00Z"
 ---
 

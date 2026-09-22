@@ -4,9 +4,9 @@ id: https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 title: Trust label
 definition: The plain-language phrase a skill uses for how far a concept has been checked - "confirmed by a person", "checked by automation only", "nobody has checked this yet" - derived from frontmatter, never stored.
 genre: reference
-resource: skills/lokf-curator/references/trust-fields.md
+resource: skills/ktl-curator/references/trust-fields.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-17T15:49:14Z"
 status: draft
 definedBy:
@@ -14,7 +14,7 @@ definedBy:
 about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-17T15:49:14Z"
 ---
 

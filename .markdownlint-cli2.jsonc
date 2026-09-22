@@ -10,7 +10,7 @@
     "**/.agents/**",
     "**/.claude/**",
     // knowledge_bundle is a symlink to .lokf/knowledge (the Obsidian vault
-    // entry point, see lokf-sidecar Step 2) - the same files already
+    // entry point, see ktl-sidecar Step 2) - the same files already
     // linted at their real path.
     "knowledge_bundle/**"
   ],
@@ -25,7 +25,7 @@
     // that markdownlint treats as an implicit H1, so the body's own
     // section headings (`# Services`, `# Overview`, ...) read as
     // "duplicate" top-level headings. That frontmatter/body split is the
-    // format's actual convention (see lokf-librarian/SKILL.md Golden Rule
+    // format's actual convention (see ktl-librarian/SKILL.md Golden Rule
     // 2 and any real `.lokf/knowledge/index.md`), not a mistake.
     "MD025": false,
     // Two adjacent `>` callouts (e.g. "> Sources:" / "> Model:" in the
@@ -36,7 +36,7 @@
     // placeholder tokens, not HTML.
     "MD033": false,
     // templates/readme-for-ai-agents.md is an insertable fragment (spliced
-    // into a host README after its intro, per lokf-sidecar Step 2), so
+    // into a host README after its intro, per ktl-sidecar Step 2), so
     // it starts at "## For AI Agents" by design - it is never meant to
     // stand alone as its own top-level document.
     "MD041": false,

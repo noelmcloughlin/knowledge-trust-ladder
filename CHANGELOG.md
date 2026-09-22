@@ -12,6 +12,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
+- **The skills take the `ktl-` prefix**: `ktl-curator`, `ktl-docent`, `ktl-librarian` and `ktl-sidecar`, formerly `lokf-curator`, `lokf-docent`, `lokf-librarian` and `lokf-sidecar`. The Obsidian plugins are KTL Registrar and KTL Curator (`obsidian-ktl-registrar`, `obsidian-ktl-curator`).
+- **A host upgrading from 0.21.0** reinstalls the skills under the new names, removes the `lokf-*` copies, rewrites its bundle's `process:lokf-librarian` and `process:lokf-curator` actors to the `ktl-` names, and moves `TRUST_LADDER_SKILLS_REF` to the first release that carries them.
 - **The dark-mode source is the dimmed set.** Every `prefers-color-scheme: dark` source now points at `*-dimmed.svg`; the `*-dark.svg` files stay in `.assets/` but nothing references them.
 
 ### Fixed

@@ -6,13 +6,13 @@ description: The GitHub CLI command group that installs, pins, and publishes age
 genre: reference
 resource: https://cli.github.com/manual/gh_skill_install
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-09T10:00:00Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-09T17:00:00Z"
 ---
 

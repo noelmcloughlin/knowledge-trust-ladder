@@ -6,13 +6,13 @@ description: The vendor-neutral installer for agent skills, supporting GitHub, g
 genre: reference
 resource: https://github.com/vercel-labs/skills
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-09T10:00:00Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-09T17:00:00Z"
 ---
 

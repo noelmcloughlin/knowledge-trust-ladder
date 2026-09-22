@@ -6,20 +6,20 @@ description: Why deriving, confirming, and reading knowledge are separated into 
 genre: explanation
 resource: README.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-10T12:00:00Z"
 status: draft
 about:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-sidecar-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-librarian-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-curator-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-docent-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-docent-skill
 references:
   - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 verified:
-- by: process:lokf-librarian
+- by: process:ktl-librarian
   at: "2026-09-16T09:10:00Z"
 ---
 

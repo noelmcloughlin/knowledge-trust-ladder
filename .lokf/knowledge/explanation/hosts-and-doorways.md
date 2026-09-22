@@ -4,19 +4,19 @@ id: https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorw
 title: Hosts and doorways - where the bundle's real folder lives
 description: The bundle is `.lokf/knowledge`, one real folder on every host, and `knowledge_bundle` beside it is a link - the doorway for people and folder pickers. Why there is one layout, what the visible layout of 2026-09-12 tried and why it was retired the next day, and what a shared folder that is not a vault may still do by hand.
 genre: explanation
-resource: skills/lokf-sidecar/SKILL.md
+resource: skills/ktl-sidecar/SKILL.md
 generated:
-  by: process:lokf-librarian
+  by: process:ktl-librarian
   at: "2026-09-17T14:57:49Z"
 status: draft
 about:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/lokf-sidecar-skill
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
   - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 relatedTo:
   - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
   - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 verified:
-  - by: process:lokf-librarian
+  - by: process:ktl-librarian
     at: "2026-09-17T14:57:49Z"
 ---
 
@@ -29,7 +29,7 @@ sits next to the bundle. This is the same shape as `.git/`, `.github/`, `.devcon
 Obsidian user, `.obsidian/`: a dot-folder the tools own, kept beside the content people own.
 
 Because the dot-folder is hidden from Finder, from most folder pickers and, in effect, from a
-repository listing, `lokf-sidecar` Step 2 adds a **doorway**: `knowledge_bundle`, a link at the host
+repository listing, `ktl-sidecar` Step 2 adds a **doorway**: `knowledge_bundle`, a link at the host
 root onto the bundle. The bundle therefore has **two names**:
 
 | Name | Who addresses it | What it is |

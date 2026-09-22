@@ -4,10 +4,10 @@
 
 ```text
 skills/
-  lokf-sidecar/         SKILL.md + references/ + templates/  (~4.5k tokens loaded on trigger)
-  lokf-librarian/       SKILL.md + references/               (~7.5k tokens loaded on trigger)
-  lokf-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
-  lokf-docent/          SKILL.md + references/               (~1.5k tokens loaded on trigger)
+  ktl-sidecar/         SKILL.md + references/ + templates/  (~4.5k tokens loaded on trigger)
+  ktl-librarian/       SKILL.md + references/               (~7.5k tokens loaded on trigger)
+  ktl-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
+  ktl-docent/          SKILL.md + references/               (~1.5k tokens loaded on trigger)
 .claude-plugin/
   plugin.json           the four skills as one Claude Code plugin, with the keywords a plugin catalog searches
   marketplace.json      lets `/plugin marketplace add` find that plugin in this repository
@@ -34,7 +34,7 @@ scripts/
   smoke-test-install.sh    installs all four skills into a throwaway consumer repo and asserts the result
   test-sidecar-layouts.sh  the wrapper, both workflows and the lokf-link recipe, with and without the doorway link
 .lokf/                  this repository's own sidecar: the bundle the docent answers from, and its tooling
-knowledge_bundle        -> .lokf/knowledge, the doorway link lokf-sidecar lays down (Step 2)
+knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar lays down (Step 2)
 ```
 
-Each `SKILL.md` is a lean router; anything not needed on every invocation lives in that skill's `references/` (loaded only when the router points to it) so the cost of a trigger stays small. `lokf-sidecar/templates/` holds the actual files it lays down - copied verbatim, never retyped.
+Each `SKILL.md` is a lean router; anything not needed on every invocation lives in that skill's `references/` (loaded only when the router points to it) so the cost of a trigger stays small. `ktl-sidecar/templates/` holds the actual files it lays down - copied verbatim, never retyped.

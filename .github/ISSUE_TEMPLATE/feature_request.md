@@ -7,7 +7,7 @@ assignees: ''
 ---
 
 **Which skill?**
-lokf-sidecar / lokf-librarian / lokf-curator / lokf-docent / several
+ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / several
 
 **What's missing or awkward**
 Describe the gap. Note whether it's about the skill's operational content
