@@ -235,8 +235,8 @@ fi
 # whether or not a sidecar is installed to compare against. A bundle with no
 # knowledge-feedback.sh is the same kind of gap rather than drift: ktl-docent
 # then has to open feedback.md to add an entry, which is the one thing that
-# script exists to stop, so a host on a sidecar that predates it should hear
-# about it before a reader's first recorded gap, not after.
+# script exists to stop. A host on a sidecar that predates it should hear so
+# before a reader's first recorded gap, not after.
 script_gaps=""
 if [ -f "$root/.lokf/scripts/knowledge-conventions.sh" ] && [ ! -f "$root/.lokf/scripts/knowledge-conventions.py" ]; then
   script_gaps=".lokf/scripts/knowledge-conventions.py missing beside the .sh, which runs it"

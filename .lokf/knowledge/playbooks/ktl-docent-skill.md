@@ -43,10 +43,11 @@ answer, plus where the answer was found) or a **Disagreement** (a concept
 versus what its source now says). It makes that write by running
 `.lokf/scripts/knowledge-feedback.sh` (2026-09-23), which inserts the entry
 newest first and prints only a kind, a date and a count, so the reports other
-readers left in that file never enter the session; before the script, keeping
-the file newest first meant reading and rewriting it, and the only guard was
-a line of prose telling the agent to ignore what it had just read. The librarian consumes and clears those
-entries on its next run, which closes the loop from reader back to bundle.
+readers left in that file never enter the session. Before the script, an
+entry meant reading the file and rewriting it, and the only guard was a line
+of prose telling the agent to ignore what it had just read. The librarian
+consumes and clears those entries on its next run, which closes the loop from
+reader back to bundle.
 An entry names the asker only from an authenticated login - `gh api user`,
 `glab api user`, or the signing-key route the curator describes - and is
 attributed to `docent` alone without one; the preflight's identity line

@@ -52,7 +52,7 @@ Resolve every placeholder from real project sources before writing anything; nev
 
 `<BASE_IRI>` is load-bearing: `base_iri` + concept path mints each concept's `@id`. It need not resolve today, but must be stable and in a namespace the project controls (ktl-librarian Rule 2 has the authority test and migration steps). A plain directory tree with no manifest/CODEOWNERS/repo: use the directory name, any document in the tree, and the `.example` fallback - and flag every guess in Step 6.
 
-**Tracked or gitignored - decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default four skills assume; gitignoring it is equally valid (personal bundle, or a policy against committing agent-authored content) but changes four things: still create every file (the bundle is filesystem-based either way); skip the commit in Step 4 and all of Step 5; add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it; say so in the Step 6 handoff. This is unrelated to `.lokf/.gitignore` below, which only excludes tool build noise.
+**Tracked or gitignored - decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default four skills assume; gitignoring it is equally valid (personal bundle, or a policy against committing agent-authored content) but changes four things: still create every file (the bundle is filesystem-based either way); skip the commit in Step 4, and Step 5 apart from the two scripts its table says to lay down anyway; add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it; say so in the Step 6 handoff. This is unrelated to `.lokf/.gitignore` below, which only excludes tool build noise.
 
 **One layout, every host.** `.lokf/knowledge/` is the real folder wherever the sidecar lands - a code repository, a notes vault, a shared folder - and it is the name every skill, the toolkit, CI and `llms.txt` address. Step 2 adds `knowledge_bundle` beside it: a link, so people and folder pickers have an ordinary name to open. Never lay the bundle down as a *real* folder inside an Obsidian vault: the vault indexes it like any other folder, and the exhibition leaks into the workshop's link suggestions, graph and search. A shared folder that is not a vault is covered in [references/portability.md](references/portability.md).
 
@@ -151,8 +151,8 @@ fallback, or was skipped. Never log this in `knowledge/log.md` (knowledge change
 
 ## Step 5 - Lay down the automation (optional)
 
-**Skip entirely if `.lokf/` is gitignored** - both workflows need the bundle on a remote branch, and the librarian loop's `git status --porcelain` check
-silently reports "no changes" for an ignored path forever. GitHub-only; other hosts: copy just the wrapper and schedule it with cron/CI (see
+**Skip the workflows and the wrapper if `.lokf/` is gitignored** - both workflows need the bundle on a remote branch, and the librarian loop's `git status --porcelain` check
+silently reports "no changes" for an ignored path forever. Two scripts land regardless, and their rows say why: the preflight and `knowledge-feedback.sh`. GitHub-only; other hosts: copy just the wrapper and schedule it with cron/CI (see
 [references/portability.md](references/portability.md)). No placeholders.
 
 | Template | Destination |
