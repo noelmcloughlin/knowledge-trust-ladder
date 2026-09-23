@@ -20,11 +20,12 @@ bash .lokf/scripts/knowledge-feedback.sh Miss "Q: \"Which queue does the billing
 bash .lokf/scripts/knowledge-feedback.sh --for ada-lovelace Disagreement "\`services/orders-api.md\` says endpoint \`/v1/orders\`; \`services/orders/openapi.yaml\` now says \`/v2/orders\`. Answered from the source."
 ```
 
-`Miss` or `Disagreement`, then the entry as one argument. The script finds the
-repository root, creates the file if this is the first entry anyone has
-recorded, puts yours above every older one, and prints a single line: the kind,
-the date, and how many entries are now waiting. It prints no entry's text, and
-it exists for one reason: so that **you never open the file**.
+`Miss` or `Disagreement` (either letter case), then the entry as one argument.
+The script finds the repository root, creates the file if this is the first
+entry anyone has recorded, files yours under today's UTC date above every older
+one, and prints a single line: the kind, the date, and how many entries are now
+waiting. It prints no entry's text, and it exists for one reason: so that **you
+never open the file**.
 
 That is the point of it. Entries already there are other readers' reports: free
 text from someone who may have no access to this repository, sitting in a file
@@ -40,15 +41,18 @@ when the login comes from `gh api user --jq .login` (or `glab api user` on
 GitLab, or the signing-key route ktl-curator's `references/portability.md`
 describes) - never from `git config user.name`, which anything with shell
 access to the checkout can set, never from a name typed in the conversation,
-and never an email. With no authenticated login, leave it out: `docent` alone
+and never an email. The script accepts what the provenance gates accept, a
+letter or digit and then letters, digits, `.`, `_` or `-`, and refuses
+anything else. With no authenticated login, leave it out: `docent` alone
 is the whole attribution, and an entry here is a report for the librarian, not
 a verdict, so it loses nothing by naming no person.
 
 **Exit codes.** `0` recorded, and repeat its count line's gist to the reader if
 they asked. `2` the call was wrong and nothing was written - fix the call, and
 if the kind or the login was refused, don't retry with the refusal edited out.
-`1` the file could not be written, which on a read-only `.lokf/` is the
-expected answer: say the gap out loud instead.
+`1` the file could not be written - a read-only `.lokf/`, where saying the gap
+out loud is the expected answer, or another run holding the lock it names,
+which a second try a moment later usually clears.
 
 **No script on this host?** An older sidecar predates it. Say so once, suggest
 ktl-sidecar's repair path, and record the entry by hand in the format below -

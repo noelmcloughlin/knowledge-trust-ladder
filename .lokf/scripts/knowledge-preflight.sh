@@ -241,7 +241,7 @@ script_gaps=""
 if [ -f "$root/.lokf/scripts/knowledge-conventions.sh" ] && [ ! -f "$root/.lokf/scripts/knowledge-conventions.py" ]; then
   script_gaps=".lokf/scripts/knowledge-conventions.py missing beside the .sh, which runs it"
 fi
-if [ -d "$root/.lokf/scripts" ] && [ ! -f "$root/.lokf/scripts/knowledge-feedback.sh" ]; then
+if [ -d "$bundle" ] && [ ! -f "$root/.lokf/scripts/knowledge-feedback.sh" ]; then
   script_gaps="${script_gaps}${script_gaps:+, }.lokf/scripts/knowledge-feedback.sh missing, so ktl-docent must edit feedback.md by hand"
 fi
 if [ -n "$templates" ] && [ -d "$root/.lokf" ]; then

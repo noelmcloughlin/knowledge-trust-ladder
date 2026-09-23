@@ -23,8 +23,8 @@
 # Usage:
 #   knowledge-feedback.sh [--root <dir>] [--for <login>] <kind> <text>
 #
-#   kind    Miss or Disagreement, and nothing else - the two shapes
-#           ktl-librarian knows how to consume.
+#   kind    Miss or Disagreement, in any letter case, and nothing else - the
+#           two shapes ktl-librarian knows how to consume.
 #   text    the entry itself, one argument. Whitespace is collapsed, so a
 #           multi-line string still lands as one line per entry.
 #   --for   an authenticated login (gh api user --jq .login, or glab), which
@@ -35,9 +35,12 @@
 #   --root  the repository root (default: the nearest ancestor of the current
 #           directory holding .lokf/, else the current directory).
 #
+# The day heading is today in UTC, as the bundle's own timestamps are, so two
+# machines in different zones file one day under one heading.
+#
 # Exit: 0 recorded; 2 the call was wrong and nothing was written; 1 the file
-# could not be written (a read-only .lokf/, most often) - the caller should
-# tell the reader the gap out loud instead.
+# could not be written (a read-only .lokf/, most often, or another run holding
+# it) - the caller should tell the reader the gap out loud instead.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [--for <login>] <kind> <text>" >&2; exit 2; }
 set -u
 
@@ -62,20 +65,23 @@ kind="$1"; text="$2"
 
 # ---- what the librarian can consume ----------------------------------------
 # A third kind would reach the librarian as an entry it has no rule for, so
-# the set is closed here rather than left to whatever the caller typed.
+# the set is closed here rather than left to whatever the caller typed. Letter
+# case is the caller's slip, not a third kind, and is put right.
 case "$kind" in
-  Miss|Disagreement) ;;
+  [Mm][Ii][Ss][Ss]) kind=Miss ;;
+  [Dd][Ii][Ss][Aa][Gg][Rr][Ee][Ee][Mm][Ee][Nn][Tt]) kind=Disagreement ;;
   *) echo "kind must be Miss or Disagreement, not '$kind'" >&2; exit 2 ;;
 esac
 
 # The attribution is the one field a later reader may take as evidence that a
 # named person asked, so it is held to a login's characters before it is
-# written - the same shape the registrar's provenance job insists on.
+# written: the shape both provenance gates accept, so a login they would pass
+# is never refused here and one they would refuse never gets in.
 if [ -n "$asker" ]; then
   case "$asker" in
-    *[!A-Za-z0-9-]*|-*|"") echo "--for takes a forge login (letters, digits and hyphens), not '$asker'" >&2; exit 2 ;;
+    *[!A-Za-z0-9._-]*|[!A-Za-z0-9]*)
+      echo "--for takes a forge login (a letter or digit, then letters, digits, '.', '_' or '-'), not '$asker'" >&2; exit 2 ;;
   esac
-  [ "${#asker}" -le 39 ] || { echo "--for: '$asker' is too long for a forge login" >&2; exit 2; }
 fi
 
 # One entry is one line. Collapse every whitespace run, drop control
@@ -93,10 +99,14 @@ if [ -z "$root" ]; then
   done
 fi
 root="$(cd "$root" 2>/dev/null && pwd -P)" || { echo "no such directory: $root" >&2; exit 2; }
-[ -d "$root/.lokf" ] || { echo "no .lokf/ under $root - ktl-sidecar creates the bundle" >&2; exit 2; }
+# Feedback is a report against a bundle. With no bundle there is nothing for
+# the librarian to fix, and ktl-docent is told to say so instead of writing.
+[ -d "$root/.lokf/knowledge" ] || { echo "no .lokf/knowledge under $root - no bundle to record a gap against; say the gap out loud, and that ktl-sidecar can create one" >&2; exit 2; }
 
 file="$root/.lokf/feedback.md"
-today="$(date +%Y-%m-%d)"
+tmp="$file.$$"
+lock="$file.lock"
+today="$(date -u +%Y-%m-%d)"
 entry="- **$kind** - $text - docent${asker:+, for human:$asker}"
 
 # ---- the file --------------------------------------------------------------
@@ -107,6 +117,24 @@ readonly_bundle() {
 # The rewrite below lands a temporary file beside this one, so the directory
 # has to be writable even when the file itself already is.
 [ -w "$root/.lokf" ] || readonly_bundle
+
+# Two runs at once - parallel agents in one checkout - would each read the
+# file, and the second mv would drop the first entry without a word. A
+# directory is the one lock every platform here creates atomically. A run
+# killed outright leaves it behind; the message says what to remove.
+tries=0
+until mkdir "$lock" 2>/dev/null; do
+  tries=$((tries + 1))
+  if [ "$tries" -ge 5 ]; then
+    echo "another run holds $lock - if nothing else is recording feedback, remove that directory and try again" >&2
+    exit 1
+  fi
+  sleep 1
+done
+trap 'rmdir "$lock" 2>/dev/null; rm -f "$tmp"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 # feedback.md is not knowledge and has no frontmatter; it appears the first
 # time a reader's agent records a gap, which may be this call.
 if [ ! -s "$file" ]; then
@@ -118,35 +146,31 @@ if [ ! -s "$file" ]; then
 fi
 [ -w "$file" ] || readonly_bundle
 
-# Newest first, which is why this cannot be a plain append: today's entry goes
-# above every older date, and above today's own earlier entries. The entry
-# travels in the environment rather than through -v, which would read a
-# backslash in the text as an escape.
-tmp="$file.$$"
-trap 'rm -f "$tmp"' EXIT INT TERM
-if KF_ENTRY="$entry" awk -v hdr="## $today" '
+# Newest first, which is why this cannot be a plain append: today goes above
+# every older day and its entry above today's earlier ones. The entry travels
+# in the environment rather than through -v, which would read a backslash in
+# the text as an escape.
+KF_ENTRY="$entry" awk -v hdr="## $today" '
   BEGIN { entry = ENVIRON["KF_ENTRY"]; done = 0; skipblank = 0; last = "" }
-  # The first date heading in the file is the newest one. Today either is it,
-  # or belongs immediately above it.
+  # Headings are days, newest first, and ISO dates order as strings. Today
+  # goes under the first heading that is today, or above the first that is
+  # older. A heading after today - another machine on a clock ahead of this
+  # one, or a wrong clock - stays where it is, so the file keeps its order
+  # instead of gaining a second heading for today further down.
   /^## / && done == 0 {
     h = $0; sub(/\r$/, "", h)
-    if (h == hdr) { print hdr; print ""; print entry; skipblank = 1 }
-    else { print hdr; print ""; print entry; print ""; print; last = $0 }
-    done = 1
-    next
+    if (h == hdr) { print hdr; print ""; print entry; skipblank = 1; done = 1; next }
+    if (h < hdr) { print hdr; print ""; print entry; print ""; print; last = $0; done = 1; next }
   }
   # The blank line that followed the heading we just reprinted with one of
   # our own.
-  skipblank == 1 { skipblank = 0; if ($0 == "") next }
+  skipblank == 1 { skipblank = 0; if ($0 == "" || $0 == "\r") next }
   { print; last = $0 }
-  # No date heading at all: a file that has only ever held its intro.
-  END { if (done == 0) { if (last != "") print ""; print hdr; print ""; print entry } }
-' "$file" > "$tmp" && mv "$tmp" "$file"; then
-  trap - EXIT INT TERM
-else
-  echo "could not record the entry in $file" >&2
-  exit 1
-fi
+  # No heading today could go above: a file that has only ever held its
+  # intro, or whose every day is after today.
+  END { if (done == 0) { if (last != "" && last != "\r") print ""; print hdr; print ""; print entry } }
+' "$file" > "$tmp" || { echo "could not record the entry in $file" >&2; exit 1; }
+mv "$tmp" "$file" || { echo "could not record the entry in $file" >&2; exit 1; }
 
 # The same expression ktl-curator counts with, so the two never disagree about
 # how many entries are waiting. It reads no entry's text, and neither does the

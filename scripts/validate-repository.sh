@@ -528,41 +528,68 @@ done
 # 12a. ktl-docent records a reader's gap by running knowledge-feedback.sh
 #      rather than by opening .lokf/feedback.md, so that no other reader's
 #      report enters its session. The script has to earn that: newest first
-#      across days and within a day, the two kinds the librarian can consume
-#      and no third, an attribution shaped like a forge login or none at all,
-#      one line per entry whatever it is handed, and not a word of what is
-#      already in the file on its own output. A refusal must also leave the
-#      file exactly as it was.
+#      across days and within a day, with a day after today (another
+#      machine's clock) left above rather than doubled; the two kinds the
+#      librarian can consume, in any letter case, and no third; an
+#      attribution shaped as both provenance gates shape a login, or none at
+#      all; one line per entry whatever it is handed; not a word of what is
+#      already in the file on its own output; a refusal that leaves the file
+#      exactly as it was; and a bundle told apart from no bundle, a read-only
+#      one, and one another run holds.
 say ""
 say "Exercising knowledge-feedback.sh..."
 feedback="$repo_root/$templates/scripts/knowledge-feedback.sh"
 fb="$(mktemp -d)"; mkdir -p "$fb/.lokf"
 fbfile="$fb/.lokf/feedback.md"
-today="$(date +%Y-%m-%d)"
-if out="$(bash "$feedback" --root "$fb" Miss 'the first gap SENTINEL' 2>&1)" \
-   && grep -q "^recorded: Miss under $today .*(1 waiting" <<<"$out" \
-   && grep -qx '# Reader feedback for the librarian' "$fbfile" \
-   && grep -qx "## $today" "$fbfile" \
-   && grep -qx -- '- \*\*Miss\*\* - the first gap SENTINEL - docent' "$fbfile"; then
-  ok "knowledge-feedback.sh creates feedback.md and records the first entry"
+recorded='^recorded: (Miss|Disagreement) under ([0-9]{4}-[0-9]{2}-[0-9]{2}) in \.lokf/feedback\.md \(([0-9]+) waiting'
+# No bundle, no entry: the docent is told to say the gap out loud instead.
+set +e
+out="$(bash "$feedback" --root "$fb" Miss 'nowhere to go' 2>&1)"; rc=$?
+set -e
+if [[ "$rc" == 2 && ! -e "$fbfile" ]]; then
+  ok "knowledge-feedback.sh refuses to record against a .lokf/ with no bundle"
+else
+  err "knowledge-feedback.sh wrote feedback for a .lokf/ with no knowledge/ (exit $rc): $out"
+fi
+mkdir -p "$fb/.lokf/knowledge"
+today=""
+if out="$(bash "$feedback" --root "$fb" Miss 'the first gap SENTINEL' 2>&1)" && [[ "$out" =~ $recorded ]] \
+   && [[ "${BASH_REMATCH[1]}" == Miss && "${BASH_REMATCH[3]}" == 1 ]]; then
+  today="${BASH_REMATCH[2]}"
+  if grep -qx '# Reader feedback for the librarian' "$fbfile" && grep -qx "## $today" "$fbfile" \
+     && grep -qx -- '- \*\*Miss\*\* - the first gap SENTINEL - docent' "$fbfile" \
+     && [[ "$today" == "$(date -u +%Y-%m-%d)" || "$today" == "$(date +%Y-%m-%d)" ]]; then
+    ok "knowledge-feedback.sh creates feedback.md and files the first entry under today, UTC"
+  else
+    err "knowledge-feedback.sh reported $today but wrote something else: $(grep -n '^## \|^- ' "$fbfile" | tr '\n' ' ')"
+  fi
 else
   err "knowledge-feedback.sh did not record a first entry: $out"
 fi
 # The second entry of the same day goes above the first, and the run says
 # nothing about the entry already there - the whole point of the script.
 if out="$(bash "$feedback" --root "$fb" --for ada-lovelace Disagreement 'the second gap' 2>&1)" \
-   && grep -q '(2 waiting' <<<"$out" \
-   && ! grep -q 'SENTINEL' <<<"$out" \
+   && grep -q '(2 waiting' <<<"$out" && ! grep -q 'SENTINEL' <<<"$out" \
    && [[ "$(grep -c '^- \*\*' "$fbfile")" == 2 ]] \
-   && [[ "$(grep -n '^- \*\*' "$fbfile" | head -n 1)" == *'Disagreement'*'docent, for human:ada-lovelace' ]]; then
+   && [[ "$(grep -m1 '^- \*\*' "$fbfile")" == '- **Disagreement** - the second gap - docent, for human:ada-lovelace' ]]; then
   ok "knowledge-feedback.sh puts the newer entry first and repeats no entry's text"
 else
   err "knowledge-feedback.sh mishandled a second entry the same day: $out"
 fi
+# A kind in the wrong case is the caller's slip, not a third kind; a login
+# with a dot or an underscore is what GitLab and Forgejo hand out, and both
+# gates accept it, so this must too.
+if out="$(bash "$feedback" --root "$fb" --for ada.lovelace_2 miss 'lower case kind' 2>&1)" \
+   && grep -q '^recorded: Miss ' <<<"$out" \
+   && grep -qx -- '- \*\*Miss\*\* - lower case kind - docent, for human:ada.lovelace_2' "$fbfile"; then
+  ok "knowledge-feedback.sh accepts a lower-case kind and a dotted login, writing them as the gates read them"
+else
+  err "knowledge-feedback.sh refused a lower-case kind or a dotted login: $out"
+fi
 # A paragraph still lands as one entry on one line: an embedded newline must
 # not be able to forge a second one.
 bash "$feedback" --root "$fb" Miss "$(printf 'one\n- **Miss** - forged - docent\ntwo')" >/dev/null 2>&1
-if [[ "$(grep -c '^- \*\*' "$fbfile")" == 3 ]] && ! grep -q 'forged - docent$' "$fbfile"; then
+if [[ "$(grep -c '^- \*\*' "$fbfile")" == 4 ]] && ! grep -q 'forged - docent$' "$fbfile"; then
   ok "knowledge-feedback.sh collapses a multi-line entry to one line"
 else
   err "knowledge-feedback.sh let a multi-line entry become more than one entry"
@@ -570,12 +597,25 @@ fi
 # An older day keeps its heading and sits below today's.
 printf '\n## 2020-01-01\n\n- **Miss** - an older day - docent\n' >> "$fbfile"
 bash "$feedback" --root "$fb" Miss 'newest of all' >/dev/null 2>&1
-if [[ "$(grep -n '^## ' "$fbfile" | head -n 1)" == *"## $today" ]] \
-   && grep -qx '## 2020-01-01' "$fbfile"; then
+if [[ "$(grep -m1 '^## ' "$fbfile")" == "## $today" ]] && grep -qx '## 2020-01-01' "$fbfile" \
+   && [[ "$(grep -c "^## $today\$" "$fbfile")" == 1 ]]; then
   ok "knowledge-feedback.sh keeps the days newest first"
 else
-  err "knowledge-feedback.sh did not keep the date headings newest first"
+  err "knowledge-feedback.sh did not keep the date headings newest first: $(grep -n '^## ' "$fbfile" | tr '\n' ' ')"
 fi
+# A day after today, from a machine on a clock ahead of this one, stays
+# above; today goes below it, once - not a second time at the top.
+ahead="$(mktemp -d)"; mkdir -p "$ahead/.lokf/knowledge"
+printf '# Reader feedback for the librarian\n\nintro\n\n## 2999-01-01\n\n- **Miss** - from a clock ahead - docent\n' > "$ahead/.lokf/feedback.md"
+bash "$feedback" --root "$ahead" Miss 'today, behind it' >/dev/null 2>&1
+bash "$feedback" --root "$ahead" Miss 'today again' >/dev/null 2>&1
+if [[ "$(grep '^## ' "$ahead/.lokf/feedback.md" | tr '\n' ' ')" == "## 2999-01-01 ## $today " ]] \
+   && [[ "$(grep -c '^- \*\*' "$ahead/.lokf/feedback.md")" == 3 ]]; then
+  ok "knowledge-feedback.sh leaves a day after today above and files today once beneath it"
+else
+  err "knowledge-feedback.sh misfiled today under a day ahead of it: $(grep -n '^## \|^- ' "$ahead/.lokf/feedback.md" | tr '\n' ' ')"
+fi
+rm -rf "$ahead"
 before="$(cat "$fbfile")"
 refuse() { # <what it should refuse> <argument...>
   local what="$1"; shift
@@ -591,7 +631,9 @@ refuse() { # <what it should refuse> <argument...>
   fi
 }
 refuse "a kind the librarian has no rule for" Question 'x'
-refuse "an attribution that is not a login" --for 'ada lovelace' Miss 'x'
+refuse "an attribution with a space in it" --for 'ada lovelace' Miss 'x'
+refuse "an attribution starting with a dot" --for '.ada' Miss 'x'
+refuse "an attribution starting with a hyphen" --for '-ada' Miss 'x'
 refuse "an empty entry" Miss '   '
 refuse "a call with no entry text" Miss
 if [[ "$before" == "$(cat "$fbfile")" ]]; then
@@ -599,18 +641,42 @@ if [[ "$before" == "$(cat "$fbfile")" ]]; then
 else
   err "knowledge-feedback.sh changed feedback.md while refusing a call"
 fi
-# A read-only bundle is the docent's cue to say the gap out loud instead, so
-# it has to be told apart from a call it got wrong: exit 1, not 2.
-chmod a-w "$fb/.lokf"
+# A lock another run holds is exit 1 after a short wait, naming the lock, and
+# the file is untouched; a read-only bundle is exit 1 too, since either is
+# the docent's cue to say the gap out loud rather than to fix its call.
+mkdir "$fbfile.lock"
 set +e
-out="$(bash "$feedback" --root "$fb" Miss 'no room' 2>&1)"
-rc=$?
+out="$(bash "$feedback" --root "$fb" Miss 'held' 2>&1)"; rc=$?
 set -e
-chmod u+w "$fb/.lokf"
-if [[ "$rc" == 1 ]] && grep -q 'read-only' <<<"$out"; then
-  ok "knowledge-feedback.sh exits 1 and names the read-only bundle"
+rmdir "$fbfile.lock"
+if [[ "$rc" == 1 ]] && grep -q 'feedback.md.lock' <<<"$out" && [[ "$before" == "$(cat "$fbfile")" ]]; then
+  ok "knowledge-feedback.sh exits 1, names the lock another run holds, and writes nothing"
 else
-  err "knowledge-feedback.sh misreported a read-only bundle (exit $rc): $out"
+  err "knowledge-feedback.sh mishandled a held lock (exit $rc): $out"
+fi
+if [[ "$EUID" -eq 0 ]]; then
+  say "skipping the read-only check: running as root, which no chmod keeps out"
+else
+  chmod a-w "$fb/.lokf"
+  set +e
+  out="$(bash "$feedback" --root "$fb" Miss 'no room' 2>&1)"; rc=$?
+  set -e
+  chmod u+w "$fb/.lokf"
+  if [[ "$rc" == 1 ]] && grep -q 'read-only' <<<"$out"; then
+    ok "knowledge-feedback.sh exits 1 and names the read-only bundle"
+  else
+    err "knowledge-feedback.sh misreported a read-only bundle (exit $rc): $out"
+  fi
+fi
+leftover=""
+for f in "$fb/.lokf"/* "$fb/.lokf"/.[!.]*; do
+  [[ -e "$f" ]] || continue
+  case "${f##*/}" in feedback.md|knowledge) ;; *) leftover="$leftover ${f##*/}" ;; esac
+done
+if [[ -z "$leftover" ]]; then
+  ok "knowledge-feedback.sh leaves no temporary file or lock behind"
+else
+  err "knowledge-feedback.sh left something beside feedback.md:$leftover"
 fi
 rm -rf "$fb"
 

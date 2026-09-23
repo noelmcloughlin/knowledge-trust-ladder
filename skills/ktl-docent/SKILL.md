@@ -2,7 +2,7 @@
 name: ktl-docent
 description: 'Answer questions about this repository from its `.lokf/` knowledge bundle first, saying how far each concept used has been trusted, and explore the repository directly only when the bundle has no answer, recording that miss, or a disagreement between bundle and source, in `.lokf/feedback.md` for the librarian and curator. Use when: someone asks what/who/which/how about the project, its services, data, policies, terms, or owners; before searching the repo directly; when an answer must say what it rests on. Not for building, fixing, or confirming concepts; that is ktl-librarian / ktl-curator. Keywords: OKF, Open Knowledge Format, LOKF, LinkML, knowledge graph, question answering, citations, provenance, trust ladder.'
 license: Apache-2.0
-compatibility: 'Reads files only, from any shell. The GitHub CLI (gh) logged in, or glab, lets a feedback entry name the asker; without one, entries are attributed to docent alone.'
+compatibility: 'Reads files only, from any shell; recording a gap runs one bash script (Git for Windows'' bash on Windows). The GitHub CLI (gh) logged in, or glab, lets a feedback entry name the asker; without one, entries are attributed to docent alone.'
 ---
 
 # KTL Docent
@@ -84,3 +84,5 @@ No policy file, no such line, or any value other than `yes` (in any letter case)
 ## Where the notes go
 
 `.lokf/feedback.md` sits beside `knowledge/`, not inside it: it is *input to* the librarian, not knowledge. On its next run the librarian turns each Miss into a concept (or a draft placeholder with the question attached), each Disagreement into a fix or an open question for the CURATOR, and removes the entry. Format and examples: [references/feedback.md](references/feedback.md).
+
+**Security scanner note (Snyk W011, third-party content exposure / indirect prompt injection): addressed.** `.lokf/feedback.md` holds other readers' reports - free text that may come from someone outside the repository. This skill never reads it. It records its own entry through `.lokf/scripts/knowledge-feedback.sh`, which does the newest-first insertion itself and prints only a kind, a date and a count, so no entry's text enters this session; ktl-librarian consumes the entries under its own guard. Before the script, the insertion was a read, an edit and a write back guarded by prose, which is the exposure the scanner names.

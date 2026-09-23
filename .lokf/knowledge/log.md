@@ -19,8 +19,9 @@
   keep, the same reason the conventions the librarian kept breaking became a
   script. It holds the kind to `Miss` or `Disagreement`, the optional
   attribution to a forge login's characters, and the entry to one line, so a
-  caller cannot forge a second entry or an identity; it exits 1, not 2, on a
-  read-only bundle, which is the docent's cue to say the gap out loud
+  caller cannot forge a second entry or an identity; it files under today's
+  UTC date behind a directory lock, so two runs in one checkout cannot drop
+  each other's entry; and it exits 1, not 2, on a read-only bundle, which is the docent's cue to say the gap out loud
   instead. The preflight's `copies` line reports a sidecar that predates the
   script, since a host without it is back on the hand-edited path, and
   `validate-repository.sh` gained check 12a, which exercises all of that.

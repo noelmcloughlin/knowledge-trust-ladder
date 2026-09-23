@@ -4,9 +4,18 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-feedback.sh`, a sixth sidecar script.** ktl-docent records a reader's Miss or Disagreement in `.lokf/feedback.md` by running it, and never opens the file. It files the entry under today's UTC date, newest first; holds the kind to the two the librarian consumes, the optional `--for` attribution to the login shape both provenance gates accept, and the entry to one line; takes a lock so two runs in one checkout cannot drop each other's entry; and prints only a kind, a date and a count. The preflight's `copies` line names a bundle whose sidecar predates it, and `validate-repository.sh` exercises it (check 12a).
+
 ### Changed
 
+- **ktl-docent's Step 7 runs the script** and gains a guardrail against reading `feedback.md` at all; its `references/feedback.md` keeps the hand-written format for a host on an older sidecar. A host upgrading runs the ktl-sidecar repair once to lay the script down; until then the preflight says so and the docent falls back to the old path.
 - **The README, docs pages, skill introductions and workflow comments are restyled for the reader**: shorter sentences, steps before rationale, plain statements. The critics page is arranged by criticism with a verdict table and sources by DOI, and the host-by-host layouts live once in `docs/obsidian.md`.
+
+### Security
+
+- **Reader feedback no longer reaches the docent's context.** Keeping `feedback.md` newest first made every entry a read, an edit and a write back, so other readers' free text - the one input that can come from outside the repository - entered the session of the agent that had just been fetching URLs and reading repository files, guarded by prose alone (Snyk W011). The insertion now happens in a script the agent calls with its own entry; ktl-librarian remains the only skill that reads what a reader wrote, under its own guard.
 
 ## [0.22.0] - 2026-09-22
 
