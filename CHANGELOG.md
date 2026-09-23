@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-23
+
 ### Added
 
 - **`knowledge-feedback.sh`, a sixth sidecar script.** It files a reader's Miss or Disagreement in `.lokf/feedback.md` under today's UTC date, newest first, and prints only a kind, a date and a count. The preflight names a sidecar that predates it; check 12a exercises it.
