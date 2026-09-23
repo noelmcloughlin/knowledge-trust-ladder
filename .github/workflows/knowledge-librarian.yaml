@@ -34,8 +34,9 @@ jobs:
       questions: ${{ steps.curator.outputs.questions }}
       human: ${{ steps.curator.outputs.human }}
     steps:
-      # Same audit-mode egress monitor this repository's other workflows run;
-      # this job installs packages and runs a third-party agent.
+      # Same audit-mode egress monitor step 5's other templates use; this job
+      # installs packages, installs a skill everywhere but the repository
+      # that publishes it, and runs a third-party agent.
       - name: Harden the runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
@@ -57,6 +58,35 @@ jobs:
         continue-on-error: true
         run: uv sync --locked
         working-directory: .lokf
+
+      # ktl-librarian is runtime state here, not source (Step 5's own hygiene
+      # note: .agents/ and .claude/ are gitignored), so a scheduled run cannot
+      # rely on it already being present in the checkout. Install it fresh,
+      # pinned to one release, on every run. A plain clone of the tagged
+      # public repo needs no `gh` flags and no token. The install target is
+      # gitignored, so it is invisible both to "Enforce the agent's write
+      # scope" below and to "Detect changes". The one repository that skips
+      # this step is the one it clones from, named again in the `if`: there
+      # the skill is source under bare skills/, and an install would land in
+      # .agents/skills/, which the wrapper searches first, so the pinned
+      # release would run instead of the current one. Repository identity is
+      # the switch, not a file in the tree, so nothing a host commits can
+      # change which instructions its scheduled agent runs. A fork that
+      # develops the skills changes the name in both places.
+      - name: Install the pinned ktl-librarian skill
+        if: github.repository != 'noelmcloughlin/knowledge-trust-ladder'
+        env:
+          TRUST_LADDER_SKILLS_REPO: https://github.com/noelmcloughlin/knowledge-trust-ladder
+          TRUST_LADDER_SKILLS_REF: v0.22.0 # the one pin; point your docs here instead of repeating it
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$TRUST_LADDER_SKILLS_REF" "$TRUST_LADDER_SKILLS_REPO" "$tmp"
+          mkdir -p .agents/skills
+          rm -rf .agents/skills/ktl-librarian
+          cp -R "$tmp/skills/ktl-librarian" .agents/skills/
+          test -f .agents/skills/ktl-librarian/SKILL.md
+          echo "Installed ktl-librarian@$TRUST_LADDER_SKILLS_REF"
 
       # Wire this up under Settings -> Secrets and variables -> Actions:
       #   1. Set KNOWLEDGE_LIBRARIAN_ENABLED to "true" to arm the run. Anything

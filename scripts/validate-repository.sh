@@ -297,8 +297,8 @@ done
 #     copies under .github/ and .lokf/scripts/ rather than the templates
 #     themselves (actionlint is pointed at both, ShellCheck scans the tree),
 #     so the copies must stay byte-identical or a template change ships
-#     unlinted. knowledge-librarian.yaml is the one deliberate exception: the
-#     repository that publishes the skill does not install it from itself.
+#     unlinted. knowledge-librarian.yaml is among them: its install step
+#     skips itself in this repository, which publishes the skill it installs.
 #     Then the conventions script itself is exercised: it must pass on this
 #     repository's own bundle and fail on a bundle that breaks each rule -
 #     a checker that cannot fail is not covering anything.
@@ -307,6 +307,7 @@ say "Checking the sidecar templates are the copies CI lints..."
 templates="skills/ktl-sidecar/templates"
 for pair in \
   "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
+  "$templates/github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml" \
   "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
   "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
   "$templates/scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py" \
