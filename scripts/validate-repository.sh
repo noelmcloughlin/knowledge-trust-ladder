@@ -915,6 +915,29 @@ elif printf '%s\n' "${recent[@]}" | grep -qxF -- "$pin"; then
 else
   err "the librarian template pins TRUST_LADDER_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
 fi
+# A current version is not the whole test. The install step clones that tag
+# and copies one path out of it, and a rename leaves the two disagreeing with
+# neither line looking wrong: v0.21.0 is a real release and skills/ktl-librarian
+# is a real path, but that path is not in that tag - the skills were lokf-*
+# until v0.22.0 - so every scheduled run on a scaffolded host failed there.
+# Read the tag where the clone has it. CI checks out one commit without tags,
+# and the newest heading is tagged after this contract runs, so a tag that is
+# not here skips this half rather than failing it.
+# shellcheck disable=SC2016 # $tmp is the template's own literal, not ours
+skill_path="$(grep -oE '\$tmp/skills/[A-Za-z0-9._-]+' \
+                skills/ktl-sidecar/templates/github/knowledge-librarian.yaml \
+                | head -1 | sed 's|^\$tmp/||')"
+if [[ -z "$pin" ]]; then
+  : # already reported above
+elif [[ -z "$skill_path" ]]; then
+  err "the librarian template's install step copies no skills/ path that check 15 can read - it cannot tell whether $pin carries the skill a host would install"
+elif ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
+  say "skipping the pinned tag's contents: $pin is not a tag on this clone"
+elif git ls-tree --name-only "$pin" -- "$skill_path" | grep -qxF -- "$skill_path"; then
+  ok "$pin carries $skill_path, the path the install step copies out of it"
+else
+  err "the librarian template pins $pin, which has no $skill_path - the install step clones that tag and copies that path, so every scheduled run on a host scaffolded from this template fails there; this is what a rename does to a pin that still names a current release"
+fi
 
 # 16. The repository's old name stays gone from anything that still speaks in
 #     the present tense. It was renamed from lokf-agent-skills on 2026-09-19,

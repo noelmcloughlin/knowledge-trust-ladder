@@ -95,8 +95,12 @@ otherwise falls behind in silence - it sat at `v0.9.0` through `v0.19.2`.
 Two headings of slack, not one, because the newest heading exists before
 its tag does: `semantic-release.yml` promotes it on merge and `publish.yml`
 creates the tag later, so during the publish that runs this contract the
-only pin a host could clone is the heading below the top. Then
-`gh skill publish --dry-run` runs.
+only pin a host could clone is the heading below the top. Since 2026-09-23 it
+also reads the pinned tag itself for the path the install step copies out of
+it (`skills/ktl-librarian`), and skips that half where the tag is not on the
+clone: a rename leaves a real version and a real path that are not in the same
+tag, which is how the pin sat at `v0.21.0` after the `lokf-*` skills became
+`ktl-*`. Then `gh skill publish --dry-run` runs.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs
 `actionlint`, pointed by path at this repository's workflows and at the two
