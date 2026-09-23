@@ -79,25 +79,35 @@ file and nothing checks approvals, and a host without git has only its
 platform's version history.
 
 The critics have a page of their own, `docs/three-lines-critics.md`, marked
-as preliminary research read in September 2026: the UK Parliamentary
-Commission on Banking Standards (2013), Davies and Zhivitskaya (2018),
-Arndorfer and Minto (2015), Schuett (2023), Bantleon et al. (2021) and
-Valkenburg and Bongiovanni (2024), then the research on automation bias
-(Parasuraman and Manzey, 2010; Bansal et al., 2021; Green, 2022; Buçinca
-et al., 2021) and on hallucination (Ji et al., 2023), each quoted from its
-own text. Its second half, shortened on 2026-09-17 so as not to restate the
-main page's limits, answers them: three points met by construction
-(accountability per claim, a second line that is a program, a gate that
-asks the forge rather than the author); two answered in part - *judgement
-absent while process is followed* (the curator records only what the person
-says, the review session shows the source first, curation is a reviewed
-policy, the docent's evidence-first mode is off by default; left open, that
-nothing proves the person read, that a dynamic page reads as changed on
-every re-check, and that evidence the oversight works is third-line work the
-curator's sampling step only hands over) and *the machine invents* (every
-record names its source, unsettled concepts stay `draft`; left open by
-design, since the registrar never judges truth and the librarian's re-check
-is self-review); and incentives and skill, which are the organisation's.
+as preliminary research read in September 2026 and, since 2026-09-23,
+arranged by criticism rather than by critic. A table at the top lists nine
+points with who raised them and a verdict; each section then quotes the
+criticism from its source, says what a bundle does about it, and gives the
+verdict, and a sources list closes the page with every paper by DOI. Three
+points are met by construction: *accountability is diluted* (the UK
+Parliamentary Commission on Banking Standards, 2013; Davies and Zhivitskaya,
+2018; one named person per confirmation), *the second line cannot challenge
+the first* (the Commission; Arndorfer and Minto, 2015; the second line is a
+program) and *the second line sees only what it is shown* (Zhivitskaya as
+Schuett, 2023, repeats it; the gate reads the whole change and asks the
+forge, with the limit that a concept never derived surfaces only as a
+docent miss). Three are answered in part: *process is followed, judgement
+is absent* (the Commission, with Parasuraman and Manzey, 2010, Bansal et
+al., 2021, Green, 2022, and Buçinca et al., 2021, on why; the curator
+records only what the person says, the review session shows the source
+first, curation is a reviewed policy, the docent's evidence-first mode is
+off by default; left open, that nothing proves the person read, that a
+dynamic page reads as changed on every re-check, and that evidence the
+oversight works is third-line work the curator's sampling step only hands
+over), *the machine invents* (Ji et al., 2023; every record names its
+source and unsettled concepts stay `draft`; left open by design, since the
+registrar never judges truth and the librarian's re-check is self-review)
+and *the lines do not coordinate in practice* (Bantleon et al., 2021;
+Valkenburg and Bongiovanni, 2024; every hand-off is written down and no
+more is claimed). Three are not the bundle's role: *incentives and skill*
+and *a fourth line for a weak internal audit* (Arndorfer and Minto) and
+*the model's effectiveness is untested* (Davies and Zhivitskaya; Schuett),
+each of which lands on the adopting organisation or on a third line.
 
 The main page closes with what remains and who owns it, in three lines:
 upstream, OKF adopting `revision` (knowledge-catalog#437) and LOKF's 0.9.0

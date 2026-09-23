@@ -10,7 +10,7 @@
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Any repository's scattered knowledge, kept as a **collection** - catalogued, authenticated and explained, with the trust in every claim left visible. Four [Agent Skills](https://agentskills.io/home) keep it, registrar automation serves the desk - checking every record and guarding every confirmation, in CI on each pull request - and the [toolkit](https://pypi.org/project/lokf) underneath supplies the schema and the tooling. Two [Obsidian](https://obsidian.md/) plugins are optional, for a desk with no CI.
+Knowledge Trust Ladder keeps a repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four [Agent Skills](https://agentskills.io/home) build and keep it. Registrar automation serves the desk, checking every record and guarding every confirmation in CI on each pull request. The [toolkit](https://pypi.org/project/lokf) underneath supplies the schema and the tooling. Two [Obsidian](https://obsidian.md/) plugins are optional, for a desk with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
@@ -25,30 +25,30 @@ Any repository's scattered knowledge, kept as a **collection** - catalogued, aut
 
 ## Why libraries have catalogues
 
-The knowledge already exists - in code, documents, diagrams, policies, operational records. What's missing is a **context layer**: a governed layer that sits between those sources and whoever consumes them - a person or an agent - and stays put. Without it every task starts the same way: find the material, work out how it connects, judge what's still true. That work dies with the task, and the next person - or the next conversation with an assistant - pays for it again.
+The knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a **context layer**: a governed layer between those sources and whoever consumes them, a person or an agent, that stays put. Without it every task starts the same way: find the material, work out how it connects, judge what's still true. That work dies with the task, and the next person, or the next conversation with an assistant, pays for it again.
 
-A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. But a catalogue is only worth keeping if you can tell which entries are sound. Otherwise you re-verify everything yourself, and the files quietly rot. A context layer always comes back to one question - *who is responsible for the quality of this context?* - and the trust ladder is the answer, written into each entry. So every concept says where it came from and how far it has been checked, in plain words: *confirmed by a person*, or *nobody has checked this yet* - the labels are under [Trust stays visible](#trust-stays-visible).
+A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. But a catalogue is only worth keeping if you can tell which entries are sound. Otherwise you re-verify everything yourself, and the files quietly rot. A context layer always comes back to one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry. Every concept says where it came from and how far it has been checked, in plain words: *confirmed by a person*, or *nobody has checked this yet*. The labels are under [Trust stays visible](#trust-stays-visible).
 
 ## Prose, Structure, Meaning, Tools
 
-**Specification first, schema first, interoperability first.** The bundle is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). Nothing here invents a field, a format or a validator, so a folder of Markdown can be validated, queried as a graph, and read by people, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL, and [other supported formats](https://linkml.io/linkml/generators/index.html).
+A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and tools that come with the standard rather than with this project. **Specification first, schema first, interoperability first.** The bundle is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). Nothing here invents a field, a format or a validator. A folder of Markdown can therefore be validated, queried as a graph, and read by people, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html).
 
 OKF's fourth goal is to "standardize the small set of frontmatter fields making an agent-maintained corpus **trustable**, without prescribing any runtime". **This is such a runtime**: those fields become a ladder each claim climbs, a CI gate that refuses a `human:` confirmation no person can be tied to, and an answer saying how far it has been checked.
 
-OKF puts "a fixed taxonomy of concept types" and "replacing domain-specific schemas" out of scope. **Here they are in scope** by construction: a domain's own types get a schema of their own, and go from merely tolerated to checked - [when the vocabulary stops fitting](skills/ktl-curator/references/domain-schemas.md).
+OKF puts "a fixed taxonomy of concept types" and "replacing domain-specific schemas" out of scope. **Here they are in scope** by construction: a domain's own types get a schema of their own, and go from merely tolerated to checked, as [when the vocabulary stops fitting](skills/ktl-curator/references/domain-schemas.md) describes.
 
 ## Four skills, three lines of the poem
 
 | Skill | Role | Runs |
 | --- | --- | --- |
-| [`ktl-sidecar`](skills/ktl-sidecar/SKILL.md) | **Sidecar** - *lays the network*. Bootstraps a fresh `knowledge_bundle` into a repository that doesn't have one - the visible doorway to the `.lokf/` sidecar (tooling, docs, dummy skeleton) it lays down from bundled templates; repairs a broken sidecar file. | once |
-| [`ktl-librarian`](skills/ktl-librarian/SKILL.md) | **Librarian** - *binds it into order*. Scrapes the repository, derives concepts with their sources, classifies them, wires typed relationships, audits, hands off for review. Like a real librarian it catalogues without vouching: *facts about the repository*, never verdicts about truth. | often, including on a schedule |
-| [`ktl-curator`](skills/ktl-curator/SKILL.md) | **Curator** - *holds the scales*. A person's assistant: shows what needs a look, puts the source next to the claim, records the verdict - confirm, correct, retire, send back - in the bundle's own frontmatter. *Judgments a person made*, never facts it derived. | a little, regularly |
-| [`ktl-docent`](skills/ktl-docent/SKILL.md) ([examples](docs/examples/docent.md)) | **Docent** - *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. Answers from the bundle, labels how far each concept has been trusted, checks exact values at the source, and when the bundle has no answer explores the repository and records the miss, so it becomes the librarian's next task. Read-only on the bundle. | whenever anyone asks |
+| [`ktl-sidecar`](skills/ktl-sidecar/SKILL.md) | **Sidecar**, *lays the network*. Lays down the `.lokf/` sidecar (tooling, docs, a dummy skeleton) from bundled templates in a repository that has none, with `knowledge_bundle` as its visible doorway. Repairs a broken sidecar file. | once |
+| [`ktl-librarian`](skills/ktl-librarian/SKILL.md) | **Librarian**, *binds it into order*. Scrapes the repository, derives concepts with their sources, classifies them, wires typed relationships, audits, and hands off for review. Like a real librarian it catalogues without vouching: *facts about the repository*, never verdicts about truth. | often, including on a schedule |
+| [`ktl-curator`](skills/ktl-curator/SKILL.md) | **Curator**, *holds the scales*. A person's assistant. It shows what needs a look, puts the source next to the claim, and records the verdict (confirm, correct, retire, send back) in the bundle's own frontmatter. *Judgments a person made*, never facts it derived. | a little, regularly |
+| [`ktl-docent`](skills/ktl-docent/SKILL.md) ([examples](docs/examples/docent.md)) | **Docent**, *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. Answers from the bundle and labels how far each concept has been trusted. Checks exact values at the source. When the bundle has no answer it explores the repository and records the miss, which becomes the librarian's next task. Read-only on the bundle. | whenever anyone asks |
 
-**Curator** is the museum sense - the one who authenticates, weighs provenance, decides what goes on exhibit - not the data-management sense, which is the **librarian**'s job. A **docent** is the museum's guide, who explains the exhibition without moving anything on the shelves. In short: the librarian reports, the curator fact-checks and edits, the docent reads and writes back what was missed.
+**Curator** is the museum sense, the one who authenticates, weighs provenance and decides what goes on exhibit. It is not the data-management sense, which is the **librarian**'s job. A **docent** is the museum's guide, who explains the exhibition without moving anything on the shelves. In short: the librarian reports, the curator fact-checks and edits, the docent reads and writes back what was missed.
 
-On a fresh repository they run in order - **sidecar**, then **librarian** filling the bundle with drafts, then **curator**, where a person turns drafts into confirmed knowledge a few at a time. A fifth role, the **registrar**, is no skill at all - it is the toolkit and CI, [below](#the-fifth-role-which-is-not-a-skill). After that it is a loop: the **librarian** refreshes on a schedule, readers send back what the bundle missed, and the **curator** works through whatever that surfaces.
+On a fresh repository they run in order: **sidecar**, then **librarian** filling the bundle with drafts, then **curator**, where a person turns drafts into confirmed knowledge a few at a time. A fifth role, the **registrar**, is no skill at all. It is the toolkit and CI, [below](#the-fifth-role-which-is-not-a-skill). After that it is a loop: the **librarian** refreshes on a schedule, readers send back what the bundle missed, and the **curator** works through whatever that surfaces.
 
 <p align="center">
   <picture>
@@ -63,9 +63,9 @@ Regulated industries use the **three lines of defence** to say who owns a risk, 
 
 ### The fifth role, which is not a skill
 
-The **registrar** keeps the records themselves in order - each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit does it on every change, and CI's [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) does it again on every pull request that touches the bundle, where it also checks that each new confirmation is backed by that person's approval of the pull request or their signature on the commit.
+The **registrar** keeps the records themselves in order: each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it. The `lokf` toolkit does it on every change, and CI's [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) does it again on every pull request that touches the bundle. There it also checks that each new confirmation is backed by that person's approval of the pull request or their signature on the commit.
 
-In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins stand in for the registrar automation at the desk: [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) checks each record is well-formed as it is typed - the first of the [four levels of checking](docs/for-the-curious.md#four-levels-of-checking), live in the editor - and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) runs this repository's `ktl-curator` review session - the third level, source beside claim, the person's decision written down - without an agent in the loop ([The bundle in Obsidian](docs/obsidian.md)).
+In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do the registrar's work at the desk. [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) checks each record is well-formed as it is typed, the first of the [four levels of checking](docs/for-the-curious.md#four-levels-of-checking), live in the editor. [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) runs this repository's `ktl-curator` review session, the third level: source beside claim, the person's decision written down, and no agent in the loop ([The bundle in Obsidian](docs/obsidian.md)).
 
 The **curator** is always a person. The skill and the plugin that carry the name are that person's assistants, and neither reaches a verdict of its own.
 
@@ -78,16 +78,16 @@ The **curator** is always a person. The skill and the plugin that carry the name
 
 ## Where the bundle lives
 
-`.lokf/` sits beside the sources it distils - code, notes, documents - in the same tree and almost always the same git repository, the way `.git/` does. The bundle is `.lokf/knowledge/`, one real folder on every host, with a `knowledge_bundle` link beside it for folder pickers that hide dot-folders. Windows, macOS, other forges, no git and synced folders are covered in the sidecar's [portability page](skills/ktl-sidecar/references/portability.md).
+`.lokf/` sits beside the code, notes and documents it distils, in the same tree and almost always the same git repository, the way `.git/` does. The bundle is `.lokf/knowledge/`, one real folder on every host, with a `knowledge_bundle` link beside it for folder pickers that hide dot-folders. Windows, macOS, other forges, no git and synced folders are covered in the sidecar's [portability page](skills/ktl-sidecar/references/portability.md).
 
 ## Trust stays visible
 
 Every concept carries its own trust record, and the **curator** reports it in plain words rather than ontology terms:
 
-- **Confirmed by a person** - a named person checked it against its source.
-- **Checked by automation only** - automation re-checked that the source still matches; no person has.
-- **Nobody has checked this yet** - no check of any kind is recorded.
-- **Still a draft**, **edited since a person last confirmed it**, **past its review date**, **retired** - and, for prioritising, how many other concepts rely on each one.
+- **Confirmed by a person**: a named person checked it against its source.
+- **Checked by automation only**: automation re-checked that the source still matches; no person has.
+- **Nobody has checked this yet**: no check of any kind is recorded.
+- **Still a draft**, **edited since a person last confirmed it**, **past its review date**, **retired**; and, for prioritising, how many other concepts rely on each one.
 
 <p align="center">
   <picture>
@@ -96,7 +96,7 @@ Every concept carries its own trust record, and the **curator** reports it in pl
   </picture>
 </p>
 
-The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**, and it is meant to rise slowly - a handful of concepts in a sitting, cumulative and partial by design. A small, young bundle can reach fully-confirmed quickly; a large or fast-growing one never quite does, and the report says so instead of pretending.
+The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting. A small, young bundle can reach fully-confirmed quickly. A large or fast-growing one never quite does, and the report says so.
 
 ## Install
 

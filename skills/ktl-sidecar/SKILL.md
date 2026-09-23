@@ -1,14 +1,14 @@
 ---
 name: ktl-sidecar
-description: 'Lay down a `.lokf/` LOKF knowledge-bundle sidecar (tooling, docs, dummy skeleton, and a `knowledge_bundle` doorway link beside it) in the repository this skill sits in, from bundled templates. Use when: a repo has no `.lokf/` yet and someone asks to add, scaffold, bootstrap, or set up a LOKF/lokf sidecar, knowledge bundle, or machine-readable, SPARQL-queryable knowledge; or to repair a missing/broken sidecar file. Not for authoring or maintaining concepts - that is the ktl-librarian skill, which this one hands off to when done. Keywords: OKF, Open Knowledge Format, LOKF, LinkML, knowledge graph, linked data, RDF, JSON-LD, trust ladder.'
+description: 'Lay down a `.lokf/` LOKF knowledge-bundle sidecar (tooling, docs, dummy skeleton, and a `knowledge_bundle` doorway link beside it) in the repository this skill sits in, from bundled templates. Use when: a repo has no `.lokf/` yet and someone asks to add, scaffold, bootstrap, or set up a LOKF/lokf sidecar, knowledge bundle, or machine-readable, SPARQL-queryable knowledge; or to repair a missing/broken sidecar file. Not for authoring or maintaining concepts; that is the ktl-librarian skill, which this one hands off to when done. Keywords: OKF, Open Knowledge Format, LOKF, LinkML, knowledge graph, linked data, RDF, JSON-LD, trust ladder.'
 license: Apache-2.0
-compatibility: 'Requires a POSIX shell (bash; Git for Windows on Windows) and python3 or uv for placeholder substitution; uv with the lokf toolkit to validate (a manual cross-check otherwise). Any host - git or none, GitHub or another forge, Linux, macOS or Windows, a synced folder - with references/portability.md saying what each loses. Step 5''s workflows are GitHub Actions.'
+compatibility: 'Requires a POSIX shell (bash; Git for Windows on Windows) and python3 or uv for placeholder substitution; uv with the lokf toolkit to validate (a manual cross-check otherwise). Any host (git or none, GitHub or another forge, Linux, macOS or Windows, a synced folder), with references/portability.md saying what each loses. Step 5''s workflows are GitHub Actions.'
 ---
 
 # KTL Sidecar
 
-Create a fresh **`.lokf/` sidecar** - a machine-readable, SPARQL-queryable [LOKF](https://lokf.nolan-nichols.com/) knowledge bundle - inside the repository this skill is invoked from: directory, tooling, docs, and a small
-**dummy** skeleton, then hand off to **ktl-librarian** to fill it with real knowledge. Every file is copied from `templates/` (paths below are relative to this skill's directory), never retyped.
+Create a fresh **`.lokf/` sidecar** inside the repository this skill is invoked from: a machine-readable, SPARQL-queryable [LOKF](https://lokf.nolan-nichols.com/) knowledge bundle, with its directory, tooling, docs, and a small
+**dummy** skeleton. Then hand off to **ktl-librarian** to fill it with real knowledge. Every file is copied from `templates/` (paths below are relative to this skill's directory), never retyped.
 
 > Sources: lokf.nolan-nichols.com is the canonical site for what LOKF *means*
 > (spec, Golden Rules). The tooling this skill installs comes from the
@@ -36,7 +36,7 @@ Create a fresh **`.lokf/` sidecar** - a machine-readable, SPARQL-queryable [LOKF
 
 ## Step 0 - Gather the host project's facts
 
-**First, the preflight.** Run `bash templates/scripts/knowledge-preflight.sh` from this skill's directory (the copy under `.lokf/scripts/` does not exist yet) and read its screen before anything else: the host and shell, whether the tree is under git and on which forge, whether `uv` is present, which skill copies are installed and whether they differ, and whether the session is attended. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. A host whose shell is PowerShell, or that is not Linux, git or GitHub, has its own bullet in [references/portability.md](references/portability.md), and the preflight tells you which one applies. When the person you are working with cannot act on a `missing` or `warn` line themselves, write them a request note for the maintainer from [references/prerequisites.md](references/prerequisites.md) - the plain meaning of each line, who fixes it, and what to send - and carry on with what remains.
+**First, the preflight.** Run `bash templates/scripts/knowledge-preflight.sh` from this skill's directory (the copy under `.lokf/scripts/` does not exist yet) and read its screen before anything else: the host and shell, whether the tree is under git and on which forge, whether `uv` is present, which skill copies are installed and whether they differ, and whether the session is attended. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. A host whose shell is PowerShell, or that is not Linux, git or GitHub, has its own section in [references/portability.md](references/portability.md), and the preflight tells you which one applies. When the person you are working with cannot act on a `missing` or `warn` line themselves, write them a request note for the maintainer from [references/prerequisites.md](references/prerequisites.md) - the plain meaning of each line, who fixes it, and what to send - and carry on with what remains.
 
 Resolve every placeholder from real project sources before writing anything; never leave a `<...>` token or dummy value behind.
 

@@ -1,4 +1,4 @@
-# Prerequisites - what the preflight's lines mean, and who fixes each
+# Prerequisites: what the preflight's lines mean, and who fixes each
 
 `.lokf/scripts/knowledge-preflight.sh` prints one line per thing a skill depends on, in the words of the tools it checked. A curator is chosen for knowing the subject, not the repository, and a reader may know neither. This table is the translation: what each line means, what it stops, who normally puts it right, and what to send that person. **You** is the person at the keyboard; **the maintainer** is whoever set the repository up; **an administrator** has the forge's settings.
 
@@ -18,7 +18,7 @@ When a person cannot act on a `missing` or `warn` line, write them a short reque
 | `toolkit` | Whether `uv` and the `lokf` toolkit are installed. | Validation, conversion and queries, and six of the conventions script's ten checks; reading and editing still work. | you, or the maintainer | "Please install `uv` (docs.astral.sh/uv) and run `just lokf-install` in `.lokf/`." |
 | `just` | Whether the `just` command runner is present. | Nothing; `uvx --from rust-just just` does the same. | you | Nothing. |
 | `skills` | Which of the four skills are installed, and whether two copies differ. | Nothing; a stale copy may answer from an older version. | the maintainer | "Two copies of `<skill>` differ. Please reinstall the LOKF skills from one release, or remove the stale copy." |
-| `copies` | Whether the scripts and workflows the sidecar laid down still match their templates. | Nothing; a drifted copy may miss a later fix. | the maintainer | "`<file>` differs from the sidecar's template. Please run the ktl-sidecar repair, or confirm the edit is deliberate." |
+| `copies` | Whether the scripts and workflows the sidecar laid down still match their templates. | Nothing; a drifted copy may miss a later fix. | the maintainer | "`<file>` differs from the sidecar's template. Please run the ktl-sidecar repair, or confirm the edit is intended." |
 | `session` | Whether a person is present or the run is automated. | Unattended: the curator's review session. | nobody | Nothing; an automated run is meant to stop there. |
 | `network` | Whether PyPI is reachable and `curl` exists. | Version checks, skill installs, the signing-key identity route. | the maintainer | "This machine cannot reach pypi.org, or has no `curl`. Please allow it, or tell me the `lokf` version to pin." |
 

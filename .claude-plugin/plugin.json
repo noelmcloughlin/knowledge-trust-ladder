@@ -1,7 +1,7 @@
 {
   "name": "knowledge-trust-ladder",
   "displayName": "Knowledge Trust Ladder",
-  "description": "Four agent skills that keep a LOKF knowledge bundle (Linked Open Knowledge Format, a semantic profile of OKF) true beside any repository, and record who checked each claim: a sidecar, a librarian, a curator and a docent.",
+  "description": "Four agent skills that keep a LOKF knowledge bundle (Linked Open Knowledge Format, a semantic profile of OKF) current beside any repository, and record who checked each claim: a sidecar, a librarian, a curator and a docent.",
   "author": { "name": "Noel McLoughlin", "url": "https://github.com/noelmcloughlin" },
   "homepage": "https://github.com/noelmcloughlin/knowledge-trust-ladder#readme",
   "repository": "https://github.com/noelmcloughlin/knowledge-trust-ladder",

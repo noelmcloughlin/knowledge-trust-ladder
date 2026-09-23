@@ -2,23 +2,23 @@ name: Semantic release (version + changelog only)
 
 # Computes the next version from Conventional Commits on `main`, using the
 # same pinned semantic-release tool as the sibling plugin repositories, but
-# never lets it create a tag or a release itself: `publish.yml`'s
+# never lets it create a tag or a release itself. `publish.yml`'s
 # `gh skill publish --tag` is this repository's one and only tag creator
-# (see that workflow's own header comment for why), and two tools racing to
+# (see that workflow's own header comment for why). Two tools racing to
 # create the same tag would be worse than either alone. So this workflow
-# only ever runs semantic-release with `--dry-run` - which performs no
-# writes, no commit, no tag, no publish, by design - to learn the next
+# only ever runs semantic-release with `--dry-run`, which performs no
+# writes, no commit, no tag and no publish. That run learns the next
 # version and this repository's CHANGELOG.md "## [Unreleased]" section text
-# via .github/scripts/changelog-release.mjs, then promotes that section and
-# commits it itself in a plain, reviewable step below, outside the tool's
-# own publish lifecycle.
+# via .github/scripts/changelog-release.mjs. The workflow then promotes that
+# section and commits it itself in a plain, reviewable step below, outside
+# the tool's own publish lifecycle.
 #
 # `plan` previews every pull request into main. `release` runs on push to
-# main behind the `release` GitHub Environment - the same gate `publish.yml`
-# already uses, so configure required reviewers on it once, in this
+# main behind the `release` GitHub Environment, the same gate `publish.yml`
+# already uses. Configure required reviewers on it once, in this
 # repository's Settings > Environments, and both workflows honor it.
 # `publish.yml` itself is unchanged in spirit: a maintainer still runs it
-# by hand with an explicit version, but that version must now match what
+# by hand with an explicit version. But that version must now match what
 # this workflow already promoted into CHANGELOG.md, so a typo can no longer
 # ship a version nobody wrote release notes for.
 
@@ -86,23 +86,24 @@ jobs:
 
       # semantic-release detects a pull_request event itself and exits before
       # running any plugin, including @semantic-release/exec's verifyRelease
-      # hook - so the --dry-run below never calls changelog-release.mjs check
-      # on this event, and an empty "## [Unreleased]" would otherwise pass a
-      # pull request and only fail at release time. Call it directly - but
-      # only when these commits would actually release, or a chore-only pull
-      # request (a Dependabot bump, a docs tidy) fails for lacking notes it
-      # was never meant to write.
+      # hook. So the --dry-run below never calls changelog-release.mjs check
+      # on this event. An empty "## [Unreleased]" would otherwise pass a
+      # pull request and only fail at release time. Call it directly, but
+      # only when these commits would release, or a chore-only pull request
+      # (a Dependabot bump, a docs tidy) fails for lacking notes it was never
+      # meant to write.
       - name: Refuse an empty changelog entry when these commits would release
         if: steps.commits.outputs.releases == 'true'
         run: node .github/scripts/changelog-release.mjs check
 
       # A squash merge takes its commit subject from the pull request title,
-      # and GitHub's default title is the branch name in words - "Fix deps and
-      # empty changelog (#46)" - which carries no type, so the merge reached
-      # main and released nothing while its notes waited in "## [Unreleased]".
-      # So when the commits would release, the title must too: then either
-      # merge strategy releases. The title is read through `env:`, never
-      # interpolated into the script, since anyone can open a pull request.
+      # and GitHub's default title is the branch name in words, such as "Fix
+      # deps and empty changelog (#46)", which carries no type. That merge
+      # reached main and released nothing while its notes waited in
+      # "## [Unreleased]". So when the commits would release, the title must
+      # too: then either merge strategy releases. The title is read through
+      # `env:`, never interpolated into the script, since anyone can open a
+      # pull request.
       - name: Refuse a title that would lose the release on a squash merge
         if: steps.commits.outputs.releases == 'true'
         env:
@@ -133,11 +134,11 @@ jobs:
         with:
           egress-policy: audit
 
-      # This job pushes a commit to `main` itself (see below), so - like the
-      # equivalent job in the sibling plugin repositories - it keeps the
-      # checkout action's default credential helper rather than disabling
-      # it: nothing untrusted runs here, only the pinned release tool above
-      # and this repository's own reviewed script below.
+      # This job pushes a commit to `main` itself (see below), so it keeps the
+      # checkout action's default credential helper rather than disabling it,
+      # like the equivalent job in the sibling plugin repositories. Nothing
+      # untrusted runs here, only the pinned release tool above and this
+      # repository's own reviewed script below.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -155,10 +156,10 @@ jobs:
 
       # Always --dry-run: semantic-release computes the next version and
       # this repository's Unreleased notes but writes nothing and creates no
-      # tag - see this workflow's header comment for why. The command
+      # tag; see this workflow's header comment for why. The command
       # writes `next_version` to $GITHUB_OUTPUT itself (see
       # changelog-release.mjs's `notes` subcommand) only when a release is
-      # actually due; a push with no feat/fix/etc. commit since the last tag
+      # due; a push with no feat/fix/etc. commit since the last tag
       # leaves it unset and the step below is skipped.
       - name: Compute the next version (writes nothing)
         id: plan

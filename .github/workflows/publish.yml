@@ -1,10 +1,10 @@
 name: Publish
 
 # Maintainer-gated release. `gh skill publish` creates the tag and the GitHub
-# release itself, so this workflow must never be tag-triggered - a
-# tag-push trigger here would race the very tag `gh skill publish` is about
-# to create. `workflow_dispatch` keeps release timing an explicit human
-# decision; the `release` environment (configure required reviewers on it in
+# release itself, so this workflow must never be tag-triggered. A tag-push
+# trigger here would race the very tag `gh skill publish` is about to
+# create. `workflow_dispatch` keeps release timing an explicit human
+# decision. The `release` environment (configure required reviewers on it in
 # repo settings) adds a maintainer-approval gate in front of the write scope.
 on:
   workflow_dispatch:
@@ -54,9 +54,9 @@ jobs:
       # semantic-release.yml computes each release's version from commits and
       # promotes it into CHANGELOG.md on every qualifying push to main (see
       # that workflow's header comment for why it stops short of tagging
-      # itself); this only checks the human-typed input above still agrees
-      # with what it promoted, catching the transcription error a manual
-      # version number invites - not re-deciding the version.
+      # itself). This step only checks that the human-typed input above still
+      # agrees with what it promoted. It catches the transcription error a
+      # manual version number invites; it does not re-decide the version.
       - name: Cross-check against the promoted changelog
         env:
           VERSION: ${{ inputs.version }}
@@ -69,9 +69,9 @@ jobs:
           fi
 
       # The contract exercises knowledge-conventions.sh, whose parser's half
-      # runs through `uv run`; without uv it skips those rules and check 11
-      # then fails to see them. validate.yml installs uv for the same reason
-      # - a release runs the same contract, so it needs the same tool.
+      # runs through `uv run`. Without uv it skips those rules and check 11
+      # then fails to see them. validate.yml installs uv for the same reason:
+      # a release runs the same contract, so it needs the same tool.
       - name: Set up uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
 

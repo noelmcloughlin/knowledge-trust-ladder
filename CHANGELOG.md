@@ -1,8 +1,12 @@
 # Changelog
 
-All notable changes to this repository are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows the rules in [README.md](README.md#versioning). All skills release together under one tag.
+All notable changes to this repository are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows the rules in [docs/releasing.md](docs/releasing.md). All skills release together under one tag.
 
 ## [Unreleased]
+
+### Changed
+
+- **The README, docs pages, skill introductions and workflow comments are restyled for the reader**: shorter sentences, steps before rationale, plain statements. The critics page is arranged by criticism with a verdict table and sources by DOI, and the host-by-host layouts live once in `docs/obsidian.md`.
 
 ## [0.22.0] - 2026-09-22
 

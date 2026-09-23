@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Reads and rewrites this repository's own CHANGELOG.md "## [Unreleased]"
 // section for the semantic-release pipeline in
-// .github/workflows/semantic-release.yml. Plain Node, no dependencies -
+// .github/workflows/semantic-release.yml. Plain Node, no dependencies:
 // reviewable in one read, matching this project's preference for a fixed,
 // in-repo script over an inline command string (see knowledge-librarian.sh).
 //
@@ -11,7 +11,7 @@
 //       verifyReleaseCmd, so a release with nothing written up never ships.
 //
 //   node changelog-release.mjs notes [version]
-//       Prints the Unreleased section's body to stdout - becomes the
+//       Prints the Unreleased section's body to stdout; it becomes the
 //       release notes when used as generateNotesCmd. With a version arg,
 //       also appends `next_version=<version>` to $GITHUB_OUTPUT if that
 //       env var is set (a side channel a caller can read even from a
@@ -19,10 +19,10 @@
 //
 //   node changelog-release.mjs promote <version> <date>
 //       Retitles "## [Unreleased]" to "## [<version>] - <date>" and
-//       inserts a fresh, empty "## [Unreleased]" above it. If the top
-//       released section is still pending - no tag `v<its version>` exists,
-//       because publish.yml has not been run since the last promotion - the
-//       Unreleased entries are folded into it, subsection by subsection,
+//       inserts a fresh, empty "## [Unreleased]" above it. The top released
+//       section is still pending when no tag `v<its version>` exists,
+//       because publish.yml has not been run since the last promotion. Then
+//       the Unreleased entries are folded into it, subsection by subsection,
 //       and it takes the new version and date, so two qualifying pushes
 //       between publishes never leave two headings for one release. Used
 //       as semantic-release's prepareCmd (never called in --dry-run). Also
