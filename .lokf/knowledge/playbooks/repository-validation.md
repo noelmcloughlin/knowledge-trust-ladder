@@ -61,15 +61,16 @@ line it can print as missing or a warning having a row on
 `knowledge-feedback.sh` refusing to write where `.lokf/` has no `knowledge/`,
 creating `feedback.md` on the first entry under today's UTC date, putting a
 newer entry above an older one within a day and a newer day above an older
-one - while a day ahead of today, from a clock ahead of this one, stays above
-with today filed once beneath it - accepting a lower-case kind and a dotted
-login as the gates read them, repeating no entry's text on its own output,
+one, leaving a day ahead of today, from a clock ahead of this one, where it
+is and filing today once beneath it, reading a day heading past a trailing
+space, accepting a lower-case kind and a dotted login as the gates read them,
+repeating no entry's text on its own output,
 collapsing a multi-line entry to one line so a newline cannot forge a second
 entry, refusing a third kind, an attribution that is not a login, an empty
-entry and a call with no text while leaving the file untouched, exiting 1
-rather than 2 on a lock another run holds and on a read-only bundle (skipped
-as root, whom no chmod keeps out), and leaving no temporary file or lock
-behind; and (check 13, same day)
+entry, a call with no text and a root that does not exist while leaving the
+file untouched, exiting 1 rather than 2 on a lock another run holds and on a
+read-only bundle (skipped as root, whom no chmod keeps out), and leaving no
+temporary file or lock behind; and (check 13, same day)
 `knowledge-provenance.sh` passing a confirmation signed by the curator on
 file - with a GPG key, a GPG signing subkey, or an SSH key - and failing an
 unsigned one, an unknown id, an id the gate cannot look up (which it used to

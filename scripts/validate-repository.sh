@@ -553,12 +553,15 @@ else
 fi
 mkdir -p "$fb/.lokf/knowledge"
 today=""
+# UTC is read before and after the call, so a run that straddles midnight
+# still passes and a script that fell back to local time still fails.
+utc_before="$(date -u +%Y-%m-%d)"
 if out="$(bash "$feedback" --root "$fb" Miss 'the first gap SENTINEL' 2>&1)" && [[ "$out" =~ $recorded ]] \
    && [[ "${BASH_REMATCH[1]}" == Miss && "${BASH_REMATCH[3]}" == 1 ]]; then
   today="${BASH_REMATCH[2]}"
   if grep -qx '# Reader feedback for the librarian' "$fbfile" && grep -qx "## $today" "$fbfile" \
      && grep -qx -- '- \*\*Miss\*\* - the first gap SENTINEL - docent' "$fbfile" \
-     && [[ "$today" == "$(date -u +%Y-%m-%d)" || "$today" == "$(date +%Y-%m-%d)" ]]; then
+     && [[ "$today" == "$utc_before" || "$today" == "$(date -u +%Y-%m-%d)" ]]; then
     ok "knowledge-feedback.sh creates feedback.md and files the first entry under today, UTC"
   else
     err "knowledge-feedback.sh reported $today but wrote something else: $(grep -n '^## \|^- ' "$fbfile" | tr '\n' ' ')"
@@ -594,12 +597,16 @@ if [[ "$(grep -c '^- \*\*' "$fbfile")" == 4 ]] && ! grep -q 'forged - docent$' "
 else
   err "knowledge-feedback.sh let a multi-line entry become more than one entry"
 fi
-# An older day keeps its heading and sits below today's.
+# An older day keeps its heading and sits below today's, and today's heading
+# is still today's with a space an editor left after it: hand-written files
+# have those, and a second heading for the same day would split it.
 printf '\n## 2020-01-01\n\n- **Miss** - an older day - docent\n' >> "$fbfile"
+awk -v h="## $today" '$0 == h { print h " "; next } { print }' "$fbfile" > "$fbfile.t" && mv "$fbfile.t" "$fbfile"
 bash "$feedback" --root "$fb" Miss 'newest of all' >/dev/null 2>&1
 if [[ "$(grep -m1 '^## ' "$fbfile")" == "## $today" ]] && grep -qx '## 2020-01-01' "$fbfile" \
-   && [[ "$(grep -c "^## $today\$" "$fbfile")" == 1 ]]; then
-  ok "knowledge-feedback.sh keeps the days newest first"
+   && [[ "$(grep -c "^## $today *\$" "$fbfile")" == 1 ]] \
+   && [[ "$(grep -m1 '^- \*\*' "$fbfile")" == '- **Miss** - newest of all - docent' ]]; then
+  ok "knowledge-feedback.sh keeps the days newest first and reads a heading past its trailing space"
 else
   err "knowledge-feedback.sh did not keep the date headings newest first: $(grep -n '^## ' "$fbfile" | tr '\n' ' ')"
 fi
@@ -636,6 +643,7 @@ refuse "an attribution starting with a dot" --for '.ada' Miss 'x'
 refuse "an attribution starting with a hyphen" --for '-ada' Miss 'x'
 refuse "an empty entry" Miss '   '
 refuse "a call with no entry text" Miss
+refuse "a root that does not exist" --root "$fb/nowhere" Miss 'x'
 if [[ "$before" == "$(cat "$fbfile")" ]]; then
   ok "knowledge-feedback.sh left feedback.md untouched on every refusal"
 else

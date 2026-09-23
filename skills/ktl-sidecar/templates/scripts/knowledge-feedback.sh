@@ -3,14 +3,15 @@
 #
 # ktl-docent appends a Miss or a Disagreement here and ktl-librarian consumes
 # it. Entries already in the file are other readers' reports: free text that
-# can come from someone with no access to this repository. Keeping the file
-# newest first used to mean the docent read it, edited it and wrote it back,
-# so those reports entered the session of an agent that had just been fetching
-# URLs and reading repository files - held off by nothing but a line of prose
-# telling it not to act on them. This script does the insertion instead. The
-# caller hands over its own entry and never opens the file, so no other
-# reader's text reaches the model at all. The guard is the call, not a rule an
-# agent has to keep (docs/threat-model.md, "Prompt-injection guards").
+# can come from someone with no access to this repository. The file is kept
+# newest first, so adding an entry used to mean the docent read it, edited it
+# and wrote it back. Those reports then entered the session of an agent that
+# had just been fetching URLs and reading repository files, held off by
+# nothing but a line of prose telling it not to act on them. This script does
+# the insertion instead. The caller hands over its own entry and never opens
+# the file, so no other reader's text reaches the model at all. The guard is
+# the call, not a rule an agent has to keep (docs/threat-model.md,
+# "Prompt-injection guards").
 #
 # It prints one line - the kind, the date, and how many entries now wait - and
 # never any entry's text, the new one included. A caller that wants to show
@@ -40,7 +41,7 @@
 #
 # Exit: 0 recorded; 2 the call was wrong and nothing was written; 1 the file
 # could not be written (a read-only .lokf/, most often, or another run holding
-# it) - the caller should tell the reader the gap out loud instead.
+# it), and the caller should tell the reader the gap out loud instead.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [--for <login>] <kind> <text>" >&2; exit 2; }
 set -u
 
@@ -121,9 +122,12 @@ readonly_bundle() {
 # Two runs at once - parallel agents in one checkout - would each read the
 # file, and the second mv would drop the first entry without a word. A
 # directory is the one lock every platform here creates atomically. A run
-# killed outright leaves it behind; the message says what to remove.
+# killed outright leaves it behind; the message says what to remove. When
+# mkdir fails and no lock is there, nothing can be created here at all - a
+# read-only mount that -w did not see - and that is the other message.
 tries=0
 until mkdir "$lock" 2>/dev/null; do
+  [ -d "$lock" ] || readonly_bundle
   tries=$((tries + 1))
   if [ "$tries" -ge 5 ]; then
     echo "another run holds $lock - if nothing else is recording feedback, remove that directory and try again" >&2
@@ -158,13 +162,12 @@ KF_ENTRY="$entry" awk -v hdr="## $today" '
   # one, or a wrong clock - stays where it is, so the file keeps its order
   # instead of gaining a second heading for today further down.
   /^## / && done == 0 {
-    h = $0; sub(/\r$/, "", h)
+    h = $0; sub(/[ \t\r]+$/, "", h)
     if (h == hdr) { print hdr; print ""; print entry; skipblank = 1; done = 1; next }
     if (h < hdr) { print hdr; print ""; print entry; print ""; print; last = $0; done = 1; next }
   }
-  # The blank line that followed the heading we just reprinted with one of
-  # our own.
-  skipblank == 1 { skipblank = 0; if ($0 == "" || $0 == "\r") next }
+  # Skip the blank line that followed that heading: we printed our own.
+  skipblank == 1 { skipblank = 0; if ($0 ~ /^[ \t\r]*$/) next }
   { print; last = $0 }
   # No heading today could go above: a file that has only ever held its
   # intro, or whose every day is after today.
