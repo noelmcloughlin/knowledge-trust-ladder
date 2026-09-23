@@ -4,30 +4,14 @@
 
 * **The docent records a reader's gap without reading the file it goes in.**
   `.lokf/feedback.md` is kept newest first, so adding an entry meant reading
-  it, editing it and writing it back - which put every earlier reader's
-  report into the docent's context, in the one session that had also been
-  fetching URLs and reading repository files, held off by nothing but a line
-  of prose telling the agent not to act on them. A Snyk W011 audit flagged
-  the path across three of the four skills; two of those were false
-  positives already answered in the repository (`ktl-sidecar`, whose
-  registrar job runs no agent, and `ktl-curator`, which counts entries with
-  `grep -c`), and the librarian's own reading of them is the accepted risk
-  the threat model names. This one was real. `knowledge-feedback.sh`, a new
-  sidecar script, now does the insertion: ktl-docent passes its own entry as
-  an argument and never opens the file, and the script prints only a kind, a
-  date and a count. The guard is the call rather than a rule an agent has to
-  keep, the same reason the conventions the librarian kept breaking became a
-  script. It holds the kind to `Miss` or `Disagreement`, the optional
-  attribution to a forge login's characters, and the entry to one line, so a
-  caller cannot forge a second entry or an identity; it files under today's
-  UTC date behind a directory lock, so two runs in one checkout cannot drop
-  each other's entry; and it exits 1, not 2, on a read-only bundle, which is the docent's cue to say the gap out loud
-  instead. The preflight's `copies` line reports a sidecar that predates the
-  script, since a host without it is back on the hand-edited path, and
-  `validate-repository.sh` gained check 12a, which exercises all of that.
-  Nothing changed for ktl-librarian: consuming the entries is its job, and
-  it does that under its own guard behind the scheduled workflow's `publish`
-  job.
+  it, editing it and writing it back, which put other readers' free text
+  into the docent's session, held off by prose alone (Snyk W011).
+  `knowledge-feedback.sh`, a new sidecar script, does the insertion instead:
+  ktl-docent passes its own entry as an argument and never opens the file.
+  The guard is the call rather than a rule an agent has to keep, the same
+  reason the conventions the librarian kept breaking became a script. The
+  preflight reports a sidecar that predates it; check 12a exercises it.
+  Nothing changed for ktl-librarian, which still reads them.
 
 ## 2026-09-19
 
