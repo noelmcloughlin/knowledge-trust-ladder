@@ -1,5 +1,26 @@
 # Change Log
 
+## 2026-09-23
+
+* **The docent records a reader's gap without reading the file it goes in.**
+  `.lokf/feedback.md` is kept newest first, so adding an entry meant reading
+  it, editing it and writing it back, which put other readers' free text
+  into the docent's session, held off by prose alone (Snyk W011).
+  `knowledge-feedback.sh`, a new sidecar script, does the insertion instead:
+  ktl-docent passes its own entry as an argument and never opens the file.
+  The guard is the call rather than a rule an agent has to keep, the same
+  reason the conventions the librarian kept breaking became a script. The
+  preflight reports a sidecar that predates it; check 12a exercises it.
+  Nothing changed for ktl-librarian, which still reads them.
+
+* **A scaffolded host installed a librarian that was not in the tag.** The
+  librarian template's `TRUST_LADDER_SKILLS_REF` read `v0.21.0`, where the
+  skills are named `lokf-*`; its install step clones that tag and copies
+  `skills/ktl-librarian`, a path that arrived with the rename in `v0.22.0`.
+  Every scheduled run failed there, armed or not. The pin moves to `v0.22.0`,
+  and check 15 now reads the pinned tag for the path the step copies - a
+  version check alone reported both halves as current.
+
 ## 2026-09-19
 
 * **The relation audit moved onto the toolkit's own flag.** `just lokf-check-refs`

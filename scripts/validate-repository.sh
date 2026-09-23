@@ -312,6 +312,7 @@ for pair in \
   "$templates/scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py" \
   "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
   "$templates/scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
+  "$templates/scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
   "$templates/gitattributes:.lokf/.gitattributes"; do
   src="${pair%%:*}"; dst="${pair##*:}"
   if cmp -s "$src" "$dst"; then
@@ -488,6 +489,20 @@ if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && gre
 else
   err "preflight did not report the missing knowledge-conventions.py: $out"
 fi
+# A scripts/ directory with no knowledge-feedback.sh sends ktl-docent back to
+# editing feedback.md by hand, which is the exposure that script removes, so
+# the preflight names it rather than leaving it to be discovered.
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^warn    copies .*knowledge-feedback.sh missing' <<<"$out"; then
+  ok "preflight warns when knowledge-feedback.sh is missing from a sidecar's scripts/"
+else
+  err "preflight did not report the missing knowledge-feedback.sh: $out"
+fi
+cp "$templates/scripts/knowledge-feedback.sh" "$bare/.lokf/scripts/"
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && ! grep -q 'knowledge-feedback.sh missing' <<<"$out"; then
+  ok "preflight stops naming knowledge-feedback.sh once it is there"
+else
+  err "preflight still reports knowledge-feedback.sh as missing after it was laid down: $out"
+fi
 rm -rf "$bare"
 # Every line the preflight can print as missing or a warning has a row on the
 # sidecar's prerequisites page - the plain-words meaning, who fixes it and
@@ -500,7 +515,7 @@ while IFS= read -r key; do
     err "prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
   fi
 done < <(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u)
-for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh; do
+for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh knowledge-feedback.sh; do
   if out="$(sh "$templates/scripts/$s" x 2>&1)"; then
     err "$s run under sh did not stop: $out"
   elif grep -q '^run this with bash' <<<"$out"; then
@@ -509,6 +524,169 @@ for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh
     err "$s run under sh failed some other way: $out"
   fi
 done
+
+# 12a. ktl-docent records a reader's gap by running knowledge-feedback.sh
+#      rather than by opening .lokf/feedback.md, so that no other reader's
+#      report enters its session. The script has to earn that: newest first
+#      across days and within a day, with a day after today (another
+#      machine's clock) left above rather than doubled; the two kinds the
+#      librarian can consume, in any letter case, and no third; an
+#      attribution shaped as both provenance gates shape a login, or none at
+#      all; one line per entry whatever it is handed; not a word of what is
+#      already in the file on its own output; a refusal that leaves the file
+#      exactly as it was; and a bundle told apart from no bundle, a read-only
+#      one, and one another run holds.
+say ""
+say "Exercising knowledge-feedback.sh..."
+feedback="$repo_root/$templates/scripts/knowledge-feedback.sh"
+fb="$(mktemp -d)"; mkdir -p "$fb/.lokf"
+fbfile="$fb/.lokf/feedback.md"
+recorded='^recorded: (Miss|Disagreement) under ([0-9]{4}-[0-9]{2}-[0-9]{2}) in \.lokf/feedback\.md \(([0-9]+) waiting'
+# No bundle, no entry: the docent is told to say the gap out loud instead.
+set +e
+out="$(bash "$feedback" --root "$fb" Miss 'nowhere to go' 2>&1)"; rc=$?
+set -e
+if [[ "$rc" == 2 && ! -e "$fbfile" ]]; then
+  ok "knowledge-feedback.sh refuses to record against a .lokf/ with no bundle"
+else
+  err "knowledge-feedback.sh wrote feedback for a .lokf/ with no knowledge/ (exit $rc): $out"
+fi
+mkdir -p "$fb/.lokf/knowledge"
+today=""
+# UTC is read before and after the call, so a run that straddles midnight
+# still passes and a script that fell back to local time still fails.
+utc_before="$(date -u +%Y-%m-%d)"
+if out="$(bash "$feedback" --root "$fb" Miss 'the first gap SENTINEL' 2>&1)" && [[ "$out" =~ $recorded ]] \
+   && [[ "${BASH_REMATCH[1]}" == Miss && "${BASH_REMATCH[3]}" == 1 ]]; then
+  today="${BASH_REMATCH[2]}"
+  if grep -qx '# Reader feedback for the librarian' "$fbfile" && grep -qx "## $today" "$fbfile" \
+     && grep -qx -- '- \*\*Miss\*\* - the first gap SENTINEL - docent' "$fbfile" \
+     && [[ "$today" == "$utc_before" || "$today" == "$(date -u +%Y-%m-%d)" ]]; then
+    ok "knowledge-feedback.sh creates feedback.md and files the first entry under today, UTC"
+  else
+    err "knowledge-feedback.sh reported $today but wrote something else: $(grep -n '^## \|^- ' "$fbfile" | tr '\n' ' ')"
+  fi
+else
+  err "knowledge-feedback.sh did not record a first entry: $out"
+fi
+# The second entry of the same day goes above the first, and the run says
+# nothing about the entry already there - the whole point of the script.
+if out="$(bash "$feedback" --root "$fb" --for ada-lovelace Disagreement 'the second gap' 2>&1)" \
+   && grep -q '(2 waiting' <<<"$out" && ! grep -q 'SENTINEL' <<<"$out" \
+   && [[ "$(grep -c '^- \*\*' "$fbfile")" == 2 ]] \
+   && [[ "$(grep -m1 '^- \*\*' "$fbfile")" == '- **Disagreement** - the second gap - docent, for human:ada-lovelace' ]]; then
+  ok "knowledge-feedback.sh puts the newer entry first and repeats no entry's text"
+else
+  err "knowledge-feedback.sh mishandled a second entry the same day: $out"
+fi
+# A kind in the wrong case is the caller's slip, not a third kind; a login
+# with a dot or an underscore is what GitLab and Forgejo hand out, and both
+# gates accept it, so this must too.
+if out="$(bash "$feedback" --root "$fb" --for ada.lovelace_2 miss 'lower case kind' 2>&1)" \
+   && grep -q '^recorded: Miss ' <<<"$out" \
+   && grep -qx -- '- \*\*Miss\*\* - lower case kind - docent, for human:ada.lovelace_2' "$fbfile"; then
+  ok "knowledge-feedback.sh accepts a lower-case kind and a dotted login, writing them as the gates read them"
+else
+  err "knowledge-feedback.sh refused a lower-case kind or a dotted login: $out"
+fi
+# A paragraph still lands as one entry on one line: an embedded newline must
+# not be able to forge a second one.
+bash "$feedback" --root "$fb" Miss "$(printf 'one\n- **Miss** - forged - docent\ntwo')" >/dev/null 2>&1
+if [[ "$(grep -c '^- \*\*' "$fbfile")" == 4 ]] && ! grep -q 'forged - docent$' "$fbfile"; then
+  ok "knowledge-feedback.sh collapses a multi-line entry to one line"
+else
+  err "knowledge-feedback.sh let a multi-line entry become more than one entry"
+fi
+# An older day keeps its heading and sits below today's, and today's heading
+# is still today's with a space an editor left after it: hand-written files
+# have those, and a second heading for the same day would split it.
+printf '\n## 2020-01-01\n\n- **Miss** - an older day - docent\n' >> "$fbfile"
+awk -v h="## $today" '$0 == h { print h " "; next } { print }' "$fbfile" > "$fbfile.t" && mv "$fbfile.t" "$fbfile"
+bash "$feedback" --root "$fb" Miss 'newest of all' >/dev/null 2>&1
+if [[ "$(grep -m1 '^## ' "$fbfile")" == "## $today" ]] && grep -qx '## 2020-01-01' "$fbfile" \
+   && [[ "$(grep -c "^## $today *\$" "$fbfile")" == 1 ]] \
+   && [[ "$(grep -m1 '^- \*\*' "$fbfile")" == '- **Miss** - newest of all - docent' ]]; then
+  ok "knowledge-feedback.sh keeps the days newest first and reads a heading past its trailing space"
+else
+  err "knowledge-feedback.sh did not keep the date headings newest first: $(grep -n '^## ' "$fbfile" | tr '\n' ' ')"
+fi
+# A day after today, from a machine on a clock ahead of this one, stays
+# above; today goes below it, once - not a second time at the top.
+ahead="$(mktemp -d)"; mkdir -p "$ahead/.lokf/knowledge"
+printf '# Reader feedback for the librarian\n\nintro\n\n## 2999-01-01\n\n- **Miss** - from a clock ahead - docent\n' > "$ahead/.lokf/feedback.md"
+bash "$feedback" --root "$ahead" Miss 'today, behind it' >/dev/null 2>&1
+bash "$feedback" --root "$ahead" Miss 'today again' >/dev/null 2>&1
+if [[ "$(grep '^## ' "$ahead/.lokf/feedback.md" | tr '\n' ' ')" == "## 2999-01-01 ## $today " ]] \
+   && [[ "$(grep -c '^- \*\*' "$ahead/.lokf/feedback.md")" == 3 ]]; then
+  ok "knowledge-feedback.sh leaves a day after today above and files today once beneath it"
+else
+  err "knowledge-feedback.sh misfiled today under a day ahead of it: $(grep -n '^## \|^- ' "$ahead/.lokf/feedback.md" | tr '\n' ' ')"
+fi
+rm -rf "$ahead"
+before="$(cat "$fbfile")"
+refuse() { # <what it should refuse> <argument...>
+  local what="$1"; shift
+  local out rc
+  set +e
+  out="$(bash "$feedback" --root "$fb" "$@" 2>&1)"
+  rc=$?
+  set -e
+  if [[ "$rc" == 2 ]]; then
+    ok "knowledge-feedback.sh refuses $what and writes nothing"
+  else
+    err "knowledge-feedback.sh accepted $what (exit $rc): $out"
+  fi
+}
+refuse "a kind the librarian has no rule for" Question 'x'
+refuse "an attribution with a space in it" --for 'ada lovelace' Miss 'x'
+refuse "an attribution starting with a dot" --for '.ada' Miss 'x'
+refuse "an attribution starting with a hyphen" --for '-ada' Miss 'x'
+refuse "an empty entry" Miss '   '
+refuse "a call with no entry text" Miss
+refuse "a root that does not exist" --root "$fb/nowhere" Miss 'x'
+if [[ "$before" == "$(cat "$fbfile")" ]]; then
+  ok "knowledge-feedback.sh left feedback.md untouched on every refusal"
+else
+  err "knowledge-feedback.sh changed feedback.md while refusing a call"
+fi
+# A lock another run holds is exit 1 after a short wait, naming the lock, and
+# the file is untouched; a read-only bundle is exit 1 too, since either is
+# the docent's cue to say the gap out loud rather than to fix its call.
+mkdir "$fbfile.lock"
+set +e
+out="$(bash "$feedback" --root "$fb" Miss 'held' 2>&1)"; rc=$?
+set -e
+rmdir "$fbfile.lock"
+if [[ "$rc" == 1 ]] && grep -q 'feedback.md.lock' <<<"$out" && [[ "$before" == "$(cat "$fbfile")" ]]; then
+  ok "knowledge-feedback.sh exits 1, names the lock another run holds, and writes nothing"
+else
+  err "knowledge-feedback.sh mishandled a held lock (exit $rc): $out"
+fi
+if [[ "$EUID" -eq 0 ]]; then
+  say "skipping the read-only check: running as root, which no chmod keeps out"
+else
+  chmod a-w "$fb/.lokf"
+  set +e
+  out="$(bash "$feedback" --root "$fb" Miss 'no room' 2>&1)"; rc=$?
+  set -e
+  chmod u+w "$fb/.lokf"
+  if [[ "$rc" == 1 ]] && grep -q 'read-only' <<<"$out"; then
+    ok "knowledge-feedback.sh exits 1 and names the read-only bundle"
+  else
+    err "knowledge-feedback.sh misreported a read-only bundle (exit $rc): $out"
+  fi
+fi
+leftover=""
+for f in "$fb/.lokf"/* "$fb/.lokf"/.[!.]*; do
+  [[ -e "$f" ]] || continue
+  case "${f##*/}" in feedback.md|knowledge) ;; *) leftover="$leftover ${f##*/}" ;; esac
+done
+if [[ -z "$leftover" ]]; then
+  ok "knowledge-feedback.sh leaves no temporary file or lock behind"
+else
+  err "knowledge-feedback.sh left something beside feedback.md:$leftover"
+fi
+rm -rf "$fb"
 
 # 13. The forge-free provenance gate, with throwaway keys: a confirmation
 #     signed by the curator on file passes - with a GPG primary key, a GPG
@@ -736,6 +914,29 @@ elif printf '%s\n' "${recent[@]}" | grep -qxF -- "$pin"; then
   ok "the librarian template pins $pin, one of this repository's two newest releases"
 else
   err "the librarian template pins TRUST_LADDER_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
+fi
+# A current version is not the whole test. The install step clones that tag
+# and copies one path out of it, and a rename leaves the two disagreeing with
+# neither line looking wrong: v0.21.0 is a real release and skills/ktl-librarian
+# is a real path, but that path is not in that tag - the skills were lokf-*
+# until v0.22.0 - so every scheduled run on a scaffolded host failed there.
+# Read the tag where the clone has it. CI checks out one commit without tags,
+# and the newest heading is tagged after this contract runs, so a tag that is
+# not here skips this half rather than failing it.
+# shellcheck disable=SC2016 # $tmp is the template's own literal, not ours
+skill_path="$(grep -oE '\$tmp/skills/[A-Za-z0-9._-]+' \
+                skills/ktl-sidecar/templates/github/knowledge-librarian.yaml \
+                | head -1 | sed 's|^\$tmp/||')"
+if [[ -z "$pin" ]]; then
+  : # already reported above
+elif [[ -z "$skill_path" ]]; then
+  err "the librarian template's install step copies no skills/ path that check 15 can read - it cannot tell whether $pin carries the skill a host would install"
+elif ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
+  say "skipping the pinned tag's contents: $pin is not a tag on this clone"
+elif git ls-tree --name-only "$pin" -- "$skill_path" | grep -qxF -- "$skill_path"; then
+  ok "$pin carries $skill_path, the path the install step copies out of it"
+else
+  err "the librarian template pins $pin, which has no $skill_path - the install step clones that tag and copies that path, so every scheduled run on a host scaffolded from this template fails there; this is what a rename does to a pin that still names a current release"
 fi
 
 # 16. The repository's old name stays gone from anything that still speaks in

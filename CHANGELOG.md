@@ -4,9 +4,22 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-feedback.sh`, a sixth sidecar script.** It files a reader's Miss or Disagreement in `.lokf/feedback.md` under today's UTC date, newest first, and prints only a kind, a date and a count. The preflight names a sidecar that predates it; check 12a exercises it.
+
 ### Changed
 
+- **ktl-docent records a gap by running that script** and never reads `feedback.md`. A host on an older sidecar runs the ktl-sidecar repair; until then the preflight says so and the hand-written format stands.
 - **The README, docs pages, skill introductions and workflow comments are restyled for the reader**: shorter sentences, steps before rationale, plain statements. The critics page is arranged by criticism with a verdict table and sources by DOI, and the host-by-host layouts live once in `docs/obsidian.md`.
+
+### Fixed
+
+- **The librarian template pins a tag that carries the skill.** `TRUST_LADDER_SKILLS_REF` read `v0.21.0`, where the skills are still `lokf-*`, so the install step's `skills/ktl-librarian` was not there and every scheduled run on a scaffolded host failed at it. The pin moves to `v0.22.0`, and check 15 now reads the pinned tag for that path.
+
+### Security
+
+- **Reader feedback no longer reaches the docent's context.** Keeping `feedback.md` newest first made an entry a read, an edit and a write back, so outsider-written text entered the session, guarded by prose alone (Snyk W011). The script does the insertion instead; ktl-librarian is the only skill that still reads an entry.
 
 ## [0.22.0] - 2026-09-22
 

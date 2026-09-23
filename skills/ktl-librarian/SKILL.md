@@ -53,7 +53,7 @@ Maintain `.lokf/`, the host repository's knowledge captured as a [**Linked Open 
 |   |-- playbooks/  glossary/  person/
 |-- pyproject.toml        # declares the `lokf` toolkit dependency
 |-- justfile              # lokf-install / lokf-validate / lokf-convert / lokf-serve
-|-- scripts/              # knowledge-preflight.sh, what this host can do (run first); knowledge-conventions.sh and its Python half knowledge-conventions.py, what the gate checks that lokf validate cannot (section 2); (optional) knowledge-librarian.sh, the scheduled-agent wrapper (references/scheduled-task.md), and knowledge-provenance.sh, the forge-free gate
+|-- scripts/              # knowledge-preflight.sh, what this host can do (run first); knowledge-conventions.sh and its Python half knowledge-conventions.py, what the gate checks that lokf validate cannot (section 2); knowledge-feedback.sh, how ktl-docent records a reader's gap in feedback.md without opening it; (optional) knowledge-librarian.sh, the scheduled-agent wrapper (references/scheduled-task.md), and knowledge-provenance.sh, the forge-free gate
 ```
 
 `.lokf/knowledge` is a real folder in the layout ktl-sidecar lays down, with a `knowledge_bundle` link beside it for people. If a host has turned it into a link instead (a shared folder rearranged by hand - see the sidecar's `references/portability.md`), address the bundle as `.lokf/knowledge` regardless and let the link resolve - but expect git to report your changes under the real folder's name, and name both paths when you scope a diff or a PR.

@@ -52,7 +52,7 @@ Resolve every placeholder from real project sources before writing anything; nev
 
 `<BASE_IRI>` is load-bearing: `base_iri` + concept path mints each concept's `@id`. It need not resolve today, but must be stable and in a namespace the project controls (ktl-librarian Rule 2 has the authority test and migration steps). A plain directory tree with no manifest/CODEOWNERS/repo: use the directory name, any document in the tree, and the `.example` fallback - and flag every guess in Step 6.
 
-**Tracked or gitignored - decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default four skills assume; gitignoring it is equally valid (personal bundle, or a policy against committing agent-authored content) but changes four things: still create every file (the bundle is filesystem-based either way); skip the commit in Step 4 and all of Step 5; add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it; say so in the Step 6 handoff. This is unrelated to `.lokf/.gitignore` below, which only excludes tool build noise.
+**Tracked or gitignored - decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default four skills assume; gitignoring it is equally valid (personal bundle, or a policy against committing agent-authored content) but changes four things: still create every file (the bundle is filesystem-based either way); skip the commit in Step 4, and Step 5 apart from the two scripts its table says to lay down anyway; add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it; say so in the Step 6 handoff. This is unrelated to `.lokf/.gitignore` below, which only excludes tool build noise.
 
 **One layout, every host.** `.lokf/knowledge/` is the real folder wherever the sidecar lands - a code repository, a notes vault, a shared folder - and it is the name every skill, the toolkit, CI and `llms.txt` address. Step 2 adds `knowledge_bundle` beside it: a link, so people and folder pickers have an ordinary name to open. Never lay the bundle down as a *real* folder inside an Obsidian vault: the vault indexes it like any other folder, and the exhibition leaks into the workshop's link suggestions, graph and search. A shared folder that is not a vault is covered in [references/portability.md](references/portability.md).
 
@@ -151,8 +151,8 @@ fallback, or was skipped. Never log this in `knowledge/log.md` (knowledge change
 
 ## Step 5 - Lay down the automation (optional)
 
-**Skip entirely if `.lokf/` is gitignored** - both workflows need the bundle on a remote branch, and the librarian loop's `git status --porcelain` check
-silently reports "no changes" for an ignored path forever. GitHub-only; other hosts: copy just the wrapper and schedule it with cron/CI (see
+**Skip the workflows and the wrapper if `.lokf/` is gitignored** - both workflows need the bundle on a remote branch, and the librarian loop's `git status --porcelain` check
+silently reports "no changes" for an ignored path forever. Two scripts land regardless, and their rows say why: the preflight and `knowledge-feedback.sh`. GitHub-only; other hosts: copy just the wrapper and schedule it with cron/CI (see
 [references/portability.md](references/portability.md)). No placeholders.
 
 | Template | Destination |
@@ -164,6 +164,7 @@ silently reports "no changes" for an ignored path forever. GitHub-only; other ho
 | `templates/scripts/knowledge-conventions.py` | `.lokf/scripts/knowledge-conventions.py` (`chmod +x`) - the half of the conventions script that parses YAML; the `.sh` runs it through `uv run` and fails without it, so the two land together |
 | `templates/scripts/knowledge-preflight.sh` | `.lokf/scripts/knowledge-preflight.sh` (`chmod +x`) - what this host can do; every skill runs it first (Step 0 here). Lay it down even when the rest of this step is skipped: it needs neither git nor GitHub |
 | `templates/scripts/knowledge-provenance.sh` | `.lokf/scripts/knowledge-provenance.sh` (`chmod +x`) - the signature half of the gate on any host with git, and gpg or ssh-keygen; verifies only once `.lokf/curators/<id>.asc` (GPG) or `<id>.pub` (SSH) keys exist ([references/portability.md](references/portability.md)) |
+| `templates/scripts/knowledge-feedback.sh` | `.lokf/scripts/knowledge-feedback.sh` (`chmod +x`) - how ktl-docent records a reader's Miss or Disagreement in `.lokf/feedback.md` without opening it, so no other reader's report reaches that session. Lay it down even when the rest of this step is skipped: a gitignored bundle still takes feedback, and it needs neither git nor GitHub |
 
 **Security scanner note (Snyk W011, third-party content exposure / indirect prompt injection): false positive.** `knowledge-registrar.yaml`'s `provenance` job reads `github.event.pull_request` fields and the pull request's reviews and commits from the GitHub API for one purpose: to verify that each person a new `human:<id>` confirmation names either approved the pull request or signed the commit recording it - human provenance, not content. No LLM, AI agent or AI tool runs in that job, this skill never reads that data itself, and nothing read there is passed to a model, so there is no prompt for injected content to reach. The job's own header comment states the same and how each input is contained.
 
@@ -174,8 +175,8 @@ publishes the skills it also uses) - if this repo uses another directory, add it
 a mismatch otherwise fails at scheduled-run time, not now. What each file does, the repo variables to wire, and the runner/SHA-pin notes:
 [references/automation.md](references/automation.md).
 
-These seven files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
-so and suggest adding coverage for the four `scripts/*.sh`, the `scripts/*.py` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
+These eight files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
+so and suggest adding coverage for the five `scripts/*.sh`, the `scripts/*.py` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
 scheduled agent's own wrapper unchecked indefinitely. That's a one-line suggestion, not a scaffold: a full lint/release CI setup is outside this
 skill's scope and every host's own choice to make - see `lint-and-docs.yaml` in this skill's home repository for one example shape, adapted to
 what that repository actually ships, not copied wholesale.

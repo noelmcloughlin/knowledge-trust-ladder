@@ -8,3 +8,7 @@ lokf-tables/
 # Obsidian vault - directly, or through the root knowledge_bundle link (Step 2)
 # - workspace state, not bundle content.
 .obsidian/
+
+# knowledge-feedback.sh rewrites feedback.md through a temporary file and a
+# lock directory beside it; a run killed outright can leave either behind.
+feedback.md.*

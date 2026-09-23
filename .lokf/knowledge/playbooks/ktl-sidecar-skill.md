@@ -33,10 +33,11 @@ root-level pointers - `llms.txt`, a README aside, and a `knowledge_bundle`
 symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian
 (Step 2, see [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)) - verify
 no placeholder survives (Step 3), validate (Step 4), optionally lay down the
-CI automation (Step 5: two workflows and five scripts - the conventions
-script's Python half among them, since the `.sh` fails without it - of
-which the preflight and the forge-free provenance gate need neither git nor
-GitHub to be laid down), and hand off (Step 6). Its frontmatter declares what it
+CI automation (Step 5: two workflows and six scripts - the conventions
+script's Python half among them, since the `.sh` fails without it - three
+of which need neither git nor GitHub to be laid down: the preflight, the
+forge-free provenance gate and, since 2026-09-23, the feedback recorder), and
+hand off (Step 6). Its frontmatter declares what it
 needs in the Agent Skills `compatibility` field, as every skill here does.
 
 Its detail lives in three reference files - `references/portability.md` (a
