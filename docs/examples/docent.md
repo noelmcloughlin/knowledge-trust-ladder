@@ -1,8 +1,8 @@
-# Examples: `ktl-docent` answering real questions
+# Examples: `ktl-docent` answering questions
 
-Eight questions actually asked against this repository's own `.lokf/knowledge/` bundle, following `skills/ktl-docent/SKILL.md` exactly: read the bundle first, widen along typed relations before searching the repo, verify exact values at the source before stating them, state each concept's trust label, and fall back - deliberately, and out loud - only when the bundle has no answer. These are real captured output, not invented transcripts.
+Eight questions asked against this repository's own `.lokf/knowledge/` bundle, following `skills/ktl-docent/SKILL.md` exactly. That means: read the bundle first, widen along typed relations before searching the repo, and verify exact values at the source before stating them. State each concept's trust label, and fall back, out loud, only when the bundle has no answer. The answers are captured output.
 
-Trust labels here mean what `skills/ktl-curator/references/trust-fields.md` defines. At the time these were run, no concept in this bundle had been confirmed by a person yet (`ktl-curator` hadn't been run), so every answer below is at most "checked by automation only" or "nobody has checked this yet" - which is itself demonstrated in examples 2 and 6. The answers are what the docent said then; some of the pages it checked have been rewritten since (`CONTRIBUTING.md` is now a shorter checklist), so take the sources named as current, not the values quoted.
+Trust labels here mean what `skills/ktl-curator/references/trust-fields.md` defines. At the time these were run, no concept in this bundle had been confirmed by a person yet, since `ktl-curator` had not been run. So every answer below is at most "checked by automation only" or "nobody has checked this yet", which examples 2 and 6 themselves demonstrate. The answers are what the **docent** said then. Some of the pages it checked have been rewritten since (`CONTRIBUTING.md` is now a shorter checklist), so take the sources named as current, not the values quoted.
 
 ## 1. "What is LOKF?"
 
@@ -26,7 +26,7 @@ From the bundle:
 - OKF specification (v0.2) (references/okf-specification.md) - nobody has checked this yet
 ```
 
-*Two related concepts, two different labels - the glossary term was re-verified against its internal resource file this session; the Reference concept's resource is an external URL that wasn't re-fetched, so it carries no `verified` event yet. Real difference, not an inconsistency.*
+*Two related concepts, two different labels. The glossary term was re-verified against its internal resource file this session; the Reference concept's resource is an external URL that was not re-fetched, so it carries no `verified` event yet.*
 
 ## 3. "I have a repo with no `.lokf/` yet - which skill do I run first?"
 
@@ -92,7 +92,7 @@ Checked at source: cli.github.com/manual/gh_skill_install - does not state a ver
 Gap recorded: none - the bundle's claim isn't contradicted, just unconfirmable at this page
 ```
 
-*This is the honest version of "verify exact values at the source": the source didn't have the value to confirm, and the answer says so instead of quietly repeating the bundle's number as fact.*
+*This is "verify exact values at the source" when the source lacks the value to confirm: the answer says so, rather than repeating the bundle's number as fact.*
 
 ## 7. "What's the roadmap for a fifth skill after ktl-docent?"
 
@@ -108,8 +108,8 @@ Gap recorded: Miss - "What's the roadmap for a fifth skill after ktl-docent?" -
   no answer found anywhere in the bundle or repository.
 ```
 
-Asked once this session whether to record gaps in `.lokf/feedback.md`; the answer was yes, so this one was written there for real - see
-[`.lokf/feedback.md`](../../.lokf/feedback.md). `ktl-librarian`'s next run will either turn it into a real concept or note that no roadmap exists.
+The **docent** asked once this session whether to record gaps in `.lokf/feedback.md`; the answer was yes, so this one was written there: see
+[`.lokf/feedback.md`](../../.lokf/feedback.md). `ktl-librarian`'s next run will either turn it into a concept or note that no roadmap exists.
 
 ## 8. "Who do I contact to report a security issue, and is that policy confirmed by a person?"
 
@@ -128,4 +128,4 @@ Checked at source: SECURITY.md's "Reporting a vulnerability" section - matches e
 
 ---
 
-Try these yourself once `ktl-docent` is installed, or ask your own - that's the point of the skill.
+Try these yourself once `ktl-docent` is installed, or ask your own: that is the point of the skill.

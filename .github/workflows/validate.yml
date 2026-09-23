@@ -3,7 +3,7 @@ name: Validate
 # Validate every pull request and every push to main. Separate jobs for the
 # repository contract, script linting, workflow linting, the actual install
 # path, and Markdown/link checks so failures are easy to diagnose at a
-# glance. Also runs weekly and on demand: link rot, an upstream `gh skill`
+# glance. Also runs weekly and on demand. Link rot, an upstream `gh skill`
 # spec change, or drift in what the install path resolves to would otherwise
 # only be caught on the next incidental PR.
 on:
@@ -41,7 +41,7 @@ jobs:
           persist-credentials: false
 
       # The contract exercises knowledge-conventions.sh, whose parser's half
-      # runs through `uv run`; without uv it skips those rules and says so,
+      # runs through `uv run`. Without uv it skips those rules and says so,
       # and check 11 then fails to see them.
       - name: Set up uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
@@ -50,7 +50,7 @@ jobs:
         run: bash scripts/validate-repository.sh
 
       # Fail visibly if `gh skill` is unavailable rather than silently
-      # skipping spec validation - a missing subcommand is a broken run, not
+      # skipping spec validation: a missing subcommand is a broken run, not
       # a pass.
       - name: Verify gh skill support
         run: gh skill --help
@@ -96,12 +96,12 @@ jobs:
           persist-credentials: false
 
       # Catches what YAML parsing alone misses (bad expressions, wrong
-      # contexts, invalid `needs:`, shellcheck on `run:` blocks) - and,
-      # unlike `gh skill publish --dry-run`, reaches the two workflow
+      # contexts, invalid `needs:`, shellcheck on `run:` blocks). Unlike
+      # `gh skill publish --dry-run`, it also reaches the two workflow
       # templates under skills/ktl-sidecar/templates/github/ that get
       # copied into other repositories and run there. With no paths given
       # actionlint looks only under .github/workflows/, so the templates are
-      # named explicitly; the repository contract separately holds this
+      # named explicitly. The repository contract separately holds this
       # repository's own registrar gate byte-identical to its template.
       - name: actionlint
         uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 # v1.7.12
@@ -109,8 +109,8 @@ jobs:
           args: -color .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml skills/ktl-sidecar/templates/github/knowledge-librarian.yaml skills/ktl-sidecar/templates/github/knowledge-registrar.yaml
 
       # actionlint checks syntax, not pinning. A tag or branch ref floats, so
-      # every `uses:` - here and in the templates hosts copy - must name a
-      # commit SHA (or an image digest), with the version in a trailing
+      # every `uses:`, here and in the templates hosts copy, must name a
+      # commit SHA (or an image digest). The version sits in a trailing
       # comment for Dependabot to bump.
       - name: Every action is pinned to a commit
         run: |
@@ -141,9 +141,9 @@ jobs:
         with:
           node-version: 22
 
-      # Installs from this checkout (a local path, not the published repo),
-      # so a PR exercises the actual `npx skills add` install path - skill
-      # discovery, full directory copy, relative-link survival - before it
+      # Installs from this checkout (a local path, not the published repo).
+      # So a PR exercises the actual `npx skills add` install path (skill
+      # discovery, full directory copy, relative-link survival) before it
       # ever reaches a real consumer.
       - name: Run the install smoke test
         run: bash scripts/smoke-test-install.sh "$GITHUB_WORKSPACE"
@@ -181,6 +181,6 @@ jobs:
         with:
           path: '**/*.md'
           # knowledge_bundle is a symlink to .lokf/knowledge (Obsidian vault
-          # entry point, see ktl-sidecar Step 2) - already checked at
+          # entry point, see ktl-sidecar Step 2), already checked at
           # its real path.
           skip: knowledge_bundle

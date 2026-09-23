@@ -37,4 +37,4 @@ scripts/
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar lays down (Step 2)
 ```
 
-Each `SKILL.md` is a lean router; anything not needed on every invocation lives in that skill's `references/` (loaded only when the router points to it) so the cost of a trigger stays small. `ktl-sidecar/templates/` holds the actual files it lays down - copied verbatim, never retyped.
+Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. `ktl-sidecar/templates/` holds the files it lays down, copied verbatim, never retyped.

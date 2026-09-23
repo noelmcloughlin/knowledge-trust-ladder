@@ -1,4 +1,4 @@
-# Portability - who is recording, and what checks it, on each host
+# Portability: who is recording, and what checks it, on each host
 
 The rule never changes: a `human:<id>` event carries an id that something outside the bundle can independently confirm, and this skill writes one only for an answer that person gave to that item. What changes from host to host is where the id comes from and what checks it afterwards. The preflight (`.lokf/scripts/knowledge-preflight.sh`) names the host, the forge and the identity it could resolve; this page is the rule for each case.
 
@@ -15,7 +15,7 @@ The rule never changes: a `human:<id>` event carries an id that something outsid
 
 For a forge with no CLI at hand, or a forge this skill has no CLI for. It binds a claimed login to possession of a key, which is the same fact the gate relies on later.
 
-1. Read the key the person signs with: `git config user.signingkey`. For GPG that is a key id, and the key that actually signs is often a *subkey* of it - `gpg --list-keys --with-subkey-fingerprints <id>` shows both; for SSH (`gpg.format ssh`) a public key file or its contents. No value with signing on means git picks the GPG key by the committer's email; `git log -1 --format=%GK` after a signed commit names the key it used.
+1. Read the key the person signs with: `git config user.signingkey`. For GPG that is a key id, and the key that signs is often a *subkey* of it; `gpg --list-keys --with-subkey-fingerprints <id>` shows both. For SSH (`gpg.format ssh`) it is a public key file or its contents. No value with signing on means git picks the GPG key by the committer's email; `git log -1 --format=%GK` after a signed commit names the key it used.
 2. The person states their login. On its own that is a claim, as this skill says elsewhere.
 3. Fetch the forge's public key listing for that login and look for that key. GitHub: `https://api.github.com/users/<login>/gpg_keys` (match `key_id`, or a `subkeys[].key_id`) or `/users/<login>/ssh_signing_keys` (match the key line). GitLab: `https://<host>/api/v4/users?username=<login>` for the id, then `/api/v4/users/<id>/gpg_keys` or `/users/<id>/keys`. Forgejo and Gitea: `/api/v1/users/<login>/gpg_keys` and `/users/<login>/keys`, which some instances (Codeberg among them) serve only with a token. All of it needs `curl`; the preflight's `network` line says when there is none.
 4. Only when the key is listed under that login, record `human:<login>`. If it is not listed, or the listing cannot be read, *Confirm* and *Correct now* stay unavailable: say so, and offer the three verbs that assert nothing.
@@ -28,7 +28,7 @@ A synced folder (SharePoint, OneDrive, Drive, Dropbox, iCloud) or a plain direct
 
 ## The forge-free gate
 
-Where no gate runs, or as a second opinion where one does, ktl-sidecar can lay down `knowledge-provenance.sh` beside the conventions script: it verifies the signature on every commit that adds or changes a `human:<id>` event - a `verified` entry, or the `generated` record Correct writes - against a public key the repository carries for that id under `.lokf/curators/` - GPG as `<id>.asc`, SSH as `<id>.pub` - with plain git and gpg or ssh-keygen, on any CI or by hand. Its rules, and the guard that stops a change adding an id's key and their confirmation together, are in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md). The preflight's `curators` line says whether this person's key is on file; when it is not, the Step 1 readiness line says so, and the request to send an administrator is on ktl-sidecar's [prerequisites.md](../../ktl-sidecar/references/prerequisites.md).
+Where no gate runs, or as a second opinion where one does, ktl-sidecar can lay down `knowledge-provenance.sh` beside the conventions script: it verifies the signature on every commit that adds or changes a `human:<id>` event (a `verified` entry, or the `generated` record Correct writes) against a public key the repository carries for that id under `.lokf/curators/` (GPG as `<id>.asc`, SSH as `<id>.pub`), with plain git and gpg or ssh-keygen, on any CI or by hand. Its rules, and the guard that stops a change adding an id's key and their confirmation together, are in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md). The preflight's `curators` line says whether this person's key is on file; when it is not, the Step 1 readiness line says so, and the request to send an administrator is on ktl-sidecar's [prerequisites.md](../../ktl-sidecar/references/prerequisites.md).
 
 ## Shells and tools
 

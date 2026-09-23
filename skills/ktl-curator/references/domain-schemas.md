@@ -1,20 +1,22 @@
 # When the built-in vocabulary stops fitting
 
-LOKF ships a deliberately small vocabulary: a short list of classes, the typed relations, and a handful of trust fields. That is enough for most repositories and is what keeps bundles portable. It is not enough forever.
+This page is for the **curator** and the team: it says how to tell that the core vocabulary has stopped fitting a bundle, and what a domain schema involves.
+
+LOKF ships a small vocabulary: a short list of classes, the typed relations, and a handful of trust fields. That is enough for most repositories and is what keeps bundles portable. It is not enough forever.
 
 ## The signs
 
-- The report's **vocabulary fit** line keeps growing - concepts whose `type` isn't one of the core classes, tolerated as generic concepts (Golden Rule 7) but carrying no agreed meaning. (Once a domain schema is wired into `just lokf-validate`, the line counts only what falls outside core *and* domain, so it goes quiet again rather than staying a permanent complaint.)
+- The report's **vocabulary fit** line keeps growing. It counts concepts whose `type` isn't one of the core classes, tolerated as generic concepts (Golden Rule 7) but carrying no agreed meaning. Once a domain schema is wired into `just lokf-validate`, the line counts only what falls outside core *and* domain, and goes quiet again.
 - Concepts sprout many producer-defined keys (`dosage`, `contraindication`, `jurisdiction`, `failure_mode`) that no validator checks and no other bundle understands.
-- The domain is one where a wrong or ambiguous field has real consequences: medicine, law, finance, safety engineering, anything regulated.
+- The domain is one where a wrong or ambiguous field has consequences: medicine, law, finance, safety engineering, anything regulated.
 
 ## What to do about it (loose guidance)
 
-Keep the OKF/LOKF mechanics - one Markdown file per concept, frontmatter, the trust fields, the bundle-root header - and give the *domain* its own schema. LOKF's schema is written in [LinkML](https://linkml.io/linkml/); LinkML schemas can import another schema and add classes and slots, and the same LinkML tooling then generates the JSON Schema, JSON-LD context, and SHACL shapes for the extended vocabulary. Check the [linkml](https://linkml.io) and [`lokf` project](https://github.com/nicholsn/lokf) for the supported extension path before designing one - don't invent a mechanism. The path that exists today is `lokf validate --schema <file>` with a LinkML schema that imports LOKF's; the recipe is the librarian's [domain-schema.md](../../ktl-librarian/references/domain-schema.md).
+Keep the OKF/LOKF mechanics: one Markdown file per concept, frontmatter, the trust fields, the bundle-root header. Give the *domain* its own schema. LOKF's schema is written in [LinkML](https://linkml.io/linkml/). LinkML schemas can import another schema and add classes and slots. The same LinkML tooling then generates the JSON Schema, JSON-LD context, and SHACL shapes for the extended vocabulary. Check the [linkml](https://linkml.io) and [`lokf` project](https://github.com/nicholsn/lokf) for the supported extension path before designing one. Don't invent a mechanism. The path that exists today is `lokf validate --schema <file>` with a LinkML schema that imports LOKF's. The recipe is the **librarian**'s [domain-schema.md](../../ktl-librarian/references/domain-schema.md).
 
 ## You already have the tooling
 
-The scaffolded sidecar depends on `lokf[build]`, and that `[build]` extra pulls in the `linkml` package - the full generator suite, not just the runtime So a domain schema costs no new installation; from `.lokf/`:
+The scaffolded sidecar depends on `lokf[build]`. That `[build]` extra pulls in the `linkml` package: the full generator suite, not just the runtime. So a domain schema costs no new installation. From `.lokf/`:
 
 ```bash
 uv run gen-json-schema domain.yaml > domain.schema.json   # what validators check
@@ -23,24 +25,24 @@ uv run gen-doc -d docs domain.yaml                        # browsable reference 
 uv run gen-shacl       domain.yaml                        # shapes for the projected graph
 ```
 
-The same schema serves the people who think in JSON, Python, or docs pages and the people who think in graphs - which is the point of writing it in LinkML rather than in any one of those. If your sidecar pins plain `lokf` without the `[build]` extra, add the extra rather than installing `linkml` separately, so the two stay version-compatible.
+The same schema serves the people who think in JSON, Python, or docs pages and the people who think in graphs. That is the point of writing it in LinkML rather than in any one of those. If your sidecar pins plain `lokf` without the `[build]` extra, add the extra rather than installing `linkml` separately, so the two stay version-compatible.
 
 ## When the domain already has a schema
 
-Some regulated domains already have a LinkML vocabulary of their own. AI governance has the [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/) from IBM AI Atlas Nexus - risks, controls, obligations, taxonomies, incidents, evaluations - written independently of LOKF and with its own generated tooling; [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) is a reference implementation over it, with a LOKF sidecar beside it. Where that is the case, don't re-describe the domain in classes of your own. A LinkML schema can import another schema, so a domain schema can bring the existing vocabulary in beside LOKF's and let a concept name a control or an obligation by the identifier the domain already uses - with the same caution as above: confirm the import path the toolkits support before designing one. The cost is unchanged: one file, generated by the `[build]` extra.
+Some regulated domains already have a LinkML vocabulary of their own. AI governance has the [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/) from IBM AI Atlas Nexus, written independently of LOKF and with its own generated tooling. It covers risks, controls, obligations, taxonomies, incidents and evaluations. [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) is a reference implementation over it, with a LOKF sidecar beside it. Where that is the case, don't re-describe the domain in classes of your own. A LinkML schema can import another schema. A domain schema can therefore bring the existing vocabulary in beside LOKF's and let a concept name a control or an obligation by the identifier the domain already uses. The same caution as above applies: confirm the import path the toolkits support before designing one. The cost is unchanged: one file, generated by the `[build]` extra.
 
-What such a vocabulary usually lacks is the other half of a bundle's concern - who encoded a record, from which edition, who confirmed it, when to look again. OKF v0.2 defines those fields for documents, not for domain data. Whether they belong on a domain's own records is a question for the domain's owners and for the OKF specification as it evolves, not one a bundle settles on its own.
+What such a vocabulary usually lacks is the other half of a bundle's concern: who encoded a record, from which edition, who confirmed it, when to look again. OKF v0.2 defines those fields for documents, not for domain data. Whether they belong on a domain's own records is a question for the domain's owners and for the OKF specification as it evolves. A bundle does not settle it on its own.
 
 ## Validating values against an external vocabulary
 
-A domain schema often binds a slot to codes from an external controlled vocabulary - a `diagnosis` slot's permissible values `meaning`-bound to SNOMED CT terms, say. That binding is a LinkML concern; neither LOKF's schema nor `lokf validate` checks it - schema validation confirms the *shape* is right, not that a bound term still exists, isn't obsolete, or carries the label a concept assumes.
+A domain schema often binds a slot to codes from an external controlled vocabulary: a `diagnosis` slot's permissible values `meaning`-bound to SNOMED CT terms, say. That binding is a LinkML concern. Neither LOKF's schema nor `lokf validate` checks it. Schema validation confirms the *shape* is right, not that a bound term still exists, isn't obsolete, or carries the label a concept assumes.
 
-[`linkml-term-validator`](https://github.com/linkml/linkml-term-validator), backed by the [Ontology Access Kit](https://github.com/INCATools/ontology-access-kit), checks that gap: it queries the live ontology behind a `meaning:` binding and reports whether the term still exists, isn't deprecated, and matches the expected label. Run it as an additional, optional gate alongside `lokf validate`, never a replacement for it, and treat "the ontology service was unreachable" as its own non-passing result rather than a silent pass. It only applies once a domain schema introduces a binding like this - a bundle using LOKF's built-in vocabulary alone has nothing for it to check.
+[`linkml-term-validator`](https://github.com/linkml/linkml-term-validator) checks that gap. Backed by the [Ontology Access Kit](https://github.com/INCATools/ontology-access-kit), it queries the live ontology behind a `meaning:` binding and reports whether the term still exists, isn't deprecated, and matches the expected label. Run it as an additional, optional gate alongside `lokf validate`, never a replacement for it. Treat "the ontology service was unreachable" as its own non-passing result rather than a silent pass. It only applies once a domain schema introduces a binding like this. A bundle using LOKF's built-in vocabulary alone has nothing for it to check.
 
 Roles stay as they are:
 
-- **The curator raises it.** A rising vocabulary-fit count, or a critical domain, is a report line and a conversation with the team - not something this skill fixes.
+- **The curator raises it.** A rising vocabulary-fit count, or a critical domain, is a report line and a conversation with the team. It is not something this skill fixes.
 - **The team decides** whether a domain schema is worth owning (it is a small piece of governed software).
-- **The librarian applies it**, validating concepts against the extended schema through the same `lokf` toolkit - [how](../../ktl-librarian/references/domain-schema.md).
+- **The librarian applies it**, validating concepts against the extended schema through the same `lokf` toolkit: [how](../../ktl-librarian/references/domain-schema.md).
 
-Until then, tolerate the misfits: the spec says consumers MUST NOT reject unknown types. A misfit concept is still knowledge - it just isn't yet *checkable* knowledge.
+Until then, tolerate the misfits: the spec says consumers MUST NOT reject unknown types. A misfit concept is still knowledge. It just isn't yet *checkable* knowledge.

@@ -1,13 +1,13 @@
 # The same labels as SPARQL (optional)
 
-For people who run `just lokf-serve` (SPARQL endpoint at `http://127.0.0.1:8000/sparql`, LOKF prefixes preset - no `PREFIX` lines needed). Nothing in the curator skill requires these; the report is computed from frontmatter. They are here because the questions are natural graph questions once the bundle is projected.
+This page is for people who run `just lokf-serve`. That serves a SPARQL endpoint at `http://127.0.0.1:8000/sparql` with the LOKF prefixes preset, so no `PREFIX` lines are needed. Nothing in the **curator** skill requires these queries: the report is computed from frontmatter. They are here because the questions are natural graph questions once the bundle is projected.
 
 > Written from the LOKF schema's declared slot URIs (`verified` ->
 > `lokf:verified`, its `by`/`at` -> `prov:wasAssociatedWith` /
 > `prov:endedAtTime`; `generated` -> `prov:wasGeneratedBy`; `status` ->
 > `schema:creativeWorkStatus`; `stale_after` -> `schema:expires`; `title` ->
 > `schema:name`). Check them against your own `just lokf-convert` output
-> once - engines differ on date/dateTime comparisons, so dates are compared
+> once. Engines differ on date/dateTime comparisons, so dates are compared
 > as `YYYY-MM-DD` strings below.
 
 ## Nobody has checked this yet

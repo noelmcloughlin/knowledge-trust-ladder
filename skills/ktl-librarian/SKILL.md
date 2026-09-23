@@ -7,9 +7,9 @@ compatibility: 'Requires git and a POSIX shell (bash; Git for Windows on Windows
 
 # KTL Librarian
 
-Maintain `.lokf/` - the host repository's knowledge captured as a [**Linked Open Knowledge Format (LOKF)**](https://lokf.nolan-nichols.com/specification/) bundle. LOKF is a **semantic profile of OKF**: the same directory of Markdown + YAML frontmatter, but every field, type, and relationship is bound to a public vocabulary (schema.org / DCAT / PROV-O), so the bundle expands losslessly to JSON/JSON-LD and RDF and is queryable with SPARQL. This skill covers the full lifecycle: **scrape -> build/maintain -> audit -> hand off for review -> keep fresh on a schedule.**
+Maintain `.lokf/`, the host repository's knowledge captured as a [**Linked Open Knowledge Format (LOKF)**](https://lokf.nolan-nichols.com/specification/) bundle. LOKF is a **semantic profile of OKF**: the same directory of Markdown + YAML frontmatter, but every field, type, and relationship is bound to a public vocabulary (schema.org / DCAT / PROV-O), so the bundle expands losslessly to JSON/JSON-LD and RDF and is queryable with SPARQL. This skill covers the full lifecycle: **scrape -> build/maintain -> audit -> hand off for review -> keep fresh on a schedule.**
 
-**Why this matters:** plain OKF gives knowledge *prose + structure*; typical hand-rolled ("vibe-coded") OKF setups add *tools* that only work in the repo that grew them; LOKF completes the stack - *prose + structure + **meaning** + tools* - because binding every field and relation to public vocabularies is precisely what lets **standard, schema-generated** tooling (JSON Schema, SHACL, SPARQL) validate and query the bundle instead of bespoke scripts.
+**Why this matters:** plain OKF gives knowledge *prose + structure*; typical hand-rolled ("vibe-coded") OKF setups add *tools* that only work in the repo that grew them; LOKF completes the stack, *prose + structure + **meaning** + tools*, because binding every field and relation to public vocabularies is precisely what lets **standard, schema-generated** tooling (JSON Schema, SHACL, SPARQL) validate and query the bundle instead of bespoke scripts.
 
 > Scope: this skill owns **only** `.lokf/`. A plain, tooling-free sibling `okf/`
 > would be owned by some separate **okf-librarian** type skill. Every LOKF bundle

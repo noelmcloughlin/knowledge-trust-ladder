@@ -1,16 +1,16 @@
 ---
 name: ktl-docent
-description: 'Answer questions about this repository from its `.lokf/` knowledge bundle first, saying how far each concept used has been trusted, and explore the repository directly only when the bundle has no answer - recording that miss, or a disagreement between bundle and source, in `.lokf/feedback.md` for the librarian and curator. Use when: someone asks what/who/which/how about the project, its services, data, policies, terms, or owners; before searching the repo directly; when an answer must say what it rests on. Not for building, fixing, or confirming concepts - that is ktl-librarian / ktl-curator. Keywords: OKF, Open Knowledge Format, LOKF, LinkML, knowledge graph, question answering, citations, provenance, trust ladder.'
+description: 'Answer questions about this repository from its `.lokf/` knowledge bundle first, saying how far each concept used has been trusted, and explore the repository directly only when the bundle has no answer, recording that miss, or a disagreement between bundle and source, in `.lokf/feedback.md` for the librarian and curator. Use when: someone asks what/who/which/how about the project, its services, data, policies, terms, or owners; before searching the repo directly; when an answer must say what it rests on. Not for building, fixing, or confirming concepts; that is ktl-librarian / ktl-curator. Keywords: OKF, Open Knowledge Format, LOKF, LinkML, knowledge graph, question answering, citations, provenance, trust ladder.'
 license: Apache-2.0
 compatibility: 'Reads files only, from any shell. The GitHub CLI (gh) logged in, or glab, lets a feedback entry name the asker; without one, entries are attributed to docent alone.'
 ---
 
 # KTL Docent
 
-A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle: answer from it first, say which concepts the answer rests on and how far each has been trusted, and go to the raw repository only when the bundle can't answer - leaving a note so the gap gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next run and a person confirms after that.
+A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle: answer from it first, say which concepts the answer rests on and how far each has been trusted, and go to the raw repository only when the bundle can't answer, leaving a note so the gap gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next run and a person confirms after that.
 
-> Eight real examples of this skill answering real questions, including a
-> deliberate miss and an honest "couldn't confirm at the source" case:
+> Eight captured examples of this skill answering questions, including a
+> recorded miss and a value it could not confirm at the source:
 > [`docs/examples/docent.md`](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/docent.md)
 > in this skill's home repository (not copied on install, since it documents
 > that repository's own bundle rather than this skill's behavior generally).
