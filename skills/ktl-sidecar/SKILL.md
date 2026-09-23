@@ -164,6 +164,7 @@ silently reports "no changes" for an ignored path forever. GitHub-only; other ho
 | `templates/scripts/knowledge-conventions.py` | `.lokf/scripts/knowledge-conventions.py` (`chmod +x`) - the half of the conventions script that parses YAML; the `.sh` runs it through `uv run` and fails without it, so the two land together |
 | `templates/scripts/knowledge-preflight.sh` | `.lokf/scripts/knowledge-preflight.sh` (`chmod +x`) - what this host can do; every skill runs it first (Step 0 here). Lay it down even when the rest of this step is skipped: it needs neither git nor GitHub |
 | `templates/scripts/knowledge-provenance.sh` | `.lokf/scripts/knowledge-provenance.sh` (`chmod +x`) - the signature half of the gate on any host with git, and gpg or ssh-keygen; verifies only once `.lokf/curators/<id>.asc` (GPG) or `<id>.pub` (SSH) keys exist ([references/portability.md](references/portability.md)) |
+| `templates/scripts/knowledge-feedback.sh` | `.lokf/scripts/knowledge-feedback.sh` (`chmod +x`) - how ktl-docent records a reader's Miss or Disagreement in `.lokf/feedback.md` without opening it, so no other reader's report reaches that session. Lay it down even when the rest of this step is skipped: a gitignored bundle still takes feedback, and it needs neither git nor GitHub |
 
 **Security scanner note (Snyk W011, third-party content exposure / indirect prompt injection): false positive.** `knowledge-registrar.yaml`'s `provenance` job reads `github.event.pull_request` fields and the pull request's reviews and commits from the GitHub API for one purpose: to verify that each person a new `human:<id>` confirmation names either approved the pull request or signed the commit recording it - human provenance, not content. No LLM, AI agent or AI tool runs in that job, this skill never reads that data itself, and nothing read there is passed to a model, so there is no prompt for injected content to reach. The job's own header comment states the same and how each input is contained.
 
@@ -174,8 +175,8 @@ publishes the skills it also uses) - if this repo uses another directory, add it
 a mismatch otherwise fails at scheduled-run time, not now. What each file does, the repo variables to wire, and the runner/SHA-pin notes:
 [references/automation.md](references/automation.md).
 
-These seven files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
-so and suggest adding coverage for the four `scripts/*.sh`, the `scripts/*.py` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
+These eight files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
+so and suggest adding coverage for the five `scripts/*.sh`, the `scripts/*.py` and the two `.github/workflows/*.yaml` specifically, rather than leaving a
 scheduled agent's own wrapper unchecked indefinitely. That's a one-line suggestion, not a scaffold: a full lint/release CI setup is outside this
 skill's scope and every host's own choice to make - see `lint-and-docs.yaml` in this skill's home repository for one example shape, adapted to
 what that repository actually ships, not copied wholesale.

@@ -36,7 +36,7 @@ that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
 staying under their own word budget (1000 and 900, check 10, extended
 2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`),
 (check 11, added 2026-09-14) this repository's copies of the registrar gate,
-the five sidecar scripts and `.lokf/.gitattributes` staying byte-identical to
+the six sidecar scripts and `.lokf/.gitattributes` staying byte-identical to
 their templates, with `knowledge-conventions.sh` shown to pass on this
 bundle, to fail on a synthetic bundle breaking each of its ten rules (a
 vanished `resource`, a `revision` naming no commit, a duplicate `id`, an
@@ -53,9 +53,18 @@ which it skipped; (check 12, added 2026-09-17) `knowledge-preflight.sh`
 ending on its summary line here, on a bare directory, and warning on a CRLF
 bundle, counting a linked bundle, reading `commit.gpgsign = yes` as signing
 on, warning when the conventions script's Python half is missing beside it,
-stopping on one line under `sh` (as the other two scripts do), and every
+warning when `knowledge-feedback.sh` is missing from a sidecar's `scripts/`
+and falling silent once it is there, stopping on one line under `sh` (as the
+other three scripts do), and every
 line it can print as missing or a warning having a row on
-`ktl-sidecar/references/prerequisites.md`; and (check 13, same day)
+`ktl-sidecar/references/prerequisites.md`; (check 12a, added 2026-09-23)
+`knowledge-feedback.sh` creating `feedback.md` on the first entry, putting a
+newer entry above an older one within a day and a newer day above an older
+one, repeating no entry's text on its own output, collapsing a multi-line
+entry to one line so a newline cannot forge a second entry, refusing a third
+kind, an attribution that is not a login, an empty entry and a call with no
+text while leaving the file untouched, and exiting 1 rather than 2 on a
+read-only bundle; and (check 13, same day)
 `knowledge-provenance.sh` passing a confirmation signed by the curator on
 file - with a GPG key, a GPG signing subkey, or an SSH key - and failing an
 unsigned one, an unknown id, an id the gate cannot look up (which it used to

@@ -69,7 +69,10 @@ of forgery, not the truth of a confirmation.
 resolves a `.lokf/feedback.md` entry only from the source it names, never its
 own wording; ktl-curator quotes a fetched source to a person rather than
 acting on it; ktl-docent treats fetched or repository content as text to
-quote, never instructions, and is read-only on the bundle besides. If a guard
+quote, never instructions, is read-only on the bundle besides, and since
+2026-09-23 adds a feedback entry through `knowledge-feedback.sh` rather than
+by opening `feedback.md`, so the librarian is the only skill that reads what
+a reader wrote. If a guard
 fails, the only unattended write path is `knowledge-librarian.yaml`'s
 `publish` job, which re-derives the touched paths from the patch's own
 `git apply --numstat` on a clean checkout the agent never shared, confines

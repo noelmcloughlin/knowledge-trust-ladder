@@ -312,6 +312,7 @@ for pair in \
   "$templates/scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py" \
   "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
   "$templates/scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
+  "$templates/scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
   "$templates/gitattributes:.lokf/.gitattributes"; do
   src="${pair%%:*}"; dst="${pair##*:}"
   if cmp -s "$src" "$dst"; then
@@ -488,6 +489,20 @@ if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && gre
 else
   err "preflight did not report the missing knowledge-conventions.py: $out"
 fi
+# A scripts/ directory with no knowledge-feedback.sh sends ktl-docent back to
+# editing feedback.md by hand, which is the exposure that script removes, so
+# the preflight names it rather than leaving it to be discovered.
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && grep -q '^warn    copies .*knowledge-feedback.sh missing' <<<"$out"; then
+  ok "preflight warns when knowledge-feedback.sh is missing from a sidecar's scripts/"
+else
+  err "preflight did not report the missing knowledge-feedback.sh: $out"
+fi
+cp "$templates/scripts/knowledge-feedback.sh" "$bare/.lokf/scripts/"
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$bare" 2>&1)" && ! grep -q 'knowledge-feedback.sh missing' <<<"$out"; then
+  ok "preflight stops naming knowledge-feedback.sh once it is there"
+else
+  err "preflight still reports knowledge-feedback.sh as missing after it was laid down: $out"
+fi
 rm -rf "$bare"
 # Every line the preflight can print as missing or a warning has a row on the
 # sidecar's prerequisites page - the plain-words meaning, who fixes it and
@@ -500,7 +515,7 @@ while IFS= read -r key; do
     err "prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
   fi
 done < <(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u)
-for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh; do
+for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh knowledge-feedback.sh; do
   if out="$(sh "$templates/scripts/$s" x 2>&1)"; then
     err "$s run under sh did not stop: $out"
   elif grep -q '^run this with bash' <<<"$out"; then
@@ -509,6 +524,95 @@ for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh
     err "$s run under sh failed some other way: $out"
   fi
 done
+
+# 12a. ktl-docent records a reader's gap by running knowledge-feedback.sh
+#      rather than by opening .lokf/feedback.md, so that no other reader's
+#      report enters its session. The script has to earn that: newest first
+#      across days and within a day, the two kinds the librarian can consume
+#      and no third, an attribution shaped like a forge login or none at all,
+#      one line per entry whatever it is handed, and not a word of what is
+#      already in the file on its own output. A refusal must also leave the
+#      file exactly as it was.
+say ""
+say "Exercising knowledge-feedback.sh..."
+feedback="$repo_root/$templates/scripts/knowledge-feedback.sh"
+fb="$(mktemp -d)"; mkdir -p "$fb/.lokf"
+fbfile="$fb/.lokf/feedback.md"
+today="$(date +%Y-%m-%d)"
+if out="$(bash "$feedback" --root "$fb" Miss 'the first gap SENTINEL' 2>&1)" \
+   && grep -q "^recorded: Miss under $today .*(1 waiting" <<<"$out" \
+   && grep -qx '# Reader feedback for the librarian' "$fbfile" \
+   && grep -qx "## $today" "$fbfile" \
+   && grep -qx -- '- \*\*Miss\*\* - the first gap SENTINEL - docent' "$fbfile"; then
+  ok "knowledge-feedback.sh creates feedback.md and records the first entry"
+else
+  err "knowledge-feedback.sh did not record a first entry: $out"
+fi
+# The second entry of the same day goes above the first, and the run says
+# nothing about the entry already there - the whole point of the script.
+if out="$(bash "$feedback" --root "$fb" --for ada-lovelace Disagreement 'the second gap' 2>&1)" \
+   && grep -q '(2 waiting' <<<"$out" \
+   && ! grep -q 'SENTINEL' <<<"$out" \
+   && [[ "$(grep -c '^- \*\*' "$fbfile")" == 2 ]] \
+   && [[ "$(grep -n '^- \*\*' "$fbfile" | head -n 1)" == *'Disagreement'*'docent, for human:ada-lovelace' ]]; then
+  ok "knowledge-feedback.sh puts the newer entry first and repeats no entry's text"
+else
+  err "knowledge-feedback.sh mishandled a second entry the same day: $out"
+fi
+# A paragraph still lands as one entry on one line: an embedded newline must
+# not be able to forge a second one.
+bash "$feedback" --root "$fb" Miss "$(printf 'one\n- **Miss** - forged - docent\ntwo')" >/dev/null 2>&1
+if [[ "$(grep -c '^- \*\*' "$fbfile")" == 3 ]] && ! grep -q 'forged - docent$' "$fbfile"; then
+  ok "knowledge-feedback.sh collapses a multi-line entry to one line"
+else
+  err "knowledge-feedback.sh let a multi-line entry become more than one entry"
+fi
+# An older day keeps its heading and sits below today's.
+printf '\n## 2020-01-01\n\n- **Miss** - an older day - docent\n' >> "$fbfile"
+bash "$feedback" --root "$fb" Miss 'newest of all' >/dev/null 2>&1
+if [[ "$(grep -n '^## ' "$fbfile" | head -n 1)" == *"## $today" ]] \
+   && grep -qx '## 2020-01-01' "$fbfile"; then
+  ok "knowledge-feedback.sh keeps the days newest first"
+else
+  err "knowledge-feedback.sh did not keep the date headings newest first"
+fi
+before="$(cat "$fbfile")"
+refuse() { # <what it should refuse> <argument...>
+  local what="$1"; shift
+  local out rc
+  set +e
+  out="$(bash "$feedback" --root "$fb" "$@" 2>&1)"
+  rc=$?
+  set -e
+  if [[ "$rc" == 2 ]]; then
+    ok "knowledge-feedback.sh refuses $what and writes nothing"
+  else
+    err "knowledge-feedback.sh accepted $what (exit $rc): $out"
+  fi
+}
+refuse "a kind the librarian has no rule for" Question 'x'
+refuse "an attribution that is not a login" --for 'ada lovelace' Miss 'x'
+refuse "an empty entry" Miss '   '
+refuse "a call with no entry text" Miss
+if [[ "$before" == "$(cat "$fbfile")" ]]; then
+  ok "knowledge-feedback.sh left feedback.md untouched on every refusal"
+else
+  err "knowledge-feedback.sh changed feedback.md while refusing a call"
+fi
+# A read-only bundle is the docent's cue to say the gap out loud instead, so
+# it has to be told apart from a call it got wrong: exit 1, not 2.
+chmod a-w "$fb/.lokf"
+set +e
+out="$(bash "$feedback" --root "$fb" Miss 'no room' 2>&1)"
+rc=$?
+set -e
+chmod u+w "$fb/.lokf"
+if [[ "$rc" == 1 ]] && grep -q 'read-only' <<<"$out"; then
+  ok "knowledge-feedback.sh exits 1 and names the read-only bundle"
+else
+  err "knowledge-feedback.sh misreported a read-only bundle (exit $rc): $out"
+fi
+rm -rf "$fb"
 
 # 13. The forge-free provenance gate, with throwaway keys: a confirmation
 #     signed by the curator on file passes - with a GPG primary key, a GPG
