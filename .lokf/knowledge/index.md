@@ -60,3 +60,5 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 * [Why the skills live in their own repository](explanation/why-a-distribution-repository.md)
 * [Hosts and doorways - where the bundle's real folder lives](explanation/hosts-and-doorways.md) - one real folder, a doorway link beside it on every host, and why the visible layout was retired.
 * [Three lines of defence - where each role sits, and what an auditor can check](explanation/three-lines-of-defence.md) - the roles placed in the Three Lines Model, what the evidence does and does not show, and what remains to do and who does it; the model's critics, and what a bundle answers each, have a page of their own.
+* [When the built-in vocabulary stops fitting - domain schemas](explanation/domain-schemas.md) - the signs a domain schema is due, how it extends LOKF's classes, and reusing a domain's own vocabulary such as the AI Risk Ontology for AI governance.
+* [What Knowledge Trust Ladder is for, and what it is not](explanation/intended-uses.md) - a draft placeholder carrying a reader's question no source yet settles.

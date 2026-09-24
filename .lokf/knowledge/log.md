@@ -2,6 +2,8 @@
 
 ## 2026-09-24
 
+* **Two concepts cut back to their sources.** `why-a-registrar-role` drops the four-skill contrast and "or agent", neither of which the README says, closing the curator's open question. `policies/versioning.md` drops an uncited history of the old rule and the reasoning behind one shared tag, keeping the README's conclusion, and dates semantic release to 0.15.0 (2026-09-12) from the changelog instead of 2026-09-14.
+* **Reader feedback consumed.** Two docent misses from 2026-09-24. The governance question becomes `explanation/domain-schemas.md`, derived from the curator's and librarian's domain-schema references, including the AI Risk Ontology pointer no concept carried. The DevSecOps question becomes `explanation/intended-uses.md`, a draft placeholder, because no source names KTL's intended uses or non-goals.
 * **Curation**: human:noelmcloughlin confirmed 2 concepts (LOKF specification, AI covenant), corrected 1
   (Knowledge bundle's definition), and sent 2 back (ktl-librarian skill, Why a registrar role).
 * **Audit**: `playbooks/index.md` had no bullet for the Obsidian playbook, and

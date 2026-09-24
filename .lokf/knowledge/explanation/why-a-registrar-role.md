@@ -10,7 +10,7 @@ sources:
 - resource: docs/obsidian.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:41:00Z"
+  at: "2026-09-24T11:05:00Z"
 status: draft
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -24,7 +24,7 @@ stale_after: 2027-09-10
 
 # Overview
 
-A museum registrar keeps the records themselves in order: each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. That is a distinct job from the four skills ([why four skill roles](why-four-roles.md)): it derives no facts (librarian), decides nothing about trust (curator), and answers no questions (docent). It is not a fifth skill because no person or agent has to do it. The `lokf` toolkit does it on every change, and CI's `knowledge-registrar.yaml` does it again on every pull request that touches the bundle. There it also checks that each new confirmation is backed by that person's approval of the pull request or their signature on the commit.
+A museum registrar keeps the records themselves in order: each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. The README calls it the fifth role, which is not a skill, beside the four that are ([why four skill roles](why-four-roles.md)). No person has to do it. The `lokf` toolkit does it on every change, and CI's `knowledge-registrar.yaml` does it again on every pull request that touches the bundle. There it also checks that each new confirmation is backed by that person's approval of the pull request or their signature on the commit.
 
 In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do the registrar's work at the desk:
 
@@ -32,7 +32,3 @@ In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do t
 - [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) runs this repository's `ktl-curator` review session - the third level: source beside claim, the person's decision written down, and no agent in the loop.
 
 The curator is always a person; the skill and the plugin that carry the name are that person's assistants, and neither reaches a verdict of its own. Obsidian is optional in both directions: the plugins work on any LOKF bundle however it was made, and a vault with no bundle in it is left alone (`docs/obsidian.md`).
-
-## Open questions
-
-- 2026-09-24, human:noelmcloughlin: The concept adds two things of its own that the sources don't say in so many words: "it derives no facts (librarian), decides nothing about trust (curator), and answers no questions (docent)" - a contrast with the four skills that the README implies by the heading but doesn't spell out; and "It is not a fifth skill because no person or agent has to do it" - the README says "No person has to do it"; "or agent" is the librarian's addition.
