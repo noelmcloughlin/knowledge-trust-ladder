@@ -7,8 +7,9 @@ healthy `.lokf/`? Skip the **sidecar**. The **docent** goes anywhere an agent
 only *reads* a bundle, this repository included.
 
 > Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
-> `npx skills add` paths, so an existing install keeps working; the skill
-> names are unchanged.
+> `npx skills add` paths, so an existing install keeps working. The skills
+> themselves took the `ktl-` prefix in 0.22.0; [CHANGELOG.md](../CHANGELOG.md)
+> lists their old names, which a host installed before then removes.
 
 ## Install with the GitHub CLI
 

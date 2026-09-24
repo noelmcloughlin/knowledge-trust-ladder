@@ -7,11 +7,12 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T17:19:54Z"
+  at: "2026-09-24T22:22:58Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
 references:
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
   - https://knowledge-trust-ladder.example/knowledge/policies/versioning
   - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
   - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
@@ -81,7 +82,12 @@ typed version nobody wrote release notes for), then sets up `uv` and re-runs the
 --dry-run`, and only then publishes. Since 2026-09-24 it then dispatches
 `knowledge-release.yaml` for the new tag, which attaches the bundle to the
 release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle
-changed since the last release that carries one. The dispatch is needed
+changed since the last release that carries one, and beside it (since
+2026-09-24, not yet released) the docent as a Microsoft 365 Copilot skill,
+`ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`, one zip per
+instructions file under `.lokf/m365/`, each with its own checksum and
+attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release
+ships the bundle zip alone. The dispatch is needed
 because GitHub starts no workflow from a release made with `GITHUB_TOKEN`, so
 that workflow's own release trigger never fires here; if the dispatch fails,
 the job fails and names the manual run to make. The version is typed *with* the `v`

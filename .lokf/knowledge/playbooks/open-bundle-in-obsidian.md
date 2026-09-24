@@ -9,9 +9,11 @@ sources:
 - resource: skills/ktl-sidecar/SKILL.md
 - resource: docs/obsidian.md
 - resource: skills/ktl-docent/references/obsidian.md
+- resource: https://obsidian.md/help/settings
+  title: Settings - Obsidian Help
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  at: "2026-09-24T22:22:58Z"
 status: draft
 isPartOf:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -86,15 +88,12 @@ indexed twice. Dot-directories are never indexed at all. Two consequences:
 # Why the bundle is never a real folder inside a vault
 
 Obsidian indexes a real folder inside a vault like any other, so the exhibition leaks into the
-workshop's link suggestions, quick switcher, graph and search, and *Settings → Files and links →
-Excluded files* only makes an excluded folder "less noticeable" in the quick switcher and link
-suggestions (hidden in search, graph view and unlinked mentions). `ktl-sidecar` laid the bundle down
+workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links →
+Excluded files* hides an excluded folder from search, graph view and unlinked mentions, but only
+makes it "less noticeable" in the quick switcher and link suggestions, in the words of
+[Obsidian's settings help](https://obsidian.md/help/settings). `ktl-sidecar` laid the bundle down
 that way for a vault host for one day (2026-09-12) and retired it the next; the two-vault workflow
 above is the one the skills and the plugins assume. A shared folder that is *not* a vault may still be
 rearranged that way by hand, for a synced visible name - the sidecar's `references/portability.md`
 says how and what it costs. The attempt, its cost and what the reversal kept:
 [Hosts and doorways](../explanation/hosts-and-doorways.md).
-
-## Open questions
-
-- 2026-09-24, process:ktl-librarian: the parenthetical that *Excluded files* hides a folder "in search, graph view and unlinked mentions" has no source in this repository - `references/portability.md`, `docs/obsidian.md` and the docent's `obsidian.md` say only that exclusion makes the exhibition "less noticeable" while it still enters graph and search. If it is Obsidian's own settings text, cite Obsidian; otherwise drop it.

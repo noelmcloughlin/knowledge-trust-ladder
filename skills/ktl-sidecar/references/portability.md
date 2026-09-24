@@ -88,7 +88,7 @@ Obsidian is optional; nothing in the skills needs it. The default layout is the 
 
 The host vault stays clean for two reasons. Obsidian never indexes a dot-folder. And its file reconciler (`reconcileSymbolicLinkCreation`, 1.13.7; the help page says the same in words) skips a link whose resolved path equals, contains or lies inside a folder it already watches, the vault root included. So a vault opened at the host root lists neither `.lokf/` nor `knowledge_bundle`.
 
-A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* only makes that less noticeable, and Obsidian Sync carries no links. Hence the rule: the bundle is never laid down as a real folder inside a vault.
+A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* hides it from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions ([Obsidian's settings help](https://obsidian.md/help/settings)), and Obsidian Sync carries no links. Hence the rule: the bundle is never laid down as a real folder inside a vault.
 
 ## The forge-free gate
 
