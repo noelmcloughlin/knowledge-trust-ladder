@@ -2,12 +2,13 @@
 type: GlossaryTerm
 id: https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 title: Trust label
+description: The plain words the skills use for how far a concept has been checked, derived from its frontmatter on every read and never stored.
 definition: The plain-language phrase a skill uses for how far a concept has been checked - "confirmed by a person", "checked by automation only", "nobody has checked this yet" - derived from frontmatter, never stored.
 genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T01:20:00Z"
+  at: "2026-09-24T16:52:47Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification

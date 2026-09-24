@@ -7,12 +7,12 @@ genre: reference
 resource: https://agentskills.io/home
 generated:
   by: process:ktl-librarian
-  at: "2026-09-09T10:00:00Z"
+  at: "2026-09-09T00:13:37Z"
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T01:25:00Z"
+  at: "2026-09-24T00:55:04Z"
 - by: human:noelmcloughlin
-  at: "2026-09-09T18:30:00Z"
+  at: "2026-09-09T16:35:55Z"
 stale_after: 2027-09-09
 ---
 

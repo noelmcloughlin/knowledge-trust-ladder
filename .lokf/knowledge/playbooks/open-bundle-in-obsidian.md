@@ -11,7 +11,7 @@ sources:
 - resource: skills/ktl-docent/references/obsidian.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T01:20:00Z"
+  at: "2026-09-24T00:55:04Z"
 status: draft
 isPartOf:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill

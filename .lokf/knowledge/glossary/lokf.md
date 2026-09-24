@@ -2,6 +2,7 @@
 type: GlossaryTerm
 id: https://knowledge-trust-ladder.example/knowledge/glossary/lokf
 title: LOKF
+description: The Linked Open Knowledge Format, the semantic profile of OKF this bundle is written in, which binds every field to a public vocabulary so the bundle projects to RDF.
 definition: Linked Open Knowledge Format - a semantic profile of OKF in which every field, type, and relationship is bound to a public vocabulary, so the same Markdown expands losslessly to JSON-LD and RDF.
 abbreviation: LOKF
 genre: reference
@@ -11,7 +12,7 @@ sources:
 - resource: skills/ktl-librarian/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:41:00Z"
+  at: "2026-09-24T16:52:47Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification

@@ -20,7 +20,7 @@ The two fallbacks this skill used to allow are gone, and it matters why:
 
 **Other forges, and no forge** are covered in [portability.md](portability.md). The principle is the rule, not the tool: the id must be one that something outside the bundle can independently confirm.
 
-Never use an email address, since the bundle may be public. The actor string is `human:<id>` exactly (OKF §7). It is a literal, never turned into a link. Timestamps are UTC, ISO 8601, and quoted in YAML: `"2026-09-08T14:00:00Z"`.
+Never use an email address, since the bundle may be public. The actor string is `human:<id>` exactly (OKF §7). It is a literal, never turned into a link. Timestamps are UTC, ISO 8601, and quoted in YAML: `"2026-09-08T14:00:00Z"`. Take each from `date -u +%Y-%m-%dT%H:%M:%SZ` when the person gives the verdict, never an estimate, a round time, or local time with a `Z` added. The gate's conventions rule 11 rejects a time later than the commit that records it.
 
 ## Before the first verb: will the gate accept this?
 

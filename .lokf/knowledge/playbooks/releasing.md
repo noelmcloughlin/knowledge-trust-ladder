@@ -2,12 +2,12 @@
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 title: Releasing
-description: semantic-release.yml computes the version and promotes CHANGELOG.md on merge to main but never tags, folding into a still-unpublished section rather than doubling it; a workflow_dispatch run of publish.yml then validates that version against the promoted changelog, re-checks the contract and spec, and lets gh skill publish create the tag and release.
+description: semantic-release.yml computes the version and promotes CHANGELOG.md on merge to main but never tags, folding into a still-unpublished section rather than doubling it; a workflow_dispatch run of publish.yml then validates that version against the promoted changelog, re-checks the contract and spec, lets gh skill publish create the tag and release, and dispatches knowledge-release.yaml to attach the bundle zip.
 genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T01:00:00Z"
+  at: "2026-09-24T16:40:00Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -78,7 +78,13 @@ Each `publish.yml` run validates that the input is `vMAJOR.MINOR.PATCH`, that
 the tag does not already exist, and that the bare version matches the top
 released heading in CHANGELOG.md, skipping `## [Unreleased]` (catching a
 typed version nobody wrote release notes for), then sets up `uv` and re-runs the repository contract and `gh skill publish
---dry-run`, and only then publishes. The version is typed *with* the `v`
+--dry-run`, and only then publishes. Since 2026-09-24 it then dispatches
+`knowledge-release.yaml` for the new tag, which attaches the bundle to the
+release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle
+changed since the last release that carries one. The dispatch is needed
+because GitHub starts no workflow from a release made with `GITHUB_TOKEN`, so
+that workflow's own release trigger never fires here; if the dispatch fails,
+the job fails and names the manual run to make. The version is typed *with* the `v`
 (`v0.16.0`); the changelog heading never carries one, and the cross-check
 strips it before comparing. This release-process detail moved out of
 `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for

@@ -330,7 +330,7 @@ done
 
 say ""
 say "Exercising knowledge-conventions.sh..."
-# Six of the ten rules run through `uv run`, so without uv the script reports
+# Six of the eleven rules run through `uv run`, so without uv the script reports
 # none of them and every expectation below fails saying only that it "failed
 # to report" something - never why. Name the cause once, up front: a job that
 # runs this contract installs uv (validate.yml and publish.yml both do).
@@ -365,6 +365,16 @@ real="$("${tmpgit[@]}" rev-parse HEAD)"
 pinned() { printf -- '---\ntype: Service\nresource: pinned.md\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "%s"\n---\n' "$1"; }
 pinned "0000000000000000000000000000000000000000" > "$bad/k/x/d.md"
 pinned "$real" > "$bad/k/x/e.md"
+# Rule 11: a time later than the commit that recorded it, committed at a
+# fixed committer date so the verdict does not depend on today; a time in the
+# future on a file not committed yet; and a time before its commit, which must
+# pass.
+stamped() { printf -- '---\ntype: Service\ngenerated:\n  by: process:ktl-librarian\n  at: "%s"\n---\n' "$1"; }
+stamped "2026-09-17T01:00:00Z" > "$bad/k/x/r11-late.md"
+stamped "2026-09-16T23:00:00Z" > "$bad/k/x/r11-ok.md"
+"${tmpgit[@]}" add k/x/r11-late.md k/x/r11-ok.md
+GIT_COMMITTER_DATE="2026-09-17T00:00:00Z" "${tmpgit[@]}" commit -q -m stamp
+stamped "2999-01-01T00:00:00Z" > "$bad/k/x/r11-future.md"
 # Rules 7-9 and the line-ending tolerance. A CRLF copy of a file that breaks
 # rule 2 must still be reported (a Windows checkout used to make the script
 # skip every frontmatter rule unread); a byte order mark and a file with no
@@ -396,6 +406,7 @@ for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp
             "f-crlf.md: unquoted timestamp" "g-bom.md: starts with a byte order mark" "h-nofm.md: no closed frontmatter block" \
             "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase" \
             "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on" \
+            "r11-late.md: at \"2026-09-17T01:00:00Z\" is later than the commit that recorded it (2026-09-17T00:00:00Z)" "r11-future.md: at \"2999-01-01T00:00:00Z\" is in the future" \
             "fl-flow.md: unquoted timestamp" "n-int.md: unquoted timestamp" "y-bad.md: frontmatter is not valid YAML" "l-list.md: frontmatter is not a mapping"; do
   if grep -q "$want" <<<"$findings"; then
     ok "conventions script reports: $want"
@@ -403,7 +414,7 @@ for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp
     err "conventions script failed to report '$want' on a bundle that breaks it"
   fi
 done
-for quiet in "x/e.md:whose revision holds its resource" "fence.md:whose second librarian event is only an example in a code fence"; do
+for quiet in "x/e.md:whose revision holds its resource" "r11-ok.md:whose time is before the commit that recorded it" "fence.md:whose second librarian event is only an example in a code fence"; do
   if grep -q "${quiet%%:*}" <<<"$findings"; then
     err "conventions script reported ${quiet%%:*}, ${quiet#*:}"
   else

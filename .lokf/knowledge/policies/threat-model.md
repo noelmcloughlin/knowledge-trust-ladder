@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T01:00:00Z"
+  at: "2026-09-24T16:40:00Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/security
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
@@ -33,7 +33,15 @@ technically enforces its scope, because nothing else is watching it run.
 the copied templates; `permissions: {}` at the top of every workflow;
 harden-runner in audit mode on any job installing packages or running
 third-party code; the librarian split into a read-only `refresh` job and an
-agent-free `publish` job so the write token and the agent never meet; every
+agent-free `publish` job so the write token and the agent never meet, with
+the agent's one credential (the `AGENT_API_KEY` secret or, with
+`AGENT_USE_JOB_TOKEN`, the job's own token, holding `contents: read` and
+`copilot-requests: write`) exported into the agent's environment only, under
+a credential-shaped name the wrapper checks (2026-09-24); the release
+workflow split the same way, a `pack` job that installs the toolkit and
+validates under `contents: read` and an `attach` job that runs no
+third-party packages, holds `contents: write`, and checks the zip against
+the checksum `pack` made before uploading it (2026-09-24); every
 write to `main` behind the `release` Environment's required reviewers; `main`
 blocking deletion, force-pushes, and non-linear history, deliberately nothing
 more, since a stricter ruleset would also reject the release job's own

@@ -2,19 +2,20 @@
 type: GlossaryTerm
 id: https://knowledge-trust-ladder.example/knowledge/glossary/okf
 title: OKF
+description: The Open Knowledge Format, Google's specification for a folder of Markdown concept files with YAML frontmatter, which LOKF profiles.
 definition: Open Knowledge Format - Google's specification for a folder of Markdown concept files with YAML frontmatter, where the file path is the concept ID and `type` is the only strictly required field.
 abbreviation: OKF
 genre: reference
 resource: skills/ktl-librarian/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-09T10:00:00Z"
+  at: "2026-09-24T16:52:47Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T01:25:00Z"
+  at: "2026-09-24T00:55:04Z"
 ---
 
 # Overview
