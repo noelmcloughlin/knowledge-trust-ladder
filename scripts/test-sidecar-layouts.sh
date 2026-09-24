@@ -261,21 +261,22 @@ fi
 
 echo "5. the release workflow's compare and pack steps"
 # Run the template's own lines, so the test breaks if they change: the
-# bundle_tree function, the mtime line and the tar line.
+# bundle_tree function, the mtime line and the lines from stage= to zip.
 bundle_tree_fn="$(sed -n '/^ *bundle_tree() {$/,/^          }$/p' "$release_yaml")"
 mtime_line="$(grep -E '^\s*mtime=' "$release_yaml" | sed 's/^[[:space:]]*//')"
-# shellcheck disable=SC2016 # the pattern matches a literal "$src"
-tar_line="$(grep -E '^\s*(LC_ALL=C )?tar -C "\$src"' "$release_yaml" | sed 's/^[[:space:]]*//')"
-if [ -z "$bundle_tree_fn" ] || [ -z "$mtime_line" ] || [ -z "$tar_line" ]; then
-  err "knowledge-release.yaml no longer has a bundle_tree function, an mtime= line and a 'tar -C \"\$src\"' line"
+zip_lines="$(sed -n '/^ *stage=/,/ zip -q -X -y -@ /p' "$release_yaml" | sed 's/^[[:space:]]*//')"
+if [ -z "$bundle_tree_fn" ] || [ -z "$mtime_line" ] || ! grep -q ' zip -q -X -y -@ ' <<<"$zip_lines"; then
+  err "knowledge-release.yaml no longer has a bundle_tree function, an mtime= line and the stage= to 'zip -q -X -y -@' lines"
+elif ! command -v zip >/dev/null || ! command -v unzip >/dev/null; then
+  echo "SKIP: zip and unzip are not installed - the pack tests need them"
 else
   eval "$bundle_tree_fn"
-  # pack <host> <tag> <out dir> - runs the template's pack lines at the tag's checkout
+  # pack <host> <tag> <out dir> [TZ] - runs the template's pack lines at the tag's checkout
   pack() {
     # shellcheck disable=SC2034 # asset, src and mtime are read by the eval'd lines
-    ( cd "$1" && git checkout -q "$2" && export RUNNER_TEMP="$3" && mkdir -p "$RUNNER_TEMP/release" \
-        && read -r _ BUNDLE_PATH < <(bundle_tree "$2") && asset=knowledge.tar.gz \
-        && src="$(cd "$BUNDLE_PATH" && pwd -P)" && eval "$mtime_line" && eval "$tar_line" )
+    ( cd "$1" && git checkout -q "$2" && export RUNNER_TEMP="$3" TZ="${4:-UTC}" && mkdir -p "$RUNNER_TEMP/release" \
+        && read -r _ BUNDLE_PATH < <(bundle_tree "$2") && asset=knowledge.zip \
+        && src="$(cd "$BUNDLE_PATH" && pwd -P)" && eval "$mtime_line" && eval "$zip_lines" )
   }
   for shape in default no-doorway rearranged; do
     host="$work/release-$shape"
@@ -290,19 +291,21 @@ else
     if [ "${t3%% *}" != "${t2%% *}" ]; then ok "$shape: a concept edit compares as changed"
     else err "$shape: a concept edit compared as unchanged"; fi
     for tag in v1 v2 v3; do pack "$host" "$tag" "$work/rt-$shape-$tag"; done
-    pack "$host" v1 "$work/rt-$shape-again"
-    tarball="$work/rt-$shape-v1/release/knowledge.tar.gz"
-    listing="$(tar -tzf "$tarball" | tr '\n' ' ')"
-    if [ "$listing" = "knowledge/ knowledge/a.md knowledge/alias.md " ]; then
-      ok "$shape: the tarball holds the bundle under knowledge/ and nothing else"
-    else err "$shape: unexpected tarball listing ($listing)"; fi
-    if tar -tvzf "$tarball" | grep -q 'knowledge/alias.md -> \./a\.md$'; then ok "$shape: a link inside the bundle keeps its target"
-    else err "$shape: a link inside the bundle lost its target"; fi
-    if cmp -s "$tarball" "$work/rt-$shape-again/release/knowledge.tar.gz"; then ok "$shape: two packs of one tag give the same bytes"
+    # A second pack of v1 in another time zone and under a tight umask.
+    ( umask 077 && pack "$host" v1 "$work/rt-$shape-again" Asia/Tokyo )
+    zipfile="$work/rt-$shape-v1/release/knowledge.zip"
+    listing="$(unzip -Z1 "$zipfile" | tr '\n' ' ')"
+    if [ "$listing" = "knowledge/a.md knowledge/alias.md " ]; then
+      ok "$shape: the zip holds the bundle under knowledge/ and nothing else"
+    else err "$shape: unexpected zip listing ($listing)"; fi
+    if unzip -Z "$zipfile" knowledge/alias.md | grep -q '^l' && [ "$(unzip -p "$zipfile" knowledge/alias.md)" = "./a.md" ]; then
+      ok "$shape: a link inside the bundle is stored as a link and keeps its target"
+    else err "$shape: a link inside the bundle was followed or lost its target"; fi
+    if cmp -s "$zipfile" "$work/rt-$shape-again/release/knowledge.zip"; then ok "$shape: two packs of one tag give the same bytes, whatever the time zone and umask"
     else err "$shape: two packs of one tag differ"; fi
-    if cmp -s "$tarball" "$work/rt-$shape-v2/release/knowledge.tar.gz"; then ok "$shape: an unchanged bundle packs to the same bytes at a later tag"
+    if cmp -s "$zipfile" "$work/rt-$shape-v2/release/knowledge.zip"; then ok "$shape: an unchanged bundle packs to the same bytes at a later tag"
     else err "$shape: an unchanged bundle packed differently at a later tag"; fi
-    if ! cmp -s "$tarball" "$work/rt-$shape-v3/release/knowledge.tar.gz"; then ok "$shape: a changed bundle packs to different bytes"
+    if ! cmp -s "$zipfile" "$work/rt-$shape-v3/release/knowledge.zip"; then ok "$shape: a changed bundle packs to different bytes"
     else err "$shape: a changed bundle packed to the same bytes"; fi
   done
 fi
