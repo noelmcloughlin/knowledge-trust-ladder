@@ -2,7 +2,7 @@
 
 **Everything here assumes `.lokf/` is git-tracked** (ktl-sidecar's Step 0). If it is gitignored, do not scaffold or rely on any of this. `knowledge-registrar.yaml` never triggers, since nothing under `.lokf/**` is ever part of a pull request diff. `knowledge-librarian.yaml`'s change-detection step (`git status --porcelain -- .lokf/knowledge`, in the workflow) silently reports no changes for an ignored path. That is not a failure you would notice, just a scheduled job that quietly does nothing, forever. Get periodic freshness in that mode from a scheduler that is not gated on git history instead: cron, a systemd timer, or re-running this skill by hand.
 
-Keep the graph continuously accurate rather than rewriting it in bursts. Three pieces automate this rebuild loop. The **ktl-sidecar** skill's Step 5 scaffolds them from `../../ktl-sidecar/templates/` (`github/*.yaml`, `scripts/knowledge-librarian.sh`), and its [automation.md](../../ktl-sidecar/references/automation.md) says what each file does and how to wire it. This file is their operating manual: what a run does, and what this skill must keep true for it.
+Keep the graph continuously accurate rather than rewriting it in bursts. Three pieces automate this rebuild loop. The **ktl-sidecar** skill's Step 5 scaffolds them from `../../ktl-sidecar/templates/` (`github/*.yaml`, `scripts/knowledge-librarian.sh`), and its [automation.md](../../ktl-sidecar/references/automation.md) and [gate.md](../../ktl-sidecar/references/gate.md) say what each file does and how to wire it. This file is their operating manual: what a run does, and what this skill must keep true for it.
 
 ## `knowledge-librarian.yaml`: the rebuild workflow
 
