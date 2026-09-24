@@ -206,16 +206,10 @@ jobs:
           echo "asset=$asset" >> "$GITHUB_OUTPUT"
           echo "Packed $(unzip -Z1 "$RUNNER_TEMP/release/$asset" | wc -l) files into $asset"
 
-      # The Microsoft 365 Copilot skills, one per instructions file under
-      # .lokf/m365/ (the docent first), each with this bundle inside, so a
-      # person with nothing installed downloads one from the release and
-      # uploads it to Agent Builder. It runs the host's own copy of
-      # knowledge-m365.sh, laid down by ktl-sidecar and committed here, on
-      # the folder the step above staged, with the bundle's commit time as
-      # SOURCE_DATE_EPOCH, so each zip is as reproducible as the bundle's.
-      # The bundle zip is the release's purpose, so a host that predates the
-      # builder, or a bundle it refuses (a link inside it, say), gets a
-      # notice and the bundle zip alone, never a failed release.
+      # Build one Copilot skill per .lokf/m365/*.md with the host's
+      # knowledge-m365.sh, dated at the bundle's commit so each zip is
+      # reproducible. If the builder is missing or refuses the bundle, the
+      # step posts a notice and the release ships the bundle zip alone.
       - name: Pack the Copilot skills
         if: steps.compare.outputs.changed == 'true'
         env:

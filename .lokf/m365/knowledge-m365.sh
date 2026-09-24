@@ -2,22 +2,11 @@
 # Build the Microsoft 365 Copilot custom skills: one per instructions file
 # beside this script, each with a snapshot of the knowledge bundle inside.
 #
-# Copilot runs a skill in a sandbox with no repository, no shell and no
-# network, so the bundle has to travel inside the skill. Every read-only KTL
-# role fits Copilot the same way: its instructions, plus the snapshot. The
-# docent is ktl-docent-m365.md; an auditor arrives as another file beside
-# it, and nothing here changes. Each file's frontmatter `name:` is the
-# skill's name and the file's own basename, since Agents Toolkit takes the
-# name from the zip's top folder.
-#
-# The release workflow runs this on the bundle it has staged, with
-# SOURCE_DATE_EPOCH set to the bundle's commit time, and attaches each zip
-# beside the bundle zip. A host on another forge, or with none, runs it by
-# hand and uploads the zip to Agent Builder. The result is refused, and
-# nothing written, when any skill breaks Copilot's documented limits for
-# custom skills (preview): instructions under 20,000 characters, a directory
-# depth of 3, allowed file types only, 350 files, and a 10 MB app package.
-# It never touches the source bundle, and never overwrites a build.
+# Copilot runs a skill with no repository, shell or network, so the bundle
+# travels inside it. A new read-only role is just another .md file here.
+# The release workflow runs this and attaches each zip; elsewhere, run it by
+# hand. Nothing is written if any skill breaks Copilot's limits, and neither
+# the source bundle nor an earlier build is ever touched.
 #
 # Usage: .lokf/m365/knowledge-m365.sh [--repo-url URL] [--ref REF] <bundle-dir> <out-dir>
 #   <bundle-dir>  the bundle folder (.lokf/knowledge); in a git clone, only
