@@ -11,7 +11,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T01:00:00Z"
+  at: "2026-09-24T00:55:04Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model

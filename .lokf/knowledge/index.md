@@ -40,10 +40,10 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 
 # Glossary
 
-* [LOKF](glossary/lokf.md)
-* [OKF](glossary/okf.md)
-* [Knowledge bundle](glossary/knowledge-bundle.md)
-* [Trust label](glossary/trust-label.md)
+* [LOKF](glossary/lokf.md) - the semantic profile of OKF this bundle is written in.
+* [OKF](glossary/okf.md) - Google's Markdown-and-frontmatter format that LOKF profiles.
+* [Knowledge bundle](glossary/knowledge-bundle.md) - the `.lokf/knowledge` directory: documentation and a queryable graph at once.
+* [Trust label](glossary/trust-label.md) - the plain words for how far a concept has been checked.
 
 # Policies
 

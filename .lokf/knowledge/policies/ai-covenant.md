@@ -7,7 +7,7 @@ genre: reference
 resource: AI_COVENANT.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T01:00:00Z"
+  at: "2026-09-24T00:55:04Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"

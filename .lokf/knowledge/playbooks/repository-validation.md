@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T16:40:00Z"
+  at: "2026-09-24T16:52:26Z"
 status: draft
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -38,10 +38,12 @@ their templates - since 2026-09-24 apart from one value, the librarian
 workflow's `TRUST_LADDER_SKILLS_REF`, which the release commit moves in the
 template only - and failing up front, naming the cause, when `uv` is
 missing, with `knowledge-conventions.sh` shown to pass on this
-bundle, to fail on a synthetic bundle breaking each of its ten rules (a
+bundle, to fail on a synthetic bundle breaking each of its eleven rules (a
 vanished `resource`, a `revision` naming no commit, a duplicate `id`, an
 upper-case path, a byte order mark, a missing frontmatter block, an event
-spelt with a quoted key or a tag, and the first four - six of which (2, 3, 4,
+spelt with a quoted key or a tag, a time later than the commit that recorded
+it or, uncommitted, in the future (rule 11, since 2026-09-24, with a time
+before its commit shown to pass), and the first four - six of which (2, 3, 4,
 7, 9, 10), since 2026-09-17, it delegates to `knowledge-conventions.py`
 through `uv run`, a real YAML parse in place of grep and awk, proven on the
 layouts that used to slip: a multi-line flow item with an unquoted `at`, a

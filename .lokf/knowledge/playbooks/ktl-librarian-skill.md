@@ -13,7 +13,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T16:40:00Z"
+  at: "2026-09-24T16:52:26Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -24,6 +24,7 @@ definedBy:
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
   - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
@@ -102,7 +103,7 @@ ETag or a `sha256:` digest of a URL, always quoted. The field is proposed
 for lokf 0.9.0 and not yet released, and the 0.8.0 validator rejects it, so
 the key is left out on every released toolkit, on a file with uncommitted
 changes, and on a source the skill did not read that run. The registrar gate checks that a commit hash names a
-commit holding the concept's `resource`.
+commit holding the concept's `resource`. Every `at` comes from `date -u` at the moment it is written, never an estimate or local time labelled `Z` (2026-09-24), and conventions rule 11 rejects one later than the commit that records it.
 
 **Portability (added 2026-09-17).** `references/portability.md` says what
 the skill loses on each host and the substitute: without git, `revision` is

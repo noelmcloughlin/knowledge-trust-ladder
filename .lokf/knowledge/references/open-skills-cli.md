@@ -7,13 +7,13 @@ genre: reference
 resource: https://github.com/vercel-labs/skills
 generated:
   by: process:ktl-librarian
-  at: "2026-09-09T10:00:00Z"
+  at: "2026-09-09T00:13:37Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T01:25:00Z"
+  at: "2026-09-24T00:55:04Z"
 ---
 
 # Overview

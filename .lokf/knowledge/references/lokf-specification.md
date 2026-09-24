@@ -7,12 +7,14 @@ genre: reference
 resource: https://lokf.nolan-nichols.com/specification/
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T01:20:00Z"
+  at: "2026-09-24T16:46:12Z"
+references:
+- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 verified:
 - by: human:noelmcloughlin
-  at: "2026-09-09T18:38:00Z"
+  at: "2026-09-09T16:35:55Z"
 - by: human:noelmcloughlin
   at: "2026-09-24T01:12:16Z"
 stale_after: 2027-09-09

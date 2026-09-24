@@ -7,11 +7,11 @@ genre: reference
 resource: CODE_OF_CONDUCT.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-09T10:00:00Z"
+  at: "2026-09-09T00:13:37Z"
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T01:25:00Z"
+  at: "2026-09-24T00:55:04Z"
 ---
 
 # Overview
