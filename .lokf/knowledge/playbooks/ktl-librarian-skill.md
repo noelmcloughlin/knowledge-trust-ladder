@@ -112,3 +112,7 @@ path is the id and case-insensitive hosts collide. The audit runs the
 preflight first, and the tooling-version check now uses `uvx --from pip pip
 index versions lokf`: `uv pip` has no `index` subcommand, which every
 earlier refresh had noted and worked around.
+
+## Open questions
+
+- 2026-09-24, human:noelmcloughlin: One gap on the source side: references/scheduled-task.md (line 7) still lists the refresh job's steps without the install step. The concept follows the workflow, which is right; the reference page lags it.
