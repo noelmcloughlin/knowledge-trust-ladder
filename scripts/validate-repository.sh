@@ -127,7 +127,7 @@ done < <(find skills -name '*.md' | sort)
 # 6. Executable scripts pass language-specific linting.
 say ""
 say "Linting executable scripts..."
-mapfile -t scripts < <(find skills scripts -type f -name '*.sh' | sort)
+mapfile -t scripts < <(find skills scripts integrations -type f -name '*.sh' | sort)
 if command -v shellcheck >/dev/null 2>&1; then
   for s in "${scripts[@]}"; do
     if shellcheck "$s"; then
@@ -1027,6 +1027,35 @@ else
     err "these files name a lokf- skill or plugin: ${unexpected[*]} - use the ktl- name (only CHANGELOG.md keeps the old ones)"
   fi
 fi
+
+# 17. The Microsoft 365 Copilot build of the docent is an integration point,
+#     not a fifth skill. Its template keeps a name no installer or catalog
+#     reads as a skill, its trust labels stay word for word the docent's, and
+#     it builds from this repository's own bundle inside Copilot's limits.
+say ""
+say "Checking the Microsoft 365 Copilot docent build..."
+m365="integrations/m365"
+if [[ -n "$(find integrations -iname 'SKILL.md' 2>/dev/null)" ]]; then
+  err "a SKILL.md sits under integrations/ - installers would list it as a skill; keep the template named skill-template.md"
+else
+  ok "no SKILL.md under integrations/"
+fi
+labels() { awk '/^## Trust labels/{f=1; next} /^## /{f=0} f && /^\|/' "$1"; }
+if [[ -z "$(labels skills/ktl-docent/SKILL.md)" ]]; then
+  err "could not find the trust-label table in skills/ktl-docent/SKILL.md"
+elif [[ "$(labels skills/ktl-docent/SKILL.md)" == "$(labels "$m365/skill-template.md")" ]]; then
+  ok "$m365/skill-template.md carries ktl-docent's trust labels word for word"
+else
+  err "$m365/skill-template.md's trust-label table differs from ktl-docent's - the two must say the same words"
+fi
+m365_out="$(mktemp -d)"
+if build_log="$(bash "$m365/build.sh" --repo-url https://github.com/noelmcloughlin/knowledge-trust-ladder .lokf/knowledge "$m365_out" 2>&1)" \
+   && [[ -f "$m365_out/ktl-docent-m365/SKILL.md" && -f "$m365_out/ktl-docent-m365/SNAPSHOT.md" && -f "$m365_out/ktl-docent-m365/knowledge/index.md" ]]; then
+  ok "$m365/build.sh builds ktl-docent-m365 from this repository's bundle ($(printf '%s\n' "$build_log" | head -1 | sed 's/.*: //'))"
+else
+  err "$m365/build.sh failed on this repository's bundle: $build_log"
+fi
+rm -rf "${m365_out:?}"
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

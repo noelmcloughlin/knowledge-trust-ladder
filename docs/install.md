@@ -39,6 +39,13 @@ All four skills release together under one tag, so pin them to the same one.
 Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`.
 What each version level means: [releasing.md](releasing.md).
 
+## Microsoft 365 Copilot
+
+Copilot runs custom skills in a sandbox with no repository, so only the
+**docent** goes there, and it takes a snapshot of the bundle with it.
+[integrations/m365/README.md](../integrations/m365/README.md) builds it and
+adds it to a declarative agent.
+
 ## What each skill needs
 
 Every skill runs from a POSIX shell and starts with a preflight that prints

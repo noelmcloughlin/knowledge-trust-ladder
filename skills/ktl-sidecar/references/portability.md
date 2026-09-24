@@ -14,6 +14,7 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | No forge, git only | everything local | the gate, pull requests, the scheduled loop | review by the host's own mechanism; the forge-free gate for confirmations |
 | No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |
+| Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle | the other three skills, source checks, `feedback.md` | [`integrations/m365`](https://github.com/noelmcloughlin/knowledge-trust-ladder/tree/main/integrations/m365) builds it |
 
 ## Install all four skills together
 

@@ -8,6 +8,8 @@ skills/
   ktl-librarian/       SKILL.md + references/               (~7.5k tokens loaded on trigger)
   ktl-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
   ktl-docent/          SKILL.md + references/               (~1.5k tokens loaded on trigger)
+integrations/
+  m365/                 build.sh + skill-template.md: the docent as a Microsoft 365 Copilot custom skill, with a bundle snapshot inside (not a fifth skill)
 .claude-plugin/
   plugin.json           the four skills as one Claude Code plugin, with the keywords a plugin catalog searches
   marketplace.json      lets `/plugin marketplace add` find that plugin in this repository
