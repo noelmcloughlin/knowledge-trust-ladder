@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-09-24
+
 ### Added
 
 - **`knowledge-release.yaml`, a third sidecar workflow.** It attaches `.lokf/knowledge` to a GitHub release as a reproducible `knowledge-<tag>.tar.gz` with a checksum, after the registrar's checks pass, and attests its provenance on a public repository. It skips a release whose bundle has the same git tree as the last release that carries one; a manual run's `force` input overrides that. It runs when dispatched by hand, and on each published release once `KNOWLEDGE_RELEASE_ENABLED` is `true`. This repository's `publish.yml` dispatches it after each release, and layout test 5 exercises its pack step.
