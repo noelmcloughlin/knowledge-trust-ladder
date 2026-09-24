@@ -7,36 +7,35 @@ compatibility: 'Requires a POSIX shell (bash; Git for Windows on Windows) and py
 
 # KTL Sidecar
 
-Create a fresh **`.lokf/` sidecar** inside the repository this skill is invoked from: a machine-readable, SPARQL-queryable [LOKF](https://lokf.nolan-nichols.com/) knowledge bundle, with its directory, tooling, docs, and a small
-**dummy** skeleton. Then hand off to **ktl-librarian** to fill it with real knowledge. Every file is copied from `templates/` (paths below are relative to this skill's directory), never retyped.
+Create a fresh **`.lokf/` sidecar** inside the repository this skill is invoked from: a machine-readable, SPARQL-queryable [LOKF](https://lokf.nolan-nichols.com/) knowledge bundle, with its directory, tooling, docs, and a small **dummy** skeleton. Then hand off to **ktl-librarian** to fill it with real knowledge. Every file is copied from `templates/` (paths below are relative to this skill's directory), never retyped.
 
 > Sources: lokf.nolan-nichols.com is the canonical site for what LOKF *means*
 > (spec, Golden Rules). The tooling this skill installs comes from the
 > [`lokf` PyPI package](https://pypi.org/project/lokf/); with no Python, the
 > raw schema at the tag matching `templates/pyproject.toml`'s floor,
 > <https://raw.githubusercontent.com/nicholsn/lokf/v0.8.0/lokf.yaml>, is the
-> fallback (Step 4) - never `main`, which can be ahead of the toolkit. Cite
+> fallback (Step 4), never `main`, which can be ahead of the toolkit. Cite
 > each for its own role in generated docs.
 
-> Model: a small/mid-tier model is enough here - Step 1 copies templates and
+> Model: a small/mid-tier model is enough here: Step 1 copies templates and
 > substitutes placeholders; Step 0 is structured file lookup. Mistakes are
 > caught by Step 3's grep and Step 6's human sign-off. **ktl-librarian** is
 > the opposite case: keep it on the calling agent's normal model.
 
 ## Scope
 
-- **This skill** - run **once** to create `.lokf/`, or to **repair** a missing/broken sidecar file (anything in the Step 1/5 tables). Never authors real concepts.
-- **ktl-librarian** - run **often** to scrape the repo and create, maintain, and audit the actual concepts and typed relations.
+- **This skill** runs **once**, to create `.lokf/` or to **repair** a missing or broken sidecar file (anything in the Step 1/5 tables). It never authors real concepts.
+- **ktl-librarian** runs **often**, to scrape the repo and create, maintain, and audit the actual concepts and typed relations.
 
 > Guardrails: if `.lokf/` exists and is healthy, use ktl-librarian instead.
-> When repairing, (re)write only the missing/broken file - including a missing
-> `llms.txt`/README pointer on an older bundle; **never overwrite concept
-> files**. Non-git, non-GitHub, or non-POSIX host: see
+> When repairing, (re)write only the missing/broken file, including a missing
+> `llms.txt`/README pointer on an older bundle. **Never overwrite concept
+> files.** Non-git, non-GitHub, or non-POSIX host: see
 > [references/portability.md](references/portability.md).
 
 ## Step 0 - Gather the host project's facts
 
-**First, the preflight.** Run `bash templates/scripts/knowledge-preflight.sh` from this skill's directory (the copy under `.lokf/scripts/` does not exist yet) and read its screen before anything else: the host and shell, whether the tree is under git and on which forge, whether `uv` is present, which skill copies are installed and whether they differ, and whether the session is attended. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. A host whose shell is PowerShell, or that is not Linux, git or GitHub, has its own section in [references/portability.md](references/portability.md), and the preflight tells you which one applies. When the person you are working with cannot act on a `missing` or `warn` line themselves, write them a request note for the maintainer from [references/prerequisites.md](references/prerequisites.md) - the plain meaning of each line, who fixes it, and what to send - and carry on with what remains.
+**First, the preflight.** Run `bash templates/scripts/knowledge-preflight.sh` from this skill's directory (the copy under `.lokf/scripts/` does not exist yet) and read its screen before anything else. It shows the host and shell, whether the tree is under git and on which forge, whether `uv` is present, which skill copies are installed and whether they differ, and whether the session is attended. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. A host whose shell is PowerShell, or that is not Linux, git or GitHub, has its own section in [references/portability.md](references/portability.md), and the preflight tells you which one applies. When the person you are working with cannot act on a `missing` or `warn` line themselves, write them a request note for the maintainer from [references/prerequisites.md](references/prerequisites.md), which gives the plain meaning of each line, who fixes it, and what to send. Then carry on with what remains.
 
 Resolve every placeholder from real project sources before writing anything; never leave a `<...>` token or dummy value behind.
 
@@ -45,23 +44,29 @@ Resolve every placeholder from real project sources before writing anything; nev
 | `<PROJ_NAME>` | Human-readable project name | manifest `name` (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, ...), root `README.md` title, service catalog, or repo name |
 | `<PROJ_DESC>` | One-sentence description | manifest `description`, README intro, or service catalog |
 | `<PROJ_SLUG>` | lowercase-hyphenated slug | derive from `<PROJ_NAME>` (`Acme Platform` -> `acme-platform`) |
-| `<BASE_IRI>` | Bundle base IRI, **must end with `/`** | (1) a persistent-identifier namespace the project already publishes under (w3id.org, purl.org, owned domain) + `/knowledge/`; (2) a stable URL the project controls (docs `site_url`, Pages, service catalog) + `/knowledge/`; (3) else `https://<PROJ_SLUG>.example/knowledge/`, flagged for review. **Never** the code-host repo URL (`https://github.com/<org>/<repo>/...`) - that path space isn't the project's, so the IDs could never resolve |
+| `<BASE_IRI>` | Bundle base IRI, **must end with `/`** | (1) a persistent-identifier namespace the project already publishes under (w3id.org, purl.org, owned domain) + `/knowledge/`; (2) a stable URL the project controls (docs `site_url`, Pages, service catalog) + `/knowledge/`; (3) else `https://<PROJ_SLUG>.example/knowledge/`, flagged for review. **Never** the code-host repo URL (`https://github.com/<org>/<repo>/...`): that path space is not the project's, so the IDs could never resolve |
 | `<OWNER_NAME>` | Owning team/org display name | `CODEOWNERS`, manifest authors, service catalog, or README |
 | `<OWNER_SLUG>` | lowercase-hyphenated owner slug | derive from `<OWNER_NAME>` |
 | `<TODAY>` | `YYYY-MM-DD` | system clock (for `log.md`) |
 
-`<BASE_IRI>` is load-bearing: `base_iri` + concept path mints each concept's `@id`. It need not resolve today, but must be stable and in a namespace the project controls (ktl-librarian Rule 2 has the authority test and migration steps). A plain directory tree with no manifest/CODEOWNERS/repo: use the directory name, any document in the tree, and the `.example` fallback - and flag every guess in Step 6.
+`<BASE_IRI>` is load-bearing: `base_iri` + concept path mints each concept's `@id`. It need not resolve today, but must be stable and in a namespace the project controls (ktl-librarian Rule 2 has the authority test and migration steps). For a plain directory tree with no manifest, CODEOWNERS or repo, use the directory name, any document in the tree, and the `.example` fallback, and flag every guess in Step 6.
 
-**Tracked or gitignored - decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default four skills assume; gitignoring it is equally valid (personal bundle, or a policy against committing agent-authored content) but changes four things: still create every file (the bundle is filesystem-based either way); skip the commit in Step 4, and Step 5 apart from the two scripts its table says to lay down anyway; add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it; say so in the Step 6 handoff. This is unrelated to `.lokf/.gitignore` below, which only excludes tool build noise.
+**Tracked or gitignored: decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default the four skills assume. Gitignoring it is equally valid (a personal bundle, or a policy against committing agent-authored content) but changes four things:
 
-**One layout, every host.** `.lokf/knowledge/` is the real folder wherever the sidecar lands - a code repository, a notes vault, a shared folder - and it is the name every skill, the toolkit, CI and `llms.txt` address. Step 2 adds `knowledge_bundle` beside it: a link, so people and folder pickers have an ordinary name to open. Never lay the bundle down as a *real* folder inside an Obsidian vault: the vault indexes it like any other folder, and the exhibition leaks into the workshop's link suggestions, graph and search. A shared folder that is not a vault is covered in [references/portability.md](references/portability.md).
+- still create every file (the bundle is filesystem-based either way);
+- skip the commit in Step 4, and Step 5 apart from the two scripts its table says to lay down anyway;
+- add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it;
+- say so in the Step 6 handoff.
+
+This is unrelated to `.lokf/.gitignore` below, which only excludes tool build noise.
+
+**One layout, every host.** `.lokf/knowledge/` is the real folder wherever the sidecar lands (a code repository, a notes vault, a shared folder), and it is the name every skill, the toolkit, CI and `llms.txt` address. Step 2 adds `knowledge_bundle` beside it: a link, so people and folder pickers have an ordinary name to open. Never lay the bundle down as a *real* folder inside an Obsidian vault: the vault indexes it like any other folder, and the exhibition leaks into the workshop's link suggestions, graph and search. A shared folder that is not a vault is covered in [references/portability.md](references/portability.md).
 
 > Repo hygiene note: if the host repo installs AI skills locally, the generated runtime directories `.agents/`, `.claude/`, and the lockfile `skills-lock.json` are not source content and should be excluded from the root `.gitignore` rather than committed as project changes.
 
 ## Step 1 - Create the skeleton and copy the templates
 
-Copy each template to its destination, then substitute the placeholders it lists. Only these placeholders exist; `templates/gitignore` and
-`templates/gitattributes` are written as `.lokf/.gitignore` and `.lokf/.gitattributes`.
+Copy each template to its destination, then substitute the placeholders it lists. Only these placeholders exist; `templates/gitignore` and `templates/gitattributes` are written as `.lokf/.gitignore` and `.lokf/.gitattributes`.
 
 | Template | Destination | Placeholders |
 | --- | --- | --- |
@@ -73,7 +78,7 @@ Copy each template to its destination, then substitute the placeholders it lists
 | `templates/knowledge/index.md` | `.lokf/knowledge/index.md` (semantic header + TOC, reserved) | PROJ_NAME, PROJ_DESC, BASE_IRI, OWNER_NAME, OWNER_SLUG |
 | `templates/knowledge/log.md` | `.lokf/knowledge/log.md` (reserved) | PROJ_NAME, TODAY |
 | `templates/knowledge/services/index.md` | `.lokf/knowledge/services/index.md` | - |
-| `templates/knowledge/services/example-service-a.md`, `-b.md` | same paths under `.lokf/` (DUMMY - ktl-librarian replaces) | PROJ_NAME, PROJ_SLUG, BASE_IRI |
+| `templates/knowledge/services/example-service-a.md`, `-b.md` | same paths under `.lokf/` (DUMMY; ktl-librarian replaces) | PROJ_NAME, PROJ_SLUG, BASE_IRI |
 | `templates/queries.http` *(optional, default on)* | `.lokf/queries.http` | PROJ_NAME |
 
 ```bash
@@ -97,46 +102,29 @@ open(path, "w", encoding="utf-8").write(text)
 
 ## Step 2 - Point agents and humans at the bundle (optional, root-level)
 
-Three additions at the **repo root**, outside `.lokf/`. Add only, never overwrite, and check for an existing item first. All three stay true
-**whether or not `.lokf/` exists later**, so nothing ever needs cleaning up if the bundle is removed - keep that self-qualifying phrasing (a dangling
-symlink is harmless and easy to spot).
+Make three additions at the **repo root**, outside `.lokf/`. Add only, never overwrite, and check for an existing item first. All three stay true **whether or not `.lokf/` exists later**, so nothing ever needs cleaning up if the bundle is removed. Keep that self-qualifying phrasing (a dangling symlink is harmless and easy to spot).
 
-- **`llms.txt`** - copy `templates/llms.txt` (PROJ_NAME, PROJ_DESC) if absent. If it exists, leave it intact and append only the `## Agent context`
-  section, and only if the file doesn't already mention `.lokf/`.
-- **README pointer** - if `README.md` exists and doesn't already link to `.lokf/knowledge/` anywhere (check the path, not a heading string), insert
-  `templates/readme-for-ai-agents.md` after the intro, before the first `##`. It is a one-paragraph blockquote aside, not a section, and it speaks to both readers a README has: a person, who learns there is a second way in - install `ktl-docent` and ask - and an agent, which reads the top of a README and is told to read the bundle first; the trust-weighing detail lives in `llms.txt` rather than being repeated here. If one question this host's readers keep asking comes to mind, put it in the aside as the example - a concrete question is what makes a person try it. Don't invent a README on a host that has none.
-- **`knowledge_bundle` symlink** - the bundle under an ordinary, visible name, beside the hidden `.lokf/`. Finder and most folder pickers hide
-  dot-directories, a repository listing shows nothing else, and a double-click in a file manager should land in the bundle - so the doorway is the
-  one name a person needs to know, whatever they open it with. If nothing named `knowledge_bundle` already exists at the repo root:
+- **`llms.txt`**: copy `templates/llms.txt` (PROJ_NAME, PROJ_DESC) if absent. If it exists, leave it intact and append only the `## Agent context` section, and only if the file does not already mention `.lokf/`.
+- **README pointer**: if `README.md` exists and does not already link to `.lokf/knowledge/` anywhere (check the path, not a heading string), insert `templates/readme-for-ai-agents.md` after the intro, before the first `##`. It is a one-paragraph blockquote aside, not a section, and it speaks to both readers a README has. A person learns there is a second way in (install `ktl-docent` and ask). An agent, which reads the top of a README, is told to read the bundle first. The trust-weighing detail lives in `llms.txt` rather than being repeated here. If one question this host's readers keep asking comes to mind, put it in the aside as the example; a concrete question is what makes a person try it. Do not invent a README on a host that has none.
+- **`knowledge_bundle` symlink**: the bundle under an ordinary, visible name, beside the hidden `.lokf/`. Finder and most folder pickers hide dot-directories, a repository listing shows nothing else, and a double-click in a file manager should land in the bundle. So the doorway is the one name a person needs to know, whatever they open it with. If nothing named `knowledge_bundle` already exists at the repo root:
 
   ```bash
   ln -s .lokf/knowledge knowledge_bundle
   ```
 
-  Run from the repo root - the target is relative, which keeps the link valid after a clone or move (`just lokf-link` from `.lokf/` does the same,
-  and recreates it on a machine where a sync service dropped it). Mirror the Step 0 tracked/gitignored decision: commit it alongside a tracked
-  `.lokf/`, or add `knowledge_bundle` to the root `.gitignore` alongside a gitignored one. POSIX only - on Windows a junction does the job with no
-  elevated rights (`mklink /J knowledge_bundle .lokf\knowledge`); on a filesystem without links, skip it (see
-  [references/portability.md](references/portability.md)); the bundle works identically without it. If the host repo lints, spell-checks, or
-  link-checks `**/*.md` repo-wide, exclude `knowledge_bundle/` from that config - otherwise the same files under `.lokf/knowledge/` are processed
-  twice, once at each path.
+    Run it from the repo root. The target is relative, which keeps the link valid after a clone or move (`just lokf-link` from `.lokf/` does the same, and recreates it on a machine where a sync service dropped it). Mirror the Step 0 tracked/gitignored decision: commit it alongside a tracked `.lokf/`, or add `knowledge_bundle` to the root `.gitignore` alongside a gitignored one. This is POSIX only. On Windows a junction does the job with no elevated rights (`mklink /J knowledge_bundle .lokf\knowledge`). On a filesystem without links, skip it (see [references/portability.md](references/portability.md)); the bundle works identically without it. If the host repo lints, spell-checks, or link-checks `**/*.md` repo-wide, exclude `knowledge_bundle/` from that config. Otherwise the same files under `.lokf/knowledge/` are processed twice, once at each path.
 
-  **If the person uses Obsidian** (optional; every step here is the same without it), they open `knowledge_bundle` *itself* as a vault (File → Open
-  folder as vault) - the exhibition, beside whatever vault they already keep, the workshop. Obsidian writes that vault's workspace state through the
-  link into `.lokf/knowledge/.obsidian/`, which `templates/gitignore` excludes and `lokf validate` ignores (Step 4 reads only `*.md`). A vault opened
-  at the host root never lists a dot-directory or a link that resolves inside it, which is what keeps the workshop clean when the host is itself a
-  vault - so point people at the doorway, not the root. The rule against a real folder inside a vault is in Step 0; the mechanics are in
-  [references/portability.md](references/portability.md).
+    **If the person uses Obsidian** (optional; every step here is the same without it), they open `knowledge_bundle` *itself* as a vault (File → Open folder as vault). That is the exhibition, beside whatever vault they already keep, the workshop. Obsidian writes that vault's workspace state through the link into `.lokf/knowledge/.obsidian/`, which `templates/gitignore` excludes and `lokf validate` ignores (Step 4 reads only `*.md`). A vault opened at the host root never lists a dot-directory or a link that resolves inside it, which is what keeps the workshop clean when the host is itself a vault. So point people at the doorway, not the root. The rule against a real folder inside a vault is in Step 0; the mechanics are in [references/portability.md](references/portability.md).
 
 ## Step 3 - Verify the skeleton
 
-Placeholder tokens only - the files legitimately contain other angle brackets:
+Check for placeholder tokens only; the files legitimately contain other angle brackets:
 
 ```bash
 grep -rn -e '<PROJ_' -e '<BASE_IRI>' -e '<OWNER_' -e '<TODAY>' .lokf/ knowledge_bundle/ llms.txt 2>/dev/null
 ```
 
-Zero hits means fully resolved. (`knowledge_bundle/` is the same files listed twice, harmlessly; it is named so the check still holds on a host where someone has turned `.lokf/knowledge` into a link, since `grep -r` does not descend into one.) Leave the `example-service-*.md` dummies as dummies (or delete them for an empty bundle) - don't enumerate real services.
+Zero hits means fully resolved. (`knowledge_bundle/` is the same files listed twice, harmlessly; it is named so the check still holds on a host where someone has turned `.lokf/knowledge` into a link, since `grep -r` does not descend into one.) Leave the `example-service-*.md` dummies as dummies (or delete them for an empty bundle); do not enumerate real services.
 
 ## Step 4 - Validate the skeleton
 
@@ -144,53 +132,38 @@ Zero hits means fully resolved. (`knowledge_bundle/` is the same files listed tw
 cd .lokf && just lokf-install && just lokf-validate   # uv sync; schema-valid
 ```
 
-No `uv`/`lokf`? There's no substitute for the generated JSON Schema/SHACL checks, but fetch the raw schema (Sources note) and manually cross-check the
-`Service` class and the slots you used - a structural sanity check, not a validation run. Report in Step 6 whether validation ran, ran as this manual
-fallback, or was skipped. Never log this in `knowledge/log.md` (knowledge changes only). Fix findings, then commit - unless `.lokf/` is gitignored
-(Step 0), in which case there is nothing to commit.
+With no `uv` or `lokf`, there is no substitute for the generated JSON Schema/SHACL checks. Fetch the raw schema (Sources note) and manually cross-check the `Service` class and the slots you used: a structural sanity check, not a validation run. Report in Step 6 whether validation ran, ran as this manual fallback, or was skipped. Never log this in `knowledge/log.md` (knowledge changes only). Fix findings, then commit, unless `.lokf/` is gitignored (Step 0), in which case there is nothing to commit.
 
 ## Step 5 - Lay down the automation (optional)
 
-**Skip the workflows and the wrapper if `.lokf/` is gitignored** - the workflows need the bundle on a remote branch, and the librarian loop's `git status --porcelain` check
-silently reports "no changes" for an ignored path forever. Two scripts land regardless, and their rows say why: the preflight and `knowledge-feedback.sh`. GitHub-only; other hosts: copy just the wrapper and schedule it with cron/CI (see
-[references/portability.md](references/portability.md)). No placeholders.
+**Skip the workflows and the wrapper if `.lokf/` is gitignored.** The workflows need the bundle on a remote branch, and the librarian loop's `git status --porcelain` check silently reports "no changes" for an ignored path forever. Two scripts land regardless, and their rows say why: the preflight and `knowledge-feedback.sh`. The workflows are GitHub-only; on other hosts, copy just the wrapper and schedule it with cron or CI (see [references/portability.md](references/portability.md)). None of these files has placeholders.
 
 | Template | Destination |
 | --- | --- |
 | `templates/github/knowledge-registrar.yaml` | `.github/workflows/knowledge-registrar.yaml` |
 | `templates/github/knowledge-librarian.yaml` | `.github/workflows/knowledge-librarian.yaml` |
-| `templates/github/knowledge-release.yaml` | `.github/workflows/knowledge-release.yaml` - attaches the bundle to a GitHub release as a tarball, and skips a release whose bundle matches the last one released. It runs when dispatched by hand, and on each published release once the `KNOWLEDGE_RELEASE_ENABLED` variable is `true`; it needs no agent |
+| `templates/github/knowledge-release.yaml` | `.github/workflows/knowledge-release.yaml`: attaches the bundle to a GitHub release as a tarball, and skips a release whose bundle matches the last one released. It runs when dispatched by hand, and on each published release once the `KNOWLEDGE_RELEASE_ENABLED` variable is `true`; it needs no agent |
 | `templates/scripts/knowledge-librarian.sh` | `.lokf/scripts/knowledge-librarian.sh` (`chmod +x`) |
-| `templates/scripts/knowledge-conventions.sh` | `.lokf/scripts/knowledge-conventions.sh` (`chmod +x`) - the gate runs it; so does ktl-librarian's audit |
-| `templates/scripts/knowledge-conventions.py` | `.lokf/scripts/knowledge-conventions.py` (`chmod +x`) - the half of the conventions script that parses YAML; the `.sh` runs it through `uv run` and fails without it, so the two land together |
-| `templates/scripts/knowledge-preflight.sh` | `.lokf/scripts/knowledge-preflight.sh` (`chmod +x`) - what this host can do; every skill runs it first (Step 0 here). Lay it down even when the rest of this step is skipped: it needs neither git nor GitHub |
-| `templates/scripts/knowledge-provenance.sh` | `.lokf/scripts/knowledge-provenance.sh` (`chmod +x`) - the signature half of the gate on any host with git, and gpg or ssh-keygen; verifies only once `.lokf/curators/<id>.asc` (GPG) or `<id>.pub` (SSH) keys exist ([references/portability.md](references/portability.md)) |
-| `templates/scripts/knowledge-feedback.sh` | `.lokf/scripts/knowledge-feedback.sh` (`chmod +x`) - how ktl-docent records a reader's Miss or Disagreement in `.lokf/feedback.md` without opening it, so no other reader's report reaches that session. Lay it down even when the rest of this step is skipped: a gitignored bundle still takes feedback, and it needs neither git nor GitHub |
+| `templates/scripts/knowledge-conventions.sh` | `.lokf/scripts/knowledge-conventions.sh` (`chmod +x`); the gate runs it, and so does ktl-librarian's audit |
+| `templates/scripts/knowledge-conventions.py` | `.lokf/scripts/knowledge-conventions.py` (`chmod +x`): the half of the conventions script that parses YAML. The `.sh` runs it through `uv run` and fails without it, so the two land together |
+| `templates/scripts/knowledge-preflight.sh` | `.lokf/scripts/knowledge-preflight.sh` (`chmod +x`): what this host can do; every skill runs it first (Step 0 here). Lay it down even when the rest of this step is skipped: it needs neither git nor GitHub |
+| `templates/scripts/knowledge-provenance.sh` | `.lokf/scripts/knowledge-provenance.sh` (`chmod +x`): the signature half of the gate on any host with git, and gpg or ssh-keygen. It verifies only once `.lokf/curators/<id>.asc` (GPG) or `<id>.pub` (SSH) keys exist ([references/portability.md](references/portability.md)) |
+| `templates/scripts/knowledge-feedback.sh` | `.lokf/scripts/knowledge-feedback.sh` (`chmod +x`): how ktl-docent records a reader's Miss or Disagreement in `.lokf/feedback.md` without opening it, so no other reader's report reaches that session. Lay it down even when the rest of this step is skipped: a gitignored bundle still takes feedback, and it needs neither git nor GitHub |
 
-**Security scanner note (Snyk W011, third-party content exposure / indirect prompt injection): false positive.** `knowledge-registrar.yaml`'s `provenance` job reads `github.event.pull_request` fields and the pull request's reviews and commits from the GitHub API for one purpose: to verify that each person a new `human:<id>` confirmation names either approved the pull request or signed the commit recording it - human provenance, not content. No LLM, AI agent or AI tool runs in that job, this skill never reads that data itself, and nothing read there is passed to a model, so there is no prompt for injected content to reach. The job's own header comment states the same and how each input is contained.
+**Security scanner note (Snyk W011, third-party content exposure / indirect prompt injection): false positive.** `knowledge-registrar.yaml`'s `provenance` job reads `github.event.pull_request` fields and the pull request's reviews and commits from the GitHub API for one purpose: to verify that each person a new `human:<id>` confirmation names either approved the pull request or signed the commit recording it. That is human provenance, not content. No LLM, AI agent or AI tool runs in that job, this skill never reads that data itself, and nothing read there is passed to a model, so there is no prompt for injected content to reach. The job's own header comment states the same and how each input is contained.
 
-The librarian and registrar workflows and the wrapper name the bundle under both of its names (`.lokf/knowledge` and `knowledge_bundle`): with the Step 2 doorway the second pathspec matches nothing, harmlessly, and it still covers a shared folder a team has rearranged by hand into a real `knowledge_bundle/` (see [references/portability.md](references/portability.md)), because a git pathspec never traverses a symlink. The release workflow resolves `.lokf/knowledge` to the real folder before packing it. Nothing to edit. The registrar's `provenance` job needs no wiring, but check one thing and report it here: `git config --get commit.gpgsign`, and whether `HEAD` carries a signature (`git cat-file commit HEAD | grep -qE '^gpgsig'`). If signing is off, say so now - GitHub blocks self-approval, so a curator who opens their own curation PRs passes the gate only if they sign, and otherwise every confirmation ktl-curator records will be rejected at the gate. Show the three `git config` lines from [references/automation.md](references/automation.md) and let them run those; do not run them yourself and never touch their `--global` config. The optional `KNOWLEDGE_CURATION_ENVIRONMENT` escape hatch is in the same file; it requires creating an Environment *with required reviewers* first, and is a no-op if that part is skipped.
+The librarian and registrar workflows and the wrapper name the bundle under both of its names (`.lokf/knowledge` and `knowledge_bundle`). With the Step 2 doorway the second pathspec matches nothing, harmlessly. It still covers a shared folder a team has rearranged by hand into a real `knowledge_bundle/` (see [references/portability.md](references/portability.md)), because a git pathspec never traverses a symlink. The release workflow resolves `.lokf/knowledge` to the real folder before packing it. There is nothing to edit. The registrar's `provenance` job needs no wiring, but check one thing and report it here: `git config --get commit.gpgsign`, and whether `HEAD` carries a signature (`git cat-file commit HEAD | grep -qE '^gpgsig'`). If signing is off, say so now. GitHub blocks self-approval, so a curator who opens their own curation pull requests passes the gate only if they sign, and otherwise every confirmation ktl-curator records will be rejected at the gate. Show the three `git config` lines from [references/automation.md](references/automation.md) and let them run those; do not run them yourself and never touch their `--global` config. The optional `KNOWLEDGE_CURATION_ENVIRONMENT` escape hatch is in the same file. It requires creating an Environment *with required reviewers* first, and is a no-op if that part is skipped.
 
-The wrapper looks for `ktl-librarian/SKILL.md` under `.claude/skills/`, `.github/skills/`, `.agents/skills/`, then bare `skills/` (a repo that
-publishes the skills it also uses) - if this repo uses another directory, add it to the script's `candidate` list now, and run the script once to confirm:
-a mismatch otherwise fails at scheduled-run time, not now. What each file does, the repo variables to wire, and the runner/SHA-pin notes:
-[references/automation.md](references/automation.md).
+The wrapper looks for `ktl-librarian/SKILL.md` under `.claude/skills/`, `.github/skills/`, `.agents/skills/`, then bare `skills/` (a repo that publishes the skills it also uses). If this repo uses another directory, add it to the script's `candidate` list now, and run the script once to confirm; a mismatch otherwise fails at scheduled-run time, not now. [references/automation.md](references/automation.md) says what each file does, the repo variables to wire, and the runner and SHA-pin notes.
 
-These nine files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree; if it doesn't, say
-so and suggest adding coverage for the five `scripts/*.sh`, the `scripts/*.py` and the three `.github/workflows/*.yaml` specifically, rather than leaving a
-scheduled agent's own wrapper unchecked indefinitely. That's a one-line suggestion, not a scaffold: a full lint/release CI setup is outside this
-skill's scope and every host's own choice to make - see `lint-and-docs.yaml` in this skill's home repository for one example shape, adapted to
-what that repository actually ships, not copied wholesale.
+These nine files land unlinted. Check whether the host already runs something like ShellCheck and `actionlint` over its own tree. If it does not, say so and suggest adding coverage for the five `scripts/*.sh`, the `scripts/*.py` and the three `.github/workflows/*.yaml` specifically, rather than leaving a scheduled agent's own wrapper unchecked indefinitely. That is a one-line suggestion, not a scaffold. A full lint and release CI setup is outside this skill's scope and every host's own choice to make; see `lint-and-docs.yaml` in this skill's home repository for one example shape, adapted to what that repository actually ships, not copied wholesale.
 
 ## Step 6 - Hand off to ktl-librarian
 
-The sidecar ends here; ktl-librarian's first run is a **bootstrap discovery** pass that records the repo's knowledge sources as
-`playbooks/knowledge-sources.md`; the librarian in turn hands off to **ktl-curator**, where a person confirms what it derived; and
-**ktl-docent** answers readers from the bundle, recording what it lacked for the librarian's next run - so all four skills should be installed. In the
-handoff, tell the user:
+The sidecar ends here. ktl-librarian's first run is a **bootstrap discovery** pass that records the repo's knowledge sources as `playbooks/knowledge-sources.md`. The librarian in turn hands off to **ktl-curator**, where a person confirms what it derived, and **ktl-docent** answers readers from the bundle, recording what it lacked for the librarian's next run. So all four skills should be installed. In the handoff, tell the user:
 
-- which Step 0 values were **guessed** rather than found (a fallback `<BASE_IRI>` above all - it mints every `@id`, so it needs sign-off);
+- which Step 0 values were **guessed** rather than found (a fallback `<BASE_IRI>` above all; it mints every `@id`, so it needs sign-off);
 - whether Step 4 validation ran, ran as the manual fallback, or was skipped;
 - which optional pieces (`queries.http`, Step 2 pointers, Step 5 automation) were added, appended to, or left alone because they already existed;
-- whether `.lokf/` is **git-tracked or gitignored** - this decides whether ktl-librarian's PR-based review and any Step 5 automation apply at all;
+- whether `.lokf/` is **git-tracked or gitignored**; this decides whether ktl-librarian's PR-based review and any Step 5 automation apply at all;
 - whether the **`knowledge_bundle` doorway** was created and, if not (Windows, no symlink support, a name already taken), the one command that makes it: `ln -s .lokf/knowledge knowledge_bundle`, `just lokf-link` from `.lokf/`, or `mklink /J knowledge_bundle .lokf\knowledge`. On a synced host, that sync services carry `.lokf/` but drop links, so the doorway is per machine; on an Obsidian vault host, that the bundle is opened by picking `knowledge_bundle` *itself* as a vault, and the vault they already have never lists it.
