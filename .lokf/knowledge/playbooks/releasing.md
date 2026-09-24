@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T16:40:00Z"
+  at: "2026-09-24T17:19:54Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -90,6 +90,19 @@ strips it before comparing. This release-process detail moved out of
 `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for
 the three LOKF repositories in one place. All four skills ship together
 under one tag, so a consumer can pin them to a single release.
+
+The sibling repositories (the two Obsidian plugins and ai-linkmo) carry
+byte-identical copies of the sidecar templates and their own skills pin, and
+since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up
+to one release: it refuses anything but a tag that is on origin and carries
+`skills/ktl-librarian`, copies that tag's templates over the copies the
+sibling already has, moves its `TRUST_LADDER_SKILLS_REF` to the same tag,
+runs the sidecar's checks there, prints a draft changelog line and the commit
+command, and never commits. The pin and the copies move together because
+the skill a tag installs is written against the wrapper, gate and preflight
+that tag ships, and once a sibling arms its scheduled librarian the pin
+decides which instructions run unattended. A release that touched neither
+the templates nor the librarian skill needs no sync.
 
 Both checks read the `workflow_dispatch` version input through an `env:`
 var rather than interpolating `${{ inputs.version }}` straight into the

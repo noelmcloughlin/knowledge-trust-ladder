@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T16:40:00Z"
+  at: "2026-09-24T17:19:54Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -35,7 +35,7 @@ stale_after: 2027-09-10
 | `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `knowledge-conventions.sh`, `knowledge-conventions.py`, `knowledge-preflight.sh`, `knowledge-provenance.sh`, `knowledge-feedback.sh`, `.lokf/.gitattributes` | this repository's dogfooded copies of the workflow templates, scripts and attributes the sidecar skill ships | diff each against its counterpart under `skills/ktl-sidecar/templates/`; all ten are kept byte-identical (check 11 and the preflight report any drift) apart from one value, `knowledge-librarian.yaml`'s `TRUST_LADDER_SKILLS_REF`: since 2026-09-24 the release commit moves that pin in the template only, because `GITHUB_TOKEN` may not push under `.github/workflows/`, and the install step that reads it is skipped here by an `if` on the repository name, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`. Any other difference is a template bump not yet copied across |
 | `.lokf/curators/*.asc`, `*.pub` | the curator public keys `knowledge-provenance.sh` verifies `human:` confirmations against (the first, `noelmcloughlin.asc`, registered 2026-09-24) | consciously excluded as concepts: key material, not knowledge; re-check that `playbooks/ktl-curator-skill.md` and `policies/threat-model.md` still describe the directory as the gate reads it |
 | `.github/ISSUE_TEMPLATE/*.md`, `.github/pull_request_template.md`, `.github/dependabot.yml` | contributor intake forms and pin maintenance | consciously excluded as concepts - see note below; re-check only that each template still names all four skills and that its `AI_COVENANT.md` link is absolute |
-| `scripts/*.sh` | what the validation playbook claims CI enforces | re-read the assertions; a new check is a gap in the playbook |
+| `scripts/*.sh` | what the validation playbook claims CI enforces; since 2026-09-24 `sync-sidecar.sh`, the maintainer's tool the releasing playbook describes, which is not a CI check | re-read the assertions; a new check is a gap in the playbook; diff `sync-sidecar.sh`'s refusals and steps against `playbooks/releasing.md` |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
 | external URLs cited across the repo | the seven Reference concepts | confirm each still resolves and still says what the concept claims |
 | `.assets/*.svg` | the README social-preview card, the project's logo mark, and the diagrams the README and `docs/` pages embed | consciously excluded - see note below; re-check only that each diagram still matches the page that embeds it |

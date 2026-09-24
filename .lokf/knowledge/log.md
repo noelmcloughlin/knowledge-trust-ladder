@@ -2,6 +2,7 @@
 
 ## 2026-09-24
 
+* **Sibling sync described.** `scripts/sync-sidecar.sh` brings a sibling repository's template copies and skills pin up to one release and leaves the diff for review; the releasing and contributing playbooks and the source map now say so. `CONTRIBUTING.md` no longer asks for a hand bump of the template's pin or calls the librarian workflow an exception to check 11, so the contributing playbook's open question closes and the concept follows its source again.
 * **Curation**: at human:noelmcloughlin's instruction, his four confirmations of 2026-09-09 (knowledge bundle, Agent Skills, OKF and LOKF specifications) are re-dated from 18:30-18:38Z to 16:35:55Z, the commit that recorded them, so they satisfy conventions rule 11. What was confirmed is unchanged.
 * **Glossary terms described.** The four glossary terms gain a `description` and their index bullets a summary. The knowledge bundle's is the first sentence of its human-authored definition, word for word, so its `generated` record stays true.
 * **Conventions rule 11 reflected.** The repository-validation playbook counts eleven rules and the new time check among check 12's cases, and the librarian playbook says every `at` now comes from `date -u`.

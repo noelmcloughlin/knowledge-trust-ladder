@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`scripts/sync-sidecar.sh` brings a sibling repository up to one release.** It takes a tag that is on origin and carries `skills/ktl-librarian`, copies that tag's templates over the sibling's copies, moves its `TRUST_LADDER_SKILLS_REF` to the same tag, runs the sidecar's checks there, and leaves the diff for a person to review and commit. The pin and the copies move together because, once a sibling arms its scheduled librarian, the pin decides which agent instructions run unattended. `docs/releasing.md` now says the template's own pin moves by itself at each release, which has been so since 0.23.1, in place of the hand bump it still asked for.
+
 ## [0.26.0] - 2026-09-24
 
 ### Added

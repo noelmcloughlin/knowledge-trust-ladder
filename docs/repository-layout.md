@@ -34,6 +34,7 @@ scripts/
   validate-repository.sh   the checks validate.yml runs
   smoke-test-install.sh    installs all four skills into a throwaway consumer repo and asserts the result
   test-sidecar-layouts.sh  the wrapper, both workflows and the lokf-link recipe, with and without the doorway link
+  sync-sidecar.sh          copies one release's templates into a sibling repository and moves its skills pin, then leaves the diff for review
 .lokf/                  this repository's own sidecar: the bundle the docent answers from, and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar lays down (Step 2)
 ```
