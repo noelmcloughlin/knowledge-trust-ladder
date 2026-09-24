@@ -189,7 +189,7 @@ dependsOn:
 The **Orders API** generates its endpoints from `services/orders/openapi.yaml` and serves the order data consumed by the CLI and web UI...
 ```
 
-On every concept you create or materially change, record provenance with `generated: { by: <OKF §7 actor>, at: <ISO 8601 UTC datetime> }` (`prov:wasGeneratedBy`), for example `at: "2026-08-05T00:00:00Z"`, `by: process:ktl-librarian`.
+On every concept you create or materially change, record provenance with `generated: { by: <OKF §7 actor>, at: <ISO 8601 UTC datetime> }` (`prov:wasGeneratedBy`), for example `at: "2026-08-05T00:00:00Z"`, `by: process:ktl-librarian`. Take every `at`, here and on your own `verified` event, from the clock at the moment you write it: `date -u +%Y-%m-%dT%H:%M:%SZ`. Never estimate it, round it, or write local time with a `Z` added. Conventions rule 11 rejects a time later than the commit that records it, and a time ahead of the clock makes a concept look edited after a person confirmed it.
 
 Where the toolkit accepts it, add `revision`, the state of the `resource` you derived from. The field is proposed for lokf 0.9.0 and not yet released; the 0.8.0 validator rejects the key. For a committed path in the repository, it is `git log -1 --format=%H -- <path>`, the full hash, since an abbreviation can become ambiguous as the repository grows and the registrar gate resolves the pin against the tree. For a URL, it is its `ETag` or a `sha256:` digest of what you fetched. Always quote it (`revision: "3f9c2a1b7e0d4c6a8f5e2d1c9b8a7f6e5d4c3b2a"`): an all-digit commit id is otherwise read as a number and fails `lokf validate`. Leave it out on an older toolkit (its validator rejects the key), when the file has uncommitted changes or is not under version control, or when you did not read the source this run.
 
@@ -208,7 +208,7 @@ bash scripts/knowledge-preflight.sh     # what this host can do: read its summar
 just lokf-install          # uv sync  (first time)
 just lokf-validate         # JSON Schema on frontmatter + assembled bundle
 just lokf-check-refs       # every typed-relation target resolves to a real concept
-bash scripts/knowledge-conventions.sh   # log headings, quoted timestamps, verified lists, open-question shape, local resources exist, revisions hold their resource, one file per id, lowercase paths, readable frontmatter, event fields spelt plainly (the YAML rules run through uv; without uv it says which it skipped)
+bash scripts/knowledge-conventions.sh   # log headings, quoted timestamps, verified lists, open-question shape, local resources exist, revisions hold their resource, one file per id, lowercase paths, readable frontmatter, event fields spelt plainly, no time later than its commit (the YAML rules run through uv; without uv it says which it skipped)
 just lokf-convert          # project to Turtle/RDF; eyeball the triples
 just lokf-serve            # SPARQL endpoint + live graph explorer (optional)
 ```

@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **Conventions rule 11: no time later than the commit that records it.** `knowledge-conventions.sh` looks each `at:` up in its concept's history and reports one later than the commit that first added it, or, before it is committed, later than now. An agent writing local time labelled `Z`, or a round placeholder, had put 16 `generated` times and 12 verification times in this repository's bundle ahead of their commits, so concepts read as edited after a person confirmed them. A rename or a shallow clone can only make the recording commit look later, so the rule can miss a bad time but never flags a good one. ktl-librarian and ktl-curator now take every `at` from `date -u`. Check 12 exercises the rule.
+
 ## [0.25.0] - 2026-09-24
 
 ### Changed
