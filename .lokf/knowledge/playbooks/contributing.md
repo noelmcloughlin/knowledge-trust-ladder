@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  at: "2026-09-24T17:20:12Z"
 status: draft
 references:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -40,8 +40,9 @@ changelog entry. Files here are deep-linked from the sibling repositories
 follow those URLs for real - `validate-repository.sh` check 9 lists the
 paths; move one only together with its links, landing this side first.
 A change under `skills/ktl-sidecar/templates/` is copied over this
-repository's own copy in the same pull request, and check 11 names the
-pairs. When the commits would release, the pull request title carries the
+repository's own copy in the same pull request; check 11 names the pairs
+and holds each byte-identical, `knowledge-librarian.yaml` apart from its
+skills pin, which the release commit moves in the template only. When the commits would release, the pull request title carries the
 releasing type too (`feat:`, `fix:`, `security:`), because a squash merge
 takes its subject from the title and the `plan` job refuses a mismatch.
 Pinned action SHAs are bumped by Dependabot, and CI fails an action that
@@ -62,14 +63,13 @@ in review, and an agent may not take part in discussion on their behalf
 Releasing is maintainer-gated: Conventional Commits decide the version and
 `[Unreleased]` is the release note; a merge to `main` promotes the
 changelog but never tags, and a maintainer runs `publish.yml` by hand
-([releasing](releasing.md)). After a release that changes a template, the
-sibling repositories copy it in from that tag: moving their
-`TRUST_LADDER_SKILLS_REF` changes only the skill their scheduled run
-installs. Signing a commit is required only for a pull request that records
+([releasing](releasing.md)). After a release that changes a template or
+`skills/ktl-librarian/`, `scripts/sync-sidecar.sh <tag> <sibling>...`
+copies that release's templates over each sibling's copies and moves its
+`TRUST_LADDER_SKILLS_REF` to the same tag, once the tag is on origin, and
+leaves the diff for a person to review: the pin and the copies move
+together because, once a sibling arms its scheduled librarian, the pin
+decides which instructions run unattended (2026-09-24). Signing a commit is required only for a pull request that records
 a `human:` confirmation in a knowledge bundle (`docs/signing-commits.md`),
 and a repository running the forge-free gate also needs the signer's public
 key under `.lokf/curators/`, landed in its own pull request first.
-
-## Open questions
-
-- 2026-09-24, process:ktl-librarian: `CONTRIBUTING.md` says `knowledge-librarian.yaml` is "the one exception" to copying a template change over this repository's copy, and that a releasing merge "almost always needs a same-day follow-up" bumping the template's skills pin; since #70 (2026-09-24) check 11 compares that workflow too, apart from `TRUST_LADDER_SKILLS_REF`, and the release commit moves the template's pin itself. This concept follows the script and the workflow and leaves both sentences out until the source catches up.
