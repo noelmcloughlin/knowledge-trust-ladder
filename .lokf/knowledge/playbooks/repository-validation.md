@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:50:00Z"
+  at: "2026-09-24T16:40:00Z"
 status: draft
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -32,7 +32,7 @@ URL still existing - and, when those siblings are cloned beside this repo,
 that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
 staying under their own word budget (1000 and 900, check 10, extended
 2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`),
-(check 11, added 2026-09-14) this repository's copies of both knowledge workflows,
+(check 11, added 2026-09-14) this repository's copies of the three knowledge workflows (the release workflow since 2026-09-24),
 the six sidecar scripts and `.lokf/.gitattributes` staying byte-identical to
 their templates - since 2026-09-24 apart from one value, the librarian
 workflow's `TRUST_LADDER_SKILLS_REF`, which the release commit moves in the
@@ -109,9 +109,10 @@ confirms `gh skill` is available before the contract runs, and then
 `gh skill publish --dry-run` runs.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs
-`actionlint`, pointed by path at this repository's workflows and at the two
+`actionlint`, pointed by path at this repository's workflows and at the three
 workflow templates that get copied into other repositories (it would
-otherwise look only under `.github/workflows/`), and (added 2026-09-14) a check that every `uses:`
+otherwise look only under `.github/workflows/`; since 2026-09-24 it ignores
+the `copilot-requests` permission, which actionlint 1.7.12 predates), and (added 2026-09-14) a check that every `uses:`
 in this repository's workflows and those templates names a commit SHA or
 image digest rather than a floating tag or branch; `smoke-test` installs all
 four skills from the checkout into a throwaway consumer repo via

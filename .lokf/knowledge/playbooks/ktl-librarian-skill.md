@@ -13,7 +13,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T01:15:00Z"
+  at: "2026-09-24T16:40:00Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -53,6 +53,8 @@ question or disagreement it names, from the source it points at, and
 removes each entry it handled. A scheduled run installs the pinned
 `ktl-librarian` release first, except in the repository that publishes the
 skills, which runs its own source under bare `skills/` (2026-09-24).
+
+**The scheduled run's credential and checks (added 2026-09-24).** The wrapper hands the agent one credential, under the name the `AGENT_API_KEY_ENV` variable gives: the `AGENT_API_KEY` secret, or, with `AGENT_USE_JOB_TOKEN` set to `true`, the job's own token, which Copilot CLI accepts. It refuses a name that does not end `_API_KEY`, `_TOKEN` or `_KEY`, or that starts `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, and it exports the key into the agent's environment only, never into an argument list or its own git commands. The `refresh` job now validates with `lokf validate --check-refs`, as the registrar gate does, so a dangling relation target fails the librarian's own check before `publish` opens the pull request.
 
 Two things it now leaves alone by rule (added 2026-09-12): the Obsidian
 affordances KTL Registrar may write into a bundle - a marker-delimited

@@ -2,6 +2,7 @@
 
 ## 2026-09-24
 
+* **The bundle follows 0.24.0 and 0.25.0.** The sidecar, librarian, releasing and repository-validation playbooks and the threat model now describe the third sidecar workflow, `knowledge-release.yaml`, which `publish.yml` dispatches to attach the bundle zip, the scheduled librarian's credential slot and `--check-refs` validation, and the gate detail's move into the sidecar's new `gate.md`. The source map lists the release workflow among the dogfooded copies; the rest of the diff was rewording that changed no concept.
 * **Two concepts cut back to their sources.** `why-a-registrar-role` drops the four-skill contrast and "or agent", neither of which the README says, closing the curator's open question. `policies/versioning.md` drops an uncited history of the old rule and the reasoning behind one shared tag, keeping the README's conclusion, and dates semantic release to 0.15.0 (2026-09-12) from the changelog instead of 2026-09-14.
 * **Reader feedback consumed.** Two docent misses from 2026-09-24. The governance question becomes `explanation/domain-schemas.md`, derived from the curator's and librarian's domain-schema references, including the AI Risk Ontology pointer no concept carried. The DevSecOps question becomes `explanation/intended-uses.md`, a draft placeholder, because no source names KTL's intended uses or non-goals.
 * **Curation**: human:noelmcloughlin confirmed 2 concepts (LOKF specification, AI covenant), corrected 1
