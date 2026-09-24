@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T16:52:26Z"
+  at: "2026-09-24T22:22:58Z"
 status: draft
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -19,7 +19,7 @@ references:
 
 `validate.yml` runs five jobs on every pull request, every push to `main`,
 weekly, and on demand. `validate-skills` runs `scripts/validate-repository.sh` -
-sixteen numbered checks, several with lettered sub-checks: exactly four skill directories with a case-correct
+seventeen numbered checks, several with lettered sub-checks: exactly four skill directories with a case-correct
 `SKILL.md` in each, frontmatter `name` matching its directory and (check 3b,
 added 2026-09-17) a `compatibility` field of at most 500 characters naming
 what the skill needs, (check 3c, added 2026-09-19) each skill's `description` ending in a `Keywords:` list within the spec's 1024 characters - catalogs have no tag field, so it is the only tag they read - with `.claude-plugin/plugin.json` and `marketplace.json` carrying one identical keyword list, no duplicate `SKILL.md`, every relative Markdown link
@@ -33,7 +33,7 @@ that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
 staying under their own word budget (1000 and 900, check 10, extended
 2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`),
 (check 11, added 2026-09-14) this repository's copies of the three knowledge workflows (the release workflow since 2026-09-24),
-the six sidecar scripts and `.lokf/.gitattributes` staying byte-identical to
+the six sidecar scripts, the two `.lokf/m365/` files (since 2026-09-24) and `.lokf/.gitattributes` staying byte-identical to
 their templates - since 2026-09-24 apart from one value, the librarian
 workflow's `TRUST_LADDER_SKILLS_REF`, which the release commit moves in the
 template only - and failing up front, naming the cause, when `uv` is
@@ -106,7 +106,14 @@ tag, which is how the pin sat at `v0.21.0` after the `lokf-*` skills became
 out of every file but the ones that record history - `CHANGELOG.md`, the
 bundle's `log.md`, and one "formerly" line in `docs/install.md` - and
 (check 16a, added 2026-09-23) the skills' and plugins' old `lokf-` names
-staying out of every file but `CHANGELOG.md`. The job sets up `uv` and
+staying out of every file but `CHANGELOG.md`; and (check 17, added
+2026-09-24) the Microsoft 365 Copilot skills: no `SKILL.md` anywhere under
+the sidecar's `templates/`, so no installer lists an instructions file as a
+skill, every instructions file under `templates/m365/` carrying ktl-docent's
+trust-label table word for word, `knowledge-m365.sh` building
+`ktl-docent-m365` from this repository's own bundle within Copilot's limits,
+and, where `zip` is installed, the same zip bytes under another time zone
+and umask, as a release asset must. The job sets up `uv` and
 confirms `gh skill` is available before the contract runs, and then
 `gh skill publish --dry-run` runs.
 

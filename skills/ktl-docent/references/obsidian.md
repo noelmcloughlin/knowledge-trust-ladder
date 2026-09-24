@@ -30,7 +30,8 @@ mklink /J knowledge_bundle .lokf\knowledge   # Windows: a junction, no administr
 ## What not to suggest first
 
 - **Putting the bundle inside their vault.** Obsidian indexes a real folder inside a vault like any other, so link suggestions, the quick switcher,
-  graph and search would mix exhibits with everyday notes; *Settings → Files and links → Excluded files* only makes that less noticeable. If they
+  graph and search would mix exhibits with everyday notes; *Settings → Files and links → Excluded files* hides them from search, graph view and
+  unlinked mentions, but only makes them less noticeable in the quick switcher and link suggestions. If they
   want it anyway, say that cost, and that both plugins detect a top-level `knowledge_bundle/` folder or any folder listed under *Bundle root
   folders*.
 - **Making the link yourself.** This skill is read-only outside `.lokf/feedback.md`, and a missing link is not a knowledge gap: never record it

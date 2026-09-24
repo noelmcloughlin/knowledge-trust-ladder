@@ -7,7 +7,10 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T16:40:00Z"
+  at: "2026-09-24T22:22:58Z"
+verified:
+- by: process:ktl-librarian
+  at: "2026-09-24T22:22:58Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/security
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
@@ -40,7 +43,7 @@ the agent's one credential (the `AGENT_API_KEY` secret or, with
 a credential-shaped name the wrapper checks (2026-09-24); the release
 workflow split the same way, a `pack` job that installs the toolkit and
 validates under `contents: read` and an `attach` job that runs no
-third-party packages, holds `contents: write`, and checks the zip against
+third-party packages, holds `contents: write`, and checks each zip, the bundle's and any Copilot skill's, against
 the checksum `pack` made before uploading it (2026-09-24); every
 write to `main` behind the `release` Environment's required reviewers; `main`
 blocking deletion, force-pushes, and non-linear history, deliberately nothing

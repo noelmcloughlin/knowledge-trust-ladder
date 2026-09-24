@@ -9,14 +9,16 @@ sources:
 - resource: README.md
 - resource: docs/install.md
 - resource: .claude-plugin/marketplace.json
+- resource: docs/m365.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:41:00Z"
+  at: "2026-09-24T22:22:58Z"
 status: draft
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
   - https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
   - https://knowledge-trust-ladder.example/knowledge/policies/versioning
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 ---
 
 # Overview
@@ -25,10 +27,6 @@ The four skills are installed from this repository rather than copied into each 
 
 All four skills release together under one `vMAJOR.MINOR.PATCH` tag with one `CHANGELOG.md`, so a set pinned to one tag agrees with itself: append the tag to the skill name (`ktl-docent@v0.16.0`) or pass `--pin`. `docs/install.md` carries the commands, the pinning rule, and what each skill needs on the machine.
 
-The repository also carries its own bundle, kept by its own skills, so a reader can install the docent anywhere and ask about this project: it answers from this repository's `.lokf/`, saying how far each answer has been checked.
+The repository also carries its own bundle, kept by its own skills, so a reader can install the docent anywhere and ask about this project: it answers from this repository's `.lokf/`, saying how far each answer has been checked. Microsoft 365 Copilot is a fourth route for the docent alone: each release that changes the bundle carries it as a zip with a snapshot of the bundle inside, to upload to a declarative agent ([The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
 
-The repository was renamed on 2026-09-19; GitHub redirects the old links, clones and `npx skills add` paths, so an existing install keeps working. `docs/install.md` records the old name, and check 16 keeps it out of every file that does not record history - this concept included.
-
-## Open questions
-
-- 2026-09-24, process:ktl-librarian: `docs/install.md` says of the repository rename that "the skill names are unchanged", but the skills were renamed from `lokf-*` to `ktl-*` in #64 (2026-09-23), and check 16a now blocks the old names. The source needs a one-line fix; until then this concept leaves the claim out.
+The repository was renamed on 2026-09-19; GitHub redirects the old links, clones and `npx skills add` paths, so an existing install keeps working. `docs/install.md` records the old name, and check 16 keeps it out of every file that does not record history - this concept included. The skills themselves took the `ktl-` prefix in 0.22.0 (2026-09-22); `CHANGELOG.md` lists their old names, which a host installed before then removes, and check 16a keeps those names out of every other file.

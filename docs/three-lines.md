@@ -54,5 +54,5 @@ The model has critics, and so has the kind of tool a bundle is: a machine's outp
 ## What remains to do, and who does it
 
 - **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and LOKF's 0.9.0 shipping it.
-- **This project.** `revision` written by the KTL Curator plugin; an entitlement check by kind of concept; the approval half of the gate on GitLab and Forgejo; an auditor skill for the third line, of which the curator's sampling step is the first half.
+- **This project.** `revision` written by the KTL Curator plugin; an entitlement check by kind of concept; the approval half of the gate on GitLab and Forgejo; an auditor skill for the third line, of which the curator's sampling step is the first half, and whose Copilot form is one instructions file beside the docent's under `.lokf/m365/` ([m365.md](m365.md)).
 - **The organisation's.** Naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.

@@ -20,6 +20,7 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 
 * [ktl-sidecar skill](playbooks/ktl-sidecar-skill.md) - creates a `.lokf/` sidecar from templates, or repairs a single missing sidecar file.
 * [Open the knowledge bundle in Obsidian](playbooks/open-bundle-in-obsidian.md) - two vaults: the workshop someone keeps, and the bundle opened as its own vault through the root `knowledge_bundle` link.
+* [The docent in Microsoft 365 Copilot](playbooks/docent-in-m365-copilot.md) - the docent packed with a bundle snapshot as a Copilot custom skill: from a release zip or the sidecar's builder, into a declarative agent.
 * [ktl-librarian skill](playbooks/ktl-librarian-skill.md) - derives and maintains the concepts; facts, never verdicts.
 * [ktl-curator skill](playbooks/ktl-curator-skill.md) - a human curator's assistant; verdicts, never facts.
 * [ktl-docent skill](playbooks/ktl-docent-skill.md) - answers from the bundle and records what it lacked.

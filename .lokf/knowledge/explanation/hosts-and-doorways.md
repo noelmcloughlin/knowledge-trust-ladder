@@ -7,12 +7,13 @@ genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  at: "2026-09-24T22:22:58Z"
 status: draft
 about:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
   - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 relatedTo:
+  - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
   - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
   - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 ---
@@ -62,7 +63,12 @@ what is lost and the substitute: Linux; macOS on its stock bash 3.2, with `shasu
 `sha256sum` is named; Windows from Git for Windows' bash, or from PowerShell through a one-line
 launch of that bash; GitLab, Forgejo and Gitea, where the two GitHub Actions workflows are the only
 loss and the recipe names the two calls to rewrite; git with no forge; no git at all, where the
-platform's version history is the record of who changed what; and an Obsidian vault. A preflight the
+platform's version history is the record of who changed what; an Obsidian vault; and, since
+2026-09-24, a Microsoft 365 Copilot declarative agent, which can hold only the read-only roles, as
+a snapshot of the bundle packed inside the skill (see
+[The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)). A SharePoint or
+OneDrive workspace with no git whose curators sign in to Microsoft 365 would need an identity of its
+own, recorded as a shape held in reserve in the curator's domain-schema guidance. A preflight the
 sidecar lays down, `.lokf/scripts/knowledge-preflight.sh`, reports which case a machine is, and every
 skill runs it first, so a missing tool is said before a step is offered. `.lokf/.gitattributes` keeps
 a tracked bundle on LF, and the conventions script reads a CRLF or byte-order-marked file the same

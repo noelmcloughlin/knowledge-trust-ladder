@@ -38,6 +38,8 @@ pairs=(
   "scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh"
   "scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh"
   "scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh"
+  "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh"
+  "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
   "gitattributes:.lokf/.gitattributes"
 )
 

@@ -14,6 +14,7 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | No forge, git only | everything local | the gate, pull requests, the scheduled loop | review by the host's own mechanism; the forge-free gate for confirmations |
 | No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |
+| Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle; the auditor when it ships | the other three skills, source checks, `feedback.md` | the `ktl-docent-m365-<tag>-<repository>.zip` a release carries, or `.lokf/m365/knowledge-m365.sh` on the bundle folder ([m365.md](m365.md)) |
 
 ## Install all four skills together
 
@@ -35,7 +36,7 @@ The scaffold is files, so any directory tree works: a local or shared filesystem
 
 ### No git
 
-`.lokf/.gitignore` and `.lokf/.gitattributes` are inert. Keep them, since version control may arrive later, or drop them. Skip the "commit" instructions, rely on the platform's own versioning or backup, and review changes by whatever mechanism the host offers instead of pull requests. Step 5 does not apply, except the preflight and `knowledge-feedback.sh`, which need nothing. The **librarian** leaves `revision` out and hands off by pointing at the changed files. The **curator**'s identity is the account the platform's version history shows, and that history is the only thing that checks a confirmation; the curator's [portability.md](../../ktl-curator/references/portability.md) has the rule.
+`.lokf/.gitignore` and `.lokf/.gitattributes` are inert. Keep them, since version control may arrive later, or drop them. Skip the "commit" instructions, rely on the platform's own versioning or backup, and review changes by whatever mechanism the host offers instead of pull requests. Step 5 does not apply, except the preflight and `knowledge-feedback.sh`, which need nothing. The **librarian** leaves `revision` out and hands off by pointing at the changed files. The **curator**'s identity is the account the platform's version history shows, and that history is the only thing that checks a confirmation; the curator's [portability.md](../../ktl-curator/references/portability.md) has the rule. A SharePoint or OneDrive workspace whose curators sign in to Microsoft 365 would need an identity of its own, which the curator's [domain-schemas.md](../../ktl-curator/references/domain-schemas.md) records as a shape held in reserve.
 
 ### Not GitHub: GitLab, Forgejo, Gitea, another forge, or none
 
@@ -87,7 +88,7 @@ Obsidian is optional; nothing in the skills needs it. The default layout is the 
 
 The host vault stays clean for two reasons. Obsidian never indexes a dot-folder. And its file reconciler (`reconcileSymbolicLinkCreation`, 1.13.7; the help page says the same in words) skips a link whose resolved path equals, contains or lies inside a folder it already watches, the vault root included. So a vault opened at the host root lists neither `.lokf/` nor `knowledge_bundle`.
 
-A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* only makes that less noticeable, and Obsidian Sync carries no links. Hence the rule: the bundle is never laid down as a real folder inside a vault.
+A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* hides it from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions ([Obsidian's settings help](https://obsidian.md/help/settings)), and Obsidian Sync carries no links. Hence the rule: the bundle is never laid down as a real folder inside a vault.
 
 ## The forge-free gate
 

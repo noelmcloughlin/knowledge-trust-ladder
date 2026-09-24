@@ -6,13 +6,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
-- **`scripts/sync-sidecar.sh` brings a sibling repository up to one release.** It takes a tag that is on origin and carries `skills/ktl-librarian`, copies that tag's templates over the sibling's copies, moves its `TRUST_LADDER_SKILLS_REF` to the same tag, runs the sidecar's checks there, and leaves the diff for a person to review and commit. The pin and the copies move together because, once a sibling arms its scheduled librarian, the pin decides which agent instructions run unattended. `docs/releasing.md` now says the template's own pin moves by itself at each release, which has been so since 0.23.1, in place of the hand bump it still asked for.
+- **Releases carry the docent as a Microsoft 365 Copilot skill.** `knowledge-release.yaml` attaches `ktl-docent-m365-<tag>-<repository>.zip` beside the bundle zip, for a person with nothing installed to upload to Agent Builder. The new sidecar folder `.lokf/m365/` holds its instructions and `knowledge-m365.sh`, which packs one reproducible zip per instructions file and refuses a result over Copilot's limits; the auditor will be another file there. Check 17 builds it. `docs/m365.md` has the routes, and the sidecar's `references/m365.md` what Copilot allows.
+- **`scripts/sync-sidecar.sh` syncs a sibling repository to one release.** It copies a published tag's templates over the sibling's copies, moves its skills pin to that tag, runs the sidecar's checks, and leaves the diff for review. `docs/releasing.md` drops the hand bump of the template's own pin, which the release commit has made since 0.23.1.
 
 ## [0.26.0] - 2026-09-24
 
 ### Added
 
-- **Conventions rule 11: no time later than the commit that records it.** `knowledge-conventions.sh` looks each `at:` up in its concept's history and reports one later than the commit that first added it, or, before it is committed, later than now. An agent writing local time labelled `Z`, or a round placeholder, had put 16 `generated` times and 12 verification times in this repository's bundle ahead of their commits, so concepts read as edited after a person confirmed them. A rename or a shallow clone can only make the recording commit look later, so the rule can miss a bad time but never flags a good one. ktl-librarian and ktl-curator now take every `at` from `date -u`. Check 12 exercises the rule.
+- **Conventions rule 11 rejects an `at:` later than the commit that recorded it.** Local time labelled `Z` and round placeholders had put 28 times in this bundle ahead of their commits, so concepts read as edited after a person confirmed them. ktl-librarian and ktl-curator now take every `at` from `date -u`.
 
 ## [0.25.0] - 2026-09-24
 

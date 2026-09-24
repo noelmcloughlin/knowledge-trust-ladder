@@ -9,33 +9,34 @@ skills/
   ktl-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
   ktl-docent/          SKILL.md + references/               (~1.5k tokens loaded on trigger)
 .claude-plugin/
-  plugin.json           the four skills as one Claude Code plugin, with the keywords a plugin catalog searches
-  marketplace.json      lets `/plugin marketplace add` find that plugin in this repository
+  plugin.json           the four skills as one Claude Code plugin, with catalog keywords
+  marketplace.json      lets `/plugin marketplace add` find that plugin
 .github/workflows/
-  validate.yml               repository contract + Agent Skills spec + Markdown/link checks (every PR)
-  knowledge-registrar.yaml   this repository's copy of the gate the sidecar ships: schema-valid and provenance (every PR that touches the bundle)
-  knowledge-librarian.yaml   this repository's copy of the scheduled librarian refresh
-  knowledge-release.yaml     this repository's copy of the release step that attaches the bundle as a zip file (dispatched by publish.yml)
+  validate.yml               repository contract, Agent Skills spec, Markdown and links (every PR)
+  knowledge-registrar.yaml   the sidecar's schema and provenance gate (PRs touching the bundle)
+  knowledge-librarian.yaml   the sidecar's scheduled librarian refresh
+  knowledge-release.yaml     the sidecar's release step: bundle and Copilot zips (from publish.yml)
   semantic-release.yml       version and changelog from Conventional Commits on main; never tags
   publish.yml                maintainer-gated release (workflow_dispatch only)
 docs/
-  for-the-curious.md    the mechanics behind the README: four levels of checking, domain schemas
+  for-the-curious.md    the README's mechanics: four levels of checking, domain schemas
   obsidian.md           the bundle as a vault of its own, and the two plugins
-  three-lines.md        the roles placed in the three lines of defence, what an auditor can check, and what remains to do and who does it
-  three-lines-critics.md  what the model's critics say, quoted from their own texts, and what a bundle answers and leaves open
-  releasing.md          how the three repositories release, and the repository settings it depends on
+  m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first
+  three-lines.md        the roles in the three lines of defence, and what an auditor can check
+  three-lines-critics.md  the model's critics, quoted, and what a bundle answers
+  releasing.md          how the three repositories release, and the settings it needs
   signing-commits.md    signing commits, which the provenance gate reads
-  threat-model.md       the three repositories' shared security design: what an agent can reach, what holds it, and what a human: confirmation proves
+  threat-model.md       shared security design: what an agent can reach, and what holds it
   repository-layout.md  this page
   examples/
     docent.md           eight captured docent answers against this repository's own bundle
     curator.md          placeholder: the curator sessions still to capture
 scripts/
   validate-repository.sh   the checks validate.yml runs
-  smoke-test-install.sh    installs all four skills into a throwaway consumer repo and asserts the result
-  test-sidecar-layouts.sh  the wrapper, both workflows and the lokf-link recipe, with and without the doorway link
-  sync-sidecar.sh          copies one release's templates into a sibling repository and moves its skills pin, then leaves the diff for review
-.lokf/                  this repository's own sidecar: the bundle the docent answers from, and its tooling
+  smoke-test-install.sh    installs the four skills into a throwaway repo and checks them
+  test-sidecar-layouts.sh  the wrapper, workflows and lokf-link, with and without the doorway
+  sync-sidecar.sh          copies one release's templates and skills pin into a sibling repository
+.lokf/                  this repository's own sidecar: the bundle and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar lays down (Step 2)
 ```
 

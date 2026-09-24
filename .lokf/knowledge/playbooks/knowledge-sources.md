@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T17:19:54Z"
+  at: "2026-09-24T22:22:58Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -20,8 +20,9 @@ stale_after: 2027-09-10
 | --- | --- | --- |
 | `skills/*/SKILL.md` | the four skill Playbooks | re-read each router; a changed step list, guardrail, or frontmatter `description` is a drift signal |
 | `skills/*/references/*.md` | detail behind each skill Playbook | diff against the claims in the corresponding concept body |
-| `skills/ktl-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, `.gitattributes`, the six scripts (preflight, conventions and its Python half, librarian wrapper, provenance gate, feedback recorder), and the three workflows (registrar, librarian and, since 2026-09-24, release) | diff `pyproject.toml` (the `lokf` floor) and the template lists in the skill's Step 1 and Step 5 tables |
+| `skills/ktl-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, `.gitattributes`, the six scripts (preflight, conventions and its Python half, librarian wrapper, provenance gate, feedback recorder), the three workflows (registrar, librarian and, since 2026-09-24, release), and, also since 2026-09-24, `m365/`: the Copilot skills' builder and the docent's instructions for Copilot | diff `pyproject.toml` (the `lokf` floor) and the template lists in the skill's Step 1 and Step 5 tables |
 | `README.md`, `docs/install.md`, `docs/repository-layout.md` | project identity and the four-role narrative; the install commands, prerequisites table and pinning rule, on their own page since 2026-09-19 when the README became a front door; the repository tree, likewise on its own page | diff the roles table and the `Read on` table; diff `docs/install.md` against `references/gh-skill-cli.md` and `references/open-skills-cli.md`; diff the tree against the working copy |
+| `docs/m365.md`, `skills/ktl-sidecar/references/m365.md` | `playbooks/docent-in-m365-copilot.md` (2026-09-24): getting, building and adding the docent's Copilot skill, and why only read-only roles go there; the reserved Microsoft 365 identity shape lives in the curator's `domain-schemas.md`, carried by `explanation/domain-schemas.md` | diff the routes, the builder's limits and the role table against the concept; diff `.lokf/m365/ktl-docent-m365.md`'s trust-label table against `glossary/trust-label.md` (check 17 already holds it to ktl-docent's); re-read Microsoft's custom-skills page for changed limits while the feature is in preview |
 | `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `ktl-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `ktl-docent/references/obsidian.md`, which must agree with it |
 | `.claude-plugin/plugin.json`, `marketplace.json` | the Claude Code plugin route to the four skills (2026-09-19), carried by `explanation/why-a-distribution-repository.md` | diff the install commands in `README.md` against that concept; check 3c holds the two keyword lists identical |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
@@ -32,7 +33,7 @@ stale_after: 2027-09-10
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
 | `.github/workflows/semantic-release.yml`, `.github/scripts/changelog-release.mjs`, `.releaserc.json` | the version-and-changelog automation `playbooks/releasing.md` describes | diff the `release` job's steps, the script's `verifyRelease`/`generateNotes` behaviour, and `.releaserc.json`'s `releaseRules` (which commit types map to which bump) against the concept's Overview; all three sit behind the `release` Environment along with `publish.yml` |
-| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `knowledge-conventions.sh`, `knowledge-conventions.py`, `knowledge-preflight.sh`, `knowledge-provenance.sh`, `knowledge-feedback.sh`, `.lokf/.gitattributes` | this repository's dogfooded copies of the workflow templates, scripts and attributes the sidecar skill ships | diff each against its counterpart under `skills/ktl-sidecar/templates/`; all ten are kept byte-identical (check 11 and the preflight report any drift) apart from one value, `knowledge-librarian.yaml`'s `TRUST_LADDER_SKILLS_REF`: since 2026-09-24 the release commit moves that pin in the template only, because `GITHUB_TOKEN` may not push under `.github/workflows/`, and the install step that reads it is skipped here by an `if` on the repository name, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`. Any other difference is a template bump not yet copied across |
+| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `knowledge-conventions.sh`, `knowledge-conventions.py`, `knowledge-preflight.sh`, `knowledge-provenance.sh`, `knowledge-feedback.sh`, `.lokf/m365/knowledge-m365.sh`, `ktl-docent-m365.md`, `.lokf/.gitattributes` | this repository's dogfooded copies of the workflow templates, scripts and attributes the sidecar skill ships | diff each against its counterpart under `skills/ktl-sidecar/templates/`; all twelve are kept byte-identical (check 11 and the preflight report any drift) apart from one value, `knowledge-librarian.yaml`'s `TRUST_LADDER_SKILLS_REF`: since 2026-09-24 the release commit moves that pin in the template only, because `GITHUB_TOKEN` may not push under `.github/workflows/`, and the install step that reads it is skipped here by an `if` on the repository name, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`. Any other difference is a template bump not yet copied across |
 | `.lokf/curators/*.asc`, `*.pub` | the curator public keys `knowledge-provenance.sh` verifies `human:` confirmations against (the first, `noelmcloughlin.asc`, registered 2026-09-24) | consciously excluded as concepts: key material, not knowledge; re-check that `playbooks/ktl-curator-skill.md` and `policies/threat-model.md` still describe the directory as the gate reads it |
 | `.github/ISSUE_TEMPLATE/*.md`, `.github/pull_request_template.md`, `.github/dependabot.yml` | contributor intake forms and pin maintenance | consciously excluded as concepts - see note below; re-check only that each template still names all four skills and that its `AI_COVENANT.md` link is absolute |
 | `scripts/*.sh` | what the validation playbook claims CI enforces; since 2026-09-24 `sync-sidecar.sh`, the maintainer's tool the releasing playbook describes, which is not a CI check | re-read the assertions; a new check is a gap in the playbook; diff `sync-sidecar.sh`'s refusals and steps against `playbooks/releasing.md` |
@@ -43,6 +44,19 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-24, twentieth pass)**, on branch `0.27`
+  at `fc76970`, after #79 and the unreleased Microsoft 365 Copilot work.
+  One concept added, `playbooks/docent-in-m365-copilot.md`, from the new
+  `docs/m365.md` and the sidecar's `references/m365.md`; the sidecar,
+  releasing and repository-validation playbooks, the three-lines, domain
+  schemas, hosts and distribution explanations follow their sources, and the
+  rows above name `.lokf/m365/`. `docs/threat-model.md` still says the
+  release workflow's `attach` job checks "the zip" where it now checks each
+  zip's checksum, and `docs/install.md` said "the skill names are unchanged";
+  both sources were fixed later the same day at the maintainer's request.
+  `explanation/intended-uses.md` stays open by the maintainer's choice: no
+  source states KTL's intended uses yet. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has
+  no entries.
 - **Steady-state refresh (2026-09-24, nineteenth pass)**, on `main` at
   0.25.0, after #75, #76 and #77. Five concepts follow their sources: the
   sidecar playbook names three workflows and the new `gate.md`, the
