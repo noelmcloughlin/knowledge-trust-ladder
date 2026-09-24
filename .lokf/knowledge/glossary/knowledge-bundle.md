@@ -2,19 +2,20 @@
 type: GlossaryTerm
 id: https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 title: Knowledge bundle
-definition: The `.lokf/` sidecar itself - a directory of one-concept-per-file Markdown under `knowledge/`, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph.
+definition: The `.lokf/knowledge` directory - containing one-concept-per-file Markdown, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph. Accessible via a `knowledge_bundle` link at the repository root if that link exists.
 genre: reference
 resource: skills/ktl-sidecar/templates/README.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-09-24T01:20:00Z"
+  by: human:noelmcloughlin
+  at: "2026-09-24T01:09:00Z"
 about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/lokf
-status: draft
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T18:33:00Z"
-stale_after: 2028-09-09
+- by: human:noelmcloughlin
+  at: "2026-09-24T01:09:00Z"
+stale_after: 2028-09-24
 ---
 
 # Overview
@@ -38,7 +39,3 @@ semantic header (`base_iri`, `context`, versions, publisher) plus the table
 of contents; `knowledge/log.md` records knowledge changes only. The bundle is
 the durable layer between scattered sources and the next task - the thing that
 stops each session re-finding, re-connecting, and re-judging the same material.
-
-## Open questions
-
-- 2026-09-18, process:ktl-curator: unauthenticated session, no `gh` login to attribute to a person - the `definition` field calls the bundle "the `.lokf/` sidecar itself", but the source's own file tree (`skills/ktl-sidecar/templates/README.md`) shows the sidecar (`.lokf/`) contains the bundle (`knowledge/`) plus non-concept tooling (`pyproject.toml`, `justfile`, `feedback.md`). The body text already draws this distinction correctly; tighten `definition` to match.

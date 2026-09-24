@@ -2,6 +2,8 @@
 
 ## 2026-09-24
 
+* **Curation**: human:noelmcloughlin confirmed 2 concepts (LOKF specification, AI covenant), corrected 1
+  (Knowledge bundle's definition), and sent 2 back (ktl-librarian skill, Why a registrar role).
 * **Audit**: `playbooks/index.md` had no bullet for the Obsidian playbook, and
   the sidecar playbook linked `hosts-and-doorways` in its body with no typed
   relation; both fixed. Every other check passed - schema, relation targets,
