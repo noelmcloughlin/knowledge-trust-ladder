@@ -151,7 +151,7 @@ deep="$(cd "$stage" && find . -type f | awk -F/ 'NF-2 > 3 {print substr($0, 3)}'
 [[ -z "$deep" ]] || limit "these files sit more than 3 directories deep: $deep"
 
 allowed='json|xml|yaml|yml|ini|config|utf8|docx|doc|docm|pdf|txt|rtf|md|ppt|pptx|ppsm|xlsx|xls|xlsm|csv|tsv|html|htm|png|jpg|jpeg|gif|bmp|log'
-bad_type="$(cd "$stage" && find . -type f | grep -viE "\.($allowed)$" | sed 's#^\./##' || true)"
+bad_type="$(cd "$stage" && find . -type f | { grep -viE "\.($allowed)$" || true; } | sed 's#^\./##')"
 [[ -z "$bad_type" ]] || limit "Copilot does not accept these file types: $bad_type"
 
 files="$(find "$stage" -type f | wc -l | tr -d ' ')"
@@ -169,4 +169,4 @@ mkdir -p "$out_parent"
 mv "$stage" "$out"
 echo "built $out: $files files, ${kb} KB, SKILL.md $body_chars characters"
 echo "snapshot: ${repo_url:-repository not recorded} at ${ref:-revision not recorded}, built $built"
-echo "counts against the agent's limits: 1 of 8 skills, $files of 350 files"
+echo "counts against the agent's limit: $files of 350 files, across all its skills"
