@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The release workflow attaches the bundle as a zip file.** `knowledge-release.yaml` now uploads `knowledge-<tag>-<repository>.zip` with its `.sha256`, in place of `knowledge-<tag>.tar.gz`, because every operating system opens a zip with its own tools, and the name says which repository it came from. It stays reproducible: the same bundle gives the same bytes in any time zone and under any umask, and links inside the bundle are stored as links, never followed. A release that carries the earlier tarball still counts as the last released bundle, so an unchanged bundle after `v0.24.0` gets no zip. Layout test 5 runs the new pack lines.
+
 ## [0.24.0] - 2026-09-24
 
 ### Added

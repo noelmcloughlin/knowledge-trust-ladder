@@ -45,7 +45,7 @@ What has to be rewritten is what talks to GitHub:
 
 - In the librarian workflow, the review pull request is opened with `actions/github-script`. On GitLab, open a merge request with `glab mr create` or the API, using a project access token with `api` scope; a job token cannot open one.
 - In the registrar workflow, the `provenance` job reads reviews and commit verification through `gh api`. GitLab exposes the same facts as `GET /projects/:id/merge_requests/:iid/approvals` and `GET /projects/:id/repository/commits/:sha/signature`. Forgejo and Gitea expose them as the pull request's reviews and the commit's `verification` object.
-- The release workflow uploads the tarball with `gh release upload` and records a GitHub attestation. On another forge, attach the tarball through that forge's release API, or skip the workflow; the bundle is in git either way.
+- The release workflow uploads the zip with `gh release upload` and records a GitHub attestation. On another forge, attach the zip through that forge's release API, or skip the workflow; the bundle is in git either way.
 
 One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions runs GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below needs no forge at all.
 

@@ -11,7 +11,7 @@ Each file has a section on one of the two pages. Read the one you are wiring.
 | `knowledge-provenance.sh` | The signature check, with no forge needed | A public key per curator under `.lokf/curators/` | [gate.md](gate.md) |
 | `knowledge-librarian.yaml` | Runs the librarian agent weekly and opens a review pull request | Repository variables, and a secret for the agent's key | below |
 | `knowledge-librarian.sh` | The wrapper the librarian workflow runs | Nothing, unless the skills live in an unusual directory | below |
-| `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a tarball | One variable to arm it, or run it by hand | below |
+| `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to arm it, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 
 ## `knowledge-librarian.yaml`: the scheduled refresh loop
@@ -102,7 +102,7 @@ The workflow relies on this contract:
 
 ## `knowledge-release.yaml`: the bundle as a release asset
 
-It attaches `.lokf/knowledge` to a GitHub release as `knowledge-<tag>.tar.gz`, with a `.sha256` file beside it, so a reader can take the bundle as it stood at that release without cloning the repository. It runs no agent and needs no LLM. It never commits or pushes.
+It attaches `.lokf/knowledge` to a GitHub release as `knowledge-<tag>-<repository>.zip`, with a `.sha256` file beside it, so a reader can take the bundle as it stood at that release without cloning the repository. Every operating system opens a zip file with its own tools. It runs no agent and needs no LLM. It never commits or pushes.
 
 It starts in two ways:
 
@@ -111,19 +111,20 @@ It starts in two ways:
 
 GitHub starts no workflow for a release made with the default `GITHUB_TOKEN`, so the release trigger never fires when your release job makes releases that way. Have that job dispatch this workflow after it creates the release, with `actions: write` on the job: `gh workflow run knowledge-release.yaml --ref "$TAG" -f tag="$TAG"`. The skills repository's own `publish.yml` does this.
 
-### An unchanged bundle gets no tarball
+### An unchanged bundle gets no zip
 
-The `pack` job compares the bundle's git tree at the tag with its tree at the newest other published release that carries a knowledge tarball. When the two match, the run ends green with a notice naming that release, and nothing is uploaded. A reader who wants the bundle for such a release takes it from the release the notice names. The tree changes only when a tracked file in the bundle does, so a release that touched only code or docs compares as unchanged. To attach a tarball anyway, for example to repair a release's assets, start the workflow by hand with `force` ticked.
+The `pack` job compares the bundle's git tree at the tag with its tree at the newest other published release that carries a knowledge bundle, as a zip or as the tarball earlier releases attached. When the two match, the run ends green with a notice naming that release, and nothing is uploaded. A reader who wants the bundle for such a release takes it from the release the notice names. The tree changes only when a tracked file in the bundle does, so a release that touched only code or docs compares as unchanged. To attach a zip anyway, for example to repair a release's assets, start the workflow by hand with `force` ticked.
 
-### What the tarball holds
+### What the zip holds
 
 When the bundle changed, `pack` runs the registrar's two checks, so a release never carries a bundle its own gate would fail. It then packs the bundle under a read-only token:
 
-- The tarball holds the tracked files under a `knowledge/` root.
+- The zip holds the tracked files under a `knowledge/` root.
 - It is reproducible. Every file carries the time of the last commit that touched the bundle, so a reader can rebuild it from the tag and compare checksums, and an unchanged bundle gives the same checksum at every release.
-- Links inside the bundle are stored as links, never followed.
+- A link inside the bundle is stored as a link and never followed, so the zip can hold nothing from outside the bundle. A bundle normally carries none; the `knowledge_bundle` doorway sits at the repository root, outside it.
+- It is built with `zip` and checked with `unzip`, which GitHub's hosted Ubuntu runners carry. A self-hosted runner needs both installed.
 
-The `attach` job holds `contents: write`, runs no third-party packages, checks the tarball against its checksum and uploads both files, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
+The `attach` job holds `contents: write`, runs no third-party packages, checks the zip against its checksum and uploads both files, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
 
 ## `knowledge-feedback.sh`: how a reader's gap gets recorded without being read back
 

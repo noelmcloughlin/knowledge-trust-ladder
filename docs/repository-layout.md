@@ -15,7 +15,7 @@ skills/
   validate.yml               repository contract + Agent Skills spec + Markdown/link checks (every PR)
   knowledge-registrar.yaml   this repository's copy of the gate the sidecar ships: schema-valid and provenance (every PR that touches the bundle)
   knowledge-librarian.yaml   this repository's copy of the scheduled librarian refresh
-  knowledge-release.yaml     this repository's copy of the release step that attaches the bundle as a tarball (dispatched by publish.yml)
+  knowledge-release.yaml     this repository's copy of the release step that attaches the bundle as a zip file (dispatched by publish.yml)
   semantic-release.yml       version and changelog from Conventional Commits on main; never tags
   publish.yml                maintainer-gated release (workflow_dispatch only)
 docs/

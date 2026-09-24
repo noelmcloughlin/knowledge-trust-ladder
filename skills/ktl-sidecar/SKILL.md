@@ -142,7 +142,7 @@ With no `uv` or `lokf`, there is no substitute for the generated JSON Schema/SHA
 | --- | --- |
 | `templates/github/knowledge-registrar.yaml` | `.github/workflows/knowledge-registrar.yaml`: the gate ([references/gate.md](references/gate.md)) |
 | `templates/github/knowledge-librarian.yaml` | `.github/workflows/knowledge-librarian.yaml` |
-| `templates/github/knowledge-release.yaml` | `.github/workflows/knowledge-release.yaml`: attaches the bundle to a GitHub release as a tarball, and skips a release whose bundle matches the last one released. It runs when dispatched by hand, and on each published release once the `KNOWLEDGE_RELEASE_ENABLED` variable is `true`; it needs no agent |
+| `templates/github/knowledge-release.yaml` | `.github/workflows/knowledge-release.yaml`: attaches the bundle to a GitHub release as a zip file, and skips a release whose bundle matches the last one released. It runs when dispatched by hand, and on each published release once the `KNOWLEDGE_RELEASE_ENABLED` variable is `true`; it needs no agent |
 | `templates/scripts/knowledge-librarian.sh` | `.lokf/scripts/knowledge-librarian.sh` (`chmod +x`) |
 | `templates/scripts/knowledge-conventions.sh` | `.lokf/scripts/knowledge-conventions.sh` (`chmod +x`); the gate runs it, and so does ktl-librarian's audit |
 | `templates/scripts/knowledge-conventions.py` | `.lokf/scripts/knowledge-conventions.py` (`chmod +x`): the half of the conventions script that parses YAML. The `.sh` runs it through `uv run` and fails without it, so the two land together |
