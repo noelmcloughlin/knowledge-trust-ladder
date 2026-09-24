@@ -44,6 +44,7 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-24, twenty-first pass)**, on `main` at `c21f785`, after the 0.27.0 release. Two commits since the last bundle change. `docs/m365.md` was reordered into three numbered steps with a first-answer check and a troubleshooting list, so `playbooks/docent-in-m365-copilot.md` follows it. The release commit moved the template's skills pin to `v0.26.0`, which no concept states. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 - **Steady-state refresh (2026-09-24, twentieth pass)**, on branch `0.27`
   at `fc76970`, after #79 and the unreleased Microsoft 365 Copilot work.
   One concept added, `playbooks/docent-in-m365-copilot.md`, from the new
