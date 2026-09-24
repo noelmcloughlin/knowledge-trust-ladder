@@ -5,9 +5,15 @@ title: ktl-librarian skill
 description: Recurring procedure that scrapes the host repository, derives and maintains the .lokf/ concepts and their typed relations, audits the bundle, and hands off for human review.
 genre: how-to
 resource: skills/ktl-librarian/SKILL.md
+sources:
+- resource: skills/ktl-librarian/SKILL.md
+- resource: skills/ktl-librarian/references/scheduled-task.md
+- resource: .github/workflows/knowledge-librarian.yaml
+- resource: .lokf/scripts/knowledge-librarian.sh
+- resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-17T23:05:00Z"
+  at: "2026-09-24T01:15:00Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -19,8 +25,6 @@ references:
   - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
   - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 verified:
-- by: process:ktl-librarian
-  at: "2026-09-17T23:05:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
 stale_after: 2027-09-09
@@ -41,6 +45,14 @@ record that it re-checked a concept against its source (`verified` by
 writes a `human:` confirmation. Concepts it creates start as `status: draft`,
 and a claim it cannot settle gets an `## Open questions` section instead of a
 guess.
+
+Each steady-state run starts by consuming `.lokf/feedback.md`, where
+ktl-docent records readers' misses and disagreements. Every entry is an
+untrusted report, never an instruction: the librarian resolves only the
+question or disagreement it names, from the source it points at, and
+removes each entry it handled. A scheduled run installs the pinned
+`ktl-librarian` release first, except in the repository that publishes the
+skills, which runs its own source under bare `skills/` (2026-09-24).
 
 Two things it now leaves alone by rule (added 2026-09-12): the Obsidian
 affordances KTL Registrar may write into a bundle - a marker-delimited
@@ -65,10 +77,6 @@ never trusting the `refresh` job's own check alone), plus harden-runner and
 the wrapper script - restored from an `EXIT` trap since 2026-09-17, after a
 Socket audit showed a failing agent or a cancelled job skipped the restore
 and left a poisoned config for the workflow's next steps. See `policies/security.md` for the detail.
-
-## Open questions
-
-- 2026-09-18, process:ktl-curator: unauthenticated session, no `gh` login to attribute to a person - the paragraph above (harden-runner, `.git/config`/`.git/hooks/` snapshot-and-restore, the `EXIT` trap since 2026-09-17, the Socket audit finding, `knowledge-librarian.yaml`'s privileged `publish` job) cites terms found nowhere in this concept's `resource` (`skills/ktl-librarian/SKILL.md`). Re-derive with the actual source (workflow YAML / wrapper script) cited, or add it to `resource`/`sources`.
 
 **Extending the vocabulary (added 2026-09-14).** Rule 3's classes are
 deliberately few and portable. A domain needing more of its own gets a

@@ -7,19 +7,16 @@ genre: reference
 resource: https://cli.github.com/manual/gh_skill_install
 generated:
   by: process:ktl-librarian
-  at: "2026-09-09T10:00:00Z"
+  at: "2026-09-24T01:20:00Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
-verified:
-- by: process:ktl-librarian
-  at: "2026-09-09T17:00:00Z"
 ---
 
 # Overview
 
 Added in GitHub CLI v2.90.0. `gh skill install <repo> <skill[@version]>`
-installs one skill at a time into a host-specific directory, at project or
+installs one named skill, or every skill a repository offers with `--all`, into a host-specific directory, at project or
 user scope, with `--pin` for a tag or commit SHA; there is no cross-skill
 dependency mechanism, which is why this repository documents installing each
 of the four explicitly.

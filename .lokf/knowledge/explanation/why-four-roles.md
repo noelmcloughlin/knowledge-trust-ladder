@@ -2,12 +2,16 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
 title: Why four skill roles rather than one skill
-description: Why deriving, confirming, and reading knowledge are separated into four distinct skill roles - schema checks can make a bundle consistent, but only a person can make it trusted. A fifth, non-skill role (the registrar) also exists - see why-a-registrar-role.md.
+description: Why the work is split into four skills - sidecar, librarian, curator, docent - named for the library and museum professions, run first in order and then as a loop, with a fifth, non-skill role (the registrar) described in why-a-registrar-role.md.
 genre: explanation
 resource: README.md
+sources:
+- resource: README.md
+- resource: skills/ktl-librarian/SKILL.md
+- resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-10T12:00:00Z"
+  at: "2026-09-24T00:41:00Z"
 status: draft
 about:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -18,39 +22,21 @@ references:
   - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
-verified:
-- by: process:ktl-librarian
-  at: "2026-09-16T09:10:00Z"
 ---
 
 # Overview
 
-"Four roles" here means the four **skill** roles - `README.md`'s own section
-header is "Four roles, three lines of the poem." A fifth role, the
-**registrar**, is named separately and explicitly *not* a skill (see
-[why a registrar role](why-a-registrar-role.md)) - so the repository names
-five roles in total, four of which are skills.
+The README names five roles, and four of them are skills: its section is "Four skills, three lines of the poem", after the three lines of Amy Lowell's *The Congressional Library* it opens with. The fifth, the **registrar**, is the toolkit and CI rather than a skill ([why a registrar role](why-a-registrar-role.md)).
 
-A single "keep the docs current" agent would conflate two different acts:
-finding out what the repository says, and deciding what the team accepts as
-true. The first is mechanical and repeatable; the second requires
-accountability. Validation cannot bridge the gap - JSON Schema and SHACL prove
-a bundle is *consistent*, never that it is *correct*.
+Each skill takes one line of the poem, or the role the poem leaves implicit:
 
-The split follows the professions the names come from. A librarian selects,
-classifies, and maintains authority control, but catalogues without vouching:
-a library shelves contradictory books. A museum curator authenticates, weighs
-provenance, and decides what is exhibited as trusted. A docent guides visitors
-and carries back what the collection could not answer.
+- **Sidecar** *lays the network*: lays down the `.lokf/` sidecar once, with `knowledge_bundle` as its visible doorway, and repairs a broken sidecar file.
+- **Librarian** *binds it into order*: derives concepts from the repository with their sources, classifies and relates them, and hands off for review. Like a real librarian it catalogues without vouching - facts about the repository, never verdicts about truth.
+- **Curator** *holds the scales*: a person's assistant that shows what needs a look, puts the source next to the claim, and records the person's verdict. Curator is the museum sense - the one who authenticates and weighs provenance - not the data-management sense, which is the librarian's job.
+- **Docent** *guides the visitors*: answers from the bundle with each concept's trust label, and records what the bundle missed for the librarian's next run. Read-only on the bundle.
 
-The closest working analogue is a publishing chain - author, fact-checker,
-editor, and readers writing in with corrections. The one place the analogy
-needs care is that the curator hears only the librarian's case, with no
-opposing counsel; that is why the review session shows the source *before* the
-claim, never pre-fills a verdict, and treats reader feedback as the missing
-adversary.
+In short: the librarian reports, the curator fact-checks and edits, the docent reads and writes back what was missed.
 
-Each handoff is a frontmatter fact, not a convention: the librarian marks what
-it creates `status: draft`, the curator's `verified` event by a `human:` actor
-is what clears it, and the docent's `.lokf/feedback.md` entries are what the
-librarian consumes next run.
+On a fresh repository they run in order - sidecar, then librarian filling the bundle with drafts, then curator, where a person turns drafts into confirmed knowledge a few at a time. After that it is a loop: the librarian refreshes on a schedule, readers send back what the bundle missed, and the curator works through whatever that surfaces (`.assets/ktl-lifecycle-loop.svg`).
+
+Each handoff is a frontmatter fact, not a convention: the librarian marks what it creates `status: draft`, a curator's `verified` event by a `human:` actor is what confirms it, and the docent's `.lokf/feedback.md` entries are what the librarian consumes next run.

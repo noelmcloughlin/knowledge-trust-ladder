@@ -2,18 +2,15 @@
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 title: Threat model
-description: "The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each skill's own input path - carried once here so each SECURITY.md can link instead of restate."
+description: "The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate."
 genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-17T17:30:00Z"
+  at: "2026-09-24T01:00:00Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/security
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
-verified:
-- by: process:ktl-librarian
-  at: "2026-09-17T17:30:00Z"
 ---
 
 # Overview
@@ -65,15 +62,26 @@ or SSH key per curator id, and refuses a change that adds an id's key and
 that id's confirmation together. None of this proves anyone read the source - it raises the cost
 of forgery, not the truth of a confirmation.
 
-**Prompt-injection guards**, one per skill's input path: ktl-librarian
+**Prompt-injection guards**, one per input path: ktl-librarian
 resolves a `.lokf/feedback.md` entry only from the source it names, never its
-own wording; ktl-curator quotes a fetched source to a person rather than
+own wording, and ktl-curator only counts waiting entries with `grep -c`;
+ktl-curator quotes a fetched source to a person rather than
 acting on it; ktl-docent treats fetched or repository content as text to
 quote, never instructions, is read-only on the bundle besides, and since
 2026-09-23 adds a feedback entry through `knowledge-feedback.sh` rather than
 by opening `feedback.md`, so the librarian is the only skill that reads what
-a reader wrote. If a guard
+a reader wrote; its one write path asks once per session first. The
+registrar's `provenance` job, which reads pull-request metadata, runs no
+agent: event fields enter through `env:`, API reads are narrowed to logins,
+SHAs and a verification flag, the `human:<id>` is held to a login's
+characters, the token is read-only, and a path git still has to quote is
+refused (2026-09-19). If a guard
 fails, the only unattended write path is `knowledge-librarian.yaml`'s
 `publish` job, which re-derives the touched paths from the patch's own
 `git apply --numstat` on a clean checkout the agent never shared, confines
-them to the bundle, and refuses a patch adding a `by: human:` claim.
+them to `.lokf/knowledge`, `knowledge_bundle` and `.lokf/feedback.md` (the
+only pathspecs it stages), and refuses a patch adding a `by: human:` claim.
+Inside `refresh`, the wrapper snapshots `.git/config` and `.git/hooks`
+before the agent call and restores them from an `EXIT` trap, and keeps its
+own checks in a `main()` called last, so neither a failed agent nor a
+cancelled job leaves a poisoned config behind.

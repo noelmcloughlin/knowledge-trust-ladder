@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-17T15:49:14Z"
+  at: "2026-09-24T01:20:00Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -15,9 +15,6 @@ about:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
-verified:
-- by: process:ktl-librarian
-  at: "2026-09-17T15:49:14Z"
 ---
 
 # Overview
@@ -29,7 +26,7 @@ Auditors (IIA), updated in
 and reissued as a
 [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf)
 in 2026. LOKF was not built to it, but each role fits, and the page shows
-where in a table and a diagram (`.assets/ktl-three-lines.svg`), for any
+where in a table and a diagram (`.assets/ktl-three-lines.svg`, with a dimmed counterpart for dark mode), for any
 organisation that adopts a bundle. First line: the **librarian**, which
 derives every record from a named source and marks what it cannot settle
 `status: draft`, and the **curator**, a named person who decides what the
@@ -52,7 +49,7 @@ roles" and "may overlap in practice" given "clear accountability,
 transparency, and safeguards". The adopting organisation decides who plays
 each line; the tooling holds the lines apart either way. Since 2026-09-17
 the page says the curator's identity comes from the forge, never from the
-person: the login the machine is signed in as (`gh`, `glab`), or the login
+person: the login the machine is signed in as, or the login
 under which the forge lists the key the person signs with - never git
 config, never what is typed into the agent's chat. The gate accepts a
 `human:` verdict only on that person's approval of the pull request or
@@ -67,7 +64,10 @@ state of the source the check was made against in `revision` - a field
 proposed for lokf 0.9.0 and not yet released - which the gate resolves
 against the tree for a file and nothing checks for a URL; whether that
 confirmation is really tied to the named person in the `provenance` job's
-log; and when it must be looked at again in `stale_after`. Four limits
+log; when it must be looked at again in `stale_after`; what changed, and
+why, in `log.md` and git; and whether the checker is independent of the
+checked in the JSON Schema and SHACL shapes, which are generated from the
+upstream `lokf.yaml` rather than written by the bundle's authors. Four limits
 bound what that evidence proves: a confirmation records who and when, and
 the state of the source only when the event carries `revision`, and even
 then what the skill fetched rather than what the person read; the gate
@@ -79,7 +79,7 @@ file and nothing checks approvals, and a host without git has only its
 platform's version history.
 
 The critics have a page of their own, `docs/three-lines-critics.md`, marked
-as preliminary research read in September 2026 and, since 2026-09-23,
+as preliminary research and, since 2026-09-23,
 arranged by criticism rather than by critic. A table at the top lists nine
 points with who raised them and a verdict; each section then quotes the
 criticism from its source, says what a bundle does about it, and gives the

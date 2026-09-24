@@ -7,7 +7,7 @@ genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-17T14:57:49Z"
+  at: "2026-09-24T01:20:00Z"
 status: draft
 about:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -15,9 +15,6 @@ about:
 relatedTo:
   - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
   - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
-verified:
-  - by: process:ktl-librarian
-    at: "2026-09-17T14:57:49Z"
 ---
 
 # The pattern
@@ -35,7 +32,7 @@ root onto the bundle. The bundle therefore has **two names**:
 | Name | Who addresses it | What it is |
 | --- | --- | --- |
 | `.lokf/knowledge` | the four skills, the `lokf` toolkit, CI's `knowledge-registrar.yaml`, `llms.txt` | the real folder, on every host |
-| `knowledge_bundle` | people, folder pickers, file managers, Obsidian's *Open folder as vault* | a symlink (junction on Windows), laid down by default |
+| `knowledge_bundle` | people, folder pickers, file managers, Obsidian's *Open folder as vault* | a symlink (junction on Windows), laid down by the sidecar's optional Step 2 |
 
 Every tool and every person finds the bundle at the name they know, and which of the two is the real
 folder is not a choice the sidecar makes any more: it is always the hidden one.

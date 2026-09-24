@@ -1,5 +1,33 @@
 # Change Log
 
+## 2026-09-24
+
+* **Audit**: `playbooks/index.md` had no bullet for the Obsidian playbook, and
+  the sidecar playbook linked `hosts-and-doorways` in its body with no typed
+  relation; both fixed. Every other check passed - schema, relation targets,
+  conventions, the projected graph, and the manual lint pass.
+* **README-sourced explanations re-derived.** `why-four-roles`,
+  `why-a-registrar-role`, `why-a-distribution-repository` and `glossary/lokf`
+  had kept prose no current source carries (an origin story, an adversarial
+  review analogy, a single-plugin framing), and missed the run order, the
+  plugins' levels of checking and the Claude Code plugin route. Each now cites
+  every file it rests on; the registrar concept's open question closes by
+  dropping the uncited rename detail.
+* **The contract and release playbooks follow #69 and #70.** Check 11 now
+  covers the librarian workflow apart from its skills pin, which the release
+  commit moves in the template only; checks 3c, 16 and 16a were missing, and
+  the count is sixteen, not fifteen.
+* **Skill and policy playbooks follow their sources.** The sidecar has seven
+  steps and two scripts that land regardless; the curator's report counts
+  unsigned confirmations from git history; the librarian consumes feedback
+  first; the threat model gains the registrar's pull-request-metadata guard
+  and the publish job's exact pathspecs; contributing, security and the
+  covenant gain the #60 rules. Two curator open questions close by citing the
+  files the claims came from.
+* **Source map**: rows for `.claude-plugin/` and `.lokf/curators/`, and the
+  dogfooded-workflows row no longer says the librarian workflow omits its
+  install step.
+
 ## 2026-09-23
 
 * **The docent records a reader's gap without reading the file it goes in.**

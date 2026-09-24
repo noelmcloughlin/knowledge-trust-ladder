@@ -7,25 +7,22 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-18T14:00:00Z"
+  at: "2026-09-24T00:50:00Z"
 status: draft
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
   - https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
   - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
-verified:
-- by: process:ktl-librarian
-  at: "2026-09-18T14:00:00Z"
 ---
 
 # Overview
 
 `validate.yml` runs five jobs on every pull request, every push to `main`,
 weekly, and on demand. `validate-skills` runs `scripts/validate-repository.sh` -
-fifteen numbered checks: exactly four skill directories with a case-correct
+sixteen numbered checks, several with lettered sub-checks: exactly four skill directories with a case-correct
 `SKILL.md` in each, frontmatter `name` matching its directory and (check 3b,
 added 2026-09-17) a `compatibility` field of at most 500 characters naming
-what the skill needs, no duplicate `SKILL.md`, every relative Markdown link
+what the skill needs, (check 3c, added 2026-09-19) each skill's `description` ending in a `Keywords:` list within the spec's 1024 characters - catalogs have no tag field, so it is the only tag they read - with `.claude-plugin/plugin.json` and `marketplace.json` carrying one identical keyword list, no duplicate `SKILL.md`, every relative Markdown link
 under `skills/` resolving (fenced examples excluded), ShellCheck-clean
 scripts, every stated LOKF class count agreeing with
 `ktl-librarian/SKILL.md` Rule 3 (and with
@@ -35,9 +32,12 @@ URL still existing - and, when those siblings are cloned beside this repo,
 that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
 staying under their own word budget (1000 and 900, check 10, extended
 2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`),
-(check 11, added 2026-09-14) this repository's copies of the registrar gate,
+(check 11, added 2026-09-14) this repository's copies of both knowledge workflows,
 the six sidecar scripts and `.lokf/.gitattributes` staying byte-identical to
-their templates, with `knowledge-conventions.sh` shown to pass on this
+their templates - since 2026-09-24 apart from one value, the librarian
+workflow's `TRUST_LADDER_SKILLS_REF`, which the release commit moves in the
+template only - and failing up front, naming the cause, when `uv` is
+missing, with `knowledge-conventions.sh` shown to pass on this
 bundle, to fail on a synthetic bundle breaking each of its ten rules (a
 vanished `resource`, a `revision` naming no commit, a duplicate `id`, an
 upper-case path, a byte order mark, a missing frontmatter block, an event
@@ -73,7 +73,7 @@ read-only bundle (skipped as root, whom no chmod keeps out), and leaving no
 temporary file or lock behind; and (check 13, same day)
 `knowledge-provenance.sh` passing a confirmation signed by the curator on
 file - with a GPG key, a GPG signing subkey, or an SSH key - and failing an
-unsigned one, an unknown id, an id the gate cannot look up (which it used to
+unsigned one, a concept path git has to quote (refused rather than passed unread; a name with a byte above 0x7f is read), an unknown id, an id the gate cannot look up (which it used to
 skip), a wrong key of either kind and an id's own key registered in the same
 range as their confirmation, while another curator's key landing alongside
 passes; and, since events are read whole from the frontmatter, against every
@@ -83,7 +83,7 @@ flow-style event, a flow-style human `generated` record and an event a merge
 adds that neither side held, while passing the same re-date signed by its
 curator, a confirmed concept that merely moved, an example event in a body
 code fence and a merge that brings in a signed confirmation - all with
-throwaway keys; and (check 14, added 2026-09-17) `CHANGELOG.md` never
+throwaway keys, and saying so and passing where there is no `.lokf/curators/`; and (check 14, added 2026-09-17) `CHANGELOG.md` never
 carrying two headings for one released version, and `changelog-release.mjs
 promote` folding a second qualifying push into the top released section by
 subsection, rather than adding a second heading for it, when that version
@@ -100,7 +100,13 @@ also reads the pinned tag itself for the path the install step copies out of
 it (`skills/ktl-librarian`), and skips that half where the tag is not on the
 clone: a rename leaves a real version and a real path that are not in the same
 tag, which is how the pin sat at `v0.21.0` after the `lokf-*` skills became
-`ktl-*`. Then `gh skill publish --dry-run` runs.
+`ktl-*`; and (check 16, added 2026-09-19) the repository's old name staying
+out of every file but the ones that record history - `CHANGELOG.md`, the
+bundle's `log.md`, and one "formerly" line in `docs/install.md` - and
+(check 16a, added 2026-09-23) the skills' and plugins' old `lokf-` names
+staying out of every file but `CHANGELOG.md`. The job sets up `uv` and
+confirms `gh skill` is available before the contract runs, and then
+`gh skill publish --dry-run` runs.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs
 `actionlint`, pointed by path at this repository's workflows and at the two
