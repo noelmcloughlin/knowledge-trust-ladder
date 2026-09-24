@@ -2,6 +2,10 @@
 
 ## 2026-09-24
 
+* **Audit**: `playbooks/index.md` had no bullet for the Obsidian playbook, and
+  the sidecar playbook linked `hosts-and-doorways` in its body with no typed
+  relation; both fixed. Every other check passed - schema, relation targets,
+  conventions, the projected graph, and the manual lint pass.
 * **README-sourced explanations re-derived.** `why-four-roles`,
   `why-a-registrar-role`, `why-a-distribution-repository` and `glossary/lokf`
   had kept prose no current source carries (an origin story, an adversarial

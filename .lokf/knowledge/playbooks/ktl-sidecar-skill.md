@@ -15,6 +15,7 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
+  - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 ---
 
 # Overview
