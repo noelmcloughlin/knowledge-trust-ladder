@@ -1,6 +1,6 @@
 # Step 5 automation - what the files do and how to wire them
 
-Laying these down is one-time setup; how they behave at run time is ktl-librarian's operating manual ([`../../ktl-librarian/references/scheduled-task.md`](../../ktl-librarian/references/scheduled-task.md)). Applies only to a **git-tracked** `.lokf/` on **GitHub** - see SKILL.md Step 5 for why a gitignored bundle makes both workflows a permanent no-op.
+Laying these down is one-time setup; how they behave at run time is ktl-librarian's operating manual ([`../../ktl-librarian/references/scheduled-task.md`](../../ktl-librarian/references/scheduled-task.md)). Applies only to a **git-tracked** `.lokf/` on **GitHub** - see SKILL.md Step 5 for why a gitignored bundle makes the workflows a permanent no-op.
 
 ## `knowledge-registrar.yaml` - the validation and provenance gate
 
@@ -55,9 +55,31 @@ changed. It is **inert until wired**:
 | Repository variable | Value |
 | --- | --- |
 | `KNOWLEDGE_LIBRARIAN_ENABLED` | `true` - arms the scheduled run; anything else (or unset) leaves the agent step skipped |
-| `AGENT_CLI` | your non-interactive agent command, accepting a prompt via `-p` (use a repo *secret* instead if it embeds a token, and read `secrets.AGENT_CLI` in the workflow) |
+| `AGENT_CLI` | your non-interactive agent command, accepting a prompt via `-p`, such as `npx -y @anthropic-ai/claude-code --permission-mode acceptEdits`, or `npx -y @github/copilot` with the tool approvals its documentation gives for `-p` runs, which can prompt no one. Keep the credential out of it; if it must embed one, make it a *secret* named `AGENT_CLI` instead, which the workflow also reads |
+| `AGENT_API_KEY_ENV` | the environment variable your agent CLI reads its key from, such as `ANTHROPIC_API_KEY` or `COPILOT_GITHUB_TOKEN`. Leave it unset for an agent that authenticates another way |
+
+| Repository secret | Value |
+| --- | --- |
+| `AGENT_API_KEY` | the agent's API key or token. The wrapper hands it to the agent under the `AGENT_API_KEY_ENV` name and to nothing else |
 
 With `KNOWLEDGE_LIBRARIAN_ENABLED` unset (or not `true`) the agent step is skipped, so the workflow is harmless until you wire it up. The workflow runs the reviewed `.lokf/scripts/knowledge-librarian.sh` directly rather than an arbitrary command string.
+
+The wrapper refuses to start when only one of `AGENT_API_KEY` and `AGENT_API_KEY_ENV` is set. It also refuses a name that does not end `_API_KEY`, `_TOKEN` or `_KEY`, so a slip cannot overwrite `PATH` or `LD_PRELOAD`, and a name starting `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, because `gh`, git and the runner read those too. The key reaches the agent's environment only, never an argument list or the wrapper's own git commands.
+
+## `knowledge-release.yaml` - the bundle as a release asset
+
+Attaches `.lokf/knowledge` to a GitHub release as `knowledge-<tag>.tar.gz`, with a `.sha256` file beside it, so a reader can take the bundle as it stood at that release without cloning the repository. It runs no agent and needs no LLM. It never commits or pushes.
+
+It starts in two ways:
+
+- **By hand, always.** Run it from the Actions tab, or `gh workflow run knowledge-release.yaml -f tag=<tag>`, naming an existing release's tag.
+- **On each published release, once armed.** Set the `KNOWLEDGE_RELEASE_ENABLED` repository variable to `true`. Unset, each release shows the run as skipped.
+
+GitHub starts no workflow for a release made with the default `GITHUB_TOKEN`, so the release trigger never fires when your release job makes releases that way. Have that job dispatch this workflow after it creates the release, with `actions: write` on the job: `gh workflow run knowledge-release.yaml --ref "$TAG" -f tag="$TAG"`. The skills repository's own `publish.yml` does this.
+
+A release whose bundle is unchanged gets no tarball. The `pack` job compares the bundle's git tree at the tag with its tree at the newest other published release that carries a knowledge tarball. When the two match, the run ends green with a notice naming that release, and nothing is uploaded. A reader who wants the bundle for such a release takes it from the release the notice names. The tree changes only when a tracked file in the bundle does, so a release that touched only code or docs compares as unchanged. To attach a tarball anyway, for example to repair a release's assets, start the workflow by hand with `force` ticked.
+
+When the bundle changed, `pack` runs the registrar's two checks, so a release never carries a bundle its own gate would fail. It then packs the bundle under a read-only token. The tarball holds the tracked files under a `knowledge/` root. It is reproducible: every file carries the time of the last commit that touched the bundle, so a reader can rebuild it from the tag and compare checksums, and an unchanged bundle gives the same checksum at every release. Links inside the bundle are stored as links, never followed. The `attach` job holds `contents: write`, runs no third-party packages, checks the tarball against its checksum and uploads both files, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
 
 ## `knowledge-librarian.sh` - the agent wrapper
 

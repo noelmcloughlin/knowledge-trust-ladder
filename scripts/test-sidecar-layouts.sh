@@ -14,14 +14,20 @@
 #      name - with the doorway, without it, and in the rearranged shape - and
 #      still refuses one outside the bundle; and (1b) the wrapper puts
 #      .git/config and .git/hooks/ back when the agent fails or the job is
-#      cancelled, not only when it returns cleanly;
+#      cancelled, not only when it returns cleanly; and (1c) the wrapper hands
+#      AGENT_API_KEY to the agent under AGENT_API_KEY_ENV's name only, and
+#      refuses a name that is not a credential's;
 #   2. the librarian workflow's change detection sees a bundle edit in each of
 #      those shapes, and its packaging step stages it without failing when the
 #      second name does not exist;
 #   3. the registrar workflow triggers on, and diffs, both names;
 #   4. `just lokf-link` creates the doorway, is a no-op when it is present,
 #      refuses a name taken by something else, and does nothing when
-#      `.lokf/knowledge` is itself a link.
+#      `.lokf/knowledge` is itself a link;
+#   5. the release workflow compares an unchanged bundle as unchanged and an
+#      edited one as changed in each shape; its pack step puts the bundle, and
+#      nothing beside it, under `knowledge/`, keeps a link's target as written,
+#      and gives the same bytes for the same bundle, at the same tag or a later one.
 #
 # Needs bash and git. `just` is optional: without it, test 4 is skipped and says so.
 set -euo pipefail
@@ -31,6 +37,7 @@ templates="$repo_root/skills/ktl-sidecar/templates"
 wrapper="$templates/scripts/knowledge-librarian.sh"
 librarian_yaml="$templates/github/knowledge-librarian.yaml"
 registrar_yaml="$templates/github/knowledge-registrar.yaml"
+release_yaml="$templates/github/knowledge-release.yaml"
 justfile="$templates/justfile"
 
 work="$(mktemp -d)"
@@ -139,6 +146,35 @@ for way in fail term; do
   else ok "poison/$way: .git/hooks/ was restored"; fi
 done
 
+# 1c. The key reaches the agent under the name AGENT_API_KEY_ENV gives, and
+# under no other: not as AGENT_API_KEY, and not at all when the name is one
+# the wrapper refuses (it exits 2 before the agent runs).
+env_agent="$work/env-agent.sh"
+cat > "$env_agent" <<'AGENT'
+#!/usr/bin/env bash
+env | grep -E '^(ANTHROPIC_API_KEY|AGENT_API_KEY|AGENT_API_KEY_ENV|PATH)=' | sed 's/^PATH=.*/PATH=set/' | sort > "$ENV_OUT"
+AGENT
+chmod +x "$env_agent"
+host="$work/wrapper-key"
+make_host "$host" default
+# key_case <label> <key> <name> <expected exit> <expected env lines, space-separated>
+key_case() {
+  local label="$1" key="$2" name="$3" want="$4" expect="$5" status=0 got
+  rm -f "$work/env.out"
+  ( cd "$host" && AGENT_CLI="$env_agent" ENV_OUT="$work/env.out" AGENT_API_KEY="$key" AGENT_API_KEY_ENV="$name" \
+      bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+  got="$( [ -f "$work/env.out" ] && tr '\n' ' ' < "$work/env.out" | sed 's/ $//' || echo "agent did not run")"
+  if [ "$status" = "$want" ] && [ "$got" = "$expect" ]; then ok "key/$label: exit $status, agent saw: $got"
+  else err "key/$label: exit $status (want $want), agent saw: $got (want: $expect)"; fi
+}
+key_case named   sk-test ANTHROPIC_API_KEY 0 "ANTHROPIC_API_KEY=sk-test PATH=set"
+key_case none    ""      ""                0 "PATH=set"
+key_case no-name sk-test ""                2 "agent did not run"
+key_case no-key  ""      ANTHROPIC_API_KEY 2 "agent did not run"
+key_case path    sk-test PATH              2 "agent did not run"
+key_case github  sk-test GITHUB_TOKEN      2 "agent did not run"
+key_case lower   sk-test anthropic_api_key 2 "agent did not run"
+
 echo "2. the librarian workflow's change detection and packaging"
 detect='git status --porcelain -- .lokf/knowledge knowledge_bundle'
 if grep -qF "$detect" "$librarian_yaml"; then ok "template detects changes with: $detect"
@@ -221,6 +257,54 @@ if command -v just >/dev/null 2>&1; then
   else err "a rearranged host was not left alone"; fi
 else
   echo "SKIP: just is not installed - the lokf-link recipe tests need it"
+fi
+
+echo "5. the release workflow's compare and pack steps"
+# Run the template's own lines, so the test breaks if they change: the
+# bundle_tree function, the mtime line and the tar line.
+bundle_tree_fn="$(sed -n '/^ *bundle_tree() {$/,/^          }$/p' "$release_yaml")"
+mtime_line="$(grep -E '^\s*mtime=' "$release_yaml" | sed 's/^[[:space:]]*//')"
+# shellcheck disable=SC2016 # the pattern matches a literal "$src"
+tar_line="$(grep -E '^\s*tar -C "\$src"' "$release_yaml" | sed 's/^[[:space:]]*//')"
+if [ -z "$bundle_tree_fn" ] || [ -z "$mtime_line" ] || [ -z "$tar_line" ]; then
+  err "knowledge-release.yaml no longer has a bundle_tree function, an mtime= line and a 'tar -C \"\$src\"' line"
+else
+  eval "$bundle_tree_fn"
+  # pack <host> <tag> <out dir> - runs the template's pack lines at the tag's checkout
+  pack() {
+    # shellcheck disable=SC2034 # asset, src and mtime are read by the eval'd lines
+    ( cd "$1" && git checkout -q "$2" && export RUNNER_TEMP="$3" && mkdir -p "$RUNNER_TEMP/release" \
+        && read -r _ BUNDLE_PATH < <(bundle_tree HEAD) && asset=knowledge.tar.gz \
+        && src="$(cd .lokf/knowledge && pwd -P)" && eval "$mtime_line" && eval "$tar_line" )
+  }
+  for shape in default no-doorway rearranged; do
+    host="$work/release-$shape"
+    make_host "$host" "$shape"
+    ln -s ./a.md "$host/.lokf/knowledge/alias.md"
+    ( cd "$host" && git add -A && git commit -q -m link && git -c tag.gpgSign=false tag v1 \
+        && sleep 1 && printf 'more\n' >> README.md && git commit -qam readme && git -c tag.gpgSign=false tag v2 \
+        && sleep 1 && printf 'more\n' >> .lokf/knowledge/a.md && git commit -qam concept && git -c tag.gpgSign=false tag v3 )
+    t1="$(cd "$host" && bundle_tree v1)"; t2="$(cd "$host" && bundle_tree v2)"; t3="$(cd "$host" && bundle_tree v3)"
+    if [ -n "$t1" ] && [ "$t1" = "$t2" ]; then ok "$shape: a README-only release compares as unchanged ($t1)"
+    else err "$shape: a README-only release compared as changed ($t1 vs $t2)"; fi
+    if [ "${t3%% *}" != "${t2%% *}" ]; then ok "$shape: a concept edit compares as changed"
+    else err "$shape: a concept edit compared as unchanged"; fi
+    for tag in v1 v2 v3; do pack "$host" "$tag" "$work/rt-$shape-$tag"; done
+    pack "$host" v1 "$work/rt-$shape-again"
+    tarball="$work/rt-$shape-v1/release/knowledge.tar.gz"
+    listing="$(tar -tzf "$tarball" | tr '\n' ' ')"
+    if [ "$listing" = "knowledge/ knowledge/a.md knowledge/alias.md " ]; then
+      ok "$shape: the tarball holds the bundle under knowledge/ and nothing else"
+    else err "$shape: unexpected tarball listing ($listing)"; fi
+    if tar -tvzf "$tarball" | grep -q 'knowledge/alias.md -> \./a\.md$'; then ok "$shape: a link inside the bundle keeps its target"
+    else err "$shape: a link inside the bundle lost its target"; fi
+    if cmp -s "$tarball" "$work/rt-$shape-again/release/knowledge.tar.gz"; then ok "$shape: two packs of one tag give the same bytes"
+    else err "$shape: two packs of one tag differ"; fi
+    if cmp -s "$tarball" "$work/rt-$shape-v2/release/knowledge.tar.gz"; then ok "$shape: an unchanged bundle packs to the same bytes at a later tag"
+    else err "$shape: an unchanged bundle packed differently at a later tag"; fi
+    if ! cmp -s "$tarball" "$work/rt-$shape-v3/release/knowledge.tar.gz"; then ok "$shape: a changed bundle packs to different bytes"
+    else err "$shape: a changed bundle packed to the same bytes"; fi
+  done
 fi
 
 echo ""

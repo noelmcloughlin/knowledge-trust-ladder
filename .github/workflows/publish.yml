@@ -27,6 +27,7 @@ jobs:
     environment: release
     permissions:
       contents: write
+      actions: write # dispatch knowledge-release.yaml for the new tag
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -88,3 +89,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
         run: gh skill publish --tag "$VERSION"
+
+      # The release above is made with GITHUB_TOKEN, and GitHub starts no
+      # workflow from an event that token causes, so knowledge-release.yaml's
+      # release trigger never fires here. A dispatch is the one exception, so
+      # this step asks for the bundle tarball directly, built from the tag.
+      - name: Attach the knowledge bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: gh workflow run knowledge-release.yaml --ref "$VERSION" -f tag="$VERSION"

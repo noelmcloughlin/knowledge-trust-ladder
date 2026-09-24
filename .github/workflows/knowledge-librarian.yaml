@@ -92,11 +92,16 @@ jobs:
       #   1. Set KNOWLEDGE_LIBRARIAN_ENABLED to "true" to arm the run. Anything
       #      else (or unset) leaves this step skipped, a safe no-op.
       #   2. Set AGENT_CLI to your non-interactive agent command (it takes a prompt
-      #      via -p). If it embeds an API key or token, define it as a *secret*
-      #      (secrets are masked in logs; `vars.` are not, and public-repo logs are
-      #      world-readable) and reference `secrets.AGENT_CLI` here instead. Better
-      #      still, keep the credential out of the command and let the agent CLI read
-      #      it from its own secret-provided environment variable.
+      #      via -p), for example
+      #        npx -y @anthropic-ai/claude-code --permission-mode acceptEdits
+      #      Keep the credential out of it. If the command must embed one, make
+      #      AGENT_CLI a *secret* instead: secrets are masked in logs, `vars.` are
+      #      not, and public-repo logs are world-readable.
+      #   3. Put the agent's API key or token in the AGENT_API_KEY secret, and set
+      #      the AGENT_API_KEY_ENV variable to the name the agent CLI reads it
+      #      from, such as ANTHROPIC_API_KEY or COPILOT_GITHUB_TOKEN. The wrapper
+      #      hands the key to the agent under that name only. Skip this step for
+      #      an agent that authenticates some other way.
       #
       # What runs is fixed to the reviewed, in-repo wrapper below, not an arbitrary
       # command string from a repo variable. So changing *what executes* goes
@@ -112,6 +117,8 @@ jobs:
         if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
         env:
           AGENT_CLI: ${{ vars.AGENT_CLI || secrets.AGENT_CLI }}
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          AGENT_API_KEY_ENV: ${{ vars.AGENT_API_KEY_ENV }}
         run: bash .lokf/scripts/knowledge-librarian.sh
 
       # The wrapper enforces this same boundary itself, immediately after the
