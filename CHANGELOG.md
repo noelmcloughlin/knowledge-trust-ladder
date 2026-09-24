@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-release.yaml`, a third sidecar workflow.** It attaches `.lokf/knowledge` to a GitHub release as a reproducible `knowledge-<tag>.tar.gz` with a checksum, after the registrar's checks pass, and attests its provenance on a public repository. It skips a release whose bundle has the same git tree as the last release that carries one; a manual run's `force` input overrides that. It runs when dispatched by hand, and on each published release once `KNOWLEDGE_RELEASE_ENABLED` is `true`. This repository's `publish.yml` dispatches it after each release, and layout test 5 exercises its pack step.
+- **The librarian template has a slot for the agent's credential, and documented settings for Copilot CLI and Claude Code.** Name the variable your agent reads in `AGENT_API_KEY_ENV`, then either set `AGENT_USE_JOB_TOKEN` so the job's own token is the credential (Copilot CLI; the job requests `copilot-requests: write`, idle until then) or put a key in the `AGENT_API_KEY` secret: a Claude Console key, or a Claude subscription token from `claude setup-token` under `CLAUDE_CODE_OAUTH_TOKEN`. The wrapper hands it to the agent under that name only, and refuses a name that is not a credential's or that `gh`, git or the runner also read. Node 22 is set up before the agent step. Layout test 1c exercises the hand-off.
+
+### Fixed
+
+- **The librarian validates relation targets before it opens a pull request.** Its validate step ran plain `lokf validate` while the registrar gate and the release workflow run `lokf validate --check-refs`, and the gate never fires on the pull request the librarian opens, so a dangling relation could pass the librarian's own check and land. The template, this repository's copy and the pull-request summary line now name `--check-refs`. Both plugins had made this change locally.
+- **The sidecar README's layout tree names everything Step 5 lays down.** It stopped at `justfile` and `feedback.md`; `scripts/`, `queries.http` and `curators/` were missing.
+
 ## [0.23.1] - 2026-09-24
 
 ### Fixed

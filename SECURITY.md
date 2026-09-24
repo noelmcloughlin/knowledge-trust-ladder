@@ -1,6 +1,6 @@
 # Security Policy
 
-*This file is a policy, not a threat model. It says how to report, what executes here, and what holds each surface, a line or two each that links to where the reasoning lives - a workflow header, a skill's own guardrail, or the shared [threat model](docs/threat-model.md) - and `bash scripts/validate-repository.sh` holds it to a word budget so it stays that way.*
+*This file is a policy, not a threat model. It says how to report, what executes here, and what holds each surface. Each is a line or two that links to where the reasoning lives: a workflow header, a skill's own guardrail, or the shared [threat model](docs/threat-model.md). `bash scripts/validate-repository.sh` holds the file to a word budget so it stays that way.*
 
 ## Reporting a vulnerability
 
@@ -12,7 +12,7 @@ Only the latest published tag receives fixes. A security fix ships as a patch re
 
 A fix to a template reaches a repository that already has a sidecar only when its copies are laid down again. Updating the skill, or moving `TRUST_LADDER_SKILLS_REF`, does not touch them. `knowledge-preflight.sh` reports the drift on its `copies` line, and ktl-sidecar's repair re-copies the files.
 
-A finding from an automated skill audit, such as Snyk's or Socket's on a skills catalog, is answered in the file it names and in the [threat model](docs/threat-model.md#prompt-injection-guards). Report one that looks unanswered the same way as any other.
+An automated skill audit, such as Snyk's or Socket's on a skills catalog, gets its answer in the file each finding names and in the [threat model](docs/threat-model.md#prompt-injection-guards). Report a finding that looks unanswered the same way as any other.
 
 ## What executes here
 
@@ -20,9 +20,9 @@ This repository is mostly Markdown. Three things in it run, or are run by other 
 
 | Surface | What holds it |
 | --- | --- |
-| `skills/ktl-sidecar/templates/` - six scripts and two workflows the sidecar **copies into other repositories**, which run there | The template's own design: two jobs so the agent never meets a write token, a `publish` job that confines the patch to the bundle and refuses a `human:` claim, and a preflight and a forge-free gate that only read git and gpg. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards). |
-| `.github/workflows/` - `validate.yml` on every pull request; `knowledge-registrar.yaml` and `knowledge-librarian.yaml`, this repository's own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, harden-runner in audit mode. Each workflow's header comment says why it is shaped as it is. [Repository hardening](docs/threat-model.md#repository-hardening). |
-| The four skills' `SKILL.md` and `references/` prose - **executed by whichever LLM agent runs it**, here and in every consumer | Each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards) and [Human attribution](docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential). |
+| `skills/ktl-sidecar/templates/`: six scripts and three workflows the sidecar **copies into other repositories**, which run there | The template's own design: two jobs so the agent never meets a write token, a `publish` job that confines the patch to the bundle and refuses a `human:` claim, and a preflight and a forge-free gate that only read git and gpg. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards). |
+| `.github/workflows/`: `validate.yml` on every pull request; `knowledge-registrar.yaml`, `knowledge-librarian.yaml` and `knowledge-release.yaml`, this repository's own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, harden-runner in audit mode. Each workflow's header comment says why it is shaped as it is. [Repository hardening](docs/threat-model.md#repository-hardening). |
+| The four skills' `SKILL.md` and `references/` prose, **executed by whichever LLM agent runs it**, here and in every consumer | Each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards) and [Human attribution](docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential). |
 
 A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access your harness grants it, and only the scheduled workflow enforces its scope, so review what the agent changed before you commit. [Interactive use](docs/threat-model.md#interactive-use-scope-is-advisory-not-enforced).
 

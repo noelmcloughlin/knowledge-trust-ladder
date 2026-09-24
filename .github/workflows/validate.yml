@@ -97,16 +97,18 @@ jobs:
 
       # Catches what YAML parsing alone misses (bad expressions, wrong
       # contexts, invalid `needs:`, shellcheck on `run:` blocks). Unlike
-      # `gh skill publish --dry-run`, it also reaches the two workflow
+      # `gh skill publish --dry-run`, it also reaches the three workflow
       # templates under skills/ktl-sidecar/templates/github/ that get
       # copied into other repositories and run there. With no paths given
       # actionlint looks only under .github/workflows/, so the templates are
       # named explicitly. The repository contract separately holds this
-      # repository's own registrar gate byte-identical to its template.
+      # repository's own copy of each template byte-identical to it.
       - name: actionlint
         uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 # v1.7.12
         with:
-          args: -color .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml skills/ktl-sidecar/templates/github/knowledge-librarian.yaml skills/ktl-sidecar/templates/github/knowledge-registrar.yaml
+          # -ignore: actionlint 1.7.12 predates the copilot-requests scope the
+          # librarian template requests; drop the flag once a release knows it.
+          args: -color -ignore copilot-requests .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/knowledge-release.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml skills/ktl-sidecar/templates/github/knowledge-librarian.yaml skills/ktl-sidecar/templates/github/knowledge-registrar.yaml skills/ktl-sidecar/templates/github/knowledge-release.yaml
 
       # actionlint checks syntax, not pinning. A tag or branch ref floats, so
       # every `uses:`, here and in the templates hosts copy, must name a

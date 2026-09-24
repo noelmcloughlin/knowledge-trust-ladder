@@ -312,6 +312,7 @@ unpin() { sed -E 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/
 for pair in \
   "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
   "$templates/github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml" \
+  "$templates/github/knowledge-release.yaml:.github/workflows/knowledge-release.yaml" \
   "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
   "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
   "$templates/scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py" \
