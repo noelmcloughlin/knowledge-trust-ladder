@@ -27,6 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read # read the repo only; no write token near the agent
+      # Lets the job token pay for Copilot CLI requests. The token reaches the
+      # agent only when AGENT_USE_JOB_TOKEN is "true" (see the agent step);
+      # until then the scope is idle. actionlint 1.7.12 does not know this
+      # scope yet, so the lint step ignores that one message.
+      copilot-requests: write
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
       validate_outcome: ${{ steps.validate-lokf.outcome }}
@@ -88,20 +93,32 @@ jobs:
           test -f .agents/skills/ktl-librarian/SKILL.md
           echo "Installed ktl-librarian@$TRUST_LADDER_SKILLS_REF"
 
-      # Wire this up under Settings -> Secrets and variables -> Actions:
+      # Both agent commands the sidecar documents run through npx, and Copilot
+      # CLI needs Node 22 or newer, which a runner image does not promise.
+      - name: Set up Node for the agent
+        if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      # Wire this up under Settings -> Secrets and variables -> Actions. The
+      # sidecar's references/automation.md gives the full commands for Copilot
+      # CLI and for Claude Code.
       #   1. Set KNOWLEDGE_LIBRARIAN_ENABLED to "true" to arm the run. Anything
       #      else (or unset) leaves this step skipped, a safe no-op.
-      #   2. Set AGENT_CLI to your non-interactive agent command (it takes a prompt
-      #      via -p), for example
-      #        npx -y @anthropic-ai/claude-code --permission-mode acceptEdits
-      #      Keep the credential out of it. If the command must embed one, make
-      #      AGENT_CLI a *secret* instead: secrets are masked in logs, `vars.` are
-      #      not, and public-repo logs are world-readable.
-      #   3. Put the agent's API key or token in the AGENT_API_KEY secret, and set
-      #      the AGENT_API_KEY_ENV variable to the name the agent CLI reads it
-      #      from, such as ANTHROPIC_API_KEY or COPILOT_GITHUB_TOKEN. The wrapper
-      #      hands the key to the agent under that name only. Skip this step for
-      #      an agent that authenticates some other way.
+      #   2. Set AGENT_CLI to your non-interactive agent command; the wrapper
+      #      appends -p "<prompt>". It splits the value on whitespace and
+      #      honours no quotes, so no flag value may contain a space. Keep the
+      #      credential out of it. If the command must embed one, make
+      #      AGENT_CLI a *secret* instead: secrets are masked in logs, `vars.`
+      #      are not, and public-repo logs are world-readable.
+      #   3. Set AGENT_API_KEY_ENV to the name the agent reads its credential
+      #      from: COPILOT_GITHUB_TOKEN for Copilot CLI, ANTHROPIC_API_KEY for
+      #      Claude Code. The wrapper hands it to the agent under that name only.
+      #   4. Then either set AGENT_USE_JOB_TOKEN to "true", so the job's own
+      #      GITHUB_TOKEN is that credential (Copilot CLI: no key to keep, and
+      #      the requests are billed to the repository owner's Copilot seat, or
+      #      to the organisation); or put the key in the AGENT_API_KEY secret.
       #
       # What runs is fixed to the reviewed, in-repo wrapper below, not an arbitrary
       # command string from a repo variable. So changing *what executes* goes
@@ -117,7 +134,7 @@ jobs:
         if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
         env:
           AGENT_CLI: ${{ vars.AGENT_CLI || secrets.AGENT_CLI }}
-          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          AGENT_API_KEY: ${{ vars.AGENT_USE_JOB_TOKEN == 'true' && github.token || secrets.AGENT_API_KEY }}
           AGENT_API_KEY_ENV: ${{ vars.AGENT_API_KEY_ENV }}
         run: bash .lokf/scripts/knowledge-librarian.sh
 

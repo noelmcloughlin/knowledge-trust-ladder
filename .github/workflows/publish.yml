@@ -98,4 +98,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
-        run: gh workflow run knowledge-release.yaml --ref "$VERSION" -f tag="$VERSION"
+        run: |
+          gh workflow run knowledge-release.yaml --ref "$VERSION" -f tag="$VERSION" \
+            || { echo "::error::The skills published under $VERSION, but the bundle tarball was not requested. Run the Knowledge Release workflow by hand with tag=$VERSION."; exit 1; }

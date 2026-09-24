@@ -95,13 +95,17 @@ jobs:
           bundle_tree() {
             local ref="$1" path
             for path in .lokf/knowledge knowledge_bundle; do
-              if [ "$(git cat-file -t "$ref:$path" 2>/dev/null)" = tree ]; then
-                printf '%s %s\n' "$(git rev-parse "$ref:$path")" "$path"
+              if [ "$(git cat-file -t "refs/tags/$ref:$path" 2>/dev/null)" = tree ]; then
+                printf '%s %s\n' "$(git rev-parse "refs/tags/$ref:$path")" "$path"
                 return 0
               fi
             done
             return 1
           }
+          # Both tags are spelt in full, so a name is never read as an option
+          # or as a branch of the same name.
+          gh release view "$TAG" --json tagName --jq .tagName >/dev/null \
+            || { echo "::error::No release exists for tag $TAG. Create the release first, then run this workflow again."; exit 1; }
           read -r tree path < <(bundle_tree "$TAG") || { echo "::error::No bundle folder at $TAG"; exit 1; }
           echo "path=$path" >> "$GITHUB_OUTPUT"
           # Newest first. Drafts are left out, since nobody has published them.
@@ -125,7 +129,7 @@ jobs:
             echo "::notice::The bundle at $TAG is identical to the one released with $prev (tree ${tree:0:12}), so no tarball is attached."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "The bundle changed since $prev: $(git diff --shortstat "$prev" "$TAG" -- "$path")"
+            echo "The bundle changed since $prev: $(git diff --shortstat "refs/tags/$prev" "refs/tags/$TAG" -- "$path")"
           fi
 
       - name: Set up uv
@@ -136,7 +140,7 @@ jobs:
 
       - name: Install the lokf sidecar
         if: steps.compare.outputs.changed == 'true'
-        run: uv sync --locked
+        run: uv sync
         working-directory: .lokf
 
       # The registrar's two checks, so a release never carries a bundle its
@@ -157,9 +161,9 @@ jobs:
       # reader can rebuild the tarball from the tag and compare checksums, and
       # an unchanged bundle has the same checksum at every release.
       #
-      # `.lokf/knowledge` is a link onto `knowledge_bundle/` on a host
-      # rearranged by hand (see the sidecar's references/portability.md), so
-      # the path is resolved first. The archive root is always `knowledge/`.
+      # The path is the one the compare step found, resolved to the real
+      # folder in case it is a link (see the sidecar's references/portability.md).
+      # The archive root is always `knowledge/`.
       # Links inside the bundle are stored as links and never followed, so
       # nothing outside the bundle can reach the tarball. The `S` flag keeps
       # their targets as written. Only tracked files are packed, because the
@@ -172,10 +176,10 @@ jobs:
         run: |
           set -euo pipefail
           asset="knowledge-${TAG//\//-}.tar.gz"
-          src="$(cd .lokf/knowledge && pwd -P)"
+          src="$(cd "$BUNDLE_PATH" && pwd -P)"
           mtime="$(git log -1 --format=%ct -- "$BUNDLE_PATH")"
           mkdir -p "$RUNNER_TEMP/release"
-          tar -C "$src" --sort=name --mtime="@$mtime" --owner=0 --group=0 --numeric-owner --mode='u=rwX,go=rX' --transform 's,^\.,knowledge,S' -cf - . | gzip -n > "$RUNNER_TEMP/release/$asset"
+          LC_ALL=C tar -C "$src" --sort=name --mtime="@$mtime" --owner=0 --group=0 --numeric-owner --mode='u=rwX,go=rX' --transform 's,^\.,knowledge,S' -cf - . | gzip -n > "$RUNNER_TEMP/release/$asset"
           (cd "$RUNNER_TEMP/release" && sha256sum "$asset" > "$asset.sha256")
           echo "asset=$asset" >> "$GITHUB_OUTPUT"
           echo "Packed $(tar -tzf "$RUNNER_TEMP/release/$asset" | grep -vc '/$') files into $asset"

@@ -55,16 +55,45 @@ changed. It is **inert until wired**:
 | Repository variable | Value |
 | --- | --- |
 | `KNOWLEDGE_LIBRARIAN_ENABLED` | `true` - arms the scheduled run; anything else (or unset) leaves the agent step skipped |
-| `AGENT_CLI` | your non-interactive agent command, accepting a prompt via `-p`, such as `npx -y @anthropic-ai/claude-code --permission-mode acceptEdits`, or `npx -y @github/copilot` with the tool approvals its documentation gives for `-p` runs, which can prompt no one. Keep the credential out of it; if it must embed one, make it a *secret* named `AGENT_CLI` instead, which the workflow also reads |
-| `AGENT_API_KEY_ENV` | the environment variable your agent CLI reads its key from, such as `ANTHROPIC_API_KEY` or `COPILOT_GITHUB_TOKEN`. Leave it unset for an agent that authenticates another way |
+| `AGENT_CLI` | your non-interactive agent command; the wrapper appends `-p "<prompt>"`. The two commands below are the ones this file vouches for. Keep the credential out of it; if it must embed one, make it a *secret* named `AGENT_CLI` instead, which the workflow also reads |
+| `AGENT_API_KEY_ENV` | the environment variable the agent reads its credential from: `COPILOT_GITHUB_TOKEN` for Copilot CLI, `ANTHROPIC_API_KEY` for Claude Code |
+| `AGENT_USE_JOB_TOKEN` | `true` - the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it; leave it unset for any other agent |
 
 | Repository secret | Value |
 | --- | --- |
-| `AGENT_API_KEY` | the agent's API key or token. The wrapper hands it to the agent under the `AGENT_API_KEY_ENV` name and to nothing else |
+| `AGENT_API_KEY` | the agent's API key or token, when `AGENT_USE_JOB_TOKEN` is not set. The wrapper hands it to the agent under the `AGENT_API_KEY_ENV` name and to nothing else |
 
 With `KNOWLEDGE_LIBRARIAN_ENABLED` unset (or not `true`) the agent step is skipped, so the workflow is harmless until you wire it up. The workflow runs the reviewed `.lokf/scripts/knowledge-librarian.sh` directly rather than an arbitrary command string.
 
-The wrapper refuses to start when only one of `AGENT_API_KEY` and `AGENT_API_KEY_ENV` is set. It also refuses a name that does not end `_API_KEY`, `_TOKEN` or `_KEY`, so a slip cannot overwrite `PATH` or `LD_PRELOAD`, and a name starting `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, because `gh`, git and the runner read those too. The key reaches the agent's environment only, never an argument list or the wrapper's own git commands.
+The wrapper splits `AGENT_CLI` on whitespace and honours no quotes, so no flag value may contain a space; both commands below are written that way. It refuses to start when only one of the credential and `AGENT_API_KEY_ENV` is set. It also refuses a name that does not end `_API_KEY`, `_TOKEN` or `_KEY`, so a slip cannot overwrite `PATH` or `LD_PRELOAD`, and a name starting `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, because `gh`, git and the runner read those too. The key reaches the agent's environment only, never an argument list or the wrapper's own git commands. The workflow sets up Node 22 before the agent step, since both commands below run through `npx`.
+
+### Copilot CLI
+
+Three settings, and no key to keep:
+
+| Setting | Value |
+| --- | --- |
+| `AGENT_CLI` | `npx -y @github/copilot --no-ask-user --allow-tool=read --allow-tool=write --allow-tool=shell(git:*) --allow-tool=shell(uv:*) --allow-tool=shell(uvx:*) --allow-tool=shell(just:*) --allow-tool=shell(bash:*)` |
+| `AGENT_API_KEY_ENV` | `COPILOT_GITHUB_TOKEN` |
+| `AGENT_USE_JOB_TOKEN` | `true` |
+
+The `refresh` job requests `copilot-requests: write`, which lets the job token pay for the requests. On a personally owned repository they are billed to the owner's Copilot seat. In an organisation the policy *Allow use of Copilot CLI billed to the organization* must be on; it is on by default wherever Copilot CLI is enabled. The token holds `contents: read` besides, and expires with the job.
+
+The flags pre-approve what the skill runs: reading and writing files, and the git, uv, uvx, just and bash commands. A `-p` run can prompt no one, so any other tool call is denied and shown in the log; widen the list when a log shows a denied call the skill needed. `--no-ask-user` stops the CLI asking a question instead. The `write` approval is not scoped to the bundle: the wrapper refuses a run that wrote outside it, and the `publish` job checks the patch again.
+
+A personal access token instead of the job token: a fine-grained token owned by the person, not by an organisation, with the account permission *Copilot Requests*; a classic `ghp_` token is ignored. Put it in the `AGENT_API_KEY` secret and leave `AGENT_USE_JOB_TOKEN` unset. The requests are then billed to that person's seat, and that person's plan decides which models are available.
+
+### Claude Code
+
+| Setting | Value |
+| --- | --- |
+| `AGENT_CLI` | `npx -y @anthropic-ai/claude-code --permission-mode dontAsk --allowedTools Read,Edit(.lokf/knowledge/**),Bash(git:*),Bash(uv:*),Bash(uvx:*),Bash(just:*),Bash(bash:*)` |
+| `AGENT_API_KEY_ENV` | `ANTHROPIC_API_KEY` |
+| `AGENT_API_KEY` (secret) | an API key from the Claude Console |
+
+`dontAsk` denies any call that would otherwise prompt, so a run never waits for a person, and `--allowedTools` names what the skill needs. `Edit(.lokf/knowledge/**)` confines every file edit to the bundle; Edit rules cover new files too. `Bash(git:*)` is the prefix form, and it is why no pattern has a space: a rule such as `Bash(git log:*)` cannot be passed, since the wrapper splits on spaces.
+
+Whichever agent, run the workflow once by hand from the Actions tab before arming the schedule, and read the agent's log for denied tool calls.
 
 ## `knowledge-release.yaml` - the bundle as a release asset
 

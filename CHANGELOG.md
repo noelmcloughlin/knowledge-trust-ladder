@@ -7,7 +7,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Added
 
 - **`knowledge-release.yaml`, a third sidecar workflow.** It attaches `.lokf/knowledge` to a GitHub release as a reproducible `knowledge-<tag>.tar.gz` with a checksum, after the registrar's checks pass, and attests its provenance on a public repository. It skips a release whose bundle has the same git tree as the last release that carries one; a manual run's `force` input overrides that. It runs when dispatched by hand, and on each published release once `KNOWLEDGE_RELEASE_ENABLED` is `true`. This repository's `publish.yml` dispatches it after each release, and layout test 5 exercises its pack step.
-- **The librarian template has a slot for the agent's key.** Put it in the `AGENT_API_KEY` secret and name the variable your agent reads in `AGENT_API_KEY_ENV`. The wrapper hands the key to the agent under that name only, and refuses a name that is not a credential's or that `gh`, git or the runner also read. Layout test 1c exercises it.
+- **The librarian template has a slot for the agent's credential, and documented settings for Copilot CLI and Claude Code.** Name the variable your agent reads in `AGENT_API_KEY_ENV`, then either set `AGENT_USE_JOB_TOKEN` so the job's own token is the credential (Copilot CLI; the job requests `copilot-requests: write`, idle until then) or put a key in the `AGENT_API_KEY` secret. The wrapper hands it to the agent under that name only, and refuses a name that is not a credential's or that `gh`, git or the runner also read. Node 22 is set up before the agent step. Layout test 1c exercises the hand-off.
 
 ## [0.23.1] - 2026-09-24
 

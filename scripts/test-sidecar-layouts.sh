@@ -265,7 +265,7 @@ echo "5. the release workflow's compare and pack steps"
 bundle_tree_fn="$(sed -n '/^ *bundle_tree() {$/,/^          }$/p' "$release_yaml")"
 mtime_line="$(grep -E '^\s*mtime=' "$release_yaml" | sed 's/^[[:space:]]*//')"
 # shellcheck disable=SC2016 # the pattern matches a literal "$src"
-tar_line="$(grep -E '^\s*tar -C "\$src"' "$release_yaml" | sed 's/^[[:space:]]*//')"
+tar_line="$(grep -E '^\s*(LC_ALL=C )?tar -C "\$src"' "$release_yaml" | sed 's/^[[:space:]]*//')"
 if [ -z "$bundle_tree_fn" ] || [ -z "$mtime_line" ] || [ -z "$tar_line" ]; then
   err "knowledge-release.yaml no longer has a bundle_tree function, an mtime= line and a 'tar -C \"\$src\"' line"
 else
@@ -274,8 +274,8 @@ else
   pack() {
     # shellcheck disable=SC2034 # asset, src and mtime are read by the eval'd lines
     ( cd "$1" && git checkout -q "$2" && export RUNNER_TEMP="$3" && mkdir -p "$RUNNER_TEMP/release" \
-        && read -r _ BUNDLE_PATH < <(bundle_tree HEAD) && asset=knowledge.tar.gz \
-        && src="$(cd .lokf/knowledge && pwd -P)" && eval "$mtime_line" && eval "$tar_line" )
+        && read -r _ BUNDLE_PATH < <(bundle_tree "$2") && asset=knowledge.tar.gz \
+        && src="$(cd "$BUNDLE_PATH" && pwd -P)" && eval "$mtime_line" && eval "$tar_line" )
   }
   for shape in default no-doorway rearranged; do
     host="$work/release-$shape"
