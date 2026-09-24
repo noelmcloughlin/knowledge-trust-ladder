@@ -161,7 +161,7 @@ jobs:
         id: validate-lokf
         if: steps.install-lokf.outcome == 'success'
         continue-on-error: true
-        run: uv run lokf validate knowledge
+        run: uv run lokf validate --check-refs knowledge
         working-directory: .lokf
 
       - name: Detect changes
@@ -316,7 +316,7 @@ jobs:
               'and reconciled the `.lokf/` bundle. A human maintainer must review and',
               'approve - this PR must not be auto-merged.',
               '',
-              `- LOKF validation (\`lokf validate\`): ${check(LOKF_OUTCOME)}`,
+              `- LOKF validation (\`lokf validate --check-refs\`): ${check(LOKF_OUTCOME)}`,
               '',
               '### Reviewer checklist',
               '- [ ] Claims trace to a source of truth.',
