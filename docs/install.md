@@ -43,8 +43,8 @@ What each version level means: [releasing.md](releasing.md).
 
 Copilot runs custom skills in a sandbox with no repository, so only the
 **docent** goes there, and it takes a snapshot of the bundle with it.
-[integrations/m365/README.md](../integrations/m365/README.md) builds it and
-adds it to a declarative agent.
+[m365.md](m365.md) says where to get it and
+how to add it to a declarative agent.
 
 ## What each skill needs
 

@@ -127,7 +127,7 @@ done < <(find skills -name '*.md' | sort)
 # 6. Executable scripts pass language-specific linting.
 say ""
 say "Linting executable scripts..."
-mapfile -t scripts < <(find skills scripts integrations -type f -name '*.sh' | sort)
+mapfile -t scripts < <(find skills scripts -type f -name '*.sh' | sort)
 if command -v shellcheck >/dev/null 2>&1; then
   for s in "${scripts[@]}"; do
     if shellcheck "$s"; then
@@ -319,6 +319,8 @@ for pair in \
   "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
   "$templates/scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
   "$templates/scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
+  "$templates/m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh" \
+  "$templates/m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md" \
   "$templates/gitattributes:.lokf/.gitattributes"; do
   src="${pair%%:*}"; dst="${pair##*:}"
   if cmp -s <(unpin "$src") <(unpin "$dst"); then
@@ -1028,32 +1030,50 @@ else
   fi
 fi
 
-# 17. The Microsoft 365 Copilot build of the docent is an integration point,
-#     not a fifth skill. Its template keeps a name no installer or catalog
-#     reads as a skill, its trust labels stay word for word the docent's, and
-#     it builds from this repository's own bundle inside Copilot's limits.
+# 17. The Microsoft 365 Copilot skills are sidecar templates, not skills of
+#     this repository: one shared builder and one instructions file per
+#     read-only role, the docent first. No file under templates/ may be a
+#     SKILL.md, every instructions file's trust labels stay word for word the
+#     docent's, this repository's own bundle builds inside Copilot's limits,
+#     and one input gives one zip, since the release workflow attaches it.
 say ""
-say "Checking the Microsoft 365 Copilot docent build..."
-m365="integrations/m365"
-if [[ -n "$(find integrations -iname 'SKILL.md' 2>/dev/null)" ]]; then
-  err "a SKILL.md sits under integrations/ - installers would list it as a skill; keep the template named skill-template.md"
+say "Checking the Microsoft 365 Copilot skills build..."
+m365="$templates/m365"
+if [[ -n "$(find "$templates" -iname 'SKILL.md' 2>/dev/null)" ]]; then
+  err "a SKILL.md sits under $templates - installers would list it as a skill; name an instructions file after the skill it builds (ktl-docent-m365.md)"
 else
-  ok "no SKILL.md under integrations/"
+  ok "no SKILL.md under $templates"
 fi
 labels() { awk '/^## Trust labels/{f=1; next} /^## /{f=0} f && /^\|/' "$1"; }
-if [[ -z "$(labels skills/ktl-docent/SKILL.md)" ]]; then
-  err "could not find the trust-label table in skills/ktl-docent/SKILL.md"
-elif [[ "$(labels skills/ktl-docent/SKILL.md)" == "$(labels "$m365/skill-template.md")" ]]; then
-  ok "$m365/skill-template.md carries ktl-docent's trust labels word for word"
-else
-  err "$m365/skill-template.md's trust-label table differs from ktl-docent's - the two must say the same words"
-fi
+docent_labels="$(labels skills/ktl-docent/SKILL.md)"
+[[ -n "$docent_labels" ]] || err "could not find the trust-label table in skills/ktl-docent/SKILL.md"
+for f in "$m365"/*.md; do
+  if ! grep -q '^## Trust labels' "$f"; then
+    err "$f has no '## Trust labels' section - every Copilot skill says the same words for trust as ktl-docent"
+  elif [[ "$(labels "$f")" == "$docent_labels" ]]; then
+    ok "$f carries ktl-docent's trust labels word for word"
+  else
+    err "$f's trust-label table differs from ktl-docent's - the two must say the same words"
+  fi
+done
 m365_out="$(mktemp -d)"
-if build_log="$(bash "$m365/build.sh" --repo-url https://github.com/noelmcloughlin/knowledge-trust-ladder .lokf/knowledge "$m365_out" 2>&1)" \
-   && [[ -f "$m365_out/ktl-docent-m365/SKILL.md" && -f "$m365_out/ktl-docent-m365/SNAPSHOT.md" && -f "$m365_out/ktl-docent-m365/knowledge/index.md" ]]; then
-  ok "$m365/build.sh builds ktl-docent-m365 from this repository's bundle ($(printf '%s\n' "$build_log" | head -1 | sed 's/.*: //'))"
+# A fixed fallback, so a checkout whose history does not reach the bundle
+# still builds twice from one epoch rather than from two "now"s.
+m365_epoch="$(git log -1 --format=%ct -- .lokf/knowledge)"
+m365_epoch="${m365_epoch:-1700000000}"
+m365_build() { SOURCE_DATE_EPOCH="$m365_epoch" bash "$m365/knowledge-m365.sh" --repo-url https://github.com/noelmcloughlin/knowledge-trust-ladder --ref test .lokf/knowledge "$1" 2>&1; }
+if build_log="$(m365_build "$m365_out/a")" \
+   && [[ -f "$m365_out/a/ktl-docent-m365/SKILL.md" && -f "$m365_out/a/ktl-docent-m365/SNAPSHOT.md" && -f "$m365_out/a/ktl-docent-m365/knowledge/index.md" && -f "$m365_out/a/ktl-docent-m365.zip" ]]; then
+  ok "knowledge-m365.sh builds ktl-docent-m365 from this repository's bundle ($(printf '%s\n' "$build_log" | grep -m1 '^built' | sed 's/.*: //'))"
 else
-  err "$m365/build.sh failed on this repository's bundle: $build_log"
+  err "knowledge-m365.sh failed on this repository's bundle: $build_log"
+fi
+if command -v zip >/dev/null 2>&1; then
+  if (umask 077 && TZ=Asia/Tokyo m365_build "$m365_out/b" >/dev/null) && cmp -s "$m365_out/a/ktl-docent-m365.zip" "$m365_out/b/ktl-docent-m365.zip"; then
+    ok "knowledge-m365.sh gives the same zip bytes under another time zone and umask, as a release asset must"
+  else
+    err "knowledge-m365.sh gave different zip bytes for one input under another time zone and umask"
+  fi
 fi
 rm -rf "${m365_out:?}"
 

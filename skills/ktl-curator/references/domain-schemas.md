@@ -33,6 +33,10 @@ Some regulated domains already have a LinkML vocabulary of their own. AI governa
 
 What such a vocabulary usually lacks is the other half of a bundle's concern: who encoded a record, from which edition, who confirmed it, when to look again. OKF v0.2 defines those fields for documents, not for domain data. Whether they belong on a domain's own records is a question for the domain's owners and for the OKF specification as it evolves. A bundle does not settle it on its own.
 
+## A shape held in reserve: Microsoft 365 provenance
+
+A host whose curators work in Microsoft 365 Copilot rather than a forge has no `gh` login and no signed commit to stand behind a `human:` verdict. Nothing writes such a verdict yet (a Copilot curator needs a write action that does not exist) and nothing checks one (the gate reads `human:` only), so no schema is built. The shape it would take is recorded here so the decision is not re-made: a subclass of the verification event carrying `tenant_id` and `object_id` (the Entra tenant and user object, which outlive a display name or email), an `assurance` from `attested`, `delegated-me`, `directory-lookup`, `platform-history`, `unverified`, `anonymous`, and a revision as the item's `etag` plus a content digest; `by:` under a scheme of its own, `entra:<tenant>/<object>`, so a reader never mistakes it for a forge login. It waits for the curator's write path; the docent and the auditor read `verified` as it is.
+
 ## Validating values against an external vocabulary
 
 A domain schema often binds a slot to codes from an external controlled vocabulary: a `diagnosis` slot's permissible values `meaning`-bound to SNOMED CT terms, say. That binding is a LinkML concern. Neither LOKF's schema nor `lokf validate` checks it. Schema validation confirms the *shape* is right, not that a bound term still exists, isn't obsolete, or carries the label a concept assumes.

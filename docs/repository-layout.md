@@ -8,8 +8,6 @@ skills/
   ktl-librarian/       SKILL.md + references/               (~7.5k tokens loaded on trigger)
   ktl-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
   ktl-docent/          SKILL.md + references/               (~1.5k tokens loaded on trigger)
-integrations/
-  m365/                 build.sh + skill-template.md: docent as M365 Copilot custom skill integration
 .claude-plugin/
   plugin.json           the four skills as one Claude Code plugin, with the keywords a plugin catalog searches
   marketplace.json      lets `/plugin marketplace add` find that plugin in this repository
@@ -23,6 +21,7 @@ integrations/
 docs/
   for-the-curious.md    the mechanics behind the README: four levels of checking, domain schemas
   obsidian.md           the bundle as a vault of its own, and the two plugins
+  m365.md               the docent as a Microsoft 365 Copilot custom skill, from a release; the pattern every read-only role follows
   three-lines.md        the roles placed in the three lines of defence, what an auditor can check, and what remains to do and who does it
   three-lines-critics.md  what the model's critics say, quoted from their own texts, and what a bundle answers and leaves open
   releasing.md          how the three repositories release, and the repository settings it depends on

@@ -107,7 +107,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder \
   --skill ktl-sidecar --skill ktl-librarian --yes
 ```
 
-Add the curator once there is a bundle worth trusting; the docent goes anywhere an agent only *reads* one. The `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release: **[docs/install.md](docs/install.md)**.
+Add the curator once there is a bundle worth trusting; the docent goes anywhere an agent only *reads* one. The `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release: **[docs/install.md](docs/install.md)**. Microsoft 365 Copilot gets the docent as a zip each release carries: **[docs/m365.md](docs/m365.md)**.
 
 **Claude Code plugin** (the same four skills as one plugin, with keywords a plugin catalog can search):
 
