@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The librarian template no longer installs the pinned skill in `noelmcloughlin/knowledge-trust-ladder`.** The install step put a copy in `.agents/skills/`, which the wrapper searches before `skills/`, so scheduled runs used that old release instead of the source. The step checks the repository name, not a file a host could commit. This repository's workflow now matches the template, and check 11 enforces it.
+
 ## [0.23.0] - 2026-09-23
 
 ### Added
