@@ -84,6 +84,15 @@ jobs:
       # at `.lokf/knowledge`, or at `knowledge_bundle` on a host rearranged by
       # hand, where `.lokf/knowledge` is a link and git stores it as a blob.
       # The step picks whichever of the two is a tree at each release.
+      #
+      # SECURITY SCANNER NOTE: Snyk W011 "third-party content exposure /
+      # indirect prompt injection" does not apply to this job. It reads the
+      # repository's own release list from the GitHub API for one purpose: to
+      # find the newest release that already carries a knowledge tarball. No
+      # LLM, AI agent or AI tool runs anywhere in this workflow, so nothing it
+      # reads can reach a prompt. The reply is reduced by `--jq` to tag names,
+      # and each tag name is used only as a quoted `refs/tags/` revision in
+      # git commands, never interpolated into a script by `${{ }}`.
       - name: Compare with the last released bundle
         id: compare
         env:

@@ -73,7 +73,7 @@ Three settings, and no key to keep:
 
 | Setting | Value |
 | --- | --- |
-| `AGENT_CLI` | `npx -y @github/copilot --no-ask-user --allow-tool=read --allow-tool=write --allow-tool=shell(git:*) --allow-tool=shell(uv:*) --allow-tool=shell(uvx:*) --allow-tool=shell(just:*) --allow-tool=shell(bash:*)` |
+| `AGENT_CLI` | `npx -y @github/copilot@1.0.88 --no-ask-user --allow-tool=read --allow-tool=write --allow-tool=shell(git:*) --allow-tool=shell(uv:*) --allow-tool=shell(uvx:*) --allow-tool=shell(just:*) --allow-tool=shell(bash:*)` |
 | `AGENT_API_KEY_ENV` | `COPILOT_GITHUB_TOKEN` |
 | `AGENT_USE_JOB_TOKEN` | `true` |
 
@@ -87,11 +87,18 @@ A personal access token instead of the job token: a fine-grained token owned by 
 
 | Setting | Value |
 | --- | --- |
-| `AGENT_CLI` | `npx -y @anthropic-ai/claude-code --permission-mode dontAsk --allowedTools Read,Edit(.lokf/knowledge/**),Bash(git:*),Bash(uv:*),Bash(uvx:*),Bash(just:*),Bash(bash:*)` |
-| `AGENT_API_KEY_ENV` | `ANTHROPIC_API_KEY` |
-| `AGENT_API_KEY` (secret) | an API key from the Claude Console |
+| `AGENT_CLI` | `npx -y @anthropic-ai/claude-code@2.1.281 --permission-mode dontAsk --allowedTools Read,Edit(.lokf/knowledge/**),Bash(git:*),Bash(uv:*),Bash(uvx:*),Bash(just:*),Bash(bash:*)` |
+| `AGENT_API_KEY_ENV` | `ANTHROPIC_API_KEY` with a Console key, or `CLAUDE_CODE_OAUTH_TOKEN` with a subscription token |
+| `AGENT_API_KEY` (secret) | an API key from the Claude Console, or the token `claude setup-token` prints |
+| `AGENT_USE_JOB_TOKEN` | unset. Claude Code cannot use the job's GitHub token |
+
+Pay for the runs in one of two ways. A Console API key is billed per use, apart from any subscription, and the Console can cap its spending. A Pro or Max subscription needs no API billing: run `claude setup-token` on your own machine, and it prints a long-lived token for your account. The runs then count against that subscription's usage limits, which your own sessions share.
 
 `dontAsk` denies any call that would otherwise prompt, so a run never waits for a person, and `--allowedTools` names what the skill needs. `Edit(.lokf/knowledge/**)` confines every file edit to the bundle; Edit rules cover new files too. `Bash(git:*)` is the prefix form, and it is why no pattern has a space: a rule such as `Bash(git log:*)` cannot be passed, since the wrapper splits on spaces.
+
+Type every value in the Settings form without quotes. GitHub stores exactly what you type, so a quote becomes part of the value: `AGENT_API_KEY_ENV` is then refused, and `AGENT_CLI` passes the quote to the agent.
+
+Both commands pin the CLI's version, as every action in the workflow is pinned, so a run executes the code you tried and a new CLI release reaches the librarian when you move the pin, not before. Move it on purpose, from the CLI's release notes; nothing bumps a repository variable for you.
 
 Whichever agent, run the workflow once by hand from the Actions tab before arming the schedule, and read the agent's log for denied tool calls.
 
