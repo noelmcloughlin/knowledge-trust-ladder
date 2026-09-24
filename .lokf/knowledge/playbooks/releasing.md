@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-18T12:00:00Z"
+  at: "2026-09-24T01:00:00Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -15,9 +15,6 @@ references:
   - https://knowledge-trust-ladder.example/knowledge/policies/versioning
   - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
   - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
-verified:
-- by: process:ktl-librarian
-  at: "2026-09-18T12:00:00Z"
 ---
 
 # Overview
@@ -35,7 +32,12 @@ anything here; `@semantic-release/exec` calls
 `CHANGELOG.md`'s `## [Unreleased]` section is empty, and `notes`, which
 supplies the release notes. A plain shell step
 afterward reads the version `--dry-run` computed, promotes that section to a
-dated heading itself, and commits the change directly - `gh skill publish`
+dated heading itself, moves the librarian template's `TRUST_LADDER_SKILLS_REF`
+to the newest tag a host can clone, and commits both directly as
+`chore(release): <version> - changelog promoted [skip ci]`. Only the
+template's pin moves: `GITHUB_TOKEN` may not push a change under
+`.github/workflows/`, so this repository's own copy keeps its old pin and
+check 11 ignores that one value (2026-09-24) - `gh skill publish`
 stays this repository's one and only tag creator, per the reasoning below.
 
 Because the next version is computed from the last tag and `gh skill publish`
@@ -75,7 +77,7 @@ in front of the `contents: write` scope - the same Environment
 Each `publish.yml` run validates that the input is `vMAJOR.MINOR.PATCH`, that
 the tag does not already exist, and that the bare version matches the top
 released heading in CHANGELOG.md, skipping `## [Unreleased]` (catching a
-typed version nobody wrote release notes for), then re-runs the repository contract and `gh skill publish
+typed version nobody wrote release notes for), then sets up `uv` and re-runs the repository contract and `gh skill publish
 --dry-run`, and only then publishes. The version is typed *with* the `v`
 (`v0.16.0`); the changelog heading never carries one, and the cross-check
 strips it before comparing. This release-process detail moved out of

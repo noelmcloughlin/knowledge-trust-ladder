@@ -7,13 +7,11 @@ genre: reference
 resource: skills/ktl-sidecar/templates/README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-13T12:00:00Z"
+  at: "2026-09-24T01:20:00Z"
 about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/lokf
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-09-14T19:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T18:33:00Z"
 stale_after: 2028-09-09
@@ -29,7 +27,7 @@ loosely for each other here. To an Obsidian user a bundle is a folder of
 notes opened as a vault of its own - the intended arrangement, through the
 host's `knowledge_bundle` link - or, at a cost the plugin READMEs name, a
 folder inside a vault, or a whole vault that is a bundle outright. In
-library terms - the poem the skills README opens with - the bundle is the
+library terms - the poem the repository's README opens with - the bundle is the
 *catalogue* the librarian keeps: the layer that stays put between the stacks
 and the next reader. In museum terms it is the *exhibition* - the hall
 visitors are shown into, where the docent takes people - and each concept in

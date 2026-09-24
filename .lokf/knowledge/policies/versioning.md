@@ -13,7 +13,7 @@ about:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-17T14:02:11Z"
+  at: "2026-09-24T01:25:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10

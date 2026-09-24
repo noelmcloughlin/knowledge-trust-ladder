@@ -19,7 +19,7 @@ references:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-17T15:27:51Z"
+  at: "2026-09-24T01:25:00Z"
 ---
 
 # Overview

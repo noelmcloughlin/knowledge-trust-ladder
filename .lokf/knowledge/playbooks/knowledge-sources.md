@@ -7,10 +7,8 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-09-17T16:40:00Z"
+  at: "2026-09-24T01:30:00Z"
 verified:
-- by: process:ktl-librarian
-  at: "2026-09-17T16:40:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
@@ -25,6 +23,7 @@ stale_after: 2027-09-10
 | `skills/ktl-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, `.gitattributes`, and the six scripts (preflight, conventions and its Python half, librarian wrapper, provenance gate, feedback recorder) | diff `pyproject.toml` (the `lokf` floor) and the template lists in the skill's Step 1 and Step 5 tables |
 | `README.md`, `docs/install.md`, `docs/repository-layout.md` | project identity and the four-role narrative; the install commands, prerequisites table and pinning rule, on their own page since 2026-09-19 when the README became a front door; the repository tree, likewise on its own page | diff the roles table and the `Read on` table; diff `docs/install.md` against `references/gh-skill-cli.md` and `references/open-skills-cli.md`; diff the tree against the working copy |
 | `docs/for-the-curious.md`, `docs/obsidian.md` | the mechanics the README delegates: the four levels of checking and the domain-schema escape hatch; and, since 2026-09-13, the human guide to opening the bundle as a vault of its own with the two plugins | diff the four-levels table against `glossary/trust-label.md` and `ktl-curator/references/domain-schemas.md`; diff `obsidian.md`'s two-vault steps against `playbooks/open-bundle-in-obsidian.md` and `ktl-docent/references/obsidian.md`, which must agree with it |
+| `.claude-plugin/plugin.json`, `marketplace.json` | the Claude Code plugin route to the four skills (2026-09-19), carried by `explanation/why-a-distribution-repository.md` | diff the install commands in `README.md` against that concept; check 3c holds the two keyword lists identical |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
 | `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
 | `docs/three-lines.md`, `docs/three-lines-critics.md` | the roles placed in the three lines of defence, what an auditor can check and what remains to do and who does it; the critics, quoted, and what a bundle answers and leaves open, on the second page | diff `explanation/three-lines-of-defence.md`; confirm every external link on both pages still resolves and still says what is quoted, and that the cross-links between the two pages still meet their headings |
@@ -33,7 +32,8 @@ stale_after: 2027-09-10
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
 | `.github/workflows/semantic-release.yml`, `.github/scripts/changelog-release.mjs`, `.releaserc.json` | the version-and-changelog automation `playbooks/releasing.md` describes | diff the `release` job's steps, the script's `verifyRelease`/`generateNotes` behaviour, and `.releaserc.json`'s `releaseRules` (which commit types map to which bump) against the concept's Overview; all three sit behind the `release` Environment along with `publish.yml` |
-| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `knowledge-conventions.sh`, `knowledge-conventions.py`, `knowledge-preflight.sh`, `knowledge-provenance.sh`, `knowledge-feedback.sh`, `.lokf/.gitattributes` | this repository's dogfooded copies of the workflow templates, scripts and attributes the sidecar skill ships | diff each against its counterpart under `skills/ktl-sidecar/templates/`; `knowledge-registrar.yaml`, the six scripts and `.gitattributes` are kept byte-identical (the preflight reports any drift), and `knowledge-librarian.yaml` differs only by design - it omits the template's "Install the pinned ktl-librarian skill" step, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`, and words one comment for itself. Any other difference is a template bump not yet copied across |
+| `.github/workflows/knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `.lokf/scripts/knowledge-librarian.sh`, `knowledge-conventions.sh`, `knowledge-conventions.py`, `knowledge-preflight.sh`, `knowledge-provenance.sh`, `knowledge-feedback.sh`, `.lokf/.gitattributes` | this repository's dogfooded copies of the workflow templates, scripts and attributes the sidecar skill ships | diff each against its counterpart under `skills/ktl-sidecar/templates/`; all nine are kept byte-identical (check 11 and the preflight report any drift) apart from one value, `knowledge-librarian.yaml`'s `TRUST_LADDER_SKILLS_REF`: since 2026-09-24 the release commit moves that pin in the template only, because `GITHUB_TOKEN` may not push under `.github/workflows/`, and the install step that reads it is skipped here by an `if` on the repository name, since this repository publishes the skills it uses and the wrapper finds them under bare `skills/`. Any other difference is a template bump not yet copied across |
+| `.lokf/curators/*.asc`, `*.pub` | the curator public keys `knowledge-provenance.sh` verifies `human:` confirmations against (the first, `noelmcloughlin.asc`, registered 2026-09-24) | consciously excluded as concepts: key material, not knowledge; re-check that `playbooks/ktl-curator-skill.md` and `policies/threat-model.md` still describe the directory as the gate reads it |
 | `.github/ISSUE_TEMPLATE/*.md`, `.github/pull_request_template.md`, `.github/dependabot.yml` | contributor intake forms and pin maintenance | consciously excluded as concepts - see note below; re-check only that each template still names all four skills and that its `AI_COVENANT.md` link is absolute |
 | `scripts/*.sh` | what the validation playbook claims CI enforces | re-read the assertions; a new check is a gap in the playbook |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
@@ -43,6 +43,18 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-24, eighteenth pass)**, on `main` at
+  0.23.1. Most concepts had not been re-checked since #54, #59, #61 and #65
+  rewrote `README.md` and `docs/`, and #64 renamed their contents
+  mechanically: twenty concepts follow their sources again, nine re-checked
+  unchanged. The README-sourced explanations had kept prose no current source
+  carries; a pass after any README rewrite should re-read all four. Several
+  sources lag #69/#70 themselves (`CONTRIBUTING.md`'s "one exception" and
+  pin follow-up, `docs/releasing.md`'s follow-up section, `docs/install.md`'s
+  "skill names are unchanged", the sidecar's `automation.md`,
+  `portability.md` and `prerequisites.md` on byte-identical copies): flagged,
+  not fixed here. `lokf` on PyPI is still `0.8.0`, the floor; upstream `main`
+  carries unreleased `--check-ids` work. `.lokf/feedback.md` has no entries.
 - **Refresh after the portability work (2026-09-17, twelfth pass)**, on the
   working tree before it merged. The contract, sidecar, curator, librarian,
   docent, threat-model and three-lines concepts and the hosts explanation

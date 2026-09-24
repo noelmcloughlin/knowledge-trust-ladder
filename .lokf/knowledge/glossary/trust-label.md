@@ -7,22 +7,20 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-17T15:49:14Z"
+  at: "2026-09-24T01:20:00Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-verified:
-- by: process:ktl-librarian
-  at: "2026-09-17T15:49:14Z"
 ---
 
 # Overview
 
 The labels restate OKF section 5.3's trust tiers in words a non-specialist can
 act on. They are computed each time from `verified`, `status`, `generated.at`,
-and `stale_after`: any `verified` actor prefixed `human:` means confirmed by a
+and `stale_after` (with `type` and the relation fields for vocabulary fit
+and reliance, and git history for confirmations no signed commit backs): any `verified` actor prefixed `human:` means confirmed by a
 person; events by non-human actors only mean checked by automation; no
 `verified` key at all means nobody has checked it.
 

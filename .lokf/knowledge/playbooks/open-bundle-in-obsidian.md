@@ -5,9 +5,13 @@ title: Open the knowledge bundle in Obsidian
 description: How a knowledge bundle meets an Obsidian vault - two vaults, the workshop someone already keeps and the bundle opened as its own vault through the root-level knowledge_bundle doorway - with what Obsidian does with a link on each host, verified against Obsidian 1.13.7's file reconciler, and why the bundle is never laid down as a real folder inside a vault.
 genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
+sources:
+- resource: skills/ktl-sidecar/SKILL.md
+- resource: docs/obsidian.md
+- resource: skills/ktl-docent/references/obsidian.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-13T12:00:00Z"
+  at: "2026-09-24T01:20:00Z"
 status: draft
 isPartOf:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -15,9 +19,6 @@ about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 relatedTo:
   - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
-verified:
-  - by: process:ktl-librarian
-    at: "2026-09-16T09:10:00Z"
 ---
 
 # Overview
@@ -71,7 +72,9 @@ indexed twice. Dot-directories are never indexed at all. Two consequences:
   invisible to that vault by the same rule that hides `.obsidian/` and `.git/`. So point people at the
   doorway, not the root. For a notes vault this is the feature that makes the sidecar safe to keep
   *inside* the vault folder: the workshop and the exhibition never index the same file, which is the
-  one hazard Obsidian's caution about nested vaults names.
+  one hazard Obsidian's caution about nested vaults names. On a code-repository host the cost runs
+  the other way: concepts cite sources such as `src/…` and `docs/…` that sit above the small vault, so
+  no plugin can open them from there, and KTL Curator shows such a source as a path with a copy button.
 - **A link whose target lies outside the vault is followed.** An Obsidian user with one vault and many
   repositories can link each repository's `.lokf/knowledge` into a folder of that vault
   (`projects/acme-knowledge -> ~/git/acme/.lokf/knowledge`) and list those folders under the plugins'
@@ -91,3 +94,7 @@ above is the one the skills and the plugins assume. A shared folder that is *not
 rearranged that way by hand, for a synced visible name - the sidecar's `references/portability.md`
 says how and what it costs. The attempt, its cost and what the reversal kept:
 [Hosts and doorways](../explanation/hosts-and-doorways.md).
+
+## Open questions
+
+- 2026-09-24, process:ktl-librarian: the parenthetical that *Excluded files* hides a folder "in search, graph view and unlinked mentions" has no source in this repository - `references/portability.md`, `docs/obsidian.md` and the docent's `obsidian.md` say only that exclusion makes the exhibition "less noticeable" while it still enters graph and search. If it is Obsidian's own settings text, cite Obsidian; otherwise drop it.

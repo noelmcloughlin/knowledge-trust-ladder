@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-17T15:49:14Z"
+  at: "2026-09-24T01:10:00Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
@@ -15,17 +15,18 @@ about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
-verified:
-- by: process:ktl-librarian
-  at: "2026-09-17T15:49:14Z"
 ---
 
 # Overview
 
 Runs **a little, regularly**. Step 1 is always a read-only one-screen report
-computed from frontmatter alone (no toolkit needed): a health line, at most
-five items "worth ten minutes today", the librarian's open questions, waiting
-reader feedback, vocabulary fit, (only when the curation policy sets
+computed from frontmatter, and from git history for one count (no toolkit
+needed): a health line (including how many confirmations no signed commit
+stands behind), at most
+five items "worth ten minutes today", the librarian's open questions, how many
+reader feedback entries wait - counted with `grep -c`, never read, so no
+reader's text enters the session - vocabulary fit, the confirmations git
+cannot back (named, only when there are any), (only when the curation policy sets
 `Independent re-check: <n>`) n confirmed concepts,
 picked by a rule the curator cannot steer, with their sources for a second
 person to re-check, and (since 2026-09-17) a *Ready to record* line from the
@@ -36,7 +37,8 @@ often the person who knows the subject and not the repository; one who
 cannot fix it themselves gets a request note for the maintainer, written
 from ktl-sidecar's `references/prerequisites.md`. Step 2 is an opt-in review session that
 shows the source *before* the claim and takes one verb per item. Step 3 covers
-the curation policy, gap intake, and domain-schema guidance.
+the curation policy, gap intake, domain-schema guidance, and the same labels
+as SPARQL queries for `lokf serve` (`references/queries.md`).
 
 **Vocabulary fit counts against the host's vocabulary, not only LOKF's**
 (stated 2026-09-14): where `.lokf/justfile` validates with `--schema
