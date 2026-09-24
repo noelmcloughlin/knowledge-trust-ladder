@@ -297,14 +297,18 @@ done
 #     copies under .github/ and .lokf/scripts/ rather than the templates
 #     themselves (actionlint is pointed at both, ShellCheck scans the tree),
 #     so the copies must stay byte-identical or a template change ships
-#     unlinted. knowledge-librarian.yaml is among them: its install step
-#     skips itself in this repository, which publishes the skill it installs.
+#     unlinted. knowledge-librarian.yaml is among them, apart from the value
+#     of TRUST_LADDER_SKILLS_REF: the release commit moves the template's pin
+#     but may not touch .github/workflows/, and the install step that reads
+#     the pin is skipped in this repository anyway.
 #     Then the conventions script itself is exercised: it must pass on this
 #     repository's own bundle and fail on a bundle that breaks each rule -
 #     a checker that cannot fail is not covering anything.
 say ""
 say "Checking the sidecar templates are the copies CI lints..."
 templates="skills/ktl-sidecar/templates"
+# The skills pin is each repository's own to move, so it is not drift.
+unpin() { sed -E 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' "$1"; }
 for pair in \
   "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
   "$templates/github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml" \
@@ -316,7 +320,7 @@ for pair in \
   "$templates/scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
   "$templates/gitattributes:.lokf/.gitattributes"; do
   src="${pair%%:*}"; dst="${pair##*:}"
-  if cmp -s "$src" "$dst"; then
+  if cmp -s <(unpin "$src") <(unpin "$dst"); then
     ok "$dst matches its template"
   else
     err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"

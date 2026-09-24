@@ -6,7 +6,9 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
-- **The librarian template no longer installs the pinned skill in `noelmcloughlin/knowledge-trust-ladder`.** The install step put a copy in `.agents/skills/`, which the wrapper searches before `skills/`, so scheduled runs used that old release instead of the source. The step checks the repository name, not a file a host could commit. This repository's workflow now matches the template, and check 11 enforces it.
+- **The librarian template no longer installs the pinned skill in `noelmcloughlin/knowledge-trust-ladder`.** The install step put a copy in `.agents/skills/`, which the wrapper searches before `skills/`, so scheduled runs used that old release instead of the source. The step checks the repository name, not a file a host could commit. This repository's workflow now matches the template apart from its skills pin, and check 11 enforces it.
+- **The release commit moves the skills pin in the template only.** `GITHUB_TOKEN` may not push a change under `.github/workflows/`, so moving it in this repository's workflow as well made the 0.23.1 release fail.
+- **The preflight no longer reports a different skills pin as drift.** A host moves `TRUST_LADDER_SKILLS_REF` on its own schedule, so its librarian workflow is compared with the template's apart from that one value.
 
 ## [0.23.0] - 2026-09-23
 

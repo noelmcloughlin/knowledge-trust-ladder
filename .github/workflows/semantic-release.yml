@@ -178,14 +178,15 @@ jobs:
         run: |
           node .github/scripts/changelog-release.mjs promote "$VERSION" "$(date -u +%Y-%m-%d)"
           # Move the librarian template's pin to the newest tag a host can
-          # clone, or check 15 fails main one release later. The dogfooded
-          # copy moves with it, or check 11 fails on the copy.
+          # clone, or check 15 fails main one release later. Only the
+          # template: GITHUB_TOKEN may not push a change under
+          # .github/workflows/, so the dogfooded copy keeps its old pin, and
+          # check 11 ignores that one value.
           pinned=skills/ktl-sidecar/templates/github/knowledge-librarian.yaml
-          copy=.github/workflows/knowledge-librarian.yaml
           latest="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)"
           if [ -n "$latest" ]; then
-            sed -i -E "s/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1$latest/" "$pinned" "$copy"
+            sed -i -E "s/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1$latest/" "$pinned"
           fi
-          git add CHANGELOG.md "$pinned" "$copy"
+          git add CHANGELOG.md "$pinned"
           git commit -m "chore(release): $VERSION - changelog promoted [skip ci]"
           git push origin HEAD:main
