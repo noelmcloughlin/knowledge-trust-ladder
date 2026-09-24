@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-09-24
+
 ### Added
 
 - **Releases carry the docent as a Microsoft 365 Copilot skill.** `knowledge-release.yaml` attaches `ktl-docent-m365-<tag>-<repository>.zip` beside the bundle zip, for a person with nothing installed to upload to Agent Builder. The new sidecar folder `.lokf/m365/` holds its instructions and `knowledge-m365.sh`, which packs one reproducible zip per instructions file and refuses a result over Copilot's limits; the auditor will be another file there. Check 17 builds it. `docs/m365.md` has the routes, and the sidecar's `references/m365.md` what Copilot allows.
