@@ -7,7 +7,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Added
 
 - **`integrations/m365/` builds the docent as a Microsoft 365 Copilot custom skill.** `build.sh` packs a bundle or a release zip into `ktl-docent-m365/` and refuses a result over Copilot's limits. The answers name the snapshot, and gaps go back to the reader as a line to file. Check 17 builds it and holds its trust labels to ktl-docent's.
-
 - **`scripts/sync-sidecar.sh` syncs a sibling repository to one release.** It copies a published tag's templates over the sibling's copies, moves its skills pin to that tag, runs the sidecar's checks, and leaves the diff for review. `docs/releasing.md` drops the hand bump of the template's own pin, which the release commit has made since 0.23.1.
 
 ## [0.26.0] - 2026-09-24
