@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.27.1] - 2026-09-25
+
 ### Fixed
 
 - **`atk add skill` works with the released Agents Toolkit.** The 1.1.17 release hides the command behind `TEAMSFX_AGENT_SKILLS`, not `ATK_FRONTIER`, which only the 1.1.18 betas read, so the documented line failed with `UnknownCommandError`. `docs/m365.md`, the sidecar's `references/m365.md` and the Copilot playbook now set both.
