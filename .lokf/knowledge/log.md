@@ -1,7 +1,12 @@
 # Change Log
 
+## 2026-09-25
+
+* **The Copilot playbook says what a tenant without custom skills sees.** `docs/m365.md` and the sidecar's `references/m365.md` record a test in such a tenant: `atk provision` refused `agent_skills` at Microsoft's service, and Agent Builder sent the skill to Copilot Studio, which needs its own licence. `docent-in-m365-copilot` now checks for the preview before the routes, adds the Copilot Studio step, and has two troubleshooting lines for those errors in place of the fallback to Agent Builder.
+
 ## 2026-09-24
 
+* **The Copilot playbook names both toolkit flags.** `docs/m365.md` and the sidecar's `references/m365.md` now say `atk add skill` is hidden behind `TEAMSFX_AGENT_SKILLS` in the 1.1.17 release and `ATK_FRONTIER` from the 1.1.18 betas on, and set both. `docent-in-m365-copilot` follows, in its toolkit route and its troubleshooting list. The toolkit route also changes into the project folder, passes `--env dev`, and skips `atk validate`, which rejects `agent_skills` against the v1.8 schema; two troubleshooting lines cover `InvalidProjectError` and that rejection. Both variables are exported for the session, since `provision` packs the skill's files only while one is set.
 * **The Copilot playbook follows the reworked `docs/m365.md`.** `docent-in-m365-copilot` now gives the three steps in order, says what a release with no docent zip means, adds the first-answer check and where its gap line goes, and carries the page's troubleshooting list. The build's need for bash and `zip` is new, taken from the builder.
 * **Three open questions closed.** `docs/install.md` now says the skills took the `ktl-` prefix in 0.22.0, so the distribution concept states it again. `references/scheduled-task.md` lists the refresh job's install, Node and write-scope steps, closing the librarian playbook's question. Obsidian's settings help confirms that *Excluded files* hides a folder from search, graph view and unlinked mentions, so the Obsidian playbook cites it, and the sidecar's `portability.md` and the docent's `obsidian.md` no longer understate it.
 * **Threat model follows its source.** `docs/threat-model.md` and the concept now say the release workflow's `attach` job checks each zip, not one.

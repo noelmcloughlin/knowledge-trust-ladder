@@ -12,7 +12,7 @@ sources:
 - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:42:01Z"
+  at: "2026-09-25T00:09:11Z"
 status: draft
 isPartOf:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -46,7 +46,7 @@ It writes `dist/ktl-docent-m365/` (with `SKILL.md`, `SNAPSHOT.md` and `knowledge
 
 # 2. Add it to an agent
 
-Two routes take the same zip, and the page recommends **Agent Builder** unless the reader already develops agents with the toolkit. With Agent Builder, nothing is installed: create or open an agent in Microsoft 365 Copilot and add the zip as a skill. With the **Agents Toolkit CLI** (`atk`, for developers, on Node.js), log in, scaffold or reuse a declarative agent, and run `ATK_FRONTIER=true atk add skill --from <zip> -i false` (the command is hidden without that variable), then `atk validate`, `atk provision` and `atk preview`. Either way, custom skills are in preview: the tenant must be in the Frontier program, and an agent cannot yet have both skills and embedded files.
+Custom skills are in preview, only for tenants in Microsoft's Frontier program and not with Information Barriers, so the page has the reader check that first; without the preview, both routes fail with errors that do not say why. Two routes take the same zip, and the page recommends **Agent Builder** unless the reader already develops agents with the toolkit. With Agent Builder, nothing is installed: create or open an agent in Microsoft 365 Copilot and add the zip as a skill. If Agent Builder says skill attachments require the full Copilot Studio experience, the reader copies the agent to Copilot Studio and adds the zip there, which needs a Copilot Studio licence or trial. With the **Agents Toolkit CLI** (`atk`, for developers, on Node.js), log in, scaffold or reuse a declarative agent, change into its folder, export `TEAMSFX_AGENT_SKILLS=true` and `ATK_FRONTIER=true` (skills are hidden without the variable its version reads: `TEAMSFX_AGENT_SKILLS` in the 1.1.17 release, `ATK_FRONTIER` from the 1.1.18 betas on), and run `atk add skill --from <zip> -i false`, then `atk provision --env dev` and `atk preview --env dev` in the same shell, since without the variable the toolkit packs the agent without the skill's files. The page says to skip `atk validate` for now, because it rejects the `agent_skills` entry the toolkit itself wrote. Either way, an agent cannot yet have both skills and embedded files.
 
 # 3. Ask it something
 
@@ -61,8 +61,12 @@ The snapshot does not update itself. After each release that changes the bundle,
 - **The release has no `ktl-docent-m365-…` asset.** The bundle did not change since the last release that carries one, or the repository has not laid down `.lokf/m365/`.
 - **The build exits 1.** The skill breaks one of Copilot's limits, the output names which, and nothing is written.
 - **The build says `zip not found`.** The folder is built but not zipped: install `zip`, or zip the folder by hand before adding it.
-- **`atk add skill` is not a command.** Set `ATK_FRONTIER=true`. The command also works only inside a project the toolkit scaffolded.
-- **Agent Builder or the toolkit refuses the skill.** The tenant is not in the Frontier program, or the agent already has embedded files. Both are preview limits, not faults in the zip.
+- **`atk add skill` is not a command** (`UnknownCommandError`). Export both `TEAMSFX_AGENT_SKILLS=true` and `ATK_FRONTIER=true`.
+- **`atk add skill` says `InvalidProjectError`.** It ran outside the agent's project: change into the folder `atk new` created, or pass `--folder`.
+- **`atk validate` rejects `agent_skills`.** The newest published manifest schema, v1.8, has no such property yet, so the fault is the toolkit's preview, not the zip. Skip it, and let `provision` decide.
+- **`atk provision` fails at `teamsApp/validateAppPackage` with `Unrecognized member 'agent_skills'`.** Microsoft's service refused the entry: check that the tenant has custom skills. `teamsApp/create` has already registered an app by then, which the reader deletes in the Teams Developer Portal if they give up.
+- **Agent Builder says skill attachments require the full Copilot Studio experience.** Copy the agent to Copilot Studio and add the zip there; if Copilot Studio says sign-up is disabled, only an admin can grant the licence.
+- **Agent Builder or the toolkit refuses the skill for another reason.** The agent may already have embedded files, a preview limit, not a fault in the zip.
 
 # Which roles go to Copilot
 

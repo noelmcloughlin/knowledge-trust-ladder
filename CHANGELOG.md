@@ -4,6 +4,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **`atk add skill` works with the released Agents Toolkit.** The 1.1.17 release hides the command behind `TEAMSFX_AGENT_SKILLS`, not `ATK_FRONTIER`, which only the 1.1.18 betas read, so the documented line failed with `UnknownCommandError`. `docs/m365.md`, the sidecar's `references/m365.md` and the Copilot playbook now set both.
+- **The toolkit route in `docs/m365.md` runs in the agent's project.** `atk new` scaffolds into a new folder, and `atk add skill` run beside it failed with `InvalidProjectError`, so the steps now change into it. `provision` and `preview` take `--env dev`, which they need with `-i false`. `atk validate` is skipped: it checks against the v1.8 manifest schema, which has no `agent_skills`, and rejects the entry the toolkit's own `add skill` wrote. Two troubleshooting lines cover both errors. Both variables are now exported for the session: `provision` packs the skill's files only while the variable is set, and without it ships the agent's `agent_skills` entry with no folder behind it.
+- **`docs/m365.md` says what a tenant without custom skills sees.** Custom skills are a Frontier preview, and the page now has the reader check for it before choosing a route. Tried on 2026-09-25 in a tenant without the preview, `atk provision` failed at `teamsApp/validateAppPackage` with `Unrecognized member 'agent_skills'`, from Microsoft's service. Agent Builder sent the skill to Copilot Studio, which needs its own licence. The troubleshooting list quotes both errors, and says to delete the app that `provision` registers before it fails.
+
 ## [0.27.0] - 2026-09-24
 
 ### Added
