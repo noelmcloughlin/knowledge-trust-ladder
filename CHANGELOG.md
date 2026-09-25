@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Security
+
+- **The Snyk W011 findings on ktl-librarian and ktl-docent are acknowledged** in each skill and [the threat model](docs/threat-model.md#prompt-injection-guards). The librarian is the one skill that reads a reader's feedback entry, and the note says what contains that: resolve only what an entry names, and the scheduled workflow's `publish` job refuses any path outside the three allowed and any `by: human:` claim. The docent's note now also covers its repository fallback, which opens text it did not author and quotes it, with no write path but a scripted feedback entry.
+
 ## [0.27.1] - 2026-09-25
 
 ### Fixed
