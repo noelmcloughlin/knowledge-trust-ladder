@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: "2026-09-26T19:52:21Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -44,6 +44,7 @@ stale_after: 2027-09-10
 
 # Notes for the next run
 
+- **Steady-state refresh (2026-09-26, twenty-second pass)**, on `main` at `cb55e5b`, after the 0.27.1 and 0.27.2 releases. One change since the last bundle change: #83 acknowledged the Snyk W011 findings in the librarian's and docent's `SKILL.md`, so both skill playbooks now carry them; `docs/threat-model.md` did not change. The release commit moved the template's skills pin to `v0.27.1`, which no concept states. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 - **Steady-state refresh (2026-09-24, twenty-first pass)**, on `main` at `c21f785`, after the 0.27.0 release. Two commits since the last bundle change. `docs/m365.md` was reordered into three numbered steps with a first-answer check and a troubleshooting list, so `playbooks/docent-in-m365-copilot.md` follows it. The release commit moved the template's skills pin to `v0.26.0`, which no concept states. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 - **Steady-state refresh (2026-09-24, twentieth pass)**, on branch `0.27`
   at `fc76970`, after #79 and the unreleased Microsoft 365 Copilot work.

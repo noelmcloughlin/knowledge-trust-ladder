@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-17T15:27:51Z"
+  at: "2026-09-26T19:52:21Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
@@ -17,9 +17,10 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+  - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  at: "2026-09-26T19:52:21Z"
 ---
 
 # Overview
@@ -58,3 +59,5 @@ answer or a feedback entry, even to explain where one was found - it names
 the file and line and the kind of value, never the value itself, since the
 scheduled workflow commits `feedback.md` into a pull request that can be
 public.
+
+**The repository fallback, the second Snyk W011 finding (acknowledged 2026-09-25).** Falling back to the repository means opening text the skill did not author, and its guardrails treat that text as something to quote or summarize, never as instructions, even when a file is phrased as one. What contains it is what the skill cannot do: it never edits `.lokf/knowledge/`, and its one write is a feedback entry through the script, after asking once per session, which the script holds to one line and one of two kinds. The Copilot variant cannot write the file at all and hands the reader the line to paste instead. The [threat model](../policies/threat-model.md) lists this surface and what it does not cover.
