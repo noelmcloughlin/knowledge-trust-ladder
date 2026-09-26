@@ -32,3 +32,7 @@ In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do t
 - [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) runs this repository's `ktl-curator` review session - the third level: source beside claim, the person's decision written down, and no agent in the loop.
 
 The curator is always a person; the skill and the plugin that carry the name are that person's assistants, and neither reaches a verdict of its own. Obsidian is optional in both directions: the plugins work on any LOKF bundle however it was made, and a vault with no bundle in it is left alone (`docs/obsidian.md`).
+
+## Open questions
+
+- 2026-09-26, human:noelmcloughlin: the description still says "rather than by an agent"; the README doesn't.

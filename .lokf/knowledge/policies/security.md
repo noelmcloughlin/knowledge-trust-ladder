@@ -12,14 +12,15 @@ sources:
 generated:
   by: process:ktl-librarian
   at: "2026-09-24T00:55:04Z"
-status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
-stale_after: 2027-03-10
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:21:41Z"
+stale_after: 2027-03-26
 ---
 
 # Overview

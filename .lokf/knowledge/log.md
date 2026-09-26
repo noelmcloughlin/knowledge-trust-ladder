@@ -2,6 +2,7 @@
 
 ## 2026-09-26
 
+* **Curation**: human:noelmcloughlin confirmed 5 concepts (ktl-librarian skill, LOKF specification, versioning policy, security policy, knowledge bundle), corrected 3 (Agent Skills specification, OKF specification, AI covenant) and sent 3 back (Why a registrar role: its description says "rather than by an agent", which the README does not; Knowledge sources: name the files covered only by glob and add `.gitignore`; The docent in Microsoft 365 Copilot: Agent Builder's 50 MB zip limit). All three corrections were the same kind: a paraphrase that drifted from its source's wording, adding a qualifier the source lacks ("case-exact", "100 words", `generated` as provenance) or dropping one it has ("in that session", "batched"), which is worth a line in ktl-librarian's instructions.
 * **The skill playbooks carry the Snyk W011 acknowledgements.** #83 added a note to the librarian's and docent's `SKILL.md` saying what contains each finding: the scheduled workflow's `publish` job for the librarian reading feedback, and the read-only bundle and scripted feedback entry for the docent's repository fallback. `ktl-librarian-skill` and `ktl-docent-skill` now say so, and the docent playbook gains a typed reference to the threat model it cites.
 
 ## 2026-09-25

@@ -17,7 +17,9 @@ verified:
   at: "2026-09-09T16:35:55Z"
 - by: human:noelmcloughlin
   at: "2026-09-24T01:12:16Z"
-stale_after: 2027-09-09
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:04:41Z"
+stale_after: 2027-09-26
 ---
 
 # Overview

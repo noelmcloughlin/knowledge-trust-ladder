@@ -13,7 +13,6 @@ sources:
 generated:
   by: process:ktl-librarian
   at: "2026-09-24T11:05:00Z"
-status: draft
 about:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 verified:
@@ -21,7 +20,9 @@ verified:
   at: "2026-09-24T11:05:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
-stale_after: 2027-09-10
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:08:48Z"
+stale_after: 2027-09-26
 ---
 
 # Overview

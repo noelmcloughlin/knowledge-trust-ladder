@@ -6,25 +6,27 @@ description: The specification defining a skill directory - a required SKILL.md 
 genre: reference
 resource: https://agentskills.io/home
 generated:
-  by: process:ktl-librarian
-  at: "2026-09-09T00:13:37Z"
+  by: human:noelmcloughlin
+  at: "2026-09-26T20:33:12Z"
 verified:
 - by: process:ktl-librarian
   at: "2026-09-24T00:55:04Z"
 - by: human:noelmcloughlin
   at: "2026-09-09T16:35:55Z"
-stale_after: 2027-09-09
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:33:12Z"
+stale_after: 2027-09-26
 ---
 
 # Overview
 
 Defines the unit this repository distributes. Each skill is a directory with a
-case-exact `SKILL.md` whose frontmatter carries `name` (matching the directory)
+`SKILL.md` whose frontmatter carries `name` (matching the directory)
 and `description`; supporting files may sit alongside it and travel with the
 directory when installed.
 
 Two consequences shape the layout here: the `description` is always resident in
-the calling agent's context, so it is kept near 100 words, while the body loads
+the calling agent's context, so it is kept near ~100 tokens, while the body loads
 only on trigger - which is why each `SKILL.md` is a lean router and detail
 lives in `references/`. `gh skill publish --dry-run` validates conformance in
 CI on every pull request.

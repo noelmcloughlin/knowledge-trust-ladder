@@ -6,14 +6,16 @@ description: Community norms for AI use - contributors own what they submit rega
 genre: reference
 resource: AI_COVENANT.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  by: human:noelmcloughlin
+  at: "2026-09-26T20:48:23Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-24T01:16:00Z"
-stale_after: 2027-09-10
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:48:23Z"
+stale_after: 2027-09-26
 ---
 
 # Overview
@@ -42,5 +44,5 @@ the scheduled agent runs in a read-only job with no git credentials on disk
 and hands its change to a separate privileged job that runs no agent code,
 which checks the "edit only `.lokf/knowledge/`" contract after the run
 rather than merely requesting it; and a skill recording a person's verdict (`ktl-curator`'s `verified:
-human:<id>`) may write only what that person said about that specific item,
-never inferred or self-supplied.
+human:<id>`) may write only what that person said about that specific item, in that session,
+never inferred, batched, or self-supplied.

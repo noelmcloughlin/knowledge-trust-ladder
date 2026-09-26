@@ -73,3 +73,7 @@ The snapshot does not update itself. After each release that changes the bundle,
 `.lokf/m365/` holds one instructions file per read-only role, named after the skill it becomes (`ktl-docent-m365.md`, deliberately not `SKILL.md`, so no installer lists it), and the builder packs each file into its own zip. The auditor, the third line, is planned as `ktl-auditor-m365.md` beside it, with no change to the builder, workflow or checks. The sidecar and librarian need a repository and a shell, so they have no Copilot form. The curator has none yet: it needs a write action the agent can call and an identity that is not a forge login, and the shape of that identity record is held in reserve (see [domain-schemas](../explanation/domain-schemas.md)).
 
 A host's copy under `.lokf/m365/` is what its releases pack, so a host that edits it changes what its readers' Copilot follows. Repository check 17 holds every instructions file's trust-label table word for word to ktl-docent's.
+
+## Open questions
+
+- 2026-09-26, human:noelmcloughlin: Agent Builder's zip limit is 50 MB; the limits sentence gives only 10 MB, the toolkit's app package (`skills/ktl-sidecar/references/m365.md`, line 18).
