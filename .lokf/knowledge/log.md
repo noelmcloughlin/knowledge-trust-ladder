@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-09-26
+
+* **The skill playbooks carry the Snyk W011 acknowledgements.** #83 added a note to the librarian's and docent's `SKILL.md` saying what contains each finding: the scheduled workflow's `publish` job for the librarian reading feedback, and the read-only bundle and scripted feedback entry for the docent's repository fallback. `ktl-librarian-skill` and `ktl-docent-skill` now say so, and the docent playbook gains a typed reference to the threat model it cites.
+
 ## 2026-09-25
 
 * **The Copilot playbook says what a tenant without custom skills sees.** `docs/m365.md` and the sidecar's `references/m365.md` record a test in such a tenant: `atk provision` refused `agent_skills` at Microsoft's service, and Agent Builder sent the skill to Copilot Studio, which needs its own licence. `docent-in-m365-copilot` now checks for the preview before the routes, adds the Copilot Studio step, and has two troubleshooting lines for those errors in place of the fallback to Agent Builder.
