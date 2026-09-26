@@ -14,7 +14,6 @@ sources:
 generated:
   by: process:ktl-librarian
   at: "2026-09-26T19:52:21Z"
-status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -28,7 +27,9 @@ references:
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
-stale_after: 2027-09-09
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:00:42Z"
+stale_after: 2027-09-26
 ---
 
 # Overview
