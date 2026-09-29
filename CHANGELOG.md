@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **Release assets can carry a host's published name.** `knowledge-release.yaml` names its zips after the `KNOWLEDGE_RELEASE_NAME` repository variable when it is set, and after the repository otherwise, so a host whose package is published under another name, such as gist as `gist-linkml`, ships assets under that name.
+
 ## [0.27.2] - 2026-09-25
 
 ### Security
