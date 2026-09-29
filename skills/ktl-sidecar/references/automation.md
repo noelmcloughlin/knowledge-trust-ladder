@@ -109,6 +109,8 @@ It starts in two ways:
 - **By hand, always.** Run it from the Actions tab, or `gh workflow run knowledge-release.yaml -f tag=<tag>`, naming an existing release's tag.
 - **On each published release, once armed.** Set the `KNOWLEDGE_RELEASE_ENABLED` repository variable to `true`. Unset, each release shows the run as skipped.
 
+`<repository>` is the repository's name. A host that publishes under another name, such as a package renamed for PyPI, sets it in the `KNOWLEDGE_RELEASE_NAME` repository variable: letters, digits, `.`, `_` and `-`. The Copilot skill zips take the same name.
+
 GitHub starts no workflow for a release made with the default `GITHUB_TOKEN`, so the release trigger never fires when your release job makes releases that way. Have that job dispatch this workflow after it creates the release, with `actions: write` on the job: `gh workflow run knowledge-release.yaml --ref "$TAG" -f tag="$TAG"`. The skills repository's own `publish.yml` does this.
 
 ### An unchanged bundle gets no zip
