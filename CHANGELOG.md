@@ -11,6 +11,9 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Changed
 
 - **ktl-librarian writes in plain English, and offers a plain-prose pass in a live session.** A paragraph in its section 1 gives the rules for every body, `description` and index bullet, so a new concept needs no rewording. Before it opens its pull request in a live session it offers the `ktl-prose` pass, whose time is before a person confirms. An unattended run skips the offer.
+### Fixed
+
+- **ktl-curator compares the two times of "edited since" whole.** `references/trust-fields.md` told it to cut both to the day first, so a concept confirmed in the morning and rewritten that afternoon did not count as edited. The Obsidian plugins and the SPARQL query already compared whole times.
 
 ## [0.28.0] - 2026-09-29
 

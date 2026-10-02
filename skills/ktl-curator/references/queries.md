@@ -7,8 +7,8 @@ This page is for people who run `just lokf-serve`. That serves a SPARQL endpoint
 > `prov:endedAtTime`; `generated` -> `prov:wasGeneratedBy`; `status` ->
 > `schema:creativeWorkStatus`; `stale_after` -> `schema:expires`; `title` ->
 > `schema:name`). Check them against your own `just lokf-convert` output
-> once. Engines differ on date/dateTime comparisons, so dates are compared
-> as `YYYY-MM-DD` strings below.
+> once. Engines differ on date/dateTime comparisons, so review dates are
+> compared as `YYYY-MM-DD` strings below, and event times as whole strings.
 
 ## Nobody has checked this yet
 
