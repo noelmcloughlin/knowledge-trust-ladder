@@ -51,7 +51,7 @@ Apply the first row that fits. Naming a concept unlocks only the sixth row.
 | A concept with no `generated.by` | Skip it and list it, because nobody recorded who wrote it. Reword it only when the person names it. |
 | Any other concept | Reword the body. |
 
-A confirmation is a person's time spent against a source, and a rewording must not spend it. Nothing a reader sees would show the edit either: ktl-docent has no label for "edited since a person confirmed it", and no gate ties a body to its confirmation. So the rule has no exception, and the script enforces it.
+A confirmation is a person's time spent against a source, and a rewording must not spend it. Nothing a reader sees would show the edit either: this skill leaves `generated.at` where it was, so no trust label changes, and no gate ties a body to its confirmation. So the rule has no exception, and the script enforces it.
 
 ## What a rewording never changes
 
