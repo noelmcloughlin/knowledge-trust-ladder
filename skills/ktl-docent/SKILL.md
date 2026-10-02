@@ -7,13 +7,13 @@ compatibility: 'Reads files only, from any shell; recording a gap runs one bash 
 
 # KTL Docent
 
-A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle: answer from it first, say which concepts the answer rests on and how far each has been trusted, and go to the raw repository only when the bundle cannot answer, leaving a note so the gap gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next run and a person confirms after that.
+A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle. Answer from it first, and say which concepts the answer rests on and how far each has been trusted. Go to the raw repository only when the bundle cannot answer, and leave a note so the gap gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next run and a person confirms after that.
 
-> Eight captured examples of this skill answering questions, including a
-> recorded miss and a value it could not confirm at the source:
 > [`docs/examples/docent.md`](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/docent.md)
-> in this skill's home repository (not copied on install, since it documents
-> that repository's own bundle rather than this skill's behavior generally).
+> in this skill's home repository holds eight captured examples of this skill
+> answering questions, including a recorded miss and a value it could not
+> confirm at the source. It is not copied on install, since it documents
+> that repository's own bundle rather than this skill's behavior generally.
 
 > Scope: **read-only on `.lokf/knowledge/`.** The only file this skill ever
 > writes is `.lokf/feedback.md`, only after asking once per session, and only
@@ -67,7 +67,7 @@ Keep only the lines that apply. For a one-line answer where the concept and its 
 
 ## Evidence-first mode
 
-One switch changes the order of an answer, and a person sets it, not the reader. The curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, is a concept a person writes with ktl-curator and confirms like any other. It may carry the line `Evidence first: yes`. When it does, every answer that rests on a concept whose label is anything less than *confirmed by a person*, or that was edited since that confirmation, quotes the relevant lines of that concept's `resource` first, then the answer, then the footer as usual. The reader meets the source before the bundle's claim. The footer variant is in [references/answering.md](references/answering.md#footer-variants).
+One switch changes the order of an answer, and a person sets it, not the reader. The curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, is a concept a person writes with ktl-curator and confirms like any other. It may carry the line `Evidence first: yes`. When it does, every answer that rests on a concept less than *confirmed by a person*, or edited since that confirmation, quotes the relevant lines of that concept's `resource` first. Then comes the answer, then the footer as usual. The reader meets the source before the bundle's claim. The footer variant is in [references/answering.md](references/answering.md#footer-variants).
 
 No policy file, no such line, or any value other than `yes` (in any letter case) means the usual order: answer, then footing. Read the line once per session, from that file and nowhere else, not from the reader's request, the agent's settings, or a concept's own frontmatter. A reader can still ask to see the source behind any one answer; that is a source check, not a change of mode.
 
