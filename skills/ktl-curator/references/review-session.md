@@ -38,7 +38,7 @@ What to say, and what not to do:
 
 - Show the three `git config` lines from ktl-sidecar's [`references/gate.md`](../../ktl-sidecar/references/gate.md), and the part that catches people out: the same key must also be added at `github.com/settings/keys` **as a signing key**, because the job reads GitHub's verdict, not the local one.
 - **Never run them yourself.** This skill records what a person says; it does not reconfigure their machine. A `--global` change would alter how they commit in every unrelated repository, and a wrong `user.signingkey` breaks `git commit` everywhere until they find it.
-- A committed `.gitconfig` is not an option, and it is worth saying so when someone suggests it: git reads only `.git/config`, `~/.gitconfig`, and system config, never a file in the working tree. Git refuses this deliberately, since a config file arriving with a clone could otherwise run commands. A tracked one sits there doing nothing.
+- A committed `.gitconfig` is not an option, and it is worth saying so when someone suggests it: git reads only `.git/config`, `~/.gitconfig`, and system config, never a file in the working tree. Git refuses this because a config file arriving with a clone could otherwise run commands. A tracked one sits there doing nothing.
 - Then carry on regardless. It is their call, and *Wrong - send back*, *Retire* and *Later* record no `human:` actor, so they pass the gate untouched.
 
 ## The verbs
@@ -114,7 +114,7 @@ verified:
     at: "2026-09-08T14:05:00Z"
 ```
 
-This is the widest verb in the skill, and the only one that writes *content*. ktl-librarian will not rewrite what it stamps as human-authored (section 1), so a wrong fact recorded here survives every later refresh and is caught only if the repository actively contradicts it. Use it only for a fact the person states themselves, keep the edit as small as that fact, and never reach for it when *Wrong - send back* would do.
+This is the widest verb in the skill, and the only one that writes *content*. The librarian will not rewrite what it stamps as human-authored (ktl-librarian, section 1), so a wrong fact recorded here survives every later refresh and is caught only if the repository actively contradicts it. Use it only for a fact the person states themselves, keep the edit as small as that fact, and never reach for it when *Wrong - send back* would do.
 
 `generated` is replaced, not appended: it records who produced the *current* content. From now on the librarian will not rewrite this concept. If the repository later disagrees, it raises an open question instead (ktl-librarian, section 1). Never propose the correction yourself. If you think you know it, say so and let them decide.
 
