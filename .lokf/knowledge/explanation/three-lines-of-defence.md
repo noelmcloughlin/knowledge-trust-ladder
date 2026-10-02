@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: '2026-10-02T23:52:54Z'
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -16,7 +16,6 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 ---
-
 # Overview
 
 The README's "Three lines of defence" section points at this page. The
@@ -66,8 +65,9 @@ against the tree for a file and nothing checks for a URL; whether that
 confirmation is really tied to the named person in the `provenance` job's
 log; when it must be looked at again in `stale_after`; what changed, and
 why, in `log.md` and git; and whether the checker is independent of the
-checked in the JSON Schema and SHACL shapes, which are generated from the
-upstream `lokf.yaml` rather than written by the bundle's authors. Four limits
+checked in the JSON Schema, which is generated from the upstream `lokf.yaml`
+rather than written by the bundle's authors (the toolkit also generates SHACL
+shapes, which nothing here runs yet). Four limits
 bound what that evidence proves: a confirmation records who and when, and
 the state of the source only when the event carries `revision`, and even
 then what the skill fetched rather than what the person read; the gate

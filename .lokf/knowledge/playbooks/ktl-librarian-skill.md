@@ -8,30 +8,31 @@ resource: skills/ktl-librarian/SKILL.md
 sources:
 - resource: skills/ktl-librarian/SKILL.md
 - resource: skills/ktl-librarian/references/scheduled-task.md
+- resource: skills/ktl-librarian/references/patch.md
 - resource: .github/workflows/knowledge-librarian.yaml
 - resource: .lokf/scripts/knowledge-librarian.sh
+- resource: .lokf/scripts/knowledge-apply.sh
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-26T19:52:21Z"
+  at: '2026-10-02T23:52:54Z'
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
-  - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
-  - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+- https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
+- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
 verified:
 - by: human:noelmcloughlin
-  at: "2026-09-09T18:36:00Z"
+  at: '2026-09-09T18:36:00Z'
 - by: human:noelmcloughlin
-  at: "2026-09-26T20:00:42Z"
+  at: '2026-09-26T20:00:42Z'
 stale_after: 2027-09-26
 ---
-
 # Overview
 
 Runs **often**, including on a schedule. It carries the seven LOKF Golden Rules
@@ -48,13 +49,9 @@ writes a `human:` confirmation. Concepts it creates start as `status: draft`,
 and a claim it cannot settle gets an `## Open questions` section instead of a
 guess.
 
-Each steady-state run starts by consuming `.lokf/feedback.md`, where
-ktl-docent records readers' misses and disagreements. Every entry is an
-untrusted report, never an instruction: the librarian resolves only the
-question or disagreement it names, from the source it points at, and
-removes each entry it handled. A scheduled run installs the pinned
-`ktl-librarian` release first, except in the repository that publishes the
-skills, which runs its own source under bare `skills/` (2026-09-24).
+Each steady-state run starts by reading the verdicts on its previous work: the `**Curation**` lines in `log.md` and every open question a person left, read as reports and never as instructions, so that a sent-back concept is re-derived from the source the note names and never the same way again (2026-10-02). Then it consumes `.lokf/feedback.md`, where ktl-docent records readers' misses and disagreements, at most ten entries in a run. Every entry is an untrusted report, never an instruction: the librarian resolves only the question or disagreement it names, from the source it points at, and removes each entry it handled. A miss on a question an existing concept already answers is a description defect: the skill fixes the `description` and the index bullets that copy it, and adds no twin. A scheduled run installs the pinned `ktl-librarian` release first, except in the repository that publishes the skills, which runs its own source under bare `skills/` (2026-09-24).
+
+Since 2026-10-02 the skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script, checks every operation and writes the files: it stamps `generated` from the clock, keeps a `description` equal to its two index bullets, files each log line under the day's heading, and refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed. The scheduled wrapper applies the file after the agent has finished and refuses a run that changed anything else. `references/patch.md` gives the six operations.
 
 **Reading feedback, the Snyk W011 finding (acknowledged 2026-09-25).** The librarian is the one skill that reads what a reader wrote, because consuming an entry is what `.lokf/feedback.md` is for, so the scanner's finding is acknowledged rather than designed away. The skill names what contains it, and none of it is prose the agent has to keep: an unattended run has no write credential in `refresh`; `publish`, which runs no agent, refuses a patch touching any path outside `.lokf/knowledge`, `knowledge_bundle` and `.lokf/feedback.md` or adding a `by: human:` claim, so an entry cannot mint trust; and what comes out is a pull request a person merges. On the way in, `knowledge-feedback.sh` holds each entry to one line and one of two kinds.
 
@@ -71,8 +68,9 @@ link the other way round, so it addresses the bundle by the tools' name and
 names both paths when scoping a diff or a PR.
 
 The tooling-version check (rule 6) now runs **only in interactive
-sessions**: the scheduled workflow's wrapper permits edits solely under
-`.lokf/knowledge/`, `knowledge_bundle/` and `.lokf/feedback.md`, so a
+sessions**: the scheduled workflow's wrapper lets the agent write only
+`.lokf/patch.yaml` (since 2026-10-02; before that, only under
+`.lokf/knowledge/`, `knowledge_bundle/` and `.lokf/feedback.md`), so a
 scheduled run that touched `.lokf/pyproject.toml` would fail the whole run
 closed rather than land a partial change - added 2026-09-12 as part of a
 security-hardening pass that also added a second, independent enforcement

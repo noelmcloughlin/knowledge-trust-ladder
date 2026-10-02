@@ -7,20 +7,19 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: '2026-10-02T23:52:54Z'
 hasPart:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 status: draft
 about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
-  - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
-  - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
+- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
+- https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 ---
-
 # Overview
 
 Runs **once** per repository, or to repair a single missing sidecar file;
@@ -34,9 +33,9 @@ root-level pointers - `llms.txt`, a README aside, and a `knowledge_bundle`
 symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian
 (Step 2, see [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)) - verify
 no placeholder survives (Step 3), validate (Step 4), optionally lay down the
-CI automation (Step 5: three workflows, six scripts and, since 2026-09-24,
-the `m365/` folder, eleven files in all; the conventions script's Python half
-is among the scripts, since the `.sh` fails without it; two of the scripts
+CI automation (Step 5: three workflows, eight scripts and, since 2026-09-24,
+the `m365/` folder, thirteen files in all; the conventions script's Python half
+is among the scripts, since the `.sh` fails without it, and so is the apply script's `knowledge-apply.py`, the librarian's only pen since 2026-10-02; two of the scripts
 and the `m365/` folder land even when the rest of Step 5 is skipped, since
 they need neither git nor GitHub: the preflight, since 2026-09-23 the
 feedback recorder, and the Microsoft 365 Copilot skills' builder with its

@@ -1,5 +1,17 @@
 # Change Log
 
+## 2026-10-02
+
+* **Prose**: What WikiSkill says about a knowledge bundle: two sentences split; no fact changed.
+* **Added**: ktl-prose skill, the fifth skill, from `skills/ktl-prose/SKILL.md`; re-created after the bundle was restored from main.
+* **Added**: What WikiSkill says about a knowledge bundle, from `docs/wikiskill.md`, the new page that reads the paper against this design.
+* **Changed**: ktl-librarian skill: the run now reads the curator's verdicts first, caps feedback at ten entries, treats a miss on a covered question as a description defect, and writes the bundle only through `knowledge-apply.sh`; `skills/ktl-librarian/SKILL.md` and `references/patch.md` say so. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Knowledge sources: the sidecar lays down eight scripts, the apply script and its Python half among the fourteen dogfooded copies, and `docs/wikiskill.md` feeds a new Explanation concept. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Why a registrar role: `knowledge-apply.sh` is the registrar at the librarian's desk, as the README's fifth-role section now says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Threat model: the hardening list gains the librarian's pen, `knowledge-apply.sh`, as `docs/threat-model.md` does.
+* **Changed**: Three lines of defence: the independent checker is the generated JSON Schema; the SHACL shapes exist upstream and nothing here runs them, as `docs/three-lines.md` now says.
+* **Changed**: ktl-sidecar skill: Step 5 lays down eight scripts and thirteen files, the apply script and its Python half among them.
+
 ## 2026-09-26
 
 * **Curation**: human:noelmcloughlin confirmed 5 concepts (ktl-librarian skill, LOKF specification, versioning policy, security policy, knowledge bundle), corrected 3 (Agent Skills specification, OKF specification, AI covenant) and sent 3 back (Why a registrar role: its description says "rather than by an agent", which the README does not; Knowledge sources: name the files covered only by glob and add `.gitignore`; The docent in Microsoft 365 Copilot: Agent Builder's 50 MB zip limit). All three corrections were the same kind: a paraphrase that drifted from its source's wording, adding a qualifier the source lacks ("case-exact", "100 words", `generated` as provenance) or dropping one it has ("in that session", "batched"), which is worth a line in ktl-librarian's instructions.

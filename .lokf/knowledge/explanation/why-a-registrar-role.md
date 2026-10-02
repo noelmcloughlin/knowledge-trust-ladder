@@ -10,7 +10,7 @@ sources:
 - resource: docs/obsidian.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T11:05:00Z"
+  at: '2026-10-02T23:52:54Z'
 status: draft
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -18,13 +18,14 @@ about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 verified:
 - by: human:noelmcloughlin
-  at: "2026-09-10T00:00:00Z"
+  at: '2026-09-10T00:00:00Z'
 stale_after: 2027-09-10
 ---
-
 # Overview
 
 A museum registrar keeps the records themselves in order: each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. The README calls it the fifth role, which is not a skill, beside the four that are ([why four skill roles](why-four-roles.md)). No person has to do it. The `lokf` toolkit does it on every change, and CI's `knowledge-registrar.yaml` does it again on every pull request that touches the bundle. There it also checks that each new confirmation is backed by that person's approval of the pull request or their signature on the commit.
+
+At the librarian's desk the registrar is `knowledge-apply.sh` (since 2026-10-02). The librarian describes each change as an operation in `.lokf/patch.yaml`, and the script, not the agent, writes the record: it stamps `generated`, keeps the index bullets equal to the description, files the log line under the day's heading, and refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed. In the scheduled run the wrapper applies the file after the agent has finished, so the agent never writes the bundle at all.
 
 In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do the registrar's work at the desk:
 

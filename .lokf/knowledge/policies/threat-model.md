@@ -2,20 +2,19 @@
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 title: Threat model
-description: "The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate."
+description: 'The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate.'
 genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: '2026-10-02T23:52:54Z'
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: '2026-09-24T22:22:58Z'
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/security
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 ---
-
 # Overview
 
 Added 2026-09-14, when `policies/security.md`'s ~1,900-word design moved out
@@ -51,6 +50,8 @@ more, since a stricter ruleset would also reject the release job's own
 commit; secret scanning and push protection as GitHub settings nothing in CI
 can assert still hold; CodeQL and dependency review skipped where there is
 nothing for them to scan.
+
+**The librarian's pen (added 2026-10-02)**: `knowledge-apply.sh` is the only writer of `.lokf/knowledge/`. ktl-librarian describes each change as an operation in `.lokf/patch.yaml`, and the script stamps `generated`, refuses an operation that would name a person as its actor, refuses to rewrite text a person wrote or to delete a concept a person confirmed, and writes nothing unless every operation passes. The scheduled wrapper applies the file after the agent has finished and refuses a run that changed anything else, so the agent never writes the bundle itself; `docs/threat-model.md` lists it under repository hardening.
 
 **Human attribution**: a `verified` event whose actor starts with `human:`,
 or a `generated` record written that way, is a claim, not a credential - just

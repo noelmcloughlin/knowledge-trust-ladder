@@ -1,8 +1,8 @@
 ---
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
-title: "ktl-prose skill"
-description: "The librarian's copy editor. It rewords the body of a concept an agent wrote, in plain English, before a person confirms it, changing the wording and never a fact or a frontmatter byte, and its script proves that only the wording changed."
+title: ktl-prose skill
+description: The librarian's copy editor. It rewords the body of a concept an agent wrote, in plain English, before a person confirms it, changing the wording and never a fact or a frontmatter byte, and its script proves that only the wording changed.
 genre: how-to
 resource: skills/ktl-prose/SKILL.md
 sources:
@@ -11,21 +11,20 @@ sources:
 - resource: skills/ktl-prose/references/other-files.md
 - resource: skills/ktl-prose/scripts/prose-check.py
 - resource: README.md
+references:
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+- https://knowledge-trust-ladder.example/knowledge/policies/threat-model
+dependsOn:
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
+about:
+- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+definedBy:
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-02T21:25:32Z"
+  at: '2026-10-02T23:52:54Z'
 status: draft
-references:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-  - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
-dependsOn:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-definedBy:
-  - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 ---
-
 # Overview
 
 A museum edits its labels before the exhibition opens. `ktl-prose` does that for the `.lokf/` knowledge bundle: it rewords what the librarian wrote, in plain English, before a person confirms it. It changes the wording and never a fact. A curator can only confirm a claim they can read. The skill is a copy editor, not an author: the librarian stays the maker of every concept it derived, so `generated` keeps naming it, and `log.md` and git record the rewording. The README calls it the fifth skill, which is not a role, and says the four roles lose nothing without it.
