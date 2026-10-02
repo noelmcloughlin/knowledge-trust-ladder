@@ -23,7 +23,10 @@ Maintain `.lokf/`, the host repository's knowledge captured as a [**Linked Open 
 > **ktl-curator** skill: this one hands off to it (section 3) and never
 > writes a `human:` verification. Readers reach the bundle through
 > **ktl-docent**, which answers from it and records what it lacked in
-> `.lokf/feedback.md` for this skill to consume (section 1).
+> `.lokf/feedback.md` for this skill to consume (section 1). The optional
+> **ktl-prose** helper rewords the body of a concept that no person wrote or
+> confirmed. It changes no fact and no frontmatter, so `generated` still names
+> this skill.
 
 > Model: keep this skill on the calling agent's normal/frontier model. Three
 > things here need real reasoning over an unfamiliar repo, with no sign-off
@@ -199,7 +202,9 @@ Concepts this skill **creates** also get `status: draft`, the spec's "not yet re
 
 Update the nearest `index.md` (bullet + `description`) and log the change in `log.md`. **One `## YYYY-MM-DD` heading per day, the bare date and nothing else.** OKF §9 makes an ISO-date heading a MUST, and both Obsidian plugins find today's section by matching exactly that. So a second run on the same day adds its bullets at the top of the day's existing section, never a second heading, and never a suffixed one like `## 2026-09-14 (2)`, which passes the registrar's date check unseen and leaves the curator plugin unable to find the day at all. Newest day first; log dates are date-only, concept timestamps are datetime+Z. A bullet is `* **<short label>**:` followed by one to three sentences naming what changed and why. The diff carries the detail, and a forty-line entry is read by nobody. `log.md` records **knowledge changes only**: concepts added, changed or removed, or the source map updated. If a run changes nothing in the bundle, write no log entry. Never log administrative events ("librarian ran, no changes detected"); they do not represent a knowledge change.
 
-A spaced dash ("X - Y") used as punctuation must not be allowed to land at the start of a line after wrapping. Markdown reads a line beginning `-` followed by a space as a list item, so a paragraph never meant to be a list trips `MD032/blanks-around-lists` wherever the consuming repo lints `.lokf/**` (most do, via a `lint-and-docs`-style gate). Reword or rewrap so the dash stays mid-line. When unsure, prefer an unwrapped single line over one that risks the break landing there. Hold to this while writing, but do not rely on having held to it: section 2's markdownlint step is what actually catches it, and this rule on its own has already failed to.
+**Write each body, `description` and index bullet in plain English.** Put the actor first and the verb early. Give every sentence a verb, and start an instruction with its verb. Keep one idea to a sentence, and turn a sentence that lists several conditions into a list. Use no dash as punctuation: a colon introduces, commas or parentheses set an aside apart, and a full stop ends the thought. Define a term where it first appears, and write "for example" rather than "e.g.". These rules govern wording only. They never change a fact, a code span, a link, a number or a frontmatter key. The optional **ktl-prose** skill carries the full rules and rewords an existing body when a person asks.
+
+A spaced dash ("X - Y") in text you carry over must not land at the start of a line after wrapping. Markdown reads a line beginning `-` followed by a space as a list item, so a paragraph never meant to be a list trips `MD032/blanks-around-lists` wherever the consuming repo lints `.lokf/**` (most do, via a `lint-and-docs`-style gate). Reword or rewrap so the dash stays mid-line. When unsure, prefer an unwrapped single line over one that risks the break landing there. Hold to this while writing, but do not rely on having held to it: section 2's markdownlint step is what actually catches it, and this rule on its own has already failed to.
 
 ## 2. Audit (correctness, gaps, bugs)
 
@@ -230,6 +235,8 @@ Report findings as a checklist; fix mechanical issues directly and re-run `just 
 If `uv` or the `lokf` package is not available, there is no substitute for the two generated validators above. Fall back to the manual, structural cross-check against the raw schema described in ktl-sidecar's Step 4, and say so in the audit report rather than silently claiming full coverage. That fallback cannot catch everything the generated JSON Schema does. It has no cardinality check, so a bare-scalar value where a slot is `multivalued: true` (Rule 4) passes it silently and only fails real `lokf validate`. A bundle that has only passed the manual fallback is not proven schema-valid; report it as such.
 
 ## 3. Hand off for human maintainer review
+
+**In a live session, offer a plain-prose pass before you open the pull request.** Where the optional **ktl-prose** skill is installed and this run created or rewrote concepts, name them and offer the pass. Its time is now: ktl-prose rewords only a body no person has confirmed, and it leaves your `generated` record as you wrote it. It runs only when the person says yes. Unattended, skip this step.
 
 Open a PR scoped to `.lokf/` with a summary, the `lokf validate` (and, when relevant, SHACL/convert) output, and citations for every claim whose authority lives outside the repository: the standards, ontologies, and upstream systems the bundle's `Reference` concepts point at. A human maintainer verifies against the canonical source and approves before merge. Once `.github/workflows/knowledge-registrar.yaml` exists (see [references/scheduled-task.md](references/scheduled-task.md)), it runs `uv run lokf validate --check-refs knowledge` and the conventions script on every `.lokf/**` pull request as the automated gate. Until then, paste the local `just lokf-validate` output into the pull request.
 
