@@ -21,7 +21,7 @@ Knowledge Trust Ladder keeps a repository's scattered knowledge as a **collectio
   </picture>
 </p>
 
-> **Prefer to ask?** `npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --yes` installs the docent into any agent you already use; ask it about this project and it answers from this repository's own bundle, saying how far each answer has been checked. [Eight captured answers](docs/examples/docent.md). **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
+> **Prefer to ask?** `npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --yes` installs the docent into any agent you already use. Ask it about this project, and it answers from this repository's own bundle, saying how far each answer has been checked. See [eight captured answers](docs/examples/docent.md). **Agents:** if `.lokf/knowledge/index.md` exists, read it first. `llms.txt` says how to weigh it.
 
 ## Why libraries have catalogues
 
@@ -111,7 +111,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder \
   --skill ktl-sidecar --skill ktl-librarian --yes
 ```
 
-Add the curator once there is a bundle worth trusting; the docent goes anywhere an agent only *reads* one. `ktl-prose` is optional and installs the same way. The `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release: **[docs/install.md](docs/install.md)**. Microsoft 365 Copilot gets the docent as a zip each release carries: **[docs/m365.md](docs/m365.md)**.
+Add the curator once there is a bundle worth trusting. The docent goes anywhere an agent only *reads* one. `ktl-prose` is optional and installs the same way. **[docs/install.md](docs/install.md)** gives the `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release. Microsoft 365 Copilot gets the docent as a zip each release carries: **[docs/m365.md](docs/m365.md)**.
 
 **Claude Code plugin** (the same five skills as one plugin, with keywords a plugin catalog can search):
 
