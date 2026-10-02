@@ -13,7 +13,7 @@ A gitignored `.lokf/` is still writable: record the feedback, but say that the s
 Run the script. It is the whole procedure:
 
 ```bash
-bash .lokf/scripts/knowledge-feedback.sh Miss "Q: \"Which queue does the billing worker consume?\" Answered from \`workers/billing/config.yaml\` (queue \`billing-events\`). Suggest: a Service concept for the billing worker, \`dependsOn\` the events dataset."
+bash .lokf/scripts/knowledge-feedback.sh Miss "Q: \"Which queue does the billing worker consume?\" Answered from \`workers/billing/config.yaml\` (queue \`billing-events\`). Nothing relevant in index.md. Suggest: a Service concept for the billing worker, \`dependsOn\` the events dataset."
 bash .lokf/scripts/knowledge-feedback.sh --for ada-lovelace Disagreement "\`services/orders-api.md\` says endpoint \`/v1/orders\`; \`services/orders/openapi.yaml\` now says \`/v2/orders\`. Answered from the source."
 ```
 
@@ -42,13 +42,13 @@ Written by ktl-docent; consumed and cleared by ktl-librarian on its next run. Ne
 
 ## 2026-09-08
 
-- **Miss** - Q: "Which queue does the billing worker consume?" Answered from `workers/billing/config.yaml` (queue `billing-events`). Suggest: a Service concept for the billing worker, `dependsOn` the events dataset. - docent, for human:ada-lovelace
+- **Miss** - Q: "Which queue does the billing worker consume?" Answered from `workers/billing/config.yaml` (queue `billing-events`). Nothing relevant in index.md. Suggest: a Service concept for the billing worker, `dependsOn` the events dataset. - docent, for human:ada-lovelace
 - **Disagreement** - `services/orders-api.md` says endpoint `/v1/orders`; `services/orders/openapi.yaml` now says `/v2/orders`. Answered from the source. - docent
 ```
 
 ### A Miss
 
-Record the question the bundle could not answer, **where you found the answer**, and, if obvious, what kind of concept it would be and what it relates to. The place is the repository path or URL; it is what lets the librarian derive the concept directly instead of rediscovering it. If you could not find the answer either, say so. The librarian will then create a draft placeholder carrying the question, and a person will see it in the curator's queue.
+Record the question the bundle could not answer, **where you found the answer**, and, if obvious, what kind of concept it would be and what it relates to. The place is the repository path or URL; it is what lets the librarian derive the concept directly instead of rediscovering it. If you could not find the answer either, say so. The librarian will then create a draft placeholder carrying the question, and a person will see it in the curator's queue. Say also which of two cases this is: a concept looked relevant from `index.md` and did not answer, naming it, or nothing relevant was listed at all. The first is a description the librarian fixes; the second is a concept it derives.
 
 ### A Disagreement
 
@@ -63,4 +63,4 @@ Record the concept (its path), what it says, what its source says instead, and w
 
 ## What happens next
 
-ktl-librarian reads this file first on every steady-state refresh (its section 1). A Miss becomes a concept derived from the source you named, or a `status: draft` placeholder with the question under `## Open questions`. A Disagreement becomes a corrected concept, or a `draft` with both versions recorded for ktl-curator. Handled entries are removed. The scheduled workflow commits `feedback.md` together with `knowledge/`, so consumed entries do not come back. The curator's report shows how many entries are waiting, so a person can see that readers are finding gaps.
+ktl-librarian reads this file on every steady-state refresh, after the curator's verdicts (its section 1). A Miss becomes a concept derived from the source you named, or a `status: draft` placeholder with the question under `## Open questions`. A Disagreement becomes a corrected concept, or a `draft` with both versions recorded for ktl-curator. Handled entries are removed. The scheduled workflow commits `feedback.md` together with `knowledge/`, so consumed entries do not come back. The curator's report shows how many entries are waiting, so a person can see that readers are finding gaps.

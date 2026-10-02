@@ -127,6 +127,7 @@ Add the curator once there is a bundle worth trusting. The docent goes anywhere 
 | The mechanics: the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
 | The bundle in Obsidian, and the two plugins | [docs/obsidian.md](docs/obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
+| WikiSkill, a 2026 paper on agent-maintained wikis, read against this design: what overlaps, what the skills took from it, and what it says about determinism | [docs/wikiskill.md](docs/wikiskill.md) |
 | Versioning: all five skills ship under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [docs/releasing.md](docs/releasing.md), [CHANGELOG.md](CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](CONTRIBUTING.md), [docs/repository-layout.md](docs/repository-layout.md), [SECURITY.md](SECURITY.md) |
 
@@ -136,6 +137,7 @@ Add the curator once there is a bundle worth trusting. The docent goes anywhere 
 - The [LinkML Community](https://linkml.io/), creators of [LinkML](https://linkml.io/linkml/), the schema language LOKF is written in.
 - [Google Cloud](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing), creator of the Open Knowledge Format (OKF) specification that LOKF profiles.
 - [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), a pattern for building personal knowledge bases with LLMs.
+- [WikiSkill](https://arxiv.org/abs/2608.27454) by Tang et al. (Google Research, 2026), the paper on persistent agent wikis that [docs/wikiskill.md](docs/wikiskill.md) reads against this design.
 
 This is an independent project. It is not affiliated with, endorsed by, or an
 official distribution of LOKF or of the Open Knowledge Format. "LOKF" and

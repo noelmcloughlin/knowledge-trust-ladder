@@ -132,7 +132,7 @@ Zero hits means fully resolved. (`knowledge_bundle/` is the same files listed tw
 cd .lokf && just lokf-install && just lokf-validate   # uv sync; schema-valid
 ```
 
-With no `uv` or `lokf`, there is no substitute for the generated JSON Schema/SHACL checks. Fetch the raw schema (Sources note) and manually cross-check the `Service` class and the slots you used: a structural sanity check, not a validation run. Report in Step 6 whether validation ran, ran as this manual fallback, or was skipped. Never log this in `knowledge/log.md` (knowledge changes only). Fix findings, then commit, unless `.lokf/` is gitignored (Step 0), in which case there is nothing to commit.
+With no `uv` or `lokf`, there is no substitute for the generated JSON Schema check. Fetch the raw schema (Sources note) and manually cross-check the `Service` class and the slots you used: a structural sanity check, not a validation run. Report in Step 6 whether validation ran, ran as this manual fallback, or was skipped. Never log this in `knowledge/log.md` (knowledge changes only). Fix findings, then commit, unless `.lokf/` is gitignored (Step 0), in which case there is nothing to commit.
 
 ## Step 5 - Lay down the automation (optional)
 

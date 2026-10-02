@@ -38,7 +38,7 @@ Every trust label is computed from the frontmatter on each read and never stored
 | Was that really them? | the `provenance` job's log on the pull request: the forge's verdict on the approval or the signature, not the runner's. Locally, the curator skill's *Not tied to a signed commit* count |
 | When must it be looked at again, and by what rule? | `stale_after`, proposed from `policies/knowledge-curation.md` |
 | What changed, and why? | `log.md`, and git |
-| Is the checker independent of the checked? | the JSON Schema and SHACL shapes are generated from the upstream `lokf.yaml`, not written by the bundle's authors; the bundle projects to RDF and answers [SPARQL](../skills/ktl-curator/references/queries.md) |
+| Is the checker independent of the checked? | the JSON Schema is generated from the upstream `lokf.yaml`, not written by the bundle's authors; the toolkit also generates SHACL shapes, which nothing here runs yet; the bundle projects to RDF and answers [SPARQL](../skills/ktl-curator/references/queries.md) |
 
 Four limits on what that evidence shows:
 
