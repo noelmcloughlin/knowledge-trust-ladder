@@ -1,6 +1,6 @@
 # Install
 
-Four skills, each one standing alone. The **sidecar** plus the **librarian** is
+Each of the four skills stands alone. The **sidecar** plus the **librarian** is
 enough to see the idea: the bundle gets built, everything in it marked a draft.
 Add the **curator** once there is a bundle worth trusting. Already have a
 healthy `.lokf/`? Skip the **sidecar**. The **docent** goes anywhere an agent
@@ -42,7 +42,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder \
 
 All five skills release together under one tag, so pin them to the same one.
 Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`.
-What each version level means: [releasing.md](releasing.md).
+[releasing.md](releasing.md) says what each version level means.
 
 ## Microsoft 365 Copilot
 

@@ -57,7 +57,7 @@ The key lives in `~/.gnupg/`. You never save it to a file of your own: exporting
 
 ## SSH, step by step
 
-Simpler, and reuses a key you may already have. The file must be an SSH public key, one line starting `ssh-ed25519 AAAA...`, and *not* a GPG export saved under an SSH-looking name.
+SSH is simpler, and reuses a key you may already have. The file must be an SSH public key, one line starting `ssh-ed25519 AAAA...`, and *not* a GPG export saved under an SSH-looking name.
 
 ```bash
 ssh-keygen -t ed25519 -C "you@example.com"     # skip if ~/.ssh/id_ed25519 exists

@@ -54,7 +54,7 @@ The [three lines page](three-lines.md) places the roles, says what an auditor ca
 - People accept a machine's output even when it is wrong, and this "cannot be prevented by training or instructions" ([Parasuraman and Manzey, Human Factors, 2010](https://doi.org/10.1177/0018720810376055)).
 - An explanation makes acceptance more likely "regardless of its correctness" ([Bansal et al., CHI 2021](https://doi.org/10.1145/3411764.3445717)).
 - Policies that require a human to oversee an algorithm rest on people who "are unable to perform the desired oversight functions" ([Green, Computer Law & Security Review, 2022](https://doi.org/10.1016/j.clsr.2022.105681)).
-- People relied less blindly on a machine's suggestion when the screen forced a pause before showing it, and not when it merely added an explanation: asking for their own answer first, showing the suggestion only when they clicked for it, or making them wait for it ([Buçinca et al., CSCW 2021](https://doi.org/10.1145/3449287)).
+- People relied less blindly on a machine's suggestion when the screen forced a pause before showing it, and not when it merely added an explanation. The pauses were asking for their own answer first, showing the suggestion only when they clicked for it, or making them wait for it ([Buçinca et al., CSCW 2021](https://doi.org/10.1145/3449287)).
 
 **What a bundle does.** Four things:
 
@@ -89,7 +89,7 @@ Once `revision` ships (proposed for lokf 0.9.0, and for OKF in [knowledge-catalo
 
 ## Incentives are misaligned, skill is lacking
 
-**The criticism.** Arndorfer and Minto's remaining two weaknesses: misaligned incentives in the first line, and a second line without the skill to challenge the first.
+**The criticism.** Arndorfer and Minto's remaining two weaknesses are misaligned incentives in the first line, and a second line without the skill to challenge the first.
 
 **What a bundle does.** Nothing. LOKF does not ask its second line to judge content, so that judgement lands on the curator, a named person in the first line. The organisation assigns curators through the curation policy and answers for their incentives and skill.
 
