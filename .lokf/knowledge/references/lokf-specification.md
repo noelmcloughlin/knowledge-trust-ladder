@@ -27,7 +27,14 @@ lokf.nolan-nichols.com is, in the librarian skill's words, the canonical site fo
 
 # What the specification fixes
 
-The librarian skill draws seven Golden Rules from it. Among them: the bundle-root `index.md` carries the semantic header; a concept uses a class from the type vocabulary, one of `Dataset`, `Table`, `Metric`, `Service`, `Playbook`, `Tutorial`, `Explanation`, `Policy`, `GlossaryTerm`, `Reference`, `Document`, `Role`, `Person`, `Organization` and `AttestedComputation`; typed relationships are preferred over bare links, each mapping to a fixed RDF predicate; core fields map to ontology terms; trust, provenance and lifecycle are recorded only where the source attests them; and consumers stay permissive.
+The librarian skill draws seven Golden Rules from it. Among them:
+
+- the bundle-root `index.md` carries the semantic header;
+- a concept uses a class from the type vocabulary, one of `Dataset`, `Table`, `Metric`, `Service`, `Playbook`, `Tutorial`, `Explanation`, `Policy`, `GlossaryTerm`, `Reference`, `Document`, `Role`, `Person`, `Organization` and `AttestedComputation`;
+- typed relationships are preferred over bare links, each mapping to a fixed RDF predicate;
+- core fields map to ontology terms;
+- trust, provenance and lifecycle are recorded only where the source attests them;
+- consumers stay permissive.
 
 # How this repository tracks it
 

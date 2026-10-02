@@ -39,7 +39,17 @@ The IIA's own text says the lines "are not intended to denote structural element
 
 # What an auditor can check
 
-Every trust label is computed from the frontmatter on each read and never stored, so a label cannot be asserted, only earned. The page lists where each auditor's question is answered: `resource` and `sources` for where a record came from, `generated` for who produced the current text, `verified` for who confirmed it, `revision` (proposed for lokf 0.9.0) for which state of the source, the `provenance` job's log for whether it was really them, `stale_after` for when to look again, and `log.md` and git for what changed. It also states four limits, among them that a confirmation records who and when, not what the person read.
+Every trust label is computed from the frontmatter on each read and never stored, so a label cannot be asserted, only earned. The page lists where each auditor's question is answered.
+
+- Where did this come from? `resource` and `sources`.
+- Who produced the current text? `generated`.
+- Who confirmed it? `verified`.
+- Which state of the source? `revision`, proposed for lokf 0.9.0.
+- Was that really them? The `provenance` job's log.
+- When must it be looked at again? `stale_after`.
+- What changed? `log.md`, and git.
+
+It also states four limits, among them that a confirmation records who and when, not what the person read.
 
 # The critics
 

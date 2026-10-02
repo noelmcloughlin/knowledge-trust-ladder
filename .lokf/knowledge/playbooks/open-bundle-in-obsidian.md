@@ -34,7 +34,7 @@ relatedTo:
 2. **Install the plugins in that vault.** Obsidian installs plugins per vault. There is nothing to configure: the root `index.md` carries the bundle's header, so the whole vault is the bundle.
 3. **Edit and confirm there.** Obsidian writes that vault's workspace state through the link into `.lokf/knowledge/.obsidian/`, which the sidecar's `.gitignore` already excludes.
 
-If `knowledge_bundle` is missing, because a sync service dropped it or a Windows checkout shows it as a small text file, open `.lokf/knowledge` by typing the path into the picker, or make the link once from the host root: `ln -s .lokf/knowledge knowledge_bundle`, `just lokf-link` from `.lokf/`, or `mklink /J knowledge_bundle .lokf\knowledge` on Windows.
+`knowledge_bundle` can be missing, because a sync service dropped it or a Windows checkout shows it as a small text file. Then open `.lokf/knowledge` by typing the path into the picker, or make the link once from the host root. The command is `ln -s .lokf/knowledge knowledge_bundle`, or `just lokf-link` from `.lokf/`, or `mklink /J knowledge_bundle .lokf\knowledge` on Windows.
 
 # Plugin for skill
 

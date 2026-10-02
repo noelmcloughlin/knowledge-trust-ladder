@@ -45,7 +45,7 @@ Every concept it creates or materially changes carries `generated: { by: process
 
 # Plain English
 
-The skill writes each body, `description` and index bullet in plain English: the actor first and the verb early, every sentence with a verb, one idea to a sentence, no dash as punctuation, a term defined where it first appears, and "for example" rather than "e.g.". These rules govern wording only. In a live session the skill offers a pass by the optional `ktl-prose` skill before it opens its pull request; unattended, it skips that step.
+The skill writes each body, `description` and index bullet in plain English. It puts the actor first and the verb early, gives every sentence a verb, and keeps one idea to a sentence. It uses no dash as punctuation, defines a term where it first appears, and writes "for example" rather than "e.g.". These rules govern wording only. In a live session the skill offers a pass by the optional `ktl-prose` skill before it opens its pull request; unattended, it skips that step.
 
 # Audit
 

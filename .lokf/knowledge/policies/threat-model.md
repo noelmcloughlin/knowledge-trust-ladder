@@ -36,7 +36,14 @@ Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, h
 
 # Human attribution is a claim, not a credential
 
-The realistic threat is not an outside attacker but another agent driving `ktl-curator` and recording confirmations nobody gave. Four measures, in descending order of weight: the forge is the authority, through the `provenance` job that requires an approving review or a verified signature for every `human:` event a pull request adds or changes, with `knowledge-provenance.sh` doing the signature half off GitHub; the curator writes `human:` only for an authenticated identity; the curator refuses to run a review session unattended; and the curator's report counts confirmations git cannot back. The limits are stated: a signature proves a key holder made a commit, and nothing proves anyone read the source.
+The realistic threat is not an outside attacker but another agent driving `ktl-curator` and recording confirmations nobody gave. Four measures hold it, in descending order of weight.
+
+- The forge is the authority. The `provenance` job requires an approving review or a verified signature for every `human:` event a pull request adds or changes, and `knowledge-provenance.sh` does the signature half off GitHub.
+- The curator writes `human:` only for an authenticated identity.
+- The curator refuses to run a review session unattended.
+- The curator's report counts confirmations git cannot back.
+
+The limits are stated: a signature proves a key holder made a commit, and nothing proves anyone read the source.
 
 # Prompt-injection guards
 

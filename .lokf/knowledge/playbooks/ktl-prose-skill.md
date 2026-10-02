@@ -32,7 +32,21 @@ A museum edits its labels before the exhibition opens. `ktl-prose` does that for
 
 # The rules
 
-Thirteen rules, each with a before and an after in `references/rules.md`: put the actor first and the verb early; give every sentence a verb; keep one idea to a sentence and split one past forty words; say the step, then the reason; use no dash as punctuation; turn a long aside into a sentence of its own; turn a run of conditions into a list; use the same word for the same thing; choose the plain word and keep each technical term exact; cut words that carry nothing; say what is and what to do; open each page by saying who it is for; and report what you cannot fix.
+`references/rules.md` gives thirteen rules, each with a before and an after.
+
+1. Put the actor first and the verb early.
+2. Give every sentence a verb.
+3. Keep one idea to a sentence, and split one past forty words.
+4. Say the step, then the reason.
+5. Use no dash as punctuation.
+6. Turn a long aside into a sentence of its own.
+7. Turn a run of conditions into a list.
+8. Use the same word for the same thing.
+9. Choose the plain word, and keep each technical term exact.
+10. Cut words that carry nothing.
+11. Say what is, and what to do.
+12. Open each page by saying who it is for.
+13. Report what you cannot fix.
 
 # Which concepts it may reword
 
@@ -40,7 +54,12 @@ Only a body an agent wrote that no person has confirmed. It never rewords `index
 
 # What a rewording never changes
 
-A fact, a name, a number, a command or a piece of code; a link target; a heading; text in quotation marks; an RFC 2119 keyword or the strength of an instruction; any byte of frontmatter; the `lokf:related` region; the `## Open questions` section; and every fenced block.
+- A fact, a name, a number, a command or a piece of code.
+- A link target, or a heading.
+- Text in quotation marks.
+- An RFC 2119 keyword, or the strength of an instruction.
+- Any byte of frontmatter.
+- The `lokf:related` region, the `## Open questions` section, and every fenced block.
 
 # Steps
 

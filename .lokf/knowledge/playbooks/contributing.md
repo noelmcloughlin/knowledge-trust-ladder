@@ -44,7 +44,7 @@ Each `SKILL.md` is a lean router, and detail lives in that skill's `references/`
 
 # Editing scope
 
-This repository packages and distributes the four skills and the `ktl-prose` helper. A change to what an agent should actually do needs its why in the pull request, and it must keep the role boundary intact: the librarian derives facts from the repository and never vouches for them, the curator records a person's verdicts and never derives facts, and `ktl-prose` changes wording and never a fact, a frontmatter byte or a concept a person vouched for.
+This repository packages and distributes the four skills and the `ktl-prose` helper. A change to what an agent should actually do needs its why in the pull request, and it must keep the role boundary intact. The librarian derives facts from the repository and never vouches for them. The curator records a person's verdicts and never derives facts. `ktl-prose` changes wording and never a fact, a frontmatter byte or a concept a person vouched for.
 
 # Conduct and AI tools
 

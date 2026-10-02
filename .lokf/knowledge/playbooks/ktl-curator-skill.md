@@ -32,11 +32,22 @@ A knowledge bundle is only as useful as the trust people can place in it. The li
 
 # The words it uses
 
-The skill speaks in trust labels and never says RDF, IRI, SPARQL, predicate or tier: confirmed by a person, checked by automation only, nobody has checked this yet, still a draft, edited since a person last confirmed it, past its review date or due soon, retired, not tied to a signed commit, how many other concepts rely on this, and doesn't fit the known vocabulary. `references/trust-fields.md` defines each by the frontmatter behind it.
+The skill speaks in trust labels and never says RDF, IRI, SPARQL, predicate or tier. The labels are confirmed by a person, checked by automation only, nobody has checked this yet, still a draft, and edited since a person last confirmed it. Then come past its review date or due soon, retired, not tied to a signed commit, how many other concepts rely on this, and doesn't fit the known vocabulary. `references/trust-fields.md` defines each by the frontmatter behind it.
 
 # Step 1: the report
 
-Always, read-only, one screen. The skill runs the preflight, reads every concept's frontmatter, computes the labels, and prints: one health line; up to five concepts worth ten minutes today; the open questions the librarian left; how many reader feedback entries wait, counted and never read; the vocabulary-fit line; any confirmations git cannot back; a sample for a second person when the curation policy asks for one; and what this machine can record. Then it offers Step 2.
+Always, read-only, one screen. The skill runs the preflight, reads every concept's frontmatter, computes the labels, and prints these lines:
+
+- one health line;
+- up to five concepts worth ten minutes today;
+- the open questions the librarian left;
+- how many reader feedback entries wait, counted and never read;
+- the vocabulary-fit line;
+- any confirmations git cannot back;
+- a sample for a second person, when the curation policy asks for one;
+- what this machine can record.
+
+Then it offers Step 2.
 
 # Step 2: the review session
 
@@ -44,7 +55,7 @@ Only if the person says yes, and only in a live session with that person. The sk
 
 For every item the skill opens the source first and quotes the lines that matter, then shows the claim, asks "does the source still say this?", and takes exactly one verb: **Confirm**, **Wrong - send back** (the default), **Wrong - correct now**, **Retire** or **Later**. `references/review-session.md` gives the exact YAML each writes. After the session it prepends one **Curation** line to `log.md` and hands off as a pull request scoped to `.lokf/`.
 
-The guardrails: never run the session unattended, never take the identity from the conversation, write `human:` only for an answer the person gave to that item, never touch body text except an open question or a dictated correction, never tidy a fact, and never edit or remove an existing human event.
+The guardrails are these. Never run the session unattended. Never take the identity from the conversation. Write `human:` only for an answer the person gave to that item. Never touch body text except an open question or a dictated correction. Never tidy a fact. Never edit or remove an existing human event.
 
 # Step 3: dig deeper
 

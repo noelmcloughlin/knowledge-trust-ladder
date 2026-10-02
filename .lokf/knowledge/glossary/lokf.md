@@ -30,7 +30,7 @@ LOKF stands for Linked Open Knowledge Format. The README calls a bundle written 
 
 The README states the position as "specification first, schema first, interoperability first". Nothing in this repository invents a field, a format or a validator. The whole format is one LinkML schema, `lokf.yaml`, and the JSON Schema, JSON-LD context, SHACL shapes and OWL ontology are generated from it. A folder of Markdown can therefore be validated, queried as a graph, and read by people, agents and any tool that speaks OKF, JSON Schema, JSON-LD or SHACL.
 
-The librarian skill lists what LOKF adds over plain OKF: a type vocabulary of fifteen core classes, ten typed relationships that each map to a fixed RDF predicate, and the trust fields of OKF v0.2 (`generated`, `verified`, `sources`, `status`, `stale_after`) made queryable.
+The librarian skill lists what LOKF adds over plain OKF. It adds a type vocabulary of fifteen core classes, and ten typed relationships that each map to a fixed RDF predicate. It makes the trust fields of OKF v0.2 (`generated`, `verified`, `sources`, `status`, `stale_after`) queryable.
 
 # Where it is defined
 

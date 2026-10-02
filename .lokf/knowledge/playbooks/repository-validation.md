@@ -34,7 +34,20 @@ references:
 
 # The repository contract
 
-`scripts/validate-repository.sh` is the entry point, and it names each check as it runs. Among them: the five skill directories and their frontmatter; relative link targets; the paths the sibling repositories link into, which must not move; `CONTRIBUTING.md` and `SECURITY.md` under their word budgets; the sidecar templates byte-identical to this repository's own copies, with the conventions, preflight, feedback and provenance scripts exercised on fixtures; `CHANGELOG.md` with no version promoted twice; the librarian template's skills pin at a current release; the old repository and skill names kept out; the Microsoft 365 Copilot skills building reproducibly from this bundle, with the Copilot template carrying the docent's trust labels word for word; and `prose-check.py` giving the expected verdict on fixtures and on this repository's own bundle. It ends with one line, PASS or FAIL.
+`scripts/validate-repository.sh` is the entry point, and it names each check as it runs. Among them:
+
+- the five skill directories and their frontmatter;
+- relative link targets;
+- the paths the sibling repositories link into, which must not move;
+- `CONTRIBUTING.md` and `SECURITY.md` under their word budgets;
+- the sidecar templates byte-identical to this repository's own copies, with the conventions, preflight, feedback and provenance scripts exercised on fixtures;
+- `CHANGELOG.md` with no version promoted twice;
+- the librarian template's skills pin at a current release;
+- the old repository and skill names kept out;
+- the Microsoft 365 Copilot skills building reproducibly from this bundle, with the Copilot template carrying the docent's trust labels word for word;
+- `prose-check.py` giving the expected verdict on fixtures and on this repository's own bundle.
+
+It ends with one line, PASS or FAIL.
 
 # The bundle's own gate
 

@@ -33,10 +33,10 @@ Only the latest published tag receives fixes, shipped as a patch release and not
 
 The repository is mostly Markdown. Four things in it run, or are run by other systems, and are the attack surface:
 
-- The sidecar's templates, six scripts and three workflows copied into other repositories, held by their own design: two jobs so the agent never meets a write token, a `publish` job that confines the patch to the bundle and refuses a `human:` claim, and a preflight and a forge-free gate that only read git and gpg.
+- The sidecar's templates, six scripts and three workflows copied into other repositories. Their own design holds them. Two jobs mean the agent never meets a write token. A `publish` job confines the patch to the bundle and refuses a `human:` claim. A preflight and a forge-free gate only read git and gpg.
 - This repository's own workflows, held by actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, and harden-runner in audit mode.
 - `skills/ktl-prose/scripts/prose-check.py`, the one script a skill runs in place: standard library only, it reads the files it is given and calls `git show` with an argument list, writes nothing and opens no network connection.
-- The five skills' prose, executed by whichever LLM agent runs it, held by each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one.
+- The five skills' prose, executed by whichever LLM agent runs it. Each skill's guardrail for its own input path holds it: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one.
 
 A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access the harness grants it, so review what it changed before you commit.
 

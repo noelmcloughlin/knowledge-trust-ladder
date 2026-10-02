@@ -44,7 +44,7 @@ A squash merge takes its subject from the pull request title, and GitHub's defau
 
 # After a release of knowledge-trust-ladder
 
-The sidecar template's own skills pin moves itself in the release commit, one release behind by design, and is never bumped by hand. The sibling repositories need a person: after `publish.yml` has tagged a release that changed a template or `skills/ktl-librarian/`, run `scripts/sync-sidecar.sh <tag> <sibling>...` from this repository. It refuses anything but a tag that is on origin and carries the skill, copies that release's templates over each sibling's copies, moves the sibling's `TRUST_LADDER_SKILLS_REF` to the same tag, runs the sidecar's checks there, and leaves the diff for a person to review and commit as `security(sidecar): ...`. The pin and the copies move together, from one tag, because once a sibling arms its scheduled librarian, the pin decides which instructions run unattended.
+The sidecar template's own skills pin moves itself in the release commit, one release behind by design, and is never bumped by hand. The sibling repositories need a person: after `publish.yml` has tagged a release that changed a template or `skills/ktl-librarian/`, run `scripts/sync-sidecar.sh <tag> <sibling>...` from this repository. It refuses anything but a tag that is on origin and carries the skill. It copies that release's templates over each sibling's copies and moves the sibling's `TRUST_LADDER_SKILLS_REF` to the same tag. Then it runs the sidecar's checks there, and leaves the diff for a person to review and commit as `security(sidecar): ...`. The pin and the copies move together, from one tag, because once a sibling arms its scheduled librarian, the pin decides which instructions run unattended.
 
 # Repository settings
 
