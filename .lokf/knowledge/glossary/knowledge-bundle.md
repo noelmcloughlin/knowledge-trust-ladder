@@ -1,40 +1,44 @@
 ---
 type: GlossaryTerm
 id: https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-title: "Knowledge bundle"
-description: "The `.lokf/knowledge` folder: one Markdown file per concept, with a semantic header on the root index.md, which people read as documentation and tools query as a graph."
-definition: "A folder of Markdown concept files, one concept per file, whose root index.md carries the header that lifts the whole folder into a queryable LOKF graph."
+title: Knowledge bundle
+description: The `.lokf/knowledge` directory - containing one-concept-per-file Markdown, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph.
+definition: The `.lokf/knowledge` directory - containing one-concept-per-file Markdown, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph. Accessible via a `knowledge_bundle` link at the repository root if that link exists.
 genre: reference
-resource: README.md
-sources:
-- resource: README.md
-- resource: skills/ktl-sidecar/SKILL.md
-- resource: skills/ktl-sidecar/templates/README.md
-- resource: docs/obsidian.md
+resource: skills/ktl-sidecar/templates/README.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-02T21:25:32Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-09-24T01:09:00Z"
 about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/lokf
-relatedTo:
-  - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
+verified:
+- by: human:noelmcloughlin
+  at: "2026-09-09T16:35:55Z"
+- by: human:noelmcloughlin
+  at: "2026-09-24T01:09:00Z"
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:36:11Z"
+stale_after: 2028-09-24
 ---
 
 # Overview
 
-A knowledge bundle is the catalogue the README describes: a plain folder of Markdown concept files that keeps the work of finding, connecting and judging a repository's knowledge, instead of discarding it with each task. Every concept says where it came from and how far it has been checked, in plain words.
-
-In this family the bundle is always `.lokf/knowledge/`, one real folder on every host. The `.lokf/` folder beside it holds the tooling: a `pyproject.toml` that declares the `lokf` toolkit, a `justfile`, the scripts the gate runs, and the Copilot builder. A `knowledge_bundle` link at the repository root points at the real folder, so that folder pickers, which hide dot-folders, have an ordinary name to open.
-
-# What is in it
-
-- `index.md` at the root carries the semantic header: `lokf_version`, `okf_version`, `base_iri`, `context`, `title`, `description`, `license` and `publisher`. `base_iri` plus a concept's path mints that concept's IRI. Without the header the bundle is plain OKF.
-- `log.md` records knowledge changes, newest day first, under one bare `## YYYY-MM-DD` heading per day.
-- Every other Markdown file is one concept. Its frontmatter names its `type`, its `id`, where it came from (`resource`, `sources`), who produced it (`generated`), who checked it (`verified`) and its lifecycle (`status`, `stale_after`). Its body is prose a person reads.
-- Each domain folder (`playbooks/`, `policies/`, `glossary/`, `references/`, `explanation/`) carries an `index.md` of its own, a table of contents.
-
-# The exhibition, not the workshop
-
-`docs/obsidian.md` names the split. The vault or repository a person already keeps is the workshop, and nothing in it is moved or migrated. The bundle is the exhibition: the checked part of what the workshop knows, and the front door that teammates, continuous integration and agents come through. In Obsidian it opens as a small vault of its own, through the `knowledge_bundle` link, and the two never index the same file.
+Strictly, the *bundle* is the `knowledge/` folder - one concept per Markdown
+file under an `index.md` that names it - and the *sidecar* is `.lokf/`, the
+bundle plus the tooling that validates it, kept out of the host project's
+build. In a repository the two travel together, so the terms are used
+loosely for each other here. To an Obsidian user a bundle is a folder of
+notes opened as a vault of its own - the intended arrangement, through the
+host's `knowledge_bundle` link - or, at a cost the plugin READMEs name, a
+folder inside a vault, or a whole vault that is a bundle outright. In
+library terms - the poem the repository's README opens with - the bundle is the
+*catalogue* the librarian keeps: the layer that stays put between the stacks
+and the next reader. In museum terms it is the *exhibition* - the hall
+visitors are shown into, where the docent takes people - and each concept in
+it an *exhibit*, the checked, curated part. Both stand against the *workshop*
+of raw sources or notes it was distilled from: a repository's code, or an
+Obsidian vault, which is never migrated into the bundle. `knowledge/index.md` carries the
+semantic header (`base_iri`, `context`, versions, publisher) plus the table
+of contents; `knowledge/log.md` records knowledge changes only. The bundle is
+the durable layer between scattered sources and the next task - the thing that
+stops each session re-finding, re-connecting, and re-judging the same material.

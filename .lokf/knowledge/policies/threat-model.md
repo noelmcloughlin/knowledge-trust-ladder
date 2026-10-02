@@ -1,54 +1,98 @@
 ---
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/threat-model
-title: "Threat model"
-description: "The security design the three LOKF repositories share: scope is advisory in interactive use, repository hardening, the human: attribution gate on a verified event, the prompt-injection guard for each skill's input path, and what it does not cover."
+title: Threat model
+description: "The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate."
 genre: reference
 resource: docs/threat-model.md
-sources:
-- resource: docs/threat-model.md
-- resource: SECURITY.md
-- resource: skills/ktl-sidecar/references/gate.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-02T21:25:32Z"
-status: draft
+  at: "2026-09-24T22:22:58Z"
+verified:
+- by: process:ktl-librarian
+  at: "2026-09-24T22:22:58Z"
 references:
-  - https://knowledge-trust-ladder.example/knowledge/policies/security
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-docent-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
-relatedTo:
-  - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
+- https://knowledge-trust-ladder.example/knowledge/policies/security
+- https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 ---
 
 # Overview
 
-`knowledge-trust-ladder`, KTL Registrar and KTL Curator run the same scheduled agent from the same sidecar templates and release the same way, so they share one threat model, and `docs/threat-model.md` is it. Two facts shape it. The skills are prose executed by whichever LLM agent runs them, so anywhere a skill sends the agent to read content it did not author is a prompt-injection surface. And the bundle's central trust signal, a `verified` event whose actor starts with `human:`, is a string in a Markdown file that any writer can type.
+Added 2026-09-14, when `policies/security.md`'s ~1,900-word design moved out
+of `SECURITY.md` and into this page across the three LOKF repositories
+(`knowledge-trust-ladder`, KTL Registrar, KTL Curator). Its section headings are
+kept stable on purpose - `#interactive-use-scope-is-advisory-not-enforced`,
+`#repository-hardening`, `#human-attribution-human-is-a-claim-not-a-credential`,
+`#prompt-injection-guards` - because every sibling repository's `SECURITY.md`
+deep-links them by URL; `scripts/validate-repository.sh` check 9 records this
+path among the ones a sibling depends on.
 
-# Scope is advisory in interactive use
+**Interactive use is advisory, not enforced.** A skill's `Scope:` line is
+prose, not a checked permission - an agent run interactively has whatever
+access its harness grants, and only the scheduled `knowledge-librarian.yaml`
+technically enforces its scope, because nothing else is watching it run.
 
-A skill's `Scope:` line is prose, not a checked permission, and an agent run interactively has whatever tool access the harness grants it. Only the scheduled librarian workflow enforces its scope. Interactively, review what the agent changed before you commit or merge.
+**Repository hardening**: actions pinned to commit SHAs everywhere including
+the copied templates; `permissions: {}` at the top of every workflow;
+harden-runner in audit mode on any job installing packages or running
+third-party code; the librarian split into a read-only `refresh` job and an
+agent-free `publish` job so the write token and the agent never meet, with
+the agent's one credential (the `AGENT_API_KEY` secret or, with
+`AGENT_USE_JOB_TOKEN`, the job's own token, holding `contents: read` and
+`copilot-requests: write`) exported into the agent's environment only, under
+a credential-shaped name the wrapper checks (2026-09-24); the release
+workflow split the same way, a `pack` job that installs the toolkit and
+validates under `contents: read` and an `attach` job that runs no
+third-party packages, holds `contents: write`, and checks each zip, the bundle's and any Copilot skill's, against
+the checksum `pack` made before uploading it (2026-09-24); every
+write to `main` behind the `release` Environment's required reviewers; `main`
+blocking deletion, force-pushes, and non-linear history, deliberately nothing
+more, since a stricter ruleset would also reject the release job's own
+commit; secret scanning and push protection as GitHub settings nothing in CI
+can assert still hold; CodeQL and dependency review skipped where there is
+nothing for them to scan.
 
-# Repository hardening
+**Human attribution**: a `verified` event whose actor starts with `human:`,
+or a `generated` record written that way, is a claim, not a credential - just
+a string in Markdown that any writer can type. `knowledge-registrar.yaml`'s
+`provenance` job is the authority: it requires an approving review from the
+named account or their verified signature on the introducing commit,
+evidence GitHub holds rather than evidence the bundle asserts. Both gates
+read the events themselves - whole, from the frontmatter, against every
+parent of a commit and keyed by the concept's `id` - so a re-dated event
+counts while a rename, a merge and an example in a body code fence do not,
+and conventions rule 10 keeps those fields to spellings a line reader and a
+parser agree on (2026-09-17). ktl-curator writes `human:` only for
+an authenticated identity - `gh api user`, `glab api user`, or a signing
+key the forge lists under the stated login - refuses to run a review session
+unattended, and its report flags an unsigned `human:` commit rather than
+trusting it silently. Where GitHub is not the forge, or as a second opinion
+where it is, `knowledge-provenance.sh` (2026-09-17) does the signature half
+against public keys the repository carries under `.lokf/curators/`, one GPG
+or SSH key per curator id, and refuses a change that adds an id's key and
+that id's confirmation together. None of this proves anyone read the source - it raises the cost
+of forgery, not the truth of a confirmation.
 
-Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, harden-runner in audit mode. The librarian runs in two jobs so the agent and the write token never meet, and the agent step runs the reviewed in-repository wrapper, never a variable's content as a command. The release workflow packs the bundle and uploads it in separate jobs. Every workflow write to `main` sits behind the `release` environment. `main` blocks deletion and force-pushes and requires linear history, and no more, because a rule requiring pull requests would also reject the release job's own push.
-
-# Human attribution is a claim, not a credential
-
-The realistic threat is not an outside attacker but another agent driving `ktl-curator` and recording confirmations nobody gave. Four measures hold it, in descending order of weight.
-
-- The forge is the authority. The `provenance` job requires an approving review or a verified signature for every `human:` event a pull request adds or changes, and `knowledge-provenance.sh` does the signature half off GitHub.
-- The curator writes `human:` only for an authenticated identity.
-- The curator refuses to run a review session unattended.
-- The curator's report counts confirmations git cannot back.
-
-The limits are stated: a signature proves a key holder made a commit, and nothing proves anyone read the source.
-
-# Prompt-injection guards
-
-Each skill carries the guard for its own input path. The librarian is the one skill that reads reader feedback, and it resolves only the question an entry names, from the source it points at. The curator quotes a source to a person and records only the person's verdict. The docent treats fetched sources and the repository as text to quote, and records a gap through a script so it never opens the feedback file. `ktl-prose` treats the body it rewords as text to edit, rewords only in a live session, and its script refuses a rewording that touches a person's record or a frontmatter byte. The `provenance` job reads pull-request metadata with no agent in the job. If a guard fails, the blast radius is a pull request that never pushes to `main` and never auto-merges.
-
-# Not covered
-
-Ordinary repository content the librarian scrapes has no per-entry guard; it relies on the review before merge. A reader's own phrasing to the docent belongs to the agent harness. A compromised runner, upstream action or agent harness is out of reach.
+**Prompt-injection guards**, one per input path: ktl-librarian
+resolves a `.lokf/feedback.md` entry only from the source it names, never its
+own wording, and ktl-curator only counts waiting entries with `grep -c`;
+ktl-curator quotes a fetched source to a person rather than
+acting on it; ktl-docent treats fetched or repository content as text to
+quote, never instructions, is read-only on the bundle besides, and since
+2026-09-23 adds a feedback entry through `knowledge-feedback.sh` rather than
+by opening `feedback.md`, so the librarian is the only skill that reads what
+a reader wrote; its one write path asks once per session first. The
+registrar's `provenance` job, which reads pull-request metadata, runs no
+agent: event fields enter through `env:`, API reads are narrowed to logins,
+SHAs and a verification flag, the `human:<id>` is held to a login's
+characters, the token is read-only, and a path git still has to quote is
+refused (2026-09-19). If a guard
+fails, the only unattended write path is `knowledge-librarian.yaml`'s
+`publish` job, which re-derives the touched paths from the patch's own
+`git apply --numstat` on a clean checkout the agent never shared, confines
+them to `.lokf/knowledge`, `knowledge_bundle` and `.lokf/feedback.md` (the
+only pathspecs it stages), and refuses a patch adding a `by: human:` claim.
+Inside `refresh`, the wrapper snapshots `.git/config` and `.git/hooks`
+before the agent call and restores them from an `EXIT` trap, and keeps its
+own checks in a `main()` called last, so neither a failed agent nor a
+cancelled job leaves a poisoned config behind.

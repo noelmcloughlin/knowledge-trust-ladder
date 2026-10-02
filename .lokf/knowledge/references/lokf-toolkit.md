@@ -1,42 +1,42 @@
 ---
 type: Reference
 id: https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
-title: "LOKF toolkit (lokf on PyPI)"
-description: "The Python package that validates, converts and serves a LOKF bundle. It is the dependency the scaffolded .lokf/pyproject.toml declares."
+title: LOKF toolkit (lokf on PyPI)
+description: The Python package that validates, converts, and serves a LOKF bundle - the dependency the scaffolded .lokf/pyproject.toml declares.
 genre: reference
 resource: https://pypi.org/project/lokf/
-sources:
-- resource: https://pypi.org/project/lokf/
-- resource: skills/ktl-sidecar/SKILL.md
-- resource: skills/ktl-librarian/SKILL.md
-- resource: .lokf/justfile
 generated:
   by: process:ktl-librarian
-  at: "2026-10-02T21:25:32Z"
+  at: "2026-09-17T22:30:00Z"
 status: draft
-relatedTo:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
 definedBy:
-  - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
+- https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
+relatedTo:
+- https://knowledge-trust-ladder.example/knowledge/references/linkml
+verified:
+- by: process:ktl-librarian
+  at: "2026-09-24T00:55:04Z"
 ---
 
 # Overview
 
-The `lokf` package on PyPI is the toolkit underneath the skills. The README says it supplies the schema and the tooling. The sidecar installs it through `uv`, from the `pyproject.toml` it lays down, and the `justfile` wraps its commands.
+The implementation, not the specification. `lokf validate` checks frontmatter
+and bundle shape against the generated JSON Schema, and `--schema <file>.yaml`
+checks against a domain schema that imports LOKF's instead, which is the flag
+the extension recipe rests on; the generated SHACL shapes
+catch cardinality, datatype, and range violations on the projected graph;
+`lokf convert` projects to RDF and `lokf serve` exposes a SPARQL endpoint.
+`lokf query` runs a SPARQL query against the bundle. Typed-relation targets
+with no matching concept are `lokf validate --check-refs`, which this
+repository's own `just lokf-check-refs` recipe now calls: it takes the
+relation slots from the schema, so a domain schema's own slots are covered
+without the recipe restating a predicate list.
 
-# The commands the skills run
-
-From `.lokf/`, as the librarian skill lists them:
-
-- `just lokf-install` runs `uv sync`.
-- `just lokf-validate` runs `lokf validate`, the JSON Schema check on every concept's frontmatter and on the assembled bundle.
-- `just lokf-check-refs` runs `lokf validate --check-refs`, so that every typed relation target resolves to a concept in the bundle.
-- `just lokf-convert` projects the bundle to Turtle.
-- `just lokf-serve` starts a SPARQL endpoint with a live graph explorer.
-
-`lokf validate` reads a concept body as an opaque string and never opens `log.md`. The conventions the gate also checks, such as quoted timestamps and one log heading per day, are held by `knowledge-conventions.sh`, which the sidecar lays down beside it.
-
-# Versions
-
-The sidecar's template floors the toolkit at 0.8.0. The librarian's tooling-version step compares the latest PyPI release against that floor in interactive sessions, bumps a minor or patch version itself, and asks a person before a major one.
+Scaffolded bundles pin `lokf[build]`, and that `[build]` extra pulls in the full
+`linkml` package - so every sidecar already has the LinkML generators available
+for a domain-schema extension, with no extra installation. Where Python is
+unavailable, the skills fall back to the raw schema at the tag matching the
+`lokf` floor, `raw.githubusercontent.com/nicholsn/lokf/v0.8.0/lokf.yaml`, for
+a structural cross-check only, which is not a validation run. The pin moves
+with the floor: upstream `main` has already diverged from 0.8.0, so a check
+against it would pass or fail things the installed toolkit does not.

@@ -11,6 +11,7 @@ Each file has a section on one of the two pages. Read the one you are wiring.
 | `knowledge-provenance.sh` | The signature check, with no forge needed | A public key per curator under `.lokf/curators/` | [gate.md](gate.md) |
 | `knowledge-librarian.yaml` | Runs the librarian agent weekly and opens a review pull request | Repository variables, and a secret for the agent's key | below |
 | `knowledge-librarian.sh` | The wrapper the librarian workflow runs | Nothing, unless the skills live in an unusual directory | below |
+| `knowledge-apply.sh`, `knowledge-apply.py` | The librarian's only pen: applies `.lokf/patch.yaml` to the bundle; the wrapper runs it after the agent | Nothing | ktl-librarian's `references/patch.md` |
 | `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to arm it, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 
@@ -73,14 +74,14 @@ A personal access token can stand in for the job token. Use a fine-grained token
 
 | Setting | Value |
 | --- | --- |
-| `AGENT_CLI` | `npx -y @anthropic-ai/claude-code@2.1.281 --permission-mode dontAsk --allowedTools Read,Edit(.lokf/knowledge/**),Bash(git:*),Bash(uv:*),Bash(uvx:*),Bash(just:*),Bash(bash:*)` |
+| `AGENT_CLI` | `npx -y @anthropic-ai/claude-code@2.1.281 --permission-mode dontAsk --allowedTools Read,Write(.lokf/patch.yaml),Edit(.lokf/patch.yaml),Bash(git:*),Bash(uv:*),Bash(uvx:*),Bash(just:*),Bash(bash:*)` |
 | `AGENT_API_KEY_ENV` | `ANTHROPIC_API_KEY` with a Console key, or `CLAUDE_CODE_OAUTH_TOKEN` with a subscription token |
 | `AGENT_API_KEY` (secret) | an API key from the Claude Console, or the token `claude setup-token` prints |
 | `AGENT_USE_JOB_TOKEN` | unset. Claude Code cannot use the job's GitHub token |
 
 Pay for the runs in one of two ways. A Console API key is billed per use, apart from any subscription, and the Console can cap its spending. A Pro or Max subscription needs no API billing: run `claude setup-token` on your own machine, and it prints a long-lived token for your account. The runs then count against that subscription's usage limits, which your own sessions share.
 
-`dontAsk` denies any call that would otherwise prompt, so a run never waits for a person, and `--allowedTools` names what the skill needs. `Edit(.lokf/knowledge/**)` confines every file edit to the bundle; Edit rules cover new files too. `Bash(git:*)` is the prefix form, and it is why no pattern has a space: a rule such as `Bash(git log:*)` cannot be passed, since the wrapper splits on spaces.
+`dontAsk` denies any call that would otherwise prompt, so a run never waits for a person, and `--allowedTools` names what the skill needs. `Write(.lokf/patch.yaml)` and `Edit(.lokf/patch.yaml)` confine every file write to the patch file, which the wrapper applies with `knowledge-apply.sh` after the run; the bundle itself is on no list. `Bash(git:*)` is the prefix form, and it is why no pattern has a space: a rule such as `Bash(git log:*)` cannot be passed, since the wrapper splits on spaces.
 
 ### Before arming the schedule
 

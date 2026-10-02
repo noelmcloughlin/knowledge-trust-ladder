@@ -1,35 +1,48 @@
 ---
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
-title: "AI covenant"
-description: "Community norms for AI use: contributors own what they submit regardless of tooling, AI must not post autonomously in discussions, AI co-authorship in commit messages is discouraged, and repository-owned agents land every change as a reviewed pull request."
+title: AI covenant
+description: Community norms for AI use - contributors own what they submit regardless of tooling, AI must not post autonomously in discussions, AI co-authorship in commit messages is discouraged, and a repository-owned agent (e.g. ktl-librarian) must commit under a bot or maintainer identity with no trailer either way and land only as a human-reviewed PR.
 genre: reference
 resource: AI_COVENANT.md
-sources:
-- resource: AI_COVENANT.md
-- resource: CONTRIBUTING.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-02T21:25:32Z"
-status: draft
-references:
-  - https://knowledge-trust-ladder.example/knowledge/policies/code-of-conduct
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+  by: human:noelmcloughlin
+  at: "2026-09-26T20:48:23Z"
+verified:
+- by: human:noelmcloughlin
+  at: "2026-09-10T00:00:00Z"
+- by: human:noelmcloughlin
+  at: "2026-09-24T01:16:00Z"
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:48:23Z"
+stale_after: 2027-09-26
 ---
 
 # Overview
 
-`AI_COVENANT.md` establishes community norms for responsible AI use in the project, and applies to this repository and the two Obsidian plugin repositories. It is adapted from the LinkML AI Covenant. Its core principle: everything you contribute is yours, regardless of what tools helped create it. When you submit code, documentation, issues or comments with AI assistance, you are the author, responsible for understanding it, verifying it, defending it in review, and ensuring it meets project standards.
+The covenant applies to the three repositories of the project:
+`knowledge-trust-ladder`, `obsidian-ktl-registrar` and
+`obsidian-ktl-curator`.
 
-# Reviews and discussions
+The core principle is ownership: everything submitted is the contributor's,
+whatever tools helped create it, and they must be able to understand, verify,
+and defend it. AI review comments are suggestions, not requirements.
 
-AI review tools provide automated quality checks, not human reviews. Their comments are suggestions, a pull request owner may close them without response, and a pull request still requires human approval. AI tools may help a person think before taking part in a discussion, but AI systems must not be used to post comments, replies or messages directly in issues, discussions, chat channels or mailing lists. Every discussion contribution reflects a human position the author is prepared to explain, revise and defend.
+Discussions are for human judgement - AI must not directly post comments in
+issues, Slack, or mailing lists. Disclosure is required when proposing changes
+to code the contributor does not fully understand, and AI co-authorship
+trailers in commit messages are actively discouraged. Adapted from the LinkML
+AI Covenant.
 
-# Repository-owned agent automation
-
-Some of what runs here is a scheduled or on-demand agent, such as `ktl-librarian`, that proposes changes on its own initiative. The core principle still applies. Such an agent commits as either a clearly labeled bot identity or the maintainer who invoked it, never both, and carries no AI co-authorship trailer. Every change it proposes lands as a pull request and requires a human maintainer's approval; an agent's own review does not satisfy that. It runs with least privilege, in a read-only job that hands its change to a separate privileged job, and the contract that it edits only `.lokf/knowledge/` is checked after it runs. A skill that records a person's judgment, such as `ktl-curator` writing a `human:` event, may write only what that person said about that item, in that session. An agent's output is nobody's contribution until a human has reviewed and approved it.
-
-# Disclosure
-
-Required: attribute the idea to AI when proposing a fix to code you do not fully understand. Appreciated: say which ideas are AI-generated and which are your own when brainstorming. Not required: routine use of AI for writing code, issues or pull request descriptions, and AI co-authorship in commit messages, which is actively discouraged.
+A dedicated **Repository-Owned Agent Automation** section covers the case
+this repository actually runs into: an agent (`ktl-librarian`, scheduled or
+interactive) proposing changes with nobody drafting alongside it. It commits
+as a labeled bot identity or the invoking maintainer - never both, and never
+with an AI co-authorship trailer either way; every such change lands as a PR
+requiring human approval, never a direct push or an agent's own approval;
+the scheduled agent runs in a read-only job with no git credentials on disk
+and hands its change to a separate privileged job that runs no agent code,
+which checks the "edit only `.lokf/knowledge/`" contract after the run
+rather than merely requesting it; and a skill recording a person's verdict (`ktl-curator`'s `verified:
+human:<id>`) may write only what that person said about that specific item, in that session,
+never inferred, batched, or self-supplied.

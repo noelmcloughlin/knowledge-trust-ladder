@@ -1,31 +1,25 @@
 ---
 type: GlossaryTerm
 id: https://knowledge-trust-ladder.example/knowledge/glossary/okf
-title: "OKF"
-description: "The Open Knowledge Format, Google Cloud's specification for a folder of Markdown concept files with YAML frontmatter, which LOKF profiles."
-definition: "Google Cloud's Open Knowledge Format: a folder of Markdown files, one concept per file, with YAML frontmatter in which only `type` is required, plus the v0.2 provenance, trust and lifecycle fields."
+title: OKF
+description: The Open Knowledge Format, Google's specification for a folder of Markdown concept files with YAML frontmatter, which LOKF profiles.
+definition: Open Knowledge Format - Google's specification for a folder of Markdown concept files with YAML frontmatter, where the file path is the concept ID and `type` is the only strictly required field.
 abbreviation: OKF
 genre: reference
 resource: skills/ktl-librarian/SKILL.md
-sources:
-- resource: skills/ktl-librarian/SKILL.md
-- resource: README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-02T21:25:32Z"
+  at: "2026-09-24T16:52:47Z"
 status: draft
-relatedTo:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/lokf
 definedBy:
-  - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
+- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
+verified:
+- by: process:ktl-librarian
+  at: "2026-09-24T00:55:04Z"
 ---
 
 # Overview
 
-OKF is the Open Knowledge Format, published by Google Cloud. Its Golden Rule, as the librarian skill repeats it, is "OKF first": one concept per file, the file path is the concept id, `type` is the only strictly required field, and consumers are permissive. Every LOKF bundle is also a valid OKF bundle.
-
-# What this family takes from it
-
-The README quotes OKF's fourth goal: to "standardize the small set of frontmatter fields making an agent-maintained corpus trustable, without prescribing any runtime". This family is such a runtime. OKF's v0.2 fields `generated`, `verified`, `sources`, `status` and `stale_after` become the ladder each claim climbs, and its section 7 actor strings (`human:<id>`, `process:<id>`) are what every trust label is computed from.
-
-OKF puts a fixed taxonomy of concept types and domain-specific schemas out of scope. The README notes that LOKF brings both into scope by construction: a domain's own types get a schema of their own.
+The substrate LOKF profiles. Its defining trait is permissiveness: a consumer
+must not reject a bundle for missing optional fields, unknown types, unknown
+keys, or broken cross-links. Every LOKF bundle is also a valid OKF bundle.

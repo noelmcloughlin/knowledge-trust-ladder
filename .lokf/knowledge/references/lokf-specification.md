@@ -1,41 +1,35 @@
 ---
 type: Reference
 id: https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
-title: "LOKF specification"
-description: "The canonical definition of the Linked Open Knowledge Format: a semantic profile of OKF that binds every field, type and relationship to schema.org, DCAT and PROV-O terms."
+title: LOKF specification
+description: The canonical definition of the Linked Open Knowledge Format - a semantic profile of OKF binding every field, type, and relationship to schema.org, DCAT, and PROV-O.
 genre: reference
 resource: https://lokf.nolan-nichols.com/specification/
-sources:
-- resource: https://lokf.nolan-nichols.com/specification/
-- resource: skills/ktl-librarian/SKILL.md
-- resource: README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-02T21:25:32Z"
-status: draft
+  at: "2026-09-24T16:46:12Z"
 references:
-  - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
+- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 relatedTo:
-  - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
-  - https://knowledge-trust-ladder.example/knowledge/references/linkml
-  - https://knowledge-trust-ladder.example/knowledge/glossary/lokf
+- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
+verified:
+- by: human:noelmcloughlin
+  at: "2026-09-09T16:35:55Z"
+- by: human:noelmcloughlin
+  at: "2026-09-24T01:12:16Z"
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:04:41Z"
+stale_after: 2027-09-26
 ---
 
 # Overview
 
-lokf.nolan-nichols.com is, in the librarian skill's words, the canonical site for what LOKF means. The specification and the Golden Rules come from it. The format itself is one LinkML schema, published in the `nicholsn/lokf` repository on GitHub, and the README links the schema at tag v0.8.0.
+The site is the authority for what LOKF *means* - the source the librarian
+skill's Golden Rules are drawn from: the type vocabulary, the typed-relation predicates,
+and the trust families. The format itself is defined once in LinkML
+(`lokf.yaml`); the JSON Schema, JSON-LD context, SHACL shapes, and OWL
+ontology are all **generated** from it and must not be hand-edited.
 
-# What the specification fixes
-
-The librarian skill draws seven Golden Rules from it. Among them:
-
-- the bundle-root `index.md` carries the semantic header;
-- a concept uses a class from the type vocabulary, one of `Dataset`, `Table`, `Metric`, `Service`, `Playbook`, `Tutorial`, `Explanation`, `Policy`, `GlossaryTerm`, `Reference`, `Document`, `Role`, `Person`, `Organization` and `AttestedComputation`;
-- typed relationships are preferred over bare links, each mapping to a fixed RDF predicate;
-- core fields map to ontology terms;
-- trust, provenance and lifecycle are recorded only where the source attests them;
-- consumers stay permissive.
-
-# How this repository tracks it
-
-The sidecar pins the toolkit at the 0.8.0 floor. The raw schema at the matching tag, never `main`, is the fallback for an audit with no Python. Where a page says a field is proposed for lokf 0.9.0, such as `revision` on an event and `excerpt` on a source, the 0.8.0 validator rejects it, and the skills leave it out until the floor moves.
+Distinct from the [toolkit](lokf-toolkit.md) that implements it: the site
+defines meaning, the PyPI package does the validating and projecting. The
+skills cite each for its own role.

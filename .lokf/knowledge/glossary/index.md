@@ -1,6 +1,6 @@
 # Glossary
 
-* [Knowledge bundle](knowledge-bundle.md) - The `.lokf/knowledge` folder: one Markdown file per concept, with a semantic header on the root index.md, which people read as documentation and tools query as a graph.
-* [LOKF](lokf.md) - The Linked Open Knowledge Format: a semantic profile of OKF that binds every field, type and relationship to a public vocabulary, so a bundle projects losslessly to JSON-LD and RDF.
-* [OKF](okf.md) - The Open Knowledge Format, Google Cloud's specification for a folder of Markdown concept files with YAML frontmatter, which LOKF profiles.
-* [Trust label](trust-label.md) - The plain words the skills use for how far a concept has been checked. Each label is computed from the concept's frontmatter on every read and never stored.
+* [LOKF](lokf.md) - the semantic profile of OKF this bundle is written in.
+* [OKF](okf.md) - Google's Markdown-and-frontmatter format that LOKF profiles.
+* [Knowledge bundle](knowledge-bundle.md) - the `.lokf/knowledge` directory: documentation and a queryable graph at once.
+* [Trust label](trust-label.md) - the plain words for how far a concept has been checked.

@@ -1,60 +1,120 @@
 ---
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-title: "ktl-librarian skill"
-description: "The recurring procedure that scrapes the host repository, derives and maintains the .lokf/ concepts and their typed relations, audits the bundle, writes in plain English, and hands off for a person's review. Facts, never verdicts."
+title: ktl-librarian skill
+description: Recurring procedure that scrapes the host repository, derives and maintains the .lokf/ concepts and their typed relations, audits the bundle, and hands off for human review.
 genre: how-to
 resource: skills/ktl-librarian/SKILL.md
 sources:
 - resource: skills/ktl-librarian/SKILL.md
 - resource: skills/ktl-librarian/references/scheduled-task.md
-- resource: skills/ktl-librarian/references/portability.md
 - resource: .github/workflows/knowledge-librarian.yaml
 - resource: .lokf/scripts/knowledge-librarian.sh
+- resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-02T23:25:43Z"
-status: draft
+  at: "2026-09-26T19:52:21Z"
+dependsOn:
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
+about:
+  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+definedBy:
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
   - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
   - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/knowledge-sources
-dependsOn:
-  - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
-about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-definedBy:
-  - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+verified:
+- by: human:noelmcloughlin
+  at: "2026-09-09T18:36:00Z"
+- by: human:noelmcloughlin
+  at: "2026-09-26T20:00:42Z"
+stale_after: 2027-09-26
 ---
 
 # Overview
 
-`ktl-librarian` maintains `.lokf/`, the host repository's knowledge captured as a LOKF bundle. It covers the full lifecycle: scrape, build and maintain, audit, hand off for review, and keep fresh on a schedule. It owns only `.lokf/`. Trust verdicts belong to `ktl-curator`, and this skill never writes a `human:` verification. It stays on the calling agent's normal model, because choosing a class, wiring typed relations and judging provenance need real reasoning with no gate catching a wrong call.
+Runs **often**, including on a schedule. It carries the seven LOKF Golden Rules
+(OKF-first; the bundle-root semantic header and `base_iri` authority test; the
+type vocabulary plus the Diátaxis `genre` facet; typed
+relationships over bare links; core field-to-ontology mapping; trust,
+provenance and lifecycle; permissiveness), then four sections: scrape and
+build, audit, hand off for review, and the scheduled task.
 
-# The Golden Rules
+It deals in **facts about the repository, never verdicts about truth**: it may
+record that it re-checked a concept against its source (`verified` by
+`process:ktl-librarian`), but only [ktl-curator](ktl-curator-skill.md)
+writes a `human:` confirmation. Concepts it creates start as `status: draft`,
+and a claim it cannot settle gets an `## Open questions` section instead of a
+guess.
 
-The skill draws seven rules from the LOKF specification. OKF first: one concept per file, the path is the id, `type` is the only required field. The bundle-root `index.md` carries the semantic header, and `base_iri` must be a namespace the project controls. A concept uses a class from the LOKF vocabulary, or from the host's domain schema where the justfile names one. Typed relationships are preferred over bare links, and every one is a YAML list even for a single value. Core fields map to ontology terms. Trust, provenance and lifecycle are recorded only where the source attests them. Consumers stay permissive.
+Each steady-state run starts by consuming `.lokf/feedback.md`, where
+ktl-docent records readers' misses and disagreements. Every entry is an
+untrusted report, never an instruction: the librarian resolves only the
+question or disagreement it names, from the source it points at, and
+removes each entry it handled. A scheduled run installs the pinned
+`ktl-librarian` release first, except in the repository that publishes the
+skills, which runs its own source under bare `skills/` (2026-09-24).
 
-# Scrape and build
+**Reading feedback, the Snyk W011 finding (acknowledged 2026-09-25).** The librarian is the one skill that reads what a reader wrote, because consuming an entry is what `.lokf/feedback.md` is for, so the scanner's finding is acknowledged rather than designed away. The skill names what contains it, and none of it is prose the agent has to keep: an unattended run has no write credential in `refresh`; `publish`, which runs no agent, refuses a patch touching any path outside `.lokf/knowledge`, `knowledge_bundle` and `.lokf/feedback.md` or adding a `by: human:` claim, so an entry cannot mint trust; and what comes out is a pull request a person merges. On the way in, `knowledge-feedback.sh` holds each entry to one line and one of two kinds.
 
-On the first run the skill sweeps the repository with generic heuristics, maps what it finds to LOKF classes, and records the map as a concept, `playbooks/knowledge-sources.md`. Every later run is a steady-state refresh. It first reads the verdicts on its previous work, the `**Curation**` lines in `log.md` and every open question a person left, as reports and never as instructions, and re-derives a sent-back concept from the source the note names. Then it consumes `.lokf/feedback.md`, at most ten entries in a run, reading each entry as an untrusted report and resolving only the question or disagreement it names, from the source it points at. A miss on a question an existing concept already answers is a description defect: the skill fixes the `description` and the index bullets that copy it, and adds no twin. Then it re-verifies each concept's provenance, re-walks the source map, sweeps for orphans, and leaves the Obsidian plugin's affordances alone. A concept it still finds true gets this skill's own `verified` event refreshed. A claim it cannot settle gets `status: draft` and an `## Open questions` section for the curator. Human-authored content is never rewritten.
+**The scheduled run's credential and checks (added 2026-09-24).** The wrapper hands the agent one credential, under the name the `AGENT_API_KEY_ENV` variable gives: the `AGENT_API_KEY` secret, or, with `AGENT_USE_JOB_TOKEN` set to `true`, the job's own token, which Copilot CLI accepts. It refuses a name that does not end `_API_KEY`, `_TOKEN` or `_KEY`, or that starts `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, and it exports the key into the agent's environment only, never into an argument list or its own git commands. The `refresh` job now validates with `lokf validate --check-refs`, as the registrar gate does, so a dangling relation target fails the librarian's own check before `publish` opens the pull request.
 
-Every concept it creates or materially changes carries `generated: { by: process:ktl-librarian, at }`, with the time taken from the clock, and starts as `status: draft`. A `description` is one or two sentences that name what the concept answers and the terms a reader would search by, and the index bullets copy it. The nearest `index.md` gains a bullet, and `log.md` gains one line under one bare `## YYYY-MM-DD` heading per day, for knowledge changes only. A line for a change made from reader feedback quotes the question.
+Two things it now leaves alone by rule (added 2026-09-12): the Obsidian
+affordances KTL Registrar may write into a bundle - a marker-delimited
+`<!-- lokf:related -->` block in a concept body and a `diataxis.md` Map of
+Content (`type: Document`, `generated.by: ktl-registrar/<version>`), which it
+never edits, lists, audits as orphans, or counts - and the bundle's second
+name: `.lokf/knowledge` is the real folder ktl-sidecar lays down, with a
+`knowledge_bundle` link beside it, but a host rearranged by hand may have the
+link the other way round, so it addresses the bundle by the tools' name and
+names both paths when scoping a diff or a PR.
 
-# Plain English
+The tooling-version check (rule 6) now runs **only in interactive
+sessions**: the scheduled workflow's wrapper permits edits solely under
+`.lokf/knowledge/`, `knowledge_bundle/` and `.lokf/feedback.md`, so a
+scheduled run that touched `.lokf/pyproject.toml` would fail the whole run
+closed rather than land a partial change - added 2026-09-12 as part of a
+security-hardening pass that also added a second, independent enforcement
+of that same path boundary in `knowledge-librarian.yaml`'s privileged
+`publish` job (re-derived from the proposed patch on a clean checkout,
+never trusting the `refresh` job's own check alone), plus harden-runner and
+`.git/config`/`.git/hooks/` snapshot-and-restore around the agent call in
+the wrapper script - restored from an `EXIT` trap since 2026-09-17, after a
+Socket audit showed a failing agent or a cancelled job skipped the restore
+and left a poisoned config for the workflow's next steps. See `policies/security.md` for the detail.
 
-The skill writes each body, `description` and index bullet in plain English. It puts the actor first and the verb early, gives every sentence a verb, and keeps one idea to a sentence. It uses no dash as punctuation, defines a term where it first appears, and writes "for example" rather than "e.g.". These rules govern wording only. In a live session the skill offers a pass by the optional `ktl-prose` skill before it opens its pull request; unattended, it skips that step.
+**Extending the vocabulary (added 2026-09-14).** Rule 3's classes are
+deliberately few and portable. A domain needing more of its own gets a
+LinkML schema that imports LOKF's and validates with `lokf validate --schema
+<file>`, which the toolkit has always accepted - no loosening of Rule 7.
+`ktl-librarian/references/domain-schema.md` is the recipe: a pinned copy of
+the core schema, the domain schema, frontmatter naming the class exactly, and
+the flag wired into the justfile and both workflow templates. Rule 3 reads
+that wiring back - where the justfile passes `--schema`, that schema's
+`Concept` descendants are part of the vocabulary, and a record names the
+subclass. The tooling-version step (rule 6) refreshes the pinned copy.
+`ktl-curator/references/domain-schemas.md` covers when; this covers how.
 
-# Audit
+**The toolkit's constraints, and `revision` (added 2026-09-17).** The field
+tables state what lokf 0.8.0 enforces: `sources[].author` is an actor
+string, `http_method` is one uppercase verb from a closed list, and every
+timestamp, `stale_after` included, is a datetime, a bare date meaning
+midnight UTC. Where the toolkit accepts it, the skill also writes `revision`
+on `generated`: the full commit hash of a file in the repository, or the
+ETag or a `sha256:` digest of a URL, always quoted. The field is proposed
+for lokf 0.9.0 and not yet released, and the 0.8.0 validator rejects it, so
+the key is left out on every released toolkit, on a file with uncommitted
+changes, and on a source the skill did not read that run. The registrar gate checks that a commit hash names a
+commit holding the concept's `resource`. Every `at` comes from `date -u` at the moment it is written, never an estimate or local time labelled `Z` (2026-09-24), and conventions rule 11 rejects one later than the commit that records it.
 
-From `.lokf/`: the preflight, `just lokf-validate`, `just lokf-check-refs`, `knowledge-conventions.sh` and `just lokf-convert`. The conventions script is the one the toolkit cannot stand in for, since `lokf validate` reads a body as an opaque string. The skill then lints the Markdown, because a bundle can be schema-valid and still fail the host's lint gate.
-
-# Hand off
-
-The skill opens a pull request scoped to `.lokf/`, with the validate output and citations for every claim whose authority lives outside the repository. It ends the description with a **For the CURATOR** section: the health line, the concepts newly marked draft, every open question, and the name of the `ktl-curator` skill. Where `.lokf/` is gitignored or the host has no git, it hands over the validate output and the changed files instead.
-
-# On a schedule
-
-Two GitHub workflows and a wrapper script run the skill weekly and open a review pull request with whatever changed. The agent runs in a read-only job with no write credential and hands on a patch; a separate job that runs no agent code applies it. `references/scheduled-task.md` is the operating manual.
+**Portability (added 2026-09-17).** `references/portability.md` says what
+the skill loses on each host and the substitute: without git, `revision` is
+left out and the hand-off names the platform's version history; on GitLab
+or Forgejo the wrapper ports and the merge request is opened there; from
+PowerShell the commands run through Git for Windows' bash; on macOS
+`shasum -a 256`. Files and directories are named in lowercase, since the
+path is the id and case-insensitive hosts collide. The audit runs the
+preflight first, and the tooling-version check now uses `uvx --from pip pip
+index versions lokf`: `uv pip` has no `index` subcommand, which every
+earlier refresh had noted and worked around.

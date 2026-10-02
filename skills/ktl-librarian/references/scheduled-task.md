@@ -8,7 +8,7 @@ Keep the graph continuously accurate rather than rewriting it in bursts. Three p
 
 It runs weekly (Mondays, 05:00 UTC) and on demand (`workflow_dispatch`). Each run has two jobs:
 
-1. A read-only `refresh` job checks out the full history, sets up `uv`, and installs the `lokf` sidecar. It installs this skill from the tag `TRUST_LADDER_SKILLS_REF` pins into `.agents/skills/`; that step is skipped in the repository that publishes the skills, where the wrapper finds them under bare `skills/`. Then it sets up Node for the agent, runs the agent, fails if it wrote outside `.lokf/knowledge/` and `.lokf/feedback.md`, validates, and diffs `.lokf/knowledge/`. Only the bundle is diffed, so tool artifacts never trigger a pull request. If anything changed, it packages the change as a patch artifact: `.lokf/knowledge/` plus `.lokf/feedback.md`, ktl-docent's reader-feedback file, so entries the librarian consumed do not return.
+1. A read-only `refresh` job checks out the full history, sets up `uv`, and installs the `lokf` sidecar. It installs this skill from the tag `TRUST_LADDER_SKILLS_REF` pins into `.agents/skills/`; that step is skipped in the repository that publishes the skills, where the wrapper finds them under bare `skills/`. Then it sets up Node for the agent, runs the agent, applies the `.lokf/patch.yaml` it wrote with `knowledge-apply.sh`, fails if the agent changed anything else, validates, and diffs `.lokf/knowledge/`. Only the bundle is diffed, so tool artifacts never trigger a pull request. If anything changed, it packages the change as a patch artifact: `.lokf/knowledge/` plus `.lokf/feedback.md`, ktl-docent's reader-feedback file, so entries the librarian consumed do not return.
 2. A separate privileged `publish` job applies the patch on a clean checkout, commits it to a fresh `knowledge-librarian/<date>-<run_id>` branch, and opens a review pull request via `github-script`.
 
 The guardrails: the agent runs in a `contents: read` job with no persisted credentials, and only the `publish` job, which runs no agent code, holds `contents: write` and `pull-requests: write`. The workflow never pushes to the default branch, never auto-merges, and opens no pull request when nothing changed.
@@ -29,7 +29,7 @@ The workflow invokes `.lokf/scripts/knowledge-librarian.sh` directly, a fixed, r
 
 The sidecar's automation.md gives the full settings for Copilot CLI and Claude Code. If `KNOWLEDGE_LIBRARIAN_ENABLED` is not `true`, the workflow's agent step is skipped, so the workflow is harmless until you wire the agent up.
 
-The script selects the ktl-librarian skill, builds a prompt telling the agent to follow it and re-scrape the repository, then calls `AGENT_CLI`. Its contract: it edits **only** files under `.lokf/knowledge/` and performs no git or pull request operations. The workflow owns the branch, the commit and the pull request.
+The script selects the ktl-librarian skill, builds a prompt telling the agent to follow it and re-scrape the repository, then calls `AGENT_CLI`. Its contract: the agent writes one file, `.lokf/patch.yaml`, and the wrapper applies it with `knowledge-apply.sh` once the agent has finished, refusing a run that changed anything else. So `.lokf/knowledge/` changes only through that script, and the wrapper performs no git or pull request operations. The workflow owns the branch, the commit and the pull request.
 
 ## `knowledge-registrar.yaml`: the gate
 

@@ -320,6 +320,8 @@ for pair in \
   "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
   "$templates/scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
   "$templates/scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
+  "$templates/scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh" \
+  "$templates/scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py" \
   "$templates/m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh" \
   "$templates/m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md" \
   "$templates/gitattributes:.lokf/.gitattributes"; do
@@ -535,7 +537,7 @@ while IFS= read -r key; do
     err "prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
   fi
 done < <(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u)
-for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh knowledge-feedback.sh; do
+for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh knowledge-feedback.sh knowledge-apply.sh; do
   if out="$(sh "$templates/scripts/$s" x 2>&1)"; then
     err "$s run under sh did not stop: $out"
   elif grep -q '^run this with bash' <<<"$out"; then
@@ -1204,6 +1206,148 @@ rm -rf "${pc:?}"
 expect_prose 2 "usage" "no argument is a usage error" --
 expect_prose 0 "rewrite" "this repository's own bundle is given its verdicts" -- --bundle .lokf/knowledge
 expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- skills/ktl-prose/SKILL.md skills/ktl-prose/references/*.md
+
+# 19. knowledge-apply.sh is the librarian's only pen, so it has to earn the
+#     refusals the skill promises: nothing lands unless every operation
+#     passes; a human: actor anywhere, a rewrite of text a person wrote and
+#     the deletion of a concept a person confirmed are refused; a person's
+#     own verified event survives a patch; the index bullets and the log
+#     heading are kept in step; the lokf:related block survives a rewrite; a
+#     handled feedback entry is removed; and a dry run writes nothing.
+say ""
+say "Exercising knowledge-apply.sh..."
+apply="$repo_root/$templates/scripts/knowledge-apply.sh"
+ka="$(mktemp -d)"; kb="$ka/.lokf/knowledge"; mkdir -p "$kb/playbooks"
+printf '%s\n' '---' 'base_iri: https://acme.example/knowledge/' '---' '' '# Acme' '' '# Playbooks' '' \
+  '* [Draft](playbooks/draft.md) - a draft.' '* [Confirmed](playbooks/confirmed.md) - confirmed.' '* [Authored](playbooks/authored.md) - authored.' > "$kb/index.md"
+printf '%s\n' '# Playbooks' '' '* [Draft](draft.md) - a draft.' '* [Confirmed](confirmed.md) - confirmed.' '* [Authored](authored.md) - authored.' > "$kb/playbooks/index.md"
+printf '%s\n' '---' 'type: Playbook' 'id: https://acme.example/knowledge/playbooks/draft' 'title: Draft' 'description: a draft.' \
+  'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'status: draft' '---' '' '# Overview' '' 'The old text.' > "$kb/playbooks/draft.md"
+printf '%s\n' '---' 'type: Playbook' 'id: https://acme.example/knowledge/playbooks/confirmed' 'title: Confirmed' 'description: confirmed.' \
+  'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'verified:' '  - by: human:ada' '    at: "2026-02-02T00:00:00Z"' '---' '' \
+  '# Overview' '' 'Confirmed text.' '' '<!-- lokf:related -->' '#how-to' '<!-- /lokf:related -->' > "$kb/playbooks/confirmed.md"
+printf '%s\n' '---' 'type: Playbook' 'id: https://acme.example/knowledge/playbooks/authored' 'title: Authored' 'description: authored.' \
+  'generated:' '  by: human:ada' '  at: "2026-01-01T00:00:00Z"' 'verified:' '  - by: human:ada' '    at: "2026-01-01T00:00:00Z"' '---' '' '# Overview' '' 'Written by a person.' > "$kb/playbooks/authored.md"
+printf '%s\n' '# Change Log' '' '## 2020-01-01' '' '* **Old**: an old line.' > "$kb/log.md"
+printf '%s\n' '# Reader feedback for the librarian' '' 'Newest first.' '' '## 2026-03-03' '' '- **Miss** - Q: "where?" Answered from here. - docent' > "$ka/.lokf/feedback.md"
+kpatch="$ka/.lokf/patch.yaml"
+ksum() { (cd "$ka" && find . -type f ! -name patch.yaml -exec md5sum {} + | sort | md5sum); }
+refuse() {  # <what> <expected finding>; the patch file is already in place
+  local before out rc; before="$(ksum)"
+  set +e; out="$(bash "$apply" --root "$ka" "$kpatch" 2>&1)"; rc=$?; set -e
+  if [[ "$rc" == 1 ]] && grep -qF -- "$2" <<<"$out" && [[ "$(ksum)" == "$before" ]]; then
+    ok "knowledge-apply.sh refuses $1 and writes nothing"
+  else
+    err "knowledge-apply.sh did not refuse $1 cleanly (exit $rc): $out"
+  fi
+}
+cat > "$kpatch" <<'EOF'
+ops:
+  - op: create
+    path: playbooks/new.md
+    frontmatter: {type: Playbook, title: New, description: brand new., resource: README.md}
+    body: "# Overview\n\nBrand new.\n"
+  - op: patch
+    path: playbooks/draft.md
+    edits:
+      - replace: {target: "The old text.", content: "The new text."}
+    set: {description: a better draft.}
+    log: "the text moved on"
+    from_feedback: '- **Miss** - Q: "where?" Answered from here. - docent'
+  - op: patch
+    path: playbooks/confirmed.md
+    edits:
+      - append: {content: "A new paragraph."}
+    log: "**Changed**: one more paragraph."
+  - op: question
+    path: playbooks/authored.md
+    text: is this still right?
+EOF
+kday="$(date -u +%Y-%m-%d)"
+if out="$(bash "$apply" --root "$ka" "$kpatch" 2>&1)" && [[ ! -e "$kpatch" ]]; then
+  ok "knowledge-apply.sh applies a valid patch and removes the patch file"
+else
+  err "knowledge-apply.sh failed on a valid patch: $out"
+fi
+knew="$kb/playbooks/new.md"
+if [[ -f "$knew" ]] && grep -q '^status: draft$' "$knew" && grep -q '^id: https://acme.example/knowledge/playbooks/new$' "$knew" \
+   && grep -qE "^  at: ['\"]${kday}T[0-9:]+Z['\"]$" "$knew" && grep -q '^  by: process:ktl-librarian$' "$knew" \
+   && grep -qF '* [New](playbooks/new.md) - brand new.' "$kb/index.md" && grep -qF '* [New](new.md) - brand new.' "$kb/playbooks/index.md"; then
+  ok "create mints the id, stamps generated from the clock, starts as a draft, and adds both index bullets"
+else
+  err "create did not produce the expected concept and bullets: $(head -12 "$knew" 2>/dev/null | tr '\n' '|')"
+fi
+if grep -q 'The new text.' "$kb/playbooks/draft.md" && ! grep -q 'The old text.' "$kb/playbooks/draft.md" \
+   && ! grep -q '2026-01-01T00:00:00Z' "$kb/playbooks/draft.md" \
+   && grep -qF '* [Draft](playbooks/draft.md) - a better draft.' "$kb/index.md" && grep -qF '* [Draft](draft.md) - a better draft.' "$kb/playbooks/index.md"; then
+  ok "patch replaces the one target, restamps generated, and rewrites both bullets from the new description"
+else
+  err "patch did not edit the draft as expected: $(head -14 "$kb/playbooks/draft.md" | tr '\n' '|')"
+fi
+if grep -q 'A new paragraph.' "$kb/playbooks/confirmed.md" && grep -q '^ *- by: human:ada$' "$kb/playbooks/confirmed.md" \
+   && grep -qE "^ +at: ['\"]2026-02-02T00:00:00Z['\"]$" "$kb/playbooks/confirmed.md" \
+   && grep -q 'Edited since a person confirmed it' "$kb/log.md"; then
+  ok "patch on a confirmed concept keeps the person's event and says so in the log"
+else
+  err "patch on a confirmed concept lost the person's event or the log note: $(tr '\n' '|' < "$kb/playbooks/confirmed.md")"
+fi
+if grep -q '^status: draft$' "$kb/playbooks/authored.md" && grep -q "^- ${kday}, process:ktl-librarian: is this still right?$" "$kb/playbooks/authored.md" \
+   && grep -q '^  by: human:ada$' "$kb/playbooks/authored.md" && grep -q 'Written by a person.' "$kb/playbooks/authored.md"; then
+  ok "question adds the curator-shaped bullet with this run's actor and touches neither text nor generated"
+else
+  err "question did not leave the authored concept as expected: $(tr '\n' '|' < "$kb/playbooks/authored.md")"
+fi
+if [[ "$(grep -m1 '^## ' "$kb/log.md")" == "## $kday" ]] && grep -q '^## 2020-01-01$' "$kb/log.md" \
+   && grep -q '^\* \*\*From reader feedback\*\*: the text moved on' "$kb/log.md" && grep -q '^\* \*\*Added\*\*: New' "$kb/log.md" \
+   && ! grep -q 'where?' "$ka/.lokf/feedback.md" && ! grep -q '^## 2026-03-03$' "$ka/.lokf/feedback.md"; then
+  ok "the log gains today's heading above the old one, and the handled feedback entry and its emptied day are gone"
+else
+  err "the log or the feedback file is not as expected: $(head -8 "$kb/log.md" | tr '\n' '|') // $(tr '\n' '|' < "$ka/.lokf/feedback.md")"
+fi
+cat > "$kpatch" <<'EOF'
+ops:
+  - op: rewrite
+    path: playbooks/confirmed.md
+    body: "# Overview\n\nRewritten from the source.\n"
+    log: "rewritten from the source"
+EOF
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -q 'Rewritten from the source.' "$kb/playbooks/confirmed.md" \
+   && grep -q '<!-- lokf:related -->' "$kb/playbooks/confirmed.md" && [[ "$(grep -c "^## $kday$" "$kb/log.md")" == 1 ]]; then
+  ok "rewrite carries the lokf:related block over, and a second run today reuses the heading"
+else
+  err "rewrite lost the lokf:related block or doubled today's heading: $(tr '\n' '|' < "$kb/playbooks/confirmed.md")"
+fi
+cat > "$kpatch" <<'EOF'
+ops:
+  - op: delete
+    path: playbooks/draft.md
+    log: "**Removal**: Draft; its source is gone."
+EOF
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && [[ ! -e "$kb/playbooks/draft.md" ]] \
+   && ! grep -q 'draft.md' "$kb/index.md" && ! grep -q 'draft.md' "$kb/playbooks/index.md" && grep -q '^\* \*\*Removal\*\*: Draft' "$kb/log.md"; then
+  ok "delete removes a draft, both its bullets, and logs why"
+else
+  err "delete did not remove the draft and its bullets: $(grep -n draft "$kb/index.md" "$kb/playbooks/index.md" | tr '\n' '|')"
+fi
+printf '%s\n' 'by: human:ada' 'ops:' '  - {op: recheck, path: playbooks/new.md}' > "$kpatch"
+refuse "a human: actor anywhere in the file" "names a human: actor"
+printf '%s\n' 'ops:' '  - {op: delete, path: playbooks/confirmed.md, log: gone}' > "$kpatch"
+refuse "deleting a concept a person confirmed" "a person confirmed this concept"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/authored.md, edits: [{append: {content: x}}], log: x}' > "$kpatch"
+refuse "patching text a person wrote" "a person wrote this text"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, set: {status: stable}, log: x}' > "$kpatch"
+refuse "setting status" "set may not touch status"
+printf '%s\n' 'ops:' '  - {op: create, path: playbooks/other.md, frontmatter: {type: Playbook, title: Other, description: d.}, body: b}' \
+               '  - {op: patch, path: playbooks/new.md, edits: [{replace: {target: "not there", content: x}}], log: x}' > "$kpatch"
+refuse "a missing target, with a valid create beside it" "must occur exactly once"
+if [[ ! -e "$kb/playbooks/other.md" ]]; then ok "a refused file lands none of its operations"; else err "a refused file still created playbooks/other.md"; fi
+printf '%s\n' 'ops:' '  - {op: create, path: playbooks/dry.md, frontmatter: {type: Playbook, title: Dry, description: d.}, body: b}' > "$kpatch"
+if out="$(bash "$apply" --root "$ka" --dry-run "$kpatch" 2>&1)" && grep -q 'would write' <<<"$out" && [[ ! -e "$kb/playbooks/dry.md" && -e "$kpatch" ]]; then
+  ok "a dry run reports what it would write, writes nothing, and keeps the patch file"
+else
+  err "the dry run wrote something or lost the patch file: $out"
+fi
+rm -rf "$ka"
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

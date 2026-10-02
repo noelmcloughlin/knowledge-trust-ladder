@@ -10,9 +10,11 @@
 # references/portability.md). These tests pin that for the template files that
 # do so, and for the `just lokf-link` recipe:
 #
-#   1. the librarian wrapper's boundary check accepts an edit made under either
-#      name - with the doorway, without it, and in the rearranged shape - and
-#      still refuses one outside the bundle; and (1b) the wrapper puts
+#   1. the librarian wrapper refuses a run in which the agent edited anything
+#      itself, under either name of the bundle or outside it, and applies the
+#      one file the agent may write, .lokf/patch.yaml, with knowledge-apply.sh,
+#      which refuses a bad patch - with the doorway, without it, and in the
+#      rearranged shape; and (1b) the wrapper puts
 #      .git/config and .git/hooks/ back when the agent fails or the job is
 #      cancelled, not only when it returns cleanly; and (1c) the wrapper hands
 #      AGENT_API_KEY to the agent under AGENT_API_KEY_ENV's name only, and
@@ -69,7 +71,8 @@ make_host() {
     git config user.name "layout test"
     mkdir -p .lokf/scripts skills/ktl-librarian
     cp "$wrapper" .lokf/scripts/knowledge-librarian.sh
-    chmod +x .lokf/scripts/knowledge-librarian.sh
+    cp "$templates/scripts/knowledge-apply.sh" "$templates/scripts/knowledge-apply.py" .lokf/scripts/
+    chmod +x .lokf/scripts/knowledge-librarian.sh .lokf/scripts/knowledge-apply.sh .lokf/scripts/knowledge-apply.py
     cp "$justfile" .lokf/justfile
     printf '# stub skill\n' > skills/ktl-librarian/SKILL.md
     case "$shape" in
@@ -78,6 +81,7 @@ make_host() {
       rearranged)  mkdir -p knowledge_bundle; ln -s ../knowledge_bundle .lokf/knowledge ;;
       *) echo "unknown shape $shape" >&2; exit 2 ;;
     esac
+    printf -- '---\nbase_iri: https://host.example/knowledge/\n---\n\n# Host\n' > .lokf/knowledge/index.md
     printf -- '---\ntype: Service\ntitle: A\n---\n\n# A\n' > .lokf/knowledge/a.md
     printf '# host\n' > README.md
     git add -A .
@@ -94,27 +98,55 @@ run_wrapper() {
   printf '%s' "$status"
 }
 
-echo "1. the librarian wrapper's boundary check"
-for shape in default rearranged; do
+# The wrapper applies .lokf/patch.yaml with knowledge-apply.sh after the agent
+# returns, and refuses a run in which the agent changed anything else, so the
+# agent never writes the bundle itself. This stand-in writes PATCH_TEXT to the
+# patch file and nothing else.
+patch_agent="$work/patch-agent.sh"
+cat > "$patch_agent" <<'AGENT'
+#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+AGENT
+chmod +x "$patch_agent"
+create_op='ops:
+  - op: create
+    path: playbooks/b.md
+    frontmatter: {type: Playbook, title: B, description: made through the pen.}
+    body: "# B\n\nMade through the pen.\n"'
+bad_op='ops:
+  - op: delete
+    path: playbooks/missing.md
+    log: gone'
+
+# run_patch <dir> <patch text> - prints the wrapper's exit status and whether
+# the pen wrote playbooks/b.md and removed the patch file, then resets the tree.
+run_patch() {
+  local dir="$1" text="$2" status=0 wrote=no
+  ( cd "$dir" && AGENT_CLI="$patch_agent" PATCH_TEXT="$text" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+  [ -f "$dir/.lokf/knowledge/playbooks/b.md" ] && wrote=yes
+  [ -e "$dir/.lokf/patch.yaml" ] && wrote="$wrote,patch-left"
+  git -C "$dir" checkout -q -- . && git -C "$dir" clean -qfd
+  printf '%s %s' "$status" "$wrote"
+}
+
+echo "1. the librarian wrapper's boundary: one patch file in, and only the pen writes the bundle"
+for shape in default rearranged no-doorway; do
   host="$work/wrapper-$shape"
   make_host "$host" "$shape"
-  for edit in .lokf/knowledge/a.md knowledge_bundle/a.md; do
+  edits=".lokf/knowledge/a.md README.md"
+  [ "$shape" != no-doorway ] && edits="$edits knowledge_bundle/a.md"
+  for edit in $edits; do
     status="$(run_wrapper "$host" "$edit")"
-    if [ "$status" = 0 ]; then ok "$shape: an edit via $edit is inside the bundle (exit 0)"
-    else err "$shape: an edit via $edit was refused (exit $status)"; fi
+    if [ "$status" = 3 ]; then ok "$shape: an agent that edits $edit itself is refused (exit 3)"
+    else err "$shape: an agent that edits $edit itself was not refused (exit $status)"; fi
   done
-  status="$(run_wrapper "$host" README.md)"
-  if [ "$status" = 3 ]; then ok "$shape: an edit to README.md is refused (exit 3)"
-  else err "$shape: an edit outside the bundle was not refused (exit $status)"; fi
+  result="$(run_patch "$host" "$create_op")"
+  if [ "$result" = "0 yes" ]; then ok "$shape: a patch file is applied by the pen, which writes playbooks/b.md and removes the file (exit 0)"
+  else err "$shape: a valid patch file was not applied as expected (got: $result)"; fi
+  result="$(run_patch "$host" "$bad_op")"
+  if [ "$result" = "4 no" ]; then ok "$shape: a patch the pen refuses fails the run and writes nothing (exit 4)"
+  else err "$shape: a refused patch did not fail the run cleanly (got: $result)"; fi
 done
-host="$work/wrapper-no-doorway"
-make_host "$host" no-doorway
-status="$(run_wrapper "$host" .lokf/knowledge/a.md)"
-if [ "$status" = 0 ]; then ok "no-doorway: an edit via .lokf/knowledge/a.md is inside the bundle (exit 0)"
-else err "no-doorway: an edit via .lokf/knowledge/a.md was refused (exit $status)"; fi
-status="$(run_wrapper "$host" README.md)"
-if [ "$status" = 3 ]; then ok "no-doorway: an edit to README.md is refused (exit 3)"
-else err "no-doorway: an edit outside the bundle was not refused (exit $status)"; fi
 
 # 1b. The wrapper restores .git/config and .git/hooks/ on every way out, not
 # only after a clean return: an agent that poisons both and then exits non-zero
@@ -295,7 +327,7 @@ else
     ( umask 077 && pack "$host" v1 "$work/rt-$shape-again" Asia/Tokyo )
     zipfile="$work/rt-$shape-v1/release/knowledge.zip"
     listing="$(unzip -Z1 "$zipfile" | tr '\n' ' ')"
-    if [ "$listing" = "knowledge/a.md knowledge/alias.md " ]; then
+    if [ "$listing" = "knowledge/a.md knowledge/alias.md knowledge/index.md " ]; then
       ok "$shape: the zip holds the bundle under knowledge/ and nothing else"
     else err "$shape: unexpected zip listing ($listing)"; fi
     if unzip -Z "$zipfile" knowledge/alias.md | grep -q '^l' && [ "$(unzip -p "$zipfile" knowledge/alias.md)" = "./a.md" ]; then

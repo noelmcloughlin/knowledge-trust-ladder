@@ -1,19 +1,19 @@
 ---
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
-title: "Open the knowledge bundle in Obsidian"
-description: "How a knowledge bundle meets an Obsidian vault: two vaults, the workshop someone already keeps and the bundle opened as its own vault through the root-level knowledge_bundle link, which plugins go in it, and what each host does with the link."
+title: Open the knowledge bundle in Obsidian
+description: How a knowledge bundle meets an Obsidian vault - two vaults, the workshop someone already keeps and the bundle opened as its own vault through the root-level knowledge_bundle doorway - with what Obsidian does with a link on each host, verified against Obsidian 1.13.7's file reconciler, and why the bundle is never laid down as a real folder inside a vault.
 genre: how-to
-resource: docs/obsidian.md
+resource: skills/ktl-sidecar/SKILL.md
 sources:
-- resource: docs/obsidian.md
 - resource: skills/ktl-sidecar/SKILL.md
-- resource: skills/ktl-sidecar/references/portability.md
+- resource: docs/obsidian.md
 - resource: skills/ktl-docent/references/obsidian.md
 - resource: https://obsidian.md/help/settings
+  title: Settings - Obsidian Help
 generated:
   by: process:ktl-librarian
-  at: "2026-10-02T21:25:32Z"
+  at: "2026-09-24T22:22:58Z"
 status: draft
 isPartOf:
   - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -21,29 +21,79 @@ about:
   - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 relatedTo:
   - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
-  - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 ---
 
 # Overview
 
-`docs/obsidian.md` is for the people who open the bundle in Obsidian. The vault they already have is the workshop, and nothing in it is moved or migrated. The bundle is the exhibition: the checked part of what the workshop knows, and the front door teammates, continuous integration and agents come through. It opens as a small vault of its own, and the two never index the same file.
+`ktl-sidecar` Step 2 creates a `knowledge_bundle` symlink at the host root, pointing at
+`.lokf/knowledge`. It exists because `.lokf/` is a dot-directory and Finder, most folder pickers -
+Obsidian's **File → Open folder as vault** included - and a repository listing hide or bury those, so
+`.lokf/knowledge` is easy to open by typing the path but awkward to browse to. The link is the
+**doorway**: the one name a person needs to know, whatever they open the bundle with. For an Obsidian
+user it is also the boundary between two vaults.
 
-# Steps
+# Two vaults
 
-1. **File, Open folder as vault**, and pick `knowledge_bundle` at the root of the host. That link is the doorway the sidecar laid beside `.lokf/`, so the bundle has a name a folder picker can see. Open the link itself, never the host root: a vault opened at the root lists neither the dot-folder nor the link, which is exactly what keeps the workshop clean.
-2. **Install the plugins in that vault.** Obsidian installs plugins per vault. There is nothing to configure: the root `index.md` carries the bundle's header, so the whole vault is the bundle.
-3. **Edit and confirm there.** Obsidian writes that vault's workspace state through the link into `.lokf/knowledge/.obsidian/`, which the sidecar's `.gitignore` already excludes.
+The vault someone already keeps is the **workshop**: notes change freely there, and nothing about it
+is migrated or reorganised. The bundle is the **exhibition**, and it is opened as a vault of its own:
 
-`knowledge_bundle` can be missing, because a sync service dropped it or a Windows checkout shows it as a small text file. Then open `.lokf/knowledge` by typing the path into the picker, or make the link once from the host root. The command is `ln -s .lokf/knowledge knowledge_bundle`, or `just lokf-link` from `.lokf/`, or `mklink /J knowledge_bundle .lokf\knowledge` on Windows.
+1. **File → Open folder as vault** → `knowledge_bundle`. The bundle becomes a small vault - every note
+   a concept, the root `index.md` carrying the bundle's header - and Obsidian writes its workspace
+   state through the link into the real `.lokf/knowledge/.obsidian/`, harmless to `lokf validate` (it
+   reads only `*.md`) and excluded from git by `.lokf/.gitignore`.
+2. Install KTL Registrar and KTL Curator *in that vault* - Obsidian installs plugins per vault.
+   Nothing to configure: both default to "the vault root is the bundle root" when the root `index.md`
+   carries a header.
 
-# Plugin for skill
+The doorway is invisible to any vault it sits inside (the reconciler below), so the workshop vault and
+the exhibition vault never index the same file. Open the link itself; a vault opened at the host root
+never lists the bundle.
 
-Obsidian is optional in both directions. The skills rely on `lokf validate`, not on a plugin, and the plugins work on any LOKF bundle however it was made. KTL Registrar runs the same checks as the registrar gate, as you type. KTL Curator runs the curator's review session at the desk. The librarian has no plugin, because deriving is an agent's job, and the docent is reached through the skill or `lokf serve`.
+Per host:
 
-# Why never a real folder inside a vault
+- **Windows** - a junction does the same job with no administrator rights or Developer Mode:
+  `mklink /J knowledge_bundle .lokf\knowledge`. Obsidian follows junctions as it follows symlinks.
+- **No link at all** (a filesystem without them, or a sync service that carries folders but not
+  links - OneDrive syncs neither symbolic links nor junctions) - open `.lokf/knowledge` directly by
+  typing the path into the picker, or recreate the link on each machine (`just lokf-link` from
+  `.lokf/`). Everything else is identical.
+- **Git** carries the symlink as a symlink; a Windows checkout without `core.symlinks` materialises it
+  as a small text file, which is the cue to make the junction.
 
-Obsidian never indexes a dot-folder, and its file reconciler skips a link whose resolved path lies inside a folder it already watches. So a vault opened at the host root lists neither `.lokf/` nor `knowledge_bundle`. A real folder inside the vault is indexed like any other, and so is a link whose target lies outside the vault. Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. Obsidian's Excluded files setting hides it from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions, and Obsidian Sync carries no links.
+# What Obsidian does with the link on each host
 
-# Host by host
+Obsidian 1.13.7's file reconciler (`reconcileSymbolicLinkCreation`, read from the installed
+application bundle on 2026-09-12) resolves a link's real path and **skips the link when that path
+equals, contains, or lies inside a folder it is already watching** - the vault root always being one.
+Its help page says the same in words: it ignores "a symlink to a parent folder of the vault, or from
+one folder in the vault to another folder in the same vault", as a safeguard against a note being
+indexed twice. Dot-directories are never indexed at all. Two consequences:
 
-In a code repository, concepts cite sources that sit above the small vault, so no plugin can open them from there; KTL Curator shows such a source as a path with a copy button. In a vault kept in git, the sidecar lands beside the notes, `.lokf/` is a dot-folder the vault never indexes, and the person curates in a second vault opened through the doorway. On a shared drive or SharePoint library, links do not sync, so the doorway is made per machine or the bundle is opened by path. With many hosts and one vault, each repository's `.lokf/knowledge` can be linked into a folder of the person's own vault and listed under the plugins' Bundle root folders setting, at the cost the plugin READMEs name.
+- **From a vault opened at the host's root** (a code repository, or a notes vault kept in git that
+  the sidecar was laid into), neither `.lokf/` nor `knowledge_bundle` appears - the sidecar is
+  invisible to that vault by the same rule that hides `.obsidian/` and `.git/`. So point people at the
+  doorway, not the root. For a notes vault this is the feature that makes the sidecar safe to keep
+  *inside* the vault folder: the workshop and the exhibition never index the same file, which is the
+  one hazard Obsidian's caution about nested vaults names. On a code-repository host the cost runs
+  the other way: concepts cite sources such as `src/…` and `docs/…` that sit above the small vault, so
+  no plugin can open them from there, and KTL Curator shows such a source as a path with a copy button.
+- **A link whose target lies outside the vault is followed.** An Obsidian user with one vault and many
+  repositories can link each repository's `.lokf/knowledge` into a folder of that vault
+  (`projects/acme-knowledge -> ~/git/acme/.lokf/knowledge`) and list those folders under the plugins'
+  *Bundle root folders* setting - with the sources now inside the vault for the review card to open.
+  This is the one arrangement that does put exhibits in the workshop's index, so it costs what a real
+  folder costs (below); Obsidian Sync does not carry such links either, so keep them out of a synced
+  vault.
+
+# Why the bundle is never a real folder inside a vault
+
+Obsidian indexes a real folder inside a vault like any other, so the exhibition leaks into the
+workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links →
+Excluded files* hides an excluded folder from search, graph view and unlinked mentions, but only
+makes it "less noticeable" in the quick switcher and link suggestions, in the words of
+[Obsidian's settings help](https://obsidian.md/help/settings). `ktl-sidecar` laid the bundle down
+that way for a vault host for one day (2026-09-12) and retired it the next; the two-vault workflow
+above is the one the skills and the plugins assume. A shared folder that is *not* a vault may still be
+rearranged that way by hand, for a synced visible name - the sidecar's `references/portability.md`
+says how and what it costs. The attempt, its cost and what the reversal kept:
+[Hosts and doorways](../explanation/hosts-and-doorways.md).
