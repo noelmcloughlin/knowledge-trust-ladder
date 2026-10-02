@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A fifth skill, `ktl-prose`, rewords a bundle's agent-written concepts in plain English.** It works between the librarian and the curator: it rewords only a body an agent wrote and no person has confirmed, and it changes no fact and no byte of frontmatter, so `generated` keeps naming the librarian. Its thirteen rules each come with a before and an after from the two hand passes that set this repository's style. Its `prose-check.py` reports dashes, long sentences and stock phrases, proves that a rewording changed only wording, and refuses one that touches a concept a person wrote or confirmed. It rewords another Markdown file only when a person names it. `scripts/validate-repository.sh` exercises the script in a new check 18.
+
 ## [0.28.0] - 2026-09-29
 
 ### Added

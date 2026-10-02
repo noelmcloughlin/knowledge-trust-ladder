@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Isolated install smoke test. Installs four skills into a throwaway
+# Isolated install smoke test. Installs the five skills into a throwaway
 # "consumer" repo via the open skills CLI, so generated agent directories
 # never contaminate this distribution source.
 #
@@ -40,6 +40,7 @@ mkdir -p "$test_root/consumer"
     --skill ktl-sidecar \
     --skill ktl-curator \
     --skill ktl-docent \
+    --skill ktl-prose \
     --yes
 )
 
@@ -75,6 +76,21 @@ assert "ktl-docent discovered by name" \
   "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-docent\" -o -path \"*.claude/skills/ktl-docent\" 2>/dev/null)\" ]]"
 assert "ktl-docent SKILL.md installed" \
   "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-docent/SKILL.md\" -o -path \"*.claude/skills/ktl-docent/SKILL.md\" 2>/dev/null)\" ]]"
+assert "ktl-prose discovered by name" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-prose\" -o -path \"*.claude/skills/ktl-prose\" 2>/dev/null)\" ]]"
+assert "ktl-prose SKILL.md installed" \
+  "[[ -n \"\$(find \"\$test_root/consumer\" -path \"*.agents/skills/ktl-prose/SKILL.md\" -o -path \"*.claude/skills/ktl-prose/SKILL.md\" 2>/dev/null)\" ]]"
+# ktl-prose runs its check script in place, so the script must arrive with
+# the skill and must run from where the installer put it.
+prose_dir="$(find "$test_root/consumer" \( -path "*.agents/skills/ktl-prose" -o -path "*.claude/skills/ktl-prose" \) -type d 2>/dev/null | head -1)"
+assert "ktl-prose scripts/prose-check.py carried along" \
+  "[[ -n \"$prose_dir\" && -f \"$prose_dir/scripts/prose-check.py\" ]]"
+if command -v python3 >/dev/null 2>&1; then
+  assert "the installed prose-check.py passes its own installed SKILL.md" \
+    "python3 \"$prose_dir/scripts/prose-check.py\" \"$prose_dir/SKILL.md\" >/dev/null"
+else
+  echo "SKIP: python3 not found, so the installed prose-check.py was not run"
+fi
 assert "no installer metadata leaked back into this source repo" \
   "[[ -z \"\$(git -C \"\$repo_root\" status --porcelain --untracked-files=all -- .agents .claude skills-lock.json 2>/dev/null)\" ]]"
 

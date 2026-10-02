@@ -12,11 +12,12 @@ say() { printf '%s\n' "$*"; }
 err() { printf 'FAIL: %s\n' "$*" >&2; fail=1; }
 ok() { printf 'OK:   %s\n' "$*"; }
 
-# 1. Exactly the two intended published skill directories exist.
+# 1. Exactly the intended published skill directories exist. This list is the
+#    one place their number is written: checks 1 and 4 count it.
 mapfile -t skill_dirs < <(find skills -mindepth 1 -maxdepth 1 -type d | sort)
-expected_dirs=("skills/ktl-curator" "skills/ktl-docent" "skills/ktl-librarian" "skills/ktl-sidecar")
+expected_dirs=("skills/ktl-curator" "skills/ktl-docent" "skills/ktl-librarian" "skills/ktl-prose" "skills/ktl-sidecar")
 if [[ "${skill_dirs[*]}" == "${expected_dirs[*]}" ]]; then
-  ok "exactly the four intended skill directories exist (${expected_dirs[*]})"
+  ok "exactly the ${#expected_dirs[@]} intended skill directories exist (${expected_dirs[*]})"
 else
   err "expected skill directories ${expected_dirs[*]}, found ${skill_dirs[*]:-none}"
 fi
@@ -90,10 +91,10 @@ fi
 
 # 4. No unexpected duplicate SKILL.md files in publishable paths.
 mapfile -t all_skill_md < <(find skills -iname 'SKILL.md' | sort)
-if [[ ${#all_skill_md[@]} -eq 4 ]]; then
+if [[ ${#all_skill_md[@]} -eq ${#expected_dirs[@]} ]]; then
   ok "no duplicate SKILL.md files under skills/"
 else
-  err "expected exactly 4 SKILL.md files under skills/, found ${#all_skill_md[@]}: ${all_skill_md[*]}"
+  err "expected exactly ${#expected_dirs[@]} SKILL.md files under skills/, found ${#all_skill_md[@]}: ${all_skill_md[*]}"
 fi
 
 # 5. Relative references remain valid after the complete skill directory is
@@ -1076,6 +1077,133 @@ if command -v zip >/dev/null 2>&1; then
   fi
 fi
 rm -rf "${m365_out:?}"
+
+# 18. ktl-prose's check script is exercised as the conventions script is at
+#     check 11. It must report each thing it claims to see, and stay quiet on
+#     what the two hand passes kept. It must refuse a rewording that touches a
+#     concept a person wrote or confirmed, or a byte of frontmatter. It reads
+#     events the way the provenance gates do, so each form they read is staged
+#     here. The skill's own pages must pass the three style rules they state.
+say ""
+say "Exercising ktl-prose's prose-check.py..."
+prose_py="skills/ktl-prose/scripts/prose-check.py"
+if command -v python3 >/dev/null 2>&1; then
+  prose=(python3 "$prose_py")
+elif command -v uv >/dev/null 2>&1; then
+  prose=(uv run --quiet "$prose_py")
+else
+  prose=(false)
+  err "neither python3 nor uv is on PATH, so prose-check.py cannot run and every expectation for it below will fail"
+fi
+# expect_prose <exit status> <substring> <what must hold> -- <arguments>
+expect_prose() {
+  local want_status="$1" want_text="$2" what="$3" out status=0
+  shift 4
+  out="$("${prose[@]}" "$@" 2>&1)" || status=$?
+  if [[ "$status" -eq "$want_status" ]] && grep -qF -- "$want_text" <<<"$out"; then
+    ok "prose-check.py: $what"
+  else
+    err "prose-check.py: this does not hold: $what (wanted exit $want_status and '$want_text', got exit $status and: $out)"
+  fi
+}
+pc="$(mktemp -d)"
+# The three style rules, one finding each, with the line it sits on.
+printf '# A page\n\nThe gate is strict - it checks every change.\n\nWe run the check in order to catch drift.\n\nThe gate reads every changed file in the bundle and then compares each one against the earlier version that the repository holds and then reports every difference that it finds to the person who asked for the check before it lets the change go any further.\n' > "$pc/bad.md"
+expect_prose 1 "bad.md:3: dash:" "a dash used as punctuation is reported with its line" -- "$pc/bad.md"
+expect_prose 1 "bad.md:5: words:" "a stock phrase is reported with its line" -- "$pc/bad.md"
+expect_prose 1 "bad.md:7: long:" "a sentence over 40 words is reported with its line" -- "$pc/bad.md"
+sed -n '7p' "$pc/bad.md" > "$pc/long.md"
+expect_prose 0 "OK" "a higher --max-words lets that sentence pass" -- --max-words 60 "$pc/long.md"
+# What the hand passes kept: a dash in frontmatter, a heading, a code span, a
+# fenced block, a quoted string, a short emphasised label and a table cell.
+# shellcheck disable=SC2016 # the backticks are Markdown, not a command
+printf -- '---\ntitle: A - B\n---\n\n# A heading - with a dash\n\nRun `a - b` to subtract.\n\n```text\nx - y\n```\n\nThe button reads "X - Y" when it is ready.\n\nPick *Wrong - send back* when you are unsure.\n\n| Field | Value |\n| --- | --- |\n| a | - |\n' > "$pc/quiet.md"
+expect_prose 0 "OK" "a dash is left alone in frontmatter, a heading, code, a quotation, a short label and a table cell" -- "$pc/quiet.md"
+
+# --before on plain files: wording may change, and nothing else.
+plain() { printf -- '---\ntitle: %s\n---\n\n# Guide\n\n%s\n\n<!-- lokf:related -->\n[[%s]]\n<!-- /lokf:related -->\n' "$1" "$2" "$3"; }
+plain Guide 'The gate checks 20 files, and [the guide](docs/guide.md) says why. It is strict.' services/orders-api > "$pc/p-old.md"
+plain Guide '[The guide](docs/guide.md) says why the gate checks 20 files. The gate is strict.' services/orders-api > "$pc/p-new.md"
+plain Guide 'The gate checks 21 files, and [the guide](docs/guide.md) says why. It is strict.' services/orders-api > "$pc/p-num.md"
+plain Guide 'The gate checks 20 files, and [the guide](docs/other.md) says why. It is strict.' services/orders-api > "$pc/p-link.md"
+plain Guide 'The gate checks 20 files, and [the guide](docs/guide.md) says why. It is strict.' services/billing > "$pc/p-rel.md"
+plain Guidebook 'The gate checks 20 files, and [the guide](docs/guide.md) says why. It is strict.' services/orders-api > "$pc/p-fm.md"
+expect_prose 0 "OK" "a change of wording alone passes" -- --before "$pc/p-old.md" "$pc/p-new.md"
+expect_prose 1 "digits:" "a changed number is reported" -- --before "$pc/p-old.md" "$pc/p-num.md"
+expect_prose 1 "link:" "a changed link target is reported" -- --before "$pc/p-old.md" "$pc/p-link.md"
+expect_prose 1 "related:" "a changed wikilink in the lokf:related region is reported" -- --before "$pc/p-old.md" "$pc/p-rel.md"
+expect_prose 1 "frontmatter:" "a changed frontmatter value is reported" -- --before "$pc/p-old.md" "$pc/p-fm.md"
+
+# --before on concepts: a body may change only where no person vouched for it,
+# and the frontmatter never. The confirmation is staged in each form the
+# provenance gates read, and in one they cannot, which must fail closed.
+concept() { printf -- '---\ntype: Service\nid: https://example.invalid/k/x/a\n%s---\n\n%s\n' "$1" "$2"; }
+lib=$'generated:\n  by: process:ktl-librarian\n  at: "2026-09-01T05:00:00Z"\n'
+body_a='The Orders API serves order data. It reads 3 tables.'
+body_b='The Orders API reads 3 tables and serves order data.'
+changed() {  # <exit status> <substring> <what must hold> <frontmatter before> [<frontmatter after>]
+  concept "$4" "$body_a" > "$pc/c-old.md"
+  concept "${5:-$4}" "$body_b" > "$pc/c-new.md"
+  expect_prose "$1" "$2" "$3" -- --before "$pc/c-old.md" "$pc/c-new.md"
+}
+changed 0 "OK" "a reworded draft the librarian wrote passes, its frontmatter untouched" "$lib"
+changed 1 "person:" "a reworded concept a person wrote is refused" $'generated:\n  by: human:ada\n  at: "2026-09-08T14:05:00Z"\n'
+changed 1 "confirmed:" "a reworded concept is refused under a confirmation in a block list" "$lib"$'verified:\n  - by: human:ada\n    at: "2026-09-08T14:00:00Z"\n'
+changed 1 "confirmed:" "a reworded concept is refused under a confirmation in a list at column zero" "$lib"$'verified:\n- by: human:ada\n  at: "2026-09-08T14:00:00Z"\n'
+changed 1 "confirmed:" "a reworded concept is refused under a confirmation in a flow sequence" "$lib"$'verified: [{ by: process:ktl-librarian, at: "2026-09-07T05:00:00Z" }, { by: human:ada, at: "2026-09-08T14:00:00Z" }]\n'
+changed 1 "confirmed:" "a reworded concept is refused under a confirmation in a bare mapping" "$lib"$'verified:\n  by: human:ada\n  at: "2026-09-08T14:00:00Z"\n'
+changed 1 "unreadable:" "a reworded concept is refused when its confirmation is spelt so the gates cannot read it" "$lib"$'verified:\n  - by: !!str human:ada\n    at: "2026-09-08T14:00:00Z"\n'
+changed 1 "retired:" "a reworded retired concept is refused" "$lib"$'status: deprecated\n'
+changed 1 "frontmatter:" "a moved generated.at is reported" "$lib" "${lib/09-01T05/10-02T09}"
+changed 0 "no generated record" "a reworded concept with no generated record passes with a note" ""
+
+# --against HEAD, on a concept reached through the knowledge_bundle link, which
+# git stores as a link and cannot show a file through.
+prose_repo="$pc/repo"
+mkdir -p "$prose_repo/.lokf/knowledge/x"
+prosegit=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$prose_repo"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid
+  -c commit.gpgsign=false)
+"${prosegit[@]}" init -q
+printf -- '---\nbase_iri: https://example.invalid/k/\n---\n\n# Index\n' > "$prose_repo/.lokf/knowledge/index.md"
+concept "$lib" "$body_a" > "$prose_repo/.lokf/knowledge/x/a.md"
+ln -s .lokf/knowledge "$prose_repo/knowledge_bundle"
+"${prosegit[@]}" add -A
+"${prosegit[@]}" commit -q -m bundle
+concept "$lib" "$body_b" > "$prose_repo/.lokf/knowledge/x/a.md"
+expect_prose 0 "OK" "a reworded concept reached through the knowledge_bundle link passes against HEAD" -- --against HEAD "$prose_repo/knowledge_bundle/x/a.md"
+concept "$lib" "${body_b/3 tables/4 tables}" > "$prose_repo/.lokf/knowledge/x/a.md"
+expect_prose 1 "digits:" "a changed number is reported against HEAD" -- --against HEAD "$prose_repo/knowledge_bundle/x/a.md"
+concept "$lib" "$body_a" > "$prose_repo/.lokf/knowledge/x/new.md"
+expect_prose 1 "baseline:" "a file git does not hold yet cannot be proved against HEAD" -- --against HEAD "$prose_repo/.lokf/knowledge/x/new.md"
+
+# --bundle: one file for each verdict, in the order the skill's table gives.
+mkdir -p "$pc/b/k/x"
+printf -- '---\nbase_iri: https://example.invalid/k/\n---\n\n# Index\n' > "$pc/b/k/index.md"
+printf '# Change Log\n\n## 2026-09-15\n\n* **A**: b - c.\n' > "$pc/b/k/log.md"
+concept $'generated:\n  by: human:ada\n  at: "2026-09-08T14:05:00Z"\n' "$body_a" > "$pc/b/k/x/a-person.md"
+concept "$lib"$'verified: [{ by: human:ada, at: "2026-09-08T14:00:00Z" }]\n' "$body_a" > "$pc/b/k/x/b-confirmed.md"
+concept "$lib"$'status: deprecated\n' "$body_a" > "$pc/b/k/x/c-retired.md"
+printf -- '---\ntype: Service\n\nThe block above never closes.\n' > "$pc/b/k/x/d-unreadable.md"
+concept "" "$body_a" > "$pc/b/k/x/e-unrecorded.md"
+concept "$lib" "$body_a" > "$pc/b/k/x/f-rewrite.md"
+verdicts="$("${prose[@]}" --bundle "$pc/b/k" 2>&1 || true)"
+for want in "index.md: skip: reserved file" "log.md: skip: reserved file" "a-person.md: skip: written by a person" \
+            "b-confirmed.md: skip: confirmed by a person" "c-retired.md: skip: retired" \
+            "d-unreadable.md: skip: frontmatter the script cannot read" "e-unrecorded.md: skip: no record of who wrote it" \
+            "f-rewrite.md: rewrite"; do
+  if grep -qF -- "$want" <<<"$verdicts"; then
+    ok "prose-check.py --bundle gives: $want"
+  else
+    err "prose-check.py --bundle did not give '$want' on a bundle staged for it: $verdicts"
+  fi
+done
+expect_prose 0 "OK" "a reserved bundle file is not held to the style rules" -- "$pc/b/k/log.md"
+rm -rf "${pc:?}"
+
+expect_prose 2 "usage" "no argument is a usage error" --
+expect_prose 0 "rewrite" "this repository's own bundle is given its verdicts" -- --bundle .lokf/knowledge
+expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- skills/ktl-prose/SKILL.md skills/ktl-prose/references/*.md
 
 say ""
 if [[ "$fail" -eq 0 ]]; then
