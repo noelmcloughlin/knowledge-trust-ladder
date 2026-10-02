@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release tag, e.g. v0.11.0 (four skills are released together under this one tag)'
+        description: 'Release tag, e.g. v0.11.0 (the skills are released together under this one tag)'
         required: true
         type: string
 
@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   publish:
-    name: Publish four skills
+    name: Publish the skills
     runs-on: ubuntu-latest
     environment: release
     permissions:
