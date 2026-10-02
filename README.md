@@ -124,7 +124,7 @@ Add the curator once there is a bundle worth trusting; the docent goes anywhere 
 
 | | |
 | --- | --- |
-| The mechanics - the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
+| The mechanics: the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
 | The bundle in Obsidian, and the two plugins | [docs/obsidian.md](docs/obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
 | Versioning: all five skills ship under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [docs/releasing.md](docs/releasing.md), [CHANGELOG.md](CHANGELOG.md) |

@@ -34,10 +34,10 @@ The workflow is **inert until wired**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset 
 
 | Repository variable | Value |
 | --- | --- |
-| `KNOWLEDGE_LIBRARIAN_ENABLED` | `true` - arms the scheduled run; anything else (or unset) leaves the agent step skipped |
+| `KNOWLEDGE_LIBRARIAN_ENABLED` | `true`: arms the scheduled run; anything else (or unset) leaves the agent step skipped |
 | `AGENT_CLI` | your non-interactive agent command; the wrapper appends `-p "<prompt>"`. The two commands below are the ones this file vouches for. Keep the credential out of it; if it must embed one, make it a *secret* named `AGENT_CLI` instead, which the workflow also reads |
 | `AGENT_API_KEY_ENV` | the environment variable the agent reads its credential from: `COPILOT_GITHUB_TOKEN` for Copilot CLI, `ANTHROPIC_API_KEY` for Claude Code |
-| `AGENT_USE_JOB_TOKEN` | `true` - the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it; leave it unset for any other agent |
+| `AGENT_USE_JOB_TOKEN` | `true`: the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it; leave it unset for any other agent |
 
 | Repository secret | Value |
 | --- | --- |
