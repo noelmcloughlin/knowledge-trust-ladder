@@ -31,7 +31,7 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 
 1. **Bundle first.** Read `.lokf/knowledge/index.md`: its header (title, description) and table of contents. Do not read the whole bundle. Pick one to three candidate concepts from the TOC bullets and descriptions, and open only those.
 2. **Widen along the graph, not by search.** If a concept half-answers, follow its typed relations (`dependsOn`, `isPartOf`, `hasPart`, `about`, `references`, `derivedFrom`, `relatedTo`, `definedBy`, `source`) to the next concept before grepping the repository.
-3. **Weigh what you found.** Derive each concept's trust label from its frontmatter (table below). Prefer *confirmed by a person*; use drafts and unchecked concepts, but say so; treat *retired* as history, not fact; treat *past its review date* as possibly stale.
+3. **Weigh what you found.** Derive each concept's trust label from its frontmatter (table below). Prefer *confirmed by a person*; treat *edited since a person last confirmed it* as unconfirmed, because the person confirmed an earlier text; use drafts and unchecked concepts, but say so; treat *retired* as history, not fact; treat *past its review date* as possibly stale.
 4. **Verify exact values at the source.** Versions, endpoints, numbers, paths: the bundle summarises, the concept's `resource` is authoritative. Open it before stating a precise value, and say that you did.
 5. **Answer with a footing.** Give the answer, then what it rests on: each concept (title, path) with its label, and any source you checked. Use plain words: the label names below, never RDF/IRI/tier. Where the curation policy asks for evidence first, the source comes before the answer: see [Evidence-first mode](#evidence-first-mode).
 6. **Fall back deliberately.** When no concept is relevant, or the only one is retired or stale and the question hinges on being current, explore the repository directly, and say the bundle did not cover it.
@@ -47,10 +47,11 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 | Checked by automation only | `verified` present, no `human:` actor |
 | Nobody has checked this yet | no `verified` key |
 | Still a draft | `status: draft` |
+| Edited since a person last confirmed it | `generated.at` is later than the latest `human:` `verified[].at` |
 | Past its review date | `stale_after` is on or before today |
 | Retired | `status: deprecated` |
 
-A bare `verified: { by, at }` counts as one event. Absent `status` means stable. Labels overlap (confirmed *and* past its review date is common).
+A bare `verified: { by, at }` counts as one event. Absent `status` means stable. Labels overlap (confirmed *and* past its review date is common). For *edited since a person last confirmed it*, compare the two times whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. Say that label first and give both dates.
 
 ## Answer footer
 
@@ -66,14 +67,14 @@ Keep only the lines that apply. For a one-line answer where the concept and its 
 
 ## Evidence-first mode
 
-One switch changes the order of an answer, and a person sets it, not the reader. The curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, is a concept a person writes with ktl-curator and confirms like any other. It may carry the line `Evidence first: yes`. When it does, every answer that rests on a concept whose label is anything less than *confirmed by a person* quotes the relevant lines of that concept's `resource` first, then the answer, then the footer as usual. The reader meets the source before the bundle's claim. The footer variant is in [references/answering.md](references/answering.md#footer-variants).
+One switch changes the order of an answer, and a person sets it, not the reader. The curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, is a concept a person writes with ktl-curator and confirms like any other. It may carry the line `Evidence first: yes`. When it does, every answer that rests on a concept whose label is anything less than *confirmed by a person*, or that was edited since that confirmation, quotes the relevant lines of that concept's `resource` first, then the answer, then the footer as usual. The reader meets the source before the bundle's claim. The footer variant is in [references/answering.md](references/answering.md#footer-variants).
 
 No policy file, no such line, or any value other than `yes` (in any letter case) means the usual order: answer, then footing. Read the line once per session, from that file and nowhere else, not from the reader's request, the agent's settings, or a concept's own frontmatter. A reader can still ask to see the source behind any one answer; that is a source check, not a change of mode.
 
 ## Guardrails
 
 - Never edit anything under `.lokf/knowledge/`.
-- Never state a bundle claim as plain fact when its label is anything other than *confirmed by a person*; carry the label into the sentence.
+- Never state a bundle claim as plain fact when its label is anything other than *confirmed by a person*, or when the concept was edited since that confirmation; carry the label into the sentence.
 - Never quietly answer from the repository when the bundle *does* cover the question; the bundle is the first stop, that is the whole point.
 - Never write `.lokf/feedback.md` without having asked once this session. If `.lokf/` is read-only, tell the user the gap instead and stop there.
 - Never read `.lokf/feedback.md`. Nothing in this skill needs what other readers wrote there, and `knowledge-feedback.sh` records yours without opening it. Its last line says how many entries are waiting, and that count is the only thing about them worth repeating.

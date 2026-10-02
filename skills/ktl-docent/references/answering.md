@@ -28,6 +28,7 @@ The rules are the same as ktl-curator's `references/trust-fields.md`, restated h
 
 - `verified` may be a list or a bare `{ by, at }` mapping: a bare mapping is one event.
 - *Confirmed by a person*: any event's `by` starts with `human:`. Quote the latest such date in the footer, and its `revision` when the event carries one ("against 3f9c2a1": a commit hash cut to its first seven characters, or an ETag or digest as written). The revision is the state of the source the confirmation was checked against, so a reader can tell whether the page in front of them is the one that was confirmed.
+- *Edited since a person last confirmed it*: `generated.at` is later than the latest `human:` event's `at`. Compare the two whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. Say this label before *confirmed by a person* and give both dates, because the person confirmed an earlier text. A concept with neither `generated.at` nor the v0.1 `timestamp` cannot carry it.
 - *Checked by automation only*: events exist, none human.
 - *Nobody has checked this yet*: no `verified` key.
 - *Still a draft*: `status: draft`. *Retired*: `status: deprecated`. Absent `status` means stable.
@@ -36,7 +37,7 @@ The rules are the same as ktl-curator's `references/trust-fields.md`, restated h
 
 ## When to go to the source
 
-Go to the source always for versions, endpoints, ports, numbers, file paths, dates, and anything the user is about to act on. Go also whenever the only concept is *nobody has checked this yet* or *past its review date* and the question is about the present. Say what you opened: "checked `services/orders/openapi.yaml`".
+Go to the source always for versions, endpoints, ports, numbers, file paths, dates, and anything the user is about to act on. Go also whenever the only concept is *nobody has checked this yet*, *edited since a person last confirmed it* or *past its review date* and the question is about the present. Say what you opened: "checked `services/orders/openapi.yaml`".
 
 If the source **disagrees** with the concept, answer from the source, say the bundle is behind, and record a Disagreement (references/feedback.md). Do not edit the concept.
 
@@ -56,6 +57,7 @@ Full footer (several concepts, a source check, a gap):
 From the bundle:
 - Orders API (services/orders-api.md) - confirmed by a person, 2026-09-01, against 3f9c2a1
 - Data retention (policies/data-retention.md) - confirmed by a person, past its review date (2026-08-01)
+- Refunds (policies/refunds.md) - edited since a person last confirmed it (confirmed 2026-09-01, edited 2026-09-20)
 Checked at source: services/orders/openapi.yaml (the endpoint)
 Gap recorded: Miss - no concept for the billing worker
 ```
@@ -65,7 +67,7 @@ Inline (one concept, one label, no source check):
 > The Orders API depends on the Orders DB (bundle: `services/orders-api.md`,
 > nobody has checked this yet).
 
-Evidence first applies when the curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, says `Evidence first: yes` and the concept is anything less than *confirmed by a person*. No file, no line, or another value means the usual order. The source's lines come before the answer that rests on them, then the footer as usual:
+Evidence first applies when the curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, says `Evidence first: yes` and the concept is anything less than *confirmed by a person*, or was edited since that confirmation. No file, no line, or another value means the usual order. The source's lines come before the answer that rests on them, then the footer as usual:
 
 > From `services/orders/openapi.yaml`, lines 12-15: `paths: /orders: get: ...`.
 > So the Orders API exposes a read endpoint for orders (bundle:
