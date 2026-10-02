@@ -8,8 +8,9 @@ skills/
   ktl-librarian/       SKILL.md + references/               (~7.5k tokens loaded on trigger)
   ktl-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
   ktl-docent/          SKILL.md + references/               (~1.5k tokens loaded on trigger)
+  ktl-prose/           SKILL.md + references/ + scripts/    (~2.5k tokens loaded on trigger)
 .claude-plugin/
-  plugin.json           the four skills as one Claude Code plugin, with catalog keywords
+  plugin.json           the five skills as one Claude Code plugin, with catalog keywords
   marketplace.json      lets `/plugin marketplace add` find that plugin
 .github/workflows/
   validate.yml               repository contract, Agent Skills spec, Markdown and links (every PR)
@@ -33,11 +34,11 @@ docs/
     curator.md          placeholder: the curator sessions still to capture
 scripts/
   validate-repository.sh   the checks validate.yml runs
-  smoke-test-install.sh    installs the four skills into a throwaway repo and checks them
+  smoke-test-install.sh    installs the five skills into a throwaway repo and checks them
   test-sidecar-layouts.sh  the wrapper, workflows and lokf-link, with and without the doorway
   sync-sidecar.sh          copies one release's templates and skills pin into a sibling repository
 .lokf/                  this repository's own sidecar: the bundle and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar lays down (Step 2)
 ```
 
-Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. `ktl-sidecar/templates/` holds the files it lays down, copied verbatim, never retyped.
+Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. `ktl-sidecar/templates/` holds the files it lays down, copied verbatim, never retyped. `ktl-prose/scripts/` holds the one script that skill runs in place.

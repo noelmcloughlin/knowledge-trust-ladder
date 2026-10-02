@@ -16,13 +16,14 @@ An automated skill audit, such as Snyk's or Socket's on a skills catalog, gets i
 
 ## What executes here
 
-This repository is mostly Markdown. Three things in it run, or are run by other systems, and are the attack surface.
+This repository is mostly Markdown. Four things in it run, or are run by other systems, and are the attack surface.
 
 | Surface | What holds it |
 | --- | --- |
 | `skills/ktl-sidecar/templates/`: six scripts and three workflows the sidecar **copies into other repositories**, which run there | The template's own design: two jobs so the agent never meets a write token, a `publish` job that confines the patch to the bundle and refuses a `human:` claim, and a preflight and a forge-free gate that only read git and gpg. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards). |
 | `.github/workflows/`: `validate.yml` on every pull request; `knowledge-registrar.yaml`, `knowledge-librarian.yaml` and `knowledge-release.yaml`, this repository's own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, harden-runner in audit mode. Each workflow's header comment says why it is shaped as it is. [Repository hardening](docs/threat-model.md#repository-hardening). |
-| The four skills' `SKILL.md` and `references/` prose, **executed by whichever LLM agent runs it**, here and in every consumer | Each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards) and [Human attribution](docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential). |
+| `skills/ktl-prose/scripts/prose-check.py`: the one script a skill runs in place, **in whichever repository installs it** | Standard library only. It reads the files it is given and calls `git show` with an argument list. It writes nothing and opens no network connection. |
+| The five skills' `SKILL.md` and `references/` prose, **executed by whichever LLM agent runs it**, here and in every consumer | Each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards) and [Human attribution](docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential). |
 
 A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access your harness grants it, and only the scheduled workflow enforces its scope, so review what the agent changed before you commit. [Interactive use](docs/threat-model.md#interactive-use-scope-is-advisory-not-enforced).
 

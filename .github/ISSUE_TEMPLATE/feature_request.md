@@ -1,13 +1,13 @@
 ---
 name: Feature request
-about: Suggest an improvement to one of the four LOKF skills
+about: Suggest an improvement to one of the five LOKF skills
 title: ''
 labels: enhancement
 assignees: ''
 ---
 
 **Which skill?**
-ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / several
+ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose / several
 
 **What's missing or awkward**
 Describe the gap. Note whether it's about the skill's operational content

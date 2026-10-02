@@ -76,6 +76,10 @@ The **curator** is always a person. The skill and the plugin that carry the name
   </picture>
 </p>
 
+### The fifth skill, which is not a role
+
+[`ktl-prose`](skills/ktl-prose/SKILL.md) is the **librarian**'s copy editor. It rewords what an agent wrote, in plain English, before a person confirms it. It changes the wording and never a fact, it leaves every byte of frontmatter alone, and it never touches a concept a person wrote or confirmed. It is optional, and the roles above lose nothing without it.
+
 ## Where the bundle lives
 
 `.lokf/` sits beside the code, notes and documents it distils, in the same tree and almost always the same git repository, the way `.git/` does. The bundle is `.lokf/knowledge/`, one real folder on every host, with a `knowledge_bundle` link beside it for folder pickers that hide dot-folders. Windows, macOS, other forges, no git and synced folders are covered in the sidecar's [portability page](skills/ktl-sidecar/references/portability.md).
@@ -107,9 +111,9 @@ npx skills add noelmcloughlin/knowledge-trust-ladder \
   --skill ktl-sidecar --skill ktl-librarian --yes
 ```
 
-Add the curator once there is a bundle worth trusting; the docent goes anywhere an agent only *reads* one. The `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release: **[docs/install.md](docs/install.md)**. Microsoft 365 Copilot gets the docent as a zip each release carries: **[docs/m365.md](docs/m365.md)**.
+Add the curator once there is a bundle worth trusting; the docent goes anywhere an agent only *reads* one. `ktl-prose` is optional and installs the same way. The `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release: **[docs/install.md](docs/install.md)**. Microsoft 365 Copilot gets the docent as a zip each release carries: **[docs/m365.md](docs/m365.md)**.
 
-**Claude Code plugin** (the same four skills as one plugin, with keywords a plugin catalog can search):
+**Claude Code plugin** (the same five skills as one plugin, with keywords a plugin catalog can search):
 
 ```text
 /plugin marketplace add noelmcloughlin/knowledge-trust-ladder
@@ -123,7 +127,7 @@ Add the curator once there is a bundle worth trusting; the docent goes anywhere 
 | The mechanics - the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
 | The bundle in Obsidian, and the two plugins | [docs/obsidian.md](docs/obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
-| Versioning: all four skills ship under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [docs/releasing.md](docs/releasing.md), [CHANGELOG.md](CHANGELOG.md) |
+| Versioning: all five skills ship under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [docs/releasing.md](docs/releasing.md), [CHANGELOG.md](CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](CONTRIBUTING.md), [docs/repository-layout.md](docs/repository-layout.md), [SECURITY.md](SECURITY.md) |
 
 ## Credits

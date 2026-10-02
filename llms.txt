@@ -1,6 +1,6 @@
 # Knowledge Trust Ladder
 
-> Four Agent Skills that turn a repository's scattered knowledge into a maintained, trusted LOKF knowledge bundle.
+> Four Agent Skills that turn a repository's scattered knowledge into a maintained, trusted LOKF knowledge bundle, and a fifth that keeps its prose plain.
 
 ## Agent context
 

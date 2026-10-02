@@ -111,6 +111,8 @@ Gap recorded: Miss - "What's the roadmap for a fifth skill after ktl-docent?" -
 The **docent** asked once this session whether to record gaps in `.lokf/feedback.md`; the answer was yes, so this one was written there: see
 [`.lokf/feedback.md`](../../.lokf/feedback.md). `ktl-librarian`'s next run will either turn it into a concept or note that no roadmap exists.
 
+*Since this capture the repository has gained a fifth skill, `ktl-prose`. The answer above stays as it was given, and the librarian's next refresh records the new skill.*
+
 ## 8. "Who do I contact to report a security issue, and is that policy confirmed by a person?"
 
 > Use GitHub's private vulnerability reporting (linked from `SECURITY.md`)
