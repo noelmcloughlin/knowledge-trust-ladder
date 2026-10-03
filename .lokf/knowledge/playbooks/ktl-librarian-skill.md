@@ -31,8 +31,9 @@ verified:
   at: "2026-09-09T18:36:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-26T20:00:42Z"
-stale_after: 2027-09-26
-status: draft
+- by: human:noelmcloughlin
+  at: "2026-10-03T09:40:04Z"
+stale_after: 2027-10-03
 ---
 # Overview
 

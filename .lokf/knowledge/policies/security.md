@@ -21,6 +21,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-09-26T20:21:41Z"
 stale_after: 2027-03-26
+status: draft
 ---
 
 # Overview
@@ -61,3 +62,7 @@ ktl-docent, a boundary the agent harness owns, not a Markdown file.
 
 A word budget (check 10, 900 words) holds this file to a policy's shape; the
 design that used to live here now lives once in the linked threat model.
+
+## Open questions
+
+- 2026-10-03, human:noelmcloughlin: ensrure this concept is check against source again

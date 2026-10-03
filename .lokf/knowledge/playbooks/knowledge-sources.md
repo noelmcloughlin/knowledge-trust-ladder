@@ -423,3 +423,4 @@ status: draft
 ## Open questions
 
 - 2026-09-26, human:noelmcloughlin: name the tracked files the table covers only by glob (`.github/ISSUE_TEMPLATE/`: `bug_report.md`, `feature_request.md`; `docs/examples/`: `docent.md`, `curator.md`), and add `.gitignore` to the `LICENSE`/`llms.txt` row as the repository's ignore rules.
+- 2026-10-03, human:noelmcloughlin: the issue-template row says "still names all four skills"; both `bug_report.md` and `feature_request.md` now say five.

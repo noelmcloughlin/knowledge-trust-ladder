@@ -2,6 +2,9 @@
 
 ## 2026-10-03
 
+* **Curation**: human:noelmcloughlin confirmed 2 concepts (ktl-librarian skill, versioning policy), corrected 1 (Why a registrar role: the title now ends "why it is not a skill", since the README's fifth skill is ktl-prose) and sent 2 back (Knowledge sources: the issue-template row still says "all four skills"; Security policy: check it against `SECURITY.md` again). Two of the three verdicts were the same kind, a skill count the move to five skills left behind, which is worth a line in ktl-librarian's instructions.
+* **Changed**: The docent in Microsoft 365 Copilot: the release asset's `<repository>` may be the name `KNOWLEDGE_RELEASE_NAME` sets, as `docs/m365.md` says since #86, and the `atk validate` line quotes the error the page quotes.
+* **Open question**: The docent in Microsoft 365 Copilot: Microsoft's page on custom skills (updated 2026-09-04) says the Agents Toolkit takes a skill directory and that `.zip` isn't supported. `skills/ktl-sidecar/references/m365.md` says `atk add skill --from` takes a zip from any path, as checked against the toolkit's source, and this concept follows it. Which holds for the toolkit a reader installs?
 * **Changed**: Why the skills live in their own repository: the old repository name is left to `docs/install.md`, which records it; the contract keeps it out of every other file.
 * **Changed**: ktl-librarian skill: seven pen operations, with `reindex`, as `references/patch.md` now gives. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: When the built-in vocabulary stops fitting: the description is the catalogue entry, cut to one sentence.
