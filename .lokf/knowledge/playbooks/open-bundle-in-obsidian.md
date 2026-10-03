@@ -22,6 +22,9 @@ about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-03T13:27:24Z"
 ---
 
 # Overview

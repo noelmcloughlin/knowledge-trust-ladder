@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-03T13:28:08Z"
 verified:
 - by: process:ktl-librarian
   at: "2026-09-24T22:22:58Z"
@@ -60,7 +60,7 @@ commit; secret scanning and push protection as GitHub settings nothing in CI
 can assert still hold; CodeQL and dependency review skipped where there is
 nothing for them to scan.
 
-**The librarian's pen (added 2026-10-02)**: `knowledge-apply.sh` is the only writer of `.lokf/knowledge/`. ktl-librarian describes each change as an operation in `.lokf/patch.yaml`, and the script stamps `generated`, refuses an operation that would name a person as its actor, refuses to rewrite text a person wrote or to delete a concept a person confirmed, and writes nothing unless every operation passes. The scheduled wrapper applies the file after the agent has finished and refuses a run that changed anything else, so the agent never writes the bundle itself; `docs/threat-model.md` lists it under repository hardening.
+**The librarian's pen (added 2026-10-02)**: `knowledge-apply.sh` is the only writer of `.lokf/knowledge/`. ktl-librarian describes each change as an operation in `.lokf/patch.yaml`, and the script stamps `generated`, refuses an operation that would name a person as its actor, refuses to rewrite text a person wrote or to delete a concept a person confirmed or left a note on, and writes nothing unless every operation passes. The scheduled wrapper applies the file after the agent has finished and refuses a run that changed anything else, so the agent never writes the bundle itself. `publish` reads the same refusals off the patched tree with `knowledge-provenance.sh --unattended`; `docs/threat-model.md` lists it under repository hardening.
 
 **Human attribution**: a `verified` event whose actor starts with `human:`,
 or a `generated` record written that way, is a claim, not a credential - just
@@ -111,9 +111,13 @@ refused (2026-09-19). If a guard
 fails, the only unattended write path is `knowledge-librarian.yaml`'s
 `publish` job, which re-derives the touched paths from the patch's own
 `git apply --numstat` on a clean checkout the agent never shared, confines
-them to `.lokf/knowledge`, `knowledge_bundle` and `.lokf/feedback.md` (the
-only pathspecs it stages), and refuses a patch adding a `by: human:` claim.
+them to `.lokf/knowledge`, `knowledge_bundle`, `.lokf/feedback.md` and `.lokf/questions.md` (the
+only pathspecs the patch is built from), and refuses a patch that touches a person's record: an event added, changed or removed in any YAML layout, a person's note added or removed, or text a person wrote changed.
 Inside `refresh`, the wrapper snapshots `.git/config` and `.git/hooks`
 before the agent call and restores them from an `EXIT` trap, and keeps its
 own checks in a `main()` called last, so neither a failed agent nor a
 cancelled job leaves a poisoned config behind.
+
+**A person's record is never removed without that person.** `docs/threat-model.md` has the `provenance` job collect the actor of every `human:` event a pull request adds, changes or removes. A `verified` event struck out, or gone with its concept, needs the same approval or signature as one that is added, and a person's `generated` record may give way only to another person's.
+
+**The ledger of readers' questions.** A handled feedback entry leaves `feedback.md` for `.lokf/questions.md`, which the pen writes and only programs read. The librarian keeps a reader's words out of `log.md` and out of every concept, since the curator opens both. `knowledge-report.sh` builds from the ledger the one prompt of the retrieval test, which an agent answers from an empty directory and whose reply is read for concept paths only.

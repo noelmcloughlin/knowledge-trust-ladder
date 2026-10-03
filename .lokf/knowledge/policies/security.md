@@ -20,6 +20,8 @@ verified:
   at: "2026-09-10T00:00:00Z"
 - by: human:noelmcloughlin
   at: "2026-09-26T20:21:41Z"
+- by: process:ktl-librarian
+  at: "2026-10-03T13:27:24Z"
 stale_after: 2027-03-26
 status: draft
 ---

@@ -1,8 +1,10 @@
 # The patch file: how the librarian writes the bundle
 
-The librarian never edits a file under `.lokf/knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, checks the file with `bash .lokf/scripts/knowledge-apply.sh --dry-run`, and applies it with the same script. The script, not the agent, writes the files. It stamps `generated` from the clock, keeps a concept's `description` equal to its bullet in the folder's `index.md` and in the root `index.md`, and files each log line under the day's heading in `log.md`. It removes a feedback entry an operation says it handled, and it writes nothing unless every operation passes. In the scheduled run the wrapper applies the file after the agent has finished and refuses a run that changed anything else. The file is deleted once applied, and `.lokf/.gitignore` keeps it out of git.
+The librarian never edits a file under `.lokf/knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, checks the file with `bash .lokf/scripts/knowledge-apply.sh --dry-run`, and applies it with the same script. The script, not the agent, writes the files. It stamps `generated` from the clock, keeps a concept's `description` equal to its bullet in the folder's `index.md` and in the root `index.md`, and files each log line under the day's heading in `log.md`. It moves a feedback entry an operation says it handled into the ledger of questions readers asked, and it writes nothing unless every operation passes. In the scheduled run the wrapper applies the file after the agent has finished and refuses a run that changed anything else. The file is deleted once applied, and `.lokf/.gitignore` keeps it out of git.
 
 ## The file
+
+`bash .lokf/scripts/knowledge-apply.sh --format` prints this block. A host learns the format from the script it has, whatever release of this skill it runs.
 
 ```yaml
 by: process:ktl-librarian        # optional; the actor every stamp carries, always process:<id>
@@ -21,6 +23,8 @@ ops:
 
       The **Orders API** generates its endpoints from `services/orders/openapi.yaml`...
     log: "**Added**: Orders API, from `services/orders/openapi.yaml`."   # optional on create
+    from_feedback: "- **Miss** - Q: \"Which API serves orders?\" Answered from `services/orders/openapi.yaml`. Nothing relevant in index.md. - docent"   # the exact entry, which the script moves out of feedback.md
+    asked: "Which API serves orders?"   # the reader's question from that entry, for the ledger in .lokf/questions.md
 
   - op: patch                    # minimal edits to a body, and frontmatter keys to set
     path: datasets/orders-db.md
@@ -44,13 +48,18 @@ ops:
     path: policies/retention.md
     text: "the policy names 13 months and the ETL config names 12; which is current?"
 
+  - op: resolve                  # withdraws one open question this run's actor asked, once the source settles it
+    path: policies/retention.md
+    target: "which is current?"  # text found in exactly one of that actor's questions; a person's note is the curator's to clear
+    log: "**Resolved**: the policy and the ETL config both name 13 months since a1b2c3d."
+
   - op: recheck                  # this run's own verified event, replacing its previous one where it stood
     path: glossary/order.md
 
   - op: reindex                  # both index bullets re-derived from the frontmatter; the concept is not written
     path: policies/retention.md
 
-  - op: delete                   # the file and its index bullets; refused when a person confirmed it
+  - op: delete                   # the file and its index bullets; refused when a person confirmed it or left a note on it
     path: services/legacy-sync.md
     log: "**Removal**: Legacy Sync; `services/legacy-sync/` was deleted in a1b2c3d."
 ```
@@ -62,9 +71,11 @@ The values are fictional, as in the skill page's example; mint ids from the bund
 - **Provenance.** `create`, `patch` and `rewrite` stamp `generated: { by, at }` with this run's actor and the clock. Pass `revision: "<full commit hash>"` on an operation to record it where the toolkit accepts the key.
 - **Status.** `create` sets `status: draft`; `question` sets it too. Nothing else touches `status`.
 - **The index.** `create` adds the concept's bullet, its title linked to its file and followed by its description, to the folder's `index.md` and, under the matching `# Section` heading, to the root `index.md`; `set` of `title` or `description` rewrites both; `delete` removes both; `reindex` re-derives both from the frontmatter as it stands, touching neither the concept nor the log, for a bullet that drifted or a concept the script may not patch. A new folder gets a new section.
-- **The log.** Every operation but `recheck` and `reindex` gives one bullet under today's `## YYYY-MM-DD` heading, newest day first, reusing the heading a run earlier today made. A `log` line that does not start with `**` gets the label `**Changed**` (or `**Rewrite**`). A `from_feedback` operation's bullet is labelled `**From reader feedback**`, so quote the reader's question in its `log` line.
-- **Feedback.** `from_feedback` is the exact one-line entry as `.lokf/feedback.md` holds it. The script removes it, and a day left with no entry loses its heading.
+- **The log.** Every operation but `recheck` and `reindex` gives one bullet under today's `## YYYY-MM-DD` heading, newest day first, reusing the heading a run earlier today made. A `log` line that does not start with `**` gets the label `**Changed**` (or `**Rewrite**`, or `**Resolved**`). A `from_feedback` operation's bullet is labelled `**From reader feedback**`. Say there what changed and why, in your own words, and never copy the reader's.
+- **Feedback and the ledger.** `from_feedback` is the exact one-line entry as `.lokf/feedback.md` holds it. The script removes it there, and a day left with no entry loses its heading. It then adds one line to `.lokf/questions.md`: the day, the entry's kind and the concept the operation names, with the reader's question from `asked` where the entry held one. That file only grows, and programs read it: `knowledge-report.sh` counts the concepts readers keep asking about, and scores whether the index leads to them.
+- **Open questions.** `question` adds one in the curator's shape. `resolve` withdraws one this run's actor asked, once the source settles it, and the heading goes with its last question. Neither stamps `generated`, since an open question is no part of what the concept claims. `resolve` leaves `status` as it finds it, because confirming the concept is the curator's.
 - **Carry-overs.** `rewrite` keeps the `<!-- lokf:related -->` block and the `## Open questions` section from the old body when the new body lacks them. No edit may target text inside either.
+- **The hand-off.** After an apply, or a dry run, the script names each concept a person confirmed that the patch edits. Each reads as *edited since a person last confirmed it* until the curator looks again, so name them in the hand-off.
 
 ## What it refuses
 
@@ -76,13 +87,14 @@ Any one of these refuses the whole file, and nothing is written:
 - `create` on a path that exists, or any other operation on one that does not;
 - `create` or `set` carrying `generated`, `verified`, `status`, `stale_after` or `timestamp`; `set` carrying `id` or `type`; an `id` that is not `base_iri` plus the path;
 - `patch`, `rewrite`, `set` or `delete` on a concept whose `generated.by` starts with `human:` (a person wrote that text; add a `question` instead);
-- `delete` on a concept with a `human:` event under `verified` (add a `question` saying the source is gone; the curator retires it);
+- `delete` on a concept with a `human:` event under `verified`, or with a person's note under `## Open questions` (add a `question` saying the source is gone; the curator retires it);
 - a `replace` target that occurs zero or several times, an `insert_after` target on zero or several lines, or either inside the `lokf:related` block or under `## Open questions`;
-- a `patch`, `rewrite` or `delete` with no `log` line; a `title` with square brackets; a `from_feedback` line the feedback file does not hold.
+- a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
+- a `patch`, `rewrite`, `delete` or `resolve` with no `log` line; a `title` with square brackets; a `from_feedback` line the feedback file does not hold; `asked` on an operation with no `from_feedback`.
 
 ## Exit codes
 
-- `0`: applied, or with `--dry-run` would apply. The patch file is removed after an apply unless `--keep` is passed.
+- `0`: applied, or with `--dry-run` would apply, or `--format` printed the block above. The patch file is removed after an apply unless `--keep` is passed.
 - `1`: findings, one per line, and nothing written. Fix the file and run again.
 - `2`: no bundle, no patch file, a file that is not YAML, or no `uv` and no `pyyaml` for `python3`. The sidecar's prerequisites page says who installs `uv`.
 

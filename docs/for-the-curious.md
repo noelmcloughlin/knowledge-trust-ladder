@@ -9,9 +9,9 @@ Each proves less than its name suggests. Only the third yields a claim someone h
 | Check | Who, when | What it proves | What it can't |
 | --- | --- | --- | --- |
 | Schema-valid | the `lokf` toolkit on every change (`just lokf-validate`, and `just lokf-check-refs` for relation targets); `lokf validate` again as the CI gate on every pull request that touches the bundle | the frontmatter is well-formed, the types and relations are ones the schema knows, and every typed relation points at a concept that exists | that anything in it is true |
-| Source-consistent | `ktl-librarian` on every scheduled refresh, shown as *checked by automation only* | the concept still matches what its source says today | that the source is right, or that the concept says what the team means |
+| Source-consistent | `ktl-librarian` on every scheduled refresh, starting from the sources `knowledge-report.sh` finds have moved; shown as *checked by automation only* | the concept still matches what its source says today | that the source is right, or that the concept says what the team means |
 | Human-confirmed | a named person, through `ktl-curator` or the KTL Curator plugin, shown as *confirmed by a person* | someone accountable read the source and agreed | that it stays true, which is what review dates are for |
-| Proven in use | readers, through `ktl-docent`, which records misses and disagreements in `.lokf/feedback.md` | the bundle answered a real question, or didn't, and the gap became the librarian's next task | nothing further: this is the feedback loop that feeds the other three |
+| Proven in use | readers, through `ktl-docent`, which records misses and disagreements in `.lokf/feedback.md`; and, where the retrieval score is switched on, `knowledge-report.sh` on each scheduled refresh | the bundle answered a real question, or didn't, and the gap became the librarian's next task; the score says whether the index still leads to the concept behind each question readers asked | nothing further: this is the feedback loop that feeds the other three |
 
 The first and third rows also run live, outside these skills and the CLI, for anyone maintaining a bundle in Obsidian rather than through an agent. That is KTL Registrar for the first and KTL Curator for the third: see [the fifth role](../README.md#the-fifth-role-which-is-not-a-skill).
 

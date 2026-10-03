@@ -21,6 +21,9 @@ sources:
 - resource: skills/ktl-sidecar/references/portability.md
 - resource: docs/obsidian.md
 - resource: CHANGELOG.md
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-03T13:27:24Z"
 ---
 
 # The pattern

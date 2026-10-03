@@ -4,6 +4,34 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-report.sh` computes what the skills used to work out.** It prints each concept's trust label, the bundle's health line, ktl-librarian's work list and what a change does to the record, from frontmatter and git history, in bash and awk. ktl-curator's Step 1 and ktl-docent's footer quote it. The librarian workflow's `publish` job fills its pull request from it, on its own checkout. A source has moved when history, not a clock, puts its last commit after the one that recorded the event. Check 20 exercises it.
+- **A retrieval score, off unless `KNOWLEDGE_RETRIEVAL` is `true`.** On a scheduled run that changes the bundle, the agent picks from `index.md` alone the concepts it would open for each question readers asked, and `knowledge-report.sh` scores the reply by program. The pull request carries the result as `n of m`. It reports and gates nothing.
+- **A ledger of the questions readers asked, `.lokf/questions.md`.** `knowledge-apply.sh` moves each handled feedback entry there: the day, the kind, the concept that now answers it, and the reader's question from the operation's `asked` key. It only grows, and programs read it.
+- **The pen gains `resolve` and `--format`.** `resolve` withdraws an open question the librarian itself asked, and never a person's note. `--format` prints the patch file's shape, which check 19 holds equal to `references/patch.md`.
+- **Conventions rule 12: an index bullet carries its concept's title and description.** The pen keeps the three copies equal for a concept it writes; the gate now fails when another hand leaves one behind, and a `reindex` operation repairs it.
+
+### Changed
+
+- **ktl-librarian starts a refresh from the work list,** and reads a local source again only when it moved. It leaves a note that a later confirmation answered to the curator, withdraws its own answered questions, and keeps a reader's words out of `log.md` and out of every concept. When a count or a name changes in one source, it searches the bundle for the old value, which the curation of 2026-10-03 asked for.
+- **The health line counts a concept edited since its confirmation once, under *Edited since confirmed*,** and no longer under *Confirmed by a person* as well. The person confirmed an earlier text.
+- **ktl-curator clears answered open questions on *Correct now* too.** Its report lists apart the questions a person's later confirmation answered, and the confirmed concepts whose source moved after the confirmation.
+- **The scheduled pull request is filled by the job that opens it.** The health line and what the change does to the record come from `knowledge-report.sh` in `publish`, and nothing but the retrieval score's two integers comes from the job that ran the agent.
+
+### Fixed
+
+- **A sidecar laid down from 0.29.0 paired the new wrapper with a skill that predates the pen.** The template pins the skills one release behind, and the wrapper's prompt named `references/patch.md`, which that release lacks. The prompt now takes the format from `knowledge-apply.sh --format`, and the wrapper says so when the pinned skill is older. A host already laid down from 0.29.0 moves `TRUST_LADDER_SKILLS_REF` to `v0.29.0` or syncs to this release.
+- **`docs/wikiskill.md` said the paper's ablation ran on five benchmarks.** Its Table 3 has four.
+- **A `from_feedback` line that `feedback.md` does not hold is a finding, not a traceback.**
+
+### Security
+
+- **A person's record is never removed without that person.** The `provenance` job and `knowledge-provenance.sh` ask the person behind a `verified` event that a change removes, struck out or gone with its concept, as they ask the one behind an event it adds. A person's `generated` record may give way only to another person's. Before this a pull request that deleted a confirmed concept passed the gate.
+- **`publish` reads a person's events off the patched tree.** `knowledge-provenance.sh --unattended` refuses a person's event added, changed or removed in any YAML layout, a person's note added or removed, and a change to text a person wrote. The line pattern it replaces as the backstop saw a block-style `by: human:` line only. The wrapper runs the same check after the pen.
+- **The pen refuses to delete a concept a person left a note on,** as it refuses one a person confirmed.
+- **A reader's words no longer reach `log.md`.** The librarian quoted a reader's question there since 0.29.0, and ktl-curator opens that file to add its line. The question now stays in the ledger.
+
 ## [0.29.0] - 2026-10-03
 
 ### Added

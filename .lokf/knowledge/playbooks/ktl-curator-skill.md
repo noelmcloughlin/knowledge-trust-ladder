@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-03T13:27:24Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
@@ -27,13 +27,13 @@ sources:
 # Overview
 
 Runs **a little, regularly**. Step 1 is always a read-only one-screen report
-computed from frontmatter, and from git history for one count (no toolkit
+that quotes `knowledge-report.sh`, which computes it from frontmatter and git history (no toolkit
 needed): a health line (including how many confirmations no signed commit
 stands behind), at most
-five items "worth ten minutes today", the librarian's open questions, how many
+five items "worth ten minutes today", the open questions, with those a person's later confirmation answered listed apart, how many
 reader feedback entries wait - counted with `grep -c`, never read, so no
 reader's text enters the session - vocabulary fit, the confirmations git
-cannot back (named, only when there are any), (only when the curation policy sets
+cannot back (named, only when there are any), the confirmed concepts whose source has a commit after the one that recorded the confirmation (again only when there are any), (only when the curation policy sets
 `Independent re-check: <n>`) n confirmed concepts,
 picked by a rule the curator cannot steer, with their sources for a second
 person to re-check, and (since 2026-09-17) a *Ready to record* line from the
@@ -89,3 +89,5 @@ field says the skill needs git, a POSIX shell and one of those identities to
 record a confirmation in a person's name. Where the repository keeps curator
 keys under `.lokf/curators/` for the forge-free gate, the preflight says
 whether this person's key is on file before the session starts.
+
+The health line counts a concept edited since its confirmation once, under *Edited since confirmed*, because the person confirmed an earlier text (`references/trust-fields.md`). *Correct now* clears the open questions the person says are answered, as *Confirm* does (`references/review-session.md`).

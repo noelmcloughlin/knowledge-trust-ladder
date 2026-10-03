@@ -12,8 +12,12 @@
 # CONTRACT (the workflow relies on this):
 #   - The agent WRITES one file, .lokf/patch.yaml, and nothing else. After it
 #     returns, this script applies that file with knowledge-apply.sh, so
-#     .lokf/knowledge/ (and a handled feedback.md entry) change only through
-#     that script; a run in which the agent changed any other path is refused.
+#     .lokf/knowledge/, a handled feedback.md entry and the ledger line it
+#     becomes in questions.md change only through that script; a run in which
+#     the agent changed any other path is refused.
+#   - What the pen refuses before it writes is then read off the result, by
+#     knowledge-provenance.sh --unattended: a run that touched a person's
+#     event, note or text is refused too.
 #   - It MUST NOT git commit, push, or open PRs - the workflow owns that.
 #   - On success it exits 0 whether or not it changed anything; the workflow
 #     diffs the working tree to decide whether to open a PR.
@@ -23,6 +27,10 @@
 #   AGENT_API_KEY       optional: the agent's API key or token, from a secret
 #   AGENT_API_KEY_ENV   the name the agent reads that key from, such as
 #                       ANTHROPIC_API_KEY; required when AGENT_API_KEY is set
+#   KNOWLEDGE_RETRIEVAL optional: "true" scores, after the bundle is written,
+#                       whether the index leads an agent to the concept behind
+#                       each question readers asked (one more agent call)
+#   KNOWLEDGE_RETRIEVAL_OUT  optional: a file to write that one score line to
 #
 set -euo pipefail
 
@@ -45,15 +53,35 @@ done
   exit 2
 }
 
+# This wrapper writes the bundle through knowledge-apply.sh and nothing else,
+# so a sidecar that never laid the pen down - a copy synced over an older one
+# adds no file that was not there - is said now, before an agent run is spent
+# on a patch nothing could apply.
+if [ ! -f .lokf/scripts/knowledge-apply.sh ] || [ ! -f .lokf/scripts/knowledge-apply.py ]; then
+  echo "knowledge-librarian: .lokf/scripts/knowledge-apply.sh and knowledge-apply.py are not both here, and the bundle is written through them alone; ktl-sidecar's repair path lays them down" >&2
+  exit 2
+fi
+
 if [ -z "${AGENT_CLI:-}" ]; then
   cat >&2 <<'EOF'
 knowledge-librarian: AGENT_CLI is not set.
 
 Set AGENT_CLI to your non-interactive agent command (e.g. a Copilot CLI or
 internal runner). This wrapper hands it a prompt built from the ktl-librarian
-skill; the agent is expected to edit files under .lokf/knowledge/ only.
+skill; the agent is expected to write one file, .lokf/patch.yaml, which this
+wrapper then applies with knowledge-apply.sh.
 EOF
   exit 2
+fi
+
+# The patch file's format travels with knowledge-apply.sh, which prints it
+# with --format, so the prompt below names no file inside the skill. That
+# matters because the skill a scheduled run installs is pinned one release
+# behind the scripts beside this one: a skill that predates the patch file
+# still gets a prompt it can follow. Say so when that is the case, since
+# nothing else would tell the operator why the skill and the prompt differ.
+if [ ! -f "$(dirname "$skill")/references/patch.md" ]; then
+  echo "knowledge-librarian: $skill predates the patch file, so the prompt takes the format from knowledge-apply.sh --format; move the skills pin to a release that carries references/patch.md once one is tagged" >&2
 fi
 
 # The workflow passes the key under one fixed name, and the agent CLI reads it
@@ -82,8 +110,8 @@ if [ -n "$agent_key" ] || [ -n "$key_name" ]; then
   fi
 fi
 
-# Build the prompt. The agent should follow the skill verbatim, edit only the
-# .lokf/knowledge/ bundle, and make no VCS operations.
+# Build the prompt. The agent should follow the skill verbatim, write only
+# .lokf/patch.yaml, and make no VCS operations.
 # The heredoc is unquoted so $skill expands - which means any backtick in the
 # text MUST be escaped (\`) or bash runs it as a command and blanks the word.
 prompt="$(cat <<EOF
@@ -94,19 +122,23 @@ Task (Karpathy rule - continuous small corrections, not a rewrite):
   1. Follow the skill's Scrape & build procedure: bootstrap discovery if the
      bundle has no real concepts yet, otherwise the steady-state refresh of the
      sources recorded in the bundle (concept provenance and
-     .lokf/knowledge/playbooks/knowledge-sources.md).
+     .lokf/knowledge/playbooks/knowledge-sources.md). Start a refresh from
+     "bash .lokf/scripts/knowledge-report.sh worklist" where that script
+     exists: a program has already found which sources moved, which notes a
+     person left, and how much reader feedback waits.
   2. Reconcile the .lokf/ knowledge bundle with the repository: add missing
      concepts, correct stale facts, wire typed relations, and give every
      operation its log line - but only when the bundle content actually
      changed. If nothing changed, write no patch file at all; do not log
      administrative no-op runs.
-  3. Write every change as an operation in .lokf/patch.yaml, in the shape the
-     skill's references/patch.md gives, and check it with
-     "bash .lokf/scripts/knowledge-apply.sh --dry-run". Do NOT edit any file
-     under .lokf/knowledge/ or .lokf/feedback.md yourself, do NOT run the
-     apply script without --dry-run, and do NOT run git, open PRs, or touch
-     any other path: this wrapper applies the file after you finish. Cite
-     sources for any claim whose authority is outside the repository.
+  3. Write every change as an operation in .lokf/patch.yaml, in the shape
+     "bash .lokf/scripts/knowledge-apply.sh --format" prints, and check it
+     with "bash .lokf/scripts/knowledge-apply.sh --dry-run". Do NOT edit any
+     file under .lokf/knowledge/, .lokf/feedback.md or .lokf/questions.md
+     yourself, do NOT run the apply script without --dry-run, and do NOT run
+     git, open PRs, or touch any other path: this wrapper applies the file
+     after you finish. Cite sources for any claim whose authority is outside
+     the repository.
   4. Mark concepts you create, and claims you cannot settle from the
      repository, as \`status: draft\` (with a plain-prose "## Open questions"
      section for the latter), exactly as the skill says. End your reply with a
@@ -123,7 +155,7 @@ EOF
 # metacharacters (; | & $() ``) are passed as inert arguments, not executed -
 # there is no eval and no `bash -c`. This step runs only in the workflow's
 # read-only `refresh` job (contents: read, no persisted credentials), and the
-# post-run check further fails if the agent wrote outside .lokf/knowledge/.
+# post-run check further fails if the agent wrote anything but .lokf/patch.yaml.
 # That check, and the AGENT_CLI invocation itself, live inside main() below,
 # called only from this file's last line: bash reads a function body in full
 # before running any of it, so - unlike the top-level statements this used to
@@ -141,17 +173,18 @@ if [ "${#agent_cmd[@]}" -eq 0 ]; then
   exit 2
 fi
 
-# Defence in depth: the prompt asks the agent to edit only .lokf/knowledge/, but
+# Defence in depth: the prompt asks the agent to write only the patch file, but
 # nothing forces it. Record paths already dirty outside the bundle (e.g. a
 # uv.lock the workflow refreshed) so the agent is held to account only for *new*
 # ones. Allowed: the bundle under either of its two names - .lokf/knowledge/,
 # and knowledge_bundle/, which is ktl-sidecar's doorway link by default (then
 # the pathspec matches nothing) but a real folder on a host rearranged by hand
 # with .lokf/knowledge a link onto it (git pathspecs do not traverse a symlink,
-# so both must be named) - plus ktl-docent's .lokf/feedback.md.
+# so both must be named) - plus ktl-docent's .lokf/feedback.md and the ledger
+# the pen moves a handled entry into, .lokf/questions.md.
 outside_bundle() {
   git status --porcelain -- '.' \
-    ':(exclude).lokf/knowledge' ':(exclude)knowledge_bundle' ':(exclude).lokf/feedback.md' \
+    ':(exclude).lokf/knowledge' ':(exclude)knowledge_bundle' ':(exclude).lokf/feedback.md' ':(exclude).lokf/questions.md' \
     | cut -c4- | sort -u
 }
 # Every path git sees changed, the patch file apart: the agent's one output,
@@ -160,10 +193,16 @@ changed_paths() {
   git status --porcelain -- '.' ':(exclude).lokf/patch.yaml' | cut -c4- | sort -u
 }
 
-# Snapshots of .git/config and .git/hooks/ taken by main() before the agent
-# runs. File-scope, not local, so the EXIT trap below can reach them.
+# Snapshots of .git/config and .git/hooks/ taken before each agent call.
+# File-scope, not local, so the EXIT trap below can reach them.
 config_snapshot=""
 hooks_snapshot=""
+snapshot_git_state() {
+  config_snapshot="$(mktemp)"
+  hooks_snapshot="$(mktemp -d)"
+  cp .git/config "$config_snapshot"
+  cp -a .git/hooks/. "$hooks_snapshot/"
+}
 
 # Put .git/config and .git/hooks/ back as they were before the agent ran, then
 # forget the snapshot so a second call is a no-op. Called explicitly right after
@@ -183,6 +222,53 @@ restore_git_state() {
   hooks_snapshot=""
 }
 
+# Everything git can see of the working tree, as one checksum: which paths
+# differ from HEAD, how the tracked ones differ, and what the untracked ones
+# hold. Two readings that agree mean nothing in the checkout changed between
+# them.
+tree_state() {
+  {
+    git status --porcelain --untracked-files=all
+    git diff HEAD
+    git ls-files --others --exclude-standard | while IFS= read -r f; do cksum "$f"; done
+  } 2>/dev/null | cksum
+}
+
+# The index-only retrieval test (knowledge-report.sh's `retrieval`), run only
+# when KNOWLEDGE_RETRIEVAL is "true". The bundle is written by now. The agent
+# answers one prompt - the table of contents and the questions readers asked -
+# from an empty directory, so the index is all it has, and its reply is
+# scored by program: one line, "n of m". The prompt carries readers' words,
+# so the reply is read for concept paths and for nothing else, the same
+# snapshot guards .git/config and .git/hooks/, and a call that changed
+# anything in the checkout refuses the run like any other stray write.
+score_retrieval() {
+  local prompt scratch before line
+  prompt="$(bash .lokf/scripts/knowledge-report.sh retrieval --prompt 2>/dev/null || true)"
+  if [ -z "$prompt" ]; then
+    echo "knowledge-librarian: no reader's question is on file, so retrieval is not scored"
+    return 0
+  fi
+  scratch="$(mktemp -d)"
+  before="$(tree_state)"
+  snapshot_git_state
+  (
+    cd "$scratch" || exit 1
+    if [ -n "$key_name" ]; then export "$key_name=$agent_key"; fi
+    exec "${agent_cmd[@]}" -p "$prompt"
+  ) > "$scratch/reply" 2>/dev/null || true
+  restore_git_state
+  if [ "$(tree_state)" != "$before" ]; then
+    echo "knowledge-librarian: the retrieval call changed files in the checkout - refusing" >&2
+    rm -rf "$scratch"
+    exit 3
+  fi
+  line="$(bash .lokf/scripts/knowledge-report.sh retrieval "$scratch/reply" 2>/dev/null | sed -n 1p)"
+  rm -rf "$scratch"
+  echo "knowledge-librarian: $line"
+  if [ -n "${KNOWLEDGE_RETRIEVAL_OUT:-}" ]; then printf '%s\n' "$line" > "$KNOWLEDGE_RETRIEVAL_OUT"; fi
+}
+
 main() {
   # A local, well-formed AGENT_CLI can still run code that writes anywhere in
   # this job's checkout - that's what the check above is for. But that check
@@ -197,10 +283,7 @@ main() {
   # kills the step outright also discards the job, so nothing reads the
   # checkout after it. This is defence in depth, not the actual backstop - a
   # human reviewing the PR before merge is.
-  config_snapshot="$(mktemp)"
-  hooks_snapshot="$(mktemp -d)"
-  cp .git/config "$config_snapshot"
-  cp -a .git/hooks/. "$hooks_snapshot/"
+  snapshot_git_state
   trap restore_git_state EXIT
   # A signal caught by a trap does not end the shell, so these turn it into an
   # exit, which runs the EXIT trap above. bash delivers them only once the
@@ -254,6 +337,19 @@ main() {
     echo "knowledge-librarian: agent modified paths outside .lokf/knowledge/ - refusing:" >&2
     printf '%s\n' "$stray" | sed '/^$/d; s/^/  /' >&2
     exit 3
+  fi
+
+  # What the pen refuses before it writes, read off the result: the change
+  # adds, changes and removes no person's event or note, and rewrites no text
+  # a person wrote. The publish job runs the same check on a checkout the
+  # agent never shared; this one fails fast.
+  if [ -f .lokf/scripts/knowledge-provenance.sh ] && ! bash .lokf/scripts/knowledge-provenance.sh --unattended; then
+    echo "knowledge-librarian: the change touches a person's record - refusing" >&2
+    exit 3
+  fi
+
+  if [ "${KNOWLEDGE_RETRIEVAL:-}" = true ] && [ -f .lokf/scripts/knowledge-report.sh ]; then
+    score_retrieval
   fi
 }
 

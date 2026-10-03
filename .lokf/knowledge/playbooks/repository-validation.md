@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-03T13:27:24Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -23,7 +23,7 @@ sources:
 
 `validate.yml` runs five jobs on every pull request, every push to `main`,
 weekly, and on demand. `validate-skills` runs `scripts/validate-repository.sh` -
-nineteen numbered checks, several with lettered sub-checks: exactly five skill directories with a case-correct
+twenty numbered checks, several with lettered sub-checks: exactly five skill directories with a case-correct
 `SKILL.md` in each, frontmatter `name` matching its directory and (check 3b,
 added 2026-09-17) a `compatibility` field of at most 500 characters naming
 what the skill needs, (check 3c, added 2026-09-19) each skill's `description` ending in a `Keywords:` list within the spec's 1024 characters - catalogs have no tag field, so it is the only tag they read - with `.claude-plugin/plugin.json` and `marketplace.json` carrying one identical keyword list, no duplicate `SKILL.md`, every relative Markdown link
@@ -37,12 +37,12 @@ that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
 staying under their own word budget (1000 and 900, check 10, extended
 2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`),
 (check 11, added 2026-09-14) this repository's copies of the three knowledge workflows (the release workflow since 2026-09-24),
-the eight sidecar scripts, the two `.lokf/m365/` files (since 2026-09-24) and `.lokf/.gitattributes` staying byte-identical to
+the nine sidecar scripts, the two `.lokf/m365/` files (since 2026-09-24) and `.lokf/.gitattributes` staying byte-identical to
 their templates - since 2026-09-24 apart from one value, the librarian
 workflow's `TRUST_LADDER_SKILLS_REF`, which the release commit moves in the
 template only - and failing up front, naming the cause, when `uv` is
 missing, with `knowledge-conventions.sh` shown to pass on this
-bundle, to fail on a synthetic bundle breaking each of its eleven rules (a
+bundle, to fail on a synthetic bundle breaking each of its twelve rules (a
 vanished `resource`, a `revision` naming no commit, a duplicate `id`, an
 upper-case path, a byte order mark, a missing frontmatter block, an event
 spelt with a quoted key or a tag, a time later than the commit that recorded
@@ -89,7 +89,7 @@ flow-style event, a flow-style human `generated` record and an event a merge
 adds that neither side held, while passing the same re-date signed by its
 curator, a confirmed concept that merely moved, an example event in a body
 code fence and a merge that brings in a signed confirmation - all with
-throwaway keys, and saying so and passing where there is no `.lokf/curators/`; and (check 14, added 2026-09-17) `CHANGELOG.md` never
+throwaway keys, and saying so and passing where there is no `.lokf/curators/`; a removed confirmation needs its curator's signature as an added one does, whether the event is struck out or its concept deleted, and a person's `generated` record may give way only to another person's; (check 13a) the same script's `--unattended` form refusing, with no key at all, a change that adds, changes or removes a person's event or note or rewrites text a person wrote; and (check 14, added 2026-09-17) `CHANGELOG.md` never
 carrying two headings for one released version, and `changelog-release.mjs
 promote` folding a second qualifying push into the top released section by
 subsection, rather than adding a second heading for it, when that version
@@ -126,7 +126,7 @@ on, staying quiet on what the two hand passes kept, and refusing, with
 wording, a frontmatter byte, or a concept a person wrote or confirmed; and
 (check 19) `knowledge-apply.sh`, the librarian's only pen, exercised on a
 throwaway bundle: each operation applied, each refusal refused, and a dry run
-writing nothing. The job sets up `uv`, runs the contract, then confirms
+writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock. The twelfth conventions rule holds an index bullet to its concept's title and description. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check and retrieval call. The job sets up `uv`, runs the contract, then confirms
 `gh skill` is available, and then runs `gh skill publish --dry-run`.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs

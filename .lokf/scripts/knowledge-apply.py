@@ -9,23 +9,29 @@
 # never edits .lokf/knowledge/ itself, so what reaches the bundle is what
 # this script allows: it stamps `generated` from the clock, keeps a concept's
 # description and its two index bullets equal, files each log line under the
-# day's heading, removes a feedback entry an operation says it handled, and
-# refuses an operation that would write a `human:` actor, rewrite text a
-# person wrote, or delete a concept a person confirmed. Nothing is written
-# unless every operation passes. The format is ktl-librarian's
-# references/patch.md; the summary here is the contract.
+# day's heading, moves a feedback entry an operation says it handled out of
+# feedback.md and into the ledger of questions readers asked, and refuses an
+# operation that would write a `human:` actor, rewrite text a person wrote, or
+# delete a concept a person confirmed or left a note on. Nothing is written
+# unless every operation passes. `--format` prints the patch file's shape, so
+# the format travels with the script that enforces it and a host needs no
+# particular release of the skill to learn it; ktl-librarian's
+# references/patch.md carries the same block, and the repository contract
+# holds the two equal.
 #
 # Operations (each a mapping under `ops:` with `op:` and `path:`):
 #   create    frontmatter + body for a concept that does not exist yet
 #   patch     edits (replace / insert_after / append) and `set` frontmatter keys
 #   rewrite   a whole new body; the lokf:related block and open questions carry over
 #   question  one open question, in the curator's shape, with this run's actor
+#   resolve   withdraws one open question this run's actor asked; never a person's note
 #   recheck   this run's own `verified` event, replacing its previous one
 #   delete    the concept, its index bullets, and a log line saying why
 #   reindex   both index bullets re-derived from the frontmatter; the concept itself is not touched
 #
 # Usage: knowledge-apply.py [--dry-run] [--keep] --root <repo-root> [<patch-file>]
-#   exit 0  applied, or with --dry-run would apply
+#        knowledge-apply.py --format
+#   exit 0  applied, or with --dry-run would apply; or the format was printed
 #   exit 1  findings; nothing written
 #   exit 2  usage, no bundle, or a patch file that cannot be read
 
@@ -49,8 +55,75 @@ DENIED_SET = {"id", "type", "generated", "verified", "status", "stale_after", "t
 DENIED_CREATE = {"generated", "verified", "status", "stale_after", "timestamp"}
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
-OPS = {"create", "patch", "rewrite", "question", "recheck", "delete", "reindex"}
+BULLET_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, (\S+?): ")  # an open question's actor, in the shape the curator writes
+FEEDBACK_KIND_RE = re.compile(r"^- \*\*(Miss|Disagreement)\*\* ")
+OPS = {"create", "patch", "rewrite", "question", "resolve", "recheck", "delete", "reindex"}
 EDITS = {"replace", "insert_after", "append"}
+LEDGER_HEAD = (
+    "# Questions readers asked\n"
+    "\n"
+    "Written by knowledge-apply.sh each time ktl-librarian handles a reader's feedback entry: the day, the kind, the concept that now answers it, and the reader's question where the entry held one. Oldest first, one line per entry, never edited. Programs read it: knowledge-report.sh counts the concepts readers keep asking about, and scores whether the index leads to them.\n"
+    "\n"
+)
+
+# What `--format` prints. ktl-librarian's references/patch.md carries the same
+# block, and check 19 of the repository contract holds the two equal.
+FORMAT = r'''by: process:ktl-librarian        # optional; the actor every stamp carries, always process:<id>
+ops:
+  - op: create                   # a concept that does not exist yet
+    path: services/orders-api.md # lowercase, under a folder, .md; the id is base_iri plus this path
+    frontmatter:                 # type, title and description are required; never generated, verified, status, stale_after
+      type: Service
+      title: Orders API
+      description: REST API serving order data to the CLI and web UI.
+      resource: services/orders/openapi.yaml
+      dependsOn:
+        - https://acme.example/knowledge/datasets/orders-db
+    body: |
+      # Overview
+
+      The **Orders API** generates its endpoints from `services/orders/openapi.yaml`...
+    log: "**Added**: Orders API, from `services/orders/openapi.yaml`."   # optional on create
+    from_feedback: "- **Miss** - Q: \"Which API serves orders?\" Answered from `services/orders/openapi.yaml`. Nothing relevant in index.md. - docent"   # the exact entry, which the script moves out of feedback.md
+    asked: "Which API serves orders?"   # the reader's question from that entry, for the ledger in .lokf/questions.md
+
+  - op: patch                    # minimal edits to a body, and frontmatter keys to set
+    path: datasets/orders-db.md
+    edits:
+      - replace: { target: "nightly at 02:00", content: "nightly at 03:00" }   # target occurs exactly once
+      - insert_after: { target: "## Columns", content: "" }                     # new lines after the one line holding the target
+      - append: { content: "## Retention\n\nRows older than 13 months are dropped." }   # before ## Open questions, if any
+    set:
+      description: The orders table, loaded nightly at 03:00 from the Orders API.
+    log: "**Changed**: the load moved to 03:00; `etl/orders.yaml` says so since 2026-08-01."
+    from_feedback: "- **Disagreement** - `datasets/orders-db.md` says 02:00; `etl/orders.yaml` now says 03:00. - docent"
+
+  - op: rewrite                  # a whole new body; the lokf:related block and ## Open questions carry over
+    path: playbooks/release.md
+    body: |
+      # Overview
+      ...
+    log: "the release page was rewritten around the new workflow"
+
+  - op: question                 # one open question in the curator's shape; sets status: draft
+    path: policies/retention.md
+    text: "the policy names 13 months and the ETL config names 12; which is current?"
+
+  - op: resolve                  # withdraws one open question this run's actor asked, once the source settles it
+    path: policies/retention.md
+    target: "which is current?"  # text found in exactly one of that actor's questions; a person's note is the curator's to clear
+    log: "**Resolved**: the policy and the ETL config both name 13 months since a1b2c3d."
+
+  - op: recheck                  # this run's own verified event, replacing its previous one where it stood
+    path: glossary/order.md
+
+  - op: reindex                  # both index bullets re-derived from the frontmatter; the concept is not written
+    path: policies/retention.md
+
+  - op: delete                   # the file and its index bullets; refused when a person confirmed it or left a note on it
+    path: services/legacy-sync.md
+    log: "**Removal**: Legacy Sync; `services/legacy-sync/` was deleted in a1b2c3d."
+'''
 
 
 class Refused(Exception):
@@ -109,10 +182,14 @@ def related_span(body: str):
 
 
 def questions_span(body: str):
-    """(start, end) of the ## Open questions section: its heading line to the next ## heading or the end."""
+    """(start, end) of the ## Open questions section: its heading line to the next ## heading or the end. A heading shown inside a code fence is an example, not the section."""
     lines, offsets = line_offsets(body)
+    fenced = False
     for i, line in enumerate(lines):
-        if line.strip() == OPEN_Q:
+        if line.startswith("```") or line.startswith("~~~"):
+            fenced = not fenced
+            continue
+        if not fenced and line.strip() == OPEN_Q:
             end = len(body)
             for j in range(i + 1, len(lines)):
                 if lines[j].startswith("## "):
@@ -120,6 +197,12 @@ def questions_span(body: str):
                     break
             return (offsets[i], end)
     return None
+
+
+def clean_question(value, what: str) -> str:
+    """A reader's question as the ledger holds it: one line, no control character, no backtick to close the code span it sits in, and no longer than a question is."""
+    text = re.sub(r"[\x00-\x1f\x7f]", "", one_line(value, what)).replace("`", "'")
+    return text[:300]
 
 
 def protected_spans(body: str):
@@ -165,6 +248,13 @@ class Concept:
     def confirmed_by_person(self) -> bool:
         return any(str(e.get("by", "")).startswith("human:") for e in self.events())
 
+    def noted_by_person(self) -> bool:
+        q = questions_span(self.body)
+        if q is None:
+            return False
+        actors = (BULLET_RE.match(line) for line in self.body[q[0]:q[1]].split("\n"))
+        return any(m is not None and m.group(1).startswith("human:") for m in actors)
+
     def title(self) -> str:
         return " ".join(str(self.fm.get("title", self.path)).split())
 
@@ -177,11 +267,14 @@ class Bundle:
         self.root = root
         self.knowledge = root / ".lokf" / "knowledge"
         self.feedback = root / ".lokf" / "feedback.md"
+        self.ledger = root / ".lokf" / "questions.md"
         self.by, self.now, self.today = by, now, today
         self.concepts: dict[str, Concept] = {}
         self.indexes: dict[Path, str] = {}
         self.log_lines: list[str] = []
         self.feedback_handled: list[str] = []
+        self.ledger_lines: list[str] = []
+        self.demoted: list[str] = []  # concepts a person confirmed that this run edited
         self.base_iri = self.read_base_iri()
 
     def read_base_iri(self) -> str:
@@ -273,6 +366,8 @@ class Bundle:
             c.fm[k] = v
         c.fm["generated"] = self.stamp(op)
         c.touched = True
+        if c.confirmed_by_person() and path not in self.demoted:
+            self.demoted.append(path)
         self.index_set(path, c.title(), c.description())
         self.log(op, None, c)
 
@@ -336,6 +431,8 @@ class Bundle:
         c.body = new
         c.fm["generated"] = self.stamp(op)
         c.touched = True
+        if c.confirmed_by_person() and path not in self.demoted:
+            self.demoted.append(path)
         self.index_set(path, c.title(), c.description())
         self.log(op, None, c, label="Rewrite")
 
@@ -353,6 +450,34 @@ class Bundle:
         c.fm["status"] = "draft"
         c.touched = True
         self.log(op, f"**Open question**: {c.title()}: {text}")
+
+    def resolve(self, op: dict) -> None:
+        """Withdraws one open question this run's actor asked, once the source settles it. A person's note stays: only the curator clears one, on that person's word. Neither `generated` nor `status` moves, since the question was never part of what the concept claims."""
+        path = op["path"]
+        c = self.concept(path, must_exist=True)
+        target = op.get("target")
+        if not isinstance(target, str) or not target.strip():
+            raise Refused(f"{path}: resolve needs a target string found in the question")
+        if not isinstance(op.get("log"), str) or not op["log"].strip():
+            raise Refused(f"{path}: resolve needs a log line saying what settled the question")
+        q = questions_span(c.body)
+        if q is None:
+            raise Refused(f"{path}: no {OPEN_Q} section, so there is no question to resolve")
+        section = c.body[q[0]:q[1]].split("\n")
+        hits = [k for k, line in enumerate(section) if line.startswith("- ") and target in line]
+        if len(hits) != 1:
+            raise Refused(f"{path}: resolve target is in {len(hits)} open questions, and must be in exactly one: {target[:60]!r}")
+        asker = BULLET_RE.match(section[hits[0]])
+        if asker is None or asker.group(1) != self.by:
+            raise Refused(f"{path}: that question is not one {self.by} asked; a person's note is the curator's to clear, on that person's word")
+        del section[hits[0]]
+        if any(line.strip() for line in section[1:]):
+            c.body = c.body[: q[0]] + "\n".join(section) + c.body[q[1]:]
+        else:  # the heading goes with its last question
+            head, tail = c.body[: q[0]].rstrip("\n"), c.body[q[1]:].lstrip("\n")
+            c.body = head + "\n" + ("\n" + tail if tail else "")
+        c.touched = True
+        self.log(op, None, None, label="Resolved")
 
     def recheck(self, op: dict) -> None:
         """This run's own event replaces its previous one where it stood, so a person's events keep their place."""
@@ -379,6 +504,8 @@ class Bundle:
         c = self.concept(path, must_exist=True)
         if c.confirmed_by_person():
             raise Refused(f"{path}: a person confirmed this concept, so delete is refused; add a question saying the source is gone, and the curator retires it")
+        if c.noted_by_person():
+            raise Refused(f"{path}: a person left a note on this concept, so delete is refused; add a question saying the source is gone, and the curator retires it")
         self.guard_writable(c, "delete")
         if not isinstance(op.get("log"), str) or not op["log"].strip():
             raise Refused(f"{path}: delete needs a log line saying why")
@@ -450,12 +577,25 @@ class Bundle:
         if c is not None and c.confirmed_by_person() and "edited since" not in text:
             text += " Edited since a person confirmed it; the label says so until the curator looks again."
         fb = op.get("from_feedback")
+        asked = op.get("asked")
+        if asked is not None and fb is None:
+            raise Refused(f"{op['path']}: asked goes with from_feedback; it is the reader's question from that entry")
         if fb is not None:
+            if not isinstance(fb, str):
+                raise Refused(f"{op['path']}: from_feedback is the exact one-line entry as feedback.md holds it")
             fb = fb.rstrip("\n")
             if "\n" in fb or not fb.startswith("- **"):
                 raise Refused(f"{op['path']}: from_feedback is the exact one-line entry as feedback.md holds it")
             self.feedback_handled.append(fb)
             text = "**From reader feedback**: " + re.sub(r"^\*\*[^*]+\*\*: ?", "", text)
+            # The entry leaves feedback.md for the ledger: the day, its kind and
+            # the concept that now answers it, with the reader's question in a
+            # code span so that none of it renders or reads as Markdown.
+            kind = FEEDBACK_KIND_RE.match(fb)
+            line = f"- {self.today} {kind.group(1) if kind else 'Feedback'} {op['path']}"
+            if asked is not None:
+                line += ": `" + clean_question(asked, f"{op['path']}: asked") + "`"
+            self.ledger_lines.append(line)
         self.log_lines.append("* " + text)
 
     def log_text(self) -> str | None:
@@ -498,6 +638,15 @@ class Bundle:
             k += 1
         return "\n".join(out).rstrip("\n") + "\n"
 
+    def ledger_text(self) -> str | None:
+        """The ledger with this run's lines appended. It only ever grows: no line already in it is read, moved or rewritten."""
+        if not self.ledger_lines:
+            return None
+        text = self.ledger.read_text(encoding="utf-8").rstrip("\n") + "\n" if self.ledger.is_file() else LEDGER_HEAD
+        if not text.endswith("\n\n") and not text.rstrip("\n").split("\n")[-1].startswith("- "):
+            text += "\n"  # a file that holds only its heading and paragraph
+        return text + "\n".join(self.ledger_lines) + "\n"
+
 
 def check_path(path) -> str:
     if not isinstance(path, str) or not PATH_RE.match(path) or ".." in path or path.rsplit("/", 1)[-1] in RESERVED:
@@ -509,11 +658,18 @@ def check_path(path) -> str:
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="knowledge-apply.py", add_help=True)
-    ap.add_argument("--root", required=True)
+    ap.add_argument("--root")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--keep", action="store_true", help="keep the patch file after applying it")
+    ap.add_argument("--format", action="store_true", help="print the patch file's shape and exit")
     ap.add_argument("patch", nargs="?")
     a = ap.parse_args(argv[1:])
+    if a.format:
+        sys.stdout.write(FORMAT)
+        return 0
+    if not a.root:
+        print("--root <repo-root> is required", file=sys.stderr)
+        return 2
     root = Path(a.root).resolve()
     patch_file = Path(a.patch).resolve() if a.patch else root / ".lokf" / "patch.yaml"
     if not (root / ".lokf" / "knowledge" / "index.md").is_file():
@@ -572,9 +728,17 @@ def main(argv: list[str]) -> int:
     log_text = bundle.log_text()
     if log_text is not None:
         writes.append((bundle.knowledge / "log.md", log_text))
-    fb_text = bundle.feedback_text()
+    try:
+        fb_text = bundle.feedback_text()
+    except Refused as exc:
+        print(str(exc))
+        print("refused: 1 finding(s); nothing was written")
+        return 1
     if fb_text is not None:
         writes.append((bundle.feedback, fb_text))
+    ledger_text = bundle.ledger_text()
+    if ledger_text is not None:
+        writes.append((bundle.ledger, ledger_text))
     verb = "would write" if a.dry_run else "wrote"
     for file, text in writes:
         rel = file.relative_to(root)
@@ -590,6 +754,8 @@ def main(argv: list[str]) -> int:
         print(f"{verb} {rel}")
     if not a.dry_run and not a.keep:
         patch_file.unlink()
+    if bundle.demoted:
+        print(f"confirmed by a person, and edited {'by this patch' if a.dry_run else 'here'}: {', '.join(bundle.demoted)}; each reads as edited since that confirmation until the curator looks again")
     print(f"{'OK (dry run)' if a.dry_run else 'OK'} - {len(doc['ops'])} operation(s) by {by} at {bundle.now}; now run lokf validate --check-refs and knowledge-conventions.sh")
     return 0
 

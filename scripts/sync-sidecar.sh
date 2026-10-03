@@ -40,6 +40,7 @@ pairs=(
   "scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh"
   "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh"
   "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py"
+  "scripts/knowledge-report.sh:.lokf/scripts/knowledge-report.sh"
   "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh"
   "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
   "gitattributes:.lokf/.gitattributes"

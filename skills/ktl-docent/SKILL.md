@@ -2,7 +2,7 @@
 name: ktl-docent
 description: 'Answer questions about this repository from its `.lokf/` knowledge bundle first, saying how far each concept used has been trusted, and explore the repository directly only when the bundle has no answer, recording that miss, or a disagreement between bundle and source, in `.lokf/feedback.md` for the librarian and curator. Use when: someone asks what/who/which/how about the project, its services, data, policies, terms, or owners; before searching the repo directly; when an answer must say what it rests on. Not for building, fixing, or confirming concepts; that is ktl-librarian / ktl-curator. Keywords: OKF, Open Knowledge Format, LOKF, LinkML, knowledge graph, question answering, citations, provenance, WikiSkill, trust ladder.'
 license: Apache-2.0
-compatibility: 'Reads files only, from any shell; recording a gap runs one bash script (Git for Windows'' bash on Windows). The GitHub CLI (gh) logged in, or glab, lets a feedback entry name the asker; without one, entries are attributed to docent alone.'
+compatibility: 'Reads files, from any shell; a trust label and a recorded gap each run one bash script (Git for Windows'' bash on Windows). The GitHub CLI (gh) logged in, or glab, lets a feedback entry name the asker; without one, entries are attributed to docent alone.'
 ---
 
 # KTL Docent
@@ -31,7 +31,7 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 
 1. **Bundle first.** Read `.lokf/knowledge/index.md`: its header (title, description) and table of contents. Do not read the whole bundle. Pick one to three candidate concepts from the TOC bullets and descriptions, and open only those.
 2. **Widen along the graph, not by search.** If a concept half-answers, follow its typed relations (`dependsOn`, `isPartOf`, `hasPart`, `about`, `references`, `derivedFrom`, `relatedTo`, `definedBy`, `source`) to the next concept before grepping the repository.
-3. **Weigh what you found.** Derive each concept's trust label from its frontmatter (table below). Prefer *confirmed by a person*; treat *edited since a person last confirmed it* as unconfirmed, because the person confirmed an earlier text; use drafts and unchecked concepts, but say so; treat *retired* as history, not fact; treat *past its review date* as possibly stale.
+3. **Weigh what you found.** Take each concept's trust label from `bash .lokf/scripts/knowledge-report.sh labels <path>...`, which computes it from the frontmatter. Where a sidecar has no such script, derive it from the table below. Prefer *confirmed by a person*; treat *edited since a person last confirmed it* as unconfirmed, because the person confirmed an earlier text; use drafts and unchecked concepts, but say so; treat *retired* as history, not fact; treat *past its review date* as possibly stale.
 4. **Verify exact values at the source.** Versions, endpoints, numbers, paths: the bundle summarises, the concept's `resource` is authoritative. Open it before stating a precise value, and say that you did.
 5. **Answer with a footing.** Give the answer, then what it rests on: each concept (title, path) with its label, and any source you checked. Use plain words: the label names below, never RDF/IRI/tier. Where the curation policy asks for evidence first, the source comes before the answer: see [Evidence-first mode](#evidence-first-mode).
 6. **Fall back deliberately.** When no concept is relevant, or the only one is retired or stale and the question hinges on being current, explore the repository directly, and say the bundle did not cover it.
@@ -50,6 +50,8 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 | Edited since a person last confirmed it | `generated.at` is later than the latest `human:` `verified[].at` |
 | Past its review date | `stale_after` is on or before today |
 | Retired | `status: deprecated` |
+
+`knowledge-report.sh labels` applies this table and prints one line per concept, in the shape of the footer below, so two readers of one concept print one label. Quote its line. The table is what it applies, and what to apply by hand on a sidecar that predates the script.
 
 A bare `verified: { by, at }` counts as one event. Absent `status` means stable. Labels overlap (confirmed *and* past its review date is common). For *edited since a person last confirmed it*, compare the two times whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. Say that label first and give both dates.
 

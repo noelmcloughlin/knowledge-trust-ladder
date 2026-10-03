@@ -35,9 +35,7 @@ jobs:
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
       validate_outcome: ${{ steps.validate-lokf.outcome }}
-      drafts: ${{ steps.curator.outputs.drafts }}
-      questions: ${{ steps.curator.outputs.questions }}
-      human: ${{ steps.curator.outputs.human }}
+      retrieval: ${{ steps.retrieval.outputs.score }}
     steps:
       # Same audit-mode egress monitor step 5's other templates use; this job
       # installs packages, installs a skill everywhere but the repository
@@ -119,6 +117,10 @@ jobs:
       #      GITHUB_TOKEN is that credential (Copilot CLI: no key to keep, and
       #      the requests are billed to the repository owner's Copilot seat, or
       #      to the organisation); or put the key in the AGENT_API_KEY secret.
+      #   5. Optional: set KNOWLEDGE_RETRIEVAL to "true" to score, on each run
+      #      that changes the bundle, whether the index leads the agent to the
+      #      concept behind each question readers asked. It costs one more
+      #      agent call, and the pull request then carries the score.
       #
       # What runs is fixed to the reviewed, in-repo wrapper below, not an arbitrary
       # command string from a repo variable. So changing *what executes* goes
@@ -128,14 +130,17 @@ jobs:
       # admin-set config (not untrusted input). The wrapper parses it into a quoted
       # argv array and runs it directly (no eval, no re-expansion), and only here,
       # in this read-only job (contents: read, no persisted credentials). A post-run
-      # check fails if the agent writes outside .lokf/knowledge/. Contained by
-      # design, not arbitrary execution.
+      # check fails if the agent writes anything but .lokf/patch.yaml, which the
+      # wrapper then applies with knowledge-apply.sh. Contained by design, not
+      # arbitrary execution.
       - name: Run the librarian agent
         if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
         env:
           AGENT_CLI: ${{ vars.AGENT_CLI || secrets.AGENT_CLI }}
           AGENT_API_KEY: ${{ vars.AGENT_USE_JOB_TOKEN == 'true' && github.token || secrets.AGENT_API_KEY }}
           AGENT_API_KEY_ENV: ${{ vars.AGENT_API_KEY_ENV }}
+          KNOWLEDGE_RETRIEVAL: ${{ vars.KNOWLEDGE_RETRIEVAL }}
+          KNOWLEDGE_RETRIEVAL_OUT: ${{ runner.temp }}/retrieval.txt
         run: bash .lokf/scripts/knowledge-librarian.sh
 
       # The wrapper enforces this same boundary itself, immediately after the
@@ -150,9 +155,9 @@ jobs:
         if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
         run: |
           set -euo pipefail
-          out="$(git status --porcelain -- . ':!.lokf/knowledge' ':!knowledge_bundle' ':!.lokf/feedback.md' ':!.lokf/uv.lock')"
+          out="$(git status --porcelain -- . ':!.lokf/knowledge' ':!knowledge_bundle' ':!.lokf/feedback.md' ':!.lokf/questions.md' ':!.lokf/uv.lock')"
           if [ -n "$out" ]; then
-            echo "::error::The librarian agent touched files outside .lokf/knowledge/ and .lokf/feedback.md:"
+            echo "::error::The librarian run touched files outside .lokf/knowledge/, .lokf/feedback.md and .lokf/questions.md:"
             echo "$out"
             exit 1
           fi
@@ -181,29 +186,22 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Plain-language counts for the PR's "For the curator" section. Computed
-      # from frontmatter with grep: deterministic, no dependence on what the
-      # agent printed. The ktl-curator skill's own report is the authoritative
-      # version; this is the nudge that gets a busy person to run it.
-      - name: Summarise for the curator
-        id: curator
+      # The one number this job hands on about the bundle: the retrieval score
+      # the wrapper wrote when KNOWLEDGE_RETRIEVAL is on. Only its two integers
+      # go on. This job ran the agent, so `publish` takes nothing else from it
+      # and computes the rest of what the pull request says on its own checkout.
+      - name: Read the retrieval score
+        id: retrieval
         if: steps.diff.outputs.changed == 'true'
         run: |
           set -euo pipefail
-          count() {
-            grep -rlE "$1" --include='*.md' .lokf/knowledge 2>/dev/null \
-              | grep -vE '/(index|log)\.md$' \
-              | grep -c . || true
-          }
-          {
-            echo "drafts=$(count '^status: *draft')"
-            echo "questions=$(count '^## Open questions')"
-            echo "human=$(count '^ *-? *by: *human:')"
-          } >> "$GITHUB_OUTPUT"
+          score="$(grep -oE '[0-9]+ of [0-9]+' "$RUNNER_TEMP/retrieval.txt" 2>/dev/null | head -n 1 || true)"
+          echo "score=$score" >> "$GITHUB_OUTPUT"
 
       # Hand the proposed change to the privileged job as a patch (captures adds,
-      # edits and deletes under the bundle, plus ktl-docent's feedback.md). The
-      # agent never sees a write token; `publish` applies this on a clean checkout.
+      # edits and deletes under the bundle, plus ktl-docent's feedback.md and the
+      # ledger a handled entry moves into). The agent never sees a write token;
+      # `publish` applies this on a clean checkout.
       - name: Package the bundle change
         if: steps.diff.outputs.changed == 'true'
         run: |
@@ -214,8 +212,10 @@ jobs:
           # nothing, hence the guard.
           [ -e knowledge_bundle ] && git add -A -- knowledge_bundle || true
           # Reader feedback (written by ktl-docent, consumed by the librarian,
-          # which removes handled entries) - carry it so entries don't come back.
+          # whose pen moves each handled entry into the ledger) - carry both, so
+          # entries don't come back and the questions readers asked are kept.
           [ -e .lokf/feedback.md ] && git add -A -- .lokf/feedback.md || true
+          [ -e .lokf/questions.md ] && git add -A -- .lokf/questions.md || true
           git diff --cached --binary > "$RUNNER_TEMP/librarian.patch"
 
       - name: Upload the bundle patch
@@ -262,7 +262,7 @@ jobs:
           # concept named with a byte above 0x7f is listed C-quoted and
           # refused as outside the bundle.
           paths="$(git -c core.quotePath=false apply --numstat "$RUNNER_TEMP/librarian.patch" | cut -f3-)"
-          bad="$(printf '%s\n' "$paths" | grep -Ev '^(\.lokf/knowledge/|knowledge_bundle/|\.lokf/feedback\.md$)' || true)"
+          bad="$(printf '%s\n' "$paths" | grep -Ev '^(\.lokf/knowledge/|knowledge_bundle/|\.lokf/feedback\.md$|\.lokf/questions\.md$)' || true)"
           if [ -n "${bad//[$'\n\t ']/}" ]; then
             echo "::error::Patch touches paths outside the allowed bundle:"
             printf '%s\n' "$bad" | sed '/^$/d; s/^/  /'
@@ -281,6 +281,27 @@ jobs:
           # Apply the agent's proposed change onto a clean checkout; fails safe if
           # the default branch moved since `refresh` ran.
           git apply --index --whitespace=nowarn "$RUNNER_TEMP/librarian.patch"
+          # The line pattern above sees a block-style `by: human:` line and no
+          # other layout. This reads the events themselves, as the registrar's
+          # gate does, off the tree the patch leaves: an unattended change adds,
+          # changes and removes no person's event or note, and rewrites no text
+          # a person wrote. knowledge-apply.sh refuses each of those before it
+          # writes, in a job the agent shared; this job did not share it, and
+          # the script comes from this checkout, which the path check above
+          # keeps the patch out of.
+          if [ -f .lokf/scripts/knowledge-provenance.sh ] && ! bash .lokf/scripts/knowledge-provenance.sh --unattended; then
+            echo "::error::Patch touches a person's record - the scheduled librarian must never do that."
+            exit 1
+          fi
+          # What the pull request says about the record is computed here too,
+          # from the tree about to be pushed and not from anything `refresh`
+          # reported: the bundle's health line, and what this change does.
+          if [ -f .lokf/scripts/knowledge-report.sh ]; then
+            {
+              echo "health<<KTL_REPORT_END"; bash .lokf/scripts/knowledge-report.sh health; echo "KTL_REPORT_END"
+              echo "changes<<KTL_REPORT_END"; bash .lokf/scripts/knowledge-report.sh changes; echo "KTL_REPORT_END"
+            } >> "$GITHUB_OUTPUT"
+          fi
           branch="knowledge-librarian/$(date -u +%Y-%m-%d)-${GITHUB_RUN_ID}"
           git config user.name  "knowledge-librarian[bot]"
           git config user.email "knowledge-librarian[bot]@users.noreply.github.com"
@@ -295,12 +316,12 @@ jobs:
         env:
           BRANCH: ${{ steps.push.outputs.branch }}
           LOKF_OUTCOME: ${{ needs.refresh.outputs.validate_outcome }}
-          DRAFTS: ${{ needs.refresh.outputs.drafts }}
-          QUESTIONS: ${{ needs.refresh.outputs.questions }}
-          HUMAN: ${{ needs.refresh.outputs.human }}
+          RETRIEVAL: ${{ needs.refresh.outputs.retrieval }}
+          HEALTH: ${{ steps.push.outputs.health }}
+          CHANGES: ${{ steps.push.outputs.changes }}
         with:
           script: |
-            const { BRANCH, LOKF_OUTCOME, DRAFTS, QUESTIONS, HUMAN } = process.env;
+            const { BRANCH, LOKF_OUTCOME, RETRIEVAL, HEALTH, CHANGES } = process.env;
             // On `schedule` triggers the event payload is empty, so resolve the
             // default branch via the API rather than context.payload.repository.
             const { data: repo } = await github.rest.repos.get(context.repo);
@@ -309,6 +330,12 @@ jobs:
               o === 'success' ? 'pass'
               : o === 'failure' ? 'failed (review the run log)'
               : 'skipped';
+            // The score comes from the job that ran the agent, so only a line
+            // of exactly two integers is shown. The health line and the list
+            // of changes were computed by this job, by knowledge-report.sh.
+            const retrieval = /^[0-9]+ of [0-9]+$/.test(RETRIEVAL || '')
+              ? [`- Retrieval from the index: ${RETRIEVAL} reader questions reach their concept`]
+              : [];
             const body = [
               '## Scheduled knowledge-librarian refresh',
               '',
@@ -317,6 +344,10 @@ jobs:
               'approve - this PR must not be auto-merged.',
               '',
               `- LOKF validation (\`lokf validate --check-refs\`): ${check(LOKF_OUTCOME)}`,
+              ...retrieval,
+              '',
+              '### What this change does to the record',
+              ...(CHANGES ? CHANGES.split('\n') : ['Not computed: this sidecar has no `knowledge-report.sh`.']),
               '',
               '### Reviewer checklist',
               '- [ ] Claims trace to a source of truth.',
@@ -324,11 +355,11 @@ jobs:
               '- [ ] Validation findings above are acceptable or addressed.',
               '',
               '### For the curator',
-              `Across the whole bundle: ${DRAFTS} concept(s) are drafts (not yet confirmed by a person),`,
-              `${QUESTIONS} carry open questions the librarian could not settle, and ${HUMAN} have been`,
-              'confirmed by a person. The librarian derives facts; it never vouches for them. A few',
-              'minutes with the **ktl-curator** skill turns drafts into confirmed knowledge - run its',
-              'report for the full picture and a guided review.',
+              HEALTH || 'This sidecar has no `knowledge-report.sh` to compute the health line.',
+              '',
+              'The librarian derives facts; it never vouches for them. A few minutes with the',
+              '**ktl-curator** skill turns drafts into confirmed knowledge - run its report for the',
+              'full picture and a guided review.',
             ].join('\n');
             const { data: pr } = await github.rest.pulls.create({
               owner: context.repo.owner,

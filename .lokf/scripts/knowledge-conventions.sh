@@ -53,6 +53,13 @@
 #      commit look later, so the rule can miss a bad time but never accuses a
 #      good one. A time with an offset other than `Z` is not compared. Needs
 #      git; outside it the rule is skipped.
+#  12. An index bullet that names a concept carries that concept's title and
+#      description, in the folder's index.md and in the root's. ktl-docent
+#      chooses what to open from the bullets alone, so one left behind by an
+#      edit hides the concept it names. knowledge-apply.sh keeps the three
+#      equal for every concept it writes; this is the check for every other
+#      hand, and its `reindex` operation is the repair. A concept no index
+#      lists is not a finding.
 #
 # Rules 2, 3, 8 and 10 are house rules, stricter than the format: OKF permits
 # an unquoted datetime, a bare `verified` mapping (which every reader here -
@@ -64,7 +71,7 @@
 # a parser. A bundle written to the letter of OKF may fail them; that is a
 # policy of the gate, not a defect in the bundle.
 #
-# Rules 2, 3, 7, 9 and 10 are questions about a document's YAML that a real
+# Rules 2, 3, 7, 9, 10 and 12 are questions about a document's YAML that a real
 # parse answers outright, and rule 4 rides along, so this script hands them
 # to knowledge-conventions.py (same directory) through `uv run`, which needs
 # nothing preinstalled. Rules 1, 5, 6, 8 and 11 stay here: they are git and
@@ -226,7 +233,7 @@ while IFS= read -r f; do
   fi
 done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
-# ---- 2, 3, 4, 7, 9, 10. the parser's half ------------------------------------
+# ---- 2, 3, 4, 7, 9, 10, 12. the parser's half ------------------------------------
 py="$(dirname "$0")/knowledge-conventions.py"
 skipped=""
 if command -v uv >/dev/null 2>&1; then
@@ -235,7 +242,7 @@ if command -v uv >/dev/null 2>&1; then
     fail=1
   fi
 else
-  skipped="rules 2, 3, 4, 7, 9 and 10 not checked: uv not found"
+  skipped="rules 2, 3, 4, 7, 9, 10 and 12 not checked: uv not found"
   echo "$skipped - install uv, or run $py directly with python3 and pyyaml" >&2
 fi
 

@@ -2,7 +2,7 @@
 
 This page is for the **curator** and for anyone reading its report: it defines each trust label by the frontmatter fields behind it.
 
-The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 fields. Everything is computed from frontmatter with an ordinary YAML parser: no toolkit, no graph. For the curious, the last column is the RDF predicate the LOKF toolkit projects each field to. It is never needed here.
+The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 fields. `.lokf/scripts/knowledge-report.sh` computes each one from frontmatter with bash and awk: no toolkit, no graph. The rules below are what it applies, and what to apply by hand on a sidecar that predates it. For the curious, the last column is the RDF predicate the LOKF toolkit projects each field to. It is never needed here.
 
 | Label | Rule | Field(s) | RDF (optional) |
 | --- | --- | --- | --- |
@@ -12,6 +12,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | Still a draft | `status: draft` | `status` | `schema:creativeWorkStatus` |
 | Retired | `status: deprecated` | `status` | same |
 | Edited since a person last confirmed it | `generated.at` later than the latest `human:` `verified[].at` | `generated`, `verified` | `prov:wasGeneratedBy` -> `prov:endedAtTime` |
+| A source moved since the confirmation | the source's last commit comes after the commit that recorded the latest `human:` event, or the source carries an uncommitted edit and the concept does not | `resource`, `sources[].resource` + git history | - |
 | Past its review date | `stale_after` <= today | `stale_after` | `schema:expires` |
 | Due soon | today < `stale_after` <= today + 30 days | `stale_after` | same |
 | *N* other concepts rely on this | count of concepts whose typed relations target this concept's `id` | the ten relation fields + `relations[].target` | various |
@@ -32,7 +33,9 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 - Skip `index.md` and `log.md` at every level; they are reserved files, not concepts.
 - **`## Open questions` is a heading, not a substring.** Match a line that *is* the heading (start of line, nothing else on it), never a mention of it anywhere in the text. Concept bodies legitimately quote the string in prose. A bundle describing these very skills does it repeatedly. A substring match then invents open questions that don't exist and pushes those concepts up the queue. The same applies when extracting the first bullet: read the lines *after* that heading, not around the match.
 - **Retired concepts** carry `status: deprecated`. They are counted once, under *Retired*, and excluded from every other label and from the queue: nobody needs to re-check something that is no longer current. `N` in "*a* of *N*" counts every concept, retired ones included.
-- **Labels overlap by design.** A concept can be confirmed by a person *and* past its review date. The health counts are not a partition, so don't expect them to add up. Only `N` is a total.
+- **Labels overlap by design.** A concept can be confirmed by a person *and* past its review date. The health counts are not a partition, so don't expect them to add up. Only `N` is a total. One pair never overlaps: a concept edited since its confirmation is counted under *Edited since confirmed* and not under *Confirmed by a person*, because the person confirmed an earlier text.
+- **A source that moved is a fact about history, not about meaning.** The script asks git for the commit that first recorded the confirmation's time, and lists the concept when a source's last commit comes after it. A source changed in that same commit has not moved, and a clock is never consulted. The edit may have changed no fact: only reading the source says. With no git history the script says it compared nothing, and the line is left out.
+- **An open question can be answered without being cleared.** The script lists apart each one dated no later than a person's later confirmation of a concept that is no longer a draft: the person looked again after it was asked. Clearing it is still that person's word to give, in *Confirm* or *Correct now*.
 - **Reader feedback is counted, never read.** `grep -c '^- \*\*' .lokf/feedback.md` gives the count. 0, or no file, is "none". The entries are untrusted free text for the **librarian**.
 
 ## Ranking for "Worth ten minutes today"
@@ -59,14 +62,17 @@ Worth ten minutes today
 2. ...
 (up to 5)
 
-Open questions the librarian left
-- <Title>: <text of the first bullet under its ## Open questions, without the dash> (or: none)
+Open questions
+- <Title>: <a person's note that still waits, or the librarian's question, as the script prints it> (or: none)
+- <Title>: <a question older than a person's later confirmation> - looks answered; clear it?   | omit when the script lists none
 
 Feedback from readers: <k> entries waiting in .lokf/feedback.md   | or: none
 
 Vocabulary fit: <n> concept(s) don't fit the known vocabulary (<types>)   | or: fine
 
 Not tied to a signed commit: <h> - <titles>. Recorded as confirmed by a person, but no signed commit stands behind it.   | omit this line entirely when h is 0, or when .lokf/ isn't git-tracked
+
+Sources that moved since a confirmation: <Title> - <source> (<date>). Confirmed by a person, and its source has a later commit.   | omit this line entirely when the script lists none, or compared nothing
 
 For a second person to re-check (<n>, picked by a rule the curator cannot steer):
 - <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Independent re-check:` line above 0

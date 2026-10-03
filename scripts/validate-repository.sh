@@ -322,6 +322,7 @@ for pair in \
   "$templates/scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
   "$templates/scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh" \
   "$templates/scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py" \
+  "$templates/scripts/knowledge-report.sh:.lokf/scripts/knowledge-report.sh" \
   "$templates/m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh" \
   "$templates/m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md" \
   "$templates/gitattributes:.lokf/.gitattributes"; do
@@ -335,12 +336,12 @@ done
 
 say ""
 say "Exercising knowledge-conventions.sh..."
-# Six of the eleven rules run through `uv run`, so without uv the script reports
+# Seven of the twelve rules run through `uv run`, so without uv the script reports
 # none of them and every expectation below fails saying only that it "failed
 # to report" something - never why. Name the cause once, up front: a job that
 # runs this contract installs uv (validate.yml and publish.yml both do).
 if ! command -v uv >/dev/null 2>&1; then
-  err "uv is not on PATH, so rules 2, 3, 4, 7, 9 and 10 cannot run and every expectation for them below will fail - install uv, or add the setup-uv step to the workflow running this"
+  err "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10 and 12 cannot run and every expectation for them below will fail - install uv, or add the setup-uv step to the workflow running this"
 fi
 if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge >/dev/null); then
   ok "this repository's bundle keeps the conventions"
@@ -405,6 +406,13 @@ printf -- '---\ntype: Service\nverified: [unclosed\n---\n' > "$bad/k/x/y-bad.md"
 printf -- '---\n- just a list\n---\n' > "$bad/k/x/l-list.md"
 # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n' > "$bad/k/x/fence.md"
+# Rule 12: a bullet left behind by an edited description, in the folder's
+# index and in the root's; a bullet that still agrees, and a concept no index
+# lists, must both pass.
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/stale\ntitle: Stale\ndescription: what the concept says now.\n---\n' > "$bad/k/x/idx-stale.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fresh\ntitle: Fresh\ndescription: >-\n  folded, and\n  still equal.\n---\n' > "$bad/k/x/idx-fresh.md"
+printf -- '# K\n\n* [Stale](x/idx-stale.md) - what the concept said before.\n* [Fresh](x/idx-fresh.md) - folded, and still equal.\n' > "$bad/k/index.md"
+printf -- '# X\n\n* [Stale, renamed](idx-stale.md) - what the concept says now.\n* [Fresh](idx-fresh.md) - folded, and still equal.\n' > "$bad/k/x/index.md"
 findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
 rm -rf "$bad"
 for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp" "bare mapping" "open question not" "2 process:ktl-librarian events" "resource not found" "does not hold" \
@@ -412,14 +420,16 @@ for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp
             "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase" \
             "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on" \
             "r11-late.md: at \"2026-09-17T01:00:00Z\" is later than the commit that recorded it (2026-09-17T00:00:00Z)" "r11-future.md: at \"2999-01-01T00:00:00Z\" is in the future" \
-            "fl-flow.md: unquoted timestamp" "n-int.md: unquoted timestamp" "y-bad.md: frontmatter is not valid YAML" "l-list.md: frontmatter is not a mapping"; do
+            "fl-flow.md: unquoted timestamp" "n-int.md: unquoted timestamp" "y-bad.md: frontmatter is not valid YAML" "l-list.md: frontmatter is not a mapping" \
+            "idx-stale.md: its bullet in .*/k/index.md does not match" "idx-stale.md: its bullet in .*/k/x/index.md does not match"; do
   if grep -q "$want" <<<"$findings"; then
     ok "conventions script reports: $want"
   else
     err "conventions script failed to report '$want' on a bundle that breaks it"
   fi
 done
-for quiet in "x/e.md:whose revision holds its resource" "r11-ok.md:whose time is before the commit that recorded it" "fence.md:whose second librarian event is only an example in a code fence"; do
+for quiet in "x/e.md:whose revision holds its resource" "r11-ok.md:whose time is before the commit that recorded it" "fence.md:whose second librarian event is only an example in a code fence" \
+             "idx-fresh.md:whose index bullets carry its title and its folded description"; do
   if grep -q "${quiet%%:*}" <<<"$findings"; then
     err "conventions script reported ${quiet%%:*}, ${quiet#*:}"
   else
@@ -446,7 +456,7 @@ fi
 # Without uv the shell half still runs, and its OK line says what it skipped.
 if PATH=/usr/bin:/bin command -v uv >/dev/null 2>&1; then
   say "uv is on /usr/bin - the without-uv case cannot be staged here"
-elif out="$(PATH=/usr/bin:/bin bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>/dev/null)" && grep -q '^OK - .*(rules 2, 3, 4, 7, 9 and 10 not checked: uv not found)' <<<"$out"; then
+elif out="$(PATH=/usr/bin:/bin bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>/dev/null)" && grep -q '^OK - .*(rules 2, 3, 4, 7, 9, 10 and 12 not checked: uv not found)' <<<"$out"; then
   ok "conventions script without uv passes on its own rules and says which it skipped"
 else
   err "conventions script without uv did not say what it skipped: $out"
@@ -537,7 +547,7 @@ while IFS= read -r key; do
     err "prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
   fi
 done < <(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u)
-for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh knowledge-feedback.sh knowledge-apply.sh; do
+for s in knowledge-preflight.sh knowledge-conventions.sh knowledge-provenance.sh knowledge-feedback.sh knowledge-apply.sh knowledge-report.sh; do
   if out="$(sh "$templates/scripts/$s" x 2>&1)"; then
     err "$s run under sh did not stop: $out"
   elif grep -q '^run this with bash' <<<"$out"; then
@@ -715,6 +725,9 @@ rm -rf "$fb"
 #     signing subkey, or an SSH key; an unsigned one, one by an id with no
 #     key, one by another key, and one whose own key lands in the same range
 #     each fail, while another curator's key landing alongside does not; a
+#     removed confirmation needs its curator's signature as an added one
+#     does, whether the event is struck out or its concept deleted, and a
+#     person's generated record may give way only to another person's; a
 #     repository with no .lokf/curators/ is a stated skip. Needs gpg and
 #     ssh-keygen, which CI has.
 say ""
@@ -817,6 +830,21 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
     pv_git checkout -q side && pv_git merge -q --no-commit --no-ff "$trunk" >/dev/null && confirmed contract > "$k/evil.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'evil merge'
     expect_pv "HEAD~1" 1 'is unsigned' "read an event a merge adds that neither side held"
     pv_git checkout -q "$trunk"
+    # A person's record is never removed without that person: striking an
+    # event out, or deleting the concept that carries it, is a claim its
+    # curator signs. A person's generated record may give way to another
+    # person's, the curator's Correct, which that person signs as their own;
+    # it may not give way to a process's.
+    printf -- '---\ntype: Service\n---\n' > "$k/j.md" && pv_git commit -q --no-gpg-sign -am 'event struck out, unsigned'
+    expect_pv "HEAD~1" 1 'removes a confirmation by human:contract but is unsigned' "report a confirmation struck out by an unsigned commit"
+    printf -- '---\ntype: Service\n---\n' > "$k/b.md" && pv_git commit -q -S -am 'event struck out by its curator'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "pass a confirmation its own curator struck out and signed"
+    pv_git rm -q "$k/d.md" && pv_git commit -q --no-gpg-sign -m 'confirmed concept deleted, unsigned'
+    expect_pv "HEAD~1" 1 'removes a confirmation by human:contract but is unsigned' "report the deletion of a concept a person confirmed"
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: human:other, at: "2026-09-20T00:00:00Z" }\n---\n' > "$k/gen.md" && pv_git -c user.signingkey="$fpr2" commit -q -S -am 'corrected by another curator'
+    expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "let one person's generated record give way to another's, signed by the second"
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: process:ktl-librarian, at: "2026-09-21T00:00:00Z" }\n---\n' > "$k/gen.md" && pv_git commit -q --no-gpg-sign -am 'restamped by a process, unsigned'
+    expect_pv "HEAD~1" 1 'removes a confirmation by human:other but is unsigned' "report a person's generated record replaced by a process's"
     pv_git rm -rq .lokf/curators && pv_git commit -q -S -m nokeys
     expect_pv "HEAD~1" 0 '^skipped' "say so and pass with no .lokf/curators/"
   else
@@ -826,6 +854,48 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
 else
   say "gpg or ssh-keygen not installed locally - CI runs check 13; skipping here"
 fi
+
+# 13a. The same script's --unattended form, which needs no key and no forge:
+#      the scheduled librarian's change is one nobody stands behind, so it
+#      may add, change or remove no person's event in any YAML layout, add or
+#      remove no person's note, and rewrite no text a person wrote; a
+#      process's own open question under a person's text is none of those.
+say ""
+say "Exercising knowledge-provenance.sh --unattended..."
+ua="$(mktemp -d)"; uk="$ua/.lokf/knowledge/x"; mkdir -p "$uk"
+ua_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$ua"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${ua_git[@]}" init -q
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/confirmed\nverified:\n  - by: human:ada\n    at: "2026-09-17T00:00:00Z"\n---\n\n# Overview\n\nConfirmed text.\n' > "$uk/confirmed.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/authored\ngenerated:\n  by: human:ada\n  at: "2026-09-17T00:00:00Z"\n---\n\n# Overview\n\nWritten by a person.\n' > "$uk/authored.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/noted\n---\n\n# Overview\n\n## Open questions\n\n- 2026-09-17, human:ada: send this back\n' > "$uk/noted.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/plain\n---\n\n# Overview\n' > "$uk/plain.md"
+"${ua_git[@]}" add -A && "${ua_git[@]}" commit -q -m base
+expect_ua() {  # <exit status> <line expected> <what>, then the tree is put back
+  local out rc=0
+  out="$(cd "$ua" && bash "$repo_root/$templates/scripts/knowledge-provenance.sh" --unattended 2>&1)" || rc=$?
+  if [[ "$rc" -eq "$1" ]] && grep -q "$2" <<<"$out"; then ok "unattended gate: $3"; else err "unattended gate did not $3 (exit $rc): $out"; fi
+  "${ua_git[@]}" checkout -q -- . && "${ua_git[@]}" clean -qfd
+}
+printf '\nA paragraph the librarian adds.\n' >> "$uk/plain.md"; printf '\nAnother.\n' >> "$uk/confirmed.md"
+expect_ua 0 '^OK - the change against HEAD' "pass a change that edits a draft and a confirmed concept and touches no person's record"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/plain\nverified: [{ by: human:ada, at: "2026-09-18T00:00:00Z" }]\n---\n\n# Overview\n' > "$uk/plain.md"
+expect_ua 1 'x/plain: an unattended change adds or changes a confirmation by human:ada' "refuse a person's event added in a flow layout no line pattern sees"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/new\nverified:\n  - by: human:ada\n    at: "2026-09-18T00:00:00Z"\n---\n' > "$uk/new.md"
+expect_ua 1 'x/new: an unattended change adds or changes a confirmation by human:ada' "refuse a person's event in a concept not yet tracked"
+rm "$uk/confirmed.md"
+expect_ua 1 'x/confirmed: an unattended change removes a confirmation by human:ada' "refuse the deletion of a concept a person confirmed"
+sed -i 's/2026-09-17T00:00:00Z/2026-09-19T00:00:00Z/' "$uk/confirmed.md"
+expect_ua 1 'x/confirmed: an unattended change removes a confirmation by human:ada' "refuse a person's event re-dated"
+printf -- '- 2026-09-18, human:ada: looks right to me\n' >> "$uk/noted.md"
+expect_ua 1 'noted.md: an unattended change adds a note in a person' "refuse a note added in a person's name"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/noted\n---\n\n# Overview\n' > "$uk/noted.md"
+expect_ua 1 "noted.md: an unattended change removes a person's note" "refuse a person's note removed"
+sed -i 's/Written by a person./Rewritten by an agent./' "$uk/authored.md"
+expect_ua 1 'authored.md: a person wrote this text, and an unattended change rewrites it' "refuse a change to text a person wrote"
+printf '\n## Open questions\n\n- 2026-09-18, process:ktl-librarian: the source now says otherwise\n' >> "$uk/authored.md"
+expect_ua 0 '^OK - the change against HEAD' "pass a process's own question added under text a person wrote"
+rm -rf "$ua"
 
 # 14. CHANGELOG.md never carries two headings for one released version, and
 #     changelog-release.mjs's promote folds a second qualifying push between
@@ -1213,9 +1283,11 @@ expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- s
 #     the deletion of a concept a person confirmed are refused; a person's
 #     own verified event survives a patch; the index bullets and the log
 #     heading are kept in step; the lokf:related block survives a rewrite; a
-#     handled feedback entry is removed; a dry run writes nothing; a quoted
-#     timestamp keeps its double quotes; and reindex re-derives a bullet
-#     without touching the concept.
+#     handled feedback entry leaves feedback.md for the ledger, with the
+#     reader's question in a code span; a dry run writes nothing; a quoted
+#     timestamp keeps its double quotes; reindex re-derives a bullet without
+#     touching the concept; resolve withdraws the librarian's own question and
+#     never a person's note; and --format prints the block patch.md shows.
 say ""
 say "Exercising knowledge-apply.sh..."
 apply="$repo_root/$templates/scripts/knowledge-apply.sh"
@@ -1256,6 +1328,7 @@ ops:
     set: {description: a better draft.}
     log: "the text moved on"
     from_feedback: '- **Miss** - Q: "where?" Answered from here. - docent'
+    asked: "where is `it`?"
   - op: patch
     path: playbooks/confirmed.md
     edits:
@@ -1305,6 +1378,17 @@ if [[ "$(grep -m1 '^## ' "$kb/log.md")" == "## $kday" ]] && grep -q '^## 2020-01
   ok "the log gains today's heading above the old one, and the handled feedback entry and its emptied day are gone"
 else
   err "the log or the feedback file is not as expected: $(head -8 "$kb/log.md" | tr '\n' '|') // $(tr '\n' '|' < "$ka/.lokf/feedback.md")"
+fi
+# The entry is not lost: it leaves feedback.md for the ledger, as the day, the
+# kind and the concept, with the reader's question in a code span whose
+# backticks are gone, so none of it renders as Markdown. And the reader's
+# words stay out of log.md, which the curator opens.
+# shellcheck disable=SC2016 # the backticks are a Markdown code span, not a command
+if [[ "$(head -1 "$ka/.lokf/questions.md" 2>/dev/null)" == "# Questions readers asked" ]] \
+   && grep -qxF -- "- $kday Miss playbooks/draft.md: \`where is 'it'?\`" "$ka/.lokf/questions.md" && ! grep -q 'where is' "$kb/log.md"; then
+  ok "a handled feedback entry lands in the ledger with its question in a code span, and the question stays out of the log"
+else
+  err "the ledger is not as expected: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
 fi
 cat > "$kpatch" <<'EOF'
 ops:
@@ -1358,7 +1442,163 @@ if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qF '* [New](pla
 else
   err "reindex did not restore the bullet, or touched the concept or the log: $(grep -n 'New' "$kb/index.md" "$kb/log.md" | tr '\n' '|')"
 fi
+# resolve withdraws a question the librarian itself asked and takes the
+# heading with its last question; the person's text, their generated record
+# and the status stay as they were. A person's note is never the pen's to
+# clear, a concept carrying one is never the pen's to delete, and a second
+# ledger line joins the first rather than replacing it.
+printf '%s\n' 'ops:' '  - {op: resolve, path: playbooks/authored.md, target: "still right", log: "the source settles it"}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && ! grep -q 'Open questions' "$kb/playbooks/authored.md" && ! grep -q 'still right' "$kb/playbooks/authored.md" \
+   && grep -q '^status: draft$' "$kb/playbooks/authored.md" && grep -q '^  by: human:ada$' "$kb/playbooks/authored.md" && grep -q 'Written by a person.' "$kb/playbooks/authored.md" \
+   && grep -q '^\* \*\*Resolved\*\*: the source settles it' "$kb/log.md"; then
+  ok "resolve withdraws the librarian's own question and its heading, and leaves the text, generated and status alone"
+else
+  err "resolve did not withdraw the question cleanly: $(tr '\n' '|' < "$kb/playbooks/authored.md")"
+fi
+printf '\n## Open questions\n\n- 2026-03-03, human:ada: send this back\n' >> "$kb/playbooks/new.md"
+printf '%s\n' 'ops:' '  - {op: resolve, path: playbooks/new.md, target: "send this back", log: x}' > "$kpatch"
+apply_refuses "resolving a note a person left" "is not one process:ktl-librarian asked"
+printf '%s\n' 'ops:' '  - {op: delete, path: playbooks/new.md, log: gone}' > "$kpatch"
+apply_refuses "deleting a concept a person left a note on" "a person left a note on this concept"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, edits: [{append: {content: x}}], log: x, asked: "why?"}' > "$kpatch"
+apply_refuses "a reader's question with no feedback entry behind it" "asked goes with from_feedback"
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-04' '' '- **Disagreement** - it says one thing. - docent' > "$ka/.lokf/feedback.md"
+printf '%s\n' 'ops:' "  - {op: patch, path: playbooks/new.md, edits: [{append: {content: fixed}}], log: fixed, from_feedback: '- **Disagreement** - it says one thing. - docent'}" > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qxF -- "- $kday Disagreement playbooks/new.md" "$ka/.lokf/questions.md" \
+   && [[ "$(grep -c '^- ' "$ka/.lokf/questions.md")" == 2 ]] && [[ "$(grep -c '^# Questions readers asked$' "$ka/.lokf/questions.md")" == 1 ]]; then
+  ok "a second handled entry joins the ledger under the first, with no question where the entry held none"
+else
+  err "the ledger did not grow as expected: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
+fi
 rm -rf "$ka"
+# The format travels with the script that enforces it, so a host needs no
+# particular release of the skill to learn it; the skill's page shows the
+# same block, and the two are held equal here.
+# shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
+if diff <(bash "$apply" --format) <(awk '/^```yaml$/ {on = 1; next} /^```$/ {on = 0} on' skills/ktl-librarian/references/patch.md) >/dev/null; then
+  ok "knowledge-apply.sh --format prints the block ktl-librarian's references/patch.md shows"
+else
+  err "knowledge-apply.sh --format and the yaml block in skills/ktl-librarian/references/patch.md differ - one was edited without the other"
+fi
+
+# 20. knowledge-report.sh computes what the skills used to have a model work
+#     out, so it has to get the arithmetic right on every layout the format
+#     allows: the health line; each label, with a same-day edit told from its
+#     confirmation by the two times compared whole; a retired concept counted
+#     once; events written as a block list, a flow sequence or a bare
+#     mapping; an open question read only under its real heading. A source
+#     has moved when history, not a clock, puts its last commit after the one
+#     that recorded the event, or when it carries an uncommitted edit; one
+#     changed in the same commit has not. And no reader's words leave it,
+#     except inside the one prompt the retrieval test builds, whose reply it
+#     scores by program.
+say ""
+say "Exercising knowledge-report.sh..."
+report="$repo_root/$templates/scripts/knowledge-report.sh"
+kr="$(mktemp -d)"; kk="$kr/.lokf/knowledge"; mkdir -p "$kk/x" "$kr/src"
+kr_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$kr"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${kr_git[@]}" init -q
+printf 'a\n' > "$kr/src/a.md"; printf 'b\n' > "$kr/src/b.md"; printf 'c\n' > "$kr/src/c.md"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n\n# X\n\n* [Confirmed](x/confirmed.md) - a confirmed concept about widgets.\n* [Draft one](x/draft.md) - a draft about gadgets.\n' > "$kk/index.md"
+printf -- '---\ntype: Service\ntitle: Confirmed\nresource: src/a.md\nsources:\n- resource: src/a.md\n- resource: src/c.md\n- resource: https://example.invalid/never-fetched\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n  revision: "3f9c2a1b7e0d4c6a8f5e2d1c9b8a7f6e5d4c3b2a"\nstale_after: 2020-01-01\n---\n\n# Overview\n' > "$kk/x/confirmed.md"
+printf -- '---\ntype: Service\ntitle: Edited\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-02T14:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$kk/x/edited.md"
+printf -- '---\ntype: Service\ntitle: Auto\nresource: src/b.md\nverified: [{ by: process:ktl-librarian, at: "2026-01-03T00:00:00Z" }]\n---\n' > "$kk/x/auto.md"
+# shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
+printf -- '---\ntype: Service\ntitle: Draft one\nstatus: draft\n---\n\n# Overview\n\n```markdown\n## Open questions\n\n- 2026-01-01, human:example: only an example in a fence\n```\n\n## Open questions\n\n- 2026-01-05, human:ada: send it back, with these words for the curator\n' > "$kk/x/draft.md"
+printf -- '---\ntype: Service\ntitle: Retired\nstatus: deprecated\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n---\n' > "$kk/x/retired.md"
+printf -- "---\ntype: Service\ntitle: 'Ada''s answered concept'\nverified:\n  by: human:ada\n  at: \"2026-02-01T00:00:00Z\"\n---\n\n## Open questions\n\n- 2026-01-15, process:ktl-librarian: which is it?\n" > "$kk/x/answered.md"
+printf -- '---\ntype: Service\ntitle: Gone\nresource: src/missing.md\n---\n' > "$kk/x/gone.md"
+printf '# Change Log\n' > "$kk/log.md"
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-03' '' '- **Miss** - Q: "a reader wrote these waiting words" - docent' '- **Disagreement** - another. - docent' > "$kr/.lokf/feedback.md"
+# shellcheck disable=SC2016 # the backticks are Markdown code spans, not commands
+printf '%s\n' '# Questions readers asked' '' 'Written by knowledge-apply.sh.' '' '- 2026-01-10 Miss x/confirmed.md: `Where are widgets?`' '- 2026-01-11 Miss x/confirmed.md: `a reader wrote these ledger words`' '- 2026-01-12 Disagreement x/draft.md' > "$kr/.lokf/questions.md"
+"${kr_git[@]}" add -A && "${kr_git[@]}" commit -q -m 'sources and concepts in one commit'
+kr_run() { (cd "$kr" && bash "$report" "$@" 2>&1); }
+if out="$(kr_run worklist)" && grep -q '^Sources that moved since the concept was derived or last checked: 1$' <<<"$out" && grep -qF -- '- x/gone.md: src/missing.md (gone)' <<<"$out"; then
+  ok "report script: a source changed in the commit that recorded the event has not moved, and a missing one is named"
+else
+  err "report script misread a single-commit history: $out"
+fi
+printf 'a2\n' >> "$kr/src/a.md" && "${kr_git[@]}" commit -q -am 'a source moves on'
+printf 'b2\n' >> "$kr/src/b.md"
+want_health='Confirmed by a person: 2 of 7 · Checked by automation only: 1 · Nobody has checked: 2 · Drafts: 1 · Past review date: 1 · Edited since confirmed: 1 · Retired: 1'
+if out="$(kr_run health)" && [[ "$out" == "$want_health" ]]; then
+  ok "report script: the health line counts each label, an edited concept under its own, a retired one once"
+else
+  err "report script printed the wrong health line: $out"
+fi
+out="$(kr_run labels x/confirmed.md x/edited.md x/auto.md x/draft.md x/retired.md x/answered.md x/none.md)"
+for want in '- Confirmed (x/confirmed.md) - confirmed by a person, 2026-01-02, against 3f9c2a1, past its review date (2020-01-01)' \
+            '- Edited (x/edited.md) - edited since a person last confirmed it (confirmed 2026-01-02T10:00:00Z, edited 2026-01-02T14:00:00Z)' \
+            '- Auto (x/auto.md) - checked by automation only' \
+            '- Draft one (x/draft.md) - nobody has checked this yet, still a draft' \
+            '- Retired (x/retired.md) - retired' \
+            "- Ada's answered concept (x/answered.md) - confirmed by a person, 2026-02-01" \
+            '- x/none.md - no such concept in this bundle'; do
+  if grep -qxF -- "$want" <<<"$out"; then ok "report script labels: $want"; else err "report script did not print '$want': $out"; fi
+done
+out="$(kr_run worklist)"
+for want in '- x/confirmed.md: src/a.md (' '- x/auto.md: src/b.md (edited, not yet committed)' '- x/gone.md: src/missing.md (gone)' \
+            'Notes a person left that still wait: 1' '- x/draft.md (2026-01-05, human:ada)' \
+            "Open questions older than a person's later confirmation: 1" '- x/answered.md (2026-01-15, process:ktl-librarian; a person confirmed the concept 2026-02-01)' \
+            'Reader feedback waiting: 2' '- x/confirmed.md (2 times)'; do
+  if grep -qF -- "$want" <<<"$out"; then ok "report script work list: $want"; else err "report script's work list lacks '$want': $out"; fi
+done
+if grep -q 'src/c.md\|never-fetched\|example in a fence' <<<"$out"; then
+  err "report script's work list names an unmoved source, a URL or a fenced example: $out"
+else
+  ok "report script: an unmoved source, a URL and a question shown inside a code fence are left out"
+fi
+if grep -q 'waiting words\|ledger words\|these words for the curator' <<<"$out"; then
+  err "report script's work list carries a reader's or a person's words: $out"
+else
+  ok "report script: the work list is paths and dates, with nobody's words in it"
+fi
+if out="$(kr_run)" && grep -qF 'Confirmed by a person, and a source moved after that confirmation: 1' <<<"$out" && grep -qF -- '- x/confirmed.md: src/a.md (' <<<"$out" \
+   && grep -qF 'send it back, with these words for the curator' <<<"$out" && ! grep -q 'waiting words\|ledger words' <<<"$out"; then
+  ok "report script: the whole report names a confirmed concept whose source moved, shows a person's note, and no reader's words"
+else
+  err "report script's whole report is not as expected: $out"
+fi
+printf '\nmore\n' >> "$kk/x/confirmed.md"; printf -- '---\ntype: Service\ntitle: New\n---\n' > "$kk/x/new.md"
+if out="$(kr_run changes)" && grep -qxF 'Concepts added: 1 · changed: 1 · removed: 0' <<<"$out" && grep -qxF 'Confirmed by a person, and changed or removed here: 1' <<<"$out" && grep -qxF -- '- x/confirmed.md' <<<"$out"; then
+  ok "report script: changes counts the working tree against HEAD and names the confirmed concept it edits"
+else
+  err "report script's changes is not as expected: $out"
+fi
+if out="$(kr_run retrieval --prompt)" && grep -qxF 'x/confirmed.md | Confirmed | a confirmed concept about widgets.' <<<"$out" && grep -qxF 'Q1: Where are widgets?' <<<"$out" && grep -qxF 'Q2: a reader wrote these ledger words' <<<"$out"; then
+  ok "report script: the retrieval prompt holds the index's entries and the ledger's questions, numbered"
+else
+  err "report script's retrieval prompt is not as expected: $out"
+fi
+printf '%s\n' 'Here are my picks.' '**Q1:** x/draft.md, x/confirmed.md' 'Q2: x/draft.md, x/gone.md, x/auto.md, x/confirmed.md' > "$kr/reply.txt"
+if out="$(kr_run retrieval "$kr/reply.txt")" && grep -qxF 'Retrieval from the index: 1 of 2 reader questions reach their concept' <<<"$out" && grep -qxF -- '- question 2 did not reach x/confirmed.md' <<<"$out"; then
+  ok "report script: a reply is scored by program, on the first three paths it gives for each question"
+else
+  err "report script scored a reply wrongly: $out"
+fi
+rm -f "$kr/.lokf/questions.md"
+if out="$(kr_run retrieval --prompt)" && [[ -z "$out" ]]; then
+  ok "report script: with no question on file there is no prompt, so nothing is asked of an agent"
+else
+  err "report script built a retrieval prompt with no question on file: $out"
+fi
+nogit="$(mktemp -d)"; cp -R "$kr/.lokf" "$nogit/"
+if out="$(cd "$nogit" && bash "$report" worklist 2>&1)" && grep -q '^Sources: not compared here' <<<"$out" && grep -q '^Notes a person left that still wait: 1$' <<<"$out"; then
+  ok "report script: without git the work list says the sources were not compared, and still lists what frontmatter holds"
+else
+  err "report script misbehaves outside git: $out"
+fi
+rm -rf "$nogit/.lokf"
+if out="$(cd "$nogit" && bash "$report" health 2>&1)"; then
+  err "report script did not stop with no bundle: $out"
+elif grep -q '^no bundle at ' <<<"$out"; then
+  ok "report script: with no bundle it says so and exits non-zero"
+else
+  err "report script failed some other way with no bundle: $out"
+fi
+rm -rf "$kr" "$nogit"
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

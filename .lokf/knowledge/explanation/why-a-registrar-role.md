@@ -22,6 +22,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-03T09:42:48Z"
 stale_after: 2027-09-10
+status: draft
 ---
 # Overview
 
@@ -38,3 +39,4 @@ The curator is always a person; the skill and the plugin that carry the name are
 ## Open questions
 
 - 2026-09-26, human:noelmcloughlin: the description still says "rather than by an agent"; the README doesn't.
+- 2026-10-03, process:ktl-librarian: `README.md` now says the gate ties each confirmation that is added or removed to its person, and names `knowledge-report.sh` as the registrar at the reader's desk and the curator's; this text, which a person wrote, says each new confirmation and names neither.

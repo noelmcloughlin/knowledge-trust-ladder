@@ -6,8 +6,8 @@ Its three jobs, in the order a pull request meets them:
 
 | Job | Runs when | Checks |
 | --- | --- | --- |
-| `validate` | every pull request touching `.lokf/**`, weekly, on demand | the schema, every relation target, and the eleven conventions below |
-| `provenance` | pull requests only | that each new `human:` confirmation is backed by that person's approval or signature |
+| `validate` | every pull request touching `.lokf/**`, weekly, on demand | the schema, every relation target, and the twelve conventions below |
+| `provenance` | pull requests only | that each `human:` confirmation added, changed or removed is backed by that person's approval or signature |
 | `attestation` | only when `provenance` finds an unbacked confirmation, and only once enabled | that a listed reviewer clicked Approve |
 
 ## The `validate` job
@@ -17,13 +17,13 @@ It runs on every pull request touching `.lokf/**` (or the workflow itself), week
 It runs two checks:
 
 1. `uv run lokf validate --check-refs knowledge`: the schema check, and every typed relation must point at a concept in the bundle.
-2. `bash scripts/knowledge-conventions.sh knowledge`: the eleven conventions below, which the toolkit cannot see.
+2. `bash scripts/knowledge-conventions.sh knowledge`: the twelve conventions below, which the toolkit cannot see.
 
 It checks out the full history, because conventions 6 and 11 read each concept's commits.
 
-### The eleven conventions
+### The twelve conventions
 
-`lokf validate` reads a concept body as an opaque string and never opens `log.md`. `knowledge-conventions.sh` holds the bundle to eleven conventions the toolkit never sees. ktl-librarian's audit runs the same script before handing off.
+`lokf validate` reads a concept body as an opaque string and never opens `log.md`. `knowledge-conventions.sh` holds the bundle to twelve conventions the toolkit never sees. ktl-librarian's audit runs the same script before handing off.
 
 1. `log.md` has one bare `## YYYY-MM-DD` heading per day, newest first (OKF §9, and how the KTL Curator plugin finds today).
 2. Every `at:` is quoted.
@@ -36,12 +36,13 @@ It checks out the full history, because conventions 6 and 11 read each concept's
 9. Every concept has a closed frontmatter block, with no byte order mark in front of it.
 10. The fields the provenance gates read line by line (`id`, and `by`, `at` and `revision` on an event) are spelt with no tag, anchor, alias, quoted key, block scalar or value spanning lines. Each of those is valid YAML that `lokf validate` accepts and neither gate can see.
 11. No `at:` is later than the commit that first recorded it, or, before it is committed, than now. A time written ahead of the clock, such as local time labelled `Z` or a round placeholder, sorts after the edits and confirmations that really followed it. So a concept reads as edited since it was confirmed when it was not. A rename or a shallow clone can only make that commit look later, so the rule can miss a bad time but never flags a good one. Outside git it is skipped.
+12. An index bullet that names a concept carries that concept's title and description. That holds in the folder's `index.md` and in the root's. ktl-docent chooses what to open from the bullets alone, so one left behind by an edit hides the concept it names. `knowledge-apply.sh` keeps the three equal for every concept it writes, and its `reindex` operation repairs one any other hand left behind. A concept no index lists is not a finding.
 
-Each of the first five, and the eleventh, has been broken by an agent that had it in prose, which is why it is a script. The rest are there so that a pin, a duplicate, a file the script could not read or an event the gate could not fails loudly instead of passing unread.
+Each of the first five, and the eleventh, has been broken by an agent that had it in prose, which is why it is a script. The twelfth was three copies kept equal by attention alone. The rest are there so that a pin, a duplicate, a file the script could not read or an event the gate could not fails loudly instead of passing unread.
 
 Rules 2, 3, 8 and 10 are house rules, stricter than OKF, which permits an unquoted datetime, a bare `verified` mapping, any file name and any YAML. The gate asks more so that a datetime reaches every consumer as one string, and an event is always appended to a list. It also asks that a name never collides on a case-insensitive host, and that an event reads the same to a line reader as to a parser. Every reader here still accepts a bare mapping, as OKF requires, so that half of rule 3 is style, not safety.
 
-The script is two files. Rules 2, 3, 4, 7, 9 and 10 are questions about a document's YAML, which a real parser answers outright where grep and awk only approximate. `knowledge-conventions.sh` hands those to `knowledge-conventions.py` beside it, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
+The script is two files. Rules 2, 3, 4, 7, 9, 10 and 12 are questions about a document's YAML, which a real parser answers outright where grep and awk only approximate. `knowledge-conventions.sh` hands those to `knowledge-conventions.py` beside it, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
 
 ## The `provenance` job
 
@@ -49,16 +50,18 @@ It runs on pull requests only, and enforces the other half of the registrar's re
 
 A `human:<id>` verification claims that a named person checked a concept against its source. Nothing in the format proves one. Any writer that can edit the file can type the string, and `lokf validate` sees a perfectly valid event.
 
-So the job collects the actor of every `human:` event the pull request adds or changes under `.lokf/knowledge/`. An event is a `verified` entry, or the `generated` record the curator's Correct writes. The job reads each one whole from the frontmatter and keys it by the concept's `id`, so:
+So the job collects the actor of every `human:` event the pull request adds, changes or removes under `.lokf/knowledge/`. An event is a `verified` entry, or the `generated` record the curator's Correct writes. The job reads each one whole from the frontmatter and keys it by the concept's `id`, so:
 
 - a re-dated event counts;
 - a renamed concept does not;
 - an id quoted in an `## Open questions` note or a body code fence is not an event at all.
 
+A removal is a claim too, because a person's record is never removed without that person. A `verified` event that the base holds and the head does not needs its actor's backing, whether the event was struck out or its concept deleted. A person's `generated` record may give way to another person's, which is what the curator's Correct writes and which the second person backs as an addition. It may give way to nothing else without the first person.
+
 For each actor it then requires evidence from the forge, one of:
 
 - an **APPROVED** review from that account; or
-- a signature of *theirs* on the commit that introduced the event, when that person opened the pull request. GitHub will not let authors approve their own pull request, so the signature is the route for them.
+- a signature of *theirs* on each commit that introduced or removed the event, when that person opened the pull request. GitHub will not let authors approve their own pull request, so the signature is the route for them.
 
 Signature status comes from GitHub's API rather than `git log %G?`. A runner has neither a GPG keyring nor an allowed-signers file, so locally every signature reads as unverifiable however good it is. The API also names the account each commit is attributed to, which is what ties a signature to a person rather than merely proving one exists.
 
@@ -101,15 +104,17 @@ Mark `validate` and `provenance` as required in branch protection, and `attestat
 
 Add one line to the repository's pull request template for whoever approves a curation pull request: *I opened the sources named by every confirmation I am approving.* An approval then records a task done, not only a click. The gate can prove who approved, never what they read.
 
-One wrinkle follows. The librarian's own pull request never fires this workflow, because GitHub starts no `pull_request` workflow for a pull request opened with the default `GITHUB_TOKEN`. Its `publish` job runs its own two checks before opening it, so nothing unsafe merges. But a required `validate` or `provenance` sits at "Expected" until a human closes and reopens the pull request or pushes an empty commit. ktl-librarian's [scheduled-task.md](../../ktl-librarian/references/scheduled-task.md) has the detail.
+One wrinkle follows. The librarian's own pull request never fires this workflow, because GitHub starts no `pull_request` workflow for a pull request opened with the default `GITHUB_TOKEN`. Its `publish` job runs its own checks before opening it, the unattended form of the forge-free gate below among them, so nothing unsafe merges. But a required `validate` or `provenance` sits at "Expected" until a human closes and reopens the pull request or pushes an empty commit. ktl-librarian's [scheduled-task.md](../../ktl-librarian/references/scheduled-task.md) has the detail.
 
 ## The forge-free gate: `knowledge-provenance.sh`
 
 The `provenance` job needs GitHub. Where it cannot run (another forge, or none), and as a second opinion where it does, `knowledge-provenance.sh` does the signature half of its work with plain git, and gpg or ssh-keygen, on any CI or by hand. Step 5 lays it down at `.lokf/scripts/knowledge-provenance.sh`.
 
 - **Who may confirm.** The repository carries one public key per curator id under `.lokf/curators/`: `<id>.asc` for GPG (`gpg --armor --export <key>`, subkeys included) or `<id>.pub` for SSH (the `ssh-keygen` public key file, one key per line). That directory is the machine-readable list of who may confirm: a key not there is not a curator, whatever the forge says. The id is the forge login the curator skill records, so the two gates name the same person.
-- **What is checked.** For every commit in a range that adds or changes a `human:<id>` event under the bundle (a `verified` entry or the `generated` record), the script verifies the commit's signature against that id's key. Events are read whole from the frontmatter, against every parent of the commit, and keyed by the concept's `id`, exactly as the GitHub job reads them. So a re-dated `at`, a moved `revision` or a flow-style event counts, while a renamed concept, a merge that brings in another curator's confirmation, and an example in a body code fence do not. A GPG signature is checked with `git verify-commit` in a throwaway keyring, matched against every fingerprint the key file carries, since most keys sign with a subkey. An SSH signature is checked with `ssh-keygen -Y verify` (OpenSSH 8.2+) over the commit's own payload, with the id as the principal.
+- **What is checked.** For every commit in a range that adds, changes or removes a `human:<id>` event under the bundle (a `verified` entry or the `generated` record), the script verifies the commit's signature against that id's key. A removal is read as the GitHub job reads it: a `verified` event every parent held, or a person's `generated` record that no other person's replaces. Events are read whole from the frontmatter, against every parent of the commit, and keyed by the concept's `id`, exactly as the GitHub job reads them. So a re-dated `at`, a moved `revision` or a flow-style event counts, while a renamed concept, a merge that brings in another curator's confirmation, and an example in a body code fence do not. A GPG signature is checked with `git verify-commit` in a throwaway keyring, matched against every fingerprint the key file carries, since most keys sign with a subkey. An SSH signature is checked with `ssh-keygen -Y verify` (OpenSSH 8.2+) over the commit's own payload, with the id as the principal.
 - **What fails.** An unsigned commit. One signed by another key, by an expired or revoked key, or by a key of the other kind. An id with no key on file. And a range that adds, alters or removes an id's own key file and records a confirmation *by that id* together. So nobody registers a key and vouches with it in one step; a key lands in its own reviewed change first. Another curator's key landing beside a confirmation is fine. One finding per problem, and exit 1.
 - **What it proves** is what the GitHub job's signature route proves: that the holder of that key made that commit. Not that anyone read the source, and it says so.
 
-With no `.lokf/curators/` it says so and passes: a host that has not opted in loses nothing. The GitHub job runs it as an extra step when a key file exists. On another forge or a plain CI, run it with the pull or merge request's `<base> <head>`. The preflight's `curators` line says how many keys are on file and whether the current machine's signing key is among them. So a curator learns before a session, not at the gate, that theirs is missing. The request to send is in [prerequisites.md](prerequisites.md). [Signing your commits](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/signing-commits.md) says how to export a key for the directory.
+**The unattended form.** `knowledge-provenance.sh --unattended` needs no key and no forge. It compares the working tree with `HEAD` and reports every way a change nobody stands behind touches a person's record. That is a `human:` event added, changed or removed in any YAML layout, a person's note under `## Open questions` added or removed, and text a person wrote changed. `knowledge-apply.sh` refuses each of those before it writes. This is the same refusal read off the result, and the librarian workflow runs it twice: in the wrapper, and again in the `publish` job, on a checkout the agent never shared.
+
+With no `.lokf/curators/` the signed form says so and passes: a host that has not opted in loses nothing. The GitHub job runs it as an extra step when a key file exists. On another forge or a plain CI, run it with the pull or merge request's `<base> <head>`. The preflight's `curators` line says how many keys are on file and whether the current machine's signing key is among them. So a curator learns before a session, not at the gate, that theirs is missing. The request to send is in [prerequisites.md](prerequisites.md). [Signing your commits](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/signing-commits.md) says how to export a key for the directory.

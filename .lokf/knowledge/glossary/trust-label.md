@@ -8,7 +8,7 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-03T13:27:24Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
@@ -19,7 +19,7 @@ about:
 # Overview
 
 The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can
-act on. They are computed each time from `verified`, `status`, `generated.at`,
+act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at`,
 and `stale_after` (with `type` and the relation fields for vocabulary fit
 and reliance, and git history for confirmations no signed commit backs): any `verified` actor prefixed `human:` means confirmed by a
 person; events by non-human actors only mean checked by automation; no
@@ -30,5 +30,5 @@ shown beside that event's date but changes no label: its absence means
 unrecorded, never unchanged.
 
 They deliberately overlap - a concept can be confirmed *and* past its review
-date - so the counts in a curator report are not a partition. Nothing is
+date - so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is
 scored and nothing is stored: the spec keeps scores out of frontmatter.
