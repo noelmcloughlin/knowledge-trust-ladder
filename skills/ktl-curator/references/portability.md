@@ -13,7 +13,7 @@ The rule never changes: a `human:<id>` event carries an id that something outsid
 
 ## The signing-key route
 
-For a forge with no CLI at hand, or a forge this skill has no CLI for. It binds a claimed login to possession of a key, which is the same fact the gate relies on later.
+This route is for a forge with no CLI at hand, or a forge this skill has no CLI for. It binds a claimed login to possession of a key, which is the same fact the gate relies on later.
 
 1. Read the key the person signs with: `git config user.signingkey`. For GPG that is a key id, and the key that signs is often a *subkey* of it; `gpg --list-keys --with-subkey-fingerprints <id>` shows both. For SSH (`gpg.format ssh`) it is a public key file or its contents. No value with signing on means git picks the GPG key by the committer's email; `git log -1 --format=%GK` after a signed commit names the key it used.
 2. The person states their login. On its own that is a claim, as this skill says elsewhere.
@@ -24,11 +24,11 @@ The commit the person then makes is signed with that key, or fails: with `commit
 
 ## No forge
 
-A synced folder (SharePoint, OneDrive, Drive, Dropbox, iCloud) or a plain directory has no gate and no signatures. The platform's version history is the only record of who saved what, so the id is the account that history shows for this person, written as a handle, never an email (the bundle may be public): the local part of a work account, or the handle the platform displays. Say in the report, every time, that confirmations here rest on the platform's version history, not on a gate; and skip the *Not tied to a signed commit* check, saying so rather than reporting zero, as [trust-fields.md](trust-fields.md) already requires.
+A synced folder (SharePoint, OneDrive, Drive, Dropbox, iCloud) or a plain directory has no gate and no signatures. The platform's version history is the only record of who saved what, so the id is the account that history shows for this person. Write it as a handle, never an email, because the bundle may be public: the local part of a work account, or the handle the platform displays. Say in the report, every time, that confirmations here rest on the platform's version history, not on a gate. Skip the *Not tied to a signed commit* check, and say so rather than reporting zero, as [trust-fields.md](trust-fields.md) already requires.
 
 ## The forge-free gate
 
-Where no gate runs, or as a second opinion where one does, ktl-sidecar can lay down `knowledge-provenance.sh` beside the conventions script: it verifies the signature on every commit that adds or changes a `human:<id>` event (a `verified` entry, or the `generated` record Correct writes) against a public key the repository carries for that id under `.lokf/curators/` (GPG as `<id>.asc`, SSH as `<id>.pub`), with plain git and gpg or ssh-keygen, on any CI or by hand. Its rules, and the guard that stops a change adding an id's key and their confirmation together, are in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md). The preflight's `curators` line says whether this person's key is on file; when it is not, the Step 1 readiness line says so, and the request to send an administrator is on ktl-sidecar's [prerequisites.md](../../ktl-sidecar/references/prerequisites.md).
+Where no gate runs, or as a second opinion where one does, ktl-sidecar can lay down `knowledge-provenance.sh` beside the conventions script. It verifies the signature on every commit that adds or changes a `human:<id>` event (a `verified` entry, or the `generated` record Correct writes). It checks against a public key the repository carries for that id under `.lokf/curators/` (GPG as `<id>.asc`, SSH as `<id>.pub`), with plain git and gpg or ssh-keygen, on any CI or by hand. Its rules, and the guard that stops a change adding an id's key and their confirmation together, are in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md). The preflight's `curators` line says whether this person's key is on file; when it is not, the Step 1 readiness line says so, and the request to send an administrator is on ktl-sidecar's [prerequisites.md](../../ktl-sidecar/references/prerequisites.md).
 
 ## Shells and tools
 

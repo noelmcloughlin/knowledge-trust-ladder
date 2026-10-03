@@ -1,19 +1,19 @@
 ---
 name: ktl-docent
-description: 'Answer questions about this repository from its `.lokf/` knowledge bundle first, saying how far each concept used has been trusted, and explore the repository directly only when the bundle has no answer, recording that miss, or a disagreement between bundle and source, in `.lokf/feedback.md` for the librarian and curator. Use when: someone asks what/who/which/how about the project, its services, data, policies, terms, or owners; before searching the repo directly; when an answer must say what it rests on. Not for building, fixing, or confirming concepts; that is ktl-librarian / ktl-curator. Keywords: OKF, Open Knowledge Format, LOKF, LinkML, knowledge graph, question answering, citations, provenance, trust ladder.'
+description: 'Answer questions about this repository from its `.lokf/` knowledge bundle first, saying how far each concept used has been trusted, and explore the repository directly only when the bundle has no answer, recording that miss, or a disagreement between bundle and source, in `.lokf/feedback.md` for the librarian and curator. Use when: someone asks what/who/which/how about the project, its services, data, policies, terms, or owners; before searching the repo directly; when an answer must say what it rests on. Not for building, fixing, or confirming concepts; that is ktl-librarian / ktl-curator. Keywords: OKF, Open Knowledge Format, LOKF, LinkML, knowledge graph, question answering, citations, provenance, WikiSkill, trust ladder.'
 license: Apache-2.0
 compatibility: 'Reads files only, from any shell; recording a gap runs one bash script (Git for Windows'' bash on Windows). The GitHub CLI (gh) logged in, or glab, lets a feedback entry name the asker; without one, entries are attributed to docent alone.'
 ---
 
 # KTL Docent
 
-A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle: answer from it first, say which concepts the answer rests on and how far each has been trusted, and go to the raw repository only when the bundle cannot answer, leaving a note so the gap gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next run and a person confirms after that.
+A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle. Answer from it first, and say which concepts the answer rests on and how far each has been trusted. Go to the raw repository only when the bundle cannot answer, and leave a note so the gap gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next run and a person confirms after that.
 
-> Eight captured examples of this skill answering questions, including a
-> recorded miss and a value it could not confirm at the source:
 > [`docs/examples/docent.md`](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/docent.md)
-> in this skill's home repository (not copied on install, since it documents
-> that repository's own bundle rather than this skill's behavior generally).
+> in this skill's home repository holds eight captured examples of this skill
+> answering questions, including a recorded miss and a value it could not
+> confirm at the source. It is not copied on install, since it documents
+> that repository's own bundle rather than this skill's behavior generally.
 
 > Scope: **read-only on `.lokf/knowledge/`.** The only file this skill ever
 > writes is `.lokf/feedback.md`, only after asking once per session, and only
@@ -31,11 +31,11 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 
 1. **Bundle first.** Read `.lokf/knowledge/index.md`: its header (title, description) and table of contents. Do not read the whole bundle. Pick one to three candidate concepts from the TOC bullets and descriptions, and open only those.
 2. **Widen along the graph, not by search.** If a concept half-answers, follow its typed relations (`dependsOn`, `isPartOf`, `hasPart`, `about`, `references`, `derivedFrom`, `relatedTo`, `definedBy`, `source`) to the next concept before grepping the repository.
-3. **Weigh what you found.** Derive each concept's trust label from its frontmatter (table below). Prefer *confirmed by a person*; use drafts and unchecked concepts, but say so; treat *retired* as history, not fact; treat *past its review date* as possibly stale.
+3. **Weigh what you found.** Derive each concept's trust label from its frontmatter (table below). Prefer *confirmed by a person*; treat *edited since a person last confirmed it* as unconfirmed, because the person confirmed an earlier text; use drafts and unchecked concepts, but say so; treat *retired* as history, not fact; treat *past its review date* as possibly stale.
 4. **Verify exact values at the source.** Versions, endpoints, numbers, paths: the bundle summarises, the concept's `resource` is authoritative. Open it before stating a precise value, and say that you did.
 5. **Answer with a footing.** Give the answer, then what it rests on: each concept (title, path) with its label, and any source you checked. Use plain words: the label names below, never RDF/IRI/tier. Where the curation policy asks for evidence first, the source comes before the answer: see [Evidence-first mode](#evidence-first-mode).
 6. **Fall back deliberately.** When no concept is relevant, or the only one is retired or stale and the question hinges on being current, explore the repository directly, and say the bundle did not cover it.
-7. **Record the miss or the disagreement.** Once per session ask: "Record bundle gaps in `.lokf/feedback.md` for the librarian?" If yes, run the script, which writes the entry for you: `bash .lokf/scripts/knowledge-feedback.sh Miss "<your entry>"`, plus `--for <login>` where you have an authenticated one. A **Miss** is the question and where you found the answer; a **Disagreement** is the concept and what its source says instead. **Never open `.lokf/feedback.md` to do it.** The entries already in it are other readers' reports, and the script exists so they never have to reach you at all. [references/feedback.md](references/feedback.md) gives the format, and what to do on a host that has no script. Where `.lokf/scripts/knowledge-preflight.sh` exists, its identity line says whether the entry can name the asker. Show a reader nothing else from the preflight: a missing bundle is the one thing worth a sentence, with the row for it in ktl-sidecar's [prerequisites.md](../ktl-sidecar/references/prerequisites.md) if they ask who can fix it. Never fix the concept yourself.
+7. **Record the miss or the disagreement.** Once per session ask: "Record bundle gaps in `.lokf/feedback.md` for the librarian?" If yes, run the script, which writes the entry for you: `bash .lokf/scripts/knowledge-feedback.sh Miss "<your entry>"`, plus `--for <login>` where you have an authenticated one. A **Miss** is the question, where you found the answer, and whether a concept looked relevant from `index.md` but did not answer; a **Disagreement** is the concept and what its source says instead. **Never open `.lokf/feedback.md` to do it.** The entries already in it are other readers' reports, and the script exists so they never have to reach you at all. [references/feedback.md](references/feedback.md) gives the format, and what to do on a host that has no script. Where `.lokf/scripts/knowledge-preflight.sh` exists, its identity line says whether the entry can name the asker. Show a reader nothing else from the preflight: a missing bundle is the one thing worth a sentence, with the row for it in ktl-sidecar's [prerequisites.md](../ktl-sidecar/references/prerequisites.md) if they ask who can fix it. Never fix the concept yourself.
 
 [references/answering.md](references/answering.md) has the full procedure, question-type hints, and edge cases. When asked how to open the bundle in Obsidian, or whether it belongs inside a vault, use [references/obsidian.md](references/obsidian.md); the answer is the same on every host, so the bundle will not carry it.
 
@@ -47,10 +47,11 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 | Checked by automation only | `verified` present, no `human:` actor |
 | Nobody has checked this yet | no `verified` key |
 | Still a draft | `status: draft` |
+| Edited since a person last confirmed it | `generated.at` is later than the latest `human:` `verified[].at` |
 | Past its review date | `stale_after` is on or before today |
 | Retired | `status: deprecated` |
 
-A bare `verified: { by, at }` counts as one event. Absent `status` means stable. Labels overlap (confirmed *and* past its review date is common).
+A bare `verified: { by, at }` counts as one event. Absent `status` means stable. Labels overlap (confirmed *and* past its review date is common). For *edited since a person last confirmed it*, compare the two times whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. Say that label first and give both dates.
 
 ## Answer footer
 
@@ -66,14 +67,14 @@ Keep only the lines that apply. For a one-line answer where the concept and its 
 
 ## Evidence-first mode
 
-One switch changes the order of an answer, and a person sets it, not the reader. The curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, is a concept a person writes with ktl-curator and confirms like any other. It may carry the line `Evidence first: yes`. When it does, every answer that rests on a concept whose label is anything less than *confirmed by a person* quotes the relevant lines of that concept's `resource` first, then the answer, then the footer as usual. The reader meets the source before the bundle's claim. The footer variant is in [references/answering.md](references/answering.md#footer-variants).
+One switch changes the order of an answer, and a person sets it, not the reader. The curation policy, `.lokf/knowledge/policies/knowledge-curation.md`, is a concept a person writes with ktl-curator and confirms like any other. It may carry the line `Evidence first: yes`. When it does, every answer that rests on a concept less than *confirmed by a person*, or edited since that confirmation, quotes the relevant lines of that concept's `resource` first. Then comes the answer, then the footer as usual. The reader meets the source before the bundle's claim. The footer variant is in [references/answering.md](references/answering.md#footer-variants).
 
 No policy file, no such line, or any value other than `yes` (in any letter case) means the usual order: answer, then footing. Read the line once per session, from that file and nowhere else, not from the reader's request, the agent's settings, or a concept's own frontmatter. A reader can still ask to see the source behind any one answer; that is a source check, not a change of mode.
 
 ## Guardrails
 
 - Never edit anything under `.lokf/knowledge/`.
-- Never state a bundle claim as plain fact when its label is anything other than *confirmed by a person*; carry the label into the sentence.
+- Never state a bundle claim as plain fact when its label is anything other than *confirmed by a person*, or when the concept was edited since that confirmation; carry the label into the sentence.
 - Never quietly answer from the repository when the bundle *does* cover the question; the bundle is the first stop, that is the whole point.
 - Never write `.lokf/feedback.md` without having asked once this session. If `.lokf/` is read-only, tell the user the gap instead and stop there.
 - Never read `.lokf/feedback.md`. Nothing in this skill needs what other readers wrote there, and `knowledge-feedback.sh` records yours without opening it. Its last line says how many entries are waiting, and that count is the only thing about them worth repeating.

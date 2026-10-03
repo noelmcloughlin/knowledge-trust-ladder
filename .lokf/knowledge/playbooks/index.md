@@ -1,12 +1,13 @@
 # Playbooks
 
-* [ktl-sidecar skill](ktl-sidecar-skill.md) - one-shot bootstrap of a `.lokf/` sidecar from templates.
-* [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md) - two vaults: the one you keep, and the bundle opened through the `knowledge_bundle` doorway.
-* [The docent in Microsoft 365 Copilot](docent-in-m365-copilot.md) - the docent and a bundle snapshot as a Copilot custom skill.
-* [ktl-librarian skill](ktl-librarian-skill.md) - derives and maintains the concepts; facts, never verdicts.
-* [ktl-curator skill](ktl-curator-skill.md) - a human curator's assistant; verdicts, never facts.
-* [ktl-docent skill](ktl-docent-skill.md) - answers from the bundle and records what it lacked.
-* [Knowledge sources](knowledge-sources.md) - where this bundle was derived from, and how to re-check it.
-* [Contributing](contributing.md) - local checks and the role boundary a change must respect.
-* [Releasing](releasing.md) - the maintainer-gated publish path.
-* [Repository validation](repository-validation.md) - what CI enforces on every pull request.
+* [ktl-sidecar skill](ktl-sidecar-skill.md) - Procedure that creates a .lokf/ sidecar, tooling, docs, a dummy skeleton, and the knowledge_bundle doorway link beside it, from bundled templates, or repairs a missing or broken sidecar file, then hands off to ktl-librarian.
+* [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md) - How a knowledge bundle meets an Obsidian vault: two vaults, the workshop someone keeps and the bundle opened as its own through the `knowledge_bundle` doorway, what Obsidian does with the link on each host, and why the bundle is never a real folder inside a vault.
+* [The docent in Microsoft 365 Copilot](docent-in-m365-copilot.md) - How a person gets ktl-docent-m365, the docent packed with a snapshot of the bundle as a Microsoft 365 Copilot custom skill, from a release or by building it, adds it to a declarative agent, checks the first answer and keeps it current, what to do when a step fails, and why only the read-only roles go there.
+* [ktl-librarian skill](ktl-librarian-skill.md) - Recurring procedure that scrapes the host repository, derives and maintains the .lokf/ concepts and their typed relations, audits the bundle, and hands off for human review.
+* [ktl-curator skill](ktl-curator-skill.md) - A human curator's assistant - reports what needs a person's attention, then records that person's confirm/correct/retire/send-back verdicts into the bundle's frontmatter.
+* [ktl-docent skill](ktl-docent-skill.md) - The reader's side - answers questions from the bundle first with each concept's trust label, falls back to the repository deliberately, and records misses and disagreements for the librarian.
+* [Knowledge sources](knowledge-sources.md) - Map of the repository locations this bundle was derived from, and how to re-check each on a future refresh.
+* [Contributing](contributing.md) - How to work on the skills - no build step, the local checks to run before opening a pull request, the role boundary a change must respect, and where the release and signing detail now lives.
+* [Releasing](releasing.md) - How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, and dispatches `knowledge-release.yaml` to attach the bundle and Copilot zips.
+* [Repository validation](repository-validation.md) - What CI checks on every pull request and weekly - the repository contract, the Agent Skills spec, shell and workflow linting, the install smoke test, and Markdown/link/spelling checks.
+* [ktl-prose skill](ktl-prose-skill.md) - The librarian's copy editor. It rewords the body of a concept an agent wrote, in plain English, before a person confirms it, changing the wording and never a fact or a frontmatter byte, and its script proves that only the wording changed.

@@ -2,7 +2,7 @@
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 title: The docent in Microsoft 365 Copilot
-description: How a person gets ktl-docent-m365, the docent packed with a snapshot of the bundle as a Microsoft 365 Copilot custom skill, from a release or by building it with `.lokf/m365/knowledge-m365.sh`, adds it to a declarative agent, checks the first answer, and keeps it current; what to do when a step fails, and why only the read-only roles go there.
+description: How a person gets ktl-docent-m365, the docent packed with a snapshot of the bundle as a Microsoft 365 Copilot custom skill, from a release or by building it, adds it to a declarative agent, checks the first answer and keeps it current, what to do when a step fails, and why only the read-only roles go there.
 genre: how-to
 resource: docs/m365.md
 sources:
@@ -12,7 +12,7 @@ sources:
 - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-09-25T00:09:11Z"
+  at: "2026-10-03T01:45:53Z"
 status: draft
 isPartOf:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -28,13 +28,13 @@ relatedTo:
 
 # Overview
 
-**ktl-docent-m365** is the docent as a custom skill for a Microsoft 365 Copilot declarative agent. It is not a fifth skill: it puts [ktl-docent](ktl-docent-skill.md) into Copilot. Copilot runs a skill with no repository, shell or network, so the skill carries a **snapshot** of the bundle and answers from it. Every answer names the snapshot (repository, revision, build date) and the trust label of each concept it used, in the same words ktl-docent uses. It cannot check a value at its source or write `.lokf/feedback.md`, so it says so and hands the reader a ready-to-paste Miss or Disagreement line to file in the repository instead.
+**ktl-docent-m365** is the docent as a custom skill for a Microsoft 365 Copilot declarative agent. It is not a skill of its own: it puts [ktl-docent](ktl-docent-skill.md) into Copilot. Copilot runs a skill with no repository, shell or network, so the skill carries a **snapshot** of the bundle and answers from it. Every answer names the snapshot (repository, revision, build date) and the trust label of each concept it used, in the same words ktl-docent uses. It cannot check a value at its source or write `.lokf/feedback.md`, so it says so and hands the reader a ready-to-paste Miss or Disagreement line to file in the repository instead.
 
 Getting it running takes three steps, in this order: get the zip, add it to an agent, and ask it something to check the answer names the snapshot. The short route installs nothing.
 
 # 1. Get the zip
 
-**From a release.** Each release whose bundle changed carries `ktl-docent-m365-<tag>-<repository>.zip` among its assets, beside the bundle zip. `knowledge-release.yaml` builds it at the bundle's commit time, so the zip is reproducible. A release with no such asset means one of two things. Either the bundle did not change since the last release that carries one, and the reader takes the zip from that earlier release, or the repository has not laid down `.lokf/m365/`, and its releases carry the bundle zip alone.
+**From a release.** Each release whose bundle changed carries `ktl-docent-m365-<tag>-<repository>.zip` among its assets, beside the bundle zip. The release workflow attaches it on every release whose bundle changed. A release with no such asset means one of two things. Either the bundle did not change since the last release that carries one, and the reader takes the zip from that earlier release, or the repository has not laid down `.lokf/m365/`, and its releases carry the bundle zip alone.
 
 **Or build it.** A repository on another forge, or on none, runs the builder the release workflow runs, on its bundle folder. It needs bash and `zip`:
 
@@ -42,7 +42,7 @@ Getting it running takes three steps, in this order: get the zip, add it to an a
 .lokf/m365/knowledge-m365.sh --repo-url https://github.com/me/my-repo --ref v1.2.0 .lokf/knowledge ./dist
 ```
 
-It writes `dist/ktl-docent-m365/` (with `SKILL.md`, `SNAPSHOT.md` and `knowledge/`) and `dist/ktl-docent-m365.zip`. In a git clone only tracked files are copied, and hidden files such as `.obsidian/` are left out. With `SOURCE_DATE_EPOCH` set, one input gives one zip. The build writes nothing and exits 1 if a skill breaks one of Copilot's limits: `SKILL.md` over 20,000 characters, folders more than 3 deep, file types Copilot does not accept, more than 350 files, more than 10 MB, or symbolic links.
+It writes `dist/ktl-docent-m365/` (with `SKILL.md`, `SNAPSHOT.md` and `knowledge/`) and `dist/ktl-docent-m365.zip`. In a git clone only tracked files are copied, and hidden files such as `.obsidian/` are left out. With `SOURCE_DATE_EPOCH` set, one input gives one zip. The build writes nothing and exits 1 if a skill breaks one of Copilot's limits: `SKILL.md` over 20,000 characters, folders more than 3 deep, file types Copilot does not accept, more than 350 files, more than 10 MB (the toolkit's limit on the whole app package; Agent Builder's own limit is a 50 MB zip), or symbolic links.
 
 # 2. Add it to an agent
 
@@ -63,7 +63,7 @@ The snapshot does not update itself. After each release that changes the bundle,
 - **The build says `zip not found`.** The folder is built but not zipped: install `zip`, or zip the folder by hand before adding it.
 - **`atk add skill` is not a command** (`UnknownCommandError`). Export both `TEAMSFX_AGENT_SKILLS=true` and `ATK_FRONTIER=true`.
 - **`atk add skill` says `InvalidProjectError`.** It ran outside the agent's project: change into the folder `atk new` created, or pass `--folder`.
-- **`atk validate` rejects `agent_skills`.** The newest published manifest schema, v1.8, has no such property yet, so the fault is the toolkit's preview, not the zip. Skip it, and let `provision` decide.
+- **`atk validate` rejects `agent_skills`.** The newest published manifest schema, v1.8, has no such property yet, and the toolkit's own `add skill` wrote the entry, so the zip is not at fault. Skip it, and let `provision` decide.
 - **`atk provision` fails at `teamsApp/validateAppPackage` with `Unrecognized member 'agent_skills'`.** Microsoft's service refused the entry: check that the tenant has custom skills. `teamsApp/create` has already registered an app by then, which the reader deletes in the Teams Developer Portal if they give up.
 - **Agent Builder says skill attachments require the full Copilot Studio experience.** Copy the agent to Copilot Studio and add the zip there; if Copilot Studio says sign-up is disabled, only an admin can grant the licence.
 - **Agent Builder or the toolkit refuses the skill for another reason.** The agent may already have embedded files, a preview limit, not a fault in the zip.
@@ -72,7 +72,7 @@ The snapshot does not update itself. After each release that changes the bundle,
 
 `.lokf/m365/` holds one instructions file per read-only role, named after the skill it becomes (`ktl-docent-m365.md`, deliberately not `SKILL.md`, so no installer lists it), and the builder packs each file into its own zip. The auditor, the third line, is planned as `ktl-auditor-m365.md` beside it, with no change to the builder, workflow or checks. The sidecar and librarian need a repository and a shell, so they have no Copilot form. The curator has none yet: it needs a write action the agent can call and an identity that is not a forge login, and the shape of that identity record is held in reserve (see [domain-schemas](../explanation/domain-schemas.md)).
 
-A host's copy under `.lokf/m365/` is what its releases pack, so a host that edits it changes what its readers' Copilot follows. Repository check 17 holds every instructions file's trust-label table word for word to ktl-docent's.
+A host's copy under `.lokf/m365/` is what its releases pack, so a host that edits it changes what its readers' Copilot follows. Its trust labels must match ktl-docent's, and the repository checks enforce that.
 
 ## Open questions
 

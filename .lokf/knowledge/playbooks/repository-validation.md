@@ -7,19 +7,23 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: "2026-10-03T01:25:58Z"
 status: draft
 references:
-  - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
-  - https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
+- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
+- https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
+sources:
+- resource: .github/workflows/validate.yml
+- resource: scripts/validate-repository.sh
+- resource: CHANGELOG.md
 ---
 
 # Overview
 
 `validate.yml` runs five jobs on every pull request, every push to `main`,
 weekly, and on demand. `validate-skills` runs `scripts/validate-repository.sh` -
-seventeen numbered checks, several with lettered sub-checks: exactly four skill directories with a case-correct
+nineteen numbered checks, several with lettered sub-checks: exactly five skill directories with a case-correct
 `SKILL.md` in each, frontmatter `name` matching its directory and (check 3b,
 added 2026-09-17) a `compatibility` field of at most 500 characters naming
 what the skill needs, (check 3c, added 2026-09-19) each skill's `description` ending in a `Keywords:` list within the spec's 1024 characters - catalogs have no tag field, so it is the only tag they read - with `.claude-plugin/plugin.json` and `marketplace.json` carrying one identical keyword list, no duplicate `SKILL.md`, every relative Markdown link
@@ -33,7 +37,7 @@ that the list of them is complete - `CONTRIBUTING.md` and `SECURITY.md` each
 staying under their own word budget (1000 and 900, check 10, extended
 2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`),
 (check 11, added 2026-09-14) this repository's copies of the three knowledge workflows (the release workflow since 2026-09-24),
-the six sidecar scripts, the two `.lokf/m365/` files (since 2026-09-24) and `.lokf/.gitattributes` staying byte-identical to
+the eight sidecar scripts, the two `.lokf/m365/` files (since 2026-09-24) and `.lokf/.gitattributes` staying byte-identical to
 their templates - since 2026-09-24 apart from one value, the librarian
 workflow's `TRUST_LADDER_SKILLS_REF`, which the release commit moves in the
 template only - and failing up front, naming the cause, when `uv` is
@@ -57,7 +61,7 @@ bundle, counting a linked bundle, reading `commit.gpgsign = yes` as signing
 on, warning when the conventions script's Python half is missing beside it,
 warning when `knowledge-feedback.sh` is missing from a sidecar's `scripts/`
 and falling silent once it is there, stopping on one line under `sh` (as the
-other three scripts do), and every
+other four scripts do), and every
 line it can print as missing or a warning having a row on
 `ktl-sidecar/references/prerequisites.md`; (check 12a, added 2026-09-23)
 `knowledge-feedback.sh` refusing to write where `.lokf/` has no `knowledge/`,
@@ -104,18 +108,26 @@ clone: a rename leaves a real version and a real path that are not in the same
 tag, which is how the pin sat at `v0.21.0` after the `lokf-*` skills became
 `ktl-*`; and (check 16, added 2026-09-19) the repository's old name staying
 out of every file but the ones that record history - `CHANGELOG.md`, the
-bundle's `log.md`, and one "formerly" line in `docs/install.md` - and
+bundle's `log.md`, `rename-plan.md`, the contract script itself, and one
+"formerly" line in `docs/install.md` - and
 (check 16a, added 2026-09-23) the skills' and plugins' old `lokf-` names
-staying out of every file but `CHANGELOG.md`; and (check 17, added
+staying out of every file but `CHANGELOG.md` and the contract script; (check 17, added
 2026-09-24) the Microsoft 365 Copilot skills: no `SKILL.md` anywhere under
 the sidecar's `templates/`, so no installer lists an instructions file as a
 skill, every instructions file under `templates/m365/` carrying ktl-docent's
 trust-label table word for word, `knowledge-m365.sh` building
 `ktl-docent-m365` from this repository's own bundle within Copilot's limits,
 and, where `zip` is installed, the same zip bytes under another time zone
-and umask, as a release asset must. The job sets up `uv` and
-confirms `gh skill` is available before the contract runs, and then
-`gh skill publish --dry-run` runs.
+and umask, as a release asset must; (check 18) `ktl-prose`'s
+`prose-check.py` exercised as the conventions script is at check 11:
+reporting a dash, a long sentence and a stock phrase with the line each sits
+on, staying quiet on what the two hand passes kept, and refusing, with
+`--before` or `--against HEAD`, a rewording that touches anything but
+wording, a frontmatter byte, or a concept a person wrote or confirmed; and
+(check 19) `knowledge-apply.sh`, the librarian's only pen, exercised on a
+throwaway bundle: each operation applied, each refusal refused, and a dry run
+writing nothing. The job sets up `uv`, runs the contract, then confirms
+`gh skill` is available, and then runs `gh skill publish --dry-run`.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs
 `actionlint`, pointed by path at this repository's workflows and at the three
@@ -123,8 +135,8 @@ workflow templates that get copied into other repositories (it would
 otherwise look only under `.github/workflows/`; since 2026-09-24 it ignores
 the `copilot-requests` permission, which actionlint 1.7.12 predates), and (added 2026-09-14) a check that every `uses:`
 in this repository's workflows and those templates names a commit SHA or
-image digest rather than a floating tag or branch; `smoke-test` installs all
-four skills from the checkout into a throwaway consumer repo via
+image digest rather than a floating tag or branch; `smoke-test` installs the
+skills from the checkout into a throwaway consumer repo via
 `scripts/smoke-test-install.sh`; `validate-markdown` runs markdownlint,
 lychee, and codespell.
 

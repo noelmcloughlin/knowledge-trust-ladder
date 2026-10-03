@@ -10,9 +10,10 @@
 # agent runner that accepts a prompt on `-p`/stdin.
 #
 # CONTRACT (the workflow relies on this):
-#   - This script only READS the repo and WRITES files under .lokf/knowledge/
-#     (the workflow diffs and commits that path only; tooling files are
-#     ktl-sidecar's domain).
+#   - The agent WRITES one file, .lokf/patch.yaml, and nothing else. After it
+#     returns, this script applies that file with knowledge-apply.sh, so
+#     .lokf/knowledge/ (and a handled feedback.md entry) change only through
+#     that script; a run in which the agent changed any other path is refused.
 #   - It MUST NOT git commit, push, or open PRs - the workflow owns that.
 #   - On success it exits 0 whether or not it changed anything; the workflow
 #     diffs the working tree to decide whether to open a PR.
@@ -95,15 +96,17 @@ Task (Karpathy rule - continuous small corrections, not a rewrite):
      sources recorded in the bundle (concept provenance and
      .lokf/knowledge/playbooks/knowledge-sources.md).
   2. Reconcile the .lokf/ knowledge bundle with the repository: add missing
-     concepts, correct stale facts (refreshing each changed concept's
-     \`generated\` provenance, which supersedes the v0.1 \`timestamp\`), wire
-     typed relations, and prepend dated entries to
-     .lokf/knowledge/log.md - but only when the bundle content actually
-     changed. If nothing changed, leave the bundle (including log.md)
-     untouched; do not log administrative no-op runs.
-  3. Only edit files under .lokf/knowledge/. Do NOT run git, open PRs, or touch
-     any other path. Cite sources for any claim whose authority is outside the
-     repository.
+     concepts, correct stale facts, wire typed relations, and give every
+     operation its log line - but only when the bundle content actually
+     changed. If nothing changed, write no patch file at all; do not log
+     administrative no-op runs.
+  3. Write every change as an operation in .lokf/patch.yaml, in the shape the
+     skill's references/patch.md gives, and check it with
+     "bash .lokf/scripts/knowledge-apply.sh --dry-run". Do NOT edit any file
+     under .lokf/knowledge/ or .lokf/feedback.md yourself, do NOT run the
+     apply script without --dry-run, and do NOT run git, open PRs, or touch
+     any other path: this wrapper applies the file after you finish. Cite
+     sources for any claim whose authority is outside the repository.
   4. Mark concepts you create, and claims you cannot settle from the
      repository, as \`status: draft\` (with a plain-prose "## Open questions"
      section for the latter), exactly as the skill says. End your reply with a
@@ -150,6 +153,11 @@ outside_bundle() {
   git status --porcelain -- '.' \
     ':(exclude).lokf/knowledge' ':(exclude)knowledge_bundle' ':(exclude).lokf/feedback.md' \
     | cut -c4- | sort -u
+}
+# Every path git sees changed, the patch file apart: the agent's one output,
+# which .lokf/.gitignore keeps out of git anyway.
+changed_paths() {
+  git status --porcelain -- '.' ':(exclude).lokf/patch.yaml' | cut -c4- | sort -u
 }
 
 # Snapshots of .git/config and .git/hooks/ taken by main() before the agent
@@ -201,8 +209,9 @@ main() {
   trap 'exit 130' INT
   trap 'exit 143' TERM
 
-  local before_outside
+  local before_outside before_all
   before_outside="$(outside_bundle)"
+  before_all="$(changed_paths)"
 
   echo "knowledge-librarian: refreshing the .lokf/ bundle via AGENT_CLI"
   # The subshell exports the key under the agent's own name and then becomes
@@ -213,8 +222,31 @@ main() {
     exec "${agent_cmd[@]}" -p "$prompt"
   )
 
-  # Restore before the check below reads git, not only at exit.
+  # Restore before the checks below read git, not only at exit.
   restore_git_state
+
+  # The agent's one output is .lokf/patch.yaml. Anything else it changed,
+  # inside the bundle or out, is refused before the file is applied: the
+  # bundle changes only through knowledge-apply.sh, so a direct edit never
+  # reaches the publish job.
+  local touched
+  touched="$(comm -13 <(printf '%s\n' "$before_all") <(changed_paths))"
+  if [ -n "${touched//[$'\n\t ']/}" ]; then
+    echo "knowledge-librarian: the agent changed files other than .lokf/patch.yaml - refusing:" >&2
+    printf '%s\n' "$touched" | sed '/^$/d; s/^/  /' >&2
+    rm -f .lokf/patch.yaml
+    exit 3
+  fi
+  if [ -f .lokf/patch.yaml ]; then
+    echo "knowledge-librarian: applying .lokf/patch.yaml with knowledge-apply.sh"
+    if ! bash .lokf/scripts/knowledge-apply.sh .lokf/patch.yaml; then
+      echo "knowledge-librarian: knowledge-apply.sh refused the patch, so nothing was written" >&2
+      rm -f .lokf/patch.yaml
+      exit 4
+    fi
+  else
+    echo "knowledge-librarian: the agent wrote no .lokf/patch.yaml, so the bundle is unchanged"
+  fi
 
   local stray
   stray="$(comm -13 <(printf '%s\n' "$before_outside") <(outside_bundle))"

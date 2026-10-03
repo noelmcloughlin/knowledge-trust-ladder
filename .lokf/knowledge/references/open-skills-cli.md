@@ -13,7 +13,7 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  at: "2026-10-03T01:25:58Z"
 ---
 
 # Overview

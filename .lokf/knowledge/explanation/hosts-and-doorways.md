@@ -2,26 +2,31 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 title: Hosts and doorways - where the bundle's real folder lives
-description: The bundle is `.lokf/knowledge`, one real folder on every host, and `knowledge_bundle` beside it is a link - the doorway for people and folder pickers. Why there is one layout, what the visible layout of 2026-09-12 tried and why it was retired the next day, and what a shared folder that is not a vault may still do by hand.
+description: Why the bundle is `.lokf/knowledge`, one real folder on every host, with `knowledge_bundle` beside it as a link for people and folder pickers; what the visible layout tried and why it was retired; and what a shared folder that is not a vault may still do by hand.
 genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: "2026-10-03T01:45:53Z"
 status: draft
 about:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
+- https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 relatedTo:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
-  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-  - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
+- https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
+- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
+sources:
+- resource: skills/ktl-sidecar/SKILL.md
+- resource: skills/ktl-sidecar/references/portability.md
+- resource: docs/obsidian.md
+- resource: CHANGELOG.md
 ---
 
 # The pattern
 
 A LOKF bundle is a **sidecar**: it sits beside the raw sources it distils, in the same folder tree
-and normally the same git repository, and never inside the host's build. The sidecar is `.lokf/`; the
+and normally the same git repository. The sidecar is `.lokf/`; the
 bundle is `.lokf/knowledge/`; the tooling (`pyproject.toml`, `justfile`, `scripts/`, `feedback.md`)
 sits next to the bundle. This is the same shape as `.git/`, `.github/`, `.devcontainer/` - and, for an
 Obsidian user, `.obsidian/`: a dot-folder the tools own, kept beside the content people own.
@@ -61,8 +66,8 @@ folder is not a choice the sidecar makes any more: it is always the hidden one.
 Since 2026-09-17 the sidecar's `references/portability.md` is a matrix, host by host, of what works,
 what is lost and the substitute: Linux; macOS on its stock bash 3.2, with `shasum -a 256` where
 `sha256sum` is named; Windows from Git for Windows' bash, or from PowerShell through a one-line
-launch of that bash; GitLab, Forgejo and Gitea, where the two GitHub Actions workflows are the only
-loss and the recipe names the two calls to rewrite; git with no forge; no git at all, where the
+launch of that bash; GitLab, Forgejo and Gitea, where the three GitHub Actions workflows are the only
+loss and the recipe names the three calls to rewrite; git with no forge; no git at all, where the
 platform's version history is the record of who changed what; an Obsidian vault; and, since
 2026-09-24, a Microsoft 365 Copilot declarative agent, which can hold only the read-only roles, as
 a snapshot of the bundle packed inside the skill (see
@@ -82,8 +87,8 @@ or a shared folder, laid the bundle down the other way round - the **visible lay
 subfolder of the host), `.lokf/knowledge` a link onto it. The intent was that an Obsidian user would
 see the bundle in their own vault's explorer, graph, search and Sync, and that both plugins would
 detect it with nothing to configure. What it cost the tooling: a `visible` variable and a
-`lokf-link` recipe that recreated the tools' link where a sync service dropped it, `▸` markers
-through the skill, two extra layout test cases, and both workflows and the wrapper naming the bundle
+`lokf-link` recipe that recreated the tools' link where a sync service dropped it, two extra
+layout test cases, and both workflows and the wrapper naming the bundle
 under both paths, because a git pathspec never traverses a symlink.
 
 A day later, in daily use of the maintainer's own vault, the intent turned out to be the problem.
@@ -99,8 +104,3 @@ or recreate the doorway. What the reversal keeps, because it costs nothing and s
 folder rearranged by hand: the dual pathspecs in the Step 5 templates, the plugins' auto-detection of
 a top-level `knowledge_bundle/` and their *Bundle root folders* setting, and the junction guidance
 for Windows.
-
-The alternative the maintainer floated earlier - renaming the whole sidecar `.lokf/` to
-`knowledge_bundle/` on some hosts - would keep one name instead of two but need the skills to accept
-a configurable sidecar path; the two-name form needs no such knob, which is why it was chosen, and why
-it survived the reversal unchanged.

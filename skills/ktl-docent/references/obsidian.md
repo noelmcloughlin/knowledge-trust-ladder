@@ -6,14 +6,14 @@ the host bundle has a playbook of its own on the subject, that one wins.
 
 ## The answer
 
-Two vaults. The one the person already has is their **workshop** and stays exactly as it is: nothing is moved into it, nothing migrated out. The
+There are two vaults. The one the person already has is their **workshop** and stays exactly as it is: nothing is moved into it, nothing migrated out. The
 bundle is the **exhibition**, and it is opened as a vault of its own:
 
 1. **File → Open folder as vault**, and pick `knowledge_bundle` at the host root, the link `ktl-sidecar` laid beside `.lokf/` so that the bundle has a
    name a folder picker can see. Open the link *itself*, never the host root: a vault opened at the root cannot see a dot-folder or a link that
    resolves inside it, which is exactly what keeps the workshop clean.
 2. Install [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) and
-   [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) *in that vault*; Obsidian installs plugins per vault. Nothing to
+   [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) *in that vault*; Obsidian installs plugins per vault. There is nothing to
    configure: the root `index.md` carries the bundle's header, so the whole vault is the bundle. Both are optional; the bundle is only Markdown.
 
 `knowledge_bundle` can be missing: a sync service such as OneDrive drops links, and a Windows checkout without `core.symlinks` shows it as a small
@@ -30,7 +30,7 @@ mklink /J knowledge_bundle .lokf\knowledge   # Windows: a junction, no administr
 ## What not to suggest first
 
 - **Putting the bundle inside their vault.** Obsidian indexes a real folder inside a vault like any other, so link suggestions, the quick switcher,
-  graph and search would mix exhibits with everyday notes; *Settings → Files and links → Excluded files* hides them from search, graph view and
+  graph and search would mix exhibits with everyday notes. *Settings → Files and links → Excluded files* hides them from search, graph view and
   unlinked mentions, but only makes them less noticeable in the quick switcher and link suggestions. If they
   want it anyway, say that cost, and that both plugins detect a top-level `knowledge_bundle/` folder or any folder listed under *Bundle root
   folders*.

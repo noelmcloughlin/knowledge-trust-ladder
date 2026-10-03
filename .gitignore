@@ -9,3 +9,6 @@ node_modules/
 .agents/
 .claude/
 skills-lock.json
+
+# Python bytecode, if a contributor imports or compiles a script here
+__pycache__/

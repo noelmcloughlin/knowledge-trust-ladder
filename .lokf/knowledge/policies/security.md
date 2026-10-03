@@ -11,7 +11,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  at: "2026-10-03T01:25:58Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -28,7 +28,7 @@ stale_after: 2027-03-26
 Rewritten 2026-09-14 from a single file of up to ~1,900 words into a short policy plus
 [the shared threat model](threat-model.md): report a vulnerability through
 GitHub's private vulnerability reporting, never a public issue or PR, naming
-the affected file and whether a template issue is in the template itself or
+the affected file and why it is exploitable, and whether a template issue is in the template itself or
 appears only after a consumer customizes it - one maintainer, so expect a
 reply in days, not hours, no bounty. Only the latest published tag receives
 fixes, as a patch release noted in `CHANGELOG.md`. A template fix reaches a
@@ -44,8 +44,12 @@ two linking out rather than explaining: the sidecar templates copied into
 other repositories, held by the librarian workflow's two-job design, the
 `publish` job's confinement and `human:` refusal, the preflight and the
 forge-free gate; this repository's
-workflows, held by pinned actions, `permissions: {}`, and harden-runner; and
-the four skills' prose, executed by whichever agent runs it, held by each
+workflows, held by pinned actions, `permissions: {}`, and harden-runner;
+`skills/ktl-prose/scripts/prose-check.py`, the one script a skill runs in
+place in whichever repository installs it, held to the standard library,
+reading the files it is given, calling `git show` with an argument list,
+writing nothing and opening no network connection; and
+the five skills' prose, executed by whichever agent runs it, held by each
 skill's own guardrail for its input path. A skill's `Scope:` line is prose,
 not a permission - only the scheduled workflow enforces its scope, so an
 interactive session's guard is a person reviewing what the agent changed.

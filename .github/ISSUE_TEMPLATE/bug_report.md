@@ -1,13 +1,13 @@
 ---
 name: Bug report
-about: One of the four LOKF skills behaves incorrectly
+about: One of the five LOKF skills behaves incorrectly
 title: ''
 labels: bug
 assignees: ''
 ---
 
 **Which skill?**
-ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent
+ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose
 
 **Installed via**
 `gh skill install` / `npx skills add` / manual copy - and which version/tag

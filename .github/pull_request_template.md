@@ -6,6 +6,7 @@
 - [ ] ktl-sidecar
 - [ ] ktl-curator
 - [ ] ktl-docent
+- [ ] ktl-prose
 - [ ] repository packaging only (CI, docs, templates unrelated to skill content)
 
 ## Checklist

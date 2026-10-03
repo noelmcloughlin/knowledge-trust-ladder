@@ -19,6 +19,8 @@ verified:
   at: "2026-09-24T01:12:16Z"
 - by: human:noelmcloughlin
   at: "2026-09-26T20:04:41Z"
+- by: process:ktl-librarian
+  at: "2026-10-03T01:25:58Z"
 stale_after: 2027-09-26
 ---
 

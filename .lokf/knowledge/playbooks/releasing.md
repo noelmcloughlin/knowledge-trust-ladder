@@ -2,20 +2,29 @@
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 title: Releasing
-description: semantic-release.yml computes the version and promotes CHANGELOG.md on merge to main but never tags, folding into a still-unpublished section rather than doubling it; a workflow_dispatch run of publish.yml then validates that version against the promoted changelog, re-checks the contract and spec, lets gh skill publish create the tag and release, and dispatches knowledge-release.yaml to attach the bundle zip.
+description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, and dispatches `knowledge-release.yaml` to attach the bundle and Copilot zips."
 genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: "2026-10-03T01:45:53Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
 references:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
-  - https://knowledge-trust-ladder.example/knowledge/policies/versioning
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
+- https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
+- https://knowledge-trust-ladder.example/knowledge/policies/versioning
+- https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
+- https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
+sources:
+- resource: .github/workflows/publish.yml
+- resource: docs/releasing.md
+- resource: .github/workflows/semantic-release.yml
+- resource: .github/scripts/changelog-release.mjs
+- resource: .releaserc.json
+- resource: .github/workflows/knowledge-release.yaml
+- resource: scripts/sync-sidecar.sh
+- resource: CHANGELOG.md
 ---
 
 # Overview
@@ -47,7 +56,7 @@ between one `publish.yml` run and the next compute the *same* next version
 twice. `promote` now checks whether the top released heading's version is
 still untagged and, if so, folds the new entries into it by `###` subsection
 instead of inserting a second heading for the same version - the bug that
-shipped two `## [0.19.0] - 2026-09-17` headings on 2026-09-17, orphaning the
+shipped two `## [0.19.0] - 2026-09-17` headings, orphaning the
 second merge's entries above an empty `[Unreleased]`. The `plan` job also
 calls `changelog-release.mjs check` as its own step, not only inside
 `--dry-run`: semantic-release detects a pull-request event and skips every
@@ -57,10 +66,10 @@ fix, and an empty `[Unreleased]` would have merged silently. That step reads
 the pull request's own commits first and runs `check` only when one of them
 would release - the types `.releaserc.json` acts on - so a `chore:` or
 `docs:` pull request, a Dependabot action bump among them, is not failed for
-notes it was never going to ship. When they would release, the same step
-also requires the pull request *title* to carry a releasing type, because a
+notes it was never going to ship. When they would release, a second step
+requires the pull request *title* to carry a releasing type, because a
 squash merge takes its subject from the title and GitHub's default title
-has none - pull request #46 merged that way on 2026-09-17 and released
+has none - pull request #46 merged that way and released
 nothing, its notes left waiting in `[Unreleased]`. The trigger names
 `edited` alongside the default pull-request types, because retitling is how
 that check is cleared and the default types never fire on a title change -
@@ -81,9 +90,10 @@ released heading in CHANGELOG.md, skipping `## [Unreleased]` (catching a
 typed version nobody wrote release notes for), then sets up `uv` and re-runs the repository contract and `gh skill publish
 --dry-run`, and only then publishes. Since 2026-09-24 it then dispatches
 `knowledge-release.yaml` for the new tag, which attaches the bundle to the
-release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle
+release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` (the repository's
+name, or the one its `KNOWLEDGE_RELEASE_NAME` variable sets) when the bundle
 changed since the last release that carries one, and beside it (since
-2026-09-24, not yet released) the docent as a Microsoft 365 Copilot skill,
+2026-09-24) the docent as a Microsoft 365 Copilot skill,
 `ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`, one zip per
 instructions file under `.lokf/m365/`, each with its own checksum and
 attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release
@@ -94,21 +104,29 @@ the job fails and names the manual run to make. The version is typed *with* the 
 (`v0.16.0`); the changelog heading never carries one, and the cross-check
 strips it before comparing. This release-process detail moved out of
 `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for
-the three LOKF repositories in one place. All four skills ship together
-under one tag, so a consumer can pin them to a single release.
+the three LOKF repositories in one place. All five skills ship together
+under one tag, so a consumer can pin them to a single release. The
+`release` Environment's required reviewers are configured once, by hand,
+in each repository's settings, or a qualifying merge ships unattended.
+Changes reach `main` by pull request, but no ruleset enforces it, and
+"Require signed commits" as a branch rule is off and must stay off.
 
 The sibling repositories (the two Obsidian plugins and ai-linkmo) carry
 byte-identical copies of the sidecar templates and their own skills pin, and
 since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up
 to one release: it refuses anything but a tag that is on origin and carries
 `skills/ktl-librarian`, copies that tag's templates over the copies the
-sibling already has, moves its `TRUST_LADDER_SKILLS_REF` to the same tag,
+sibling already has (a template it never laid down is reported, not
+added), moves its `TRUST_LADDER_SKILLS_REF` to the same tag,
 runs the sidecar's checks there, prints a draft changelog line and the commit
 command, and never commits. The pin and the copies move together because
 the skill a tag installs is written against the wrapper, gate and preflight
 that tag ships, and once a sibling arms its scheduled librarian the pin
 decides which instructions run unattended. A release that touched neither
-the templates nor the librarian skill needs no sync.
+the templates nor the librarian skill needs no sync. The template's pin is
+never bumped by hand, which would cut a pointless release, and the sibling's
+pull request is opened after the tag exists, since a sibling merged before
+its pin's tag fails at the install step on its next scheduled run.
 
 Both checks read the `workflow_dispatch` version input through an `env:`
 var rather than interpolating `${{ inputs.version }}` straight into the

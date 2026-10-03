@@ -4,6 +4,27 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A fifth skill, `ktl-prose`, rewords a bundle's agent-written concepts in plain English.** It rewords only a body an agent wrote and no person confirmed, and changes no fact and no frontmatter byte, so `generated` keeps naming the librarian. Its `prose-check.py` reports dashes, long sentences and stock phrases, and proves a rewording changed only wording. Check 18 exercises it.
+- **`docs/wikiskill.md` reads the WikiSkill paper (Tang et al., Google Research, 2026) against this design,** part by part. The captured docent answers in `docs/examples/docent.md` now link the concept behind each question, so the link checker fails the build when that concept is renamed or deleted.
+- **`knowledge-apply.sh`, the librarian's only pen.** ktl-librarian describes each change as one of seven operations in `.lokf/patch.yaml` (`references/patch.md`), and the script writes the files. It stamps `generated`, keeps each description equal to its two index bullets, files the log line, and refuses a `human:` actor, a rewrite of a person's text, or the deletion of a confirmed concept. Nothing is written unless every operation passes. Check 19 exercises it.
+
+### Changed
+
+- **ktl-librarian writes in plain English, and offers a plain-prose pass in a live session.** A paragraph in its section 1 gives the rules for every body, `description` and index bullet, so a new concept needs no rewording. Before it opens its pull request in a live session it offers the `ktl-prose` pass, whose time is before a person confirms. An unattended run skips the offer.
+- **ktl-librarian reads the curator's verdicts before it derives, and closes the loop on a reader's miss.** It re-derives a sent-back concept from the source the note names. A miss that an existing concept answers is a description defect, fixed in the `description` and both index bullets, never with a twin. A run handles at most ten feedback entries. Rule 3 reaches a `Person` or `Organization` through `author` or `publisher`, not `source`.
+
+### Fixed
+
+- **A concept edited after a person confirmed it is no longer read as confirmed.** ktl-docent and the Copilot docent gain the label *edited since a person last confirmed it*, which the curator and the Obsidian plugins already show. The docent says the edit first, gives both dates, and treats the concept as unconfirmed.
+- **ktl-curator compares the two times of "edited since" whole.** `references/trust-fields.md` told it to cut both to the day first, so a concept confirmed in the morning and rewritten that afternoon did not count as edited. The Obsidian plugins and the SPARQL query already compared whole times.
+- **The skills no longer claim a SHACL check that nothing runs.** ktl-librarian, ktl-sidecar and `docs/three-lines.md` said the bundle was validated with JSON Schema and SHACL. The toolkit generates the shapes and neither ships nor runs them, so the wording now names what runs: `lokf validate` (JSON Schema) and `--check-refs`.
+
+### Security
+
+- **The scheduled librarian never writes the bundle itself.** The agent's one output is `.lokf/patch.yaml`; `knowledge-librarian.sh` applies it with `knowledge-apply.sh` and refuses a run that touched any other file, so the refusals above hold in the unattended run and not only in prose. The threat model's hardening list names it.
+
 ## [0.28.0] - 2026-09-29
 
 ### Added
@@ -14,21 +35,21 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Security
 
-- **The Snyk W011 findings on ktl-librarian and ktl-docent are acknowledged** in each skill and [the threat model](docs/threat-model.md#prompt-injection-guards). The librarian is the one skill that reads a reader's feedback entry, and the note says what contains that: resolve only what an entry names, and the scheduled workflow's `publish` job refuses any path outside the three allowed and any `by: human:` claim. The docent's note now also covers its repository fallback, which opens text it did not author and quotes it, with no write path but a scripted feedback entry.
+- **The Snyk W011 findings on ktl-librarian and ktl-docent are acknowledged** in each skill and [the threat model](docs/threat-model.md#prompt-injection-guards). The librarian resolves only what a feedback entry names, and the scheduled `publish` job refuses any other path and any `by: human:` claim. The docent quotes repository text it did not author and writes only a scripted feedback entry.
 
 ## [0.27.1] - 2026-09-25
 
 ### Fixed
 
 - **`atk add skill` works with the released Agents Toolkit.** The 1.1.17 release hides the command behind `TEAMSFX_AGENT_SKILLS`, not `ATK_FRONTIER`, which only the 1.1.18 betas read, so the documented line failed with `UnknownCommandError`. `docs/m365.md`, the sidecar's `references/m365.md` and the Copilot playbook now set both.
-- **The toolkit route in `docs/m365.md` runs in the agent's project.** `atk new` scaffolds into a new folder, and `atk add skill` run beside it failed with `InvalidProjectError`, so the steps now change into it. `provision` and `preview` take `--env dev`, which they need with `-i false`. `atk validate` is skipped: it checks against the v1.8 manifest schema, which has no `agent_skills`, and rejects the entry the toolkit's own `add skill` wrote. Two troubleshooting lines cover both errors. Both variables are now exported for the session: `provision` packs the skill's files only while the variable is set, and without it ships the agent's `agent_skills` entry with no folder behind it.
-- **`docs/m365.md` says what a tenant without custom skills sees.** Custom skills are a Frontier preview, and the page now has the reader check for it before choosing a route. Tried on 2026-09-25 in a tenant without the preview, `atk provision` failed at `teamsApp/validateAppPackage` with `Unrecognized member 'agent_skills'`, from Microsoft's service. Agent Builder sent the skill to Copilot Studio, which needs its own licence. The troubleshooting list quotes both errors, and says to delete the app that `provision` registers before it fails.
+- **The toolkit route in `docs/m365.md` runs in the agent's project.** The steps change into the folder `atk new` creates, pass `--env dev` to `provision` and `preview`, and skip `atk validate`, which rejects `agent_skills` against the v1.8 schema. Both variables are exported for the session, since `provision` packs the skill's files only while one is set.
+- **`docs/m365.md` says what a tenant without custom skills sees.** The reader checks for the Frontier preview first. Without it, `atk provision` fails with `Unrecognized member 'agent_skills'` and Agent Builder sends the skill to Copilot Studio, which needs its own licence. The troubleshooting list quotes both.
 
 ## [0.27.0] - 2026-09-24
 
 ### Added
 
-- **Releases carry the docent as a Microsoft 365 Copilot skill.** `knowledge-release.yaml` attaches `ktl-docent-m365-<tag>-<repository>.zip` beside the bundle zip, for a person with nothing installed to upload to Agent Builder. The new sidecar folder `.lokf/m365/` holds its instructions and `knowledge-m365.sh`, which packs one reproducible zip per instructions file and refuses a result over Copilot's limits; the auditor will be another file there. Check 17 builds it. `docs/m365.md` has the routes, and the sidecar's `references/m365.md` what Copilot allows.
+- **Releases carry the docent as a Microsoft 365 Copilot skill.** `knowledge-release.yaml` attaches `ktl-docent-m365-<tag>-<repository>.zip` beside the bundle zip, for upload to Agent Builder. The new `.lokf/m365/` folder holds its instructions and `knowledge-m365.sh`, which packs a reproducible zip within Copilot's limits. Check 17 builds it.
 - **`scripts/sync-sidecar.sh` syncs a sibling repository to one release.** It copies a published tag's templates over the sibling's copies, moves its skills pin to that tag, runs the sidecar's checks, and leaves the diff for review. `docs/releasing.md` drops the hand bump of the template's own pin, which the release commit has made since 0.23.1.
 
 ## [0.26.0] - 2026-09-24
@@ -41,18 +62,18 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
-- **The release workflow attaches the bundle as a zip file.** `knowledge-release.yaml` now uploads `knowledge-<tag>-<repository>.zip` with its `.sha256`, in place of `knowledge-<tag>.tar.gz`, because every operating system opens a zip with its own tools, and the name says which repository it came from. It stays reproducible: the same bundle gives the same bytes in any time zone and under any umask, and links inside the bundle are stored as links, never followed. A release that carries the earlier tarball still counts as the last released bundle, so an unchanged bundle after `v0.24.0` gets no zip. Layout test 5 runs the new pack lines.
+- **The release workflow attaches the bundle as a zip file.** `knowledge-<tag>-<repository>.zip` with its `.sha256` replaces the tarball, since every operating system opens a zip. It stays reproducible across time zones and umasks, and stores links as links. Layout test 5 runs the pack.
 
 ## [0.24.0] - 2026-09-24
 
 ### Added
 
-- **`knowledge-release.yaml`, a third sidecar workflow.** It attaches `.lokf/knowledge` to a GitHub release as a reproducible `knowledge-<tag>.tar.gz` with a checksum, after the registrar's checks pass, and attests its provenance on a public repository. It skips a release whose bundle has the same git tree as the last release that carries one; a manual run's `force` input overrides that. It runs when dispatched by hand, and on each published release once `KNOWLEDGE_RELEASE_ENABLED` is `true`. This repository's `publish.yml` dispatches it after each release, and layout test 5 exercises its pack step.
-- **The librarian template has a slot for the agent's credential, and documented settings for Copilot CLI and Claude Code.** Name the variable your agent reads in `AGENT_API_KEY_ENV`, then either set `AGENT_USE_JOB_TOKEN` so the job's own token is the credential (Copilot CLI; the job requests `copilot-requests: write`, idle until then) or put a key in the `AGENT_API_KEY` secret: a Claude Console key, or a Claude subscription token from `claude setup-token` under `CLAUDE_CODE_OAUTH_TOKEN`. The wrapper hands it to the agent under that name only, and refuses a name that is not a credential's or that `gh`, git or the runner also read. Node 22 is set up before the agent step. Layout test 1c exercises the hand-off.
+- **`knowledge-release.yaml`, a third sidecar workflow.** It attaches `.lokf/knowledge` to a GitHub release as a reproducible archive with a checksum, after the registrar's checks pass, and attests it on a public repository. It skips an unchanged bundle unless `force` is set, and runs by hand or, with `KNOWLEDGE_RELEASE_ENABLED`, on each release. `publish.yml` dispatches it here.
+- **The librarian template has a slot for the agent's credential.** `AGENT_API_KEY_ENV` names the variable the agent reads. The credential is the `AGENT_API_KEY` secret or, with `AGENT_USE_JOB_TOKEN`, the job's own token for Copilot CLI. The wrapper exports it under that name only and refuses a name that `gh`, git or the runner also read. Layout test 1c exercises it.
 
 ### Fixed
 
-- **The librarian validates relation targets before it opens a pull request.** Its validate step ran plain `lokf validate` while the registrar gate and the release workflow run `lokf validate --check-refs`, and the gate never fires on the pull request the librarian opens, so a dangling relation could pass the librarian's own check and land. The template, this repository's copy and the pull-request summary line now name `--check-refs`. Both plugins had made this change locally.
+- **The librarian validates relation targets before it opens a pull request.** Its validate step now runs `lokf validate --check-refs`, as the registrar gate does, because the gate never fires on the librarian's own pull request.
 - **The sidecar README's layout tree names everything Step 5 lays down.** It stopped at `justfile` and `feedback.md`; `scripts/`, `queries.http` and `curators/` were missing.
 
 ## [0.23.1] - 2026-09-24
@@ -208,7 +229,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Security
 
-- **The librarian wrapper restores `.git/config` and `.git/hooks/` on every exit.** The restore ran only after a clean return, so an agent that poisoned `core.hooksPath` or `core.fsmonitor` and then exited non-zero, or a cancelled job, left them in the checkout for the workflow's next steps to read. An `EXIT` trap now restores on failure and on the runner's signals; the layout tests prove both. Reported by a Socket audit on skills.sh.
+- **The librarian wrapper restores `.git/config` and `.git/hooks/` on every exit.** An `EXIT` trap now restores them after a failing agent or a cancelled job too, so a poisoned `core.hooksPath` cannot reach the workflow's next steps. A Socket audit reported it, and the layout tests prove the fix.
 
 ## [0.19.1] - 2026-09-17
 
@@ -216,9 +237,9 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **A pull request that would release must be titled to release.** A squash merge takes its subject from the pull request title, and GitHub's default title carries no type, so a typed `fix:` reached `main` untyped and released nothing. The `plan` job now refuses that combination and says how to retitle.
 
-- **The no-Python schema fallback is pinned to the toolkit's version.** Both skills, the sidecar README and the toolkit concept pointed at `lokf.yaml` on upstream `main`, which has already moved past the 0.8.0 floor, so a manual cross-check read a schema the installed validator does not enforce. The URL now names the `v0.8.0` tag and the librarian's tooling-version step moves it with the floor; this also answers a skills.sh audit finding about an unpinned runtime URL.
+- **The no-Python schema fallback is pinned to the toolkit's version.** It pointed at `lokf.yaml` on upstream `main`, which the 0.8.0 validator does not enforce. The URL now names the `v0.8.0` tag and moves with the floor, which also answers a skills.sh audit finding.
 
-- **A pull request that releases nothing is no longer failed for writing no release notes.** The `plan` job's new changelog check ran on every pull request, so a `chore:` or `docs:` one - a Dependabot action bump among them - failed against the empty `## [Unreleased]` a release had just emptied. It now reads the pull request's own commits and asks for notes only when one of them would release.
+- **A pull request that releases nothing is no longer failed for writing no release notes.** The `plan` job asks for notes only when one of the pull request's own commits would release, so a `chore:` or `docs:` one, a Dependabot bump among them, passes.
 - **A Dependabot action bump no longer breaks the contract on its own.** The bot edits `.github/workflows/` and cannot see the copies under `skills/lokf-sidecar/templates/github/`, which check 11 holds byte-identical, so every bump failed until the template was synced by hand. The failure now names both directions instead of only "copy the template over it", which is the wrong one in that case.
 
 ## [0.19.0] - 2026-09-17
@@ -236,10 +257,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
-- **The skills use lokf 0.9.0+'s `revision`.** The curator writes it on a confirmation and the librarian on `generated` (the full commit hash of a file, an ETag or digest for a URL), the docent quotes it beside the date, and `docs/three-lines.md` moves "which state of the source was the check made against" from an OKF gap to a recorded answer. On an older toolkit the key is left out. The librarian's field tables also name `excerpt` on a source, and the domain-schema page says an undeclared type now projects as `lokf:Concept`.
+- **The skills use lokf 0.9.0+'s `revision`.** The curator writes it on a confirmation, the librarian on `generated`, and the docent quotes it beside the date. An older toolkit leaves it out. The librarian's tables also name a source's `excerpt`.
 - **The sidecar's toolkit floor is lokf 0.8.0**, here and in the `lokf-sidecar` template. The librarian's field tables now state its constraints: `sources[].author` is an actor string, `http_method` is one of seven uppercase verbs, and every timestamp including `stale_after` is a datetime, a bare date meaning midnight UTC.
 - **The curator says what it can record before offering a session**, from a *Ready to record* line with three identity routes - `gh`, `glab`, the signing key the forge lists - and a rule for a host with no forge. The librarian names files in lowercase and hands off on a host without git; the docent's feedback attribution names the same routes.
-- **Six of the conventions script's ten checks now parse YAML for real.** `knowledge-conventions.py`, run through `uv run`, takes over the quoted-`at`, `verified`-shape, open-question, duplicate-`id`, closed-frontmatter and plain-spelling rules from grep and awk, which missed a flow-style `verified` and a multi-line flow item; the other four stay shell, needing nothing but bash and git, and without `uv` the OK line says which rules were skipped. The sidecar lays it down beside the `.sh` (Step 5's seventh file), and the preflight reports a host holding one without the other. Check 11 proves each rule on the layouts that used to slip.
+- **Six of the conventions script's ten checks now parse YAML for real.** `knowledge-conventions.py`, run through `uv run`, replaces grep and awk where they missed flow-style events. The other four stay shell, and without `uv` the script says which rules it skipped. The preflight reports a host holding one half without the other, and check 11 proves each rule.
 
 ### Fixed
 
@@ -251,20 +272,20 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The gate reads a confirmation whole, not its `by:` line.** Re-dating an existing event, moving its `revision`, or writing it in flow style left no added `by: human:` line and passed both gates; events are now compared whole between base and head, keyed by the concept's `id`, so a renamed concept keeps its confirmations and a copied one does not. Check 13 proves each.
 - **The conventions script no longer aborts on a runner that ignores SIGPIPE.** GitHub Actions starts every step that way, so an awk that closed the frontmatter pipe early turned into a `tr: write error` that `pipefail` made fatal on the first long concept; the script now reads each file whole, and the contract's own job installs `uv` so the parser's half runs there too.
 - **A confirmation spelt with a YAML tag, anchor, alias or quoted key was invisible to both gates** while `lokf validate` accepted it. Conventions rule 10 now holds `id`, `by`, `at` and `revision` to spellings a line reader and a parser agree on, so the `validate` check fails such a concept before the `provenance` check could miss it; check 11 proves it.
-- **Both gates read merges, `generated`, and only the frontmatter.** A merge commit listed no changed paths, so an event added in one passed the forge-free gate unseen; a human `generated` record - the curator's Correct writes one - was a claim only when written as a `by:` line; and a `by: human:` in a body code fence counted as one. Events are now read against every parent of a commit, from `verified` and `generated`, and from nowhere else. Check 13 proves each.
-- **A push to `main` between releases no longer promotes `## [Unreleased]` a second time.** `semantic-release.yml` computes the version from the last *tag*, and only `publish.yml` tags, so two qualifying merges without a publish between them promoted the same version twice, leaving two `## [0.19.0]` headings and orphaning the second push's entries above an empty `[Unreleased]`. `changelog-release.mjs promote` now folds into the top released section instead of inserting a new one when that section's version carries no tag yet, merging by subsection in Keep a Changelog order. Check 14 proves it, and repairs the two headings this bug had already written. The `plan` job also runs `changelog-release.mjs check` directly, since semantic-release skips its own plugin hooks - including this one - on a pull request and would otherwise let an empty `[Unreleased]` merge, contrary to `docs/releasing.md`'s claim.
-- **`publish.yml` installs `uv`, so a release can pass the contract it runs.** Six of the conventions script's ten rules run through `uv run`, and the publish job never installed it, so every expectation for those rules failed and no release could reach the tag - `validate.yml` had the same gap and was fixed, the release path was missed. The contract now also names that cause in one line up front, instead of leaving fifteen expectations reporting only that they "failed to report" something.
+- **Both gates read merges, `generated`, and only the frontmatter.** Events are now read against every parent of a commit, from `verified` and `generated` and nowhere else, so a merge can no longer slip one in and an example in a body code fence no longer counts. Check 13 proves each.
+- **A push to `main` between releases no longer promotes `## [Unreleased]` a second time.** When the top released version has no tag yet, `changelog-release.mjs promote` folds new entries into it by subsection instead of writing a second heading. The `plan` job also runs `check` directly, because semantic-release skips its plugin hooks on a pull request. Check 14 proves it.
+- **`publish.yml` installs `uv`, so a release can pass the contract it runs.** Six conventions rules run through `uv run`, and without it no release could reach the tag. The contract now names that cause in one line up front.
 
 ## [0.18.0] - 2026-09-16
 
 ### Added
 
 - **The registrar gate fails on a vanished source.** `knowledge-conventions.sh` gains a fifth rule: a `resource:` that is not a URL must name a file or directory that still exists under the repository root. Check 11 proves it on a bundle that breaks it; URLs are never fetched.
-- **Two switches in the curation policy, both off by default.** `Independent re-check: <n>` makes every curator report list n confirmed concepts, picked by a rule the curator cannot steer, with their sources for a second person; `Evidence first: yes` makes the docent quote the source before any answer that rests on a concept not yet confirmed by a person, and the docent reads that line from the policy alone. The sidecar's automation reference recommends a pull request template line asking a curation PR's approver to open the sources; this repository's template carries it.
+- **Two switches in the curation policy, both off by default.** `Independent re-check: <n>` lists n confirmed concepts, picked by a rule the curator cannot steer, for a second person to re-check. `Evidence first: yes` makes the docent quote the source before an answer resting on an unconfirmed concept.
 
 ### Changed
 
-- **`docs/three-lines.md` is written for a governance reader.** It names The Institute of Internal Auditors in full, cites the 2026 Statement of Position, places each role in a new diagram (`.assets/lokf-three-lines.svg`), and ends with what remains open and whose it is. The model's critics, quoted from their own texts and marked as preliminary research, and a bundle's answer to each with every remaining gap labelled by kind, are on a page of their own, `docs/three-lines-critics.md`.
+- **`docs/three-lines.md` is written for a governance reader.** It names the IIA in full, cites its 2026 Statement of Position, places each role in a diagram, and ends with what remains open and whose it is. The model's critics have a page of their own, `docs/three-lines-critics.md`.
 - **Adopter-facing text no longer addresses "solo maintainers".** The sidecar's automation reference and the registrar workflow's comments describe the case - the confirming person also opens the pull request, so the gate's evidence is their signature - and the attestation environment's reviewers are "the people allowed to attest".
 - **`EXAMPLES.md` is now `docs/examples/docent.md`**, one page per skill's captured sessions; `docs/examples/curator.md` is a placeholder that lists what is still to capture, including a docent answer under each value of `Evidence first:`.
 
@@ -283,12 +304,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`validate-repository.sh` check 9: the paths sibling repositories link into.** LOKF Curator and LOKF Registrar deep-link files here and their link checks follow those URLs for real, so moving one passed every check here and broke their builds; the check now fails instead, and confirms its list is complete when the siblings are cloned alongside.
 - **`docs/releasing.md` and `docs/signing-commits.md`** carry the release pipeline, the repository settings it depends on, and the signing walkthrough once for all four repositories; every `CONTRIBUTING.md` links there instead of repeating them. Check 10 holds this repository's `CONTRIBUTING.md` to a word budget, and CI fails an action not pinned to a commit.
 - **`docs/three-lines.md`** maps the cast onto the three lines of defence for readers who work under that model, and says what an auditor can check and what the evidence does not show; the README and both plugins link to it.
-- **`templates/scripts/knowledge-conventions.sh`, and the registrar gate runs it.** `lokf validate` reads a body as an opaque string and never opens `log.md`, so the four conventions the skills and plugins rely on - one ISO-date log heading per day, quoted timestamps, `verified` as a list with one librarian event, open questions in the curator's shape - are now a script the sidecar lays down and `knowledge-registrar.yaml` runs on every `.lokf/**` pull request, alongside the justfile's `lokf-check-refs`. Check 11 of the repository contract holds this repository's copies identical to the templates and proves the script fails on a bundle that breaks each rule; actionlint is pointed at the templates by path.
+- **`templates/scripts/knowledge-conventions.sh`, and the registrar gate runs it.** It checks what `lokf validate` cannot: one ISO-date log heading per day, quoted timestamps, `verified` as a list, and open questions in the curator's shape. `knowledge-registrar.yaml` runs it on every `.lokf/**` pull request, and check 11 proves it fails on each broken rule.
 
 ### Fixed
 
 - **The librarian now lints the Markdown it writes.** Its rule against letting a wrapped punctuation dash start a line was advice only, and a pass tripped `MD032` in a host's lint gate anyway; the audit step now runs the host's markdownlint config over the bundle, since `lokf validate` reads a concept body as an opaque string and cannot see this class of fault at all.
-- **One `log.md` heading per day, the bare date.** The librarian had been opening a fresh `## 2026-09-14 (2)` heading for each run in a day; that is not the ISO-date heading OKF §9 requires, passes the registrar's date check unseen, and the curator plugin cannot find the day through it. The librarian and the curator's review session now both reuse the day's heading, and the librarian's log bullets are held to a few sentences.
+- **One `log.md` heading per day, the bare date.** A suffixed heading such as `## 2026-09-14 (2)` is not the ISO-date heading OKF §9 requires, and the curator plugin cannot find the day through it. The librarian and the curator now reuse the day's heading.
 - **The librarian's open questions take the curator's shape**, `- YYYY-MM-DD, process:lokf-librarian: ...`, so the date and actor lead and the first bullet the curator reads is the question.
 - **The docent no longer takes a reader's identity from `git config user.name`** for a feedback entry - `gh api user` or nothing, the same rule the curator holds to.
 
@@ -306,7 +327,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The curator's vocabulary-fit line respects a host's domain schema.** Where `.lokf/justfile` validates with `--schema <slug>.yaml`, `trust-fields.md` now has the skill read that file and count its `Concept` descendants as known - the same widening as Rule 3, so the line goes quiet once a team adopts a schema instead of naming every domain class a misfit. The label reads "doesn't fit the known vocabulary", matching the LOKF Curator plugin.
 - **`lokf-curator/references/review-session.md` states how the curation-policy table is read**: class names match ignoring spaces and plural form ("Glossary terms" is `GlossaryTerm`), and an unknown class binds nothing. Written down because the LOKF Curator plugin matched literally and so ignored four rows of this file's own template.
-- **`README.md` polished, not restructured.** Role names carry the emphasis; the docent's job and the trust labels are each said once; the plugin table maps onto the four levels of checking; *Where the bundle lives* is a section of its own; the layout lists every workflow and the measured size of each `SKILL.md`. The Obsidian section moves to `docs/obsidian.md`, with the two-vaults picture the plugin READMEs use, and the README keeps one paragraph and a link.
+- **`README.md` polished, not restructured.** Each role and label is said once, the plugin table maps onto the four levels of checking, and the Obsidian section moves to `docs/obsidian.md`.
 
 ## [0.16.0] - 2026-09-13
 
@@ -327,7 +348,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
-- **`lokf-curator/references/domain-schemas.md`** gains "When the domain already has a schema": a regulated domain may already have a LinkML vocabulary of its own and a domain schema then imports it beside LOKF's rather than re-describing it. What such a vocabulary lacks - who encoded a record, who confirmed it, when to look again - OKF v0.2 defines for documents only; whether it belongs on domain records is left to the domain's owners and the OKF specification. The README's summary line points at the new section.
+- **`lokf-curator/references/domain-schemas.md`** gains "When the domain already has a schema": a domain schema imports a domain's existing LinkML vocabulary beside LOKF's rather than re-describing it. Whether provenance fields belong on domain records is left to the domain's owners and OKF.
 - **`lokf-scaffolding` renamed `lokf-sidecar`**, matching what it produces: directory, frontmatter, install commands, this repository's own bundle, and every cross-reference. A bundle already laid down needs nothing - the files it wrote are identical.
 - **Corrected Obsidian guidance for `knowledge_bundle`**: the link is opened *itself* as a vault, never the repository root (Obsidian skips a symlink resolving inside the vault it's indexing, and never indexes a dot-folder). Linking a repository's `.lokf/knowledge` *into* a personal vault - the reverse direction - is supported and now documented.
 - **`README.md`** gains "Where the skills meet an Obsidian vault": the bundle's two names and which is real per host, a plugin-for-skill table, and the vault-as-**workshop**/bundle-as-**exhibition** framing. "The fifth role" no longer calls LOKF Curator a registrar: it is the curator's assistant, and the curator is always a person.
@@ -363,11 +384,11 @@ A `human:<id>` verification is a claim any writer can type, not a credential, an
 
 ### Added
 
-- `lokf-sidecar` Step 2 now also creates a `knowledge_bundle` symlink to `.lokf/knowledge` at the repo root (POSIX hosts) - a visible entry point for humans and their tools, chiefly Obsidian's "Open folder as vault," which like most OS folder pickers hides dot-directories by default. Mirrors the Step 0 tracked/gitignored decision; `templates/gitignore` now excludes the `.obsidian/` folder Obsidian writes through the link into `.lokf/knowledge/` when used as a vault. This repository's own `.lokf/` now carries the symlink too, with matching excludes added to `.markdownlint-cli2.jsonc`, `lychee.toml`, and the `codespell` step so the aliased files aren't linted/checked twice.
+- `lokf-sidecar` Step 2 now also creates a `knowledge_bundle` symlink to `.lokf/knowledge` at the repo root, a visible entry point for folder pickers that hide dot-directories, Obsidian's "Open folder as vault" among them. `templates/gitignore` excludes the `.obsidian/` folder Obsidian writes through it, and the lint and link checks skip the aliased files.
 
 ## [0.13.0] - 2026-09-10
 
-- The librarian SKILL now says: A spaced dash ("X - Y") used as punctuation must not be allowed to land at the start of a line after wrapping - Markdown reads a line beginning `-` followed by a space as a list item, so a paragraph never meant to be a list trips `MD032/blanks-around-lists` wherever the consuming repo lints `.lokf/**` (most do, via a `lint-and-docs`-style gate). Reword or rewrap so the dash stays mid-line; when unsure, prefer an unwrapped single line over one that risks the break landing there.
+- The librarian SKILL now says a spaced dash ("X - Y") must not land at the start of a line after wrapping, where Markdown reads it as a list item and trips `MD032/blanks-around-lists`. Reword or rewrap so the dash stays mid-line.
 - `.markdownlint-cli2.jsonc` disables `MD060` (table column style): it flags the padded-header/bare-separator table style used everywhere in this repo (and on GitHub generally) as inconsistent, and no `style` setting reconciles the two without just relocating which row gets flagged. `.lokf/README.md`'s concept checklist gained a reminder not to let a spaced dash wrap onto its own line, since Markdown reads that as a list item (`MD032`).
 
 ## [0.12.0] - 2026-09-10
@@ -399,6 +420,6 @@ Initial release: four [Agent Skills](https://agentskills.io/home) that turn a re
 - `lokf-sidecar` - bootstraps a fresh `.lokf/` sidecar into a repository that has none: tooling, docs, and a dummy skeleton from bundled templates.
 - `lokf-librarian` - scrapes the repository, derives concepts with their sources, wires typed relationships, audits the bundle against the LOKF schema, and hands off for review. Runs often, including on a schedule; deals in facts about the repository, never in verdicts about truth.
 - `lokf-curator` - a human curator's assistant: a one-screen trust and freshness report, and an opt-in review session that records a person's confirm/correct/retire/send-back verdict directly in the bundle's frontmatter.
-- `lokf-docent` - the reader's entry point. Answers questions from the bundle first, states each concept's trust label in plain words, verifies exact values at the source, and - when the bundle has no answer - explores the repository directly and records the gap in `.lokf/feedback.md` for the librarian to pick up. See [`docs/examples/docent.md`](docs/examples/docent.md) for real question-and-answer transcripts.
+- `lokf-docent`, the reader's entry point. It answers from the bundle first with each concept's trust label, verifies exact values at the source, and records a gap in `.lokf/feedback.md` for the librarian when the bundle has no answer. [`docs/examples/docent.md`](docs/examples/docent.md) has real transcripts.
 
 This repository dogfoods its own skills: `.lokf/` here is a real bundle built by `lokf-sidecar` and `lokf-librarian`, self-describing all four skills, this repository's own governance, and its CI.

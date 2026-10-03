@@ -2,7 +2,7 @@
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/versioning
 title: Versioning policy
-description: One repository-level semantic version covering all four skills, released together under a single tag, with patch/minor/major computed from Conventional Commits rather than hand-picked.
+description: One repository-level semantic version covering all five skills, released together under a single tag, with patch, minor and major decided by Conventional Commits.
 genre: reference
 resource: docs/releasing.md
 sources:
@@ -10,11 +10,12 @@ sources:
 - resource: README.md
 - resource: CONTRIBUTING.md
 - resource: CHANGELOG.md
+- resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T11:05:00Z"
+  at: "2026-10-03T01:25:58Z"
 about:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
+- https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 verified:
 - by: process:ktl-librarian
   at: "2026-09-24T11:05:00Z"
@@ -35,7 +36,7 @@ are patch; a `BREAKING CHANGE:` footer or `!` after the type is major;
 the change merges and its changelog entries ship with the next release that
 does.
 
-All four skills ship together under one tag rather than versioning
+All five skills ship together under one tag rather than versioning
 independently, so a set pinned to one tag agrees with itself (`README.md`).
 
 One asymmetry to know: tags carry a `v` prefix (`v0.16.0`), and `publish.yml`

@@ -10,7 +10,7 @@ generated:
   by: human:noelmcloughlin
   at: "2026-09-24T01:09:00Z"
 about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/lokf
+- https://knowledge-trust-ladder.example/knowledge/glossary/lokf
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T16:35:55Z"

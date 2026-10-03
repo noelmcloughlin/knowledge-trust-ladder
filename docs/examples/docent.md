@@ -111,6 +111,8 @@ Gap recorded: Miss - "What's the roadmap for a fifth skill after ktl-docent?" -
 The **docent** asked once this session whether to record gaps in `.lokf/feedback.md`; the answer was yes, so this one was written there: see
 [`.lokf/feedback.md`](../../.lokf/feedback.md). `ktl-librarian`'s next run will either turn it into a concept or note that no roadmap exists.
 
+*Since this capture the repository has gained a fifth skill, `ktl-prose`. The answer above stays as it was given, and the librarian's next refresh records the new skill.*
+
 ## 8. "Who do I contact to report a security issue, and is that policy confirmed by a person?"
 
 > Use GitHub's private vulnerability reporting (linked from `SECURITY.md`)
@@ -125,6 +127,21 @@ From the bundle:
 - Security policy (policies/security.md) - still a draft; checked by automation only
 Checked at source: SECURITY.md's "Reporting a vulnerability" section - matches exactly
 ```
+
+## Which concept answers each question
+
+The link checker follows each link below on every build, so a concept that is renamed or deleted fails the build with its question beside it. The librarian never derives from this page, since `playbooks/knowledge-sources.md` keeps `docs/examples/` out of its sources, so the questions stay held out from the bundle they test.
+
+| Question | Concept that answers it today |
+| --- | --- |
+| 1. What is LOKF? | [glossary/lokf.md](../../.lokf/knowledge/glossary/lokf.md) |
+| 2. What does OKF require of a concept file? | [glossary/okf.md](../../.lokf/knowledge/glossary/okf.md), [references/okf-specification.md](../../.lokf/knowledge/references/okf-specification.md) |
+| 3. Which skill do I run first? | [playbooks/ktl-sidecar-skill.md](../../.lokf/knowledge/playbooks/ktl-sidecar-skill.md) |
+| 4. How do ktl-librarian and ktl-curator relate? | [playbooks/ktl-librarian-skill.md](../../.lokf/knowledge/playbooks/ktl-librarian-skill.md), [playbooks/ktl-curator-skill.md](../../.lokf/knowledge/playbooks/ktl-curator-skill.md) |
+| 5. How do I contribute a change? | [playbooks/contributing.md](../../.lokf/knowledge/playbooks/contributing.md) |
+| 6. What GitHub CLI version do I need? | [references/gh-skill-cli.md](../../.lokf/knowledge/references/gh-skill-cli.md) |
+| 7. What is the roadmap for a fifth skill? | [playbooks/ktl-prose-skill.md](../../.lokf/knowledge/playbooks/ktl-prose-skill.md), [explanation/why-four-roles.md](../../.lokf/knowledge/explanation/why-four-roles.md); a miss when captured, and the skill exists now |
+| 8. Who do I contact about a security issue? | [policies/security.md](../../.lokf/knowledge/policies/security.md) |
 
 ---
 

@@ -7,20 +7,26 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-26T19:52:21Z"
+  at: "2026-10-03T01:25:58Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
 about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 references:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-  - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+- https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 verified:
 - by: process:ktl-librarian
   at: "2026-09-26T19:52:21Z"
+sources:
+- resource: skills/ktl-docent/SKILL.md
+- resource: skills/ktl-docent/references/answering.md
+- resource: skills/ktl-docent/references/feedback.md
+- resource: README.md
+- resource: CHANGELOG.md
 ---
 
 # Overview
@@ -34,7 +40,7 @@ which concepts it rests on and how far each has been trusted, with the
 records one ("against 3f9c2a1", a commit hash cut to seven characters). One switch,
 set by a person in the curation policy (`policies/knowledge-curation.md`,
 the line `Evidence first: yes`), reverses the order for any concept not yet
-confirmed by a person: the quoted source first, then the answer that rests
+confirmed by a person, or edited since that confirmation: the quoted source first, then the answer that rests
 on it. No policy, no line, or another value means the usual order, and the
 reader cannot switch it from the conversation.
 

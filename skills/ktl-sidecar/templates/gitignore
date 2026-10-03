@@ -12,3 +12,8 @@ lokf-tables/
 # knowledge-feedback.sh rewrites feedback.md through a temporary file and a
 # lock directory beside it; a run killed outright can leave either behind.
 feedback.md.*
+
+# The librarian's patch file: ktl-librarian writes its operations here and
+# knowledge-apply.sh applies and removes it. A run that stopped midway can
+# leave it behind, and it is never bundle content.
+patch.yaml

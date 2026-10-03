@@ -2,12 +2,12 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 title: Three lines of defence - where each role sits, and what an auditor can check
-description: Placing the librarian, curator, registrar, sidecar and docent roles in The Institute of Internal Auditors' Three Lines Model, with a diagram - who owns a claim, what a machine checks, and what a person can examine afterwards - the four limits on what that evidence shows, a pointer to the critics page, and what remains to do and who does it. The critics page quotes the model's critics (preliminary research) and says which of their points a LOKF bundle answers and what kind of gap each remainder is. Written for whoever adopts a bundle, not about this repository's own arrangements.
+description: "The librarian, curator, registrar, sidecar and docent placed in the IIA's Three Lines Model, for whoever adopts a bundle: who owns a claim, what a machine checks, what a person can examine afterwards, the four limits on that evidence, what the critics page answers, and what remains to do and who does it."
 genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: "2026-10-03T01:45:53Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -16,10 +16,9 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 ---
-
 # Overview
 
-The README's "Three lines of defence" section points at this page. The
+The README's section on the fifth role, the registrar, points at this page. The
 reference model is the Three Lines Model of The Institute of Internal
 Auditors (IIA), updated in
 [2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/)
@@ -31,10 +30,11 @@ organisation that adopts a bundle. First line: the **librarian**, which
 derives every record from a named source and marks what it cannot settle
 `status: draft`, and the **curator**, a named person who decides what the
 team accepts as true - maker and checker, since the agent cannot vouch and
-the person does not derive. Second line: the **registrar** - `lokf validate`
-on every change and in CI, plus the KTL Registrar Obsidian plugin - which
-keeps records well-formed and ties a `human:` verdict to that person's
-approval or signature, without judging truth. Third line: the bundle ships
+the person does not derive. Second line: the **registrar**, which keeps records
+well-formed: `lokf validate` on every change and in CI, `knowledge-apply.sh`
+as the librarian's only pen, and the KTL Registrar Obsidian plugin. The gate
+ties a `human:` verdict to that person's approval or signature, the pen
+refuses to write a `human:` actor at all, and neither judges truth. Third line: the bundle ships
 the evidence an independent reviewer needs, not the review. The **docent**
 sits outside the lines, where the reader does, and reports what it could
 not answer back to the librarian as untrusted input; the **sidecar** lays
@@ -66,8 +66,9 @@ against the tree for a file and nothing checks for a URL; whether that
 confirmation is really tied to the named person in the `provenance` job's
 log; when it must be looked at again in `stale_after`; what changed, and
 why, in `log.md` and git; and whether the checker is independent of the
-checked in the JSON Schema and SHACL shapes, which are generated from the
-upstream `lokf.yaml` rather than written by the bundle's authors. Four limits
+checked in the JSON Schema, which is generated from the upstream `lokf.yaml`
+rather than written by the bundle's authors (the toolkit also generates SHACL
+shapes, which nothing here runs yet). Four limits
 bound what that evidence proves: a confirmation records who and when, and
 the state of the source only when the event carries `revision`, and even
 then what the skill fetched rather than what the person read; the gate

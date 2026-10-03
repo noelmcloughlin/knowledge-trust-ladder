@@ -8,17 +8,17 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T16:52:47Z"
+  at: "2026-10-03T01:25:58Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 ---
 
 # Overview
 
-The labels restate OKF section 5.3's trust tiers in words a non-specialist can
+The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can
 act on. They are computed each time from `verified`, `status`, `generated.at`,
 and `stale_after` (with `type` and the relation fields for vocabulary fit
 and reliance, and git history for confirmations no signed commit backs): any `verified` actor prefixed `human:` means confirmed by a
@@ -31,5 +31,4 @@ unrecorded, never unchanged.
 
 They deliberately overlap - a concept can be confirmed *and* past its review
 date - so the counts in a curator report are not a partition. Nothing is
-scored and nothing is stored: a score would be subjective, unportable, and
-would go stale.
+scored and nothing is stored: the spec keeps scores out of frontmatter.

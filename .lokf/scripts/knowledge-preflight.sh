@@ -244,6 +244,9 @@ fi
 if [ -d "$bundle" ] && [ ! -f "$root/.lokf/scripts/knowledge-feedback.sh" ]; then
   script_gaps="${script_gaps}${script_gaps:+, }.lokf/scripts/knowledge-feedback.sh missing, so ktl-docent must edit feedback.md by hand"
 fi
+if [ -d "$bundle" ] && [ ! -f "$root/.lokf/scripts/knowledge-apply.sh" ]; then
+  script_gaps="${script_gaps}${script_gaps:+, }.lokf/scripts/knowledge-apply.sh missing, so ktl-librarian must write the bundle by hand"
+fi
 # A host moves TRUST_LADDER_SKILLS_REF on its own schedule, so a different
 # pin is not drift; every other byte of the librarian workflow still counts.
 unpin() { sed -E 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' "$1"; }
@@ -255,6 +258,8 @@ if [ -n "$templates" ] && [ -d "$root/.lokf" ]; then
               "scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
               "scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
               "scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
+              "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh" \
+              "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py" \
               "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh" \
               "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md" \
               "gitattributes:.lokf/.gitattributes" \
@@ -285,7 +290,7 @@ agent=""
 [ -n "${CODESPACES:-}" ] && agent="${agent}${agent:+, }Codespaces"
 [ "${TERM_PROGRAM:-}" = vscode ] && agent="${agent}${agent:+, }VS Code terminal"
 if [ -n "$unattended" ]; then
-  info session "unattended ($unattended set): ktl-curator stops after its report; ktl-librarian edits only under the bundle"
+  info session "unattended ($unattended set): ktl-curator stops after its report; ktl-librarian writes the bundle only through knowledge-apply.sh"
 else
   info session "attended${agent:+ ($agent)}: a person can answer item by item"
 fi
