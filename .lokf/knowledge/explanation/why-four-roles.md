@@ -11,7 +11,7 @@ sources:
 - resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-03T13:27:24Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -27,7 +27,7 @@ relatedTo:
 
 # Overview
 
-The README names five roles, and four of them are skills: its section is "Four skills, three lines of the poem", after the three lines of Amy Lowell's *The Congressional Library* it opens with. The fifth role, the **registrar**, is not a skill: the `lokf` toolkit, CI's gate, `knowledge-apply.sh` at the librarian's desk, and two optional Obsidian plugins ([why a registrar role](why-a-registrar-role.md)). The README also names a fifth skill, which is not a role: `ktl-prose`, the librarian's optional copy editor, which rewords what an agent wrote before a person confirms it, and the roles lose nothing without it ([ktl-prose skill](../playbooks/ktl-prose-skill.md)).
+The README names five roles, and four of them are skills: its section is "Four skills, three lines of the poem", after the three lines of Amy Lowell's *The Congressional Library* it opens with. The fifth role, the **registrar**, is not a skill: the `lokf` toolkit, CI's gate, `knowledge-apply.sh` at the librarian's desk, `knowledge-report.sh` at the reader's desk and the curator's, and two optional Obsidian plugins ([why a registrar role](why-a-registrar-role.md)). The README also names a fifth skill, which is not a role: `ktl-prose`, the librarian's optional copy editor, which rewords what an agent wrote before a person confirms it, and the roles lose nothing without it ([ktl-prose skill](../playbooks/ktl-prose-skill.md)).
 
 Each skill takes one line of the poem, or the role the poem leaves implicit:
 

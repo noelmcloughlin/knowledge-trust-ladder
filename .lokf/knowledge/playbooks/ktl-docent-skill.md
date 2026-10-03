@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-03T13:28:08Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
@@ -35,7 +35,7 @@ Runs **whenever anyone asks**. Bundle first: read `knowledge/index.md`, open
 one to three candidate concepts, widen along typed relations rather than by
 grepping, and verify exact values (versions, endpoints, paths) at the
 concept's `resource` before stating them. Every answer carries a footing -
-which concepts it rests on and how far each has been trusted, with the
+which concepts it rests on and how far each has been trusted. Each label is taken from `knowledge-report.sh labels` where the sidecar has that script, and carries the
 `revision` a person's confirmation was checked against where the event
 records one ("against 3f9c2a1", a commit hash cut to seven characters). One switch,
 set by a person in the curation policy (`policies/knowledge-curation.md`,
@@ -53,7 +53,7 @@ newest first and prints only a kind, a date and a count, so the reports other
 readers left in that file never enter the session. Before the script, an
 entry meant reading the file and rewriting it, and the only guard was a line
 of prose telling the agent to ignore what it had just read. The librarian
-consumes and clears those entries on its next run, which closes the loop from
+consumes those entries on its next run, and its apply script moves each one into `.lokf/questions.md`, a ledger only programs read, which closes the loop from
 reader back to bundle.
 An entry names the asker only from an authenticated login - `gh api user`,
 `glab api user`, or the signing-key route the curator describes - and is

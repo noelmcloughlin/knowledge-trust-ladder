@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:45:53Z"
+  at: "2026-10-03T13:27:24Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -32,8 +32,8 @@ derives every record from a named source and marks what it cannot settle
 team accepts as true - maker and checker, since the agent cannot vouch and
 the person does not derive. Second line: the **registrar**, which keeps records
 well-formed: `lokf validate` on every change and in CI, `knowledge-apply.sh`
-as the librarian's only pen, and the KTL Registrar Obsidian plugin. The gate
-ties a `human:` verdict to that person's approval or signature, the pen
+as the librarian's only pen, `knowledge-report.sh` computing every trust label, and the KTL Registrar Obsidian plugin. The gate
+ties a `human:` verdict that is added or removed to that person's approval or signature, the pen
 refuses to write a `human:` actor at all, and neither judges truth. Third line: the bundle ships
 the evidence an independent reviewer needs, not the review. The **docent**
 sits outside the lines, where the reader does, and reports what it could
@@ -62,9 +62,9 @@ An auditor's questions each have a fixed place to look: provenance in
 and when in `generated`; who confirmed it and when in `verified[]`; which
 state of the source the check was made against in `revision` - a field
 proposed for lokf 0.9.0 and not yet released - which the gate resolves
-against the tree for a file and nothing checks for a URL; whether that
+against the tree for a file and nothing checks for a URL, and until it ships `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation; whether that
 confirmation is really tied to the named person in the `provenance` job's
-log; when it must be looked at again in `stale_after`; what changed, and
+log, where a confirmation struck out or gone with its concept needs that person as an added one does; when it must be looked at again in `stale_after`; what changed, and
 why, in `log.md` and git; and whether the checker is independent of the
 checked in the JSON Schema, which is generated from the upstream `lokf.yaml`
 rather than written by the bundle's authors (the toolkit also generates SHACL

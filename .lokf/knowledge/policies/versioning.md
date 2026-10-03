@@ -18,7 +18,7 @@ about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T11:05:00Z"
+  at: "2026-10-03T13:27:24Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 - by: human:noelmcloughlin

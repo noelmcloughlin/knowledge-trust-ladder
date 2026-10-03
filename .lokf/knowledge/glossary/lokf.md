@@ -18,6 +18,9 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/okf
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-03T13:27:24Z"
 ---
 
 # Overview
