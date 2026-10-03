@@ -24,7 +24,7 @@ The point of a bundle is to *not* re-read the repository. Spend tokens in this o
 
 ## Deriving the label
 
-The rules are the same as ktl-curator's `references/trust-fields.md`, restated here so this skill stands alone:
+Run `bash .lokf/scripts/knowledge-report.sh labels <path>...` with the bundle paths of the concepts you used, such as `services/orders-api.md`, and copy each line it prints into the footer. The script applies the rules below from the frontmatter, the same for every reader. On a sidecar that predates it, apply them by hand. They are the same as ktl-curator's `references/trust-fields.md`, restated here so this skill stands alone:
 
 - `verified` may be a list or a bare `{ by, at }` mapping: a bare mapping is one event.
 - *Confirmed by a person*: any event's `by` starts with `human:`. Quote the latest such date in the footer, and its `revision` when the event carries one ("against 3f9c2a1": a commit hash cut to its first seven characters, or an ETag or digest as written). The revision is the state of the source the confirmation was checked against, so a reader can tell whether the page in front of them is the one that was confirmed.

@@ -181,13 +181,16 @@ jobs:
 
           # A claim is an event in a concept's frontmatter - a `verified`
           # entry, or the `generated` record the curator's Correct writes as
-          # `human:<id>` - read whole as `<id>\t<by>\t<at>\t<revision>`,
+          # `human:<id>` - read whole as `<id>\t<by>\t<at>\t<revision>\t<kind>`,
           # whatever its YAML layout, and keyed by the concept's id so a rename
           # keeps its events and a copy does not. An added line would not do:
           # a re-dated `at`, a moved `revision` or a flow-style event adds no
           # `by:` line, and a `by: human:` in a body code fence or a send-back
           # note is not an event at all. Any event present at head and absent
-          # at base names an actor who must stand behind it. Same extractor as
+          # at base names an actor who must stand behind it. So does a
+          # `verified` event present at base and absent at head: a person's
+          # record is never removed without that person, whether the event
+          # is struck out or its concept deleted. Same extractor as
           # knowledge-provenance.sh; the id is taken as the schema takes it, so
           # one this job cannot look up is refused below, never skipped.
           human_events() {
@@ -195,7 +198,7 @@ jobs:
             function val(s) { sub(/^[^:]*:[[:space:]]*/, "", s); gsub(/["'"'"']/, "", s); sub(/[[:space:]]+$/, "", s); return s }
             function kv(l,  k) { k = l; sub(/:.*/, "", k); sub(/^[[:space:]]+/, "", k)
               if (k == "by") by = val(l); else if (k == "at") at = val(l); else if (k == "revision") rev = val(l) }
-            function emit() { if (inev && by ~ /^human:/) { sub(/^human:/, "", by); out = out (cid ? cid : path) "\t" by "\t" at "\t" rev "\n" }
+            function emit() { if (inev && by ~ /^human:/) { sub(/^human:/, "", by); out = out (cid ? cid : path) "\t" by "\t" at "\t" rev "\t" kind "\n" }
               inev = 0; by = ""; at = ""; rev = "" }
             function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ",")
               for (i = 1; i <= n; i++) kv(parts[i]); emit() }
@@ -203,7 +206,7 @@ jobs:
             NR == 1 { if ($0 == "---") { fm = 1; next } else exit }
             fm && $0 == "---" { emit(); exit }
             /^id:/ { cid = val($0) }
-            /^(verified|generated):/ { emit(); inv = 1; rest = $0; sub(/^(verified|generated):[[:space:]]*/, "", rest)
+            /^(verified|generated):/ { emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated):[[:space:]]*/, "", rest)
               if (rest ~ /^\{/) { flow(rest); inv = 0 }
               else if (rest ~ /^\[/) { gsub(/[][]/, "", rest); n = split(rest, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
               next }
@@ -216,6 +219,8 @@ jobs:
           }
           paths="$(mktemp)"
           listed="$(mktemp)"  # every path git named under the bundle, quoted or not
+          now_events="$(mktemp)"
+          every_events="$(mktemp)"
           events_in() {  # ref, paths on stdin -> the human events of those paths at that ref, sorted
             { while IFS= read -r f; do git show "$1:$f" 2>/dev/null | human_events "$f" || true; done | sort; } || true
           }
@@ -236,10 +241,37 @@ jobs:
             { git -c core.quotePath=false diff-tree --no-commit-id --name-only -r -m "$1" -- .lokf/knowledge knowledge_bundle | tee -a "$listed" | grep '\.md$' | sort -u > "$paths"
               events_in "$1" < "$paths" | comm -13 <(for p in $(git rev-parse "$1^@"); do events_in "$p" < "$paths"; done | sort -u) - | cut -f2; } || true
           }
+          # A removal is a claim too. Of the events that went, a `verified`
+          # one always needs its person. A person's `generated` record may
+          # give way to another person's - the curator's Correct, whose
+          # actor is already checked above as an addition - so it counts
+          # only when no person's `generated` record stands in its place.
+          needs_its_person() {  # removed events on stdin, the file of events that remain -> those whose actor must back the removal
+            awk -F'\t' -v now="$1" '
+              BEGIN { while ((getline line < now) > 0) { split(line, f, "\t"); if (f[5] == "generated") kept[f[1]] = 1 } }
+              $5 == "verified" || !($1 in kept)'
+          }
+          removed_actors() {  # base head -> actors of events base holds that head does not
+            { git -c core.quotePath=false diff --name-only "$1" "$2" -- .lokf/knowledge knowledge_bundle | tee -a "$listed" | grep '\.md$' | sort -u > "$paths"
+              events_in "$2" < "$paths" > "$now_events"
+              events_in "$1" < "$paths" | comm -23 - "$now_events" | needs_its_person "$now_events" | cut -f2; } || true
+          }
+          # Against every parent again: what a merge lacks because one side
+          # never held it is no removal, and a root commit removes nothing.
+          gone_in_commit() {  # sha -> actors of events every parent holds that sha does not
+            { git -c core.quotePath=false diff-tree --no-commit-id --name-only -r -m "$1" -- .lokf/knowledge knowledge_bundle | tee -a "$listed" | grep '\.md$' | sort -u > "$paths"
+              events_in "$1" < "$paths" > "$now_events"
+              first=1
+              for p in $(git rev-parse "$1^@"); do
+                if [ "$first" -eq 1 ]; then events_in "$p" < "$paths" > "$every_events"; first=0
+                else events_in "$p" < "$paths" | comm -12 "$every_events" - > "$every_events.next"; mv "$every_events.next" "$every_events"; fi
+              done
+              [ "$first" -eq 1 ] || comm -23 "$every_events" "$now_events" | needs_its_person "$now_events" | cut -f2; } || true
+          }
 
           base="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
 
-          mapfile -t actors < <(changed_actors "$base" "$HEAD_SHA" | sort -u)
+          mapfile -t actors < <({ changed_actors "$base" "$HEAD_SHA"; removed_actors "$base" "$HEAD_SHA"; } | sed '/^$/d' | sort -u)
 
           if grep -q '^"' "$listed"; then
             echo "unreadable: git had to quote these bundle paths, so this gate cannot read them:"
@@ -249,7 +281,7 @@ jobs:
           fi
 
           if [ "${#actors[@]}" -eq 0 ]; then
-            echo "No new human confirmations in this pull request."
+            echo "No human confirmation is added, changed or removed in this pull request."
             echo "verdict=ok" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -290,18 +322,19 @@ jobs:
             fi
 
             # No approval from them. The remaining evidence is their own
-            # signature on the commit that introduced the event - the only
-            # path open when they opened the pull request themselves, since
-            # GitHub will not let anyone approve their own pull request.
+            # signature on each commit that introduced or removed the event -
+            # the only path open when they opened the pull request
+            # themselves, since GitHub will not let anyone approve their own
+            # pull request.
             introducing=()
             for sha in "${bundle_shas[@]}"; do
-              if new_in_commit "$sha" | grep -qxF -- "$actor"; then
+              if new_in_commit "$sha" | grep -qxF -- "$actor" || gone_in_commit "$sha" | grep -qxF -- "$actor"; then
                 introducing+=("$sha")
               fi
             done
 
             if [ "${#introducing[@]}" -eq 0 ]; then
-              echo "unbacked: human:${actor} is recorded, but no commit in this pull request introduces it."
+              echo "unbacked: a confirmation by human:${actor} is added, changed or removed here, but no commit in this pull request does it."
               unbacked+=("$actor")
               continue
             fi
@@ -315,12 +348,12 @@ jobs:
                 continue
               fi
               backed=no
-              echo "unbacked: commit ${sha:0:8} records human:${actor} but GitHub reports it" \
+              echo "unbacked: commit ${sha:0:8} adds, changes or removes a confirmation by human:${actor} but GitHub reports it" \
                    "verified=${verified:-unknown}, attributed to ${signer:-unknown}."
             done
 
             if [ "$backed" = yes ]; then
-              echo "ok: human:${actor} signed the commit recording their own confirmation."
+              echo "ok: human:${actor} signed each commit that adds, changes or removes their own confirmation."
             else
               unbacked+=("$actor")
             fi
@@ -337,9 +370,9 @@ jobs:
           {
             echo "### Confirmations nothing stands behind"
             echo ""
-            echo "This pull request records these people as having checked a concept"
-            echo "against its source, but neither an approval nor a signature of theirs"
-            echo "backs them:"
+            echo "This pull request adds, changes or removes a confirmation by each of"
+            echo "these people, and neither an approval nor a signature of theirs backs"
+            echo "it:"
             echo ""
             # An id that failed the login pattern may hold a backtick, which
             # would close this code span; the log line has it verbatim.
@@ -360,7 +393,9 @@ jobs:
           echo "or - if it is their own, which GitHub will not let them approve -"
           echo "have them sign their commits (see this job's comments). If nobody"
           echo "actually checked it, remove the event: an unchecked concept is"
-          echo "supposed to read as unchecked."
+          echo "supposed to read as unchecked. A person's record is never removed"
+          echo "without that person either: if this pull request strikes one out or"
+          echo "deletes its concept, put it back, or ask them to approve or sign."
           exit 1
 
       # Second opinion where the repository carries curator keys: the same

@@ -19,11 +19,12 @@ You write normal Markdown; you get a validated, queryable graph for free.
 |   |-- services/         # concepts (grow into metrics/ policies/ playbooks/ glossary/ ...)
 |-- pyproject.toml        # declares the `lokf` toolkit as a dependency
 |-- justfile              # convenience commands (below)
-|-- scripts/              # the librarian wrapper and its apply script, the preflight, the gate's two checks and the docent's feedback recorder
+|-- scripts/              # the librarian wrapper and its apply script, the report script, the preflight, the gate's two checks and the docent's feedback recorder
 |-- m365/                 # the Microsoft 365 Copilot skills' instructions and their builder; the release workflow packs them
 |-- queries.http          # SPARQL queries for the local endpoint (VS Code REST Client)
 |-- curators/             # appears once a curator's public key is on file; who may confirm at the gate
 |-- feedback.md           # appears once a reader's agent records a gap; input for the librarian, not knowledge
+|-- questions.md          # appears once the librarian handles a reader's entry; the questions readers asked, kept by the apply script
 ```
 
 The `knowledge_bundle` link at the repository root is this same `knowledge/` directory under an ordinary, visible name. It is there for folder pickers and file managers that hide dot-directories, and, for Obsidian users, for "Open folder as vault": open the link *itself* as a vault, never the repository root, which cannot see a dot-folder or a link that resolves inside it. Git carries the link; a sync service does not, so `just lokf-link` recreates it on a machine where it is missing (Windows: `mklink /J knowledge_bundle .lokf\knowledge`). Every command below works without it.

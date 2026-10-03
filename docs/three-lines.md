@@ -5,7 +5,7 @@ Regulated industries use the **three lines of defence** to say who owns a risk, 
 | Line | In the model | In a LOKF bundle |
 | --- | --- | --- |
 | **First**: owns the work and its risk | operational management | The **librarian** derives every record from a source it names, records its own re-checks as `process:` and never as a person, and marks what it cannot settle `status: draft` with an open question. The **curator**, a named person, decides what the team accepts as true: confirm, correct, send back, retire, or leave for later. Maker and checker: the agent cannot vouch, and the person does not derive. |
-| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change and again as the CI gate, `knowledge-apply.sh` as the librarian's only pen, and the KTL Registrar plugin in Obsidian. The gate's `provenance` job ties each new `human:` verdict to that person's approval of the pull request or their signature on the commit, and the pen refuses to write a `human:` actor at all. It never judges truth: a verdict is only ever what that person said. |
+| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change and again as the CI gate, `knowledge-apply.sh` as the librarian's only pen, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval of the pull request or their signature on the commit, and the pen refuses to write a `human:` actor at all. It never judges truth: a verdict is only ever what that person said. |
 | **Third**: independent assurance | internal audit | The **bundle** ships the evidence an independent reviewer needs, listed below, and not the review, because assurance is independent only when it comes from someone other than the authors. |
 
 <p align="center">
@@ -27,16 +27,17 @@ The tooling holds the lines apart either way. The **curator**'s identity comes f
 
 ## What an auditor can check
 
-Every trust label is computed from the frontmatter on each read and never stored, so a label cannot be asserted, only earned. Each question an auditor asks has a place where the answer is written:
+Every trust label is computed from the frontmatter on each read and never stored, so a label cannot be asserted, only earned. `knowledge-report.sh` does the computing, so the answer does not vary with the reader. Each question an auditor asks has a place where the answer is written:
 
 | Question | Where the answer is |
 | --- | --- |
 | Where did this come from? | `resource`, `sources[].resource`, `derivedFrom` |
 | Who produced the current text, and when? | `generated.by`, `generated.at` |
 | Who confirmed it, and when? | `verified[].by`, `verified[].at` |
-| Which state of the source was the check made against? | `verified[].revision` and `generated.revision`, proposed for lokf 0.9.0 and not yet released: the commit hash of a file, which the gate resolves against the tree, or an ETag or digest for a URL, which nothing checks. Absent means unrecorded, never unchanged |
+| Which state of the source was the check made against? | `verified[].revision` and `generated.revision`, proposed for lokf 0.9.0 and not yet released: the commit hash of a file, which the gate resolves against the tree, or an ETag or digest for a URL, which nothing checks. Absent means unrecorded, never unchanged. Until it ships, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation |
 | Was that really them? | the `provenance` job's log on the pull request: the forge's verdict on the approval or the signature, not the runner's. Locally, the curator skill's *Not tied to a signed commit* count |
 | When must it be looked at again, and by what rule? | `stale_after`, proposed from `policies/knowledge-curation.md` |
+| Has a person's record been removed? | the `provenance` job's log: a confirmation struck out, or gone with its concept, needs that person's approval or signature as an added one does. On the scheduled librarian's pull request, `knowledge-provenance.sh --unattended` in the job that holds the write token |
 | What changed, and why? | `log.md`, and git |
 | Is the checker independent of the checked? | the JSON Schema is generated from the upstream `lokf.yaml`, not written by the bundle's authors; the toolkit also generates SHACL shapes, which nothing here runs yet; the bundle projects to RDF and answers [SPARQL](../skills/ktl-curator/references/queries.md) |
 

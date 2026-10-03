@@ -18,11 +18,19 @@
 #      .git/config and .git/hooks/ back when the agent fails or the job is
 #      cancelled, not only when it returns cleanly; and (1c) the wrapper hands
 #      AGENT_API_KEY to the agent under AGENT_API_KEY_ENV's name only, and
-#      refuses a name that is not a credential's;
+#      refuses a name that is not a credential's; and (1d) a change that
+#      touches a person's record is refused even when the pen let it through;
+#      and (1e) with KNOWLEDGE_RETRIEVAL on, the wrapper has the agent answer
+#      the index-only retrieval test from an empty directory, writes the score
+#      a program computes, and refuses a call that changed the checkout; and
+#      (1f) a sidecar with no pen stops the wrapper before the agent runs;
 #   2. the librarian workflow's change detection sees a bundle edit in each of
 #      those shapes, and its packaging step stages it without failing when the
 #      second name does not exist;
-#   3. the registrar workflow triggers on, and diffs, both names;
+#   3. the registrar workflow triggers on, and diffs, both names; and (3b) its
+#      provenance step, run here as the template has it with `gh` stubbed,
+#      asks the person behind a confirmation that is added, changed or
+#      removed, and nobody when only a body changes;
 #   4. `just lokf-link` creates the doorway, is a no-op when it is present,
 #      refuses a name taken by something else, and does nothing when
 #      `.lokf/knowledge` is itself a link;
@@ -72,7 +80,8 @@ make_host() {
     mkdir -p .lokf/scripts skills/ktl-librarian
     cp "$wrapper" .lokf/scripts/knowledge-librarian.sh
     cp "$templates/scripts/knowledge-apply.sh" "$templates/scripts/knowledge-apply.py" .lokf/scripts/
-    chmod +x .lokf/scripts/knowledge-librarian.sh .lokf/scripts/knowledge-apply.sh .lokf/scripts/knowledge-apply.py
+    cp "$templates/scripts/knowledge-provenance.sh" "$templates/scripts/knowledge-report.sh" .lokf/scripts/
+    chmod +x .lokf/scripts/knowledge-*.sh .lokf/scripts/knowledge-apply.py
     cp "$justfile" .lokf/justfile
     printf '# stub skill\n' > skills/ktl-librarian/SKILL.md
     case "$shape" in
@@ -207,6 +216,75 @@ key_case path    sk-test PATH              2 "agent did not run"
 key_case github  sk-test GITHUB_TOKEN      2 "agent did not run"
 key_case lower   sk-test anthropic_api_key 2 "agent did not run"
 
+# 1d. What the pen refuses before it writes is read off the result as well, so
+# a pen that let a person's event through - a poisoned copy, in a workspace
+# the agent shared - still fails the run. The stand-in pen here writes one.
+host="$work/wrapper-unattended"
+make_host "$host" default
+cat > "$host/.lokf/scripts/knowledge-apply.sh" <<'PEN'
+#!/usr/bin/env bash
+printf -- '---\ntype: Service\ntitle: A\nverified: [{ by: human:nobody, at: "2026-01-01T00:00:00Z" }]\n---\n\n# A\n' > .lokf/knowledge/a.md
+rm -f .lokf/patch.yaml
+PEN
+git -C "$host" commit -q -am "a pen that lets a person's event through"
+status=0
+( cd "$host" && AGENT_CLI="$patch_agent" PATCH_TEXT="$create_op" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 3 ]; then ok "unattended: a person's event the pen let through fails the run (exit 3)"
+else err "unattended: a person's event reached the bundle unrefused (exit $status)"; fi
+
+# 1e. The retrieval test is off unless KNOWLEDGE_RETRIEVAL is "true". On, the
+# same agent command is called a second time from an empty directory: this
+# stand-in writes the patch when it finds itself in the repository, and
+# answers the one question otherwise.
+retrieval_agent="$work/retrieval-agent.sh"
+cat > "$retrieval_agent" <<'AGENT'
+#!/usr/bin/env bash
+if [ -d .lokf ]; then
+  printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+else
+  [ -z "${MEDDLE:-}" ] || printf 'meddled\n' >> "$MEDDLE"
+  echo "Q1: a.md"
+fi
+AGENT
+chmod +x "$retrieval_agent"
+# shellcheck disable=SC2016 # the backticks are a Markdown code span, not a command
+retrieval_host() {
+  make_host "$1" default
+  printf '%s\n' '# Questions readers asked' '' 'Kept by knowledge-apply.sh.' '' '- 2026-01-01 Miss a.md: `where is a?`' > "$1/.lokf/questions.md"
+  git -C "$1" add -A && git -C "$1" commit -q -m "a question on file"
+}
+host="$work/wrapper-retrieval"
+retrieval_host "$host"
+status=0; rm -f "$work/retrieval.txt"
+( cd "$host" && AGENT_CLI="$retrieval_agent" PATCH_TEXT="$create_op" KNOWLEDGE_RETRIEVAL=true KNOWLEDGE_RETRIEVAL_OUT="$work/retrieval.txt" \
+    bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 0 ] && [ "$(cat "$work/retrieval.txt" 2>/dev/null)" = "Retrieval from the index: 1 of 1 reader questions reach their concept" ] && [ -f "$host/.lokf/knowledge/playbooks/b.md" ]; then
+  ok "retrieval: with the switch on, the reply is scored by program and the one line is written (exit 0)"
+else err "retrieval: exit $status, score file: $(cat "$work/retrieval.txt" 2>/dev/null || echo none)"; fi
+host="$work/wrapper-retrieval-off"
+retrieval_host "$host"
+status=0; rm -f "$work/retrieval.txt"
+( cd "$host" && AGENT_CLI="$retrieval_agent" PATCH_TEXT="$create_op" KNOWLEDGE_RETRIEVAL_OUT="$work/retrieval.txt" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 0 ] && [ ! -e "$work/retrieval.txt" ]; then ok "retrieval: with the switch off, the agent is called once and nothing is scored"
+else err "retrieval: scored with the switch off (exit $status)"; fi
+host="$work/wrapper-retrieval-meddle"
+retrieval_host "$host"
+status=0; rm -f "$work/retrieval.txt"
+( cd "$host" && AGENT_CLI="$retrieval_agent" PATCH_TEXT="$create_op" KNOWLEDGE_RETRIEVAL=true KNOWLEDGE_RETRIEVAL_OUT="$work/retrieval.txt" MEDDLE="$host/README.md" \
+    bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 3 ] && [ ! -e "$work/retrieval.txt" ]; then ok "retrieval: a call that changes the checkout is refused and no score is written (exit 3)"
+else err "retrieval: a call that changed the checkout was not refused (exit $status)"; fi
+
+# 1f. A sidecar that never laid the pen down is said before an agent run is
+# spent on it: the wrapper exits 2 and the agent is not called.
+host="$work/wrapper-no-pen"
+make_host "$host" default
+rm "$host/.lokf/scripts/knowledge-apply.py"
+status=0; rm -f "$work/env.out"
+( cd "$host" && AGENT_CLI="$env_agent" ENV_OUT="$work/env.out" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 2 ] && [ ! -e "$work/env.out" ]; then ok "no pen: the wrapper stops before the agent runs (exit 2)"
+else err "no pen: the wrapper ran the agent or did not stop (exit $status)"; fi
+
 echo "2. the librarian workflow's change detection and packaging"
 detect='git status --porcelain -- .lokf/knowledge knowledge_bundle'
 if grep -qF "$detect" "$librarian_yaml"; then ok "template detects changes with: $detect"
@@ -215,6 +293,10 @@ stage_second='[ -e knowledge_bundle ] && git add -A -- knowledge_bundle || true'
 if grep -qF 'git add -A -- .lokf/knowledge' "$librarian_yaml" && grep -qF "$stage_second" "$librarian_yaml"; then
   ok "template stages both names and guards the second one"
 else err "knowledge-librarian.yaml packaging lines changed"; fi
+if grep -qF '[ -e .lokf/feedback.md ] && git add -A -- .lokf/feedback.md || true' "$librarian_yaml" \
+   && grep -qF '[ -e .lokf/questions.md ] && git add -A -- .lokf/questions.md || true' "$librarian_yaml"; then
+  ok "template carries reader feedback and the ledger its handled entries move into"
+else err "knowledge-librarian.yaml no longer stages .lokf/feedback.md and .lokf/questions.md"; fi
 for shape in default no-doorway rearranged; do
   host="$work/workflow-$shape"
   make_host "$host" "$shape"
@@ -241,14 +323,22 @@ if grep -qF "$listing" "$librarian_yaml"; then ok "template lists the patch's pa
 else err "knowledge-librarian.yaml no longer contains: $listing"; fi
 host="$work/publish-paths"
 make_host "$host" default
-allowed='^(\.lokf/knowledge/|knowledge_bundle/|\.lokf/feedback\.md$)'
-for case in "inside:.lokf/knowledge/café.md" "outside:notes-café.md"; do
+allowed='^(\.lokf/knowledge/|knowledge_bundle/|\.lokf/feedback\.md$|\.lokf/questions\.md$)'
+if grep -qF -- "grep -Ev '$allowed'" "$librarian_yaml"; then ok "template refuses a patch path outside: $allowed"
+else err "knowledge-librarian.yaml no longer filters the patch's paths with: $allowed"; fi
+# The publish job reads a person's events off the patched tree, and fills the
+# pull request from its own checkout, with the scripts that checkout holds.
+for line in 'bash .lokf/scripts/knowledge-provenance.sh --unattended' 'bash .lokf/scripts/knowledge-report.sh health' 'bash .lokf/scripts/knowledge-report.sh changes'; do
+  if sed -n '/^  publish:/,$p' "$librarian_yaml" | grep -qF -- "$line"; then ok "publish runs: $line"
+  else err "knowledge-librarian.yaml's publish job no longer runs: $line"; fi
+done
+for case in "inside:.lokf/knowledge/café.md" "inside:.lokf/questions.md" "outside:notes-café.md" "outside:.lokf/scripts/knowledge-apply.sh"; do
   printf 'x\n' > "$host/${case#*:}"
   (cd "$host" && git add -A && git diff --cached --binary > "$work/p.patch" && git reset -q --hard)
   bad="$(cd "$host" && { git -c core.quotePath=false apply --numstat "$work/p.patch" | cut -f3- | grep -Ev "$allowed" || true; })"
   case "${case%%:*}:${bad:+refused}" in
-    inside:)         ok "publish accepts a non-ASCII concept path" ;;
-    outside:refused) ok "publish still refuses a non-ASCII path outside the bundle" ;;
+    inside:)         ok "publish accepts ${case#*:}" ;;
+    outside:refused) ok "publish refuses ${case#*:}, a path outside the bundle, the feedback file and the ledger" ;;
     *)               err "publish path check got ${case#*:} wrong (refused: ${bad:-nothing})" ;;
   esac
 done
@@ -261,6 +351,74 @@ pathspecs="$(grep -c -- '-- .lokf/knowledge knowledge_bundle' "$registrar_yaml" 
 single="$(grep -cE -- '-- \.lokf/knowledge *$|-- \.lokf/knowledge \|' "$registrar_yaml" || true)"
 if [ "$pathspecs" -ge 3 ] && [ "$single" -eq 0 ]; then ok "provenance job names both paths in all $pathspecs of its git pathspecs"
 else err "knowledge-registrar.yaml: $pathspecs pathspecs name both paths, $single name only .lokf/knowledge"; fi
+
+# 3b. The provenance step itself, extracted from the template so the test
+# breaks when its lines change. `gh` is a stand-in that answers the two API
+# calls the step makes: who approved, and which commits GitHub verified for
+# whom. A person's record is never removed without that person, so a
+# confirmation struck out, or gone with its concept, needs the same backing
+# as one that is added; a person's generated record may give way to another
+# person's, the curator's Correct, and to nothing else.
+step="$work/provenance-step.sh"
+awk '/^      - name: Every new human confirmation must come from that person$/ { on = 1 }
+     on && /^        run: \|$/ { body = 1; next }
+     body && /^      [#-]/ { exit }
+     body { sub(/^          /, ""); print }' "$registrar_yaml" > "$step"
+if ! grep -q 'removed_actors' "$step" || ! bash -n "$step" 2>/dev/null; then
+  err "could not extract the provenance step from knowledge-registrar.yaml, or it no longer holds removed_actors"
+else
+  mkdir -p "$work/stub"
+  cat > "$work/stub/gh" <<'GH'
+#!/usr/bin/env bash
+case "$*" in
+  *reviews*) cat "$STUB_APPROVERS" ;;
+  *commits*) cat "$STUB_COMMITS" ;;
+esac
+GH
+  chmod +x "$work/stub/gh"
+  # provenance_case <label> <change> <approver or ""> <signer or "-"> <expected exit> <expected line>
+  provenance_case() {
+    local label="$1" change="$2" approver="$3" signer="$4" want="$5" line="$6" repo="$work/provenance-$1" k base head sha out status=0
+    k="$repo/.lokf/knowledge/x"; mkdir -p "$k"
+    (
+      cd "$repo"
+      git init -q -b main . && git config user.email "layout-test@example.invalid" && git config user.name "layout test"
+      printf -- '---\ntype: Service\nid: https://e.invalid/k/x/confirmed\nverified:\n  - by: human:ada\n    at: "2026-09-17T00:00:00Z"\n---\n\nText.\n' > "$k/confirmed.md"
+      printf -- '---\ntype: Service\nid: https://e.invalid/k/x/authored\ngenerated:\n  by: human:ada\n  at: "2026-09-17T00:00:00Z"\n---\n\nWritten.\n' > "$k/authored.md"
+      printf -- '---\ntype: Service\nid: https://e.invalid/k/x/plain\n---\n\nPlain.\n' > "$k/plain.md"
+      git add -A && git commit -q -m base
+    )
+    base="$(git -C "$repo" rev-parse HEAD)"
+    case "$change" in
+      strike)   printf -- '---\ntype: Service\nid: https://e.invalid/k/x/confirmed\n---\n\nText.\n' > "$k/confirmed.md" ;;
+      remove)   rm "$k/confirmed.md" ;;
+      correct)  printf -- '---\ntype: Service\nid: https://e.invalid/k/x/authored\ngenerated:\n  by: human:bob\n  at: "2026-09-20T00:00:00Z"\n---\n\nCorrected.\n' > "$k/authored.md" ;;
+      restamp)  printf -- '---\ntype: Service\nid: https://e.invalid/k/x/authored\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-09-20T00:00:00Z"\n---\n\nRewritten.\n' > "$k/authored.md" ;;
+      bodyonly) printf 'More.\n' >> "$k/confirmed.md" ;;
+      confirm)  printf -- '---\ntype: Service\nid: https://e.invalid/k/x/plain\nverified: [{ by: human:bob, at: "2026-09-20T00:00:00Z" }]\n---\n\nPlain.\n' > "$k/plain.md" ;;
+      *) echo "unknown change $change" >&2; exit 2 ;;
+    esac
+    (cd "$repo" && git add -A && git commit -q -m change)
+    head="$(git -C "$repo" rev-parse HEAD)"
+    printf '%s\n' "$approver" | sed '/^$/d' > "$work/approvers"
+    : > "$work/commits"
+    for sha in $(git -C "$repo" rev-list "$base..$head"); do
+      if [ "$signer" = "-" ]; then printf '%s\tfalse\t-\n' "$sha"; else printf '%s\ttrue\t%s\n' "$sha" "$signer"; fi >> "$work/commits"
+    done
+    out="$(cd "$repo" && PATH="$work/stub:$PATH" GH_TOKEN=x PR_NUMBER=1 BASE_SHA="$base" HEAD_SHA="$head" ATTEST_ENV="" GITHUB_REPOSITORY=o/r \
+            GITHUB_OUTPUT="$work/gh-output" GITHUB_STEP_SUMMARY="$work/gh-summary" STUB_APPROVERS="$work/approvers" STUB_COMMITS="$work/commits" bash "$step" 2>&1)" || status=$?
+    if [ "$status" = "$want" ] && grep -q -- "$line" <<<"$out"; then ok "provenance/$label: exit $status"
+    else err "provenance/$label: exit $status (want $want), and no line matching '$line' in: $out"; fi
+  }
+  provenance_case struck-out-unbacked  strike   ""  -   1 'removes a confirmation by human:ada but GitHub reports it verified=false'
+  provenance_case struck-out-approved  strike   ada -   0 'ok: human:ada approved this pull request'
+  provenance_case struck-out-signed    strike   ""  ada 0 'ok: human:ada signed each commit'
+  provenance_case deleted-unbacked     remove   ""  -   1 'confirmation by human:ada'
+  provenance_case corrected-by-another correct  bob -   0 'ok: human:bob approved this pull request'
+  provenance_case restamped-by-process restamp  ""  -   1 'confirmation by human:ada'
+  provenance_case body-only            bodyonly ""  -   0 'No human confirmation is added, changed or removed'
+  provenance_case confirmed-approved   confirm  bob -   0 'ok: human:bob approved this pull request'
+fi
 
 echo "4. just lokf-link"
 if command -v just >/dev/null 2>&1; then

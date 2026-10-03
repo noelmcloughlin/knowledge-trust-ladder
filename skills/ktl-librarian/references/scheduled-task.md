@@ -8,15 +8,15 @@ Keep the graph continuously accurate rather than rewriting it in bursts. Three p
 
 It runs weekly (Mondays, 05:00 UTC) and on demand (`workflow_dispatch`). Each run has two jobs:
 
-1. A read-only `refresh` job checks out the full history, sets up `uv`, and installs the `lokf` sidecar. It installs this skill from the tag `TRUST_LADDER_SKILLS_REF` pins into `.agents/skills/`; that step is skipped in the repository that publishes the skills, where the wrapper finds them under bare `skills/`. Then it sets up Node for the agent, runs the agent, applies the `.lokf/patch.yaml` it wrote with `knowledge-apply.sh`, fails if the agent changed anything else, validates, and diffs `.lokf/knowledge/`. Only the bundle is diffed, so tool artifacts never trigger a pull request. If anything changed, it packages the change as a patch artifact: `.lokf/knowledge/` plus `.lokf/feedback.md`, ktl-docent's reader-feedback file, so entries the librarian consumed do not return.
-2. A separate privileged `publish` job applies the patch on a clean checkout, commits it to a fresh `knowledge-librarian/<date>-<run_id>` branch, and opens a review pull request via `github-script`.
+1. A read-only `refresh` job checks out the full history, sets up `uv`, and installs the `lokf` sidecar. It installs this skill from the tag `TRUST_LADDER_SKILLS_REF` pins into `.agents/skills/`; that step is skipped in the repository that publishes the skills, where the wrapper finds them under bare `skills/`. Then it sets up Node for the agent, runs the agent, applies the `.lokf/patch.yaml` it wrote with `knowledge-apply.sh`, fails if the agent changed anything else, validates, and diffs `.lokf/knowledge/`. Only the bundle is diffed, so tool artifacts never trigger a pull request. If anything changed, it packages the change as a patch artifact: `.lokf/knowledge/` plus `.lokf/feedback.md`, ktl-docent's reader-feedback file, and `.lokf/questions.md`, the ledger a handled entry moves into, so entries the librarian consumed do not return.
+2. A separate privileged `publish` job applies the patch on a clean checkout and checks the result before it commits. It then commits to a fresh `knowledge-librarian/<date>-<run_id>` branch and opens a review pull request via `github-script`.
 
 The guardrails: the agent runs in a `contents: read` job with no persisted credentials, and only the `publish` job, which runs no agent code, holds `contents: write` and `pull-requests: write`. The workflow never pushes to the default branch, never auto-merges, and opens no pull request when nothing changed.
 
 Two things this skill must keep true for it:
 
 - A no-change run must leave the bundle byte-for-byte untouched, `log.md` included (section 1's log policy).
-- The pull request body ends with a **For the curator** section: counts of drafts, open questions and person-confirmed concepts. The workflow computes them from frontmatter with `grep` rather than taking them from the agent's output, and points the reviewer at the **ktl-curator** skill. It is a nudge; the curator's own report is the authoritative view.
+- What a reviewer must know goes in the bundle, as a `log` line or an open question. The pull request body is the workflow's and not yours: the `publish` job computes the bundle's health line and what the change does to the record with `knowledge-report.sh`, on its own checkout, and takes nothing from the agent's output. Your final reply is read in the job's log and nowhere else.
 
 ## `knowledge-librarian.sh`: the agent wrapper
 
@@ -26,10 +26,11 @@ The workflow invokes `.lokf/scripts/knowledge-librarian.sh` directly, a fixed, r
 2. Set `AGENT_CLI` to your non-interactive agent command.
 3. Name the variable the agent reads its credential from in `AGENT_API_KEY_ENV`.
 4. Either set `AGENT_USE_JOB_TOKEN` to `true` (Copilot CLI, billed to the repository owner's seat) or put a key in the `AGENT_API_KEY` secret. The wrapper hands it to the agent under that name only.
+5. Optionally set `KNOWLEDGE_RETRIEVAL` to `true`. Each run that changes the bundle then makes one more agent call, which scores whether the index leads to the concept behind each question readers asked, and the pull request carries the score.
 
 The sidecar's automation.md gives the full settings for Copilot CLI and Claude Code. If `KNOWLEDGE_LIBRARIAN_ENABLED` is not `true`, the workflow's agent step is skipped, so the workflow is harmless until you wire the agent up.
 
-The script selects the ktl-librarian skill, builds a prompt telling the agent to follow it and re-scrape the repository, then calls `AGENT_CLI`. Its contract: the agent writes one file, `.lokf/patch.yaml`, and the wrapper applies it with `knowledge-apply.sh` once the agent has finished, refusing a run that changed anything else. So `.lokf/knowledge/` changes only through that script, and the wrapper performs no git or pull request operations. The workflow owns the branch, the commit and the pull request.
+The script selects the ktl-librarian skill, builds a prompt telling the agent to follow it and re-scrape the repository, then calls `AGENT_CLI`. The prompt takes the patch file's format from `knowledge-apply.sh --format`, so it holds for whichever release of this skill the pin installs. Its contract: the agent writes one file, `.lokf/patch.yaml`, and the wrapper applies it with `knowledge-apply.sh` once the agent has finished. It refuses a run that changed anything else, and one whose result touches a person's record. So `.lokf/knowledge/` changes only through that script, and the wrapper performs no git or pull request operations. The workflow owns the branch, the commit and the pull request.
 
 ## `knowledge-registrar.yaml`: the gate
 
@@ -37,8 +38,8 @@ The registrar keeps records well-formed and provenanced. It never judges whether
 
 Its `pull_request` trigger does **not** fire on the librarian's own pull request. GitHub does not start `pull_request`-triggered workflows for a pull request opened with the default `GITHUB_TOKEN`, which is how `publish` opens it. That is a deliberate anti-recursion rule, not a bug here. So `publish` carries the two checks that matter for this pull request itself, before it ever opens it:
 
-- Every changed path falls inside the bundle. `publish` re-derives this from the patch's own `git apply --numstat` output against an allow-list, since the `refresh` job's own boundary check shared a workspace with the agent and so cannot be trusted alone.
-- The patch adds no `by: human:` claim. This skill never writes one.
+- Every changed path falls inside the bundle, the feedback file or the ledger. `publish` re-derives this from the patch's own `git apply --numstat` output against an allow-list, since the `refresh` job's own boundary check shared a workspace with the agent and so cannot be trusted alone.
+- The patch touches no person's record. `knowledge-provenance.sh --unattended` reads that off the patched tree: no `human:` event added, changed or removed in any YAML layout, no person's note added or removed, and no text a person wrote changed. This skill never does any of those, and the pen refuses each before it writes.
 
 To get the registrar's own `validate` and `provenance` checks to run and show green on the librarian pull request, useful if your branch protection requires them, close and reopen the pull request, or push an empty commit to its branch. Either is a human action and fires a fresh `pull_request` event. A curation pull request from ktl-curator, opened normally by a person, triggers the gate immediately with no extra step; that is what `provenance` exists for.
 

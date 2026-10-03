@@ -3,7 +3,7 @@
 # requires-python = ">=3.9"
 # dependencies = ["pyyaml"]
 # ///
-# The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9 and 10
+# The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9, 10 and 12
 # (see that script's header for the list). Rules 2, 3, 7 and 9 are questions
 # about a document's YAML - is this scalar quoted, is this key a list or a
 # mapping, do two files share an id, does the block even parse - that a real
@@ -13,8 +13,10 @@
 # is where a line-oriented regex used to guess wrong. Rule 4 is a body rule
 # that rides along, and rule 10 exists because the provenance gates do read
 # the frontmatter line by line: it keeps the fields they read to spellings a
-# line reader and a parser agree on. Rules 1, 5, 6, 8 and 11 stay in the shell
-# script: they are git and filesystem facts, and needn't wait on uv.
+# line reader and a parser agree on. Rule 12 compares a concept's title and
+# description, which only a parser reads whole, with the index bullets that
+# copy them. Rules 1, 5, 6, 8 and 11 stay in the shell script: they are git
+# and filesystem facts, and needn't wait on uv.
 #
 # Usage: knowledge-conventions.py <bundle-dir>. Same contract as the shell
 # half: one line per finding on stdout, exit 1 if any; "OK" and exit 0 if
@@ -32,6 +34,9 @@ import yaml
 
 RESERVED = {"index.md", "log.md", "diataxis.md"}
 OPEN_QUESTION = re.compile(r"^- \d{4}-\d{2}-\d{2}, (human|process):[^ :]+: ")
+# An index bullet in the shape knowledge-apply.sh writes: the title linked to
+# the concept, then its description.
+INDEX_BULLET = re.compile(r"^\* \[(.+?)\]\(([^)]+)\) - (.*)$")
 # The fields the provenance gates read line by line: a concept's id, and the
 # actor, time and revision of each event.
 GATE_FIELDS = {"id", "by", "at", "revision"}
@@ -105,7 +110,21 @@ def find_unquoted_at(node, where: str) -> list[str]:
     return findings
 
 
-def check_file(path: Path, ids: dict[str, list[Path]]) -> list[str]:
+def index_bullets(index: Path, cache: dict[Path, dict[str, tuple[str, str]]]) -> dict[str, tuple[str, str]]:
+    """The bullets of one index.md, as link -> (title, description), each with its whitespace collapsed."""
+    if index not in cache:
+        found: dict[str, tuple[str, str]] = {}
+        if index.is_file():
+            text = index.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+            for line in text.split("\n"):
+                m = INDEX_BULLET.match(line)
+                if m:
+                    found[m.group(2)] = (" ".join(m.group(1).split()), " ".join(m.group(3).split()))
+        cache[index] = found
+    return cache[index]
+
+
+def check_file(path: Path, ids: dict[str, list[Path]], entries: dict[Path, tuple[str, str]]) -> list[str]:
     findings: list[str] = []
     raw = path.read_bytes()
     if raw.startswith(b"\xef\xbb\xbf"):
@@ -176,6 +195,12 @@ def check_file(path: Path, ids: dict[str, list[Path]]) -> list[str]:
     if isinstance(concept_id, str) and concept_id:
         ids.setdefault(concept_id, []).append(path)
 
+    # 12. the catalogue entry - collected here, compared with the index
+    #     bullets once every file is read.
+    title, description = frontmatter.get("title"), frontmatter.get("description")
+    if isinstance(title, str) and isinstance(description, str):
+        entries[path] = (" ".join(title.split()), " ".join(description.split()))
+
     return findings
 
 
@@ -190,10 +215,28 @@ def main(argv: list[str]) -> int:
 
     findings: list[str] = []
     ids: dict[str, list[Path]] = {}
+    entries: dict[Path, tuple[str, str]] = {}
     for path in sorted(bundle.rglob("*.md")):
         if ".obsidian" in path.parts or path.name in RESERVED:
             continue
-        findings.extend(check_file(path, ids))
+        findings.extend(check_file(path, ids, entries))
+
+    # 12. an index bullet that names a concept says what the concept says. A
+    #     reader chooses from the index before opening anything, so a bullet
+    #     left behind by an edited title or description hides the concept as
+    #     surely as a missing one. Only a bullet that exists is compared, in
+    #     the folder's index.md and in the root's: a concept no index lists
+    #     is a choice this rule leaves alone.
+    cache: dict[Path, dict[str, tuple[str, str]]] = {}
+    for path, entry in entries.items():
+        places = {path.parent / "index.md": path.name, bundle / "index.md": path.relative_to(bundle).as_posix()}
+        for index, link in places.items():
+            bullet = index_bullets(index, cache).get(link)
+            if bullet is not None and bullet != entry:
+                findings.append(
+                    f"{path}: its bullet in {index} does not match its title and description - "
+                    "a reindex operation through knowledge-apply.sh re-derives it"
+                )
 
     for concept_id, paths in ids.items():
         if len(paths) > 1:

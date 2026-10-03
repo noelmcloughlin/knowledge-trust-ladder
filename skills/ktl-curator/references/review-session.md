@@ -82,7 +82,7 @@ stale_after: 2027-03-08
 
 Quote it always, like `at`. An all-digit commit id is otherwise read as a number and fails `lokf validate`, and an ETag carries its own double quotes (`revision: 'W/"33a64df5"'`). Leave the key out rather than guess, and leave it out where the toolkit rejects it. Every released version does, since the field is proposed for lokf 0.9.0 and not yet shipped (`uv run lokf --version` in `.lokf/`).
 
-If the body has an `## Open questions` section and the person says those are answered, delete the section. Otherwise leave it.
+If the body has an `## Open questions` section and the person says those are answered, delete the section. Otherwise leave it. The report lists apart each question dated no later than this person's earlier confirmation: it looks answered, so ask, and clear it only on their word.
 
 ### Wrong - send back (default)
 
@@ -113,6 +113,8 @@ verified:
   - by: human:ada-lovelace
     at: "2026-09-08T14:05:00Z"
 ```
+
+As with *Confirm*, delete the `## Open questions` section when the person says its questions are answered, and leave it otherwise.
 
 This is the widest verb in the skill, and the only one that writes *content*. The librarian will not rewrite what it stamps as human-authored (ktl-librarian, section 1), so a wrong fact recorded here survives every later refresh and is caught only if the repository actively contradicts it. Use it only for a fact the person states themselves, keep the edit as small as that fact, and never reach for it when *Wrong - send back* would do.
 

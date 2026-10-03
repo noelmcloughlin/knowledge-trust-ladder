@@ -195,7 +195,7 @@ if have uv; then
   fi
   if have just; then ok just "just $(just --version 2>/dev/null | sed 's/^just //')"; else info just "just not installed - uvx --from rust-just just works the same"; fi
 else
-  miss toolkit "uv not installed - lokf validate, convert and query unavailable, and the conventions script skips its parser's half (rules 2, 3, 4, 7, 9, 10); only the manual schema cross-check remains" "lokf validate and six of the eleven conventions (every skill's audit)"
+  miss toolkit "uv not installed - lokf validate, convert and query unavailable, and the conventions script skips its parser's half (rules 2, 3, 4, 7, 9, 10, 12); only the manual schema cross-check remains" "lokf validate and six of the eleven conventions (every skill's audit)"
 fi
 
 # ---- installed skills, and drift between copies -----------------------------
@@ -247,6 +247,9 @@ fi
 if [ -d "$bundle" ] && [ ! -f "$root/.lokf/scripts/knowledge-apply.sh" ]; then
   script_gaps="${script_gaps}${script_gaps:+, }.lokf/scripts/knowledge-apply.sh missing, so ktl-librarian must write the bundle by hand"
 fi
+if [ -d "$bundle" ] && [ ! -f "$root/.lokf/scripts/knowledge-report.sh" ]; then
+  script_gaps="${script_gaps}${script_gaps:+, }.lokf/scripts/knowledge-report.sh missing, so ktl-curator and ktl-docent must work each trust label out by hand"
+fi
 # A host moves TRUST_LADDER_SKILLS_REF on its own schedule, so a different
 # pin is not drift; every other byte of the librarian workflow still counts.
 unpin() { sed -E 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' "$1"; }
@@ -260,6 +263,7 @@ if [ -n "$templates" ] && [ -d "$root/.lokf" ]; then
               "scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
               "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh" \
               "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py" \
+              "scripts/knowledge-report.sh:.lokf/scripts/knowledge-report.sh" \
               "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh" \
               "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md" \
               "gitattributes:.lokf/.gitattributes" \
