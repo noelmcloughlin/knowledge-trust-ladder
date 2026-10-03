@@ -2,6 +2,15 @@
 
 ## 2026-10-03
 
+* **Changed**: Why the skills live in their own repository: the old repository name is left to `docs/install.md`, which records it; the contract keeps it out of every other file.
+* **Changed**: ktl-librarian skill: seven pen operations, with `reindex`, as `references/patch.md` now gives. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: When the built-in vocabulary stops fitting: the description is the catalogue entry, cut to one sentence.
+* **Changed**: Hosts and doorways: the description is the catalogue entry, cut to one sentence.
+* **Changed**: What Knowledge Trust Ladder is for: the description is the catalogue entry, cut to two sentences.
+* **Changed**: Three lines of defence: the description is the catalogue entry, cut to one sentence.
+* **Changed**: The docent in Microsoft 365 Copilot: the description is the catalogue entry, cut to one sentence.
+* **Changed**: Open the knowledge bundle in Obsidian: the description is the catalogue entry, cut to one sentence.
+* **Changed**: Releasing: the description is the catalogue entry, cut to one sentence.
 * **Changed**: Why a registrar role: the description no longer says "rather than by an agent", which `README.md` does not say (the curator's send-back of 2026-09-26); the body follows the README's registrar section as of `f1f0d51`, which dropped the two plugins' "levels of checking" and folded the three-lines paragraph under it, and the undated pen is no longer dated. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: The docent in Microsoft 365 Copilot: the limits sentence now gives both sizes the sidecar's `references/m365.md` states, the toolkit's 10 MB app package and Agent Builder's 50 MB zip (the curator's send-back of 2026-09-26); four qualifiers `docs/m365.md` does not state are dropped ("fifth skill", "at the bundle's commit time", "the toolkit's preview", "check 17 word for word").
 * **Changed**: Knowledge sources: the rows name `bug_report.md`, `feature_request.md`, `docent.md` and `curator.md` instead of their globs, and `.gitignore` joins the `LICENSE` row (the curator's send-back of 2026-09-26); the skills row counts five playbooks and the references row admits `prose-check.py`; a row for `.markdownlint-cli2.jsonc` and `lychee.toml`, which had none; a note for this pass. Edited since a person confirmed it; the label says so until the curator looks again.

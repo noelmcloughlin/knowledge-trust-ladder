@@ -2,12 +2,12 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 title: Hosts and doorways - where the bundle's real folder lives
-description: The bundle is `.lokf/knowledge`, one real folder on every host, and `knowledge_bundle` beside it is a link - the doorway for people and folder pickers. Why there is one layout, what the visible layout of 2026-09-12 tried and why it was retired the next day, and what a shared folder that is not a vault may still do by hand.
+description: Why the bundle is `.lokf/knowledge`, one real folder on every host, with `knowledge_bundle` beside it as a link for people and folder pickers; what the visible layout tried and why it was retired; and what a shared folder that is not a vault may still do by hand.
 genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:45:53Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -22,6 +22,7 @@ sources:
 - resource: docs/obsidian.md
 - resource: CHANGELOG.md
 ---
+
 # The pattern
 
 A LOKF bundle is a **sidecar**: it sits beside the raw sources it distils, in the same folder tree

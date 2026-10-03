@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -18,6 +18,7 @@ sources:
 - resource: scripts/validate-repository.sh
 - resource: CHANGELOG.md
 ---
+
 # Overview
 
 `validate.yml` runs five jobs on every pull request, every push to `main`,

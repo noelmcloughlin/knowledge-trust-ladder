@@ -2,7 +2,7 @@
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 title: The docent in Microsoft 365 Copilot
-description: How a person gets ktl-docent-m365, the docent packed with a snapshot of the bundle as a Microsoft 365 Copilot custom skill, from a release or by building it with `.lokf/m365/knowledge-m365.sh`, adds it to a declarative agent, checks the first answer, and keeps it current; what to do when a step fails, and why only the read-only roles go there.
+description: How a person gets ktl-docent-m365, the docent packed with a snapshot of the bundle as a Microsoft 365 Copilot custom skill, from a release or by building it, adds it to a declarative agent, checks the first answer and keeps it current, what to do when a step fails, and why only the read-only roles go there.
 genre: how-to
 resource: docs/m365.md
 sources:
@@ -12,7 +12,7 @@ sources:
 - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:45:53Z"
 status: draft
 isPartOf:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -25,6 +25,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 - https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
 ---
+
 # Overview
 
 **ktl-docent-m365** is the docent as a custom skill for a Microsoft 365 Copilot declarative agent. It is not a skill of its own: it puts [ktl-docent](ktl-docent-skill.md) into Copilot. Copilot runs a skill with no repository, shell or network, so the skill carries a **snapshot** of the bundle and answers from it. Every answer names the snapshot (repository, revision, build date) and the trust label of each concept it used, in the same words ktl-docent uses. It cannot check a value at its source or write `.lokf/feedback.md`, so it says so and hands the reader a ready-to-paste Miss or Disagreement line to file in the repository instead.

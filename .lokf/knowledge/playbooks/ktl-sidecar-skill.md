@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 hasPart:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot

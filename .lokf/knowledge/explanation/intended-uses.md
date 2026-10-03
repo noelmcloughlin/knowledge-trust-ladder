@@ -2,14 +2,14 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/intended-uses
 title: What Knowledge Trust Ladder is for, and what it is not
-description: Placeholder for a reader's question the sources do not settle - which uses KTL fits (such as DevSecOps or technology governance) and which it does not. Today the README states the purpose, a governed context layer over a repository's knowledge, but names no use cases or non-goals.
+description: "A draft placeholder for a reader's question no source settles: which uses Knowledge Trust Ladder is meant for, such as DevSecOps or technology governance, and which it is not. The README states the purpose and names no use case or non-goal."
 genre: explanation
 resource: README.md
 sources:
 - resource: README.md
 generated:
   by: process:ktl-librarian
-  at: '2026-09-24T10:52:00Z'
+  at: "2026-10-03T01:45:53Z"
 status: draft
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
@@ -17,8 +17,9 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
 verified:
 - by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 ---
+
 # Overview
 
 The README states what the project is: it keeps a repository's scattered knowledge as a collection - catalogued, authenticated and explained, with the trust in every claim visible. It calls that a **context layer**, a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent, and frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim.

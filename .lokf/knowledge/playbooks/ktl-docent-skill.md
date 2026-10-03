@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
@@ -20,7 +20,7 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 verified:
 - by: process:ktl-librarian
-  at: '2026-09-26T19:52:21Z'
+  at: "2026-09-26T19:52:21Z"
 sources:
 - resource: skills/ktl-docent/SKILL.md
 - resource: skills/ktl-docent/references/answering.md
@@ -28,6 +28,7 @@ sources:
 - resource: README.md
 - resource: CHANGELOG.md
 ---
+
 # Overview
 
 Runs **whenever anyone asks**. Bundle first: read `knowledge/index.md`, open

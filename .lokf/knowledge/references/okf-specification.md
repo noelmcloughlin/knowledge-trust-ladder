@@ -7,16 +7,17 @@ genre: reference
 resource: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
 generated:
   by: human:noelmcloughlin
-  at: '2026-09-26T20:42:16Z'
+  at: "2026-09-26T20:42:16Z"
 verified:
 - by: human:noelmcloughlin
-  at: '2026-09-09T16:35:55Z'
+  at: "2026-09-09T16:35:55Z"
 - by: human:noelmcloughlin
-  at: '2026-09-26T20:42:16Z'
+  at: "2026-09-26T20:42:16Z"
 - by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 stale_after: 2027-09-26
 ---
+
 # Overview
 
 Every LOKF bundle is also a valid OKF bundle. OKF supplies the substrate the

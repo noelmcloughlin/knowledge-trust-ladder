@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -18,6 +18,7 @@ sources:
 - resource: CONTRIBUTING.md
 - resource: docs/signing-commits.md
 ---
+
 # Overview
 
 `CONTRIBUTING.md` is a checklist, not a design log: each rule is a line or two linking to where its reasoning

@@ -7,10 +7,10 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 verified:
 - by: human:noelmcloughlin
-  at: '2026-09-10T00:00:00Z'
+  at: "2026-09-10T00:00:00Z"
 stale_after: 2027-09-10
 status: draft
 ---

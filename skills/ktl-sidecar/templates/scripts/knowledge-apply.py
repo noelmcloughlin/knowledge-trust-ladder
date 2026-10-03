@@ -22,6 +22,7 @@
 #   question  one open question, in the curator's shape, with this run's actor
 #   recheck   this run's own `verified` event, replacing its previous one
 #   delete    the concept, its index bullets, and a log line saying why
+#   reindex   both index bullets re-derived from the frontmatter; the concept itself is not touched
 #
 # Usage: knowledge-apply.py [--dry-run] [--keep] --root <repo-root> [<patch-file>]
 #   exit 0  applied, or with --dry-run would apply
@@ -48,12 +49,20 @@ DENIED_SET = {"id", "type", "generated", "verified", "status", "stale_after", "t
 DENIED_CREATE = {"generated", "verified", "status", "stale_after", "timestamp"}
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
-OPS = {"create", "patch", "rewrite", "question", "recheck", "delete"}
+OPS = {"create", "patch", "rewrite", "question", "recheck", "delete", "reindex"}
 EDITS = {"replace", "insert_after", "append"}
 
 
 class Refused(Exception):
     pass
+
+
+class Dumper(yaml.SafeDumper):
+    """Writes frontmatter the way the bundle's own files do: a scalar that needs quoting gets double quotes."""
+
+    def choose_scalar_style(self):
+        style = super().choose_scalar_style()
+        return '"' if style == "'" else style
 
 
 def split_frontmatter(text: str):
@@ -67,10 +76,9 @@ def split_frontmatter(text: str):
 
 
 def dump(fm: dict, body: str) -> str:
-    fm_text = yaml.safe_dump(fm, sort_keys=False, allow_unicode=True, default_flow_style=False, width=1_000_000)
-    if not body.startswith("\n"):
-        body = "\n" + body
-    return "---\n" + fm_text + "---" + body.rstrip("\n") + "\n"
+    """The frontmatter block, then the body as it was read: a blank line after the closing --- stays, and one that was absent stays absent."""
+    fm_text = yaml.dump(fm, Dumper=Dumper, sort_keys=False, allow_unicode=True, default_flow_style=False, width=1_000_000)
+    return "---\n" + fm_text + "---\n" + body.rstrip("\n") + "\n"
 
 
 def one_line(value, what: str) -> str:
@@ -347,11 +355,24 @@ class Bundle:
         self.log(op, f"**Open question**: {c.title()}: {text}")
 
     def recheck(self, op: dict) -> None:
+        """This run's own event replaces its previous one where it stood, so a person's events keep their place."""
         c = self.concept(op["path"], must_exist=True)
-        events = [e for e in c.events() if e.get("by") != self.by]
-        events.append({"by": self.by, "at": self.now})
+        events = c.events()
+        mine = [k for k, e in enumerate(events) if e.get("by") == self.by]
+        event = {"by": self.by, "at": self.now}
+        if mine:
+            events[mine[0]] = event
+            for k in reversed(mine[1:]):
+                del events[k]
+        else:
+            events.append(event)
         c.fm["verified"] = events
         c.touched = True
+
+    def reindex(self, op: dict) -> None:
+        """Both index bullets re-derived from the frontmatter as it stands. The concept is read, never written, so it works on a person's text too."""
+        c = self.concept(op["path"], must_exist=True)
+        self.index_set(op["path"], c.title(), c.description())
 
     def delete(self, op: dict) -> None:
         path = op["path"]

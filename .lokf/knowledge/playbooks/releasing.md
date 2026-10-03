@@ -2,12 +2,12 @@
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 title: Releasing
-description: semantic-release.yml computes the version and promotes CHANGELOG.md on merge to main but never tags, folding into a still-unpublished section rather than doubling it; a workflow_dispatch run of publish.yml then validates that version against the promoted changelog, re-checks the contract and spec, lets gh skill publish create the tag and release, and dispatches knowledge-release.yaml to attach the bundle zip.
+description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, and dispatches `knowledge-release.yaml` to attach the bundle and Copilot zips."
 genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:45:53Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -26,6 +26,7 @@ sources:
 - resource: scripts/sync-sidecar.sh
 - resource: CHANGELOG.md
 ---
+
 # Overview
 
 A person no longer hand-picks the version, but two tools never race to tag

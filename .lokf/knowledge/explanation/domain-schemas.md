@@ -2,7 +2,7 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
 title: When the built-in vocabulary stops fitting - domain schemas
-description: How a bundle in a specialised or regulated domain goes beyond LOKF's core classes - the signs a domain schema is due, a LinkML schema importing LOKF's and checked with `lokf validate --schema`, reusing a domain's existing vocabulary (the AI Risk Ontology for AI governance), the Microsoft 365 identity shape held in reserve for a Copilot curator, and who raises, decides and applies it.
+description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's and checked with `lokf validate --schema`, reusing a domain's own vocabulary such as the AI Risk Ontology, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
 genre: explanation
 resource: skills/ktl-curator/references/domain-schemas.md
 sources:
@@ -11,7 +11,7 @@ sources:
 - resource: README.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:45:53Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
@@ -23,6 +23,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 ---
+
 # Overview
 
 LOKF ships a small vocabulary on purpose: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. OKF leaves a fixed taxonomy of concept types to the producer, so any domain can bring its own. The README says LOKF's is a short list of classes, and a domain whose concepts stop fitting it extends the schema in LinkML, so its own types go from tolerated to checked.

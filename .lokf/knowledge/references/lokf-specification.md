@@ -7,22 +7,23 @@ genre: reference
 resource: https://lokf.nolan-nichols.com/specification/
 generated:
   by: process:ktl-librarian
-  at: '2026-09-24T16:46:12Z'
+  at: "2026-09-24T16:46:12Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 verified:
 - by: human:noelmcloughlin
-  at: '2026-09-09T16:35:55Z'
+  at: "2026-09-09T16:35:55Z"
 - by: human:noelmcloughlin
-  at: '2026-09-24T01:12:16Z'
+  at: "2026-09-24T01:12:16Z"
 - by: human:noelmcloughlin
-  at: '2026-09-26T20:04:41Z'
+  at: "2026-09-26T20:04:41Z"
 - by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 stale_after: 2027-09-26
 ---
+
 # Overview
 
 The site is the authority for what LOKF *means* - the source the librarian

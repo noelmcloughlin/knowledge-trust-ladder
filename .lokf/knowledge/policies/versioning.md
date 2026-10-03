@@ -13,18 +13,19 @@ sources:
 - resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 verified:
 - by: process:ktl-librarian
-  at: '2026-09-24T11:05:00Z'
+  at: "2026-09-24T11:05:00Z"
 - by: human:noelmcloughlin
-  at: '2026-09-10T00:00:00Z'
+  at: "2026-09-10T00:00:00Z"
 - by: human:noelmcloughlin
-  at: '2026-09-26T20:08:48Z'
+  at: "2026-09-26T20:08:48Z"
 stale_after: 2027-09-26
 ---
+
 # Overview
 
 `vMAJOR.MINOR.PATCH`. Since 0.15.0 (2026-09-12, `CHANGELOG.md`) the bump is

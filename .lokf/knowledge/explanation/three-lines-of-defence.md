@@ -2,12 +2,12 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 title: Three lines of defence - where each role sits, and what an auditor can check
-description: Placing the librarian, curator, registrar, sidecar and docent roles in The Institute of Internal Auditors' Three Lines Model, with a diagram - who owns a claim, what a machine checks, and what a person can examine afterwards - the four limits on what that evidence shows, a pointer to the critics page, and what remains to do and who does it. The critics page quotes the model's critics (preliminary research) and says which of their points a LOKF bundle answers and what kind of gap each remainder is. Written for whoever adopts a bundle, not about this repository's own arrangements.
+description: "The librarian, curator, registrar, sidecar and docent placed in the IIA's Three Lines Model, for whoever adopts a bundle: who owns a claim, what a machine checks, what a person can examine afterwards, the four limits on that evidence, what the critics page answers, and what remains to do and who does it."
 genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:45:53Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles

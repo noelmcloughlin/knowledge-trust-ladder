@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
@@ -23,6 +23,7 @@ sources:
 - resource: README.md
 - resource: CHANGELOG.md
 ---
+
 # Overview
 
 Runs **a little, regularly**. Step 1 is always a read-only one-screen report

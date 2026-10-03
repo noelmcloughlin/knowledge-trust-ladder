@@ -8,13 +8,14 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 ---
+
 # Overview
 
 The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can

@@ -1213,7 +1213,9 @@ expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- s
 #     the deletion of a concept a person confirmed are refused; a person's
 #     own verified event survives a patch; the index bullets and the log
 #     heading are kept in step; the lokf:related block survives a rewrite; a
-#     handled feedback entry is removed; and a dry run writes nothing.
+#     handled feedback entry is removed; a dry run writes nothing; a quoted
+#     timestamp keeps its double quotes; and reindex re-derives a bullet
+#     without touching the concept.
 say ""
 say "Exercising knowledge-apply.sh..."
 apply="$repo_root/$templates/scripts/knowledge-apply.sh"
@@ -1285,9 +1287,9 @@ else
   err "patch did not edit the draft as expected: $(head -14 "$kb/playbooks/draft.md" | tr '\n' '|')"
 fi
 if grep -q 'A new paragraph.' "$kb/playbooks/confirmed.md" && grep -q '^ *- by: human:ada$' "$kb/playbooks/confirmed.md" \
-   && grep -qE "^ +at: ['\"]2026-02-02T00:00:00Z['\"]$" "$kb/playbooks/confirmed.md" \
+   && grep -qE '^ +at: "2026-02-02T00:00:00Z"$' "$kb/playbooks/confirmed.md" \
    && grep -q 'Edited since a person confirmed it' "$kb/log.md"; then
-  ok "patch on a confirmed concept keeps the person's event and says so in the log"
+  ok "patch on a confirmed concept keeps the person's event, with its double quotes, and says so in the log"
 else
   err "patch on a confirmed concept lost the person's event or the log note: $(tr '\n' '|' < "$kb/playbooks/confirmed.md")"
 fi
@@ -1346,6 +1348,15 @@ if out="$(bash "$apply" --root "$ka" --dry-run "$kpatch" 2>&1)" && grep -q 'woul
   ok "a dry run reports what it would write, writes nothing, and keeps the patch file"
 else
   err "the dry run wrote something or lost the patch file: $out"
+fi
+sed -i 's|^\* \[New\](playbooks/new.md) - brand new.$|* [New](playbooks/new.md) - stale.|' "$kb/index.md"
+kbefore="$(md5sum < "$kb/playbooks/new.md")"
+printf '%s\n' 'ops:' '  - {op: reindex, path: playbooks/new.md}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qF '* [New](playbooks/new.md) - brand new.' "$kb/index.md" \
+   && [[ "$(md5sum < "$kb/playbooks/new.md")" == "$kbefore" ]] && ! grep -q 'brand new' "$kb/log.md"; then
+  ok "reindex restores a drifted bullet from the frontmatter and touches neither the concept nor the log"
+else
+  err "reindex did not restore the bullet, or touched the concept or the log: $(grep -n 'New' "$kb/index.md" "$kb/log.md" | tr '\n' '|')"
 fi
 rm -rf "$ka"
 

@@ -2,15 +2,15 @@
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 title: Threat model
-description: 'The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate.'
+description: "The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate."
 genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 verified:
 - by: process:ktl-librarian
-  at: '2026-09-24T22:22:58Z'
+  at: "2026-09-24T22:22:58Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/security
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant

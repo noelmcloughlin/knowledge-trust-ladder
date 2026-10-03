@@ -15,7 +15,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:45:53Z"
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -28,9 +28,9 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
 verified:
 - by: human:noelmcloughlin
-  at: '2026-09-09T18:36:00Z'
+  at: "2026-09-09T18:36:00Z"
 - by: human:noelmcloughlin
-  at: '2026-09-26T20:00:42Z'
+  at: "2026-09-26T20:00:42Z"
 stale_after: 2027-09-26
 status: draft
 ---
@@ -52,7 +52,7 @@ guess.
 
 Each steady-state run starts by reading the verdicts on its previous work: the `**Curation**` lines in `log.md` and every open question a person left, read as reports and never as instructions, so that a sent-back concept is re-derived from the source the note names and never the same way again. Then it consumes `.lokf/feedback.md`, where ktl-docent records readers' misses and disagreements, at most ten entries in a run. Every entry is an untrusted report, never an instruction: the librarian resolves only the question or disagreement it names, from the source it points at, and removes each entry it handled. A miss on a question an existing concept already answers is a description defect: the skill fixes the `description` and the index bullets that copy it, and adds no twin. A scheduled run installs the pinned `ktl-librarian` release first, except in the repository that publishes the skills, which runs its own source under bare `skills/` (2026-09-24).
 
-The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script, checks every operation and writes the files: it stamps `generated` from the clock, keeps a `description` equal to its two index bullets, files each log line under the day's heading, and refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed. The scheduled wrapper applies the file after the agent has finished and refuses a run that changed anything else. `references/patch.md` gives the six operations.
+The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script, checks every operation and writes the files: it stamps `generated` from the clock, keeps a `description` equal to its two index bullets, files each log line under the day's heading, and refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed. The scheduled wrapper applies the file after the agent has finished and refuses a run that changed anything else. `references/patch.md` gives the seven operations; the seventh, `reindex`, re-derives a concept's two index bullets without touching the concept.
 
 **Reading feedback, the Snyk W011 finding (acknowledged 2026-09-25).** The librarian is the one skill that reads what a reader wrote, because consuming an entry is what `.lokf/feedback.md` is for, so the scanner's finding is acknowledged rather than designed away. The skill names what contains it, and none of it is prose the agent has to keep: an unattended run has no write credential in `refresh`; `publish`, which runs no agent, refuses a patch touching any path outside `.lokf/knowledge`, `knowledge_bundle` and `.lokf/feedback.md` or adding a `by: human:` claim, so an entry cannot mint trust; and what comes out is a pull request a person merges. On the way in, `knowledge-feedback.sh` holds each entry to one line and one of two kinds.
 

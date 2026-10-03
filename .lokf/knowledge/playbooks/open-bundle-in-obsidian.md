@@ -2,7 +2,7 @@
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 title: Open the knowledge bundle in Obsidian
-description: How a knowledge bundle meets an Obsidian vault - two vaults, the workshop someone already keeps and the bundle opened as its own vault through the root-level knowledge_bundle doorway - with what Obsidian does with a link on each host, verified against Obsidian 1.13.7's file reconciler, and why the bundle is never laid down as a real folder inside a vault.
+description: "How a knowledge bundle meets an Obsidian vault: two vaults, the workshop someone keeps and the bundle opened as its own through the `knowledge_bundle` doorway, what Obsidian does with the link on each host, and why the bundle is never a real folder inside a vault."
 genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 sources:
@@ -14,7 +14,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:45:53Z"
 status: draft
 isPartOf:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -23,6 +23,7 @@ about:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 ---
+
 # Overview
 
 `ktl-sidecar` Step 2 creates a `knowledge_bundle` symlink at the host root, pointing at

@@ -11,17 +11,18 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
 verified:
 - by: human:noelmcloughlin
-  at: '2026-09-10T00:00:00Z'
+  at: "2026-09-10T00:00:00Z"
 - by: human:noelmcloughlin
-  at: '2026-09-26T20:21:41Z'
+  at: "2026-09-26T20:21:41Z"
 stale_after: 2027-03-26
 ---
+
 # Overview
 
 Rewritten 2026-09-14 from a single file of up to ~1,900 words into a short policy plus

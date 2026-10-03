@@ -44,8 +44,11 @@ ops:
     path: policies/retention.md
     text: "the policy names 13 months and the ETL config names 12; which is current?"
 
-  - op: recheck                  # this run's own verified event, replacing its previous one
+  - op: recheck                  # this run's own verified event, replacing its previous one where it stood
     path: glossary/order.md
+
+  - op: reindex                  # both index bullets re-derived from the frontmatter; the concept is not written
+    path: policies/retention.md
 
   - op: delete                   # the file and its index bullets; refused when a person confirmed it
     path: services/legacy-sync.md
@@ -58,8 +61,8 @@ The values are fictional, as in the skill page's example; mint ids from the bund
 
 - **Provenance.** `create`, `patch` and `rewrite` stamp `generated: { by, at }` with this run's actor and the clock. Pass `revision: "<full commit hash>"` on an operation to record it where the toolkit accepts the key.
 - **Status.** `create` sets `status: draft`; `question` sets it too. Nothing else touches `status`.
-- **The index.** `create` adds the concept's bullet, its title linked to its file and followed by its description, to the folder's `index.md` and, under the matching `# Section` heading, to the root `index.md`; `set` of `title` or `description` rewrites both; `delete` removes both. A new folder gets a new section.
-- **The log.** Every operation but `recheck` gives one bullet under today's `## YYYY-MM-DD` heading, newest day first, reusing the heading a run earlier today made. A `log` line that does not start with `**` gets the label `**Changed**` (or `**Rewrite**`). A `from_feedback` operation's bullet is labelled `**From reader feedback**`, so quote the reader's question in its `log` line.
+- **The index.** `create` adds the concept's bullet, its title linked to its file and followed by its description, to the folder's `index.md` and, under the matching `# Section` heading, to the root `index.md`; `set` of `title` or `description` rewrites both; `delete` removes both; `reindex` re-derives both from the frontmatter as it stands, touching neither the concept nor the log, for a bullet that drifted or a concept the script may not patch. A new folder gets a new section.
+- **The log.** Every operation but `recheck` and `reindex` gives one bullet under today's `## YYYY-MM-DD` heading, newest day first, reusing the heading a run earlier today made. A `log` line that does not start with `**` gets the label `**Changed**` (or `**Rewrite**`). A `from_feedback` operation's bullet is labelled `**From reader feedback**`, so quote the reader's question in its `log` line.
 - **Feedback.** `from_feedback` is the exact one-line entry as `.lokf/feedback.md` holds it. The script removes it, and a day left with no entry loses its heading.
 - **Carry-overs.** `rewrite` keeps the `<!-- lokf:related -->` block and the `## Open questions` section from the old body when the new body lacks them. No edit may target text inside either.
 
@@ -83,4 +86,4 @@ Any one of these refuses the whole file, and nothing is written:
 - `1`: findings, one per line, and nothing written. Fix the file and run again.
 - `2`: no bundle, no patch file, a file that is not YAML, or no `uv` and no `pyyaml` for `python3`. The sidecar's prerequisites page says who installs `uv`.
 
-Then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. The script keeps the conventions it knows; the schema and the relation targets are the toolkit's to check.
+Then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. The script writes a touched concept's frontmatter back with double quotes where a value needs quoting and keeps the blank line after the closing `---` as it found it, so the diff shows the change and not the rewrite. The script keeps the conventions it knows; the schema and the relation targets are the toolkit's to check.

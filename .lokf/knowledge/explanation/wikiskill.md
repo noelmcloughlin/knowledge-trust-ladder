@@ -2,7 +2,7 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/wikiskill
 title: WikiSkill's loop and the bundle's ladder
-description: 'The WikiSkill paper (Tang et al., 2026) set beside this design part by part, as `docs/wikiskill.md` does: the same loop with different parts, what the paper found and what a bundle does with each finding, where each design puts programs, models and people, and what the paper does not settle.'
+description: "The WikiSkill paper (Tang et al., 2026) set beside this design part by part, as `docs/wikiskill.md` does: the same loop with different parts, what the paper found and what a bundle does with each finding, where each design puts programs, models and people, and what the paper does not settle."
 genre: explanation
 resource: docs/wikiskill.md
 sources:
@@ -17,7 +17,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/knowledge-sources
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 status: draft
 ---
 # Overview

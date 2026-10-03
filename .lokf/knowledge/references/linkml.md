@@ -7,12 +7,13 @@ genre: reference
 resource: https://linkml.io/linkml/
 generated:
   by: process:ktl-librarian
-  at: '2026-10-03T01:25:58Z'
+  at: "2026-10-03T01:25:58Z"
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: '2026-09-24T00:55:04Z'
+  at: "2026-09-24T00:55:04Z"
 ---
+
 # Overview
 
 LOKF is defined as a LinkML schema, which is why its JSON Schema, JSON-LD
