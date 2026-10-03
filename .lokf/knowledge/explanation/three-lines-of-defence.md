@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-02T23:52:54Z'
+  at: '2026-10-03T01:25:58Z'
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -18,7 +18,7 @@ relatedTo:
 ---
 # Overview
 
-The README's "Three lines of defence" section points at this page. The
+The README's section on the fifth role, the registrar, points at this page. The
 reference model is the Three Lines Model of The Institute of Internal
 Auditors (IIA), updated in
 [2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/)
@@ -30,10 +30,11 @@ organisation that adopts a bundle. First line: the **librarian**, which
 derives every record from a named source and marks what it cannot settle
 `status: draft`, and the **curator**, a named person who decides what the
 team accepts as true - maker and checker, since the agent cannot vouch and
-the person does not derive. Second line: the **registrar** - `lokf validate`
-on every change and in CI, plus the KTL Registrar Obsidian plugin - which
-keeps records well-formed and ties a `human:` verdict to that person's
-approval or signature, without judging truth. Third line: the bundle ships
+the person does not derive. Second line: the **registrar**, which keeps records
+well-formed: `lokf validate` on every change and in CI, `knowledge-apply.sh`
+as the librarian's only pen, and the KTL Registrar Obsidian plugin. The gate
+ties a `human:` verdict to that person's approval or signature, the pen
+refuses to write a `human:` actor at all, and neither judges truth. Third line: the bundle ships
 the evidence an independent reviewer needs, not the review. The **docent**
 sits outside the lines, where the reader does, and reports what it could
 not answer back to the librarian as untrusted input; the **sidecar** lays

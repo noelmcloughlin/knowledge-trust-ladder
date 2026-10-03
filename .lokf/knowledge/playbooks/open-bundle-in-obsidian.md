@@ -9,20 +9,20 @@ sources:
 - resource: skills/ktl-sidecar/SKILL.md
 - resource: docs/obsidian.md
 - resource: skills/ktl-docent/references/obsidian.md
+- resource: skills/ktl-sidecar/references/portability.md
 - resource: https://obsidian.md/help/settings
-  title: Settings - Obsidian Help
+- resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T22:22:58Z"
+  at: '2026-10-03T01:25:58Z'
 status: draft
 isPartOf:
-  - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 relatedTo:
-  - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
+- https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 ---
-
 # Overview
 
 `ktl-sidecar` Step 2 creates a `knowledge_bundle` symlink at the host root, pointing at
@@ -62,8 +62,7 @@ Per host:
 
 # What Obsidian does with the link on each host
 
-Obsidian 1.13.7's file reconciler (`reconcileSymbolicLinkCreation`, read from the installed
-application bundle on 2026-09-12) resolves a link's real path and **skips the link when that path
+Obsidian 1.13.7's file reconciler (`reconcileSymbolicLinkCreation`) resolves a link's real path and **skips the link when that path
 equals, contains, or lies inside a folder it is already watching** - the vault root always being one.
 Its help page says the same in words: it ignores "a symlink to a parent folder of the vault, or from
 one folder in the vault to another folder in the same vault", as a safeguard against a note being

@@ -2,12 +2,12 @@
 type: Playbook
 id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 title: ktl-sidecar skill
-description: Procedure that creates a .lokf/ sidecar - tooling, docs, a dummy skeleton, and the knowledge_bundle doorway link beside it - from bundled templates, or repairs a single missing sidecar file, then hands off to ktl-librarian.
+description: Procedure that creates a .lokf/ sidecar, tooling, docs, a dummy skeleton, and the knowledge_bundle doorway link beside it, from bundled templates, or repairs a missing or broken sidecar file, then hands off to ktl-librarian.
 genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: '2026-10-02T23:52:54Z'
+  at: '2026-10-03T01:25:58Z'
 hasPart:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
@@ -19,10 +19,21 @@ definedBy:
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
+sources:
+- resource: skills/ktl-sidecar/SKILL.md
+- resource: skills/ktl-sidecar/references/automation.md
+- resource: skills/ktl-sidecar/references/gate.md
+- resource: skills/ktl-sidecar/references/portability.md
+- resource: skills/ktl-sidecar/references/prerequisites.md
+- resource: skills/ktl-sidecar/references/m365.md
+- resource: .github/workflows/knowledge-librarian.yaml
+- resource: skills/ktl-librarian/references/scheduled-task.md
+- resource: .lokf/scripts/knowledge-preflight.sh
+- resource: CHANGELOG.md
 ---
 # Overview
 
-Runs **once** per repository, or to repair a single missing sidecar file;
+Runs **once** per repository, or to repair a missing or broken sidecar file;
 it never authors concepts. Seven steps, 0 to 6: run the preflight and gather the host project's facts (Step 0;
 the preflight says what the machine can do, and the layout is the same on
 every host - `.lokf/knowledge` is the real folder, see
@@ -35,7 +46,7 @@ symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian
 no placeholder survives (Step 3), validate (Step 4), optionally lay down the
 CI automation (Step 5: three workflows, eight scripts and, since 2026-09-24,
 the `m365/` folder, thirteen files in all; the conventions script's Python half
-is among the scripts, since the `.sh` fails without it, and so is the apply script's `knowledge-apply.py`, the librarian's only pen since 2026-10-02; two of the scripts
+is among the scripts, since the `.sh` fails without it, and so is the apply script's `knowledge-apply.py`, the librarian's only pen; two of the scripts
 and the `m365/` folder land even when the rest of Step 5 is skipped, since
 they need neither git nor GitHub: the preflight, since 2026-09-23 the
 feedback recorder, and the Microsoft 365 Copilot skills' builder with its

@@ -9,15 +9,14 @@ genre: reference
 resource: skills/ktl-librarian/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T16:52:47Z"
+  at: '2026-09-24T16:52:47Z'
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 verified:
 - by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  at: '2026-10-03T01:25:58Z'
 ---
-
 # Overview
 
 The substrate LOKF profiles. Its defining trait is permissiveness: a consumer

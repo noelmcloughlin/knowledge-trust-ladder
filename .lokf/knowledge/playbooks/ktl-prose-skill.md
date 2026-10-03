@@ -22,12 +22,12 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: '2026-10-02T23:52:54Z'
+  at: '2026-10-03T01:25:58Z'
 status: draft
 ---
 # Overview
 
-A museum edits its labels before the exhibition opens. `ktl-prose` does that for the `.lokf/` knowledge bundle: it rewords what the librarian wrote, in plain English, before a person confirms it. It changes the wording and never a fact. A curator can only confirm a claim they can read. The skill is a copy editor, not an author: the librarian stays the maker of every concept it derived, so `generated` keeps naming it, and `log.md` and git record the rewording. The README calls it the fifth skill, which is not a role, and says the four roles lose nothing without it.
+A museum edits its labels before the exhibition opens. `ktl-prose` does that for the `.lokf/` knowledge bundle: it rewords what the librarian wrote, in plain English, before a person confirms it. It changes the wording and never a fact. A curator can only confirm a claim they can read. The skill is a copy editor, not an author: the librarian stays the maker of every concept it derived, so `generated` keeps naming it, and `log.md` and git record the rewording. The README calls it the fifth skill, which is not a role, and says the roles lose nothing without it.
 
 # The rules
 

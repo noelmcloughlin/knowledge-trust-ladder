@@ -9,14 +9,16 @@ sources:
 - resource: README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T10:52:00Z"
+  at: '2026-09-24T10:52:00Z'
 status: draft
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 - https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
+verified:
+- by: process:ktl-librarian
+  at: '2026-10-03T01:25:58Z'
 ---
-
 # Overview
 
 The README states what the project is: it keeps a repository's scattered knowledge as a collection - catalogued, authenticated and explained, with the trust in every claim visible. It calls that a **context layer**, a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent, and frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim.

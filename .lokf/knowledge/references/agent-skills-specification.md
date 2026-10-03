@@ -7,17 +7,16 @@ genre: reference
 resource: https://agentskills.io/home
 generated:
   by: human:noelmcloughlin
-  at: "2026-09-26T20:33:12Z"
+  at: '2026-09-26T20:33:12Z'
 verified:
+- by: human:noelmcloughlin
+  at: '2026-09-09T16:35:55Z'
+- by: human:noelmcloughlin
+  at: '2026-09-26T20:33:12Z'
 - by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
-- by: human:noelmcloughlin
-  at: "2026-09-09T16:35:55Z"
-- by: human:noelmcloughlin
-  at: "2026-09-26T20:33:12Z"
+  at: '2026-10-03T01:25:58Z'
 stale_after: 2027-09-26
 ---
-
 # Overview
 
 Defines the unit this repository distributes. Each skill is a directory with a

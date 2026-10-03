@@ -7,16 +7,22 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-09-24T00:55:04Z"
+  at: '2026-10-03T01:25:58Z'
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
 about:
-  - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+sources:
+- resource: skills/ktl-curator/SKILL.md
+- resource: skills/ktl-curator/references/review-session.md
+- resource: skills/ktl-curator/references/trust-fields.md
+- resource: skills/ktl-curator/references/portability.md
+- resource: README.md
+- resource: CHANGELOG.md
 ---
-
 # Overview
 
 Runs **a little, regularly**. Step 1 is always a read-only one-screen report
@@ -45,16 +51,15 @@ as SPARQL queries for `lokf serve` (`references/queries.md`).
 <slug>.yaml`, the skill reads that file and counts its `Concept` descendants
 as known - the same widening the librarian's Rule 3 applies, and the reason
 the line goes quiet once a team adopts a domain schema instead of naming
-every domain class a misfit for good. The label is now "doesn't fit the known
-vocabulary", matching what the KTL Curator plugin already says.
+every domain class a misfit for good. The Obsidian plugins cannot read a
+schema outside the vault, so they are told the list by hand in their *Known
+LOKF types* setting.
 
 The curation policy's table is read **tolerantly** (`references/review-session.md`,
 stated 2026-09-14): rows name classes in prose, so the match ignores spaces
 and plural form - "Glossary terms" is `GlossaryTerm`, "people" is `Person` -
 and an unknown class binds nothing. A host extending the vocabulary sets
-intervals for its own classes the same way. Stated because the KTL Curator
-plugin implements this document and matched literally, ignoring four rows of
-the skill's own template.
+intervals for its own classes the same way.
 
 It deals in **judgments a person made, never facts it derived**. It writes only
 `verified` (human events), `status`, `stale_after`, `generated` (on a dictated
@@ -66,8 +71,10 @@ the state of the source the person was shown (`references/review-session.md`,
 added 2026-09-17): the full commit hash for a file in the repository, or the
 ETag, else a `sha256:` digest, for a URL. The field is proposed for lokf
 0.9.0 and not yet released - the 0.8.0 validator rejects it - so the skill
-leaves it out on every released toolkit, and when the file has uncommitted
-changes. It records what the skill fetched, not proof that the person read it.
+leaves it out on every released toolkit, when the file has uncommitted
+changes, and where the host has no version control. It records the state of
+the source the person was shown, so a later reader can tell whether the page
+they see is the one the confirmation rested on.
 
 **Where the id comes from (added 2026-09-17).** Three routes, in order:
 `gh api user` on GitHub, `glab api user` on GitLab, and on any forge the
