@@ -11,7 +11,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-03T09:51:48Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -26,42 +26,40 @@ status: draft
 
 # Overview
 
-Rewritten 2026-09-14 from a single file of up to ~1,900 words into a short policy plus
-[the shared threat model](threat-model.md): report a vulnerability through
-GitHub's private vulnerability reporting, never a public issue or PR, naming
-the affected file and why it is exploitable, and whether a template issue is in the template itself or
-appears only after a consumer customizes it - one maintainer, so expect a
-reply in days, not hours, no bounty. Only the latest published tag receives
-fixes, as a patch release noted in `CHANGELOG.md`. A template fix reaches a
-repository that already has a sidecar only when its copies are laid down
-again - updating the skill or moving `TRUST_LADDER_SKILLS_REF` does not
-touch them - so `knowledge-preflight.sh` reports the drift on its `copies`
-line and ktl-sidecar's repair re-copies the files. A finding from an
-automated skill audit (Snyk, Socket) is answered in the file it names and in
-the threat model's prompt-injection section.
+`SECURITY.md` is a policy, not a threat model. It says how to report, what executes here, and what holds each surface, in a line or two that links to where the reasoning lives: a workflow header, a skill's own guardrail, or [the shared threat model](threat-model.md). It took that shape in 0.17.1 (2026-09-14, `CHANGELOG.md`), when the design moved to `docs/threat-model.md`.
 
-A surface table names what executes and what holds it, each cell a line or
-two linking out rather than explaining: the sidecar templates copied into
-other repositories, held by the librarian workflow's two-job design, the
-`publish` job's confinement and `human:` refusal, the preflight and the
-forge-free gate; this repository's
-workflows, held by pinned actions, `permissions: {}`, and harden-runner;
-`skills/ktl-prose/scripts/prose-check.py`, the one script a skill runs in
-place in whichever repository installs it, held to the standard library,
-reading the files it is given, calling `git show` with an argument list,
-writing nothing and opening no network connection; and
-the five skills' prose, executed by whichever agent runs it, held by each
-skill's own guardrail for its input path. A skill's `Scope:` line is prose,
-not a permission - only the scheduled workflow enforces its scope, so an
-interactive session's guard is a person reviewing what the agent changed.
+# Reporting a vulnerability
 
-Not covered: a compromised runner, upstream action, or agent harness (a
-baseline, not a sandbox - report a finding there anyway); whether a bundle is
-*true*, which `AI_COVENANT.md` addresses; and a reader's own words to
-ktl-docent, a boundary the agent harness owns, not a Markdown file.
+Report through GitHub's private vulnerability reporting, not a public issue or a pull request. Say which file is affected and why it is exploitable. For a template that gets copied into other repositories, say whether the issue is in the template itself or appears only after a consumer customizes it. One person maintains the repository, so expect a first reply in days, not hours, and no bounty.
 
-A word budget (check 10, 900 words) holds this file to a policy's shape; the
-design that used to live here now lives once in the linked threat model.
+# Supported versions
+
+Only the latest published tag receives fixes. A security fix ships as a patch release and is noted in `CHANGELOG.md`.
+
+A fix to a template reaches a repository that already has a sidecar only when its copies are laid down again. Updating the skill, or moving `TRUST_LADDER_SKILLS_REF`, does not touch them. `knowledge-preflight.sh` reports the drift on its `copies` line, and ktl-sidecar's repair re-copies the files.
+
+An automated skill audit, such as Snyk's or Socket's on a skills catalog, gets its answer in the file each finding names and in the threat model's prompt-injection section. A finding that looks unanswered is reported the same way as any other.
+
+# What executes here
+
+The repository is mostly Markdown. Four things in it run, or are run by other systems, and they are the attack surface:
+
+| Surface | What holds it |
+| --- | --- |
+| the sidecar templates under `skills/ktl-sidecar/templates/`, which the sidecar copies into other repositories, where they run | the template's own design: two jobs, so the agent never meets a write token; a `publish` job that confines the patch to the bundle and refuses a `human:` claim; a preflight and a forge-free gate that only read git and gpg |
+| this repository's workflows: `validate.yml` on every pull request; its own copies of the three knowledge workflows; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, and harden-runner in audit mode; each workflow's header comment says why it is shaped as it is |
+| `skills/ktl-prose/scripts/prose-check.py`, the one script a skill runs in place, in whichever repository installs it | the standard library only; it reads the files it is given, calls `git show` with an argument list, writes nothing and opens no network connection |
+| the five skills' `SKILL.md` and `references/` prose, executed by whichever LLM agent runs it, here and in every consumer | each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one |
+
+A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access the harness grants it, and only the scheduled workflow enforces its scope. So review what the agent changed before you commit.
+
+# Not covered
+
+- A compromised runner, upstream action or agent harness: the policy is a baseline, not a sandbox. A finding there is still reported, with scope and reproduction.
+- Whether a bundle is *true*. The gate proves who vouched, not what they read, and `AI_COVENANT.md` sets the human-accountability rules.
+- A reader's own words to ktl-docent. That boundary belongs to the agent harness, not to a Markdown file.
+
+Check 10 of `scripts/validate-repository.sh` holds `SECURITY.md` to a word budget of 900. Its comment says the file sits between 450 and 800 words and ran to 1,400 to 1,900 before `docs/threat-model.md` took the design.
 
 ## Open questions
 
