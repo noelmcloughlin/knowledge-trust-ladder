@@ -646,7 +646,7 @@ else
 fi
 rm -rf "$ahead"
 before="$(cat "$fbfile")"
-refuse() { # <what it should refuse> <argument...>
+feedback_refuses() { # <what it should refuse> <argument...>
   local what="$1"; shift
   local out rc
   set +e
@@ -659,13 +659,13 @@ refuse() { # <what it should refuse> <argument...>
     err "knowledge-feedback.sh accepted $what (exit $rc): $out"
   fi
 }
-refuse "a kind the librarian has no rule for" Question 'x'
-refuse "an attribution with a space in it" --for 'ada lovelace' Miss 'x'
-refuse "an attribution starting with a dot" --for '.ada' Miss 'x'
-refuse "an attribution starting with a hyphen" --for '-ada' Miss 'x'
-refuse "an empty entry" Miss '   '
-refuse "a call with no entry text" Miss
-refuse "a root that does not exist" --root "$fb/nowhere" Miss 'x'
+feedback_refuses "a kind the librarian has no rule for" Question 'x'
+feedback_refuses "an attribution with a space in it" --for 'ada lovelace' Miss 'x'
+feedback_refuses "an attribution starting with a dot" --for '.ada' Miss 'x'
+feedback_refuses "an attribution starting with a hyphen" --for '-ada' Miss 'x'
+feedback_refuses "an empty entry" Miss '   '
+feedback_refuses "a call with no entry text" Miss
+feedback_refuses "a root that does not exist" --root "$fb/nowhere" Miss 'x'
 if [[ "$before" == "$(cat "$fbfile")" ]]; then
   ok "knowledge-feedback.sh left feedback.md untouched on every refusal"
 else
@@ -1234,7 +1234,7 @@ printf '%s\n' '# Change Log' '' '## 2020-01-01' '' '* **Old**: an old line.' > "
 printf '%s\n' '# Reader feedback for the librarian' '' 'Newest first.' '' '## 2026-03-03' '' '- **Miss** - Q: "where?" Answered from here. - docent' > "$ka/.lokf/feedback.md"
 kpatch="$ka/.lokf/patch.yaml"
 ksum() { (cd "$ka" && find . -type f ! -name patch.yaml -exec md5sum {} + | sort | md5sum); }
-refuse() {  # <what> <expected finding>; the patch file is already in place
+apply_refuses() {  # <what> <expected finding>; the patch file is already in place
   local before out rc; before="$(ksum)"
   set +e; out="$(bash "$apply" --root "$ka" "$kpatch" 2>&1)"; rc=$?; set -e
   if [[ "$rc" == 1 ]] && grep -qF -- "$2" <<<"$out" && [[ "$(ksum)" == "$before" ]]; then
@@ -1332,16 +1332,16 @@ else
   err "delete did not remove the draft and its bullets: $(grep -n draft "$kb/index.md" "$kb/playbooks/index.md" | tr '\n' '|')"
 fi
 printf '%s\n' 'by: human:ada' 'ops:' '  - {op: recheck, path: playbooks/new.md}' > "$kpatch"
-refuse "a human: actor anywhere in the file" "names a human: actor"
+apply_refuses "a human: actor anywhere in the file" "names a human: actor"
 printf '%s\n' 'ops:' '  - {op: delete, path: playbooks/confirmed.md, log: gone}' > "$kpatch"
-refuse "deleting a concept a person confirmed" "a person confirmed this concept"
+apply_refuses "deleting a concept a person confirmed" "a person confirmed this concept"
 printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/authored.md, edits: [{append: {content: x}}], log: x}' > "$kpatch"
-refuse "patching text a person wrote" "a person wrote this text"
+apply_refuses "patching text a person wrote" "a person wrote this text"
 printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, set: {status: stable}, log: x}' > "$kpatch"
-refuse "setting status" "set may not touch status"
+apply_refuses "setting status" "set may not touch status"
 printf '%s\n' 'ops:' '  - {op: create, path: playbooks/other.md, frontmatter: {type: Playbook, title: Other, description: d.}, body: b}' \
                '  - {op: patch, path: playbooks/new.md, edits: [{replace: {target: "not there", content: x}}], log: x}' > "$kpatch"
-refuse "a missing target, with a valid create beside it" "must occur exactly once"
+apply_refuses "a missing target, with a valid create beside it" "must occur exactly once"
 if [[ ! -e "$kb/playbooks/other.md" ]]; then ok "a refused file lands none of its operations"; else err "a refused file still created playbooks/other.md"; fi
 printf '%s\n' 'ops:' '  - {op: create, path: playbooks/dry.md, frontmatter: {type: Playbook, title: Dry, description: d.}, body: b}' > "$kpatch"
 if out="$(bash "$apply" --root "$ka" --dry-run "$kpatch" 2>&1)" && grep -q 'would write' <<<"$out" && [[ ! -e "$kb/playbooks/dry.md" && -e "$kpatch" ]]; then
