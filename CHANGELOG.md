@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-10-03
+
 ### Added
 
 - **A fifth skill, `ktl-prose`, rewords a bundle's agent-written concepts in plain English.** It rewords only a body an agent wrote and no person confirmed, and changes no fact and no frontmatter byte, so `generated` keeps naming the librarian. Its `prose-check.py` reports dashes, long sentences and stock phrases, and proves a rewording changed only wording. Check 18 exercises it.
