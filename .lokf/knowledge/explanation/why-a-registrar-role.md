@@ -1,7 +1,7 @@
 ---
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
-title: Why a registrar role, and why it is not a fifth skill
+title: Why a registrar role, and why it is not a skill
 description: "What the registrar does, keeping every bundle record in order and every confirmation tied to a person, and why no person has to do it: the `lokf` toolkit, CI's `knowledge-registrar.yaml`, the `knowledge-apply.sh` pen at the librarian's desk, and two optional Obsidian plugins for a desk with no CI."
 genre: explanation
 resource: README.md
@@ -9,9 +9,8 @@ sources:
 - resource: README.md
 - resource: docs/obsidian.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-03T09:42:48Z"
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
 - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
@@ -20,6 +19,8 @@ about:
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
+- by: human:noelmcloughlin
+  at: "2026-10-03T09:42:48Z"
 stale_after: 2027-09-10
 ---
 # Overview

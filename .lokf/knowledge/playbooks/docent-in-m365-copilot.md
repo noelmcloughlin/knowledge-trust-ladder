@@ -12,7 +12,7 @@ sources:
 - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:45:53Z"
+  at: "2026-10-03T09:31:20Z"
 status: draft
 isPartOf:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -34,7 +34,7 @@ Getting it running takes three steps, in this order: get the zip, add it to an a
 
 # 1. Get the zip
 
-**From a release.** Each release whose bundle changed carries `ktl-docent-m365-<tag>-<repository>.zip` among its assets, beside the bundle zip. The release workflow attaches it on every release whose bundle changed. A release with no such asset means one of two things. Either the bundle did not change since the last release that carries one, and the reader takes the zip from that earlier release, or the repository has not laid down `.lokf/m365/`, and its releases carry the bundle zip alone.
+**From a release.** The release workflow attaches `ktl-docent-m365-<tag>-<repository>.zip` beside the bundle zip on every release whose bundle changed. `<repository>` is the repository's name, or the name its `KNOWLEDGE_RELEASE_NAME` variable sets. A release with no such asset means one of two things. Either the bundle did not change since the last release that carries one, and the reader takes the zip from that earlier release, or the repository has not laid down `.lokf/m365/`, and its releases carry the bundle zip alone.
 
 **Or build it.** A repository on another forge, or on none, runs the builder the release workflow runs, on its bundle folder. It needs bash and `zip`:
 
@@ -63,7 +63,7 @@ The snapshot does not update itself. After each release that changes the bundle,
 - **The build says `zip not found`.** The folder is built but not zipped: install `zip`, or zip the folder by hand before adding it.
 - **`atk add skill` is not a command** (`UnknownCommandError`). Export both `TEAMSFX_AGENT_SKILLS=true` and `ATK_FRONTIER=true`.
 - **`atk add skill` says `InvalidProjectError`.** It ran outside the agent's project: change into the folder `atk new` created, or pass `--folder`.
-- **`atk validate` rejects `agent_skills`.** The newest published manifest schema, v1.8, has no such property yet, and the toolkit's own `add skill` wrote the entry, so the zip is not at fault. Skip it, and let `provision` decide.
+- **`atk validate` says `property name must be valid` for `agent_skills`.** The newest published manifest schema, v1.8, has no such property yet, and the toolkit's own `add skill` wrote the entry, so the zip is not at fault. Skip it, and let `provision` decide.
 - **`atk provision` fails at `teamsApp/validateAppPackage` with `Unrecognized member 'agent_skills'`.** Microsoft's service refused the entry: check that the tenant has custom skills. `teamsApp/create` has already registered an app by then, which the reader deletes in the Teams Developer Portal if they give up.
 - **Agent Builder says skill attachments require the full Copilot Studio experience.** Copy the agent to Copilot Studio and add the zip there; if Copilot Studio says sign-up is disabled, only an admin can grant the licence.
 - **Agent Builder or the toolkit refuses the skill for another reason.** The agent may already have embedded files, a preview limit, not a fault in the zip.
@@ -77,3 +77,4 @@ A host's copy under `.lokf/m365/` is what its releases pack, so a host that edit
 ## Open questions
 
 - 2026-09-26, human:noelmcloughlin: Agent Builder's zip limit is 50 MB; the limits sentence gives only 10 MB, the toolkit's app package (`skills/ktl-sidecar/references/m365.md`, line 18).
+- 2026-10-03, process:ktl-librarian: Microsoft's page on custom skills (updated 2026-09-04) says the Agents Toolkit takes a skill directory and that `.zip` isn't supported. `skills/ktl-sidecar/references/m365.md` says `atk add skill --from` takes a zip from any path, as checked against the toolkit's source, and this concept follows it. Which holds for the toolkit a reader installs?
