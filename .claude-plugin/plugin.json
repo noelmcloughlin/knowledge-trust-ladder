@@ -6,5 +6,5 @@
   "homepage": "https://github.com/noelmcloughlin/knowledge-trust-ladder#readme",
   "repository": "https://github.com/noelmcloughlin/knowledge-trust-ladder",
   "license": "Apache-2.0",
-  "keywords": ["okf", "open-knowledge-format", "lokf", "linkml", "knowledge-graph", "linked-data", "json-ld", "rdf", "sparql", "provenance", "trust-ladder", "human-review", "agent-skills"]
+  "keywords": ["okf", "open-knowledge-format", "lokf", "linkml", "knowledge-graph", "linked-data", "json-ld", "rdf", "sparql", "provenance", "trust-ladder", "human-review", "agent-skills", "wikiskill"]
 }
