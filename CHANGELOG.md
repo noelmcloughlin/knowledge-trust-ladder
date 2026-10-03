@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-10-03
+
 ### Added
 
 - **`knowledge-report.sh` computes what the skills used to work out.** It prints each concept's trust label, the bundle's health line, ktl-librarian's work list and what a change does to the record, from frontmatter and git history, in bash and awk. ktl-curator's Step 1 and ktl-docent's footer quote it. The librarian workflow's `publish` job fills its pull request from it, on its own checkout. A source has moved when history, not a clock, puts its last commit after the one that recorded the event. Check 20 exercises it.
