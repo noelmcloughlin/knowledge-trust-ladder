@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-10-04
+
 ### Added
 
 - **`docs/for-the-curious.md` shows who writes the bundle and what checks it.** A new section and diagram, `.assets/ktl-architecture.svg`, give each writer's one door. The librarian's patch file goes through the pen, the curator's verdicts through `ktl-curator` or the KTL Curator plugin, and a reader's miss through the docent's feedback recorder. Below them sit the registrar's gate and the report script. The README now says why `knowledge-apply.sh` is called *the pen* where it first names it, and the bundle's glossary defines the term.
