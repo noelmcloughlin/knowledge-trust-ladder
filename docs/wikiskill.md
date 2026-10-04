@@ -1,30 +1,30 @@
-# WikiSkill's loop and the bundle's ladder
+# WikiSkill's loop and Knowledge Trust Ladder
 
 > [!NOTE]
-> A reading of one paper against this design, for anyone deciding what a bundle shares with WikiSkill and what it adds. The paper is quoted from its own text, and the measurements are its authors', not ours.
+> A reading of one paper against this design, for anyone deciding what Knowledge Trust Ladder (KTL) shares with WikiSkill and what it adds. The paper is quoted from its own text, and the measurements are its authors', not ours.
 
 *WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution* (Tang et al., Google Research, August 2026) has an agent compile its own execution traces into a wiki and evolves the agent's skills from it. Knowledge Trust Ladder has an agent derive a bundle from a repository and has a person confirm it. Both take their shape from [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): immutable sources, a corpus a model writes, an index a reader opens first, a log, and a conventions file the gist calls a schema.
 
-The two run the same loop and hold it together with different parts. WikiSkill puts programs and a score around its model, with no person in the loop. A bundle puts a schema under the corpus, a registrar around it and a person at the top.
+The two run the same loop and hold it together with different parts. WikiSkill puts programs and a score around its model, with no person in the loop. KTL puts a schema under its corpus, the bundle, a registrar around it and a person at the top. Below, *KTL* is this design, *the bundle* is the corpus it keeps in `.lokf/knowledge/`, and *the wiki* is the paper's corpus.
 
 ## The same loop, part by part
 
-| Part | WikiSkill | A bundle |
+| Part | WikiSkill | KTL |
 | --- | --- | --- |
-| The sources | `raw/`, the execution traces, written once and kept | the repository, which the bundle cites and never edits, and `questions.md`, the questions readers asked, which the pen writes once and keeps |
-| The corpus | `wiki/`: pattern pages, `index.md`, an evolution log and `skill-impact.md`. Never reset, never rolled back | `.lokf/knowledge/`: one Markdown concept per file, `index.md` and `log.md`. Never reset, and a person's record is never removed |
+| The sources | `raw/`, the execution traces, written once and kept | the repository, which the bundle cites and never edits, and `questions.md`, the questions readers asked, which `knowledge-apply.sh` writes once and keeps |
+| The corpus | `wiki/`: pattern pages, `index.md`, an evolution log and `skill-impact.md`. Never reset, never rolled back | the bundle, `.lokf/knowledge/`: one Markdown concept per file, `index.md` and `log.md`. Never reset, and a person's record is never removed |
 | Its conventions | a maintainer prompt, a JSON output contract and exact-substring patch operations | [a LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml) with typed relations and trust fields, a JSON-LD context that makes the frontmatter a graph, and a conventions script for what the schema cannot say |
 | The maintainer | the wiki maintainer, a model that reads a bounded sample of traces and returns new pages, patches, the whole index and a log line | the librarian, a model that starts from a work list a program computed, reads the sources that moved and the readers' feedback, and returns operations in `patch.yaml` |
-| The pen | the harness, which applies the JSON and alone writes `skill-impact.md` | `knowledge-apply.sh`, which applies the operations, stamps `generated`, keeps each description equal to its two index bullets and files each handled question in the ledger. It refuses a `human:` actor, a rewrite of a person's text and the deletion of a confirmed concept |
+| The pen | the harness, which applies the JSON and alone writes `skill-impact.md` | `knowledge-apply.sh`, the librarian's only way to write the bundle. It applies the operations, stamps `generated`, keeps each description equal to its two index bullets and files each handled question in the ledger. It refuses a `human:` actor, a rewrite of a person's text and the deletion of a confirmed concept |
 | The consumer | the inference agent, which runs the tasks with the skills and without the wiki | the docent, which answers from the bundle, labels each concept's trust, writes nothing there and records a miss in `feedback.md` |
 | The gate | a validation score. A skill change stays only if the score rises | the registrar: `lokf validate` and `--check-refs` on every change and again in CI, the conventions script, and a provenance job that lets a `human:` confirmation be added or removed only with that person's approval or signature. A scheduled refresh can also carry a retrieval score |
 | The record | `skill-impact.md`: every proposal with its diff, score and verdict | `generated` and `verified` events, `log.md` and git. `knowledge-report.sh` computes the trust labels from them on every read, and they are never stored |
 | The verdict | a number | a named person's: confirm, correct, send back or retire |
 | Pruning | none. The authors list it as a limitation | `stale_after`, `status: deprecated`, and the librarian's orphan sweep |
 
-## What the paper found, and what a bundle does with it
+## What the paper found, and what KTL does with it
 
-The paper holds the evidence for each finding. This section says what a bundle does with it.
+The paper holds the evidence for each finding. This section says what KTL does with it.
 
 **Persistence is the lever.** In the paper's ablation, on one model across four benchmarks, the wiki is worth fifteen points on average, and it is kept even when a skill change is rolled back. The librarian follows each concept back to its source and fixes drift, rather than rewriting the bundle in bursts, and the pen refuses to delete a concept a person confirmed. The gate asks the person behind any confirmation a pull request removes, as it asks the one behind a confirmation it adds. A rewrite demotes the label to *edited since a person last confirmed it* and removes nothing a person recorded. `revision` on each `verified` event, proposed for lokf 0.9.0, will let a confirmation name the state of the source it rested on. Until then `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
 
@@ -38,9 +38,9 @@ The paper holds the evidence for each finding. This section says what a bundle d
 
 **The maintainer's run is bounded.** The paper caps the traces a maintainer reads and the skill changes a proposer makes per iteration, and a program does the sampling. The librarian starts from a work list `knowledge-report.sh` computes: the concepts with a source whose last commit comes after the commit that recorded their stamp or their latest check. History orders the two, never a clock. A local source that has not moved is not read again. A run handles at most ten feedback entries, oldest first, and says how many remain.
 
-**Pruning is unsolved there.** The authors list it as a limitation. A bundle has `stale_after` to date a concept for re-confirmation, `status: deprecated` to retire it with its links kept, and the orphan sweep to find what no concept accounts for. The curator proposes the dates from a curation policy that is itself a concept, reviewed like any other.
+**Pruning is unsolved there.** The authors list it as a limitation. KTL dates a concept for re-confirmation with `stale_after`, retires it with `status: deprecated` and keeps its links, and finds what no concept accounts for with the librarian's orphan sweep. The curator proposes the dates from a curation policy that is itself a concept, reviewed like any other.
 
-**The gate measures an outcome.** The paper keeps a skill change only if a validation score rises. A bundle's gate measures form and provenance: the registrar proves a record is well formed and a confirmation is a person's, and the curator records what the person decided. A scheduled refresh can carry a measured outcome beside them. `knowledge-report.sh` has the agent choose, from `index.md` alone, the concepts it would open for each question readers asked, and scores the reply by program. The pull request shows the result as `n of m`, and a person decides, so a change that leaves the score where it stood still lands. The paper names retrieval, and a gate that lets a neutral change through, as future work. A bundle's score measures the first and never blocks the second. It is the fourth [level of checking](for-the-curious.md#four-levels-of-checking), proven in use, given a number. The captured docent questions in [docs/examples/docent.md](examples/docent.md) stay out of derivation and name the concept that answers each one, with a link the build checks.
+**The gate measures an outcome.** The paper keeps a skill change only if a validation score rises. KTL's gate measures form and provenance: the registrar proves a record is well formed and a confirmation is a person's, and the curator records what the person decided. A scheduled refresh can carry a measured outcome beside them. `knowledge-report.sh` has the agent choose, from `index.md` alone, the concepts it would open for each question readers asked, and scores the reply by program. The pull request shows the result as `n of m`, and a person decides, so a change that leaves the score where it stood still lands. The paper names retrieval, and a gate that lets a neutral change through, as future work. KTL's score measures the first and never blocks the second. It is the fourth [level of checking](for-the-curious.md#four-levels-of-checking), proven in use, given a number. The captured docent questions in [docs/examples/docent.md](examples/docent.md) stay out of derivation and name the concept that answers each one, with a link the build checks.
 
 Reading the paper beside this repository in October 2026 changed the skills in several places, and the [changelog](../CHANGELOG.md) lists them.
 
@@ -48,20 +48,20 @@ Reading the paper beside this repository in October 2026 changed the skills in s
 
 Each design has three kinds of part. A program is deterministic: it gives the same output for the same input. A model does not, and neither does a person, and both bring a judgment a program lacks. Where each design puts each kind is a fact about the design, not a result.
 
-| | WikiSkill | A bundle |
+| | WikiSkill | KTL |
 | --- | --- | --- |
 | Programs | the write-once trace store, the sampler, the JSON contract and its exact-substring patches, the gate, and the harness that writes `skill-impact.md` | the LinkML schema and the JSON-LD context, which make a bundle validate and project to a graph; the conventions script; the pen; the registrar's gate and its provenance job. The report script computes the labels, the work list and the retrieval score |
 | Models | the wiki maintainer, the skill proposer and the inference agent | the librarian, the docent and the optional prose pass |
 | People | none in the loop | the curator, whose verdict the gate ties to them |
 
-Both designs keep their record with programs: the paper has the harness write `skill-impact.md` and calls it "an objective, ground-truth audit trail", and a script computes a bundle's labels on each read, from frontmatter the gate has checked. The paper measures accuracy, averaged over three independent runs, and says nothing about how the three runs' wikis differed. Its wiki has no schema, only prescribed file names and an entry format. Its baselines were structured pipelines too, and all three finished behind it. So the paper credits a persistent wiki kept separate from the skills, which is the loop a bundle shares, and is silent on the parts a bundle adds.
+Both designs keep their record with programs: the paper has the harness write `skill-impact.md` and calls it "an objective, ground-truth audit trail", and a script computes a bundle's labels on each read, from frontmatter the gate has checked. The paper measures accuracy, averaged over three independent runs, and says nothing about how the three runs' wikis differed. Its wiki has no schema, only prescribed file names and an entry format. Its baselines were structured pipelines too, and all three finished behind it. So the paper credits a persistent wiki kept separate from the skills, which is the loop KTL shares, and is silent on the parts KTL adds.
 
 ## What the paper does not settle
 
 - Whether a schema helps. Its wiki has none.
 - Whether a model-maintained corpus is reproducible. Nothing is derived twice and compared.
 - Whether the knowledge is attributable. Its one program-written record is a log of proposals and scores, not of who stands behind a page.
-- How a person fits in. No person confirms anything there, and every verdict is a number. A bundle's verdicts are a person's, and the gate ties each to that person. The paper is the better evidence for the loop, and this project for the record.
+- How a person fits in. No person confirms anything there, and every verdict is a number. KTL's verdicts are a person's, and the gate ties each to that person. The paper is the better evidence for the loop, and this project for the record.
 
 ## Sources
 

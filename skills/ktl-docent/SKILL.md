@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: 'Reads files, from any shell; a trust label and a recorded gap each run one bash script (Git for Windows'' bash on Windows). The GitHub CLI (gh) logged in, or glab, lets a feedback entry name the asker; without one, entries are attributed to docent alone.'
 ---
 
-# KTL Docent
+# ktl-docent
 
 A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle. Answer from it first, and say which concepts the answer rests on and how far each has been trusted. Go to the raw repository only when the bundle cannot answer, and leave a note so the gap gets filled. It is the reader's side of the loop the other three skills run: the miss you record today is the concept the librarian derives on its next run and a person confirms after that.
 

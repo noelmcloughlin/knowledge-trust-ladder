@@ -63,7 +63,7 @@ On a fresh repository they run in order: **sidecar**, then **librarian** filling
 
 The **registrar** keeps the records themselves in order: each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or their signed commit.
 
-At the librarian's desk the registrar is `knowledge-apply.sh`, the only pen. The librarian describes each change as an operation, and the script writes the record, stamps its provenance, keeps the index in step, and refuses one that would forge or remove a confirmation. At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the opening line: a check gives the same answer every time, which neither the librarian nor the curator can promise.
+At the librarian's desk the registrar is `knowledge-apply.sh`, called *the pen* because the librarian writes the bundle only through it. The librarian describes each change as an operation, and the pen writes the record, stamps its provenance, keeps the index in step, and refuses one that would forge or remove a confirmation. At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the opening line: a check gives the same answer every time, which neither the librarian nor the curator can promise.
 
 In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do the registrar's work at the desk. [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) checks each record as it is typed, and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) runs this repository's `ktl-curator` review session with no agent in the loop ([The bundle in Obsidian](docs/obsidian.md)).
 
@@ -122,7 +122,7 @@ Add the curator once there is a bundle worth trusting. The docent goes anywhere 
 
 | | |
 | --- | --- |
-| The mechanics: the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
+| The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
 | The bundle in Obsidian, and the two plugins | [docs/obsidian.md](docs/obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
 | WikiSkill, a 2026 paper on agent-maintained wikis, set beside this design part by part: the same loop, with a score there and a person here | [docs/wikiskill.md](docs/wikiskill.md) |

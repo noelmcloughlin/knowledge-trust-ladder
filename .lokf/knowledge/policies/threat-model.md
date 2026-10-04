@@ -2,12 +2,12 @@
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 title: Threat model
-description: "The security design the three LOKF repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate."
+description: "The security design the three KTL repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate."
 genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T13:28:08Z"
+  at: "2026-10-04T14:21:43Z"
 verified:
 - by: process:ktl-librarian
   at: "2026-09-24T22:22:58Z"
@@ -21,7 +21,7 @@ sources:
 # Overview
 
 Added 2026-09-14, when the design moved out of `SECURITY.md` and into this
-page across the three LOKF repositories (`knowledge-trust-ladder`, KTL
+page across the three KTL repositories (`knowledge-trust-ladder`, KTL
 Registrar, KTL Curator). Each repository's `SECURITY.md` says how to report,
 what that repository owns, and what it inherits from here, and
 `scripts/validate-repository.sh` check 9 records this path among the ones a

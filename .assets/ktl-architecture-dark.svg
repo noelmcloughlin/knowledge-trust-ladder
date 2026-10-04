@@ -1,0 +1,77 @@
+<svg width="720" height="540" viewBox="0 0 720 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">Who writes the bundle, and what checks it</title>
+<desc id="d">Three writers, each through one door. The librarian, an agent, writes only .lokf/patch.yaml, which the pen, knowledge-apply.sh, applies to the bundle and refuses when it names a human: actor. The curator, a named person, writes a verified event in that person's name through ktl-curator or the KTL Curator plugin. The docent, an agent, writes nothing in the bundle; knowledge-feedback.sh records a reader's miss in feedback.md, and the pen files each handled entry in questions.md. Below, two programs check what lands: the registrar's gate, knowledge-registrar.yaml, runs lokf validate, the conventions script and the provenance job on each pull request, and a human: event needs that person's approval or signature; knowledge-report.sh computes each trust label, the health line and the librarian's work list on every read.</desc>
+<rect width="720" height="540" fill="#1C1C1A"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#ABA9A0"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#E4BD6E"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#1C1C1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#93C0F2" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#23301B" stroke="#6FA33F" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#6FA33F" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#6FA33F" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Trust Ladder</text><!-- ktl-brand:end -->
+<text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#E6E4DC">Who writes the bundle, and what checks it</text>
+<rect x="20" y="48" width="680" height="302" rx="20" fill="#262623"/>
+<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">Three writers, each through one door</text>
+<rect x="44" y="92" width="196" height="66" rx="12" fill="#23301B" stroke="#6FA33F" stroke-width="2"/>
+<g transform="translate(70,125)" stroke="#A9D27C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-8" width="20" height="16" rx="2"/><line x1="0" y1="-8" x2="0" y2="8"/></g>
+<text x="94" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#A9D27C">Librarian</text>
+<text x="94" y="130" font-family="Arial, sans-serif" font-size="10.5" fill="#A9D27C">an agent, ktl-librarian</text>
+<text x="94" y="145" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">writes only patch.yaml</text>
+<rect x="262" y="92" width="196" height="66" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
+<g transform="translate(288,125)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="0" y1="-10" x2="0" y2="8"/><line x1="-10" y1="-10" x2="10" y2="-10"/><circle cx="-10" cy="-4" r="3" fill="#142639"/><circle cx="10" cy="-4" r="3" fill="#142639"/><line x1="-6" y1="8" x2="6" y2="8"/></g>
+<text x="312" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">Curator</text>
+<text x="312" y="130" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">a named person</text>
+<text x="312" y="145" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">ktl-curator or the plugin</text>
+<rect x="480" y="92" width="196" height="66" rx="12" fill="#23301B" stroke="#6FA33F" stroke-width="2"/>
+<g transform="translate(506,125)" stroke="#A9D27C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="10"/><polygon points="0,-6 3,0 0,6 -3,0" fill="#A9D27C" stroke="none"/></g>
+<text x="530" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#A9D27C">Docent</text>
+<text x="530" y="130" font-family="Arial, sans-serif" font-size="10.5" fill="#A9D27C">an agent, ktl-docent</text>
+<text x="530" y="145" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">writes nothing in the bundle</text>
+<rect x="44" y="180" width="196" height="66" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
+<g transform="translate(70,213)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-8 8 L-6 1 L4 -9 L9 -4 L-1 6 Z"/><line x1="-6" y1="1" x2="-1" y2="6"/><line x1="1" y1="-6" x2="6" y2="-1"/></g>
+<text x="94" y="202" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">The pen</text>
+<text x="94" y="218" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">knowledge-apply.sh</text>
+<text x="94" y="233" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">refuses a human: actor</text>
+<rect x="480" y="180" width="196" height="66" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
+<g transform="translate(506,213)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-10 -8 H10 V4 H-1 L-6 9 V4 H-10 Z"/><line x1="-5" y1="-3" x2="5" y2="-3"/><line x1="-5" y1="0" x2="2" y2="0"/></g>
+<text x="530" y="202" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">Feedback</text>
+<text x="530" y="218" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">knowledge-feedback.sh</text>
+<text x="530" y="233" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">records a reader's miss</text>
+<line x1="142" y1="158" x2="142" y2="180" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M137.5 173.4 L142 180 L146.5 173.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="578" y1="158" x2="578" y2="180" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M573.5 173.4 L578 180 L582.5 173.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="360" y1="158" x2="360" y2="266" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M355.5 259.4 L360 266 L364.5 259.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="368" y="206" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">a verified event</text>
+<text x="368" y="220" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">in that person's name</text>
+<rect x="44" y="266" width="632" height="66" rx="12" fill="#23301B" stroke="#6FA33F" stroke-width="2"/>
+<g transform="translate(70,299)" stroke="#A9D27C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#23301B"/><circle cx="-8" cy="6" r="3" fill="#23301B"/><circle cx="8" cy="6" r="3" fill="#23301B"/></g>
+<text x="94" y="288" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#A9D27C">.lokf/knowledge/, the bundle</text>
+<text x="94" y="304" font-family="Arial, sans-serif" font-size="10.5" fill="#A9D27C">one Markdown concept per file, with index.md and log.md</text>
+<text x="94" y="319" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">beside it: feedback.md, and questions.md, where the pen files each entry the librarian handles</text>
+<line x1="142" y1="246" x2="142" y2="266" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M137.5 259.4 L142 266 L146.5 259.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="578" y1="246" x2="578" y2="266" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M573.5 259.4 L578 266 L582.5 259.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="20" y="364" width="680" height="134" rx="20" fill="#262623"/>
+<text x="40" y="392" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">Two programs check what lands</text>
+<line x1="300" y1="332" x2="300" y2="406" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M295.5 399.4 L300 406 L304.5 399.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="521" y1="332" x2="521" y2="406" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M516.5 399.4 L521 406 L525.5 399.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="308" y="384" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">each pull request</text>
+<text x="529" y="384" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">each read</text>
+<rect x="44" y="406" width="310" height="78" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
+<g transform="translate(70,445)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-8" y="-8" width="16" height="18" rx="2"/><path d="M-3 -10 h6 v3 h-6 z" fill="#33290F"/><path d="M-4 2 l3 3 l5 -6"/></g>
+<text x="94" y="428" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">The registrar's gate</text>
+<text x="94" y="444" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">knowledge-registrar.yaml, in CI</text>
+<text x="94" y="459" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">lokf validate, conventions, provenance</text>
+<text x="94" y="473" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">a human: event needs that person's approval or signature</text>
+<rect x="366" y="406" width="310" height="78" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
+<g transform="translate(392,445)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-10" y1="9" x2="10" y2="9"/><line x1="-6" y1="6" x2="-6" y2="0"/><line x1="0" y1="6" x2="0" y2="-7"/><line x1="6" y1="6" x2="6" y2="-3"/></g>
+<text x="416" y="428" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">The report script</text>
+<text x="416" y="444" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">knowledge-report.sh, on every read</text>
+<text x="416" y="459" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">each trust label and the health line</text>
+<text x="416" y="473" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">and the librarian's work list</text>
+<circle cx="52" cy="520" r="5" fill="#23301B" stroke="#6FA33F" stroke-width="1"/>
+<text x="63" y="524" font-family="Arial, sans-serif" font-size="12" fill="#A9D27C">an agent derives it</text>
+<circle cx="206" cy="520" r="5" fill="#33290F" stroke="#C99A3E" stroke-width="1"/>
+<text x="217" y="524" font-family="Arial, sans-serif" font-size="12" fill="#E4BD6E">deterministic tools check it</text>
+<circle cx="418" cy="520" r="5" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
+<text x="429" y="524" font-family="Arial, sans-serif" font-size="12" fill="#93C0F2">a named person vouches for it</text>
+</svg>

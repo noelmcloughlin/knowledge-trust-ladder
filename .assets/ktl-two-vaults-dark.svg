@@ -27,7 +27,7 @@
 <text x="524" y="114" font-family="Arial, sans-serif" font-size="10.5" fill="#A9D27C">the bundle, opened as a vault</text>
 <text x="428" y="140" font-family="Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#A9D27C">index.md</text>
 <text x="500" y="140" font-family="Arial, sans-serif" font-size="9.5" fill="#A9D27C">carries the LOKF header</text>
-<text x="428" y="156" font-family="Menlo, Consolas, monospace" font-size="11" fill="#A9D27C">concepts/  playbooks/  log.md</text>
+<text x="428" y="156" font-family="Menlo, Consolas, monospace" font-size="11" fill="#A9D27C">services/  playbooks/  log.md</text>
 <text x="428" y="178" font-family="Arial, sans-serif" font-size="10.5" fill="#A9D27C">Plugins installed here, nothing to configure:</text>
 <rect x="428" y="186" width="118" height="60" rx="8" fill="#33290F" stroke="#C99A3E" stroke-width="1"/>
 <text x="438" y="202" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#E4BD6E">KTL Registrar</text>

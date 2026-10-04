@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:45:53Z"
+  at: "2026-10-04T14:26:28Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -107,7 +107,7 @@ the job fails and names the manual run to make. The version is typed *with* the 
 (`v0.16.0`); the changelog heading never carries one, and the cross-check
 strips it before comparing. This release-process detail moved out of
 `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for
-the three LOKF repositories in one place. All five skills ship together
+the three KTL repositories in one place. All five skills ship together
 under one tag, so a consumer can pin them to a single release. The
 `release` Environment's required reviewers are configured once, by hand,
 in each repository's settings, or a qualifying merge ships unattended.
@@ -115,14 +115,15 @@ Changes reach `main` by pull request, but no ruleset enforces it, and
 "Require signed commits" as a branch rule is off and must stay off.
 
 The sibling repositories (the two Obsidian plugins and ai-linkmo) carry
-byte-identical copies of the sidecar templates and their own skills pin, and
-since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up
-to one release: it refuses anything but a tag that is on origin and carries
-`skills/ktl-librarian`, copies that tag's templates over the copies the
-sibling already has (a template it never laid down is reported, not
-added), moves its `TRUST_LADDER_SKILLS_REF` to the same tag,
-runs the sidecar's checks there, prints a draft changelog line and the commit
-command, and never commits. The pin and the copies move together because
+byte-identical copies of the sidecar templates and their own skills pin.
+Since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up
+to one release. It refuses anything but a tag that is on origin and carries
+`skills/ktl-librarian`. It copies that tag's templates over the copies the
+sibling already has, and lays down a template the sibling lacks when
+ktl-sidecar puts it on every host or a copy there cannot run without it.
+It reports any other, and adds nothing more. Then it moves the sibling's
+`TRUST_LADDER_SKILLS_REF` to the same tag, runs the sidecar's checks there,
+prints a draft changelog line and the commit command, and never commits. The pin and the copies move together because
 the skill a tag installs is written against the wrapper, gate and preflight
 that tag ships, and once a sibling arms its scheduled librarian the pin
 decides which instructions run unattended. A release that touched neither

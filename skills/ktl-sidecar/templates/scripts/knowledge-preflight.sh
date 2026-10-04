@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# What this host can and cannot do for the four LOKF skills: one read-only
+# What this host can and cannot do for the KTL skills: one read-only
 # screen, no toolkit needed. Every skill runs it first and repeats its summary
 # line in the hand-off, so a missing tool disables a step out loud instead of
 # being discovered after a report has already offered that step.
@@ -195,14 +195,14 @@ if have uv; then
   fi
   if have just; then ok just "just $(just --version 2>/dev/null | sed 's/^just //')"; else info just "just not installed - uvx --from rust-just just works the same"; fi
 else
-  miss toolkit "uv not installed - lokf validate, convert and query unavailable, and the conventions script skips its parser's half (rules 2, 3, 4, 7, 9, 10, 12); only the manual schema cross-check remains" "lokf validate and six of the eleven conventions (every skill's audit)"
+  miss toolkit "uv not installed - lokf validate, convert and query unavailable, and the conventions script skips its parser's half (rules 2, 3, 4, 7, 9, 10, 12); only the manual schema cross-check remains" "lokf validate and seven of the twelve conventions (every skill's audit)"
 fi
 
 # ---- installed skills, and drift between copies -----------------------------
 found=""; templates=""
 for dir in .claude/skills .github/skills .agents/skills skills; do
   here=""
-  for s in ktl-sidecar ktl-librarian ktl-curator ktl-docent; do
+  for s in ktl-sidecar ktl-librarian ktl-curator ktl-docent ktl-prose; do
     [ -f "$root/$dir/$s/SKILL.md" ] && here="$here ${s#ktl-}"
   done
   [ -n "$here" ] && found="${found}${found:+; }$dir:$here"
@@ -215,7 +215,7 @@ for dir in skills .claude/skills .github/skills .agents/skills; do
 done
 if [ -n "$found" ]; then
   ok skills "$found"
-  for s in ktl-sidecar ktl-librarian ktl-curator ktl-docent; do
+  for s in ktl-sidecar ktl-librarian ktl-curator ktl-docent ktl-prose; do
     first=""
     for dir in .claude/skills .github/skills .agents/skills skills; do
       [ -d "$root/$dir/$s" ] || continue
@@ -226,7 +226,7 @@ if [ -n "$found" ]; then
     done
   done
 else
-  info skills "no LOKF skill installed under .claude/skills, .github/skills, .agents/skills or skills/"
+  info skills "no KTL skill installed under .claude/skills, .github/skills, .agents/skills or skills/"
 fi
 
 # ---- host copies of the sidecar's templates ----------------------------------

@@ -407,11 +407,13 @@ printf -- '---\n- just a list\n---\n' > "$bad/k/x/l-list.md"
 # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n' > "$bad/k/x/fence.md"
 # Rule 12: a bullet left behind by an edited description, in the folder's
-# index and in the root's; a bullet that still agrees, and a concept no index
-# lists, must both pass.
+# index and in the root's; a bullet that still agrees, a concept no index
+# lists, and a line that lists two concepts, which is neither one's bullet,
+# must all pass.
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/stale\ntitle: Stale\ndescription: what the concept says now.\n---\n' > "$bad/k/x/idx-stale.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fresh\ntitle: Fresh\ndescription: >-\n  folded, and\n  still equal.\n---\n' > "$bad/k/x/idx-fresh.md"
-printf -- '# K\n\n* [Stale](x/idx-stale.md) - what the concept said before.\n* [Fresh](x/idx-fresh.md) - folded, and still equal.\n' > "$bad/k/index.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/shared\ntitle: Shared\ndescription: listed only beside another.\n---\n' > "$bad/k/x/idx-shared.md"
+printf -- '# K\n\n* [Stale](x/idx-stale.md) - what the concept said before.\n* [Fresh](x/idx-fresh.md) - folded, and still equal.\n* [Fresh](x/idx-fresh.md), [Shared](x/idx-shared.md) - a line that lists two.\n' > "$bad/k/index.md"
 printf -- '# X\n\n* [Stale, renamed](idx-stale.md) - what the concept says now.\n* [Fresh](idx-fresh.md) - folded, and still equal.\n' > "$bad/k/x/index.md"
 findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$bad/k" 2>&1 || true)"
 rm -rf "$bad"
@@ -429,7 +431,8 @@ for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp
   fi
 done
 for quiet in "x/e.md:whose revision holds its resource" "r11-ok.md:whose time is before the commit that recorded it" "fence.md:whose second librarian event is only an example in a code fence" \
-             "idx-fresh.md:whose index bullets carry its title and its folded description"; do
+             "idx-fresh.md:whose index bullets carry its title and its folded description" \
+             "idx-shared.md:whose only listing is a root line that names it beside another concept"; do
   if grep -q "${quiet%%:*}" <<<"$findings"; then
     err "conventions script reported ${quiet%%:*}, ${quiet#*:}"
   else
@@ -1103,6 +1106,35 @@ else
   fi
 fi
 
+# 16b. LOKF is the format, its schema and its toolkit. The roles, skills and
+#      repositories that keep a bundle are KTL's, and a page that names them
+#      after the format leaves a reader unsure which project answers for
+#      them. CHANGELOG.md and the bundle's log.md keep what was written at
+#      the time, and so do the dated maintainer notes in the source map.
+say ""
+say "Checking that KTL's roles, skills and repositories are not named after LOKF..."
+named_after_format='LOKF (roles?|skills?|repositories)([^A-Za-z]|$)'
+set +e
+hits="$(git grep -lIE -- "$named_after_format")"
+grep_rc=$?
+set -e
+if [[ "$grep_rc" -gt 1 ]]; then
+  err "git grep exited $grep_rc while looking for KTL's roles, skills and repositories named after LOKF, so this check did not run"
+else
+  unexpected=()
+  while IFS= read -r f; do
+    case "$f" in
+      "" | CHANGELOG.md | scripts/validate-repository.sh | .lokf/knowledge/log.md | .lokf/knowledge/playbooks/knowledge-sources.md) continue ;;
+    esac
+    unexpected+=("$f")
+  done <<<"$hits"
+  if [[ "${#unexpected[@]}" -eq 0 ]]; then
+    ok "no file calls a role, skill or repository of KTL a LOKF one"
+  else
+    err "these files call a role, skill or repository of KTL a LOKF one: ${unexpected[*]} - LOKF is the format and its toolkit; write KTL"
+  fi
+fi
+
 # 17. The Microsoft 365 Copilot skills are sidecar templates, not skills of
 #     this repository: one shared builder and one instructions file per
 #     read-only role, the docent first. No file under templates/ may be a
@@ -1287,7 +1319,8 @@ expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- s
 #     reader's question in a code span; a dry run writes nothing; a quoted
 #     timestamp keeps its double quotes; reindex re-derives a bullet without
 #     touching the concept; resolve withdraws the librarian's own question and
-#     never a person's note; and --format prints the block patch.md shows.
+#     never a person's note; a root index shaped by hand keeps its shape; and
+#     --format prints the block patch.md shows.
 say ""
 say "Exercising knowledge-apply.sh..."
 apply="$repo_root/$templates/scripts/knowledge-apply.sh"
@@ -1470,6 +1503,77 @@ if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qxF -- "- $kday
 else
   err "the ledger did not grow as expected: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
 fi
+rm -rf "$ka"
+# A root index a person shaped by hand keeps its shape. Its sections may be
+# `##` headings, and a line may list several concepts or name one in a
+# sentence. The pen rewrites every line that holds one concept's link alone
+# and nothing else; files a new bullet under the folder's heading at whatever
+# level it has, or in the section that links the folder's index.md, but never
+# under the title; on delete takes the link out of a list of links and leaves
+# no double blank line; and refuses a delete that would reword a sentence.
+ka="$(mktemp -d)"; kb="$ka/.lokf/knowledge"; kpatch="$ka/.lokf/patch.yaml"; mkdir -p "$kb/glossary" "$kb/org"
+kvocab='The vocabulary ([index](glossary/index.md)): [Risk](glossary/risk.md), [Taxonomy](glossary/taxonomy.md)'
+kmulti='* [Acme Corp](org/acme.md), [Widget Co](org/widget.md)'
+printf '%s\n' '---' 'base_iri: https://acme.example/knowledge/' '---' '' '# Acme' '' 'Start at the [explanations](explanation/index.md).' '' \
+  '## Start here' '' '* [Risk](glossary/risk.md) - stale.' '' '## Glossary' '' "$kvocab" '' \
+  '## Organizations' '' '([index](org/index.md))' '' "$kmulti" '' \
+  'Start with [Model](glossary/model.md), then read the rest.' 'Read [Harm](glossary/harm.md) first.' > "$kb/index.md"
+printf '%s\n' '# Glossary' '' '* [Risk](risk.md) - a harm.' '* [Taxonomy](taxonomy.md) - a catalogue of risks.' '* [Model](model.md) - the model.' \
+  '* [Harm](harm.md) - a harm done.' '' '## See also' '' '* [Risk](risk.md) - a harm.' > "$kb/glossary/index.md"
+printf '%s\n' '# Org' '' '* [Acme Corp](acme.md) - stale.' '' '## Makers' '' '* [Widget Co](widget.md) - a maker of widgets.' > "$kb/org/index.md"
+for kc in glossary/risk:Risk:'a named harm.' glossary/taxonomy:Taxonomy:'a catalogue of risks.' glossary/model:Model:'the model.' \
+          glossary/harm:Harm:'a harm done.' org/acme:'Acme Corp':'a company.' org/widget:'Widget Co':'a maker of widgets.'; do
+  IFS=: read -r kpath ktitle kdesc <<<"$kc"
+  printf '%s\n' '---' 'type: Reference' "id: https://acme.example/knowledge/$kpath" "title: $ktitle" "description: $kdesc" \
+    'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'status: draft' '---' '' '# Overview' '' 'Text.' > "$kb/$kpath.md"
+done
+printf '%s\n' '# Change Log' > "$kb/log.md"
+ksection() { awk -v h="$1" '$0 == h {s = 1; next} /^#/ {s = 0} s' "$kb/index.md"; }  # the lines under one root heading
+printf '%s\n' 'ops:' '  - {op: reindex, path: org/acme.md}' '  - {op: reindex, path: glossary/risk.md}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qxF "$kvocab" "$kb/index.md" && grep -qxF "$kmulti" "$kb/index.md" \
+   && ksection '## Start here' | grep -qxF '* [Risk](glossary/risk.md) - a named harm.' \
+   && [[ "$(grep -cxF '* [Risk](risk.md) - a named harm.' "$kb/glossary/index.md")" == 2 ]] \
+   && grep -qxF '* [Acme Corp](acme.md) - a company.' "$kb/org/index.md" \
+   && [[ "$(grep -cE '^#+ Glossary$' "$kb/index.md")" == 1 ]] && ! grep -qE '^#+ Org$' "$kb/index.md"; then
+  ok "reindex rewrites every line that holds the concept's link alone, and leaves a root line that lists it among others as it was"
+else
+  err "reindex rewrote a hand-shaped root index, or missed a bullet: $(tr '\n' '|' < "$kb/index.md") // $(tr '\n' '|' < "$kb/glossary/index.md")"
+fi
+cat > "$kpatch" <<'EOF'
+ops:
+  - {op: create, path: glossary/crosswalk.md, frontmatter: {type: Reference, title: Crosswalk, description: a mapping across taxonomies.}, body: "# Overview\n\nA mapping.\n"}
+  - {op: create, path: org/newco.md, frontmatter: {type: Reference, title: Newco, description: a new company.}, body: "# Overview\n\nNew.\n"}
+  - {op: create, path: explanation/why.md, frontmatter: {type: Explanation, title: Why, description: why it exists.}, body: "# Overview\n\nBecause.\n"}
+  - {op: create, path: policies/retention.md, frontmatter: {type: Policy, title: Retention, description: how long rows are kept.}, body: "# Overview\n\nThirteen months.\n"}
+EOF
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && [[ "$(grep -cE '^#+ Glossary$' "$kb/index.md")" == 1 ]] \
+   && ksection '## Glossary' | grep -qxF '* [Crosswalk](glossary/crosswalk.md) - a mapping across taxonomies.' \
+   && grep -qx '## Organizations' "$kb/index.md" && [[ -z "$(grep -B1 -x '## Organizations' "$kb/index.md" | head -1)" ]] \
+   && ksection '## Organizations' | grep -qxF '* [Newco](org/newco.md) - a new company.' && ! grep -qE '^#+ Org$' "$kb/index.md" \
+   && ksection '## Explanation' | grep -qxF '* [Why](explanation/why.md) - why it exists.' \
+   && ksection '## Policies' | grep -qxF '* [Retention](policies/retention.md) - how long rows are kept.' && ! grep -qx '# Policies' "$kb/index.md"; then
+  ok "create files a bullet under the folder's heading at any level, or in the section that links the folder's index.md, and otherwise opens a section at the root's level"
+else
+  err "create misplaced a bullet in a hand-shaped root index: $(tr '\n' '|' < "$kb/index.md")"
+fi
+cat > "$kpatch" <<'EOF'
+ops:
+  - {op: delete, path: glossary/taxonomy.md, log: "**Removal**: Taxonomy; its source is gone."}
+  - {op: delete, path: org/widget.md, log: "**Removal**: Widget Co; its source is gone."}
+EOF
+knodouble() { awk 'NR > 1 && prev == "" && $0 == "" {bad = 1} {prev = $0} END {exit bad}' "$1"; }
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 \
+   && grep -qxF 'The vocabulary ([index](glossary/index.md)): [Risk](glossary/risk.md)' "$kb/index.md" && grep -qxF '* [Acme Corp](org/acme.md)' "$kb/index.md" \
+   && ! grep -qE 'taxonomy\.md|widget\.md' "$kb/index.md" "$kb/glossary/index.md" "$kb/org/index.md" \
+   && knodouble "$kb/index.md" && knodouble "$kb/org/index.md"; then
+  ok "delete takes the concept's link out of a list of links, keeps the rest of the line, and leaves no double blank line"
+else
+  err "delete did not take the link out of a shared line cleanly: $(tr '\n' '|' < "$kb/index.md") // $(tr '\n' '|' < "$kb/org/index.md")"
+fi
+printf '%s\n' 'ops:' '  - {op: delete, path: glossary/model.md, log: gone}' > "$kpatch"
+apply_refuses "deleting a concept a sentence links, with a comma after the link" "inside other text"
+printf '%s\n' 'ops:' '  - {op: delete, path: glossary/harm.md, log: gone}' > "$kpatch"
+apply_refuses "deleting a concept a sentence links, with no comma" "inside other text"
 rm -rf "$ka"
 # The format travels with the script that enforces it, so a host needs no
 # particular release of the skill to learn it; the skill's page shows the

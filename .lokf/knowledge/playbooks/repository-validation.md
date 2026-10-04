@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-04T13:37:58Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -126,7 +126,7 @@ on, staying quiet on what the two hand passes kept, and refusing, with
 wording, a frontmatter byte, or a concept a person wrote or confirmed; and
 (check 19) `knowledge-apply.sh`, the librarian's only pen, exercised on a
 throwaway bundle: each operation applied, each refusal refused, and a dry run
-writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock. The twelfth conventions rule holds an index bullet to its concept's title and description. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check and retrieval call. The job sets up `uv`, runs the contract, then confirms
+writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, a root index shaped by hand keeping its shape, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock. The twelfth conventions rule holds an index bullet to its concept's title and description. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check and retrieval call. The job sets up `uv`, runs the contract, then confirms
 `gh skill` is available, and then runs `gh skill publish --dry-run`.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs

@@ -87,7 +87,7 @@ The health line is the one number to watch over time: "confirmed by a person: *a
 
 ## Checking a confirmation against git
 
-A `human:<id>` event is a **claim typed by whoever held the pen**, not a credential. Any writer can produce a perfectly well-formed one: an agent steered by another agent, a script, a bad merge. `lokf validate` will pass it. The only evidence that binds such a claim to a person lives outside the bundle, in git: a signature, and (in CI) a pull-request approval.
+A `human:<id>` event is a **claim typed by whoever wrote it**, not a credential. Any writer can produce a perfectly well-formed one: an agent steered by another agent, a script, a bad merge. `lokf validate` will pass it. The only evidence that binds such a claim to a person lives outside the bundle, in git: a signature, and (in CI) a pull-request approval.
 
 Step 1 runs the local half of that check. For each concept carrying a `human:<id>` event, find the commit that introduced it, then ask whether that commit is signed at all:
 

@@ -1,4 +1,4 @@
-# Portability: reusing the LOKF skills on another host
+# Portability: reusing the KTL skills on another host
 
 The skills are repository-agnostic. Run them in any directory tree, including an empty one. The bundle is the same on every host: `.lokf/knowledge/`, one Markdown file per concept, validated by the same toolkit. What varies is the shell, the version control, the forge (GitHub, GitLab, Forgejo, or none), and what each of the four skills can do there.
 

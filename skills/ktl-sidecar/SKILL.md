@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: 'Requires a POSIX shell (bash; Git for Windows on Windows) and python3 or uv for placeholder substitution; uv with the lokf toolkit to validate (a manual cross-check otherwise). Any host (git or none, GitHub or another forge, Linux, macOS or Windows, a synced folder), with references/portability.md saying what each loses. Step 5''s workflows are GitHub Actions.'
 ---
 
-# KTL Sidecar
+# ktl-sidecar
 
 Create a fresh **`.lokf/` sidecar** inside the repository this skill is invoked from: a machine-readable, SPARQL-queryable [LOKF](https://lokf.nolan-nichols.com/) knowledge bundle, with its directory, tooling, docs, and a small **dummy** skeleton. Then hand off to **ktl-librarian** to fill it with real knowledge. Every file is copied from `templates/` (paths below are relative to this skill's directory), never retyped.
 
@@ -54,7 +54,7 @@ Resolve every placeholder from real project sources before writing anything; nev
 **Tracked or gitignored: decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default the four skills assume. Gitignoring it is equally valid (a personal bundle, or a policy against committing agent-authored content) but changes four things:
 
 - still create every file (the bundle is filesystem-based either way);
-- skip the commit in Step 4, and Step 5 apart from the two scripts its table says to lay down anyway;
+- skip the commit in Step 4, and Step 5 apart from the scripts and the `m365/` folder its table says to lay down anyway;
 - add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it;
 - say so in the Step 6 handoff.
 

@@ -1,6 +1,6 @@
 # Signing your commits
 
-A signature ties a commit to you cryptographically, so GitHub can show it `Verified`. In the LOKF repositories it is *required* for one thing: a pull request that adds a `by: human:` verification event to `.lokf/knowledge/`.
+A signature ties a commit to you cryptographically, so GitHub can show it `Verified`. In the KTL repositories it is *required* for one thing: a pull request that adds or removes a `by: human:` verification event in `.lokf/knowledge/`.
 
 The `provenance` job in each repository's `knowledge-registrar.yaml` checks those. It accepts either an approving review from the confirming account or a verified commit attributed to it. A sole maintainer cannot approve their own pull request, so for them the signature is the only path. The job exists because a claim that a named person checked a concept has to be tied back to that person: [threat-model.md](threat-model.md) says what such a confirmation proves.
 

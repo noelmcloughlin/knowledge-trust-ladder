@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an improvement to one of the five LOKF skills
+about: Suggest an improvement to one of the five KTL skills
 title: ''
 labels: enhancement
 assignees: ''

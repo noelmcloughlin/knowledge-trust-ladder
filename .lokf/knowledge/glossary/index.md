@@ -4,3 +4,4 @@
 * [OKF](okf.md) - The Open Knowledge Format, Google's specification for a folder of Markdown concept files with YAML frontmatter, which LOKF profiles.
 * [Knowledge bundle](knowledge-bundle.md) - The `.lokf/knowledge` directory - containing one-concept-per-file Markdown, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph.
 * [Trust label](trust-label.md) - The plain words the skills use for how far a concept has been checked, derived from its frontmatter on every read and never stored.
+* [The pen](the-pen.md) - The name for `knowledge-apply.sh`, the only way ktl-librarian writes the bundle: it applies the operations in `.lokf/patch.yaml`, stamps `generated`, keeps the index in step, and refuses a `human:` actor.

@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: 'Requires git and a POSIX shell (bash; Git for Windows on Windows). Recording a confirmation in a person''s name needs an authenticated identity, from the GitHub CLI (gh) logged in, glab on GitLab, or the signing-key route in references/portability.md, and commit signing when that person opens their own curation pull requests. uv is optional (validates after a session).'
 ---
 
-# KTL Curator
+# ktl-curator
 
 A knowledge bundle is only as useful as the trust people can place in it. The **ktl-librarian** skill derives every concept from the repository and cites its sources, but like a real librarian it catalogues without vouching. A person decides what the team accepts as true. This skill is that person's assistant: it shows what needs a look, puts the evidence next to the claim, and writes the verdict into the bundle's own frontmatter. It decides nothing itself.
 
