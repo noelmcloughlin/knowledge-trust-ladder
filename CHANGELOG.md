@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-10-04
+
 ### Added
 
 - **The README shows who writes the bundle and what checks it.** The diagram that `docs/for-the-curious.md` added in 0.31.0, `.assets/ktl-architecture.svg`, replaces the README's lifecycle diagram, since the opening card already shows the order the roles first run in and the loop back to the librarian. Its headings now say what happens: *each in one way only* and *what is written*, where they said *each through one door* and *what lands*.
