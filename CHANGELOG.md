@@ -4,6 +4,22 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The README shows who writes the bundle and what checks it.** The diagram that `docs/for-the-curious.md` added in 0.31.0, `.assets/ktl-architecture.svg`, replaces the README's lifecycle diagram, since the opening card already shows the order the roles first run in and the loop back to the librarian. Its headings now say what happens: *each in one way only* and *what is written*, where they said *each through one door* and *what lands*.
+- **The README says what a docent, a registrar, an accession and the sidecar are where it first names each, and links the bundle's glossary.** A docent is a museum's name for a guide, and the README pointer that ktl-sidecar installs says so too. A registrar is the person in a museum who keeps the collection's records, and an accession is an item added to the collection. The sidecar is `.lokf/`, a folder beside the code and kept out of the project's build. The glossary now defines all four, and *desk*, the README's word for the place where a role does its work.
+- **ktl-prose keeps one topic to a paragraph, and says what happens in plain words.** Rule 3 now covers the paragraph: split one that runs past 150 words where its topic turns, the limit the Federal Plain Language Guidelines give. `prose-check.py` reports it as `paragraph`, and never counts a table cell. Rule 9 now asks for the literal verb: a key is "added", not "landed", and an IRI is "built", not "minted". The script reports seven such figures under `words`, and the rules page lists the rest with their plain words. A word of the analogy a project names its roles by, such as the librarian's *desk*, stands once the project's glossary defines it. ktl-librarian's rules for a concept body say the same.
+- **`prose-check.py` reports a character no reader sees, as `unseen`.** That is a control character other than a tab, or a format character such as a zero-width space, a byte order mark or the right-to-left override the "Trojan Source" attack hides code behind. An agent that types such a character's escape into a tool call can write the character itself. The script reports each line that holds one, code and frontmatter included, and its comparison refuses a rewording that adds one. Check 18 exercises both.
+
+### Changed
+
+- **In a live session, ktl-librarian opens its pull request only when the person says so.** The person who started it is the change's author and submits it, as the AI covenant says. A scheduled run's workflow still opens its own. ktl-curator's review session ends the same way.
+- **The docs, the skill pages and the script comments read plainer.** A third pass replaced figures of speech, such as "lands", "mints", "ships", "arms", "wires" and "lays down", with what happens. It split every paragraph and comment block past 150 words, and took the dashes and long sentences out of the script comments, which no pass had read before. No fact changed. The captured docent answers, the released changelog entries and the messages the scripts print stay as they were.
+
+### Security
+
+- **The contract fails on a character a reader cannot see in any tracked file.** Check 21 searches every tracked text file for a control character other than a tab, and for a format character such as a zero-width space, a byte order mark or a right-to-left override. A diff shows none of them, and GitHub warns of only some. Typed escapes once put three of them into a sanitizer here, as the characters themselves, and only a search by hand found them. Code that needs one spells it as an escape.
+
 ## [0.32.0] - 2026-10-04
 
 ### Added

@@ -3,26 +3,29 @@
 # requires-python = ">=3.9"
 # dependencies = ["pyyaml"]
 # ///
-# The librarian's only pen. ktl-librarian describes each change to the bundle
-# as an operation in .lokf/patch.yaml, and this script, run through
-# knowledge-apply.sh, checks every operation and writes the files. The agent
-# never edits .lokf/knowledge/ itself, so what reaches the bundle is what
-# this script allows: it stamps `generated` from the clock, keeps a concept's
-# description and its two index bullets equal, files each log line under the
-# day's heading, moves a feedback entry an operation says it handled out of
-# feedback.md and into the ledger of questions readers asked, and refuses an
-# operation that would write a `human:` actor, rewrite text a person wrote, or
-# delete a concept a person confirmed or left a note on. Nothing is written
-# unless every operation passes. `--format` prints the patch file's shape, so
-# the format travels with the script that enforces it and a host needs no
-# particular release of the skill to learn it; ktl-librarian's
-# references/patch.md carries the same block, and the repository contract
-# holds the two equal.
+# The pen, the librarian's only way to write the bundle. ktl-librarian
+# describes each change to the bundle as an operation in .lokf/patch.yaml, and
+# this script, run through knowledge-apply.sh, checks every operation and
+# writes the files. The agent never edits .lokf/knowledge/ itself, so what
+# reaches the bundle is what this script allows. It:
+#   - stamps `generated` from the clock;
+#   - keeps a concept's description and its two index bullets equal;
+#   - files each log line under the day's heading;
+#   - moves a feedback entry an operation says it handled out of feedback.md
+#     and into the ledger of questions readers asked;
+#   - refuses an operation that would write a `human:` actor, rewrite text a
+#     person wrote, or delete a concept a person confirmed or left a note on.
+# Nothing is written unless every operation passes.
+#
+# `--format` prints the patch file's shape. So the format comes from the
+# script that enforces it, and a host needs no particular release of the skill
+# to learn it. ktl-librarian's references/patch.md carries the same block, and
+# the repository contract checks that the two are equal.
 #
 # A patch may also carry `handoff`: at most ten lines for the person who
 # reviews the change, in the librarian's own words. They are never written to
-# the bundle. The script holds each to one line of printable text, with no
-# backtick, and prints them; `--handoff <file>` also writes them there, which
+# the bundle. The script accepts each only as one line of printable text,
+# with no backtick, and prints them; `--handoff <file>` also writes them there, which
 # is how the scheduled wrapper passes them to the pull request.
 #
 # Operations (each a mapping under `ops:` with `op:` and `path:`):
@@ -576,7 +579,7 @@ class Bundle:
         The concept's own bullet is a line that holds its link alone,
         optionally followed by its description; every such line is rewritten.
         A line that lists the concept among other links, or names it in a
-        sentence, is the host's own way of listing it: create, set and reindex
+        sentence, is the host's own way of listing it. Create, set and reindex
         leave it alone, as rule 12 does, and delete takes the link out of a
         list of links. A mention inside another concept's bullet lists nothing.
         `section` is the folder's heading text and a link to the folder's

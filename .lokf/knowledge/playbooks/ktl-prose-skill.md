@@ -22,7 +22,7 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-04T17:27:49Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -38,13 +38,13 @@ A museum edits its labels before the exhibition opens. `ktl-prose` does that for
 
 1. Put the actor first and the verb early.
 2. Give every sentence a verb.
-3. Keep one idea to a sentence, and split one past forty words.
+3. Keep one idea to a sentence and one topic to a paragraph, and split a sentence past forty words or a paragraph past 150.
 4. Say the step, then the reason.
 5. Use no dash as punctuation.
 6. Turn a long aside into a sentence of its own.
 7. Turn a run of conditions into a list.
 8. Use the same word for the same thing.
-9. Choose the plain word, and keep each technical term exact.
+9. Choose the plain word, say literally what happens, and keep each technical term exact.
 10. Cut words that carry nothing.
 11. Say what is, and what to do.
 12. Open each page by saying who it is for.
@@ -66,9 +66,9 @@ Only a body an agent wrote that no person has confirmed. It never rewords `index
 # Steps
 
 1. **Preflight**, as every skill that touches the bundle does.
-2. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded; the style rules `dash`, `long` and `words` run over those; then the agent reads them, because only a reader sees a late verb.
+2. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded; the style checks `dash`, `long`, `paragraph` and `words` run over those, with `unseen` for a character no reader sees; then the agent reads them, because only a reader sees a late verb.
 3. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, and leave what cannot be fixed.
-4. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, and the agent undoes it. The script enforces the table above with no override.
+4. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, such as a character no reader sees that the rewording added, and the agent undoes it. The script enforces the table above with no override.
 5. **Log** one **Prose** line in `log.md`.
 6. **Hand off** a change scoped to `.lokf/`, with the counts before and after, each sentence left alone, each concept skipped, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
 

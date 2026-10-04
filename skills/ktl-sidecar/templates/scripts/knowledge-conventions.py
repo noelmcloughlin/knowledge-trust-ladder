@@ -4,14 +4,17 @@
 # dependencies = ["pyyaml"]
 # ///
 # The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9, 10, 12
-# and 13 (see that script's header for the list). Rules 2, 3, 7 and 9 are
-# questions about a document's YAML - is this scalar quoted, is this key a
-# list or a mapping, do two files share an id, does the block even parse -
-# that a real parser answers outright where grep and awk could only
-# approximate: an unquoted `at:` is only visible as a `datetime` once
-# something parses the document, and a flow-style `verified: { by: ... }` or a
-# multi-line flow item is where a line-oriented regex used to guess wrong.
-# Rule 4 is a body rule that rides along, and rule 10 exists because the
+# and 13 (see that script's header for the list).
+#
+# Rules 2, 3, 7 and 9 are questions about a document's YAML that a real
+# parser answers outright, where grep and awk could only approximate. Is this
+# scalar quoted, is this key a list or a mapping, do two files share an id,
+# does the block even parse? An unquoted `at:` is only visible as a
+# `datetime` once something parses the document. A flow-style
+# `verified: { by: ... }` or a multi-line flow item is where a line-oriented
+# regex used to guess wrong.
+#
+# Rule 4 is a body rule that goes with them. Rule 10 exists because the
 # provenance gates do read the frontmatter line by line: it keeps the fields
 # they read to spellings a line reader and a parser agree on. Rule 12 compares
 # a concept's title and description, which only a parser reads whole, with
@@ -19,7 +22,7 @@
 # confirmed and compares it with today's as parsed values, since
 # knowledge-apply.sh writes the whole frontmatter back and a requoted value is
 # no change. Rules 1, 5, 6, 8 and 11 stay in the shell script: they are git
-# and filesystem facts, and needn't wait on uv.
+# and filesystem facts, and need not wait on uv.
 #
 # Usage: knowledge-conventions.py <bundle-dir>. Same contract as the shell
 # half: one line per finding on stdout, exit 1 if any; "OK" and exit 0 if
@@ -45,10 +48,11 @@ INDEX_BULLET = re.compile(r"^\* \[([^\]]*)\]\(([^)]+)\) - (.*)$")
 # The fields the provenance gates read line by line: a concept's id, and the
 # actor, time and revision of each event.
 GATE_FIELDS = {"id", "by", "at", "revision"}
-# What a person's confirmation does not cover, for rule 13: the trust,
-# lifecycle and usage fields, which record who checked what and when rather
-# than what the concept claims, and in the body the open questions and the
-# block KTL Registrar derives from the frontmatter.
+# What a person's confirmation does not cover, for rule 13. In the
+# frontmatter these are the trust, lifecycle and usage fields, which record
+# who checked what and when rather than what the concept claims. In the body
+# they are the open questions and the block KTL Registrar derives from the
+# frontmatter.
 NOT_CLAIMS = {"generated", "verified", "status", "stale_after", "timestamp", "usage_window"}
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 
@@ -261,7 +265,7 @@ def check_file(path: Path, ids: dict[str, list[Path]], entries: dict[Path, tuple
     for what in plain_spellings(fm_text):
         findings.append(f"{path}: frontmatter uses {what} - write it plainly, so the gate reads the event a parser reads")
 
-    # 2. every `at:` quoted - unquoted, YAML resolves it to a datetime, a
+    # 2. every `at:` quoted: unquoted, YAML resolves it to a datetime, a
     #    date or a number, and only a string reaches every consumer the same.
     for where in find_unquoted_at(frontmatter, ""):
         findings.append(f"{path}: unquoted timestamp at {where}")
@@ -294,12 +298,12 @@ def check_file(path: Path, ids: dict[str, list[Path]], entries: dict[Path, tuple
         if in_section and line.startswith("- ") and not OPEN_QUESTION.match(line):
             findings.append(f"{path}: open question not '- YYYY-MM-DD, <actor>: ...': {line[:60]}")
 
-    # 7. one file per id - collected here, reported once every file is read.
+    # 7. one file per id: collected here, reported once every file is read.
     concept_id = frontmatter.get("id")
     if isinstance(concept_id, str) and concept_id:
         ids.setdefault(concept_id, []).append(path)
 
-    # 12. the catalogue entry - collected here, compared with the index
+    # 12. the catalogue entry: collected here, compared with the index
     #     bullets once every file is read.
     title, description = frontmatter.get("title"), frontmatter.get("description")
     if isinstance(title, str) and isinstance(description, str):

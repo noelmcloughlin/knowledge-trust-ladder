@@ -14,7 +14,7 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | No forge, git only | everything local | the gate, pull requests, the scheduled loop | review by the host's own mechanism; the forge-free gate for confirmations |
 | No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |
-| Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle; the auditor when it ships | the other three skills, source checks, `feedback.md` | the `ktl-docent-m365-<tag>-<repository>.zip` a release carries, or `.lokf/m365/knowledge-m365.sh` on the bundle folder ([m365.md](m365.md)) |
+| Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle; the auditor once it exists | the other three skills, source checks, `feedback.md` | the `ktl-docent-m365-<tag>-<repository>.zip` a release carries, or `.lokf/m365/knowledge-m365.sh` on the bundle folder ([m365.md](m365.md)) |
 
 ## Install all four skills together
 
@@ -26,7 +26,7 @@ Two copies of a skill in two of those directories drift: an installer updates on
 
 ## Tooling
 
-Validation uses [`uv`](https://docs.astral.sh/uv/) and the `lokf` PyPI package. [`just`](https://just.systems/) is optional: `uvx --from rust-just just` runs the same recipes. The files scaffold without them; only Step 4's validation needs them installed, and Step 4 gives the raw-schema fallback when Python is unavailable. Every script this skill lays down runs on bash 3.2 with POSIX tools, so macOS's stock shell and Git for Windows are covered. `mapfile`, `declare -A` and GNU-only flags are avoided for that reason.
+Validation uses [`uv`](https://docs.astral.sh/uv/) and the `lokf` PyPI package. [`just`](https://just.systems/) is optional: `uvx --from rust-just just` runs the same recipes. The files scaffold without them; only Step 4's validation needs them installed, and Step 4 gives the raw-schema fallback when Python is unavailable. Every script this skill installs runs on bash 3.2 with POSIX tools, so macOS's stock shell and Git for Windows are covered. `mapfile`, `declare -A` and GNU-only flags are avoided for that reason.
 
 The host copies of those scripts and workflows are meant to stay byte-identical to the templates they came from, so that a template fix reaches the host on the next sidecar repair. The preflight compares each host copy with the installed sidecar's template and warns on a difference. A host that edits a copy knowingly (a stricter checkout step, say) owns that copy from then on, and should say so where it documents its automation.
 
@@ -88,7 +88,7 @@ Obsidian is optional; nothing in the skills needs it. The default layout is the 
 
 The host vault stays clean for two reasons. Obsidian never indexes a dot-folder. And its file reconciler (`reconcileSymbolicLinkCreation`, 1.13.7; the help page says the same in words) skips a link whose resolved path equals, contains or lies inside a folder it already watches, the vault root included. So a vault opened at the host root lists neither `.lokf/` nor `knowledge_bundle`.
 
-A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* hides it from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions ([Obsidian's settings help](https://obsidian.md/help/settings)), and Obsidian Sync carries no links. Hence the rule: the bundle is never laid down as a real folder inside a vault.
+A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* hides it from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions ([Obsidian's settings help](https://obsidian.md/help/settings)), and Obsidian Sync carries no links. Hence the rule: the bundle is never placed as a real folder inside a vault.
 
 ## The forge-free gate
 

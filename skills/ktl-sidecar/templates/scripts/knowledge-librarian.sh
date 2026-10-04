@@ -2,29 +2,30 @@
 #
 # Wrapper for the scheduled knowledge-librarian loop (Karpathy rule).
 #
-# `.github/workflows/knowledge-librarian.yaml` invokes this script directly - a
-# fixed, reviewed path, not an arbitrary command from a repo variable. To arm the
-# scheduled run, set the `KNOWLEDGE_LIBRARIAN_ENABLED` repository variable to
-# "true", and set `AGENT_CLI` (repo variable or secret) to the command that runs
-# your coding agent non-interactively - e.g. the GitHub Copilot CLI or an internal
-# agent runner that accepts a prompt on `-p`/stdin.
+# `.github/workflows/knowledge-librarian.yaml` invokes this script directly: a
+# fixed, reviewed path, not an arbitrary command from a repo variable. To turn
+# on the scheduled run, set the `KNOWLEDGE_LIBRARIAN_ENABLED` repository
+# variable to "true". Then set `AGENT_CLI` (repo variable or secret) to the
+# command that runs your coding agent non-interactively, for example the GitHub
+# Copilot CLI or an internal agent runner that accepts a prompt on `-p`/stdin.
 #
 # CONTRACT (the workflow relies on this):
 #   - The agent WRITES one file, .lokf/patch.yaml, and nothing else. After it
-#     returns, this script applies that file with knowledge-apply.sh, so
+#     returns, this script applies that file with knowledge-apply.sh. So
 #     .lokf/knowledge/, a handled feedback.md entry and the ledger line it
-#     becomes in questions.md change only through that script; a run in which
-#     the agent changed any other path is refused.
-#   - What the pen refuses before it writes is then read off the result, by
+#     becomes in questions.md change only through that script, and a run in
+#     which the agent changed any other path is refused.
+#   - What the pen refuses before it writes is then checked on the result, by
 #     knowledge-provenance.sh --unattended: a run that touched a person's
 #     event, note or text is refused too.
 #   - The lines the patch file holds for the reviewer, its `handoff`, reach
 #     the file KNOWLEDGE_HANDOFF_OUT names through the same script, cleaned.
 #     That file and the retrieval score's are removed once the agent returns,
 #     so what the workflow reads from them was written after it.
-#   - It MUST NOT git commit, push, or open PRs - the workflow owns that.
+#   - It MUST NOT git commit, push, or open pull requests: the workflow owns
+#     that.
 #   - On success it exits 0 whether or not it changed anything; the workflow
-#     diffs the working tree to decide whether to open a PR. A run that
+#     diffs the working tree to decide whether to open a pull request. A run that
 #     knowledge-report.sh finds quiet, when the caller allows a skip, ends
 #     with exit 0 before the agent is called.
 #
@@ -50,10 +51,10 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repo_root"
 
 # The ktl-librarian skill may live under any of these skill-directory
-# conventions - the three install targets, plus bare skills/ for a repo that
-# publishes the skills it also uses. If this repo uses a different one, add it here - a candidate
-# list that doesn't match reality fails this whole script at run time, not at
-# scaffold time.
+# conventions: the three install targets, plus bare skills/ for a repo that
+# publishes the skills it also uses. If this repo uses a different one, add it
+# here. A candidate list that does not match the repo fails this whole script
+# at run time, not when the sidecar is installed.
 skill=""
 for candidate in .claude/skills/ktl-librarian/SKILL.md .github/skills/ktl-librarian/SKILL.md \
                  .agents/skills/ktl-librarian/SKILL.md skills/ktl-librarian/SKILL.md; do
@@ -64,10 +65,10 @@ done
   exit 2
 }
 
-# This wrapper writes the bundle through knowledge-apply.sh and nothing else,
-# so a sidecar that never laid the pen down - a copy synced over an older one
-# adds no file that was not there - is said now, before an agent run is spent
-# on a patch nothing could apply.
+# This wrapper writes the bundle through knowledge-apply.sh and nothing else.
+# A sidecar can lack that script when a newer copy was synced over an older
+# one, since a sync adds no file that was not there. So say it now, before an
+# agent run is spent on a patch nothing could apply.
 if [ ! -f .lokf/scripts/knowledge-apply.sh ] || [ ! -f .lokf/scripts/knowledge-apply.py ]; then
   echo "knowledge-librarian: .lokf/scripts/knowledge-apply.sh and knowledge-apply.py are not both here, and the bundle is written through them alone; ktl-sidecar's repair path lays them down" >&2
   exit 2
@@ -85,7 +86,7 @@ EOF
   exit 2
 fi
 
-# The patch file's format travels with knowledge-apply.sh, which prints it
+# The patch file's format comes from knowledge-apply.sh, which prints it
 # with --format, so the prompt below names no file inside the skill. That
 # matters because the skill a scheduled run installs is pinned one release
 # behind the scripts beside this one: a skill that predates the patch file
@@ -123,8 +124,8 @@ fi
 
 # Build the prompt. The agent should follow the skill verbatim, write only
 # .lokf/patch.yaml, and make no VCS operations.
-# The heredoc is unquoted so $skill expands - which means any backtick in the
-# text MUST be escaped (\`) or bash runs it as a command and blanks the word.
+# The heredoc is unquoted so $skill expands. So any backtick in the text MUST
+# be escaped (\`), or bash runs it as a command and blanks the word.
 prompt="$(cat <<EOF
 You are the repository knowledge librarian. Follow this skill file verbatim:
   - $skill
@@ -161,25 +162,26 @@ EOF
 )"
 
 # Security rationale (for human and automated reviewers): AGENT_CLI is trusted
-# configuration, not untrusted input - a repo admin sets it in Settings (the
-# operator naming their own agent command); it is never derived from repo
-# contents, PR data, or model output. It is parsed into a quoted argv array and
-# run directly (see below), so bash does NOT re-evaluate it as source: shell
-# metacharacters (; | & $() ``) are passed as inert arguments, not executed -
+# configuration, not untrusted input. A repo admin sets it in Settings, naming
+# their own agent command, and it is never derived from repo contents, pull
+# request data or model output. It is parsed into a quoted argv array and run
+# directly (see below), so bash does NOT re-evaluate it as source. Shell
+# metacharacters (; | & $() ``) are passed as inert arguments, not executed:
 # there is no eval and no `bash -c`. This step runs only in the workflow's
 # read-only `refresh` job (contents: read, no persisted credentials), and the
-# post-run check further fails if the agent wrote anything but .lokf/patch.yaml.
+# post-run check also fails if the agent wrote anything but .lokf/patch.yaml.
+#
 # That check, and the AGENT_CLI invocation itself, live inside main() below,
-# called only from this file's last line: bash reads a function body in full
-# before running any of it, so - unlike the top-level statements this used to
-# be - nothing after the agent call can be skipped by an agent that truncates
-# this script mid-run (bash otherwise just stops at whatever the file's
-# current length on disk is when it gets there).
+# called only from this file's last line. Bash reads a function body in full
+# before running any of it, so an agent that truncates this script mid-run
+# cannot make it skip anything after the agent call. Top-level statements, as
+# these once were, run only as far as the file's length on disk when bash
+# reaches them.
 #
 # Split AGENT_CLI into an argv array (whitespace word-split, no globbing) and
 # invoke it as a quoted vector rather than a re-expanded string. Handles the
-# usual "cmd --flags" form; quotes *inside* AGENT_CLI are not honoured - keep it
-# to a plain command plus flags, or wrap richer logic in its own script.
+# usual "cmd --flags" form. Quotes *inside* AGENT_CLI are not honoured, so keep
+# it to a plain command plus flags, or wrap richer logic in its own script.
 read -r -a agent_cmd <<< "$AGENT_CLI"
 if [ "${#agent_cmd[@]}" -eq 0 ]; then
   echo "knowledge-librarian: AGENT_CLI has no command after parsing" >&2
@@ -187,14 +189,15 @@ if [ "${#agent_cmd[@]}" -eq 0 ]; then
 fi
 
 # Defence in depth: the prompt asks the agent to write only the patch file, but
-# nothing forces it. Record paths already dirty outside the bundle (e.g. a
-# uv.lock the workflow refreshed) so the agent is held to account only for *new*
-# ones. Allowed: the bundle under either of its two names - .lokf/knowledge/,
-# and knowledge_bundle/, which is ktl-sidecar's doorway link by default (then
-# the pathspec matches nothing) but a real folder on a host rearranged by hand
-# with .lokf/knowledge a link onto it (git pathspecs do not traverse a symlink,
-# so both must be named) - plus ktl-docent's .lokf/feedback.md and the ledger
-# the pen moves a handled entry into, .lokf/questions.md.
+# nothing forces it. Record paths already dirty outside the bundle (for example
+# a uv.lock the workflow refreshed), so the agent answers only for *new* ones.
+# The allowed paths are the bundle under both its names, ktl-docent's
+# .lokf/feedback.md, and the ledger the pen moves a handled entry into,
+# .lokf/questions.md. The bundle's names are .lokf/knowledge/ and
+# knowledge_bundle/. By default the second is ktl-sidecar's doorway link, and
+# the pathspec matches nothing there. On a host rearranged by hand it is a real
+# folder, with .lokf/knowledge a link onto it, and git pathspecs do not
+# traverse a symlink, so both must be named.
 outside_bundle() {
   git status --porcelain -- '.' \
     ':(exclude).lokf/knowledge' ':(exclude)knowledge_bundle' ':(exclude).lokf/feedback.md' ':(exclude).lokf/questions.md' \
@@ -218,12 +221,14 @@ snapshot_git_state() {
 }
 
 # Put .git/config and .git/hooks/ back as they were before the agent ran, then
-# forget the snapshot so a second call is a no-op. Called explicitly right after
-# the agent returns, and again from the EXIT trap for every other way out: the
-# agent exiting non-zero (which `set -e` turns into this script's exit), the job
-# being cancelled (the runner's SIGINT/SIGTERM, handled below by exiting), or an
-# error anywhere after the snapshot. Without the trap, a failing agent left its
-# poisoned config in the checkout for the workflow's next steps to read.
+# forget the snapshot so a second call is a no-op. main() calls it right after
+# the agent returns, and the EXIT trap calls it for every other way out:
+# - the agent exiting non-zero, which `set -e` turns into this script's exit;
+# - the job being cancelled, the runner's SIGINT or SIGTERM, which the traps
+#   below turn into an exit;
+# - an error anywhere after the snapshot.
+# Without the trap, a failing agent left the config it had rewritten in the
+# checkout, for the workflow's next steps to read.
 restore_git_state() {
   [ -n "$config_snapshot" ] || return 0
   cp "$config_snapshot" .git/config
@@ -249,10 +254,10 @@ tree_state() {
 
 # The index-only retrieval test (knowledge-report.sh's `retrieval`), run only
 # when KNOWLEDGE_RETRIEVAL is "true". The bundle is written by now. The agent
-# answers one prompt - the table of contents and the questions readers asked -
-# from an empty directory, so the index is all it has, and its reply is
-# scored by program: one line, "n of m". The prompt carries readers' words,
-# so the reply is read for concept paths and for nothing else, the same
+# answers one prompt, holding the table of contents and the questions readers
+# asked, from an empty directory, so the index is all it has. A program scores
+# its reply as one line, "n of m". The prompt carries readers' words. So
+# the reply is read for concept paths and for nothing else, the same
 # snapshot guards .git/config and .git/hooks/, and a call that changed
 # anything in the checkout refuses the run like any other stray write.
 score_retrieval() {
@@ -296,11 +301,11 @@ clear_outputs() {
 
 main() {
   # A run with nothing to do ends here, before the agent is called, when the
-  # caller allows it: the workflow sets KNOWLEDGE_SKIP_QUIET on a scheduled
+  # caller allows it. The workflow sets KNOWLEDGE_SKIP_QUIET on a scheduled
   # run. knowledge-report.sh decides, from frontmatter and history, and runs
   # from the checkout before any agent has touched it. Anything but a clear
-  # "quiet" - work waiting, no history, a report script too old to know the
-  # command - runs the agent as before.
+  # "quiet" runs the agent as before: work waiting, no history, or a report
+  # script too old to know the command.
   if [ "${KNOWLEDGE_SKIP_QUIET:-}" = true ] && [ -f .lokf/scripts/knowledge-report.sh ]; then
     local verdict rc=0
     verdict="$(bash .lokf/scripts/knowledge-report.sh quiet 2>/dev/null)" || rc=$?
@@ -312,22 +317,24 @@ main() {
   fi
 
   # A local, well-formed AGENT_CLI can still run code that writes anywhere in
-  # this job's checkout - that's what the check above is for. But that check
-  # is only as good as the `git status` it reads: an agent that sets
+  # this job's checkout, which is what the check above is for. But that check
+  # is only as good as the `git status` it reads. An agent that sets
   # core.fsmonitor or core.hooksPath in .git/config, or drops a file in
-  # .git/hooks/, gets it run by *this script's own* later git commands (and
-  # by the workflow's separate detect/package steps after this script exits,
-  # which share this job's checkout). Snapshot both around the agent call and
-  # restore them on every exit - success, agent failure, cancellation - so
-  # neither this check nor anything the workflow does afterwards can be
-  # blinded or hijacked that way. Only SIGKILL escapes this; a runner that
-  # kills the step outright also discards the job, so nothing reads the
-  # checkout after it. This is defence in depth, not the actual backstop - a
-  # human reviewing the PR before merge is.
+  # .git/hooks/, gets it run by *this script's own* later git commands. The
+  # workflow's detect and package steps share this job's checkout and run it
+  # too, after this script exits.
+  #
+  # So snapshot both around the agent call and restore them on every exit
+  # (success, agent failure, cancellation), and neither this check nor
+  # anything the workflow does afterwards can be defeated or taken over that
+  # way. Only SIGKILL escapes this, and a runner that kills the step outright
+  # also discards the job, so nothing reads the checkout after it. This is
+  # defence in depth, not the backstop: a person reviewing the pull request
+  # before merge is.
   snapshot_git_state
   trap restore_git_state EXIT
   # A signal caught by a trap does not end the shell, so these turn it into an
-  # exit, which runs the EXIT trap above. bash delivers them only once the
+  # exit, which runs the EXIT trap above. Bash delivers them only once the
   # foreground agent has itself exited, so the restore never races the agent.
   trap 'exit 129' HUP
   trap 'exit 130' INT
@@ -381,7 +388,7 @@ main() {
     exit 3
   fi
 
-  # What the pen refuses before it writes, read off the result: the change
+  # What the pen refuses before it writes, checked on the result: the change
   # adds, changes and removes no person's event or note, and rewrites no text
   # a person wrote. The publish job runs the same check on a checkout the
   # agent never shared; this one fails fast.

@@ -1,6 +1,6 @@
 # Contributing to Knowledge Trust Ladder
 
-*This file is a checklist, not a design log. Each rule is a line or two that links to where its reasoning lives: a code comment, a workflow header, or a page under `docs/`. `bash scripts/validate-repository.sh` holds the file to a word budget so it stays that way.*
+*This file is a checklist, not a design log. Each rule is a line or two that links to where its reasoning lives: a code comment, a workflow header, or a page under `docs/`. `bash scripts/validate-repository.sh` fails when the file outgrows its word budget, so it stays that way.*
 
 Thanks for your interest in improving `knowledge-trust-ladder`.
 
@@ -33,7 +33,7 @@ npx skills add ./knowledge-trust-ladder --skill ktl-sidecar
 | `skills/ktl-docent/SKILL.md` | The reader's side: answers from the bundle with each concept's trust label, and records misses in `.lokf/feedback.md`. Read-only on the bundle. |
 | `skills/ktl-prose/SKILL.md` | The librarian's copy editor: rewords a concept body an agent wrote, in plain English, before a person confirms it. Wording, never facts. `scripts/prose-check.py` is its check. |
 | `skills/*/references/*.md` | Detail loaded only when the router points to it, which keeps each `SKILL.md` small. |
-| `scripts/` | The repository contract CI runs on every PR. `validate-repository.sh` is the entry point and runs the layout tests; `smoke-test-install.sh` installs all five skills into a throwaway repo. |
+| `scripts/` | The repository contract CI runs on every pull request. `validate-repository.sh` is the entry point and runs the layout tests; `smoke-test-install.sh` installs all five skills into a throwaway repo. |
 
 [docs/repository-layout.md](docs/repository-layout.md) shows the whole tree, workflows and docs included.
 
@@ -42,16 +42,16 @@ npx skills add ./knowledge-trust-ladder --skill ktl-sidecar
 - Run `bash scripts/validate-repository.sh`. It names each check as it runs, and CI runs the same script plus ShellCheck, `actionlint`, markdownlint, lychee and codespell.
 - Run `gh skill publish --dry-run` if you have the GitHub CLI: the Agent Skills spec check `validate.yml` runs.
 - If a change alters what a skill *does*, not just its wording, add a line or two under `## [Unreleased]` in `CHANGELOG.md`. The reasoning belongs beside the code.
-- Files here are deep-linked from the sibling repositories, whose link checks follow those URLs for real; check 9 lists the paths. Move one only together with their links, and when a change *there* needs something new *here*, land this side first.
+- Files here are deep-linked from the sibling repositories, whose link checks follow those URLs for real; check 9 lists the paths. Move one only together with their links, and when a change *there* needs something new *here*, merge this side first.
 - Copy a change under `skills/ktl-sidecar/templates/` over this repository's own copy in the same pull request. Check 11 names the pairs and holds each byte-identical, `knowledge-librarian.yaml` apart from its skills pin, which the release commit moves in the template only.
 - When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`): a squash merge takes its subject from the title, and the `plan` job refuses a mismatch.
 - Dependabot bumps the pinned action SHAs, and CI fails an action that is not pinned to a commit.
-- Sign a pull request that records a `human:` confirmation, with GPG or SSH ([signing your commits](docs/signing-commits.md)). A repository running the forge-free gate also carries your public key under `.lokf/curators/`, landed in its own pull request first. The same page says how to export it.
-- The PR template's checklist is the short form of this list.
+- Sign a pull request that records a `human:` confirmation, with GPG or SSH ([signing your commits](docs/signing-commits.md)). A repository running the forge-free gate also carries your public key under `.lokf/curators/`, added first in a pull request of its own. The same page says how to export it.
+- The pull request template's checklist is the short form of this list.
 
 ## Editing scope
 
-This repository packages and distributes the four skills and the `ktl-prose` helper. It does not second-guess their operational content on its own. A change to what an agent should actually *do* (a new Golden Rule interpretation, a different sidecar step, a new curator verb) needs its *why* in the pull request. It must also keep the role boundary intact: the librarian derives facts from the repository and never vouches for them, and the curator records a person's verdicts and never derives facts. `ktl-prose` changes wording, and never a fact, a frontmatter byte or a concept a person vouched for.
+This repository packages and distributes the four skills and the `ktl-prose` helper. It does not revise what they tell an agent to do on its own initiative. A change to what an agent should actually *do* (a new Golden Rule interpretation, a different sidecar step, a new curator verb) needs its *why* in the pull request. It must also keep the role boundary intact: the librarian derives facts from the repository and never vouches for them, and the curator records a person's verdicts and never derives facts. `ktl-prose` changes wording, and never a fact, a frontmatter byte or a concept a person vouched for.
 
 ## Code of conduct
 
@@ -63,4 +63,8 @@ AI assistance is welcome; these skills exist for agents to run. You are still th
 
 ## Releasing (maintainers)
 
-Commits typed with [Conventional Commits](https://www.conventionalcommits.org/) decide the version, and `## [Unreleased]` is the release note. On a merge to `main`, [`semantic-release.yml`](.github/workflows/semantic-release.yml) promotes the changelog and commits it, but never tags. A maintainer then runs [`publish.yml`](.github/workflows/publish.yml) by hand with the version to ship, typed **with** its `v`, and the workflow cross-checks it against the promoted changelog before anything reaches the registry. All five skills ship together under that one tag. After a release that changes a template or `skills/ktl-librarian/`, run `scripts/sync-sidecar.sh <tag> <sibling>...` once the tag is on origin. It copies that release's templates over each sibling's copies, moves its `TRUST_LADDER_SKILLS_REF` to the same tag, runs the sidecar's checks there, and leaves the diff for a person to review and commit. The pin and the copies move together, from one tag, because once a sibling arms its scheduled librarian, the pin decides which instructions run unattended. [How the three repositories release](docs/releasing.md) has the whole pipeline and the repository settings it depends on. [Signing your commits](docs/signing-commits.md) is required only for a pull request that records a `human:` confirmation. The template's own pin moves by itself at each release: [what follows a releasing merge](docs/releasing.md#after-a-releasing-merge-to-knowledge-trust-ladder-what-follows).
+Commits typed with [Conventional Commits](https://www.conventionalcommits.org/) decide the version, and `## [Unreleased]` is the release note. On a merge to `main`, [`semantic-release.yml`](.github/workflows/semantic-release.yml) promotes the changelog and commits it, but never tags. A maintainer then runs [`publish.yml`](.github/workflows/publish.yml) by hand with the version to release, typed **with** its `v`, and the workflow cross-checks it against the promoted changelog before anything reaches the registry. All five skills are released together under that one tag.
+
+After a release that changes a template or `skills/ktl-librarian/`, run `scripts/sync-sidecar.sh <tag> <sibling>...` once the tag is on origin. It copies that release's templates over each sibling's copies, moves its `TRUST_LADDER_SKILLS_REF` to the same tag, runs the sidecar's checks there, and leaves the diff for a person to review and commit. The pin and the copies move together, from one tag, because once a sibling turns on its scheduled librarian, the pin decides which instructions run unattended.
+
+[How the three repositories release](docs/releasing.md) has the whole pipeline and the repository settings it depends on. [Signing your commits](docs/signing-commits.md) is required only for a pull request that records a `human:` confirmation. The template's own pin moves by itself at each release: [what follows a releasing merge](docs/releasing.md#after-a-releasing-merge-to-knowledge-trust-ladder-what-follows).

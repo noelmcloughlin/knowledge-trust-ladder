@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# The librarian's only pen. ktl-librarian describes each change to the bundle
-# as an operation in .lokf/patch.yaml and never edits .lokf/knowledge/ itself;
-# this script checks every operation and writes the files, or refuses the
-# whole file and writes nothing. The rules live in the Python half beside it,
+# The pen, the librarian's only way to write the bundle. ktl-librarian
+# describes each change to the bundle as an operation in .lokf/patch.yaml and
+# never edits .lokf/knowledge/ itself; this script checks every operation and
+# writes the files, or refuses the whole file and writes nothing. The rules live in the Python half beside it,
 # knowledge-apply.py, which this script runs through `uv run` (the script's
 # own header names pyyaml) or, without uv, through python3 where pyyaml is
 # installed. The scheduled wrapper runs it after the agent has finished.
@@ -15,7 +15,7 @@
 #               <file>, or leave it empty when the patch has none
 #   --root      the repository root; default: two levels above this script
 #   --format    print the patch file's shape, every operation with its keys,
-#               and exit; the format travels with the script that enforces it
+#               and exit, so the format comes from the script that enforces it
 # Exit 0 applied (or would apply); 1 findings, nothing written; 2 usage or no runner.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--dry-run] [--keep] [--format] [--handoff <file>] [--root <dir>] [<patch-file>]" >&2; exit 2; }
 set -u

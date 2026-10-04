@@ -10,7 +10,7 @@ assignees: ''
 ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose
 
 **Installed via**
-`gh skill install` / `npx skills add` / manual copy - and which version/tag
+`gh skill install` / `npx skills add` / manual copy, and which version or tag
 
 **What happened**
 A clear description of the incorrect behavior, including the agent's actual

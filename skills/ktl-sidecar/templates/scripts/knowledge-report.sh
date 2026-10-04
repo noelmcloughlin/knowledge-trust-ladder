@@ -39,15 +39,17 @@
 # event is the later of `generated.at` and the newest `verified` event for
 # the work list, and the newest confirmation by a person for the report. Git
 # is asked for the commit that first recorded that event's time in the
-# concept, and a source moved when its own last commit comes after that
-# commit in history, or when it carries an edit not yet committed and the
-# concept does not. History orders the two, never a clock, so a source
-# changed in the commit that recorded the event, as a squash merge leaves
-# them, has not moved. An event not yet committed is the newest thing there
-# is, and one git cannot find is left alone: the comparison can miss a moved
-# source and never invents one. It is the file's history, not its meaning: an
-# edit that changed no fact still counts, and only reading the source says
-# which it was.
+# concept. A source moved when its own last commit comes after that commit in
+# history, or when it carries an edit not yet committed and the concept does
+# not.
+#
+# History orders the two, never a clock, so a source changed in the commit
+# that recorded the event, as a squash merge leaves them, has not moved. An
+# event not yet committed is the newest thing there is, and one git cannot
+# find is left alone: the comparison can miss a moved source and never
+# invents one. It is the file's history, not its meaning: an edit that
+# changed no fact still counts, and only reading the source says which it
+# was.
 #
 # An open question is "answered" here when a person confirmed the concept on
 # or after the day the question is dated and the concept is no longer a
@@ -56,26 +58,29 @@
 # with the pen's `resolve`.
 #
 # `quiet` says whether a scheduled run has anything to do, so the wrapper can
-# skip the agent in a week when nothing happened. Work waits when a source
-# moved after its concept's stamp, when a person left a note after the
-# librarian last wrote or checked that concept, when reader feedback waits,
-# or when a concept carries no stamp at all: no `generated`, no `timestamp`
-# and no `verified` event, so no history can say what moved for it, as in
-# the skeleton ktl-sidecar lays down. A note's commit is compared with the
-# stamp's as a source's is, so a note left in the commit that recorded the
-# stamp is missed, and a note not yet committed is newer than any stamp. A
-# bundle git holds no full history of is never quiet. A source given as a URL
-# is never fetched, so it never makes a run busy: the wrapper's caller decides
-# how often a run goes ahead regardless. It prints one line of counts, with
-# no path and nobody's words.
+# skip the agent in a week when nothing happened. Work waits when:
+#   - a source moved after its concept's stamp;
+#   - a person left a note after the librarian last wrote or checked that
+#     concept;
+#   - reader feedback waits;
+#   - a concept carries no stamp at all, as in the skeleton ktl-sidecar
+#     installs: no `generated`, no `timestamp` and no `verified` event, so no
+#     history can say what moved for it.
+#
+# A note's commit is compared with the stamp's as a source's is, so a note
+# left in the commit that recorded the stamp is missed, and a note not yet
+# committed is newer than any stamp. A bundle git holds no full history of is
+# never quiet. A source given as a URL is never fetched, so it never makes a
+# run busy: the wrapper's caller decides how often a run goes ahead
+# regardless. It prints one line of counts, with no path and nobody's words.
 #
 # `retrieval` measures what the index promises: that an agent reading only
 # index.md can tell which concept to open. The questions are the ones readers
 # asked, from the ledger in .lokf/questions.md that knowledge-apply.sh keeps.
 # `--prompt` prints one prompt holding the table of contents and the numbered
-# questions; an agent answers it with no tool, and the reply is scored here,
-# by program: a question counts when a concept the ledger names for it is
-# among the first three paths the reply gives.
+# questions. An agent answers it with no tool, and a program scores the reply
+# here. A question counts when a concept the ledger names for it is among the
+# first three paths the reply gives.
 #
 # Bash 3.2, POSIX awk and git only, so it runs wherever the other sidecar
 # scripts do, and in a workflow job that installs nothing.
@@ -116,7 +121,7 @@ today="$(date -u +%Y-%m-%d)"
 have_git=0
 if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then have_git=1; fi
 # The bundle's real folder, since git names a concept by it and never through
-# a link; and whether git tracks the bundle at all, which a gitignored .lokf/
+# a link. And whether git tracks the bundle at all, which a gitignored .lokf/
 # does not, so that "nothing moved" is never said of a history that is absent.
 kdir="$(cd "$bundle" && pwd -P)"
 tracked=0
@@ -126,7 +131,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 # ---- one concept -> its facts ------------------------------------------------
-# A line reader, like the provenance gates: conventions rule 10 holds the
+# A line reader, like the provenance gates: conventions rule 10 keeps the
 # fields read here to spellings a line reader and a parser agree on. Out come
 #   C  path  title  status  stale_after  generated.by  generated.at
 #      latest human verified.at  human events  verified events  latest verified.at  open questions

@@ -2,6 +2,18 @@
 
 ## 2026-10-04
 
+* **Added**: Accession, a museum's word for an item added to its collection, from `README.md`, which now says so where it describes the registrar.
+* **Changed**: Registrar: its quotation of the README carries the README's new gloss on *accession*.
+* **Added**: Registrar, the person in a museum who keeps the collection's records, from `README.md`, which now says so where it first names the role.
+* **Added**: Sidecar, the `.lokf/` folder beside the code and the role that installs it, from `README.md`, which now says so where it first names it.
+* **Added**: Docent, a museum's name for a guide, from `README.md`, which now says so where it first names the docent.
+* **Added**: Desk, the README's word for the place where a role does its work, from its section on the registrar.
+* **Changed**: ktl-prose skill: rule 3 covers a paragraph past 150 words, rule 9 asks for the literal verb, and the check reports both and a character no reader sees.
+* **Changed**: repository validation: check 18 exercises the paragraph, figure-of-speech and unseen-character findings, and check 21 searches every tracked file for a character a reader cannot see.
+* **Changed**: threat model: this repository's contract fails on a character a reader cannot see, and ktl-prose's check refuses a rewording that adds one.
+* **Changed**: security policy: `SECURITY.md` now says what guards each surface, and that a security fix is published as a patch release. Checked against it again, as the note of 2026-10-03 asks. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the pen: the README now names it as the registrar for the librarian.
+* **Changed**: contributing: `CONTRIBUTING.md` now says to merge this side first, and that a curator's key is added first in a pull request of its own.
 * **Changed**: the skill page gives the Golden Rules in brief and keeps their tables, the first run's sweep and the audit's detail in three new references; a run's hand-off reaches its pull request, a quiet week runs no agent, and a note the run reads leaves its stamp. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the pen also takes the librarian's hand-off, which it cleans and writes nowhere in the bundle, as `references/patch.md` now says.
 * **Changed**: check 11 now proves conventions rule 13, check 19 the pen's hand-off and check 20 the quiet check, and the layout tests the wrapper's quiet skip and hand-off; the playbook counts thirteen conventions, eight of them in the Python half.

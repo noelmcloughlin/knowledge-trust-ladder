@@ -5,7 +5,7 @@ The rule never changes: a `human:<id>` event carries an id that something outsid
 | Host | Where the id comes from | What checks a confirmation afterwards |
 | --- | --- | --- |
 | GitHub | `gh api user --jq .login`; or the signing-key route below | the `provenance` job: an approving review by that account, or its verified signature on the commit |
-| GitLab | `glab api user` (the `username` field); or the signing-key route | no template ships; the recipe is in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md) |
+| GitLab | `glab api user` (the `username` field); or the signing-key route | no template exists; the recipe is in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md) |
 | Forgejo, Gitea, Codeberg | the signing-key route, with a token where the key listing needs one | same: no template, recipe there |
 | Another forge, Bitbucket included | the signing-key route if the forge lists keys; else no *Confirm* | untested; the forge-free gate below is the safe choice |
 | No forge: a synced or shared folder, a plain directory | the account the platform's version history attributes the save to | that version history, and nothing else |
@@ -28,7 +28,7 @@ A synced folder (SharePoint, OneDrive, Drive, Dropbox, iCloud) or a plain direct
 
 ## The forge-free gate
 
-Where no gate runs, or as a second opinion where one does, ktl-sidecar can lay down `knowledge-provenance.sh` beside the conventions script. It verifies the signature on every commit that adds or changes a `human:<id>` event (a `verified` entry, or the `generated` record Correct writes). It checks against a public key the repository carries for that id under `.lokf/curators/` (GPG as `<id>.asc`, SSH as `<id>.pub`), with plain git and gpg or ssh-keygen, on any CI or by hand. Its rules, and the guard that stops a change adding an id's key and their confirmation together, are in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md). The preflight's `curators` line says whether this person's key is on file; when it is not, the Step 1 readiness line says so, and the request to send an administrator is on ktl-sidecar's [prerequisites.md](../../ktl-sidecar/references/prerequisites.md).
+Where no gate runs, or as a second opinion where one does, ktl-sidecar can install `knowledge-provenance.sh` beside the conventions script. It verifies the signature on every commit that adds or changes a `human:<id>` event (a `verified` entry, or the `generated` record Correct writes). It checks against a public key the repository carries for that id under `.lokf/curators/` (GPG as `<id>.asc`, SSH as `<id>.pub`), with plain git and gpg or ssh-keygen, on any CI or by hand. Its rules, and the guard that stops a change adding an id's key and their confirmation together, are in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md). The preflight's `curators` line says whether this person's key is on file; when it is not, the Step 1 readiness line says so, and the request to send an administrator is on ktl-sidecar's [prerequisites.md](../../ktl-sidecar/references/prerequisites.md).
 
 ## Shells and tools
 

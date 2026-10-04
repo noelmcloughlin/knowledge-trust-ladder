@@ -1,31 +1,31 @@
-# Step 5 automation: what the files do and how to wire them
+# Step 5 automation: what the files do and how to set them up
 
-You lay these files down once. This page covers the librarian loop, the release asset and the feedback script, and how to wire each. [gate.md](gate.md) covers the registrar workflow and the two scripts it runs, and ktl-librarian's [scheduled-task.md](../../ktl-librarian/references/scheduled-task.md) says how the librarian loop behaves at run time. The workflows apply only to a **git-tracked** `.lokf/` on **GitHub**; SKILL.md Step 5 says why a gitignored bundle makes them a permanent no-op.
+You install these files once. This page covers the librarian loop, the release asset and the feedback script, and how to set each up. [gate.md](gate.md) covers the registrar workflow and the two scripts it runs, and ktl-librarian's [scheduled-task.md](../../ktl-librarian/references/scheduled-task.md) says how the librarian loop behaves at run time. The workflows apply only to a **git-tracked** `.lokf/` on **GitHub**; SKILL.md Step 5 says why a gitignored bundle makes them a permanent no-op.
 
-Each file has a section on one of the two pages. Read the one you are wiring.
+Each file has a section on one of the two pages. Read the one you are setting up.
 
 | File | What it does | What you set up | Where |
 | --- | --- | --- | --- |
-| `knowledge-registrar.yaml` | Validates the bundle, and checks that each new human confirmation is backed by its person | Nothing to wire. Curators sign their commits; the attestation environment is optional | [gate.md](gate.md) |
+| `knowledge-registrar.yaml` | Validates the bundle, and checks that each new human confirmation is backed by its person | Nothing to set up. Curators sign their commits; the attestation environment is optional | [gate.md](gate.md) |
 | `knowledge-conventions.sh` and `.py` | The checks the gate runs that `lokf validate` cannot | Nothing | [gate.md](gate.md) |
 | `knowledge-provenance.sh` | The signature check, with no forge needed, and the check that an unattended change touches no person's record | A public key per curator under `.lokf/curators/`; nothing for the unattended form | [gate.md](gate.md) |
 | `knowledge-librarian.yaml` | Runs the librarian agent weekly when work waits for it, and opens a review pull request | Repository variables, and a secret for the agent's key | below |
 | `knowledge-librarian.sh` | The wrapper the librarian workflow runs | Nothing, unless the skills live in an unusual directory | below |
 | `knowledge-apply.sh`, `knowledge-apply.py` | The librarian's only pen: applies `.lokf/patch.yaml` to the bundle; the wrapper runs it after the agent | Nothing | ktl-librarian's `references/patch.md`, or `--format` |
 | `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, whether any work waits, what a change does to the record, and the retrieval score | Nothing, or one variable for the retrieval score | below |
-| `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to arm it, or run it by hand | below |
+| `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to turn it on, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 
 ## `knowledge-librarian.yaml`: the scheduled refresh loop
 
 It runs weekly (Mondays 05:00 UTC) and on demand, in two jobs:
 
-- **`refresh`** is read-only. It checks out the full history, sets up `uv`, installs the sidecar, runs the reviewed agent wrapper, validates, and diffs `.lokf/knowledge/` only, so tool artifacts such as a fresh `uv.lock` never trigger a pull request. If anything changed it packages the change as a patch artifact, together with `.lokf/feedback.md`, the reader-feedback file ktl-docent writes and the librarian consumes, and `.lokf/questions.md`, the ledger a handled entry moves into. The librarian's hand-off travels beside the patch.
+- **`refresh`** is read-only. It checks out the full history, sets up `uv`, installs the sidecar, runs the reviewed agent wrapper, validates, and diffs `.lokf/knowledge/` only, so tool artifacts such as a fresh `uv.lock` never trigger a pull request. If anything changed it packages the change as a patch artifact, together with `.lokf/feedback.md`, the reader-feedback file ktl-docent writes and the librarian consumes, and `.lokf/questions.md`, the ledger a handled entry moves into. The librarian's hand-off is uploaded beside the patch.
 - **`publish`** is the privileged job and runs no agent code. It applies that patch on a clean checkout and checks the result before it commits. Then it commits to a fresh `knowledge-librarian/<date>-<run_id>` branch and opens a review pull request via `github-script`. It fills that pull request itself, with `knowledge-report.sh` on its own checkout: the bundle's health line, and what the change does to the record. The hand-off goes under *From the librarian*, as the agent's own words.
 
 **A quiet week runs no agent.** A scheduled run asks `knowledge-report.sh quiet` first, and skips the agent when nothing waits for it. Work waits when a source moved after its concept's stamp, or a person left a note after the librarian last wrote or checked that concept. It waits too when reader feedback is on file, or a concept carries no stamp at all, as the skeleton's do. A scheduled run in a month's first seven days goes ahead regardless. The work list never fetches a source given as a URL and names no file the source map leaves out, so the librarian reads both at least monthly. A run you start from the Actions tab always runs the agent. Change the cadence in the agent step's `run` line.
 
-**The hand-off is the agent's words, and the pull request says so.** The patch file may carry `handoff`, up to ten lines for the reviewer, such as a send-back that came up twice or a source that did not answer. The pen holds each to one line of printable text with no backtick and writes them nowhere in the bundle. `publish` cleans them again and shows them in a code block, where no link, image, mention or HTML renders.
+**The hand-off is the agent's words, and the pull request says so.** The patch file may carry `handoff`, up to ten lines for the reviewer, such as a send-back that came up twice or a source that did not answer. The pen accepts each only as one line of printable text with no backtick, and writes them nowhere in the bundle. `publish` cleans them again and shows them in a code block, where no link, image, mention or HTML renders.
 
 The guardrails:
 
@@ -35,13 +35,13 @@ The guardrails:
 - What runs is the reviewed `.lokf/scripts/knowledge-librarian.sh`, at a fixed path, not an arbitrary command string.
 - `publish` refuses a patch that touches a path outside the bundle, the feedback file and the ledger, and one that touches a person's record. It reads that off the patched tree with `knowledge-provenance.sh --unattended`, so a `human:` event in any YAML layout, a person's note and text a person wrote are all covered.
 
-### Wiring it up
+### Setting it up
 
-The workflow is **inert until wired**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset (or not `true`) the agent step is skipped, so the workflow is harmless until you set these:
+The workflow is **inert until set up**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset (or not `true`) the agent step is skipped, so the workflow does nothing until you set these:
 
 | Repository variable | Value |
 | --- | --- |
-| `KNOWLEDGE_LIBRARIAN_ENABLED` | `true`: arms the scheduled run; anything else (or unset) leaves the agent step skipped |
+| `KNOWLEDGE_LIBRARIAN_ENABLED` | `true`: turns on the scheduled run; anything else (or unset) leaves the agent step skipped |
 | `AGENT_CLI` | your non-interactive agent command; the wrapper appends `-p "<prompt>"`. The two commands below are the ones this file vouches for. Keep the credential out of it; if it must embed one, make it a *secret* named `AGENT_CLI` instead, which the workflow also reads |
 | `AGENT_API_KEY_ENV` | the environment variable the agent reads its credential from: `COPILOT_GITHUB_TOKEN` for Copilot CLI, `ANTHROPIC_API_KEY` for Claude Code |
 | `AGENT_USE_JOB_TOKEN` | `true`: the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it; leave it unset for any other agent |
@@ -91,13 +91,13 @@ Pay for the runs in one of two ways. A Console API key is billed per use, apart 
 
 `dontAsk` denies any call that would otherwise prompt, so a run never waits for a person, and `--allowedTools` names what the skill needs. `Write(.lokf/patch.yaml)` and `Edit(.lokf/patch.yaml)` confine every file write to the patch file, which the wrapper applies with `knowledge-apply.sh` after the run; the bundle itself is on no list. `Bash(git:*)` is the prefix form, and it is why no pattern has a space: a rule such as `Bash(git log:*)` cannot be passed, since the wrapper splits on spaces.
 
-### Before arming the schedule
+### Before turning on the schedule
 
 Type every value in the Settings form without quotes. GitHub stores exactly what you type, so a quote becomes part of the value: `AGENT_API_KEY_ENV` is then refused, and `AGENT_CLI` passes the quote to the agent.
 
 Both commands pin the CLI's version, as every action in the workflow is pinned, so a run executes the code you tried. A new CLI release reaches the librarian when you move the pin, not before. Move it on purpose, from the CLI's release notes; nothing bumps a repository variable for you.
 
-Whichever agent, run the workflow once by hand from the Actions tab before arming the schedule, and read the agent's log for denied tool calls.
+Whichever agent, run the workflow once by hand from the Actions tab before turning on the schedule, and read the agent's log for denied tool calls.
 
 ## `knowledge-librarian.sh`: the agent wrapper
 
@@ -118,7 +118,7 @@ It attaches `.lokf/knowledge` to a GitHub release as `knowledge-<tag>-<repositor
 It starts in two ways:
 
 - **By hand, always.** Run it from the Actions tab, or `gh workflow run knowledge-release.yaml -f tag=<tag>`, naming an existing release's tag.
-- **On each published release, once armed.** Set the `KNOWLEDGE_RELEASE_ENABLED` repository variable to `true`. Unset, each release shows the run as skipped.
+- **On each published release, once turned on.** Set the `KNOWLEDGE_RELEASE_ENABLED` repository variable to `true`. Unset, each release shows the run as skipped.
 
 `<repository>` is the repository's name. A host that publishes under another name, such as a package renamed for PyPI, sets it in the `KNOWLEDGE_RELEASE_NAME` repository variable: letters, digits, `.`, `_` and `-`. The Copilot skill zips take the same name.
 

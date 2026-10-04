@@ -4,33 +4,35 @@
 # The GitHub `provenance` job asks GitHub whether the person named in a new
 # `by: human:<id>` line approved the pull request or signed its commit. Off
 # GitHub there is no such job, and on GitHub it is the only check. This
-# script does the signature half anywhere git runs: the repository carries
-# one public key per curator id under `.lokf/curators/` - `<id>.asc`, a GPG
-# key as `gpg --armor --export` writes it, or `<id>.pub`, an OpenSSH public
-# key as `ssh-keygen` writes it, one key per line - and every commit in a
-# range that adds, changes or removes a `human:<id>` event under the bundle -
-# a `verified` entry, or the `generated` record the curator's Correct writes -
-# must be signed by a key on file for exactly that id. A GPG key
-# counts with every subkey it carries, since most keys sign with a subkey; an
-# SSH key is verified with `ssh-keygen -Y verify` (OpenSSH 8.2+) against the
-# commit's own payload.
+# script does the signature half anywhere git runs.
+#
+# The repository carries one public key per curator id under
+# `.lokf/curators/`: `<id>.asc`, a GPG key as `gpg --armor --export` writes
+# it, or `<id>.pub`, an OpenSSH public key as `ssh-keygen` writes it, one key
+# per line. Every commit in a range that adds, changes or removes a
+# `human:<id>` event under the bundle must be signed by a key on file for
+# exactly that id. The event is a `verified` entry, or the `generated` record
+# the curator's Correct writes. A GPG key counts with every subkey it carries,
+# since most keys sign with a subkey. An SSH key is verified with
+# `ssh-keygen -Y verify` (OpenSSH 8.2+) against the commit's own payload.
 #
 # A removal is a claim too. A person's record is never removed without that
-# person: a `verified` event every parent held and the commit no longer
-# holds - struck out, or gone with its concept - needs the same signature as
-# one that was added. A person's `generated` record may give way to another
-# person's, which is what the curator's Correct writes and which that second
-# person signs as an addition; one that gives way to anything else needs the
-# signature of the person it named.
+# person. A `verified` event every parent held and the commit no longer holds,
+# struck out or gone with its concept, needs the same signature as one that
+# was added. A person's `generated` record may be replaced by another
+# person's, which is what the curator's Correct writes, and that second
+# person signs it as an addition. A record replaced by anything else needs
+# the signature of the person it named.
 #
 # `--unattended` is the other half, for a change nobody stands behind: the
 # scheduled librarian's. It compares the working tree, staged or not, with
-# HEAD, needs no key and no forge, and reports every way such a change
-# touches a person's record - a `human:` event added, changed or removed in
-# any YAML layout, a person's note under `## Open questions` added or
-# removed, and text a person wrote changed. knowledge-apply.sh refuses each
-# of these before it writes; this is the same refusal read off the result, by
-# a job the agent never ran in.
+# HEAD, and needs no key and no forge. It reports every way such a change
+# touches a person's record:
+#   - a `human:` event added, changed or removed in any YAML layout;
+#   - a person's note under `## Open questions` added or removed;
+#   - text a person wrote, changed.
+# knowledge-apply.sh refuses each of these before it writes. This is the same
+# refusal, checked on the result, by a job the agent never ran in.
 #
 # Findings, one line each, exit 1:
 #   - the commit is unsigned, or its signature does not verify;
@@ -39,12 +41,12 @@
 #   - the id has no key on file (a stranger, or a curator not yet added), or
 #     is not a login any forge could list;
 #   - the range adds, changes or removes that id's own key file *and* records
-#     a confirmation by them - a key lands in its own reviewed change first,
+#     a confirmation by them: a key is added in its own reviewed change first,
 #     so nobody registers a key and vouches with it in one step;
 #   - a commit touches a bundle path git has to quote (`"`, `\` or a control
 #     character in the name), which this line reader cannot hold.
-# No `.lokf/curators/` directory: says so and exits 0 - nothing to verify
-# against, and the forge's gate, if any, is the only check.
+# With no `.lokf/curators/` directory it says so and exits 0: there is nothing
+# to verify against, and the forge's gate, if any, is the only check.
 #
 # What a pass proves: the holder of that key made that commit. Not that
 # anyone read the source, and not who the person is beyond what the key file's
@@ -53,7 +55,8 @@
 #
 # Usage: knowledge-provenance.sh <base-ref> [head-ref] [bundle-dir]
 #        knowledge-provenance.sh --unattended [bundle-dir]
-#   e.g. knowledge-provenance.sh origin/main            (a branch, locally)
+#   For example:
+#        knowledge-provenance.sh origin/main            (a branch, locally)
 #        knowledge-provenance.sh "$BASE_SHA" "$HEAD_SHA"  (in CI)
 #        knowledge-provenance.sh --unattended            (what the librarian workflow runs)
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} <base-ref> [head-ref] | --unattended" >&2; exit 2; }
@@ -126,18 +129,20 @@ sig_format() {  # commit -> pgp | ssh | none
   esac
 }
 
-# The human events of a concept - its `verified` list and its `generated`
-# record, since the curator's Correct writes `generated.by: human:<id>` - as
-# `<id or path>\t<by>\t<at>\t<revision>\t<verified|generated>`, one per line, whatever the YAML
-# layout: a block list in any key order, a flow-style item, a flow sequence, a
-# bare mapping. Only the frontmatter is read, so an example event in a body
-# code fence is not a claim. Keyed by the concept's `id` so a renamed concept
-# keeps its events and a confirmation copied into another concept does not.
+# The human events of a concept, one per line, as
+# `<id or path>\t<by>\t<at>\t<revision>\t<verified|generated>`. They are its
+# `verified` list and its `generated` record, since the curator's Correct
+# writes `generated.by: human:<id>`. Any YAML layout is read: a block list in
+# any key order, a flow-style item, a flow sequence, a bare mapping. Only the
+# frontmatter is read, so an example event in a body code fence is not a
+# claim. Events are keyed by the concept's `id`, so a renamed concept keeps
+# its events and a confirmation copied into another concept does not.
+#
 # An event present in a commit's tree and absent from every parent's is new or
-# changed - a re-dated `at` or a moved `revision` is as much a claim as a new
-# line - and its actor must stand behind it. Every parent, so a merge that
-# brings in another curator's confirmation claims nothing, and one that adds
-# an event neither side held is read like any other commit.
+# changed, and its actor must stand behind it. A re-dated `at` or a moved
+# `revision` is as much a claim as a new line. Every parent is compared, so a
+# merge that brings in another curator's confirmation claims nothing, and one
+# that adds an event neither side held is read like any other commit.
 human_events() {  # path -> events, reading the concept on stdin
   awk -v path="$1" '
   function val(s) { sub(/^[^:]*:[[:space:]]*/, "", s); gsub(/["'"'"']/, "", s); sub(/[[:space:]]+$/, "", s); return s }
@@ -167,19 +172,20 @@ events_in() {  # ref, paths on stdin -> the human events of those paths at that 
     git show "$1:$f" 2>/dev/null | human_events "$f"
   done | sort
 }
-# The paths a commit changes against any of its parents: without -m, git
-# lists nothing at all for a merge commit. core.quotePath off, or a name with
-# a byte above 0x7f comes C-quoted and `.md$` misses it; git still quotes
-# `"`, `\` and control characters, and the caller refuses those.
+# The paths a commit changes against any of its parents. Without -m, git
+# lists nothing at all for a merge commit. With core.quotePath on, a name
+# with a byte above 0x7f would come C-quoted and `.md$` would miss it, so it
+# is off. Git still quotes `"`, `\` and control characters, and the caller
+# refuses those.
 changed_paths() {  # commit, pathspecs... -> paths, one per line
   git -c core.quotePath=false diff-tree --no-commit-id --name-only -r -m "$@" 2>/dev/null | sort -u
 }
 
 # The events a commit removes: those every parent held that it no longer
 # holds. A `verified` event is never removed without its person. A person's
-# `generated` record may give way to another person's - the curator's Correct,
-# which that person signs as an addition - so it counts only when no person's
-# `generated` record stands in its place.
+# `generated` record may be replaced by another person's, the curator's
+# Correct, which that person signs as an addition. So it counts only when no
+# person's `generated` record stands in its place.
 removed_from() {  # events-before file, events-now file -> the removed events that need their person
   comm -23 "$1" "$2" | awk -F'\t' -v now="$2" '
     BEGIN { while ((getline line < now) > 0) { split(line, f, "\t"); if (f[5] == "generated") kept[f[1]] = 1 } }

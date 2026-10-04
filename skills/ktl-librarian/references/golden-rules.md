@@ -4,7 +4,7 @@ This page is for the **librarian**: it holds the tables and the detail behind th
 
 ## Rule 2: the semantic header and `base_iri`
 
-The bundle-root `index.md` declares the keys that lift the whole bundle into RDF. The values below are illustrative; the real ones are minted when the sidecar is laid down:
+The bundle-root `index.md` declares the keys that lift the whole bundle into RDF. The values below are illustrative; the real ones are chosen when the sidecar is installed:
 
 ```yaml
 lokf_version: "0.2"
@@ -17,13 +17,13 @@ license: https://creativecommons.org/licenses/by/4.0/
 publisher: { type: Person, id: https://acme.example/knowledge/person/jane-doe, name: Jane Doe }
 ```
 
-`base_iri` plus the concept ID mints each concept's IRI (`@id`), and `context` maps frontmatter keys to IRIs. Without these keys the bundle degrades to plain OKF.
+Each concept's IRI (`@id`) is `base_iri` plus the concept ID, and `context` maps frontmatter keys to IRIs. Without these keys the bundle degrades to plain OKF.
 
 **Choose `base_iri` as an identifier in a namespace you control.** A concept's `id` is a globally unique *name* that merely looks like a URL, so a 404 on it is valid. Linked Data practice ("Cool URIs") still says identifiers *should* eventually work as links. Test a `base_iri` for authority and future resolvability:
 
-- **Never mint inside a URL space the project does not control**, such as `https://github.com/<org>/<repo>/knowledge/...` or any third-party domain. The host owns that path space, so the IRIs can never be made to resolve, and they misattribute naming authority to the host.
+- **Never build IRIs in a URL space the project does not control**, such as `https://github.com/<org>/<repo>/knowledge/...` or any third-party domain. The host owns that path space, so the IRIs can never be made to resolve, and they misattribute naming authority to the host.
 - **Prefer, in order:** (a) a namespace the project already publishes under. If its schemas or ontologies use a persistent-identifier namespace (w3id.org, purl.org, an owned domain), put the bundle there, for example `https://w3id.org/<org>/<project>/knowledge/`. (b) A new persistent-identifier registration; a w3id.org rule is a small pull request to `perma-id/w3id.org`, redirectable later to rendered pages such as GitHub Pages. (c) A project-owned domain. Repository cues are schema `id` or namespace declarations, a docs `site_url`, a Pages deployment.
-- **Migrate early if the base is wrong.** Changing `base_iri` rewrites every concept `id` and breaks any outside link to the old ones. That is cheap while the bundle is young and expensive later. To migrate, replace the namespace in `base_iri`, the publisher `id`, every concept `id`, and every typed-relation target. Leave `resource` and `distribution` URLs alone, since they are real links and not minted identifiers. Log the migration and its reason, run `just lokf-validate` again, and confirm the converted graph holds only the new namespace.
+- **Migrate early if the base is wrong.** Changing `base_iri` rewrites every concept `id` and breaks any outside link to the old ones. That is cheap while the bundle is young and expensive later. To migrate, replace the namespace in `base_iri`, the publisher `id`, every concept `id`, and every typed-relation target. Leave `resource` and `distribution` URLs alone, since they are real links and not identifiers the bundle made. Log the migration and its reason, run `just lokf-validate` again, and confirm the converted graph holds only the new namespace.
 - **When a person asks "these IDs don't resolve; is that a problem?"**, answer that it is valid by design, then apply the test above. An uncontrolled namespace can never resolve and should be migrated. A controlled one that is not yet registered needs the pending registration noted, not the 404 treated as a defect.
 
 ## Rule 3: classes and `genre`
@@ -66,7 +66,7 @@ For a predicate outside this set, use the generic `relations` list of reified ob
 
 Two v0.1 fields are **superseded in v0.2** and still read as fallbacks: `timestamp` by `generated.at`, and `citations` by `sources` (Rule 6). Keep `timestamp` only on a v0.1 concept you are not otherwise touching.
 
-A local `resource` must be a path git *tracks*. Gitignored runtime state, such as an installed skill under `.agents/` or `.claude/`, a build artifact or a local virtualenv, resolves on the machine that has it and nowhere else. It fails conventions rule 5 in CI and tells a reader to open a file they do not have. Point at the published copy instead, pinned to the version the host installs (a skill's release tag, for example), and say in the body where it lands locally if that helps.
+A local `resource` must be a path git *tracks*. Gitignored runtime state, such as an installed skill under `.agents/` or `.claude/`, a build artifact or a local virtualenv, resolves on the machine that has it and nowhere else. It fails conventions rule 5 in CI and tells a reader to open a file they do not have. Point at the published copy instead, pinned to the version the host installs (a skill's release tag, for example), and say in the body where it is installed locally if that helps.
 
 ## Rule 6: trust, provenance and lifecycle
 
@@ -85,7 +85,7 @@ These optional families (OKF v0.2 §5.4) make trust signals queryable RDF instea
 
 **This skill's own `verified` event.** When a refresh actually re-confirms a concept against its `resource`, record it with the pen's `recheck`, which writes one `{ by: process:ktl-librarian, at }` event and replaces this skill's previous one. It never touches a `human:` event, and you never record one on a concept you did not re-check this run. That makes "the bot checked this last week" distinguishable from "nobody ever looked". It is not a claim of truth. Only **ktl-curator** writes a `human:` event, and only on a person's explicit say-so.
 
-**`generated` comes from the pen.** It stamps `{ by, at }` from the clock on every concept an operation creates or changes, and never on an untouched one, so the diff never fills with churn. A concept a person confirmed reads as *edited since a person last confirmed it* once the pen changes it; conventions rule 13 holds every other hand to the same restamp.
+**`generated` comes from the pen.** It stamps `{ by, at }` from the clock on every concept an operation creates or changes, and never on an untouched one, so the diff never fills with churn. A concept a person confirmed reads as *edited since a person last confirmed it* once the pen changes it; conventions rule 13 asks the same restamp of every other writer.
 
 **`revision`, where the toolkit accepts it.** The field is proposed for lokf 0.9.0 and not yet released, and the 0.8.0 validator rejects the key. Pass it on an operation as the state of the `resource` you derived from. For a committed path in the repository, it is the full hash from `git log -1 --format=%H -- <path>`, since an abbreviation can become ambiguous as the repository grows and the gate resolves the pin against the tree. For a URL, it is its `ETag` or a `sha256:` digest of what you fetched. Always quote it: an all-digit commit id is otherwise read as a number and fails `lokf validate`. Leave it out on an older toolkit, when the file has uncommitted changes or is not under version control, and when you did not read the source this run.
 

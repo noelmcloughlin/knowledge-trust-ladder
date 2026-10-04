@@ -7,7 +7,7 @@ The model's own critics say its origins are opaque and its effectiveness unteste
 
 - **Met by construction.** KTL's design removes the ground for the point.
 - **Answered in part.** KTL does something about it, and the section says what is left open.
-- **Not KTL's role.** The point stands, and it lands on the organisation that adopts KTL.
+- **Not KTL's role.** The point stands, and answering it is the job of the organisation that adopts KTL.
 
 The [three lines page](three-lines.md) places the roles, says what an auditor can check, and collects every gap left open here by owner.
 
@@ -45,7 +45,7 @@ The [three lines page](three-lines.md) places the roles, says what an auditor ca
 
 **What KTL does.** The gate reads the whole pull request and the repository's history, and asks the forge, not the author, whether the named person approved or signed. The Institute of Internal Auditors' 2026 text makes such unfiltered access the condition of independence.
 
-**Verdict: met by construction, with one limit.** The gate sees what the first line wrote, not what it never derived. A missing concept surfaces only as a docent miss.
+**Verdict: met by construction, with one limit.** The gate sees what the first line wrote, not what it never derived. A missing concept shows up only as a docent miss.
 
 ## Process is followed, judgement is absent
 
@@ -63,12 +63,12 @@ The [three lines page](three-lines.md) places the roles, says what an auditor ca
 - Who confirms what, and how often, is a reviewed policy rather than a habit, the direction Green points.
 - The docent's evidence-first mode quotes the source before any answer that rests on an unconfirmed concept. It is off by default, because Buçinca found such designs cost goodwill.
 
-Once `revision` ships (proposed for lokf 0.9.0, and for OKF in [knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), a confirmation will also say which state of the source it rested on.
+Once `revision` is released (proposed for lokf 0.9.0, and for OKF in [knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), a confirmation will also say which state of the source it rested on.
 
 **Verdict: answered in part.** Left open:
 
 - Nothing shows that the person read the source. A signature proves who decided, and `revision` names what the skill fetched.
-- A page assembled afresh on every request reads as changed on every re-check, which is why the skill prefers a server's ETag to a digest.
+- A page assembled afresh on every request appears changed on every re-check, which is why the skill prefers a server's ETag to a digest.
 - The evidence Green asks for, that oversight works, is third-line work KTL should not produce about itself. The curator's report hands over a random sample of confirmed concepts when the policy names a size.
 
 ## The machine invents
@@ -91,7 +91,7 @@ Once `revision` ships (proposed for lokf 0.9.0, and for OKF in [knowledge-catalo
 
 **The criticism.** Arndorfer and Minto's remaining two weaknesses are misaligned incentives in the first line, and a second line without the skill to challenge the first.
 
-**What KTL does.** Nothing. KTL does not ask its second line to judge content, so that judgement lands on the curator, a named person in the first line. The organisation assigns curators through the curation policy and answers for their incentives and skill.
+**What KTL does.** Nothing. KTL does not ask its second line to judge content, so the curator, a named person in the first line, makes that judgement. The organisation assigns curators through the curation policy and answers for their incentives and skill.
 
 **Verdict: not KTL's role.**
 
@@ -99,7 +99,7 @@ Once `revision` ships (proposed for lokf 0.9.0, and for OKF in [knowledge-catalo
 
 **The criticism.** Arndorfer and Minto's fourth weakness is an internal audit whose risk assessment is inadequate or subjective. Their remedy is a fourth line: external audit and supervisors.
 
-**What KTL does.** It ships the evidence a third line needs, and not the review, since assurance is independent only when it comes from someone other than the authors. A fourth line is the organisation's to add.
+**What KTL does.** It provides the evidence a third line needs, and not the review, since assurance is independent only when it comes from someone other than the authors. A fourth line is the organisation's to add.
 
 **Verdict: not KTL's role.** An auditor skill for the third line is listed under [What remains to do](three-lines.md#what-remains-to-do-and-who-does-it).
 

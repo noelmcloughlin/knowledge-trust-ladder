@@ -2,11 +2,11 @@
 
 This page is for the **curator** and the team: it says how to tell that the core vocabulary has stopped fitting a bundle, and what a domain schema involves.
 
-LOKF ships a small vocabulary: a short list of classes, the typed relations, and a handful of trust fields. That is enough for most repositories and is what keeps bundles portable. It is not enough forever.
+LOKF has a small vocabulary: a short list of classes, the typed relations, and a handful of trust fields. That is enough for most repositories and is what keeps bundles portable. It is not enough forever.
 
 ## The signs
 
-- The report's **vocabulary fit** line keeps growing. It counts concepts whose `type` isn't one of the core classes, tolerated as generic concepts (Golden Rule 7) but carrying no agreed meaning. Once a domain schema is wired into `just lokf-validate`, the line counts only what falls outside core *and* domain, and goes quiet again.
+- The report's **vocabulary fit** line keeps growing. It counts concepts whose `type` isn't one of the core classes, tolerated as generic concepts (Golden Rule 7) but carrying no agreed meaning. Once a domain schema is added to `just lokf-validate`, the line counts only what falls outside core *and* domain, and stops growing.
 - Concepts sprout many producer-defined keys (`dosage`, `contraindication`, `jurisdiction`, `failure_mode`) that no validator checks and no other bundle understands.
 - The domain is one where a wrong or ambiguous field has consequences: medicine, law, finance, safety engineering, anything regulated.
 
@@ -35,7 +35,9 @@ What such a vocabulary usually lacks is the other half of a bundle's concern: wh
 
 ## A shape held in reserve: Microsoft 365 provenance
 
-A host whose curators work in Microsoft 365 Copilot rather than a forge has no `gh` login and no signed commit to stand behind a `human:` verdict. Nothing writes such a verdict yet (a Copilot curator needs a write action that does not exist) and nothing checks one (the gate reads `human:` only), so no schema is built. The shape it would take is recorded here so the decision is not re-made. It is a subclass of the verification event carrying `tenant_id` and `object_id` (the Entra tenant and user object, which outlive a display name or email). It carries an `assurance` from `attested`, `delegated-me`, `directory-lookup`, `platform-history`, `unverified` and `anonymous`, and a revision as the item's `etag` plus a content digest. Its `by:` sits under a scheme of its own, `entra:<tenant>/<object>`, so a reader never mistakes it for a forge login. It waits for the curator's write path; the docent and the auditor read `verified` as it is.
+A host whose curators work in Microsoft 365 Copilot rather than a forge has no `gh` login and no signed commit to stand behind a `human:` verdict. Nothing writes such a verdict yet (a Copilot curator needs a write action that does not exist) and nothing checks one (the gate reads `human:` only), so no schema is built. The shape it would take is recorded here so the decision is not re-made.
+
+It is a subclass of the verification event carrying `tenant_id` and `object_id` (the Entra tenant and user object, which outlive a display name or email). It carries an `assurance` from `attested`, `delegated-me`, `directory-lookup`, `platform-history`, `unverified` and `anonymous`, and a revision as the item's `etag` plus a content digest. Its `by:` sits under a scheme of its own, `entra:<tenant>/<object>`, so a reader never mistakes it for a forge login. It waits for the curator's write path; the docent and the auditor read `verified` as it is.
 
 ## Validating values against an external vocabulary
 

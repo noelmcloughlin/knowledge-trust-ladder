@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T14:21:43Z"
+  at: "2026-10-04T17:27:49Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -26,7 +26,7 @@ lives - a code comment, a workflow header, or a page under `docs/` - and
 `scripts/validate-repository.sh` holds it to a word budget so it stays
 that way.
 
-There is no build step: the skills are Markdown, YAML, shell and one Python script. The repository packages and distributes the four skills and the `ktl-prose` helper, and all five ship together under one tag. Clone,
+There is no build step: the skills are Markdown, YAML, shell and one Python script. The repository packages and distributes the four skills and the `ktl-prose` helper, and all five are released together under one tag. Clone,
 then run `bash scripts/validate-repository.sh`. To try a change end-to-end
 before publishing, install from the local clone (`gh skill install
 ./knowledge-trust-ladder <skill> --from-local`, or `npx skills add
@@ -40,7 +40,7 @@ behaviour changes - the reasoning belongs beside the code, not in the
 changelog entry. Files here are deep-linked from the sibling repositories
 (KTL Registrar, and the KTL Curator), whose own link checks
 follow those URLs for real - `validate-repository.sh` check 9 lists the
-paths; move one only together with its links, and when a change there needs something new here, land this side first.
+paths; move one only together with its links, and when a change there needs something new here, merge this side first.
 A change under `skills/ktl-sidecar/templates/` is copied over this
 repository's own copy in the same pull request; check 11 names the pairs
 and holds each byte-identical, `knowledge-librarian.yaml` apart from its
@@ -48,7 +48,7 @@ skills pin, which the release commit moves in the template only. When the commit
 releasing type too (`feat:`, `fix:`, `security:`), because a squash merge
 takes its subject from the title and the `plan` job refuses a mismatch.
 Pinned action SHAs are bumped by Dependabot, and CI fails an action that
-floats on a tag or branch instead of a commit. The PR template's checklist
+floats on a tag or branch instead of a commit. The pull request template's checklist
 is the short form of this list.
 
 A change to what an agent should actually *do* needs its *why* in the pull
@@ -72,9 +72,9 @@ changelog but never tags, and a maintainer runs `publish.yml` by hand
 copies that release's templates over each sibling's copies and moves its
 `TRUST_LADDER_SKILLS_REF` to the same tag, once the tag is on origin, runs
 the sidecar's checks there, and leaves the diff for a person to review and
-commit: the pin and the copies move together because, once a sibling arms
+commit: the pin and the copies move together because, once a sibling turns on
 its scheduled librarian, the pin decides which instructions run
 unattended. Signing a commit is required only for a pull request that records
 a `human:` confirmation in a knowledge bundle (`docs/signing-commits.md`),
 and a repository running the forge-free gate also needs the signer's public
-key under `.lokf/curators/`, landed in its own pull request first.
+key under `.lokf/curators/`, added first in a pull request of its own.

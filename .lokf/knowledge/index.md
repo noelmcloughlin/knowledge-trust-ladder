@@ -47,11 +47,16 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 * [Knowledge bundle](glossary/knowledge-bundle.md) - The `.lokf/knowledge` directory - containing one-concept-per-file Markdown, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph.
 * [Trust label](glossary/trust-label.md) - The plain words the skills use for how far a concept has been checked, derived from its frontmatter on every read and never stored.
 * [The pen](glossary/the-pen.md) - The name for `knowledge-apply.sh`, the only way ktl-librarian writes the bundle: it applies the operations in `.lokf/patch.yaml`, stamps `generated`, keeps the index in step, and refuses a `human:` actor.
+* [Docent](glossary/docent.md) - A museum's name for a guide, and the role that answers a reader's questions from the bundle, says how far each answer has been checked, and writes nothing in the bundle.
+* [Desk](glossary/desk.md) - The README's word, in its library terms, for the place where a role does its work with the bundle: the registrar is `knowledge-apply.sh` at the librarian's desk, and `knowledge-report.sh` at the reader's and the curator's.
+* [Registrar](glossary/registrar.md) - The person in a museum who keeps the collection's records, and Knowledge Trust Ladder's fifth role, which programs play: the `lokf` toolkit, the gate `knowledge-registrar.yaml`, the pen and the report script.
+* [Sidecar](glossary/sidecar.md) - `.lokf/`, the folder beside a project's code that holds the bundle and the tooling that checks it, kept out of the project's build; also the role, and the ktl-sidecar skill, that installs it.
+* [Accession](glossary/accession.md) - A museum's word for an item added to its collection, which the README's registrar keeps documented with its provenance filed; in the bundle, each concept added is one.
 
 # Policies
 
 * [AI covenant](policies/ai-covenant.md) - Community norms for AI use - contributors own what they submit regardless of tooling, AI must not post autonomously in discussions, AI co-authorship in commit messages is discouraged, and a repository-owned agent (e.g. ktl-librarian) must commit under a bot or maintainer identity with no trailer either way and land only as a human-reviewed PR.
-* [Security policy](policies/security.md) - How to report a vulnerability privately, supported versions, and a surface table (what executes here, what holds it) that links to the shared threat model instead of restating it.
+* [Security policy](policies/security.md) - How to report a vulnerability privately, supported versions, and a surface table (what executes here, what guards it) that links to the shared threat model instead of restating it.
 * [Threat model](policies/threat-model.md) - The security design the three KTL repositories share: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author - carried once here so each SECURITY.md can link instead of restate.
 * [Versioning policy](policies/versioning.md) - One repository-level semantic version covering all five skills, released together under a single tag, with patch, minor and major decided by Conventional Commits.
 * [Code of conduct](policies/code-of-conduct.md) - Contributor Covenant v2.1 - the behavioural standards for issues, pull requests, and discussions, and how to report unacceptable behaviour.

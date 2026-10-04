@@ -93,7 +93,7 @@ jobs:
 
       # `lokf validate` reads a concept body as an opaque string and never
       # opens log.md. So the conventions the skills and both Obsidian plugins
-      # rely on are checked by the script the sidecar lays down beside the
+      # rely on are checked by the script the sidecar installs beside the
       # agent wrapper. Those are one ISO-date heading per day, quoted
       # timestamps, `verified` as a list with one librarian event, and open
       # questions in the shape the curator reads. Each of them has been broken
@@ -179,20 +179,23 @@ jobs:
         run: |
           set -euo pipefail
 
-          # A claim is an event in a concept's frontmatter - a `verified`
+          # A claim is an event in a concept's frontmatter: a `verified`
           # entry, or the `generated` record the curator's Correct writes as
-          # `human:<id>` - read whole as `<id>\t<by>\t<at>\t<revision>\t<kind>`,
-          # whatever its YAML layout, and keyed by the concept's id so a rename
-          # keeps its events and a copy does not. An added line would not do:
-          # a re-dated `at`, a moved `revision` or a flow-style event adds no
-          # `by:` line, and a `by: human:` in a body code fence or a send-back
-          # note is not an event at all. Any event present at head and absent
-          # at base names an actor who must stand behind it. So does a
-          # `verified` event present at base and absent at head: a person's
-          # record is never removed without that person, whether the event
-          # is struck out or its concept deleted. Same extractor as
-          # knowledge-provenance.sh; the id is taken as the schema takes it, so
-          # one this job cannot look up is refused below, never skipped.
+          # `human:<id>`. It is read whole as
+          # `<id>\t<by>\t<at>\t<revision>\t<kind>`, whatever its YAML layout,
+          # and keyed by the concept's id so a rename keeps its events and a
+          # copy does not. An added line would not do: a re-dated `at`, a moved
+          # `revision` or a flow-style event adds no `by:` line, and a
+          # `by: human:` in a body code fence or a send-back note is not an
+          # event at all.
+          #
+          # Any event present at head and absent at base names an actor who
+          # must stand behind it. So does a `verified` event present at base
+          # and absent at head: a person's record is never removed without
+          # that person, whether the event is struck out or its concept
+          # deleted. Same extractor as knowledge-provenance.sh; the id is taken
+          # as the schema takes it, so one this job cannot look up is refused
+          # below, never skipped.
           human_events() {
             awk -v path="$1" '
             function val(s) { sub(/^[^:]*:[[:space:]]*/, "", s); gsub(/["'"'"']/, "", s); sub(/[[:space:]]+$/, "", s); return s }
@@ -234,8 +237,8 @@ jobs:
               events_in "$2" < "$paths" | comm -13 <(events_in "$1" < "$paths") - | cut -f2; } || true
           }
           # Against every parent: a merge that brings in another curator's
-          # confirmation claims nothing, one that adds an event neither side
-          # held is read like any other commit - and without -m, git lists no
+          # confirmation claims nothing, and one that adds an event neither
+          # side held is read like any other commit. Without -m, git lists no
           # paths at all for a merge.
           new_in_commit() {  # sha -> actors of events at sha that none of its parents holds
             { git -c core.quotePath=false diff-tree --no-commit-id --name-only -r -m "$1" -- .lokf/knowledge knowledge_bundle | tee -a "$listed" | grep '\.md$' | sort -u > "$paths"
@@ -243,9 +246,9 @@ jobs:
           }
           # A removal is a claim too. Of the events that went, a `verified`
           # one always needs its person. A person's `generated` record may
-          # give way to another person's - the curator's Correct, whose
-          # actor is already checked above as an addition - so it counts
-          # only when no person's `generated` record stands in its place.
+          # be replaced by another person's, the curator's Correct, whose
+          # actor is already checked above as an addition. So it counts only
+          # when no person's `generated` record stands in its place.
           needs_its_person() {  # removed events on stdin, the file of events that remain -> those whose actor must back the removal
             awk -F'\t' -v now="$1" '
               BEGIN { while ((getline line < now) > 0) { split(line, f, "\t"); if (f[5] == "generated") kept[f[1]] = 1 } }
@@ -295,7 +298,7 @@ jobs:
           # A runner has no GPG keyring and no `gpg.ssh.allowedSignersFile`,
           # so locally every signature here reads as unverifiable (`N`) no
           # matter how good it is. GitHub checks each signature against the
-          # keys registered to an account - which is also what ties the
+          # keys registered to an account, which is also what ties the
           # signature to a person, rather than merely proving one exists.
           commits="$(mktemp)"
           gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/commits" --paginate \
@@ -322,8 +325,8 @@ jobs:
             fi
 
             # No approval from them. The remaining evidence is their own
-            # signature on each commit that introduced or removed the event -
-            # the only path open when they opened the pull request
+            # signature on each commit that introduced or removed the event.
+            # It is the only route when they opened the pull request
             # themselves, since GitHub will not let anyone approve their own
             # pull request.
             introducing=()
@@ -403,7 +406,7 @@ jobs:
       # on file (<id>.asc or <id>.pub) rather than GitHub's verdict. So a
       # signature from a key not on file for that id fails even when GitHub
       # shows it as Verified. A repository with no .lokf/curators/ never runs
-      # it; the script itself says so and passes if run by hand. Laid down by
+      # it; the script itself says so and passes if run by hand. Installed by
       # ktl-sidecar Step 5.
       - name: Verify signatures against the keys on file
         if: hashFiles('.lokf/curators/*.asc', '.lokf/curators/*.pub') != ''
@@ -414,22 +417,21 @@ jobs:
 
   attestation:
     name: Attest to an unbacked confirmation
-    # The escape hatch for a repository that cannot sign commits and has
-    # nobody else available to approve.
+    # The fallback for a repository that cannot sign commits and has nobody
+    # else available to approve.
     #
     # It is NOT a switch that turns the check off. A permanent
-    # "provenance: off" setting gets flipped for one urgent afternoon and
-    # never flipped back, and the bundle then claims confirmations it cannot
-    # support. This asks instead for a fresh human action on every pull
+    # "provenance: off" setting gets set for one urgent afternoon and never
+    # reset, and the bundle then claims confirmations it cannot support. This asks instead for a fresh human action on every pull
     # request that needs one: the run pauses, GitHub emails the environment's
     # reviewers, and someone clicks Approve in a browser. Unlike a pull
     # request review, an environment reviewer MAY be the person who opened
     # the pull request. That is what makes this work when the same person
     # opens the pull request and attests.
-    # The click lands in the deployment log, so it stays auditable.
+    # The click is recorded in the deployment log, so it stays auditable.
     #
     # To enable, both steps are required:
-    #   1. Settings -> Environments -> New environment (e.g. "knowledge-curation"),
+    #   1. Settings -> Environments -> New environment (for example "knowledge-curation"),
     #      tick "Required reviewers", and add the people allowed to attest.
     #   2. Settings -> Secrets and variables -> Actions -> Variables: set
     #      KNOWLEDGE_CURATION_ENVIRONMENT to that environment's name.

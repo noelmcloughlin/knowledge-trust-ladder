@@ -2,29 +2,32 @@
 # Bring a sibling repository's sidecar copies and skills pin up to one release
 # of this repository, and leave it to a person to review and commit.
 #
-# A sibling (the two Obsidian plugins, ai-linkmo, any host that scaffolded
-# from ktl-sidecar) carries byte-identical copies of the templates under
+# A sibling (the two Obsidian plugins, ai-linkmo, any host ktl-sidecar
+# installed into) carries byte-identical copies of the templates under
 # skills/ktl-sidecar/templates/ and pins its scheduled librarian to one tag of
-# this repository with TRUST_LADDER_SKILLS_REF. The two must move together:
-# the skill that tag installs is written against the wrapper, gate and
-# preflight that tag ships, and once the librarian is armed, the pin decides
-# which agent instructions run unattended with a credential in the job. So
-# this script takes a *tag* and nothing looser, reads the templates out of
-# that tag rather than the working tree, refuses a tag that does not exist
-# yet (which settles the merge order: release here first, then sync), and
-# never commits. The diff it leaves behind is the review.
+# this repository with TRUST_LADDER_SKILLS_REF. The two must move together.
+# The skill that tag installs is written against the wrapper, gate and
+# preflight that tag includes. And once the librarian is turned on, the pin
+# decides which agent instructions run unattended with a credential in the
+# job. So this script:
+#   - takes a *tag* and nothing looser;
+#   - reads the templates out of that tag rather than the working tree;
+#   - refuses a tag that does not exist yet, which settles the merge order:
+#     release here first, then sync;
+#   - never commits.
+# The diff it leaves behind is the review.
 #
 # Usage: scripts/sync-sidecar.sh <tag> <sibling-dir>...
 #   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator ../ai-linkmo
 #
 # For each sibling it copies every template the sibling already carries. It
-# lays down a template the sibling never had in two cases only: ktl-sidecar
-# lays it down on every host, or a file the sibling carries cannot run without
-# it (a workflow runs the script, or the wrapper writes the bundle through the
-# apply script). Any other is reported, not added: that is ktl-sidecar's
-# Step 5, a decision for the host. Then
-# it sets the pin to the tag, runs the sidecar's own checks there, and prints
-# a draft changelog line and the commit command. Exit 1 when a sibling's
+# adds a template the sibling never had in two cases only: ktl-sidecar
+# installs it on every host, or a file the sibling carries cannot run without
+# it. A file cannot run without it when a workflow runs the script, or when
+# the wrapper writes the bundle through the apply script. Any other is
+# reported, not added: that is ktl-sidecar's Step 5, a decision for the host.
+# Then it sets the pin to the tag, runs the sidecar's own checks there, and
+# prints a draft changelog line and the commit command. Exit 1 when a sibling's
 # checks fail after the copy; exit 2 when the arguments are wrong or the tag
 # is not usable.
 set -euo pipefail
@@ -49,7 +52,7 @@ pairs=(
   "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
   "gitattributes:.lokf/.gitattributes"
 )
-# ktl-sidecar lays these down on every host, whatever else the host chose,
+# ktl-sidecar installs these on every host, whatever else the host chose,
 # so a sibling that lacks one gets it: <template>|<the step that says so>.
 always=(
   "gitattributes|Step 1"
@@ -105,7 +108,7 @@ tag_sha="$(git -C "$repo_root" rev-parse "$tag^{commit}")"
 # The skills pin is each repository's own to move, so it is not drift.
 unpin() { sed -E 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/'; }
 at_tag() { git -C "$repo_root" show "$tag:$templates/$1"; }
-# Why the sibling needs a template it never laid down, or nothing when it does
+# Why the sibling needs a template it never installed, or nothing when it does
 # not: <template> <sibling-root>.
 needed() {
   local entry

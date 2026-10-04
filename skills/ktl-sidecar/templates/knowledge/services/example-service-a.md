@@ -8,5 +8,5 @@ endpoint: https://<PROJ_SLUG>.example/api/example-a
 
 # Overview
 
-**Example Service A** is a dummy concept laid down by the ktl-sidecar skill. Replace its frontmatter and body with a real service, and wire it to other concepts with
-typed relations (e.g. `dependsOn`, `about`, `references`).
+**Example Service A** is a dummy concept the ktl-sidecar skill installed. Replace its frontmatter and body with a real service, and link it to other concepts with
+typed relations, such as `dependsOn`, `about` and `references`.
