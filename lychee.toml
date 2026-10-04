@@ -3,8 +3,8 @@
 exclude = [
   # LOKF's published JSON-LD context. Every LOKF bundle's index.md declares
   # this exact URI (see skills/ktl-sidecar/templates/knowledge/index.md
-  # and ktl-librarian/SKILL.md Golden Rule 2) - it is the upstream lokf
-  # project's identifier, not this repository's, and currently 404s
+  # and ktl-librarian/SKILL.md Golden Rule 2). It is the upstream lokf
+  # project's identifier, not this repository's, and currently answers 404
   # (checked 2026-09-08). Re-check periodically and drop this line once the
   # w3id.org redirect is registered.
   '^https://w3id\.org/lokf/context\.jsonld$',
@@ -18,7 +18,7 @@ exclude = [
   # skills/ktl-docent/SKILL.md links its examples page on main by absolute
   # URL, since installed copies have no relative path to it. The page moved
   # from EXAMPLES.md to docs/examples/docent.md on 2026-09-16 and exists
-  # only on the branch until that lands; drop this line after the merge.
+  # only on the branch until that merges; drop this line after the merge.
   '^https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/docent\.md$',
   # Same for docs/m365.md, linked from ktl-sidecar/references/m365.md; drop
   # after 0.27 merges.
@@ -30,7 +30,7 @@ exclude = [
 ]
 
 # knowledge_bundle is a symlink to .lokf/knowledge (the Obsidian vault entry
-# point, see ktl-sidecar Step 2) - exclude it so lychee doesn't walk the
+# point, see ktl-sidecar Step 2). Exclude it so lychee does not walk the
 # same files twice, once at each path.
 exclude_path = [
   "(^|/)knowledge_bundle/",

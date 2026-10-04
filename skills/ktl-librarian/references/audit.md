@@ -12,7 +12,7 @@ This page is for the **librarian**: it backs SKILL.md section 2 with what each t
 
 ## What to audit by hand
 
-- **Correctness.** The class matches the asset. Typed relations point the right way (`isPartOf` versus `hasPart`, `dependsOn` versus `derivedFrom`). Each relation target resolves to the *intended* concept, not merely to *a* concept, which `lokf-check-refs` cannot catch. `id` and `base_iri` mint the expected IRIs, and the namespace passes Rule 2's authority test. `endpoint` and `resource` still resolve.
+- **Correctness.** The class matches the asset. Typed relations point the right way (`isPartOf` versus `hasPart`, `dependsOn` versus `derivedFrom`). Each relation target resolves to the *intended* concept, not merely to *a* concept, which `lokf-check-refs` cannot catch. `id` and `base_iri` give the expected IRIs, and the namespace passes Rule 2's authority test. `endpoint` and `resource` still resolve.
 - **Gaps.** New code or data files with no concept. Untyped body links that should be typed relations. A missing `id` on a concept other bundles link to. A class left as a generic `lokf:Concept` where the vocabulary has a proper type, in the core list or the host's domain schema. Provenance or trust that is knowable but unrecorded: a missing `generated` or `sources`, or no `status` or `stale_after` on content that has clearly gone deprecated or stale.
 - **Bugs.** Malformed YAML. An invalid enum or datatype. A relation target that resolves to nothing. A missing `base_iri` or `context` in the root `index.md`. A `lokf` constraint in `.lokf/pyproject.toml` with no `>=` floor, or one behind the latest release (SKILL.md section 1, step 7).
 
@@ -22,7 +22,7 @@ Report the findings as a checklist, fix the mechanical ones through the pen, and
 
 The toolkit validates frontmatter and the projected graph, so a bundle can be schema-valid and still fail the host's lint gate on its bodies. Treat that as part of the audit, not as the host's problem. If the host has a markdownlint config at its root (`.markdownlint-cli2.jsonc`, `.markdownlint.jsonc`, `.markdownlint.json` or `.markdownlint.yaml`), run `npx markdownlint-cli2 '**/*.md'`, quoted so the shell does not expand the glob, and fix what it reports on files you touched.
 
-Where `npx` is missing, grep the files you changed for the trap this skill has actually shipped into a red CI run. Markdown reads a line that begins with a dash and a space as a list item. So a spaced dash ("X - Y") in carried-over text that lands at the start of a line after wrapping turns a paragraph into a list, and trips `MD032/blanks-around-lists`. Look for such a line whose previous line is unindented prose: not blank, not a heading, not another list item, and not the indented continuation of a wrapped bullet. Writing each paragraph as one unwrapped line avoids the trap, since there is then no line break for the dash to land after.
+Where `npx` is missing, grep the files you changed for the mistake that has already failed CI for this skill. Markdown reads a line that begins with a dash and a space as a list item. So a spaced dash ("X - Y") in carried-over text that wrapping moves to the start of a line turns a paragraph into a list, and fails `MD032/blanks-around-lists`. Look for such a line whose previous line is unindented prose: not blank, not a heading, not another list item, and not the indented continuation of a wrapped bullet. Writing each paragraph as one unwrapped line avoids the trap, since there is then no line break before the dash.
 
 ## Without `uv`
 

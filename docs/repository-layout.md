@@ -28,7 +28,7 @@ docs/
   wikiskill.md          the WikiSkill paper read against this design, part by part
   releasing.md          how the three repositories release, and the settings it needs
   signing-commits.md    signing commits, which the provenance gate reads
-  threat-model.md       shared security design: what an agent can reach, and what holds it
+  threat-model.md       shared security design: what an agent can reach, and what guards it
   repository-layout.md  this page
   examples/
     docent.md           eight captured docent answers against this repository's own bundle
@@ -39,7 +39,7 @@ scripts/
   test-sidecar-layouts.sh  the wrapper, workflows and lokf-link, with and without the doorway
   sync-sidecar.sh          copies one release's templates and skills pin into a sibling repository
 .lokf/                  this repository's own sidecar: the bundle and its tooling
-knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar lays down (Step 2)
+knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
 ```
 
-Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. `ktl-sidecar/templates/` holds the files it lays down, copied verbatim, never retyped. `ktl-prose/scripts/` holds the one script that skill runs in place.
+Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. `ktl-sidecar/templates/` holds the files it installs, copied verbatim, never retyped. `ktl-prose/scripts/` holds the one script that skill runs in place.

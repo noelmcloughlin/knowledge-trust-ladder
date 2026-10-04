@@ -27,7 +27,7 @@ You write normal Markdown; you get a validated, queryable graph for free.
 |-- questions.md          # appears once the librarian handles a reader's entry; the questions readers asked, kept by the apply script
 ```
 
-The `knowledge_bundle` link at the repository root is this same `knowledge/` directory under an ordinary, visible name. It is there for folder pickers and file managers that hide dot-directories, and, for Obsidian users, for "Open folder as vault": open the link *itself* as a vault, never the repository root, which cannot see a dot-folder or a link that resolves inside it. Git carries the link; a sync service does not, so `just lokf-link` recreates it on a machine where it is missing (Windows: `mklink /J knowledge_bundle .lokf\knowledge`). Every command below works without it.
+The `knowledge_bundle` link at the repository root is this same `knowledge/` directory under an ordinary, visible name. It is there for folder pickers and file managers that hide dot-directories, and for Obsidian's "Open folder as vault". Open the link *itself* as a vault, never the repository root, which cannot see a dot-folder or a link that resolves inside it. Git carries the link; a sync service does not, so `just lokf-link` recreates it on a machine where it is missing (Windows: `mklink /J knowledge_bundle .lokf\knowledge`). Every command below works without it.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ uv run lokf convert knowledge --format ttl
 
 ## Add or edit a concept
 
-1. Create a Markdown file under `knowledge/<kind>/` (e.g. `services/`, `metrics/`).
+1. Create a Markdown file under `knowledge/<kind>/`, such as `services/` or `metrics/`.
 2. Start with frontmatter. OKF requires only `type`; this bundle also sets `id`, `title`, and `description` on every concept.
 3. Link concepts with typed-relation keys whose values are target `id`s, such as `dependsOn:`, `about:`, `references:`, `measures:`. Run `uv run lokf vocab` to list available relations.
 4. Add the concept to the table of contents in `knowledge/index.md`.

@@ -1,6 +1,6 @@
 # Security Policy
 
-*This file is a policy, not a threat model. It says how to report, what executes here, and what holds each surface. Each is a line or two that links to where the reasoning lives: a workflow header, a skill's own guardrail, or the shared [threat model](docs/threat-model.md). `bash scripts/validate-repository.sh` holds the file to a word budget so it stays that way.*
+*This file is a policy, not a threat model. It says how to report, what executes here, and what guards each surface. Each is a line or two that links to where the reasoning lives: a workflow header, a skill's own guardrail, or the shared [threat model](docs/threat-model.md). `bash scripts/validate-repository.sh` fails when the file outgrows its word budget, so it stays that way.*
 
 ## Reporting a vulnerability
 
@@ -8,9 +8,9 @@ Use GitHub's [private vulnerability reporting](https://github.com/noelmcloughlin
 
 ## Supported versions
 
-Only the latest published tag receives fixes. A security fix ships as a patch release and is noted in [CHANGELOG.md](CHANGELOG.md).
+Only the latest published tag receives fixes. A security fix is published as a patch release and is noted in [CHANGELOG.md](CHANGELOG.md).
 
-A fix to a template reaches a repository that already has a sidecar only when its copies are laid down again. Updating the skill, or moving `TRUST_LADDER_SKILLS_REF`, does not touch them. `knowledge-preflight.sh` reports the drift on its `copies` line, and ktl-sidecar's repair re-copies the files.
+A fix to a template reaches a repository that already has a sidecar only when ktl-sidecar copies the templates there again. Updating the skill, or moving `TRUST_LADDER_SKILLS_REF`, does not touch them. `knowledge-preflight.sh` reports the drift on its `copies` line, and ktl-sidecar's repair re-copies the files.
 
 An automated skill audit, such as Snyk's or Socket's on a skills catalog, gets its answer in the file each finding names and in the [threat model](docs/threat-model.md#prompt-injection-guards). Report a finding that looks unanswered the same way as any other.
 
@@ -18,7 +18,7 @@ An automated skill audit, such as Snyk's or Socket's on a skills catalog, gets i
 
 This repository is mostly Markdown. Four things in it run, or are run by other systems, and are the attack surface.
 
-| Surface | What holds it |
+| Surface | What guards it |
 | --- | --- |
 | `skills/ktl-sidecar/templates/`: seven scripts and three workflows the sidecar **copies into other repositories**, which run there | The template's own design. Two jobs mean the agent never meets a write token. A `publish` job confines the patch to the bundle and refuses a `human:` claim. A preflight and a forge-free gate only read git and gpg. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards). |
 | `.github/workflows/`: `validate.yml` on every pull request; `knowledge-registrar.yaml`, `knowledge-librarian.yaml` and `knowledge-release.yaml`, this repository's own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, harden-runner in audit mode. Each workflow's header comment says why it is shaped as it is. [Repository hardening](docs/threat-model.md#repository-hardening). |

@@ -5,17 +5,17 @@ Regulated industries use the **three lines of defence** to say who owns a risk, 
 | Line | In the model | In KTL |
 | --- | --- | --- |
 | **First**: owns the work and its risk | operational management | The **librarian** derives every record from a source it names, records its own re-checks as `process:` and never as a person, and marks what it cannot settle `status: draft` with an open question. The **curator**, a named person, decides what the team accepts as true: confirm, correct, send back, retire, or leave for later. Maker and checker: the agent cannot vouch, and the person does not derive. |
-| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change and again as the CI gate, `knowledge-apply.sh` as the librarian's only pen, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval of the pull request or their signature on the commit, and the pen refuses to write a `human:` actor at all. It never judges truth: a verdict is only ever what that person said. |
-| **Third**: independent assurance | internal audit | The **bundle** ships the evidence an independent reviewer needs, listed below, and not the review, because assurance is independent only when it comes from someone other than the authors. |
+| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change and again as the CI gate, `knowledge-apply.sh`, the pen, as the only way the librarian writes the bundle, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval of the pull request or their signature on the commit, and the pen refuses to write a `human:` actor at all. It never judges truth: a verdict is only ever what that person said. |
+| **Third**: independent assurance | internal audit | The **bundle** holds the evidence an independent reviewer needs, listed below, and not the review, because assurance is independent only when it comes from someone other than the authors. |
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-three-lines-dimmed.svg">
-    <img src="../.assets/ktl-three-lines.svg" alt="The three lines of defence with each KTL role in place: the governing body above, the librarian and curator in the first line, the registrar in the second, the evidence for an unshipped third line, and the docent outside the lines feeding back to the librarian" width="720" />
+    <img src="../.assets/ktl-three-lines.svg" alt="The three lines of defence with each KTL role in place: the governing body above, the librarian and curator in the first line, the registrar in the second, the evidence for a third line that does not exist yet, and the docent outside the lines feeding back to the librarian" width="720" />
   </picture>
 </p>
 
-The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** lays down the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: it rewords what the librarian wrote before a person confirms it. A copy editor is not the author, so it writes no `generated` record, and `log.md` and git record the pass.
+The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: it rewords what the librarian wrote before a person confirms it. A copy editor is not the author, so it writes no `generated` record, and `log.md` and git record the pass.
 
 Above the lines sits a governing body: for a bundle, the owners of the repository that holds it. Their two instruments are the organisation's rules for AI-assisted work (this project's are its [AI covenant](../AI_COVENANT.md)) and the curation policy. The policy is a concept in the bundle that says who curates and how often each kind of concept is re-confirmed, and it is reviewed like any other concept. The [four levels of checking](for-the-curious.md#four-levels-of-checking) are these same checks ordered by when they happen.
 
@@ -23,18 +23,18 @@ Above the lines sits a governing body: for a bundle, the owners of the repositor
 
 The IIA's own text says the lines "are not intended to denote structural elements but a useful differentiation in roles", and that roles "may overlap in practice" given "clear accountability, transparency, and safeguards to preserve objectivity and avoid self-review risks". KTL does not decide who plays each line; the organisation that adopts it does, one person or a department per line.
 
-The tooling holds the lines apart either way. The **curator**'s identity comes from the forge, never from the person. It is the login this machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, which anyone can edit, and never what the person types into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where an organisation lets one person both author and confirm, the signature is the route, since GitHub will not let them approve their own pull request. An Environment with required reviewers is the one logged exception.
+The tooling keeps the lines apart either way. The **curator**'s identity comes from the forge, never from the person. It is the login this machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, which anyone can edit, and never what the person types into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where an organisation lets one person both author and confirm, the signature is the route, since GitHub will not let them approve their own pull request. An Environment with required reviewers is the one logged exception.
 
 ## What an auditor can check
 
-Every trust label is computed from the frontmatter on each read and never stored, so a label cannot be asserted, only earned. `knowledge-report.sh` does the computing, so the answer does not vary with the reader. Each question an auditor asks has a place where the answer is written:
+Every trust label is computed from the frontmatter on each read and never stored, so a label cannot be asserted, only derived from the events behind it. `knowledge-report.sh` does the computing, so the answer does not vary with the reader. Each question an auditor asks has a place where the answer is written:
 
 | Question | Where the answer is |
 | --- | --- |
 | Where did this come from? | `resource`, `sources[].resource`, `derivedFrom` |
 | Who produced the current text, and when? | `generated.by`, `generated.at` |
 | Who confirmed it, and when? | `verified[].by`, `verified[].at` |
-| Which state of the source was the check made against? | `verified[].revision` and `generated.revision`, proposed for lokf 0.9.0 and not yet released: the commit hash of a file, which the gate resolves against the tree, or an ETag or digest for a URL, which nothing checks. Absent means unrecorded, never unchanged. Until it ships, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation |
+| Which state of the source was the check made against? | `verified[].revision` and `generated.revision`, proposed for lokf 0.9.0 and not yet released: the commit hash of a file, which the gate resolves against the tree, or an ETag or digest for a URL, which nothing checks. Absent means unrecorded, never unchanged. Until it is released, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation |
 | Is the confirmed text the text they saw? | the `validate` job's log: conventions rule 13 fails a change to a confirmed concept's content that leaves `generated` older than the confirmation, so an edited concept reads *edited since* and never as confirmed |
 | Was that really them? | the `provenance` job's log on the pull request: the forge's verdict on the approval or the signature, not the runner's. Locally, the curator skill's *Not tied to a signed commit* count |
 | When must it be looked at again, and by what rule? | `stale_after`, proposed from `policies/knowledge-curation.md` |
@@ -55,6 +55,6 @@ The model has critics, and so has the kind of tool KTL is: a machine's output ch
 
 ## What remains to do, and who does it
 
-- **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and LOKF's 0.9.0 shipping it.
+- **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and LOKF releasing it in 0.9.0.
 - **This project.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, of which the curator's sampling step is the first half; its Copilot form is one instructions file beside the docent's under `.lokf/m365/` ([m365.md](m365.md)).
 - **The organisation's.** Naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.

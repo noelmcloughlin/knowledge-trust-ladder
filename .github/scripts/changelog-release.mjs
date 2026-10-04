@@ -8,7 +8,7 @@
 // Usage:
 //   node changelog-release.mjs check
 //       Exits 1 if "## [Unreleased]" is empty. Used as semantic-release's
-//       verifyReleaseCmd, so a release with nothing written up never ships.
+//       verifyReleaseCmd, so a release with nothing written up never goes out.
 //
 //   node changelog-release.mjs notes [version]
 //       Prints the Unreleased section's body to stdout; it becomes the

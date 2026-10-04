@@ -1,46 +1,50 @@
 #!/usr/bin/env bash
-# Layout tests for the way ktl-sidecar lays a bundle down (SKILL.md Step 2).
+# Layout tests for the way ktl-sidecar installs a bundle (SKILL.md Step 2).
 #
 # The bundle is `.lokf/knowledge`, which the tools address, and `knowledge_bundle`
 # beside it is the doorway link people and Obsidian open. A git pathspec never
 # traverses a symlink, so a template that scopes a diff to the bundle names both
-# paths: with the doorway the second name matches nothing, harmlessly, and it
-# still covers a shared folder someone rearranged by hand into a real
+# paths. With the doorway the second name matches nothing, harmlessly. It still
+# covers a shared folder someone rearranged by hand into a real
 # `knowledge_bundle/` with `.lokf/knowledge` linking onto it (see the sidecar's
 # references/portability.md). These tests pin that for the template files that
 # do so, and for the `just lokf-link` recipe:
 #
-#   1. the librarian wrapper refuses a run in which the agent edited anything
-#      itself, under either name of the bundle or outside it, and applies the
-#      one file the agent may write, .lokf/patch.yaml, with knowledge-apply.sh,
-#      which refuses a bad patch - with the doorway, without it, and in the
-#      rearranged shape; and (1b) the wrapper puts
-#      .git/config and .git/hooks/ back when the agent fails or the job is
-#      cancelled, not only when it returns cleanly; and (1c) the wrapper hands
-#      AGENT_API_KEY to the agent under AGENT_API_KEY_ENV's name only, and
-#      refuses a name that is not a credential's; and (1d) a change that
-#      touches a person's record is refused even when the pen let it through;
-#      and (1e) with KNOWLEDGE_RETRIEVAL on, the wrapper has the agent answer
-#      the index-only retrieval test from an empty directory, writes the score
-#      a program computes, and refuses a call that changed the checkout; and
-#      (1f) a sidecar with no pen stops the wrapper before the agent runs; and
-#      (1g) a quiet bundle skips the agent only when KNOWLEDGE_SKIP_QUIET
-#      allows it; and (1h) the hand-off reaches its file through the pen,
-#      cleaned, after whatever the agent left at either output path is gone;
+#   1. the librarian wrapper:
+#      (1)  refuses a run in which the agent edited anything itself, under
+#           either name of the bundle or outside it, and applies the one file
+#           the agent may write, .lokf/patch.yaml, with knowledge-apply.sh,
+#           which refuses a bad patch: with the doorway, without it, and in
+#           the rearranged shape;
+#      (1b) puts .git/config and .git/hooks/ back when the agent fails or the
+#           job is cancelled, not only when it returns cleanly;
+#      (1c) hands AGENT_API_KEY to the agent under AGENT_API_KEY_ENV's name
+#           only, and refuses a name that is not a credential's;
+#      (1d) refuses a change that touches a person's record even when the pen
+#           let it through;
+#      (1e) with KNOWLEDGE_RETRIEVAL on, has the agent answer the index-only
+#           retrieval test from an empty directory, writes the score a
+#           program computes, and refuses a call that changed the checkout;
+#      (1f) stops before the agent runs when the sidecar has no pen;
+#      (1g) skips the agent for a quiet bundle only when KNOWLEDGE_SKIP_QUIET
+#           allows it;
+#      (1h) passes the hand-off to its file through the pen, cleaned, after
+#           whatever the agent left at either output path is gone;
 #   2. the librarian workflow's change detection sees a bundle edit in each of
 #      those shapes, and its packaging step stages it without failing when the
 #      second name does not exist;
-#   3. the registrar workflow triggers on, and diffs, both names; and (3b) its
-#      provenance step, run here as the template has it with `gh` stubbed,
-#      asks the person behind a confirmation that is added, changed or
-#      removed, and nobody when only a body changes;
+#   3. the registrar workflow triggers on, and diffs, both names. Its
+#      provenance step (3b), run here as the template has it with `gh`
+#      stubbed, asks the person behind a confirmation that is added, changed
+#      or removed, and nobody when only a body changes;
 #   4. `just lokf-link` creates the doorway, is a no-op when it is present,
 #      refuses a name taken by something else, and does nothing when
 #      `.lokf/knowledge` is itself a link;
 #   5. the release workflow compares an unchanged bundle as unchanged and an
-#      edited one as changed in each shape; its pack step puts the bundle, and
-#      nothing beside it, under `knowledge/`, keeps a link's target as written,
-#      and gives the same bytes for the same bundle, at the same tag or a later one.
+#      edited one as changed in each shape. Its pack step puts the bundle, and
+#      nothing beside it, under `knowledge/`, keeps a link's target as
+#      written, and gives the same bytes for the same bundle, at the same tag
+#      or a later one.
 #
 # Needs bash and git. `just` is optional: without it, test 4 is skipped and says so.
 set -euo pipefail
@@ -71,7 +75,7 @@ chmod +x "$fake_agent"
 
 # make_host <dir> <default|no-doorway|rearranged>
 # A minimal host repository: the wrapper and justfile in place, one concept in
-# the bundle, and the two names wired the way the shape says.
+# the bundle, and the two names set up the way the shape says.
 make_host() {
   local dir="$1" shape="$2"
   mkdir -p "$dir"
@@ -101,7 +105,7 @@ make_host() {
   )
 }
 
-# run_wrapper <dir> <path the fake agent edits> - prints the wrapper's exit status
+# run_wrapper <dir> <path the fake agent edits>: prints the wrapper's exit status
 # and resets the working tree for the next case.
 run_wrapper() {
   local dir="$1" edit="$2" status=0
@@ -130,7 +134,7 @@ bad_op='ops:
     path: playbooks/missing.md
     log: gone'
 
-# run_patch <dir> <patch text> - prints the wrapper's exit status and whether
+# run_patch <dir> <patch text>: prints the wrapper's exit status and whether
 # the pen wrote playbooks/b.md and removed the patch file, then resets the tree.
 run_patch() {
   local dir="$1" text="$2" status=0 wrote=no
@@ -161,10 +165,10 @@ for shape in default rearranged no-doorway; do
 done
 
 # 1b. The wrapper restores .git/config and .git/hooks/ on every way out, not
-# only after a clean return: an agent that poisons both and then exits non-zero
-# (set -e ends the wrapper there) or gets the job cancelled (SIGTERM, which
-# bash delivers once the agent has exited) must leave neither behind, and the
-# wrapper's own exit status must be the agent's, or the signal's.
+# only after a clean return. An agent that rewrites both and then exits
+# non-zero (set -e ends the wrapper there), or gets the job cancelled (SIGTERM,
+# which bash delivers once the agent has exited), must leave neither behind.
+# The wrapper's own exit status must be the agent's, or the signal's.
 poison_agent="$work/poison-agent.sh"
 cat > "$poison_agent" <<'AGENT'
 #!/usr/bin/env bash
@@ -219,9 +223,9 @@ key_case path    sk-test PATH              2 "agent did not run"
 key_case github  sk-test GITHUB_TOKEN      2 "agent did not run"
 key_case lower   sk-test anthropic_api_key 2 "agent did not run"
 
-# 1d. What the pen refuses before it writes is read off the result as well, so
-# a pen that let a person's event through - a poisoned copy, in a workspace
-# the agent shared - still fails the run. The stand-in pen here writes one.
+# 1d. What the pen refuses before it writes is checked on the result as well.
+# So a pen that let a person's event through, such as a tampered copy in a
+# workspace the agent shared, still fails the run. The stand-in pen here writes one.
 host="$work/wrapper-unattended"
 make_host "$host" default
 cat > "$host/.lokf/scripts/knowledge-apply.sh" <<'PEN'
@@ -424,8 +428,8 @@ else err "knowledge-registrar.yaml: $pathspecs pathspecs name both paths, $singl
 # calls the step makes: who approved, and which commits GitHub verified for
 # whom. A person's record is never removed without that person, so a
 # confirmation struck out, or gone with its concept, needs the same backing
-# as one that is added; a person's generated record may give way to another
-# person's, the curator's Correct, and to nothing else.
+# as one that is added. A person's generated record may be replaced by another
+# person's, the curator's Correct, and by nothing else.
 step="$work/provenance-step.sh"
 awk '/^      - name: Every new human confirmation must come from that person$/ { on = 1 }
      on && /^        run: \|$/ { body = 1; next }
@@ -528,7 +532,7 @@ elif ! command -v zip >/dev/null || ! command -v unzip >/dev/null; then
   echo "SKIP: zip and unzip are not installed - the pack tests need them"
 else
   eval "$bundle_tree_fn"
-  # pack <host> <tag> <out dir> [TZ] - runs the template's pack lines at the tag's checkout
+  # pack <host> <tag> <out dir> [TZ]: runs the template's pack lines at the tag's checkout
   pack() {
     # shellcheck disable=SC2034 # asset, src and mtime are read by the eval'd lines
     ( cd "$1" && git checkout -q "$2" && export RUNNER_TEMP="$3" TZ="${4:-UTC}" && mkdir -p "$RUNNER_TEMP/release" \

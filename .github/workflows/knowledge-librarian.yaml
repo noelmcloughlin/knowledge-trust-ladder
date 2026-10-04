@@ -69,11 +69,12 @@ jobs:
       # pinned to one release, on every run. A plain clone of the tagged
       # public repo needs no `gh` flags and no token. The install target is
       # gitignored, so it is invisible both to "Enforce the agent's write
-      # scope" below and to "Detect changes". The one repository that skips
-      # this step is the one it clones from, named again in the `if`: there
-      # the skill is source under bare skills/, and an install would land in
-      # .agents/skills/, which the wrapper searches first, so the pinned
-      # release would run instead of the current one. Repository identity is
+      # scope" below and to "Detect changes".
+      #
+      # The one repository that skips this step is the one it clones from,
+      # named again in the `if`. There the skill is source under bare skills/.
+      # An install would go to .agents/skills/, which the wrapper searches
+      # first, so the pinned release would run instead of the current one. Repository identity is
       # the switch, not a file in the tree, so nothing a host commits can
       # change which instructions its scheduled agent runs. A fork that
       # develops the skills changes the name in both places.
@@ -100,11 +101,11 @@ jobs:
         with:
           node-version: "22"
 
-      # Wire this up under Settings -> Secrets and variables -> Actions. The
+      # Set this up under Settings -> Secrets and variables -> Actions. The
       # sidecar's references/automation.md gives the full commands for Copilot
       # CLI and for Claude Code.
-      #   1. Set KNOWLEDGE_LIBRARIAN_ENABLED to "true" to arm the run. Anything
-      #      else (or unset) leaves this step skipped, a safe no-op.
+      #   1. Set KNOWLEDGE_LIBRARIAN_ENABLED to "true" to turn on the run.
+      #      Anything else (or unset) leaves this step skipped, a safe no-op.
       #   2. Set AGENT_CLI to your non-interactive agent command; the wrapper
       #      appends -p "<prompt>". It splits the value on whitespace and
       #      honours no quotes, so no flag value may contain a space. Keep the
@@ -115,9 +116,10 @@ jobs:
       #      from: COPILOT_GITHUB_TOKEN for Copilot CLI, ANTHROPIC_API_KEY for
       #      Claude Code. The wrapper hands it to the agent under that name only.
       #   4. Then either set AGENT_USE_JOB_TOKEN to "true", so the job's own
-      #      GITHUB_TOKEN is that credential (Copilot CLI: no key to keep, and
-      #      the requests are billed to the repository owner's Copilot seat, or
-      #      to the organisation); or put the key in the AGENT_API_KEY secret.
+      #      GITHUB_TOKEN is that credential, or put the key in the
+      #      AGENT_API_KEY secret. With Copilot CLI the job's token leaves no
+      #      key to keep, and the requests are billed to the repository
+      #      owner's Copilot seat, or to the organisation.
       #   5. Optional: set KNOWLEDGE_RETRIEVAL to "true" to score, on each run
       #      that changes the bundle, whether the index leads the agent to the
       #      concept behind each question readers asked. It costs one more
@@ -159,7 +161,7 @@ jobs:
       # The wrapper enforces this same boundary itself, immediately after the
       # agent returns. It also restores .git/config and .git/hooks around the
       # call, from an EXIT trap, so a failing agent or a cancelled job restores
-      # too. That keeps a poisoned core.fsmonitor/hooksPath from blinding
+      # too. That keeps a tampered core.fsmonitor or hooksPath from defeating
       # either check (see the wrapper's own comments). This is the second,
       # independent layer: it runs even when the wrapper did not get to (agent
       # disarmed, early exit), so no path outside the bundle can reach
@@ -186,12 +188,13 @@ jobs:
         id: diff
         run: |
           set -euo pipefail
-          # Scope to the bundle so tool artifacts (e.g. a fresh .lokf/uv.lock from
-          # `uv sync`) never trigger a PR by themselves. Both of the bundle's
-          # names are listed: with ktl-sidecar's doorway link the second
-          # matches nothing, harmlessly, and it still covers a host rearranged
-          # by hand into a real knowledge_bundle/ with .lokf/knowledge a link
-          # onto it, since a git pathspec never traverses a symlink. A name
+          # Scope to the bundle so tool artifacts (for example a fresh
+          # .lokf/uv.lock from `uv sync`) never trigger a pull request by
+          # themselves. Both of the bundle's names are listed. With
+          # ktl-sidecar's doorway link the second matches nothing, harmlessly.
+          # It still covers a host rearranged by hand into a real
+          # knowledge_bundle/ with .lokf/knowledge a link onto it, since a git
+          # pathspec never traverses a symlink. A name
           # that does not exist in this repository is simply ignored.
           if [ -n "$(git status --porcelain -- .lokf/knowledge knowledge_bundle)" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -203,8 +206,8 @@ jobs:
       # and `publish` computes the rest of what the pull request says on its
       # own checkout. One is the retrieval score the wrapper wrote when
       # KNOWLEDGE_RETRIEVAL is on, of which only two integers go on. The other
-      # is the librarian's hand-off, its own words for the reviewer, which
-      # travels beside the patch and which `publish` cleans again and shows as
+      # is the librarian's hand-off, its own words for the reviewer, which is
+      # uploaded beside the patch and which `publish` cleans again and shows as
       # the agent's.
       - name: Read the retrieval score
         id: retrieval
@@ -227,9 +230,10 @@ jobs:
           # (see "Detect changes"); `git add` refuses a pathspec that matches
           # nothing, hence the guard.
           [ -e knowledge_bundle ] && git add -A -- knowledge_bundle || true
-          # Reader feedback (written by ktl-docent, consumed by the librarian,
-          # whose pen moves each handled entry into the ledger) - carry both, so
-          # entries don't come back and the questions readers asked are kept.
+          # Reader feedback is written by ktl-docent and consumed by the
+          # librarian, whose pen moves each handled entry into the ledger. Carry
+          # both, so entries do not come back and the questions readers asked
+          # are kept.
           [ -e .lokf/feedback.md ] && git add -A -- .lokf/feedback.md || true
           [ -e .lokf/questions.md ] && git add -A -- .lokf/questions.md || true
           git diff --cached --binary > "$RUNNER_TEMP/librarian.patch"
@@ -274,9 +278,9 @@ jobs:
         id: push
         run: |
           set -euo pipefail
-          # Trust nothing the `refresh` job decided on its own - it shared a
+          # Trust nothing the `refresh` job decided on its own. It shared a
           # workspace with the agent, so its checks can in principle be
-          # blinded or skipped (see the wrapper script's comments). Re-derive
+          # defeated or skipped (see the wrapper script's comments). Re-derive
           # the path check here, on this job's clean checkout, before
           # anything from the patch touches disk. core.quotePath off, or a
           # concept named with a byte above 0x7f is listed C-quoted and
@@ -289,11 +293,11 @@ jobs:
             exit 1
           fi
           # This skill never writes a human: confirmation (see ktl-librarian's
-          # SKILL.md). A PR opened with GITHUB_TOKEN never fires
+          # SKILL.md). A pull request opened with GITHUB_TOKEN never fires
           # knowledge-registrar.yaml's own pull_request-triggered provenance
-          # job - GitHub does not start pull_request workflows for a PR
-          # authored by the default token - so this is that check's only
-          # backstop for this particular PR; see scheduled-task.md.
+          # job, since GitHub does not start pull_request workflows for a pull
+          # request the default token opened. So this is that check's only
+          # backstop for this pull request; see scheduled-task.md.
           if grep -Eq '^\+ *-? *by: *human:' "$RUNNER_TEMP/librarian.patch"; then
             echo "::error::Patch adds a 'by: human:' claim - the scheduled librarian must never author one."
             exit 1
@@ -302,11 +306,11 @@ jobs:
           # the default branch moved since `refresh` ran.
           git apply --index --whitespace=nowarn "$RUNNER_TEMP/librarian.patch"
           # The line pattern above sees a block-style `by: human:` line and no
-          # other layout. This reads the events themselves, as the registrar's
-          # gate does, off the tree the patch leaves: an unattended change adds,
-          # changes and removes no person's event or note, and rewrites no text
-          # a person wrote. knowledge-apply.sh refuses each of those before it
-          # writes, in a job the agent shared; this job did not share it, and
+          # other layout. This reads the events themselves on the tree the
+          # patch leaves, as the registrar's gate does. An unattended change
+          # adds, changes and removes no person's event or note, and rewrites no
+          # text a person wrote. knowledge-apply.sh refuses each of those before
+          # it writes, in a job the agent shared. This job did not share it, and
           # the script comes from this checkout, which the path check above
           # keeps the patch out of.
           if [ -f .lokf/scripts/knowledge-provenance.sh ] && ! bash .lokf/scripts/knowledge-provenance.sh --unattended; then

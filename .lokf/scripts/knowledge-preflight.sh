@@ -9,7 +9,7 @@
 # Exit 0 always: the skills read the lines; nothing here is a gate.
 #
 # Bash 3.2 and POSIX tools only, so it runs on macOS's stock bash and on Git
-# for Windows. From PowerShell, run it through Git for Windows' bash - the
+# for Windows. From PowerShell, run it through Git for Windows' bash: the
 # one-liner is in ktl-sidecar/references/portability.md.
 #
 # Usage: knowledge-preflight.sh [repo-root]   (default: the nearest ancestor of
@@ -50,9 +50,9 @@ printf 'Preflight for %s\n' "$root"
 ok host "$host, bash ${BASH_VERSION%%(*}; digest: ${digest:-none (macOS: install coreutils, or use uv run python)}; python: ${py:-none (use uv run python)}"
 
 # ---- bundle ----------------------------------------------------------------
-# The trailing slash on every find: a host may have made .lokf/knowledge a link
-# onto a visible knowledge_bundle/ folder, and find never enters a link it is
-# handed bare - it would count zero concepts and say nothing.
+# Every find takes a trailing slash. A host may have made .lokf/knowledge a
+# link onto a visible knowledge_bundle/ folder, and find never enters a link
+# it is handed bare: it would count zero concepts and say nothing.
 bundle="$root/.lokf/knowledge"
 if [ -d "$bundle" ]; then
   n="$(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' -not -name index.md -not -name log.md -not -name diataxis.md | wc -l | tr -d ' ')"
@@ -231,8 +231,8 @@ fi
 
 # ---- host copies of the sidecar's templates ----------------------------------
 # The conventions script runs its Python half, so a host holding the .sh
-# without the .py has a gate that fails outright, not a stale copy - said
-# whether or not a sidecar is installed to compare against. A bundle with no
+# without the .py has a gate that fails outright, not a stale copy. This is
+# reported whether or not a sidecar is installed to compare against. A bundle with no
 # knowledge-feedback.sh is the same kind of gap rather than drift: ktl-docent
 # then has to open feedback.md to add an entry, which is the one thing that
 # script exists to stop. A host on a sidecar that predates it should hear so

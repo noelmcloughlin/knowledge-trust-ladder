@@ -3,7 +3,7 @@ name: Knowledge Release
 # Attaches the LOKF knowledge bundle to a GitHub release as a zip file, so a
 # reader can take the bundle as it stood at that release without cloning the
 # repository, and open it with any operating system's own tools. Beside it,
-# when the host has laid down .lokf/m365/, one Microsoft 365 Copilot skill
+# when the host has installed .lokf/m365/, one Microsoft 365 Copilot skill
 # zip per instructions file there, for a person with nothing installed to
 # upload to Agent Builder. It runs no LLM or agent, and it never commits or pushes.
 #
@@ -15,7 +15,7 @@ name: Knowledge Release
 #   release published   runs only once the KNOWLEDGE_RELEASE_ENABLED
 #                       repository variable is "true". Unset, every release
 #                       shows this run as skipped, so the workflow is inert
-#                       until someone arms it.
+#                       until someone turns it on.
 #
 # GitHub starts no workflow for a release created with the default
 # GITHUB_TOKEN. If your release job makes the release that way, the release
@@ -218,7 +218,7 @@ jobs:
       # Build one Copilot skill per .lokf/m365/*.md with the host's
       # knowledge-m365.sh, dated at the bundle's commit so each zip is
       # reproducible. If the builder is missing or refuses the bundle, the
-      # step posts a notice and the release ships the bundle zip alone.
+      # step posts a notice and the release carries the bundle zip alone.
       - name: Pack the Copilot skills
         if: steps.compare.outputs.changed == 'true'
         env:

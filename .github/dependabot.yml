@@ -1,18 +1,18 @@
 version: 2
 updates:
-  # Keeps this repository's OWN workflows (.github/workflows/*.yml) current -
-  # it understands the `@<sha> # v1.2.3` pin convention used throughout and
-  # opens a PR bumping both when a pinned action releases.
+  # Keeps this repository's OWN workflows (.github/workflows/*.yml) current.
+  # It understands the `@<sha> # v1.2.3` pin convention used throughout, and
+  # opens a pull request bumping both when a pinned action releases.
   #
   # This does NOT reach the three workflow templates under
-  # skills/ktl-sidecar/templates/github/ - Dependabot's github-actions
+  # skills/ktl-sidecar/templates/github/. Dependabot's github-actions
   # ecosystem only scans .github/workflows/ (or a root action.yml), a known
   # limitation (dependabot/dependabot-core#5970). Those pins still need a
   # manual bump; lint-workflows' actionlint step catches syntax drift, not
   # staleness. Re-evaluate if that upstream limitation is ever lifted.
   #
-  # This repository dogfoods all three templates, so each one is kept
-  # byte-identical to its live counterpart above. That makes the manual bump a
+  # This repository runs all three templates as its own workflows, so each one
+  # is kept byte-identical to its live counterpart above. That makes the manual bump a
   # copy rather than a judgement call, and staleness cheap to spot:
   #
   #   for f in knowledge-registrar knowledge-librarian knowledge-release; do
@@ -20,8 +20,8 @@ updates:
   #          ".github/workflows/$f.yaml"
   #   done
   #
-  # Deliberate divergence is allowed - if a template ever needs to differ from
-  # the dogfooded copy, say why here so the diff above isn't read as a defect.
+  # A template may differ from this repository's copy on purpose. If one ever
+  # needs to, say why here, so the diff above is not read as a defect.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
