@@ -153,7 +153,7 @@ jobs:
           KNOWLEDGE_HANDOFF_OUT: ${{ runner.temp }}/handoff.txt
           KNOWLEDGE_SKIP_QUIET: ${{ github.event_name == 'schedule' }}
         run: |
-          if [ "$(date -u +%d)" -le 7 ]; then KNOWLEDGE_SKIP_QUIET=false; fi
+          if [ "$(date -u +%d)" -le 7 ]; then export KNOWLEDGE_SKIP_QUIET=false; fi
           bash .lokf/scripts/knowledge-librarian.sh
 
       # The wrapper enforces this same boundary itself, immediately after the

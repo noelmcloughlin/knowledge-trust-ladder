@@ -354,7 +354,7 @@ else err "knowledge-librarian.yaml no longer stages .lokf/feedback.md and .lokf/
 # days; a run a person starts never skips.
 # shellcheck disable=SC2016 # the template's own $(...), matched as text
 if grep -qF "KNOWLEDGE_SKIP_QUIET: \${{ github.event_name == 'schedule' }}" "$librarian_yaml" \
-   && grep -qF 'if [ "$(date -u +%d)" -le 7 ]; then KNOWLEDGE_SKIP_QUIET=false; fi' "$librarian_yaml"; then
+   && grep -qF 'if [ "$(date -u +%d)" -le 7 ]; then export KNOWLEDGE_SKIP_QUIET=false; fi' "$librarian_yaml"; then
   ok "template lets a scheduled run skip a quiet week, outside a month's first seven days"
 else err "knowledge-librarian.yaml no longer sets KNOWLEDGE_SKIP_QUIET for scheduled runs, or lost the monthly full run"; fi
 # The hand-off goes from the pen, through the artifact, to the pull request.
