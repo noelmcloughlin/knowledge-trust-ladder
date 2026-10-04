@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T14:21:43Z"
+  at: "2026-10-04T16:34:14Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -62,7 +62,7 @@ An auditor's questions each have a fixed place to look: provenance in
 and when in `generated`; who confirmed it and when in `verified[]`; which
 state of the source the check was made against in `revision` - a field
 proposed for lokf 0.9.0 and not yet released - which the gate resolves
-against the tree for a file and nothing checks for a URL, and until it ships `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation; whether that
+against the tree for a file and nothing checks for a URL, and until it ships `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation; whether the confirmed text is still the one the person saw in the `validate` job's log, where conventions rule 13 fails an edit that leaves `generated` older than the confirmation; whether that
 confirmation is really tied to the named person in the `provenance` job's
 log, where a confirmation struck out or gone with its concept needs that person as an added one does; when it must be looked at again in `stale_after`; what changed, and
 why, in `log.md` and git; and whether the checker is independent of the

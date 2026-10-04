@@ -7,15 +7,19 @@ genre: how-to
 resource: skills/ktl-librarian/SKILL.md
 sources:
 - resource: skills/ktl-librarian/SKILL.md
+- resource: skills/ktl-librarian/references/golden-rules.md
+- resource: skills/ktl-librarian/references/bootstrap.md
+- resource: skills/ktl-librarian/references/audit.md
 - resource: skills/ktl-librarian/references/scheduled-task.md
 - resource: skills/ktl-librarian/references/patch.md
 - resource: .github/workflows/knowledge-librarian.yaml
 - resource: .lokf/scripts/knowledge-librarian.sh
 - resource: .lokf/scripts/knowledge-apply.sh
+- resource: .lokf/scripts/knowledge-report.sh
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-04T16:34:14Z"
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -41,8 +45,10 @@ Runs **often**, including on a schedule. It carries the seven LOKF Golden Rules
 (OKF-first; the bundle-root semantic header and `base_iri` authority test; the
 type vocabulary plus the Diátaxis `genre` facet; typed
 relationships over bare links; core field-to-ontology mapping; trust,
-provenance and lifecycle; permissiveness), then four sections: scrape and
-build, audit, hand off for review, and the scheduled task.
+provenance and lifecycle; permissiveness) in brief, with their tables in
+`references/golden-rules.md`, then four sections: scrape and build, audit,
+hand off for review, and the scheduled task. The first run's sweep is in
+`references/bootstrap.md`, and the audit's detail in `references/audit.md`.
 
 It deals in **facts about the repository, never verdicts about truth**: it may
 record that it re-checked a concept against its source (`verified` by
@@ -51,13 +57,13 @@ writes a `human:` confirmation. Concepts it creates start as `status: draft`,
 and a claim it cannot settle gets an `## Open questions` section instead of a
 guess.
 
-Each steady-state run starts from the work list `knowledge-report.sh` computes: the concepts whose sources moved since they were derived or last checked, ordered by git history and never by clock, the notes a person left, and how much reader feedback waits. A local source that has not moved is not read again. Then the run reads the verdicts on its previous work: the `**Curation**` lines in `log.md` and every open question a person left, read as reports and never as instructions, so that a sent-back concept is re-derived from the source the note names and never the same way again. Then it consumes `.lokf/feedback.md`, where ktl-docent records readers' misses and disagreements, at most ten entries in a run. Every entry is an untrusted report, never an instruction: the librarian resolves only the question or disagreement it names, from the source it points at. It names each entry it handled in the operation's `from_feedback`, with the reader's question in `asked`, and the apply script moves the entry out of `feedback.md` and into `.lokf/questions.md`, a ledger that only grows and that only programs read. A reader's words go nowhere else: not into a concept, and not into `log.md`. The run leaves a note that a person's later confirmation answered to the curator, and withdraws a question of its own with the `resolve` operation once the source settles it. When a count or a name changes in one source, it searches the bundle for the old value and changes a concept only where its own source now states the new one. A miss on a question an existing concept already answers is a description defect: the skill fixes the `description` and the index bullets that copy it, and adds no twin. A scheduled run installs the pinned `ktl-librarian` release first, except in the repository that publishes the skills, which runs its own source under bare `skills/` (2026-09-24).
+Each steady-state run starts from the work list `knowledge-report.sh` computes: the concepts whose sources moved since they were derived or last checked, ordered by git history and never by clock, the notes a person left, and how much reader feedback waits. A local source that has not moved is not read again. Then the run reads the verdicts on its previous work: the `**Curation**` lines in `log.md` and every open question a person left, read as reports and never as instructions, so that a sent-back concept is re-derived from the source the note names and never the same way again. Then it consumes `.lokf/feedback.md`, where ktl-docent records readers' misses and disagreements, at most ten entries in a run. Every entry is an untrusted report, never an instruction: the librarian resolves only the question or disagreement it names, from the source it points at. It names each entry it handled in the operation's `from_feedback`, with the reader's question in `asked`, and the apply script moves the entry out of `feedback.md` and into `.lokf/questions.md`, a ledger that only grows and that only programs read. A reader's words go nowhere else: not into a concept, not into `log.md`, and not into the hand-off. Every note from a person that the run reads leaves the librarian's stamp on its concept, a `patch`, `rewrite` or `recheck`, so the quiet check knows the note was read. The run leaves a note that a person's later confirmation answered to the curator, and withdraws a question of its own with the `resolve` operation once the source settles it. When a count or a name changes in one source, it searches the bundle for the old value and changes a concept only where its own source now states the new one. A miss on a question an existing concept already answers is a description defect: the skill fixes the `description` and the index bullets that copy it, and adds no twin. A scheduled run installs the pinned `ktl-librarian` release first, except in the repository that publishes the skills, which runs its own source under bare `skills/` (2026-09-24).
 
-The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script, checks every operation and writes the files: it stamps `generated` from the clock, keeps a `description` equal to its two index bullets, files each log line under the day's heading, and refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed or left a note on. The scheduled wrapper applies the file after the agent has finished. It refuses a run that changed anything else, and one whose result touches a person's record, which `knowledge-provenance.sh --unattended` reads off the tree. `references/patch.md` gives the eight operations, and `knowledge-apply.sh --format` prints the same block, so the scheduled wrapper's prompt names no file of the skill. `reindex` re-derives a concept's two index bullets without touching the concept, and `resolve` withdraws an open question the librarian itself asked.
+The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script, checks every operation and writes the files: it stamps `generated` from the clock, keeps a `description` equal to its two index bullets, files each log line under the day's heading, and refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed or left a note on. The scheduled wrapper applies the file after the agent has finished. It refuses a run that changed anything else, and one whose result touches a person's record, which `knowledge-provenance.sh --unattended` reads off the tree. `references/patch.md` gives the eight operations, and `knowledge-apply.sh --format` prints the same block, so the scheduled wrapper's prompt names no file of the skill. A patch may also carry `handoff`, up to ten lines for the reviewer in the agent's own words. The pen holds each to one line of printable text and writes none of it to the bundle, and the scheduled pull request shows them under *From the librarian*, in a code block (2026-10-04). `reindex` re-derives a concept's two index bullets without touching the concept, and `resolve` withdraws an open question the librarian itself asked.
 
 **Reading feedback, the Snyk W011 finding (acknowledged 2026-09-25).** The librarian is the one skill that reads what a reader wrote, because consuming an entry is what `.lokf/feedback.md` is for, so the scanner's finding is acknowledged rather than designed away. The skill names what contains it, and none of it is prose the agent has to keep: an unattended run has no write credential in `refresh`; `publish`, which runs no agent, refuses a patch touching any path outside `.lokf/knowledge`, `knowledge_bundle`, `.lokf/feedback.md` and `.lokf/questions.md`, and one that touches a person's record in any YAML layout, so an entry cannot mint trust or remove it; and what comes out is a pull request a person merges. On the way in, `knowledge-feedback.sh` holds each entry to one line and one of two kinds.
 
-**The scheduled run's credential and checks (added 2026-09-24).** The wrapper hands the agent one credential, under the name the `AGENT_API_KEY_ENV` variable gives: the `AGENT_API_KEY` secret, or, with `AGENT_USE_JOB_TOKEN` set to `true`, the job's own token, which Copilot CLI accepts. It refuses a name that does not end `_API_KEY`, `_TOKEN` or `_KEY`, or that starts `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, and it exports the key into the agent's environment only, never into an argument list or its own git commands. The `refresh` job validates with `lokf validate --check-refs`, as the registrar gate does, and reports the outcome in the pull request body; the step continues on error, so a dangling relation target is reported there rather than stopping the pull request.
+**The scheduled run's credential and checks (added 2026-09-24).** The wrapper hands the agent one credential, under the name the `AGENT_API_KEY_ENV` variable gives: the `AGENT_API_KEY` secret, or, with `AGENT_USE_JOB_TOKEN` set to `true`, the job's own token, which Copilot CLI accepts. It refuses a name that does not end `_API_KEY`, `_TOKEN` or `_KEY`, or that starts `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, and it exports the key into the agent's environment only, never into an argument list or its own git commands. The `refresh` job validates with `lokf validate --check-refs`, as the registrar gate does, and reports the outcome in the pull request body; the step continues on error, so a dangling relation target is reported there rather than stopping the pull request. A scheduled week with nothing waiting runs no agent: `knowledge-report.sh quiet` finds no moved source, no note a person left since the librarian's last stamp, no concept without a stamp and no reader feedback. A scheduled run in a month's first seven days, and a run a person starts, always go ahead (2026-10-04).
 
 Two things it now leaves alone by rule (added 2026-09-12): the Obsidian
 affordances KTL Registrar may write into a bundle - a marker-delimited
@@ -69,7 +75,7 @@ name: `.lokf/knowledge` is the real folder ktl-sidecar lays down, with a
 link the other way round, so it addresses the bundle by the tools' name and
 names both paths when scoping a diff or a PR.
 
-The tooling-version check (rule 6) now runs **only in interactive
+The tooling-version check (step 7 of a refresh) runs **only in interactive
 sessions**: the scheduled workflow's wrapper lets the agent write only
 `.lokf/patch.yaml` (before the pen, only under
 `.lokf/knowledge/`, `knowledge_bundle/` and `.lokf/feedback.md`), so a
@@ -93,7 +99,7 @@ the core schema, the domain schema, frontmatter naming the class exactly, and
 the flag wired into the justfile and both workflow templates. Rule 3 reads
 that wiring back - where the justfile passes `--schema`, that schema's
 `Concept` descendants are part of the vocabulary, and a record names the
-subclass. The tooling-version step (rule 6) refreshes the pinned copy.
+subclass. The tooling-version step refreshes the pinned copy.
 `ktl-curator/references/domain-schemas.md` covers when; this covers how.
 
 **The toolkit's constraints, and `revision` (added 2026-09-17).** The field

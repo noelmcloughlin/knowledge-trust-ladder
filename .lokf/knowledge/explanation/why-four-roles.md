@@ -23,6 +23,9 @@ references:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-04T16:34:14Z"
 ---
 
 # Overview

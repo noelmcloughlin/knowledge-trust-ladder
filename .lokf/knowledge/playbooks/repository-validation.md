@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T13:37:58Z"
+  at: "2026-10-04T16:34:14Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -42,13 +42,16 @@ their templates - since 2026-09-24 apart from one value, the librarian
 workflow's `TRUST_LADDER_SKILLS_REF`, which the release commit moves in the
 template only - and failing up front, naming the cause, when `uv` is
 missing, with `knowledge-conventions.sh` shown to pass on this
-bundle, to fail on a synthetic bundle breaking each of its twelve rules (a
+bundle, to fail on a synthetic bundle breaking each of its thirteen rules (a
 vanished `resource`, a `revision` naming no commit, a duplicate `id`, an
 upper-case path, a byte order mark, a missing frontmatter block, an event
 spelt with a quoted key or a tag, a time later than the commit that recorded
 it or, uncommitted, in the future (rule 11, since 2026-09-24, with a time
-before its commit shown to pass), and the first four - six of which (2, 3, 4,
-7, 9, 10), since 2026-09-17, it delegates to `knowledge-conventions.py`
+before its commit shown to pass), a confirmed concept edited after its
+confirmation with `generated` left behind (rule 13, since 2026-10-04, with a
+person's note, KTL Registrar's block, a requoted title, a restamp and a second
+confirmation shown to pass), and the first four - eight of which (2, 3, 4,
+7, 9, 10, 12 and 13) it delegates, the first six since 2026-09-17, to `knowledge-conventions.py`
 through `uv run`, a real YAML parse in place of grep and awk, proven on the
 layouts that used to slip: a multi-line flow item with an unquoted `at`, a
 number for an `at`, a block that does not parse, reported on one line, and a
@@ -126,7 +129,7 @@ on, staying quiet on what the two hand passes kept, and refusing, with
 wording, a frontmatter byte, or a concept a person wrote or confirmed; and
 (check 19) `knowledge-apply.sh`, the librarian's only pen, exercised on a
 throwaway bundle: each operation applied, each refusal refused, and a dry run
-writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, a root index shaped by hand keeping its shape, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock. The twelfth conventions rule holds an index bullet to its concept's title and description. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check and retrieval call. The job sets up `uv`, runs the contract, then confirms
+writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, a root index shaped by hand keeping its shape, the hand-off reaching the file `--handoff` names as plain single lines and never the bundle, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock, and `quiet` telling a week with nothing waiting from one with work, where a note no longer counts once the librarian has stamped its concept after it. The twelfth conventions rule holds an index bullet to its concept's title and description, and the thirteenth holds a confirmed concept to the text its person confirmed. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check, retrieval call, quiet skip and hand-off, after whatever the agent left at the output paths is gone. The job sets up `uv`, runs the contract, then confirms
 `gh skill` is available, and then runs `gh skill publish --dry-run`.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs
