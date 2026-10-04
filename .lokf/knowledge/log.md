@@ -2,6 +2,8 @@
 
 ## 2026-10-04
 
+* **Added**: Registrar, the person in a museum who keeps the collection's records, from `README.md`, which now says so where it first names the role.
+* **Added**: Sidecar, the `.lokf/` folder beside the code and the role that installs it, from `README.md`, which now says so where it first names it.
 * **Added**: Docent, a museum's name for a guide, from `README.md`, which now says so where it first names the docent.
 * **Added**: Desk, the README's word for the place where a role does its work, from its section on the registrar.
 * **Changed**: ktl-prose skill: rule 3 covers a paragraph past 150 words, rule 9 asks for the literal verb, and the check reports both and a character no reader sees.
