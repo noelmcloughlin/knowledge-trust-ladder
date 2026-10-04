@@ -223,7 +223,7 @@ Do not add a bullet to the nearest `index.md`. That file is the librarian's, and
 
 ## Handing off
 
-**Git-tracked `.lokf/`.** Open a pull request scoped to `.lokf/`, titled "Curation: <date>". Its body holds the health line before and after, the verbs taken, and the `just lokf-validate` output (or "validation skipped - no `uv`"). The `knowledge-registrar.yaml` gate, if installed, runs on it, including its `provenance` job, which re-checks every `human:` event the pull request adds.
+**Git-tracked `.lokf/`.** Prepare a pull request scoped to `.lokf/`, titled "Curation: <date>", and open it only when the person says so, since it is theirs to submit. Its body holds the health line before and after, the verbs taken, and the `just lokf-validate` output (or "validation skipped - no `uv`"). The `knowledge-registrar.yaml` gate, if installed, runs on it, including its `provenance` job, which re-checks every `human:` event the pull request adds.
 
 Each named person must have approved the pull request or, when the pull request is their own, have signed its commits, since GitHub will not let authors approve themselves. Tell the person plainly that the pull request needs their approval or signature before the confirmations they just gave will pass. If they are the repository's only maintainer, tell them that GitHub will not let them approve their own pull request, so signing their commits is the path (ktl-sidecar's `references/gate.md` has the three-line setup). That is the gate working, not a fault in it. It is what makes their confirmation something a later reader can check rather than take on faith.
 

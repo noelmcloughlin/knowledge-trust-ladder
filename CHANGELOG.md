@@ -11,6 +11,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
+- **In a live session, ktl-librarian opens its pull request only when the person says so.** The person who started it is the change's author and submits it, as the AI covenant says. A scheduled run's workflow still opens its own. ktl-curator's review session ends the same way.
 - **The docs, the skill pages and the script comments read plainer.** A third pass replaced figures of speech, such as "lands", "mints", "ships", "arms", "wires" and "lays down", with what happens. It split every paragraph and comment block past 150 words, and took the dashes and long sentences out of the script comments, which no pass had read before. No fact changed. The captured docent answers, the released changelog entries and the messages the scripts print stay as they were.
 
 ### Security
