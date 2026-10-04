@@ -2,6 +2,8 @@
 
 ## 2026-10-04
 
+* **Added**: Docent, a museum's name for a guide, from `README.md`, which now says so where it first names the docent.
+* **Added**: Desk, the README's word for the place where a role does its work, from its section on the registrar.
 * **Changed**: ktl-prose skill: rule 3 covers a paragraph past 150 words, rule 9 asks for the literal verb, and the check reports both and a character no reader sees.
 * **Changed**: repository validation: check 18 exercises the paragraph, figure-of-speech and unseen-character findings, and check 21 searches every tracked file for a character a reader cannot see.
 * **Changed**: threat model: this repository's contract fails on a character a reader cannot see, and ktl-prose's check refuses a rewording that adds one.
