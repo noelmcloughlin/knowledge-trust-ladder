@@ -57,6 +57,7 @@ RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
 BULLET_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, (\S+?): ")  # an open question's actor, in the shape the curator writes
 HEADING_RE = re.compile(r"^(#{1,6})[ \t]+(.*\S)[ \t]*$")  # a Markdown heading: its level and its text
+OWN_BULLET_RE = re.compile(r"^\* \[[^\]]*\]\([^)]+\)(?: - .*)?$")  # any concept's own index bullet: its link alone, then its description
 FEEDBACK_KIND_RE = re.compile(r"^- \*\*(Miss|Disagreement)\*\* ")
 OPS = {"create", "patch", "rewrite", "question", "resolve", "recheck", "delete", "reindex"}
 EDITS = {"replace", "insert_after", "append"}
@@ -121,7 +122,7 @@ ops:
   - op: reindex                  # both index bullets re-derived from the frontmatter; the concept is not written
     path: policies/retention.md
 
-  - op: delete                   # the file and its index bullets; refused when a person confirmed it or left a note on it
+  - op: delete                   # the file and its index bullets; refused when a person confirmed it or left a note on it, or an index names it in a sentence
     path: services/legacy-sync.md
     log: "**Removal**: Legacy Sync; `services/legacy-sync/` was deleted in a1b2c3d."
 '''
@@ -525,9 +526,11 @@ class Bundle:
         section = folder.rsplit("/", 1)[-1].capitalize()
         folder_file = self.knowledge / folder / "index.md"
         root_file = self.knowledge / "index.md"
+        folder_text = self.index_text(folder_file, f"# {section}\n")
+        if not folder_text.strip():  # an empty file starts from its heading, as a new one does
+            folder_text = f"# {section}\n"
         self.indexes[folder_file] = self.place_bullet(
-            self.index_text(folder_file, f"# {section}\n"), name,
-            None if title is None else f"* [{title}]({name}) - {description}", path, f"{folder}/index.md")
+            folder_text, name, None if title is None else f"* [{title}]({name}) - {description}", path, f"{folder}/index.md")
         self.indexes[root_file] = self.place_bullet(
             self.index_text(root_file, ""), path,
             None if title is None else f"* [{title}]({path}) - {description}", path, "index.md",
@@ -537,25 +540,31 @@ class Bundle:
     def place_bullet(text: str, link: str, bullet, path: str, where: str, section=None) -> str:
         """Sets, adds or removes one concept's bullet in one index.md, with None for bullet on delete.
 
-        The concept's own bullet is a line that holds its link alone, with the
-        description after it. A line that lists the concept among others, or
-        names it in a sentence, is the host's own way of listing it: create, set
-        and reindex leave it alone, as rule 12 does, and delete takes the link
-        out of a comma-separated list. `section` is the folder's heading text and
-        a link to the folder's index.md, given for the root index only.
+        The concept's own bullet is a line that holds its link alone,
+        optionally followed by its description; every such line is rewritten.
+        A line that lists the concept among other links, or names it in a
+        sentence, is the host's own way of listing it: create, set and reindex
+        leave it alone, as rule 12 does, and delete takes the link out of a
+        list of links. A mention inside another concept's bullet lists nothing.
+        `section` is the folder's heading text and a link to the folder's
+        index.md, given for the root index only.
         """
         lines = text.split("\n")
         own = re.compile(r"^\* \[[^\]]*\]\(" + re.escape(link) + r"\)(?: - .*)?$")
         mine = [k for k, line in enumerate(lines) if own.match(line)]
         needle = f"]({link})"
         if bullet is None:
-            lines = [line for k, line in enumerate(lines) if k not in mine]
+            for k in reversed(mine):
+                del lines[k]
+                if 0 < k < len(lines) and lines[k - 1] == "" and lines[k] == "":
+                    del lines[k]  # the blank line on either side of it, now two in a row
             return Bundle.joined([Bundle.unlink(line, link, path, where) if needle in line else line for line in lines])
         if mine:
-            lines[mine[0]] = bullet
-            return Bundle.joined([line for k, line in enumerate(lines) if k not in mine[1:]])
-        if any(needle in line for line in lines):
-            return text
+            for k in mine:
+                lines[k] = bullet
+            return Bundle.joined(lines)
+        if any(needle in line and not OWN_BULLET_RE.match(line) for line in lines):
+            return Bundle.joined(lines)
         start, end = 0, len(lines)
         if section is not None:
             found = Bundle.find_section(lines, *section)
@@ -581,15 +590,17 @@ class Bundle:
 
     @staticmethod
     def unlink(line: str, link: str, path: str, where: str) -> str:
-        """The line with the concept's link taken out of the comma-separated list it is an item of. A link anywhere else, in a sentence say, is refused: rewording the host's own text is not this script's to do."""
+        """The line with the concept's link taken out of a comma-separated list of links, where a link stands next to it. A link anywhere else, in a sentence say, is refused: rewording the host's own text is not this script's to do."""
         item = r"\[[^\]]*\]\(" + re.escape(link) + r"\)"
+        after_link = re.compile(r"(\]\([^)]*\)), " + item)
+        before_link = re.compile(item + r", (?=\[[^\]]*\]\()")
         while f"]({link})" in line:
-            for pattern in (", " + item, item + ", "):
-                line, n = re.subn(pattern, "", line, count=1)
-                if n:
-                    break
-            else:
+            new, n = after_link.subn(r"\1", line, count=1)
+            if not n:
+                new, n = before_link.subn("", line, count=1)
+            if not n:
                 raise Refused(f"{path}: {where} links this concept inside other text, which this script never rewrites; a person takes that link out, and the delete can then run")
+            line = new
         return line
 
     @staticmethod
@@ -612,16 +623,18 @@ class Bundle:
 
     @staticmethod
     def find_section(lines: list, name: str, folder_link: str):
-        """(start, end) of the root section a folder's bullets go under: the heading named after the folder, at any level, or else the heading whose section links the folder's index.md. The narrowest match wins, so a title heading over the whole file never does."""
+        """(start, end) of the root section a folder's bullets go under: a heading named after the folder, at any level, or else a section that links the folder's index.md. A heading that does both wins, then the narrowest. The first heading is the title, whose section is the whole file, so it never wins by a link."""
         heads = Bundle.headings(lines)
         spans = []
         for i, (k, level, text) in enumerate(heads):
             end = next((k2 for k2, level2, _ in heads[i + 1 :] if level2 <= level), len(lines))
-            spans.append((k, end, text))
-        named = [(k, end) for k, end, text in spans if text.lower() == name.lower()]
-        linked = [(k, end) for k, end, _ in spans if any(folder_link in line for line in lines[k:end])]
-        matches = named or linked
-        return min(matches, key=lambda span: span[1] - span[0]) if matches else None
+            spans.append((i, k, end, text))
+        named = {(k, end) for i, k, end, text in spans if text.lower() == name.lower()}
+        linked = {(k, end) for i, k, end, _ in spans if i > 0 and any(folder_link in line for line in lines[k:end])}
+        for matches in (named & linked, named, linked):
+            if matches:
+                return min(matches, key=lambda span: span[1] - span[0])
+        return None
 
     @staticmethod
     def section_level(lines: list) -> int:

@@ -18,10 +18,11 @@
 #   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator ../ai-linkmo
 #
 # For each sibling it copies every template the sibling already carries. It
-# lays down a template the sibling never had in two cases only: ktl-sidecar's
-# Step 5 lays it down on every host, or a file the sibling carries cannot run
-# without it (the wrapper writes the bundle through the apply script). Any
-# other is reported, not added: that is Step 5, a decision for the host. Then
+# lays down a template the sibling never had in two cases only: ktl-sidecar
+# lays it down on every host, or a file the sibling carries cannot run without
+# it (a workflow runs the script, or the wrapper writes the bundle through the
+# apply script). Any other is reported, not added: that is ktl-sidecar's
+# Step 5, a decision for the host. Then
 # it sets the pin to the tag, runs the sidecar's own checks there, and prints
 # a draft changelog line and the commit command. Exit 1 when a sibling's
 # checks fail after the copy; exit 2 when the arguments are wrong or the tag
@@ -48,19 +49,27 @@ pairs=(
   "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
   "gitattributes:.lokf/.gitattributes"
 )
-# Step 5 lays these down on every host, whatever else the host chose, so a
-# sibling that lacks one gets it.
+# ktl-sidecar lays these down on every host, whatever else the host chose,
+# so a sibling that lacks one gets it: <template>|<the step that says so>.
 always=(
-  "scripts/knowledge-preflight.sh"
-  "scripts/knowledge-feedback.sh"
-  "scripts/knowledge-report.sh"
-  "m365/knowledge-m365.sh"
-  "m365/ktl-docent-m365.md"
+  "gitattributes|Step 1"
+  "scripts/knowledge-preflight.sh|Step 5"
+  "scripts/knowledge-feedback.sh|Step 5"
+  "scripts/knowledge-report.sh|Step 5"
+  "m365/knowledge-m365.sh|Step 5"
+  "m365/ktl-docent-m365.md|Step 5"
 )
-# A template and the copy that cannot run without it: the wrapper refuses to
-# start without the apply script, and each shell half runs its Python half.
-# Copying the second without the first would leave the sibling failing.
+# A template and a copy that cannot run without it: <template>:<copy>. Each
+# workflow runs a script with no check that it is there, the wrapper refuses
+# to start without the apply script, and each shell half runs its Python
+# half. A sync that carried the copy alone would leave the sibling failing.
 companions=(
+  "scripts/knowledge-librarian.sh:.github/workflows/knowledge-librarian.yaml"
+  "scripts/knowledge-conventions.sh:.github/workflows/knowledge-registrar.yaml"
+  "scripts/knowledge-conventions.py:.github/workflows/knowledge-registrar.yaml"
+  "scripts/knowledge-provenance.sh:.github/workflows/knowledge-registrar.yaml"
+  "scripts/knowledge-conventions.sh:.github/workflows/knowledge-release.yaml"
+  "scripts/knowledge-conventions.py:.github/workflows/knowledge-release.yaml"
   "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-librarian.sh"
   "scripts/knowledge-apply.py:.lokf/scripts/knowledge-librarian.sh"
   "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.sh"
@@ -101,7 +110,7 @@ at_tag() { git -C "$repo_root" show "$tag:$templates/$1"; }
 needed() {
   local entry
   for entry in "${always[@]}"; do
-    if [[ "$entry" == "$1" ]]; then echo "ktl-sidecar's Step 5 lays it down on every host"; return; fi
+    if [[ "${entry%%|*}" == "$1" ]]; then echo "ktl-sidecar's ${entry##*|} lays it down on every host"; return; fi
   done
   for entry in "${companions[@]}"; do
     if [[ "${entry%%:*}" == "$1" && -f "$2/${entry##*:}" ]]; then echo "${entry##*:} cannot run without it"; return; fi

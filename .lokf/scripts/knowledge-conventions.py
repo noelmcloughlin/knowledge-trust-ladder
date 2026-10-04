@@ -35,8 +35,9 @@ import yaml
 RESERVED = {"index.md", "log.md", "diataxis.md"}
 OPEN_QUESTION = re.compile(r"^- \d{4}-\d{2}-\d{2}, (human|process):[^ :]+: ")
 # An index bullet in the shape knowledge-apply.sh writes: the title linked to
-# the concept, then its description.
-INDEX_BULLET = re.compile(r"^\* \[(.+?)\]\(([^)]+)\) - (.*)$")
+# the concept, then its description. A line that lists two concepts is
+# neither one's bullet, so the title holds no closing bracket.
+INDEX_BULLET = re.compile(r"^\* \[([^\]]*)\]\(([^)]+)\) - (.*)$")
 # The fields the provenance gates read line by line: a concept's id, and the
 # actor, time and revision of each event.
 GATE_FIELDS = {"id", "by", "at", "revision"}
