@@ -1287,7 +1287,8 @@ expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- s
 #     reader's question in a code span; a dry run writes nothing; a quoted
 #     timestamp keeps its double quotes; reindex re-derives a bullet without
 #     touching the concept; resolve withdraws the librarian's own question and
-#     never a person's note; and --format prints the block patch.md shows.
+#     never a person's note; a root index shaped by hand keeps its shape; and
+#     --format prints the block patch.md shows.
 say ""
 say "Exercising knowledge-apply.sh..."
 apply="$repo_root/$templates/scripts/knowledge-apply.sh"
@@ -1470,6 +1471,69 @@ if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qxF -- "- $kday
 else
   err "the ledger did not grow as expected: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
 fi
+rm -rf "$ka"
+# A root index a person shaped by hand keeps its shape. Its sections may be
+# `##` headings, and a line may list several concepts or name one in a
+# sentence. The pen rewrites only a line that holds one concept's link alone,
+# files a new bullet under the folder's heading at whatever level it has, and
+# on delete takes the link out of a list of several; a link in other text is
+# a person's to take out, so that delete is refused.
+ka="$(mktemp -d)"; kb="$ka/.lokf/knowledge"; kpatch="$ka/.lokf/patch.yaml"; mkdir -p "$kb/glossary" "$kb/org"
+printf '%s\n' '---' 'base_iri: https://acme.example/knowledge/' '---' '' '# Acme' '' '## Glossary' '' \
+  'The vocabulary ([index](glossary/index.md)): [Risk](glossary/risk.md), [Taxonomy](glossary/taxonomy.md)' '' \
+  '## Organizations' '' '([index](org/index.md))' '' '* [Acme Corp](org/acme.md), [Widget Co](org/widget.md)' '' \
+  'Start with [Risk](glossary/risk.md) to read the model.' > "$kb/index.md"
+printf '%s\n' '# Glossary' '' '* [Risk](risk.md) - a harm.' '* [Taxonomy](taxonomy.md) - a catalogue of risks.' > "$kb/glossary/index.md"
+printf '%s\n' '# Org' '' '* [Acme Corp](acme.md) - stale.' '* [Widget Co](widget.md) - a maker of widgets.' > "$kb/org/index.md"
+for kc in glossary/risk:Risk:'a named harm.' glossary/taxonomy:Taxonomy:'a catalogue of risks.' org/acme:'Acme Corp':'a company.' org/widget:'Widget Co':'a maker of widgets.'; do
+  IFS=: read -r kpath ktitle kdesc <<<"$kc"
+  printf '%s\n' '---' 'type: Reference' "id: https://acme.example/knowledge/$kpath" "title: $ktitle" "description: $kdesc" \
+    'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'status: draft' '---' '' '# Overview' '' 'Text.' > "$kb/$kpath.md"
+done
+printf '%s\n' '# Change Log' > "$kb/log.md"
+kroot="$(md5sum < "$kb/index.md")"
+printf '%s\n' 'ops:' '  - {op: reindex, path: org/acme.md}' '  - {op: reindex, path: glossary/risk.md}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && [[ "$(md5sum < "$kb/index.md")" == "$kroot" ]] \
+   && grep -qxF '* [Acme Corp](acme.md) - a company.' "$kb/org/index.md" && grep -qxF '* [Risk](risk.md) - a named harm.' "$kb/glossary/index.md"; then
+  ok "reindex re-derives the folder bullets and leaves a root line that lists the concept among others, or in a sentence, as it was"
+else
+  err "reindex rewrote a hand-shaped root index: $(tr '\n' '|' < "$kb/index.md")"
+fi
+cat > "$kpatch" <<'EOF'
+ops:
+  - op: create
+    path: glossary/crosswalk.md
+    frontmatter: {type: Reference, title: Crosswalk, description: a mapping across taxonomies.}
+    body: "# Overview\n\nA mapping.\n"
+  - op: create
+    path: policies/retention.md
+    frontmatter: {type: Policy, title: Retention, description: how long rows are kept.}
+    body: "# Overview\n\nThirteen months.\n"
+EOF
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && [[ "$(grep -cE '^#+ Glossary$' "$kb/index.md")" == 1 ]] \
+   && awk '/^## Glossary$/ {s = 1; next} /^#/ {s = 0} s' "$kb/index.md" | grep -qxF '* [Crosswalk](glossary/crosswalk.md) - a mapping across taxonomies.' \
+   && [[ -z "$(grep -B1 -x '## Organizations' "$kb/index.md" | head -1)" ]] \
+   && grep -qx '## Policies' "$kb/index.md" && ! grep -qx '# Policies' "$kb/index.md" \
+   && grep -qxF '* [Retention](policies/retention.md) - how long rows are kept.' "$kb/index.md"; then
+  ok "create files a bullet under the folder's ## heading, and opens a new folder's section at the level the root's sections use"
+else
+  err "create misplaced a bullet in a hand-shaped root index: $(tr '\n' '|' < "$kb/index.md")"
+fi
+cat > "$kpatch" <<'EOF'
+ops:
+  - {op: delete, path: glossary/taxonomy.md, log: "**Removal**: Taxonomy; its source is gone."}
+  - {op: delete, path: org/widget.md, log: "**Removal**: Widget Co; its source is gone."}
+EOF
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 \
+   && grep -qxF 'The vocabulary ([index](glossary/index.md)): [Risk](glossary/risk.md)' "$kb/index.md" \
+   && grep -qxF '* [Acme Corp](org/acme.md)' "$kb/index.md" \
+   && ! grep -qE 'taxonomy\.md|widget\.md' "$kb/index.md" "$kb/glossary/index.md" "$kb/org/index.md"; then
+  ok "delete takes the concept's link out of a list of several and keeps the rest of the line"
+else
+  err "delete did not take the link out of a shared line cleanly: $(tr '\n' '|' < "$kb/index.md")"
+fi
+printf '%s\n' 'ops:' '  - {op: delete, path: glossary/risk.md, log: gone}' > "$kpatch"
+apply_refuses "deleting a concept the root index links inside other text" "inside other text"
 rm -rf "$ka"
 # The format travels with the script that enforces it, so a host needs no
 # particular release of the skill to learn it; the skill's page shows the

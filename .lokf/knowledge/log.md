@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-04
+
+* **Changed**: Repository validation; check 19 now also holds the pen to a root index shaped by hand, which keeps its `##` sections and its lines that list several concepts.
+
 ## 2026-10-03
 
 * **Prose**: Threat model: one sentence split; no fact changed.

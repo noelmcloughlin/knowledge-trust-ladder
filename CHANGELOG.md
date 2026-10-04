@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The pen keeps an index in the shape a person gave it.** `knowledge-apply.sh` took any bullet that held a concept's link for that concept's own bullet, so a `reindex`, `set` or `delete` of one concept rewrote or removed a line that listed several. It looked for a folder's section under a `#` heading only, so a root index with `##` sections gained a second section at its end. It now rewrites only a line that holds the concept's link alone, and leaves a line that lists the concept another way, as conventions rule 12 does. It takes a deleted concept's link out of a comma-separated list, refuses the delete while a sentence links it, and finds the folder's heading at any level. Check 19 exercises each case. ai-linkmo's sync to 0.30.0 found the defect, since its root index lists concepts this way.
+
 ## [0.30.0] - 2026-10-03
 
 ### Added
