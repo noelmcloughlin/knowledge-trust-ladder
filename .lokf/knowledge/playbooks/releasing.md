@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:45:53Z"
+  at: "2026-10-04T13:44:10Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -119,8 +119,9 @@ byte-identical copies of the sidecar templates and their own skills pin, and
 since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up
 to one release: it refuses anything but a tag that is on origin and carries
 `skills/ktl-librarian`, copies that tag's templates over the copies the
-sibling already has (a template it never laid down is reported, not
-added), moves its `TRUST_LADDER_SKILLS_REF` to the same tag,
+sibling already has, lays down a template the sibling lacks when
+ktl-sidecar's Step 5 puts it on every host or a copy there cannot run
+without it (any other is reported, not added), moves its `TRUST_LADDER_SKILLS_REF` to the same tag,
 runs the sidecar's checks there, prints a draft changelog line and the commit
 command, and never commits. The pin and the copies move together because
 the skill a tag installs is written against the wrapper, gate and preflight

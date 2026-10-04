@@ -2,6 +2,7 @@
 
 ## 2026-10-04
 
+* **Changed**: Releasing; the sync script now lays down a template a sibling lacks when Step 5 puts it on every host or a copy there needs it, as `scripts/sync-sidecar.sh` and `docs/releasing.md` say.
 * **Changed**: Repository validation; check 19 now also holds the pen to a root index shaped by hand, which keeps its `##` sections and its lines that list several concepts.
 
 ## 2026-10-03
