@@ -21,13 +21,13 @@ Knowledge Trust Ladder keeps a repository's scattered knowledge as a **collectio
   </picture>
 </p>
 
-> **Prefer to ask?** `npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --yes` installs the docent into any agent you already use. Ask it about this project, and it answers from this repository's own bundle, saying how far each answer has been checked. See [eight captured answers](docs/examples/docent.md). **Agents:** if `.lokf/knowledge/index.md` exists, read it first. `llms.txt` says how to weigh it.
+> **Prefer to ask?** `npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --yes` installs the docent, a museum's name for a guide, into any agent you already use. Ask it about this project, and it answers from this repository's own bundle, saying how far each answer has been checked. See [eight captured answers](docs/examples/docent.md). **Agents:** if `.lokf/knowledge/index.md` exists, read it first. `llms.txt` says how to weigh it.
 
 ## Why libraries have catalogues
 
 The knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a **context layer**: a governed layer between those sources and whoever consumes them, a person or an agent, that persists from one task to the next. Without it every task starts the same way: find the material, connect it, judge what's still true. The next person or assistant pays for that work again.
 
-A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. It earns its keep when a reader can tell which entries are sound, which comes back to one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry. Every concept says where it came from and how far it has been checked, in plain words: *confirmed by a person*, or *nobody has checked this yet*. The labels are under [Trust stays visible](#trust-stays-visible).
+A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. It is useful only when a reader can tell which entries are sound, and that depends on one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry. Every concept says where it came from and how far it has been checked, in plain words: *confirmed by a person*, or *nobody has checked this yet*. The labels are under [Trust stays visible](#trust-stays-visible).
 
 ## Prose, Structure, Meaning, Tools
 
@@ -52,18 +52,18 @@ A bundle is prose a person reads, structure a schema checks, meaning a graph can
 
 On a fresh repository they run in order: **sidecar**, then **librarian** filling the bundle with drafts, then **curator**, where a person turns drafts into confirmed knowledge a few at a time. After that it is a loop: the **librarian** refreshes on a schedule, readers report what the bundle missed, and the **curator** reviews what is new or changed.
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".assets/ktl-lifecycle-loop-dimmed.svg">
-    <img src=".assets/ktl-lifecycle-loop.svg" alt="First a sequence, then a loop: sidecar, librarian and curator run once in order; then the librarian, registrar, curator and docent take turns around the bundle" width="720" />
-  </picture>
-</p>
-
 ### The fifth role, which is not a skill
 
 The **registrar** keeps the records themselves in order: each accession documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or their signed commit.
 
-For the librarian, the registrar is `knowledge-apply.sh`, called *the pen* because the librarian writes the bundle only through it. The librarian describes each change as an operation, and the pen writes the record, stamps its provenance, keeps the index in step, and refuses one that would forge or remove a confirmation. For the reader and the curator it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the opening line: a check gives the same answer every time, which neither the librarian nor the curator can promise.
+At the librarian's [desk](.lokf/knowledge/glossary/desk.md) the registrar is `knowledge-apply.sh`, called *the pen* because the librarian writes the bundle only through it. The librarian describes each change as an operation, and the pen writes the record, stamps its provenance, keeps the index in step, and refuses one that would forge or remove a confirmation. At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the opening line: a check gives the same answer every time, which neither the librarian nor the curator can promise.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".assets/ktl-architecture-dimmed.svg">
+    <img src=".assets/ktl-architecture.svg" alt="Who writes the bundle and what checks it: the librarian writes only patch.yaml, which the pen, knowledge-apply.sh, applies to the bundle; the curator writes a verified event in that person's name through ktl-curator or the plugin; the docent writes nothing there, and knowledge-feedback.sh records a reader's miss. Below, the registrar's gate checks each pull request, and knowledge-report.sh computes every trust label on each read" width="720" />
+  </picture>
+</p>
 
 In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do the registrar's work inside the editor. [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) checks each record as it is typed, and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) runs this repository's `ktl-curator` review session with no agent in the loop ([The bundle in Obsidian](docs/obsidian.md)).
 
@@ -123,6 +123,7 @@ Add the curator once there is a bundle worth trusting. The docent goes anywhere 
 | | |
 | --- | --- |
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
+| What the project's own words mean, such as *docent*, *desk*, *the pen* and *trust label* | [the bundle's glossary](.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [docs/obsidian.md](docs/obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
 | WikiSkill, a 2026 paper on agent-maintained wikis, set beside this design part by part: the same loop, with a score there and a person here | [docs/wikiskill.md](docs/wikiskill.md) |

@@ -152,9 +152,9 @@ The third pass replaced the figures below. The script reports the words of the f
 | "lay down", "laid down" | "install", "copy" or "create" |
 | "travels with", "reads off" | "is uploaded with", "checks on" or "finds on" |
 | "holds every other hand to the same" | "asks the same of every other writer" |
-| "desk", "door" | the role or the place, by its name |
+| "door", "through one door" | the way in, by its name, or "in one way only" |
 
-It gives way to an abbreviation that is the thing's own name: CI, YAML, IRI. A term the page has defined needs no second definition. A figure gives way to a name the project defines, such as *the pen* or *the doorway*, once its page has defined it. It gives way too to a term of art the reader's own field uses in that exact sense, such as pinning a version.
+It gives way to an abbreviation that is the thing's own name: CI, YAML, IRI. A term the page has defined needs no second definition. A figure gives way to a name the project defines, such as *the pen* or *the doorway*, once its page has defined it. It gives way to a word of the analogy the project names its roles by, such as the librarian's *desk*, once the project's glossary defines it. It gives way too to a term of art the reader's own field uses in that exact sense, such as pinning a version.
 
 ## 10. Cut words that carry nothing
 

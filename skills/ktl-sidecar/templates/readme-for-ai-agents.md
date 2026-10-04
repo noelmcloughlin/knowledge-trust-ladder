@@ -1,4 +1,5 @@
-> **Two ways in.** This README is one; the other is a docent. Install
+> **Two ways in.** This README is one; the other is a docent, a museum's name
+> for a guide. Install
 > [`ktl-docent`](https://github.com/noelmcloughlin/knowledge-trust-ladder) into
 > whatever agent you already use
 > (`npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --yes`)
