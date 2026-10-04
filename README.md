@@ -10,7 +10,7 @@
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Knowledge Trust Ladder keeps a repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four [Agent Skills](https://agentskills.io/home) build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request. The [toolkit](https://pypi.org/project/lokf) underneath supplies the schema and the tooling. Two [Obsidian](https://obsidian.md/) plugins are optional, for a vault with no CI.
+Knowledge Trust Ladder keeps a repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four [Agent Skills](https://agentskills.io/home) build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. The [toolkit](https://pypi.org/project/lokf) underneath supplies the schema and the tooling. Two [Obsidian](https://obsidian.md/) plugins are optional, for a vault with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
@@ -43,7 +43,7 @@ A bundle is prose a person reads, structure a schema checks, meaning a graph can
 
 | Skill | Role | Runs |
 | --- | --- | --- |
-| [`ktl-sidecar`](skills/ktl-sidecar/SKILL.md) | **Sidecar**, *lays the network*. Installs `.lokf/` from bundled templates, a dot-folder beside the code like `.git/`: tooling, docs, a dummy skeleton at `.lokf/knowledge/`, and a `knowledge_bundle` link for folder pickers that hide dot-folders. Repairs a broken sidecar file. Its [portability page](skills/ktl-sidecar/references/portability.md) covers Windows, macOS, other forges, no git and synced folders. | once |
+| [`ktl-sidecar`](skills/ktl-sidecar/SKILL.md) | **Sidecar**, *lays the network*. Installs the sidecar from bundled templates: `.lokf/`, a dot-folder beside the code like `.git/`, kept out of the project's build. It holds tooling, docs, a dummy skeleton at `.lokf/knowledge/`, and a `knowledge_bundle` link for folder pickers that hide dot-folders. Repairs a broken sidecar file. Its [portability page](skills/ktl-sidecar/references/portability.md) covers Windows, macOS, other forges, no git and synced folders. | once |
 | [`ktl-librarian`](skills/ktl-librarian/SKILL.md) | **Librarian**, *binds it into order*. Scrapes the repository, derives concepts with their sources, classifies them, links them with typed relationships, audits, and hands off for review. Like a real librarian it catalogues without vouching: *facts about the repository*, never verdicts about truth. | often, including on a schedule |
 | [`ktl-curator`](skills/ktl-curator/SKILL.md) | **Curator**, *holds the scales*. A person's assistant. It shows what needs a look, puts the source next to the claim, and records the verdict (confirm, correct, retire, send back) in the bundle's own frontmatter. *Judgments a person made*, never facts it derived. | a little, regularly |
 | [`ktl-docent`](skills/ktl-docent/SKILL.md) ([examples](docs/examples/docent.md)) | **Docent**, *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. Answers from the bundle and labels how far each concept has been trusted. Checks exact values at the source. When the bundle has no answer it explores the repository and records the miss, which becomes the librarian's next task. Read-only on the bundle. | whenever anyone asks |
@@ -123,7 +123,7 @@ Add the curator once there is a bundle worth trusting. The docent goes anywhere 
 | | |
 | --- | --- |
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
-| What the project's own words mean, such as *docent*, *desk*, *the pen* and *trust label* | [the bundle's glossary](.lokf/knowledge/glossary/index.md) |
+| What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [docs/obsidian.md](docs/obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
 | WikiSkill, a 2026 paper on agent-maintained wikis, set beside this design part by part: the same loop, with a score there and a person here | [docs/wikiskill.md](docs/wikiskill.md) |
