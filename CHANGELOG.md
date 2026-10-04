@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-10-04
+
 ### Added
 
 - **A scheduled week with nothing waiting for the librarian runs no agent.** `knowledge-report.sh quiet` exits 0 when no source moved since its concept's stamp, no person left a note since the librarian last stamped that concept, every concept carries a stamp, and no reader feedback waits. The wrapper asks it before a scheduled run, which `KNOWLEDGE_SKIP_QUIET` allows, and calls no agent when the answer is quiet. A scheduled run in a month's first seven days goes ahead regardless, since the work list never fetches a source given as a URL. So does a run a person starts. Check 20 and the layout tests exercise it.
