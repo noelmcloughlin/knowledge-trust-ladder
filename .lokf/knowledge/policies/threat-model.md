@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T14:21:43Z"
+  at: "2026-10-04T16:34:14Z"
 verified:
 - by: process:ktl-librarian
   at: "2026-09-24T22:22:58Z"
@@ -120,4 +120,8 @@ cancelled job leaves a poisoned config behind.
 
 **A person's record is never removed without that person.** `docs/threat-model.md` has the `provenance` job collect the actor of every `human:` event a pull request adds, changes or removes. A `verified` event struck out, or gone with its concept, needs the same approval or signature as one that is added, and a person's `generated` record may give way only to another person's.
 
-**The ledger of readers' questions.** A handled feedback entry leaves `feedback.md` for `.lokf/questions.md`, which the pen writes and only programs read. The librarian keeps a reader's words out of `log.md` and out of every concept, since the curator opens both. `knowledge-report.sh` builds from the ledger the one prompt of the retrieval test, which an agent answers from an empty directory and whose reply is read for concept paths only.
+**The ledger of readers' questions.** A handled feedback entry leaves `feedback.md` for `.lokf/questions.md`, which the pen writes and only programs read. The librarian keeps a reader's words out of `log.md`, out of every concept and out of its hand-off, since the curator opens the first two and a person reads the third. `knowledge-report.sh` builds from the ledger the one prompt of the retrieval test, which an agent answers from an empty directory and whose reply is read for concept paths only.
+
+**The librarian's hand-off (2026-10-04).** The patch file may carry up to ten lines for the person reviewing the pull request, in the agent's own words. It is the one free text that passes from the job that ran the agent to the pull request. The pen holds each line to printable text with no backtick and writes none of it to the bundle. Once the agent returns, the wrapper removes whatever sits at the paths the workflow reads, so a file or a link the agent left there is gone. `publish` cleans the lines again and shows them in a code block, where nothing renders, and the curator never opens a pull request body.
+
+**A confirmation covers the text the person saw (2026-10-04).** The label *confirmed by a person* holds while `generated.at` is no later than the confirmation. The pen restamps every change it writes, and conventions rule 13 fails a pull request in which any other hand changes a confirmed concept's content and leaves `generated` behind.

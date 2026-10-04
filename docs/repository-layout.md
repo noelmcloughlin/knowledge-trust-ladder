@@ -5,7 +5,7 @@
 ```text
 skills/
   ktl-sidecar/         SKILL.md + references/ + templates/  (~4.5k tokens loaded on trigger)
-  ktl-librarian/       SKILL.md + references/               (~7.5k tokens loaded on trigger)
+  ktl-librarian/       SKILL.md + references/               (~4.5k tokens loaded on trigger)
   ktl-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
   ktl-docent/          SKILL.md + references/               (~1.5k tokens loaded on trigger)
   ktl-prose/           SKILL.md + references/ + scripts/    (~2.5k tokens loaded on trigger)

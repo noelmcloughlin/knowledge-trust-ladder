@@ -13,6 +13,7 @@
 #   knowledge-report.sh health             the one health line
 #   knowledge-report.sh labels [<path>..]  one line per concept, in the shape of ktl-docent's footer
 #   knowledge-report.sh worklist           where ktl-librarian starts: paths and dates only
+#   knowledge-report.sh quiet              exit 0 when nothing waits for the librarian, 1 when work does
 #   knowledge-report.sh changes            what the working tree does to the record, against HEAD
 #   knowledge-report.sh retrieval --prompt the index-only question an agent is asked
 #   knowledge-report.sh retrieval <reply>  that agent's reply, scored
@@ -54,6 +55,20 @@
 # person's note on that person's word, and ktl-librarian withdraws its own
 # with the pen's `resolve`.
 #
+# `quiet` says whether a scheduled run has anything to do, so the wrapper can
+# skip the agent in a week when nothing happened. Work waits when a source
+# moved after its concept's stamp, when a person left a note after the
+# librarian last wrote or checked that concept, when reader feedback waits,
+# or when a concept carries no stamp at all: no `generated`, no `timestamp`
+# and no `verified` event, so no history can say what moved for it, as in
+# the skeleton ktl-sidecar lays down. A note's commit is compared with the
+# stamp's as a source's is, so a note left in the commit that recorded the
+# stamp is missed, and a note not yet committed is newer than any stamp. A
+# bundle git holds no full history of is never quiet. A source given as a URL
+# is never fetched, so it never makes a run busy: the wrapper's caller decides
+# how often a run goes ahead regardless. It prints one line of counts, with
+# no path and nobody's words.
+#
 # `retrieval` measures what the index promises: that an agent reading only
 # index.md can tell which concept to open. The questions are the ones readers
 # asked, from the ledger in .lokf/questions.md that knowledge-apply.sh keeps.
@@ -65,12 +80,13 @@
 # Bash 3.2, POSIX awk and git only, so it runs wherever the other sidecar
 # scripts do, and in a workflow job that installs nothing.
 #
-# Exit 0, or 2 when the call is wrong or there is no bundle to report on.
-[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|worklist|changes|retrieval] [...]" >&2; exit 2; }
+# Exit 0, or 2 when the call is wrong or there is no bundle to report on;
+# `quiet` exits 1 when work waits.
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|worklist|quiet|changes|retrieval] [...]" >&2; exit 2; }
 set -u
 
 usage() {
-  echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | changes | retrieval --prompt | retrieval <reply-file>]" >&2
+  echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file>]" >&2
   exit 2
 }
 
@@ -334,6 +350,56 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
         print "Concepts readers asked about more than once: " (n2 ? n2 : "none"); if (n2) printf "%s", out }' "$root/.lokf/questions.md" | { IFS= read -r first; printf '%s\n' "$first"; LC_ALL=C sort; }
 }
 
+# ---- quiet -------------------------------------------------------------------
+# The notes a person left, not answered by a later confirmation, whose commit
+# comes after the one that recorded their concept's stamp: the ones the
+# librarian has not read since. Fields are split on the unit separator, since
+# bash's read joins empty fields between tabs.
+new_notes() {
+  local us path day actor text ref rec note n=0
+  us="$(printf '\037')"
+  while IFS="$us" read -r path day actor text ref; do
+    [ -n "$path" ] || continue
+    rec=""
+    [ -z "$ref" ] || rec="$(git -C "$kdir" log --format=%H -S"$ref" -- "$path" 2>/dev/null | tail -1)"
+    note="$(git -C "$kdir" log --format=%H -S"- $day, $actor: $text" -- "$path" 2>/dev/null | tail -1)"
+    if [ -z "$note" ]; then
+      n=$((n + 1))
+    elif [ -n "$rec" ] && [ "$note" != "$rec" ] && git -C "$root" merge-base --is-ancestor "$rec" "$note" 2>/dev/null; then
+      n=$((n + 1))
+    fi
+  done < <(printf '%s\n' "$all" | awk -F'\t' -v US="$us" '
+    $1 == "C" { ref[$2] = $14; status[$2] = $4; human[$2] = $8 }
+    $1 == "Q" && $4 ~ /^human:/ { q[++n] = $2 US $3 US $4 US $5 }
+    END {
+      for (i = 1; i <= n; i++) {
+        split(q[i], f, US); p = f[1]
+        if (status[p] == "deprecated") continue
+        if (status[p] != "draft" && human[p] != "" && f[2] <= substr(human[p], 1, 10)) continue
+        print q[i] US ref[p]
+      }
+    }')
+  printf '%s' "$n"
+}
+
+quiet() {
+  if [ "$tracked" != 1 ]; then
+    echo "Work may wait: git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/), so nothing says what moved"
+    return 1
+  fi
+  local unstamped moved_n notes feedback
+  unstamped="$(printf '%s\n' "$all" | awk -F'\t' '$1 == "C" && $4 != "deprecated" && $7 == "" && $11 == "" { n++ } END { print n + 0 }')"
+  moved_n="$(printf '%s\n' "$times" | awk -F'\t' '$1 == "M" && $2 == "w" { n++ } END { print n + 0 }')"
+  notes="$(new_notes)"
+  feedback="$(waiting_feedback)"
+  if [ "$unstamped" -eq 0 ] && [ "$moved_n" -eq 0 ] && [ "$notes" -eq 0 ] && [ "$feedback" -eq 0 ]; then
+    echo "Quiet: no source moved since its concept's stamp, no person left a note since the librarian last looked, every concept carries a stamp, and no reader feedback waits"
+    return 0
+  fi
+  echo "Work waits: concepts whose source moved: $moved_n · notes a person left since the librarian last looked: $notes · concepts with no stamp: $unstamped · reader feedback: $feedback"
+  return 1
+}
+
 # ---- changes -----------------------------------------------------------------
 # What the working tree, staged or not, does to the record against HEAD: for
 # a reviewer, and for the librarian workflow's pull request, which the job
@@ -457,6 +523,11 @@ case "$cmd" in
     lists worklist
     echo "Reader feedback waiting: $(waiting_feedback)"
     repeats
+    ;;
+  quiet)
+    [ $# -eq 0 ] || usage
+    times="$(moved)"
+    quiet; exit $?
     ;;
   report)
     [ $# -eq 0 ] || usage

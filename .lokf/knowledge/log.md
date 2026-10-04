@@ -2,6 +2,13 @@
 
 ## 2026-10-04
 
+* **Changed**: the skill page gives the Golden Rules in brief and keeps their tables, the first run's sweep and the audit's detail in three new references; a run's hand-off reaches its pull request, a quiet week runs no agent, and a note the run reads leaves its stamp. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the pen also takes the librarian's hand-off, which it cleans and writes nowhere in the bundle, as `references/patch.md` now says.
+* **Changed**: check 11 now proves conventions rule 13, check 19 the pen's hand-off and check 20 the quiet check, and the layout tests the wrapper's quiet skip and hand-off; the playbook counts thirteen conventions, eight of them in the Python half.
+* **Changed**: the sidecar's references now describe the quiet week, the hand-off's path to the pull request, and the gate's thirteenth convention.
+* **Changed**: the threat model adds the librarian's hand-off as a guarded path to the pull request, and conventions rule 13 under human attribution.
+* **Changed**: `docs/wikiskill.md` now names conventions rule 13, the hand-off that carries a repeated send-back to the pull request, and the quiet week that bounds a run further.
+* **Changed**: an auditor's questions now include whether a confirmed text is the one its person saw, which conventions rule 13 answers.
 * **Prose**: Releasing; the sentence on the sync script is split into six; no fact changed.
 * **Changed**: WikiSkill's loop and Knowledge Trust Ladder; `docs/wikiskill.md` now names the design KTL and keeps *the bundle* for its corpus and *the wiki* for the paper's, and the concept follows it.
 * **Changed**: Three lines of defence; the roles are KTL's and the pages now say so, where they named them after LOKF, the format.

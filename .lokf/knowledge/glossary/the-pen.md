@@ -17,7 +17,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T14:21:43Z"
+  at: "2026-10-04T16:34:14Z"
 status: draft
 ---
 
@@ -25,6 +25,6 @@ status: draft
 
 *The pen* is the name the README and the docs give `knowledge-apply.sh`. ktl-librarian never edits a file under `.lokf/knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and the pen checks every operation and writes the files, or refuses the whole file and writes nothing.
 
-The pen stamps `generated` from the clock, keeps a concept's `description` equal to its two index bullets, files each line in `log.md`, and moves a feedback entry the librarian handled into `.lokf/questions.md`. It refuses a `human:` actor, a rewrite of text a person wrote, and the deletion of a concept a person confirmed or left a note on. In the scheduled run, the wrapper applies the patch file after the agent has finished, and refuses a run in which the agent changed any other file.
+The pen stamps `generated` from the clock, keeps a concept's `description` equal to its two index bullets, files each line in `log.md`, and moves a feedback entry the librarian handled into `.lokf/questions.md`. It refuses a `human:` actor, a rewrite of text a person wrote, and the deletion of a concept a person confirmed or left a note on. In the scheduled run, the wrapper applies the patch file after the agent has finished, and refuses a run in which the agent changed any other file. A patch may also carry `handoff`, up to ten lines for the person reviewing the change, in the librarian's own words. The pen holds each to one line of printable text and writes none of it to the bundle, and the scheduled pull request shows them under *From the librarian*.
 
 The pen is the librarian's door into the bundle, and not the only door: a person writes the curator's verdicts through ktl-curator or the KTL Curator plugin. The README counts the pen as the registrar at the librarian's desk.

@@ -19,6 +19,12 @@
 # references/patch.md carries the same block, and the repository contract
 # holds the two equal.
 #
+# A patch may also carry `handoff`: at most ten lines for the person who
+# reviews the change, in the librarian's own words. They are never written to
+# the bundle. The script holds each to one line of printable text, with no
+# backtick, and prints them; `--handoff <file>` also writes them there, which
+# is how the scheduled wrapper passes them to the pull request.
+#
 # Operations (each a mapping under `ops:` with `op:` and `path:`):
 #   create    frontmatter + body for a concept that does not exist yet
 #   patch     edits (replace / insert_after / append) and `set` frontmatter keys
@@ -29,7 +35,7 @@
 #   delete    the concept, its index bullets, and a log line saying why
 #   reindex   both index bullets re-derived from the frontmatter; the concept itself is not touched
 #
-# Usage: knowledge-apply.py [--dry-run] [--keep] --root <repo-root> [<patch-file>]
+# Usage: knowledge-apply.py [--dry-run] [--keep] [--handoff <file>] --root <repo-root> [<patch-file>]
 #        knowledge-apply.py --format
 #   exit 0  applied, or with --dry-run would apply; or the format was printed
 #   exit 1  findings; nothing written
@@ -59,6 +65,10 @@ BULLET_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, (\S+?): ")  # an open question's 
 HEADING_RE = re.compile(r"^(#{1,6})[ \t]+(.*\S)[ \t]*$")  # a Markdown heading: its level and its text
 OWN_BULLET_RE = re.compile(r"^\* \[[^\]]*\]\([^)]+\)(?: - .*)?$")  # any concept's own index bullet: its link alone, then its description
 FEEDBACK_KIND_RE = re.compile(r"^- \*\*(Miss|Disagreement)\*\* ")
+# What a hand-off line may not hold: control characters, and the invisible
+# ones that reorder or hide text where it is shown.
+UNSEEN_RE = re.compile(r"[\x00-\x1f\x7f-\x9f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]")
+HANDOFF_LINES, HANDOFF_CHARS = 10, 300
 OPS = {"create", "patch", "rewrite", "question", "resolve", "recheck", "delete", "reindex"}
 EDITS = {"replace", "insert_after", "append"}
 LEDGER_HEAD = (
@@ -125,6 +135,10 @@ ops:
   - op: delete                   # the file and its index bullets; refused when a person confirmed it or left a note on it, or an index names it in a sentence
     path: services/legacy-sync.md
     log: "**Removal**: Legacy Sync; `services/legacy-sync/` was deleted in a1b2c3d."
+
+handoff:                         # optional; at most ten lines of 300 characters for the reviewer, in your own words and never a reader's; written nowhere in the bundle
+  - "datasets/orders-db.md and playbooks/release.md came back for the same misread date; the skill's rule on dates needs a look."
+  - "https://acme.example/spec did not answer, so references/acme-spec.md was not rechecked."
 '''
 
 
@@ -205,6 +219,25 @@ def clean_question(value, what: str) -> str:
     """A reader's question as the ledger holds it: one line, no control character, no backtick to close the code span it sits in, and no longer than a question is."""
     text = re.sub(r"[\x00-\x1f\x7f]", "", one_line(value, what)).replace("`", "'")
     return text[:300]
+
+
+def handoff_lines(value) -> list:
+    """The patch's lines for the reviewer: one line of printable text each, with no backtick to close the code block they are shown in."""
+    if value is None:
+        return []
+    if not isinstance(value, list) or not value:
+        raise Refused("handoff is a list of lines for the reviewer")
+    if len(value) > HANDOFF_LINES:
+        raise Refused(f"handoff holds {len(value)} lines; a reviewer gets at most {HANDOFF_LINES}")
+    lines = []
+    for n, item in enumerate(value, start=1):
+        text = UNSEEN_RE.sub("", one_line(item, f"handoff line {n}")).replace("`", "'").strip()
+        if not text:
+            raise Refused(f"handoff line {n} holds no printable text")
+        if len(text) > HANDOFF_CHARS:
+            raise Refused(f"handoff line {n} is {len(text)} characters; a line is at most {HANDOFF_CHARS}")
+        lines.append(text)
+    return lines
 
 
 def protected_spans(body: str):
@@ -740,6 +773,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--keep", action="store_true", help="keep the patch file after applying it")
     ap.add_argument("--format", action="store_true", help="print the patch file's shape and exit")
+    ap.add_argument("--handoff", metavar="FILE", help="after applying, write the patch's hand-off lines to FILE, or empty it")
     ap.add_argument("patch", nargs="?")
     a = ap.parse_args(argv[1:])
     if a.format:
@@ -774,6 +808,11 @@ def main(argv: list[str]) -> int:
     findings: list[str] = []
     if not isinstance(by, str) or not ACTOR_RE.match(by):
         findings.append(f"by must be a process:<id> actor, not {by!r}")
+    handoff: list = []
+    try:
+        handoff = handoff_lines(doc.get("handoff"))
+    except Refused as exc:
+        findings.append(str(exc))
     bundle = None
     if not findings:
         try:
@@ -817,6 +856,15 @@ def main(argv: list[str]) -> int:
     ledger_text = bundle.ledger_text()
     if ledger_text is not None:
         writes.append((bundle.ledger, ledger_text))
+    # The hand-off goes first, outside the bundle, so a file that cannot be
+    # written stops the run before the bundle is touched.
+    if a.handoff and not a.dry_run:
+        try:
+            with open(a.handoff, "w", encoding="utf-8", newline="\n") as f:
+                f.write("".join(f"{line}\n" for line in handoff))
+        except OSError as exc:
+            print(f"the hand-off file cannot be written ({exc}); nothing was written")
+            return 2
     verb = "would write" if a.dry_run else "wrote"
     for file, text in writes:
         rel = file.relative_to(root)
@@ -832,6 +880,10 @@ def main(argv: list[str]) -> int:
         print(f"{verb} {rel}")
     if not a.dry_run and not a.keep:
         patch_file.unlink()
+    if handoff:
+        print(f"hand-off for the reviewer, {len(handoff)} line(s):")
+        for line in handoff:
+            print(f"  {line}")
     if bundle.demoted:
         print(f"confirmed by a person, and edited {'by this patch' if a.dry_run else 'here'}: {', '.join(bundle.demoted)}; each reads as edited since that confirmation until the curator looks again")
     print(f"{'OK (dry run)' if a.dry_run else 'OK'} - {len(doc['ops'])} operation(s) by {by} at {bundle.now}; now run lokf validate --check-refs and knowledge-conventions.sh")

@@ -23,7 +23,10 @@
 #      and (1e) with KNOWLEDGE_RETRIEVAL on, the wrapper has the agent answer
 #      the index-only retrieval test from an empty directory, writes the score
 #      a program computes, and refuses a call that changed the checkout; and
-#      (1f) a sidecar with no pen stops the wrapper before the agent runs;
+#      (1f) a sidecar with no pen stops the wrapper before the agent runs; and
+#      (1g) a quiet bundle skips the agent only when KNOWLEDGE_SKIP_QUIET
+#      allows it; and (1h) the hand-off reaches its file through the pen,
+#      cleaned, after whatever the agent left at either output path is gone;
 #   2. the librarian workflow's change detection sees a bundle edit in each of
 #      those shapes, and its packaging step stages it without failing when the
 #      second name does not exist;
@@ -285,6 +288,56 @@ status=0; rm -f "$work/env.out"
 if [ "$status" = 2 ] && [ ! -e "$work/env.out" ]; then ok "no pen: the wrapper stops before the agent runs (exit 2)"
 else err "no pen: the wrapper ran the agent or did not stop (exit $status)"; fi
 
+# 1g. A run with nothing waiting skips the agent when the caller allows it:
+# with KNOWLEDGE_SKIP_QUIET "true", the wrapper asks knowledge-report.sh and,
+# on a quiet bundle, exits 0 without calling the agent. Unset, or with work
+# waiting, the agent runs as before.
+host="$work/wrapper-quiet"
+make_host "$host" default
+printf -- '---\ntype: Service\ntitle: A\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n---\n\n# A\n' > "$host/.lokf/knowledge/a.md"
+git -C "$host" commit -q -am "a stamped concept"
+quiet_case() {  # <label> <KNOWLEDGE_SKIP_QUIET> <ran|skipped>
+  local status=0 got=skipped
+  rm -f "$work/env.out"
+  ( cd "$host" && AGENT_CLI="$env_agent" ENV_OUT="$work/env.out" KNOWLEDGE_SKIP_QUIET="$2" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+  [ -e "$work/env.out" ] && got=ran
+  if [ "$status" = 0 ] && [ "$got" = "$3" ]; then ok "quiet/$1: the agent $got (exit 0)"
+  else err "quiet/$1: the agent $got, exit $status (want $3, exit 0)"; fi
+}
+quiet_case "nothing waits, skip allowed" true skipped
+quiet_case "nothing waits, skip not allowed" "" ran
+printf '%s\n' '# Reader feedback' '' '## 2026-01-02' '' '- **Miss** - a reader asked. - docent' > "$host/.lokf/feedback.md"
+quiet_case "reader feedback waits" true ran
+rm "$host/.lokf/feedback.md"
+
+# 1h. The patch file's hand-off reaches the file KNOWLEDGE_HANDOFF_OUT names
+# through the pen, cleaned. What the agent left at that path, or at the
+# retrieval score's, is gone first: a file it wrote there, and a link that
+# would send the next write into the checkout.
+plant_agent="$work/plant-agent.sh"
+cat > "$plant_agent" <<'AGENT'
+#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+printf 'planted by the agent\n' > "$KNOWLEDGE_HANDOFF_OUT"
+ln -sf "$PWD/README.md" "$KNOWLEDGE_RETRIEVAL_OUT"
+AGENT
+chmod +x "$plant_agent"
+handoff_patch="$create_op
+handoff:
+  - \"one line for the reviewer, with a \`backtick\`\""
+host="$work/wrapper-handoff"
+make_host "$host" default
+status=0; rm -f "$work/handoff.txt" "$work/retrieval.txt"
+( cd "$host" && AGENT_CLI="$plant_agent" PATCH_TEXT="$handoff_patch" KNOWLEDGE_HANDOFF_OUT="$work/handoff.txt" KNOWLEDGE_RETRIEVAL_OUT="$work/retrieval.txt" \
+    bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 0 ] && [ "$(cat "$work/handoff.txt" 2>/dev/null)" = "one line for the reviewer, with a 'backtick'" ] \
+   && [ -f "$host/.lokf/knowledge/playbooks/b.md" ] && ! grep -rq 'one line for the reviewer' "$host/.lokf/knowledge"; then
+  ok "hand-off: the pen's cleaned lines replace what the agent wrote at the path, and none reach the bundle (exit 0)"
+else err "hand-off: exit $status, file holds: $(cat "$work/handoff.txt" 2>/dev/null || echo nothing)"; fi
+if [ ! -L "$work/retrieval.txt" ] && [ ! -s "$work/retrieval.txt" ] && [ "$(cat "$host/README.md")" = "# host" ]; then
+  ok "hand-off: a link the agent left at the retrieval score's path is gone, and nothing was written through it"
+else err "hand-off: the retrieval path is still a link, or holds the agent's text, or the checkout's README changed"; fi
+
 echo "2. the librarian workflow's change detection and packaging"
 detect='git status --porcelain -- .lokf/knowledge knowledge_bundle'
 if grep -qF "$detect" "$librarian_yaml"; then ok "template detects changes with: $detect"
@@ -297,6 +350,20 @@ if grep -qF '[ -e .lokf/feedback.md ] && git add -A -- .lokf/feedback.md || true
    && grep -qF '[ -e .lokf/questions.md ] && git add -A -- .lokf/questions.md || true' "$librarian_yaml"; then
   ok "template carries reader feedback and the ledger its handled entries move into"
 else err "knowledge-librarian.yaml no longer stages .lokf/feedback.md and .lokf/questions.md"; fi
+# A scheduled run may skip a quiet week, except in a month's first seven
+# days; a run a person starts never skips.
+# shellcheck disable=SC2016 # the template's own $(...), matched as text
+if grep -qF "KNOWLEDGE_SKIP_QUIET: \${{ github.event_name == 'schedule' }}" "$librarian_yaml" \
+   && grep -qF 'if [ "$(date -u +%d)" -le 7 ]; then export KNOWLEDGE_SKIP_QUIET=false; fi' "$librarian_yaml"; then
+  ok "template lets a scheduled run skip a quiet week, outside a month's first seven days"
+else err "knowledge-librarian.yaml no longer sets KNOWLEDGE_SKIP_QUIET for scheduled runs, or lost the monthly full run"; fi
+# The hand-off goes from the pen, through the artifact, to the pull request.
+# shellcheck disable=SC2016 # the template's own ${{ }} expressions, matched as text
+if grep -qF 'KNOWLEDGE_HANDOFF_OUT: ${{ runner.temp }}/handoff.txt' "$librarian_yaml" \
+   && grep -qF '${{ runner.temp }}/handoff.txt' <(sed -n '/name: Upload the bundle patch/,/if-no-files-found/p' "$librarian_yaml") \
+   && grep -qF 'HANDOFF_FILE: ${{ runner.temp }}/handoff.txt' "$librarian_yaml" && grep -qF "'\`\`\`text', ...handoff, '\`\`\`'" "$librarian_yaml"; then
+  ok "template carries the hand-off in the artifact and shows it in a code block"
+else err "knowledge-librarian.yaml lost the hand-off's path from the pen to the pull request"; fi
 for shape in default no-doorway rearranged; do
   host="$work/workflow-$shape"
   make_host "$host" "$shape"

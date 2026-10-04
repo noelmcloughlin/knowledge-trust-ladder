@@ -9,10 +9,10 @@ Each file has a section on one of the two pages. Read the one you are wiring.
 | `knowledge-registrar.yaml` | Validates the bundle, and checks that each new human confirmation is backed by its person | Nothing to wire. Curators sign their commits; the attestation environment is optional | [gate.md](gate.md) |
 | `knowledge-conventions.sh` and `.py` | The checks the gate runs that `lokf validate` cannot | Nothing | [gate.md](gate.md) |
 | `knowledge-provenance.sh` | The signature check, with no forge needed, and the check that an unattended change touches no person's record | A public key per curator under `.lokf/curators/`; nothing for the unattended form | [gate.md](gate.md) |
-| `knowledge-librarian.yaml` | Runs the librarian agent weekly and opens a review pull request | Repository variables, and a secret for the agent's key | below |
+| `knowledge-librarian.yaml` | Runs the librarian agent weekly when work waits for it, and opens a review pull request | Repository variables, and a secret for the agent's key | below |
 | `knowledge-librarian.sh` | The wrapper the librarian workflow runs | Nothing, unless the skills live in an unusual directory | below |
 | `knowledge-apply.sh`, `knowledge-apply.py` | The librarian's only pen: applies `.lokf/patch.yaml` to the bundle; the wrapper runs it after the agent | Nothing | ktl-librarian's `references/patch.md`, or `--format` |
-| `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, what a change does to the record, and the retrieval score | Nothing, or one variable for the retrieval score | below |
+| `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, whether any work waits, what a change does to the record, and the retrieval score | Nothing, or one variable for the retrieval score | below |
 | `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to arm it, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 
@@ -20,14 +20,18 @@ Each file has a section on one of the two pages. Read the one you are wiring.
 
 It runs weekly (Mondays 05:00 UTC) and on demand, in two jobs:
 
-- **`refresh`** is read-only. It checks out the full history, sets up `uv`, installs the sidecar, runs the reviewed agent wrapper, validates, and diffs `.lokf/knowledge/` only, so tool artifacts such as a fresh `uv.lock` never trigger a pull request. If anything changed it packages the change as a patch artifact, together with `.lokf/feedback.md`, the reader-feedback file ktl-docent writes and the librarian consumes, and `.lokf/questions.md`, the ledger a handled entry moves into.
-- **`publish`** is the privileged job and runs no agent code. It applies that patch on a clean checkout and checks the result before it commits. Then it commits to a fresh `knowledge-librarian/<date>-<run_id>` branch and opens a review pull request via `github-script`. It fills that pull request itself, with `knowledge-report.sh` on its own checkout: the bundle's health line, and what the change does to the record.
+- **`refresh`** is read-only. It checks out the full history, sets up `uv`, installs the sidecar, runs the reviewed agent wrapper, validates, and diffs `.lokf/knowledge/` only, so tool artifacts such as a fresh `uv.lock` never trigger a pull request. If anything changed it packages the change as a patch artifact, together with `.lokf/feedback.md`, the reader-feedback file ktl-docent writes and the librarian consumes, and `.lokf/questions.md`, the ledger a handled entry moves into. The librarian's hand-off travels beside the patch.
+- **`publish`** is the privileged job and runs no agent code. It applies that patch on a clean checkout and checks the result before it commits. Then it commits to a fresh `knowledge-librarian/<date>-<run_id>` branch and opens a review pull request via `github-script`. It fills that pull request itself, with `knowledge-report.sh` on its own checkout: the bundle's health line, and what the change does to the record. The hand-off goes under *From the librarian*, as the agent's own words.
+
+**A quiet week runs no agent.** A scheduled run asks `knowledge-report.sh quiet` first, and skips the agent when nothing waits for it. Work waits when a source moved after its concept's stamp, or a person left a note after the librarian last wrote or checked that concept. It waits too when reader feedback is on file, or a concept carries no stamp at all, as the skeleton's do. A scheduled run in a month's first seven days goes ahead regardless. The work list never fetches a source given as a URL and names no file the source map leaves out, so the librarian reads both at least monthly. A run you start from the Actions tab always runs the agent. Change the cadence in the agent step's `run` line.
+
+**The hand-off is the agent's words, and the pull request says so.** The patch file may carry `handoff`, up to ten lines for the reviewer, such as a send-back that came up twice or a source that did not answer. The pen holds each to one line of printable text with no backtick and writes them nowhere in the bundle. `publish` cleans them again and shows them in a code block, where no link, image, mention or HTML renders.
 
 The guardrails:
 
 - Only `publish` holds `contents: write` and `pull-requests: write`. The agent runs in a `contents: read` job with no persisted credentials.
 - It never pushes to the default branch and never auto-merges.
-- It opens no pull request when nothing changed.
+- It opens no pull request when nothing changed, and runs no agent in a scheduled week when nothing waits.
 - What runs is the reviewed `.lokf/scripts/knowledge-librarian.sh`, at a fixed path, not an arbitrary command string.
 - `publish` refuses a patch that touches a path outside the bundle, the feedback file and the ledger, and one that touches a person's record. It reads that off the patched tree with `knowledge-provenance.sh --unattended`, so a `human:` event in any YAML layout, a person's note and text a person wrote are all covered.
 
@@ -102,9 +106,10 @@ It is generic, with no placeholders. It resolves the repository root from its ow
 The workflow relies on this contract:
 
 - the agent writes one file, `.lokf/patch.yaml`, and the wrapper applies it with `knowledge-apply.sh`, so the bundle, a handled feedback entry and its ledger line change only through that script;
+- the patch file's hand-off reaches the file `KNOWLEDGE_HANDOFF_OUT` names through the same script, and the wrapper removes that file and the retrieval score's once the agent returns. So the workflow reads only what was written after the agent, and no link the agent left there can send a write into the checkout;
 - a run in which the agent changed any other path, or whose result touches a person's record, is refused;
 - it never commits, pushes or opens pull requests;
-- it exits 0 whether or not anything changed. The workflow diffs the tree to decide about a pull request.
+- it exits 0 whether or not anything changed. The workflow diffs the tree to decide about a pull request. With `KNOWLEDGE_SKIP_QUIET` set to `true`, as the workflow sets it on a scheduled run, a bundle `knowledge-report.sh quiet` finds quiet ends the run before the agent is called.
 
 ## `knowledge-release.yaml`: the bundle as a release asset
 
@@ -163,12 +168,13 @@ The runner, `ubuntu-latest`, is the only project-specific choice; swap in a self
 It has no placeholders and writes nothing. A trust label, the health line and the librarian's work list are arithmetic over frontmatter and git history, and this script does that arithmetic so that no model has to:
 
 ```sh
-bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>...] | worklist | changes | retrieval --prompt | retrieval <reply-file>]
+bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file>]
 ```
 
 - With no command it prints the whole report ktl-curator's Step 1 starts from: the health line, every concept's label, the open questions, and the confirmed concepts whose source moved after the confirmation.
 - `labels` prints one line per concept, in the shape of ktl-docent's footer.
 - `worklist` is where ktl-librarian starts a refresh: the sources that moved since each concept was derived or last checked, the notes a person left, and how much reader feedback waits. It holds paths and dates, and nobody's words.
+- `quiet` exits 0 when nothing waits for the librarian and 1 when work does, with one line of counts. A note counts while its commit comes after the one that recorded the concept's latest stamp, so a note the librarian has read waits for the curator alone. A bundle git holds no full history of is never quiet. The wrapper asks it before a scheduled run.
 - `changes` says what the working tree does to the record against `HEAD`. The librarian workflow's `publish` job fills its pull request from it.
 - `retrieval` measures what the index promises, and the next section covers it.
 

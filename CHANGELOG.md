@@ -4,6 +4,20 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A scheduled week with nothing waiting for the librarian runs no agent.** `knowledge-report.sh quiet` exits 0 when no source moved since its concept's stamp, no person left a note since the librarian last stamped that concept, every concept carries a stamp, and no reader feedback waits. The wrapper asks it before a scheduled run, which `KNOWLEDGE_SKIP_QUIET` allows, and calls no agent when the answer is quiet. A scheduled run in a month's first seven days goes ahead regardless, since the work list never fetches a source given as a URL. So does a run a person starts. Check 20 and the layout tests exercise it.
+- **The librarian's hand-off reaches its pull request.** The patch file may carry `handoff`, up to ten lines for the reviewer in the agent's own words, such as a send-back that came up twice or a source that did not answer. The pen holds each to one line of printable text with no backtick, and writes none of it to the bundle. `publish` cleans the lines again and shows them under *From the librarian*, in a code block, where nothing renders. A scheduled run's hand-off stayed in the job log until now.
+- **Conventions rule 13: a confirmed concept still says what its person confirmed.** After the commit that recorded the latest confirmation, a change to the concept's body or claims must move `generated.at` past it, so the concept reads *edited since*. The pen always restamped, and the gate now fails a hand edit that does not. The rule compares parsed values, so a requoted value is no change, and it leaves out the open questions, KTL Registrar's block and the trust fields. It can miss an edit, and never flags a concept its person saw. Check 11 exercises it.
+
+### Changed
+
+- **ktl-librarian's page is half as long, about 3,700 words where it had 7,458.** The Golden Rules' tables, the first run's sweep and the audit's detail moved to `references/golden-rules.md`, `references/bootstrap.md` and `references/audit.md`, which an agent opens when a step needs them. The by-hand fallbacks for a host without the pen are gone, and such a host runs ktl-sidecar's repair first. A note from a person that the librarian reads now leaves its stamp on the concept, so the quiet check knows the note was read.
+
+### Security
+
+- **The workflow reads the retrieval score and the hand-off only as the wrapper's programs wrote them.** The wrapper wrote the score file only when it scored, so an agent could leave its own `n of m` there for the pull request, or a link that sent the next write into the checkout. The wrapper now removes both files once the agent returns.
+
 ## [0.31.0] - 2026-10-04
 
 ### Added

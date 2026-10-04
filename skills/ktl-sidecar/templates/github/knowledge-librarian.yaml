@@ -3,7 +3,8 @@ name: Knowledge Librarian
 # Scheduled LLM "librarian" that keeps the .lokf/ bundle in step with the repo (the
 # Karpathy rule): run the agent, validate, and open a review PR with whatever
 # changed. It NEVER pushes to the default branch and NEVER auto-merges; no changes
-# -> no PR; and it is inert until KNOWLEDGE_LIBRARIAN_ENABLED is set to "true".
+# -> no PR; a scheduled week with nothing waiting for the librarian runs no
+# agent; and it is inert until KNOWLEDGE_LIBRARIAN_ENABLED is set to "true".
 #
 # Two jobs, for least privilege. The `refresh` job runs the agent (third-party
 # code) under a read-only token with no git credentials on disk, then hands the
@@ -133,6 +134,14 @@ jobs:
       # check fails if the agent writes anything but .lokf/patch.yaml, which the
       # wrapper then applies with knowledge-apply.sh. Contained by design, not
       # arbitrary execution.
+      #
+      # A scheduled run skips the agent when knowledge-report.sh finds nothing
+      # waiting for it: no source moved since its concept's stamp, no note a
+      # person left since the librarian last looked, no concept without a
+      # stamp, no reader feedback. A run a person starts never skips. In a
+      # month's first seven days a scheduled run goes ahead regardless, since
+      # the work list never fetches a source given as a URL and names no file
+      # the source map leaves out; so the librarian reads both monthly.
       - name: Run the librarian agent
         if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
         env:
@@ -141,7 +150,11 @@ jobs:
           AGENT_API_KEY_ENV: ${{ vars.AGENT_API_KEY_ENV }}
           KNOWLEDGE_RETRIEVAL: ${{ vars.KNOWLEDGE_RETRIEVAL }}
           KNOWLEDGE_RETRIEVAL_OUT: ${{ runner.temp }}/retrieval.txt
-        run: bash .lokf/scripts/knowledge-librarian.sh
+          KNOWLEDGE_HANDOFF_OUT: ${{ runner.temp }}/handoff.txt
+          KNOWLEDGE_SKIP_QUIET: ${{ github.event_name == 'schedule' }}
+        run: |
+          if [ "$(date -u +%d)" -le 7 ]; then export KNOWLEDGE_SKIP_QUIET=false; fi
+          bash .lokf/scripts/knowledge-librarian.sh
 
       # The wrapper enforces this same boundary itself, immediately after the
       # agent returns. It also restores .git/config and .git/hooks around the
@@ -186,10 +199,13 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # The one number this job hands on about the bundle: the retrieval score
-      # the wrapper wrote when KNOWLEDGE_RETRIEVAL is on. Only its two integers
-      # go on. This job ran the agent, so `publish` takes nothing else from it
-      # and computes the rest of what the pull request says on its own checkout.
+      # This job ran the agent, so it hands on two things besides the patch,
+      # and `publish` computes the rest of what the pull request says on its
+      # own checkout. One is the retrieval score the wrapper wrote when
+      # KNOWLEDGE_RETRIEVAL is on, of which only two integers go on. The other
+      # is the librarian's hand-off, its own words for the reviewer, which
+      # travels beside the patch and which `publish` cleans again and shows as
+      # the agent's.
       - name: Read the retrieval score
         id: retrieval
         if: steps.diff.outputs.changed == 'true'
@@ -217,13 +233,17 @@ jobs:
           [ -e .lokf/feedback.md ] && git add -A -- .lokf/feedback.md || true
           [ -e .lokf/questions.md ] && git add -A -- .lokf/questions.md || true
           git diff --cached --binary > "$RUNNER_TEMP/librarian.patch"
+          # The lines the pen took from the patch file's `handoff`, or none.
+          [ -f "$RUNNER_TEMP/handoff.txt" ] || : > "$RUNNER_TEMP/handoff.txt"
 
       - name: Upload the bundle patch
         if: steps.diff.outputs.changed == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: librarian-bundle-patch
-          path: ${{ runner.temp }}/librarian.patch
+          path: |
+            ${{ runner.temp }}/librarian.patch
+            ${{ runner.temp }}/handoff.txt
           retention-days: 1
           if-no-files-found: error
 
@@ -319,9 +339,11 @@ jobs:
           RETRIEVAL: ${{ needs.refresh.outputs.retrieval }}
           HEALTH: ${{ steps.push.outputs.health }}
           CHANGES: ${{ steps.push.outputs.changes }}
+          HANDOFF_FILE: ${{ runner.temp }}/handoff.txt
         with:
           script: |
-            const { BRANCH, LOKF_OUTCOME, RETRIEVAL, HEALTH, CHANGES } = process.env;
+            const fs = require('fs');
+            const { BRANCH, LOKF_OUTCOME, RETRIEVAL, HEALTH, CHANGES, HANDOFF_FILE } = process.env;
             // On `schedule` triggers the event payload is empty, so resolve the
             // default branch via the API rather than context.payload.repository.
             const { data: repo } = await github.rest.repos.get(context.repo);
@@ -336,6 +358,24 @@ jobs:
             const retrieval = /^[0-9]+ of [0-9]+$/.test(RETRIEVAL || '')
               ? [`- Retrieval from the index: ${RETRIEVAL} reader questions reach their concept`]
               : [];
+            // The hand-off is the agent's own words, from the job that ran
+            // it, and is shown as nothing more. The pen cleaned it there; it
+            // is cleaned again here, since that job could be blinded: ten
+            // lines of 300 characters at most, with no control or invisible
+            // character and no backtick. It goes in a code block, where no
+            // link, image, mention or HTML renders.
+            let handoff = [];
+            try {
+              handoff = fs.readFileSync(HANDOFF_FILE, 'utf8').split('\n')
+                .map((l) => l.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, '').replace(/`/g, "'").trim().slice(0, 300))
+                .filter((l) => l !== '')
+                .slice(0, 10);
+            } catch (e) {
+              handoff = [];
+            }
+            const fromLibrarian = handoff.length
+              ? ['### From the librarian', '', 'The agent wrote these lines. No program checked what they say.', '', '```text', ...handoff, '```', '']
+              : [];
             const body = [
               '## Scheduled knowledge-librarian refresh',
               '',
@@ -349,6 +389,7 @@ jobs:
               '### What this change does to the record',
               ...(CHANGES ? CHANGES.split('\n') : ['Not computed: this sidecar has no `knowledge-report.sh`.']),
               '',
+              ...fromLibrarian,
               '### Reviewer checklist',
               '- [ ] Claims trace to a source of truth.',
               '- [ ] `type`/frontmatter and typed relations are correct.',

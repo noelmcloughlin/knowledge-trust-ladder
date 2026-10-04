@@ -3,19 +3,22 @@
 # requires-python = ">=3.9"
 # dependencies = ["pyyaml"]
 # ///
-# The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9, 10 and 12
-# (see that script's header for the list). Rules 2, 3, 7 and 9 are questions
-# about a document's YAML - is this scalar quoted, is this key a list or a
-# mapping, do two files share an id, does the block even parse - that a real
-# parser answers outright where grep and awk could only approximate: an
-# unquoted `at:` is only visible as a `datetime` once something parses the
-# document, and a flow-style `verified: { by: ... }` or a multi-line flow item
-# is where a line-oriented regex used to guess wrong. Rule 4 is a body rule
-# that rides along, and rule 10 exists because the provenance gates do read
-# the frontmatter line by line: it keeps the fields they read to spellings a
-# line reader and a parser agree on. Rule 12 compares a concept's title and
-# description, which only a parser reads whole, with the index bullets that
-# copy them. Rules 1, 5, 6, 8 and 11 stay in the shell script: they are git
+# The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9, 10, 12
+# and 13 (see that script's header for the list). Rules 2, 3, 7 and 9 are
+# questions about a document's YAML - is this scalar quoted, is this key a
+# list or a mapping, do two files share an id, does the block even parse -
+# that a real parser answers outright where grep and awk could only
+# approximate: an unquoted `at:` is only visible as a `datetime` once
+# something parses the document, and a flow-style `verified: { by: ... }` or a
+# multi-line flow item is where a line-oriented regex used to guess wrong.
+# Rule 4 is a body rule that rides along, and rule 10 exists because the
+# provenance gates do read the frontmatter line by line: it keeps the fields
+# they read to spellings a line reader and a parser agree on. Rule 12 compares
+# a concept's title and description, which only a parser reads whole, with
+# the index bullets that copy them. Rule 13 asks git for the text a person
+# confirmed and compares it with today's as parsed values, since
+# knowledge-apply.sh writes the whole frontmatter back and a requoted value is
+# no change. Rules 1, 5, 6, 8 and 11 stay in the shell script: they are git
 # and filesystem facts, and needn't wait on uv.
 #
 # Usage: knowledge-conventions.py <bundle-dir>. Same contract as the shell
@@ -27,6 +30,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -41,6 +45,12 @@ INDEX_BULLET = re.compile(r"^\* \[([^\]]*)\]\(([^)]+)\) - (.*)$")
 # The fields the provenance gates read line by line: a concept's id, and the
 # actor, time and revision of each event.
 GATE_FIELDS = {"id", "by", "at", "revision"}
+# What a person's confirmation does not cover, for rule 13: the trust,
+# lifecycle and usage fields, which record who checked what and when rather
+# than what the concept claims, and in the body the open questions and the
+# block KTL Registrar derives from the frontmatter.
+NOT_CLAIMS = {"generated", "verified", "status", "stale_after", "timestamp", "usage_window"}
+RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 
 
 def plain_spellings(fm_text: str) -> list[str]:
@@ -109,6 +119,99 @@ def find_unquoted_at(node, where: str) -> list[str]:
         for index, item in enumerate(node):
             findings.extend(find_unquoted_at(item, f"{where}[{index}]."))
     return findings
+
+
+def moment(value) -> str:
+    """A time in the one UTC shape rule 11 and knowledge-report.sh compare, or '' for any other shape."""
+    if not isinstance(value, str):
+        return ""
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return value + "T00:00:00Z"
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z", value):
+        return value[:16] + ":00Z"
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z", value):
+        return value[:19] + "Z"
+    return ""
+
+
+def claims(frontmatter: dict, body: str):
+    """What a person confirms: the frontmatter without NOT_CLAIMS, and the body without its open questions and its lokf:related block, with blank lines and trailing spaces evened out."""
+    kept = {k: v for k, v in frontmatter.items() if k not in NOT_CLAIMS}
+    if isinstance(kept.get("sources"), list):  # a source's usage_count is a usage signal too
+        kept["sources"] = [{k: v for k, v in s.items() if k != "usage_count"} if isinstance(s, dict) else s for s in kept["sources"]]
+    out: list[str] = []
+    fenced = in_questions = in_related = False
+    for line in body.split("\n"):
+        line = line.rstrip()
+        # The registrar appends its block at the end, after any open questions,
+        # and the block holds a `## Related` heading of its own: skip it first.
+        if in_related or line.strip() == RELATED_START:
+            in_related = line.strip() != RELATED_END
+            continue
+        if line.startswith("```") or line.startswith("~~~"):
+            fenced = not fenced
+        elif not fenced and re.match(r"^#{1,2} ", line):
+            in_questions = line == "## Open questions"
+        if in_questions:
+            continue
+        if line or (out and out[-1]):
+            out.append(line)
+    return kept, "\n".join(out).strip("\n")
+
+
+def git(cwd: Path, *args: str) -> str | None:
+    try:
+        done = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, encoding="utf-8", errors="replace", timeout=120)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return done.stdout if done.returncode == 0 else None
+
+
+def unstamped_edit(path: Path, frontmatter: dict, body: str) -> str | None:
+    """Rule 13: a concept that reads as confirmed by a person still holds the claims they confirmed.
+
+    The text they confirmed is the concept at the newest commit that recorded
+    the time of its latest confirmation. Any later commit can only be an
+    edit after it, so the rule can miss one but never flags a concept that
+    person saw. Outside git, or before that commit exists, there is nothing
+    to compare and nothing is said.
+    """
+    if frontmatter.get("status") == "deprecated":
+        return None
+    verified = frontmatter.get("verified")
+    events = [verified] if isinstance(verified, dict) else verified if isinstance(verified, list) else []
+    confirmations = [
+        (moment(e.get("at")), e.get("at"), str(e.get("by")))
+        for e in events
+        if isinstance(e, dict) and str(e.get("by", "")).startswith("human:") and moment(e.get("at"))
+    ]
+    if not confirmations:
+        return None
+    confirmed_at, written, by = max(confirmations)
+    generated = frontmatter.get("generated")
+    stamp = moment(generated.get("at")) if isinstance(generated, dict) else moment(frontmatter.get("timestamp"))
+    if stamp > confirmed_at:
+        return None  # it already reads as edited since that confirmation
+    real = path.resolve()
+    found = git(real.parent, "log", "--format=%H", "-S" + written, "--", real.name)
+    commit = found.split("\n", 1)[0].strip() if found else ""
+    if not commit:
+        return None
+    then = git(real.parent, "show", f"{commit}:./{real.name}")
+    split = split_frontmatter(then.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")) if then else None
+    if split is None:
+        return None
+    try:
+        frontmatter_then = yaml.safe_load(split[0])
+    except yaml.YAMLError:
+        return None
+    if not isinstance(frontmatter_then, dict) or claims(frontmatter_then, split[1]) == claims(frontmatter, body):
+        return None
+    return (
+        f"{path}: changed since {by} confirmed it ({confirmed_at[:10]}, in {commit[:7]}), and `generated` was not "
+        "restamped, so it still reads as confirmed - knowledge-apply.sh restamps every change it writes; by hand, "
+        f"move generated.at to the time of the change, or have {by} confirm it again"
+    )
 
 
 def index_bullets(index: Path, cache: dict[Path, dict[str, tuple[str, str]]]) -> dict[str, tuple[str, str]]:
@@ -201,6 +304,12 @@ def check_file(path: Path, ids: dict[str, list[Path]], entries: dict[Path, tuple
     title, description = frontmatter.get("title"), frontmatter.get("description")
     if isinstance(title, str) and isinstance(description, str):
         entries[path] = (" ".join(title.split()), " ".join(description.split()))
+
+    # 13. a concept that reads as confirmed by a person still says what that
+    #     person confirmed: an edit since then restamps `generated`.
+    finding = unstamped_edit(path, frontmatter, body)
+    if finding:
+        findings.append(finding)
 
     return findings
 
