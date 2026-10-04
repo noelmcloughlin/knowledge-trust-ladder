@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **ktl-prose keeps one topic to a paragraph, and says what happens in plain words.** Rule 3 now covers the paragraph: split one that runs past 150 words where its topic turns, the limit the Federal Plain Language Guidelines give. `prose-check.py` reports it as `paragraph`, and never counts a table cell. Rule 9 now asks for the literal verb: a key is "added", not "landed", and an IRI is "built", not "minted". The script reports seven such figures under `words`, and the rules page lists the rest with their plain words. ktl-librarian's rules for a concept body say the same.
+- **`prose-check.py` reports a character no reader sees, as `unseen`.** That is a control character other than a tab, or a format character such as a zero-width space, a byte order mark or the right-to-left override the "Trojan Source" attack hides code behind. An agent that types such a character's escape into a tool call can write the character itself. The script reports each line that holds one, code and frontmatter included, and its comparison refuses a rewording that adds one. Check 18 exercises both.
+
+### Changed
+
+- **The docs, the skill pages and the script comments read plainer.** A third pass replaced figures of speech, such as "lands", "mints", "ships", "arms", "wires" and "lays down", with what happens. It split every paragraph and comment block past 150 words, and took the dashes and long sentences out of the script comments, which no pass had read before. No fact changed. The captured docent answers, the released changelog entries and the messages the scripts print stay as they were.
+
+### Security
+
+- **The contract fails on a character a reader cannot see in any tracked file.** Check 21 searches every tracked text file for a control character other than a tab, and for a format character such as a zero-width space, a byte order mark or a right-to-left override. A diff shows none of them, and GitHub warns of only some. Typed escapes once put three of them into a sanitizer here, as the characters themselves, and only a search by hand found them. Code that needs one spells it as an escape.
+
 ## [0.32.0] - 2026-10-04
 
 ### Added

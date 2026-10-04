@@ -45,7 +45,7 @@ for dir in "${expected_dirs[@]}"; do
 done
 
 # 3b. Each skill states what it needs in the spec's optional `compatibility`
-#     field (agentskills.io/specification: 1-500 characters), so git, a POSIX
+#     field (agentskills.io/specification: 1-500 characters). So git, a POSIX
 #     shell, uv or an authenticated identity is declared where every installer
 #     shows it, not discovered after a report has offered a step. (The curator
 #     used to name `gh` only inside its Step 2.)
@@ -64,7 +64,7 @@ done
 
 # 3c. Catalogs have no tag field: `gh skill search` matches name and
 #     description, skills.sh matches file text. So each description ends in a
-#     `Keywords:` list, inside the spec's 1024 characters, and the Claude Code
+#     `Keywords:` list, inside the spec's 1024 characters. The Claude Code
 #     plugin manifest and its marketplace entry carry one keyword list between
 #     them, written on one line in each so the two can be compared.
 for dir in "${expected_dirs[@]}"; do
@@ -98,8 +98,8 @@ else
 fi
 
 # 5. Relative references remain valid after the complete skill directory is
-#    copied (i.e. resolved from each linking file's own directory - this is
-#    exactly how an installer copies one skill/ subtree at a time).
+#    copied, that is, resolved from each linking file's own directory. This
+#    is exactly how an installer copies one skill/ subtree at a time.
 say ""
 say "Checking relative link targets..."
 broken=0
@@ -147,8 +147,8 @@ fi
 #    agree with it. Prose elsewhere says "small" rather than a number: the
 #    count is the schema's to change, not this repository's.
 #    (On 2026-09-14 Rule 3 said fourteen and omitted Role while README.md and
-#    docs/for-the-curious.md said fifteen - undetected until a person read
-#    both. This check is why that cannot happen twice.)
+#    docs/for-the-curious.md said fifteen, and nobody noticed until a person
+#    read both. This check is why that cannot happen twice.)
 rule3_line="$(grep -m1 '^3\. \*\*Use a class from the LOKF type vocabulary' skills/ktl-librarian/SKILL.md || true)"
 if [[ -z "$rule3_line" ]]; then
   err "could not find Rule 3's class list in skills/ktl-librarian/SKILL.md"
@@ -157,7 +157,7 @@ else
   # `Concept` and a sample parent class, neither of which is part of the list.
   rule3_list="${rule3_line%%\*\*A host may have extended*}"
   # shellcheck disable=SC2016 # literal backticks for grep to match (markdown
-  # code spans around a class name), not a command substitution - double
+  # code spans around a class name), not a command substitution. Double
   # quotes here would make the shell try to run `[A-Z][A-Za-z]*` as a command.
   canonical="$(printf '%s' "$rule3_list" | grep -o '`[A-Z][A-Za-z]*`' | tr -d '`' | grep -vx 'Concept' | sort -u)"
   canonical_count="$(printf '%s\n' "$canonical" | grep -c .)"
@@ -210,11 +210,12 @@ fi
 # 9. Three sibling repositories deep-link into files here by URL
 #    (github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path>), and their
 #    link checks follow those for real. Moving or renaming one of these paths
-#    passes every check in this repo and breaks the build in obsidian-ktl-curator,
-#    and obsidian-ktl-registrar - (The mirror image happened on 2026-09-14: the
-#    curator referenced domain-schema.md while it was still on a branc here, and
-#    its build 404'd until this side landed. CONTRIBUTING.md carries the ordering
-#    rule; this check carries the paths.)
+#    passes every check in this repo, and breaks the build in
+#    obsidian-ktl-curator and obsidian-ktl-registrar. (The mirror image
+#    happened on 2026-09-14: the curator referenced domain-schema.md while it
+#    was still on a branch here, and its build failed with a 404 until this
+#    side merged. CONTRIBUTING.md carries the ordering rule; this check carries
+#    the paths.)
 say ""
 say "Checking the paths sibling repositories link into..."
 sibling_paths=(
@@ -241,7 +242,7 @@ done
 # 9a. When the siblings are cloned beside this repo, confirm the list above is
 #     still complete: a sibling that adds a deep link should record the path
 #     here in the same breath, or the check silently stops covering it. CI has
-#     no siblings checked out, so this half only runs locally - the recorded
+#     no siblings checked out, so this half only runs locally. The recorded
 #     list is the contract either way.
 mapfile -t cloned < <(for s in obsidian-ktl-curator obsidian-ktl-registrar; do
   [[ -d "../$s/.git" ]] && printf '%s\n' "../$s"
@@ -250,7 +251,7 @@ if [[ ${#cloned[@]} -eq 0 ]]; then
   say "      (no sibling clones beside this repo - skipping the completeness cross-check)"
 else
   # Each sibling installs these skills under .agents/skills (with .claude/skills
-  # symlinked to it), so those trees are copies of this repository - their
+  # symlinked to it), so those trees are copies of this repository. Their
   # self-links are not a sibling depending on us, and counting them reports
   # every page the skills link to internally. Skip them, and .venv, which is
   # only slow. (git-aware greps hide these via .gitignore; plain grep does not.)
@@ -274,14 +275,14 @@ else
 fi
 
 # 10. CONTRIBUTING.md is a checklist, not a design log, and SECURITY.md is a
-#     policy, not a threat model: each rule or surface is a line or two that
-#     links to where its reasoning lives - a code comment, a workflow header,
+#     policy, not a threat model. Each rule or surface is a line or two that
+#     links to where its reasoning lives: a code comment, a workflow header,
 #     a page under docs/. A word budget is the one signal every contributor,
 #     person or agent, reliably reads. CONTRIBUTING sits between 700 and 850
-#     across the three repositories and 1000 is where one has started to
-#     become a design log again; SECURITY sits between 450 and 800 and was
-#     1,400 to 1,900 before docs/threat-model.md took the design, so 900
-#     is its line. The siblings hold the same budgets from their own checks.
+#     across the three repositories, and 1000 is where one has started to
+#     become a design log again. SECURITY sits between 450 and 800, and was
+#     1,400 to 1,900 before docs/threat-model.md took the design, so 900 is
+#     its line. The siblings keep the same budgets in their own checks.
 say ""
 say "Checking CONTRIBUTING.md and SECURITY.md stay short..."
 for spec in "CONTRIBUTING.md:1000:a checklist" "SECURITY.md:900:a policy"; do
@@ -294,17 +295,17 @@ for spec in "CONTRIBUTING.md:1000:a checklist" "SECURITY.md:900:a policy"; do
   fi
 done
 
-# 11. This repository dogfoods its own sidecar templates, and CI lints the
-#     copies under .github/ and .lokf/scripts/ rather than the templates
-#     themselves (actionlint is pointed at both, ShellCheck scans the tree),
-#     so the copies must stay byte-identical or a template change ships
-#     unlinted. knowledge-librarian.yaml is among them, apart from the value
-#     of TRUST_LADDER_SKILLS_REF: the release commit moves the template's pin
-#     but may not touch .github/workflows/, and the install step that reads
-#     the pin is skipped in this repository anyway.
+# 11. This repository runs its own sidecar from the templates, and CI lints
+#     the copies under .github/ and .lokf/scripts/ rather than the templates
+#     themselves (actionlint is pointed at both, ShellCheck scans the tree).
+#     So the copies must stay byte-identical, or a template change is
+#     released unlinted. knowledge-librarian.yaml is among them, apart from
+#     the value of TRUST_LADDER_SKILLS_REF: the release commit moves the
+#     template's pin but may not touch .github/workflows/, and the install
+#     step that reads the pin is skipped in this repository anyway.
 #     Then the conventions script itself is exercised: it must pass on this
-#     repository's own bundle and fail on a bundle that breaks each rule -
-#     a checker that cannot fail is not covering anything.
+#     repository's own bundle and fail on a bundle that breaks each rule. A
+#     checker that cannot fail is not covering anything.
 say ""
 say "Checking the sidecar templates are the copies CI lints..."
 templates="skills/ktl-sidecar/templates"
@@ -337,8 +338,8 @@ done
 say ""
 say "Exercising knowledge-conventions.sh..."
 # Eight of the thirteen rules run through `uv run`, so without uv the script reports
-# none of them and every expectation below fails saying only that it "failed
-# to report" something - never why. Name the cause once, up front: a job that
+# none of them, and every expectation below fails saying only that it "failed
+# to report" something, never why. Name the cause once, up front: a job that
 # runs this contract installs uv (validate.yml and publish.yml both do).
 if ! command -v uv >/dev/null 2>&1; then
   err "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12 and 13 cannot run and every expectation for them below will fail - install uv, or add the setup-uv step to the workflow running this"
@@ -371,10 +372,11 @@ real="$("${tmpgit[@]}" rev-parse HEAD)"
 pinned() { printf -- '---\ntype: Service\nresource: pinned.md\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "%s"\n---\n' "$1"; }
 pinned "0000000000000000000000000000000000000000" > "$bad/k/x/d.md"
 pinned "$real" > "$bad/k/x/e.md"
-# Rule 11: a time later than the commit that recorded it, committed at a
-# fixed committer date so the verdict does not depend on today; a time in the
-# future on a file not committed yet; and a time before its commit, which must
-# pass.
+# Rule 11, in three cases:
+#   - a time later than the commit that recorded it, committed at a fixed
+#     committer date so the verdict does not depend on today;
+#   - a time in the future on a file not committed yet;
+#   - a time before its commit, which must pass.
 stamped() { printf -- '---\ntype: Service\ngenerated:\n  by: process:ktl-librarian\n  at: "%s"\n---\n' "$1"; }
 stamped "2026-09-17T01:00:00Z" > "$bad/k/x/r11-late.md"
 stamped "2026-09-16T23:00:00Z" > "$bad/k/x/r11-ok.md"
@@ -403,12 +405,14 @@ r13 r13-description r13-description "what it says now." "2026-09-01T00:00:00Z" "
 r13 r13-restamped r13-restamped "what it was." "2026-09-03T00:00:00Z" "" "The text the pen changed."
 r13 r13-notes '"r13-notes"' "what it was." "2026-09-01T00:00:00Z" $'status: draft\n' \
   $'The text a person confirmed.\n\n## Open questions\n\n- 2026-09-03, human:contract: is this still current?\n\n<!-- lokf:related -->\n#how-to\n\n## Related\n\n- [[r13-edited]] (dependsOn)\n<!-- /lokf:related -->'
-# Rules 7-9 and the line-ending tolerance. A CRLF copy of a file that breaks
-# rule 2 must still be reported (a Windows checkout used to make the script
-# skip every frontmatter rule unread); a byte order mark and a file with no
-# frontmatter are findings; a sync client's conflict copy shares its
-# original's id and has a name no slug would; a directory whose case differs
-# is a path-shape finding.
+# Rules 7-9 and the line-ending tolerance:
+#   - a CRLF copy of a file that breaks rule 2 must still be reported (a
+#     Windows checkout used to make the script skip every frontmatter rule
+#     unread);
+#   - a byte order mark and a file with no frontmatter are findings;
+#   - a sync client's conflict copy shares its original's id and has a name
+#     no slug would;
+#   - a directory whose case differs is a path-shape finding.
 printf -- '---\r\ntype: Service\r\nverified:\r\n  - by: process:ktl-librarian\r\n    at: 2026-09-14T00:00:00Z\r\n---\r\n' > "$bad/k/x/f-crlf.md"
 printf '\357\273\277---\ntype: Service\n---\n' > "$bad/k/x/g-bom.md"
 printf 'type: Service\n' > "$bad/k/x/h-nofm.md"
@@ -418,20 +422,23 @@ mkdir -p "$bad/k/Upper" && printf -- '---\ntype: Service\n---\n' > "$bad/k/Upper
 # Rule 10: an event spelt so that the gates' line readers cannot see it.
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/q\nverified:\n  - "by": human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n' > "$bad/k/x/q-quotedkey.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/t\nverified: [{ by: !!str human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n' > "$bad/k/x/t-tag.md"
-# What only a parser sees: a multi-line flow item with an unquoted `at`, a
-# number where a timestamp should be, a block that does not parse (reported
-# on one line), and a block that is a list rather than a mapping. And what a
-# parser must not see: a second librarian event inside a body code fence.
+# What only a parser sees:
+#   - a multi-line flow item with an unquoted `at`;
+#   - a number where a timestamp should be;
+#   - a block that does not parse, reported on one line;
+#   - a block that is a list rather than a mapping.
+# And what a parser must not see: a second librarian event inside a body code
+# fence.
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fl\nverified: [\n  { by: process:ktl-librarian,\n    at: 2026-09-14T00:00:00Z }\n]\n---\n' > "$bad/k/x/fl-flow.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/n\nverified:\n  - by: process:ktl-librarian\n    at: 20260914\n---\n' > "$bad/k/x/n-int.md"
 printf -- '---\ntype: Service\nverified: [unclosed\n---\n' > "$bad/k/x/y-bad.md"
 printf -- '---\n- just a list\n---\n' > "$bad/k/x/l-list.md"
 # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n' > "$bad/k/x/fence.md"
-# Rule 12: a bullet left behind by an edited description, in the folder's
-# index and in the root's; a bullet that still agrees, a concept no index
-# lists, and a line that lists two concepts, which is neither one's bullet,
-# must all pass.
+# Rule 12: a bullet left behind by an edited description fails, in the
+# folder's index and in the root's. A bullet that still agrees, a concept no
+# index lists, and a line that lists two concepts, which is neither one's
+# bullet, must all pass.
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/stale\ntitle: Stale\ndescription: what the concept says now.\n---\n' > "$bad/k/x/idx-stale.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fresh\ntitle: Fresh\ndescription: >-\n  folded, and\n  still equal.\n---\n' > "$bad/k/x/idx-fresh.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/shared\ntitle: Shared\ndescription: listed only beside another.\n---\n' > "$bad/k/x/idx-shared.md"
@@ -491,8 +498,8 @@ elif out="$(PATH=/usr/bin:/bin bash "$templates/scripts/knowledge-conventions.sh
 else
   err "conventions script without uv did not say what it skipped: $out"
 fi
-# A bundle reached through a link - the rearranged layout the sidecar's
-# portability page allows - must be read, not passed with zero files seen.
+# A bundle reached through a link, the rearranged layout the sidecar's
+# portability page allows, must be read, not passed with zero files seen.
 ln -s "$good/k" "$good/linked" && printf 'x' > "$good/k/x/Bad.md"
 if out="$(bash "$templates/scripts/knowledge-conventions.sh" "$good/linked" 2>&1)"; then
   err "conventions script passed a linked bundle unread: $out"
@@ -504,9 +511,10 @@ fi
 rm -rf "$good"
 
 # 12. The preflight script every skill runs first must always end on its
-#     summary line and exit 0 - on this repository, and on a bare directory
-#     with no bundle, no git and no skills, where every section has to cope
-#     with absence rather than fail. A CRLF file must raise its warning.
+#     summary line and exit 0. That holds on this repository, and on a bare
+#     directory with no bundle, no git and no skills, where every section has
+#     to cope with absence rather than fail. A CRLF file must raise its
+#     warning.
 say ""
 say "Exercising knowledge-preflight.sh..."
 if out="$(bash "$templates/scripts/knowledge-preflight.sh" . 2>&1)" && grep -q '^Preflight: ' <<<"$out"; then
@@ -567,8 +575,8 @@ else
 fi
 rm -rf "$bare"
 # Every line the preflight can print as missing or a warning has a row on the
-# sidecar's prerequisites page - the plain-words meaning, who fixes it and
-# what to send them - so a new preflight line cannot land without one.
+# sidecar's prerequisites page: the plain-words meaning, who fixes it and what
+# to send them. So a new preflight line cannot be added without one.
 prereq="skills/ktl-sidecar/references/prerequisites.md"
 while IFS= read -r key; do
   if grep -q "^| \`$key\` |" "$prereq"; then
@@ -589,15 +597,18 @@ done
 
 # 12a. ktl-docent records a reader's gap by running knowledge-feedback.sh
 #      rather than by opening .lokf/feedback.md, so that no other reader's
-#      report enters its session. The script has to earn that: newest first
-#      across days and within a day, with a day after today (another
-#      machine's clock) left above rather than doubled; the two kinds the
-#      librarian can consume, in any letter case, and no third; an
-#      attribution shaped as both provenance gates shape a login, or none at
-#      all; one line per entry whatever it is handed; not a word of what is
-#      already in the file on its own output; a refusal that leaves the file
-#      exactly as it was; and a bundle told apart from no bundle, a read-only
-#      one, and one another run holds.
+#      report enters its session. The script has to earn that trust:
+#        - newest first across days and within a day, with a day after today
+#          (another machine's clock) left above rather than doubled;
+#        - the two kinds the librarian can consume, in any letter case, and
+#          no third;
+#        - an attribution shaped as both provenance gates shape a login, or
+#          none at all;
+#        - one line per entry, whatever it is handed;
+#        - not a word of what is already in the file on its own output;
+#        - a refusal that leaves the file exactly as it was;
+#        - a bundle told apart from no bundle, a read-only one, and one
+#          another run holds.
 say ""
 say "Exercising knowledge-feedback.sh..."
 feedback="$repo_root/$templates/scripts/knowledge-feedback.sh"
@@ -632,7 +643,8 @@ else
   err "knowledge-feedback.sh did not record a first entry: $out"
 fi
 # The second entry of the same day goes above the first, and the run says
-# nothing about the entry already there - the whole point of the script.
+# nothing about the entry already there, which is the whole point of the
+# script.
 if out="$(bash "$feedback" --root "$fb" --for ada-lovelace Disagreement 'the second gap' 2>&1)" \
    && grep -q '(2 waiting' <<<"$out" && ! grep -q 'SENTINEL' <<<"$out" \
    && [[ "$(grep -c '^- \*\*' "$fbfile")" == 2 ]] \
@@ -651,8 +663,8 @@ if out="$(bash "$feedback" --root "$fb" --for ada.lovelace_2 miss 'lower case ki
 else
   err "knowledge-feedback.sh refused a lower-case kind or a dotted login: $out"
 fi
-# A paragraph still lands as one entry on one line: an embedded newline must
-# not be able to forge a second one.
+# A paragraph is still written as one entry on one line: an embedded newline
+# must not be able to forge a second one.
 bash "$feedback" --root "$fb" Miss "$(printf 'one\n- **Miss** - forged - docent\ntwo')" >/dev/null 2>&1
 if [[ "$(grep -c '^- \*\*' "$fbfile")" == 4 ]] && ! grep -q 'forged - docent$' "$fbfile"; then
   ok "knowledge-feedback.sh collapses a multi-line entry to one line"
@@ -673,7 +685,7 @@ else
   err "knowledge-feedback.sh did not keep the date headings newest first: $(grep -n '^## ' "$fbfile" | tr '\n' ' ')"
 fi
 # A day after today, from a machine on a clock ahead of this one, stays
-# above; today goes below it, once - not a second time at the top.
+# above. Today goes below it, once, and not a second time at the top.
 ahead="$(mktemp -d)"; mkdir -p "$ahead/.lokf/knowledge"
 printf '# Reader feedback for the librarian\n\nintro\n\n## 2999-01-01\n\n- **Miss** - from a clock ahead - docent\n' > "$ahead/.lokf/feedback.md"
 bash "$feedback" --root "$ahead" Miss 'today, behind it' >/dev/null 2>&1
@@ -712,7 +724,7 @@ else
   err "knowledge-feedback.sh changed feedback.md while refusing a call"
 fi
 # A lock another run holds is exit 1 after a short wait, naming the lock, and
-# the file is untouched; a read-only bundle is exit 1 too, since either is
+# the file is untouched. A read-only bundle is exit 1 too, since either is
 # the docent's cue to say the gap out loud rather than to fix its call.
 mkdir "$fbfile.lock"
 set +e
@@ -750,16 +762,18 @@ else
 fi
 rm -rf "$fb"
 
-# 13. The forge-free provenance gate, with throwaway keys: a confirmation
-#     signed by the curator on file passes - with a GPG primary key, a GPG
-#     signing subkey, or an SSH key; an unsigned one, one by an id with no
-#     key, one by another key, and one whose own key lands in the same range
-#     each fail, while another curator's key landing alongside does not; a
-#     removed confirmation needs its curator's signature as an added one
-#     does, whether the event is struck out or its concept deleted, and a
-#     person's generated record may give way only to another person's; a
-#     repository with no .lokf/curators/ is a stated skip. Needs gpg and
-#     ssh-keygen, which CI has.
+# 13. The forge-free provenance gate, with throwaway keys:
+#       - a confirmation signed by the curator on file passes, with a GPG
+#         primary key, a GPG signing subkey, or an SSH key;
+#       - an unsigned one, one by an id with no key, one by another key, and
+#         one whose own key is added in the same range each fail, while
+#         another curator's key added alongside does not;
+#       - a removed confirmation needs its curator's signature as an added
+#         one does, whether the event is struck out or its concept deleted;
+#       - a person's generated record may be replaced only by another
+#         person's;
+#       - a repository with no .lokf/curators/ is a stated skip.
+#     It needs gpg and ssh-keygen, which CI has.
 say ""
 say "Exercising knowledge-provenance.sh..."
 if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
@@ -836,8 +850,8 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
     cp "$pv/stranger.pub" "$c/stranger.pub" && confirmed contract > "$k/j.md" && pv_git add -A && pv_git commit -q -S -m 'another key lands beside a confirmation'
     expect_pv "HEAD~1" 0 '^OK - 1 confirmation' "let another curator's key land beside a confirmation"
     # Only the frontmatter is a claim: an example event in a body code fence
-    # is not, and a human `generated` record - the curator's Correct writes
-    # one - is, whatever its layout.
+    # is not, and a human `generated` record, which the curator's Correct
+    # writes, is, whatever its layout.
     # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
     printf -- '---\ntype: Service\nid: https://example.invalid/k/x/fence\n---\n\n```yaml\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n```\n' > "$k/fence.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'example in a fence, unsigned'
     expect_pv "HEAD~1" 0 '^OK - 0 confirmation' "ignore an example event in a body code fence"
@@ -885,10 +899,10 @@ else
   say "gpg or ssh-keygen not installed locally - CI runs check 13; skipping here"
 fi
 
-# 13a. The same script's --unattended form, which needs no key and no forge:
-#      the scheduled librarian's change is one nobody stands behind, so it
-#      may add, change or remove no person's event in any YAML layout, add or
-#      remove no person's note, and rewrite no text a person wrote; a
+# 13a. The same script's --unattended form, which needs no key and no forge.
+#      The scheduled librarian's change is one nobody stands behind. So it may
+#      add, change or remove no person's event in any YAML layout, add or
+#      remove no person's note, and rewrite no text a person wrote. A
 #      process's own open question under a person's text is none of those.
 say ""
 say "Exercising knowledge-provenance.sh --unattended..."
@@ -928,9 +942,9 @@ expect_ua 0 '^OK - the change against HEAD' "pass a process's own question added
 rm -rf "$ua"
 
 # 14. CHANGELOG.md never carries two headings for one released version, and
-#     changelog-release.mjs's promote folds a second qualifying push between
+#     changelog-release.mjs's promote merges a second qualifying push between
 #     publish.yml runs into the still-unpublished section instead of adding
-#     one - the bug that shipped two "## [0.19.0]" headings on 2026-09-17,
+#     one. That bug released two "## [0.19.0]" headings on 2026-09-17,
 #     because semantic-release.yml promotes on every push to main but only
 #     publish.yml tags. The first part needs nothing but the file on disk and
 #     always runs; the second exercises the fold in a throwaway repository
@@ -953,16 +967,16 @@ if command -v node >/dev/null 2>&1; then
   mkdir -p "$cl/repo/.github/scripts"
   cp "$repo_root/.github/scripts/changelog-release.mjs" "$cl/repo/.github/scripts/"
   # A blank identity falls back to the OS account's GECOS full name, which a
-  # CI runner's account does not carry - set one explicitly, as check 13's
+  # CI runner's account does not carry. Set one explicitly, as check 13's
   # pv_git does, rather than depend on that fallback existing.
   cl_git init -q \
     && cl_git config user.name contract \
     && cl_git config user.email contract@example.invalid \
     && cl_git commit -q --allow-empty -m base \
     && cl_git tag v0.18.0
-  # The state right after the first push's promote landed and a second push
-  # then wrote its own Unreleased entry above it, with v0.19.0 still untagged
-  # - exactly main's state before publish.yml ever ran for it.
+  # The state right after the first push's promote merged and a second push
+  # then wrote its own Unreleased entry above it, with v0.19.0 still untagged:
+  # exactly main's state before publish.yml ever ran for it.
   cat > "$cl/repo/CHANGELOG.md" <<'EOF'
 ## [Unreleased]
 
@@ -1017,8 +1031,8 @@ fi
 #     held to one of the *two* newest released headings in CHANGELOG.md, not
 #     just the newest. The newest heading exists before its tag does:
 #     semantic-release.yml promotes it on merge to main, and publish.yml
-#     creates the tag later. During that window - which is exactly when
-#     publish.yml runs this contract - the only valid pin is the heading
+#     creates the tag later. During that window, which is exactly when
+#     publish.yml runs this contract, the only valid pin is the heading
 #     below the top one, so requiring the top one failed every release.
 #     Two headings of slack covers that window and still catches real rot,
 #     which is measured in many versions, not one.
@@ -1039,9 +1053,9 @@ else
 fi
 # A current version is not the whole test. The install step clones that tag
 # and copies one path out of it, and a rename leaves the two disagreeing with
-# neither line looking wrong: v0.21.0 is a real release and skills/ktl-librarian
-# is a real path, but that path is not in that tag - the skills were lokf-*
-# until v0.22.0 - so every scheduled run on a scaffolded host failed there.
+# neither line looking wrong. Here v0.21.0 is a real release and skills/ktl-librarian
+# is a real path, but that path is not in that tag, since the skills were
+# lokf-* until v0.22.0. So every scheduled run on such a host failed there.
 # Read the tag where the clone has it. CI checks out one commit without tags,
 # and the newest heading is tagged after this contract runs, so a tag that is
 # not here skips this half rather than failing it.
@@ -1063,14 +1077,16 @@ fi
 
 # 16. The repository's old name stays gone from anything that still speaks in
 #     the present tense. It was renamed from lokf-agent-skills on 2026-09-19,
-#     and a branch written before that merges without conflict - the old name
+#     and a branch written before that merges without conflict: the old name
 #     simply reappears, in a clone URL or an `npx skills add` path that then
 #     depends on GitHub's redirect. Three files keep it on purpose, and they
-#     are the ones whose job is history: CHANGELOG.md, the bundle's log.md
-#     (whose entries describe the repository as it was on the day they were
-#     written - a log that renames its own past is no longer a record), and
-#     one "formerly" line in docs/install.md, where the install commands moved
-#     on 2026-09-19. Anywhere else is a merge that predates the rename; run
+#     are the ones whose job is history:
+#       - CHANGELOG.md;
+#       - the bundle's log.md, whose entries describe the repository as it
+#         was on the day they were written, since a log that renames its own
+#         past is no longer a record;
+#       - one "formerly" line in docs/install.md, where the install commands
+#         moved on 2026-09-19. Anywhere else is a merge that predates the rename; run
 #     the same replacement over it.
 say ""
 say "Checking the old repository name has not come back..."
@@ -1109,7 +1125,7 @@ fi
 
 # 16a. The skills and plugins took the ktl- prefix on 2026-09-22; their lokf-
 #      names, and the ones before those, stay gone the same way. Only
-#      CHANGELOG.md keeps them, for the releases that shipped them and the one
+#      CHANGELOG.md keeps them, for the releases that carried them and the one
 #      line telling a host what to remove.
 say ""
 say "Checking the old skill and plugin names have not come back..."
@@ -1211,10 +1227,11 @@ rm -rf "${m365_out:?}"
 
 # 18. ktl-prose's check script is exercised as the conventions script is at
 #     check 11. It must report each thing it claims to see, and stay quiet on
-#     what the two hand passes kept. It must refuse a rewording that touches a
-#     concept a person wrote or confirmed, or a byte of frontmatter. It reads
-#     events the way the provenance gates do, so each form they read is staged
-#     here. The skill's own pages must pass the three style rules they state.
+#     what the hand passes kept. It must refuse a rewording that touches a
+#     concept a person wrote or confirmed, or a byte of frontmatter, or that
+#     adds a character no reader sees. It reads events the way the provenance
+#     gates do, so each form they read is staged here. The skill's own pages
+#     must pass the style rules they state.
 say ""
 say "Exercising ktl-prose's prose-check.py..."
 prose_py="skills/ktl-prose/scripts/prose-check.py"
@@ -1238,7 +1255,7 @@ expect_prose() {
   fi
 }
 pc="$(mktemp -d)"
-# The three style rules, one finding each, with the line it sits on.
+# The style rules, one finding each, with the line it sits on.
 printf '# A page\n\nThe gate is strict - it checks every change.\n\nWe run the check in order to catch drift.\n\nThe gate reads every changed file in the bundle and then compares each one against the earlier version that the repository holds and then reports every difference that it finds to the person who asked for the check before it lets the change go any further.\n' > "$pc/bad.md"
 expect_prose 1 "bad.md:3: dash:" "a dash used as punctuation is reported with its line" -- "$pc/bad.md"
 expect_prose 1 "bad.md:5: words:" "a stock phrase is reported with its line" -- "$pc/bad.md"
@@ -1250,6 +1267,32 @@ expect_prose 0 "OK" "a higher --max-words lets that sentence pass" -- --max-word
 # shellcheck disable=SC2016 # the backticks are Markdown, not a command
 printf -- '---\ntitle: A - B\n---\n\n# A heading - with a dash\n\nRun `a - b` to subtract.\n\n```text\nx - y\n```\n\nThe button reads "X - Y" when it is ready.\n\nPick *Wrong - send back* when you are unsure.\n\n| Field | Value |\n| --- | --- |\n| a | - |\n' > "$pc/quiet.md"
 expect_prose 0 "OK" "a dash is left alone in frontmatter, a heading, code, a quotation, a short label and a table cell" -- "$pc/quiet.md"
+# A figure of speech is a listed word, and the same letters inside another
+# word or a code span are not.
+# shellcheck disable=SC2016 # the backticks are Markdown, not a command
+printf '# A page\n\nThe fix lands in the next release.\n\nThe arm64 runner checks the wire-format, and `ships` is a code span.\n' > "$pc/figure.md"
+expect_prose 1 'figure.md:3: words: "lands"' "a figure of speech is reported with its line" -- "$pc/figure.md"
+sed -n '5p' "$pc/figure.md" > "$pc/literal.md"
+expect_prose 0 "OK" "a figure's letters inside another word or a code span are left alone" -- "$pc/literal.md"
+# A paragraph or a list item past 150 words is reported, and a table cell is
+# not: a cell has no room to split.
+para=""
+for _ in $(seq 32); do para+="Each check reads one file. "; done
+printf '# A page\n\n%s\n\n- %s\n' "$para" "$para" > "$pc/para.md"
+expect_prose 1 "para.md:3: paragraph: 160 words in one paragraph" "a paragraph over 150 words is reported with its line" -- "$pc/para.md"
+expect_prose 1 "para.md:5: paragraph: 160 words in one list item" "a list item over 150 words is reported as one" -- "$pc/para.md"
+expect_prose 0 "OK" "a higher --max-paragraph lets them pass" -- --max-paragraph 200 "$pc/para.md"
+printf '| a | b |\n| --- | --- |\n| %s | x |\n' "$para" > "$pc/cell.md"
+expect_prose 0 "OK" "a table cell is no paragraph, however long" -- "$pc/cell.md"
+# A character no reader sees is reported in code as well as in prose, and a
+# rewording that adds one is refused. printf writes each from its UTF-8 bytes,
+# so this file holds none.
+# shellcheck disable=SC2016 # the backticks are Markdown, not a command
+printf '# A page\n\nRun `a\xe2\x80\xaeb` now.\n' > "$pc/override.md"
+expect_prose 1 "override.md:3: unseen: U+202E RIGHT-TO-LEFT OVERRIDE" "a right-to-left override is reported, inside a code span too" -- "$pc/override.md"
+printf '# A page\n\nPlain text.\n' > "$pc/u-old.md"
+printf '# A page\n\nPlain\xe2\x80\x8b text.\n' > "$pc/u-new.md"
+expect_prose 1 "u-new.md:3: unseen: U+200B ZERO WIDTH SPACE is new" "a rewording that adds a zero-width space is refused" -- --before "$pc/u-old.md" "$pc/u-new.md"
 
 # --before on plain files: wording may change, and nothing else.
 plain() { printf -- '---\ntitle: %s\n---\n\n# Guide\n\n%s\n\n<!-- lokf:related -->\n[[%s]]\n<!-- /lokf:related -->\n' "$1" "$2" "$3"; }
@@ -1336,19 +1379,25 @@ expect_prose 2 "usage" "no argument is a usage error" --
 expect_prose 0 "rewrite" "this repository's own bundle is given its verdicts" -- --bundle .lokf/knowledge
 expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- skills/ktl-prose/SKILL.md skills/ktl-prose/references/*.md
 
-# 19. knowledge-apply.sh is the librarian's only pen, so it has to earn the
-#     refusals the skill promises: nothing lands unless every operation
-#     passes; a human: actor anywhere, a rewrite of text a person wrote and
-#     the deletion of a concept a person confirmed are refused; a person's
-#     own verified event survives a patch; the index bullets and the log
-#     heading are kept in step; the lokf:related block survives a rewrite; a
-#     handled feedback entry leaves feedback.md for the ledger, with the
-#     reader's question in a code span; a dry run writes nothing; a quoted
-#     timestamp keeps its double quotes; reindex re-derives a bullet without
-#     touching the concept; resolve withdraws the librarian's own question and
-#     never a person's note; a root index shaped by hand keeps its shape; the
-#     hand-off reaches the file --handoff names as plain single lines and
-#     never the bundle; and --format prints the block patch.md shows.
+# 19. knowledge-apply.sh is the pen, the librarian's only way to write the
+#     bundle, so it has to earn the refusals the skill promises:
+#       - nothing is written unless every operation passes;
+#       - a human: actor anywhere, a rewrite of text a person wrote and the
+#         deletion of a concept a person confirmed are refused;
+#       - a person's own verified event survives a patch;
+#       - the index bullets and the log heading are kept in step;
+#       - the lokf:related block survives a rewrite;
+#       - a handled feedback entry leaves feedback.md for the ledger, with the
+#         reader's question in a code span;
+#       - a dry run writes nothing;
+#       - a quoted timestamp keeps its double quotes;
+#       - reindex re-derives a bullet without touching the concept;
+#       - resolve withdraws the librarian's own question and never a person's
+#         note;
+#       - a root index shaped by hand keeps its shape;
+#       - the hand-off reaches the file --handoff names as plain single lines,
+#         and never the bundle;
+#       - --format prints the block patch.md shows.
 say ""
 say "Exercising knowledge-apply.sh..."
 apply="$repo_root/$templates/scripts/knowledge-apply.sh"
@@ -1495,9 +1544,9 @@ else
   err "the dry run wrote something or lost the patch file: $out"
 fi
 # The hand-off: lines for the reviewer, which never reach the bundle. The pen
-# holds each to one line of printable text with no backtick, writes them to
-# the file --handoff names, empties that file when a patch has none, and
-# refuses a hand-off that is not a short list of short lines.
+# accepts each only as one line of printable text with no backtick. It writes
+# them to the file --handoff names, empties that file when a patch has none,
+# and refuses a hand-off that is not a short list of short lines.
 khand="$ka/handoff.txt"
 cat > "$kpatch" <<'EOF'
 ops:
@@ -1570,11 +1619,14 @@ fi
 rm -rf "$ka"
 # A root index a person shaped by hand keeps its shape. Its sections may be
 # `##` headings, and a line may list several concepts or name one in a
-# sentence. The pen rewrites every line that holds one concept's link alone
-# and nothing else; files a new bullet under the folder's heading at whatever
-# level it has, or in the section that links the folder's index.md, but never
-# under the title; on delete takes the link out of a list of links and leaves
-# no double blank line; and refuses a delete that would reword a sentence.
+# sentence. The pen:
+#   - rewrites every line that holds one concept's link alone and nothing else;
+#   - files a new bullet under the folder's heading at whatever level it has,
+#     or in the section that links the folder's index.md, but never under the
+#     title;
+#   - on delete, takes the link out of a list of links and leaves no double
+#     blank line;
+#   - refuses a delete that would reword a sentence.
 ka="$(mktemp -d)"; kb="$ka/.lokf/knowledge"; kpatch="$ka/.lokf/patch.yaml"; mkdir -p "$kb/glossary" "$kb/org"
 kvocab='The vocabulary ([index](glossary/index.md)): [Risk](glossary/risk.md), [Taxonomy](glossary/taxonomy.md)'
 kmulti='* [Acme Corp](org/acme.md), [Widget Co](org/widget.md)'
@@ -1639,9 +1691,9 @@ apply_refuses "deleting a concept a sentence links, with a comma after the link"
 printf '%s\n' 'ops:' '  - {op: delete, path: glossary/harm.md, log: gone}' > "$kpatch"
 apply_refuses "deleting a concept a sentence links, with no comma" "inside other text"
 rm -rf "$ka"
-# The format travels with the script that enforces it, so a host needs no
-# particular release of the skill to learn it; the skill's page shows the
-# same block, and the two are held equal here.
+# The format comes from the script that enforces it, so a host needs no
+# particular release of the skill to learn it. The skill's page shows the
+# same block, and this check keeps the two equal.
 # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
 if diff <(bash "$apply" --format) <(awk '/^```yaml$/ {on = 1; next} /^```$/ {on = 0} on' skills/ktl-librarian/references/patch.md) >/dev/null; then
   ok "knowledge-apply.sh --format prints the block ktl-librarian's references/patch.md shows"
@@ -1651,10 +1703,14 @@ fi
 
 # 20. knowledge-report.sh computes what the skills used to have a model work
 #     out, so it has to get the arithmetic right on every layout the format
-#     allows: the health line; each label, with a same-day edit told from its
-#     confirmation by the two times compared whole; a retired concept counted
-#     once; events written as a block list, a flow sequence or a bare
-#     mapping; an open question read only under its real heading. A source
+#     allows:
+#       - the health line;
+#       - each label, with a same-day edit told from its confirmation by the
+#         two times compared whole;
+#       - a retired concept counted once;
+#       - events written as a block list, a flow sequence or a bare mapping;
+#       - an open question read only under its real heading.
+#     A source
 #     has moved when history, not a clock, puts its last commit after the one
 #     that recorded the event, or when it carries an uncommitted edit; one
 #     changed in the same commit has not. And no reader's words leave it,
@@ -1819,6 +1875,61 @@ else
   err "report script quiet: a bundle with no history failed some other way: $out"
 fi
 rm -rf "$kq" "$nogit"
+
+# 21. No tracked file holds a character a reader cannot see. That is a
+#     control character other than a tab or a line's closing carriage return,
+#     or a format character, such as a zero-width space, a byte order mark or
+#     the right-to-left override that the "Trojan Source" attack
+#     (CVE-2021-42574) hides code behind. A diff shows none of them, and GitHub warns of only
+#     some. An agent that types such a character's escape into a tool call
+#     can write the character itself, which once put three of them into a
+#     sanitizer here. Code that needs one spells it as an escape.
+say ""
+say "Searching tracked files for characters a reader cannot see..."
+read -r -d '' unseen_py <<'PY' || true
+import sys, unicodedata
+hits = 0
+for raw in sys.stdin.buffer.read().split(b"\0"):
+    try:
+        with open(raw, "rb") as handle:
+            data = handle.read()
+    except OSError:
+        continue
+    if b"\0" in data[:8000]:
+        continue
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        continue
+    for number, line in enumerate(text.split("\n"), start=1):
+        for char in sorted(set(line[:-1] if line.endswith("\r") else line)):
+            kind = unicodedata.category(char)
+            if kind == "Cf" or (kind == "Cc" and char != "\t"):
+                hits += 1
+                print(f"{raw.decode('utf-8', 'replace')}:{number}: U+{ord(char):04X} {unicodedata.name(char, '')}".rstrip())
+sys.exit(1 if hits else 0)
+PY
+if command -v python3 >/dev/null 2>&1; then
+  unseen_run=(python3 -c "$unseen_py")
+elif command -v uv >/dev/null 2>&1; then
+  unseen_run=(uv run --quiet --no-project python -c "$unseen_py")
+else
+  unseen_run=(false)
+  err "neither python3 nor uv is on PATH, so no tracked file was searched for characters a reader cannot see"
+fi
+if unseen_out="$(git ls-files -z | "${unseen_run[@]}" 2>&1)"; then
+  ok "no tracked file holds a character a reader cannot see"
+else
+  err "these tracked lines hold a character a reader cannot see; delete it, or spell it as an escape in code: $unseen_out"
+fi
+unseen_dir="$(mktemp -d)"
+printf 'echo ok # a\xe2\x80\xaeb\n' > "$unseen_dir/planted.sh"
+if printf '%s\0' "$unseen_dir/planted.sh" | "${unseen_run[@]}" >/dev/null 2>&1; then
+  err "the search missed a right-to-left override planted in a script"
+else
+  ok "the search finds a right-to-left override planted in a script"
+fi
+rm -rf "${unseen_dir:?}"
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

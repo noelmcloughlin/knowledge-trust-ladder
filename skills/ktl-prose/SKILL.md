@@ -1,8 +1,8 @@
 ---
 name: ktl-prose
-description: 'Reword the concept bodies of a `.lokf/` knowledge bundle into plain English, changing the wording and never a fact. Use when: someone asks for a plain-prose or plain-English pass, a restyle, shorter sentences or a style audit of the bundle; or says its concepts read as if an agent wrote them. Works between ktl-librarian and ktl-curator: it rewords only a body an agent wrote and no person has confirmed, leaves every byte of frontmatter alone, and checks by script that code, links and numbers came through unchanged. Applies the same rules to another Markdown file only when a person names it. Not for deriving, correcting or confirming what a concept claims; that is ktl-librarian / ktl-curator. Keywords: plain English, plain language, readability, style guide, technical writing, copy editing, OKF, LOKF, WikiSkill, trust ladder.'
+description: 'Reword the concept bodies of a `.lokf/` knowledge bundle into plain English, changing the wording and never a fact. Use when: someone asks for a plain-prose or plain-English pass, a restyle, shorter sentences or paragraphs, plainer words in place of jargon, or a style audit of the bundle; or says its concepts read as if an agent wrote them. Works between ktl-librarian and ktl-curator: it rewords only a body an agent wrote and no person has confirmed, leaves every byte of frontmatter alone, and checks by script that code, links and numbers came through unchanged. Applies the same rules to another Markdown file only when a person names it. Not for deriving, correcting or confirming what a concept claims; that is ktl-librarian / ktl-curator. Keywords: plain English, plain language, readability, style guide, technical writing, copy editing, OKF, LOKF, WikiSkill, trust ladder.'
 license: Apache-2.0
-compatibility: 'Works on a `.lokf/` bundle laid down by ktl-sidecar. The check script needs python3 3.9 or later, or uv; without either, apply the rules by hand and say in the hand-off that no script ran. git supplies the earlier version of a file to compare against; without git, keep a copy before rewriting.'
+compatibility: 'Works on a `.lokf/` bundle installed by ktl-sidecar. The check script needs python3 3.9 or later, or uv; without either, apply the rules by hand and say in the hand-off that no script ran. git supplies the earlier version of a file to compare against; without git, keep a copy before rewriting.'
 ---
 
 # ktl-prose
@@ -25,13 +25,13 @@ It is a copy editor, not an author. The librarian stays the maker of every conce
 
 1. Put the actor first and the verb early.
 2. Give every sentence a verb, and start an instruction with it. Spell out `do not` in an instruction.
-3. Keep one idea to a sentence. Split one that runs past 40 words, and look twice at one past 30.
+3. Keep one idea to a sentence and one topic to a paragraph. Split a sentence past 40 words and a paragraph past 150, and look twice at a sentence past 30 or a paragraph past 100.
 4. Say the step, then the reason.
 5. Use no dash as punctuation. A colon introduces, commas or parentheses set an aside apart, and a full stop ends the thought.
 6. Turn a long aside in parentheses into a sentence of its own.
 7. Turn a run of conditions or steps into a list, every item in the same form.
 8. Use the same word for the same thing every time.
-9. Choose the plain word, keep each technical term exact, define a term where it first appears, and write abbreviations out.
+9. Choose the plain word, and say literally what happens: a key is "added", not "landed". Keep each technical term exact, define a term where it first appears, and write abbreviations out.
 10. Cut words that carry nothing. Keep a hedge that states a real condition.
 11. Say what is, and what to do. Keep a prohibition that guards something.
 12. Open each page by saying who it is for and what it gives them.
@@ -86,13 +86,15 @@ The check script is `scripts/prose-check.py` in this skill's directory. Run it w
    python3 <skill>/scripts/prose-check.py --bundle .lokf/knowledge
    ```
 
-2. Run the three style rules over the files it marks `rewrite`. Each finding is a candidate, not a verdict:
+2. Run the style checks over the files it marks `rewrite`. Each finding is a candidate, not a verdict:
 
    ```sh
    python3 <skill>/scripts/prose-check.py <files>
    ```
 
-3. Read those files. Only a reader sees a late verb, a reason given before its step, or two names for one thing.
+3. Read those files. Only a reader sees a late verb, a reason given before its step, two names for one thing, or a figure of speech the script does not list.
+
+An `unseen` finding is a character no reader sees, such as a zero-width space or a right-to-left override. Delete it in Step 2 where you may reword. In code, in a quotation or in a concept you may not touch, report it with its line and leave it.
 
 Then print the report, and keep it to one screen:
 
@@ -100,13 +102,14 @@ Then print the report, and keep it to one screen:
 Plain prose: <bundle title>, <YYYY-MM-DD>
 To reword: <n> concepts. Left alone: <a> confirmed by a person, <b> written by a person, <c> retired, <d> unreadable, <e> with no record of who wrote them.
 
-<path>: <n> dashes, <n> sentences over 40 words, <n> listed words. <what a reader saw, in one line>
+<path>: <n> dashes, <n> sentences over 40 words, <n> paragraphs over 150 words, <n> listed words. <what a reader saw, in one line>
 (one line per concept to reword)
 
 Worth a look first (up to five sentences, each quoted in full):
 1. <path>:<line>: "<sentence>"
 
 Confirmed by a person, and hard to read: <path> (<what the check found>)   | or: none
+Characters no reader sees: <path>:<line> (<code point>)   | or: none
 Reword these <n> concepts now?
 ```
 
@@ -137,7 +140,7 @@ python3 <skill>/scripts/prose-check.py --against HEAD <files>     # a file git a
 python3 <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied in Step 2
 ```
 
-A **finding** names something other than wording that differs: a number, a link, a code span, a quotation, a fenced block, a frontmatter byte, or a body a person vouched for. Undo what it names. A rewording has no reason to change any of them.
+A **finding** names something other than wording that differs: a number, a link, a code span, a quotation, a fenced block, a frontmatter byte, a body a person vouched for, or a character no reader sees that the rewording added. Undo what it names. A rewording has no reason to change any of them. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
 
 A **note** asks you to look again: a number written as a word, a `must` or a `not` that came or went, a text that grew.
 

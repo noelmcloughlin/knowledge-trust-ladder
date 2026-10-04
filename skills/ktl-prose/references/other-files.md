@@ -11,7 +11,7 @@ Work outside the bundle only on a file the person names in a turn addressed to y
 - **A record of the past**: the released sections of a changelog, a log, a captured transcript. Rewording it changes what was said.
 - **Text taken from elsewhere**: a licence, a code of conduct, a quoted specification.
 - **An installed copy**: anything under `.agents/` or `.claude/`. Reword the source it was installed from.
-- **A file ktl-sidecar laid down**: everything under `.lokf/` outside `knowledge/`, and the three `knowledge-*.yaml` workflows. Each is a copy of a template, and an edited copy is what the sidecar's next repair replaces.
+- **A file ktl-sidecar installed**: everything under `.lokf/` outside `knowledge/`, and the three `knowledge-*.yaml` workflows. Each is a copy of a template, and an edited copy is what the sidecar's next repair replaces.
 
 ## Before you reword a source
 
@@ -42,7 +42,7 @@ Hand off the files the person named and no others. Give the counts before and af
 
 ## Comments in scripts and workflows
 
-The script reads Markdown. A comment gets the same rules by hand.
+The script reads Markdown. A comment gets the same rules by hand. A block of comment lines is a paragraph: split a long one with an empty comment line where its topic turns.
 
 Never touch either of these:
 

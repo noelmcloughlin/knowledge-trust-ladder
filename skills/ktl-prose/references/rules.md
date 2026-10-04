@@ -1,6 +1,6 @@
 # The rules: plain English for a knowledge bundle
 
-This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the two hand passes that set this style, in the repository these skills ship from. A script checks three of the rules, and a reader checks the rest.
+This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from. A script checks parts of four of the rules, and a reader checks the rest.
 
 One rule stands above the thirteen: a rewording changes the wording and never a fact. When a rule and a fact pull apart, the fact wins and the sentence stays as it was.
 
@@ -30,7 +30,7 @@ Spell out `do not` in an instruction. The second pass cut contractions from 49 t
 
 It gives way in a label, a table cell or a list item that only names a thing.
 
-## 3. Keep one idea to a sentence
+## 3. Keep one idea to a sentence, and one topic to a paragraph
 
 Split a sentence that runs past 40 words, and look twice at one past 30. A semicolon that joins two ideas becomes a full stop.
 
@@ -41,7 +41,20 @@ After:  The number to watch is **confirmed by a person: n of N**. It is meant to
 
 The script reports each such sentence as `long`. It counts 29 in the docs before the first pass and 11 after it, and 96 in the skills before the second pass and 31 after it.
 
-It gives way to sense. The aim is that every word tells, and some sentences need their length. A semicolon is right in a series whose items hold commas.
+A paragraph holds one topic, and its first sentence says what that topic is. Split a paragraph that runs past 150 words where its topic turns, and look twice at one past 100. Hold a list item to the same limit: a long one becomes a short item with a paragraph under it. Strunk makes the paragraph "the unit of composition", and its break the sign that "a new step in the development of the subject has been reached". A long block also costs the reader before they start. Zinsser warns that "one long chunk of type can discourage the reader from even starting to read".
+
+```text
+Before: Commits typed with Conventional Commits decide the version [...] All five skills ship together under that one tag. After a release that changes a template [...] once a sibling arms its scheduled librarian, the pin decides which instructions run unattended. [How the three repositories release](docs/releasing.md) has the whole pipeline [...]
+After:  Commits typed with Conventional Commits decide the version [...] All five skills are released together under that one tag.
+
+        After a release that changes a template [...] once a sibling turns on its scheduled librarian, the pin decides which instructions run unattended.
+
+        [How the three repositories release](docs/releasing.md) has the whole pipeline [...]
+```
+
+The script reports each paragraph or list item past 150 words as `paragraph`, and never a table cell. The limit is the Federal Plain Language Guidelines' "no more than 150 words in three to eight sentences". The script counts 21 in the docs and skills before the third pass and none after it.
+
+It gives way to sense. The aim is that every word tells, and some sentences need their length. A semicolon is right in a series whose items hold commas. A paragraph gives way to an argument that a break would cut in two. Split where the topic turns, never at a word count: a page of one-sentence paragraphs is as hard to follow as one block, since nothing groups its sentences.
 
 ## 4. Say the step, then the reason
 
@@ -63,7 +76,7 @@ Before: Everything is computed from frontmatter with an ordinary YAML parser - n
 After:  Everything is computed from frontmatter with an ordinary YAML parser: no toolkit, no graph.
 ```
 
-This is a house rule, and it is stricter than the style books. Two things earn it a place. A spaced dash that lands at the start of a wrapped line becomes a list item in Markdown, and the dash is the plainest mark of an agent's voice. The script reports each one as `dash`. It counts 64 in the docs before the first pass and 18 after it, and 218 in the skills before the second pass and 2 after it.
+This is a house rule, and it is stricter than the style books. Two things justify it. A spaced dash that wrapping moves to the start of a line becomes a list item in Markdown, and the dash is the plainest mark of an agent's voice. The script reports each one as `dash`. It counts 64 in the docs before the first pass and 18 after it, and 218 in the skills before the second pass and 2 after it.
 
 It gives way inside code, a quotation, a heading and a literal output string. It gives way in a name too, such as the curator's verb *Wrong - send back*. A hyphen inside a word is not a dash.
 
@@ -112,12 +125,36 @@ Write "use" for "utilise", "to" for "in order to" and "because" for "due to the 
 
 ```text
 Before: [...] a public key it carries under `.lokf/curators/`, named after your forge login. Export the key you sign with and open a pull request holding only that file - the gate refuses a change that lands a key and a confirmation by its holder together:
-After:  [...] a public key it carries under `.lokf/curators/`. The file is named after your login on the forge (GitHub, GitLab or Forgejo). Export the key you sign with and open a pull request holding only that file. The gate, the CI job that checks a pull request, refuses a change that lands a key and a confirmation by its holder together:
+After:  [...] a public key it carries under `.lokf/curators/`. The file is named after your login on the forge (GitHub, GitLab or Forgejo). Export the key you sign with and open a pull request holding only that file. The gate, the CI job that checks a pull request, refuses a change that adds a key and a confirmation by its holder together:
 ```
 
 The second pass cut "PR" from 45 to 5 and "e.g." from 8 to 3. The script reports the stock phrases above, and "e.g.", as `words`.
 
-It gives way to an abbreviation that is the thing's own name: CI, YAML, IRI. A term the page has defined needs no second definition.
+Say literally what happens. A figure of speech a team uses every day still makes a newcomer stop and turn the picture back into the action, and an agent or a translation tool may take it at its word. A key is not "landed": it is added in a pull request. An identifier is not "minted": the pen builds it from `base_iri` and the path. The GOV.UK style guide lists "land (unless you're talking about aircraft)" among its words to avoid, and says that metaphors "do not say what you actually mean". The Federal Plain Language Guidelines say why a team misses this: writers "often fail to realize that terms they know well may be difficult or meaningless to their audience".
+
+```text
+Before: So nobody registers a key and vouches with it in one step; a key lands in its own reviewed change first.
+After:  So nobody registers a key and vouches with it in one step; a key is added in its own reviewed change first.
+
+Before: `base_iri` plus a concept's path mints its IRI. Never remove these keys, and never mint inside a URL space the project does not control.
+After:  A concept's IRI is `base_iri` plus its path. Never remove these keys, and never build IRIs in a URL space the project does not control.
+```
+
+The third pass replaced the figures below. The script reports the words of the first five rows as `words`, since none is literal in a technical text. The words of the last four have literal uses too, so a reader decides.
+
+| Figure | Say instead |
+| --- | --- |
+| "land", "lands", "landed" | "is merged", "is added", "is written" or "is installed" |
+| "mint", "minted" | "builds", "makes" or "issues" |
+| "ship", "ships", "shipped" | "is released", "is published", "includes" or "holds" |
+| "arm", "armed", "wire", "wiring" | "turn on", "set up", "connect" or "link" |
+| "dogfood", "load-bearing" | "uses its own", or say what depends on it |
+| "lay down", "laid down" | "install", "copy" or "create" |
+| "travels with", "reads off" | "is uploaded with", "checks on" or "finds on" |
+| "holds every other hand to the same" | "asks the same of every other writer" |
+| "desk", "door" | the role or the place, by its name |
+
+It gives way to an abbreviation that is the thing's own name: CI, YAML, IRI. A term the page has defined needs no second definition. A figure gives way to a name the project defines, such as *the pen* or *the doorway*, once its page has defined it. It gives way too to a term of art the reader's own field uses in that exact sense, such as pinning a version.
 
 ## 10. Cut words that carry nothing
 
@@ -169,17 +206,20 @@ Report a vague quantity, a sentence you cannot parse and a claim that looks wron
 
 Plain wording is no proof of a true claim. Paul Graham argues that writing which sounds good is more likely to be right, because the writer who repairs a clumsy sentence often has to repair the idea in it. He limits that to writing used to develop ideas. A copy editor who smooths another's sentence gets the sound without the repair.
 
-## Three things to know about the rules
+## Four things to know about the rules
 
 - **The rules are defaults.** Strunk opens his own rules by observing that "the best writers sometimes disregard the rules of rhetoric". That is why each rule above says when it gives way.
 - **Rules 4, 5 and 6 are house rules, stricter than the books.** The conventions the gate checks are stricter than OKF in the same way. The reason is the same: an agent told a rule in prose breaks it, and a strict rule is one a script can check.
-- **A script sees three rules.** `scripts/prose-check.py` reports `dash`, `long` and `words`, and each finding is a candidate, not a verdict. It skips frontmatter, fenced blocks, code spans, link targets, headings, quotations and a short emphasised label. The other ten rules need a reader.
+- **A script sees part of four rules.** `scripts/prose-check.py` reports `long` and `paragraph` for rule 3, `dash` for rule 5, and `words` for rules 9 and 10. Each finding is a candidate, not a verdict. It skips frontmatter, fenced blocks, code spans, link targets, headings, quotations and a short emphasised label. The other nine rules need a reader, and so does every figure of speech it does not list.
+- **The script also reports a character no reader sees, as `unseen`.** That is no rule of style but a hazard. A zero-width space or a byte order mark renders as nothing. A right-to-left override reorders what a reader sees: the "Trojan Source" attack (CVE-2021-42574) uses it to make code read differently from how it runs. An agent that types such a character's escape into a tool call can write the character itself. Delete one from prose you may reword, and report one in code, in a quotation or in a concept you may not touch.
 
 ## What was left out, and why
 
 - **Fiction craft**: voice, the senses, dialogue tags. A bundle states facts.
 - **Advice to vary your words.** It is rule 8 reversed.
 - **Praise of the sentence that holds its main clause back.** It is rule 1 reversed.
+- **Orwell's rule against the passive.** Rule 1 puts the actor first already, and gives way to a passive when the actor does not matter.
+- **Varying the length of paragraphs for interest.** The Federal Plain Language Guidelines advise it. A bundle splits where the topic turns, and lets the lengths fall where they fall.
 - **Hart's taste for the long form.** He writes "If you must choose between elegance and perfect clarity [...] always choose elegance", and "more is more and less is less". A bundle chooses clarity. He also makes the best case against rules 3 and 5: "A writer who disdains the semicolon is a fool", and of the dash, "Use it with abandon".
 - **Contractions as a blanket rule.** The sources split, and the two passes kept them in prose written for people.
 
@@ -192,8 +232,11 @@ The addresses sit in a fenced block so that a link checker does not fetch sites 
 | NBS, "Five essential tips for writing effective specifications" | In full | Rules 8, 9, 10 and 13. Its seven Cs include clear, concise and consistent, and the spare tiles are its example. |
 | Paul Graham, "Good Writing" (2025) | In full | Rule 13, and the limit on what a rewording can promise. |
 | David Bentley Hart's "How to Write English Prose" | In full | Rules 8 and 9: "Do not use a thesaurus", and "Know the names of things and the names of places". He argues against rules 3, 5 and 10. |
-| Strunk and White, *The Elements of Style*, fourth edition | The table of contents, and Strunk's text of 1918 | Rules 1, 2, 3, 5, 7, 9, 10, 11 and 12. Rule 1 is its "Keep related words together", rule 7 its "Express coordinate ideas in similar form", rule 10 its "Omit needless words", and rule 11 its "Put statements in positive form". |
-| William Zinsser, *On Writing Well* | Secondary pages that quote the book | Rules 3, 4, 8, 9, 10 and 12: clutter, unity, and the first sentence. |
+| Strunk and White, *The Elements of Style*, fourth edition | The table of contents, and Strunk's text of 1918 | Rules 1, 2, 3, 5, 7, 9, 10, 11 and 12. Rule 1 is its "Keep related words together", rule 3's paragraph its "Make the paragraph the unit of composition", rule 7 its "Express coordinate ideas in similar form", rule 10 its "Omit needless words", and rule 11 its "Put statements in positive form". |
+| William Zinsser, *On Writing Well* | Secondary pages that quote the book | Rules 3, 4, 8, 9, 10 and 12: clutter, unity, short paragraphs and the first sentence. |
+| GOV.UK style guide, "A to Z", its words to avoid | The entry in full | Rule 9's figures of speech: "land (unless you're talking about aircraft)", and the advice to replace a metaphor "by breaking the term into what you're actually doing". |
+| Federal Plain Language Guidelines, March 2011, revised May 2011 | The sections on jargon, short paragraphs and topic sentences | Rule 3's paragraph limit, and rule 9's warning about terms a team knows well. |
+| George Orwell, "Politics and the English Language" (1946) | Its six rules, and its passage on dying metaphors | Rule 9: "Never use a metaphor, simile or other figure of speech which you are used to seeing in print". |
 | Writer's Digest, on basic writing principles | In full | Rules 3 and 7. |
 | Grammarly, on words to cut | In full | Rule 3, and the list behind rule 10. |
 | The Write Practice, on Strunk and White | In full | The habit behind the check: keep the original beside what you have rewritten. |
@@ -205,5 +248,10 @@ https://www.paulgraham.com/goodwriting.html
 https://thelampmagazine.com/blog/how-to-write-english-prose
 https://www.goodreads.com/book/show/51478748-the-elements-of-style-fourth-edition
 https://www.goodreads.com/book/show/53343.On_Writing_Well
+https://www.gutenberg.org/ebooks/37134
+https://www.advicetowriters.com/advice/2015/3/1/short-paragraphs.html
+https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/style-guides/a-to-z-style-guide/
+https://www.fai.gov/sites/fai/files/2016-12-22-Federal-Rulemaking-VAAR-FederalPLGuidelines.pdf
+https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/
 https://www.thenovelry.com/blog/good-writing
 ```

@@ -8,10 +8,17 @@
 # text break a rule a script can see? Did a rewording change anything but the
 # wording? Whether the meaning held is a question for a reader.
 #
-#   prose-check.py FILE...                three style rules: dash, long, words
+#   prose-check.py FILE...                what a script sees: dash, long, paragraph, words, unseen
 #   prose-check.py --before OLD NEW       what differs besides the wording
 #   prose-check.py --against REF FILE...  the same, against the version git holds at REF
 #   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword
+#
+# `unseen` is a character no reader sees: a control character other than a
+# tab, or a format character such as a zero-width space or the right-to-left
+# override that the "Trojan Source" attack hides code behind. An agent that
+# types the escape for one into a tool call can write the character itself.
+# A style run reports each line that holds one, code and frontmatter included,
+# and a comparison reports one the rewording added.
 #
 # The contract is the one knowledge-conventions.sh keeps, with a line number
 # and a rule name added. Each finding is one line on stdout, as
@@ -31,11 +38,14 @@ import re
 import subprocess
 import sys
 import textwrap
+import unicodedata
 from collections import Counter
 from pathlib import Path
 
 RESERVED = {"index.md", "log.md", "diataxis.md"}
 MAX_WORDS = 40
+# The Federal Plain Language Guidelines' ceiling for a paragraph.
+MAX_PARAGRAPH = 150
 # One private-use character stands in for each character a rule skips, so
 # every offset and line number stays true after masking.
 MASK = ""
@@ -50,8 +60,25 @@ WORDS = {
     "due to the fact that": 'write "because"',
     "e.g.": 'write "for example"',
 }
+# The figures of speech the third pass replaced, each with its forms. Each
+# names an action by a picture, and a reader new to the trade has to turn the
+# picture back into the action. None of them is literal in a technical text.
+FIGURES = {
+    ("land", "lands", "landed", "landing"): 'say what happens, such as "is merged", "is added" or "is written"',
+    ("mint", "mints", "minted", "minting"): 'say what happens, such as "makes", "builds" or "issues"',
+    ("ship", "ships", "shipped", "shipping"): 'say what happens, such as "is released" or "is included"',
+    ("arm", "arms", "armed", "arming"): 'say what happens, such as "turn on"',
+    ("wire", "wires", "wired", "wiring"): 'say what happens, such as "connect", "add" or "set"',
+    ("dogfood", "dogfoods", "dogfooded", "dogfooding"): 'say what happens, such as "uses its own"',
+    ("load-bearing",): "say what depends on it",
+}
+WORDS.update((form, advice) for forms, advice in FIGURES.items() for form in forms)
+# A letter, a digit, an underscore or a hyphen on either side makes another
+# word: `arm64`, `wire-format`.
 WORD = re.compile(
-    r"(?<![A-Za-z])(?:deliberately|honestly|in order to|due to the fact that)(?![A-Za-z])|(?<![A-Za-z])e\.g\.",
+    r"(?<![\w-])(?:"
+    + "|".join(sorted((re.escape(word) for word in WORDS if word != "e.g."), key=len, reverse=True))
+    + r")(?![\w-])|(?<![A-Za-z])e\.g\.",
     re.I,
 )
 # A spaced hyphen, an em dash anywhere, and an en dash that is not a range.
@@ -142,9 +169,13 @@ class Doc:
 
 
 class Block:
-    """A run of prose joined into one string, with the line each character sits on."""
+    """A run of prose joined into one string, with the line each character sits on.
 
-    def __init__(self):
+    Its kind is `paragraph`, `item` for a list item, or `cell` for a table cell.
+    """
+
+    def __init__(self, kind: str = "paragraph"):
+        self.kind = kind
         self.text = ""
         self.starts: list[int] = []
         self.numbers: list[int] = []
@@ -296,7 +327,7 @@ def bundle_root(path: Path) -> Path | None:
     return None
 
 
-# --- the three style rules -----------------------------------------------------
+# --- what a script can see of the style rules ----------------------------------
 
 
 def hide(text: str, start: int, end: int) -> str:
@@ -395,7 +426,7 @@ def prose_blocks(doc: Doc):
         if marker:
             content = content[marker.end() :]
         if block is None:
-            block = Block()
+            block = Block("item" if marker else "paragraph")
         block.add(number, content.strip())
     if block:
         yield block
@@ -415,7 +446,7 @@ def cells(number: int, row: str):
     for text in texts:
         if text in ("-", "–", "—"):
             continue
-        block = Block()
+        block = Block("cell")
         block.add(number, text)
         yield block
 
@@ -436,11 +467,21 @@ def excerpt(text: str, start: int, end: int, room: int = 30) -> str:
     return ("..." if left else "") + text[left:right].strip() + ("..." if right < len(text) else "")
 
 
-def style(doc: Doc, max_words: int) -> list[tuple[int, str, str]]:
-    """Dash, long and words: what a script can see of the house style."""
+def style(doc: Doc, max_words: int, max_paragraph: int = MAX_PARAGRAPH) -> list[tuple[int, str, str]]:
+    """Dash, long, paragraph and words: what a script can see of the house style.
+
+    A table cell is no paragraph, and a list item is held to the same limit.
+    """
     findings: list[tuple[int, str, str]] = []
     for block in prose_blocks(doc):
         hidden = mask(block.text)
+        size = len(hidden.split())
+        if block.kind != "cell" and size > max_paragraph:
+            opening = " ".join(block.text.split()[:8])
+            what = "list item" if block.kind == "item" else "paragraph"
+            findings.append(
+                (block.line_at(0), "paragraph", f'{size} words in one {what}, and the limit is {max_paragraph}: "{opening}..."')
+            )
         for start, end in sentences(hidden):
             sentence = hidden[start:end]
             if not sentence.strip():
@@ -459,6 +500,27 @@ def style(doc: Doc, max_words: int) -> list[tuple[int, str, str]]:
             for word in WORD.finditer(sentence):
                 advice = WORDS[" ".join(word.group().lower().split())]
                 findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
+    return findings
+
+
+def unseen_char(char: str) -> bool:
+    """A character no reader sees: a format character, or a control character other than a tab."""
+    kind = unicodedata.category(char)
+    return kind == "Cf" or (kind == "Cc" and char not in "\t\n")
+
+
+def described(char: str) -> str:
+    return f"U+{ord(char):04X} {unicodedata.name(char, '')}".rstrip()
+
+
+def unseen(doc: Doc) -> list[tuple[int, str, str]]:
+    """Each line that holds a character no reader sees, frontmatter and code included."""
+    findings: list[tuple[int, str, str]] = []
+    for number, line in enumerate(doc.lines, start=1):
+        chars = sorted({char for char in line if unseen_char(char)})
+        if chars:
+            names = ", ".join(described(char) for char in chars)
+            findings.append((number, "unseen", f"{names}: a character no reader sees; delete it, or write it as an escape in code"))
     return findings
 
 
@@ -634,6 +696,14 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool):
             line = 2 + next(i for i, (a, b) in enumerate(pairs) if a != b)
         findings.append((line, "frontmatter", "this line differs from the earlier text, and a rewording changes no frontmatter"))
 
+    # A character no reader sees, which no rewording has cause to add.
+    had = Counter(char for line in old.lines for char in line if unseen_char(char))
+    has = Counter(char for line in new.lines for char in line if unseen_char(char))
+    for char in sorted(has):
+        if has[char] > had[char]:
+            line = next(number for number, text in enumerate(new.lines, start=1) if char in text)
+            findings.append((line, "unseen", f"{described(char)} is new, and a rewording adds no character a reader cannot see"))
+
     # A concept somebody vouched for keeps its body. No flag turns this off.
     if concept and old.body != new.body:
         said = {
@@ -727,15 +797,18 @@ def reserved_in_bundle(path: Path) -> bool:
     return path.name in RESERVED and bundle_root(path) is not None
 
 
-def check_style(files: list[Path], max_words: int):
+def check_style(files: list[Path], max_words: int, max_paragraph: int = MAX_PARAGRAPH):
+    """The style rules for each file, and a character no reader sees in any of them."""
     findings, notes = [], []
     for path in files:
+        doc = Doc(read(path))
+        found = unseen(doc)
         if reserved_in_bundle(path):
             notes.append((path, 1, "reserved", "a reserved bundle file is not held to the style rules"))
-            continue
-        found = sorted(style(Doc(read(path)), max_words), key=lambda finding: finding[0])
-        findings.extend((path, *finding) for finding in found)
-    return findings, notes, f"{len(files)} file(s), and nothing a script can see breaks the style rules"
+        else:
+            found += style(doc, max_words, max_paragraph)
+        findings.extend((path, *finding) for finding in sorted(found, key=lambda finding: finding[0]))
+    return findings, notes, f"{len(files)} file(s), and nothing a script can see breaks the style rules or hides from a reader"
 
 
 def check_pair(label: Path, old_text: str, new_text: str, in_bundle: bool):
@@ -808,7 +881,7 @@ def list_bundle(directory: Path) -> int:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="prose-check.py",
-        usage="prose-check.py [--max-words N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR",
+        usage="prose-check.py [--max-words N] [--max-paragraph N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR",
         description="Report what a script can see of plain prose, and prove that a rewording changed only wording.",
     )
     parser.add_argument("files", nargs="*", type=Path, metavar="FILE")
@@ -816,6 +889,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--against", metavar="REF")
     parser.add_argument("--bundle", type=Path, metavar="DIR")
     parser.add_argument("--max-words", type=int, default=MAX_WORDS, metavar="N")
+    parser.add_argument("--max-paragraph", type=int, default=MAX_PARAGRAPH, metavar="N")
     if len(argv) < 2:
         parser.print_usage(sys.stderr)
         return 2
@@ -839,7 +913,7 @@ def main(argv: list[str]) -> int:
         elif args.against:
             findings, notes, fine = check_against(args.against, args.files)
         else:
-            findings, notes, fine = check_style(args.files, args.max_words)
+            findings, notes, fine = check_style(args.files, args.max_words, args.max_paragraph)
     except Usage as exc:
         print(f"prose-check.py: {exc}", file=sys.stderr)
         return 2
