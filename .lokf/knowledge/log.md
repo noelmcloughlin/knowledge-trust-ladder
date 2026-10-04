@@ -2,6 +2,13 @@
 
 ## 2026-10-04
 
+* **Prose**: Releasing; the sentence on the sync script is split into six; no fact changed.
+* **Changed**: WikiSkill's loop and Knowledge Trust Ladder; `docs/wikiskill.md` now names the design KTL and keeps *the bundle* for its corpus and *the wiki* for the paper's, and the concept follows it.
+* **Changed**: Three lines of defence; the roles are KTL's and the pages now say so, where they named them after LOKF, the format.
+* **Changed**: Threat model; the three repositories that share it are KTL's, not LOKF's.
+* **Changed**: Contributing; the sibling repositories are KTL's, as `CONTRIBUTING.md` now says.
+* **Changed**: Releasing; the three repositories are KTL's, and the sync script's every-host templates now include one from ktl-sidecar's Step 1.
+* **Added**: The pen, the name the README and `docs/for-the-curious.md` give `knowledge-apply.sh`, the librarian's only way to write the bundle.
 * **Changed**: Releasing; the sync script now lays down a template a sibling lacks when Step 5 puts it on every host or a copy there needs it, as `scripts/sync-sidecar.sh` and `docs/releasing.md` say.
 * **Changed**: Repository validation; check 19 now also holds the pen to a root index shaped by hand, which keeps its `##` sections and its lines that list several concepts.
 

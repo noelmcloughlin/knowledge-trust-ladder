@@ -1,6 +1,6 @@
 <svg width="720" height="620" viewBox="0 0 720 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
-  <title id="t">The three lines of defence, with each LOKF role in place</title>
-  <desc id="d">Above the lines, the governing body: the owners of the repository that holds the bundle, with two instruments, the organisation's rules for AI-assisted work and the curation policy. First line: the librarian, an agent that derives each record from a named source, and the curator, a named person who confirms; the sidecar lays down their tools. Second line: the registrar, a program: lokf validate and the provenance gate; the sidecar lays down the gate. Third line: independent assurance, not shipped; what ships is the evidence a reviewer would need. Outside the lines: the docent and the reader; what the docent cannot answer goes back to the librarian as untrusted feedback. Each card is coloured by who acts: green where an agent derives it, amber where deterministic tools check it, blue where a named person vouches for it.</desc>
+  <title id="t">The three lines of defence, with each KTL role in place</title>
+  <desc id="d">Above the lines, the governing body: the owners of the repository that holds the bundle, with two instruments, the organisation's rules for AI-assisted work and the curation policy. First line: the librarian, an agent that derives each record from a named source, and the curator, a named person who confirms; the sidecar lays down their tools. Second line: the registrar, a program: lokf validate, the provenance gate, the pen that writes each librarian change, and the report script that computes each trust label; the sidecar lays down the gate. Third line: independent assurance, not shipped; what ships is the evidence a reviewer would need. Outside the lines: the docent and the reader; what the docent cannot answer goes back to the librarian as untrusted feedback. Each card is coloured by who acts: green where an agent derives it, amber where deterministic tools check it, blue where a named person vouches for it.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#55544F"/>
@@ -47,9 +47,10 @@
   <text x="56" y="330" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#55544F">down the gate</text>
 
   <rect x="190" y="248" width="474" height="80" rx="6" fill="#EBE0C6" stroke="#B7791F" stroke-width="2"/>
-  <text x="427" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#744A0A">Registrar (a program)</text>
-  <text x="427" y="294" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#744A0A">lokf validate on every change, and again as the CI gate: every record well-formed</text>
-  <text x="427" y="311" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#744A0A">provenance gate: a human: verdict needs that person's own approval or signature</text>
+  <text x="427" y="268" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#744A0A">Registrar (a program)</text>
+  <text x="427" y="287" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#744A0A">lokf validate on every change, and again as the CI gate: every record well-formed</text>
+  <text x="427" y="303" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#744A0A">provenance gate: a human: verdict needs that person's own approval or signature</text>
+  <text x="427" y="319" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#744A0A">the pen writes each librarian change; the report script computes each trust label</text>
 
   <line x1="360" y1="340" x2="360" y2="368" stroke="#55544F" stroke-width="1.5" marker-end="url(#arrow)"/>
   <text x="370" y="358" font-family="Arial, sans-serif" font-size="11" fill="#55544F">the evidence, written where an auditor can find it</text>

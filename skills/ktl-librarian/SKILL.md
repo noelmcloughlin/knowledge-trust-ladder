@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: 'Requires git and a POSIX shell (bash; Git for Windows on Windows). Validation needs uv with the lokf toolkit; without it only a manual schema cross-check remains. Works against any forge or none; the scheduled loop and its pull requests are GitHub-only (references/portability.md).'
 ---
 
-# KTL Librarian
+# ktl-librarian
 
 Maintain `.lokf/`, the host repository's knowledge captured as a [**Linked Open Knowledge Format (LOKF)**](https://lokf.nolan-nichols.com/specification/) bundle. LOKF is a **semantic profile of OKF**: the same directory of Markdown + YAML frontmatter, but every field, type, and relationship is bound to a public vocabulary (schema.org / DCAT / PROV-O). So the bundle expands losslessly to JSON/JSON-LD and RDF, and is queryable with SPARQL. This skill covers the full lifecycle: **scrape -> build/maintain -> audit -> hand off for review -> keep fresh on a schedule.**
 

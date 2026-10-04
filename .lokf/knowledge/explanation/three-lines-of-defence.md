@@ -2,12 +2,12 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 title: Three lines of defence - where each role sits, and what an auditor can check
-description: "The librarian, curator, registrar, sidecar and docent placed in the IIA's Three Lines Model, for whoever adopts a bundle: who owns a claim, what a machine checks, what a person can examine afterwards, the four limits on that evidence, what the critics page answers, and what remains to do and who does it."
+description: "The librarian, curator, registrar, sidecar and docent placed in the IIA's Three Lines Model, for whoever adopts KTL: who owns a claim, what a machine checks, what a person can examine afterwards, the four limits on that evidence, what the critics page answers, and what remains to do and who does it."
 genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-04T14:21:43Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -24,9 +24,9 @@ Auditors (IIA), updated in
 [2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/)
 and reissued as a
 [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf)
-in 2026. LOKF was not built to it, but each role fits, and the page shows
+in 2026. KTL was not built to it, but each of its roles fits, and the page shows
 where in a table and a diagram (`.assets/ktl-three-lines.svg`, with a dimmed counterpart for dark mode), for any
-organisation that adopts a bundle. First line: the **librarian**, which
+organisation that adopts KTL. First line: the **librarian**, which
 derives every record from a named source and marks what it cannot settle
 `status: draft`, and the **curator**, a named person who decides what the
 team accepts as true - maker and checker, since the agent cannot vouch and
@@ -83,7 +83,7 @@ The critics have a page of their own, `docs/three-lines-critics.md`, marked
 as preliminary research and, since 2026-09-23,
 arranged by criticism rather than by critic. A table at the top lists nine
 points with who raised them and a verdict; each section then quotes the
-criticism from its source, says what a bundle does about it, and gives the
+criticism from its source, says what KTL does about it, and gives the
 verdict, and a sources list closes the page with every paper by DOI. Three
 points are met by construction: *accountability is diluted* (the UK
 Parliamentary Commission on Banking Standards, 2013; Davies and Zhivitskaya,
@@ -105,7 +105,7 @@ source and unsettled concepts stay `draft`; left open by design, since the
 registrar never judges truth and the librarian's re-check is self-review)
 and *the lines do not coordinate in practice* (Bantleon et al., 2021;
 Valkenburg and Bongiovanni, 2024; every hand-off is written down and no
-more is claimed). Three are not the bundle's role: *incentives and skill*
+more is claimed). Three are not KTL's role: *incentives and skill*
 and *a fourth line for a weak internal audit* (Arndorfer and Minto) and
 *the model's effectiveness is untested* (Davies and Zhivitskaya; Schuett),
 each of which lands on the adopting organisation or on a third line.

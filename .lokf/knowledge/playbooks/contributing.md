@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-04T14:21:43Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -58,7 +58,7 @@ facts, and `ktl-prose` changes wording and never a fact, a frontmatter byte
 or a concept a person vouched for.
 
 Participation is covered by the Contributor Covenant, shared with the
-sibling LOKF repositories ([code of conduct](../policies/code-of-conduct.md)).
+sibling KTL repositories ([code of conduct](../policies/code-of-conduct.md)).
 AI assistance is welcome - these skills exist for agents to run - but the
 person submitting is still the author, responsible for defending the change
 in review, and an agent may not take part in discussion on their behalf

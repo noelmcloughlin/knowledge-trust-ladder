@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: 'Works on a `.lokf/` bundle laid down by ktl-sidecar. The check script needs python3 3.9 or later, or uv; without either, apply the rules by hand and say in the hand-off that no script ran. git supplies the earlier version of a file to compare against; without git, keep a copy before rewriting.'
 ---
 
-# KTL Prose
+# ktl-prose
 
 A museum edits its labels before the exhibition opens. This skill does that for the `.lokf/` knowledge bundle: it rewords what the librarian wrote, in plain English, before a person confirms it. It changes the wording and never a fact. A curator can only confirm a claim they can read.
 

@@ -4,8 +4,22 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`docs/for-the-curious.md` shows who writes the bundle and what checks it.** A new section and diagram, `.assets/ktl-architecture.svg`, give each writer's one door. The librarian's patch file goes through the pen, the curator's verdicts through `ktl-curator` or the KTL Curator plugin, and a reader's miss through the docent's feedback recorder. Below them sit the registrar's gate and the report script. The README now says why `knowledge-apply.sh` is called *the pen* where it first names it, and the bundle's glossary defines the term.
+- **Check 16b keeps KTL's roles, skills and repositories from being named after LOKF.** LOKF is the format, its schema and its toolkit. The changelog, the bundle's log and the source map's dated notes keep what was written at the time.
+
+### Changed
+
+- **The pages name Knowledge Trust Ladder (KTL), the bundle and LOKF apart.** KTL is this design, with its roles, skills, scripts and gate. The bundle is the corpus it keeps in `.lokf/knowledge/`, and LOKF is the format and its toolkit. `docs/wikiskill.md`, `docs/three-lines.md` and `docs/three-lines-critics.md` used *a bundle* or *LOKF* where they meant the design, so a reader could not tell the design from its corpus, or from the paper's wiki. The contributing guide, the signing page, two sidecar references, the issue templates and five bundle concepts follow, and `references/trust-fields.md` no longer says *whoever held the pen*, now that the pen names a script.
+- **Each skill's heading is its name, such as `# ktl-curator`.** `# KTL Curator` was also the Obsidian plugin's name. Where Obsidian is the scope, the pages now say *the KTL Curator plugin*.
+
 ### Fixed
 
+- **The trust ladder's middle rung credits the librarian's refresh, not the schema check.** *Checked by automation only* means a `verified` event with a `process:` actor, which a scheduled refresh writes after it reads the source again. The diagram credited `lokf validate`, CI and the KTL Registrar plugin, none of which writes one.
+- **The three-lines diagram names every part of the registrar.** Its second line gains the pen and the report script, which `docs/three-lines.md` already listed, and its title says *KTL role*. The two-vaults diagram shows `services/`, a folder the sidecar lays down, where it showed `concepts/`.
+- **The preflight reports `ktl-prose`.** Its two skill checks listed four skills, so it never reported the fifth or a stale copy of it. Its note for a host without `uv` now counts seven of the twelve conventions, where it said six of eleven.
+- **`docs/signing-commits.md` says a signature is required to remove a confirmation, as to add one.** The gate has held removals to the same evidence since 0.30.0.
 - **`scripts/sync-sidecar.sh` lays down what a synced copy cannot run without.** It only reported a template the sibling had never laid down. So a sync to 0.30.0 carried the new wrapper, which refuses to start without the apply script, and left the apply script and the report script out. It now lays down a template that ktl-sidecar puts on every host, and one that a copy already in the sibling cannot run without. That is a script a workflow runs, the apply script beside the wrapper, or a Python half beside its shell half. It reports any other, as before.
 - **The pen keeps an index in the shape a person gave it.** `knowledge-apply.sh` took any bullet that held a concept's link for that concept's own bullet, so a `reindex`, `set` or `delete` of one concept rewrote or removed a line that listed several. It looked for a folder's section under a `#` heading only, so a root index with `##` sections gained a second section at its end. It now rewrites every line that holds the concept's link alone, and leaves a line that lists it among other links or names it in a sentence. It takes a deleted concept's link out of a list of links, and refuses the delete while a sentence links it. It finds the folder's section at any heading level, or by the section's link to the folder's `index.md`, and never under the title. Conventions rule 12 reads a line that lists two concepts the same way, as neither one's bullet. Check 19 exercises each case. ai-linkmo's sync to 0.30.0 found the defect, since its root index lists concepts this way.
 

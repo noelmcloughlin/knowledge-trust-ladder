@@ -1106,6 +1106,35 @@ else
   fi
 fi
 
+# 16b. LOKF is the format, its schema and its toolkit. The roles, skills and
+#      repositories that keep a bundle are KTL's, and a page that names them
+#      after the format leaves a reader unsure which project answers for
+#      them. CHANGELOG.md and the bundle's log.md keep what was written at
+#      the time, and so do the dated maintainer notes in the source map.
+say ""
+say "Checking that KTL's roles, skills and repositories are not named after LOKF..."
+named_after_format='LOKF (roles?|skills?|repositories)([^A-Za-z]|$)'
+set +e
+hits="$(git grep -lIE -- "$named_after_format")"
+grep_rc=$?
+set -e
+if [[ "$grep_rc" -gt 1 ]]; then
+  err "git grep exited $grep_rc while looking for KTL's roles, skills and repositories named after LOKF, so this check did not run"
+else
+  unexpected=()
+  while IFS= read -r f; do
+    case "$f" in
+      "" | CHANGELOG.md | scripts/validate-repository.sh | .lokf/knowledge/log.md | .lokf/knowledge/playbooks/knowledge-sources.md) continue ;;
+    esac
+    unexpected+=("$f")
+  done <<<"$hits"
+  if [[ "${#unexpected[@]}" -eq 0 ]]; then
+    ok "no file calls a role, skill or repository of KTL a LOKF one"
+  else
+    err "these files call a role, skill or repository of KTL a LOKF one: ${unexpected[*]} - LOKF is the format and its toolkit; write KTL"
+  fi
+fi
+
 # 17. The Microsoft 365 Copilot skills are sidecar templates, not skills of
 #     this repository: one shared builder and one instructions file per
 #     read-only role, the docent first. No file under templates/ may be a

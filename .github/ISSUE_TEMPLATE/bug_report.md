@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: One of the five LOKF skills behaves incorrectly
+about: One of the five KTL skills behaves incorrectly
 title: ''
 labels: bug
 assignees: ''
