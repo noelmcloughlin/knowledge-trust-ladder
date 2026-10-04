@@ -18,6 +18,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The pages name Knowledge Trust Ladder (KTL), the bundle and LOKF apart.** KTL is this design, with its roles, skills, scripts and gate. The bundle is the corpus it keeps in `.lokf/knowledge/`, and LOKF is the format and its toolkit. `docs/wikiskill.md`, `docs/three-lines.md` and `docs/three-lines-critics.md` used *a bundle* or *LOKF* where they meant the design, so a reader could not tell the design from its corpus, or from the paper's wiki. The contributing guide, the signing page, two sidecar references, the issue templates and five bundle concepts follow, and `references/trust-fields.md` no longer says *whoever held the pen*, now that the pen names a script.
 - **Each skill's heading is its name, such as `# ktl-curator`.** `# KTL Curator` was also the Obsidian plugin's name. Where Obsidian is the scope, the pages now say *the KTL Curator plugin*.
+- **ktl-librarian's page is half as long, about 3,700 words where it had 7,458.** The Golden Rules' tables, the first run's sweep and the audit's detail moved to `references/golden-rules.md`, `references/bootstrap.md` and `references/audit.md`, which an agent opens when a step needs them. The by-hand fallbacks for a host without the pen are gone, and such a host runs ktl-sidecar's repair first. A note from a person that the librarian reads now leaves its stamp on the concept, so the quiet check knows the note was read.
 
 ### Fixed
 

@@ -11,7 +11,7 @@ Run `.lokf/scripts/knowledge-preflight.sh` first. Its summary line says which of
 | GitLab, Forgejo, Gitea | the two GitHub Actions workflows | the wrapper script is plain bash: schedule it in that CI and open the merge request there. The recipe is in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md) |
 | Windows | nothing, from Git for Windows' bash | from PowerShell, run every command here through that bash (launch line in the same page); write `uv run python` where this skill says `python3` |
 | macOS | `sha256sum` | `shasum -a 256` |
-| No `uv` | `lokf validate`, `convert`, `query`, `lokf-check-refs` | the manual schema cross-check in section 2, reported as such. A bundle that has only passed it is not proven schema-valid |
+| No `uv` | `lokf validate`, `convert`, `query`, `lokf-check-refs` | the manual schema cross-check in [audit.md](audit.md), reported as such. A bundle that has only passed it is not proven schema-valid |
 | Synced folder (OneDrive, SharePoint, Drive, Dropbox, iCloud) | nothing in the bundle | a conflict copy shares its original's `id`: conventions rule 7 reports it, rule 8 its name; delete the copy after reading it. Files On-Demand placeholders download on first read, so the first refresh is slow, not broken |
 
 Three rules that hold on every host:
