@@ -51,6 +51,7 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 * [Desk](glossary/desk.md) - The README's word, in its library terms, for the place where a role does its work with the bundle: the registrar is `knowledge-apply.sh` at the librarian's desk, and `knowledge-report.sh` at the reader's and the curator's.
 * [Registrar](glossary/registrar.md) - The person in a museum who keeps the collection's records, and Knowledge Trust Ladder's fifth role, which programs play: the `lokf` toolkit, the gate `knowledge-registrar.yaml`, the pen and the report script.
 * [Sidecar](glossary/sidecar.md) - `.lokf/`, the folder beside a project's code that holds the bundle and the tooling that checks it, kept out of the project's build; also the role, and the ktl-sidecar skill, that installs it.
+* [Accession](glossary/accession.md) - A museum's word for an item added to its collection, which the README's registrar keeps documented with its provenance filed; in the bundle, each concept added is one.
 
 # Policies
 

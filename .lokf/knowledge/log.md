@@ -2,6 +2,8 @@
 
 ## 2026-10-04
 
+* **Added**: Accession, a museum's word for an item added to its collection, from `README.md`, which now says so where it describes the registrar.
+* **Changed**: Registrar: its quotation of the README carries the README's new gloss on *accession*.
 * **Added**: Registrar, the person in a museum who keeps the collection's records, from `README.md`, which now says so where it first names the role.
 * **Added**: Sidecar, the `.lokf/` folder beside the code and the role that installs it, from `README.md`, which now says so where it first names it.
 * **Added**: Docent, a museum's name for a guide, from `README.md`, which now says so where it first names the docent.
