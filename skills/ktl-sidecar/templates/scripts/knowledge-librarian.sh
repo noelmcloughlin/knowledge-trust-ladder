@@ -18,15 +18,26 @@
 #   - What the pen refuses before it writes is then read off the result, by
 #     knowledge-provenance.sh --unattended: a run that touched a person's
 #     event, note or text is refused too.
+#   - The lines the patch file holds for the reviewer, its `handoff`, reach
+#     the file KNOWLEDGE_HANDOFF_OUT names through the same script, cleaned.
+#     That file and the retrieval score's are removed once the agent returns,
+#     so what the workflow reads from them was written after it.
 #   - It MUST NOT git commit, push, or open PRs - the workflow owns that.
 #   - On success it exits 0 whether or not it changed anything; the workflow
-#     diffs the working tree to decide whether to open a PR.
+#     diffs the working tree to decide whether to open a PR. A run that
+#     knowledge-report.sh finds quiet, when the caller allows a skip, ends
+#     with exit 0 before the agent is called.
 #
 # Inputs (env):
 #   AGENT_CLI           command that runs the agent given a prompt via -p "<prompt>"
 #   AGENT_API_KEY       optional: the agent's API key or token, from a secret
 #   AGENT_API_KEY_ENV   the name the agent reads that key from, such as
 #                       ANTHROPIC_API_KEY; required when AGENT_API_KEY is set
+#   KNOWLEDGE_SKIP_QUIET optional: "true" skips the agent when
+#                       knowledge-report.sh finds nothing waiting for it; the
+#                       workflow sets it on a scheduled run, never on one a
+#                       person starts
+#   KNOWLEDGE_HANDOFF_OUT  optional: a file to write the patch's hand-off lines to
 #   KNOWLEDGE_RETRIEVAL optional: "true" scores, after the bundle is written,
 #                       whether the index leads an agent to the concept behind
 #                       each question readers asked (one more agent call)
@@ -141,9 +152,11 @@ Task (Karpathy rule - continuous small corrections, not a rewrite):
      the repository.
   4. Mark concepts you create, and claims you cannot settle from the
      repository, as \`status: draft\` (with a plain-prose "## Open questions"
-     section for the latter), exactly as the skill says. End your reply with a
-     short "For the curator" summary: how many concepts are drafts, which
-     carry open questions, and how many are confirmed by a person.
+     section for the latter), exactly as the skill says. Put what the person
+     reviewing the pull request should know, and that is no change to the
+     bundle, in the patch file's "handoff" list, in your own words and never
+     a reader's. The workflow writes the rest of the pull request itself, and
+     your final reply reaches the job log only.
 EOF
 )"
 
@@ -266,10 +279,38 @@ score_retrieval() {
   line="$(bash .lokf/scripts/knowledge-report.sh retrieval "$scratch/reply" 2>/dev/null | sed -n 1p)"
   rm -rf "$scratch"
   echo "knowledge-librarian: $line"
-  if [ -n "${KNOWLEDGE_RETRIEVAL_OUT:-}" ]; then printf '%s\n' "$line" > "$KNOWLEDGE_RETRIEVAL_OUT"; fi
+  if [ -n "${KNOWLEDGE_RETRIEVAL_OUT:-}" ]; then rm -f "$KNOWLEDGE_RETRIEVAL_OUT"; printf '%s\n' "$line" > "$KNOWLEDGE_RETRIEVAL_OUT"; fi
+}
+
+# The files the workflow reads after this script: the hand-off and the
+# retrieval score. The agent could write anywhere this job can, those paths
+# included, and could leave a link there that sends a later write into the
+# checkout. So each is removed once the agent returns, and what the workflow
+# reads was put there after the agent, by the pen or the retrieval test.
+clear_outputs() {
+  local out
+  for out in "${KNOWLEDGE_HANDOFF_OUT:-}" "${KNOWLEDGE_RETRIEVAL_OUT:-}"; do
+    [ -z "$out" ] || rm -f "$out"
+  done
 }
 
 main() {
+  # A run with nothing to do ends here, before the agent is called, when the
+  # caller allows it: the workflow sets KNOWLEDGE_SKIP_QUIET on a scheduled
+  # run. knowledge-report.sh decides, from frontmatter and history, and runs
+  # from the checkout before any agent has touched it. Anything but a clear
+  # "quiet" - work waiting, no history, a report script too old to know the
+  # command - runs the agent as before.
+  if [ "${KNOWLEDGE_SKIP_QUIET:-}" = true ] && [ -f .lokf/scripts/knowledge-report.sh ]; then
+    local verdict rc=0
+    verdict="$(bash .lokf/scripts/knowledge-report.sh quiet 2>/dev/null)" || rc=$?
+    case "$rc" in
+      0) echo "knowledge-librarian: $verdict - the agent is not run this time"; return 0 ;;
+      1) echo "knowledge-librarian: $verdict" ;;
+      *) echo "knowledge-librarian: knowledge-report.sh could not say whether this run is quiet, so the agent runs" ;;
+    esac
+  fi
+
   # A local, well-formed AGENT_CLI can still run code that writes anywhere in
   # this job's checkout - that's what the check above is for. But that check
   # is only as good as the `git status` it reads: an agent that sets
@@ -307,6 +348,7 @@ main() {
 
   # Restore before the checks below read git, not only at exit.
   restore_git_state
+  clear_outputs
 
   # The agent's one output is .lokf/patch.yaml. Anything else it changed,
   # inside the bundle or out, is refused before the file is applied: the
@@ -322,7 +364,7 @@ main() {
   fi
   if [ -f .lokf/patch.yaml ]; then
     echo "knowledge-librarian: applying .lokf/patch.yaml with knowledge-apply.sh"
-    if ! bash .lokf/scripts/knowledge-apply.sh .lokf/patch.yaml; then
+    if ! bash .lokf/scripts/knowledge-apply.sh ${KNOWLEDGE_HANDOFF_OUT:+--handoff "$KNOWLEDGE_HANDOFF_OUT"} .lokf/patch.yaml; then
       echo "knowledge-librarian: knowledge-apply.sh refused the patch, so nothing was written" >&2
       rm -f .lokf/patch.yaml
       exit 4

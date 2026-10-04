@@ -336,12 +336,12 @@ done
 
 say ""
 say "Exercising knowledge-conventions.sh..."
-# Seven of the twelve rules run through `uv run`, so without uv the script reports
+# Eight of the thirteen rules run through `uv run`, so without uv the script reports
 # none of them and every expectation below fails saying only that it "failed
 # to report" something - never why. Name the cause once, up front: a job that
 # runs this contract installs uv (validate.yml and publish.yml both do).
 if ! command -v uv >/dev/null 2>&1; then
-  err "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10 and 12 cannot run and every expectation for them below will fail - install uv, or add the setup-uv step to the workflow running this"
+  err "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12 and 13 cannot run and every expectation for them below will fail - install uv, or add the setup-uv step to the workflow running this"
 fi
 if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge >/dev/null); then
   ok "this repository's bundle keeps the conventions"
@@ -381,6 +381,28 @@ stamped "2026-09-16T23:00:00Z" > "$bad/k/x/r11-ok.md"
 "${tmpgit[@]}" add k/x/r11-late.md k/x/r11-ok.md
 GIT_COMMITTER_DATE="2026-09-17T00:00:00Z" "${tmpgit[@]}" commit -q -m stamp
 stamped "2999-01-01T00:00:00Z" > "$bad/k/x/r11-future.md"
+# Rule 13: a confirmed concept edited after its confirmation, with
+# `generated` left as it was, in its body or in its description. What a
+# confirmation does not cover must pass: a person's note with the status it
+# sets, KTL Registrar's block with its own `## Related` heading, and values
+# written back requoted. So must an edit that moved `generated` past the
+# confirmation, and one its person confirmed again.
+r13() {  # <name> <title as written> <description> <generated.at> <more frontmatter> <body>, confirmed by human:contract
+  printf -- '---\ntype: Service\nid: https://example.invalid/k/x/%s\ntitle: %s\ndescription: %s\ngenerated:\n  by: process:ktl-librarian\n  at: "%s"\nverified:\n  - by: human:contract\n    at: "2026-09-02T00:00:00Z"\n%s---\n\n# Overview\n\n%s\n' \
+    "$1" "$2" "$3" "$4" "$5" "$6" > "$bad/k/x/$1.md"
+}
+for n in r13-edited r13-description r13-notes r13-restamped r13-reconfirmed; do
+  r13 "$n" "$n" "what it was." "2026-09-01T00:00:00Z" "" "The text a person confirmed."
+done
+"${tmpgit[@]}" add k/x/r13-*.md
+"${tmpgit[@]}" commit -q -m confirmed
+r13 r13-reconfirmed r13-reconfirmed "what it was." "2026-09-01T00:00:00Z" $'  - by: human:contract\n    at: "2026-09-05T00:00:00Z"\n' "The text changed, then confirmed again."
+"${tmpgit[@]}" commit -q -am 'edited, and confirmed again'
+r13 r13-edited r13-edited "what it was." "2026-09-01T00:00:00Z" "" "The text someone changed by hand."
+r13 r13-description r13-description "what it says now." "2026-09-01T00:00:00Z" "" "The text a person confirmed."
+r13 r13-restamped r13-restamped "what it was." "2026-09-03T00:00:00Z" "" "The text the pen changed."
+r13 r13-notes '"r13-notes"' "what it was." "2026-09-01T00:00:00Z" $'status: draft\n' \
+  $'The text a person confirmed.\n\n## Open questions\n\n- 2026-09-03, human:contract: is this still current?\n\n<!-- lokf:related -->\n#how-to\n\n## Related\n\n- [[r13-edited]] (dependsOn)\n<!-- /lokf:related -->'
 # Rules 7-9 and the line-ending tolerance. A CRLF copy of a file that breaks
 # rule 2 must still be reported (a Windows checkout used to make the script
 # skip every frontmatter rule unread); a byte order mark and a file with no
@@ -423,7 +445,9 @@ for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp
             "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on" \
             "r11-late.md: at \"2026-09-17T01:00:00Z\" is later than the commit that recorded it (2026-09-17T00:00:00Z)" "r11-future.md: at \"2999-01-01T00:00:00Z\" is in the future" \
             "fl-flow.md: unquoted timestamp" "n-int.md: unquoted timestamp" "y-bad.md: frontmatter is not valid YAML" "l-list.md: frontmatter is not a mapping" \
-            "idx-stale.md: its bullet in .*/k/index.md does not match" "idx-stale.md: its bullet in .*/k/x/index.md does not match"; do
+            "idx-stale.md: its bullet in .*/k/index.md does not match" "idx-stale.md: its bullet in .*/k/x/index.md does not match" \
+            "r13-edited.md: changed since human:contract confirmed it (2026-09-02, in " \
+            "r13-description.md: changed since human:contract confirmed it"; do
   if grep -q "$want" <<<"$findings"; then
     ok "conventions script reports: $want"
   else
@@ -432,7 +456,10 @@ for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp
 done
 for quiet in "x/e.md:whose revision holds its resource" "r11-ok.md:whose time is before the commit that recorded it" "fence.md:whose second librarian event is only an example in a code fence" \
              "idx-fresh.md:whose index bullets carry its title and its folded description" \
-             "idx-shared.md:whose only listing is a root line that names it beside another concept"; do
+             "idx-shared.md:whose only listing is a root line that names it beside another concept" \
+             "r13-notes.md:whose changes since its confirmation are a person's note, its status, the registrar's block and a requoted title" \
+             "r13-restamped.md:whose edit moved generated past the confirmation" \
+             "r13-reconfirmed.md:whose person confirmed it again after the edit"; do
   if grep -q "${quiet%%:*}" <<<"$findings"; then
     err "conventions script reported ${quiet%%:*}, ${quiet#*:}"
   else
@@ -459,7 +486,7 @@ fi
 # Without uv the shell half still runs, and its OK line says what it skipped.
 if PATH=/usr/bin:/bin command -v uv >/dev/null 2>&1; then
   say "uv is on /usr/bin - the without-uv case cannot be staged here"
-elif out="$(PATH=/usr/bin:/bin bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>/dev/null)" && grep -q '^OK - .*(rules 2, 3, 4, 7, 9, 10 and 12 not checked: uv not found)' <<<"$out"; then
+elif out="$(PATH=/usr/bin:/bin bash "$templates/scripts/knowledge-conventions.sh" "$good/k" 2>/dev/null)" && grep -q '^OK - .*(rules 2, 3, 4, 7, 9, 10, 12 and 13 not checked: uv not found)' <<<"$out"; then
   ok "conventions script without uv passes on its own rules and says which it skipped"
 else
   err "conventions script without uv did not say what it skipped: $out"
@@ -1319,8 +1346,9 @@ expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- s
 #     reader's question in a code span; a dry run writes nothing; a quoted
 #     timestamp keeps its double quotes; reindex re-derives a bullet without
 #     touching the concept; resolve withdraws the librarian's own question and
-#     never a person's note; a root index shaped by hand keeps its shape; and
-#     --format prints the block patch.md shows.
+#     never a person's note; a root index shaped by hand keeps its shape; the
+#     hand-off reaches the file --handoff names as plain single lines and
+#     never the bundle; and --format prints the block patch.md shows.
 say ""
 say "Exercising knowledge-apply.sh..."
 apply="$repo_root/$templates/scripts/knowledge-apply.sh"
@@ -1466,6 +1494,42 @@ if out="$(bash "$apply" --root "$ka" --dry-run "$kpatch" 2>&1)" && grep -q 'woul
 else
   err "the dry run wrote something or lost the patch file: $out"
 fi
+# The hand-off: lines for the reviewer, which never reach the bundle. The pen
+# holds each to one line of printable text with no backtick, writes them to
+# the file --handoff names, empties that file when a patch has none, and
+# refuses a hand-off that is not a short list of short lines.
+khand="$ka/handoff.txt"
+cat > "$kpatch" <<'EOF'
+ops:
+  - {op: recheck, path: playbooks/new.md}
+handoff:
+  - "two concepts came back for the same `date`;\u200b the rule\tneeds a look"
+  - "a source did not answer"
+EOF
+printf 'planted by the agent\n' > "$khand"
+if out="$(bash "$apply" --root "$ka" --handoff "$khand" "$kpatch" 2>&1)" \
+   && [[ "$(cat "$khand")" == $'two concepts came back for the same \'date\'; the rule needs a look\na source did not answer' ]] \
+   && grep -qxF '  a source did not answer' <<<"$out" && ! grep -rq 'did not answer' "$kb"; then
+  ok "the hand-off lands in the file --handoff names as plain single lines, is printed, and stays out of the bundle"
+else
+  err "the hand-off was not written as expected: $out // $(tr '\n' '|' < "$khand")"
+fi
+printf 'planted by the agent\n' > "$khand"
+printf '%s\n' 'ops:' '  - {op: recheck, path: playbooks/new.md}' > "$kpatch"
+if bash "$apply" --root "$ka" --handoff "$khand" "$kpatch" >/dev/null 2>&1 && [[ ! -s "$khand" ]]; then
+  ok "a patch with no hand-off empties the file --handoff names, so nothing planted there survives"
+else
+  err "a patch with no hand-off left the --handoff file holding: $(cat "$khand")"
+fi
+rm -f "$khand"
+{ printf '%s\n' 'ops:' '  - {op: recheck, path: playbooks/new.md}' 'handoff:'; for i in 1 2 3 4 5 6 7 8 9 10 11; do printf '  - "line %s"\n' "$i"; done; } > "$kpatch"
+apply_refuses "a hand-off of more than ten lines" "a reviewer gets at most 10"
+printf '%s\n' 'ops:' '  - {op: recheck, path: playbooks/new.md}' "handoff: [\"$(printf 'x%.0s' $(seq 301))\"]" > "$kpatch"
+apply_refuses "a hand-off line longer than 300 characters" "handoff line 1 is 301 characters"
+printf '%s\n' 'ops:' '  - {op: recheck, path: playbooks/new.md}' 'handoff: "one line, not a list"' > "$kpatch"
+apply_refuses "a hand-off that is not a list" "handoff is a list of lines"
+printf '%s\n' 'ops:' '  - {op: recheck, path: playbooks/new.md}' 'handoff: ["\u200b\u202e"]' > "$kpatch"
+apply_refuses "a hand-off line of invisible characters alone" "handoff line 1 holds no printable text"
 sed -i 's|^\* \[New\](playbooks/new.md) - brand new.$|* [New](playbooks/new.md) - stale.|' "$kb/index.md"
 kbefore="$(md5sum < "$kb/playbooks/new.md")"
 printf '%s\n' 'ops:' '  - {op: reindex, path: playbooks/new.md}' > "$kpatch"
@@ -1703,6 +1767,58 @@ else
   err "report script failed some other way with no bundle: $out"
 fi
 rm -rf "$kr" "$nogit"
+# quiet: a scheduled run has work when a source moved after its concept's
+# stamp, a person left a note after the librarian last looked, a concept
+# carries no stamp, or reader feedback waits, and none otherwise. A note the
+# librarian has stamped the concept after still waits for the curator, but
+# no longer makes work for the librarian.
+kq="$(mktemp -d)"; mkdir -p "$kq/.lokf/knowledge/x" "$kq/src"
+kq_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$kq"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${kq_git[@]}" init -q
+printf 'a\n' > "$kq/src/a.md"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$kq/.lokf/knowledge/index.md"
+kq_one() {  # <the librarian's own verified.at, or empty> <what follows the overview>
+  local verified=""
+  [[ -z "$1" ]] || verified="verified:"$'\n'"  - by: process:ktl-librarian"$'\n'"    at: \"$1\""$'\n'
+  printf -- '---\ntype: Service\ntitle: One\nresource: src/a.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n%s---\n\n# Overview\n%s' \
+    "$verified" "$2" > "$kq/.lokf/knowledge/x/one.md"
+}
+kq_expect() {  # <exit status> <text the line holds> <what>
+  local out rc=0
+  out="$(cd "$kq" && bash "$report" quiet 2>&1)" || rc=$?
+  if [[ "$rc" == "$1" ]] && grep -qF -- "$2" <<<"$out"; then ok "report script quiet: $3"; else err "report script quiet: $3 - exit $rc: $out"; fi
+}
+kq_note=$'\n## Open questions\n\n- 2026-01-03, human:ada: is this still right?\n'
+kq_one "" ""
+"${kq_git[@]}" add -A && "${kq_git[@]}" commit -q -m 'a stamped concept and its source'
+kq_expect 0 "Quiet: no source moved" "a stamped concept whose source has not moved, with nothing else waiting, makes no work"
+printf 'a2\n' >> "$kq/src/a.md" && "${kq_git[@]}" commit -q -am 'the source moves on'
+kq_expect 1 "concepts whose source moved: 1 ·" "a source that moved after the stamp makes work"
+kq_one "2026-01-02T00:00:00Z" "" && "${kq_git[@]}" commit -q -am 'the librarian rechecks it'
+kq_expect 0 "Quiet:" "a recheck recorded after the move makes the run quiet again"
+kq_one "2026-01-02T00:00:00Z" "$kq_note" && "${kq_git[@]}" commit -q -am 'a person leaves a note'
+kq_expect 1 "notes a person left since the librarian last looked: 1 ·" "a note a person left after the librarian's stamp makes work"
+kq_one "2026-01-04T00:00:00Z" "$kq_note" && "${kq_git[@]}" commit -q -am 'the librarian reads it and rechecks'
+kq_expect 0 "Quiet:" "a note the librarian stamped the concept after waits for the curator alone"
+printf '\n- 2026-01-05, human:ada: and another thing\n' >> "$kq/.lokf/knowledge/x/one.md"
+kq_expect 1 "notes a person left since the librarian last looked: 1 ·" "a note not yet committed is newer than any stamp"
+"${kq_git[@]}" checkout -q -- .
+printf -- '---\ntype: Service\ntitle: Two\n---\n' > "$kq/.lokf/knowledge/x/two.md"
+kq_expect 1 "concepts with no stamp: 1 ·" "a concept with no stamp at all makes work, as the sidecar's skeleton does"
+rm "$kq/.lokf/knowledge/x/two.md"
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-01-06' '' '- **Miss** - a reader asked. - docent' > "$kq/.lokf/feedback.md"
+kq_expect 1 "reader feedback: 1" "reader feedback waiting makes work"
+rm "$kq/.lokf/feedback.md"
+nogit="$(mktemp -d)"; cp -R "$kq/.lokf" "$nogit/"
+if out="$(cd "$nogit" && bash "$report" quiet 2>&1)"; then
+  err "report script quiet: a bundle with no history read as quiet: $out"
+elif grep -q '^Work may wait: git holds no full history' <<<"$out"; then
+  ok "report script quiet: a bundle git holds no history of is never quiet"
+else
+  err "report script quiet: a bundle with no history failed some other way: $out"
+fi
+rm -rf "$kq" "$nogit"
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

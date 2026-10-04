@@ -60,6 +60,20 @@
 #      equal for every concept it writes; this is the check for every other
 #      hand, and its `reindex` operation is the repair. A concept no index
 #      lists is not a finding.
+#  13. A concept that reads as confirmed by a person still says what that
+#      person confirmed. The label rests on `generated.at` being no later
+#      than the confirmation, so an edit that leaves `generated` alone keeps
+#      the label while the text moves on. After the commit that recorded the
+#      latest confirmation, a change to the body (outside `## Open questions`
+#      and KTL Registrar's lokf:related block) or to any frontmatter field
+#      but `generated`, `verified`, `status`, `stale_after`, `timestamp` and
+#      `usage_window` must move `generated.at` past it, which turns the label
+#      to edited since. knowledge-apply.sh restamps every change it writes;
+#      this is the check for every other hand. Parsed values are compared, so
+#      a requoted value is no change. The newest commit that recorded the
+#      confirmation's time is the one compared with, so the rule can miss an
+#      edit but never flags a concept the person saw. Needs git; outside it
+#      the rule is skipped.
 #
 # Rules 2, 3, 8 and 10 are house rules, stricter than the format: OKF permits
 # an unquoted datetime, a bare `verified` mapping (which every reader here -
@@ -74,7 +88,8 @@
 # Rules 2, 3, 7, 9, 10 and 12 are questions about a document's YAML that a real
 # parse answers outright, and rule 4 rides along, so this script hands them
 # to knowledge-conventions.py (same directory) through `uv run`, which needs
-# nothing preinstalled. Rules 1, 5, 6, 8 and 11 stay here: they are git and
+# nothing preinstalled. Rule 13 goes there too: it reads git as well, but it
+# compares parsed values. Rules 1, 5, 6, 8 and 11 stay here: they are git and
 # filesystem facts, and this half keeps running - grep and awk only -
 # wherever bash and git do, with no toolchain at all. Without uv, this half
 # still runs and says so.
@@ -233,7 +248,7 @@ while IFS= read -r f; do
   fi
 done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
-# ---- 2, 3, 4, 7, 9, 10, 12. the parser's half ------------------------------------
+# ---- 2, 3, 4, 7, 9, 10, 12, 13. the parser's half ------------------------------
 py="$(dirname "$0")/knowledge-conventions.py"
 skipped=""
 if command -v uv >/dev/null 2>&1; then
@@ -242,7 +257,7 @@ if command -v uv >/dev/null 2>&1; then
     fail=1
   fi
 else
-  skipped="rules 2, 3, 4, 7, 9, 10 and 12 not checked: uv not found"
+  skipped="rules 2, 3, 4, 7, 9, 10, 12 and 13 not checked: uv not found"
   echo "$skipped - install uv, or run $py directly with python3 and pyyaml" >&2
 fi
 

@@ -62,6 +62,10 @@ ops:
   - op: delete                   # the file and its index bullets; refused when a person confirmed it or left a note on it, or an index names it in a sentence
     path: services/legacy-sync.md
     log: "**Removal**: Legacy Sync; `services/legacy-sync/` was deleted in a1b2c3d."
+
+handoff:                         # optional; at most ten lines of 300 characters for the reviewer, in your own words and never a reader's; written nowhere in the bundle
+  - "datasets/orders-db.md and playbooks/release.md came back for the same misread date; the skill's rule on dates needs a look."
+  - "https://acme.example/spec did not answer, so references/acme-spec.md was not rechecked."
 ```
 
 The values are fictional, as in the skill page's example; mint ids from the bundle's real `base_iri`.
@@ -75,7 +79,8 @@ The values are fictional, as in the skill page's example; mint ids from the bund
 - **Feedback and the ledger.** `from_feedback` is the exact one-line entry as `.lokf/feedback.md` holds it. The script removes it there, and a day left with no entry loses its heading. It then adds one line to `.lokf/questions.md`: the day, the entry's kind and the concept the operation names, with the reader's question from `asked` where the entry held one. That file only grows, and programs read it: `knowledge-report.sh` counts the concepts readers keep asking about, and scores whether the index leads to them.
 - **Open questions.** `question` adds one in the curator's shape. `resolve` withdraws one this run's actor asked, once the source settles it, and the heading goes with its last question. Neither stamps `generated`, since an open question is no part of what the concept claims. `resolve` leaves `status` as it finds it, because confirming the concept is the curator's.
 - **Carry-overs.** `rewrite` keeps the `<!-- lokf:related -->` block and the `## Open questions` section from the old body when the new body lacks them. No edit may target text inside either.
-- **The hand-off.** After an apply, or a dry run, the script names each concept a person confirmed that the patch edits. Each reads as *edited since a person last confirmed it* until the curator looks again, so name them in the hand-off.
+- **Confirmed concepts it edits.** After an apply, or a dry run, the script names each concept a person confirmed that the patch edits. Each reads as *edited since a person last confirmed it* until the curator looks again, so name them in the hand-off.
+- **Lines for the reviewer.** `handoff` carries what a reviewer should know that is no change to the bundle: the same send-back twice, a source that did not answer, entries left for the next run. The script prints the lines and writes none of them to the bundle. Each becomes one line of printable text, with any backtick turned into `'`. In a scheduled run the wrapper passes them to the pull request, which shows them as the librarian's own words in a code block. Write them yourself, and never quote a reader.
 
 ## What it refuses
 
@@ -91,12 +96,13 @@ Any one of these refuses the whole file, and nothing is written:
 - `delete` on a concept that an `index.md` links in a sentence, or anywhere but in its own bullet or a comma-separated list of links (a person takes that link out, and the delete can then run);
 - a `replace` target that occurs zero or several times, an `insert_after` target on zero or several lines, or either inside the `lokf:related` block or under `## Open questions`;
 - a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
-- a `patch`, `rewrite`, `delete` or `resolve` with no `log` line; a `title` with square brackets; a `from_feedback` line the feedback file does not hold; `asked` on an operation with no `from_feedback`.
+- a `patch`, `rewrite`, `delete` or `resolve` with no `log` line; a `title` with square brackets; a `from_feedback` line the feedback file does not hold; `asked` on an operation with no `from_feedback`;
+- a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once control characters are gone.
 
 ## Exit codes
 
 - `0`: applied, or with `--dry-run` would apply, or `--format` printed the block above. The patch file is removed after an apply unless `--keep` is passed.
 - `1`: findings, one per line, and nothing written. Fix the file and run again.
-- `2`: no bundle, no patch file, a file that is not YAML, or no `uv` and no `pyyaml` for `python3`. The sidecar's prerequisites page says who installs `uv`.
+- `2`: no bundle, no patch file, a file that is not YAML, a `--handoff` file that cannot be written, or no `uv` and no `pyyaml` for `python3`. The sidecar's prerequisites page says who installs `uv`.
 
 Then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. The script writes a touched concept's frontmatter back with double quotes where a value needs quoting and keeps the blank line after the closing `---` as it found it, so the diff shows the change and not the rewrite. The script keeps the conventions it knows; the schema and the relation targets are the toolkit's to check.

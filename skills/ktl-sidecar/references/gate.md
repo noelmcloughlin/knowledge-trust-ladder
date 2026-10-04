@@ -6,7 +6,7 @@ Its three jobs, in the order a pull request meets them:
 
 | Job | Runs when | Checks |
 | --- | --- | --- |
-| `validate` | every pull request touching `.lokf/**`, weekly, on demand | the schema, every relation target, and the twelve conventions below |
+| `validate` | every pull request touching `.lokf/**`, weekly, on demand | the schema, every relation target, and the thirteen conventions below |
 | `provenance` | pull requests only | that each `human:` confirmation added, changed or removed is backed by that person's approval or signature |
 | `attestation` | only when `provenance` finds an unbacked confirmation, and only once enabled | that a listed reviewer clicked Approve |
 
@@ -17,13 +17,13 @@ It runs on every pull request touching `.lokf/**` (or the workflow itself), week
 It runs two checks:
 
 1. `uv run lokf validate --check-refs knowledge`: the schema check, and every typed relation must point at a concept in the bundle.
-2. `bash scripts/knowledge-conventions.sh knowledge`: the twelve conventions below, which the toolkit cannot see.
+2. `bash scripts/knowledge-conventions.sh knowledge`: the thirteen conventions below, which the toolkit cannot see.
 
-It checks out the full history, because conventions 6 and 11 read each concept's commits.
+It checks out the full history, because conventions 6, 11 and 13 read each concept's commits.
 
-### The twelve conventions
+### The thirteen conventions
 
-`lokf validate` reads a concept body as an opaque string and never opens `log.md`. `knowledge-conventions.sh` holds the bundle to twelve conventions the toolkit never sees. ktl-librarian's audit runs the same script before handing off.
+`lokf validate` reads a concept body as an opaque string and never opens `log.md`. `knowledge-conventions.sh` holds the bundle to thirteen conventions the toolkit never sees. ktl-librarian's audit runs the same script before handing off.
 
 1. `log.md` has one bare `## YYYY-MM-DD` heading per day, newest first (OKF §9, and how the KTL Curator plugin finds today).
 2. Every `at:` is quoted.
@@ -37,12 +37,13 @@ It checks out the full history, because conventions 6 and 11 read each concept's
 10. The fields the provenance gates read line by line (`id`, and `by`, `at` and `revision` on an event) are spelt with no tag, anchor, alias, quoted key, block scalar or value spanning lines. Each of those is valid YAML that `lokf validate` accepts and neither gate can see.
 11. No `at:` is later than the commit that first recorded it, or, before it is committed, than now. A time written ahead of the clock, such as local time labelled `Z` or a round placeholder, sorts after the edits and confirmations that really followed it. So a concept reads as edited since it was confirmed when it was not. A rename or a shallow clone can only make that commit look later, so the rule can miss a bad time but never flags a good one. Outside git it is skipped.
 12. An index bullet that names a concept carries that concept's title and description. That holds in the folder's `index.md` and in the root's. ktl-docent chooses what to open from the bullets alone, so one left behind by an edit hides the concept it names. `knowledge-apply.sh` keeps the three equal for every concept it writes, and its `reindex` operation repairs one any other hand left behind. A concept no index lists is not a finding.
+13. A concept that reads as confirmed by a person still says what that person confirmed. The label holds while `generated.at` is no later than the confirmation, so an edit that leaves `generated` alone would keep it. After the commit that recorded the latest confirmation, a change to the body or to a frontmatter field must move `generated.at` past that confirmation, and the label then reads *edited since*. The open questions, KTL Registrar's `lokf:related` block, and the fields that record who checked what and when (`generated`, `verified`, `status`, `stale_after`, `timestamp` and `usage_window`) are not part of what a person confirms. `knowledge-apply.sh` restamps every change it writes. A change by any other hand moves `generated.at` itself, or the person confirms the concept again. Parsed values are compared, so a value written back with other quotes is no change. The newest commit that recorded the confirmation's time is the one compared with, so the rule can miss an edit but never flags a concept the person saw. Outside git it is skipped.
 
-Each of the first five, and the eleventh, has been broken by an agent that had it in prose, which is why it is a script. The twelfth was three copies kept equal by attention alone. The rest are there so that a pin, a duplicate, a file the script could not read or an event the gate could not fails loudly instead of passing unread.
+Each of the first five, and the eleventh, has been broken by an agent that had it in prose, which is why it is a script. The twelfth was three copies kept equal by attention alone. The thirteenth was a stamp kept honest by the pen alone, so an edit by any other hand left the trust label behind. The rest are there so that a pin, a duplicate, a file the script could not read or an event the gate could not fails loudly instead of passing unread.
 
 Rules 2, 3, 8 and 10 are house rules, stricter than OKF, which permits an unquoted datetime, a bare `verified` mapping, any file name and any YAML. The gate asks more so that a datetime reaches every consumer as one string, and an event is always appended to a list. It also asks that a name never collides on a case-insensitive host, and that an event reads the same to a line reader as to a parser. Every reader here still accepts a bare mapping, as OKF requires, so that half of rule 3 is style, not safety.
 
-The script is two files. Rules 2, 3, 4, 7, 9, 10 and 12 are questions about a document's YAML, which a real parser answers outright where grep and awk only approximate. `knowledge-conventions.sh` hands those to `knowledge-conventions.py` beside it, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
+The script is two files. Rules 2, 3, 4, 7, 9, 10, 12 and 13 are questions about a document's YAML, which a real parser answers outright where grep and awk only approximate. `knowledge-conventions.sh` hands those to `knowledge-conventions.py` beside it, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. Rule 13 reads git too, from the Python half. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
 
 ## The `provenance` job
 
