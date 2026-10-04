@@ -17,12 +17,15 @@
 # Usage: scripts/sync-sidecar.sh <tag> <sibling-dir>...
 #   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator ../ai-linkmo
 #
-# For each sibling it copies every template the sibling already carries (a
-# template it never laid down is reported, not added: that is ktl-sidecar's
-# Step 5, a decision for the host), sets the pin to the tag, runs the
-# sidecar's own checks there, and prints a draft changelog line and the
-# commit command. Exit 1 when a sibling's checks fail after the copy; exit 2
-# when the arguments are wrong or the tag is not usable.
+# For each sibling it copies every template the sibling already carries. It
+# lays down a template the sibling never had in two cases only: ktl-sidecar's
+# Step 5 lays it down on every host, or a file the sibling carries cannot run
+# without it (the wrapper writes the bundle through the apply script). Any
+# other is reported, not added: that is Step 5, a decision for the host. Then
+# it sets the pin to the tag, runs the sidecar's own checks there, and prints
+# a draft changelog line and the commit command. Exit 1 when a sibling's
+# checks fail after the copy; exit 2 when the arguments are wrong or the tag
+# is not usable.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -44,6 +47,24 @@ pairs=(
   "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh"
   "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
   "gitattributes:.lokf/.gitattributes"
+)
+# Step 5 lays these down on every host, whatever else the host chose, so a
+# sibling that lacks one gets it.
+always=(
+  "scripts/knowledge-preflight.sh"
+  "scripts/knowledge-feedback.sh"
+  "scripts/knowledge-report.sh"
+  "m365/knowledge-m365.sh"
+  "m365/ktl-docent-m365.md"
+)
+# A template and the copy that cannot run without it: the wrapper refuses to
+# start without the apply script, and each shell half runs its Python half.
+# Copying the second without the first would leave the sibling failing.
+companions=(
+  "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-librarian.sh"
+  "scripts/knowledge-apply.py:.lokf/scripts/knowledge-librarian.sh"
+  "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.sh"
+  "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.sh"
 )
 
 if [[ $# -lt 2 ]]; then
@@ -75,6 +96,17 @@ tag_sha="$(git -C "$repo_root" rev-parse "$tag^{commit}")"
 # The skills pin is each repository's own to move, so it is not drift.
 unpin() { sed -E 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/'; }
 at_tag() { git -C "$repo_root" show "$tag:$templates/$1"; }
+# Why the sibling needs a template it never laid down, or nothing when it does
+# not: <template> <sibling-root>.
+needed() {
+  local entry
+  for entry in "${always[@]}"; do
+    if [[ "$entry" == "$1" ]]; then echo "ktl-sidecar's Step 5 lays it down on every host"; return; fi
+  done
+  for entry in "${companions[@]}"; do
+    if [[ "${entry%%:*}" == "$1" && -f "$2/${entry##*:}" ]]; then echo "${entry##*:} cannot run without it"; return; fi
+  done
+}
 
 status=0
 for sibling in "$@"; do
@@ -99,14 +131,24 @@ for sibling in "$@"; do
     old_pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' "$wf" | head -1 | sed 's/.*: //' || true)"
   fi
 
-  copied=(); same=(); absent=()
+  copied=(); same=(); added=(); absent=()
   for pair in "${pairs[@]}"; do
     src="${pair%%:*}"; dst="${pair##*:}"
     if ! git -C "$repo_root" cat-file -e "$tag:$templates/$src" 2>/dev/null; then
       continue  # a template this release did not have yet
     fi
     if [[ ! -f "$sibling_root/$dst" ]]; then
-      absent+=("$dst")
+      why="$(needed "$src" "$sibling_root")"
+      if [[ -z "$why" ]]; then
+        absent+=("$dst")
+        continue
+      fi
+      mkdir -p "$(dirname "$sibling_root/$dst")"
+      at_tag "$src" > "$sibling_root/$dst"
+      if [[ "$(git -C "$repo_root" ls-tree "$tag" -- "$templates/$src" | cut -c1-6)" == 100755 ]]; then
+        chmod +x "$sibling_root/$dst"
+      fi
+      added+=("$dst ($why)")
       continue
     fi
     if cmp -s <(at_tag "$src" | unpin) <(unpin < "$sibling_root/$dst"); then
@@ -126,6 +168,7 @@ for sibling in "$@"; do
 
   for f in "${copied[@]}"; do echo "   copied   $f"; done
   for f in "${same[@]}"; do echo "   same     $f"; done
+  for f in "${added[@]}"; do echo "   added    $f"; done
   for f in "${absent[@]}"; do echo "   absent   $f (never laid down here: ktl-sidecar Step 5 decides, not this script)"; done
   if [[ -f "$wf" ]]; then
     if [[ "$old_pin" == "$tag" ]]; then
@@ -170,7 +213,7 @@ for sibling in "$@"; do
   fi
 
   echo ""
-  if [[ ${#copied[@]} -eq 0 && "$old_pin" == "$tag" ]]; then
+  if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 && "$old_pin" == "$tag" ]]; then
     echo "   nothing to sync"
     continue
   fi
