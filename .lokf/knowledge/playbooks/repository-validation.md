@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T16:34:14Z"
+  at: "2026-10-04T17:27:49Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -123,13 +123,13 @@ trust-label table word for word, `knowledge-m365.sh` building
 and, where `zip` is installed, the same zip bytes under another time zone
 and umask, as a release asset must; (check 18) `ktl-prose`'s
 `prose-check.py` exercised as the conventions script is at check 11:
-reporting a dash, a long sentence and a stock phrase with the line each sits
-on, staying quiet on what the two hand passes kept, and refusing, with
+reporting a dash, a long sentence, a long paragraph, a figure of speech, a stock phrase and a character no reader sees with the line each sits
+on, staying quiet on what the hand passes kept, and refusing, with
 `--before` or `--against HEAD`, a rewording that touches anything but
-wording, a frontmatter byte, or a concept a person wrote or confirmed; and
+wording, a frontmatter byte, a character no reader sees, or a concept a person wrote or confirmed; and
 (check 19) `knowledge-apply.sh`, the librarian's only pen, exercised on a
 throwaway bundle: each operation applied, each refusal refused, and a dry run
-writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, a root index shaped by hand keeping its shape, the hand-off reaching the file `--handoff` names as plain single lines and never the bundle, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock, and `quiet` telling a week with nothing waiting from one with work, where a note no longer counts once the librarian has stamped its concept after it. The twelfth conventions rule holds an index bullet to its concept's title and description, and the thirteenth holds a confirmed concept to the text its person confirmed. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check, retrieval call, quiet skip and hand-off, after whatever the agent left at the output paths is gone. The job sets up `uv`, runs the contract, then confirms
+writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, a root index shaped by hand keeping its shape, the hand-off reaching the file `--handoff` names as plain single lines and never the bundle, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock, and `quiet` telling a week with nothing waiting from one with work, where a note no longer counts once the librarian has stamped its concept after it; and (check 21) no tracked file holding a character a reader cannot see, such as the right-to-left override the "Trojan Source" attack hides code behind. The twelfth conventions rule holds an index bullet to its concept's title and description, and the thirteenth holds a confirmed concept to the text its person confirmed. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check, retrieval call, quiet skip and hand-off, after whatever the agent left at the output paths is gone. The job sets up `uv`, runs the contract, then confirms
 `gh skill` is available, and then runs `gh skill publish --dry-run`.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs

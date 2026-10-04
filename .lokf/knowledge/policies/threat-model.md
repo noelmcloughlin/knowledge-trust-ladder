@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T16:34:14Z"
+  at: "2026-10-04T17:27:49Z"
 verified:
 - by: process:ktl-librarian
   at: "2026-09-24T22:22:58Z"
@@ -38,7 +38,7 @@ bumped by hand, since Dependabot scans only `.github/workflows/`;
 `permissions: {}` at the top of every workflow; the agent step running the
 reviewed, in-repo wrapper, never a repository variable's content as a
 command, with `AGENT_CLI` choosing the agent, `KNOWLEDGE_LIBRARIAN_ENABLED`
-arming it, and the workflow triggering only on `schedule` and
+turning it on, and the workflow triggering only on `schedule` and
 `workflow_dispatch`;
 harden-runner in audit mode on any job installing packages or running
 third-party code; the librarian split into a read-only `refresh` job and an
@@ -57,7 +57,7 @@ installed with `npm install --ignore-scripts`; `main`
 blocking deletion, force-pushes, and non-linear history, deliberately nothing
 more, since a stricter ruleset would also reject the release job's own
 commit; secret scanning and push protection as GitHub settings nothing in CI
-can assert still hold; CodeQL and dependency review skipped where there is
+can assert still hold; no tracked file holding a character a reader cannot see, which `knowledge-trust-ladder`'s contract checks (2026-10-04); CodeQL and dependency review skipped where there is
 nothing for them to scan.
 
 **The librarian's pen (added 2026-10-02)**: `knowledge-apply.sh` is the only writer of `.lokf/knowledge/`. ktl-librarian describes each change as an operation in `.lokf/patch.yaml`, and the script stamps `generated`, refuses an operation that would name a person as its actor, refuses to rewrite text a person wrote or to delete a concept a person confirmed or left a note on, and writes nothing unless every operation passes. The scheduled wrapper applies the file after the agent has finished and refuses a run that changed anything else, so the agent never writes the bundle itself. `publish` reads the same refusals off the patched tree with `knowledge-provenance.sh --unattended`; `docs/threat-model.md` lists it under repository hardening.
@@ -102,7 +102,7 @@ by opening `feedback.md`, so the librarian is the only skill that reads what
 a reader wrote; its one write path asks once per session first; and
 ktl-prose never opens `.lokf/feedback.md`, rewords only in a live session on
 a request addressed to it, and its check script refuses a rewording that
-touches a concept a person wrote or confirmed, or a byte of frontmatter. The
+touches a concept a person wrote or confirmed, or a byte of frontmatter, or that adds a character no reader sees. The
 registrar's `provenance` job, which reads pull-request metadata, runs no
 agent: event fields enter through `env:`, API reads are narrowed to logins,
 SHAs and a verification flag, the `human:<id>` is held to a login's
