@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.34.1] - 2026-10-05
+
 ### Changed
 
 - **The Copilot docent's gap report gives the librarian what ktl-docent's does.** A Miss starts with the reader's question in quotes and says whether a concept looked relevant from `index.md` and did not answer, or nothing relevant was listed. A Disagreement says which version the answer gave. The skill also gives the source link when a question about the present rests only on an unchecked or edited concept, finds endpoints, versions and schemas as ktl-docent does, and takes `ktl-docent-m365` as its heading.
