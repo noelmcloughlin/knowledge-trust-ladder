@@ -91,10 +91,9 @@ if command -v python3 >/dev/null 2>&1; then
 else
   echo "SKIP: python3 not found, so the installed prose-check.py was not run"
 fi
-# ktl-docent runs its own copies of two sidecar scripts in place, never the
-# repository's, so both must arrive with the skill. They must also run from
-# where the installer put them, against a reader's repository that holds
-# nothing but a bundle.
+# ktl-docent runs its own copies of two sidecar scripts, never the
+# repository's. Both must arrive with the skill and run from where the
+# installer put them, against a repository that holds only a bundle.
 docent_dir="$(find "$test_root/consumer" \( -path "*.agents/skills/ktl-docent" -o -path "*.claude/skills/ktl-docent" \) -type d 2>/dev/null | head -1)"
 assert "ktl-docent scripts/knowledge-report.sh and knowledge-feedback.sh carried along" \
   "[[ -n \"$docent_dir\" && -f \"$docent_dir/scripts/knowledge-report.sh\" && -f \"$docent_dir/scripts/knowledge-feedback.sh\" ]]"

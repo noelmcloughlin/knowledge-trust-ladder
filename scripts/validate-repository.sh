@@ -531,13 +531,11 @@ fi
 rm -rf "$good"
 
 # 11a. ktl-docent runs its own copies of knowledge-report.sh and
-#      knowledge-feedback.sh, from its scripts/ folder, and never the
-#      repository's under .lokf/scripts/. A question is enough to start the
-#      docent, often in a repository the reader has not reviewed, and anyone
-#      who can commit to a repository can change its copies. So the docent's
-#      copies must match their templates and must run from wherever an
-#      installer puts them, against the repository the reader is in. And no
-#      page of the docent may send an agent to the repository's copies.
+#      knowledge-feedback.sh, never the repository's, which anyone who can
+#      commit there can change. A question is enough to start the docent,
+#      often in a repository the reader has not reviewed. So the copies must
+#      match their templates and run from wherever an installer puts them,
+#      and no docent page may send an agent to a script under .lokf/scripts/.
 say ""
 say "Checking ktl-docent runs its own copies of two sidecar scripts..."
 docent_scripts="skills/ktl-docent/scripts"
@@ -554,9 +552,8 @@ if hits="$(grep -rnE 'bash[^`]*\.lokf/scripts/' skills/ktl-docent --include='*.m
 else
   ok "no ktl-docent page runs a script under .lokf/scripts/"
 fi
-# The copies run from a folder outside the reader's repository, as an
-# installer leaves them, with the working directory inside it. Each finds
-# that repository's root from the working directory, and neither needs git.
+# Each copy runs from outside the repository, as an installer leaves it, and
+# finds the root from the working directory, without git.
 ds="$(mktemp -d)"; dr="$(mktemp -d)"
 cp -R "$docent_scripts" "$ds/"
 mkdir -p "$dr/.lokf/knowledge/x"
@@ -576,13 +573,11 @@ else
 fi
 rm -rf "$ds" "$dr"
 
-# 11b. Where there is no Python, ktl-librarian and ktl-sidecar read LOKF's
-#      schema from GitHub, and the sidecar's README links to it. Whoever
-#      controls that repository can move a tag, so every page that gives the
-#      URL names a commit, and all of them the same one. Each page also names
-#      the tag of the lokf floor that templates/pyproject.toml sets, so the
-#      floor cannot move without the pages. Moving it means moving the commit
-#      too, and `git ls-remote https://github.com/nicholsn/lokf
+# 11b. Without Python, ktl-librarian and ktl-sidecar read LOKF's schema from
+#      GitHub. A tag can be moved, so every page that gives the URL names the
+#      same commit. Each page also names the tag of the lokf floor that
+#      templates/pyproject.toml sets, so the floor cannot move without the
+#      pages. `git ls-remote https://github.com/nicholsn/lokf
 #      'refs/tags/v<floor>^{}'` prints the commit a tag names.
 say ""
 say "Checking the no-Python schema URL names a commit, not a tag..."

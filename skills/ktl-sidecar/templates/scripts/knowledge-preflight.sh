@@ -241,11 +241,10 @@ fi
 # without the .py has a gate that fails outright, not a stale copy. This is
 # reported whether or not a sidecar is installed to compare against. A bundle with no
 # knowledge-feedback.sh is the same kind of gap rather than drift. ktl-docent
-# runs a copy from its own scripts/ folder, never this one, but an earlier
-# release ran this one, and without it has to open feedback.md to add an
-# entry, which is the one thing that script exists to stop. A host on a
-# sidecar that predates it should hear so before a reader's first recorded
-# gap, not after.
+# runs its own copy, but an earlier release runs this one, and without it has
+# to open feedback.md to add an entry, which is the one thing that script
+# exists to stop. A host on a sidecar that predates it should hear so before a
+# reader's first recorded gap, not after.
 script_gaps=""
 if [ -f "$root/.lokf/scripts/knowledge-conventions.sh" ] && [ ! -f "$root/.lokf/scripts/knowledge-conventions.py" ]; then
   script_gaps=".lokf/scripts/knowledge-conventions.py missing beside the .sh, which runs it"
