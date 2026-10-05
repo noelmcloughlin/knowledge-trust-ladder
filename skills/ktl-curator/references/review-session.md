@@ -6,8 +6,10 @@ Resolve the id from one source, once per session, and confirm it aloud before th
 
 ```sh
 gh api user --jq .login        # GitHub
-glab api user                  # GitLab: the "username" field
+glab api user | sed -n 's/.*"username":"\([^"]*\)".*/\1/p'   # GitLab
 ```
+
+Run `glab api user` only through that filter. On its own it prints the person's whole profile, with their email, commit email and linked accounts, and nothing here needs any of it.
 
 A forge login is stable and matches `CODEOWNERS`. It is the accepted source because it is the identity the `provenance` gate can check an event against afterwards: the gate asks whether that account approved the pull request carrying the event, or signed the commit. With neither CLI, the third route resolves the local signing key to a forge account through the forge's public key listing. With no forge at all, the id is the account the host platform's version history shows. Both are spelled out, host by host, in [portability.md](portability.md).
 

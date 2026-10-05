@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The preflight reads the CI variables by indirect expansion, not `eval`.** It reads the same four fixed names and reports the same, in bash 3.2 too, and a scanner that searches for `eval` finds none in it.
+
+### Security
+
+- **ktl-docent runs no repository script where the reader does not trust that code.** The scripts under `.lokf/scripts/` are the repository's, and anyone who can commit there can change them, so asking the docent about a repository you had not reviewed ran that repository's code. When the reader says they do not trust it, or is reviewing a change to those scripts, the docent works out each label from its table and gives the reader the feedback line to file. The threat model's *Interactive use* section says what the skills run, and why the preflight's `copies` line cannot check those scripts. The docent's scanner note answers the Gen Agent Trust Hub audit of 2026-10-04.
+- **ktl-docent names the asker's login in its question before recording a gap.** An entry carries the login only when the asker agrees. The scheduled workflow commits `.lokf/feedback.md`, often into a public pull request, and git history keeps the line after the librarian clears it.
+- **ktl-docent and ktl-curator keep only the `username` from `glab api user`.** On its own the call prints the whole profile, with the email, commit email and linked accounts, and both skills named the bare call as the source of a login. The preflight already filtered it.
+
 ## [0.34.1] - 2026-10-05
 
 ### Changed

@@ -295,7 +295,7 @@ fi
 # ---- session ---------------------------------------------------------------
 unattended=""
 for v in CI GITHUB_ACTIONS GITLAB_CI TF_BUILD; do
-  eval "val=\${$v:-}"; [ -n "$val" ] && unattended="${unattended}${unattended:+, }$v"
+  val="${!v:-}"; [ -n "$val" ] && unattended="${unattended}${unattended:+, }$v"
 done
 agent=""
 [ -n "${CLAUDECODE:-}" ] && agent="Claude Code"

@@ -25,7 +25,7 @@ This repository is mostly Markdown. Four things in it run, or are run by other s
 | `skills/ktl-prose/scripts/prose-check.py`: the one script a skill runs in place, **in whichever repository installs it** | Standard library only. It reads the files it is given and calls `git show` with an argument list. It writes nothing and opens no network connection. |
 | The five skills' `SKILL.md` and `references/` prose, **executed by whichever LLM agent runs it**, here and in every consumer | Each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one. [Prompt-injection guards](docs/threat-model.md#prompt-injection-guards) and [Human attribution](docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential). |
 
-A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access your harness grants it, and only the scheduled workflow enforces its scope, so review what the agent changed before you commit. [Interactive use](docs/threat-model.md#interactive-use-scope-is-advisory-not-enforced).
+A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access your harness grants it, and only the scheduled workflow enforces its scope, so review what the agent changed before you commit. The skills also run the scripts in the repository's `.lokf/scripts/`, which anyone who can commit there can change. Tell ktl-docent when you do not trust a repository's code, and it runs none of them. [Interactive use](docs/threat-model.md#interactive-use-scope-is-advisory-not-enforced).
 
 ## Not covered
 
