@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.34.2] - 2026-10-05
+
 ### Changed
 
 - **The preflight reads the CI variables by indirect expansion, not `eval`**, so a scanner that searches for `eval` finds none. Its output is unchanged, in bash 3.2 too.
