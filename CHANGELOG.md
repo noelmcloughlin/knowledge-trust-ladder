@@ -4,6 +4,15 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The Copilot docent's gap report gives the librarian what ktl-docent's does.** A Miss starts with the reader's question in quotes and says whether a concept looked relevant from `index.md` and did not answer, or nothing relevant was listed. A Disagreement says which version the answer gave. The skill also gives the source link when a question about the present rests only on an unchecked or edited concept, finds endpoints, versions and schemas as ktl-docent does, and takes `ktl-docent-m365` as its heading.
+
+### Fixed
+
+- **The Copilot docent labels a concept as `knowledge-report.sh labels` does.** Its rules reported every label that applied, most cautionary first, so a retired concept could also read as confirmed, and a concept edited after its confirmation could read as both. A retired concept now carries no other label, and *edited since a person last confirmed it* takes the place of *confirmed by a person*. *Still a draft* and then *past its review date* follow the first label, and a confirmation names the revision it was checked against. ktl-docent's `references/answering.md` gave the same rules for a sidecar with no script, and now matches the script too.
+- **Every label table reads an empty `verified` list as *nobody has checked this yet*, as the report script does.** The tables in ktl-docent, the Copilot docent and ktl-curator's `references/trust-fields.md` called it *checked by automation only*.
+
 ## [0.34.0] - 2026-10-05
 
 ### Added
