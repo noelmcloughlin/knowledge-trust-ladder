@@ -1,6 +1,6 @@
 # The rules: plain English for a knowledge bundle
 
-This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from. A script checks parts of four of the rules, and a reader checks the rest.
+This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from, and from a fourth over three sibling bundles. A script checks parts of four of the rules, and a reader checks the rest.
 
 One rule stands above the thirteen: a rewording changes the wording and never a fact. When a rule and a fact pull apart, the fact wins and the sentence stays as it was.
 
@@ -166,6 +166,17 @@ After:  **"Require signed commits" as a branch rule is off, and must stay off.**
 ```
 
 The first pass cut "deliberately" four times and "honest" or "honestly" four times, and added neither back. The script reports "deliberately" and "honestly" as `words`.
+
+A possessive already says whose a thing is, a noun already names it, and a negative is already whole. So read each "own" after a possessive, each "itself" after a noun and each "at all" after a negative, and cut the one that draws no contrast.
+
+```text
+Before: It never touches the Node build (`build.yml`) or the LOKF bundle's own semantics. The tool itself is installed at exact pinned versions inside the workflow.
+After:  It never touches the Node build (`build.yml`) or the LOKF bundle's semantics. The tool is installed at exact pinned versions inside the workflow.
+```
+
+A fourth pass reworded the bundles of three sibling repositories. It cut "own" 58 times of 84, and "itself" or "themselves" 33 times of 43. It kept each one that draws a contrast, as "its own two checks" and "approves itself" do, so the script lists neither word.
+
+That pass also measured what a rewording does to length. It cleared 305 of the script's 312 findings, and the text went from 15,526 words to 15,688. A fragment given its verb, and "pull request" written for "PR", cost more words than the cuts saved. The 7 findings left sit under `## Open questions`, which a rewording never touches.
 
 It gives way to a hedge that states a real condition: "usually" is a fact when the exception exists. The second pass kept "actually", "really", "simply" and "just" wherever they carried a contrast, so the script lists none of them.
 

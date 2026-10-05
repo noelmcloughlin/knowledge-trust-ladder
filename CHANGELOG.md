@@ -4,6 +4,31 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The librarian's pull request says how the conventions script ended.** The registrar's gate does not run on a pull request the workflow opens, so `refresh` runs `knowledge-conventions.sh` and the pull request reports the outcome beside the validation's. The pen keeps most conventions by itself. A `resource` that names no file and a `revision` that names no commit are the two only this script finds.
+- **`knowledge-report.sh changes` says what a change does to each confirmed concept.** Each one it names is followed by *still reads as confirmed*, *reads as edited since that confirmation*, *removed* or *its confirmation is gone*. A check or a question on a confirmed concept was listed like an edit, so a reviewer could not tell which concepts lost their label.
+- **ktl-prose rule 10 says where a text says a thing twice.** "own" after a possessive, "itself" after a noun and "at all" after a negative are cut where they draw no contrast. A fourth pass, over the bundles of the three sibling repositories, cut 58 of 84 and 33 of 43. It cleared 305 of the script's 312 findings, and the text grew by one word in a hundred.
+- **`prose-check.py` counts the words before and after a rewording.** The `OK` line of a comparison gives both counts, so the hand-off quotes them. A day or a month written out that changed, and a text cut by more than a fifth, are notes for the reader.
+
+### Changed
+
+- **The pen refuses a patch that handles more than ten reader entries.** ktl-librarian stated that limit for a run, and nothing held a run to it.
+
+### Fixed
+
+- **The pen writes a value back as the file held it.** It read each concept's frontmatter into YAML's types and wrote the whole block back, so `1.10` became `1.1`, `12:30:00` became `45000` and `yes` became `true` in any concept it touched. On a person's event an unquoted `at` came back in another shape and an all-digit `revision` as another number. The gate read that event as changed, and the report script lost the confirmation's date. The pen also refused an all-digit commit hash given as `revision`.
+- **The retrieval score leaves out a question whose concept has left the bundle.** No index could lead to such a concept, so the question counted as a miss on every run. It is not asked now, and the score says how many were left out.
+- **Conventions rule 10 reports a comment beside `id`, `by`, `at` or `revision`.** A parser drops the comment and a line reader takes it for part of the value. The gate then read an actor nobody is, and the report script could not read the time, so the concept never read as edited since.
+- **`docs/wikiskill.md` said the paper's wiki keeps every trace.** Its raw layer keeps them, and the wiki's log names the errors that came back.
+
+### Security
+
+- **A person's record is the same after the pen writes as before.** The pen compares each concept it is about to write with the file it read, and refuses the patch when a `human:` event or a person's note would differ. Three patches passed its per-operation checks before: a `rewrite` whose body brought its own `## Open questions` section, a note in a person's name spelt with an escaped line break, and a `delete` behind a second heading placed above the real one. `knowledge-provenance.sh --unattended` refused each in a scheduled run, and nothing did in a live session. Check 19 exercises them.
+- **A reader's question and the hand-off hold no character a reader cannot see, whichever block it sits in.** The pen and `publish` listed ranges, which left out the Arabic letter mark, the soft hyphen and the tag characters, which hide text from a reader and not from a model. The pen cleaned a reader's question of control characters only. Both now go by Unicode category, as check 21 and `prose-check.py` do.
+- **The hand-off a reviewer reads is the pen's, after the retrieval call too.** That call carries readers' words in its prompt and runs after the pen has written the hand-off, whose path it could write. The wrapper writes the pen's lines there again once the call returns.
+- **A reply cannot add to what it is scored against.** The retrieval scorer read the expected concepts and the reply from one stream. A reply that held lines in the scorer's own shape raised both counts.
+
 ## [0.33.0] - 2026-10-04
 
 ### Added

@@ -80,7 +80,10 @@
 # `--prompt` prints one prompt holding the table of contents and the numbered
 # questions. An agent answers it with no tool, and a program scores the reply
 # here. A question counts when a concept the ledger names for it is among the
-# first three paths the reply gives.
+# first three paths the reply gives. A question whose every concept has left
+# the bundle is not asked and not counted, since no index could lead to it,
+# and the score says how many were left out. The reply is read for answers
+# only: what is expected of it comes from the ledger, in a file of its own.
 #
 # Bash 3.2, POSIX awk and git only, so it runs wherever the other sidecar
 # scripts do, and in a workflow job that installs nothing.
@@ -410,13 +413,21 @@ quiet() {
 # a reviewer, and for the librarian workflow's pull request, which the job
 # holding the write token fills from a clean checkout rather than from
 # anything the agent's job reported. A path is printed only when it is made
-# of the characters a concept path may hold.
+# of the characters a concept path may hold. Each confirmed concept the change
+# touches is named with what the change does to its label: a check or a
+# question leaves it confirmed, and an edit the pen stamped turns it to
+# edited since.
+# shellcheck disable=SC2016 # awk's own fields, not the shell's
+standing_fn='$1 == "C" { if ($9 == 0) print "none"; else if (edited()) print "edited"; else print "confirmed" }'
 changes() {
   if [ "$have_git" != 1 ] || ! git -C "$root" rev-parse -q --verify HEAD >/dev/null 2>&1; then
     echo "Changes: not compared here, since this folder has no git history"
     return 0
   fi
-  local line st path rel added=0 changed=0 removed=0 demoted="" ndemoted=0 hidden=0 was fb_was led_now led_was
+  local line st path rel top added=0 changed=0 removed=0 demoted="" ndemoted=0 hidden=0 was now does fb_was led_now led_was
+  # Git names each changed path from the top of the work tree, which is above
+  # $root when the sidecar sits in a subfolder of a larger repository.
+  top="$(git -C "$root" rev-parse --show-toplevel 2>/dev/null)" || top="$root"
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     st="${line%%$'\t'*}"; path="${line#*$'\t'}"
@@ -424,11 +435,18 @@ changes() {
     rel="${path#.lokf/knowledge/}"; rel="${rel#knowledge_bundle/}"
     case "${rel##*/}" in index.md|log.md|diataxis.md) continue ;; esac
     case "$st" in A*) added=$((added + 1)); continue ;; D*) removed=$((removed + 1)) ;; *) changed=$((changed + 1)) ;; esac
-    was="$(git -C "$root" show "HEAD:$path" 2>/dev/null | awk -v path="$rel" -v SQ="'" "$extract" | awk -F'\t' '$1 == "C" { print $9 }')"
-    if [ "${was:-0}" -gt 0 ]; then
-      ndemoted=$((ndemoted + 1))
-      case "$rel" in *[!a-z0-9._/-]*) hidden=$((hidden + 1)) ;; *) demoted="${demoted}- ${rel}"$'\n' ;; esac
-    fi
+    was="$(git -C "$root" show "HEAD:$path" 2>/dev/null | awk -v path="$rel" -v SQ="'" "$extract" | awk -F'\t' "$label_fn$standing_fn")"
+    case "$was" in ""|none) continue ;; esac
+    ndemoted=$((ndemoted + 1))
+    now=""
+    case "$st" in D*) ;; *) now="$(awk -v path="$rel" -v SQ="'" "$extract" "$top/$path" 2>/dev/null | awk -F'\t' "$label_fn$standing_fn")" ;; esac
+    case "$st:$now" in
+      D*)          does="removed" ;;
+      *:edited)    does="reads as edited since that confirmation" ;;
+      *:confirmed) does="still reads as confirmed" ;;
+      *)           does="its confirmation is gone" ;;
+    esac
+    case "$rel" in *[!a-z0-9._/-]*) hidden=$((hidden + 1)) ;; *) demoted="${demoted}- ${rel}: ${does}"$'\n' ;; esac
   done < <(
     git -C "$root" -c core.quotePath=false diff --no-renames --name-status HEAD -- .lokf/knowledge knowledge_bundle 2>/dev/null
     git -C "$root" -c core.quotePath=false ls-files --others --exclude-standard -- .lokf/knowledge knowledge_bundle 2>/dev/null | sed "s/^/A$(printf '\t')/"
@@ -445,24 +463,39 @@ changes() {
 
 # ---- retrieval ---------------------------------------------------------------
 # The ledger's questions as `paths<TAB>question`, one per distinct question.
+# A path counts while the bundle holds a concept there. A question left with
+# none is left out, and "$tmp/gone" holds how many were.
 ledger_questions() {
+  : > "$tmp/gone"
   [ -f "$root/.lokf/questions.md" ] || return 0
-  awk '
+  awk -v dir="$bundle" -v gonefile="$tmp/gone" '
+  function held(p,  line, there) {
+    if (p !~ /^[a-z0-9][a-z0-9._\/-]*\.md$/ || p ~ /\.\./) return 0
+    if (!(p in seen)) { there = (getline line < (dir "/" p)); close(dir "/" p); seen[p] = (there >= 0) }
+    return seen[p]
+  }
   /^- [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [A-Za-z]+ / {
     line = $0; sub(/\r$/, "", line); i = index(line, ": `"); if (i == 0) next
     q = substr(line, i + 3); sub(/`[ \t]*$/, "", q); if (q == "") next
-    n = split(substr(line, 1, i - 1), f, " "); paths = ""
-    for (k = 4; k <= n; k++) { p = f[k]; sub(/,$/, "", p); if (p ~ /\.md$/) paths = paths " " p }
+    n = split(substr(line, 1, i - 1), f, " "); paths = ""; named = 0
+    for (k = 4; k <= n; k++) { p = f[k]; sub(/,$/, "", p); if (p ~ /\.md$/) { named = 1; if (held(p)) paths = paths " " p } }
+    if (!named) next
+    if (!(q in asked)) { asked[q] = 1; all[++na] = q }
     if (paths == "") next
     if (!(q in want)) order[++nq] = q
     want[q] = want[q] paths
   }
-  END { for (i = 1; i <= nq; i++) print substr(want[order[i]], 2) "\t" order[i] }' "$root/.lokf/questions.md"
+  END {
+    for (i = 1; i <= nq; i++) print substr(want[order[i]], 2) "\t" order[i]
+    for (i = 1; i <= na; i++) if (!(all[i] in want)) gone++
+    print gone + 0 > gonefile
+  }' "$root/.lokf/questions.md"
 }
 
 retrieval() {
-  local questions
+  local questions gone
   questions="$(ledger_questions)"
+  gone="$(cat "$tmp/gone" 2>/dev/null || true)"; gone="${gone:-0}"
   case "${1:-}" in
     "") usage ;;
     --prompt)
@@ -486,9 +519,16 @@ EOF
       ;;
     *)
       [ -f "$1" ] || { echo "no reply file at $1" >&2; exit 2; }
-      if [ -z "$questions" ]; then echo "Retrieval from the index: no reader's question is on file yet"; return 0; fi
-      { printf '%s\n' "$questions" | sed "s/^/E$(printf '\t')/"; cat "$1"; } | awk -F'\t' '
-      $1 == "E" { want[++m] = " " $2 " "; next }
+      if [ -z "$questions" ]; then
+        if [ "$gone" -gt 0 ]; then echo "Retrieval from the index: no question on file names a concept the bundle still holds"
+        else echo "Retrieval from the index: no reader's question is on file yet"; fi
+        return 0
+      fi
+      # What is expected comes from a file of its own and the reply from
+      # standard input, so no line of a reply can pass for an expected one.
+      printf '%s\n' "$questions" > "$tmp/expected"
+      awk -v gone="$gone" -v expected="$tmp/expected" '
+      BEGIN { while ((getline line < expected) > 0) { split(line, e, "\t"); want[++m] = " " e[1] " " } }
       {
         line = $0; sub(/\r$/, "", line)
         if (line !~ /^[ \t>*-]*Q[0-9]+[:.)]/) next
@@ -504,7 +544,8 @@ EOF
           if (hit) hits++; else missed = missed "- question " i " did not reach " substr(want[i], 2, length(want[i]) - 2) ((i in picks) ? "" : " (no answer read)") "\n"
         }
         printf "Retrieval from the index: %d of %d reader questions reach their concept\n%s", hits, m, missed
-      }'
+        if (gone > 0) printf "- %d more left out: the ledger names no concept for them that the bundle still holds\n", gone
+      }' < "$1"
       ;;
   esac
 }

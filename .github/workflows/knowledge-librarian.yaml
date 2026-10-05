@@ -36,6 +36,7 @@ jobs:
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
       validate_outcome: ${{ steps.validate-lokf.outcome }}
+      conventions_outcome: ${{ steps.conventions.outcome }}
       retrieval: ${{ steps.retrieval.outputs.score }}
     steps:
       # Same audit-mode egress monitor step 5's other templates use; this job
@@ -182,6 +183,17 @@ jobs:
         if: steps.install-lokf.outcome == 'success'
         continue-on-error: true
         run: uv run lokf validate --check-refs knowledge
+        working-directory: .lokf
+
+      # The registrar's gate does not run on the pull request this workflow
+      # opens (see `publish`), so its second half runs here, and the pull
+      # request says how it ended beside the validation. The pen keeps most of
+      # the conventions by itself. A `resource` that names no file and a
+      # `revision` that names no commit are the two only this script finds.
+      - name: Check the conventions lokf validate cannot see
+        id: conventions
+        continue-on-error: true
+        run: bash scripts/knowledge-conventions.sh knowledge
         working-directory: .lokf
 
       - name: Detect changes
@@ -340,6 +352,7 @@ jobs:
         env:
           BRANCH: ${{ steps.push.outputs.branch }}
           LOKF_OUTCOME: ${{ needs.refresh.outputs.validate_outcome }}
+          CONVENTIONS_OUTCOME: ${{ needs.refresh.outputs.conventions_outcome }}
           RETRIEVAL: ${{ needs.refresh.outputs.retrieval }}
           HEALTH: ${{ steps.push.outputs.health }}
           CHANGES: ${{ steps.push.outputs.changes }}
@@ -347,7 +360,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const { BRANCH, LOKF_OUTCOME, RETRIEVAL, HEALTH, CHANGES, HANDOFF_FILE } = process.env;
+            const { BRANCH, LOKF_OUTCOME, CONVENTIONS_OUTCOME, RETRIEVAL, HEALTH, CHANGES, HANDOFF_FILE } = process.env;
             // On `schedule` triggers the event payload is empty, so resolve the
             // default branch via the API rather than context.payload.repository.
             const { data: repo } = await github.rest.repos.get(context.repo);
@@ -365,13 +378,16 @@ jobs:
             // The hand-off is the agent's own words, from the job that ran
             // it, and is shown as nothing more. The pen cleaned it there; it
             // is cleaned again here, since that job could be blinded: ten
-            // lines of 300 characters at most, with no control or invisible
-            // character and no backtick. It goes in a code block, where no
-            // link, image, mention or HTML renders.
+            // lines of 300 characters at most, with no backtick and no
+            // character a reader cannot see. Unicode's own categories say
+            // which those are, as they do in the pen: a control, a format
+            // character such as a zero-width space, a bidirectional control
+            // or a tag character, and a line or paragraph separator. It goes
+            // in a code block, where no link, image, mention or HTML renders.
             let handoff = [];
             try {
               handoff = fs.readFileSync(HANDOFF_FILE, 'utf8').split('\n')
-                .map((l) => l.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, '').replace(/`/g, "'").trim().slice(0, 300))
+                .map((l) => l.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '').replace(/`/g, "'").trim().slice(0, 300))
                 .filter((l) => l !== '')
                 .slice(0, 10);
             } catch (e) {
@@ -388,6 +404,7 @@ jobs:
               'approve - this PR must not be auto-merged.',
               '',
               `- LOKF validation (\`lokf validate --check-refs\`): ${check(LOKF_OUTCOME)}`,
+              `- Conventions (\`knowledge-conventions.sh\`): ${check(CONVENTIONS_OUTCOME)}`,
               ...retrieval,
               '',
               '### What this change does to the record',

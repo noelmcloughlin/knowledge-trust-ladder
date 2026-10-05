@@ -29,10 +29,12 @@
 #      (1g) skips the agent for a quiet bundle only when KNOWLEDGE_SKIP_QUIET
 #           allows it;
 #      (1h) passes the hand-off to its file through the pen, cleaned, after
-#           whatever the agent left at either output path is gone;
+#           whatever the agent left at either output path is gone, and writes
+#           it again after the retrieval call;
 #   2. the librarian workflow's change detection sees a bundle edit in each of
 #      those shapes, and its packaging step stages it without failing when the
-#      second name does not exist;
+#      second name does not exist. Its pull request says how the conventions
+#      script ended, and cleans the hand-off by Unicode category;
 #   3. the registrar workflow triggers on, and diffs, both names. Its
 #      provenance step (3b), run here as the template has it with `gh`
 #      stubbed, asks the person behind a confirmation that is added, changed
@@ -250,6 +252,7 @@ if [ -d .lokf ]; then
   printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
 else
   [ -z "${MEDDLE:-}" ] || printf 'meddled\n' >> "$MEDDLE"
+  [ -z "${PLANT:-}" ] || printf 'planted in the retrieval call\n' > "$PLANT"
   echo "Q1: a.md"
 fi
 AGENT
@@ -341,6 +344,26 @@ else err "hand-off: exit $status, file holds: $(cat "$work/handoff.txt" 2>/dev/n
 if [ ! -L "$work/retrieval.txt" ] && [ ! -s "$work/retrieval.txt" ] && [ "$(cat "$host/README.md")" = "# host" ]; then
   ok "hand-off: a link the agent left at the retrieval score's path is gone, and nothing was written through it"
 else err "hand-off: the retrieval path is still a link, or holds the agent's text, or the checkout's README changed"; fi
+# The retrieval call comes after the pen has written the hand-off, and its
+# prompt carries readers' words. What that call leaves at the hand-off's path
+# is gone too: the reviewer reads the pen's lines, or none when the patch held
+# none.
+host="$work/wrapper-handoff-retrieval"
+retrieval_host "$host"
+status=0; rm -f "$work/handoff.txt" "$work/retrieval.txt"
+( cd "$host" && AGENT_CLI="$retrieval_agent" PATCH_TEXT="$handoff_patch" KNOWLEDGE_RETRIEVAL=true PLANT="$work/handoff.txt" \
+    KNOWLEDGE_HANDOFF_OUT="$work/handoff.txt" KNOWLEDGE_RETRIEVAL_OUT="$work/retrieval.txt" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 0 ] && [ "$(cat "$work/handoff.txt" 2>/dev/null)" = "one line for the reviewer, with a 'backtick'" ] && grep -q '1 of 1' "$work/retrieval.txt"; then
+  ok "hand-off: the pen's lines are written again after the retrieval call, over what that call left at the path (exit 0)"
+else err "hand-off: exit $status after a retrieval call that wrote the hand-off's path, file holds: $(cat "$work/handoff.txt" 2>/dev/null || echo nothing)"; fi
+host="$work/wrapper-handoff-retrieval-none"
+retrieval_host "$host"
+status=0; rm -f "$work/handoff.txt" "$work/retrieval.txt"
+( cd "$host" && AGENT_CLI="$retrieval_agent" PATCH_TEXT="$create_op" KNOWLEDGE_RETRIEVAL=true PLANT="$work/handoff.txt" \
+    KNOWLEDGE_HANDOFF_OUT="$work/handoff.txt" KNOWLEDGE_RETRIEVAL_OUT="$work/retrieval.txt" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 0 ] && [ ! -s "$work/handoff.txt" ]; then
+  ok "hand-off: a patch with none leaves none, whatever the retrieval call wrote at the path (exit 0)"
+else err "hand-off: exit $status, and a hand-off the retrieval call wrote survived: $(cat "$work/handoff.txt" 2>/dev/null)"; fi
 
 echo "2. the librarian workflow's change detection and packaging"
 detect='git status --porcelain -- .lokf/knowledge knowledge_bundle'
@@ -368,6 +391,35 @@ if grep -qF 'KNOWLEDGE_HANDOFF_OUT: ${{ runner.temp }}/handoff.txt' "$librarian_
    && grep -qF 'HANDOFF_FILE: ${{ runner.temp }}/handoff.txt' "$librarian_yaml" && grep -qF "'\`\`\`text', ...handoff, '\`\`\`'" "$librarian_yaml"; then
   ok "template carries the hand-off in the artifact and shows it in a code block"
 else err "knowledge-librarian.yaml lost the hand-off's path from the pen to the pull request"; fi
+# `publish` cleans the hand-off again, by Unicode category as the pen does: a
+# control, a format character or a line separator, whichever block it sits in.
+# The expression is run as the template has it where node is installed.
+clean_line="$(grep -F '.map((l) => l.replace(' "$librarian_yaml" | sed 's/^ *//')"
+# shellcheck disable=SC2016 # the backtick is JavaScript's, matched as text
+if [ "$clean_line" = '.map((l) => l.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '"''"').replace(/`/g, "'"'"'").trim().slice(0, 300))' ]; then
+  ok "template cleans each hand-off line by Unicode category, then of backticks, to 300 characters"
+else err "knowledge-librarian.yaml no longer cleans the hand-off as expected: $clean_line"; fi
+if command -v node >/dev/null 2>&1; then
+  # shellcheck disable=SC2016 # the backticks and the escapes are JavaScript's
+  cleaned="$(CLEAN="$clean_line" node -e '
+    const clean = eval("(l) => [l]" + process.env.CLEAN + "[0]");
+    process.stdout.write(clean("a\u061c line\u00ad with\u{E0041} more\ufff9 than\u180e a\u200b `list`\u2028"));')"
+  if [ "$cleaned" = "a line with more than a 'list'" ]; then
+    ok "template's cleaning removes a bidirectional mark, a soft hyphen, a tag character and a line separator"
+  else err "template's cleaning left something a reader cannot see: $(printf '%s' "$cleaned" | od -c | head -3)"; fi
+else
+  echo "node not installed locally - CI runs the hand-off's cleaning; skipping here"
+fi
+# The registrar's gate does not run on the pull request this workflow opens.
+# So the refresh job runs the conventions script, and the pull request says
+# how it ended beside the validation.
+# shellcheck disable=SC2016 # the template's own ${{ }} and ${...} expressions, matched as text
+if sed -n '/^  refresh:/,/^  publish:/p' "$librarian_yaml" | grep -qF 'run: bash scripts/knowledge-conventions.sh knowledge' \
+   && grep -qF 'conventions_outcome: ${{ steps.conventions.outcome }}' "$librarian_yaml" \
+   && grep -qF 'CONVENTIONS_OUTCOME: ${{ needs.refresh.outputs.conventions_outcome }}' "$librarian_yaml" \
+   && grep -qF '${check(CONVENTIONS_OUTCOME)}' "$librarian_yaml"; then
+  ok "template runs the conventions script in refresh and reports its outcome on the pull request"
+else err "knowledge-librarian.yaml no longer runs the conventions script, or no longer reports it on the pull request"; fi
 for shape in default no-doorway rearranged; do
   host="$work/workflow-$shape"
   make_host "$host" "$shape"

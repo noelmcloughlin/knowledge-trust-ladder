@@ -21,7 +21,9 @@
 #   - The lines the patch file holds for the reviewer, its `handoff`, reach
 #     the file KNOWLEDGE_HANDOFF_OUT names through the same script, cleaned.
 #     That file and the retrieval score's are removed once the agent returns,
-#     so what the workflow reads from them was written after it.
+#     so what the workflow reads from them was written after it. The
+#     retrieval test calls the agent a second time, so the hand-off is
+#     written again after that call, as the pen left it.
 #   - It MUST NOT git commit, push, or open pull requests: the workflow owns
 #     that.
 #   - On success it exits 0 whether or not it changed anything; the workflow
@@ -260,8 +262,11 @@ tree_state() {
 # the reply is read for concept paths and for nothing else, the same
 # snapshot guards .git/config and .git/hooks/, and a call that changed
 # anything in the checkout refuses the run like any other stray write.
+# The hand-off file sits outside the checkout, where this call could write
+# too. So the lines the pen put there are held across the call and written
+# back after it, and the reviewer never reads a hand-off this call left.
 score_retrieval() {
-  local prompt scratch before line
+  local prompt scratch before line handoff=""
   prompt="$(bash .lokf/scripts/knowledge-report.sh retrieval --prompt 2>/dev/null || true)"
   if [ -z "$prompt" ]; then
     echo "knowledge-librarian: no reader's question is on file, so retrieval is not scored"
@@ -269,6 +274,9 @@ score_retrieval() {
   fi
   scratch="$(mktemp -d)"
   before="$(tree_state)"
+  if [ -n "${KNOWLEDGE_HANDOFF_OUT:-}" ] && [ -f "$KNOWLEDGE_HANDOFF_OUT" ] && [ ! -L "$KNOWLEDGE_HANDOFF_OUT" ]; then
+    handoff="$(cat "$KNOWLEDGE_HANDOFF_OUT")"
+  fi
   snapshot_git_state
   (
     cd "$scratch" || exit 1
@@ -276,6 +284,10 @@ score_retrieval() {
     exec "${agent_cmd[@]}" -p "$prompt"
   ) > "$scratch/reply" 2>/dev/null || true
   restore_git_state
+  if [ -n "${KNOWLEDGE_HANDOFF_OUT:-}" ]; then
+    rm -f "$KNOWLEDGE_HANDOFF_OUT"
+    [ -z "$handoff" ] || printf '%s\n' "$handoff" > "$KNOWLEDGE_HANDOFF_OUT"
+  fi
   if [ "$(tree_state)" != "$before" ]; then
     echo "knowledge-librarian: the retrieval call changed files in the checkout - refusing" >&2
     rm -rf "$scratch"

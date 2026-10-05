@@ -422,6 +422,12 @@ mkdir -p "$bad/k/Upper" && printf -- '---\ntype: Service\n---\n' > "$bad/k/Upper
 # Rule 10: an event spelt so that the gates' line readers cannot see it.
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/q\nverified:\n  - "by": human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n' > "$bad/k/x/q-quotedkey.md"
 printf -- '---\ntype: Service\nid: https://example.invalid/k/x/t\nverified: [{ by: !!str human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n' > "$bad/k/x/t-tag.md"
+# A comment beside such a field is valid YAML that a parser drops and a line
+# reader takes for part of the value: the report script then cannot read the
+# time, so the concept never reads as edited since. A comment on a line of its
+# own, and a `#` inside a quoted value, must pass.
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/cm\nverified:\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z" # checked on site\n---\n' > "$bad/k/x/cm-comment.md"
+printf -- '---\ntype: Service\nid: https://example.invalid/k/x/co\nverified:\n  # a comment on a line of its own\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "etag#1"\n---\n' > "$bad/k/x/co-comment-apart.md"
 # What only a parser sees:
 #   - a multi-line flow item with an unquoted `at`;
 #   - a number where a timestamp should be;
@@ -449,7 +455,7 @@ rm -rf "$bad"
 for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp" "bare mapping" "open question not" "2 process:ktl-librarian events" "resource not found" "does not hold" \
             "f-crlf.md: unquoted timestamp" "g-bom.md: starts with a byte order mark" "h-nofm.md: no closed frontmatter block" \
             "is declared by more than one file" "conflicted copy 2026-09-17).md: path is not lowercase" "Upper/j.md: path is not lowercase" \
-            "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on" \
+            "q-quotedkey.md: frontmatter uses a quoted key (by)" "t-tag.md: frontmatter uses a tag on" "cm-comment.md: frontmatter uses a comment beside at" \
             "r11-late.md: at \"2026-09-17T01:00:00Z\" is later than the commit that recorded it (2026-09-17T00:00:00Z)" "r11-future.md: at \"2999-01-01T00:00:00Z\" is in the future" \
             "fl-flow.md: unquoted timestamp" "n-int.md: unquoted timestamp" "y-bad.md: frontmatter is not valid YAML" "l-list.md: frontmatter is not a mapping" \
             "idx-stale.md: its bullet in .*/k/index.md does not match" "idx-stale.md: its bullet in .*/k/x/index.md does not match" \
@@ -462,6 +468,7 @@ for want in "not a bare ISO date" "not newest-first" "x/a.md: unquoted timestamp
   fi
 done
 for quiet in "x/e.md:whose revision holds its resource" "r11-ok.md:whose time is before the commit that recorded it" "fence.md:whose second librarian event is only an example in a code fence" \
+             "co-comment-apart.md:whose comment sits on a line of its own, and whose revision holds a # inside its quotes" \
              "idx-fresh.md:whose index bullets carry its title and its folded description" \
              "idx-shared.md:whose only listing is a root line that names it beside another concept" \
              "r13-notes.md:whose changes since its confirmation are a person's note, its status, the registrar's block and a requoted title" \
@@ -1307,6 +1314,17 @@ expect_prose 1 "digits:" "a changed number is reported" -- --before "$pc/p-old.m
 expect_prose 1 "link:" "a changed link target is reported" -- --before "$pc/p-old.md" "$pc/p-link.md"
 expect_prose 1 "related:" "a changed wikilink in the lokf:related region is reported" -- --before "$pc/p-old.md" "$pc/p-rel.md"
 expect_prose 1 "frontmatter:" "a changed frontmatter value is reported" -- --before "$pc/p-old.md" "$pc/p-fm.md"
+# A program counts the words before and after, so the hand-off quotes them and
+# no model works them out. What digits cannot show is a note, never a refusal:
+# a day or a month written out, and a text cut by more than a fifth, which a
+# reader checks for a fact that went with the words.
+expect_prose 0 "OK: only the wording differs (1 file): 15 words, and the earlier text had 15" "a comparison that passes says how many words each version holds" -- --before "$pc/p-old.md" "$pc/p-new.md"
+printf '# A page\n\nThe job runs on Mondays in October, and it reads every file.\n' > "$pc/d-old.md"
+printf '# A page\n\nThe job runs on Tuesdays in October, and it reads every file.\n' > "$pc/d-new.md"
+expect_prose 0 'date-word: the day or month "Tuesday" is new' "a changed day of the week is a note for the reader" -- --before "$pc/d-old.md" "$pc/d-new.md"
+printf '# A page\n\n%s\n\n%s\n' "$para" "$para" > "$pc/s-old.md"
+printf '# A page\n\n%s\n' "$para" > "$pc/s-new.md"
+expect_prose 0 "shrink: 163 words, and the earlier text had 323" "a text cut by more than a fifth is a note for the reader" -- --max-paragraph 400 --before "$pc/s-old.md" "$pc/s-new.md"
 
 # --before on concepts: a body may change only where no person vouched for it,
 # and the frontmatter never. The confirmation is staged in each form the
@@ -1385,6 +1403,12 @@ expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- s
 #       - a human: actor anywhere, a rewrite of text a person wrote and the
 #         deletion of a concept a person confirmed are refused;
 #       - a person's own verified event survives a patch;
+#       - a person's record is the same after a patch as before, whatever the
+#         operations were;
+#       - a frontmatter value the operation did not name keeps the text the
+#         file held, where YAML would read it as a number, a boolean or a time;
+#       - a reader's question reaches the ledger, and a hand-off line its
+#         file, with no character a reader cannot see;
 #       - the index bullets and the log heading are kept in step;
 #       - the lokf:related block survives a rewrite;
 #       - a handled feedback entry leaves feedback.md for the ledger, with the
@@ -1616,6 +1640,106 @@ if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qxF -- "- $kday
 else
   err "the ledger did not grow as expected: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
 fi
+# A person's record is the same after a patch as before, whatever the
+# operations were. The pen compares each concept it is about to write with the
+# file it read. So these are refused, though each operation is one it allows:
+#   - a rewrite whose body brings its own `## Open questions` section, which
+#     would replace the one that holds a person's note;
+#   - a note in a person's name spelt with an escaped line break, which no
+#     scan of the patch file's lines can see, in a new concept's body and in
+#     an appended paragraph;
+#   - a delete behind a second `## Open questions` heading placed above the
+#     real one.
+# A rewrite with no such section of its own still carries the note over.
+cat > "$kpatch" <<'EOF'
+ops:
+  - op: rewrite
+    path: playbooks/new.md
+    body: "# Overview\n\nRewritten.\n\n## Open questions\n\n- 2026-03-04, process:ktl-librarian: mine now\n"
+    log: rewritten
+EOF
+apply_refuses "a rewrite whose own open questions would replace a person's note" "playbooks/new.md: this patch would remove a note a person left (human:ada, 2026-03-03)"
+cat > "$kpatch" <<'EOF'
+ops:
+  - op: create
+    path: playbooks/planted.md
+    frontmatter: {type: Playbook, title: Planted, description: planted.}
+    body: "# Overview\n\nText.\n\n## Open questions\n\n- 2026-03-04, human:ada: looks right to me\n"
+EOF
+apply_refuses "a person's note spelt with an escaped line break in a new concept" "playbooks/planted.md: this patch would add a note in a person's name (human:ada, 2026-03-04)"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/confirmed.md, edits: [{append: {content: "## Open questions\n\n- 2026-03-04, human:ada: I checked this\n"}}], log: x}' > "$kpatch"
+apply_refuses "a person's note spelt with an escaped line break in an appended paragraph" "playbooks/confirmed.md: this patch would add a note in a person's name (human:ada, 2026-03-04)"
+cat > "$kpatch" <<'EOF'
+ops:
+  - {op: patch, path: playbooks/new.md, edits: [{append: {content: "## Open questions\n\nnothing here"}}], log: x}
+  - {op: delete, path: playbooks/new.md, log: gone}
+EOF
+apply_refuses "a delete behind a second open-questions heading placed above a person's note" "playbooks/new.md: this patch would remove a note a person left (human:ada, 2026-03-03)"
+printf '%s\n' 'ops:' '  - {op: rewrite, path: playbooks/new.md, body: "# Overview\n\nRewritten from the source.\n", log: rewritten}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -q 'Rewritten from the source.' "$kb/playbooks/new.md" \
+   && grep -qxF -- '- 2026-03-03, human:ada: send this back' "$kb/playbooks/new.md"; then
+  ok "a rewrite with no open-questions section of its own carries a person's note over"
+else
+  err "a rewrite lost a person's note, or was refused: $(tr '\n' '|' < "$kb/playbooks/new.md")"
+fi
+# A value the operation did not name goes back as the file held it. YAML reads
+# each of these as a number, a boolean or a time, and written back from that
+# they would read 1.1, 45000, true and, on a person's own event, 42798 and a
+# time in another shape, which the gate reads as a changed confirmation. An
+# all-digit commit hash given as `revision` is text too, and is written quoted.
+printf '%s\n' '---' 'type: Playbook' 'id: https://acme.example/knowledge/playbooks/kept' 'title: Kept' 'description: kept.' \
+  'version: 1.10' 'window: 12:30:00' 'flag: yes' 'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' \
+  'verified:' '  - by: human:ada' '    at: 2026-02-02T10:00:00Z' '    revision: 0123456' '---' '' '# Overview' '' 'Text.' > "$kb/playbooks/kept.md"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/kept.md, edits: [{append: {content: more}}], set: {build: 1.20}, revision: 1234567, log: x}' > "$kpatch"
+if out="$(bash "$apply" --root "$ka" "$kpatch" 2>&1)"; then
+  for want in 'version: 1.10' 'window: 12:30:00' 'flag: yes' 'build: 1.20' '- by: human:ada' '  at: 2026-02-02T10:00:00Z' '  revision: 0123456' '  revision: "1234567"'; do
+    if grep -qxF -- "$want" "$kb/playbooks/kept.md"; then ok "the pen writes a value back as it was read: $want"; else err "the pen did not keep '$want': $(tr '\n' '|' < "$kb/playbooks/kept.md")"; fi
+  done
+else
+  err "knowledge-apply.sh failed on a concept holding values YAML reads as numbers and times: $out"
+fi
+# A reader's question and a hand-off line are shown to a person, in a code
+# span and a code block. Neither keeps a character a reader cannot see, by
+# Unicode's own categories: a zero-width space and a right-to-left override,
+# and also an Arabic letter mark, a soft hyphen and a tag character, which a
+# list of ranges left out. The patch spells each as an escape, so this file
+# holds none.
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-05' '' '- **Miss** - Q: "hidden?" - docent' > "$ka/.lokf/feedback.md"
+cat > "$kpatch" <<'EOF'
+ops:
+  - op: patch
+    path: playbooks/kept.md
+    edits:
+      - append: {content: "and more"}
+    log: fixed
+    from_feedback: '- **Miss** - Q: "hidden?" - docent'
+    asked: "is\u200b it\u202e hidden\u061c from\u00ad a\U000E0041 reader\uFEFF?"
+handoff:
+  - "a\u061c line\u00ad with\U000E0041 more\uFFF9 than\u180e a\u200b list"
+EOF
+# shellcheck disable=SC2016 # the backticks are a Markdown code span, not a command
+if bash "$apply" --root "$ka" --handoff "$khand" "$kpatch" >/dev/null 2>&1 \
+   && grep -qxF -- "- $kday Miss playbooks/kept.md: \`is it hidden from a reader?\`" "$ka/.lokf/questions.md" \
+   && [[ "$(cat "$khand")" == "a line with more than a list" ]]; then
+  ok "a reader's question and a hand-off line lose every character a reader cannot see, a bidirectional mark and a tag character included"
+else
+  err "an unseen character reached the ledger or the hand-off: $(tail -1 "$ka/.lokf/questions.md" | od -c | head -5) // $(od -c "$khand" | head -3)"
+fi
+rm -f "$khand"
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-05' '' '- **Miss** - Q: "unseen?" - docent' > "$ka/.lokf/feedback.md"
+printf '%s\n' 'ops:' "  - {op: patch, path: playbooks/kept.md, edits: [{append: {content: again}}], log: fixed, from_feedback: '- **Miss** - Q: \"unseen?\" - docent', asked: \"\\u200b\\u202e\"}" > "$kpatch"
+apply_refuses "a reader's question of invisible characters alone" "asked holds no printable text"
+# One run handles at most ten reader entries, which the skill states and the
+# pen holds it to: an eleventh waits for the next run.
+{ printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-05' ''; for i in 1 2 3 4 5 6 7 8 9 10 11; do printf -- '- **Miss** - entry %s - docent\n' "$i"; done; } > "$ka/.lokf/feedback.md"
+{ printf '%s\n' 'ops:'; for i in 1 2 3 4 5 6 7 8 9 10 11; do printf "  - {op: patch, path: playbooks/kept.md, edits: [{append: {content: 'line %s'}}], log: fixed, from_feedback: '- **Miss** - entry %s - docent'}\n" "$i" "$i"; done; } > "$kpatch"
+apply_refuses "a patch that handles eleven reader entries" "one run handles at most 10"
+sed -i '$d' "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && [[ "$(grep -c '^- \*\*' "$ka/.lokf/feedback.md")" == 1 ]]; then
+  ok "a patch that handles ten reader entries is applied, and the eleventh waits in feedback.md"
+else
+  err "a patch that handles ten reader entries was not applied as expected: $(grep -c '^- \*\*' "$ka/.lokf/feedback.md") entries left"
+fi
 rm -rf "$ka"
 # A root index a person shaped by hand keeps its shape. Its sections may be
 # `##` headings, and a line may list several concepts or name one in a
@@ -1715,7 +1839,10 @@ fi
 #     that recorded the event, or when it carries an uncommitted edit; one
 #     changed in the same commit has not. And no reader's words leave it,
 #     except inside the one prompt the retrieval test builds, whose reply it
-#     scores by program.
+#     scores by program: against what the ledger expects and never against a
+#     line of the reply, and without a question whose concept has left the
+#     bundle. `changes` says what a change does to each confirmed concept's
+#     label.
 say ""
 say "Exercising knowledge-report.sh..."
 report="$repo_root/$templates/scripts/knowledge-report.sh"
@@ -1736,7 +1863,8 @@ printf -- '---\ntype: Service\ntitle: Gone\nresource: src/missing.md\n---\n' > "
 printf '# Change Log\n' > "$kk/log.md"
 printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-03' '' '- **Miss** - Q: "a reader wrote these waiting words" - docent' '- **Disagreement** - another. - docent' > "$kr/.lokf/feedback.md"
 # shellcheck disable=SC2016 # the backticks are Markdown code spans, not commands
-printf '%s\n' '# Questions readers asked' '' 'Written by knowledge-apply.sh.' '' '- 2026-01-10 Miss x/confirmed.md: `Where are widgets?`' '- 2026-01-11 Miss x/confirmed.md: `a reader wrote these ledger words`' '- 2026-01-12 Disagreement x/draft.md' > "$kr/.lokf/questions.md"
+printf '%s\n' '# Questions readers asked' '' 'Written by knowledge-apply.sh.' '' '- 2026-01-10 Miss x/confirmed.md: `Where are widgets?`' '- 2026-01-11 Miss x/confirmed.md: `a reader wrote these ledger words`' '- 2026-01-12 Disagreement x/draft.md' \
+  '- 2026-01-13 Miss x/deleted-since.md: `Where did the old concept go?`' > "$kr/.lokf/questions.md"
 "${kr_git[@]}" add -A && "${kr_git[@]}" commit -q -m 'sources and concepts in one commit'
 kr_run() { (cd "$kr" && bash "$report" "$@" 2>&1); }
 if out="$(kr_run worklist)" && grep -q '^Sources that moved since the concept was derived or last checked: 1$' <<<"$out" && grep -qF -- '- x/gone.md: src/missing.md (gone)' <<<"$out"; then
@@ -1786,21 +1914,60 @@ else
   err "report script's whole report is not as expected: $out"
 fi
 printf '\nmore\n' >> "$kk/x/confirmed.md"; printf -- '---\ntype: Service\ntitle: New\n---\n' > "$kk/x/new.md"
-if out="$(kr_run changes)" && grep -qxF 'Concepts added: 1 · changed: 1 · removed: 0' <<<"$out" && grep -qxF 'Confirmed by a person, and changed or removed here: 1' <<<"$out" && grep -qxF -- '- x/confirmed.md' <<<"$out"; then
-  ok "report script: changes counts the working tree against HEAD and names the confirmed concept it edits"
+if out="$(kr_run changes)" && grep -qxF 'Concepts added: 1 · changed: 1 · removed: 0' <<<"$out" && grep -qxF 'Confirmed by a person, and changed or removed here: 1' <<<"$out" && grep -qxF -- '- x/confirmed.md: still reads as confirmed' <<<"$out"; then
+  ok "report script: changes counts the working tree against HEAD and names the confirmed concept it touches, which still reads as confirmed"
 else
   err "report script's changes is not as expected: $out"
 fi
-if out="$(kr_run retrieval --prompt)" && grep -qxF 'x/confirmed.md | Confirmed | a confirmed concept about widgets.' <<<"$out" && grep -qxF 'Q1: Where are widgets?' <<<"$out" && grep -qxF 'Q2: a reader wrote these ledger words' <<<"$out"; then
-  ok "report script: the retrieval prompt holds the index's entries and the ledger's questions, numbered"
+# What a change does to a confirmed concept's label: an edit the pen stamped
+# turns it to edited since, a deletion removes it, and a confirmation struck
+# out by hand is gone. A reviewer reads which of these each concept met.
+sed -i 's/at: "2026-01-01T00:00:00Z"/at: "2026-03-01T00:00:00Z"/' "$kk/x/confirmed.md"
+rm "$kk/x/retired.md"
+printf -- "---\ntype: Service\ntitle: 'Ada''s answered concept'\n---\n" > "$kk/x/answered.md"
+out="$(kr_run changes)"
+for want in 'Concepts added: 1 · changed: 2 · removed: 1' 'Confirmed by a person, and changed or removed here: 3' \
+            '- x/confirmed.md: reads as edited since that confirmation' '- x/retired.md: removed' '- x/answered.md: its confirmation is gone'; do
+  if grep -qxF -- "$want" <<<"$out"; then ok "report script changes: $want"; else err "report script's changes lacks '$want': $out"; fi
+done
+"${kr_git[@]}" checkout -q -- .lokf/knowledge/x/retired.md .lokf/knowledge/x/answered.md
+# A sidecar in a subfolder of a larger repository: git names each changed path
+# from the top of the work tree, and the report must still read the file there.
+km="$(mktemp -d)"; mkdir -p "$km/pkg/.lokf/knowledge/x"
+km_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$km"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${km_git[@]}" init -q
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$km/pkg/.lokf/knowledge/index.md"
+printf -- '---\ntype: Service\ntitle: Sub\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$km/pkg/.lokf/knowledge/x/sub.md"
+"${km_git[@]}" add -A && "${km_git[@]}" commit -q -m 'a sidecar in a subfolder'
+sed -i 's/at: "2026-01-01T00:00:00Z"/at: "2026-03-01T00:00:00Z"/' "$km/pkg/.lokf/knowledge/x/sub.md"
+if out="$(cd "$km/pkg" && bash "$report" changes 2>&1)" && grep -qxF -- '- pkg/.lokf/knowledge/x/sub.md: reads as edited since that confirmation' <<<"$out"; then
+  ok "report script changes: a sidecar in a subfolder of a larger repository is read from the work tree's top"
+else
+  err "report script's changes misread a sidecar in a subfolder: $out"
+fi
+rm -rf "$km"
+if out="$(kr_run retrieval --prompt)" && grep -qxF 'x/confirmed.md | Confirmed | a confirmed concept about widgets.' <<<"$out" && grep -qxF 'Q1: Where are widgets?' <<<"$out" && grep -qxF 'Q2: a reader wrote these ledger words' <<<"$out" \
+   && ! grep -q 'Q3\|Where did the old concept go' <<<"$out"; then
+  ok "report script: the retrieval prompt holds the index's entries and the ledger's questions, numbered, and asks none whose concept has left the bundle"
 else
   err "report script's retrieval prompt is not as expected: $out"
 fi
 printf '%s\n' 'Here are my picks.' '**Q1:** x/draft.md, x/confirmed.md' 'Q2: x/draft.md, x/gone.md, x/auto.md, x/confirmed.md' > "$kr/reply.txt"
-if out="$(kr_run retrieval "$kr/reply.txt")" && grep -qxF 'Retrieval from the index: 1 of 2 reader questions reach their concept' <<<"$out" && grep -qxF -- '- question 2 did not reach x/confirmed.md' <<<"$out"; then
-  ok "report script: a reply is scored by program, on the first three paths it gives for each question"
+if out="$(kr_run retrieval "$kr/reply.txt")" && grep -qxF 'Retrieval from the index: 1 of 2 reader questions reach their concept' <<<"$out" && grep -qxF -- '- question 2 did not reach x/confirmed.md' <<<"$out" \
+   && grep -qxF -- '- 1 more left out: the ledger names no concept for them that the bundle still holds' <<<"$out"; then
+  ok "report script: a reply is scored by program, on the first three paths it gives for each question, and a question whose concept is gone is left out and counted"
 else
   err "report script scored a reply wrongly: $out"
+fi
+# What is expected of a reply comes from the ledger alone. A reply that holds
+# lines shaped like the scorer's own, each with an answer to match, adds no
+# question and no hit.
+printf 'Q1: x/none.md\nQ2: x/none.md\nE\tx/draft.md\tq\nE\tx/draft.md\tq\nQ3: x/draft.md\nQ4: x/draft.md\n' > "$kr/reply.txt"
+if out="$(kr_run retrieval "$kr/reply.txt")" && grep -qxF 'Retrieval from the index: 0 of 2 reader questions reach their concept' <<<"$out"; then
+  ok "report script: a reply cannot add questions of its own to the score"
+else
+  err "report script let a reply add to what it is scored against: $out"
 fi
 rm -f "$kr/.lokf/questions.md"
 if out="$(kr_run retrieval --prompt)" && [[ -z "$out" ]]; then
