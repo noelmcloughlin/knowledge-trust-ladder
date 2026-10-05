@@ -1,12 +1,8 @@
 # Install
 
-Each of the four skills stands alone. The **sidecar** plus the **librarian** is
-enough to see the idea: the bundle gets built, everything in it marked a draft.
-Add the **curator** once there is a bundle worth trusting. Already have a
-healthy `.lokf/`? Skip the **sidecar**. The **docent** goes anywhere an agent
-only *reads* a bundle, this repository included. A fifth skill, `ktl-prose`,
-is an optional helper: it rewords what the **librarian** wrote, in plain
-English, before a person confirms it.
+Each of the four skills stands alone. The **sidecar** plus the **librarian** is enough to see the idea: the bundle gets built, everything in it marked a draft.
+
+Add the **curator** once there is a bundle worth trusting. Already have a healthy `.lokf/`? Skip the **sidecar**. The **docent** goes anywhere an agent only *reads* a bundle, this repository included. A fifth skill, `ktl-prose`, is an optional helper: it rewords what the **librarian** wrote, in plain English, before a person confirms it.
 
 > Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
 > `npx skills add` paths, so an existing install keeps working. The skills
@@ -40,21 +36,15 @@ npx skills add noelmcloughlin/knowledge-trust-ladder \
 
 ## Pin to one tag
 
-All five skills release together under one tag, so pin them to the same one.
-Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`.
-[releasing.md](releasing.md) says what each version level means.
+All five skills release together under one tag, so pin them to the same one. Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`. [releasing.md](releasing.md) says what each version level means.
 
 ## Microsoft 365 Copilot
 
-Copilot runs custom skills in a sandbox with no repository, so only the
-**docent** goes there, and it takes a snapshot of the bundle with it.
-[m365.md](m365.md) says where to get it and
-how to add it to a declarative agent.
+Copilot runs custom skills in a sandbox with no repository, so only the **docent** goes there, and it takes a snapshot of the bundle with it. [m365.md](m365.md) says where to get it and how to add it to a declarative agent.
 
 ## What each skill needs
 
-Every skill runs from a POSIX shell and starts with a preflight that prints
-what this machine can do and which steps that disables.
+Every skill runs from a POSIX shell and starts with a preflight that prints what this machine can do and which steps that disables.
 
 | Skill | Needs |
 | --- | --- |
@@ -63,7 +53,4 @@ what this machine can do and which steps that disables.
 | `ktl-docent` | nothing |
 | `ktl-prose` | `python3` 3.9 or newer, or `uv`, for its check script, and git to compare a file with its earlier version |
 
-Someone who cannot act on a line the preflight prints, such as a **curator**
-who knows the subject but not the repository, gets a request note for whoever
-set the repository up. The note comes from the **sidecar**'s
-[prerequisites page](../skills/ktl-sidecar/references/prerequisites.md).
+Someone who cannot act on a line the preflight prints, such as a **curator** who knows the subject but not the repository, gets a request note for whoever set the repository up. The note comes from the **sidecar**'s [prerequisites page](../skills/ktl-sidecar/references/prerequisites.md).
