@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-10-05
+
 ### Added
 
 - **The librarian's pull request says how the conventions script ended.** The registrar's gate does not run on a pull request the workflow opens, so `refresh` runs `knowledge-conventions.sh` and the pull request reports the outcome beside the validation's. The pen keeps most conventions by itself. A `resource` that names no file and a `revision` that names no commit are the two only this script finds.
