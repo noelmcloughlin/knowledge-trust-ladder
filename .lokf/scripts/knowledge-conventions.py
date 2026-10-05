@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.9"
-# dependencies = ["pyyaml"]
+# dependencies = ["pyyaml==6.0.3"]
+# [tool.uv]
+# exclude-newer = "2025-10-01T00:00:00Z"
 # ///
 # The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9, 10, 12
 # and 13 (see that script's header for the list).
@@ -29,6 +31,12 @@
 # none. Invoked by knowledge-conventions.sh through `uv run`, which reads the
 # dependency block above and needs nothing preinstalled; run directly it
 # needs python3 and pyyaml.
+#
+# That block names one PyYAML release, and `exclude-newer` takes no file
+# uploaded after its date. A registry never replaces a file, so every run
+# installs the files that were there when the pin was set, and this gate runs
+# what a person reviewed. Move the version and the date together, here and in
+# knowledge-apply.py; the skills repository's contract holds the two equal.
 
 from __future__ import annotations
 

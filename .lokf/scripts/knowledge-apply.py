@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.9"
-# dependencies = ["pyyaml"]
+# dependencies = ["pyyaml==6.0.3"]
+# [tool.uv]
+# exclude-newer = "2025-10-01T00:00:00Z"
 # ///
 # The pen, the librarian's only way to write the bundle. ktl-librarian
 # describes each change to the bundle as an operation in .lokf/patch.yaml, and
@@ -36,6 +38,11 @@
 # with no backtick, and prints them; `--handoff <file>` also writes them there, which
 # is how the scheduled wrapper passes them to the pull request. A reader's
 # question, which goes to the ledger, is cleaned the same way.
+#
+# The dependency block above names one PyYAML release, and `exclude-newer`
+# takes no file uploaded after its date, so every run installs the files
+# that were there when the pin was set. Move the two together, here and in
+# knowledge-conventions.py.
 #
 # Operations (each a mapping under `ops:` with `op:` and `path:`):
 #   create    frontmatter + body for a concept that does not exist yet

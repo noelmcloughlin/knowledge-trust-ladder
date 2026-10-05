@@ -40,6 +40,13 @@
 #                       knowledge-report.sh finds nothing waiting for it; the
 #                       workflow sets it on a scheduled run, never on one a
 #                       person starts
+#   KNOWLEDGE_DECLINED  optional: a file naming what a person declined, by
+#                       closing a pull request of the workflow's without
+#                       merging. knowledge-report.sh reads it, so the quiet
+#                       check and the agent's work list count none of those
+#                       changes until they change again. The workflow writes
+#                       it on a scheduled run only, never on one a person
+#                       starts
 #   KNOWLEDGE_HANDOFF_OUT  optional: a file to write the patch's hand-off lines to
 #   KNOWLEDGE_RETRIEVAL optional: "true" scores, after the bundle is written,
 #                       whether the index leads an agent to the concept behind
@@ -139,7 +146,9 @@ Task (Karpathy rule - continuous small corrections, not a rewrite):
      .lokf/knowledge/playbooks/knowledge-sources.md). Start a refresh from
      "bash .lokf/scripts/knowledge-report.sh worklist" where that script
      exists: a program has already found which sources moved, which notes a
-     person left, and how much reader feedback waits.
+     person left, and how much reader feedback waits. Where that list names
+     changes a person declined, by closing a pull request without merging,
+     propose none of them again, and say in the hand-off what you left.
   2. Reconcile the .lokf/ knowledge bundle with the repository: add missing
      concepts, correct stale facts, wire typed relations, and give every
      operation its log line - but only when the bundle content actually

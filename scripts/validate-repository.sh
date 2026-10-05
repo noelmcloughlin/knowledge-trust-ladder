@@ -300,9 +300,10 @@ done
 #     themselves (actionlint is pointed at both, ShellCheck scans the tree).
 #     So the copies must stay byte-identical, or a template change is
 #     released unlinted. knowledge-librarian.yaml is among them, apart from
-#     the value of TRUST_LADDER_SKILLS_REF: the release commit moves the
-#     template's pin but may not touch .github/workflows/, and the install
-#     step that reads the pin is skipped in this repository anyway.
+#     the values of TRUST_LADDER_SKILLS_REF and TRUST_LADDER_SKILLS_SHA: the
+#     release commit moves the template's pin but may not touch
+#     .github/workflows/, and the install step that reads the pin is skipped
+#     in this repository anyway.
 #     Then the conventions script itself is exercised: it must pass on this
 #     repository's own bundle and fail on a bundle that breaks each rule. A
 #     checker that cannot fail is not covering anything.
@@ -310,7 +311,7 @@ say ""
 say "Checking the sidecar templates are the copies CI lints..."
 templates="skills/ktl-sidecar/templates"
 # The skills pin is each repository's own to move, so it is not drift.
-unpin() { sed -E 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' "$1"; }
+unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/' "$1"; }
 for pair in \
   "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
   "$templates/github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml" \
@@ -334,6 +335,18 @@ for pair in \
     err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
   fi
 done
+
+# The two Python halves install PyYAML through `uv run`, from the dependency
+# block each carries. That block names one release and takes no file uploaded
+# after a date, so a gate never runs a parser nobody reviewed. The two files
+# must name the same release and the same date.
+pyyaml_pins="$(grep -hE '^# (dependencies = \["pyyaml==[0-9]+(\.[0-9]+)+"\]|exclude-newer = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+Z")$' \
+                 "$templates/scripts/knowledge-apply.py" "$templates/scripts/knowledge-conventions.py" | sort | uniq -c | awk '{ print $1 }' | tr '\n' ' ')"
+if [[ "$pyyaml_pins" == "2 2 " ]]; then
+  ok "knowledge-apply.py and knowledge-conventions.py pin the same PyYAML release and the same cut-off date"
+else
+  err "knowledge-apply.py and knowledge-conventions.py must each carry 'dependencies = [\"pyyaml==<version>\"]' and an 'exclude-newer' date, the same in both - one is missing, unpinned or different"
+fi
 
 say ""
 say "Exercising knowledge-conventions.sh..."
@@ -581,6 +594,29 @@ else
   err "preflight still reports knowledge-feedback.sh as missing after it was laid down: $out"
 fi
 rm -rf "$bare"
+# The gate installs the toolkit with `uv sync --locked`, which fails when git
+# holds no lock. A host that carries the gate and never committed
+# .lokf/uv.lock hears so from the preflight, before its next pull request does.
+locked="$(mktemp -d)"; mkdir -p "$locked/.lokf/knowledge" "$locked/.github/workflows"
+locked_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$locked"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${locked_git[@]}" init -q
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$locked/.lokf/knowledge/index.md"
+cp "$templates/pyproject.toml" "$locked/.lokf/pyproject.toml"
+cp "$templates/github/knowledge-registrar.yaml" "$locked/.github/workflows/"
+"${locked_git[@]}" add -A && "${locked_git[@]}" commit -q -m 'a host with the gate and no lock'
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$locked" 2>&1)" && grep -q '^warn    toolkit .*uv.lock is not in git' <<<"$out"; then
+  ok "preflight warns when the gate is installed and git holds no .lokf/uv.lock for it to install from"
+else
+  err "preflight did not report the missing .lokf/uv.lock: $out"
+fi
+printf 'version = 1\n' > "$locked/.lokf/uv.lock" && "${locked_git[@]}" add -A && "${locked_git[@]}" commit -q -m 'the lock is committed'
+if out="$(bash "$templates/scripts/knowledge-preflight.sh" "$locked" 2>&1)" && ! grep -q 'uv.lock is not in git' <<<"$out"; then
+  ok "preflight stops naming .lokf/uv.lock once git holds it"
+else
+  err "preflight still reports .lokf/uv.lock as missing after it was committed: $out"
+fi
+rm -rf "$locked"
 # Every line the preflight can print as missing or a warning has a row on the
 # sidecar's prerequisites page: the plain-words meaning, who fixes it and what
 # to send them. So a new preflight line cannot be added without one.
@@ -1081,6 +1117,36 @@ elif git ls-tree --name-only "$pin" -- "$skill_path" | grep -qxF -- "$skill_path
 else
   err "the librarian template pins $pin, which has no $skill_path - the install step clones that tag and copies that path, so every scheduled run on a host scaffolded from this template fails there; this is what a rename does to a pin that still names a current release"
 fi
+# The pin is a tag and the commit that tag names, since a tag can be moved and
+# what it names here is the instructions an agent follows unattended. The
+# install step refuses a tag that names another commit. So the template's
+# commit must be the one its tag names, and whatever moves the tag must move
+# the commit with it: the release step, and the sync into a sibling.
+pin_sha="$(grep -oE 'TRUST_LADDER_SKILLS_SHA: [0-9a-f]{40}' \
+             skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
+if [[ -z "$pin_sha" ]]; then
+  err "no TRUST_LADDER_SKILLS_SHA beside the pin in the librarian template - a host would install whatever commit the tag names on the day"
+elif [[ -z "$pin" ]] || ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
+  say "skipping the pinned commit: ${pin:-the pin} is not a tag on this clone"
+elif [[ "$(git rev-parse "refs/tags/$pin^{commit}")" == "$pin_sha" ]]; then
+  ok "the librarian template pins the commit $pin names (${pin_sha:0:12})"
+else
+  err "the librarian template pins $pin with commit $pin_sha, but $pin names $(git rev-parse "refs/tags/$pin^{commit}") - the install step refuses that on every host, so move the two together"
+fi
+# shellcheck disable=SC2016 # the template's own $ expressions, matched as text
+if grep -qF '"$TRUST_LADDER_SKILLS_SHA"' skills/ktl-sidecar/templates/github/knowledge-librarian.yaml \
+   && grep -qF 'got="$(git -C "$tmp" rev-parse HEAD)"' skills/ktl-sidecar/templates/github/knowledge-librarian.yaml; then
+  ok "the install step compares the commit it cloned with the pinned one"
+else
+  err "the librarian template's install step no longer compares the cloned commit with TRUST_LADDER_SKILLS_SHA"
+fi
+for mover in .github/workflows/semantic-release.yml scripts/sync-sidecar.sh; do
+  if grep -qF 's/(TRUST_LADDER_SKILLS_REF: )' "$mover" && grep -qF 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/' "$mover"; then
+    ok "$mover moves the pinned commit with the pinned tag"
+  else
+    err "$mover moves TRUST_LADDER_SKILLS_REF without TRUST_LADDER_SKILLS_SHA, so the install step would refuse the next pin it writes"
+  fi
+done
 
 # 16. The repository's old name stays gone from anything that still speaks in
 #     the present tense. It was renamed from lokf-agent-skills on 2026-09-19,
@@ -1842,7 +1908,9 @@ fi
 #     scores by program: against what the ledger expects and never against a
 #     line of the reply, and without a question whose concept has left the
 #     bundle. `changes` says what a change does to each confirmed concept's
-#     label.
+#     label. `quiet` and the work list set a moved source aside once the
+#     librarian's own question covers it, and set aside what a person
+#     declined by closing the workflow's pull request, until it changes again.
 say ""
 say "Exercising knowledge-report.sh..."
 report="$repo_root/$templates/scripts/knowledge-report.sh"
@@ -2033,6 +2101,109 @@ rm "$kq/.lokf/knowledge/x/two.md"
 printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-01-06' '' '- **Miss** - a reader asked. - docent' > "$kq/.lokf/feedback.md"
 kq_expect 1 "reader feedback: 1" "reader feedback waiting makes work"
 rm "$kq/.lokf/feedback.md"
+# A source that is gone makes work, and the librarian cannot always end it: a
+# concept a person confirmed is the curator's to retire, so all it may do is
+# ask. Its own question, naming the source and committed after the source
+# last changed, says it read that state and put it to a person. The source
+# then makes no work until it changes again, and the work list names it
+# apart. A question that names no source may ask about anything, so it covers
+# none.
+kq_asked=$'\n- 2026-01-06, process:ktl-librarian: the source src/a.md is gone; retire this concept?\n'
+"${kq_git[@]}" rm -q src/a.md && "${kq_git[@]}" commit -q -m 'the source is deleted'
+kq_expect 1 "concepts whose source moved: 1 ·" "a source that is gone makes work"
+kq_one "2026-01-04T00:00:00Z" "$kq_note"$'\n- 2026-01-06, process:ktl-librarian: has a person tried this in a real vault, as lib/src/a.md and src/a.md.bak suggest?\n'
+kq_expect 1 "concepts whose source moved: 1 ·" "a question of the librarian's that does not name the source, only longer paths that hold it, leaves the work"
+kq_one "2026-01-04T00:00:00Z" "$kq_note$kq_asked"
+kq_expect 0 "Already with a person: concepts whose moved source the librarian's own question covers: 1" "the librarian's own question naming a source that is gone, not yet committed, ends the work"
+"${kq_git[@]}" commit -q -am 'the librarian asks whether to retire it'
+kq_expect 0 "Quiet: nothing new waits for the librarian." "that question, once committed after the source went, keeps the run quiet"
+out="$(cd "$kq" && bash "$report" worklist 2>&1)"
+if grep -qxF 'Sources that moved since the concept was derived or last checked: none' <<<"$out" \
+   && grep -qxF 'Sources that moved, where your own question has waited for a person since: 1' <<<"$out" && grep -qxF -- '- x/one.md: src/a.md (gone)' <<<"$out"; then
+  ok "report script work list: a source the librarian's question covers is named apart from the sources that still wait"
+else
+  err "report script's work list does not set a source its own question covers apart: $out"
+fi
+mkdir -p "$kq/src" && printf 'back\n' > "$kq/src/a.md" && "${kq_git[@]}" add -A && "${kq_git[@]}" commit -q -m 'the source comes back, changed'
+kq_expect 1 "concepts whose source moved: 1 ·" "a source that changes after the librarian's question makes work again"
+kq_one "2026-01-07T00:00:00Z" "$kq_note$kq_asked" && "${kq_git[@]}" commit -q -am 'the librarian rechecks it'
+kq_expect 0 "Quiet: no source moved" "a recheck after that change makes the run quiet, with nothing set aside"
+# A source git never held has no commit to order against the question, so any
+# question of the librarian's on the concept covers it.
+printf -- '---\ntype: Service\ntitle: Never\nresource: src/never.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n---\n\n# Overview\n' > "$kq/.lokf/knowledge/x/never.md"
+"${kq_git[@]}" add -A && "${kq_git[@]}" commit -q -m 'a concept whose source never existed'
+kq_expect 1 "concepts whose source moved: 1 ·" "a source that never existed makes work"
+printf '\n## Open questions\n\n- 2026-01-08, human:ada: where is this file?\n' >> "$kq/.lokf/knowledge/x/never.md" && "${kq_git[@]}" commit -q -am 'a person asks, which is no question of the librarian'
+kq_expect 1 "concepts whose source moved: 1 ·" "a person's note covers no source for the librarian"
+printf -- '- 2026-01-09, process:ktl-librarian: no file was ever at src/never.md; which source is meant?\n' >> "$kq/.lokf/knowledge/x/never.md" && "${kq_git[@]}" commit -q -am 'the librarian asks'
+kq_expect 1 "concepts whose source moved: 0 · notes a person left since the librarian last looked: 1 ·" "the librarian's question covers a source git never held, and the person's note still waits for a stamp"
+"${kq_git[@]}" rm -q .lokf/knowledge/x/never.md && "${kq_git[@]}" commit -q -m 'that concept goes'
+
+# What a person declined. The librarian workflow hands a scheduled run the
+# pull requests of its own that a person closed without merging, in the file
+# KNOWLEDGE_DECLINED names. Nothing such a pull request had before it makes
+# work again until it changes: a source of a concept it touched, a note left
+# there, a concept it tried to stamp, a feedback entry it handled. The work
+# list names each, and the concepts it added, so none is proposed twice.
+kd_base_one() { kq_one "2026-01-07T00:00:00Z" "$1"; }
+printf 'b\n' > "$kq/src/b.md"
+printf -- '---\ntype: Service\ntitle: Two\nresource: src/b.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n---\n\n# Overview\n' > "$kq/.lokf/knowledge/x/two.md"
+"${kq_git[@]}" add -A && "${kq_git[@]}" commit -q -m 'a second stamped concept and its source'
+printf 'a3\n' >> "$kq/src/a.md"; printf 'b2\n' >> "$kq/src/b.md"
+kd_base_one "$kq_note$kq_asked"$'- 2026-01-20, human:ada: and is the limit still ten?\n'
+printf -- '---\ntype: Service\ntitle: Three\n---\n\n# Overview\n' > "$kq/.lokf/knowledge/x/three.md"
+kd_first='- **Miss** - Q: "a reader wrote these declined words" - docent'
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-01-21' '' "$kd_first" '- **Miss** - Q: "another reader asked" - docent' > "$kq/.lokf/feedback.md"
+"${kq_git[@]}" add -A && "${kq_git[@]}" commit -q -m 'both sources move, a person leaves a note, readers ask, and a concept arrives unstamped'
+kd_base="$("${kq_git[@]}" rev-parse HEAD)"
+kd="$kq/declined.txt"
+kd_expect() {  # <exit status> <text the line holds> <what>
+  local out rc=0
+  out="$(cd "$kq" && KNOWLEDGE_DECLINED="$kd" bash "$report" quiet 2>&1)" || rc=$?
+  if [[ "$rc" == "$1" ]] && grep -qF -- "$2" <<<"$out"; then ok "report script declined: $3"; else err "report script declined: $3 - exit $rc: $out"; fi
+}
+kq_expect 1 "concepts whose source moved: 2 · notes a person left since the librarian last looked: 1 · concepts with no stamp: 1 · reader feedback: 2" "with no record, everything waiting makes work"
+printf '%s\n' "declined 12 2026-02-01 $kd_base" 'touched x/one.md' 'touched x/three.md' 'added x/new.md' 'added x/two.md' \
+  "handled $(printf '%s\n' "$kd_first" | git hash-object --stdin)" 'touched ../../etc/passwd.md' 'touched x/Two.md' 'a line in no shape' > "$kd"
+kd_expect 1 "concepts whose source moved: 1 · notes a person left since the librarian last looked: 0 · concepts with no stamp: 0 · reader feedback: 1 ·" "what a closed pull request had before it makes no work, and the rest still does"
+kd_expect 1 "left from a pull request a person closed without merging: 4" "the line of counts says how much was left"
+out="$(cd "$kq" && KNOWLEDGE_DECLINED="$kd" bash "$report" worklist 2>&1)"
+for want in 'Sources that moved since the concept was derived or last checked: 1' \
+            'Declined, since a person closed the pull request without merging; propose none of it again: 5' \
+            "- x/one.md: a person's note of 2026-01-20; pull request #12, closed 2026-02-01" \
+            '- x/three.md: no stamp yet; pull request #12, closed 2026-02-01' \
+            '- x/new.md: a concept that pull request added; pull request #12, closed 2026-02-01' \
+            '- .lokf/feedback.md: the entry at line 5, which that pull request handled; pull request #12, closed 2026-02-01'; do
+  if grep -qxF -- "$want" <<<"$out"; then ok "report script declined, work list: $want"; else err "report script's work list with a declined record lacks '$want': $out"; fi
+done
+if grep -q '^- x/two.md: src/b.md (' <<<"$out" && grep -q '^- x/one.md: src/a.md (.*); pull request #12, closed 2026-02-01$' <<<"$out" \
+   && ! grep -q 'x/two.md: a concept that pull request added\|passwd\|Two.md\|declined words' <<<"$out"; then
+  ok "report script declined: a source nobody declined still waits, a declined one is named with its pull request, and no reader's words or bad path is printed"
+else
+  err "report script's work list with a declined record is not as expected: $out"
+fi
+# The record is read on a scheduled run only: with none, as on a run a person
+# starts, everything is work again. A record this clone cannot order, since
+# its base commit is no ancestor of HEAD, counts for nothing.
+printf '%s\n' 'declined 13 2026-02-08 0123456789abcdef0123456789abcdef01234567' 'touched x/one.md' 'touched x/two.md' > "$kd"
+kd_expect 1 "concepts whose source moved: 2 · notes a person left since the librarian last looked: 1 · concepts with no stamp: 1 · reader feedback: 2" "a record whose base commit this clone does not hold is left out"
+printf '%s\n' "declined 12 2026-02-01 $kd_base" 'touched x/one.md' 'touched x/two.md' 'touched x/three.md' \
+  "handled $(printf '%s\n' "$kd_first" | git hash-object --stdin)" "handled $(printf '%s\n' '- **Miss** - Q: "another reader asked" - docent' | git hash-object --stdin)" > "$kd"
+kd_expect 0 "Quiet: nothing new waits for the librarian. Already with a person: left from a pull request a person closed without merging: 6" "a week whose every item a person declined is quiet, and says what it left"
+# Each kind makes work again once it changes after that pull request.
+printf 'a4\n' >> "$kq/src/a.md" && "${kq_git[@]}" commit -q -am 'a source moves after the closed pull request'
+kd_expect 1 "concepts whose source moved: 1 ·" "a source that moves after the closed pull request makes work again"
+printf '\n## Open questions\n\n- 2026-02-10, human:ada: one more thing\n' >> "$kq/.lokf/knowledge/x/two.md"
+sed -i 's/^## 2026-01-21$/## 2026-02-10\n\n- **Miss** - Q: "a reader asks again" - docent\n\n## 2026-01-21/' "$kq/.lokf/feedback.md"
+printf 'more\n' >> "$kq/.lokf/knowledge/x/three.md"
+"${kq_git[@]}" commit -q -am 'a new note, a new reader entry and an edit to the unstamped concept'
+kd_expect 1 "concepts whose source moved: 1 · notes a person left since the librarian last looked: 1 · concepts with no stamp: 1 · reader feedback: 1 ·" "a note, a reader's entry and an edit made after the closed pull request each make work again"
+if out="$(cd "$kq" && KNOWLEDGE_DECLINED="$kd" bash "$report" 2>&1)" && ! grep -q 'Declined\|pull request #' <<<"$out"; then
+  ok "report script declined: the curator's report reads no record of declined changes"
+else
+  err "report script's whole report changed with a declined record: $out"
+fi
+"${kq_git[@]}" rm -q -r .lokf/knowledge/x/two.md .lokf/knowledge/x/three.md .lokf/feedback.md && "${kq_git[@]}" commit -q -m 'the fixture is put back to one concept'
 nogit="$(mktemp -d)"; cp -R "$kq/.lokf" "$nogit/"
 if out="$(cd "$nogit" && bash "$report" quiet 2>&1)"; then
   err "report script quiet: a bundle with no history read as quiet: $out"

@@ -19,7 +19,7 @@ It runs two checks:
 1. `uv run lokf validate --check-refs knowledge`: the schema check, and every typed relation must point at a concept in the bundle.
 2. `bash scripts/knowledge-conventions.sh knowledge`: the thirteen conventions below, which the toolkit cannot see.
 
-It checks out the full history, because conventions 6, 11 and 13 read each concept's commits.
+It checks out the full history, because conventions 6, 11 and 13 read each concept's commits. It installs the toolkit with `uv sync --locked`: what `.lokf/uv.lock` names, each file checked against its recorded hash. A lock that is missing or behind `.lokf/pyproject.toml` fails the job, so the gate never runs a toolkit nobody reviewed.
 
 ### The thirteen conventions
 
@@ -45,7 +45,7 @@ Each of the first five, and the eleventh, has been broken by an agent that had i
 
 Rules 2, 3, 8 and 10 are house rules, stricter than OKF, which permits an unquoted datetime, a bare `verified` mapping, any file name and any YAML. The gate asks more so that a datetime reaches every consumer as one string, and an event is always appended to a list. It also asks that a name never collides on a case-insensitive host, and that an event reads the same to a line reader as to a parser. Every reader here still accepts a bare mapping, as OKF requires, so that half of rule 3 is style, not safety.
 
-The script is two files. Rules 2, 3, 4, 7, 9, 10, 12 and 13 are questions about a document's YAML, which a real parser answers outright where grep and awk only approximate. `knowledge-conventions.sh` hands those to `knowledge-conventions.py` beside it, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. Rule 13 reads git too, from the Python half. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
+The script is two files. Rules 2, 3, 4, 7, 9, 10, 12 and 13 are questions about a document's YAML, which a real parser answers outright where grep and awk only approximate. `knowledge-conventions.sh` hands those to `knowledge-conventions.py` beside it, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. That header names one PyYAML release and takes no file uploaded after a set date. Rule 13 reads git too, from the Python half. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
 
 ## The `provenance` job
 
