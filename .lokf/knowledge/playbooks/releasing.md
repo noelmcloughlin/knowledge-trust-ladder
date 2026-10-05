@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T14:26:28Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -47,10 +47,12 @@ supplies the release notes. A plain shell step
 afterward reads the version `--dry-run` computed, promotes that section to a
 dated heading itself, moves the librarian template's `TRUST_LADDER_SKILLS_REF`
 to the newest tag a host can clone, and commits both directly as
-`chore(release): <version> - changelog promoted [skip ci]`. Only the
+`chore(release): <version> - changelog promoted [skip ci]`. The pin is two
+values, so the same step moves `TRUST_LADDER_SKILLS_SHA` to the commit that
+tag names: the install step refuses a tag that names any other commit. Only the
 template's pin moves: `GITHUB_TOKEN` may not push a change under
-`.github/workflows/`, so this repository's own copy keeps its old pin and
-check 11 ignores that one value (2026-09-24) - `gh skill publish`
+`.github/workflows/`, so this repository's own copy keeps its old pin,
+which check 11 ignores (2026-09-24). `gh skill publish`
 stays this repository's one and only tag creator, per the reasoning below.
 
 Because the next version is computed from the last tag and `gh skill publish`
@@ -122,8 +124,9 @@ to one release. It refuses anything but a tag that is on origin and carries
 sibling already has, and lays down a template the sibling lacks when
 ktl-sidecar puts it on every host or a copy there cannot run without it.
 It reports any other, and adds nothing more. Then it moves the sibling's
-`TRUST_LADDER_SKILLS_REF` to the same tag, runs the sidecar's checks there,
-prints a draft changelog line and the commit command, and never commits. The pin and the copies move together because
+`TRUST_LADDER_SKILLS_REF` to the same tag, and its `TRUST_LADDER_SKILLS_SHA` to
+the commit that tag names. It runs the sidecar's checks there, prints a draft
+changelog line and the commit command, and never commits. The pin and the copies move together because
 the skill a tag installs is written against the wrapper, gate and preflight
 that tag ships, and once a sibling arms its scheduled librarian the pin
 decides which instructions run unattended. A release that touched neither

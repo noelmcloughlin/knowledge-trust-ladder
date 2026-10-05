@@ -11,7 +11,7 @@ sources:
 - resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -39,6 +39,6 @@ Each skill takes one line of the poem, or the role the poem leaves implicit:
 - **Curator** *holds the scales*: a person's assistant that shows what needs a look, puts the source next to the claim, and records the person's verdict. Curator is the museum sense - the one who authenticates and weighs provenance - not the data-management sense, which is the librarian's job.
 - **Docent** *guides the visitors*: answers from the bundle with each concept's trust label, and records what the bundle missed for the librarian's next run. Read-only on the bundle.
 
-On a fresh repository they run in order - sidecar, then librarian filling the bundle with drafts, then curator, where a person turns drafts into confirmed knowledge a few at a time. After that it is a loop: the librarian refreshes on a schedule, readers send back what the bundle missed, and the curator works through whatever that surfaces (`.assets/ktl-lifecycle-loop.svg`).
+On a fresh repository they run in order - sidecar, then librarian filling the bundle with drafts, then curator, where a person turns drafts into confirmed knowledge a few at a time. After that it is a loop: the librarian refreshes on a schedule, readers report what the bundle missed, and the curator reviews what is new or changed.
 
 Each handoff is a frontmatter fact, not a convention: the librarian marks what it creates `status: draft`, a curator's `verified` event by a `human:` actor is what confirms it, and the docent's `.lokf/feedback.md` entries are what the librarian consumes next run.

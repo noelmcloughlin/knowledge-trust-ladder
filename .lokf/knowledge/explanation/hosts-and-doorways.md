@@ -7,7 +7,7 @@ genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:45:53Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -48,15 +48,15 @@ folder is not a choice the sidecar makes any more: it is always the hidden one.
 
 # Hosts
 
-- **Code repository** - readers are developers, agents, and CI, most of whom never open Obsidian. The
+- **Code repository** - readers are developers, agents, and CI. The
   hidden real folder keeps the bundle out of the way; the doorway is how a person browses to it, and
   how Obsidian opens it as a vault of its own.
 - **Notes vault** - the sidecar lands beside the notes. The vault
   never indexes `.lokf/`, and skips the doorway too (its target resolves inside the vault being
   indexed - see [Open the knowledge bundle in Obsidian](../playbooks/open-bundle-in-obsidian.md)), so
   the **workshop** and the **exhibition** never collide: the person curates in a second vault opened
-  through the doorway. What the vault does *not* get is the bundle in its own graph, search, Sync or
-  mobile - and, it turned out, that is the point.
+  through the doorway. What the vault does *not* get is the bundle in its own graph, search or
+  Sync, and that is what keeps the workshop clean.
 - **Shared drive or SharePoint library** - readers are whoever the service shows the folder to.
   `.lokf/` syncs (Microsoft's restricted-name list has nothing against a leading dot), so the real
   folder is the same on every machine; OneDrive syncs neither symbolic links nor junctions, so the
@@ -94,7 +94,7 @@ detect it with nothing to configure. What it cost the tooling: a `visible` varia
 layout test cases, and both workflows and the wrapper naming the bundle
 under both paths, because a git pathspec never traverses a symlink.
 
-A day later, in daily use of the maintainer's own vault, the intent turned out to be the problem.
+A day later, the intent turned out to be the problem.
 Obsidian indexes a real folder inside a vault like any other, so the exhibition leaked into the
 workshop: link suggestions, the quick switcher, graph and search all mixed exhibits with everyday
 notes, and *Settings → Files and links → Excluded files* only makes an excluded folder less

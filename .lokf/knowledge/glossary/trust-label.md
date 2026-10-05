@@ -8,7 +8,7 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
@@ -23,7 +23,9 @@ act on. `knowledge-report.sh` computes them each time from `verified`, `status`,
 and `stale_after` (with `type` and the relation fields for vocabulary fit
 and reliance, and git history for confirmations no signed commit backs): any `verified` actor prefixed `human:` means confirmed by a
 person; events by non-human actors only mean checked by automation; no
-`verified` key at all means nobody has checked it.
+`verified` key at all means nobody has checked it. `knowledge-report.sh` reads
+`resource`, `sources[].resource` and git history for the label
+*a source moved since the confirmation*.
 
 A `revision` on an event (proposed for lokf 0.9.0, not yet released) is
 shown beside that event's date but changes no label: its absence means

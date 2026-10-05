@@ -22,7 +22,7 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T17:27:49Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -70,7 +70,7 @@ Only a body an agent wrote that no person has confirmed. It never rewords `index
 3. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, and leave what cannot be fixed.
 4. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, such as a character no reader sees that the rewording added, and the agent undoes it. The script enforces the table above with no override.
 5. **Log** one **Prose** line in `log.md`.
-6. **Hand off** a change scoped to `.lokf/`, with the counts before and after, each sentence left alone, each concept skipped, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
+6. **Hand off** a change scoped to `.lokf/`, with the counts before and after, the words before and after from the script's `OK` line, each sentence left alone, each concept skipped, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
 
 # Outside the bundle
 

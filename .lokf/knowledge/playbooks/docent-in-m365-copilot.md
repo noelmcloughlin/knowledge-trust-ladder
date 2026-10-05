@@ -24,6 +24,9 @@ references:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 - https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-05T12:41:36Z"
 ---
 
 # Overview

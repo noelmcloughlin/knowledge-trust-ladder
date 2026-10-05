@@ -14,7 +14,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:45:53Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 isPartOf:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -46,8 +46,8 @@ is migrated or reorganised. The bundle is the **exhibition**, and it is opened a
    state through the link into the real `.lokf/knowledge/.obsidian/`, harmless to `lokf validate` (it
    reads only `*.md`) and excluded from git by `.lokf/.gitignore`.
 2. Install KTL Registrar and KTL Curator *in that vault* - Obsidian installs plugins per vault.
-   Nothing to configure: both default to "the vault root is the bundle root" when the root `index.md`
-   carries a header.
+   There is nothing to configure: the root `index.md` carries the bundle's header, so the whole vault
+   is the bundle.
 
 The doorway is invisible to any vault it sits inside (the reconciler below), so the workshop vault and
 the exhibition vault never index the same file. Open the link itself; a vault opened at the host root
