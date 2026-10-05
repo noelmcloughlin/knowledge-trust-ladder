@@ -7,8 +7,8 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | Label | Rule | Field(s) | RDF (optional) |
 | --- | --- | --- | --- |
 | Confirmed by a person | any `verified[].by` starts with `human:` | `verified` | `lokf:verified` -> `prov:wasAssociatedWith` |
-| Checked by automation only | `verified` present, no `human:` actor | `verified` | same |
-| Nobody has checked this yet | no `verified` key | `verified` | - |
+| Checked by automation only | `verified` holds events, none by a `human:` actor | `verified` | same |
+| Nobody has checked this yet | no `verified` key, or one with no events | `verified` | - |
 | Still a draft | `status: draft` | `status` | `schema:creativeWorkStatus` |
 | Retired | `status: deprecated` | `status` | same |
 | Edited since a person last confirmed it | `generated.at` later than the latest `human:` `verified[].at` | `generated`, `verified` | `prov:wasGeneratedBy` -> `prov:endedAtTime` |

@@ -28,12 +28,12 @@ Run `bash .lokf/scripts/knowledge-report.sh labels <path>...` with the bundle pa
 
 - `verified` may be a list or a bare `{ by, at }` mapping: a bare mapping is one event.
 - *Confirmed by a person*: any event's `by` starts with `human:`. Quote the latest such date in the footer, and its `revision` when the event carries one ("against 3f9c2a1": a commit hash cut to its first seven characters, or an ETag or digest as written). The revision is the state of the source the confirmation was checked against, so a reader can tell whether the page in front of them is the one that was confirmed.
-- *Edited since a person last confirmed it*: `generated.at` is later than the latest `human:` event's `at`. Compare the two whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. Say this label before *confirmed by a person* and give both dates, because the person confirmed an earlier text. A concept with neither `generated.at` nor the v0.1 `timestamp` cannot carry it.
+- *Edited since a person last confirmed it*: `generated.at` is later than the latest `human:` event's `at`. Compare the two whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. This label takes the place of *confirmed by a person*, because the person confirmed an earlier text. Give both dates, as in "(confirmed 2026-09-01, edited 2026-09-20)", or both full times when they fall on one day. A concept with neither `generated.at` nor the v0.1 `timestamp` cannot carry it.
 - *Checked by automation only*: events exist, none human.
-- *Nobody has checked this yet*: no `verified` key.
-- *Still a draft*: `status: draft`. *Retired*: `status: deprecated`. Absent `status` means stable.
+- *Nobody has checked this yet*: no `verified` key, or one with no events.
+- *Still a draft*: `status: draft`. *Retired*: `status: deprecated`, and a retired concept carries no other label. Absent `status` means stable.
 - *Past its review date*: `stale_after` (a datetime, or a bare `YYYY-MM-DD` date) is on or before today. Compare as strings after trimming to ten characters.
-- Labels overlap. Report every one that applies, most cautionary first.
+- Labels overlap. Report every one that applies, in the order the script prints them. Start with the first of *edited since a person last confirmed it*, *confirmed by a person*, *checked by automation only* and *nobody has checked this yet* that applies. Add *still a draft*, then *past its review date* with its date in brackets, where they apply.
 
 ## When to go to the source
 

@@ -46,8 +46,8 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 | Say | When |
 | --- | --- |
 | Confirmed by a person | any `verified[].by` starts with `human:` |
-| Checked by automation only | `verified` present, no `human:` actor |
-| Nobody has checked this yet | no `verified` key |
+| Checked by automation only | `verified` holds events, none by a `human:` actor |
+| Nobody has checked this yet | no `verified` key, or one with no events |
 | Still a draft | `status: draft` |
 | Edited since a person last confirmed it | `generated.at` is later than the latest `human:` `verified[].at` |
 | Past its review date | `stale_after` is on or before today |
