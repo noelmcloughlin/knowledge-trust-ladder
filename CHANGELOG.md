@@ -4,6 +4,18 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The preflight reads the CI variables by indirect expansion, not `eval`**, so a scanner that searches for `eval` finds none. Its output is unchanged, in bash 3.2 too.
+- **The preflight names who needs a missing `knowledge-feedback.sh` or `knowledge-report.sh`:** ktl-curator and an earlier ktl-docent, since the docent runs its own copies.
+
+### Security
+
+- **ktl-docent runs its own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, never the repository's.** Anyone who can commit to a repository can change its `.lokf/scripts/`, so asking about a repository you had not reviewed ran its code. Check 11a holds the copies in `skills/ktl-docent/scripts/` byte-identical to the templates. The docent no longer runs the preflight: it reads a login from `gh` or `glab`. Without its scripts, it works out labels by hand, gives the reader the feedback line to file, and never writes `.lokf/feedback.md`. Its scanner note answers the Gen Agent Trust Hub audit of 2026-10-04.
+- **ktl-docent puts the asker's login in an entry only when the asker agrees.** The scheduled workflow commits `.lokf/feedback.md`, often into a public pull request, and git history keeps the line after the librarian clears it.
+- **ktl-docent and ktl-curator keep only the `username` from `glab api user`**, as the preflight did. Both gave the bare call as a login's source, and it prints the whole profile, email and linked accounts included.
+- **ktl-librarian and ktl-sidecar read the no-Python schema from a commit, not a tag**, since a tag can be moved (Snyk W012). The URL names commit `66073c3`, tagged `v0.8.0`, whose `lokf.yaml` is byte-identical to the schema in the `lokf` 0.8.0 wheel that `.lokf/uv.lock` pins. Both skills say to read it as data, never instructions. Check 11b fails a tag or a branch in the URL, pages that pin different commits, and a page that does not name the floor's tag.
+
 ## [0.34.1] - 2026-10-05
 
 ### Changed

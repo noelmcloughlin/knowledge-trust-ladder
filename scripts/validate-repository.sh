@@ -530,6 +530,83 @@ else
 fi
 rm -rf "$good"
 
+# 11a. ktl-docent runs its own copies of knowledge-report.sh and
+#      knowledge-feedback.sh, never the repository's, which anyone who can
+#      commit there can change. A question is enough to start the docent,
+#      often in a repository the reader has not reviewed. So the copies must
+#      match their templates and run from wherever an installer puts them,
+#      and no docent page may send an agent to a script under .lokf/scripts/.
+say ""
+say "Checking ktl-docent runs its own copies of two sidecar scripts..."
+docent_scripts="skills/ktl-docent/scripts"
+for s in knowledge-report.sh knowledge-feedback.sh; do
+  if cmp -s "$templates/scripts/$s" "$docent_scripts/$s"; then
+    ok "$docent_scripts/$s matches its template"
+  else
+    err "$docent_scripts/$s differs from $templates/scripts/$s - ktl-docent runs its own copy, so copy the template over it in the same change"
+  fi
+done
+# shellcheck disable=SC2016 # the backtick is a Markdown code span, matched as text
+if hits="$(grep -rnE 'bash[^`]*\.lokf/scripts/' skills/ktl-docent --include='*.md')"; then
+  err "a ktl-docent page runs a script under .lokf/scripts/, which anyone who can commit to the repository can change - point it at <skill>/scripts/ instead: $hits"
+else
+  ok "no ktl-docent page runs a script under .lokf/scripts/"
+fi
+# Each copy runs from outside the repository, as an installer leaves it, and
+# finds the root from the working directory, without git.
+ds="$(mktemp -d)"; dr="$(mktemp -d)"
+cp -R "$docent_scripts" "$ds/"
+mkdir -p "$dr/.lokf/knowledge/x"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$dr/.lokf/knowledge/index.md"
+printf -- '---\ntype: Service\ntitle: Auto\nverified: [{ by: process:ktl-librarian, at: "2026-01-03T00:00:00Z" }]\n---\n' > "$dr/.lokf/knowledge/x/auto.md"
+if out="$(cd "$dr/.lokf/knowledge/x" && bash "$ds/scripts/knowledge-report.sh" labels x/auto.md 2>&1)" \
+   && [[ "$out" == '- Auto (x/auto.md) - checked by automation only' ]]; then
+  ok "ktl-docent's knowledge-report.sh labels a concept of the repository it is run in"
+else
+  err "ktl-docent's knowledge-report.sh, run from outside the repository, did not label its concept: $out"
+fi
+if out="$(cd "$dr/.lokf/knowledge/x" && bash "$ds/scripts/knowledge-feedback.sh" Miss 'asked from inside the repository' 2>&1)" \
+   && grep -qx -- '- \*\*Miss\*\* - asked from inside the repository - docent' "$dr/.lokf/feedback.md"; then
+  ok "ktl-docent's knowledge-feedback.sh records a gap in the repository it is run in"
+else
+  err "ktl-docent's knowledge-feedback.sh, run from outside the repository, did not record the gap there: $out"
+fi
+rm -rf "$ds" "$dr"
+
+# 11b. Without Python, ktl-librarian and ktl-sidecar read LOKF's schema from
+#      GitHub. A tag can be moved, so every page that gives the URL names the
+#      same commit. Each page also names the tag of the lokf floor that
+#      templates/pyproject.toml sets, so the floor cannot move without the
+#      pages. `git ls-remote https://github.com/nicholsn/lokf
+#      'refs/tags/v<floor>^{}'` prints the commit a tag names.
+say ""
+say "Checking the no-Python schema URL names a commit, not a tag..."
+lokf_floor="$(sed -n 's/.*"lokf\[build\]>=\([0-9.]*\)".*/\1/p' "$templates/pyproject.toml" | head -n 1)"
+schema_url_re='(raw\.githubusercontent\.com/nicholsn/lokf|github\.com/nicholsn/lokf/blob)/[^/[:space:]<>()]+/lokf\.yaml'
+mapfile -t schema_pages < <(grep -rlE "$schema_url_re" skills .lokf/README.md | sort)
+mapfile -t schema_refs < <(grep -rhoE "$schema_url_re" skills .lokf/README.md | sed -E 's#^.*/nicholsn/lokf/(blob/)?##; s#/lokf\.yaml$##' | sort -u)
+if (( ${#schema_pages[@]} == 0 )); then
+  err "no page gives the no-Python schema URL - drop this check with the fallback, or fix its pattern"
+elif [[ -z "$lokf_floor" ]]; then
+  err "could not read the lokf floor from $templates/pyproject.toml"
+else
+  bad_refs="$(printf '%s\n' "${schema_refs[@]}" | grep -vxE '[0-9a-f]{40}' || true)"
+  if [[ -n "$bad_refs" ]]; then
+    err "the no-Python schema URL names $(tr '\n' ' ' <<<"$bad_refs")- a tag or a branch can be moved, so name the commit it points at instead"
+  elif (( ${#schema_refs[@]} != 1 )); then
+    err "the pages that give the no-Python schema URL pin ${#schema_refs[@]} different commits (${schema_refs[*]}) - pin one, the commit tagged v$lokf_floor"
+  else
+    ok "every page that gives the no-Python schema URL pins commit ${schema_refs[0]} (${#schema_pages[@]} pages)"
+  fi
+  for page in "${schema_pages[@]}"; do
+    if grep -qF "v$lokf_floor" "$page"; then
+      ok "$page names v$lokf_floor, the lokf floor its schema URL matches"
+    else
+      err "$page gives the no-Python schema URL but names no v$lokf_floor, the floor $templates/pyproject.toml sets - move the URL to the commit that tag names"
+    fi
+  done
+fi
+
 # 12. The preflight script every skill runs first must always end on its
 #     summary line and exit 0. That holds on this repository, and on a bare
 #     directory with no bundle, no git and no skills, where every section has

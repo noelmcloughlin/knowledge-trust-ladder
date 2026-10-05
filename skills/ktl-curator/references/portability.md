@@ -5,7 +5,7 @@ The rule never changes: a `human:<id>` event carries an id that something outsid
 | Host | Where the id comes from | What checks a confirmation afterwards |
 | --- | --- | --- |
 | GitHub | `gh api user --jq .login`; or the signing-key route below | the `provenance` job: an approving review by that account, or its verified signature on the commit |
-| GitLab | `glab api user` (the `username` field); or the signing-key route | no template exists; the recipe is in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md) |
+| GitLab | `glab api user`, filtered to its `username` field as [review-session.md](review-session.md#who-is-recording) shows; or the signing-key route | no template exists; the recipe is in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md) |
 | Forgejo, Gitea, Codeberg | the signing-key route, with a token where the key listing needs one | same: no template, recipe there |
 | Another forge, Bitbucket included | the signing-key route if the forge lists keys; else no *Confirm* | untested; the forge-free gate below is the safe choice |
 | No forge: a synced or shared folder, a plain directory | the account the platform's version history attributes the save to | that version history, and nothing else |

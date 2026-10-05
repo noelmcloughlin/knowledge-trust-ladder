@@ -91,6 +91,19 @@ if command -v python3 >/dev/null 2>&1; then
 else
   echo "SKIP: python3 not found, so the installed prose-check.py was not run"
 fi
+# ktl-docent runs its own copies of two sidecar scripts, never the
+# repository's. Both must arrive with the skill and run from where the
+# installer put them, against a repository that holds only a bundle.
+docent_dir="$(find "$test_root/consumer" \( -path "*.agents/skills/ktl-docent" -o -path "*.claude/skills/ktl-docent" \) -type d 2>/dev/null | head -1)"
+assert "ktl-docent scripts/knowledge-report.sh and knowledge-feedback.sh carried along" \
+  "[[ -n \"$docent_dir\" && -f \"$docent_dir/scripts/knowledge-report.sh\" && -f \"$docent_dir/scripts/knowledge-feedback.sh\" ]]"
+mkdir -p "$test_root/reader/.lokf/knowledge/x"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$test_root/reader/.lokf/knowledge/index.md"
+printf -- '---\ntype: Service\ntitle: Auto\nverified: [{ by: process:ktl-librarian, at: "2026-01-03T00:00:00Z" }]\n---\n' > "$test_root/reader/.lokf/knowledge/x/auto.md"
+assert "the installed knowledge-report.sh labels a concept in a reader's repository" \
+  "[[ \"\$(cd \"$test_root/reader\" && bash \"$docent_dir/scripts/knowledge-report.sh\" labels x/auto.md 2>&1)\" == '- Auto (x/auto.md) - checked by automation only' ]]"
+assert "the installed knowledge-feedback.sh records a gap in that repository" \
+  "(cd \"$test_root/reader\" && bash \"$docent_dir/scripts/knowledge-feedback.sh\" Miss 'smoke test gap' >/dev/null) && grep -qxF -- '- **Miss** - smoke test gap - docent' \"$test_root/reader/.lokf/feedback.md\""
 assert "no installer metadata leaked back into this source repo" \
   "[[ -z \"\$(git -C \"\$repo_root\" status --porcelain --untracked-files=all -- .agents .claude skills-lock.json 2>/dev/null)\" ]]"
 
