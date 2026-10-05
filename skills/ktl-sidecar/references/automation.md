@@ -153,7 +153,7 @@ The `attach` job holds `contents: write`, runs no third-party packages, checks t
 
 ## `knowledge-feedback.sh`: how a reader's gap gets recorded without being read back
 
-It has no placeholders, and it is the one script here that has nothing to do with CI. ktl-docent runs it in an ordinary session to add a Miss or a Disagreement to `.lokf/feedback.md`:
+It has no placeholders, and it is the one script here that has nothing to do with CI. It adds a Miss or a Disagreement to `.lokf/feedback.md` in an ordinary session. ktl-docent runs a byte-identical copy from its own `scripts/` folder, never this one, so a question runs no code the repository supplies. This copy serves a person, and an earlier ktl-docent that ran it:
 
 ```sh
 bash .lokf/scripts/knowledge-feedback.sh [--root <dir>] [--for <login>] <Miss|Disagreement> <text>

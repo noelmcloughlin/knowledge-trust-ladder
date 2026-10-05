@@ -30,7 +30,7 @@ npx skills add ./knowledge-trust-ladder --skill ktl-sidecar
 | `skills/ktl-sidecar/templates/` | Every file the sidecar writes, copied verbatim, never inlined into `SKILL.md`. |
 | `skills/ktl-librarian/SKILL.md` | Day to day: scrape, build, audit and hand off `.lokf/` concepts. Facts, never verdicts. |
 | `skills/ktl-curator/SKILL.md` | A human curator's assistant: the trust report, and the review session that records a person's Confirm / Wrong / Retire / Later. Verdicts, never facts. |
-| `skills/ktl-docent/SKILL.md` | The reader's side: answers from the bundle with each concept's trust label, and records misses in `.lokf/feedback.md`. Read-only on the bundle. |
+| `skills/ktl-docent/SKILL.md` | The reader's side: answers from the bundle with each concept's trust label, and records misses in `.lokf/feedback.md`. Read-only on the bundle. `scripts/` holds its copies of two sidecar scripts. |
 | `skills/ktl-prose/SKILL.md` | The librarian's copy editor: rewords a concept body an agent wrote, in plain English, before a person confirms it. Wording, never facts. `scripts/prose-check.py` is its check. |
 | `skills/*/references/*.md` | Detail loaded only when the router points to it, which keeps each `SKILL.md` small. |
 | `scripts/` | The repository contract CI runs on every pull request. `validate-repository.sh` is the entry point and runs the layout tests; `smoke-test-install.sh` installs all five skills into a throwaway repo. |
@@ -43,7 +43,7 @@ npx skills add ./knowledge-trust-ladder --skill ktl-sidecar
 - Run `gh skill publish --dry-run` if you have the GitHub CLI: the Agent Skills spec check `validate.yml` runs.
 - If a change alters what a skill *does*, not just its wording, add a line or two under `## [Unreleased]` in `CHANGELOG.md`. The reasoning belongs beside the code.
 - Files here are deep-linked from the sibling repositories, whose link checks follow those URLs for real; check 9 lists the paths. Move one only together with their links, and when a change *there* needs something new *here*, merge this side first.
-- Copy a change under `skills/ktl-sidecar/templates/` over this repository's own copy in the same pull request. Check 11 names the pairs and holds each byte-identical, `knowledge-librarian.yaml` apart from its skills pin, which the release commit moves in the template only.
+- Copy a change under `skills/ktl-sidecar/templates/` over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11 and 11a name the pairs and hold each byte-identical, `knowledge-librarian.yaml` apart from its skills pin, which the release commit moves in the template only.
 - When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`): a squash merge takes its subject from the title, and the `plan` job refuses a mismatch.
 - Dependabot bumps the pinned action SHAs, and CI fails an action that is not pinned to a commit.
 - Sign a pull request that records a `human:` confirmation, with GPG or SSH ([signing your commits](docs/signing-commits.md)). A repository running the forge-free gate also carries your public key under `.lokf/curators/`, added first in a pull request of its own. The same page says how to export it.

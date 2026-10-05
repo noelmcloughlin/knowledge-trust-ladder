@@ -530,6 +530,52 @@ else
 fi
 rm -rf "$good"
 
+# 11a. ktl-docent runs its own copies of knowledge-report.sh and
+#      knowledge-feedback.sh, from its scripts/ folder, and never the
+#      repository's under .lokf/scripts/. A question is enough to start the
+#      docent, often in a repository the reader has not reviewed, and anyone
+#      who can commit to a repository can change its copies. So the docent's
+#      copies must match their templates and must run from wherever an
+#      installer puts them, against the repository the reader is in. And no
+#      page of the docent may send an agent to the repository's copies.
+say ""
+say "Checking ktl-docent runs its own copies of two sidecar scripts..."
+docent_scripts="skills/ktl-docent/scripts"
+for s in knowledge-report.sh knowledge-feedback.sh; do
+  if cmp -s "$templates/scripts/$s" "$docent_scripts/$s"; then
+    ok "$docent_scripts/$s matches its template"
+  else
+    err "$docent_scripts/$s differs from $templates/scripts/$s - ktl-docent runs its own copy, so copy the template over it in the same change"
+  fi
+done
+# shellcheck disable=SC2016 # the backtick is a Markdown code span, matched as text
+if hits="$(grep -rnE 'bash[^`]*\.lokf/scripts/' skills/ktl-docent --include='*.md')"; then
+  err "a ktl-docent page runs a script under .lokf/scripts/, which anyone who can commit to the repository can change - point it at <skill>/scripts/ instead: $hits"
+else
+  ok "no ktl-docent page runs a script under .lokf/scripts/"
+fi
+# The copies run from a folder outside the reader's repository, as an
+# installer leaves them, with the working directory inside it. Each finds
+# that repository's root from the working directory, and neither needs git.
+ds="$(mktemp -d)"; dr="$(mktemp -d)"
+cp -R "$docent_scripts" "$ds/"
+mkdir -p "$dr/.lokf/knowledge/x"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$dr/.lokf/knowledge/index.md"
+printf -- '---\ntype: Service\ntitle: Auto\nverified: [{ by: process:ktl-librarian, at: "2026-01-03T00:00:00Z" }]\n---\n' > "$dr/.lokf/knowledge/x/auto.md"
+if out="$(cd "$dr/.lokf/knowledge/x" && bash "$ds/scripts/knowledge-report.sh" labels x/auto.md 2>&1)" \
+   && [[ "$out" == '- Auto (x/auto.md) - checked by automation only' ]]; then
+  ok "ktl-docent's knowledge-report.sh labels a concept of the repository it is run in"
+else
+  err "ktl-docent's knowledge-report.sh, run from outside the repository, did not label its concept: $out"
+fi
+if out="$(cd "$dr/.lokf/knowledge/x" && bash "$ds/scripts/knowledge-feedback.sh" Miss 'asked from inside the repository' 2>&1)" \
+   && grep -qx -- '- \*\*Miss\*\* - asked from inside the repository - docent' "$dr/.lokf/feedback.md"; then
+  ok "ktl-docent's knowledge-feedback.sh records a gap in the repository it is run in"
+else
+  err "ktl-docent's knowledge-feedback.sh, run from outside the repository, did not record the gap there: $out"
+fi
+rm -rf "$ds" "$dr"
+
 # 12. The preflight script every skill runs first must always end on its
 #     summary line and exit 0. That holds on this repository, and on a bare
 #     directory with no bundle, no git and no skills, where every section has
