@@ -15,6 +15,9 @@ about:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-05T12:41:36Z"
 ---
 # Overview
 

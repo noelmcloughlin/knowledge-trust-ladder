@@ -9,7 +9,7 @@
 # wording? Whether the meaning held is a question for a reader.
 #
 #   prose-check.py FILE...                what a script sees: dash, long, paragraph, words, unseen
-#   prose-check.py --before OLD NEW       what differs besides the wording
+#   prose-check.py --before OLD NEW       what differs besides the wording, and the words before and after
 #   prose-check.py --against REF FILE...  the same, against the version git holds at REF
 #   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword
 #
@@ -111,6 +111,12 @@ RFC_WORD = re.compile(r"\b(?:MUST NOT|SHALL NOT|SHOULD NOT|MUST|SHALL|SHOULD|REQ
 NUMBER_WORD = re.compile(
     r"\b(?:two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|hundred|thousand)\b",
     re.I,
+)
+# A day of the week or a month, written out. "May" is left out: it is a verb
+# far more often than a month.
+DATE_WORD = re.compile(
+    r"\b(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)days?"
+    r"|January|February|March|April|June|July|August|September|October|November|December)\b"
 )
 STRENGTH = ("must", "never", "only", "always", "unless", "except")
 NEGATION = re.compile(r"\b(?:not|no|nor|neither|cannot|without)\b|n't\b", re.I)
@@ -545,6 +551,7 @@ class Kept:
         self.quotes: list[tuple[str, int]] = []
         self.rfc: list[tuple[str, int]] = []
         self.number_words: list[tuple[str, int]] = []
+        self.date_words: list[tuple[str, int]] = []
         self.strength: Counter = Counter()
         self.words = 0
         self._read(doc)
@@ -652,6 +659,8 @@ class Kept:
                 into.append((found.group(), block.line_at(found.start())))
         for found in NUMBER_WORD.finditer(hidden):
             self.number_words.append((found.group().lower(), block.line_at(found.start())))
+        for found in DATE_WORD.finditer(hidden):
+            self.date_words.append((found.group().rstrip("s"), block.line_at(found.start())))
         lowered = hidden.lower()
         for word in STRENGTH:
             self.strength[word] += len(re.findall(rf"\b{word}\b", lowered))
@@ -682,7 +691,7 @@ def differences(rule: str, what: str, old: list[tuple[str, int]], new: list[tupl
 
 
 def compare(path: Path, old: Doc, new: Doc, expect_concept: bool):
-    """What differs between two versions besides the wording: findings, then notes."""
+    """What differs between two versions besides the wording: findings, notes, and the words each version holds."""
     findings: list[tuple[int, str, str]] = []
     notes: list[tuple[int, str, str]] = []
     was, now = standing(old, expect_concept), standing(new, expect_concept)
@@ -756,14 +765,18 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool):
 
     for line, rule, words, _ in differences("number-word", "the number word", a.number_words, b.number_words):
         notes.append((line, rule, words + "; digits cannot show whether a count changed"))
+    for line, rule, words, _ in differences("date-word", "the day or month", a.date_words, b.date_words):
+        notes.append((line, rule, words + "; digits cannot show whether a date changed"))
     for word in (*STRENGTH, "a negation"):
         if a.strength[word] != b.strength[word]:
             name = word if word == "a negation" else f'"{word}"'
             notes.append((1, "strength", f"{name} appears {times(b.strength[word])}, and the earlier text had it {times(a.strength[word])}"))
     if b.words > a.words * 1.08 and b.words - a.words > 40:
         notes.append((1, "growth", f"{b.words} words, and the earlier text had {a.words}; a rewording adds no fact"))
+    if b.words < a.words * 0.8 and a.words - b.words > 40:
+        notes.append((1, "shrink", f"{b.words} words, and the earlier text had {a.words}; a rewording cuts words that carry nothing, and no fact"))
 
-    return findings, notes
+    return findings, notes, (a.words, b.words)
 
 
 # --- the four uses -------------------------------------------------------------
@@ -812,28 +825,34 @@ def check_style(files: list[Path], max_words: int, max_paragraph: int = MAX_PARA
 
 
 def check_pair(label: Path, old_text: str, new_text: str, in_bundle: bool):
-    """Compare two versions of one file, with the bundle's reserved files set apart."""
+    """Compare two versions of one file, with the bundle's reserved files set apart. The third value is the words before and after, which a reserved file does not count towards."""
     if in_bundle and label.name == "log.md":
-        return [], [(label, 1, "reserved", "the bundle's log is not compared; ktl-prose adds one line to it")]
+        return [], [(label, 1, "reserved", "the bundle's log is not compared; ktl-prose adds one line to it")], (0, 0)
     old, new = Doc(old_text), Doc(new_text)
     if in_bundle and label.name in RESERVED:
         if old.lines != new.lines:
-            return [(label, 1, "reserved", "ktl-prose never rewords a reserved bundle file")], []
-        return [], []
-    findings, notes = compare(label, old, new, expect_concept=in_bundle)
-    return [(label, *found) for found in findings], [(label, *note) for note in notes]
+            return [(label, 1, "reserved", "ktl-prose never rewords a reserved bundle file")], [], (0, 0)
+        return [], [], (0, 0)
+    findings, notes, words = compare(label, old, new, expect_concept=in_bundle)
+    return [(label, *found) for found in findings], [(label, *note) for note in notes], words
+
+
+def counted(was: int, now: int) -> str:
+    """The words before and after, for the hand-off: a program counts them, so no model has to."""
+    return f"{now} words, and the earlier text had {was}"
 
 
 def check_before(old_path: Path, new_path: Path):
     in_bundle = bundle_root(new_path) is not None
-    findings, notes = check_pair(new_path, read(old_path), read(new_path), in_bundle)
-    return findings, notes, "only the wording differs (1 file)"
+    findings, notes, (was, now) = check_pair(new_path, read(old_path), read(new_path), in_bundle)
+    return findings, notes, f"only the wording differs (1 file): {counted(was, now)}"
 
 
 def check_against(ref: str, files: list[Path]):
     if ref.startswith("-") or not re.fullmatch(r"[\w./@^~{}-]+", ref):
         raise Usage(f"{ref!r} is not a revision this script will pass to git")
     findings, notes = [], []
+    was = now = 0
     for path in files:
         new_text = read(path)
         old_text = earlier(path, ref)
@@ -842,10 +861,11 @@ def check_against(ref: str, files: list[Path]):
                 (path, 1, "baseline", f"git holds no version of this file at {ref}; keep a copy before rewording it and compare with --before")
             )
             continue
-        found, noted = check_pair(path, old_text, new_text, bundle_root(path) is not None)
+        found, noted, words = check_pair(path, old_text, new_text, bundle_root(path) is not None)
         findings.extend(found)
         notes.extend(noted)
-    return findings, notes, f"only the wording differs ({len(files)} file(s) against {ref})"
+        was, now = was + words[0], now + words[1]
+    return findings, notes, f"only the wording differs ({len(files)} file(s) against {ref}): {counted(was, now)}"
 
 
 def list_bundle(directory: Path) -> int:

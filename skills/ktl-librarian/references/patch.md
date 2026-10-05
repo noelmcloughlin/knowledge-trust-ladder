@@ -23,7 +23,7 @@ ops:
 
       The **Orders API** generates its endpoints from `services/orders/openapi.yaml`...
     log: "**Added**: Orders API, from `services/orders/openapi.yaml`."   # optional on create
-    from_feedback: "- **Miss** - Q: \"Which API serves orders?\" Answered from `services/orders/openapi.yaml`. Nothing relevant in index.md. - docent"   # the exact entry, which the script moves out of feedback.md
+    from_feedback: "- **Miss** - Q: \"Which API serves orders?\" Answered from `services/orders/openapi.yaml`. Nothing relevant in index.md. - docent"   # the exact entry, which the script moves out of feedback.md; ten to a patch at most
     asked: "Which API serves orders?"   # the reader's question from that entry, for the ledger in .lokf/questions.md
 
   - op: patch                    # minimal edits to a body, and frontmatter keys to set
@@ -80,7 +80,7 @@ The values are fictional, as in the skill page's example; build ids from the bun
 - **The log.** Every operation but `recheck` and `reindex` gives one bullet under today's `## YYYY-MM-DD` heading, newest day first, reusing the heading a run earlier today made. A `log` line that does not start with `**` gets the label `**Changed**` (or `**Rewrite**`, or `**Resolved**`). A `from_feedback` operation's bullet is labelled `**From reader feedback**`. Say there what changed and why, in your own words, and never copy the reader's.
 - **Feedback and the ledger.** `from_feedback` is the exact one-line entry as `.lokf/feedback.md` holds it. The script removes it there, and a day left with no entry loses its heading. It then adds one line to `.lokf/questions.md`: the day, the entry's kind and the concept the operation names, with the reader's question from `asked` where the entry held one. That file only grows, and programs read it: `knowledge-report.sh` counts the concepts readers keep asking about, and scores whether the index leads to them.
 - **Open questions.** `question` adds one in the curator's shape. `resolve` withdraws one this run's actor asked, once the source settles it, and the heading goes with its last question. Neither stamps `generated`, since an open question is no part of what the concept claims. `resolve` leaves `status` as it finds it, because confirming the concept is the curator's.
-- **Carry-overs.** `rewrite` keeps the `<!-- lokf:related -->` block and the `## Open questions` section from the old body when the new body lacks them. No edit may target text inside either.
+- **Carry-overs.** `rewrite` keeps the `<!-- lokf:related -->` block and the `## Open questions` section from the old body when the new body lacks them. No edit may target text inside either. So leave `## Open questions` out of a `rewrite` body: a body that brings its own replaces the section, and the script refuses that when a person's note would go with it.
 - **Confirmed concepts it edits.** After an apply, or a dry run, the script names each concept a person confirmed that the patch edits. Each reads as *edited since a person last confirmed it* until the curator looks again, so name them in the hand-off.
 - **Lines for the reviewer.** `handoff` carries what a reviewer should know that is no change to the bundle: the same send-back twice, a source that did not answer, entries left for the next run. The script prints the lines and writes none of them to the bundle. Each becomes one line of printable text, with any backtick turned into `'`. In a scheduled run the wrapper passes them to the pull request, which shows them as the librarian's own words in a code block. Write them yourself, and never quote a reader.
 
@@ -89,6 +89,7 @@ The values are fictional, as in the skill page's example; build ids from the bun
 Any one of these refuses the whole file, and nothing is written:
 
 - a line anywhere in the file that would read as a person's event (`by: human:...`) or a person's note (`- <date>, human:...`); prose may mention the actor prefix, but only ktl-curator writes one, in a live session;
+- a patch after which any concept it writes would hold a person's record other than the one the file held: a `human:` event or a person's note added, changed or removed, however the operations spelt it;
 - `by` that is not `process:<id>`;
 - a path that is not lowercase a-z, 0-9 and hyphens under a folder, or that is `index.md`, `log.md` or `diataxis.md`;
 - `create` on a path that exists, or any other operation on one that does not;
@@ -98,8 +99,9 @@ Any one of these refuses the whole file, and nothing is written:
 - `delete` on a concept that an `index.md` links in a sentence, or anywhere but in its own bullet or a comma-separated list of links (a person takes that link out, and the delete can then run);
 - a `replace` target that occurs zero or several times, an `insert_after` target on zero or several lines, or either inside the `lokf:related` block or under `## Open questions`;
 - a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
-- a `patch`, `rewrite`, `delete` or `resolve` with no `log` line; a `title` with square brackets; a `from_feedback` line the feedback file does not hold; `asked` on an operation with no `from_feedback`;
-- a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once control characters are gone.
+- a `patch`, `rewrite`, `delete` or `resolve` with no `log` line; a `title` with square brackets;
+- a `from_feedback` line the feedback file does not hold, or more than ten of them in one file; `asked` on an operation with no `from_feedback`, or with no printable text;
+- a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once the characters no reader sees are gone. Those are the controls and the format characters, such as a zero-width space, a bidirectional mark or a tag character, and the script takes them out of a reader's question too.
 
 ## Exit codes
 
@@ -107,4 +109,4 @@ Any one of these refuses the whole file, and nothing is written:
 - `1`: findings, one per line, and nothing written. Fix the file and run again.
 - `2`: no bundle, no patch file, a file that is not YAML, a `--handoff` file that cannot be written, or no `uv` and no `pyyaml` for `python3`. The sidecar's prerequisites page says who installs `uv`.
 
-Then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. The script writes a touched concept's frontmatter back with double quotes where a value needs quoting and keeps the blank line after the closing `---` as it found it, so the diff shows the change and not the rewrite. The script keeps the conventions it knows; the schema and the relation targets are the toolkit's to check.
+Then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. The script writes a touched concept's frontmatter back with double quotes where a value needs quoting and keeps the blank line after the closing `---` as it found it, so the diff shows the change and not the rewrite. A value YAML would read as a number, a boolean or a time goes back as the text the file held: `1.10` stays `1.10`, and an unquoted time on a person's event stays as that person's commit wrote it. The script keeps the conventions it knows; the schema and the relation targets are the toolkit's to check.

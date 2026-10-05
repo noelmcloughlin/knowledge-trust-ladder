@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T17:27:49Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -23,7 +23,7 @@ sources:
 
 `validate.yml` runs five jobs on every pull request, every push to `main`,
 weekly, and on demand. `validate-skills` runs `scripts/validate-repository.sh` -
-twenty numbered checks, several with lettered sub-checks: exactly five skill directories with a case-correct
+twenty-one numbered checks, several with lettered sub-checks: exactly five skill directories with a case-correct
 `SKILL.md` in each, frontmatter `name` matching its directory and (check 3b,
 added 2026-09-17) a `compatibility` field of at most 500 characters naming
 what the skill needs, (check 3c, added 2026-09-19) each skill's `description` ending in a `Keywords:` list within the spec's 1024 characters - catalogs have no tag field, so it is the only tag they read - with `.claude-plugin/plugin.json` and `marketplace.json` carrying one identical keyword list, no duplicate `SKILL.md`, every relative Markdown link
@@ -38,14 +38,17 @@ staying under their own word budget (1000 and 900, check 10, extended
 2026-09-14 when `SECURITY.md`'s design moved to `docs/threat-model.md`),
 (check 11, added 2026-09-14) this repository's copies of the three knowledge workflows (the release workflow since 2026-09-24),
 the nine sidecar scripts, the two `.lokf/m365/` files (since 2026-09-24) and `.lokf/.gitattributes` staying byte-identical to
-their templates - since 2026-09-24 apart from one value, the librarian
-workflow's `TRUST_LADDER_SKILLS_REF`, which the release commit moves in the
-template only - and failing up front, naming the cause, when `uv` is
+their templates (since 2026-09-24 apart from the librarian workflow's skills
+pin, which the release commit moves in the template only; the pin is two
+values, `TRUST_LADDER_SKILLS_REF` and `TRUST_LADDER_SKILLS_SHA`), and failing
+up front, naming the cause, when `uv` is
 missing, with `knowledge-conventions.sh` shown to pass on this
 bundle, to fail on a synthetic bundle breaking each of its thirteen rules (a
 vanished `resource`, a `revision` naming no commit, a duplicate `id`, an
 upper-case path, a byte order mark, a missing frontmatter block, an event
-spelt with a quoted key or a tag, a time later than the commit that recorded
+spelt with a quoted key, a tag or a comment beside a field (a comment on its
+own line, or a `#` in a quoted value, shown to pass), a time later than the
+commit that recorded
 it or, uncommitted, in the future (rule 11, since 2026-09-24, with a time
 before its commit shown to pass), a confirmed concept edited after its
 confirmation with `generated` left behind (rule 13, since 2026-10-04, with a
@@ -63,8 +66,9 @@ ending on its summary line here, on a bare directory, and warning on a CRLF
 bundle, counting a linked bundle, reading `commit.gpgsign = yes` as signing
 on, warning when the conventions script's Python half is missing beside it,
 warning when `knowledge-feedback.sh` is missing from a sidecar's `scripts/`
-and falling silent once it is there, stopping on one line under `sh` (as the
-other four scripts do), and every
+and falling silent once it is there, warning when the registrar workflow is
+installed but git holds no `.lokf/uv.lock` and falling silent once it does,
+stopping on one line under `sh` (as the other five scripts do), and every
 line it can print as missing or a warning having a row on
 `ktl-sidecar/references/prerequisites.md`; (check 12a, added 2026-09-23)
 `knowledge-feedback.sh` refusing to write where `.lokf/` has no `knowledge/`,
@@ -114,7 +118,10 @@ out of every file but the ones that record history - `CHANGELOG.md`, the
 bundle's `log.md`, `rename-plan.md`, the contract script itself, and one
 "formerly" line in `docs/install.md` - and
 (check 16a, added 2026-09-23) the skills' and plugins' old `lokf-` names
-staying out of every file but `CHANGELOG.md` and the contract script; (check 17, added
+staying out of every file but `CHANGELOG.md` and the contract script;
+(check 16b) no file calling a role, skill or repository of KTL a LOKF one,
+apart from `CHANGELOG.md`, the bundle's `log.md`, the source map
+(`playbooks/knowledge-sources.md`) and the contract script; (check 17, added
 2026-09-24) the Microsoft 365 Copilot skills: no `SKILL.md` anywhere under
 the sidecar's `templates/`, so no installer lists an instructions file as a
 skill, every instructions file under `templates/m365/` carrying ktl-docent's
@@ -129,7 +136,7 @@ on, staying quiet on what the hand passes kept, and refusing, with
 wording, a frontmatter byte, a character no reader sees, or a concept a person wrote or confirmed; and
 (check 19) `knowledge-apply.sh`, the librarian's only pen, exercised on a
 throwaway bundle: each operation applied, each refusal refused, and a dry run
-writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, a root index shaped by hand keeping its shape, the hand-off reaching the file `--handoff` names as plain single lines and never the bundle, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock, and `quiet` telling a week with nothing waiting from one with work, where a note no longer counts once the librarian has stamped its concept after it; and (check 21) no tracked file holding a character a reader cannot see, such as the right-to-left override the "Trojan Source" attack hides code behind. The twelfth conventions rule holds an index bullet to its concept's title and description, and the thirteenth holds a confirmed concept to the text its person confirmed. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check, retrieval call, quiet skip and hand-off, after whatever the agent left at the output paths is gone. The job sets up `uv`, runs the contract, then confirms
+writing nothing, a handled feedback entry landing in the ledger with its question in a code span, `resolve` withdrawing the librarian's own question and never a person's note, a root index shaped by hand keeping its shape, the hand-off reaching the file `--handoff` names as plain single lines and never the bundle, and `--format` printing the block `references/patch.md` shows; and (check 20) `knowledge-report.sh` printing the health line, each label, the work list, the changes against `HEAD` and the retrieval score on a throwaway repository, with a source counted as moved by commit order and never by clock, and `quiet` telling a week with nothing waiting from one with work, where a note no longer counts once the librarian has stamped its concept after it; and (check 21) no tracked file holding a character a reader cannot see, such as the right-to-left override the "Trojan Source" attack hides code behind. Check 11 also requires the two Python halves, `knowledge-apply.py` and `knowledge-conventions.py`, to pin the same PyYAML release and the same cut-off date. Check 15 also requires the template's `TRUST_LADDER_SKILLS_SHA` to be the commit the pinned tag names, and skips that where the tag is not on the clone. It also checks that the install step compares the commit it cloned with that one, and that `semantic-release.yml` and `scripts/sync-sidecar.sh` each move the commit with the tag. Check 18 also requires a comparison that passes to give each version's word count. It also requires a changed day or month written out, and a text cut by more than a fifth, to be notes for the reader and never refusals. Check 19 also requires the pen to refuse a patch that would change a person's record, whatever its operations, or that handles more than ten reader entries. The pen must write back a frontmatter value no operation named as the file held it, and keep every character a reader cannot see out of a reader's question and a hand-off line. Check 20 also requires `changes` to say what a change does to each confirmed concept's label. The report script must score a retrieval reply against what the ledger expects, never against a line of the reply, and without a question whose concept has left the bundle. `quiet` and the work list must set aside a moved source that a question of the librarian's names, and what a person declined by closing the workflow's pull request, until it changes again. The twelfth conventions rule holds an index bullet to its concept's title and description, and the thirteenth holds a confirmed concept to the text its person confirmed. The layout tests also run the registrar's `provenance` step as the template has it, with `gh` stubbed, and the wrapper's unattended check, retrieval call, quiet skip and hand-off, after whatever the agent left at the output paths is gone. The job sets up `uv`, runs the contract, then confirms
 `gh skill` is available, and then runs `gh skill publish --dry-run`.
 
 `lint-scripts` runs ShellCheck on every script; `lint-workflows` runs

@@ -4,6 +4,38 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The librarian's pull request says how the conventions script ended.** The registrar's gate does not run on a pull request the workflow opens, so `refresh` runs `knowledge-conventions.sh` and the pull request reports the outcome beside the validation's. The pen keeps most conventions by itself. A `resource` that names no file and a `revision` that names no commit are the two only this script finds.
+- **`knowledge-report.sh changes` says what a change does to each confirmed concept.** Each one it names is followed by *still reads as confirmed*, *reads as edited since that confirmation*, *removed* or *its confirmation is gone*. A check or a question on a confirmed concept was listed like an edit, so a reviewer could not tell which concepts lost their label.
+- **ktl-prose rule 10 says where a text says a thing twice.** "own" after a possessive, "itself" after a noun and "at all" after a negative are cut where they draw no contrast. A fourth pass, over the bundles of the three sibling repositories, cut 58 of 84 and 33 of 43. It cleared 305 of the script's 312 findings, and the text grew by one word in a hundred.
+- **`prose-check.py` counts the words before and after a rewording.** The `OK` line of a comparison gives both counts, so the hand-off quotes them. A day or a month written out that changed, and a text cut by more than a fifth, are notes for the reader.
+- **A scheduled librarian run opens no second pull request beside an open one.** `knowledge-librarian.yaml` has a third job, `earlier`, which lists the pull requests the workflow opened, under a token that reads pull requests and nothing else. While one is open, a scheduled run stops before the agent. A week's pull request left unreviewed was joined by another each Monday, each from the same default branch. A run a person starts goes ahead, and its pull request names the open one.
+- **What a person declined is not proposed again.** A pull request of the workflow's that a person closed without merging left nothing the next run could read, so the same change came back. `earlier` now hands a scheduled run a record of each: its base commit, the concepts it touched or added, and a hash of each feedback entry it handled. `knowledge-report.sh quiet` counts none of that as work, and the work list names it under *Declined*. Each item makes work again once it changes after that pull request. A run a person starts reads no record, so starting one asks the librarian to try again.
+- **The preflight warns when git holds no `.lokf/uv.lock`** on a host that carries the registrar workflow, since the gate now installs from that lock.
+
+### Changed
+
+- **The pen refuses a patch that handles more than ten reader entries.** ktl-librarian stated that limit for a run, and nothing held a run to it.
+- **The registrar's gate and the release workflow install the toolkit with `uv sync --locked`**, as the librarian workflow did. A host whose `.lokf/uv.lock` is missing from git, or behind `.lokf/pyproject.toml`, now fails at the install step: run `uv lock` in `.lokf/` and commit the file.
+
+### Fixed
+
+- **The pen writes a value back as the file held it.** It read each concept's frontmatter into YAML's types and wrote the whole block back, so `1.10` became `1.1`, `12:30:00` became `45000` and `yes` became `true` in any concept it touched. On a person's event an unquoted `at` came back in another shape and an all-digit `revision` as another number. The gate read that event as changed, and the report script lost the confirmation's date. The pen also refused an all-digit commit hash given as `revision`.
+- **The retrieval score leaves out a question whose concept has left the bundle.** No index could lead to such a concept, so the question counted as a miss on every run. It is not asked now, and the score says how many were left out.
+- **Conventions rule 10 reports a comment beside `id`, `by`, `at` or `revision`.** A parser drops the comment and a line reader takes it for part of the value. The gate then read an actor nobody is, and the report script could not read the time, so the concept never read as edited since.
+- **`docs/wikiskill.md` said the paper's wiki keeps every trace.** Its raw layer keeps them, and the wiki's log names the errors that came back.
+- **A week is quiet again once the librarian has asked about a source it cannot act on.** A confirmed concept whose source is deleted is the curator's to retire, so the librarian can only add a question, and a question moves no stamp. `knowledge-report.sh quiet` kept counting that source, and an agent ran every week until the curator acted. A moved source no longer counts once an open question of the librarian's that names it was committed no earlier than the source's last change, and the work list names it apart. It counts again when the source changes after the question.
+
+### Security
+
+- **A person's record is the same after the pen writes as before.** The pen compares each concept it is about to write with the file it read, and refuses the patch when a `human:` event or a person's note would differ. Three patches passed its per-operation checks before: a `rewrite` whose body brought its own `## Open questions` section, a note in a person's name spelt with an escaped line break, and a `delete` behind a second heading placed above the real one. `knowledge-provenance.sh --unattended` refused each in a scheduled run, and nothing did in a live session. Check 19 exercises them.
+- **A reader's question and the hand-off hold no character a reader cannot see, whichever block it sits in.** The pen and `publish` listed ranges, which left out the Arabic letter mark, the soft hyphen and the tag characters, which hide text from a reader and not from a model. The pen cleaned a reader's question of control characters only. Both now go by Unicode category, as check 21 and `prose-check.py` do.
+- **The hand-off a reviewer reads is the pen's, after the retrieval call too.** That call carries readers' words in its prompt and runs after the pen has written the hand-off, whose path it could write. The wrapper writes the pen's lines there again once the call returns.
+- **A reply cannot add to what it is scored against.** The retrieval scorer read the expected concepts and the reply from one stream. A reply that held lines in the scorer's own shape raised both counts.
+- **The skill a scheduled run installs is pinned to a commit.** The librarian workflow named a release tag, and a tag can be moved to other instructions, which an agent would then follow unattended. `TRUST_LADDER_SKILLS_SHA` now holds the commit that tag named when the pin was set, and the install step installs nothing unless the tag still names it. The release step and `scripts/sync-sidecar.sh` move the two together, and check 15 holds the template's commit to its tag.
+- **The conventions script and the pen pin PyYAML.** Each ran through `uv run` with a bare `pyyaml` in its dependency block, so the gate and the scheduled run installed whichever release was newest that day. The block now names one release, and `exclude-newer` takes no file uploaded after a set date.
+
 ## [0.33.0] - 2026-10-04
 
 ### Added

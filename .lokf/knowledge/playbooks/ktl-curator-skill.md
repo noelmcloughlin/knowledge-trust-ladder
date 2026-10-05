@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
@@ -83,8 +83,8 @@ login whose registered signing key is the one in `git config
 user.signingkey`, checked through the forge's public key listing. On a host
 with no forge, the account the platform's version history shows is the id,
 and that history is the only check. `references/portability.md` carries the
-steps for each host - including that a GPG key usually signs with a subkey,
-which the forge lists under `subkeys` - and the frontmatter's `compatibility`
+steps for each host - including that a GPG key often signs with a subkey,
+which GitHub lists under `subkeys` - and the frontmatter's `compatibility`
 field says the skill needs git, a POSIX shell and one of those identities to
 record a confirmation in a person's name. Where the repository keeps curator
 keys under `.lokf/curators/` for the forge-free gate, the preflight says

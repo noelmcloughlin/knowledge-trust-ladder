@@ -142,7 +142,7 @@ python3 <skill>/scripts/prose-check.py --before <copy> <file>     # a file you c
 
 A **finding** names something other than wording that differs: a number, a link, a code span, a quotation, a fenced block, a frontmatter byte, a body a person vouched for, or a character no reader sees that the rewording added. Undo what it names. A rewording has no reason to change any of them. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
 
-A **note** asks you to look again: a number written as a word, a `must` or a `not` that came or went, a text that grew.
+A **note** asks you to look again. It names a number, a day or a month written as a word, a `must` or a `not` that came or went, or a text that grew or lost more than a fifth of its words. When nothing but the wording differs, the `OK` line gives the words before and after.
 
 Then run what every change to the bundle runs. From `.lokf/`:
 
@@ -167,7 +167,7 @@ Write no line for a run that changed nothing.
 
 Hand the person a change scoped to `.lokf/`: a pull request where git tracks `.lokf/`, and the list of changed files where it does not. Give them:
 
-- the counts before and after;
+- the counts before and after, and the words before and after as the script's `OK` line gives them;
 - each sentence you left alone, and why;
 - each concept you skipped, with its reason;
 - what no script proved: that the meaning held. The diff is theirs to read.

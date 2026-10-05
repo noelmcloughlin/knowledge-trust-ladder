@@ -11,7 +11,7 @@ sources:
 - resource: README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:45:53Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
@@ -29,9 +29,9 @@ verified:
 
 # Overview
 
-LOKF ships a small vocabulary on purpose: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. OKF leaves a fixed taxonomy of concept types to the producer, so any domain can bring its own. The README says LOKF's is a short list of classes, and a domain whose concepts stop fitting it extends the schema in LinkML, so its own types go from tolerated to checked.
+LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. OKF leaves a fixed taxonomy of concept types to the producer, so any domain can bring its own. The README says LOKF's is a short list of classes, and a domain whose concepts stop fitting it extends the schema in LinkML, so its own types go from tolerated to checked.
 
-**The signs.** The curator's *vocabulary fit* line keeps growing (concepts whose `type` is outside the known classes, tolerated under Golden Rule 7 but carrying no agreed meaning); concepts sprout producer-defined keys such as `dosage`, `jurisdiction` or `failure_mode` that no validator checks; or the domain is one where a wrong field has consequences - medicine, law, finance, safety engineering, anything regulated.
+**The signs.** The curator's *vocabulary fit* line keeps growing (concepts whose `type` is outside the known classes, tolerated under Golden Rule 7 but carrying no agreed meaning); concepts sprout many producer-defined keys such as `dosage`, `jurisdiction` or `failure_mode` that no validator checks; or the domain is one where a wrong or ambiguous field has consequences: medicine, law, finance, safety engineering, anything regulated.
 
 **The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails: subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly. The recipe keeps a pinned copy of `lokf.yaml` beside the domain schema and wires the flag into the justfile and both workflows; the two Obsidian plugins learn the new classes through their *Known LOKF types* setting. The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, nothing new to install. What it does not change is the graph: `convert`, `serve` and `query` take no `--schema`, so domain keys project in LOKF's namespace. Up to lokf 0.8.0 an undeclared type projects there the same way, and from 0.9.0 it projects as `lokf:Concept` with the name kept in `schema:additionalType`.
 

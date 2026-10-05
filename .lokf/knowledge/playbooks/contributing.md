@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T17:27:49Z"
+  at: "2026-10-05T12:41:36Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -70,11 +70,14 @@ changelog but never tags, and a maintainer runs `publish.yml` by hand
 ([releasing](releasing.md)). After a release that changes a template or
 `skills/ktl-librarian/`, `scripts/sync-sidecar.sh <tag> <sibling>...`
 copies that release's templates over each sibling's copies and moves its
-`TRUST_LADDER_SKILLS_REF` to the same tag, once the tag is on origin, runs
+`TRUST_LADDER_SKILLS_REF` to the same tag and `TRUST_LADDER_SKILLS_SHA` to
+the commit that tag names, once the tag is on origin, runs
 the sidecar's checks there, and leaves the diff for a person to review and
 commit: the pin and the copies move together because, once a sibling turns on
 its scheduled librarian, the pin decides which instructions run
-unattended. Signing a commit is required only for a pull request that records
+unattended.
+
+Signing a commit is required only for a pull request that records
 a `human:` confirmation in a knowledge bundle (`docs/signing-commits.md`),
 and a repository running the forge-free gate also needs the signer's public
 key under `.lokf/curators/`, added first in a pull request of its own.

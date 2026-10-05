@@ -5,7 +5,8 @@
 # A sibling (the two Obsidian plugins, ai-linkmo, any host ktl-sidecar
 # installed into) carries byte-identical copies of the templates under
 # skills/ktl-sidecar/templates/ and pins its scheduled librarian to one tag of
-# this repository with TRUST_LADDER_SKILLS_REF. The two must move together.
+# this repository with TRUST_LADDER_SKILLS_REF, and to the commit that tag
+# names with TRUST_LADDER_SKILLS_SHA. The copies and the pin must move together.
 # The skill that tag installs is written against the wrapper, gate and
 # preflight that tag includes. And once the librarian is turned on, the pin
 # decides which agent instructions run unattended with a credential in the
@@ -106,7 +107,7 @@ fi
 tag_sha="$(git -C "$repo_root" rev-parse "$tag^{commit}")"
 
 # The skills pin is each repository's own to move, so it is not drift.
-unpin() { sed -E 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/'; }
+unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/'; }
 at_tag() { git -C "$repo_root" show "$tag:$templates/$1"; }
 # Why the sibling needs a template it never installed, or nothing when it does
 # not: <template> <sibling-root>.
@@ -172,9 +173,12 @@ for sibling in "$@"; do
   done
   # The template's own pin is one release behind by design (the release
   # commit moves it to the newest tag that existed then), so the copy above
-  # would move a sibling backwards. Set it to the tag being synced.
+  # would move a sibling backwards. Set it to the tag being synced, and the
+  # commit beside it to the one that tag names, which the install step checks
+  # the tag against on every run.
   if [[ -f "$wf" ]]; then
-    sed -i.sync-bak -E "s/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1$tag/" "$wf"
+    sed -i.sync-bak -E -e "s/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1$tag/" \
+                       -e "s/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1$tag_sha/" "$wf"
     rm -f "$wf.sync-bak"
   fi
 

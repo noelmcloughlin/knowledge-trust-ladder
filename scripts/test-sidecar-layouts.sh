@@ -27,13 +27,21 @@
 #           program computes, and refuses a call that changed the checkout;
 #      (1f) stops before the agent runs when the sidecar has no pen;
 #      (1g) skips the agent for a quiet bundle only when KNOWLEDGE_SKIP_QUIET
-#           allows it;
+#           allows it, and counts a change a person declined as no work;
 #      (1h) passes the hand-off to its file through the pen, cleaned, after
-#           whatever the agent left at either output path is gone;
+#           whatever the agent left at either output path is gone, and writes
+#           it again after the retrieval call;
 #   2. the librarian workflow's change detection sees a bundle edit in each of
 #      those shapes, and its packaging step stages it without failing when the
-#      second name does not exist;
-#   3. the registrar workflow triggers on, and diffs, both names. Its
+#      second name does not exist. Its pull request says how the conventions
+#      script ended, and cleans the hand-off by Unicode category. A scheduled
+#      run waits while an earlier pull request of the workflow's is open, and
+#      the step that reads those pull requests (2b), run here as the template
+#      has it with `gh` stubbed, hands on what a person declined as numbers,
+#      paths and hashes. Its install step (2c) installs the skill from the
+#      pinned tag only while that tag names the pinned commit;
+#   3. the registrar workflow triggers on, and diffs, both names, and like
+#      the other two templates installs the sidecar from its lock. Its
 #      provenance step (3b), run here as the template has it with `gh`
 #      stubbed, asks the person behind a confirmation that is added, changed
 #      or removed, and nobody when only a body changes;
@@ -46,7 +54,8 @@
 #      written, and gives the same bytes for the same bundle, at the same tag
 #      or a later one.
 #
-# Needs bash and git. `just` is optional: without it, test 4 is skipped and says so.
+# Needs bash and git. `just` and `jq` are optional: without `just`, test 4 is
+# skipped and says so, and without `jq`, test 2b is.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -250,6 +259,7 @@ if [ -d .lokf ]; then
   printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
 else
   [ -z "${MEDDLE:-}" ] || printf 'meddled\n' >> "$MEDDLE"
+  [ -z "${PLANT:-}" ] || printf 'planted in the retrieval call\n' > "$PLANT"
   echo "Q1: a.md"
 fi
 AGENT
@@ -300,10 +310,10 @@ host="$work/wrapper-quiet"
 make_host "$host" default
 printf -- '---\ntype: Service\ntitle: A\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n---\n\n# A\n' > "$host/.lokf/knowledge/a.md"
 git -C "$host" commit -q -am "a stamped concept"
-quiet_case() {  # <label> <KNOWLEDGE_SKIP_QUIET> <ran|skipped>
+quiet_case() {  # <label> <KNOWLEDGE_SKIP_QUIET> <ran|skipped> [<the file KNOWLEDGE_DECLINED names>]
   local status=0 got=skipped
   rm -f "$work/env.out"
-  ( cd "$host" && AGENT_CLI="$env_agent" ENV_OUT="$work/env.out" KNOWLEDGE_SKIP_QUIET="$2" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+  ( cd "$host" && AGENT_CLI="$env_agent" ENV_OUT="$work/env.out" KNOWLEDGE_SKIP_QUIET="$2" KNOWLEDGE_DECLINED="${4:-}" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
   [ -e "$work/env.out" ] && got=ran
   if [ "$status" = 0 ] && [ "$got" = "$3" ]; then ok "quiet/$1: the agent $got (exit 0)"
   else err "quiet/$1: the agent $got, exit $status (want $3, exit 0)"; fi
@@ -313,6 +323,18 @@ quiet_case "nothing waits, skip not allowed" "" ran
 printf '%s\n' '# Reader feedback' '' '## 2026-01-02' '' '- **Miss** - a reader asked. - docent' > "$host/.lokf/feedback.md"
 quiet_case "reader feedback waits" true ran
 rm "$host/.lokf/feedback.md"
+# A source that moved makes work. On a scheduled run it makes none once a
+# person has closed the pull request that changed its concept, which the
+# workflow says in the file KNOWLEDGE_DECLINED names. The source makes work
+# again when it moves after that pull request.
+printf -- '---\ntype: Service\ntitle: A\nresource: README.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n---\n\n# A\n' > "$host/.lokf/knowledge/a.md"
+git -C "$host" commit -q -am "the concept names its source"
+printf 'more\n' >> "$host/README.md" && git -C "$host" commit -q -am "the source moves"
+quiet_case "a source moved" true ran
+printf 'declined 7 2026-01-03 %s\ntouched a.md\n' "$(git -C "$host" rev-parse HEAD)" > "$work/declined.txt"
+quiet_case "a source moved, and a person closed the pull request that changed its concept" true skipped "$work/declined.txt"
+printf 'again\n' >> "$host/README.md" && git -C "$host" commit -q -am "the source moves again"
+quiet_case "the source moved again after that pull request" true ran "$work/declined.txt"
 
 # 1h. The patch file's hand-off reaches the file KNOWLEDGE_HANDOFF_OUT names
 # through the pen, cleaned. What the agent left at that path, or at the
@@ -341,6 +363,26 @@ else err "hand-off: exit $status, file holds: $(cat "$work/handoff.txt" 2>/dev/n
 if [ ! -L "$work/retrieval.txt" ] && [ ! -s "$work/retrieval.txt" ] && [ "$(cat "$host/README.md")" = "# host" ]; then
   ok "hand-off: a link the agent left at the retrieval score's path is gone, and nothing was written through it"
 else err "hand-off: the retrieval path is still a link, or holds the agent's text, or the checkout's README changed"; fi
+# The retrieval call comes after the pen has written the hand-off, and its
+# prompt carries readers' words. What that call leaves at the hand-off's path
+# is gone too: the reviewer reads the pen's lines, or none when the patch held
+# none.
+host="$work/wrapper-handoff-retrieval"
+retrieval_host "$host"
+status=0; rm -f "$work/handoff.txt" "$work/retrieval.txt"
+( cd "$host" && AGENT_CLI="$retrieval_agent" PATCH_TEXT="$handoff_patch" KNOWLEDGE_RETRIEVAL=true PLANT="$work/handoff.txt" \
+    KNOWLEDGE_HANDOFF_OUT="$work/handoff.txt" KNOWLEDGE_RETRIEVAL_OUT="$work/retrieval.txt" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 0 ] && [ "$(cat "$work/handoff.txt" 2>/dev/null)" = "one line for the reviewer, with a 'backtick'" ] && grep -q '1 of 1' "$work/retrieval.txt"; then
+  ok "hand-off: the pen's lines are written again after the retrieval call, over what that call left at the path (exit 0)"
+else err "hand-off: exit $status after a retrieval call that wrote the hand-off's path, file holds: $(cat "$work/handoff.txt" 2>/dev/null || echo nothing)"; fi
+host="$work/wrapper-handoff-retrieval-none"
+retrieval_host "$host"
+status=0; rm -f "$work/handoff.txt" "$work/retrieval.txt"
+( cd "$host" && AGENT_CLI="$retrieval_agent" PATCH_TEXT="$create_op" KNOWLEDGE_RETRIEVAL=true PLANT="$work/handoff.txt" \
+    KNOWLEDGE_HANDOFF_OUT="$work/handoff.txt" KNOWLEDGE_RETRIEVAL_OUT="$work/retrieval.txt" bash .lokf/scripts/knowledge-librarian.sh >/dev/null 2>&1 ) || status=$?
+if [ "$status" = 0 ] && [ ! -s "$work/handoff.txt" ]; then
+  ok "hand-off: a patch with none leaves none, whatever the retrieval call wrote at the path (exit 0)"
+else err "hand-off: exit $status, and a hand-off the retrieval call wrote survived: $(cat "$work/handoff.txt" 2>/dev/null)"; fi
 
 echo "2. the librarian workflow's change detection and packaging"
 detect='git status --porcelain -- .lokf/knowledge knowledge_bundle'
@@ -368,6 +410,196 @@ if grep -qF 'KNOWLEDGE_HANDOFF_OUT: ${{ runner.temp }}/handoff.txt' "$librarian_
    && grep -qF 'HANDOFF_FILE: ${{ runner.temp }}/handoff.txt' "$librarian_yaml" && grep -qF "'\`\`\`text', ...handoff, '\`\`\`'" "$librarian_yaml"; then
   ok "template carries the hand-off in the artifact and shows it in a code block"
 else err "knowledge-librarian.yaml lost the hand-off's path from the pen to the pull request"; fi
+# `publish` cleans the hand-off again, by Unicode category as the pen does: a
+# control, a format character or a line separator, whichever block it sits in.
+# The expression is run as the template has it where node is installed.
+clean_line="$(grep -F '.map((l) => l.replace(' "$librarian_yaml" | sed 's/^ *//')"
+# shellcheck disable=SC2016 # the backtick is JavaScript's, matched as text
+if [ "$clean_line" = '.map((l) => l.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '"''"').replace(/`/g, "'"'"'").trim().slice(0, 300))' ]; then
+  ok "template cleans each hand-off line by Unicode category, then of backticks, to 300 characters"
+else err "knowledge-librarian.yaml no longer cleans the hand-off as expected: $clean_line"; fi
+if command -v node >/dev/null 2>&1; then
+  # shellcheck disable=SC2016 # the backticks and the escapes are JavaScript's
+  cleaned="$(CLEAN="$clean_line" node -e '
+    const clean = eval("(l) => [l]" + process.env.CLEAN + "[0]");
+    process.stdout.write(clean("a\u061c line\u00ad with\u{E0041} more\ufff9 than\u180e a\u200b `list`\u2028"));')"
+  if [ "$cleaned" = "a line with more than a 'list'" ]; then
+    ok "template's cleaning removes a bidirectional mark, a soft hyphen, a tag character and a line separator"
+  else err "template's cleaning left something a reader cannot see: $(printf '%s' "$cleaned" | od -c | head -3)"; fi
+else
+  echo "node not installed locally - CI runs the hand-off's cleaning; skipping here"
+fi
+# The registrar's gate does not run on the pull request this workflow opens.
+# So the refresh job runs the conventions script, and the pull request says
+# how it ended beside the validation.
+# shellcheck disable=SC2016 # the template's own ${{ }} and ${...} expressions, matched as text
+if sed -n '/^  refresh:/,/^  publish:/p' "$librarian_yaml" | grep -qF 'run: bash scripts/knowledge-conventions.sh knowledge' \
+   && grep -qF 'conventions_outcome: ${{ steps.conventions.outcome }}' "$librarian_yaml" \
+   && grep -qF 'CONVENTIONS_OUTCOME: ${{ needs.refresh.outputs.conventions_outcome }}' "$librarian_yaml" \
+   && grep -qF '${check(CONVENTIONS_OUTCOME)}' "$librarian_yaml"; then
+  ok "template runs the conventions script in refresh and reports its outcome on the pull request"
+else err "knowledge-librarian.yaml no longer runs the conventions script, or no longer reports it on the pull request"; fi
+# A scheduled run waits its turn: the refresh job needs the job that read the
+# workflow's earlier pull requests, and does not run on a schedule while one
+# is open. What a person declined reaches the agent step as a file, on a
+# scheduled run only. The job that reads them holds a token that can read
+# pull requests, checks nothing out and runs no agent.
+# shellcheck disable=SC2016 # the template's own ${{ }} expressions, matched as text
+if sed -n '/^  refresh:/,/^    steps:/p' "$librarian_yaml" | grep -qxF '    needs: earlier' \
+   && sed -n '/^  refresh:/,/^    steps:/p' "$librarian_yaml" | grep -qxF "    if: github.event_name != 'schedule' || needs.earlier.outputs.open == ''" \
+   && sed -n '/^  publish:/,/^    steps:/p' "$librarian_yaml" | grep -qxF '    needs: [earlier, refresh]'; then
+  ok "template skips a scheduled refresh while a pull request of the workflow's is open, and a run a person starts goes ahead"
+else err "knowledge-librarian.yaml no longer holds a scheduled refresh back while an earlier pull request is open"; fi
+# shellcheck disable=SC2016 # the template's own ${{ }} expressions, matched as text
+if grep -qF 'KNOWLEDGE_DECLINED: ${{ runner.temp }}/declined.txt' "$librarian_yaml" \
+   && grep -qF "if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true' && github.event_name == 'schedule' && needs.earlier.outputs.record != ''" "$librarian_yaml" \
+   && grep -qF 'run: printf '"'"'%s\n'"'"' "$RECORD" > "$RUNNER_TEMP/declined.txt"' "$librarian_yaml"; then
+  ok "template hands what a person declined to the agent step as a file, on a scheduled run only"
+else err "knowledge-librarian.yaml no longer writes the declined record for a scheduled run, or no longer names it for the agent step"; fi
+# shellcheck disable=SC2016 # the template's own ${{ }} expressions and JavaScript, matched as text
+if grep -qF 'OPEN_PR: ${{ needs.earlier.outputs.open }}' "$librarian_yaml" && grep -qF 'DECLINED_PR: ${{ needs.earlier.outputs.declined }}' "$librarian_yaml" \
+   && grep -qF "if (/^[0-9]+\$/.test(OPEN_PR || '')) {" "$librarian_yaml" && grep -qF "if (/^[0-9]+\$/.test(DECLINED_PR || '')) {" "$librarian_yaml" \
+   && grep -qF "...earlier," "$librarian_yaml"; then
+  ok "template names an earlier pull request in the new one by its number, and only when it is a number"
+else err "knowledge-librarian.yaml no longer names the earlier pull requests in the one it opens, or shows more than a number"; fi
+earlier_job="$(sed -n '/^  earlier:/,/^  refresh:/p' "$librarian_yaml")"
+if grep -q '^      pull-requests: read' <<<"$earlier_job" && ! grep -qE '^      [a-z-]+: write' <<<"$earlier_job" \
+   && ! grep -q 'actions/checkout\|AGENT_' <<<"$earlier_job"; then
+  ok "the earlier job reads pull requests under a read-only token, checks nothing out and runs no agent"
+else err "knowledge-librarian.yaml's earlier job holds more than a token that reads pull requests"; fi
+
+# 2b. The step that reads those pull requests, extracted from the template so
+# the test breaks when its lines change. `gh` is a stand-in that answers each
+# API call from a file, through the real jq, so the template's own filters
+# run. A pull request counts when its branch is knowledge-librarian/... in
+# this repository: a fork's branch of that name does not, and neither does a
+# branch whose repository is gone. One closed without merging is declined, and
+# what goes on about it is its number, its day, its base commit, the concepts
+# it touched or added, and a hash of each feedback entry it handled.
+step="$work/earlier-step.sh"
+awk '/^      - name: Read the pull requests this workflow opened$/ { on = 1 }
+     on && /^        run: \|$/ { body = 1; next }
+     body && /^  [a-z]/ { exit }
+     body { sub(/^          /, ""); print }' "$librarian_yaml" > "$step"
+if ! grep -q 'KTL_EARLIER_END' "$step" || ! bash -n "$step" 2>/dev/null; then
+  err "could not extract the step that reads the earlier pull requests from knowledge-librarian.yaml"
+elif ! command -v jq >/dev/null 2>&1; then
+  echo "SKIP: jq is not installed - the step that reads the earlier pull requests runs its filters through it"
+else
+  api="$work/api"; mkdir -p "$api" "$work/stub-earlier"
+  cat > "$work/stub-earlier/gh" <<'GH'
+#!/usr/bin/env bash
+# gh api <url> [--paginate] --jq <filter>: the canned reply for that url, through jq.
+url="$2"; filter=""
+while [ $# -gt 0 ]; do [ "$1" = --jq ] && filter="$2"; shift; done
+case "$url" in
+  *"/pulls?"*"page=1") file="$STUB_API/pulls.json" ;;
+  *"/pulls?"*)         file="$STUB_API/none.json" ;;
+  *"/pulls/"*"/files") n="${url%/files}"; file="$STUB_API/files-${n##*/}.json" ;;
+  *) echo "unexpected call: $url" >&2; exit 1 ;;
+esac
+[ -f "$file" ] || file="$STUB_API/none.json"
+jq -r "$filter" "$file"
+GH
+  chmod +x "$work/stub-earlier/gh"
+  printf '[]\n' > "$api/none.json"
+  # pull <number> <state> <merged_at> <closed_at> <base> <branch> <repository, as JSON>
+  pull() { printf '{"number":%s,"state":"%s","merged_at":%s,"closed_at":%s,"base":{"sha":"%s"},"head":{"ref":"%s","repo":%s},"title":"a title nobody reads","body":"a body nobody reads"}' "$@"; }
+  sha() { printf '%040d' "$1"; }
+  ours='{"full_name":"o/r"}'
+  earlier_run() {  # prints the step's exit status; its outputs go to $work/earlier.out and its log to $work/earlier.log
+    local status=0
+    : > "$work/earlier.out"
+    ( cd "$work" && PATH="$work/stub-earlier:$PATH" GH_TOKEN=x GITHUB_REPOSITORY=o/r GITHUB_OUTPUT="$work/earlier.out" STUB_API="$api" bash "$step" > "$work/earlier.log" 2>&1 ) || status=$?
+    printf '%s' "$status"
+  }
+  printf '[%s,%s,%s,%s,%s,%s]\n' \
+    "$(pull 30 open null null "$(sha 30)" knowledge-librarian/2026-10-05-1 '{"full_name":"fork/r"}')" \
+    "$(pull 29 closed null '"2026-09-29T05:10:00Z"' "$(sha 29)" knowledge-librarian/2026-09-28-9 "$ours")" \
+    "$(pull 28 closed '"2026-09-22T08:00:00Z"' '"2026-09-22T08:00:00Z"' "$(sha 28)" knowledge-librarian/2026-09-21-8 "$ours")" \
+    "$(pull 27 closed null '"2026-09-20T08:00:00Z"' "$(sha 27)" feature/knowledge-librarian/x "$ours")" \
+    "$(pull 26 closed null '"2026-09-15T08:00:00Z"' "$(sha 26)" knowledge-librarian/2026-09-14-7 null)" \
+    "$(pull 25 closed null '"2026-09-08T08:00:00Z"' "$(sha 25)" knowledge-librarian/2026-09-07-6 "$ours")" > "$api/pulls.json"
+  cat > "$api/files-29.json" <<'JSON'
+[{"status":"modified","filename":".lokf/knowledge/x/two.md"},
+ {"status":"added","filename":".lokf/knowledge/x/new.md"},
+ {"status":"removed","filename":"knowledge_bundle/x/old.md"},
+ {"status":"modified","filename":".lokf/knowledge/index.md"},
+ {"status":"modified","filename":".lokf/knowledge/x/index.md"},
+ {"status":"modified","filename":".lokf/knowledge/log.md"},
+ {"status":"modified","filename":".lokf/knowledge/x/Bad Name.md"},
+ {"status":"modified","filename":".lokf/knowledge/x/../../../README.md"},
+ {"status":"modified","filename":"README.md"},
+ {"status":"modified","filename":".lokf/questions.md"},
+ {"status":"modified","filename":".lokf/feedback.md","patch":"@@ -3,7 +3,5 @@\n \n ## 2026-01-06\n \n-- **Miss** - Q: \"a reader wrote these declined words\" - docent\n - **Miss** - Q: \"second\" - docent\n-## 2026-01-01\n"}]
+JSON
+  printf '[{"status":"modified","filename":".lokf/knowledge/x/five.md"}]\n' > "$api/files-25.json"
+  status="$(earlier_run)"
+  want="$(printf '%s\n' "declined 29 2026-09-29 $(sha 29)" 'touched x/two.md' 'added x/new.md' 'touched x/old.md' \
+    "handled $(printf '%s\n' '- **Miss** - Q: "a reader wrote these declined words" - docent' | git hash-object --stdin)" \
+    "declined 25 2026-09-08 $(sha 25)" 'touched x/five.md')"
+  got="$(sed -n '/^record<<KTL_EARLIER_END$/,/^KTL_EARLIER_END$/p' "$work/earlier.out" | sed '1d;$d')"
+  if [ "$status" = 0 ] && grep -qxF 'open=' "$work/earlier.out" && grep -qxF 'declined=29' "$work/earlier.out"; then
+    ok "earlier: a fork's branch of the same name is no pull request of the workflow's, and the newest one closed without merging is the declined one"
+  else err "earlier: exit $status, outputs: $(tr '\n' ' ' < "$work/earlier.out"), log: $(cat "$work/earlier.log")"; fi
+  if [ "$got" = "$want" ]; then
+    ok "earlier: the record holds each declined pull request's base, the concepts it touched or added, and a hash of the feedback entry it handled"
+  else err "earlier: the record is not as expected: $got"; fi
+  if ! grep -q 'declined words\|nobody reads' "$work/earlier.out" "$work/earlier.log"; then
+    ok "earlier: no reader's words, and no pull request's title or body, leave the step"
+  else err "earlier: a reader's words or a pull request's text reached the step's outputs or its log"; fi
+  printf '[%s,%s]\n' \
+    "$(pull 31 open null null "$(sha 31)" knowledge-librarian/2026-10-05-2 "$ours")" \
+    "$(pull 28 closed '"2026-09-22T08:00:00Z"' '"2026-09-22T08:00:00Z"' "$(sha 28)" knowledge-librarian/2026-09-21-8 "$ours")" > "$api/pulls.json"
+  status="$(earlier_run)"
+  if [ "$status" = 0 ] && grep -qxF 'open=31' "$work/earlier.out" && grep -qxF 'declined=' "$work/earlier.out" && grep -q 'Pull request #31 from this workflow is still open' "$work/earlier.log"; then
+    ok "earlier: an open pull request of the workflow's is named, and a merged one declines nothing"
+  else err "earlier: exit $status with an open pull request, outputs: $(tr '\n' ' ' < "$work/earlier.out")"; fi
+  printf '[]\n' > "$api/pulls.json"
+  status="$(earlier_run)"
+  if [ "$status" = 0 ] && grep -qxF 'open=' "$work/earlier.out" && grep -qxF 'declined=' "$work/earlier.out"; then
+    ok "earlier: a repository with no pull request of the workflow's has nothing open and nothing declined"
+  else err "earlier: exit $status with no pull requests, outputs: $(tr '\n' ' ' < "$work/earlier.out")"; fi
+fi
+
+# 2c. The install step, extracted from the template and run against a
+# stand-in for the skills repository. The pin is a tag and the commit it
+# named when it was set. The skill is installed while the two agree, and
+# nothing is installed once the tag names another commit.
+step="$work/install-step.sh"
+awk '/^      - name: Install the pinned ktl-librarian skill$/ { on = 1 }
+     on && /^        run: \|$/ { body = 1; next }
+     body && /^      [#-]/ { exit }
+     body { sub(/^          /, ""); print }' "$librarian_yaml" > "$step"
+if ! grep -q 'TRUST_LADDER_SKILLS_SHA' "$step" || ! bash -n "$step" 2>/dev/null; then
+  err "could not extract the install step from knowledge-librarian.yaml, or it no longer reads TRUST_LADDER_SKILLS_SHA"
+else
+  skills_repo="$work/skills-repo"
+  mkdir -p "$skills_repo/skills/ktl-librarian"
+  (
+    cd "$skills_repo"
+    git init -q -b main . && git config user.email "layout-test@example.invalid" && git config user.name "layout test"
+    printf '# the skill as it was reviewed\n' > skills/ktl-librarian/SKILL.md
+    git add -A && git commit -q -m "the reviewed skill" && git -c tag.gpgSign=false tag v9.9.9
+  )
+  pinned="$(git -C "$skills_repo" rev-parse HEAD)"
+  install_run() {  # <dir to install into>: prints the step's exit status; its log goes to $work/install.log
+    local status=0
+    mkdir -p "$1"
+    ( cd "$1" && TRUST_LADDER_SKILLS_REPO="file://$skills_repo" TRUST_LADDER_SKILLS_REF=v9.9.9 TRUST_LADDER_SKILLS_SHA="$pinned" bash "$step" > "$work/install.log" 2>&1 ) || status=$?
+    printf '%s' "$status"
+  }
+  status="$(install_run "$work/install-ok")"
+  if [ "$status" = 0 ] && grep -q 'as it was reviewed' "$work/install-ok/.agents/skills/ktl-librarian/SKILL.md" 2>/dev/null; then
+    ok "install: the skill is installed from the pinned tag while it names the pinned commit (exit 0)"
+  else err "install: exit $status with the tag and the commit in agreement: $(cat "$work/install.log")"; fi
+  ( cd "$skills_repo" && printf '# other instructions\n' > skills/ktl-librarian/SKILL.md && git commit -q -am "the tag is moved to this" && git -c tag.gpgSign=false tag -f v9.9.9 >/dev/null )
+  status="$(install_run "$work/install-moved")"
+  if [ "$status" = 1 ] && [ ! -e "$work/install-moved/.agents/skills/ktl-librarian" ] && grep -q 'nothing was installed' "$work/install.log"; then
+    ok "install: a tag that names another commit installs nothing, and the step says so (exit 1)"
+  else err "install: exit $status after the tag moved, and the skill is $( [ -e "$work/install-moved/.agents/skills/ktl-librarian" ] && echo installed || echo absent ): $(cat "$work/install.log")"; fi
+fi
+
 for shape in default no-doorway rearranged; do
   host="$work/workflow-$shape"
   make_host "$host" "$shape"
@@ -415,6 +647,12 @@ for case in "inside:.lokf/knowledge/café.md" "inside:.lokf/questions.md" "outsi
 done
 
 echo "3. the registrar workflow"
+# Each template installs the toolkit from the sidecar's lock, so a gate, a
+# release and a scheduled run all install the files a person reviewed.
+for yaml in "$registrar_yaml" "$librarian_yaml" "$release_yaml"; do
+  if grep -qxF '        run: uv sync --locked' "$yaml" && ! grep -qE '^ *run: uv sync *$' "$yaml"; then ok "${yaml##*/} installs the sidecar from its lock (uv sync --locked)"
+  else err "${yaml##*/} installs the sidecar without --locked, so it takes whatever resolves on the day"; fi
+done
 if grep -qE '^\s*-\s*"\.lokf/\*\*"' "$registrar_yaml" && grep -qE '^\s*-\s*"knowledge_bundle/\*\*"' "$registrar_yaml"; then
   ok "registrar triggers on .lokf/** and knowledge_bundle/**"
 else err "knowledge-registrar.yaml paths: must list both .lokf/** and knowledge_bundle/**"; fi
