@@ -2652,6 +2652,65 @@ else
 fi
 rm -rf "${unseen_dir:?}"
 
+# 22. Parser parity. The provenance gate reads a concept's `verified` and
+#     `generated` events with a hand-written awk reader, not a YAML parser, for
+#     portability. So a human event in a layout the reader skips, but a real
+#     parser reads, is a forged confirmation the gate cannot challenge. For each
+#     layout a person might write, the gate must flag an unsigned human event
+#     exactly when a YAML parser sees one. This is what caught a multi-line flow
+#     event slipping the gate.
+say ""
+say "Checking the event reader agrees with a YAML parser..."
+pp="$(mktemp -d)"; ppk="$pp/.lokf/knowledge/x"; mkdir -p "$ppk"
+pp_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$pp"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${pp_git[@]}" init -q
+prov="$repo_root/$templates/scripts/knowledge-provenance.sh"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n' > "$pp/.lokf/knowledge/index.md"
+printf -- '---\ntype: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n---\n\n# C\n' > "$ppk/c.md"
+"${pp_git[@]}" add -A && "${pp_git[@]}" commit -q -m 'a draft with no event'
+ppi=0
+for layout in \
+  'verified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"' \
+  'verified: [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]' \
+  'verified: [\n  { by: human:ada, at: "2026-01-02T10:00:00Z" }\n]' \
+  'generated: { by: human:ada, at: "2026-01-02T10:00:00Z" }' \
+  'generated: {\n  by: human:ada,\n  at: "2026-01-02T10:00:00Z"\n}' \
+  'verified:\n  - by: process:ktl-librarian\n    at: "2026-01-01T00:00:00Z"\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"' \
+  'verified:\n  - by: human:ada\n    at: 2026-01-02T10:00:00+00:00' \
+  'verified: [ ]' \
+  'verified:\n  - by: process:ktl-librarian\n    at: "2026-01-01T00:00:00Z"'; do
+  ppi=$((ppi + 1))
+  # shellcheck disable=SC2059 # $layout is a trusted format fragment with \n escapes to expand
+  printf -- "---\ntype: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n$layout\n---\n\n# C\n" > "$ppk/c.md"
+  parser="$(python3 - "$ppk/c.md" <<'PY'
+import sys, yaml
+text = open(sys.argv[1], encoding="utf-8").read()
+front = text.split("\n---\n", 1)[0]
+front = front[4:] if front.startswith("---\n") else front
+try:
+    data = yaml.safe_load(front) or {}
+except yaml.YAMLError:
+    data = {}
+human = False
+for key in ("verified", "generated"):
+    value = data.get(key) if isinstance(data, dict) else None
+    for event in ([value] if isinstance(value, dict) else value if isinstance(value, list) else []):
+        if isinstance(event, dict) and str(event.get("by", "")).startswith("human:"):
+            human = True
+print("human" if human else "none")
+PY
+)"
+  set +e; out="$(cd "$pp" && bash "$prov" --unattended 2>&1)"; rc=$?; set -e
+  if [[ "$rc" -ne 0 ]]; then gate=human; else gate=none; fi
+  if [[ "$parser" == "$gate" ]]; then
+    ok "the gate agrees with a YAML parser on layout $ppi ($parser)"
+  else
+    err "the gate and a YAML parser disagree on layout $ppi: the parser sees $parser, the gate sees $gate ($out)"
+  fi
+done
+rm -rf "$pp"
+
 say ""
 if [[ "$fail" -eq 0 ]]; then
   say "Repository contract: PASS"
