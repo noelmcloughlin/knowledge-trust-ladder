@@ -23,7 +23,7 @@ Above the lines sits a governing body: for a bundle, the owners of the repositor
 
 The IIA's own text says the lines "are not intended to denote structural elements but a useful differentiation in roles", and that roles "may overlap in practice" given "clear accountability, transparency, and safeguards to preserve objectivity and avoid self-review risks". KTL does not decide who plays each line; the organisation that adopts it does, one person or a department per line.
 
-The tooling keeps the lines apart either way. The **curator**'s identity comes from the forge, never from the person. It is the login this machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, which anyone can edit, and never what the person types into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where an organisation lets one person both author and confirm, the signature is the route, since GitHub will not let them approve their own pull request. An Environment with required reviewers is the one logged exception.
+The tooling keeps the lines apart either way. The **curator**'s identity comes from the forge, never from the person. It is the login this machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, which anyone can edit, and never what the person types into the agent's chat. Where an organisation lets one person both author and confirm, the gate takes their signature on the commit, since GitHub will not let them approve their own pull request. An Environment with required reviewers is the one logged exception.
 
 ## What an auditor can check
 
