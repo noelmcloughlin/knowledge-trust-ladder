@@ -295,6 +295,39 @@ for spec in "CONTRIBUTING.md:1000:a checklist" "SECURITY.md:900:a policy"; do
   fi
 done
 
+# 10a. Each SKILL.md has a word budget too. An agent loads the whole page
+#      when the skill starts, and the Agent Skills specification recommends
+#      under 5,000 tokens for it. The detail a step needs goes in
+#      references/, which an agent opens only when a step sends it there.
+#      ktl-librarian's page was halved in #91, from 7,458 words to 3,664, and
+#      three commits added 328 words back within two days. Each budget sits
+#      just above the page's size when this check was added, so an edit that
+#      adds words moves as many into references/. A skill with no budget
+#      fails, so a new skill starts with one.
+say ""
+say "Checking each SKILL.md stays within its word budget..."
+declare -A skill_budget=(
+  [skills/ktl-curator]=2700
+  [skills/ktl-docent]=2200
+  [skills/ktl-librarian]=4000
+  [skills/ktl-prose]=2350
+  [skills/ktl-sidecar]=3600
+)
+for dir in "${expected_dirs[@]}"; do
+  file="$dir/SKILL.md"
+  budget="${skill_budget[$dir]:-}"
+  if [[ -z "$budget" ]]; then
+    err "$file has no word budget in check 10a - give it one there"
+    continue
+  fi
+  words="$(wc -w < "$file")"
+  if (( words <= budget )); then
+    ok "$file is $words words (budget $budget)"
+  else
+    err "$file is $words words; the budget is $budget - an agent loads the whole page when the skill starts, so move the detail a step needs into $dir/references/ and link to it"
+  fi
+done
+
 # 11. This repository runs its own sidecar from the templates, and CI lints
 #     the copies under .github/ and .lokf/scripts/ rather than the templates
 #     themselves (actionlint is pointed at both, ShellCheck scans the tree).

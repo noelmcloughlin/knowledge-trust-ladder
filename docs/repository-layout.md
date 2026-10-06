@@ -4,11 +4,11 @@
 
 ```text
 skills/
-  ktl-sidecar/         SKILL.md + references/ + templates/  (~4.5k tokens loaded on trigger)
-  ktl-librarian/       SKILL.md + references/               (~4.5k tokens loaded on trigger)
-  ktl-curator/         SKILL.md + references/               (~3k tokens loaded on trigger)
-  ktl-docent/          SKILL.md + references/ + scripts/    (~2.5k tokens loaded on trigger)
-  ktl-prose/           SKILL.md + references/ + scripts/    (~2.5k tokens loaded on trigger)
+  ktl-sidecar/         SKILL.md + references/ + templates/
+  ktl-librarian/       SKILL.md + references/
+  ktl-curator/         SKILL.md + references/
+  ktl-docent/          SKILL.md + references/ + scripts/
+  ktl-prose/           SKILL.md + references/ + scripts/
 .claude-plugin/
   plugin.json           the five skills as one Claude Code plugin, with catalog keywords
   marketplace.json      lets `/plugin marketplace add` find that plugin
@@ -42,4 +42,4 @@ scripts/
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
 ```
 
-Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. `ktl-sidecar/templates/` holds the files it installs, copied verbatim, never retyped. `ktl-prose/scripts/` holds the one script that skill runs in place.
+Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget. `ktl-sidecar/templates/` holds the files it installs, copied verbatim, never retyped. `ktl-prose/scripts/` holds the one script that skill runs in place.
