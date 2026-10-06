@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-10-06
+
 ### Added
 
 - **Each skill's page has a word budget.** Contract check 10a holds every `SKILL.md` to one, set just above the page's size. An agent loads the whole page when the skill starts, and the Agent Skills specification recommends under 5,000 tokens for it. ktl-librarian's page, halved in 0.32.0, had taken back 328 words within two days. An edit that adds words to a page now moves as many into that skill's `references/`, and `docs/repository-layout.md` names the check where it gave token estimates.
