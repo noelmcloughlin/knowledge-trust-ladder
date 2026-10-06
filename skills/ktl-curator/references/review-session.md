@@ -128,7 +128,9 @@ This is the widest verb in the skill, and the only one that writes *content*. Th
 status: deprecated
 ```
 
-Nothing else changes. Retired concepts stay for links and history; the librarian leaves them alone.
+Nothing else changes in the concept. Retired concepts stay for links and history; the librarian leaves them alone.
+
+Ask what replaced it, if anything. When the person names another concept, the log line below links it after "replaced by". `knowledge-report.sh` then labels the retired concept *retired, replaced by* that path, and ktl-docent opens the successor before it falls back to the repository. When nothing replaced it, the line says why in plain words, with no link.
 
 ### Later
 
@@ -142,7 +144,7 @@ Prepend under today's `## YYYY-MM-DD` heading in `.lokf/knowledge/log.md` (newes
 ## 2026-09-08
 
 * **Curation**: human:ada-lovelace confirmed 4 concepts, sent 1 back, corrected 1, retired 1.
-* **Deprecation**: [Legacy Orders Sync](../services/legacy-orders-sync.md) retired - replaced by the Orders API.
+* **Deprecation**: [Legacy Orders Sync](../services/legacy-orders-sync.md) retired - replaced by [Orders API](../services/orders-api.md).
 ```
 
 Write no log line for a session that changed nothing.

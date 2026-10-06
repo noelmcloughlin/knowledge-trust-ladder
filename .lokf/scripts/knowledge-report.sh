@@ -32,7 +32,10 @@
 #   nobody has checked this yet  no `verified` event at all
 #   still a draft                `status: draft`
 #   past its review date         `stale_after` is today or earlier
-#   retired                      `status: deprecated`; no other label applies
+#   retired                      `status: deprecated`; no other label applies,
+#                                and it names the concept that replaced it
+#                                when the newest **Deprecation** line in
+#                                log.md links one
 #
 # The whole report also prints what ktl-curator ranks its queue by, so that
 # no model counts or sorts it: each review date due within 30 days, each
@@ -484,12 +487,38 @@ health() {
   END { printf "Confirmed by a person: %d of %d · Checked by automation only: %d · Nobody has checked: %d · Drafts: %d · Past review date: %d · Edited since confirmed: %d · Retired: %d\n", confirmed, n, auto, none, drafts, past, was, retired }'
 }
 
+# The concept that replaced a retired one, from the newest **Deprecation**
+# line in log.md that links the retired concept, as S<TAB>retired<TAB>successor.
+# ktl-curator writes that line, and links the successor after "replaced by"
+# where the person named one, in the `../` form the KTL Curator plugin writes
+# too. A line with no such link names no successor.
+successors() {
+  [ -f "$bundle/log.md" ] || return 0
+  awk '
+  function target(s,  a, b) {
+    a = index(s, "]("); if (!a) return ""; s = substr(s, a + 2); b = index(s, ")"); if (!b) return ""
+    rest = substr(s, b + 1); s = substr(s, 1, b - 1); sub(/^\.\.\//, "", s); sub(/^\.\//, "", s); return s
+  }
+  /^[*-] \*\*Deprecation\*\*: \[/ {
+    old = target($0); if (old == "") next
+    c = index(rest, "replaced by ["); if (!c) next
+    new = target(substr(rest, c)); if (new == "" || (old in seen)) next
+    seen[old] = 1; print "S\t" old "\t" new
+  }' "$bundle/log.md"
+}
+
 labels() {  # [<path>...]
-  printf '%s\n' "$all" | awk -F'\t' -v today="$today" -v want="$*" "$label_fn"'
+  { successors; printf '%s\n' "$all"; } | awk -F'\t' -v today="$today" -v want="$*" -v dir="$bundle" "$label_fn"'
+  function held(p,  line, there) {
+    if (p !~ /^[a-z0-9][a-z0-9._\/-]*\.md$/ || p ~ /\.\./) return 0
+    there = (getline line < (dir "/" p)); close(dir "/" p); return there >= 0
+  }
   BEGIN { nw = split(want, w, " "); for (i = 1; i <= nw; i++) pick[w[i]] = 1 }
+  $1 == "S" { if (!($2 in after)) after[$2] = $3; next }
   $1 != "C" { next }
   nw && !($2 in pick) { next }
-  { seen[$2] = 1; print "- " $3 " (" $2 ") - " label() }
+  { s = label(); if ($4 == "deprecated" && ($2 in after) && after[$2] != $2 && held(after[$2])) s = s ", replaced by " after[$2]
+    seen[$2] = 1; print "- " $3 " (" $2 ") - " s }
   END { for (i = 1; i <= nw; i++) if (!(w[i] in seen)) print "- " w[i] " - no such concept in this bundle" }'
 }
 

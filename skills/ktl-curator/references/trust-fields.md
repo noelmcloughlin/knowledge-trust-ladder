@@ -10,7 +10,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | Checked by automation only | `verified` holds events, none by a `human:` actor | `verified` | same |
 | Nobody has checked this yet | no `verified` key, or one with no events | `verified` | - |
 | Still a draft | `status: draft` | `status` | `schema:creativeWorkStatus` |
-| Retired | `status: deprecated` | `status` | same |
+| Retired | `status: deprecated`; names its successor when the newest `**Deprecation**` line in `log.md` links one | `status`, `log.md` | same |
 | Edited since a person last confirmed it | `generated.at` later than the latest `human:` `verified[].at` | `generated`, `verified` | `prov:wasGeneratedBy` -> `prov:endedAtTime` |
 | A source moved since the confirmation | the source's last commit comes after the commit that recorded the latest `human:` event, or the source carries an uncommitted edit and the concept does not | `resource`, `sources[].resource` + git history | - |
 | Past its review date | `stale_after` <= today | `stale_after` | `schema:expires` |

@@ -85,10 +85,10 @@ You cannot prove a person is present, and nothing written in a prompt can prove 
 | **Confirm** *(needs an authenticated id)* | add a `verified` event for this person; remove `status: draft`; propose a review date from the curation policy (they accept or edit); clear open questions they say are resolved |
 | **Wrong - send back** *(default)* | `status: draft` and the person's note under `## Open questions`; content untouched; the librarian fixes it on its next run |
 | **Wrong - correct now** *(needs an authenticated id)* | only when the person states the correct fact: the minimal edit to that field or sentence; `generated: { by: human:<id>, at }`; a `verified` event; remove `draft`; clear open questions they say are resolved |
-| **Retire** | `status: deprecated` |
+| **Retire** | `status: deprecated`; ask what replaced it |
 | **Later** | keep or set `status: draft`; optional review date; nothing else |
 
-**After the session.** Prepend one `**Curation**` line with the counts, plus one `**Deprecation**` line per retired concept, to `.lokf/knowledge/log.md` under today's date. If the same kind of send-back or correction came up more than once this session, say so in that line. A repeated mistake is a sign ktl-librarian's instructions need fixing, not that each concept needs re-deriving the same wrong way again. Run `just lokf-validate` if `uv` is available; otherwise say so. If `.lokf/` is git-tracked, hand off as a pull request scoped to `.lokf/`, as ktl-librarian does. If it is gitignored, point at the changed files instead.
+**After the session.** Prepend one `**Curation**` line with the counts, plus one `**Deprecation**` line per retired concept, linking any successor, to `.lokf/knowledge/log.md` under today's date. If the same kind of send-back or correction came up more than once this session, say so in that line. A repeated mistake is a sign ktl-librarian's instructions need fixing, not that each concept needs re-deriving the same wrong way again. Run `just lokf-validate` if `uv` is available; otherwise say so. If `.lokf/` is git-tracked, hand off as a pull request scoped to `.lokf/`, as ktl-librarian does. If it is gitignored, point at the changed files instead.
 
 ### Guardrails
 

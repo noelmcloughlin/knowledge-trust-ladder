@@ -2330,6 +2330,8 @@ rm -rf "$kq" "$nogit"
 #      never a concept for itself; a review date due within 30 days; a
 #      confirmed concept derived from one edited after that confirmation; and
 #      the five concepts worth ten minutes today, in trust-fields.md's order.
+#      A retired concept's label names its successor from the newest
+#      **Deprecation** line in log.md, and only one the bundle holds.
 say ""
 say "Exercising the curator's queue in knowledge-report.sh..."
 kz="$(mktemp -d)"; kzk="$kz/.lokf/knowledge"; mkdir -p "$kzk/x" "$kz/src"
@@ -2339,7 +2341,7 @@ kz_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$kz"
 soon="$(date -u -d '+10 days' +%Y-%m-%d)"; later="$(date -u -d '+40 days' +%Y-%m-%d)"
 printf 'c\n' > "$kz/src/c.md"
 printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$kzk/index.md"
-printf '# Change Log\n' > "$kzk/log.md"
+printf '# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n' > "$kzk/log.md"
 zc() { printf -- '---\ntype: %s\n%b---\n%b' "$2" "$3" "${4:-}" > "$kzk/x/$1.md"; }
 zc hub Service "id: https://acme.example/knowledge/x/hub\ntitle: Hub\ngenerated:\n  by: process:ktl-librarian\n  at: \"2026-01-01T00:00:00Z\"\nverified:\n- by: human:ada\n  at: \"2026-01-02T10:00:00Z\"\nstale_after: $soon\n"
 zc a Service 'id: https://acme.example/knowledge/x/a\ntitle: A\ndependsOn:\n- https://acme.example/knowledge/x/hub\nreferences: [https://acme.example/knowledge/x/hub#part]\n'
@@ -2349,6 +2351,7 @@ zc origin Reference 'id: https://acme.example/knowledge/x/origin\ntitle: Origin\
 zc d Service 'id: https://acme.example/knowledge/x/d\ntitle: D\nrelations:\n- {predicate: dependsOn, target: hub.md}\nverified: [{ by: process:ktl-librarian, at: "2026-01-04T00:00:00Z" }]\n'
 zc self Service "id: https://acme.example/knowledge/x/self\ntitle: Self\nreferences:\n- https://acme.example/knowledge/x/self\nstale_after: $later\nverified:\n- by: process:ktl-librarian\n  at: \"2026-01-04T00:00:00Z\"\n"
 zc old Service 'id: https://acme.example/knowledge/x/old\ntitle: Old\nstatus: deprecated\ndependsOn:\n- https://acme.example/knowledge/x/hub\n'
+zc lost Service 'id: https://acme.example/knowledge/x/lost\ntitle: Lost\nstatus: deprecated\n'
 zc no-id Service 'title: No id\n'
 zc e Service 'id: https://acme.example/knowledge/x/e\ntitle: E\ndependsOn: https://acme.example/knowledge/x/no-id\n'
 zc stale Policy 'id: https://acme.example/knowledge/x/stale\ntitle: Stale\nresource: src/c.md\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\nstale_after: 2020-01-01\n'
@@ -2376,6 +2379,10 @@ if out="$(cd "$kz" && bash "$report" labels x/hub.md 2>&1)" && [[ "$out" == "- H
 else
   err "report script's labels changed shape: $out"
 fi
+out="$(cd "$kz" && bash "$report" labels x/old.md x/lost.md 2>&1)"
+for want in '- Old (x/old.md) - retired, replaced by x/hub.md' '- Lost (x/lost.md) - retired'; do
+  if grep -qxF -- "$want" <<<"$out"; then ok "report script successor: $want"; else err "report script did not print '$want' for a retired concept: $out"; fi
+done
 rm -rf "$kz"
 
 # 21. No tracked file holds a character a reader cannot see. That is a

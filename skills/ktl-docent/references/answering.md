@@ -31,7 +31,7 @@ Run `bash "<skill>/scripts/knowledge-report.sh" labels <path>...` from the repos
 - *Edited since a person last confirmed it*: `generated.at` is later than the latest `human:` event's `at`. Compare the two whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. This label takes the place of *confirmed by a person*, because the person confirmed an earlier text. Give both dates, as in "(confirmed 2026-09-01, edited 2026-09-20)", or both full times when they fall on one day. A concept with neither `generated.at` nor the v0.1 `timestamp` cannot carry it.
 - *Checked by automation only*: events exist, none human.
 - *Nobody has checked this yet*: no `verified` key, or one with no events.
-- *Still a draft*: `status: draft`. *Retired*: `status: deprecated`, and a retired concept carries no other label. Absent `status` means stable.
+- *Still a draft*: `status: draft`. *Retired*: `status: deprecated`, and a retired concept carries no other label. Its label names the concept that replaced it, as in *retired, replaced by services/orders-api.md*, when the newest `**Deprecation**` line in `log.md` links one. Absent `status` means stable.
 - *Past its review date*: `stale_after` (a datetime, or a bare `YYYY-MM-DD` date) is on or before today. Compare as strings after trimming to ten characters.
 - Labels overlap. Report every one that applies, in the order the script prints them. Start with the first of *edited since a person last confirmed it*, *confirmed by a person*, *checked by automation only* and *nobody has checked this yet* that applies. Add *still a draft*, then *past its review date* with its date in brackets, where they apply.
 
@@ -47,7 +47,7 @@ Say so. Prefer the one *confirmed by a person*. If the source settles it, record
 
 ## Historical questions
 
-A *retired* concept is exactly the right answer to "What did X used to be?". Label it retired and do not treat it as current.
+A *retired* concept is exactly the right answer to "What did X used to be?". Label it retired and do not treat it as current. For a question about the present, open the concept its label names as the replacement, before the repository.
 
 ## Footer variants
 
