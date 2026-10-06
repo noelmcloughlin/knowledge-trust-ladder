@@ -68,6 +68,12 @@ justfile="$templates/justfile"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
+# Isolate the fixtures from the machine's git config, so a global
+# commit.gpgsign=true does not sign every fixture commit (and fail where no key
+# is cached), and keep temporary files the extracted workflow steps create
+# under $work, where the trap removes them, rather than in the system TMPDIR.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+export TMPDIR="$work"
 
 fail=0
 ok()  { printf 'OK:   %s\n' "$*"; }
@@ -432,8 +438,15 @@ fi
 # The registrar's gate does not run on the pull request this workflow opens.
 # So the refresh job runs the conventions script, and the pull request says
 # how it ended beside the validation.
+# These sections are captured first, not piped into `grep -q`: `grep -q` exits
+# on its first match, and sed writing the rest of a large section into the
+# closed pipe takes SIGPIPE, which `set -o pipefail` would turn into a spurious
+# failure under load.
+refresh_to_publish="$(sed -n '/^  refresh:/,/^  publish:/p' "$librarian_yaml")"
+refresh_to_steps="$(sed -n '/^  refresh:/,/^    steps:/p' "$librarian_yaml")"
+publish_to_steps="$(sed -n '/^  publish:/,/^    steps:/p' "$librarian_yaml")"
 # shellcheck disable=SC2016 # the template's own ${{ }} and ${...} expressions, matched as text
-if sed -n '/^  refresh:/,/^  publish:/p' "$librarian_yaml" | grep -qF 'run: bash scripts/knowledge-conventions.sh knowledge' \
+if grep -qF 'run: bash scripts/knowledge-conventions.sh knowledge' <<<"$refresh_to_publish" \
    && grep -qF 'conventions_outcome: ${{ steps.conventions.outcome }}' "$librarian_yaml" \
    && grep -qF 'CONVENTIONS_OUTCOME: ${{ needs.refresh.outputs.conventions_outcome }}' "$librarian_yaml" \
    && grep -qF '${check(CONVENTIONS_OUTCOME)}' "$librarian_yaml"; then
@@ -445,9 +458,9 @@ else err "knowledge-librarian.yaml no longer runs the conventions script, or no 
 # scheduled run only. The job that reads them holds a token that can read
 # pull requests, checks nothing out and runs no agent.
 # shellcheck disable=SC2016 # the template's own ${{ }} expressions, matched as text
-if sed -n '/^  refresh:/,/^    steps:/p' "$librarian_yaml" | grep -qxF '    needs: earlier' \
-   && sed -n '/^  refresh:/,/^    steps:/p' "$librarian_yaml" | grep -qxF "    if: github.event_name != 'schedule' || needs.earlier.outputs.open == ''" \
-   && sed -n '/^  publish:/,/^    steps:/p' "$librarian_yaml" | grep -qxF '    needs: [earlier, refresh]'; then
+if grep -qxF '    needs: earlier' <<<"$refresh_to_steps" \
+   && grep -qxF "    if: github.event_name != 'schedule' || needs.earlier.outputs.open == ''" <<<"$refresh_to_steps" \
+   && grep -qxF '    needs: [earlier, refresh]' <<<"$publish_to_steps"; then
   ok "template skips a scheduled refresh while a pull request of the workflow's is open, and a run a person starts goes ahead"
 else err "knowledge-librarian.yaml no longer holds a scheduled refresh back while an earlier pull request is open"; fi
 # shellcheck disable=SC2016 # the template's own ${{ }} expressions, matched as text
@@ -631,8 +644,9 @@ if grep -qF -- "grep -Ev '$allowed'" "$librarian_yaml"; then ok "template refuse
 else err "knowledge-librarian.yaml no longer filters the patch's paths with: $allowed"; fi
 # The publish job reads a person's events off the patched tree, and fills the
 # pull request from its own checkout, with the scripts that checkout holds.
+publish_to_end="$(sed -n '/^  publish:/,$p' "$librarian_yaml")"  # captured first, against the SIGPIPE race above
 for line in 'bash .lokf/scripts/knowledge-provenance.sh --unattended' 'bash .lokf/scripts/knowledge-report.sh health' 'bash .lokf/scripts/knowledge-report.sh changes'; do
-  if sed -n '/^  publish:/,$p' "$librarian_yaml" | grep -qF -- "$line"; then ok "publish runs: $line"
+  if grep -qF -- "$line" <<<"$publish_to_end"; then ok "publish runs: $line"
   else err "knowledge-librarian.yaml's publish job no longer runs: $line"; fi
 done
 for case in "inside:.lokf/knowledge/café.md" "inside:.lokf/questions.md" "outside:notes-café.md" "outside:.lokf/scripts/knowledge-apply.sh"; do
