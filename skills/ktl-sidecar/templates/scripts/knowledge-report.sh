@@ -201,10 +201,38 @@ function unq(s,  a, z) {
 }
 function val(l) { sub(/^[^:]*:/, "", l); return unq(l) }
 function ev(l) { sub(/^[^:]*:[ \t]*/, "", l); gsub("[\"" SQ "]", "", l); sub(/[ \t]+$/, "", l); return l }
-function norm(v) {
+function dim(y, m) {   # days in month m (1-12) of year y
+  if (m == 2) return (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) ? 29 : 28
+  if (m == 4 || m == 6 || m == 9 || m == 11) return 30
+  return 31
+}
+function toutc(y, mo, d, h, mi, s, sign, oh, om,   tot) {
+  # Subtract the offset to reach UTC, then carry across day, month and year.
+  tot = h * 60 + mi - sign * (oh * 60 + om)
+  while (tot < 0)     { tot += 1440; d -= 1 }
+  while (tot >= 1440) { tot -= 1440; d += 1 }
+  while (d < 1)            { mo -= 1; if (mo < 1)  { mo = 12; y -= 1 } ; d += dim(y, mo) }
+  while (d > dim(y, mo))   { d -= dim(y, mo); mo += 1; if (mo > 12) { mo = 1; y += 1 } }
+  return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", y, mo, d, int(tot / 60), tot % 60, s)
+}
+function norm(v,   off, sign, oh, om, s) {
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/) return v "T00:00:00Z"
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]Z$/) return substr(v, 1, 16) ":00Z"
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9](\.[0-9]+)?Z$/) return substr(v, 1, 19) "Z"
+  # An explicit UTC offset (+00:00, -05:30, or the compact +0000), as the
+  # commands date -u -Iseconds and Python isoformat both write: convert it to
+  # Z, so a time that is really UTC is not dropped and read as no stamp.
+  # Seconds default to 00 when the time omits them, per trust-fields.md.
+  if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9](:[0-9][0-9])?(\.[0-9]+)?[+-][0-9][0-9]:?[0-9][0-9]$/) {
+    off = substr(v, length(v) - 5)
+    if (off ~ /^[+-][0-9][0-9][0-9][0-9]$/) off = substr(v, length(v) - 4)
+    sign = (substr(off, 1, 1) == "-") ? -1 : 1
+    oh = substr(off, 2, 2) + 0
+    om = substr(off, length(off) - 1, 2) + 0
+    s = (substr(v, 17, 1) == ":") ? substr(v, 18, 2) + 0 : 0
+    return toutc(substr(v, 1, 4) + 0, substr(v, 6, 2) + 0, substr(v, 9, 2) + 0, \
+                 substr(v, 12, 2) + 0, substr(v, 15, 2) + 0, s, sign, oh, om)
+  }
   return ""
 }
 function kv(l,  k) { k = l; sub(/:.*/, "", k); sub(/^[ \t]+/, "", k)

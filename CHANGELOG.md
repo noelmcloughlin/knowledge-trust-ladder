@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The report script converts a UTC offset in a timestamp, rather than dropping it.** `knowledge-report.sh`'s `norm()` read only a time ending in `Z`, so a `generated.at` or `verified` `at` written with an explicit `+00:00` offset, the form `date -u -Iseconds` and Python's isoformat both produce, was read as no time at all. A concept edited at such a time then still read *confirmed by a person*, and one confirmed at such a time read *edited since* or lost its date; a concept whose only stamp carried an offset counted as unstamped, so `quiet` never ran quiet, and a `stale_after` with an offset was never *past its review date*. `norm()` now converts any offset to UTC, carrying across the day, month and year, and leap years. Check 20 confirms a concept on each side of the fix.
+
 ## [0.36.0] - 2026-10-06
 
 ### Added
