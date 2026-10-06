@@ -11,7 +11,7 @@ sources:
 - resource: README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-06T09:49:14Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
@@ -24,21 +24,34 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-06T11:10:52Z"
 ---
 
 # Overview
 
-LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. OKF leaves a fixed taxonomy of concept types to the producer, so any domain can bring its own. The README says LOKF's is a short list of classes, and a domain whose concepts stop fitting it extends the schema in LinkML, so its own types go from tolerated to checked.
+LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. The README says that LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. It also says that a domain whose concepts stop fitting it extends the schema in LinkML, so its own types are checked rather than tolerated.
 
-**The signs.** The curator's *vocabulary fit* line keeps growing (concepts whose `type` is outside the known classes, tolerated under Golden Rule 7 but carrying no agreed meaning); concepts sprout many producer-defined keys such as `dosage`, `jurisdiction` or `failure_mode` that no validator checks; or the domain is one where a wrong or ambiguous field has consequences: medicine, law, finance, safety engineering, anything regulated.
+**The signs.** A domain schema is due when any of these holds:
 
-**The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails: subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly. The recipe keeps a pinned copy of `lokf.yaml` beside the domain schema and wires the flag into the justfile and both workflows; the two Obsidian plugins learn the new classes through their *Known LOKF types* setting. The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, nothing new to install. What it does not change is the graph: `convert`, `serve` and `query` take no `--schema`, so domain keys project in LOKF's namespace. Up to lokf 0.8.0 an undeclared type projects there the same way, and from 0.9.0 it projects as `lokf:Concept` with the name kept in `schema:additionalType`.
+- The curator's *vocabulary fit* line keeps growing. It counts concepts whose `type` is outside the known classes, tolerated under Golden Rule 7 but carrying no agreed meaning.
+- Concepts gain many producer-defined keys, such as `dosage`, `jurisdiction` or `failure_mode`, that no validator checks.
+- The domain is one where a wrong or ambiguous field has consequences: medicine, law, finance, safety engineering, anything regulated.
 
-**When the domain already has a vocabulary**, reuse it rather than re-describe it. For AI governance, the curator's guidance names IBM AI Atlas Nexus's [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/), a LinkML vocabulary covering risks, controls, obligations, taxonomies, incidents and evaluations, and [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) as a reference implementation over it with a LOKF sidecar beside it. A domain schema can import that vocabulary beside LOKF's, so a concept names a control or an obligation by the identifier the domain already uses; confirm the import path the toolkits support first. Such a vocabulary usually lacks the bundle's half - who encoded a record, from which edition, who confirmed it, when to look again - and whether those fields belong on the domain's own records is left to the domain's owners and to OKF as it evolves.
+**The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly. The recipe keeps a pinned copy of `lokf.yaml` beside the domain schema and adds the flag to the justfile and both workflows. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting.
 
-**A shape held in reserve: Microsoft 365 provenance.** A host whose curators work in Microsoft 365 Copilot rather than a forge has no `gh` login and no signed commit to stand behind a `human:` verdict. Nothing writes such a verdict yet (a Copilot curator needs a write action that does not exist) and nothing checks one (the gate reads `human:` only), so no schema is built. The curator's guidance records the shape it would take, so the decision is not made twice: a subclass of the verification event carrying the Entra `tenant_id` and `object_id`, an `assurance` level (`attested`, `delegated-me`, `directory-lookup`, `platform-history`, `unverified`, `anonymous`), a revision as the item's `etag` plus a content digest, and `by:` under a scheme of its own, `entra:<tenant>/<object>`, so no reader mistakes it for a forge login. It waits for the curator's write path.
+The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, with nothing new to install. It leaves the graph as it is: `convert`, `serve` and `query` take no `--schema`, so domain keys project in LOKF's namespace. Up to lokf 0.8.0 an undeclared type projects there the same way, and from 0.9.0 it projects as `lokf:Concept` with the name kept in `schema:additionalType`.
 
-Where a domain schema binds a slot to an external code list (SNOMED CT, say), neither LOKF's schema nor `lokf validate` checks that the term still exists; `linkml-term-validator` can, as an optional extra gate whose "service unreachable" counts as not passing.
+**When the domain already has a vocabulary**, reuse it rather than re-describe it. For AI governance, the curator's guidance names IBM AI Atlas Nexus's [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/), a LinkML vocabulary covering risks, controls, obligations, taxonomies, incidents and evaluations. It also names [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) as a reference implementation over it, with a LOKF sidecar beside it. A domain schema can import that vocabulary beside LOKF's, so a concept names a control or an obligation by the identifier the domain already uses. Confirm the import path the toolkits support first. Such a vocabulary usually lacks the bundle's half: who encoded a record, from which edition, who confirmed it, and when to look again. Whether those fields belong on the domain's own records is left to the domain's owners and to OKF as it evolves.
 
-**Roles stay as they are.** The curator raises it, as a report line and a conversation; the team decides whether a domain schema, a small piece of governed software, is worth owning; the librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge.
+**A shape held in reserve: Microsoft 365 provenance.** A host whose curators work in Microsoft 365 Copilot rather than a forge has no `gh` login and no signed commit to back a `human:` verdict. Nothing writes such a verdict yet (a Copilot curator needs a write action that does not exist) and nothing checks one (the gate reads `human:` only), so no schema is built. The curator's guidance records the shape it would take, so the decision is not made twice:
+
+- a subclass of the verification event carrying the Entra `tenant_id` and `object_id`;
+- an `assurance` level (`attested`, `delegated-me`, `directory-lookup`, `platform-history`, `unverified`, `anonymous`);
+- a revision as the item's `etag` plus a content digest;
+- `by:` under a scheme of its own, `entra:<tenant>/<object>`, so no reader mistakes it for a forge login.
+
+The shape waits for the curator's write path.
+
+Where a domain schema binds a slot to an external code list (SNOMED CT, for example), neither LOKF's schema nor `lokf validate` checks that the term still exists. `linkml-term-validator` can, as an optional extra gate whose "service unreachable" counts as not passing.
+
+**Roles stay as they are.** The curator raises the question, as a report line and a conversation. The team decides whether a domain schema, a small piece of governed software, is worth owning. The librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge.

@@ -22,11 +22,11 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-06T11:10:52Z"
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-06T11:10:52Z"
 ---
 # Overview
 
@@ -50,9 +50,11 @@ A museum edits its labels before the exhibition opens. `ktl-prose` does that for
 12. Open each page by saying who it is for.
 13. Report what you cannot fix.
 
+A last section of `references/rules.md`, apart from the thirteen, says where a line ends in the source. In the bundle that is one line for each paragraph and each list item, as ktl-librarian writes it. Outside the bundle the host's layout holds: one line per paragraph, one sentence per line, or a fixed column. A file's layout changes only when the person asks.
+
 # Which concepts it may reword
 
-Only a body an agent wrote that no person has confirmed. It never rewords `index.md`, `log.md` or `diataxis.md`, a concept whose `generated.by` starts `human:`, a concept with a `human:` event under `verified`, a retired concept, or one whose frontmatter the script cannot read. A concept with no `generated.by` is reworded only when a person names it. Naming a confirmed concept does not unlock it, because a confirmation is a person's time spent against a source and a rewording must not spend it.
+It rewords only a body an agent wrote that no person has confirmed. It never rewords `index.md`, `log.md` or `diataxis.md`, a concept whose `generated.by` starts `human:`, a concept with a `human:` event under `verified`, a retired concept, or one whose frontmatter the script cannot read. A concept with no `generated.by` is reworded only when a person names it. Naming a confirmed concept does not unlock it, because a confirmation is a person's time spent against a source and a rewording must not spend it.
 
 # What a rewording never changes
 
@@ -66,12 +68,12 @@ Only a body an agent wrote that no person has confirmed. It never rewords `index
 # Steps
 
 1. **Preflight**, as every skill that touches the bundle does.
-2. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded; the style checks `dash`, `long`, `paragraph` and `words` run over those, with `unseen` for a character no reader sees; then the agent reads them, because only a reader sees a late verb.
-3. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, and leave what cannot be fixed.
+2. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph` and `words` run over those, with `unseen` for a character no reader sees. Then the agent reads them, because only a reader sees a late verb.
+3. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, lay out what it rewords the way the file's project does, and leave what cannot be fixed.
 4. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, such as a character no reader sees that the rewording added, and the agent undoes it. The script enforces the table above with no override.
 5. **Log** one **Prose** line in `log.md`.
 6. **Hand off** a change scoped to `.lokf/`, with the counts before and after, the words before and after from the script's `OK` line, each sentence left alone, each concept skipped, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
 
 # Outside the bundle
 
-The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, how to list the concepts derived from that file and what a rewording costs them, and how to apply the rules by hand to comments in scripts and workflows.
+The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout, and how to apply the rules by hand to comments in scripts and workflows.

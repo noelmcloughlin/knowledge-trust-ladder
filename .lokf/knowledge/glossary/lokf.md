@@ -20,9 +20,9 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/okf
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-06T11:10:52Z"
 ---
 
 # Overview
 
-LOKF's specification is a single LinkML schema, created by Nolan Nichols; OKF, the specification it profiles, is Google Cloud's. Plain OKF gives knowledge prose and structure. LOKF adds meaning, which is what lets standard, schema-generated tooling - JSON Schema, SHACL, SPARQL - validate and query a bundle instead of scripts that only work in the repository that grew them. The tools come with the standard rather than with this project: a bundle can be read by people, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or another format LinkML generates.
+LOKF's specification is a single LinkML schema, created by Nolan Nichols. OKF, the specification it profiles, is Google Cloud's. Plain OKF gives knowledge prose and structure. LOKF adds meaning, which lets standard, schema-generated tooling (JSON Schema, SHACL, SPARQL) validate and query a bundle, instead of scripts that only work in the repository they were written for. The tools come with the standard rather than with this project: a bundle can be read by people, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or another format LinkML generates.

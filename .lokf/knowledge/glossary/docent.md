@@ -17,12 +17,15 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-10-04T17:49:16Z"
+  at: "2026-10-06T09:49:14Z"
 status: draft
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-06T11:10:52Z"
 ---
 
 # Overview
 
 A *docent* is a museum's name for a guide. The README says so where it first names the docent, and later adds that a docent "explains the exhibition without moving anything on the shelves". ktl-docent opens the same way: "A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle."
 
-In the README's table of roles the docent *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. It answers from the bundle, labels how far each concept has been trusted, and checks exact values at the source. When the bundle has no answer, it explores the repository and records the miss in `.lokf/feedback.md` through `knowledge-feedback.sh`, and the miss becomes the librarian's next task. It writes nothing in the bundle.
+In the README's table of roles the docent *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. It answers from the bundle, labels how far each concept has been trusted, and checks exact values at the source. When the bundle has no answer, it explores the repository and records the miss in `.lokf/feedback.md` through its own copy of `knowledge-feedback.sh`, and the miss becomes the librarian's next task. It writes nothing in the bundle.

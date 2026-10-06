@@ -15,11 +15,9 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-06T11:10:52Z"
 ---
 
 # Overview
 
-The substrate LOKF profiles. Its defining trait is permissiveness: a consumer
-must not reject a bundle for missing optional fields, unknown types, unknown
-keys, or broken cross-links. Every LOKF bundle is also a valid OKF bundle.
+OKF is the specification that LOKF profiles. Its defining trait is permissiveness: a consumer must not reject a bundle for missing optional fields, unknown types, unknown keys, or broken cross-links. Every LOKF bundle is also a valid OKF bundle.
