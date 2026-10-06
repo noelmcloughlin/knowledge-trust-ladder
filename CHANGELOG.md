@@ -7,6 +7,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Added
 
 - **Each skill's page has a word budget.** Contract check 10a holds every `SKILL.md` to one, set just above the page's size. An agent loads the whole page when the skill starts, and the Agent Skills specification recommends under 5,000 tokens for it. ktl-librarian's page, halved in 0.32.0, had taken back 328 words within two days. An edit that adds words to a page now moves as many into that skill's `references/`, and `docs/repository-layout.md` names the check where it gave token estimates.
+- **The curator's queue comes from the script.** `knowledge-report.sh` reads every typed relation, in each spelling the format allows, and resolves its target as the KTL Curator plugin does. Its whole report prints how many other concepts rely on each concept, counting each citing concept once. It also prints the review dates due within 30 days, each confirmed concept derived from one edited after that confirmation, and *Worth ten minutes today*, ranked as `references/trust-fields.md` says. ktl-curator quotes that queue, where it used to count relations and sort them itself. Check 20a covers each spelling, a self-reference, a retired concept and a concept with no `id`.
+
+### Fixed
+
+- **ktl-curator's two pages ranked its queue differently.** `SKILL.md` put a confirmed concept whose source moved in the first group, and `references/trust-fields.md` left that case out. Both now give the order the script applies. The SPARQL query for the most relied-upon concepts counts each citing concept once, and never a concept for itself.
 
 ## [0.35.0] - 2026-10-06
 

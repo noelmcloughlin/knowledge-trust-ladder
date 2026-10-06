@@ -2,7 +2,7 @@
 
 This page is for the **curator** and for anyone reading its report: it defines each trust label by the frontmatter fields behind it.
 
-The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 fields. `.lokf/scripts/knowledge-report.sh` computes each one from frontmatter with bash and awk: no toolkit, no graph. The rules below are what it applies, and what to apply by hand on a sidecar that predates it. For the curious, the last column is the RDF predicate the LOKF toolkit projects each field to. It is never needed here.
+The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 fields. `.lokf/scripts/knowledge-report.sh` computes each one but the last two from frontmatter with bash and awk: no toolkit, no graph. The rules below are what it applies, and what to apply by hand on a sidecar that predates it. For the curious, the last column is the RDF predicate the LOKF toolkit projects each field to. It is never needed here.
 
 | Label | Rule | Field(s) | RDF (optional) |
 | --- | --- | --- | --- |
@@ -15,7 +15,8 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | A source moved since the confirmation | the source's last commit comes after the commit that recorded the latest `human:` event, or the source carries an uncommitted edit and the concept does not | `resource`, `sources[].resource` + git history | - |
 | Past its review date | `stale_after` <= today | `stale_after` | `schema:expires` |
 | Due soon | today < `stale_after` <= today + 30 days | `stale_after` | same |
-| *N* other concepts rely on this | count of concepts whose typed relations target this concept's `id` | the ten relation fields + `relations[].target` | various |
+| *N* other concepts rely on this | count of other concepts whose typed relations target this concept's `id`, each counted once; a retired concept counts for none and is counted for none | the ten relation fields + `relations[].target` | various |
+| Derived from a concept edited since its confirmation | a `derivedFrom` target, in the field or in `relations[]`, has a `generated.at` later than this concept's latest `human:` event | `derivedFrom`, `relations`, `generated`, `verified` | `prov:wasDerivedFrom` |
 | Doesn't fit the known vocabulary | `type` not one of the core classes below, nor a class of the host's domain schema | `type` | `@type` |
 | Not tied to a signed commit | a `human:` `verified` event whose introducing commit carries no good signature | `verified` + git history | - |
 
@@ -27,7 +28,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 - **Datetimes** are ISO 8601 with a UTC offset (`2026-09-08T14:00:00Z`), `stale_after` included (OKF §5.5). A bare `YYYY-MM-DD` there is read as that day at 00:00:00Z, and is the form this skill writes. Compare a review date with today as strings, after normalising both to `YYYY-MM-DD`. That avoids timezone arithmetic and is exact for ISO forms. Two event times are compared whole (next note).
 - **"Edited since" compares the two times whole, to the second, never by day.** An edit at 14:00 is later than a confirmation at 10:00 the same day, and cutting both to the day hides it. Both are UTC strings that end in `Z`, so compare them as strings, as the Obsidian plugins and the query in [queries.md](queries.md) do. Read a bare date as that day at `00:00:00Z`, and convert a time that carries another offset to UTC first.
 - **Missing `generated.at`**: fall back to the v0.1 `timestamp`. If neither exists, the concept cannot be "edited since confirmed". Leave it out of that label rather than guessing.
-- **Relation targets** may be full IRIs or bundle-relative ids. Normalise by resolving relative values against `base_iri` in `knowledge/index.md` before counting. The ten relation fields: `isPartOf`, `hasPart`, `references`, `dependsOn`, `derivedFrom`, `about`, `sameAs`, `relatedTo`, `definedBy`, `source`; plus each `relations[].target`.
+- **Relation targets** may be full IRIs or bundle-relative ids. Normalise by resolving relative values against `base_iri` in `knowledge/index.md` before counting. The script resolves a target as the KTL Curator plugin does: an IRI under `base_iri` by the path after it, any other IRI as written, and a relative path from the bundle's root and then from the citing concept's folder. A concept with no `id` has `base_iri` and its path without `.md`. The script reads each of the ten fields as a block list, a one-line flow list or a bare value, and `relations` as block or one-line flow mappings. It counts no relation spelt any other way. The ten relation fields: `isPartOf`, `hasPart`, `references`, `dependsOn`, `derivedFrom`, `about`, `sameAs`, `relatedTo`, `definedBy`, `source`; plus each `relations[].target`.
 - **The core classes**: `Dataset`, `Table`, `Metric`, `Service`, `Playbook`, `Tutorial`, `Explanation`, `Policy`, `GlossaryTerm`, `Reference`, `Document`, `Role`, `Person`, `Organization`, `AttestedComputation`. Compare after removing spaces (`Attested Computation` normalises to `AttestedComputation`).
 - **A host may have extended that list**, and the vocabulary line must respect it or it reports every domain class as a misfit for good. Read `.lokf/justfile`: where `lokf-validate` passes `--schema <slug>.yaml`, open that file and add every class descending from `Concept`, directly or through a built-in (`is_a: Concept`, `is_a: Reference`, ...). Reading the file is enough: no toolkit, as everywhere else in Step 1. This is the same widening the **librarian**'s Golden Rule 3 applies when it chooses a class. The Obsidian plugins cannot read a schema outside the vault, so they are told the list by hand in their *Known LOKF types* setting.
 - Skip `index.md` and `log.md` at every level; they are reserved files, not concepts.
@@ -40,9 +41,9 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 
 ## Ranking for "Worth ten minutes today"
 
-Take at most five, in this order. Within a group, most-relied-upon first, then newest `generated.at`:
+`knowledge-report.sh` prints this queue under *Worth ten minutes today*. It takes at most five, in this order. Within a group, most-relied-upon first, then newest `generated.at`:
 
-1. Past its review date, or edited since a person last confirmed it.
+1. Past its review date, edited since a person last confirmed it, or confirmed by a person with a source that moved since.
 2. Still a draft **with** an `## Open questions` heading (the **librarian** or a previous session asked for a human).
 3. Nobody has checked this yet.
 4. Still a draft without open questions; checked by automation only.

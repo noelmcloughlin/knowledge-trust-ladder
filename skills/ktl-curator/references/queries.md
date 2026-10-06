@@ -76,14 +76,15 @@ ORDER BY ?status ?title
 ## Most relied-upon (inbound typed relations)
 
 ```sparql
-SELECT ?target (COUNT(?s) AS ?reliedOnBy)
+SELECT ?target (COUNT(DISTINCT ?s) AS ?reliedOnBy)
 WHERE { ?s ?p ?target .
         FILTER(?p IN (dcterms:isPartOf, schema:hasPart, dcterms:references,
                       dcterms:requires, prov:wasDerivedFrom, schema:about,
                       schema:sameAs, dcterms:relation, rdfs:isDefinedBy,
-                      dcterms:source)) }
+                      dcterms:source))
+        FILTER(?s != ?target) }
 GROUP BY ?target
 ORDER BY DESC(?reliedOnBy)
 ```
 
-Join this with "nobody has checked this yet" to get the report's highest-leverage unchecked concepts.
+Each citing concept counts once, and a concept never counts for itself, as `knowledge-report.sh` counts. Join this with "nobody has checked this yet" to get the report's highest-leverage unchecked concepts.

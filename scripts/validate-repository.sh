@@ -2324,6 +2324,60 @@ else
 fi
 rm -rf "$kq" "$nogit"
 
+# 20a. The whole report ranks the curator's queue, so the counts behind it
+#      are program's too: how many other concepts rely on each concept, read
+#      from every spelling of a typed relation, each citing concept once and
+#      never a concept for itself; a review date due within 30 days; a
+#      confirmed concept derived from one edited after that confirmation; and
+#      the five concepts worth ten minutes today, in trust-fields.md's order.
+say ""
+say "Exercising the curator's queue in knowledge-report.sh..."
+kz="$(mktemp -d)"; kzk="$kz/.lokf/knowledge"; mkdir -p "$kzk/x" "$kz/src"
+kz_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$kz"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${kz_git[@]}" init -q
+soon="$(date -u -d '+10 days' +%Y-%m-%d)"; later="$(date -u -d '+40 days' +%Y-%m-%d)"
+printf 'c\n' > "$kz/src/c.md"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$kzk/index.md"
+printf '# Change Log\n' > "$kzk/log.md"
+zc() { printf -- '---\ntype: %s\n%b---\n%b' "$2" "$3" "${4:-}" > "$kzk/x/$1.md"; }
+zc hub Service "id: https://acme.example/knowledge/x/hub\ntitle: Hub\ngenerated:\n  by: process:ktl-librarian\n  at: \"2026-01-01T00:00:00Z\"\nverified:\n- by: human:ada\n  at: \"2026-01-02T10:00:00Z\"\nstale_after: $soon\n"
+zc a Service 'id: https://acme.example/knowledge/x/a\ntitle: A\ndependsOn:\n- https://acme.example/knowledge/x/hub\nreferences: [https://acme.example/knowledge/x/hub#part]\n'
+zc b Playbook 'id: https://acme.example/knowledge/x/b\ntitle: B\nstatus: draft\nabout: x/hub.md\n' '\n## Open questions\n\n- 2026-01-05, process:ktl-librarian: which hub?\n'
+zc c Explanation 'id: https://acme.example/knowledge/x/c\ntitle: C\nresource: src/c.md\nrelations:\n- predicate: derivedFrom\n  target: https://acme.example/knowledge/x/origin\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n- by: human:ada\n  at: "2026-01-03T00:00:00Z"\n'
+zc origin Reference 'id: https://acme.example/knowledge/x/origin\ntitle: Origin\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-05T00:00:00Z"\nverified:\n- by: process:ktl-librarian\n  at: "2026-01-05T00:00:00Z"\n'
+zc d Service 'id: https://acme.example/knowledge/x/d\ntitle: D\nrelations:\n- {predicate: dependsOn, target: hub.md}\nverified: [{ by: process:ktl-librarian, at: "2026-01-04T00:00:00Z" }]\n'
+zc self Service "id: https://acme.example/knowledge/x/self\ntitle: Self\nreferences:\n- https://acme.example/knowledge/x/self\nstale_after: $later\nverified:\n- by: process:ktl-librarian\n  at: \"2026-01-04T00:00:00Z\"\n"
+zc old Service 'id: https://acme.example/knowledge/x/old\ntitle: Old\nstatus: deprecated\ndependsOn:\n- https://acme.example/knowledge/x/hub\n'
+zc no-id Service 'title: No id\n'
+zc e Service 'id: https://acme.example/knowledge/x/e\ntitle: E\ndependsOn: https://acme.example/knowledge/x/no-id\n'
+zc stale Policy 'id: https://acme.example/knowledge/x/stale\ntitle: Stale\nresource: src/c.md\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\nstale_after: 2020-01-01\n'
+"${kz_git[@]}" add -A && "${kz_git[@]}" commit -q -m 'the queue fixture'
+out="$(cd "$kz" && bash "$report" 2>&1)"
+for want in 'Worth ten minutes today: 5 of 8 waiting' \
+            '1. Stale (Policy) - past its review date (2020-01-01) - src/c.md' \
+            '2. B (Playbook) - still a draft, with an open question - no source recorded' \
+            '3. No id (Service) - nobody has checked this yet; 1 other concept relies on this - no source recorded' \
+            '4. A (Service) - nobody has checked this yet - no source recorded' \
+            '5. E (Service) - nobody has checked this yet - no source recorded' \
+            "Due soon, a review date within 30 days: 1" "- x/hub.md ($soon)" \
+            'Confirmed by a person, and derived from a concept edited after that confirmation: 1' \
+            '- x/c.md: x/origin.md (edited 2026-01-05, confirmed 2026-01-03)' \
+            'Relied on by other concepts: 3' '- x/hub.md (3)' '- x/origin.md (1)' '- x/no-id.md (1)'; do
+  if grep -qxF -- "$want" <<<"$out"; then ok "report script queue: $want"; else err "report script's queue or lists lack '$want': $out"; fi
+done
+if grep -qF -- '- x/self.md (' <<<"$out" || grep -qF -- '- x/old.md (' <<<"$out" || grep -qF -- "- x/self.md ($later)" <<<"$out"; then
+  err "report script counted a concept for itself, counted a retired one, or called a review date 40 days off due soon: $out"
+else
+  ok "report script: a concept never relies on itself, a retired one counts for nothing, and a date 40 days off is not due soon"
+fi
+if out="$(cd "$kz" && bash "$report" labels x/hub.md 2>&1)" && [[ "$out" == "- Hub (x/hub.md) - confirmed by a person, 2026-01-02" ]]; then
+  ok "report script: labels keep the docent's footer shape, with no count or queue in it"
+else
+  err "report script's labels changed shape: $out"
+fi
+rm -rf "$kz"
+
 # 21. No tracked file holds a character a reader cannot see. That is a
 #     control character other than a tab or a line's closing carriage return,
 #     or a format character, such as a zero-width space, a byte order mark or
