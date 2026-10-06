@@ -128,7 +128,7 @@ Take the concepts the person asked for: every one the report marks `rewrite`, or
 
 1. **Keep the earlier text.** Git holds it for a file with no uncommitted change. Copy any other file to a scratch directory before you touch it: a concept ktl-librarian wrote or changed in this session has no earlier version in git.
 2. **Work one file at a time.** Note the name the file uses for each thing before you change a word, and keep to it.
-3. **Change the wording only.** Add nothing. Remove nothing but words that carry no fact. Keep the file's line wrapping.
+3. **Change the wording only.** Add nothing. Remove nothing but words that carry no fact. Lay out what you reword the way the file's project does: in the bundle, one line for each paragraph and each list item, as ktl-librarian writes it. *Line breaks in the source*, in [references/rules.md](references/rules.md), gives the layout outside the bundle and the reasons.
 4. **Leave what you cannot fix.** A sentence you cannot parse, a vague quantity or a claim that looks wrong goes in the hand-off, unchanged. A wrong fact is ktl-librarian's to correct from the source.
 
 ## Step 3: prove that only the wording changed

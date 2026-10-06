@@ -1,6 +1,6 @@
 # The rules: plain English for a knowledge bundle
 
-This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from, and from a fourth over three sibling bundles. A script checks parts of four of the rules, and a reader checks the rest.
+This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from, and from a fourth over three sibling bundles. A script checks parts of four of the rules, and a reader checks the rest. A last section, apart from the thirteen, says where a line ends in the source.
 
 One rule stands above the thirteen: a rewording changes the wording and never a fact. When a rule and a fact pull apart, the fact wins and the sentence stays as it was.
 
@@ -217,6 +217,38 @@ Report a vague quantity, a sentence you cannot parse and a claim that looks wron
 
 Plain wording is no proof of a true claim. Paul Graham argues that writing which sounds good is more likely to be right, because the writer who repairs a clumsy sentence often has to repair the idea in it. He limits that to writing used to develop ideas. A copy editor who smooths another's sentence gets the sound without the repair.
 
+## Line breaks in the source
+
+This section is about layout, not wording, so it stands apart from the thirteen rules. It says where a line ends in the source of a text you reword. Keep the layout the file's project uses. In the bundle, that is one line for each paragraph and each list item.
+
+```text
+Before: The pen is the librarian's only way to write the bundle, and the bundle
+        has other writers: a person writes the curator's verdicts through
+        ktl-curator or the KTL Curator plugin.
+After:  The pen is the librarian's only way to write the bundle, and the bundle has other writers: a person writes the curator's verdicts through ktl-curator or the KTL Curator plugin.
+```
+
+No Markdown specification asks for a wrapped line. CommonMark reads a line ending inside a paragraph as a soft line break, which a browser shows as a space, so a standard renderer draws every layout alike. The choice concerns only the source, and three layouts are in wide use:
+
+- **One line per paragraph.** The editor wraps each line on screen. The Plone documentation guide asks for it.
+- **One sentence per line.** A line ends where a sentence ends. Brian Kernighan advised it in 1974, Semantic Line Breaks specifies it, Asciidoctor recommends it, and GitLab asks for each new sentence on a new line.
+- **A fixed column.** Lines break near a set width. Google's Markdown style guide sets 80 characters, and Microsoft's PowerShell documentation sets 100.
+
+Each layout has a benefit and a cost:
+
+- **A line break gives line-based tools a finer grain.** A diff, `git blame`, a review comment, a suggested change and a merge each work line by line, so they reach one sentence only when it has a line of its own. Google keeps its column partly because "Code Search doesn't soft wrap". Microsoft keeps its column because it "improves the readability of git diffs and history".
+- **A fixed column reflows.** Reword one sentence and every later line of the paragraph moves, so the diff marks lines whose words did not change. Kernighan, Semantic Line Breaks and Asciidoctor each give this as the reason to break at sentences instead.
+- **One sentence per line keeps line-level review without reflow.** A changed sentence is a changed line, and a long sentence shows as a long line.
+- **One line per paragraph is the cheapest to write, and it reads the same wherever a line break shows.** GitHub shows a single line break as a break in issues, pull requests and discussions, and Obsidian's Live Preview shows each source line as a line. No phrase spans two lines, so `grep`, the pen's `replace` and an agent's exact edit find it. No wrapped line can start a list, a heading or a block quote by accident (rule 5). Its cost is the coarse diff: one changed word marks the whole paragraph. GitHub's rendered prose diff and `git diff --word-diff` mark the changed words.
+
+The sources agree on no single layout. They agree that a project picks one and keeps every file to it, and that a tool keeps the project's choice: Prettier leaves a file's wrapping as it is unless told otherwise. So:
+
+- **In the bundle**, use ktl-librarian's layout: one line for each paragraph and each list item. ktl-librarian writes it in every bundle, and the repository these skills are published from turns off markdownlint's line-length rule, MD013, for its own pages too. In a concept you reword, give the whole body this layout, so no concept is left in two. Leave the `## Open questions` section, the region between the `<!-- lokf:related -->` markers and every fenced block as they are.
+- **Outside the bundle**, use the host's layout. Its tooling may set one: a markdownlint configuration that leaves MD013 on (as markdownlint does by default, at 80 columns), Prettier's `proseWrap`, or an `.editorconfig` `max_line_length` for Markdown. Otherwise the file shows it. Lay out each paragraph you reword to match, and leave the others as they are.
+- **Change a file's layout only when the person asks.** A layout is the project's choice, not a matter of wording.
+
+It gives way in a table, frontmatter and a heading, which keep their own lines, and at a hard line break the author wrote (two trailing spaces, a backslash or `<br>`), which is content. A comment in a script or a workflow keeps the wrapping of the code around it. The comparison in Step 3 does not count a moved line break, so a paragraph laid out anew passes when nothing else differs.
+
 ## Four things to know about the rules
 
 - **The rules are defaults.** Strunk opens his own rules by observing that "the best writers sometimes disregard the rules of rhetoric". That is why each rule above says when it gives way.
@@ -252,6 +284,16 @@ The addresses sit in a fenced block so that a link checker does not fetch sites 
 | Grammarly, on words to cut | In full | Rule 3, and the list behind rule 10. |
 | The Write Practice, on Strunk and White | In full | The habit behind the check: keep the original beside what you have rewritten. |
 | NowNovel, GrammarHow, The Novelry | In full | The dangling opening in rule 1, and "in order to" in rule 9. The rest is fiction craft or synonym lists. |
+| CommonMark Spec, version 0.31.2 | The sections on paragraphs, soft line breaks and list items | Line breaks: a line ending inside a paragraph shows as a space, and a list item or a heading can interrupt a paragraph. |
+| Brian Kernighan, "UNIX for Beginners" (1974), as Brandon Rhodes quotes it in "Semantic Linefeeds" (2012), and Semantic Line Breaks | Both pages in full | Line breaks: "Start each sentence on a new line", and the reflow that a break at a sentence avoids. |
+| Asciidoctor, "AsciiDoc Recommended Practices", and GitLab's "Documentation Style Guide" | The sections on line length and on one sentence per line | Line breaks: one sentence per line instead of a fixed column, and GitLab's "Start each new sentence on a new line". |
+| Google's Markdown style guide, and Microsoft's PowerShell "Markdown best practices" | The sections on line length | Line breaks: the case for a column, from tools built for code and from the readability of diffs. |
+| Plone Documentation Guide, "Whitespace" | In full | Line breaks: no character limit for flowing text. |
+| Ciro Santilli's "Markdown Style Guide", and markdownlint's rule MD013 | The guide's section on line wrapping, which the rule cites, and the rule in full | Line breaks: the cost of each layout, and MD013's 80-column default. |
+| Prettier, "Options" | The `proseWrap` option | Line breaks: the default keeps a file's wrapping, because "some services use a linebreak-sensitive renderer". |
+| GitHub Docs, on formatting syntax and on non-code files | The sections on line breaks and on rendered prose diffs | Line breaks: issues, pull requests and discussions show a single line break, and a pull request can show a rendered prose diff. |
+| Obsidian Help, "Basic formatting syntax", and a forum request of January 2026 | The section on line breaks, and the request | Line breaks: Reading view joins a paragraph's lines, and Live Preview shows each source line. |
+| One page each from GitHub Docs, MDN, Azure, PowerShell, Kubernetes, GitLab, the Rust book, VS Code, Google's style guide, react.dev, Docker and Astro (October 2026) | Line breaks counted by a script | Line breaks: five pages put each paragraph on one line, five wrap at a column, MDN puts each sentence on its own line, and GitLab mixes them. |
 
 ```text
 https://www.thenbs.com/knowledge/five-essential-tips-for-writing-effective-specifications
@@ -265,4 +307,19 @@ https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/style-gui
 https://www.fai.gov/sites/fai/files/2016-12-22-Federal-Rulemaking-VAAR-FederalPLGuidelines.pdf
 https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/
 https://www.thenovelry.com/blog/good-writing
+https://spec.commonmark.org/0.31.2/
+https://rhodesmill.org/brandon/2012/one-sentence-per-line/
+https://sembr.org/
+https://asciidoctor.org/docs/asciidoc-recommended-practices/
+https://docs.gitlab.com/development/documentation/styleguide/
+https://google.github.io/styleguide/docguide/style.html
+https://learn.microsoft.com/en-us/powershell/scripting/community/contributing/general-markdown
+https://docs-guide.plone.org/markdown/whitespace
+https://cirosantilli.com/markdown-style-guide
+https://github.com/DavidAnson/markdownlint/blob/main/doc/md013.md
+https://prettier.io/docs/options
+https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
+https://docs.github.com/en/repositories/working-with-files/using-files/working-with-non-code-files
+https://obsidian.md/help/syntax
+https://forum.obsidian.md/t/strict-line-breaks-in-live-preview/109696
 ```
