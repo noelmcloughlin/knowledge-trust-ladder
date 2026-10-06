@@ -17,12 +17,12 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-03T13:27:24Z"
+  at: "2026-10-06T11:10:52Z"
 ---
 
 # Overview
 
-The README states what the project is: it keeps a repository's scattered knowledge as a collection - catalogued, authenticated and explained, with the trust in every claim visible. It calls that a **context layer**, a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent, that persists from one task to the next. The README frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim.
+The README states what the project is. It keeps a repository's scattered knowledge as a collection: catalogued, authenticated and explained, with the trust in every claim visible. It calls that a **context layer**, a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent, that persists from one task to the next. The README frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim.
 
 No source in the repository goes further and says which kinds of use this fits and which it does not. Two neighbouring concepts cover parts of the ground: [three lines of defence](three-lines-of-defence.md) places the roles in a governance model, and [domain schemas](domain-schemas.md) covers modelling a regulated domain (AI governance among them). Neither states intended uses or non-goals.
 

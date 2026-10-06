@@ -12,7 +12,7 @@ sources:
 - resource: docs/m365.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:48:29Z"
+  at: "2026-10-06T09:49:14Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -21,15 +21,19 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-06T11:10:52Z"
 ---
 
 # Overview
 
-The skills are installed from this repository rather than copied into each project that uses them. Each of the four stands alone, and `ktl-prose`, a fifth and optional helper, installs the same way. There are three routes to the same set: the GitHub CLI (`gh skill install noelmcloughlin/knowledge-trust-ladder <skill>`), the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --skill <skill>`), and a Claude Code plugin that bundles all five (`/plugin marketplace add noelmcloughlin/knowledge-trust-ladder`, then `/plugin install knowledge-trust-ladder@knowledge-trust-ladder`), declared by `.claude-plugin/plugin.json` and `marketplace.json`.
+The skills are installed from this repository rather than copied into each project that uses them. Each skill stands alone, and the optional fifth, `ktl-prose`, installs the same way. There are three routes to the same set:
 
-All five skills release together under one `vMAJOR.MINOR.PATCH` tag with one `CHANGELOG.md`, so a set pinned to one tag agrees with itself: append the tag to the skill name (`ktl-docent@v0.16.0`) or pass `--pin`. `docs/install.md` carries the commands, the pinning rule, and what each skill needs on the machine.
+- the GitHub CLI (`gh skill install noelmcloughlin/knowledge-trust-ladder <skill>`);
+- the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --skill <skill>`);
+- a Claude Code plugin that bundles all five (`/plugin marketplace add noelmcloughlin/knowledge-trust-ladder`, then `/plugin install knowledge-trust-ladder@knowledge-trust-ladder`), declared by `.claude-plugin/plugin.json` and `marketplace.json`.
 
-The repository also carries its own bundle, kept by its own skills, so a reader can install the docent anywhere and ask about this project: it answers from this repository's `.lokf/`, saying how far each answer has been checked. Microsoft 365 Copilot is a fourth route for the docent alone: each release that changes the bundle carries it as a zip with a snapshot of the bundle inside, to upload to a declarative agent ([The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
+All five skills are released together under one `vMAJOR.MINOR.PATCH` tag with one `CHANGELOG.md`, so a set pinned to one tag agrees with itself. To pin it, append the tag to the skill name (`ktl-docent@v0.16.0`) or pass `--pin`. `docs/install.md` carries the commands, the pinning rule, and what each skill needs on the machine.
 
-The repository was renamed. GitHub redirects the old links, clones and `npx skills add` paths, so an existing install keeps working, and `docs/install.md` records the old name. The skills themselves took the `ktl-` prefix in 0.22.0, and `CHANGELOG.md` lists their old names, which a host installed before then removes.
+The repository also carries its own bundle, kept by its own skills, so a reader can install the docent anywhere and ask about this project: it answers from this repository's `.lokf/`, saying how far each answer has been checked. Microsoft 365 Copilot is a fourth route for the docent alone. Each release that changes the bundle carries the docent as a zip with a snapshot of the bundle inside, to upload to a declarative agent ([The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
+
+The repository was renamed. GitHub redirects the old links, clones and `npx skills add` paths, so an existing install keeps working, and `docs/install.md` records the old name. The skills themselves took the `ktl-` prefix in 0.22.0. `CHANGELOG.md` lists their old names, which a host that installed them before then removes.

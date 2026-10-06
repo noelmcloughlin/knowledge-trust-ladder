@@ -11,7 +11,7 @@ sources:
 - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-06T09:49:14Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -50,10 +50,10 @@ The repository is mostly Markdown. Four things in it run, or are run by other sy
 | --- | --- |
 | the sidecar templates under `skills/ktl-sidecar/templates/`, which the sidecar copies into other repositories, where they run | the template's own design: separate jobs, so the agent never meets a write token; a `publish` job that confines the patch to the bundle and refuses a `human:` claim; a preflight and a forge-free gate that only read git and gpg |
 | this repository's workflows: `validate.yml` on every pull request; its own copies of the three knowledge workflows; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, and harden-runner in audit mode; each workflow's header comment says why it is shaped as it is |
-| `skills/ktl-prose/scripts/prose-check.py`, the one script a skill runs in place, in whichever repository installs it | the standard library only; it reads the files it is given, calls `git show` with an argument list, writes nothing and opens no network connection |
+| `skills/ktl-prose/scripts/prose-check.py` and `skills/ktl-docent/scripts/`, the scripts a skill runs in place, in whichever repository installs it | `prose-check.py` uses the standard library only; it reads the files it is given, calls `git show` with an argument list and writes nothing. The docent's two are byte-identical copies of the sidecar's templates: `knowledge-report.sh` reads the bundle and git, and `knowledge-feedback.sh` writes one line to `.lokf/feedback.md`. None opens a network connection |
 | the five skills' `SKILL.md` and `references/` prose, executed by whichever LLM agent runs it, here and in every consumer | each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one |
 
-A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access the harness grants it, and only the scheduled workflow enforces its scope. So review what the agent changed before you commit.
+A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access the harness grants it, and only the scheduled workflow enforces its scope. So review what the agent changed before you commit. Three skills, ktl-curator, ktl-librarian and ktl-sidecar, also run the scripts in the repository's `.lokf/scripts/`, which anyone who can commit there can change. As ktl-prose does, ktl-docent runs only its own scripts, so a question runs none of the repository's code.
 
 # Not covered
 

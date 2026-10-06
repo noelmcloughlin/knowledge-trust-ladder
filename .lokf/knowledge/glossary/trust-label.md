@@ -8,29 +8,27 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-06T09:49:14Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-06T11:10:52Z"
 ---
 
 # Overview
 
-The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can
-act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at`,
-and `stale_after` (with `type` and the relation fields for vocabulary fit
-and reliance, and git history for confirmations no signed commit backs): any `verified` actor prefixed `human:` means confirmed by a
-person; events by non-human actors only mean checked by automation; no
-`verified` key at all means nobody has checked it. `knowledge-report.sh` reads
-`resource`, `sources[].resource` and git history for the label
-*a source moved since the confirmation*.
+The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at` and `stale_after`. It also uses `type` and the relation fields for vocabulary fit and reliance, and git history for confirmations no signed commit backs.
 
-A `revision` on an event (proposed for lokf 0.9.0, not yet released) is
-shown beside that event's date but changes no label: its absence means
-unrecorded, never unchanged.
+- Any `verified` actor prefixed `human:` means confirmed by a person.
+- Events by non-human actors alone mean checked by automation.
+- No `verified` key, or one with no events, means nobody has checked it.
 
-They deliberately overlap - a concept can be confirmed *and* past its review
-date - so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is
-scored and nothing is stored: the spec keeps scores out of frontmatter.
+`knowledge-report.sh` reads `resource`, `sources[].resource` and git history for the label *a source moved since the confirmation*.
+
+A `revision` on an event (proposed for lokf 0.9.0, not yet released) is shown beside that event's date but changes no label: its absence means unrecorded, never unchanged.
+
+The labels overlap. A concept can be confirmed *and* past its review date, so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.

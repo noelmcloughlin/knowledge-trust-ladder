@@ -13,15 +13,11 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-06T11:10:52Z"
 ---
 
 # Overview
 
-`npx skills add <source> --skill <name> ...` installs selected skills into
-whichever agent directories a repository uses, and accepts a **local path** as
-the source - which is what makes it usable as a pre-publication check.
+`npx skills add <source> --skill <name> ...` installs selected skills into whichever agent directories a repository uses, and accepts a **local path** as the source. That makes it usable as a pre-publication check.
 
-That local-source support is why `scripts/smoke-test-install.sh` can exercise
-the real install path in CI against the checked-out branch, in a throwaway
-consumer repository, before any change reaches a published release.
+That local-source support is why `scripts/smoke-test-install.sh` can exercise the real install path in CI against the checked-out branch, in a throwaway consumer repository, before any change reaches a published release.

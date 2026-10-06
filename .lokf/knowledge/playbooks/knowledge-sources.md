@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-06T09:49:14Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -19,7 +19,7 @@ status: draft
 | Source | Yields | Re-check by |
 | --- | --- | --- |
 | `skills/*/SKILL.md` | the five skill Playbooks | re-read each router; a changed step list, guardrail, or frontmatter `description` is a drift signal |
-| `skills/*/references/*.md`, `skills/ktl-prose/scripts/prose-check.py` | detail behind each skill Playbook, and the prose skill's check script, which `playbooks/ktl-prose-skill.md` describes | diff against the claims in the corresponding concept body |
+| `skills/*/references/*.md`, `skills/ktl-prose/scripts/prose-check.py`, `skills/ktl-docent/scripts/*.sh` | detail behind each skill Playbook; the prose skill's check script, which `playbooks/ktl-prose-skill.md` describes; and, since 2026-10-05, ktl-docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which `playbooks/ktl-docent-skill.md` describes | diff against the claims in the corresponding concept body; check 11a holds the docent's two scripts byte-identical to their templates |
 | `skills/ktl-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, `.gitattributes`, the nine scripts (preflight, conventions and its Python half, librarian wrapper, apply and its Python half, report, provenance gate, feedback recorder), the three workflows (registrar, librarian and, since 2026-09-24, release), and, also since 2026-09-24, `m365/`: the Copilot skills' builder and the docent's instructions for Copilot | diff `pyproject.toml` (the `lokf` floor) and the template lists in the skill's Step 1 and Step 5 tables |
 | `README.md`, `docs/install.md`, `docs/repository-layout.md` | project identity and the four-role narrative; the install commands, prerequisites table and pinning rule, on their own page since 2026-09-19 when the README became a front door; the repository tree, likewise on its own page | diff the roles table and the `Read on` table; diff `docs/install.md` against `references/gh-skill-cli.md` and `references/open-skills-cli.md`; diff the tree against the working copy |
 | `docs/m365.md`, `skills/ktl-sidecar/references/m365.md` | `playbooks/docent-in-m365-copilot.md` (2026-09-24): getting, building and adding the docent's Copilot skill, and why only read-only roles go there; the reserved Microsoft 365 identity shape lives in the curator's `domain-schemas.md`, carried by `explanation/domain-schemas.md` | diff the routes, the builder's limits and the role table against the concept; diff `.lokf/m365/ktl-docent-m365.md`'s trust-label table against `glossary/trust-label.md` (check 17 already holds it to ktl-docent's); re-read Microsoft's custom-skills page for changed limits while the feature is in preview |
