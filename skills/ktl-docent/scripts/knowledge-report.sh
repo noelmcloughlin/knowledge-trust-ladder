@@ -539,10 +539,11 @@ successors() {
     rest = substr(s, b + 1); s = substr(s, 1, b - 1); sub(/^\.\.\//, "", s); sub(/^\.\//, "", s); return s
   }
   /^[*-] \*\*Deprecation\*\*: \[/ {
-    old = target($0); if (old == "") next
+    old = target($0); if (old == "" || (old in seen)) next
+    seen[old] = 1   # the newest line for this concept decides, whether or not it names a successor
     c = index(rest, "replaced by ["); if (!c) next
-    new = target(substr(rest, c)); if (new == "" || (old in seen)) next
-    seen[old] = 1; print "S\t" old "\t" new
+    new = target(substr(rest, c)); if (new == "") next
+    print "S\t" old "\t" new
   }' "$bundle/log.md"
 }
 
@@ -654,7 +655,7 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 # references/trust-fields.md gives; `lists` prints the rest.
 ranked() {  # queue | lists
   local base
-  base="$(awk -v SQ="'" 'NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
+  base="$(awk -v SQ="'" '{ sub(/\r$/, "") } NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
     /^base_iri:/ { v = $0; sub(/^base_iri:[ \t]*/, "", v); sub(/[ \t\r]+$/, "", v)
       if (substr(v, 1, 1) == "\"" || substr(v, 1, 1) == SQ) v = substr(v, 2, length(v) - 2); print v; exit }' "$bundle/index.md" 2>/dev/null || true)"
   { printf '%s\n' "$all"; printf '%s\n' "$times"; } | awk -F'\t' -v mode="$1" -v today="$today" -v base="$base" "$label_fn"'
@@ -855,15 +856,19 @@ changes() {
     echo "Changes: not compared here, since this folder has no git history"
     return 0
   fi
-  local line st path rel top added=0 changed=0 removed=0 demoted="" ndemoted=0 hidden=0 was now does fb_was led_now led_was
+  local line st path rel top pfx added=0 changed=0 removed=0 demoted="" ndemoted=0 hidden=0 was now does fb_was led_now led_was
   # Git names each changed path from the top of the work tree, which is above
   # $root when the sidecar sits in a subfolder of a larger repository.
   top="$(git -C "$root" rev-parse --show-toplevel 2>/dev/null)" || top="$root"
+  # The sidecar may sit in a subfolder: git names each path, and resolves a
+  # HEAD:<path>, from the top of the work tree, so prepend that folder's prefix
+  # (empty when the sidecar is at the top) to reach the bundle and the ledgers.
+  pfx="$(git -C "$root" rev-parse --show-prefix 2>/dev/null || true)"
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     st="${line%%$'\t'*}"; path="${line#*$'\t'}"
     case "$path" in *.md) ;; *) continue ;; esac
-    rel="${path#.lokf/knowledge/}"; rel="${rel#knowledge_bundle/}"
+    rel="${path#"$pfx"}"; rel="${rel#.lokf/knowledge/}"; rel="${rel#knowledge_bundle/}"
     case "${rel##*/}" in index.md|log.md|diataxis.md) continue ;; esac
     case "$st" in A*) added=$((added + 1)); continue ;; D*) removed=$((removed + 1)) ;; *) changed=$((changed + 1)) ;; esac
     was="$(git -C "$root" show "HEAD:$path" 2>/dev/null | awk -v path="$rel" -v SQ="'" "$extract" | awk -F'\t' "$label_fn$standing_fn")"
@@ -886,9 +891,9 @@ changes() {
   echo "Confirmed by a person, and changed or removed here: $ndemoted"
   printf '%s' "$demoted"
   [ "$hidden" -eq 0 ] || echo "- and $hidden more, whose paths hold characters this report does not print"
-  fb_was="$(git -C "$root" show HEAD:.lokf/feedback.md 2>/dev/null | grep -c '^- \*\*' || true)"
+  fb_was="$(git -C "$root" show "HEAD:${pfx}.lokf/feedback.md" 2>/dev/null | grep -c '^- \*\*' || true)"
   led_now="$(grep -c '^- ' "$root/.lokf/questions.md" 2>/dev/null || true)"
-  led_was="$(git -C "$root" show HEAD:.lokf/questions.md 2>/dev/null | grep -c '^- ' || true)"
+  led_was="$(git -C "$root" show "HEAD:${pfx}.lokf/questions.md" 2>/dev/null | grep -c '^- ' || true)"
   echo "Reader feedback waiting: $(waiting_feedback) (was ${fb_was:-0}) · Lines added to the ledger of readers' questions: $(( ${led_now:-0} > ${led_was:-0} ? ${led_now:-0} - ${led_was:-0} : 0 ))"
 }
 

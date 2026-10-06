@@ -2229,14 +2229,34 @@ km_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$km"
 "${km_git[@]}" init -q
 printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$km/pkg/.lokf/knowledge/index.md"
 printf -- '---\ntype: Service\ntitle: Sub\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$km/pkg/.lokf/knowledge/x/sub.md"
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-03' '' '- **Miss** - Q: "one" - docent' > "$km/pkg/.lokf/feedback.md"
 "${km_git[@]}" add -A && "${km_git[@]}" commit -q -m 'a sidecar in a subfolder'
 sed -i 's/at: "2026-01-01T00:00:00Z"/at: "2026-03-01T00:00:00Z"/' "$km/pkg/.lokf/knowledge/x/sub.md"
-if out="$(cd "$km/pkg" && bash "$report" changes 2>&1)" && grep -qxF -- '- pkg/.lokf/knowledge/x/sub.md: reads as edited since that confirmation' <<<"$out"; then
-  ok "report script changes: a sidecar in a subfolder of a larger repository is read from the work tree's top"
+printf -- '- **Disagreement** - two - docent\n' >> "$km/pkg/.lokf/feedback.md"
+# The concept is named bundle-relative, as at the top level, not with the
+# subfolder prefix; and the feedback delta reads HEAD from the subfolder, so
+# "was" is 1, not 0. Both were wrong while the prefix was not accounted for.
+if out="$(cd "$km/pkg" && bash "$report" changes 2>&1)" \
+   && grep -qxF -- '- x/sub.md: reads as edited since that confirmation' <<<"$out" \
+   && grep -qF 'Reader feedback waiting: 2 (was 1)' <<<"$out"; then
+  ok "report script changes: a sidecar in a subfolder is read from the top, with bundle-relative paths and the right feedback delta"
 else
   err "report script's changes misread a sidecar in a subfolder: $out"
 fi
 rm -rf "$km"
+
+# A CRLF index.md: base_iri must still be read, or relative relation targets
+# and concepts with no id resolve to nothing and the reliance counts go wrong.
+kc="$(mktemp -d)"; mkdir -p "$kc/.lokf/knowledge/x"
+printf -- '---\r\nbase_iri: https://acme.example/knowledge/\r\n---\r\n\r\n# Acme\r\n' > "$kc/.lokf/knowledge/index.md"
+printf -- '---\ntype: Service\ntitle: A\ndependsOn:\n- x/hub.md\n---\n' > "$kc/.lokf/knowledge/x/a.md"
+printf -- '---\ntype: Service\ntitle: Hub\n---\n' > "$kc/.lokf/knowledge/x/hub.md"
+if out="$(cd "$kc" && bash "$report" 2>&1)" && grep -qF -- '- x/hub.md (1)' <<<"$out"; then
+  ok "report script: base_iri is read from a CRLF index.md, so reliance still resolves"
+else
+  err "report script lost base_iri on a CRLF index.md: $out"
+fi
+rm -rf "$kc"
 if out="$(kr_run retrieval --prompt)" && grep -qxF 'x/confirmed.md | Confirmed | a confirmed concept about widgets.' <<<"$out" && grep -qxF 'Q1: Where are widgets?' <<<"$out" && grep -qxF 'Q2: a reader wrote these ledger words' <<<"$out" \
    && ! grep -q 'Q3\|Where did the old concept go' <<<"$out"; then
   ok "report script: the retrieval prompt holds the index's entries and the ledger's questions, numbered, and asks none whose concept has left the bundle"
@@ -2469,7 +2489,11 @@ kz_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$kz"
 soon="$(date -u -d '+10 days' +%Y-%m-%d)"; later="$(date -u -d '+40 days' +%Y-%m-%d)"
 printf 'c\n' > "$kz/src/c.md"
 printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$kzk/index.md"
-printf '# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n' > "$kzk/log.md"
+# Old: the newest line names Hub, an earlier one named A; the newest wins.
+# Lost: its successor Missing is not in the bundle, so no successor is named.
+# Gone: the newest line names no successor though an earlier one did, so the
+# concept reads plain retired - the earlier line must not be read instead.
+printf '# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n* **Deprecation**: [Gone](../x/gone.md) retired, with no replacement.\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n* **Deprecation**: [Gone](../x/gone.md) retired - replaced by [A](../x/a.md).\n' > "$kzk/log.md"
 # shellcheck disable=SC2016 # the backticks are Markdown code spans in the entries, not commands
 printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-04' '' '- **Disagreement** (on `x/hub.md`) - newer - docent' '' '## 2026-03-01' '' \
   '- **Disagreement** (on `x/hub.md`) - older - docent' '- **Disagreement** - a reader wrote (on `x/a.md`) - docent' \
@@ -2484,6 +2508,7 @@ zc d Service 'id: https://acme.example/knowledge/x/d\ntitle: D\nrelations:\n- {p
 zc self Service "id: https://acme.example/knowledge/x/self\ntitle: Self\nreferences:\n- https://acme.example/knowledge/x/self\nstale_after: $later\nverified:\n- by: process:ktl-librarian\n  at: \"2026-01-04T00:00:00Z\"\n"
 zc old Service 'id: https://acme.example/knowledge/x/old\ntitle: Old\nstatus: deprecated\ndependsOn:\n- https://acme.example/knowledge/x/hub\n'
 zc lost Service 'id: https://acme.example/knowledge/x/lost\ntitle: Lost\nstatus: deprecated\n'
+zc gone Service 'id: https://acme.example/knowledge/x/gone\ntitle: Gone\nstatus: deprecated\n'
 zc no-id Service 'title: No id\n'
 zc e Service 'id: https://acme.example/knowledge/x/e\ntitle: E\ndependsOn: https://acme.example/knowledge/x/no-id\n'
 zc stale Policy 'id: https://acme.example/knowledge/x/stale\ntitle: Stale\nresource: src/c.md\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\nstale_after: 2020-01-01\n'
@@ -2512,8 +2537,9 @@ if out="$(cd "$kz" && bash "$report" labels x/c.md 2>&1)" && [[ "$out" == "- C (
 else
   err "report script's labels changed shape: $out"
 fi
-out="$(cd "$kz" && bash "$report" labels x/old.md x/lost.md x/hub.md x/a.md x/e.md 2>&1)"
+out="$(cd "$kz" && bash "$report" labels x/old.md x/lost.md x/gone.md x/hub.md x/a.md x/e.md 2>&1)"
 for want in '- Old (x/old.md) - retired, replaced by x/hub.md' '- Lost (x/lost.md) - retired' \
+            '- Gone (x/gone.md) - retired' \
             '- Hub (x/hub.md) - confirmed by a person, 2026-01-02, a reader disputed this on 2026-03-04' \
             '- A (x/a.md) - nobody has checked this yet' '- E (x/e.md) - nobody has checked this yet'; do
   if grep -qxF -- "$want" <<<"$out"; then ok "report script label: $want"; else err "report script did not print '$want': $out"; fi
