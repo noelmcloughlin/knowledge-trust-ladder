@@ -33,7 +33,7 @@ Run `bash "<skill>/scripts/knowledge-report.sh" labels <path>...` from the repos
 - *Nobody has checked this yet*: no `verified` key, or one with no events.
 - *Still a draft*: `status: draft`. *Retired*: `status: deprecated`, and a retired concept carries no other label. Its label names the concept that replaced it, as in *retired, replaced by services/orders-api.md*, when the newest `**Deprecation**` line in `log.md` links one. Absent `status` means stable.
 - *Past its review date*: `stale_after` (a datetime, or a bare `YYYY-MM-DD` date) is on or before today. Compare as strings after trimming to ten characters.
-- Labels overlap. Report every one that applies, in the order the script prints them. Start with the first of *edited since a person last confirmed it*, *confirmed by a person*, *checked by automation only* and *nobody has checked this yet* that applies. Add *still a draft*, then *past its review date* with its date in brackets, where they apply.
+- Labels overlap. Report every one that applies, in the order the script prints them. Start with the first of *edited since a person last confirmed it*, *confirmed by a person*, *checked by automation only* and *nobody has checked this yet* that applies. Add *still a draft*, then *past its review date* with its date in brackets, then *a reader disputed this on* a day, where they apply. That last one means a reader's Disagreement names the concept and waits for the librarian: say so, and check the source before you rely on the concept.
 
 ## When to go to the source
 

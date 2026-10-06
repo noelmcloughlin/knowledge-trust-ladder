@@ -89,14 +89,14 @@ A person sets this switch in the curation policy, `knowledge/policies/knowledge-
 
 A **Miss** is a question the bundle could not answer. Start the entry with the reader's question in quotes, as `Q: "..."`, because the librarian passes it on as asked. Then say which of two cases it is: a concept looked relevant from `index.md` and did not answer, naming it, or nothing relevant was listed. The first is a description the librarian fixes; the second is a concept it derives. Add the snapshot, and the kind of concept to add when it is obvious.
 
-A **Disagreement** is a concept that contradicts another concept, or a source the reader has shown you. Name the concept (its path), what it says, what the other says instead, and which one the answer gave, or that it gave both. Do not guess why they differ.
+A **Disagreement** is a concept that contradicts another concept, or a source the reader has shown you. Name the concept (its path) in brackets right after the kind, as the example does, then what it says, what the other says instead, and which one the answer gave, or that it gave both. Do not guess why they differ.
 
 Give the reader one line per gap in the format the repository's `.lokf/feedback.md` uses, and where to send it from `SNAPSHOT.md`:
 
 ```markdown
 - **Miss** - Q: "Which queue does the billing worker consume?" Nothing relevant in index.md (snapshot v0.26.0). Suggest: a Service concept for the billing worker. - docent-m365
 - **Miss** - Q: "Who maintains the orders database?" `datasets/orders-db.md` looked relevant from index.md and names no maintainer (snapshot v0.26.0). - docent-m365
-- **Disagreement** - `services/orders-api.md` says endpoint `/v1/orders`; the reader's copy of `services/orders/openapi.yaml` says `/v2/orders`. The answer gave both. - docent-m365
+- **Disagreement** (on `services/orders-api.md`) - `services/orders-api.md` says endpoint `/v1/orders`; the reader's copy of `services/orders/openapi.yaml` says `/v2/orders`. The answer gave both. - docent-m365
 ```
 
 Do not report trivia: a miss is something a future reader would plausibly ask again. Do not put the reader's name in the entry. A person files it in the repository, and the librarian there turns it into a concept or a question for the curator.

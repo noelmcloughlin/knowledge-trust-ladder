@@ -37,6 +37,7 @@ Say these to the human. Do not say RDF, IRI, SPARQL, predicate, or tier. The fie
 | Still a draft | the librarian marked it not-yet-reviewed, or a person sent it back |
 | Edited since a person last confirmed it | the content changed after the last human check |
 | Past its review date / due soon | the agreed re-check date has passed / falls within 30 days |
+| A reader disputed this | a reader's Disagreement naming it waits for the librarian |
 | Retired | kept for links and history; no longer current |
 | Not tied to a signed commit | the confirmation is recorded, but git holds no signature behind it; it may have been written by something other than that person |
 | *N* other concepts rely on this | how many concepts link to it; the more, the further a mistake spreads |

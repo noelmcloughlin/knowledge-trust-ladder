@@ -32,6 +32,8 @@
 #   nobody has checked this yet  no `verified` event at all
 #   still a draft                `status: draft`
 #   past its review date         `stale_after` is today or earlier
+#   a reader disputed this       a reader's Disagreement that names the
+#                                concept waits in .lokf/feedback.md
 #   retired                      `status: deprecated`; no other label applies,
 #                                and it names the concept that replaced it
 #                                when the newest **Deprecation** line in
@@ -507,17 +509,39 @@ successors() {
   }' "$bundle/log.md"
 }
 
+# A reader's Disagreement that names its concept and still waits, as
+# X<TAB>path<TAB>day, newest first. knowledge-feedback.sh writes the name right
+# after the kind, `- **Disagreement** (on `<path>`) -`, where no reader's text
+# can stand, and this reads that name and nothing else of the entry. A path
+# counts only in the bundle's own spelling and only while it names a concept,
+# so a line filed by hand meets the same test.
+disputed() {
+  [ -f "$root/.lokf/feedback.md" ] || return 0
+  awk -v dir="$bundle" '
+  function held(p,  line, there) {
+    if (p !~ /^[a-z0-9][a-z0-9._\/-]*\.md$/ || p ~ /\.\./) return 0
+    there = (getline line < (dir "/" p)); close(dir "/" p); return there >= 0
+  }
+  /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ { day = substr($0, 4, 10); next }
+  /^- \*\*Disagreement\*\* \(on `[^`]*`\) - / {
+    p = $0; sub(/^- \*\*Disagreement\*\* \(on `/, "", p); sub(/`.*$/, "", p)
+    if (day != "" && held(p) && !(p in seen)) { seen[p] = 1; print "X\t" p "\t" day }
+  }' "$root/.lokf/feedback.md"
+}
+
 labels() {  # [<path>...]
-  { successors; printf '%s\n' "$all"; } | awk -F'\t' -v today="$today" -v want="$*" -v dir="$bundle" "$label_fn"'
+  { successors; disputed; printf '%s\n' "$all"; } | awk -F'\t' -v today="$today" -v want="$*" -v dir="$bundle" "$label_fn"'
   function held(p,  line, there) {
     if (p !~ /^[a-z0-9][a-z0-9._\/-]*\.md$/ || p ~ /\.\./) return 0
     there = (getline line < (dir "/" p)); close(dir "/" p); return there >= 0
   }
   BEGIN { nw = split(want, w, " "); for (i = 1; i <= nw; i++) pick[w[i]] = 1 }
   $1 == "S" { if (!($2 in after)) after[$2] = $3; next }
+  $1 == "X" { if (!($2 in disp)) disp[$2] = $3; next }
   $1 != "C" { next }
   nw && !($2 in pick) { next }
   { s = label(); if ($4 == "deprecated" && ($2 in after) && after[$2] != $2 && held(after[$2])) s = s ", replaced by " after[$2]
+    if ($4 != "deprecated" && ($2 in disp)) s = s ", a reader disputed this on " disp[$2]
     seen[$2] = 1; print "- " $3 " (" $2 ") - " s }
   END { for (i = 1; i <= nw; i++) if (!(w[i] in seen)) print "- " w[i] " - no such concept in this bundle" }'
 }
@@ -970,6 +994,7 @@ case "$cmd" in
     ranked lists
     echo ""
     echo "Reader feedback waiting: $(waiting_feedback)"
+    disputed | awk -F'\t' '{ n++; body = body "- " $2 " (" $3 ")\n" } END { print "Disputed by a reader, waiting for the librarian: " (n ? n : "none"); if (n) printf "%s", body }'
     repeats
     ;;
   *) usage ;;

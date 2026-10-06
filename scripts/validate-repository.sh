@@ -758,6 +758,8 @@ done
 #        - an attribution shaped as both provenance gates shape a login, or
 #          none at all;
 #        - one line per entry, whatever it is handed;
+#        - a concept named only on a Disagreement, only in the bundle's own
+#          spelling, and only one the bundle holds;
 #        - not a word of what is already in the file on its own output;
 #        - a refusal that leaves the file exactly as it was;
 #        - a bundle told apart from no bundle, a read-only one, and one
@@ -903,6 +905,25 @@ else
     err "knowledge-feedback.sh misreported a read-only bundle (exit $rc): $out"
   fi
 fi
+mkdir -p "$fb/.lokf/knowledge/x" && printf -- '---\ntype: Service\ntitle: One\n---\n' > "$fb/.lokf/knowledge/x/one.md"
+# shellcheck disable=SC2016 # the backticks are Markdown code spans in the entry, not commands
+if out="$(bash "$feedback" --root "$fb" --concept x/one.md Disagreement 'one is disputed' 2>&1)" \
+   && [[ "$(grep -m1 '^- \*\*' "$fbfile")" == '- **Disagreement** (on `x/one.md`) - one is disputed - docent' ]]; then
+  ok "knowledge-feedback.sh names the disputed concept right after the kind"
+else
+  err "knowledge-feedback.sh did not record a Disagreement on a concept: $out"
+fi
+before="$(cat "$fbfile")"
+for bad in "--concept ../one.md Disagreement" "--concept X/One.md Disagreement" "--concept x/none.md Disagreement" "--concept x/one.md Miss" "--concept index.md Disagreement"; do
+  # shellcheck disable=SC2086 # each case is an option, its value and a kind, split on purpose
+  if out="$(bash "$feedback" --root "$fb" $bad 'refused' 2>&1)"; then
+    err "knowledge-feedback.sh accepted $bad: $out"
+  elif [[ "$(cat "$fbfile")" == "$before" ]]; then
+    ok "knowledge-feedback.sh refuses $bad and leaves the file as it was"
+  else
+    err "knowledge-feedback.sh refused $bad but changed the file"
+  fi
+done
 leftover=""
 for f in "$fb/.lokf"/* "$fb/.lokf"/.[!.]*; do
   [[ -e "$f" ]] || continue
@@ -1816,6 +1837,14 @@ if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qxF -- "- $kday
 else
   err "the ledger did not grow as expected: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
 fi
+# shellcheck disable=SC2016 # the backticks are Markdown code spans in the entry, not commands
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-05' '' '- **Disagreement** (on `playbooks/new.md`) - it says a third thing. - docent' > "$ka/.lokf/feedback.md"
+printf '%s\n' 'ops:' "  - {op: patch, path: playbooks/new.md, edits: [{append: {content: fixed again}}], log: fixed, from_feedback: '- **Disagreement** (on \`playbooks/new.md\`) - it says a third thing. - docent'}" > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && [[ "$(grep -c '^- ' "$ka/.lokf/questions.md")" == 3 ]] && ! grep -q '^- \*\*' "$ka/.lokf/feedback.md"; then
+  ok "the pen handles a Disagreement that names its concept, and files it in the ledger"
+else
+  err "the pen did not handle a Disagreement that names its concept: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
+fi
 # A person's record is the same after a patch as before, whatever the
 # operations were. The pen compares each concept it is about to write with the
 # file it read. So these are refused, though each operation is one it allows:
@@ -2331,7 +2360,10 @@ rm -rf "$kq" "$nogit"
 #      confirmed concept derived from one edited after that confirmation; and
 #      the five concepts worth ten minutes today, in trust-fields.md's order.
 #      A retired concept's label names its successor from the newest
-#      **Deprecation** line in log.md, and only one the bundle holds.
+#      **Deprecation** line in log.md, and only one the bundle holds. A
+#      waiting Disagreement that names its concept right after the kind
+#      marks that concept, from its newest day; a name anywhere else in an
+#      entry, on a Miss, or for no concept the bundle holds marks nothing.
 say ""
 say "Exercising the curator's queue in knowledge-report.sh..."
 kz="$(mktemp -d)"; kzk="$kz/.lokf/knowledge"; mkdir -p "$kzk/x" "$kz/src"
@@ -2342,6 +2374,10 @@ soon="$(date -u -d '+10 days' +%Y-%m-%d)"; later="$(date -u -d '+40 days' +%Y-%m
 printf 'c\n' > "$kz/src/c.md"
 printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$kzk/index.md"
 printf '# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n' > "$kzk/log.md"
+# shellcheck disable=SC2016 # the backticks are Markdown code spans in the entries, not commands
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-04' '' '- **Disagreement** (on `x/hub.md`) - newer - docent' '' '## 2026-03-01' '' \
+  '- **Disagreement** (on `x/hub.md`) - older - docent' '- **Disagreement** - a reader wrote (on `x/a.md`) - docent' \
+  '- **Disagreement** (on `x/nowhere.md`) - gone - docent' '- **Miss** (on `x/e.md`) - a miss - docent' > "$kz/.lokf/feedback.md"
 zc() { printf -- '---\ntype: %s\n%b---\n%b' "$2" "$3" "${4:-}" > "$kzk/x/$1.md"; }
 zc hub Service "id: https://acme.example/knowledge/x/hub\ntitle: Hub\ngenerated:\n  by: process:ktl-librarian\n  at: \"2026-01-01T00:00:00Z\"\nverified:\n- by: human:ada\n  at: \"2026-01-02T10:00:00Z\"\nstale_after: $soon\n"
 zc a Service 'id: https://acme.example/knowledge/x/a\ntitle: A\ndependsOn:\n- https://acme.example/knowledge/x/hub\nreferences: [https://acme.example/knowledge/x/hub#part]\n'
@@ -2366,7 +2402,8 @@ for want in 'Worth ten minutes today: 5 of 8 waiting' \
             "Due soon, a review date within 30 days: 1" "- x/hub.md ($soon)" \
             'Confirmed by a person, and derived from a concept edited after that confirmation: 1' \
             '- x/c.md: x/origin.md (edited 2026-01-05, confirmed 2026-01-03)' \
-            'Relied on by other concepts: 3' '- x/hub.md (3)' '- x/origin.md (1)' '- x/no-id.md (1)'; do
+            'Relied on by other concepts: 3' '- x/hub.md (3)' '- x/origin.md (1)' '- x/no-id.md (1)' \
+            'Disputed by a reader, waiting for the librarian: 1' '- x/hub.md (2026-03-04)'; do
   if grep -qxF -- "$want" <<<"$out"; then ok "report script queue: $want"; else err "report script's queue or lists lack '$want': $out"; fi
 done
 if grep -qF -- '- x/self.md (' <<<"$out" || grep -qF -- '- x/old.md (' <<<"$out" || grep -qF -- "- x/self.md ($later)" <<<"$out"; then
@@ -2374,14 +2411,16 @@ if grep -qF -- '- x/self.md (' <<<"$out" || grep -qF -- '- x/old.md (' <<<"$out"
 else
   ok "report script: a concept never relies on itself, a retired one counts for nothing, and a date 40 days off is not due soon"
 fi
-if out="$(cd "$kz" && bash "$report" labels x/hub.md 2>&1)" && [[ "$out" == "- Hub (x/hub.md) - confirmed by a person, 2026-01-02" ]]; then
+if out="$(cd "$kz" && bash "$report" labels x/c.md 2>&1)" && [[ "$out" == "- C (x/c.md) - confirmed by a person, 2026-01-03" ]]; then
   ok "report script: labels keep the docent's footer shape, with no count or queue in it"
 else
   err "report script's labels changed shape: $out"
 fi
-out="$(cd "$kz" && bash "$report" labels x/old.md x/lost.md 2>&1)"
-for want in '- Old (x/old.md) - retired, replaced by x/hub.md' '- Lost (x/lost.md) - retired'; do
-  if grep -qxF -- "$want" <<<"$out"; then ok "report script successor: $want"; else err "report script did not print '$want' for a retired concept: $out"; fi
+out="$(cd "$kz" && bash "$report" labels x/old.md x/lost.md x/hub.md x/a.md x/e.md 2>&1)"
+for want in '- Old (x/old.md) - retired, replaced by x/hub.md' '- Lost (x/lost.md) - retired' \
+            '- Hub (x/hub.md) - confirmed by a person, 2026-01-02, a reader disputed this on 2026-03-04' \
+            '- A (x/a.md) - nobody has checked this yet' '- E (x/e.md) - nobody has checked this yet'; do
+  if grep -qxF -- "$want" <<<"$out"; then ok "report script label: $want"; else err "report script did not print '$want': $out"; fi
 done
 rm -rf "$kz"
 

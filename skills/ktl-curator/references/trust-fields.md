@@ -14,6 +14,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | Edited since a person last confirmed it | `generated.at` later than the latest `human:` `verified[].at` | `generated`, `verified` | `prov:wasGeneratedBy` -> `prov:endedAtTime` |
 | A source moved since the confirmation | the source's last commit comes after the commit that recorded the latest `human:` event, or the source carries an uncommitted edit and the concept does not | `resource`, `sources[].resource` + git history | - |
 | Past its review date | `stale_after` <= today | `stale_after` | `schema:expires` |
+| A reader disputed this | a waiting `**Disagreement**` in `.lokf/feedback.md` names the concept right after the kind; the newest day is shown. Never on a retired concept | `.lokf/feedback.md` | - |
 | Due soon | today < `stale_after` <= today + 30 days | `stale_after` | same |
 | *N* other concepts rely on this | count of other concepts whose typed relations target this concept's `id`, each counted once; a retired concept counts for none and is counted for none | the ten relation fields + `relations[].target` | various |
 | Derived from a concept edited since its confirmation | a `derivedFrom` target, in the field or in `relations[]`, has a `generated.at` later than this concept's latest `human:` event | `derivedFrom`, `relations`, `generated`, `verified` | `prov:wasDerivedFrom` |
