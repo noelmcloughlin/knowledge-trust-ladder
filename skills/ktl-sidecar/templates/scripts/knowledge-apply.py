@@ -64,8 +64,10 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import os
 import re
 import sys
+import tempfile
 import unicodedata
 from collections import Counter
 from pathlib import Path
@@ -77,6 +79,7 @@ PATH_RE = re.compile(r"^[a-z0-9][a-z0-9-]*(/[a-z0-9][a-z0-9-]*)+\.md$")
 EVENT_RE = re.compile(r"^\s*-?\s*by:\s*human:")  # a line the provenance gates read as a person's event
 NOTE_RE = re.compile(r"^\s*-\s*\d{4}-\d{2}-\d{2},\s*human:")  # a line the curator reads as a person's note
 KEPT_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *human:")  # a person's note as knowledge-provenance.sh --unattended reads one
+CURATOR_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *process:ktl-curator:")  # a curator's send-back recorded with no authenticated login (review-session.md)
 ACTOR_RE = re.compile(r"^process:\S+$")
 LOGIN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 DENIED_SET = {"id", "type", "generated", "verified", "status", "stale_after", "timestamp"}
@@ -182,7 +185,7 @@ def keep_text(loader, node):
     return text
 
 
-for _kind in ("int", "float", "bool", "timestamp"):
+for _kind in ("int", "float", "bool", "timestamp", "null"):
     KeepLoader.add_constructor("tag:yaml.org,2002:" + _kind, keep_text)
 
 
@@ -388,6 +391,13 @@ class Concept:
         actors = (BULLET_RE.match(line) for line in self.body[q[0]:q[1]].split("\n"))
         return any(m is not None and m.group(1).startswith("human:") for m in actors)
 
+    def noted_by_curator(self) -> bool:
+        """A send-back the curator left under a `process:ktl-curator` actor, which stands for a person who could not sign in. The librarian re-derives such a concept but never deletes it or clears the note; only the curator does, on Confirm or Correct."""
+        q = questions_span(self.body)
+        if q is None:
+            return False
+        return any(CURATOR_NOTE_RE.match(line) for line in self.body[q[0]:q[1]].split("\n"))
+
     def title(self) -> str:
         return " ".join(str(self.fm.get("title", self.path)).split())
 
@@ -512,6 +522,7 @@ class Bundle:
             raise Refused(f"{c.path}: {kind} needs a content string")
         content = spec["content"]
         spans = protected_spans(c.body)
+        had_q, had_r = questions_span(c.body) is not None, related_span(c.body) is not None
         if kind == "append":
             self.append_body(c, content)
             return
@@ -526,6 +537,7 @@ class Bundle:
             if overlaps(spans, i, i + len(target)):
                 raise Refused(f"{c.path}: the target lies in the lokf:related block or under {OPEN_Q}, which this script never edits")
             c.body = c.body[:i] + content + c.body[i + len(target):]
+            self.check_protected_intact(c, had_q, had_r)
             return
         lines = c.body.split("\n")
         hits = [k for k, line in enumerate(lines) if target in line]
@@ -537,6 +549,14 @@ class Bundle:
             raise Refused(f"{c.path}: the target lies in the lokf:related block or under {OPEN_Q}, which this script never edits")
         lines[k + 1 : k + 1] = content.rstrip("\n").split("\n")
         c.body = "\n".join(lines)
+        self.check_protected_intact(c, had_q, had_r)
+
+    def check_protected_intact(self, c: Concept, had_q: bool, had_r: bool) -> None:
+        """An edit whose target ends right at a protected heading could glue it onto the line before, so the section is no longer a heading and the overlap test, which starts at that heading, never saw it. After the edit, a section that was there must still be there."""
+        if had_q and questions_span(c.body) is None:
+            raise Refused(f"{c.path}: this edit would merge the {OPEN_Q} heading into the text before it, and that section is never edited")
+        if had_r and related_span(c.body) is None:
+            raise Refused(f"{c.path}: this edit would break the lokf:related block, which this script never edits")
 
     def append_body(self, c: Concept, content: str) -> None:
         block = "\n" + content.strip("\n") + "\n"
@@ -572,7 +592,9 @@ class Bundle:
     def question(self, op: dict) -> None:
         path = op["path"]
         c = self.concept(path, must_exist=True)
-        text = one_line(op.get("text"), f"{path}: question text")
+        text = shown(one_line(op.get("text"), f"{path}: question text"))
+        if not text:
+            raise Refused(f"{path}: question text has no visible characters")
         bullet = f"- {self.today}, {self.by}: {text}"
         q = questions_span(c.body)
         if q:
@@ -601,6 +623,8 @@ class Bundle:
         if len(hits) != 1:
             raise Refused(f"{path}: resolve target is in {len(hits)} open questions, and must be in exactly one: {target[:60]!r}")
         asker = BULLET_RE.match(section[hits[0]])
+        if asker is not None and asker.group(1) == "process:ktl-curator":
+            raise Refused(f"{path}: that is a curator's send-back, not a question to withdraw; only the curator clears it, on Confirm or Correct")
         if asker is None or asker.group(1) != self.by:
             raise Refused(f"{path}: that question is not one {self.by} asked; a person's note is the curator's to clear, on that person's word")
         del section[hits[0]]
@@ -639,6 +663,8 @@ class Bundle:
             raise Refused(f"{path}: a person confirmed this concept, so delete is refused; add a question saying the source is gone, and the curator retires it")
         if c.noted_by_person():
             raise Refused(f"{path}: a person left a note on this concept, so delete is refused; add a question saying the source is gone, and the curator retires it")
+        if c.noted_by_curator():
+            raise Refused(f"{path}: the curator left a send-back on this concept, so delete is refused; re-derive it and leave the note for the curator")
         self.guard_writable(c, "delete")
         if not isinstance(op.get("log"), str) or not op["log"].strip():
             raise Refused(f"{path}: delete needs a log line saying why")
@@ -776,7 +802,9 @@ class Bundle:
     def log(self, op: dict, default: str | None, c: Concept | None = None, label: str = "Changed") -> None:
         text = op.get("log")
         if text is not None:
-            text = one_line(text, f"{op['path']}: log")
+            text = shown(one_line(text, f"{op['path']}: log"))
+            if not text:
+                raise Refused(f"{op['path']}: log line has no visible characters")
         if text is None and default is None:
             raise Refused(f"{op['path']}: {op['op']} needs a log line naming what changed and why")
         if text is None:
@@ -975,19 +1003,40 @@ def main(argv: list[str]) -> int:
         except OSError as exc:
             print(f"the hand-off file cannot be written ({exc}); nothing was written")
             return 2
-    verb = "would write" if a.dry_run else "wrote"
-    for file, text in writes:
-        rel = file.relative_to(root)
-        if text is None:
-            print(f"{'would delete' if a.dry_run else 'deleted'} {rel}")
-            if not a.dry_run:
+    if a.dry_run:
+        for file, text in writes:
+            print(f"{'would delete' if text is None else 'would write'} {file.relative_to(root)}")
+    else:
+        # Write every changed file to a temporary file beside it first. Only
+        # once all of them are written does the run put them in place, so a
+        # write that fails - a read-only file, a full disk - stops the run with
+        # the bundle untouched, rather than leaving it half applied.
+        staged: dict[Path, str] = {}
+        try:
+            for file, text in writes:
+                if text is None:
+                    continue
+                file.parent.mkdir(parents=True, exist_ok=True)
+                fd, tmp = tempfile.mkstemp(dir=str(file.parent), prefix="." + file.name + ".", suffix=".tmp")
+                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(text)
+                staged[file] = tmp
+        except OSError as exc:
+            for tmp in staged.values():
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+            print(f"a file could not be written ({exc}); nothing was changed")
+            return 2
+        for file, text in writes:
+            rel = file.relative_to(root)
+            if text is None:
                 file.unlink()
-            continue
-        if not a.dry_run:
-            file.parent.mkdir(parents=True, exist_ok=True)
-            with open(file, "w", encoding="utf-8", newline="\n") as f:
-                f.write(text)
-        print(f"{verb} {rel}")
+                print(f"deleted {rel}")
+            else:
+                os.replace(staged[file], file)
+                print(f"wrote {rel}")
     if not a.dry_run and not a.keep:
         patch_file.unlink()
     if handoff:

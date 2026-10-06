@@ -1901,6 +1901,37 @@ printf '%s\n' 'ops:' '  - {op: resolve, path: playbooks/new.md, target: "send th
 apply_refuses "resolving a note a person left" "is not one process:ktl-librarian asked"
 printf '%s\n' 'ops:' '  - {op: delete, path: playbooks/new.md, log: gone}' > "$kpatch"
 apply_refuses "deleting a concept a person left a note on" "a person left a note on this concept"
+# A curator's send-back recorded as process:ktl-curator (no authenticated
+# login) is the curator's to clear: the librarian re-derives the concept but
+# never withdraws the note or deletes it. An edit whose target ends right at a
+# protected heading would glue it onto the line before, which the overlap test
+# that starts at the heading never saw.
+printf '%s\n' '---' 'type: Playbook' 'id: https://acme.example/knowledge/playbooks/sentback' 'title: Sentback' 'description: sent back.' \
+  'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'status: draft' '---' '' '# Overview' '' 'Body.' '' '## Open questions' '' '- 2026-03-03, process:ktl-curator: re-derive this from the source' > "$kb/playbooks/sentback.md"
+printf '%s\n' '* [Sentback](sentback.md) - sent back.' >> "$kb/playbooks/index.md"
+printf '%s\n' 'ops:' '  - {op: resolve, path: playbooks/sentback.md, target: "re-derive this", log: x}' > "$kpatch"
+apply_refuses "withdrawing a curator's send-back" "that is a curator's send-back"
+printf '%s\n' 'ops:' '  - {op: delete, path: playbooks/sentback.md, log: gone}' > "$kpatch"
+apply_refuses "deleting a concept the curator sent back" "the curator left a send-back on this concept"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/sentback.md, edits: [{replace: {target: "Body.\n\n", content: "Body. "}}], log: x}' > "$kpatch"
+apply_refuses "an edit that would glue the Open questions heading onto the text before it" "would merge the ## Open questions heading"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/sentback.md, set: {description: "re-derived."}, log: re-derived from the source}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -q 'process:ktl-curator' "$kb/playbooks/sentback.md"; then
+  ok "the librarian re-derives a concept the curator sent back, and the send-back stays"
+else
+  err "re-deriving a sent-back concept lost the curator's note: $(tr '\n' '|' < "$kb/playbooks/sentback.md")"
+fi
+# A person's event with an empty revision round-trips as empty, not null,
+# which the gate would otherwise read as a changed confirmation.
+printf '%s\n' '---' 'type: Playbook' 'id: https://acme.example/knowledge/playbooks/nullrev' 'title: Nullrev' 'description: nr.' \
+  'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'verified:' '  - by: human:ada' '    at: "2026-02-02T00:00:00Z"' '    revision:' '---' '' '# Overview' '' 'Body.' > "$kb/playbooks/nullrev.md"
+printf '%s\n' '* [Nullrev](nullrev.md) - nr.' >> "$kb/playbooks/index.md"
+printf '%s\n' 'ops:' '  - {op: recheck, path: playbooks/nullrev.md}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -q 'revision:' "$kb/playbooks/nullrev.md" && ! grep -q 'revision: null' "$kb/playbooks/nullrev.md"; then
+  ok "the pen writes an empty revision back as empty, not null"
+else
+  err "the pen turned an empty revision into null: $(grep -n revision "$kb/playbooks/nullrev.md")"
+fi
 printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, edits: [{append: {content: x}}], log: x, asked: "why?"}' > "$kpatch"
 apply_refuses "a reader's question with no feedback entry behind it" "asked goes with from_feedback"
 printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-04' '' '- **Disagreement** - it says one thing. - docent' > "$ka/.lokf/feedback.md"
