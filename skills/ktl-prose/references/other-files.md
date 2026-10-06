@@ -29,6 +29,10 @@ A rewording changes no fact in the source, and it still costs those concepts som
 
 Say how many concepts rest on the file, and how many of those a person confirmed. Then wait for a yes. Afterwards name **ktl-librarian** as the next step, so those concepts are checked against the reworded source.
 
+## Line breaks
+
+Lay out each paragraph you reword the way the host does, and leave the others as they are. Look for the layout in the host's tooling first: a markdownlint configuration that leaves MD013 on (as markdownlint does by default, at 80 columns), Prettier's `proseWrap`, or an `.editorconfig` `max_line_length` for Markdown. Otherwise follow the file: one line per paragraph, one sentence per line, or a fixed column. Change the file's layout only when the person asks. [rules.md](rules.md) gives the reasons under *Line breaks in the source*.
+
 ## Proving the change
 
 ```sh
@@ -42,7 +46,7 @@ Hand off the files the person named and no others. Give the counts before and af
 
 ## Comments in scripts and workflows
 
-The script reads Markdown. A comment gets the same rules by hand. A block of comment lines is a paragraph: split a long one with an empty comment line where its topic turns.
+The script reads Markdown. A comment gets the same rules by hand. A block of comment lines is a paragraph: split a long one with an empty comment line where its topic turns. Keep the comment's line breaks as the code around it wraps them.
 
 Never touch either of these:
 

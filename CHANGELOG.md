@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **ktl-prose lays out what it rewords the way the file's project does.** In a bundle that is one line for each paragraph, as ktl-librarian writes it, where the skill used to keep a concept's old wrapping. Outside the bundle it keeps the host's layout, and `references/rules.md` sets out the three layouts in use, with the benefit and the cost of each.
+
 ## [0.34.2] - 2026-10-05
 
 ### Changed
