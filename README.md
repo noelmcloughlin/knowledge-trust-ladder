@@ -123,6 +123,7 @@ Add the curator once there is a bundle worth trusting. The docent goes anywhere 
 | The bundle in Obsidian, and the two plugins | [docs/obsidian.md](docs/obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
 | WikiSkill, a 2026 paper on agent-maintained wikis, set beside this design part by part | [docs/wikiskill.md](docs/wikiskill.md) |
+| SkillWiki, a 2026 paper on governing agent skills, set beside this design part by part | [docs/skillwiki.md](docs/skillwiki.md) |
 | Versioning: all five skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [docs/releasing.md](docs/releasing.md), [CHANGELOG.md](CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](CONTRIBUTING.md), [docs/repository-layout.md](docs/repository-layout.md), [SECURITY.md](SECURITY.md) |
 
@@ -133,6 +134,7 @@ Add the curator once there is a bundle worth trusting. The docent goes anywhere 
 - [Google Cloud](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing), creator of the Open Knowledge Format (OKF) specification that LOKF profiles.
 - [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), a pattern for building personal knowledge bases with LLMs.
 - [WikiSkill](https://arxiv.org/abs/2608.27454) by Tang et al. (Google Research, 2026), the paper on agent-maintained wikis that [docs/wikiskill.md](docs/wikiskill.md) reads against this design.
+- [SkillWiki](https://arxiv.org/abs/2606.16523) by Huang et al. (Harbin Institute of Technology, Tencent and Nanyang Technological University, 2026), the paper on governing agent skills that [docs/skillwiki.md](docs/skillwiki.md) reads against this design.
 
 This is an independent project. It is not affiliated with, endorsed by, or an
 official distribution of LOKF or of the Open Knowledge Format. "LOKF" and

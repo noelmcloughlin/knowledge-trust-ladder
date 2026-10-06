@@ -26,6 +26,7 @@ docs/
   three-lines.md        the roles in the three lines of defence, and what an auditor can check
   three-lines-critics.md  the model's critics, quoted, and what a bundle answers
   wikiskill.md          the WikiSkill paper read against this design, part by part
+  skillwiki.md          the SkillWiki paper and its code read against this design
   releasing.md          how the three repositories release, and the settings it needs
   signing-commits.md    signing commits, which the provenance gate reads
   threat-model.md       shared security design: what an agent can reach, and what guards it
