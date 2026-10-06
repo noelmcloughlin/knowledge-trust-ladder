@@ -247,6 +247,14 @@ function emit(  n) {
   inev = 0; by = ""; at = ""; rev = ""
 }
 function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ","); for (i = 1; i <= n; i++) kv(parts[i]); emit() }
+# A flow verified/generated may span lines, and an empty one (verified: [ ])
+# names no event. Accumulate from the opener to its closing bracket, then
+# parse: a sequence into its events, a mapping as one, nothing when empty.
+function flushflow(  b, n, items, i) { b = flowbuf
+  if (flowseq) { sub(/^\[/, "", b); sub(/\].*/, "", b) } else { sub(/^\{/, "", b); sub(/\}.*/, "", b) }
+  sub(/^[ \t]+/, "", b); sub(/[ \t]+$/, "", b)
+  if (b != "") { if (flowseq) { n = split(b, items, /\}[ \t]*,/); for (i = 1; i <= n; i++) flow(items[i]) } else flow(b) }
+  inflow = 0; flowbuf = "" }
 function link(f, v,  q, j) { v = trim(v); q = substr(v, 1, 1)
   if ((q == "\"" || q == SQ) && (j = index(substr(v, 2), q)) > 0) v = substr(v, 2, j - 1); else v = unq(v)
   sub(/^\.\//, "", v); if (v != "") print "L\t" path "\t" f "\t" v }
@@ -255,11 +263,12 @@ function rkv(l,  k, v) { k = l; sub(/:.*/, "", k); sub(/^[ \t]+/, "", k); v = l;
   if (k == "predicate") rp = unq(v); else if (k == "target") rt = v }
 function rflow(s,  n, parts, i) { rflush(); gsub(/[{}]/, "", s); n = split(s, parts, ","); for (i = 1; i <= n; i++) rkv(parts[i]); rflush() }
 function relend() { if (inrels) rflush(); inrels = 0; rel = "" }
-BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source", relnames, " "); for (j in relnames) RELF[relnames[j]] = 1 }
+BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source", relnames, " "); for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
 { sub(/\r$/, "") }
-NR == 1 { if ($0 == "---") { fm = 1; started = 1; next } else exit }
-fm && $0 == "---" { emit(); relend(); inv = 0; fm = 0; body = 1; next }
+NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else exit }
+fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); inv = 0; fm = 0; body = 1; next }
 fm {
+  if (inflow) { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
   if ($0 ~ /^title:/) title = val($0)
   else if ($0 ~ /^status:/) status = val($0)
   else if ($0 ~ /^stale_after:/) stale = val($0)
@@ -272,8 +281,8 @@ fm {
   }
   if ($0 ~ /^(verified|generated):/) {
     relend(); emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated):[ \t]*/, "", rest)
-    if (rest ~ /^\{/) { flow(rest); inv = 0 }
-    else if (rest ~ /^\[/) { gsub(/[][]/, "", rest); n = split(rest, items, /\}[ \t]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
+    if (rest ~ /^\{/) { flowseq = 0; flowbuf = rest; inv = 0; if (index(rest, "}")) flushflow(); else inflow = 1 }
+    else if (rest ~ /^\[/) { flowseq = 1; flowbuf = rest; inv = 0; if (index(rest, "]")) flushflow(); else inflow = 1 }
     next
   }
   if (inv && $0 ~ /^[^ \t-]/) { emit(); inv = 0 }

@@ -2139,12 +2139,17 @@ printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n\n# X\
 # edited.md to confirmed-by-a-person, so these two label lines guard the fix.
 printf -- '---\ntype: Service\ntitle: Confirmed\nresource: src/a.md\nsources:\n- resource: src/a.md\n- resource: src/c.md\n- resource: https://example.invalid/never-fetched\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00+00:00"\n  revision: "3f9c2a1b7e0d4c6a8f5e2d1c9b8a7f6e5d4c3b2a"\nstale_after: 2020-01-01\n---\n\n# Overview\n' > "$kk/x/confirmed.md"
 printf -- '---\ntype: Service\ntitle: Edited\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-02T14:00:00+00:00"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$kk/x/edited.md"
-printf -- '---\ntype: Service\ntitle: Auto\nresource: src/b.md\nverified: [{ by: process:ktl-librarian, at: "2026-01-03T00:00:00Z" }]\n---\n' > "$kk/x/auto.md"
+# auto.md confirms in a flow sequence that spans lines, and gone.md carries an
+# empty flow list: the report must read the first as one process event and the
+# second as no event. The old reader dropped the multi-line list (so auto.md
+# read as nobody-checked) and counted the empty one (so gone.md read as
+# automation), which would shift the health line these labels sit behind.
+printf -- '---\ntype: Service\ntitle: Auto\nresource: src/b.md\nverified: [\n  { by: process:ktl-librarian, at: "2026-01-03T00:00:00Z" }\n]\n---\n' > "$kk/x/auto.md"
 # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
 printf -- '---\ntype: Service\ntitle: Draft one\nstatus: draft\n---\n\n# Overview\n\n```markdown\n## Open questions\n\n- 2026-01-01, human:example: only an example in a fence\n```\n\n## Open questions\n\n- 2026-01-05, human:ada: send it back, with these words for the curator\n' > "$kk/x/draft.md"
 printf -- '---\ntype: Service\ntitle: Retired\nstatus: deprecated\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n---\n' > "$kk/x/retired.md"
 printf -- "---\ntype: Service\ntitle: 'Ada''s answered concept'\nverified:\n  by: human:ada\n  at: \"2026-02-01T00:00:00Z\"\n---\n\n## Open questions\n\n- 2026-01-15, process:ktl-librarian: which is it?\n" > "$kk/x/answered.md"
-printf -- '---\ntype: Service\ntitle: Gone\nresource: src/missing.md\n---\n' > "$kk/x/gone.md"
+printf -- '---\ntype: Service\ntitle: Gone\nresource: src/missing.md\nverified: [ ]\n---\n' > "$kk/x/gone.md"
 printf '# Change Log\n' > "$kk/log.md"
 printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-03' '' '- **Miss** - Q: "a reader wrote these waiting words" - docent' '- **Disagreement** - another. - docent' > "$kr/.lokf/feedback.md"
 # shellcheck disable=SC2016 # the backticks are Markdown code spans, not commands
@@ -2430,6 +2435,19 @@ else
   err "report script quiet: a bundle with no history failed some other way: $out"
 fi
 rm -rf "$kq" "$nogit"
+
+# A concept whose file begins with a UTF-8 byte order mark is still read: the
+# old reader saw no `---` on the first line and dropped the concept from every
+# count. The BOM is built at run time, so this script stays plain ASCII.
+bomdir="$(mktemp -d)"; mkdir -p "$bomdir/.lokf/knowledge/x"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n' > "$bomdir/.lokf/knowledge/index.md"
+printf -- '%s---\ntype: Service\ntitle: Bommed\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' "$(printf '\357\273\277')" > "$bomdir/.lokf/knowledge/x/bommed.md"
+if out="$(cd "$bomdir" && bash "$report" labels x/bommed.md 2>&1)" && grep -qF 'confirmed by a person' <<<"$out"; then
+  ok "report script: a concept whose file begins with a byte order mark is read, not dropped"
+else
+  err "report script dropped a BOM-prefixed concept: $out"
+fi
+rm -rf "$bomdir"
 
 # 20a. The whole report ranks the curator's queue, so the counts behind it
 #      are program's too: how many other concepts rely on each concept, read
