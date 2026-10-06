@@ -383,7 +383,7 @@ fi
 
 say ""
 say "Exercising knowledge-conventions.sh..."
-# Eight of the thirteen rules run through `uv run`, so without uv the script reports
+# Nine of the fourteen rules run through `uv run`, so without uv the script reports
 # none of them, and every expectation below fails saying only that it "failed
 # to report" something, never why. Name the cause once, up front: a job that
 # runs this contract installs uv (validate.yml and publish.yml both do).
@@ -638,6 +638,73 @@ else
       err "$page gives the no-Python schema URL but names no v$lokf_floor, the floor $templates/pyproject.toml sets - move the URL to the commit that tag names"
     fi
   done
+fi
+
+# 11c. Conventions rule 14 reads the commits after a pull request's base. One
+#      that records a person's confirmation may change what the concept says
+#      only when that person is also its author, as Correct now records them.
+#      A confirmation alone passes; one with an edit fails; Correct now
+#      passes. A merge passes when the other side holds the confirmation,
+#      after a librarian's edit there: read against its first parent alone
+#      it would look like an edit and a confirmation together. With no base
+#      the rule is not asked, and a base the clone lacks is said.
+say ""
+say "Exercising conventions rule 14..."
+if ! command -v uv >/dev/null 2>&1; then
+  err "uv is not on PATH, so conventions rule 14 cannot run - install uv (validate.yml and publish.yml do)"
+else
+  v14="$(mktemp -d)"; mkdir -p "$v14/k/x"
+  v14_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$v14"
+    -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+  "${v14_git[@]}" init -q
+  v14c() {  # <name> <generated.by> <generated.at> <verified block, or empty> <body>
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/%s\ntitle: %s\ngenerated:\n  by: %s\n  at: "%s"\n%s---\n\n# Overview\n\n%s\n' \
+      "$1" "$1" "$2" "$3" "$4" "$5" > "$v14/k/x/$1.md"
+  }
+  confirmed=$'verified:\n  - by: human:contract\n    at: "2026-09-04T00:00:00Z"\n'
+  for n in only edited corrected merged; do v14c "$n" process:ktl-librarian "2026-09-01T00:00:00Z" "" "What the librarian wrote."; done
+  "${v14_git[@]}" add -A && "${v14_git[@]}" commit -q -m 'the librarian derives four concepts'
+  v14base="$("${v14_git[@]}" rev-parse HEAD)"
+  "${v14_git[@]}" checkout -q -b elsewhere
+  v14c merged process:ktl-librarian "2026-09-03T00:00:00Z" "" "What the librarian wrote again."
+  "${v14_git[@]}" commit -q -am 'the librarian refreshes one concept'
+  v14c merged process:ktl-librarian "2026-09-03T00:00:00Z" "$confirmed" "What the librarian wrote again."
+  "${v14_git[@]}" commit -q -am 'a person confirms the refreshed text'
+  "${v14_git[@]}" checkout -q main
+  v14c only process:ktl-librarian "2026-09-01T00:00:00Z" "$confirmed" "What the librarian wrote."
+  "${v14_git[@]}" commit -q -am 'a person confirms, and changes nothing else'
+  v14c edited process:ktl-librarian "2026-09-01T00:00:00Z" "$confirmed" "What someone changed in the same commit."
+  "${v14_git[@]}" commit -q -am 'a person confirms, and an edit rides along'
+  v14c corrected human:contract "2026-09-04T00:00:00Z" "$confirmed" "What the person corrected."
+  "${v14_git[@]}" commit -q -am 'Correct now: the person edits and confirms'
+  "${v14_git[@]}" merge -q --no-ff --no-edit elsewhere
+  edited_commit="$("${v14_git[@]}" log --format=%h -n 1 --grep='an edit rides along')"
+  findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$v14/k" --since "$v14base" 2>&1 || true)"
+  if grep -qF "k/x/edited.md: commit $edited_commit records a confirmation by human:contract and changes what the concept says" <<<"$findings"; then
+    ok "conventions rule 14 reports a confirmation whose commit also changed the text"
+  else
+    err "conventions rule 14 did not report a confirmation made with an edit: $findings"
+  fi
+  for quiet in "only.md:a confirmation alone" "corrected.md:Correct now, where the person is the author" "merged.md:a merge whose other side holds the confirmation"; do
+    if grep -q "${quiet%%:*}" <<<"$findings"; then
+      err "conventions rule 14 reported ${quiet%%:*}, ${quiet#*:}: $findings"
+    else
+      ok "conventions rule 14 accepts ${quiet#*:}"
+    fi
+  done
+  if findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$v14/k" 2>&1)" && ! grep -q 'records a confirmation' <<<"$findings"; then
+    ok "conventions rule 14 is not asked without --since"
+  else
+    err "conventions script reported rule 14, or failed, with no base: $findings"
+  fi
+  if findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$v14/k" --since 0123456789abcdef 2>&1)"; then
+    err "conventions rule 14 passed a base the clone does not hold: $findings"
+  elif grep -q "rule 14: the base commit 0123456789abcdef is not in this clone's history" <<<"$findings"; then
+    ok "conventions rule 14 says when the clone lacks the base"
+  else
+    err "conventions rule 14 failed some other way on an unknown base: $findings"
+  fi
+  rm -rf "$v14"
 fi
 
 # 12. The preflight script every skill runs first must always end on its

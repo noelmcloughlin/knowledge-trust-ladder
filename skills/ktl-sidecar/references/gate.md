@@ -6,7 +6,7 @@ Its three jobs, in the order a pull request meets them:
 
 | Job | Runs when | Checks |
 | --- | --- | --- |
-| `validate` | every pull request touching `.lokf/**`, weekly, on demand | the schema, every relation target, and the thirteen conventions below |
+| `validate` | every pull request touching `.lokf/**`, weekly, on demand | the schema, every relation target, and the fourteen conventions below |
 | `provenance` | pull requests only | that each `human:` confirmation added, changed or removed is backed by that person's approval or signature |
 | `attestation` | only when `provenance` finds an unbacked confirmation, and only once enabled | that a listed reviewer clicked Approve |
 
@@ -17,13 +17,13 @@ It runs on every pull request touching `.lokf/**` (or the workflow itself), week
 It runs two checks:
 
 1. `uv run lokf validate --check-refs knowledge`: the schema check, and every typed relation must point at a concept in the bundle.
-2. `bash scripts/knowledge-conventions.sh knowledge`: the thirteen conventions below, which the toolkit cannot see.
+2. `bash scripts/knowledge-conventions.sh knowledge`: the fourteen conventions below, which the toolkit cannot see. On a pull request it adds `--since` and the pull request's base, which convention 14 reads.
 
-It checks out the full history, because conventions 6, 11 and 13 read each concept's commits. It installs the toolkit with `uv sync --locked`: what `.lokf/uv.lock` names, each file checked against its recorded hash. A lock that is missing or behind `.lokf/pyproject.toml` fails the job, so the gate never runs a toolkit nobody reviewed.
+It checks out the full history, because conventions 6, 11, 13 and 14 read each concept's commits. It installs the toolkit with `uv sync --locked`: what `.lokf/uv.lock` names, each file checked against its recorded hash. A lock that is missing or behind `.lokf/pyproject.toml` fails the job, so the gate never runs a toolkit nobody reviewed.
 
-### The thirteen conventions
+### The fourteen conventions
 
-`lokf validate` reads a concept body as an opaque string and never opens `log.md`. `knowledge-conventions.sh` checks the bundle against thirteen conventions the toolkit never sees. ktl-librarian's audit runs the same script before handing off.
+`lokf validate` reads a concept body as an opaque string and never opens `log.md`. `knowledge-conventions.sh` checks the bundle against fourteen conventions the toolkit never sees. ktl-librarian's audit runs the same script before handing off.
 
 1. `log.md` has one bare `## YYYY-MM-DD` heading per day, newest first (OKF §9, and how the KTL Curator plugin finds today).
 2. Every `at:` is quoted.
@@ -40,8 +40,9 @@ It checks out the full history, because conventions 6, 11 and 13 read each conce
 13. A concept labelled confirmed by a person still says what that person confirmed. The label holds while `generated.at` is no later than the confirmation, so an edit that leaves `generated` alone would keep it. After the commit that recorded the latest confirmation, a change to the body or to a frontmatter field must move `generated.at` past that confirmation, and the label then reads *edited since*.
 
     The open questions, KTL Registrar's `lokf:related` block, and the fields that record who checked what and when (`generated`, `verified`, `status`, `stale_after`, `timestamp` and `usage_window`) are not part of what a person confirms. `knowledge-apply.sh` restamps every change it writes. A change by any other hand moves `generated.at` itself, or the person confirms the concept again. Parsed values are compared, so a value written back with other quotes is no change. The newest commit that recorded the confirmation's time is the one compared with, so the rule can miss an edit but never flags a concept the person saw. Outside git it is skipped.
+14. A commit that records a person's confirmation changes the verdict, not what the concept says. Rule 13 compares with the commit that recorded the confirmation, so an edit made in that same commit would read as confirmed. With `--since`, each commit after the base is read against every parent, as the `provenance` job reads one. A commit that adds a `human:` event no parent holds may change the concept's claims only when `generated.by` names the same person. That is how *Correct now* records an edit the person made. A merge that brings in a confirmation made elsewhere adds nothing new. The `validate` job passes the pull request's base. Without `--since` the rule is skipped, because a squash merge on the default branch folds an edit and a later confirmation into one commit.
 
-Each of the first five, and the eleventh, has been broken by an agent that had it in prose, which is why it is a script. The twelfth was three copies kept equal by attention alone. The thirteenth relied on the pen alone to restamp, so an edit by any other hand left the trust label behind. The rest are there so that a pin, a duplicate, a file the script could not read or an event the gate could not fails loudly instead of passing unread.
+Each of the first five, and the eleventh, has been broken by an agent that had it in prose, which is why it is a script. The twelfth was three copies kept equal by attention alone. The thirteenth relied on the pen alone to restamp, so an edit by any other hand left the trust label behind. The fourteenth holds the curator's hand to the verdict, which only prose held before. The rest are there so that a pin, a duplicate, a file the script could not read or an event the gate could not fails loudly instead of passing unread.
 
 Rules 2, 3, 8 and 10 are house rules, stricter than OKF, which permits an unquoted datetime, a bare `verified` mapping, any file name and any YAML. The gate asks more so that a datetime reaches every consumer as one string, and an event is always appended to a list. It also asks that a name never collides on a case-insensitive host, and that an event reads the same to a line reader as to a parser. Every reader here still accepts a bare mapping, as OKF requires, so that half of rule 3 is style, not safety.
 
