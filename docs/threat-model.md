@@ -32,7 +32,7 @@ These are the measures the repositories take, and why. Each `SECURITY.md` says w
 
 ## Human attribution: `human:` is a claim, not a credential
 
-A `verified` event whose actor starts with `human:` says "a named person checked this concept against its source". Everything downstream depends on it: `ktl-curator`'s health line, `ktl-docent`'s answer footers, and the OKF trust tiers. Any writer can type one, and `lokf validate` accepts it, because a forged event is well-formed. The realistic threat is not an outside attacker but the ordinary shape of agent work: **another agent** driving `ktl-curator` and recording confirmations nobody gave. That agent may be an orchestrator, a subagent, a scheduled run, or a session where the "person" answering is really a tool result. An identity resolved from the local environment cannot tell that from a real session, because both arrive through the same channel.
+A `verified` event whose actor starts with `human:` says "a named person checked this concept against its source". Everything downstream depends on it: `ktl-curator`'s health line, `ktl-docent`'s answer footers, and the OKF trust tiers. `lokf validate` accepts a forged one, because it is well-formed. The realistic threat is not an outside attacker but the ordinary shape of agent work: **another agent** driving `ktl-curator` and recording confirmations nobody gave. That agent may be an orchestrator, a subagent, a scheduled run, or a session where the "person" answering is really a tool result. An identity resolved from the local environment cannot tell that from a real session, because both arrive through the same channel.
 
 Four measures answer it, in descending order of weight:
 

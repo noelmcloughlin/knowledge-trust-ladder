@@ -15,10 +15,10 @@ The two run the same loop and hold it together with different parts. WikiSkill p
 | The corpus | `wiki/`: pattern pages, `index.md`, an evolution log and `skill-impact.md`. Never reset, never rolled back | the bundle, `.lokf/knowledge/`: one Markdown concept per file, `index.md` and `log.md`. Never reset, and a person's record is never removed |
 | Its conventions | a maintainer prompt, a JSON output contract and exact-substring patch operations | [a LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml) with typed relations and trust fields, a JSON-LD context that makes the frontmatter a graph, and a conventions script for what the schema cannot say |
 | The maintainer | the wiki maintainer, a model that reads a bounded sample of traces and returns new pages, patches, the whole index and a log line | the librarian, a model that starts from a work list a program computed, reads the sources that moved and the readers' feedback, and returns operations in `patch.yaml` |
-| The pen | the harness, which applies the JSON and alone writes `skill-impact.md` | `knowledge-apply.sh`, the librarian's only way to write the bundle. It applies the operations, stamps `generated`, keeps each description equal to its two index bullets and files each handled question in the ledger. It refuses a `human:` actor, a rewrite of a person's text and the deletion of a confirmed concept. It compares each concept it writes with the file it read, so a person's events and notes come through unchanged |
+| The pen | the harness, which applies the JSON and alone writes `skill-impact.md` | `knowledge-apply.sh`, the librarian's only way to write the bundle. It applies the operations, stamps `generated`, keeps each description equal to its two index bullets and files each handled question in the ledger. It refuses an operation that would forge or change a person's record, as the [threat model](threat-model.md#repository-hardening) lists |
 | The consumer | the inference agent, which runs the tasks with the skills and without the wiki | the docent, which answers from the bundle, labels each concept's trust, writes nothing there and records a miss in `feedback.md` |
 | The gate | a validation score. A skill change stays only if the score rises | the registrar: `lokf validate` and `--check-refs` on every change and again in CI, the conventions script, and a provenance job that lets a `human:` confirmation be added or removed only with that person's approval or signature. A scheduled refresh can also carry a retrieval score |
-| The record | `skill-impact.md`: every proposal with its diff, score and verdict | `generated` and `verified` events, `log.md` and git. `knowledge-report.sh` computes the trust labels from them on every read, and they are never stored. A proposal a person turned down stays on the forge, as a pull request closed without merging, and the next scheduled run reads it there |
+| The record | `skill-impact.md`: every proposal with its diff, score and verdict | `generated` and `verified` events, `log.md` and git. `knowledge-report.sh` computes the trust labels from them on every read, and they are never stored. A declined proposal stays on the forge as a closed pull request |
 | The verdict | a number | a named person's: confirm, correct, send back or retire |
 | Pruning | none. The authors list it as a limitation | `stale_after`, `status: deprecated`, and the librarian's orphan sweep |
 
@@ -28,7 +28,7 @@ The paper holds the evidence for each finding. This section says what KTL does w
 
 **Persistence matters most.** In the paper's ablation, on one model across four benchmarks, the wiki is worth fifteen points on average, and it is kept even when a skill change is rolled back. The librarian follows each concept back to its source and fixes drift, rather than rewriting the bundle in bursts, and the pen refuses to delete a concept a person confirmed.
 
-The gate asks the person behind any confirmation a pull request removes, as it asks the one behind a confirmation it adds. A rewrite demotes the label to *edited since a person last confirmed it* and removes nothing a person recorded. The gate asks the same of every other writer: an edit to a confirmed concept that leaves `generated` behind fails conventions rule 13. `revision` on each `verified` event, proposed for lokf 0.9.0, will let a confirmation name the state of the source it rested on. Until then `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
+The gate asks the person behind any confirmation a pull request removes, as it asks the one behind a confirmation it adds. A rewrite, whoever makes it, demotes the label to *edited since a person last confirmed it* and removes nothing a person recorded ([threat model](threat-model.md#human-attribution-human-is-a-claim-not-a-credential)).
 
 **The consumer does not maintain the corpus.** Giving the inference agent the wiki during training lowered the final scores, and the authors read that as traces that said less about what the skills lacked. The docent reads the bundle and writes nothing in it. When it has to go to the repository it says so and records the miss, which is what the librarian learns from.
 
@@ -38,7 +38,7 @@ The paper keeps each rejected proposal in `skill-impact.md` so that it is not pr
 
 **The index entry is the retrieval interface.** The paper's maintainer prompt calls the index entries "the MOST IMPORTANT part of the wiki". The docent reads the root `index.md`, picks one to three concepts from the bullets, and only then opens anything. A bullet copies the concept's `description`, which must let a reader choose from the index alone, and the pen keeps the three copies equal. A miss on a question an existing concept already answers is a defect in that description, and the librarian fixes the description rather than adding a twin.
 
-**A recurring error is a signal.** The paper keeps every trace, and its wiki's log names the errors that came back, so a repeated error shows. The pen moves each feedback entry the librarian handles into `questions.md`, a ledger that only grows: the day, the concept that now answers it, and the reader's question. `knowledge-report.sh` counts it and names the concepts readers keep arriving at. A reader's words stay in that ledger, which programs read, and out of the log and the concepts, which the curator opens.
+**A recurring error is a signal.** The paper keeps every trace, and its wiki's log names the errors that came back, so a repeated error shows. The pen moves each feedback entry the librarian handles into `questions.md`, a ledger that only grows: the day, the concept that now answers it, and the reader's question. `knowledge-report.sh` counts it and names the concepts readers keep arriving at.
 
 **The maintainer's run is bounded.** The paper caps the traces a maintainer reads and the skill changes a proposer makes per iteration, and a program does the sampling. The librarian starts from a work list `knowledge-report.sh` computes: the concepts with a source whose last commit comes after the commit that recorded their `generated` stamp or their latest check. History orders the two, never a clock. A local source that has not moved is not read again. A run handles at most ten feedback entries, which the pen enforces. It takes the oldest first and says how many remain.
 
@@ -66,10 +66,10 @@ Both designs keep their record with programs: the paper has the harness write `s
 
 ## What the paper does not settle
 
-- Whether a schema helps. Its wiki has none.
+- Whether a schema helps.
 - Whether a model-maintained corpus is reproducible. Nothing is derived twice and compared.
 - Whether the knowledge is attributable. Its one program-written record is a log of proposals and scores, not of who stands behind a page.
-- How a person fits in. No person confirms anything there, and every verdict is a number. KTL's verdicts are a person's, and the gate ties each to that person. The paper is the better evidence for the loop, and this project for the record.
+- How a person fits in. No person confirms anything there. The paper is the better evidence for the loop, and this project for the record.
 
 ## Sources
 

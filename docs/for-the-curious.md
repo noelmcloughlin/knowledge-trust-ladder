@@ -6,7 +6,7 @@
 
 Three roles write to the bundle, each in one way only, and programs check every write.
 
-- **The librarian**, an agent, writes one file: `.lokf/patch.yaml`, a list of operations. `knowledge-apply.sh` applies it, and is called *the pen* because the librarian writes the bundle only through it. The pen writes each concept, stamps `generated` from the clock, keeps the two index bullets equal to the concept's `description`, and files the line in `log.md`. It refuses a `human:` actor, a rewrite of text a person wrote, and the deletion of a concept a person confirmed. On the scheduled run, the wrapper refuses a run in which the agent wrote any other file.
+- **The librarian**, an agent, writes one file: `.lokf/patch.yaml`, a list of operations. `knowledge-apply.sh` applies it, and is called *the pen* because the librarian writes the bundle only through it. The pen writes each concept, stamps `generated` from the clock, keeps the two index bullets equal to the concept's `description`, and files the line in `log.md`. It refuses an operation that would forge or change a person's record ([threat model](threat-model.md#repository-hardening)). On the scheduled run, the wrapper refuses a run in which the agent wrote any other file.
 - **The curator**, a named person, writes the verdicts through `ktl-curator` or the KTL Curator plugin. A verdict is a `verified` event in that person's name, or a change of `status` or review date, with one line in `log.md`.
 - **The docent**, an agent, writes nothing in the bundle. `knowledge-feedback.sh` records what a reader missed in `.lokf/feedback.md`, and the pen moves each entry the librarian handles into `.lokf/questions.md`.
 

@@ -43,7 +43,7 @@ The two fit without adaptation, for two reasons. A bundle is a folder of Markdow
 
 ## Where the bundle lives, host by host
 
-The skills install one layout everywhere: `.lokf/knowledge/` is the real folder, and `knowledge_bundle` beside it is a link, a junction on Windows, so that folder pickers, which hide dot-folders, have a name to open. Where the host's folder sits decides what a plugin can reach from the bundle's vault, and what syncs.
+The skills install the same layout on every host: the real folder `.lokf/knowledge/`, and the doorway beside it, a junction on Windows. Where the host's folder sits decides what a plugin can reach from the bundle's vault, and what syncs.
 
 - **A code repository.** The **librarian** derives the bundle from code and docs, and you check it in `knowledge_bundle` opened as a vault. Concepts cite sources that sit above that small vault, such as `src/…` and `docs/…`, so no plugin can open them from there. The KTL Curator plugin shows such a source as a path with a copy button and says it cannot open it.
 - **Your vault, kept in git.** Run the skills at the host, and the sidecar is installed beside your notes. `.lokf/` is a dot-folder your vault never indexes, and the doorway link resolves inside the vault, so Obsidian skips that too. Your main vault never sees the bundle, and you curate in a second vault opened through the doorway. One repository, not two: the bundle is kept with the notes it was derived from. Splitting it into a repository of its own is a later choice for a team, never a starting one.

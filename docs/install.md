@@ -1,8 +1,6 @@
 # Install
 
-Each of the four skills stands alone. The **sidecar** plus the **librarian** is enough to see the idea: the bundle gets built, everything in it marked a draft.
-
-Add the **curator** once there is a bundle worth trusting. Already have a healthy `.lokf/`? Skip the **sidecar**. The **docent** goes anywhere an agent only *reads* a bundle, this repository included. A fifth skill, `ktl-prose`, is an optional helper: it rewords what the **librarian** wrote, in plain English, before a person confirms it.
+This page gives every way to install the five skills, what each needs on the machine, and how to pin them to one release. [The README](../README.md#install) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
 
 > Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
 > `npx skills add` paths, so an existing install keeps working. The skills

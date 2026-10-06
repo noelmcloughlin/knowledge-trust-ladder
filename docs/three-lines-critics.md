@@ -63,13 +63,13 @@ The [three lines page](three-lines.md) places the roles, says what an auditor ca
 - Who confirms what, and how often, is a reviewed policy rather than a habit, the direction Green points.
 - The docent's evidence-first mode quotes the source before any answer that rests on an unconfirmed concept. It is off by default, because Buçinca found such designs cost goodwill.
 
-Once `revision` is released (proposed for lokf 0.9.0, and for OKF in [knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), a confirmation will also say which state of the source it rested on.
+Once `revision` is released ([What remains to do](three-lines.md#what-remains-to-do-and-who-does-it)), a confirmation will also say which state of the source it rested on.
 
 **Verdict: answered in part.** Left open:
 
 - Nothing shows that the person read the source. A signature proves who decided, and `revision` names what the skill fetched.
 - A page assembled afresh on every request appears changed on every re-check, which is why the skill prefers a server's ETag to a digest.
-- The evidence Green asks for, that oversight works, is third-line work KTL should not produce about itself. The curator's report hands over a random sample of confirmed concepts when the policy names a size.
+- The evidence Green asks for, that oversight works, is third-line work KTL should not produce about itself.
 
 ## The machine invents
 
@@ -99,7 +99,7 @@ Once `revision` is released (proposed for lokf 0.9.0, and for OKF in [knowledge-
 
 **The criticism.** Arndorfer and Minto's fourth weakness is an internal audit whose risk assessment is inadequate or subjective. Their remedy is a fourth line: external audit and supervisors.
 
-**What KTL does.** It provides the evidence a third line needs, and not the review, since assurance is independent only when it comes from someone other than the authors. A fourth line is the organisation's to add.
+**What KTL does.** It provides the evidence a third line needs, and not the review. A fourth line is the organisation's to add.
 
 **Verdict: not KTL's role.** An auditor skill for the third line is listed under [What remains to do](three-lines.md#what-remains-to-do-and-who-does-it).
 
@@ -107,11 +107,9 @@ Once `revision` is released (proposed for lokf 0.9.0, and for OKF in [knowledge-
 
 **The criticism.** Davies and Zhivitskaya find the model's origins opaque and its effectiveness untested. Schuett notes that "the model has been criticized and there is not much empirical evidence for its effectiveness", and concludes that within its limits it "can plausibly contribute to a reduction of risks from AI".
 
-**What KTL does.** It claims nothing about the model. KTL was not built to it; the [three lines page](three-lines.md) uses the model to answer three questions: who is accountable for a claim, what a machine checks, and what can be examined afterwards. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a random sample of confirmed concepts when the policy names a size.
+**What KTL does.** It claims nothing about the model, which KTL was not built to. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a random sample of confirmed concepts when the policy names a size.
 
 **Verdict: not KTL's role.**
-
-Every gap left open above is collected, by owner, under [What remains to do, and who does it](three-lines.md#what-remains-to-do-and-who-does-it).
 
 ## Sources
 
