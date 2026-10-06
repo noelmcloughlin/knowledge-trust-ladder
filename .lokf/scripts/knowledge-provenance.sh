@@ -152,13 +152,24 @@ human_events() {  # path -> events, reading the concept on stdin
     inev = 0; by = ""; at = ""; rev = "" }
   function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ",")
     for (i = 1; i <= n; i++) kv(parts[i]); emit() }
-  BEGIN { fm = 0; inv = 0; inev = 0; cid = ""; out = "" }
+  # A flow verified/generated may span lines - valid YAML that a block-only
+  # reader skips, which would let a forged confirmation past the gate.
+  # Accumulate from the opener to its closing bracket, then parse: a sequence
+  # into its events, a mapping as one event.
+  function flushflow(  b, n, items, i) { b = flowbuf
+    if (flowseq) { sub(/^\[/, "", b); sub(/\].*/, "", b) } else { sub(/^\{/, "", b); sub(/\}.*/, "", b) }
+    sub(/^[[:space:]]+/, "", b); sub(/[[:space:]]+$/, "", b)
+    if (b != "") { if (flowseq) { n = split(b, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]) } else flow(b) }
+    inflow = 0; flowbuf = "" }
+  BEGIN { fm = 0; inv = 0; inev = 0; inflow = 0; cid = ""; out = "" }
   NR == 1 { if ($0 == "---") { fm = 1; next } else exit }
+  inflow && $0 == "---" { flushflow(); exit }
+  inflow { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
   fm && $0 == "---" { emit(); exit }
   /^id:/ { cid = val($0) }
   /^(verified|generated):/ { emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated):[[:space:]]*/, "", rest)
-    if (rest ~ /^\{/) { flow(rest); inv = 0 }
-    else if (rest ~ /^\[/) { gsub(/[][]/, "", rest); n = split(rest, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
+    if (rest ~ /^\{/) { flowseq = 0; flowbuf = rest; inv = 0; if (index(rest, "}")) flushflow(); else inflow = 1 }
+    else if (rest ~ /^\[/) { flowseq = 1; flowbuf = rest; inv = 0; if (index(rest, "]")) flushflow(); else inflow = 1 }
     next }
   inv && /^[^[:space:]-]/ { emit(); inv = 0 }
   inv && /^[[:space:]]*-[[:space:]]*\{/ { rest = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", rest); flow(rest); next }

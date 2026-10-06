@@ -1098,6 +1098,13 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
     expect_pv "HEAD~1" 0 '^OK - 0 confirmation' "ignore an example event in a body code fence"
     printf -- '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: human:contract, at: "2026-09-17T00:00:00Z" }\n---\n' > "$k/gen.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'human generated, flow style, unsigned'
     expect_pv "HEAD~1" 1 'is unsigned' "read a flow-style human generated record as a claim"
+    # A flow verified/generated that spans lines is valid YAML every parser
+    # reads, so the gate must see the event too: a block-only reader skipped
+    # it and let an unsigned confirmation through.
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/mlflow\nverified: [\n  { by: human:contract, at: "2026-09-17T00:00:00Z" }\n]\n---\n' > "$k/mlflow.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'multi-line flow sequence, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "see a human event in a flow sequence that spans lines"
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/mlgen\ngenerated: {\n  by: human:contract,\n  at: "2026-09-17T00:00:00Z"\n}\n---\n' > "$k/mlgen.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'multi-line flow mapping, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "see a human generated record in a flow mapping that spans lines"
     # Names git would quote by default: a byte above 0x7f is read like any
     # other concept; a double quote is refused. Neither is silently dropped.
     confirmed contract > "$k/café.md" && pv_git add -A && pv_git commit -q -S -m 'utf-8 name, signed'
