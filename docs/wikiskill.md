@@ -1,7 +1,7 @@
 # WikiSkill's loop and Knowledge Trust Ladder
 
 > [!NOTE]
-> A reading of one paper against this design, for anyone deciding what Knowledge Trust Ladder (KTL) shares with WikiSkill and what it adds. The paper is quoted from its own text, and the measurements are its authors', not ours.
+> A reading of one paper against this design, for anyone deciding what Knowledge Trust Ladder (KTL) shares with WikiSkill and what it adds. The paper is quoted from its own text, and the measurements are its authors', not ours. WikiSkill is not SkillWiki, a 2026 paper on governing agent skills that [docs/skillwiki.md](skillwiki.md) reads.
 
 *WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution* (Tang et al., Google Research, August 2026) has an agent compile its own execution traces into a wiki and evolves the agent's skills from it. Knowledge Trust Ladder has an agent derive a bundle from a repository and has a person confirm it. Both take their shape from [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): immutable sources, a corpus a model writes, an index a reader opens first, a log, and a conventions file the gist calls a schema.
 

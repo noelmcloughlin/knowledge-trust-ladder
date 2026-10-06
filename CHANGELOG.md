@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **Each skill's page has a word budget.** Contract check 10a holds every `SKILL.md` to one, set just above the page's size. An agent loads the whole page when the skill starts, and the Agent Skills specification recommends under 5,000 tokens for it. ktl-librarian's page, halved in 0.32.0, had taken back 328 words within two days. An edit that adds words to a page now moves as many into that skill's `references/`, and `docs/repository-layout.md` names the check where it gave token estimates.
+- **The curator's queue comes from the script.** `knowledge-report.sh` reads every typed relation, in each spelling the format allows, and resolves its target as the KTL Curator plugin does. Its whole report prints how many other concepts rely on each concept, counting each citing concept once. It also prints the review dates due within 30 days, each confirmed concept derived from one edited after that confirmation, and *Worth ten minutes today*, ranked as `references/trust-fields.md` says. ktl-curator quotes that queue, where it used to count relations and sort them itself. Check 20a covers each spelling, a self-reference, a retired concept and a concept with no `id`.
+- **A retired concept names what replaced it.** ktl-curator's *Retire* asks what replaced the concept, and its `**Deprecation**` line in `log.md` links the successor after "replaced by". `knowledge-report.sh labels` then reads *retired, replaced by* that path, from the newest such line, and only for a concept the bundle holds. ktl-docent, and its Microsoft 365 form, open the successor before falling back to the repository. LOKF has no typed relation for a successor yet, so the log holds the link, and [nicholsn/lokf#112](https://github.com/nicholsn/lokf/issues/112) asks for one.
+- **A reader's disagreement shows on the concept.** `knowledge-feedback.sh --concept <path>` names the concept a Disagreement disputes, right after the kind. It accepts the path only with a Disagreement, only in the bundle's lowercase spelling, and only for a concept file that exists. Until the librarian handles the entry, `knowledge-report.sh labels` adds *a reader disputed this on* that day, and the whole report lists the concept. The report reads the path and never the entry's text. ktl-docent passes the path whenever a Disagreement is about one concept.
+- **Conventions rule 14: a commit that records a person's confirmation changes the verdict, not what the concept says.** Rule 13 compares a confirmed concept with the commit that recorded the confirmation, so an edit made in that same commit read as confirmed, and only the person reviewing the pull request could catch it. With `--since <commit>`, `knowledge-conventions.sh` reads each commit after it against every parent, as the `provenance` job does. A commit that adds a person's event no parent holds may change the concept's claims only when `generated.by` names that person, the shape of *Correct now*. The registrar's `validate` job passes the pull request's base, and a scheduled run passes none, since a squash merge folds an edit and a later confirmation into one commit. Check 11c covers each case, a merge among them.
+- **`docs/skillwiki.md` reads the SkillWiki paper (Huang et al., 2026) and its code against this design,** part by part: what KTL does with it, where the two designs differ, and what the paper does not settle. `docs/wikiskill.md` names the two papers apart, and the README credits SkillWiki.
+
+### Fixed
+
+- **ktl-curator's two pages ranked its queue differently.** `SKILL.md` put a confirmed concept whose source moved in the first group, and `references/trust-fields.md` left that case out. Both now give the order the script applies. The SPARQL query for the most relied-upon concepts counts each citing concept once, and never a concept for itself.
+
 ## [0.35.0] - 2026-10-06
 
 ### Changed

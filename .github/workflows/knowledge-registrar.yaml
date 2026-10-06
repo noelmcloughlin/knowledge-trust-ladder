@@ -102,9 +102,14 @@ jobs:
       # agent wrapper. Those are one ISO-date heading per day, quoted
       # timestamps, `verified` as a list with one librarian event, and open
       # questions in the shape the curator reads. Each of them has been broken
-      # by an agent that had the rule in prose.
+      # by an agent that had the rule in prose. On a pull request, rule 14
+      # reads each of its commits too: one that records a person's
+      # confirmation changes only the verdict. The base enters through env:,
+      # never interpolated, and a scheduled run has none, so it skips rule 14.
       - name: Check the conventions lokf validate cannot see
-        run: bash scripts/knowledge-conventions.sh knowledge
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: bash scripts/knowledge-conventions.sh knowledge ${BASE_SHA:+--since "$BASE_SHA"}
         working-directory: .lokf
 
   provenance:

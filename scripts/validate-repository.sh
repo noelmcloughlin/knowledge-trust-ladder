@@ -295,6 +295,39 @@ for spec in "CONTRIBUTING.md:1000:a checklist" "SECURITY.md:900:a policy"; do
   fi
 done
 
+# 10a. Each SKILL.md has a word budget too. An agent loads the whole page
+#      when the skill starts, and the Agent Skills specification recommends
+#      under 5,000 tokens for it. The detail a step needs goes in
+#      references/, which an agent opens only when a step sends it there.
+#      ktl-librarian's page was halved in #91, from 7,458 words to 3,664, and
+#      three commits added 328 words back within two days. Each budget sits
+#      just above the page's size when this check was added, so an edit that
+#      adds words moves as many into references/. A skill with no budget
+#      fails, so a new skill starts with one.
+say ""
+say "Checking each SKILL.md stays within its word budget..."
+declare -A skill_budget=(
+  [skills/ktl-curator]=2700
+  [skills/ktl-docent]=2200
+  [skills/ktl-librarian]=4000
+  [skills/ktl-prose]=2350
+  [skills/ktl-sidecar]=3600
+)
+for dir in "${expected_dirs[@]}"; do
+  file="$dir/SKILL.md"
+  budget="${skill_budget[$dir]:-}"
+  if [[ -z "$budget" ]]; then
+    err "$file has no word budget in check 10a - give it one there"
+    continue
+  fi
+  words="$(wc -w < "$file")"
+  if (( words <= budget )); then
+    ok "$file is $words words (budget $budget)"
+  else
+    err "$file is $words words; the budget is $budget - an agent loads the whole page when the skill starts, so move the detail a step needs into $dir/references/ and link to it"
+  fi
+done
+
 # 11. This repository runs its own sidecar from the templates, and CI lints
 #     the copies under .github/ and .lokf/scripts/ rather than the templates
 #     themselves (actionlint is pointed at both, ShellCheck scans the tree).
@@ -350,7 +383,7 @@ fi
 
 say ""
 say "Exercising knowledge-conventions.sh..."
-# Eight of the thirteen rules run through `uv run`, so without uv the script reports
+# Nine of the fourteen rules run through `uv run`, so without uv the script reports
 # none of them, and every expectation below fails saying only that it "failed
 # to report" something, never why. Name the cause once, up front: a job that
 # runs this contract installs uv (validate.yml and publish.yml both do).
@@ -607,6 +640,73 @@ else
   done
 fi
 
+# 11c. Conventions rule 14 reads the commits after a pull request's base. One
+#      that records a person's confirmation may change what the concept says
+#      only when that person is also its author, as Correct now records them.
+#      A confirmation alone passes; one with an edit fails; Correct now
+#      passes. A merge passes when the other side holds the confirmation,
+#      after a librarian's edit there: read against its first parent alone
+#      it would look like an edit and a confirmation together. With no base
+#      the rule is not asked, and a base the clone lacks is said.
+say ""
+say "Exercising conventions rule 14..."
+if ! command -v uv >/dev/null 2>&1; then
+  err "uv is not on PATH, so conventions rule 14 cannot run - install uv (validate.yml and publish.yml do)"
+else
+  v14="$(mktemp -d)"; mkdir -p "$v14/k/x"
+  v14_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$v14"
+    -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+  "${v14_git[@]}" init -q
+  v14c() {  # <name> <generated.by> <generated.at> <verified block, or empty> <body>
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/%s\ntitle: %s\ngenerated:\n  by: %s\n  at: "%s"\n%s---\n\n# Overview\n\n%s\n' \
+      "$1" "$1" "$2" "$3" "$4" "$5" > "$v14/k/x/$1.md"
+  }
+  confirmed=$'verified:\n  - by: human:contract\n    at: "2026-09-04T00:00:00Z"\n'
+  for n in only edited corrected merged; do v14c "$n" process:ktl-librarian "2026-09-01T00:00:00Z" "" "What the librarian wrote."; done
+  "${v14_git[@]}" add -A && "${v14_git[@]}" commit -q -m 'the librarian derives four concepts'
+  v14base="$("${v14_git[@]}" rev-parse HEAD)"
+  "${v14_git[@]}" checkout -q -b elsewhere
+  v14c merged process:ktl-librarian "2026-09-03T00:00:00Z" "" "What the librarian wrote again."
+  "${v14_git[@]}" commit -q -am 'the librarian refreshes one concept'
+  v14c merged process:ktl-librarian "2026-09-03T00:00:00Z" "$confirmed" "What the librarian wrote again."
+  "${v14_git[@]}" commit -q -am 'a person confirms the refreshed text'
+  "${v14_git[@]}" checkout -q main
+  v14c only process:ktl-librarian "2026-09-01T00:00:00Z" "$confirmed" "What the librarian wrote."
+  "${v14_git[@]}" commit -q -am 'a person confirms, and changes nothing else'
+  v14c edited process:ktl-librarian "2026-09-01T00:00:00Z" "$confirmed" "What someone changed in the same commit."
+  "${v14_git[@]}" commit -q -am 'a person confirms, and an edit rides along'
+  v14c corrected human:contract "2026-09-04T00:00:00Z" "$confirmed" "What the person corrected."
+  "${v14_git[@]}" commit -q -am 'Correct now: the person edits and confirms'
+  "${v14_git[@]}" merge -q --no-ff --no-edit elsewhere
+  edited_commit="$("${v14_git[@]}" log --format=%h -n 1 --grep='an edit rides along')"
+  findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$v14/k" --since "$v14base" 2>&1 || true)"
+  if grep -qF "k/x/edited.md: commit $edited_commit records a confirmation by human:contract and changes what the concept says" <<<"$findings"; then
+    ok "conventions rule 14 reports a confirmation whose commit also changed the text"
+  else
+    err "conventions rule 14 did not report a confirmation made with an edit: $findings"
+  fi
+  for quiet in "only.md:a confirmation alone" "corrected.md:Correct now, where the person is the author" "merged.md:a merge whose other side holds the confirmation"; do
+    if grep -q "${quiet%%:*}" <<<"$findings"; then
+      err "conventions rule 14 reported ${quiet%%:*}, ${quiet#*:}: $findings"
+    else
+      ok "conventions rule 14 accepts ${quiet#*:}"
+    fi
+  done
+  if findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$v14/k" 2>&1)" && ! grep -q 'records a confirmation' <<<"$findings"; then
+    ok "conventions rule 14 is not asked without --since"
+  else
+    err "conventions script reported rule 14, or failed, with no base: $findings"
+  fi
+  if findings="$(bash "$templates/scripts/knowledge-conventions.sh" "$v14/k" --since 0123456789abcdef 2>&1)"; then
+    err "conventions rule 14 passed a base the clone does not hold: $findings"
+  elif grep -q "rule 14: the base commit 0123456789abcdef is not in this clone's history" <<<"$findings"; then
+    ok "conventions rule 14 says when the clone lacks the base"
+  else
+    err "conventions rule 14 failed some other way on an unknown base: $findings"
+  fi
+  rm -rf "$v14"
+fi
+
 # 12. The preflight script every skill runs first must always end on its
 #     summary line and exit 0. That holds on this repository, and on a bare
 #     directory with no bundle, no git and no skills, where every section has
@@ -725,6 +825,8 @@ done
 #        - an attribution shaped as both provenance gates shape a login, or
 #          none at all;
 #        - one line per entry, whatever it is handed;
+#        - a concept named only on a Disagreement, only in the bundle's own
+#          spelling, and only one the bundle holds;
 #        - not a word of what is already in the file on its own output;
 #        - a refusal that leaves the file exactly as it was;
 #        - a bundle told apart from no bundle, a read-only one, and one
@@ -870,6 +972,25 @@ else
     err "knowledge-feedback.sh misreported a read-only bundle (exit $rc): $out"
   fi
 fi
+mkdir -p "$fb/.lokf/knowledge/x" && printf -- '---\ntype: Service\ntitle: One\n---\n' > "$fb/.lokf/knowledge/x/one.md"
+# shellcheck disable=SC2016 # the backticks are Markdown code spans in the entry, not commands
+if out="$(bash "$feedback" --root "$fb" --concept x/one.md Disagreement 'one is disputed' 2>&1)" \
+   && [[ "$(grep -m1 '^- \*\*' "$fbfile")" == '- **Disagreement** (on `x/one.md`) - one is disputed - docent' ]]; then
+  ok "knowledge-feedback.sh names the disputed concept right after the kind"
+else
+  err "knowledge-feedback.sh did not record a Disagreement on a concept: $out"
+fi
+before="$(cat "$fbfile")"
+for bad in "--concept ../one.md Disagreement" "--concept X/One.md Disagreement" "--concept x/none.md Disagreement" "--concept x/one.md Miss" "--concept index.md Disagreement"; do
+  # shellcheck disable=SC2086 # each case is an option, its value and a kind, split on purpose
+  if out="$(bash "$feedback" --root "$fb" $bad 'refused' 2>&1)"; then
+    err "knowledge-feedback.sh accepted $bad: $out"
+  elif [[ "$(cat "$fbfile")" == "$before" ]]; then
+    ok "knowledge-feedback.sh refuses $bad and leaves the file as it was"
+  else
+    err "knowledge-feedback.sh refused $bad but changed the file"
+  fi
+done
 leftover=""
 for f in "$fb/.lokf"/* "$fb/.lokf"/.[!.]*; do
   [[ -e "$f" ]] || continue
@@ -1783,6 +1904,14 @@ if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -qxF -- "- $kday
 else
   err "the ledger did not grow as expected: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
 fi
+# shellcheck disable=SC2016 # the backticks are Markdown code spans in the entry, not commands
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-05' '' '- **Disagreement** (on `playbooks/new.md`) - it says a third thing. - docent' > "$ka/.lokf/feedback.md"
+printf '%s\n' 'ops:' "  - {op: patch, path: playbooks/new.md, edits: [{append: {content: fixed again}}], log: fixed, from_feedback: '- **Disagreement** (on \`playbooks/new.md\`) - it says a third thing. - docent'}" > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && [[ "$(grep -c '^- ' "$ka/.lokf/questions.md")" == 3 ]] && ! grep -q '^- \*\*' "$ka/.lokf/feedback.md"; then
+  ok "the pen handles a Disagreement that names its concept, and files it in the ledger"
+else
+  err "the pen did not handle a Disagreement that names its concept: $(tr '\n' '|' < "$ka/.lokf/questions.md" 2>/dev/null)"
+fi
 # A person's record is the same after a patch as before, whatever the
 # operations were. The pen compares each concept it is about to write with the
 # file it read. So these are refused, though each operation is one it allows:
@@ -2290,6 +2419,77 @@ else
   err "report script quiet: a bundle with no history failed some other way: $out"
 fi
 rm -rf "$kq" "$nogit"
+
+# 20a. The whole report ranks the curator's queue, so the counts behind it
+#      are program's too: how many other concepts rely on each concept, read
+#      from every spelling of a typed relation, each citing concept once and
+#      never a concept for itself; a review date due within 30 days; a
+#      confirmed concept derived from one edited after that confirmation; and
+#      the five concepts worth ten minutes today, in trust-fields.md's order.
+#      A retired concept's label names its successor from the newest
+#      **Deprecation** line in log.md, and only one the bundle holds. A
+#      waiting Disagreement that names its concept right after the kind
+#      marks that concept, from its newest day; a name anywhere else in an
+#      entry, on a Miss, or for no concept the bundle holds marks nothing.
+say ""
+say "Exercising the curator's queue in knowledge-report.sh..."
+kz="$(mktemp -d)"; kzk="$kz/.lokf/knowledge"; mkdir -p "$kzk/x" "$kz/src"
+kz_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$kz"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${kz_git[@]}" init -q
+soon="$(date -u -d '+10 days' +%Y-%m-%d)"; later="$(date -u -d '+40 days' +%Y-%m-%d)"
+printf 'c\n' > "$kz/src/c.md"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$kzk/index.md"
+printf '# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n' > "$kzk/log.md"
+# shellcheck disable=SC2016 # the backticks are Markdown code spans in the entries, not commands
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-04' '' '- **Disagreement** (on `x/hub.md`) - newer - docent' '' '## 2026-03-01' '' \
+  '- **Disagreement** (on `x/hub.md`) - older - docent' '- **Disagreement** - a reader wrote (on `x/a.md`) - docent' \
+  '- **Disagreement** (on `x/nowhere.md`) - gone - docent' '- **Miss** (on `x/e.md`) - a miss - docent' > "$kz/.lokf/feedback.md"
+zc() { printf -- '---\ntype: %s\n%b---\n%b' "$2" "$3" "${4:-}" > "$kzk/x/$1.md"; }
+zc hub Service "id: https://acme.example/knowledge/x/hub\ntitle: Hub\ngenerated:\n  by: process:ktl-librarian\n  at: \"2026-01-01T00:00:00Z\"\nverified:\n- by: human:ada\n  at: \"2026-01-02T10:00:00Z\"\nstale_after: $soon\n"
+zc a Service 'id: https://acme.example/knowledge/x/a\ntitle: A\ndependsOn:\n- https://acme.example/knowledge/x/hub\nreferences: [https://acme.example/knowledge/x/hub#part]\n'
+zc b Playbook 'id: https://acme.example/knowledge/x/b\ntitle: B\nstatus: draft\nabout: x/hub.md\n' '\n## Open questions\n\n- 2026-01-05, process:ktl-librarian: which hub?\n'
+zc c Explanation 'id: https://acme.example/knowledge/x/c\ntitle: C\nresource: src/c.md\nrelations:\n- predicate: derivedFrom\n  target: https://acme.example/knowledge/x/origin\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n- by: human:ada\n  at: "2026-01-03T00:00:00Z"\n'
+zc origin Reference 'id: https://acme.example/knowledge/x/origin\ntitle: Origin\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-05T00:00:00Z"\nverified:\n- by: process:ktl-librarian\n  at: "2026-01-05T00:00:00Z"\n'
+zc d Service 'id: https://acme.example/knowledge/x/d\ntitle: D\nrelations:\n- {predicate: dependsOn, target: hub.md}\nverified: [{ by: process:ktl-librarian, at: "2026-01-04T00:00:00Z" }]\n'
+zc self Service "id: https://acme.example/knowledge/x/self\ntitle: Self\nreferences:\n- https://acme.example/knowledge/x/self\nstale_after: $later\nverified:\n- by: process:ktl-librarian\n  at: \"2026-01-04T00:00:00Z\"\n"
+zc old Service 'id: https://acme.example/knowledge/x/old\ntitle: Old\nstatus: deprecated\ndependsOn:\n- https://acme.example/knowledge/x/hub\n'
+zc lost Service 'id: https://acme.example/knowledge/x/lost\ntitle: Lost\nstatus: deprecated\n'
+zc no-id Service 'title: No id\n'
+zc e Service 'id: https://acme.example/knowledge/x/e\ntitle: E\ndependsOn: https://acme.example/knowledge/x/no-id\n'
+zc stale Policy 'id: https://acme.example/knowledge/x/stale\ntitle: Stale\nresource: src/c.md\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\nstale_after: 2020-01-01\n'
+"${kz_git[@]}" add -A && "${kz_git[@]}" commit -q -m 'the queue fixture'
+out="$(cd "$kz" && bash "$report" 2>&1)"
+for want in 'Worth ten minutes today: 5 of 8 waiting' \
+            '1. Stale (Policy) - past its review date (2020-01-01) - src/c.md' \
+            '2. B (Playbook) - still a draft, with an open question - no source recorded' \
+            '3. No id (Service) - nobody has checked this yet; 1 other concept relies on this - no source recorded' \
+            '4. A (Service) - nobody has checked this yet - no source recorded' \
+            '5. E (Service) - nobody has checked this yet - no source recorded' \
+            "Due soon, a review date within 30 days: 1" "- x/hub.md ($soon)" \
+            'Confirmed by a person, and derived from a concept edited after that confirmation: 1' \
+            '- x/c.md: x/origin.md (edited 2026-01-05, confirmed 2026-01-03)' \
+            'Relied on by other concepts: 3' '- x/hub.md (3)' '- x/origin.md (1)' '- x/no-id.md (1)' \
+            'Disputed by a reader, waiting for the librarian: 1' '- x/hub.md (2026-03-04)'; do
+  if grep -qxF -- "$want" <<<"$out"; then ok "report script queue: $want"; else err "report script's queue or lists lack '$want': $out"; fi
+done
+if grep -qF -- '- x/self.md (' <<<"$out" || grep -qF -- '- x/old.md (' <<<"$out" || grep -qF -- "- x/self.md ($later)" <<<"$out"; then
+  err "report script counted a concept for itself, counted a retired one, or called a review date 40 days off due soon: $out"
+else
+  ok "report script: a concept never relies on itself, a retired one counts for nothing, and a date 40 days off is not due soon"
+fi
+if out="$(cd "$kz" && bash "$report" labels x/c.md 2>&1)" && [[ "$out" == "- C (x/c.md) - confirmed by a person, 2026-01-03" ]]; then
+  ok "report script: labels keep the docent's footer shape, with no count or queue in it"
+else
+  err "report script's labels changed shape: $out"
+fi
+out="$(cd "$kz" && bash "$report" labels x/old.md x/lost.md x/hub.md x/a.md x/e.md 2>&1)"
+for want in '- Old (x/old.md) - retired, replaced by x/hub.md' '- Lost (x/lost.md) - retired' \
+            '- Hub (x/hub.md) - confirmed by a person, 2026-01-02, a reader disputed this on 2026-03-04' \
+            '- A (x/a.md) - nobody has checked this yet' '- E (x/e.md) - nobody has checked this yet'; do
+  if grep -qxF -- "$want" <<<"$out"; then ok "report script label: $want"; else err "report script did not print '$want': $out"; fi
+done
+rm -rf "$kz"
 
 # 21. No tracked file holds a character a reader cannot see. That is a
 #     control character other than a tab or a line's closing carriage return,
