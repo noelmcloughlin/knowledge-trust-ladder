@@ -562,12 +562,14 @@ class Kept:
         fenced: list[str] = []
         fence_at = 0
         related = questions = False
+        block_is_list = block_is_table = False
 
         def flush() -> None:
-            nonlocal block
+            nonlocal block, block_is_list, block_is_table
             if block:
                 self._tokens(block)
             block = None
+            block_is_list = block_is_table = False
 
         for number, line in doc.numbered_body():
             if fence:
@@ -608,16 +610,26 @@ class Kept:
             if HEADING.match(content):
                 flush()
                 self.headings.append((number, " ".join(content.split())))
-            if LIST_MARK.match(content):
+            # A list, ordered or table marker counts only where it opens a
+            # block or continues one of its own kind. On a wrapped prose line it
+            # is text, and a number that starts such a line is a fact, not an
+            # item number - so re-laying a paragraph out does not seem to change
+            # a list or lose a year.
+            at_start = block is None
+            is_item = bool(LIST_MARK.match(content)) and (at_start or block_is_list)
+            if is_item:
                 self.list_items += 1
-            if TABLE_ROW.match(content):
+            is_row = False
+            if (at_start or block_is_table) and TABLE_ROW.match(content):
                 row = [cell for cell in re.split(r"(?<!\\)\|", content) if cell.strip()]
                 if not all(RULE_CELL.match(cell) for cell in row):
                     self.table_rows += 1
-            # The number of an ordered list item is a marker, not a fact.
-            line = ORDERED_MARK.sub(lambda found: found.group(1) + " " * len(found.group(2)) + found.group(3), line)
+                is_row = True
+            if is_item:  # the number of an ordered list item is a marker, not a fact
+                line = ORDERED_MARK.sub(lambda found: found.group(1) + " " * len(found.group(2)) + found.group(3), line)
             if block is None:
                 block = Block()
+                block_is_list, block_is_table = is_item, is_row
             block.add(number, line)
             if HEADING.match(content):
                 flush()

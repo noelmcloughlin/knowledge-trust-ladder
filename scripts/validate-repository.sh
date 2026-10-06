@@ -1597,6 +1597,14 @@ expect_prose 1 "digits:" "a changed number is reported" -- --before "$pc/p-old.m
 expect_prose 1 "link:" "a changed link target is reported" -- --before "$pc/p-old.md" "$pc/p-link.md"
 expect_prose 1 "related:" "a changed wikilink in the lokf:related region is reported" -- --before "$pc/p-old.md" "$pc/p-rel.md"
 expect_prose 1 "frontmatter:" "a changed frontmatter value is reported" -- --before "$pc/p-old.md" "$pc/p-fm.md"
+# A number that begins a wrapped line is a fact, not a list number, so a change
+# to it is caught; and laying a wrapped paragraph out on one line, which the
+# bundle layout asks for, changes no fact.
+printf '# A page\n\nThe first release came out in\n2024, and the next in 2025.\n' > "$pc/w-old.md"
+printf '# A page\n\nThe first release came out in\n2023, and the next in 2025.\n' > "$pc/w-new.md"
+printf '# A page\n\nThe first release came out in 2024, and the next in 2025.\n' > "$pc/w-flat.md"
+expect_prose 1 'digits: the number "2024" is gone' "a number that begins a wrapped line is a fact, and a change to it is caught" -- --before "$pc/w-old.md" "$pc/w-new.md"
+expect_prose 0 "OK" "laying a wrapped paragraph out on one line changes no fact" -- --before "$pc/w-old.md" "$pc/w-flat.md"
 # A program counts the words before and after, so the hand-off quotes them and
 # no model works them out. What digits cannot show is a note, never a refusal:
 # a day or a month written out, and a text cut by more than a fifth, which a
