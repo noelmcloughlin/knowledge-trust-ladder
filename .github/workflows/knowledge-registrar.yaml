@@ -104,12 +104,19 @@ jobs:
       # questions in the shape the curator reads. Each of them has been broken
       # by an agent that had the rule in prose. On a pull request, rule 14
       # reads each of its commits too: one that records a person's
-      # confirmation changes only the verdict. The base enters through env:,
-      # never interpolated, and a scheduled run has none, so it skips rule 14.
+      # confirmation changes only the verdict. The base is the merge-base of
+      # the pull request, as the provenance job uses, so a commit the base
+      # branch gained after the pull request opened is not read as the pull
+      # request's. The SHAs enter through env:, never interpolated, and a
+      # scheduled run has none, so it skips rule 14.
       - name: Check the conventions lokf validate cannot see
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: bash scripts/knowledge-conventions.sh knowledge ${BASE_SHA:+--since "$BASE_SHA"}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          since=""
+          if [ -n "$BASE_SHA" ]; then since="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"; fi
+          bash scripts/knowledge-conventions.sh knowledge ${since:+--since "$since"}
         working-directory: .lokf
 
   provenance:

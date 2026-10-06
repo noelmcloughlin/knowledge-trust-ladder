@@ -981,16 +981,28 @@ else
   err "knowledge-feedback.sh did not record a Disagreement on a concept: $out"
 fi
 before="$(cat "$fbfile")"
-for bad in "--concept ../one.md Disagreement" "--concept X/One.md Disagreement" "--concept x/none.md Disagreement" "--concept x/one.md Miss" "--concept index.md Disagreement"; do
+# Each bad input is refused for its own reason, not merely refused: the shape
+# check must fire on a bad path even where a file at that path would also be
+# missing. Asserting only a non-zero exit left the check green when the shape
+# rules were deleted, since the missing-file check refused the same inputs.
+# Pairs are input|the reason its own check gives.
+while IFS='|' read -r bad why; do
   # shellcheck disable=SC2086 # each case is an option, its value and a kind, split on purpose
   if out="$(bash "$feedback" --root "$fb" $bad 'refused' 2>&1)"; then
     err "knowledge-feedback.sh accepted $bad: $out"
-  elif [[ "$(cat "$fbfile")" == "$before" ]]; then
-    ok "knowledge-feedback.sh refuses $bad and leaves the file as it was"
+  elif grep -qF -- "$why" <<<"$out" && [[ "$(cat "$fbfile")" == "$before" ]]; then
+    ok "knowledge-feedback.sh refuses $bad for the right reason, and leaves the file as it was"
   else
-    err "knowledge-feedback.sh refused $bad but changed the file"
+    err "knowledge-feedback.sh refused $bad for the wrong reason or changed the file: $out"
   fi
-done
+done <<'CASES'
+--concept ../one.md Disagreement|no '..' or '.' segment
+--concept X/One.md Disagreement|in lowercase
+--concept x/one/./x.md Disagreement|no '..' or '.' segment
+--concept x/none.md Disagreement|names no concept in this bundle
+--concept x/one.md Miss|goes with a Disagreement only
+--concept index.md Disagreement|not the bundle's
+CASES
 leftover=""
 for f in "$fb/.lokf"/* "$fb/.lokf"/.[!.]*; do
   [[ -e "$f" ]] || continue
