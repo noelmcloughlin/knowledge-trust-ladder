@@ -124,6 +124,7 @@ Add the curator once there is a bundle worth trusting. The docent goes anywhere 
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
 | WikiSkill, a 2026 paper on agent-maintained wikis, set beside this design part by part | [docs/wikiskill.md](docs/wikiskill.md) |
 | SkillWiki, a 2026 paper on governing agent skills, set beside this design part by part | [docs/skillwiki.md](docs/skillwiki.md) |
+| Whether KTL helps a repository whose content is Agent Skills, read through WikiSkill and SkillWiki | [docs/skills-repositories.md](docs/skills-repositories.md) |
 | Versioning: all five skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [docs/releasing.md](docs/releasing.md), [CHANGELOG.md](CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](CONTRIBUTING.md), [docs/repository-layout.md](docs/repository-layout.md), [SECURITY.md](SECURITY.md) |
 

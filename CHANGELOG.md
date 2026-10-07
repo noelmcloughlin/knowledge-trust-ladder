@@ -4,6 +4,15 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **ktl-librarian has a page for a host whose content is Agent Skills.** `references/agent-skills.md` says which skills are the host's own, and leaves out installed and vendored ones. It asks a person about a skill under `.claude/skills/` that shows no sign of another home, and gives a skill template no concept of its own. It says what a skill's concept holds, while the procedure stays in `SKILL.md`. A skill the repository deprecates stays a fact in the concept, apart from the curator's `status: deprecated`. A miss that a skill's own description should have prevented goes to the reviewer in a hand-off line, since only a person changes that description. The first run's sweep table names Agent Skills folders.
+- **`docs/skills-repositories.md` says whether KTL helps a repository whose content is Agent Skills,** read through WikiSkill and SkillWiki. It reports this repository's own evidence, and a run of the sidecar, the librarian and the docent on `anthropics/skills` at commit `683bc88`. It ends with the designs that remain, among them a record of skill runs and a trigger test.
+
+### Changed
+
+- **The threat model names a skills repository.** There every source the librarian reads is a set of instructions for an agent. `docs/threat-model.md` says which guards still hold, and that only the person reviewing a pull request catches an instruction that shapes what a concept says.
+
 ## [0.36.1] - 2026-10-07
 
 ### Security
