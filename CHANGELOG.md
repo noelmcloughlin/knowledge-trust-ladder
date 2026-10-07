@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.36.1] - 2026-10-07
+
 ### Security
 
 - **The provenance gate reads a `verified` or `generated` event that spans lines, so a forged confirmation cannot hide in a multi-line flow layout.** The hand-written readers in `knowledge-provenance.sh` and `knowledge-registrar.yaml`'s `provenance` job parsed a flow event only on one line. A `verified: [` or a `generated: {` continued on the next line is valid YAML every parser reads as a confirmation, but the gate saw no event and let an unsigned `human:` actor through, where `knowledge-report.sh` and the Obsidian plugins trusted it. Both readers now accumulate a flow event to its closing bracket. Checks 13a and 22 cover it.
