@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-10-07
+
 ### Added
 
 - **ktl-librarian has a page for a host whose content is Agent Skills.** `references/agent-skills.md` says which skills are the host's own, and leaves out installed and vendored ones. It asks a person about a skill under `.claude/skills/` that shows no sign of another home, and gives a skill template no concept of its own. It says what a skill's concept holds, while the procedure stays in `SKILL.md`. A skill the repository deprecates stays a fact in the concept, apart from the curator's `status: deprecated`. A miss that a skill's own description should have prevented goes to the reviewer in a hand-off line, since only a person changes that description. The first run's sweep table names Agent Skills folders.
