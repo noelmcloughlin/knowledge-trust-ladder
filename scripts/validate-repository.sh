@@ -1850,6 +1850,12 @@ printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/authored.md, edits: [{appe
 apply_refuses "patching text a person wrote" "a person wrote this text"
 printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, set: {status: stable}, log: x}' > "$kpatch"
 apply_refuses "setting status" "set may not touch status"
+# A provenance or event key in any case, and a top-level event field, are
+# refused, so a patch cannot write a line a person could read as a confirmation.
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, set: {Verified: x}, log: x}' > "$kpatch"
+apply_refuses "setting a capitalised Verified" "set may not touch Verified"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, set: {by: "human:ada"}, log: x}' > "$kpatch"
+apply_refuses "setting a top-level by" "set may not touch by"
 printf '%s\n' 'ops:' '  - {op: create, path: playbooks/other.md, frontmatter: {type: Playbook, title: Other, description: d.}, body: b}' \
                '  - {op: patch, path: playbooks/new.md, edits: [{replace: {target: "not there", content: x}}], log: x}' > "$kpatch"
 apply_refuses "a missing target, with a valid create beside it" "must occur exactly once"

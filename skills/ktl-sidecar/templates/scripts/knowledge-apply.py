@@ -82,8 +82,11 @@ KEPT_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *human:")  # a person's note a
 CURATOR_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *process:ktl-curator:")  # a curator's send-back recorded with no authenticated login (review-session.md)
 ACTOR_RE = re.compile(r"^process:\S+$")
 LOGIN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
-DENIED_SET = {"id", "type", "generated", "verified", "status", "stale_after", "timestamp"}
-DENIED_CREATE = {"generated", "verified", "status", "stale_after", "timestamp"}
+# Matched case-insensitively, and including the event-internal keys, so a
+# patch cannot write a top-level `by: human:...` or a `Verified:` that a line
+# reader would skip but a person, or another parser, could read as provenance.
+DENIED_SET = {"id", "type", "generated", "verified", "status", "stale_after", "timestamp", "by", "at", "revision"}
+DENIED_CREATE = {"generated", "verified", "status", "stale_after", "timestamp", "by", "at", "revision"}
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
 BULLET_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, (\S+?): ")  # an open question's actor, in the shape the curator writes
@@ -448,7 +451,7 @@ class Bundle:
         fm_in = op.get("frontmatter")
         if not isinstance(fm_in, dict):
             raise Refused(f"{path}: create needs a frontmatter mapping")
-        denied = sorted(k for k in fm_in if k in DENIED_CREATE)
+        denied = sorted(k for k in fm_in if k.lower() in DENIED_CREATE)
         if denied:
             raise Refused(f"{path}: create may not set {', '.join(denied)}; the script stamps provenance and status")
         if not isinstance(fm_in.get("type"), str) or not fm_in["type"]:
@@ -498,7 +501,7 @@ class Bundle:
             raise Refused(f"{path}: patch changes nothing")
         for edit in edits:
             self.apply_edit(c, edit)
-        denied = sorted(k for k in sets if k in DENIED_SET)
+        denied = sorted(k for k in sets if k.lower() in DENIED_SET)
         if denied:
             raise Refused(f"{path}: set may not touch {', '.join(denied)}; those belong to the script, the curator or the schema")
         for k, v in sets.items():
