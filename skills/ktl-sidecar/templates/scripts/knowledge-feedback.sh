@@ -54,6 +54,10 @@
 #      out loud instead.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [--for <login>] <kind> <text>" >&2; exit 2; }
 set -u
+# A-Z, a-z and 0-9 in a case glob mean the ASCII letters and digits, not
+# whatever a locale collates between them, so a login check below cannot be
+# widened by the host's locale. A no-op where the option is unknown (bash 3.2).
+shopt -s globasciiranges 2>/dev/null || :
 
 usage() {
   echo "usage: ${0##*/} [--root <dir>] [--for <login>] [--concept <path>] <Miss|Disagreement> <text>" >&2
@@ -104,8 +108,8 @@ fi
 if [ -n "$concept" ]; then
   [ "$kind" = Disagreement ] || { echo "--concept goes with a Disagreement only; a Miss names a gap, not a concept the bundle holds" >&2; exit 2; }
   case "$concept" in
-    *[!a-z0-9._/-]*|[!a-z0-9]*|*..*|*/|*//*)
-      echo "--concept takes a concept's path in the bundle, in lowercase with no '..', such as services/orders-api.md, not '$concept'" >&2; exit 2 ;;
+    *[!a-z0-9._/-]*|[!a-z0-9]*|*..*|*/|*//*|*/./*)
+      echo "--concept takes a concept's path in the bundle, in lowercase with no '..' or '.' segment, such as services/orders-api.md, not '$concept'" >&2; exit 2 ;;
   esac
   case "$concept" in *.md) ;; *) echo "--concept takes the concept's file, ending in .md, not '$concept'" >&2; exit 2 ;; esac
   case "${concept##*/}" in index.md|log.md) echo "--concept takes a concept, not the bundle's $concept" >&2; exit 2 ;; esac

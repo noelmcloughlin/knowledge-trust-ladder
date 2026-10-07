@@ -981,16 +981,28 @@ else
   err "knowledge-feedback.sh did not record a Disagreement on a concept: $out"
 fi
 before="$(cat "$fbfile")"
-for bad in "--concept ../one.md Disagreement" "--concept X/One.md Disagreement" "--concept x/none.md Disagreement" "--concept x/one.md Miss" "--concept index.md Disagreement"; do
+# Each bad input is refused for its own reason, not merely refused: the shape
+# check must fire on a bad path even where a file at that path would also be
+# missing. Asserting only a non-zero exit left the check green when the shape
+# rules were deleted, since the missing-file check refused the same inputs.
+# Pairs are input|the reason its own check gives.
+while IFS='|' read -r bad why; do
   # shellcheck disable=SC2086 # each case is an option, its value and a kind, split on purpose
   if out="$(bash "$feedback" --root "$fb" $bad 'refused' 2>&1)"; then
     err "knowledge-feedback.sh accepted $bad: $out"
-  elif [[ "$(cat "$fbfile")" == "$before" ]]; then
-    ok "knowledge-feedback.sh refuses $bad and leaves the file as it was"
+  elif grep -qF -- "$why" <<<"$out" && [[ "$(cat "$fbfile")" == "$before" ]]; then
+    ok "knowledge-feedback.sh refuses $bad for the right reason, and leaves the file as it was"
   else
-    err "knowledge-feedback.sh refused $bad but changed the file"
+    err "knowledge-feedback.sh refused $bad for the wrong reason or changed the file: $out"
   fi
-done
+done <<'CASES'
+--concept ../one.md Disagreement|no '..' or '.' segment
+--concept X/One.md Disagreement|in lowercase
+--concept x/one/./x.md Disagreement|no '..' or '.' segment
+--concept x/none.md Disagreement|names no concept in this bundle
+--concept x/one.md Miss|goes with a Disagreement only
+--concept index.md Disagreement|not the bundle's
+CASES
 leftover=""
 for f in "$fb/.lokf"/* "$fb/.lokf"/.[!.]*; do
   [[ -e "$f" ]] || continue
@@ -1098,6 +1110,13 @@ if command -v gpg >/dev/null 2>&1 && command -v ssh-keygen >/dev/null 2>&1; then
     expect_pv "HEAD~1" 0 '^OK - 0 confirmation' "ignore an example event in a body code fence"
     printf -- '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: human:contract, at: "2026-09-17T00:00:00Z" }\n---\n' > "$k/gen.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'human generated, flow style, unsigned'
     expect_pv "HEAD~1" 1 'is unsigned' "read a flow-style human generated record as a claim"
+    # A flow verified/generated that spans lines is valid YAML every parser
+    # reads, so the gate must see the event too: a block-only reader skipped
+    # it and let an unsigned confirmation through.
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/mlflow\nverified: [\n  { by: human:contract, at: "2026-09-17T00:00:00Z" }\n]\n---\n' > "$k/mlflow.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'multi-line flow sequence, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "see a human event in a flow sequence that spans lines"
+    printf -- '---\ntype: Service\nid: https://example.invalid/k/x/mlgen\ngenerated: {\n  by: human:contract,\n  at: "2026-09-17T00:00:00Z"\n}\n---\n' > "$k/mlgen.md" && pv_git add -A && pv_git commit -q --no-gpg-sign -m 'multi-line flow mapping, unsigned'
+    expect_pv "HEAD~1" 1 'is unsigned' "see a human generated record in a flow mapping that spans lines"
     # Names git would quote by default: a byte above 0x7f is read like any
     # other concept; a double quote is refused. Neither is silently dropped.
     confirmed contract > "$k/café.md" && pv_git add -A && pv_git commit -q -S -m 'utf-8 name, signed'
@@ -1281,6 +1300,8 @@ say ""
 say "Checking the librarian template's skills pin is a current release..."
 pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
          skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
+pin_sha="$(grep -oE 'TRUST_LADDER_SKILLS_SHA: [0-9a-f]{40}' \
+             skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
 mapfile -t recent < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md \
                         | head -2 | tr -d '#[] ' | sed 's/^/v/')
 if [[ -z "$pin" ]]; then
@@ -1297,9 +1318,11 @@ fi
 # neither line looking wrong. Here v0.21.0 is a real release and skills/ktl-librarian
 # is a real path, but that path is not in that tag, since the skills were
 # lokf-* until v0.22.0. So every scheduled run on such a host failed there.
-# Read the tag where the clone has it. CI checks out one commit without tags,
-# and the newest heading is tagged after this contract runs, so a tag that is
-# not here skips this half rather than failing it.
+# CI checks out one commit without tags, and the newest heading is tagged after
+# this contract runs, so the tag ref is often not here. The commit it names is,
+# though: it is recorded beside the pin and is an ancestor of this checkout, so
+# read the path out of that commit, and fall to the tag only to resolve it.
+# The half skips, rather than failing, only when neither is on the clone.
 # shellcheck disable=SC2016 # $tmp is the template's own literal, not ours
 skill_path="$(grep -oE '\$tmp/skills/[A-Za-z0-9._-]+' \
                 skills/ktl-sidecar/templates/github/knowledge-librarian.yaml \
@@ -1308,24 +1331,34 @@ if [[ -z "$pin" ]]; then
   : # already reported above
 elif [[ -z "$skill_path" ]]; then
   err "the librarian template's install step copies no skills/ path that check 15 can read - it cannot tell whether $pin carries the skill a host would install"
-elif ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
-  say "skipping the pinned tag's contents: $pin is not a tag on this clone"
-elif git ls-tree --name-only "$pin" -- "$skill_path" | grep -qxF -- "$skill_path"; then
-  ok "$pin carries $skill_path, the path the install step copies out of it"
+elif pin_commit="$(git rev-parse -q --verify "refs/tags/$pin^{commit}" 2>/dev/null)" \
+     || { [[ -n "$pin_sha" ]] && pin_commit="$(git rev-parse -q --verify "$pin_sha^{commit}" 2>/dev/null)"; }; then
+  if git ls-tree --name-only "$pin_commit" -- "$skill_path" | grep -qxF -- "$skill_path"; then
+    ok "the commit $pin names (${pin_commit:0:12}) carries $skill_path, the path the install step copies out of it"
+  else
+    err "the librarian template pins $pin, whose commit ${pin_commit:0:12} has no $skill_path - the install step clones that tag and copies that path, so every scheduled run on a host scaffolded from this template fails there; this is what a rename does to a pin that still names a current release"
+  fi
 else
-  err "the librarian template pins $pin, which has no $skill_path - the install step clones that tag and copies that path, so every scheduled run on a host scaffolded from this template fails there; this is what a rename does to a pin that still names a current release"
+  say "skipping the pinned tag's contents: neither $pin nor its commit ${pin_sha:0:12} is on this clone"
 fi
 # The pin is a tag and the commit that tag names, since a tag can be moved and
 # what it names here is the instructions an agent follows unattended. The
 # install step refuses a tag that names another commit. So the template's
 # commit must be the one its tag names, and whatever moves the tag must move
-# the commit with it: the release step, and the sync into a sibling.
-pin_sha="$(grep -oE 'TRUST_LADDER_SKILLS_SHA: [0-9a-f]{40}' \
-             skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
+# the commit with it: the release step, and the sync into a sibling. This
+# agreement can only be read where the tag is on the clone, so it skips where
+# the tag is not - a shallow or tag-less checkout has nothing to compare. The
+# skip says whether the recorded commit is at least a real object here, which
+# the content half above has read from, so the skip is not a blind one.
+# pin_sha is read above, beside the pin.
 if [[ -z "$pin_sha" ]]; then
   err "no TRUST_LADDER_SKILLS_SHA beside the pin in the librarian template - a host would install whatever commit the tag names on the day"
 elif [[ -z "$pin" ]] || ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
-  say "skipping the pinned commit: ${pin:-the pin} is not a tag on this clone"
+  if git rev-parse -q --verify "$pin_sha^{commit}" >/dev/null; then
+    say "skipping the tag/commit agreement: ${pin:-the pin} is not a tag on this clone (its commit ${pin_sha:0:12} is a real object here)"
+  else
+    say "skipping the tag/commit agreement: neither ${pin:-the pin} nor its commit ${pin_sha:0:12} is on this clone"
+  fi
 elif [[ "$(git rev-parse "refs/tags/$pin^{commit}")" == "$pin_sha" ]]; then
   ok "the librarian template pins the commit $pin names (${pin_sha:0:12})"
 else
@@ -1345,6 +1378,27 @@ for mover in .github/workflows/semantic-release.yml scripts/sync-sidecar.sh; do
     err "$mover moves TRUST_LADDER_SKILLS_REF without TRUST_LADDER_SKILLS_SHA, so the install step would refuse the next pin it writes"
   fi
 done
+# The content half reads the skill path out of the commit the pin records, not
+# only out of the tag ref, so it still runs on the scheduled, tag-less checkout
+# where it used to skip. This stages a commit that carries the path, with no tag
+# for it, and confirms the pin_sha fallback resolves the commit and reads it.
+p15="$(mktemp -d)"
+p15_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$p15"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${p15_git[@]}" init -q
+mkdir -p "$p15/skills/ktl-librarian"
+printf 'name: ktl-librarian\n' > "$p15/skills/ktl-librarian/SKILL.md"
+"${p15_git[@]}" add -A && "${p15_git[@]}" commit -q -m 'a release commit, left untagged'
+p15_sha="$("${p15_git[@]}" rev-parse HEAD)"
+if ! "${p15_git[@]}" rev-parse -q --verify "refs/tags/v9.9.9^{commit}" >/dev/null 2>&1 \
+   && p15_commit="$("${p15_git[@]}" rev-parse -q --verify "refs/tags/v9.9.9^{commit}" 2>/dev/null || "${p15_git[@]}" rev-parse -q --verify "$p15_sha^{commit}" 2>/dev/null)" \
+   && [[ "$p15_commit" == "$p15_sha" ]] \
+   && "${p15_git[@]}" ls-tree --name-only "$p15_commit" -- skills/ktl-librarian | grep -qxF -- skills/ktl-librarian; then
+  ok "check 15's content half resolves the recorded commit and reads the skill path when the tag ref is absent"
+else
+  err "check 15's content half could not read the skill path from the recorded commit without the tag"
+fi
+rm -rf "$p15"
 
 # 16. The repository's old name stays gone from anything that still speaks in
 #     the present tense. It was renamed from lokf-agent-skills on 2026-09-19,
@@ -1564,6 +1618,18 @@ expect_prose 1 "override.md:3: unseen: U+202E RIGHT-TO-LEFT OVERRIDE" "a right-t
 printf '# A page\n\nPlain text.\n' > "$pc/u-old.md"
 printf '# A page\n\nPlain\xe2\x80\x8b text.\n' > "$pc/u-new.md"
 expect_prose 1 "u-new.md:3: unseen: U+200B ZERO WIDTH SPACE is new" "a rewording that adds a zero-width space is refused" -- --before "$pc/u-old.md" "$pc/u-new.md"
+# An indented code block is code, not prose: a figure or a dash in it is no
+# style finding, where the same words laid out as prose are read.
+printf '# A page\n\n    the fix lands - it ships every file in order to catch drift\n\nDone.\n' > "$pc/indent.md"
+expect_prose 0 "OK" "an indented code block is not held to the style rules" -- "$pc/indent.md"
+printf '# A page\n\nthe fix lands - it ships every file in order to catch drift\n\nDone.\n' > "$pc/indent-prose.md"
+expect_prose 1 "dash:" "the same words laid out as prose are read, so the skip is the indent's doing" -- "$pc/indent-prose.md"
+# A prose line that opens with an inline HTML tag is prose, the tag masked, so
+# its style is read; a line that is only HTML opens no prose and is left alone.
+printf '# A page\n\n<code>x</code> the fix lands in the next release.\n' > "$pc/htmlled.md"
+expect_prose 1 'words: "lands"' "a prose line that opens with an inline tag is read, not skipped" -- "$pc/htmlled.md"
+printf -- '# A page\n\n<img src="x.png" alt="a diagram of the gate">\n\nText.\n' > "$pc/htmlblock.md"
+expect_prose 0 "OK" "a line that is only HTML opens no prose and is left to the host" -- "$pc/htmlblock.md"
 
 # --before on plain files: wording may change, and nothing else.
 plain() { printf -- '---\ntitle: %s\n---\n\n# Guide\n\n%s\n\n<!-- lokf:related -->\n[[%s]]\n<!-- /lokf:related -->\n' "$1" "$2" "$3"; }
@@ -1578,6 +1644,14 @@ expect_prose 1 "digits:" "a changed number is reported" -- --before "$pc/p-old.m
 expect_prose 1 "link:" "a changed link target is reported" -- --before "$pc/p-old.md" "$pc/p-link.md"
 expect_prose 1 "related:" "a changed wikilink in the lokf:related region is reported" -- --before "$pc/p-old.md" "$pc/p-rel.md"
 expect_prose 1 "frontmatter:" "a changed frontmatter value is reported" -- --before "$pc/p-old.md" "$pc/p-fm.md"
+# A number that begins a wrapped line is a fact, not a list number, so a change
+# to it is caught; and laying a wrapped paragraph out on one line, which the
+# bundle layout asks for, changes no fact.
+printf '# A page\n\nThe first release came out in\n2024, and the next in 2025.\n' > "$pc/w-old.md"
+printf '# A page\n\nThe first release came out in\n2023, and the next in 2025.\n' > "$pc/w-new.md"
+printf '# A page\n\nThe first release came out in 2024, and the next in 2025.\n' > "$pc/w-flat.md"
+expect_prose 1 'digits: the number "2024" is gone' "a number that begins a wrapped line is a fact, and a change to it is caught" -- --before "$pc/w-old.md" "$pc/w-new.md"
+expect_prose 0 "OK" "laying a wrapped paragraph out on one line changes no fact" -- --before "$pc/w-old.md" "$pc/w-flat.md"
 # A program counts the words before and after, so the hand-off quotes them and
 # no model works them out. What digits cannot show is a note, never a refusal:
 # a day or a month written out, and a text cut by more than a fifth, which a
@@ -1589,6 +1663,17 @@ expect_prose 0 'date-word: the day or month "Tuesday" is new' "a changed day of 
 printf '# A page\n\n%s\n\n%s\n' "$para" "$para" > "$pc/s-old.md"
 printf '# A page\n\n%s\n' "$para" > "$pc/s-new.md"
 expect_prose 0 "shrink: 163 words, and the earlier text had 323" "a text cut by more than a fifth is a note for the reader" -- --max-paragraph 400 --before "$pc/s-old.md" "$pc/s-new.md"
+# Growth is a fifth too, not the old 8%, and neither note has a word floor now.
+expect_prose 0 "growth: 323 words, and the earlier text had 163" "a text grown by more than a fifth is a note for the reader" -- --max-paragraph 400 --before "$pc/s-new.md" "$pc/s-old.md"
+# An inline HTML tag and a hard line break are layout a reader sees, so a
+# rewording keeps them: a changed tag and a dropped break are each reported,
+# where the earlier comparison read neither and let a rewording drop them.
+printf -- '# A page\n\nThe value is <sub>n</sub> here, and it holds.\n' > "$pc/t-old.md"
+printf -- '# A page\n\nThe value is <sup>n</sup> here, and it holds.\n' > "$pc/t-new.md"
+expect_prose 1 "html:" "a changed inline HTML tag is reported" -- --before "$pc/t-old.md" "$pc/t-new.md"
+printf '# A page\n\nFirst half here  \nsecond half here now.\n' > "$pc/hb-old.md"
+printf '# A page\n\nFirst half here\nsecond half here now.\n' > "$pc/hb-new.md"
+expect_prose 1 "hard-break:" "a dropped hard line break is reported" -- --before "$pc/hb-old.md" "$pc/hb-new.md"
 
 # --before on concepts: a body may change only where no person vouched for it,
 # and the frontmatter never. The confirmation is staged in each form the
@@ -1821,6 +1906,12 @@ printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/authored.md, edits: [{appe
 apply_refuses "patching text a person wrote" "a person wrote this text"
 printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, set: {status: stable}, log: x}' > "$kpatch"
 apply_refuses "setting status" "set may not touch status"
+# A provenance or event key in any case, and a top-level event field, are
+# refused, so a patch cannot write a line a person could read as a confirmation.
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, set: {Verified: x}, log: x}' > "$kpatch"
+apply_refuses "setting a capitalised Verified" "set may not touch Verified"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, set: {by: "human:ada"}, log: x}' > "$kpatch"
+apply_refuses "setting a top-level by" "set may not touch by"
 printf '%s\n' 'ops:' '  - {op: create, path: playbooks/other.md, frontmatter: {type: Playbook, title: Other, description: d.}, body: b}' \
                '  - {op: patch, path: playbooks/new.md, edits: [{replace: {target: "not there", content: x}}], log: x}' > "$kpatch"
 apply_refuses "a missing target, with a valid create beside it" "must occur exactly once"
@@ -1894,6 +1985,37 @@ printf '%s\n' 'ops:' '  - {op: resolve, path: playbooks/new.md, target: "send th
 apply_refuses "resolving a note a person left" "is not one process:ktl-librarian asked"
 printf '%s\n' 'ops:' '  - {op: delete, path: playbooks/new.md, log: gone}' > "$kpatch"
 apply_refuses "deleting a concept a person left a note on" "a person left a note on this concept"
+# A curator's send-back recorded as process:ktl-curator (no authenticated
+# login) is the curator's to clear: the librarian re-derives the concept but
+# never withdraws the note or deletes it. An edit whose target ends right at a
+# protected heading would glue it onto the line before, which the overlap test
+# that starts at the heading never saw.
+printf '%s\n' '---' 'type: Playbook' 'id: https://acme.example/knowledge/playbooks/sentback' 'title: Sentback' 'description: sent back.' \
+  'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'status: draft' '---' '' '# Overview' '' 'Body.' '' '## Open questions' '' '- 2026-03-03, process:ktl-curator: re-derive this from the source' > "$kb/playbooks/sentback.md"
+printf '%s\n' '* [Sentback](sentback.md) - sent back.' >> "$kb/playbooks/index.md"
+printf '%s\n' 'ops:' '  - {op: resolve, path: playbooks/sentback.md, target: "re-derive this", log: x}' > "$kpatch"
+apply_refuses "withdrawing a curator's send-back" "that is a curator's send-back"
+printf '%s\n' 'ops:' '  - {op: delete, path: playbooks/sentback.md, log: gone}' > "$kpatch"
+apply_refuses "deleting a concept the curator sent back" "the curator left a send-back on this concept"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/sentback.md, edits: [{replace: {target: "Body.\n\n", content: "Body. "}}], log: x}' > "$kpatch"
+apply_refuses "an edit that would glue the Open questions heading onto the text before it" "would merge the ## Open questions heading"
+printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/sentback.md, set: {description: "re-derived."}, log: re-derived from the source}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -q 'process:ktl-curator' "$kb/playbooks/sentback.md"; then
+  ok "the librarian re-derives a concept the curator sent back, and the send-back stays"
+else
+  err "re-deriving a sent-back concept lost the curator's note: $(tr '\n' '|' < "$kb/playbooks/sentback.md")"
+fi
+# A person's event with an empty revision round-trips as empty, not null,
+# which the gate would otherwise read as a changed confirmation.
+printf '%s\n' '---' 'type: Playbook' 'id: https://acme.example/knowledge/playbooks/nullrev' 'title: Nullrev' 'description: nr.' \
+  'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'verified:' '  - by: human:ada' '    at: "2026-02-02T00:00:00Z"' '    revision:' '---' '' '# Overview' '' 'Body.' > "$kb/playbooks/nullrev.md"
+printf '%s\n' '* [Nullrev](nullrev.md) - nr.' >> "$kb/playbooks/index.md"
+printf '%s\n' 'ops:' '  - {op: recheck, path: playbooks/nullrev.md}' > "$kpatch"
+if bash "$apply" --root "$ka" "$kpatch" >/dev/null 2>&1 && grep -q 'revision:' "$kb/playbooks/nullrev.md" && ! grep -q 'revision: null' "$kb/playbooks/nullrev.md"; then
+  ok "the pen writes an empty revision back as empty, not null"
+else
+  err "the pen turned an empty revision into null: $(grep -n revision "$kb/playbooks/nullrev.md")"
+fi
 printf '%s\n' 'ops:' '  - {op: patch, path: playbooks/new.md, edits: [{append: {content: x}}], log: x, asked: "why?"}' > "$kpatch"
 apply_refuses "a reader's question with no feedback entry behind it" "asked goes with from_feedback"
 printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-04' '' '- **Disagreement** - it says one thing. - docent' > "$ka/.lokf/feedback.md"
@@ -2087,6 +2209,38 @@ apply_refuses "deleting a concept a sentence links, with a comma after the link"
 printf '%s\n' 'ops:' '  - {op: delete, path: glossary/harm.md, log: gone}' > "$kpatch"
 apply_refuses "deleting a concept a sentence links, with no comma" "inside other text"
 rm -rf "$ka"
+# A host that wrote a concept's link with a ./ lead or a #fragment is still
+# linking that concept: on delete the link comes out of a list of links as a
+# bare one does, and a sentence that holds it refuses the delete, rather than
+# the old reader matching neither form and leaving the link to dangle.
+kf="$(mktemp -d)"; kfb="$kf/.lokf/knowledge"; kfp="$kf/.lokf/patch.yaml"; mkdir -p "$kfb/x"
+printf '%s\n' '---' 'base_iri: https://acme.example/knowledge/' '---' '' '# Acme' '' \
+  '## X' '' '* [A](x/a.md) - a.' '* [B](x/b.md) - b.' '* [C](x/c.md) - c.' '' \
+  'Links: [A](./x/a.md#over), [B](x/b.md).' 'See [C](./x/c.md#frag) for the rest.' > "$kfb/index.md"
+printf '%s\n' '# X' '' '* [A](a.md) - a.' '* [B](b.md) - b.' '* [C](c.md) - c.' '' 'Both: [A](./a.md#over), [B](b.md).' > "$kfb/x/index.md"
+for kc in a:A b:B c:C; do IFS=: read -r kn kt <<<"$kc"
+  printf '%s\n' '---' 'type: Reference' "id: https://acme.example/knowledge/x/$kn" "title: $kt" "description: $kt." \
+    'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'status: draft' '---' '' '# Overview' '' 'Text.' > "$kfb/x/$kn.md"
+done
+printf '%s\n' '# Change Log' > "$kfb/log.md"
+printf '%s\n' 'ops:' '  - {op: delete, path: x/c.md, log: gone}' > "$kfp"
+kf_before="$(cd "$kfb" && cat index.md x/index.md)"
+if out="$(bash "$apply" --root "$kf" "$kfp" 2>&1)"; then
+  err "delete of a concept a sentence links with ./ and a #fragment was not refused, leaving a dangling link: $out"
+elif grep -qF -- "inside other text" <<<"$out" && [[ "$(cd "$kfb" && cat index.md x/index.md)" == "$kf_before" ]]; then
+  ok "delete refuses a sentence link that leads with ./ and carries a #fragment, instead of leaving it to dangle"
+else
+  err "delete of a ./#fragment sentence link failed for the wrong reason, or still wrote: $out"
+fi
+printf '%s\n' 'ops:' '  - {op: delete, path: x/a.md, log: gone}' > "$kfp"
+if bash "$apply" --root "$kf" "$kfp" >/dev/null 2>&1 \
+   && ! grep -qE 'a\.md' "$kfb/index.md" "$kfb/x/index.md" \
+   && grep -qxF 'Links: [B](x/b.md).' "$kfb/index.md" && grep -qxF 'Both: [B](b.md).' "$kfb/x/index.md"; then
+  ok "delete takes a ./-led, #fragment link out of a list of links, in the root index and a folder index alike"
+else
+  err "delete left a ./#fragment link in a list, or did not keep the rest: $(tr '\n' '|' < "$kfb/index.md") // $(tr '\n' '|' < "$kfb/x/index.md")"
+fi
+rm -rf "$kf"
 # The format comes from the script that enforces it, so a host needs no
 # particular release of the skill to learn it. The skill's page shows the
 # same block, and this check keeps the two equal.
@@ -2126,14 +2280,23 @@ kr_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$kr"
 "${kr_git[@]}" init -q
 printf 'a\n' > "$kr/src/a.md"; printf 'b\n' > "$kr/src/b.md"; printf 'c\n' > "$kr/src/c.md"
 printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n\n# X\n\n* [Confirmed](x/confirmed.md) - a confirmed concept about widgets.\n* [Draft one](x/draft.md) - a draft about gadgets.\n' > "$kk/index.md"
-printf -- '---\ntype: Service\ntitle: Confirmed\nresource: src/a.md\nsources:\n- resource: src/a.md\n- resource: src/c.md\n- resource: https://example.invalid/never-fetched\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n  revision: "3f9c2a1b7e0d4c6a8f5e2d1c9b8a7f6e5d4c3b2a"\nstale_after: 2020-01-01\n---\n\n# Overview\n' > "$kk/x/confirmed.md"
-printf -- '---\ntype: Service\ntitle: Edited\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-02T14:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$kk/x/edited.md"
-printf -- '---\ntype: Service\ntitle: Auto\nresource: src/b.md\nverified: [{ by: process:ktl-librarian, at: "2026-01-03T00:00:00Z" }]\n---\n' > "$kk/x/auto.md"
+# confirmed.md confirms with a `+00:00` offset, and edited.md stamps its
+# edit with one: norm() must convert each to UTC, not drop it. On the old
+# code both read as no stamp, which flipped confirmed.md to edited-since and
+# edited.md to confirmed-by-a-person, so these two label lines guard the fix.
+printf -- '---\ntype: Service\ntitle: Confirmed\nresource: src/a.md\nsources:\n- resource: src/a.md\n- resource: src/c.md\n- resource: https://example.invalid/never-fetched\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00+00:00"\n  revision: "3f9c2a1b7e0d4c6a8f5e2d1c9b8a7f6e5d4c3b2a"\nstale_after: 2020-01-01\n---\n\n# Overview\n' > "$kk/x/confirmed.md"
+printf -- '---\ntype: Service\ntitle: Edited\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-02T14:00:00+00:00"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$kk/x/edited.md"
+# auto.md confirms in a flow sequence that spans lines, and gone.md carries an
+# empty flow list: the report must read the first as one process event and the
+# second as no event. The old reader dropped the multi-line list (so auto.md
+# read as nobody-checked) and counted the empty one (so gone.md read as
+# automation), which would shift the health line these labels sit behind.
+printf -- '---\ntype: Service\ntitle: Auto\nresource: src/b.md\nverified: [\n  { by: process:ktl-librarian, at: "2026-01-03T00:00:00Z" }\n]\n---\n' > "$kk/x/auto.md"
 # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
 printf -- '---\ntype: Service\ntitle: Draft one\nstatus: draft\n---\n\n# Overview\n\n```markdown\n## Open questions\n\n- 2026-01-01, human:example: only an example in a fence\n```\n\n## Open questions\n\n- 2026-01-05, human:ada: send it back, with these words for the curator\n' > "$kk/x/draft.md"
 printf -- '---\ntype: Service\ntitle: Retired\nstatus: deprecated\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n---\n' > "$kk/x/retired.md"
 printf -- "---\ntype: Service\ntitle: 'Ada''s answered concept'\nverified:\n  by: human:ada\n  at: \"2026-02-01T00:00:00Z\"\n---\n\n## Open questions\n\n- 2026-01-15, process:ktl-librarian: which is it?\n" > "$kk/x/answered.md"
-printf -- '---\ntype: Service\ntitle: Gone\nresource: src/missing.md\n---\n' > "$kk/x/gone.md"
+printf -- '---\ntype: Service\ntitle: Gone\nresource: src/missing.md\nverified: [ ]\n---\n' > "$kk/x/gone.md"
 printf '# Change Log\n' > "$kk/log.md"
 printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-03' '' '- **Miss** - Q: "a reader wrote these waiting words" - docent' '- **Disagreement** - another. - docent' > "$kr/.lokf/feedback.md"
 # shellcheck disable=SC2016 # the backticks are Markdown code spans, not commands
@@ -2187,6 +2350,30 @@ if out="$(kr_run)" && grep -qF 'Confirmed by a person, and a source moved after 
 else
   err "report script's whole report is not as expected: $out"
 fi
+# A concept edited since its confirmation whose source then moved belongs on the
+# work list under its own derivation, not under "a source moved after that
+# confirmation" as well: the edit already overtook the person's confirmation, so
+# it is counted once. The old reader, keying only on a human event, listed it in
+# both places.
+ke="$(mktemp -d)"; mkdir -p "$ke/.lokf/knowledge/x" "$ke/src"
+ke_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$ke"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${ke_git[@]}" init -q
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$ke/.lokf/knowledge/index.md"
+printf 'a\n' > "$ke/src/a.md"
+printf -- '---\ntype: Service\ntitle: Edm\nresource: src/a.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-03-01T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$ke/.lokf/knowledge/x/edm.md"
+printf '# Change Log\n' > "$ke/.lokf/knowledge/log.md"
+"${ke_git[@]}" add -A && "${ke_git[@]}" commit -q -m 'an edited-since concept and its source'
+printf 'a2\n' >> "$ke/src/a.md" && "${ke_git[@]}" commit -q -am 'the source moves'
+if keport="$(cd "$ke" && bash "$report" 2>&1)" \
+   && grep -qxF 'Confirmed by a person, and a source moved after that confirmation: none' <<<"$keport" \
+   && kewl="$(cd "$ke" && bash "$report" worklist 2>&1)" \
+   && grep -qF -- '- x/edm.md: src/a.md (' <<<"$kewl"; then
+  ok "report script: an edited-since concept whose source moved is on the work list, and not under a standing confirmation"
+else
+  err "report script listed an edited-since concept under 'a source moved after that confirmation', or dropped it from the work list: $keport"
+fi
+rm -rf "$ke"
 printf '\nmore\n' >> "$kk/x/confirmed.md"; printf -- '---\ntype: Service\ntitle: New\n---\n' > "$kk/x/new.md"
 if out="$(kr_run changes)" && grep -qxF 'Concepts added: 1 · changed: 1 · removed: 0' <<<"$out" && grep -qxF 'Confirmed by a person, and changed or removed here: 1' <<<"$out" && grep -qxF -- '- x/confirmed.md: still reads as confirmed' <<<"$out"; then
   ok "report script: changes counts the working tree against HEAD and names the confirmed concept it touches, which still reads as confirmed"
@@ -2213,14 +2400,42 @@ km_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$km"
 "${km_git[@]}" init -q
 printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$km/pkg/.lokf/knowledge/index.md"
 printf -- '---\ntype: Service\ntitle: Sub\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$km/pkg/.lokf/knowledge/x/sub.md"
+printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-03' '' '- **Miss** - Q: "one" - docent' > "$km/pkg/.lokf/feedback.md"
 "${km_git[@]}" add -A && "${km_git[@]}" commit -q -m 'a sidecar in a subfolder'
 sed -i 's/at: "2026-01-01T00:00:00Z"/at: "2026-03-01T00:00:00Z"/' "$km/pkg/.lokf/knowledge/x/sub.md"
-if out="$(cd "$km/pkg" && bash "$report" changes 2>&1)" && grep -qxF -- '- pkg/.lokf/knowledge/x/sub.md: reads as edited since that confirmation' <<<"$out"; then
-  ok "report script changes: a sidecar in a subfolder of a larger repository is read from the work tree's top"
+printf -- '- **Disagreement** - two - docent\n' >> "$km/pkg/.lokf/feedback.md"
+# The concept is named bundle-relative, as at the top level, not with the
+# subfolder prefix; and the feedback delta reads HEAD from the subfolder, so
+# "was" is 1, not 0. Both were wrong while the prefix was not accounted for.
+if out="$(cd "$km/pkg" && bash "$report" changes 2>&1)" \
+   && grep -qxF -- '- x/sub.md: reads as edited since that confirmation' <<<"$out" \
+   && grep -qF 'Reader feedback waiting: 2 (was 1)' <<<"$out"; then
+  ok "report script changes: a sidecar in a subfolder is read from the top, with bundle-relative paths and the right feedback delta"
 else
   err "report script's changes misread a sidecar in a subfolder: $out"
 fi
 rm -rf "$km"
+
+# A CRLF index.md: base_iri must still be read, or relative relation targets
+# and concepts with no id resolve to nothing and the reliance counts go wrong.
+kc="$(mktemp -d)"; mkdir -p "$kc/.lokf/knowledge/x"
+printf -- '---\r\nbase_iri: https://acme.example/knowledge/\r\n---\r\n\r\n# Acme\r\n' > "$kc/.lokf/knowledge/index.md"
+printf -- '---\ntype: Service\ntitle: A\ndependsOn:\n- x/hub.md\n---\n' > "$kc/.lokf/knowledge/x/a.md"
+printf -- '---\ntype: Service\ntitle: Hub\n---\n' > "$kc/.lokf/knowledge/x/hub.md"
+if out="$(cd "$kc" && bash "$report" 2>&1)" && grep -qF -- '- x/hub.md (1)' <<<"$out"; then
+  ok "report script: base_iri is read from a CRLF index.md, so reliance still resolves"
+else
+  err "report script lost base_iri on a CRLF index.md: $out"
+fi
+# The same, with a byte order mark on index.md: the base_iri reader strips it by
+# its bytes (under LC_ALL=C), or reliance resolves to nothing as on a lost base.
+printf -- '%s---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' "$(printf '\357\273\277')" > "$kc/.lokf/knowledge/index.md"
+if out="$(cd "$kc" && bash "$report" 2>&1)" && grep -qF -- '- x/hub.md (1)' <<<"$out"; then
+  ok "report script: base_iri is read from a byte-order-marked index.md, so reliance still resolves"
+else
+  err "report script lost base_iri on a byte-order-marked index.md: $out"
+fi
+rm -rf "$kc"
 if out="$(kr_run retrieval --prompt)" && grep -qxF 'x/confirmed.md | Confirmed | a confirmed concept about widgets.' <<<"$out" && grep -qxF 'Q1: Where are widgets?' <<<"$out" && grep -qxF 'Q2: a reader wrote these ledger words' <<<"$out" \
    && ! grep -q 'Q3\|Where did the old concept go' <<<"$out"; then
   ok "report script: the retrieval prompt holds the index's entries and the ledger's questions, numbered, and asks none whose concept has left the bundle"
@@ -2420,6 +2635,28 @@ else
 fi
 rm -rf "$kq" "$nogit"
 
+# A concept whose file begins with a UTF-8 byte order mark is still read: the
+# old reader saw no `---` on the first line and dropped the concept from every
+# count. The BOM is built at run time, so this script stays plain ASCII.
+bomdir="$(mktemp -d)"; mkdir -p "$bomdir/.lokf/knowledge/x"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n' > "$bomdir/.lokf/knowledge/index.md"
+printf -- '%s---\ntype: Service\ntitle: Bommed\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' "$(printf '\357\273\277')" > "$bomdir/.lokf/knowledge/x/bommed.md"
+if out="$(cd "$bomdir" && bash "$report" labels x/bommed.md 2>&1)" && grep -qF 'confirmed by a person' <<<"$out"; then
+  ok "report script: a concept whose file begins with a byte order mark is read, not dropped"
+else
+  err "report script dropped a BOM-prefixed concept: $out"
+fi
+rm -rf "$bomdir"
+# The strip above is byte-correct only where awk reads bytes, not characters. A
+# UTF-8 gawk reads sprintf("%c", 239) as a two-byte character and leaves the
+# mark; mawk and busybox read it as the byte. The script runs under LC_ALL=C so
+# every awk reads bytes, and the fixture passes on whichever awk the host has.
+if grep -qxF 'export LC_ALL=C' "$report"; then
+  ok "report script: byte order mark handling runs byte-oriented under LC_ALL=C, for any awk"
+else
+  err "report script no longer exports LC_ALL=C, so its byte order mark strip breaks on a UTF-8 gawk"
+fi
+
 # 20a. The whole report ranks the curator's queue, so the counts behind it
 #      are program's too: how many other concepts rely on each concept, read
 #      from every spelling of a typed relation, each citing concept once and
@@ -2440,7 +2677,11 @@ kz_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$kz"
 soon="$(date -u -d '+10 days' +%Y-%m-%d)"; later="$(date -u -d '+40 days' +%Y-%m-%d)"
 printf 'c\n' > "$kz/src/c.md"
 printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$kzk/index.md"
-printf '# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n' > "$kzk/log.md"
+# Old: the newest line names Hub, an earlier one named A; the newest wins.
+# Lost: its successor Missing is not in the bundle, so no successor is named.
+# Gone: the newest line names no successor though an earlier one did, so the
+# concept reads plain retired - the earlier line must not be read instead.
+printf '# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n* **Deprecation**: [Gone](../x/gone.md) retired, with no replacement.\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n* **Deprecation**: [Gone](../x/gone.md) retired - replaced by [A](../x/a.md).\n' > "$kzk/log.md"
 # shellcheck disable=SC2016 # the backticks are Markdown code spans in the entries, not commands
 printf '%s\n' '# Reader feedback for the librarian' '' '## 2026-03-04' '' '- **Disagreement** (on `x/hub.md`) - newer - docent' '' '## 2026-03-01' '' \
   '- **Disagreement** (on `x/hub.md`) - older - docent' '- **Disagreement** - a reader wrote (on `x/a.md`) - docent' \
@@ -2455,6 +2696,7 @@ zc d Service 'id: https://acme.example/knowledge/x/d\ntitle: D\nrelations:\n- {p
 zc self Service "id: https://acme.example/knowledge/x/self\ntitle: Self\nreferences:\n- https://acme.example/knowledge/x/self\nstale_after: $later\nverified:\n- by: process:ktl-librarian\n  at: \"2026-01-04T00:00:00Z\"\n"
 zc old Service 'id: https://acme.example/knowledge/x/old\ntitle: Old\nstatus: deprecated\ndependsOn:\n- https://acme.example/knowledge/x/hub\n'
 zc lost Service 'id: https://acme.example/knowledge/x/lost\ntitle: Lost\nstatus: deprecated\n'
+zc gone Service 'id: https://acme.example/knowledge/x/gone\ntitle: Gone\nstatus: deprecated\n'
 zc no-id Service 'title: No id\n'
 zc e Service 'id: https://acme.example/knowledge/x/e\ntitle: E\ndependsOn: https://acme.example/knowledge/x/no-id\n'
 zc stale Policy 'id: https://acme.example/knowledge/x/stale\ntitle: Stale\nresource: src/c.md\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\nstale_after: 2020-01-01\n'
@@ -2483,8 +2725,9 @@ if out="$(cd "$kz" && bash "$report" labels x/c.md 2>&1)" && [[ "$out" == "- C (
 else
   err "report script's labels changed shape: $out"
 fi
-out="$(cd "$kz" && bash "$report" labels x/old.md x/lost.md x/hub.md x/a.md x/e.md 2>&1)"
+out="$(cd "$kz" && bash "$report" labels x/old.md x/lost.md x/gone.md x/hub.md x/a.md x/e.md 2>&1)"
 for want in '- Old (x/old.md) - retired, replaced by x/hub.md' '- Lost (x/lost.md) - retired' \
+            '- Gone (x/gone.md) - retired' \
             '- Hub (x/hub.md) - confirmed by a person, 2026-01-02, a reader disputed this on 2026-03-04' \
             '- A (x/a.md) - nobody has checked this yet' '- E (x/e.md) - nobody has checked this yet'; do
   if grep -qxF -- "$want" <<<"$out"; then ok "report script label: $want"; else err "report script did not print '$want': $out"; fi
@@ -2545,6 +2788,81 @@ else
   ok "the search finds a right-to-left override planted in a script"
 fi
 rm -rf "${unseen_dir:?}"
+
+# 22. Parser parity. The provenance gate reads a concept's `verified` and
+#     `generated` events with a hand-written awk reader, not a YAML parser, for
+#     portability. So a human event in a layout the reader skips, but a real
+#     parser reads, is a forged confirmation the gate cannot challenge. For each
+#     layout a person might write, the gate must flag an unsigned human event
+#     exactly when a YAML parser sees one. This is what caught a multi-line flow
+#     event slipping the gate, and, below, a forgery hidden behind a byte order
+#     mark or in CRLF line endings, which a bare-"---" first-line reader skipped.
+say ""
+say "Checking the event reader agrees with a YAML parser..."
+pp="$(mktemp -d)"; ppk="$pp/.lokf/knowledge/x"; mkdir -p "$ppk"
+pp_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$pp"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${pp_git[@]}" init -q
+prov="$repo_root/$templates/scripts/knowledge-provenance.sh"
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n' > "$pp/.lokf/knowledge/index.md"
+printf -- '---\ntype: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n---\n\n# C\n' > "$ppk/c.md"
+"${pp_git[@]}" add -A && "${pp_git[@]}" commit -q -m 'a draft with no event'
+ppi=0
+for layout in \
+  'verified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"' \
+  'verified: [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]' \
+  'verified: [\n  { by: human:ada, at: "2026-01-02T10:00:00Z" }\n]' \
+  'generated: { by: human:ada, at: "2026-01-02T10:00:00Z" }' \
+  'generated: {\n  by: human:ada,\n  at: "2026-01-02T10:00:00Z"\n}' \
+  'verified:\n  - by: process:ktl-librarian\n    at: "2026-01-01T00:00:00Z"\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"' \
+  'verified:\n  - by: human:ada\n    at: 2026-01-02T10:00:00+00:00' \
+  'verified: [ ]' \
+  'verified:\n  - by: process:ktl-librarian\n    at: "2026-01-01T00:00:00Z"'; do
+  ppi=$((ppi + 1))
+  # shellcheck disable=SC2059 # $layout is a trusted format fragment with \n escapes to expand
+  printf -- "---\ntype: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n$layout\n---\n\n# C\n" > "$ppk/c.md"
+  parser="$(python3 - "$ppk/c.md" <<'PY'
+import sys, yaml
+text = open(sys.argv[1], encoding="utf-8").read()
+front = text.split("\n---\n", 1)[0]
+front = front[4:] if front.startswith("---\n") else front
+try:
+    data = yaml.safe_load(front) or {}
+except yaml.YAMLError:
+    data = {}
+human = False
+for key in ("verified", "generated"):
+    value = data.get(key) if isinstance(data, dict) else None
+    for event in ([value] if isinstance(value, dict) else value if isinstance(value, list) else []):
+        if isinstance(event, dict) and str(event.get("by", "")).startswith("human:"):
+            human = True
+print("human" if human else "none")
+PY
+)"
+  set +e; out="$(cd "$pp" && bash "$prov" --unattended 2>&1)"; rc=$?; set -e
+  if [[ "$rc" -ne 0 ]]; then gate=human; else gate=none; fi
+  if [[ "$parser" == "$gate" ]]; then
+    ok "the gate agrees with a YAML parser on layout $ppi ($parser)"
+  else
+    err "the gate and a YAML parser disagree on layout $ppi: the parser sees $parser, the gate sees $gate ($out)"
+  fi
+done
+# The same unsigned human event behind a byte order mark, or in CRLF line
+# endings: a reader that keys on a bare "---" first line sees neither the
+# frontmatter nor the event and waves the forgery through, though every YAML
+# parser strips both. The gate must still flag it. This is the twin of the
+# multi-line flow bypass, and a UTF-8 gawk reads the BOM bytes as one character,
+# so the strip runs under LC_ALL=C.
+pp_human='verified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"'
+# shellcheck disable=SC2059 # $pp_human is a trusted fragment with \n to expand
+{ printf '\357\273\277'; printf -- "---\ntype: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n$pp_human\n---\n\n# C\n"; } > "$ppk/c.md"
+set +e; out="$(cd "$pp" && bash "$prov" --unattended 2>&1)"; rc=$?; set -e
+if [[ "$rc" -ne 0 ]]; then ok "the gate flags an unsigned human event behind a byte order mark"; else err "the gate missed an unsigned human event behind a byte order mark: $out"; fi
+# shellcheck disable=SC2059 # same trusted fragment, re-laid with CRLF endings
+printf -- "---\ntype: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n$pp_human\n---\n\n# C\n" | sed 's/$/\r/' > "$ppk/c.md"
+set +e; out="$(cd "$pp" && bash "$prov" --unattended 2>&1)"; rc=$?; set -e
+if [[ "$rc" -ne 0 ]]; then ok "the gate flags an unsigned human event in CRLF line endings"; else err "the gate missed an unsigned human event in CRLF line endings: $out"; fi
+rm -rf "$pp"
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

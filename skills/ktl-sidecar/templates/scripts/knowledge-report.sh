@@ -137,6 +137,12 @@
 # `quiet` exits 1 when work waits.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|worklist|quiet|changes|retrieval] [...]" >&2; exit 2; }
 set -u
+# Byte-oriented awk and sort, so the byte order mark strip, the CRLF strip and
+# every comparison read raw bytes on any awk and in any locale. A gawk under a
+# UTF-8 locale otherwise reads sprintf("%c", 239) as a two-byte character, not
+# the byte the BOM needs, and leaves the mark in place. A title is printed
+# whole, never measured by character, so it still passes through unchanged.
+export LC_ALL=C
 
 usage() {
   echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file>]" >&2
@@ -201,10 +207,38 @@ function unq(s,  a, z) {
 }
 function val(l) { sub(/^[^:]*:/, "", l); return unq(l) }
 function ev(l) { sub(/^[^:]*:[ \t]*/, "", l); gsub("[\"" SQ "]", "", l); sub(/[ \t]+$/, "", l); return l }
-function norm(v) {
+function dim(y, m) {   # days in month m (1-12) of year y
+  if (m == 2) return (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) ? 29 : 28
+  if (m == 4 || m == 6 || m == 9 || m == 11) return 30
+  return 31
+}
+function toutc(y, mo, d, h, mi, s, sign, oh, om,   tot) {
+  # Subtract the offset to reach UTC, then carry across day, month and year.
+  tot = h * 60 + mi - sign * (oh * 60 + om)
+  while (tot < 0)     { tot += 1440; d -= 1 }
+  while (tot >= 1440) { tot -= 1440; d += 1 }
+  while (d < 1)            { mo -= 1; if (mo < 1)  { mo = 12; y -= 1 } ; d += dim(y, mo) }
+  while (d > dim(y, mo))   { d -= dim(y, mo); mo += 1; if (mo > 12) { mo = 1; y += 1 } }
+  return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", y, mo, d, int(tot / 60), tot % 60, s)
+}
+function norm(v,   off, sign, oh, om, s) {
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/) return v "T00:00:00Z"
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]Z$/) return substr(v, 1, 16) ":00Z"
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9](\.[0-9]+)?Z$/) return substr(v, 1, 19) "Z"
+  # An explicit UTC offset (+00:00, -05:30, or the compact +0000), as the
+  # commands date -u -Iseconds and Python isoformat both write: convert it to
+  # Z, so a time that is really UTC is not dropped and read as no stamp.
+  # Seconds default to 00 when the time omits them, per trust-fields.md.
+  if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9](:[0-9][0-9])?(\.[0-9]+)?[+-][0-9][0-9]:?[0-9][0-9]$/) {
+    off = substr(v, length(v) - 5)
+    if (off ~ /^[+-][0-9][0-9][0-9][0-9]$/) off = substr(v, length(v) - 4)
+    sign = (substr(off, 1, 1) == "-") ? -1 : 1
+    oh = substr(off, 2, 2) + 0
+    om = substr(off, length(off) - 1, 2) + 0
+    s = (substr(v, 17, 1) == ":") ? substr(v, 18, 2) + 0 : 0
+    return toutc(substr(v, 1, 4) + 0, substr(v, 6, 2) + 0, substr(v, 9, 2) + 0, \
+                 substr(v, 12, 2) + 0, substr(v, 15, 2) + 0, s, sign, oh, om)
+  }
   return ""
 }
 function kv(l,  k) { k = l; sub(/:.*/, "", k); sub(/^[ \t]+/, "", k)
@@ -219,6 +253,14 @@ function emit(  n) {
   inev = 0; by = ""; at = ""; rev = ""
 }
 function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ","); for (i = 1; i <= n; i++) kv(parts[i]); emit() }
+# A flow verified/generated may span lines, and an empty one (verified: [ ])
+# names no event. Accumulate from the opener to its closing bracket, then
+# parse: a sequence into its events, a mapping as one, nothing when empty.
+function flushflow(  b, n, items, i) { b = flowbuf
+  if (flowseq) { sub(/^\[/, "", b); sub(/\].*/, "", b) } else { sub(/^\{/, "", b); sub(/\}.*/, "", b) }
+  sub(/^[ \t]+/, "", b); sub(/[ \t]+$/, "", b)
+  if (b != "") { if (flowseq) { n = split(b, items, /\}[ \t]*,/); for (i = 1; i <= n; i++) flow(items[i]) } else flow(b) }
+  inflow = 0; flowbuf = "" }
 function link(f, v,  q, j) { v = trim(v); q = substr(v, 1, 1)
   if ((q == "\"" || q == SQ) && (j = index(substr(v, 2), q)) > 0) v = substr(v, 2, j - 1); else v = unq(v)
   sub(/^\.\//, "", v); if (v != "") print "L\t" path "\t" f "\t" v }
@@ -227,11 +269,12 @@ function rkv(l,  k, v) { k = l; sub(/:.*/, "", k); sub(/^[ \t]+/, "", k); v = l;
   if (k == "predicate") rp = unq(v); else if (k == "target") rt = v }
 function rflow(s,  n, parts, i) { rflush(); gsub(/[{}]/, "", s); n = split(s, parts, ","); for (i = 1; i <= n; i++) rkv(parts[i]); rflush() }
 function relend() { if (inrels) rflush(); inrels = 0; rel = "" }
-BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source", relnames, " "); for (j in relnames) RELF[relnames[j]] = 1 }
+BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source", relnames, " "); for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
 { sub(/\r$/, "") }
-NR == 1 { if ($0 == "---") { fm = 1; started = 1; next } else exit }
-fm && $0 == "---" { emit(); relend(); inv = 0; fm = 0; body = 1; next }
+NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else exit }
+fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); inv = 0; fm = 0; body = 1; next }
 fm {
+  if (inflow) { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
   if ($0 ~ /^title:/) title = val($0)
   else if ($0 ~ /^status:/) status = val($0)
   else if ($0 ~ /^stale_after:/) stale = val($0)
@@ -244,8 +287,8 @@ fm {
   }
   if ($0 ~ /^(verified|generated):/) {
     relend(); emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated):[ \t]*/, "", rest)
-    if (rest ~ /^\{/) { flow(rest); inv = 0 }
-    else if (rest ~ /^\[/) { gsub(/[][]/, "", rest); n = split(rest, items, /\}[ \t]*,/); for (i = 1; i <= n; i++) flow(items[i]); inv = 0 }
+    if (rest ~ /^\{/) { flowseq = 0; flowbuf = rest; inv = 0; if (index(rest, "}")) flushflow(); else inflow = 1 }
+    else if (rest ~ /^\[/) { flowseq = 1; flowbuf = rest; inv = 0; if (index(rest, "]")) flushflow(); else inflow = 1 }
     next
   }
   if (inv && $0 ~ /^[^ \t-]/) { emit(); inv = 0 }
@@ -417,14 +460,17 @@ moved() {
     line="$(TZ=UTC git -C "$root" log -1 --format='%H %cd' --date=format-local:%Y-%m-%d -- "$p" 2>/dev/null || true)"
     [ -n "$line" ] && printf '%s|clean|%s|%s\n' "$res" "${line%% *}" "${line##* }"
   done > "$src"
-  printf '%s\n' "$all" | awk -F'\t' '$1 == "C" && $4 != "deprecated" { print $2 "|" $14 "|" $13 "|" $9 }' | while IFS='|' read -r path ref human hn; do
+  printf '%s\n' "$all" | awk -F'\t' '$1 == "C" && $4 != "deprecated" { print $2 "|" $14 "|" $13 "|" $9 "|" (($9 > 0 && $7 != "" && $8 != "" && $7 > $8) ? 1 : 0) }' | while IFS='|' read -r path ref human hn wasedited; do
     cdirty=0
     [ -n "$(git -C "$kdir" status --porcelain -- "$path" 2>/dev/null | head -1)" ] && cdirty=1
     dec="$(declined_for "$path")"
     qc=""; qdone=0
     for which in w c; do
       at="$ref"
-      if [ "$which" = c ]; then [ "${hn:-0}" -gt 0 ] || continue; at="$human"; fi
+      # The confirmed-source-moved list is for a standing confirmation. A
+      # concept edited since that confirmation is already on the work list
+      # under its own derivation, so it is counted there, not here as well.
+      if [ "$which" = c ]; then { [ "${hn:-0}" -gt 0 ] && [ "${wasedited:-0}" = 0 ]; } || continue; at="$human"; fi
       rec=""
       [ -n "$at" ] && rec="$(git -C "$kdir" log --format=%H -S"$at" -- "$path" 2>/dev/null | tail -1)"
       out=""; asked=""; aside=""
@@ -502,10 +548,11 @@ successors() {
     rest = substr(s, b + 1); s = substr(s, 1, b - 1); sub(/^\.\.\//, "", s); sub(/^\.\//, "", s); return s
   }
   /^[*-] \*\*Deprecation\*\*: \[/ {
-    old = target($0); if (old == "") next
+    old = target($0); if (old == "" || (old in seen)) next
+    seen[old] = 1   # the newest line for this concept decides, whether or not it names a successor
     c = index(rest, "replaced by ["); if (!c) next
-    new = target(substr(rest, c)); if (new == "" || (old in seen)) next
-    seen[old] = 1; print "S\t" old "\t" new
+    new = target(substr(rest, c)); if (new == "") next
+    print "S\t" old "\t" new
   }' "$bundle/log.md"
 }
 
@@ -617,7 +664,7 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 # references/trust-fields.md gives; `lists` prints the rest.
 ranked() {  # queue | lists
   local base
-  base="$(awk -v SQ="'" 'NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
+  base="$(awk -v SQ="'" '{ sub(/\r$/, "") } NR == 1 { sub(/^\357\273\277/, "") } NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
     /^base_iri:/ { v = $0; sub(/^base_iri:[ \t]*/, "", v); sub(/[ \t\r]+$/, "", v)
       if (substr(v, 1, 1) == "\"" || substr(v, 1, 1) == SQ) v = substr(v, 2, length(v) - 2); print v; exit }' "$bundle/index.md" 2>/dev/null || true)"
   { printf '%s\n' "$all"; printf '%s\n' "$times"; } | awk -F'\t' -v mode="$1" -v today="$today" -v base="$base" "$label_fn"'
@@ -818,15 +865,19 @@ changes() {
     echo "Changes: not compared here, since this folder has no git history"
     return 0
   fi
-  local line st path rel top added=0 changed=0 removed=0 demoted="" ndemoted=0 hidden=0 was now does fb_was led_now led_was
+  local line st path rel top pfx added=0 changed=0 removed=0 demoted="" ndemoted=0 hidden=0 was now does fb_was led_now led_was
   # Git names each changed path from the top of the work tree, which is above
   # $root when the sidecar sits in a subfolder of a larger repository.
   top="$(git -C "$root" rev-parse --show-toplevel 2>/dev/null)" || top="$root"
+  # The sidecar may sit in a subfolder: git names each path, and resolves a
+  # HEAD:<path>, from the top of the work tree, so prepend that folder's prefix
+  # (empty when the sidecar is at the top) to reach the bundle and the ledgers.
+  pfx="$(git -C "$root" rev-parse --show-prefix 2>/dev/null || true)"
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     st="${line%%$'\t'*}"; path="${line#*$'\t'}"
     case "$path" in *.md) ;; *) continue ;; esac
-    rel="${path#.lokf/knowledge/}"; rel="${rel#knowledge_bundle/}"
+    rel="${path#"$pfx"}"; rel="${rel#.lokf/knowledge/}"; rel="${rel#knowledge_bundle/}"
     case "${rel##*/}" in index.md|log.md|diataxis.md) continue ;; esac
     case "$st" in A*) added=$((added + 1)); continue ;; D*) removed=$((removed + 1)) ;; *) changed=$((changed + 1)) ;; esac
     was="$(git -C "$root" show "HEAD:$path" 2>/dev/null | awk -v path="$rel" -v SQ="'" "$extract" | awk -F'\t' "$label_fn$standing_fn")"
@@ -849,9 +900,9 @@ changes() {
   echo "Confirmed by a person, and changed or removed here: $ndemoted"
   printf '%s' "$demoted"
   [ "$hidden" -eq 0 ] || echo "- and $hidden more, whose paths hold characters this report does not print"
-  fb_was="$(git -C "$root" show HEAD:.lokf/feedback.md 2>/dev/null | grep -c '^- \*\*' || true)"
+  fb_was="$(git -C "$root" show "HEAD:${pfx}.lokf/feedback.md" 2>/dev/null | grep -c '^- \*\*' || true)"
   led_now="$(grep -c '^- ' "$root/.lokf/questions.md" 2>/dev/null || true)"
-  led_was="$(git -C "$root" show HEAD:.lokf/questions.md 2>/dev/null | grep -c '^- ' || true)"
+  led_was="$(git -C "$root" show "HEAD:${pfx}.lokf/questions.md" 2>/dev/null | grep -c '^- ' || true)"
   echo "Reader feedback waiting: $(waiting_feedback) (was ${fb_was:-0}) · Lines added to the ledger of readers' questions: $(( ${led_now:-0} > ${led_was:-0} ? ${led_now:-0} - ${led_was:-0} : 0 ))"
 }
 
