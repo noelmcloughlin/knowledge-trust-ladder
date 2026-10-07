@@ -454,14 +454,17 @@ moved() {
     line="$(TZ=UTC git -C "$root" log -1 --format='%H %cd' --date=format-local:%Y-%m-%d -- "$p" 2>/dev/null || true)"
     [ -n "$line" ] && printf '%s|clean|%s|%s\n' "$res" "${line%% *}" "${line##* }"
   done > "$src"
-  printf '%s\n' "$all" | awk -F'\t' '$1 == "C" && $4 != "deprecated" { print $2 "|" $14 "|" $13 "|" $9 }' | while IFS='|' read -r path ref human hn; do
+  printf '%s\n' "$all" | awk -F'\t' '$1 == "C" && $4 != "deprecated" { print $2 "|" $14 "|" $13 "|" $9 "|" (($9 > 0 && $7 != "" && $8 != "" && $7 > $8) ? 1 : 0) }' | while IFS='|' read -r path ref human hn wasedited; do
     cdirty=0
     [ -n "$(git -C "$kdir" status --porcelain -- "$path" 2>/dev/null | head -1)" ] && cdirty=1
     dec="$(declined_for "$path")"
     qc=""; qdone=0
     for which in w c; do
       at="$ref"
-      if [ "$which" = c ]; then [ "${hn:-0}" -gt 0 ] || continue; at="$human"; fi
+      # The confirmed-source-moved list is for a standing confirmation. A
+      # concept edited since that confirmation is already on the work list
+      # under its own derivation, so it is counted there, not here as well.
+      if [ "$which" = c ]; then { [ "${hn:-0}" -gt 0 ] && [ "${wasedited:-0}" = 0 ]; } || continue; at="$human"; fi
       rec=""
       [ -n "$at" ] && rec="$(git -C "$kdir" log --format=%H -S"$at" -- "$path" 2>/dev/null | tail -1)"
       out=""; asked=""; aside=""

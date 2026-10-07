@@ -2262,6 +2262,30 @@ if out="$(kr_run)" && grep -qF 'Confirmed by a person, and a source moved after 
 else
   err "report script's whole report is not as expected: $out"
 fi
+# A concept edited since its confirmation whose source then moved belongs on the
+# work list under its own derivation, not under "a source moved after that
+# confirmation" as well: the edit already overtook the person's confirmation, so
+# it is counted once. The old reader, keying only on a human event, listed it in
+# both places.
+ke="$(mktemp -d)"; mkdir -p "$ke/.lokf/knowledge/x" "$ke/src"
+ke_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$ke"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${ke_git[@]}" init -q
+printf -- '---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' > "$ke/.lokf/knowledge/index.md"
+printf 'a\n' > "$ke/src/a.md"
+printf -- '---\ntype: Service\ntitle: Edm\nresource: src/a.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-03-01T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n' > "$ke/.lokf/knowledge/x/edm.md"
+printf '# Change Log\n' > "$ke/.lokf/knowledge/log.md"
+"${ke_git[@]}" add -A && "${ke_git[@]}" commit -q -m 'an edited-since concept and its source'
+printf 'a2\n' >> "$ke/src/a.md" && "${ke_git[@]}" commit -q -am 'the source moves'
+if keport="$(cd "$ke" && bash "$report" 2>&1)" \
+   && grep -qxF 'Confirmed by a person, and a source moved after that confirmation: none' <<<"$keport" \
+   && kewl="$(cd "$ke" && bash "$report" worklist 2>&1)" \
+   && grep -qF -- '- x/edm.md: src/a.md (' <<<"$kewl"; then
+  ok "report script: an edited-since concept whose source moved is on the work list, and not under a standing confirmation"
+else
+  err "report script listed an edited-since concept under 'a source moved after that confirmation', or dropped it from the work list: $keport"
+fi
+rm -rf "$ke"
 printf '\nmore\n' >> "$kk/x/confirmed.md"; printf -- '---\ntype: Service\ntitle: New\n---\n' > "$kk/x/new.md"
 if out="$(kr_run changes)" && grep -qxF 'Concepts added: 1 · changed: 1 · removed: 0' <<<"$out" && grep -qxF 'Confirmed by a person, and changed or removed here: 1' <<<"$out" && grep -qxF -- '- x/confirmed.md: still reads as confirmed' <<<"$out"; then
   ok "report script: changes counts the working tree against HEAD and names the confirmed concept it touches, which still reads as confirmed"
