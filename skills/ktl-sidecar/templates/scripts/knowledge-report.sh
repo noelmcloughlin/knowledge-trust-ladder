@@ -137,6 +137,12 @@
 # `quiet` exits 1 when work waits.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|worklist|quiet|changes|retrieval] [...]" >&2; exit 2; }
 set -u
+# Byte-oriented awk and sort, so the byte order mark strip, the CRLF strip and
+# every comparison read raw bytes on any awk and in any locale. A gawk under a
+# UTF-8 locale otherwise reads sprintf("%c", 239) as a two-byte character, not
+# the byte the BOM needs, and leaves the mark in place. A title is printed
+# whole, never measured by character, so it still passes through unchanged.
+export LC_ALL=C
 
 usage() {
   echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file>]" >&2

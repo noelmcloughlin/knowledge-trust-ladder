@@ -2639,6 +2639,15 @@ else
   err "report script dropped a BOM-prefixed concept: $out"
 fi
 rm -rf "$bomdir"
+# The strip above is byte-correct only where awk reads bytes, not characters. A
+# UTF-8 gawk reads sprintf("%c", 239) as a two-byte character and leaves the
+# mark; mawk and busybox read it as the byte. The script runs under LC_ALL=C so
+# every awk reads bytes, and the fixture passes on whichever awk the host has.
+if grep -qxF 'export LC_ALL=C' "$report"; then
+  ok "report script: byte order mark handling runs byte-oriented under LC_ALL=C, for any awk"
+else
+  err "report script no longer exports LC_ALL=C, so its byte order mark strip breaks on a UTF-8 gawk"
+fi
 
 # 20a. The whole report ranks the curator's queue, so the counts behind it
 #      are program's too: how many other concepts rely on each concept, read
