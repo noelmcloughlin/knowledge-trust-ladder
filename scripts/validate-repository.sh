@@ -2153,6 +2153,38 @@ apply_refuses "deleting a concept a sentence links, with a comma after the link"
 printf '%s\n' 'ops:' '  - {op: delete, path: glossary/harm.md, log: gone}' > "$kpatch"
 apply_refuses "deleting a concept a sentence links, with no comma" "inside other text"
 rm -rf "$ka"
+# A host that wrote a concept's link with a ./ lead or a #fragment is still
+# linking that concept: on delete the link comes out of a list of links as a
+# bare one does, and a sentence that holds it refuses the delete, rather than
+# the old reader matching neither form and leaving the link to dangle.
+kf="$(mktemp -d)"; kfb="$kf/.lokf/knowledge"; kfp="$kf/.lokf/patch.yaml"; mkdir -p "$kfb/x"
+printf '%s\n' '---' 'base_iri: https://acme.example/knowledge/' '---' '' '# Acme' '' \
+  '## X' '' '* [A](x/a.md) - a.' '* [B](x/b.md) - b.' '* [C](x/c.md) - c.' '' \
+  'Links: [A](./x/a.md#over), [B](x/b.md).' 'See [C](./x/c.md#frag) for the rest.' > "$kfb/index.md"
+printf '%s\n' '# X' '' '* [A](a.md) - a.' '* [B](b.md) - b.' '* [C](c.md) - c.' '' 'Both: [A](./a.md#over), [B](b.md).' > "$kfb/x/index.md"
+for kc in a:A b:B c:C; do IFS=: read -r kn kt <<<"$kc"
+  printf '%s\n' '---' 'type: Reference' "id: https://acme.example/knowledge/x/$kn" "title: $kt" "description: $kt." \
+    'generated:' '  by: process:ktl-librarian' '  at: "2026-01-01T00:00:00Z"' 'status: draft' '---' '' '# Overview' '' 'Text.' > "$kfb/x/$kn.md"
+done
+printf '%s\n' '# Change Log' > "$kfb/log.md"
+printf '%s\n' 'ops:' '  - {op: delete, path: x/c.md, log: gone}' > "$kfp"
+kf_before="$(cd "$kfb" && cat index.md x/index.md)"
+if out="$(bash "$apply" --root "$kf" "$kfp" 2>&1)"; then
+  err "delete of a concept a sentence links with ./ and a #fragment was not refused, leaving a dangling link: $out"
+elif grep -qF -- "inside other text" <<<"$out" && [[ "$(cd "$kfb" && cat index.md x/index.md)" == "$kf_before" ]]; then
+  ok "delete refuses a sentence link that leads with ./ and carries a #fragment, instead of leaving it to dangle"
+else
+  err "delete of a ./#fragment sentence link failed for the wrong reason, or still wrote: $out"
+fi
+printf '%s\n' 'ops:' '  - {op: delete, path: x/a.md, log: gone}' > "$kfp"
+if bash "$apply" --root "$kf" "$kfp" >/dev/null 2>&1 \
+   && ! grep -qE 'a\.md' "$kfb/index.md" "$kfb/x/index.md" \
+   && grep -qxF 'Links: [B](x/b.md).' "$kfb/index.md" && grep -qxF 'Both: [B](b.md).' "$kfb/x/index.md"; then
+  ok "delete takes a ./-led, #fragment link out of a list of links, in the root index and a folder index alike"
+else
+  err "delete left a ./#fragment link in a list, or did not keep the rest: $(tr '\n' '|' < "$kfb/index.md") // $(tr '\n' '|' < "$kfb/x/index.md")"
+fi
+rm -rf "$kf"
 # The format comes from the script that enforces it, so a host needs no
 # particular release of the skill to learn it. The skill's page shows the
 # same block, and this check keeps the two equal.

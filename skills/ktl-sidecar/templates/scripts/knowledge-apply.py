@@ -712,18 +712,18 @@ class Bundle:
         lines = text.split("\n")
         own = re.compile(r"^\* \[[^\]]*\]\(" + re.escape(link) + r"\)(?: - .*)?$")
         mine = [k for k, line in enumerate(lines) if own.match(line)]
-        needle = f"]({link})"
+        ref = Bundle.link_ref(link)
         if bullet is None:
             for k in reversed(mine):
                 del lines[k]
                 if 0 < k < len(lines) and lines[k - 1] == "" and lines[k] == "":
                     del lines[k]  # the blank line on either side of it, now two in a row
-            return Bundle.joined([Bundle.unlink(line, link, path, where) if needle in line else line for line in lines])
+            return Bundle.joined([Bundle.unlink(line, link, path, where) if ref.search(line) else line for line in lines])
         if mine:
             for k in mine:
                 lines[k] = bullet
             return Bundle.joined(lines)
-        if any(needle in line and not OWN_BULLET_RE.match(line) for line in lines):
+        if any(ref.search(line) and not OWN_BULLET_RE.match(line) for line in lines):
             return Bundle.joined(lines)
         start, end = 0, len(lines)
         if section is not None:
@@ -749,12 +749,18 @@ class Bundle:
         return "\n".join(lines).rstrip("\n") + "\n"
 
     @staticmethod
+    def link_ref(link: str) -> "re.Pattern[str]":
+        """A Markdown link that points at the concept: its target led, where a host wrote it so, by `./`, and followed by a `#fragment`. A bare `]({link})` match would miss both forms and leave the link dangling after a delete."""
+        return re.compile(r"\]\((?:\./)?" + re.escape(link) + r"(?:#[^)]*)?\)")
+
+    @staticmethod
     def unlink(line: str, link: str, path: str, where: str) -> str:
-        """The line with the concept's link taken out of a comma-separated list of links, where a link stands next to it. A link anywhere else, in a sentence say, is refused: rewording the host's own text is not this script's to do."""
-        item = r"\[[^\]]*\]\(" + re.escape(link) + r"\)"
+        """The line with the concept's link taken out of a comma-separated list of links, where a link stands next to it. A link anywhere else, in a sentence say, is refused: rewording the host's own text is not this script's to do. The `./` lead and the `#fragment` are matched here as link_ref matches them, so neither form is left behind."""
+        item = r"\[[^\]]*\]\((?:\./)?" + re.escape(link) + r"(?:#[^)]*)?\)"
         after_link = re.compile(r"(\]\([^)]*\)), " + item)
         before_link = re.compile(item + r", (?=\[[^\]]*\]\()")
-        while f"]({link})" in line:
+        ref = Bundle.link_ref(link)
+        while ref.search(line):
             new, n = after_link.subn(r"\1", line, count=1)
             if not n:
                 new, n = before_link.subn("", line, count=1)
