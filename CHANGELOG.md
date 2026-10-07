@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.37.1] - 2026-10-07
+
 ### Added
 
 - **The schema is the source of the class list and of the relation fields.** Contract check 7c holds Rule 3's class list to the classes `lokf vocab --all --json` declares as types, at the lokf floor the templates pin, where check 7 compared two prose lists with each other. Check 7d holds the relation fields `knowledge-report.sh` counts reliance from to the slots the schema ranges over `Concept`. Both run the toolkit through `uvx` at the floor, so the comparison is against the schema a host installs.
