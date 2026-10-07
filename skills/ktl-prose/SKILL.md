@@ -140,7 +140,7 @@ python3 <skill>/scripts/prose-check.py --against HEAD <files>     # a file git a
 python3 <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied in Step 2
 ```
 
-A **finding** names something other than wording that differs: a number, a link, a code span, a quotation, a fenced block, a frontmatter byte, a body a person vouched for, or a character no reader sees that the rewording added. Undo what it names. A rewording has no reason to change any of them. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
+A **finding** names something other than wording that differs: a number, a link, a code span, an inline HTML tag, a quotation, or a fenced block. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a character no reader sees that the rewording added. Undo what it names. A rewording has no reason to change any of them. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
 
 A **note** asks you to look again. It names a number, a day or a month written as a word, a `must` or a `not` that came or went, or a text that grew or lost more than a fifth of its words. When nothing but the wording differs, the `OK` line gives the words before and after.
 

@@ -92,6 +92,10 @@ RULE_LINE = re.compile(r"^ {0,3}([-*_=])(?:\s*\1){2,}\s*$")
 TABLE_ROW = re.compile(r"^\s*\|")
 RULE_CELL = re.compile(r"^\s*:?-{3,}:?\s*$")
 HTML_LINE = re.compile(r"^\s*</?(?!https?:|mailto:)[A-Za-z!]")
+# Four spaces or a tab of indent, where a block begins: an indented code block.
+INDENT_CODE = re.compile(r"^(?: {4}|\t)")
+# A hard line break: two or more spaces, or a backslash, at a line's end.
+HARD_BREAK = re.compile(r"(?:  +|\\)$")
 LINK_DEF = re.compile(r"^ {0,3}\[[^\]]+\]:\s*(\S+)")
 QUOTE_MARK = re.compile(r"^\s*(?:>\s?)+")
 LIST_MARK = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?")
@@ -201,6 +205,17 @@ def closes(fence: str, line: str) -> bool:
     """A fence closes on a line of the same mark, at least as long, and nothing else."""
     mark = QUOTE_MARK.sub("", line, count=1).strip()
     return bool(mark) and set(mark) == {fence[0]} and len(mark) >= len(fence)
+
+
+def html_only(content: str) -> bool:
+    """True when a line is HTML markup with nothing a reader reads as prose: tags and whitespace alone. A prose line that merely opens with an inline tag is not HTML-only, and its style is read like any other line's."""
+    return not HTML_TAG.sub("", content).strip()
+
+
+def tag_name(tag: str) -> str:
+    """An inline HTML tag reduced to what a rewording must not change: its name, and a leading slash where it closes. Attributes are left out, since a link's target is kept on its own."""
+    found = re.match(r"</?\s*([A-Za-z][A-Za-z0-9-]*)", tag)
+    return ("/" if tag.lstrip().startswith("</") else "") + (found.group(1).lower() if found else "")
 
 
 # --- who vouched for a concept -------------------------------------------------
@@ -372,6 +387,8 @@ def prose_blocks(doc: Doc):
     block: Block | None = None
     fence: str | None = None
     comment = related = quoted = False
+    indent_code = in_list = False
+    prev_blank = True
 
     for number, line in doc.numbered_body():
         opening = FENCE.match(line)
@@ -384,6 +401,7 @@ def prose_blocks(doc: Doc):
             if block:
                 yield block
             block = None
+            indent_code = prev_blank = False
             continue
         if line.strip() == RELATED_OPEN:
             related = True
@@ -392,10 +410,12 @@ def prose_blocks(doc: Doc):
             if block:
                 yield block
             block = None
+            indent_code = prev_blank = False
             continue
         if comment:
             end = line.find("-->")
             if end < 0:
+                prev_blank = False
                 continue
             line, comment = " " * (end + 3) + line[end + 3 :], False
         line = COMMENT.sub(lambda found: " " * len(found.group()), line)
@@ -404,13 +424,28 @@ def prose_blocks(doc: Doc):
 
         quote = QUOTE_MARK.match(line)
         content = line[quote.end() :] if quote else line
+        blank = not content.strip()
+        # An indented code block: a run of lines each indented four spaces or a
+        # tab, begun at a block boundary after a blank line and outside a list,
+        # where the same indent would instead be a list item's own continuation.
+        # Its lines are code, so no style rule reads them; a blank line ends it.
+        if indent_code:
+            if blank or not INDENT_CODE.match(content):
+                indent_code = False
+            else:
+                prev_blank = False
+                continue
+        # A line that is only HTML opens no prose and ends a block, as before. A
+        # line that opens with an inline tag but carries prose is prose: its
+        # style is read, with the tags masked, rather than skipped whole.
+        is_html_block = bool(HTML_LINE.match(content)) and html_only(content)
         breaks = (
-            not content.strip()
+            blank
             or bool(quote) != quoted
             or HEADING.match(content)
             or RULE_LINE.match(content)
             or LINK_DEF.match(content)
-            or HTML_LINE.match(content)
+            or is_html_block
             or TABLE_ROW.match(content)
             or LIST_MARK.match(content)
         )
@@ -418,22 +453,34 @@ def prose_blocks(doc: Doc):
             yield block
             block = None
         quoted = bool(quote)
-        if not content.strip() or HEADING.match(content) or RULE_LINE.match(content):
+        if block is None and prev_blank and not in_list and not blank and INDENT_CODE.match(content):
+            indent_code = True
+            prev_blank = False
             continue
-        if LINK_DEF.match(content) or HTML_LINE.match(content):
+        if blank or HEADING.match(content) or RULE_LINE.match(content):
+            prev_blank = blank
+            continue
+        if LINK_DEF.match(content) or is_html_block:
+            prev_blank = False
             continue
         # The line under a quotation that names who said it.
         if quote and re.match(r"\s*(?:—|–|--)", content):
+            prev_blank = False
             continue
         if TABLE_ROW.match(content):
             yield from cells(number, content)
+            in_list = prev_blank = False
             continue
         marker = LIST_MARK.match(content)
         if marker:
+            in_list = True
             content = content[marker.end() :]
+        elif not INDENT_CODE.match(content):
+            in_list = False
         if block is None:
             block = Block("item" if marker else "paragraph")
         block.add(number, content.strip())
+        prev_blank = False
     if block:
         yield block
 
@@ -545,7 +592,9 @@ class Kept:
         self.headings: list[tuple[int, str]] = []
         self.list_items = 0
         self.table_rows = 0
+        self.breaks = 0
         self.codes: list[tuple[str, int]] = []
+        self.html: list[tuple[str, int]] = []
         self.links: list[tuple[str, int]] = []
         self.numbers: list[tuple[str, int]] = []
         self.quotes: list[tuple[str, int]] = []
@@ -563,13 +612,15 @@ class Kept:
         fence_at = 0
         related = questions = False
         block_is_list = block_is_table = False
+        prev_in_block = ""
 
         def flush() -> None:
-            nonlocal block, block_is_list, block_is_table
+            nonlocal block, block_is_list, block_is_table, prev_in_block
             if block:
                 self._tokens(block)
             block = None
             block_is_list = block_is_table = False
+            prev_in_block = ""
 
         for number, line in doc.numbered_body():
             if fence:
@@ -627,9 +678,15 @@ class Kept:
                 is_row = True
             if is_item:  # the number of an ordered list item is a marker, not a fact
                 line = ORDERED_MARK.sub(lambda found: found.group(1) + " " * len(found.group(2)) + found.group(3), line)
+            # A hard line break joins two lines of one block, so it is the kind
+            # of layout a rewording leaves alone; count one where the line before
+            # this one in the block ended with it.
             if block is None:
                 block = Block()
                 block_is_list, block_is_table = is_item, is_row
+            elif HARD_BREAK.search(prev_in_block):
+                self.breaks += 1
+            prev_in_block = line
             block.add(number, line)
             if HEADING.match(content):
                 flush()
@@ -661,6 +718,13 @@ class Kept:
         take(INLINE_LINK, self.links)
         take(AUTOLINK, self.links)
         take(HTML_ATTR, self.links)
+        # An inline HTML tag carries meaning a rewording must not drop: a <br>, a
+        # <sub>, a <kbd>. Record its name (its target is already a link above),
+        # then mask it so it counts as neither a word nor anything else.
+        for found in HTML_TAG.finditer(hidden):
+            self.html.append((tag_name(found.group()), block.line_at(found.start())))
+        for found in list(HTML_TAG.finditer(hidden)):
+            hidden = hidden[: found.start()] + MASK * len(found.group()) + hidden[found.end() :]
         take(BARE_URL, self.links, group=0)
         for found in QUOTED.finditer(hidden):
             group = 1 if found.group(1) is not None else 2
@@ -754,6 +818,7 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool):
         ("digits", "the number", a.numbers, b.numbers),
         ("quote", "the quoted text", a.quotes, b.quotes),
         ("rfc2119", "the keyword", a.rfc, b.rfc),
+        ("html", "the inline HTML tag", a.html, b.html),
     ):
         findings.extend((line, rule, words) for line, rule, words, _ in differences(rule, what, list_a, list_b))
     for line, rule, words, how in differences("code", "the code span", a.codes, b.codes):
@@ -767,6 +832,8 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool):
         findings.append((1, "list", f"{b.list_items} list items, and the earlier text had {a.list_items}"))
     if b.table_rows < a.table_rows:
         findings.append((1, "table", f"{b.table_rows} table rows, and the earlier text had {a.table_rows}"))
+    if a.breaks != b.breaks:
+        findings.append((1, "hard-break", f"{b.breaks} hard line breaks, and the earlier text had {a.breaks}; a rewording keeps the breaks a reader sees"))
 
     heads_a, heads_b = [text for _, text in a.headings], [text for _, text in b.headings]
     if heads_a != heads_b:

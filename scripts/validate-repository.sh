@@ -1583,6 +1583,18 @@ expect_prose 1 "override.md:3: unseen: U+202E RIGHT-TO-LEFT OVERRIDE" "a right-t
 printf '# A page\n\nPlain text.\n' > "$pc/u-old.md"
 printf '# A page\n\nPlain\xe2\x80\x8b text.\n' > "$pc/u-new.md"
 expect_prose 1 "u-new.md:3: unseen: U+200B ZERO WIDTH SPACE is new" "a rewording that adds a zero-width space is refused" -- --before "$pc/u-old.md" "$pc/u-new.md"
+# An indented code block is code, not prose: a figure or a dash in it is no
+# style finding, where the same words laid out as prose are read.
+printf '# A page\n\n    the fix lands - it ships every file in order to catch drift\n\nDone.\n' > "$pc/indent.md"
+expect_prose 0 "OK" "an indented code block is not held to the style rules" -- "$pc/indent.md"
+printf '# A page\n\nthe fix lands - it ships every file in order to catch drift\n\nDone.\n' > "$pc/indent-prose.md"
+expect_prose 1 "dash:" "the same words laid out as prose are read, so the skip is the indent's doing" -- "$pc/indent-prose.md"
+# A prose line that opens with an inline HTML tag is prose, the tag masked, so
+# its style is read; a line that is only HTML opens no prose and is left alone.
+printf '# A page\n\n<code>x</code> the fix lands in the next release.\n' > "$pc/htmlled.md"
+expect_prose 1 'words: "lands"' "a prose line that opens with an inline tag is read, not skipped" -- "$pc/htmlled.md"
+printf -- '# A page\n\n<img src="x.png" alt="a diagram of the gate">\n\nText.\n' > "$pc/htmlblock.md"
+expect_prose 0 "OK" "a line that is only HTML opens no prose and is left to the host" -- "$pc/htmlblock.md"
 
 # --before on plain files: wording may change, and nothing else.
 plain() { printf -- '---\ntitle: %s\n---\n\n# Guide\n\n%s\n\n<!-- lokf:related -->\n[[%s]]\n<!-- /lokf:related -->\n' "$1" "$2" "$3"; }
@@ -1618,6 +1630,15 @@ printf '# A page\n\n%s\n' "$para" > "$pc/s-new.md"
 expect_prose 0 "shrink: 163 words, and the earlier text had 323" "a text cut by more than a fifth is a note for the reader" -- --max-paragraph 400 --before "$pc/s-old.md" "$pc/s-new.md"
 # Growth is a fifth too, not the old 8%, and neither note has a word floor now.
 expect_prose 0 "growth: 323 words, and the earlier text had 163" "a text grown by more than a fifth is a note for the reader" -- --max-paragraph 400 --before "$pc/s-new.md" "$pc/s-old.md"
+# An inline HTML tag and a hard line break are layout a reader sees, so a
+# rewording keeps them: a changed tag and a dropped break are each reported,
+# where the earlier comparison read neither and let a rewording drop them.
+printf -- '# A page\n\nThe value is <sub>n</sub> here, and it holds.\n' > "$pc/t-old.md"
+printf -- '# A page\n\nThe value is <sup>n</sup> here, and it holds.\n' > "$pc/t-new.md"
+expect_prose 1 "html:" "a changed inline HTML tag is reported" -- --before "$pc/t-old.md" "$pc/t-new.md"
+printf '# A page\n\nFirst half here  \nsecond half here now.\n' > "$pc/hb-old.md"
+printf '# A page\n\nFirst half here\nsecond half here now.\n' > "$pc/hb-new.md"
+expect_prose 1 "hard-break:" "a dropped hard line break is reported" -- --before "$pc/hb-old.md" "$pc/hb-new.md"
 
 # --before on concepts: a body may change only where no person vouched for it,
 # and the frontmatter never. The confirmation is staged in each form the
