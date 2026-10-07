@@ -12,3 +12,6 @@ skills-lock.json
 
 # Python bytecode, if a contributor imports or compiles a script here
 __pycache__/
+
+# Papers are cited by their arXiv link, never committed.
+*.pdf
