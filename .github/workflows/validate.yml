@@ -1,9 +1,9 @@
 name: Validate
 
 # Validate every pull request and every push to main. Separate jobs for the
-# repository contract, script linting, workflow linting, the actual install
-# path, and Markdown/link checks so failures are easy to diagnose at a
-# glance. Also runs weekly and on demand. Link rot, an upstream `gh skill`
+# repository contract, the behavioural tests of the sidecar scripts, script
+# linting, workflow linting, the actual install path, and Markdown/link checks
+# so failures are easy to diagnose at a glance. Also runs weekly and on demand. Link rot, an upstream `gh skill`
 # spec change, or drift in what the install path resolves to would otherwise
 # only be caught on the next incidental PR.
 on:
@@ -59,6 +59,47 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh skill publish --dry-run
+
+  test-scripts:
+    name: Test the sidecar scripts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The tests run the scripts under skills/ktl-sidecar/templates/ and
+      # skills/ktl-prose/scripts/ on throwaway bundles and repositories. They
+      # cover the pen, the gate, the report, the conventions checker, the
+      # feedback recorder, the preflight, the prose checker, and the wrapper
+      # and the workflow steps in each bundle layout. The module docstring in
+      # tests/conftest.py says which contract checks they were. The runner
+      # comes with gpg, ssh-keygen, jq, zip and unzip. Node is for the
+      # hand-off cleaning the publish job runs, and `just` for the lokf-link
+      # recipe the justfile template carries; a machine without either skips
+      # those tests and says so.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Install just
+        run: |
+          uv tool install rust-just==1.47.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Use Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Run the tests
+        run: uv run --no-project --with-requirements tests/requirements.txt pytest
 
   lint-scripts:
     name: Lint shell scripts

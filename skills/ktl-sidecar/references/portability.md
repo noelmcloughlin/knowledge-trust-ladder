@@ -30,6 +30,16 @@ Validation uses [`uv`](https://docs.astral.sh/uv/) and the `lokf` PyPI package. 
 
 The host copies of those scripts and workflows are meant to stay byte-identical to the templates they came from, so that a template fix reaches the host on the next sidecar repair. The preflight compares each host copy with the installed sidecar's template and warns on a difference. A host that edits a copy knowingly (a stricter checkout step, say) owns that copy from then on, and should say so where it documents its automation.
 
+## What is tested before a release, and what stays yours
+
+The skills repository tests every script and workflow under `templates/` before a release. Its `tests/` run each one on throwaway bundles and repositories, with the toolkit version the templates lock. Its contract script holds its own copies byte-identical to the templates, and holds the two hand-kept lists to the LOKF schema: the classes a concept may name, and the relation fields the report counts. A host whose copies are as the sidecar laid them down inherits that testing and need not test the templates again. Three things stay with the host:
+
+- **A copy the host edited.** The preflight reports it as drift. From then on the host owns that copy, and any test of it.
+- **A port.** The gate ported to another forge by the recipe below, or a step rewritten for another shell, is the host's, with its tests.
+- **Another operating system.** The tests run on Linux. The scripts are written for bash 3.2 and POSIX tools, so macOS and Git for Windows are covered by design and not by a run there. Run the preflight and the conventions check once on such a host, and report a difference as an issue on the skills repository.
+
+No test can prove that an agent follows a `SKILL.md`. The trust labels, the gate and the curator's verdicts guard against that, and they are the same on every host.
+
 ## The host need not be git, GitHub, or Linux
 
 The scaffold is files, so any directory tree works: a local or shared filesystem, or storage mounted or synced locally (Drive, Dropbox, an S3 or blob mount, and the like). Find your case below.

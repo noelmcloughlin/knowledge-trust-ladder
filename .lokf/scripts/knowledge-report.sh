@@ -269,7 +269,7 @@ function rkv(l,  k, v) { k = l; sub(/:.*/, "", k); sub(/^[ \t]+/, "", k); v = l;
   if (k == "predicate") rp = unq(v); else if (k == "target") rt = v }
 function rflow(s,  n, parts, i) { rflush(); gsub(/[{}]/, "", s); n = split(s, parts, ","); for (i = 1; i <= n; i++) rkv(parts[i]); rflush() }
 function relend() { if (inrels) rflush(); inrels = 0; rel = "" }
-BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source", relnames, " "); for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
+BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source measures memberOf holder", relnames, " "); for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
 { sub(/\r$/, "") }
 NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else exit }
 fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); inv = 0; fm = 0; body = 1; next }
@@ -292,9 +292,11 @@ fm {
     next
   }
   if (inv && $0 ~ /^[^ \t-]/) { emit(); inv = 0 }
-  # The typed relations: the ten fields, each a block list, a one-line flow
-  # list or a bare value, and `relations`, a list of { predicate, target }
-  # mappings, block or one-line flow. Out comes one L line per target.
+  # The typed relations: the thirteen fields the schema ranges over Concept,
+  # each a block list, a one-line flow list or a bare value, and `relations`,
+  # a list of { predicate, target } mappings, block or one-line flow. The
+  # contract in the skills repository holds the list of fields to the schema.
+  # Out comes one L line per target.
   if (!inv) {
     if ($0 ~ /^[^ \t-]/) relend()
     if ($0 ~ /^[A-Za-z]+:/) {
