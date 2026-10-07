@@ -1616,6 +1616,8 @@ expect_prose 0 'date-word: the day or month "Tuesday" is new' "a changed day of 
 printf '# A page\n\n%s\n\n%s\n' "$para" "$para" > "$pc/s-old.md"
 printf '# A page\n\n%s\n' "$para" > "$pc/s-new.md"
 expect_prose 0 "shrink: 163 words, and the earlier text had 323" "a text cut by more than a fifth is a note for the reader" -- --max-paragraph 400 --before "$pc/s-old.md" "$pc/s-new.md"
+# Growth is a fifth too, not the old 8%, and neither note has a word floor now.
+expect_prose 0 "growth: 323 words, and the earlier text had 163" "a text grown by more than a fifth is a note for the reader" -- --max-paragraph 400 --before "$pc/s-new.md" "$pc/s-old.md"
 
 # --before on concepts: a body may change only where no person vouched for it,
 # and the frontmatter never. The confirmation is staged in each form the

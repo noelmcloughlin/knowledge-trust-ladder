@@ -783,9 +783,12 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool):
         if a.strength[word] != b.strength[word]:
             name = word if word == "a negation" else f'"{word}"'
             notes.append((1, "strength", f"{name} appears {times(b.strength[word])}, and the earlier text had it {times(a.strength[word])}"))
-    if b.words > a.words * 1.08 and b.words - a.words > 40:
+    # A fifth either way, as SKILL.md says: more than a fifth more words, or
+    # fewer than four fifths of them. The earlier 8% growth floor, and the
+    # 40-word floor that hid a third cut of a short text, are gone.
+    if b.words > a.words * 1.2:
         notes.append((1, "growth", f"{b.words} words, and the earlier text had {a.words}; a rewording adds no fact"))
-    if b.words < a.words * 0.8 and a.words - b.words > 40:
+    if b.words < a.words * 0.8:
         notes.append((1, "shrink", f"{b.words} words, and the earlier text had {a.words}; a rewording cuts words that carry nothing, and no fact"))
 
     return findings, notes, (a.words, b.words)
