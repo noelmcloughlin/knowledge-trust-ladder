@@ -36,10 +36,14 @@ docs/
     docent.md           eight captured docent answers against this repository's own bundle
     curator.md          placeholder: the curator sessions still to capture
 scripts/
-  validate-repository.sh   the checks validate.yml runs
+  validate-repository.sh   the contract: the checks validate.yml runs on this repository's own files
   smoke-test-install.sh    installs the five skills into a throwaway repo and checks them
-  test-sidecar-layouts.sh  the wrapper, workflows and lokf-link, with and without the doorway
   sync-sidecar.sh          copies one release's templates and skills pin into a sibling repository
+tests/                     the behavioural tests of the sidecar scripts and the prose checker, run with pytest
+  conftest.py              the shared helpers, and how to run the tests
+  test_*.py                one module per script: the pen, the gate, the report, the conventions checker,
+                           the feedback recorder, the preflight, the prose checker, and the layouts the
+                           wrapper and the workflows run in
 .lokf/                  this repository's own sidecar: the bundle and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
 ```

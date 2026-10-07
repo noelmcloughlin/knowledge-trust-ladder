@@ -6,7 +6,7 @@ Thanks for your interest in improving `knowledge-trust-ladder`.
 
 ## Development setup
 
-There is no build step: the skills are Markdown, YAML, shell and one Python script.
+There is no build step: the skills are Markdown, YAML, shell and Python.
 
 ```bash
 git clone https://github.com/noelmcloughlin/knowledge-trust-ladder.git
@@ -33,13 +33,14 @@ npx skills add ./knowledge-trust-ladder --skill ktl-sidecar
 | `skills/ktl-docent/SKILL.md` | The reader's side: answers from the bundle with each concept's trust label, and records misses in `.lokf/feedback.md`. Read-only on the bundle. `scripts/` holds its copies of two sidecar scripts. |
 | `skills/ktl-prose/SKILL.md` | The librarian's copy editor: rewords a concept body an agent wrote, in plain English, before a person confirms it. Wording, never facts. `scripts/prose-check.py` is its check. |
 | `skills/*/references/*.md` | Detail loaded only when the router points to it, which keeps each `SKILL.md` small. |
-| `scripts/` | The repository contract CI runs on every pull request. `validate-repository.sh` is the entry point and runs the layout tests; `smoke-test-install.sh` installs all five skills into a throwaway repo. |
+| `scripts/` | The repository contract CI runs on every pull request: `validate-repository.sh` checks this repository's files, and `smoke-test-install.sh` installs all five skills into a throwaway repo. |
+| `tests/` | The sidecar scripts' behavioural tests; `conftest.py` says how to run them. |
 
 [docs/repository-layout.md](docs/repository-layout.md) shows the whole tree, workflows and docs included.
 
 ## Before opening a pull request
 
-- Run `bash scripts/validate-repository.sh`. It names each check as it runs, and CI runs the same script plus ShellCheck, `actionlint`, markdownlint, lychee and codespell.
+- Run `bash scripts/validate-repository.sh` and `pytest`. CI runs both plus ShellCheck, `actionlint`, markdownlint, lychee and codespell.
 - Run `gh skill publish --dry-run` if you have the GitHub CLI: the Agent Skills spec check `validate.yml` runs.
 - If a change alters what a skill *does*, not just its wording, add a line or two under `## [Unreleased]` in `CHANGELOG.md`. The reasoning belongs beside the code.
 - Files here are deep-linked from the sibling repositories, whose link checks follow those URLs for real; check 9 lists the paths. Move one only together with their links, and when a change *there* needs something new *here*, merge this side first.

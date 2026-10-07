@@ -79,6 +79,11 @@ jobs:
       - name: Verify repository contract
         run: bash scripts/validate-repository.sh
 
+      # The behavioural tests of the sidecar scripts ran inside the contract
+      # until 2026-10-07; a release still runs them.
+      - name: Test the sidecar scripts
+        run: uv run --no-project --with-requirements tests/requirements.txt pytest
+
       - name: Validate Agent Skills spec (dry run)
         env:
           GH_TOKEN: ${{ github.token }}

@@ -4,6 +4,21 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The schema is the source of the class list and of the relation fields.** Contract check 7c holds Rule 3's class list to the classes `lokf vocab --all --json` declares as types, at the lokf floor the templates pin, where check 7 compared two prose lists with each other. Check 7d holds the relation fields `knowledge-report.sh` counts reliance from to the slots the schema ranges over `Concept`. Both run the toolkit through `uvx` at the floor, so the comparison is against the schema a host installs.
+- **ktl-sidecar's portability page says what is tested before a release, and what stays with the host.** The skills repository tests every template before a release, so a host whose copies are as the sidecar laid them down need not test them again. A copy the host edited, a port to another forge or shell, and another operating system stay the host's.
+
+### Changed
+
+- **ktl-docent follows all thirteen typed relations when it widens along the graph.** `sameAs`, `measures`, `memberOf` and `holder` join the list in its SKILL.md and in the Copilot instructions. A Metric now leads to what it measures, a Role to its organization and its holder, and a concept to one that says it is the same thing.
+
+- **The behavioural tests of the sidecar scripts moved out of the repository contract into `tests/`, run with pytest.** `scripts/validate-repository.sh` held about 2,000 lines of them beside the checks on this repository's own files, each building a throwaway bundle or repository. Checks 8, 11 (its synthetic bundle), 11c, 12 (most of it), 12a, 13, 13a, 18 and 19 (most of each), 20, 20a and 22, and `scripts/test-sidecar-layouts.sh`, are now one module per script under `tests/`. The fixtures and the expected lines are the same. Each check's number stays in the contract with a line saying where it went, so a changelog entry or a bundle concept that names one still points somewhere. `validate.yml` runs the tests in a job of their own, with `just` installed for the lokf-link recipe's tests, and `publish.yml` runs them before a release. A test can be run alone, and the contract runs in seconds.
+
+### Fixed
+
+- **The report script counts reliance through `measures`, `memberOf` and `holder`.** The schema ranges the three over `Concept`, so a Metric relies on what it measures and a Role on its organization and its holder, but the count read ten fields and left them out. The three are in the list, in the template and in both copies, and ktl-curator's trust-fields.md names thirteen. The template changed, so the siblings take it at the next sync.
+
 ## [0.37.0] - 2026-10-07
 
 ### Added

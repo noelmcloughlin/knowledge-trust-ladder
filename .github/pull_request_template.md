@@ -11,7 +11,7 @@
 
 ## Checklist
 
-- [ ] `bash scripts/validate-repository.sh` passes locally
+- [ ] `bash scripts/validate-repository.sh` passes locally, and so does `pytest` (`tests/conftest.py` says how to run it)
 - [ ] `gh skill publish --dry-run` passes locally (or CI's `validate-skills` job is green)
 - [ ] If a file the sibling repositories deep-link moved (check 9 lists them), their links change too, and this side merges first
 - [ ] A changed template is copied over this repository's own copy (check 11)
