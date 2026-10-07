@@ -195,6 +195,13 @@ jobs:
           ATTEST_ENV: ${{ vars.KNOWLEDGE_CURATION_ENVIRONMENT }}
         run: |
           set -euo pipefail
+          # Byte-oriented awk, sort and comm, so the frontmatter reader below
+          # strips a byte order mark by its bytes on any awk, and sort agrees
+          # with comm. A UTF-8 gawk would otherwise read the three BOM bytes as
+          # one character, see no "---", read no events, and pass a forged
+          # unsigned confirmation that every YAML parser reads. Matches
+          # knowledge-provenance.sh.
+          export LC_ALL=C
 
           # A claim is an event in a concept's frontmatter: a `verified`
           # entry, or the `generated` record the curator's Correct writes as
@@ -233,7 +240,13 @@ jobs:
               if (b != "") { if (flowseq) { n = split(b, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]) } else flow(b) }
               inflow = 0; flowbuf = "" }
             BEGIN { fm = 0; inv = 0; inev = 0; inflow = 0; cid = ""; out = "" }
-            NR == 1 { if ($0 == "---") { fm = 1; next } else exit }
+            { sub(/\r$/, "") }
+            # A byte order mark or CRLF on the opener would make a block-only
+            # reader see no "---", read no events, and wave a forged unsigned
+            # event past the gate, though every YAML parser strips both and
+            # sees it. Strip them (bytes, under LC_ALL=C). Matches
+            # knowledge-provenance.sh.
+            NR == 1 { sub(/^\357\273\277/, ""); if ($0 == "---") { fm = 1; next } else exit }
             inflow && $0 == "---" { flushflow(); exit }
             inflow { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
             fm && $0 == "---" { emit(); exit }

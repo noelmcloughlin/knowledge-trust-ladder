@@ -664,7 +664,7 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 # references/trust-fields.md gives; `lists` prints the rest.
 ranked() {  # queue | lists
   local base
-  base="$(awk -v SQ="'" '{ sub(/\r$/, "") } NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
+  base="$(awk -v SQ="'" '{ sub(/\r$/, "") } NR == 1 { sub(/^\357\273\277/, "") } NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
     /^base_iri:/ { v = $0; sub(/^base_iri:[ \t]*/, "", v); sub(/[ \t\r]+$/, "", v)
       if (substr(v, 1, 1) == "\"" || substr(v, 1, 1) == SQ) v = substr(v, 2, length(v) - 2); print v; exit }' "$bundle/index.md" 2>/dev/null || true)"
   { printf '%s\n' "$all"; printf '%s\n' "$times"; } | awk -F'\t' -v mode="$1" -v today="$today" -v base="$base" "$label_fn"'

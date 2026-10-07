@@ -2427,6 +2427,14 @@ if out="$(cd "$kc" && bash "$report" 2>&1)" && grep -qF -- '- x/hub.md (1)' <<<"
 else
   err "report script lost base_iri on a CRLF index.md: $out"
 fi
+# The same, with a byte order mark on index.md: the base_iri reader strips it by
+# its bytes (under LC_ALL=C), or reliance resolves to nothing as on a lost base.
+printf -- '%s---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n' "$(printf '\357\273\277')" > "$kc/.lokf/knowledge/index.md"
+if out="$(cd "$kc" && bash "$report" 2>&1)" && grep -qF -- '- x/hub.md (1)' <<<"$out"; then
+  ok "report script: base_iri is read from a byte-order-marked index.md, so reliance still resolves"
+else
+  err "report script lost base_iri on a byte-order-marked index.md: $out"
+fi
 rm -rf "$kc"
 if out="$(kr_run retrieval --prompt)" && grep -qxF 'x/confirmed.md | Confirmed | a confirmed concept about widgets.' <<<"$out" && grep -qxF 'Q1: Where are widgets?' <<<"$out" && grep -qxF 'Q2: a reader wrote these ledger words' <<<"$out" \
    && ! grep -q 'Q3\|Where did the old concept go' <<<"$out"; then
@@ -2787,7 +2795,8 @@ rm -rf "${unseen_dir:?}"
 #     parser reads, is a forged confirmation the gate cannot challenge. For each
 #     layout a person might write, the gate must flag an unsigned human event
 #     exactly when a YAML parser sees one. This is what caught a multi-line flow
-#     event slipping the gate.
+#     event slipping the gate, and, below, a forgery hidden behind a byte order
+#     mark or in CRLF line endings, which a bare-"---" first-line reader skipped.
 say ""
 say "Checking the event reader agrees with a YAML parser..."
 pp="$(mktemp -d)"; ppk="$pp/.lokf/knowledge/x"; mkdir -p "$ppk"
@@ -2838,6 +2847,21 @@ PY
     err "the gate and a YAML parser disagree on layout $ppi: the parser sees $parser, the gate sees $gate ($out)"
   fi
 done
+# The same unsigned human event behind a byte order mark, or in CRLF line
+# endings: a reader that keys on a bare "---" first line sees neither the
+# frontmatter nor the event and waves the forgery through, though every YAML
+# parser strips both. The gate must still flag it. This is the twin of the
+# multi-line flow bypass, and a UTF-8 gawk reads the BOM bytes as one character,
+# so the strip runs under LC_ALL=C.
+pp_human='verified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"'
+# shellcheck disable=SC2059 # $pp_human is a trusted fragment with \n to expand
+{ printf '\357\273\277'; printf -- "---\ntype: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n$pp_human\n---\n\n# C\n"; } > "$ppk/c.md"
+set +e; out="$(cd "$pp" && bash "$prov" --unattended 2>&1)"; rc=$?; set -e
+if [[ "$rc" -ne 0 ]]; then ok "the gate flags an unsigned human event behind a byte order mark"; else err "the gate missed an unsigned human event behind a byte order mark: $out"; fi
+# shellcheck disable=SC2059 # same trusted fragment, re-laid with CRLF endings
+printf -- "---\ntype: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n$pp_human\n---\n\n# C\n" | sed 's/$/\r/' > "$ppk/c.md"
+set +e; out="$(cd "$pp" && bash "$prov" --unattended 2>&1)"; rc=$?; set -e
+if [[ "$rc" -ne 0 ]]; then ok "the gate flags an unsigned human event in CRLF line endings"; else err "the gate missed an unsigned human event in CRLF line endings: $out"; fi
 rm -rf "$pp"
 
 say ""

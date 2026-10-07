@@ -65,6 +65,11 @@ set -u
 # whatever a locale collates between them, so the login check cannot be
 # widened by the host's locale. A no-op where the option is unknown (bash 3.2).
 shopt -s globasciiranges 2>/dev/null || :
+# Byte-oriented awk, sort and comm, so this gate reads raw bytes on any awk and
+# in any locale: the frontmatter reader strips a byte order mark by its bytes
+# (a UTF-8 gawk would otherwise read those three bytes as one character and the
+# strip would miss), and `sort` feeds `comm` a byte order it agrees with.
+export LC_ALL=C
 
 unattended=0
 if [ "${1:-}" = "--unattended" ]; then
@@ -166,7 +171,12 @@ human_events() {  # path -> events, reading the concept on stdin
     if (b != "") { if (flowseq) { n = split(b, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) flow(items[i]) } else flow(b) }
     inflow = 0; flowbuf = "" }
   BEGIN { fm = 0; inv = 0; inev = 0; inflow = 0; cid = ""; out = "" }
-  NR == 1 { if ($0 == "---") { fm = 1; next } else exit }
+  { sub(/\r$/, "") }
+  # A byte order mark or a CRLF on the opener would make a block-only reader see
+  # no "---", read no events, and wave a forged unsigned event past the gate,
+  # though every YAML parser strips both and sees it. Strip them (bytes, under
+  # LC_ALL=C) so the gate reads what the parsers read.
+  NR == 1 { sub(/^\357\273\277/, ""); if ($0 == "---") { fm = 1; next } else exit }
   inflow && $0 == "---" { flushflow(); exit }
   inflow { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
   fm && $0 == "---" { emit(); exit }
@@ -212,6 +222,7 @@ removed_from() {  # events-before file, events-now file -> the removed events th
 # the text a person wrote, which a note added below it does not change.
 body_of() {
   awk '{ sub(/\r$/, "") }
+       NR == 1 { sub(/^\357\273\277/, "") }
        NR == 1 && $0 == "---" { fm = 1; next }
        fm == 1 { if ($0 == "---") fm = 2; next }
        /^## Open questions[ \t]*$/ { exit }
