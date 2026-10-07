@@ -1300,6 +1300,8 @@ say ""
 say "Checking the librarian template's skills pin is a current release..."
 pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
          skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
+pin_sha="$(grep -oE 'TRUST_LADDER_SKILLS_SHA: [0-9a-f]{40}' \
+             skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
 mapfile -t recent < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md \
                         | head -2 | tr -d '#[] ' | sed 's/^/v/')
 if [[ -z "$pin" ]]; then
@@ -1316,9 +1318,11 @@ fi
 # neither line looking wrong. Here v0.21.0 is a real release and skills/ktl-librarian
 # is a real path, but that path is not in that tag, since the skills were
 # lokf-* until v0.22.0. So every scheduled run on such a host failed there.
-# Read the tag where the clone has it. CI checks out one commit without tags,
-# and the newest heading is tagged after this contract runs, so a tag that is
-# not here skips this half rather than failing it.
+# CI checks out one commit without tags, and the newest heading is tagged after
+# this contract runs, so the tag ref is often not here. The commit it names is,
+# though: it is recorded beside the pin and is an ancestor of this checkout, so
+# read the path out of that commit, and fall to the tag only to resolve it.
+# The half skips, rather than failing, only when neither is on the clone.
 # shellcheck disable=SC2016 # $tmp is the template's own literal, not ours
 skill_path="$(grep -oE '\$tmp/skills/[A-Za-z0-9._-]+' \
                 skills/ktl-sidecar/templates/github/knowledge-librarian.yaml \
@@ -1327,24 +1331,34 @@ if [[ -z "$pin" ]]; then
   : # already reported above
 elif [[ -z "$skill_path" ]]; then
   err "the librarian template's install step copies no skills/ path that check 15 can read - it cannot tell whether $pin carries the skill a host would install"
-elif ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
-  say "skipping the pinned tag's contents: $pin is not a tag on this clone"
-elif git ls-tree --name-only "$pin" -- "$skill_path" | grep -qxF -- "$skill_path"; then
-  ok "$pin carries $skill_path, the path the install step copies out of it"
+elif pin_commit="$(git rev-parse -q --verify "refs/tags/$pin^{commit}" 2>/dev/null)" \
+     || { [[ -n "$pin_sha" ]] && pin_commit="$(git rev-parse -q --verify "$pin_sha^{commit}" 2>/dev/null)"; }; then
+  if git ls-tree --name-only "$pin_commit" -- "$skill_path" | grep -qxF -- "$skill_path"; then
+    ok "the commit $pin names (${pin_commit:0:12}) carries $skill_path, the path the install step copies out of it"
+  else
+    err "the librarian template pins $pin, whose commit ${pin_commit:0:12} has no $skill_path - the install step clones that tag and copies that path, so every scheduled run on a host scaffolded from this template fails there; this is what a rename does to a pin that still names a current release"
+  fi
 else
-  err "the librarian template pins $pin, which has no $skill_path - the install step clones that tag and copies that path, so every scheduled run on a host scaffolded from this template fails there; this is what a rename does to a pin that still names a current release"
+  say "skipping the pinned tag's contents: neither $pin nor its commit ${pin_sha:0:12} is on this clone"
 fi
 # The pin is a tag and the commit that tag names, since a tag can be moved and
 # what it names here is the instructions an agent follows unattended. The
 # install step refuses a tag that names another commit. So the template's
 # commit must be the one its tag names, and whatever moves the tag must move
-# the commit with it: the release step, and the sync into a sibling.
-pin_sha="$(grep -oE 'TRUST_LADDER_SKILLS_SHA: [0-9a-f]{40}' \
-             skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
+# the commit with it: the release step, and the sync into a sibling. This
+# agreement can only be read where the tag is on the clone, so it skips where
+# the tag is not - a shallow or tag-less checkout has nothing to compare. The
+# skip says whether the recorded commit is at least a real object here, which
+# the content half above has read from, so the skip is not a blind one.
+# pin_sha is read above, beside the pin.
 if [[ -z "$pin_sha" ]]; then
   err "no TRUST_LADDER_SKILLS_SHA beside the pin in the librarian template - a host would install whatever commit the tag names on the day"
 elif [[ -z "$pin" ]] || ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
-  say "skipping the pinned commit: ${pin:-the pin} is not a tag on this clone"
+  if git rev-parse -q --verify "$pin_sha^{commit}" >/dev/null; then
+    say "skipping the tag/commit agreement: ${pin:-the pin} is not a tag on this clone (its commit ${pin_sha:0:12} is a real object here)"
+  else
+    say "skipping the tag/commit agreement: neither ${pin:-the pin} nor its commit ${pin_sha:0:12} is on this clone"
+  fi
 elif [[ "$(git rev-parse "refs/tags/$pin^{commit}")" == "$pin_sha" ]]; then
   ok "the librarian template pins the commit $pin names (${pin_sha:0:12})"
 else
@@ -1364,6 +1378,27 @@ for mover in .github/workflows/semantic-release.yml scripts/sync-sidecar.sh; do
     err "$mover moves TRUST_LADDER_SKILLS_REF without TRUST_LADDER_SKILLS_SHA, so the install step would refuse the next pin it writes"
   fi
 done
+# The content half reads the skill path out of the commit the pin records, not
+# only out of the tag ref, so it still runs on the scheduled, tag-less checkout
+# where it used to skip. This stages a commit that carries the path, with no tag
+# for it, and confirms the pin_sha fallback resolves the commit and reads it.
+p15="$(mktemp -d)"
+p15_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$p15"
+  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
+"${p15_git[@]}" init -q
+mkdir -p "$p15/skills/ktl-librarian"
+printf 'name: ktl-librarian\n' > "$p15/skills/ktl-librarian/SKILL.md"
+"${p15_git[@]}" add -A && "${p15_git[@]}" commit -q -m 'a release commit, left untagged'
+p15_sha="$("${p15_git[@]}" rev-parse HEAD)"
+if ! "${p15_git[@]}" rev-parse -q --verify "refs/tags/v9.9.9^{commit}" >/dev/null 2>&1 \
+   && p15_commit="$("${p15_git[@]}" rev-parse -q --verify "refs/tags/v9.9.9^{commit}" 2>/dev/null || "${p15_git[@]}" rev-parse -q --verify "$p15_sha^{commit}" 2>/dev/null)" \
+   && [[ "$p15_commit" == "$p15_sha" ]] \
+   && "${p15_git[@]}" ls-tree --name-only "$p15_commit" -- skills/ktl-librarian | grep -qxF -- skills/ktl-librarian; then
+  ok "check 15's content half resolves the recorded commit and reads the skill path when the tag ref is absent"
+else
+  err "check 15's content half could not read the skill path from the recorded commit without the tag"
+fi
+rm -rf "$p15"
 
 # 16. The repository's old name stays gone from anything that still speaks in
 #     the present tense. It was renamed from lokf-agent-skills on 2026-09-19,
