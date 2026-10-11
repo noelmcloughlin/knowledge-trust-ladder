@@ -1,6 +1,6 @@
 ---
 name: ktl-prose
-description: 'Reword the concept bodies of a `.lokf/` knowledge bundle into plain English, changing the wording and never a fact. Use when: someone asks for a plain-prose or plain-English pass, a restyle, shorter sentences or paragraphs, plainer words in place of jargon, or a style audit of the bundle; or says its concepts read as if an agent wrote them. Works between ktl-librarian and ktl-curator: it rewords only a body an agent wrote and no person has confirmed, leaves every byte of frontmatter alone, and checks by script that code, links and numbers came through unchanged. Applies the same rules to another Markdown file only when a person names it. Not for deriving, correcting or confirming what a concept claims; that is ktl-librarian / ktl-curator. Keywords: plain English, plain language, readability, style guide, technical writing, copy editing, OKF, LOKF, WikiSkill, trust ladder.'
+description: 'Reword the concept bodies of a `.lokf/` knowledge bundle into plain English, changing the wording and never a fact. Use when: someone asks for a plain-prose or plain-English pass, a restyle, shorter sentences or paragraphs, plainer words in place of jargon, or a style audit of the bundle; or says its concepts read as if an agent wrote them; or asks for a version for younger or dyslexic readers ("for ages 8 to 12", "for teens", "explain like I''m five"). Works between ktl-librarian and ktl-curator: it rewords only a body an agent wrote and no person confirmed, and checks by script that code, links and numbers came through unchanged. Applies the same rules to another Markdown file only when a person names it. Not for deriving, correcting or confirming what a concept claims; that is ktl-librarian / ktl-curator. Keywords: plain English, plain language, readability, style guide, technical writing, copy editing, OKF, LOKF, WikiSkill, trust ladder.'
 license: Apache-2.0
 compatibility: 'Works on a `.lokf/` bundle installed by ktl-sidecar. The check script needs python3 3.9 or later, or uv; without either, apply the rules by hand and say in the hand-off that no script ran. git supplies the earlier version of a file to compare against; without git, keep a copy before rewriting.'
 ---
@@ -18,6 +18,10 @@ A museum edits its labels before the exhibition opens. This skill does that for 
 The **librarian** derives a concept from its source. This skill rewords the body. Then a **curator**, who is always a person, confirms the concept against the source. The order matters, because this skill never touches a concept once a person has vouched for it.
 
 It is a copy editor, not an author. The librarian stays the maker of every concept it derived, so `generated` keeps naming it and keeps its `revision`. The bundle's `log.md` and git record the rewording.
+
+## Younger readers
+
+A text for a younger reader is a retelling, not a rewording: it leaves detail out and explains terms, so it is a new file and the original stays as it is. In the bundle, ktl-librarian writes it and this skill checks it. Outside the bundle, this skill writes it beside a file a person names. A pass for dyslexic readers is a rewording at tighter limits. Read [references/young-readers.md](references/young-readers.md) first.
 
 ## The rules, in short
 
@@ -170,16 +174,11 @@ Hand the person a change scoped to `.lokf/`: a pull request where git tracks `.l
 - the counts before and after, and the words before and after as the script's `OK` line gives them;
 - each sentence you left alone, and why;
 - each concept you skipped, with its reason;
-- what no script proved: that the meaning held. The diff is theirs to read.
+- what no script proved: that the meaning held. The diff is theirs to read, and each concept stays unconfirmed until a curator confirms it against its source;
+- that a concept *checked by automation only* was checked before the rewording, and that the librarian's next run checks the new body against its source.
 
 End with a short **For the CURATOR** section, as ktl-librarian does. Say which reworded concepts are ready to confirm, and name the **ktl-curator** skill. Then list each confirmed concept that reads badly, with the one route open to it. The person sends it back through the curator (*Wrong - send back*), ktl-librarian rewrites it from its source, and the person confirms the new text.
 
-## What this skill cannot promise
-
-- **The librarian's own check event stays as it was.** A concept "checked by automation only" was checked before you reworded it. The librarian's next run checks the reworded body against its source again.
-- **No script proves that the meaning held.** A person reads the diff, and the concept stays unconfirmed until a curator confirms it against its source.
-- **A confirmed concept that reads badly stays so** until a person sends it back.
-
 ## Outside the bundle
 
-The bundle is where this skill works. A person may still name another Markdown file: a README, a docs page, a skill page. Read [references/other-files.md](references/other-files.md) first. Rewording a file that concepts were derived from has a cost in the bundle, and that page says how to show the cost to the person before you start.
+A person may name a Markdown file outside the bundle: a README, a docs page, a skill page. Read [references/other-files.md](references/other-files.md) first. Rewording a file that concepts were derived from has a cost in the bundle, and that page says how to show the cost to the person before you start.
