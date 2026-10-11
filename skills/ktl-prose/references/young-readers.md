@@ -57,6 +57,18 @@ Under a band, the script also counts the sentences in each paragraph, and report
 - **the grade**, with the words in a sentence, the letters in a word and the share of long words it comes from;
 - **the words a younger reader may not know**: those the VOA Learning English word book does not hold, most frequent first. The word book lists about 1,600 words that learners of English meet first, and sits in this skill's `assets/` folder with its credit. A technical page always has some words outside it, so explain each where it first appears, as rule 2 says.
 
+## Proving that a retelling adds nothing
+
+The check script compares a retelling with the text it retells, in one direction:
+
+```sh
+python3 <skill>/scripts/prose-check.py --derived-from <original> <retelling>
+```
+
+A number, a link target, a code span, a quotation, an inline HTML tag or a fenced block that the retelling holds and the original does not is a finding. So is a first paragraph that does not link the original, and in the bundle a `derivedFrom` that does not name the adult concept. A heading spelt like `## Open questions` but not exactly so is a finding too. What the retelling left out is a note, and so is a `should` the original never has, a keyword left in capitals, or a link to another concept of the bundle.
+
+The check changes nothing, so a retelling a person confirmed is a note, never a refusal. A rewording of a retelling is still proved with `--before` or `--against`, as Step 3 says, and that refuses a body a person vouched for.
+
 ## Who the reader is
 
 A person names the band, and the skill never guesses it. Take the band from the first of these that holds:
@@ -146,7 +158,7 @@ Never add HTML or CSS to set a font, a size, spacing or a colour. Those belong t
 
 Add these to Step 5's hand-off:
 
-- the band, the original and the retelling, with the words in each;
+- the band, the original and the retelling, with the words in each, as the `--derived-from` line gives them;
 - what the retelling left out, in a line or two;
 - each definition and example it added, and where each came from;
 - each passage left out because it could not be retold without a new fact or an analogy;

@@ -13,6 +13,7 @@
 #   prose-check.py --before OLD NEW       what differs besides the wording, and the words before and after
 #   prose-check.py --against REF FILE...  the same, against the version git holds at REF
 #   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword
+#   prose-check.py --derived-from ADULT YOUNG  what a retelling holds that the text it retells does not
 #
 # A band holds a page to the limits references/young-readers.md gives for
 # readers aged 8 to 12, aged 13 to 18, or dyslexic. A page that opens by
@@ -20,6 +21,12 @@
 # held to that band with no flag. Under a band the script also counts the
 # sentences in each paragraph, and notes the page's Automated Readability
 # Index with the counts it comes from. The index is a hint, never a finding.
+#
+# A retelling may say less than the text it retells, and never more. So
+# --derived-from reports a number, a link, a code span, a quotation, an HTML
+# tag or a fenced block that the retelling holds and the adult text does not,
+# and notes what the retelling left out. The retelling must link the text it
+# retells in its first paragraph, and in a bundle name it under derivedFrom.
 #
 # `unseen` is a character no reader sees: a control character other than a
 # tab, or a format character such as a zero-width space or the right-to-left
@@ -48,6 +55,7 @@ import subprocess
 import sys
 import textwrap
 import unicodedata
+from urllib.parse import unquote
 from collections import Counter, namedtuple
 from pathlib import Path
 
@@ -857,6 +865,7 @@ class Kept:
         self.codes: list[tuple[str, int]] = []
         self.html: list[tuple[str, int]] = []
         self.links: list[tuple[str, int]] = []
+        self.wikilinks: list[tuple[str, int]] = []
         self.numbers: list[tuple[str, int]] = []
         self.quotes: list[tuple[str, int]] = []
         self.rfc: list[tuple[str, int]] = []
@@ -975,6 +984,7 @@ class Kept:
         for found in WIKILINK.finditer(hidden):
             target = text[found.start(1) : found.end(1)].split("|")[0].strip()
             self.links.append((target, block.line_at(found.start())))
+            self.wikilinks.append((target, block.line_at(found.start())))
         take(WIKILINK, [])
         take(INLINE_LINK, self.links)
         take(AUTOLINK, self.links)
@@ -1002,11 +1012,16 @@ class Kept:
         for word in STRENGTH:
             self.strength[word] += len(re.findall(rf"\b{word}\b", lowered))
         self.strength["a negation"] += len(NEGATION.findall(hidden))
+        self.strength["should"] += len(re.findall(r"\bshould\b", lowered))
         self.words += len(hidden.split())
 
 
 def times(count: int) -> str:
     return "once" if count == 1 else f"{count} times"
+
+
+def counted_as(count: int, one: str, many: str) -> str:
+    return f"{count} {one if count == 1 else many}"
 
 
 def differences(rule: str, what: str, old: list[tuple[str, int]], new: list[tuple[str, int]]):
@@ -1233,6 +1248,180 @@ def check_against(ref: str, files: list[Path]):
     return findings, notes, f"only the wording differs ({len(files)} file(s) against {ref}): {counted(was, now)}"
 
 
+def frontmatter_list(fm: list[str] | None, key: str) -> list[str]:
+    """The values of one top-level frontmatter key, as a block list, a flow list or a single value."""
+    lines = fm or []
+    for index, line in enumerate(lines):
+        found = re.match(rf"^{re.escape(key)}\s*:\s*(.*)$", line)
+        if not found:
+            continue
+        rest = found.group(1).split(" #")[0].strip()
+        if rest.startswith("["):
+            return [value.strip().strip("\"'") for value in rest.strip("[]").split(",") if value.strip()]
+        if rest:
+            return [rest.strip("\"'")]
+        values = []
+        for item in lines[index + 1 :]:
+            entry = re.match(r"^\s*-\s+(.*)$", item)
+            if entry:
+                values.append(entry.group(1).split(" #")[0].strip().strip("\"'"))
+            elif item.strip() and not item[0].isspace():
+                break
+        return values
+    return []
+
+
+def link_keys(kept: Kept, path: Path) -> list[tuple[str, int, str]]:
+    """Each link of one file as (key, line, target as written).
+
+    The key lets two files in different folders compare their links: a
+    wikilink by the name of the note it opens, a relative path resolved from
+    the file's own folder, and a URL or an anchor as written.
+    """
+    wikis = Counter(target for target, _ in kept.wikilinks)
+    keys = []
+    for target, line in kept.links:
+        if wikis[target] > 0:
+            wikis[target] -= 1
+            name = target.split("#")[0].strip().rsplit("/", 1)[-1]
+            keys.append((f"[[{(name[:-3] if name.lower().endswith('.md') else name).lower()}]]", line, target))
+            continue
+        written = target.strip().split()[0] if target.strip() else ""
+        if not written or written.startswith("#") or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", written):
+            keys.append((written, line, target))
+            continue
+        where, _, fragment = written.partition("#")
+        key = str((path.parent / unquote(where)).resolve()) if where else ""
+        keys.append((key + (f"#{fragment}" if fragment else ""), line, target))
+    return keys
+
+
+def check_derived(adult_path: Path, young_path: Path):
+    """What a retelling holds that the adult text it retells does not: findings, notes, and the words of each.
+
+    A retelling may leave out anything and add no fact, so each comparison
+    runs one way: what is new in the retelling is a finding, and what it left
+    out is a note. Outside a bundle the retelling's first paragraph must link
+    the adult file; in a bundle it must also name the adult concept under
+    derivedFrom. Whether a person wrote or confirmed the retelling is a note
+    here, since this check changes nothing; --before and --against keep the
+    refusals for a rewording.
+    """
+    adult, young = Doc(read(adult_path)), Doc(read(young_path))
+    root = bundle_root(young_path)
+    a, y = Kept(adult), Kept(young)
+    findings: list[tuple[int, str, str]] = []
+    notes: list[tuple[int, str, str]] = []
+    back = {str(adult_path.resolve()), f"[[{adult_path.stem.lower()}]]"}
+
+    def links_back(key: str) -> bool:
+        return key.split("#")[0] in back
+
+    # Who the retelling is for, and the page it retells.
+    said = declared(young)
+    ages = Counter(re.findall(r"\d+", said[2])) if said else Counter()
+    if said is None:
+        notes.append((1, "audience", "the first paragraph names no readers, and a retelling opens by saying who it is for"))
+    first = next(iter(prose_blocks(young)), None)
+    opening = []
+    if first is not None and first.kind == "paragraph":
+        opening_doc = Kept(Doc("\n".join(["---", "---", first.text])))
+        opening = [key for key, _, _ in link_keys(opening_doc, young_path)]
+    if not any(links_back(key) for key in opening):
+        line = first.line_at(0) if first is not None else 1
+        findings.append((line, "derived-from", f"the first paragraph does not link {adult_path.name}, and a retelling opens by linking the page it retells"))
+    if root is not None:
+        adult_id = top_value(adult.fm or [], "id")
+        if not adult_id or adult_id not in frontmatter_list(young.fm, "derivedFrom"):
+            findings.append((1, "derived-from", f"derivedFrom does not name {adult_id or 'the adult concept'}, and a retelling in a bundle names the concept it retells"))
+        if said and said[0] and f"audience-{said[0]}" not in frontmatter_list(young.fm, "tags"):
+            notes.append((1, "audience", f"the tags hold no audience-{said[0]}, the band the first paragraph names"))
+    rule, words = standing(young, expect_concept=root is not None)
+    if rule in ("person", "confirmed", "retired"):
+        notes.append((1, rule, f"{words}; this check changes nothing, and only a person changes that body"))
+
+    # A character no reader sees, which the adult text did not hold either.
+    had = {char for line in adult.lines for char in line if unseen_char(char)}
+    for char in sorted({char for line in young.lines for char in line if unseen_char(char)} - had):
+        line = next(number for number, text in enumerate(young.lines, start=1) if char in text)
+        findings.append((line, "unseen", f"{described(char)} is not in the adult text, and a retelling adds no character a reader cannot see"))
+
+    # Links: the link back, and in a bundle a link to another concept, are allowed.
+    adult_keys = {key for key, _, _ in link_keys(a, adult_path)}
+    young_keys = link_keys(y, young_path)
+    for key, line, target in young_keys:
+        if key in adult_keys or links_back(key) or key.startswith("#"):
+            continue
+        inside = root is not None and (key.startswith("[[") or (key.endswith(".md") and key.startswith(str(root.resolve()))))
+        if inside:
+            notes.append((line, "link", f'"{target}" is a concept the adult text does not link; keep it only where it explains a term'))
+        else:
+            findings.append((line, "link", f'the link target "{target}" is not in the adult text, and a retelling adds no link'))
+    left_out = adult_keys - {key for key, _, _ in young_keys}
+    if left_out:
+        notes.append((1, "link", f"{counted_as(len(left_out), 'link target', 'link targets')} of the adult text left out"))
+
+    # Numbers, code, quotations and HTML, one way. The ages a retelling's
+    # first paragraph names are its own.
+    for rule, what, (one, many), old, new in (
+        ("digits", "the number", ("number", "numbers"), a.numbers, y.numbers),
+        ("code", "the code span", ("code span", "code spans"), a.codes, y.codes),
+        ("quote", "the quoted text", ("quotation", "quotations"), a.quotes, y.quotes),
+        ("html", "the inline HTML tag", ("inline HTML tag", "inline HTML tags"), a.html, y.html),
+    ):
+        holds = {token for token, _ in old}
+        spare = Counter(ages) if rule == "digits" else Counter()
+        reported = set()
+        for token, line in new:
+            if token in holds or token in reported:
+                continue
+            if spare[token] > 0:
+                spare[token] -= 1
+                continue
+            reported.add(token)
+            findings.append((line, rule, f'{what} "{token}" is not in the adult text, and a retelling adds none'))
+        gone = sorted(holds - {token for token, _ in new})
+        if gone:
+            shown = ", ".join(f'"{token}"' for token in gone[:5]) + (", and more" if len(gone) > 5 else "")
+            notes.append((1, rule, f"{counted_as(len(gone), one, many)} of the adult text left out: {shown}"))
+
+    # Fenced blocks are carried whole or left out.
+    adult_fences = {text for _, text in a.fences}
+    for index, (line, text) in enumerate(y.fences, start=1):
+        if text not in adult_fences:
+            findings.append((line, "fence", f"fenced block {index} is not in the adult text, and a retelling carries a block whole or leaves it out"))
+    dropped = len(adult_fences - {text for _, text in y.fences})
+    if dropped:
+        notes.append((1, "fence", f"{counted_as(dropped, 'fenced block', 'fenced blocks')} of the adult text left out"))
+
+    # The curator, both plugins and the pen match this heading whole.
+    for line, heading in y.headings:
+        if heading.lstrip("#").strip().lower() == OPEN_QUESTIONS.lstrip("#").strip().lower() and heading != OPEN_QUESTIONS:
+            findings.append((line, "open-questions", f'"{heading}" must be spelt "{OPEN_QUESTIONS}", which the curator, both plugins and the pen match whole'))
+
+    # Words a reader should check by hand.
+    for keyword in sorted({token for token, _ in y.rfc}):
+        notes.append((1, "rfc2119", f'"{keyword}" is in capitals; write it in lower case, and keep its strength'))
+    for word in (*STRENGTH, "should"):
+        if y.strength[word] > a.strength[word]:
+            why = "a retelling never weakens must into should" if word == "should" else "check that no instruction grew stronger"
+            had = f"has it {times(a.strength[word])}" if a.strength[word] else "never has it"
+            notes.append((1, "strength", f'"{word}" appears {times(y.strength[word])}, and the adult text {had}; {why}'))
+    for rule, what, old, new in (("number-word", "the number word", a.number_words, y.number_words), ("date-word", "the day or month", a.date_words, y.date_words)):
+        holds = {token for token, _ in old}
+        for token in sorted({token for token, _ in new} - holds):
+            line = next(line for found, line in new if found == token)
+            notes.append((line, rule, f'{what} "{token}" is not in the adult text; check that it says what the adult text says'))
+
+    return findings, notes, (a.words, y.words)
+
+
+def check_derived_files(adult_path: Path, young_path: Path):
+    findings, notes, (adult_words, young_words) = check_derived(adult_path, young_path)
+    fine = f"the retelling holds nothing the adult text does not (1 file): {young_words} words, and the adult text has {adult_words}"
+    return [(young_path, *found) for found in findings], [(young_path, *note) for note in notes], fine
+
+
 def list_bundle(directory: Path) -> int:
     """Every Markdown file of a bundle with its verdict: `rewrite` or `skip: <why>`."""
     if not directory.is_dir():
@@ -1266,13 +1455,14 @@ def list_bundle(directory: Path) -> int:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="prose-check.py",
-        usage="prose-check.py [--audience BAND] [--max-words N] [--max-paragraph N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR",
+        usage="prose-check.py [--audience BAND] [--max-words N] [--max-paragraph N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR | --derived-from ADULT YOUNG",
         description="Report what a script can see of plain prose, and prove that a rewording changed only wording.",
     )
     parser.add_argument("files", nargs="*", type=Path, metavar="FILE")
     parser.add_argument("--before", nargs=2, type=Path, metavar=("OLD", "NEW"))
     parser.add_argument("--against", metavar="REF")
     parser.add_argument("--bundle", type=Path, metavar="DIR")
+    parser.add_argument("--derived-from", nargs=2, type=Path, metavar=("ADULT", "YOUNG"))
     parser.add_argument("--audience", choices=sorted(BANDS), metavar="BAND")
     parser.add_argument("--max-words", type=int, metavar="N")
     parser.add_argument("--max-paragraph", type=int, metavar="N")
@@ -1280,12 +1470,12 @@ def main(argv: list[str]) -> int:
         parser.print_usage(sys.stderr)
         return 2
     args = parser.parse_args(argv[1:])
-    chosen = [name for name in ("before", "against", "bundle") if getattr(args, name) is not None]
+    chosen = [name.replace("_", "-") for name in ("before", "against", "bundle", "derived_from") if getattr(args, name) is not None]
     if len(chosen) > 1:
-        parser.error("give one of --before, --against and --bundle")
-    if (args.before or args.bundle) and args.files:
+        parser.error("give one of --before, --against, --bundle and --derived-from")
+    if (args.before or args.bundle or args.derived_from) and args.files:
         parser.error(f"--{chosen[0]} takes no FILE")
-    if not args.before and not args.bundle and not args.files:
+    if not args.before and not args.bundle and not args.derived_from and not args.files:
         parser.error("name at least one FILE")
     if args.audience and chosen:
         parser.error(f"--audience holds a FILE to a band's limits, and --{chosen[0]} compares; run them apart")
@@ -1298,6 +1488,8 @@ def main(argv: list[str]) -> int:
             return list_bundle(args.bundle)
         if args.before:
             findings, notes, fine = check_before(*args.before)
+        elif args.derived_from:
+            findings, notes, fine = check_derived_files(*args.derived_from)
         elif args.against:
             findings, notes, fine = check_against(args.against, args.files)
         else:
