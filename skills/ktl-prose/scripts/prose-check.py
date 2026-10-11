@@ -12,7 +12,7 @@
 #   prose-check.py --audience BAND FILE...  the same at the limits of a band of readers, with sentences and a grade
 #   prose-check.py --before OLD NEW       what differs besides the wording, and the words before and after
 #   prose-check.py --against REF FILE...  the same, against the version git holds at REF
-#   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword
+#   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword, and its readers
 #   prose-check.py --derived-from ADULT YOUNG  what a retelling holds that the text it retells does not
 #
 # A band holds a page to the limits references/young-readers.md gives for
@@ -130,6 +130,10 @@ DECLARED = re.compile(
     r"\bthis [\w.-]+ is for (?P<who>readers aged (?P<low>\d{1,2}) to (?P<high>\d{1,2})|dyslexic readers|readers with dyslexia)\b",
     re.I,
 )
+# The line a person puts in the bundle's curation policy to declare its
+# younger readers, as "Younger readers: 8-12" or "Younger readers: no".
+YOUNGER = re.compile(r"^\s*Younger readers\s*:\s*(.*?)\s*$", re.I)
+NAMES_READERS = re.compile(r"\bfor readers aged (\d{1,2}) to (\d{1,2})\b", re.I)
 # One private-use character stands in for each character a rule skips, so
 # every offset and line number stays true after masking.
 MASK = ""
@@ -1422,6 +1426,35 @@ def check_derived_files(adult_path: Path, young_path: Path):
     return [(young_path, *found) for found in findings], [(young_path, *note) for note in notes], fine
 
 
+def bundle_audience(directory: Path) -> str:
+    """The readers a bundle declares, as the line --bundle prints.
+
+    The curation policy's `Younger readers:` line decides, and a person
+    writes it with ktl-curator. Without one, a description in the root index
+    that names readers aged in a band declares that band. Nothing else does:
+    the readers are declared, never guessed.
+    """
+    policy = directory / "policies" / "knowledge-curation.md"
+    if policy.is_file():
+        for number, line in Doc(read(policy)).numbered_body():
+            found = YOUNGER.match(line)
+            if not found:
+                continue
+            value = found.group(1).strip("`'\" ")
+            if value.lower() in ("", "no", "none"):
+                return "audience: none declared (policies/knowledge-curation.md says no)"
+            bands = [band.strip() for band in value.split(",")]
+            if all(band in BANDS and band != "dyslexia" for band in bands):
+                return f"audience: {', '.join(bands)} (policies/knowledge-curation.md)"
+            return f"audience: none declared; line {number} of policies/knowledge-curation.md names {value!r}, which is no band of age"
+    index = directory / "index.md"
+    description = top_value(Doc(read(index)).fm or [], "description") if index.is_file() else None
+    found = NAMES_READERS.search(description or "")
+    if found and f"{int(found.group(1))}-{int(found.group(2))}" in BANDS:
+        return f"audience: {int(found.group(1))}-{int(found.group(2))} (the description in index.md)"
+    return "audience: none declared"
+
+
 def list_bundle(directory: Path) -> int:
     """Every Markdown file of a bundle with its verdict: `rewrite` or `skip: <why>`."""
     if not directory.is_dir():
@@ -1448,6 +1481,7 @@ def list_bundle(directory: Path) -> int:
         )
         if tally[rule]
     )
+    print(bundle_audience(directory))
     print(f"OK: {tally['rewrite']} to reword, and {sum(tally.values()) - tally['rewrite']} to leave ({left or 'none'})")
     return 0
 

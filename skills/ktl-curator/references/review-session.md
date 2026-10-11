@@ -196,9 +196,15 @@ Set above zero and every ktl-curator report lists that many concepts confirmed b
 Evidence first: no
 
 Set to yes and ktl-docent quotes the source before any answer that rests on a concept not yet confirmed by a person. Slower to read, harder to over-trust.
+
+# Younger readers
+
+Younger readers: no
+
+Set to a band of age, 8-12 or 13-18, or to both with a comma between, and ktl-librarian may write retellings of confirmed concepts for those readers on its scheduled runs. Each one is a new concept, which a person confirms against the concept it retells. With no band, a retelling is written only when a person asks for one.
 ```
 
-Step 1's report reads the `Independent re-check:` line, and ktl-docent reads `Evidence first:`. Both are optional, and absent means off.
+Step 1's report reads the `Independent re-check:` line, ktl-docent reads `Evidence first:`, and ktl-librarian and ktl-prose read `Younger readers:`. All three are optional, and absent means off.
 
 Derive `stale_after` as *confirmation date + the row's interval*, and always show the date before writing it. Read the table tolerantly. A row names its classes in prose, so match ignoring spaces and plural form: "Glossary terms" is `GlossaryTerm`, "attested computations" is `AttestedComputation`, "Policies" is `Policy`, "people" is `Person`. A row naming a class you do not know binds nothing. A host that extends the vocabulary with a domain schema may set an interval for its own classes the same way.
 
