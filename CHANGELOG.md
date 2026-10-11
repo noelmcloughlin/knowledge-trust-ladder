@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **A docs-only merge after a promotion no longer fails the release job.** The version semantic-release computes is already promoted and waits for `publish.yml`, so an empty Unreleased section passes and nothing is promoted twice. A failing check also writes its reason as a GitHub annotation.
-
 ## [0.38.0] - 2026-10-11
 
 ### Added
@@ -19,6 +15,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A README for readers aged 13 to 18.** `README.en-simple.md` retells the README in shorter sentences, `prose-check.py --derived-from` shows it adds nothing, and the README points to it.
 - **A bundle can declare its younger readers.** The curation policy's optional `Younger readers:` line names a band of age, and `prose-check.py --bundle` reports it as `audience: 8-12`, or `audience: none declared`.
 - **The librarian retells, and the docent answers, for younger readers.** ktl-librarian's `references/retellings.md` says how it writes and refreshes a retelling, and that a scheduled run retells only a confirmed concept, for a band the curation policy declares. ktl-docent and its Copilot copy prefer a retelling for a younger reader, or answer from the adult concept in shorter words, with every label kept. `docs/examples/prose.md` captures the README's retelling.
+
+### Fixed
+
+- **A docs-only merge after a promotion no longer fails the release job.** The version semantic-release computes is already promoted and waits for `publish.yml`, so an empty Unreleased section passes and nothing is promoted twice. A failing check also writes its reason as a GitHub annotation.
 
 ## [0.37.1] - 2026-10-07
 
