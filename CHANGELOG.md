@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The librarian retells, and the docent answers, for younger readers.** ktl-librarian's `references/retellings.md` says how it writes and refreshes a retelling, and that a scheduled run retells only a confirmed concept, for a band the curation policy declares. ktl-docent and its Copilot copy prefer a retelling for a younger reader, or answer from the adult concept in shorter words, with every label kept. `docs/examples/prose.md` captures the README's retelling.
+
 ## [0.38.0] - 2026-10-11
 
 ### Added

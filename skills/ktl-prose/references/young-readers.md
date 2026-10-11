@@ -128,7 +128,7 @@ In the band for 13 to 18, a sentence may carry one subordinate clause, an idea m
 
 ## In the bundle
 
-**ktl-librarian** writes a retelling through the pen, as a new concept. ktl-prose never creates a concept.
+**ktl-librarian** writes a retelling through the pen, as a new concept, and its [retellings.md](../../ktl-librarian/references/retellings.md) gives its half of the work. ktl-prose never creates a concept.
 
 - **Its path** is `young-readers/` and the adult concept's file name, in one flat folder at the top of the bundle. The index then lists the retellings in a section of their own, away from the adult bullets the docent picks from.
 - **Its frontmatter** has the adult concept's `type`, `genre`, `about` and `resource`. Its `title` names the band, as in "The pen, for readers aged 13 to 18", and its `description` says who it is for and what it retells. `derivedFrom` names the adult concept's `id`, a `sources` entry gives the adult concept's own path as its `resource`, and `tags` carries the band, such as `audience-13-18`.
@@ -142,7 +142,7 @@ Where a host tests a retelling with young readers, as the child-friendly guides 
 
 ## Outside the bundle
 
-ktl-prose writes the retelling itself, in a live session, in a new file beside one a person names. [other-files.md](other-files.md#a-version-for-younger-readers) gives the steps. The person who reads the pull request checks that the meaning held, as the original's authors do in the child-friendly guides.
+ktl-prose writes the retelling itself, in a live session, in a new file beside one a person names. [other-files.md](other-files.md#a-version-for-younger-readers) gives the steps, and [docs/examples/prose.md](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/prose.md), in this skill's home repository, holds a captured run on its README. The person who reads the pull request checks that the meaning held, as the original's authors do in the child-friendly guides.
 
 ## The pass for dyslexic readers
 

@@ -47,7 +47,7 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 
    **Never open `.lokf/feedback.md` to do it.** The entries already in it are other readers' reports, and the script exists so they never have to reach you at all. [references/feedback.md](references/feedback.md) gives the format, where the login comes from, and what to do when the script is missing. A missing bundle is worth one sentence, with the row for it in ktl-sidecar's [prerequisites.md](../ktl-sidecar/references/prerequisites.md) if they ask who can fix it. Never fix the concept yourself.
 
-[references/answering.md](references/answering.md) has the full procedure, question-type hints, and edge cases. When asked how to open the bundle in Obsidian, or whether it belongs inside a vault, use [references/obsidian.md](references/obsidian.md); the answer is the same on every host, so the bundle will not carry it.
+[references/answering.md](references/answering.md) has the full procedure, question-type hints, edge cases, and answers for a younger reader. When asked how to open the bundle in Obsidian, or whether it belongs inside a vault, use [references/obsidian.md](references/obsidian.md); the answer is the same on every host, so the bundle will not carry it.
 
 ## Trust labels (the same words ktl-curator uses)
 
