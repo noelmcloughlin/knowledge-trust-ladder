@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A README for readers aged 13 to 18.** `README.en-simple.md` retells the README in shorter sentences, `prose-check.py --derived-from` shows it adds nothing, and the README points to it.
+
 ## [0.38.0] - 2026-10-11
 
 ### Added

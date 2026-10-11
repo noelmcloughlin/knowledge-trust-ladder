@@ -14,6 +14,8 @@ Knowledge Trust Ladder keeps a repository's scattered knowledge as a **collectio
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
+A shorter version of this page, for readers aged 13 to 18, is in [README.en-simple.md](README.en-simple.md).
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".assets/knowledge-trust-ladder-card-dimmed.svg">
