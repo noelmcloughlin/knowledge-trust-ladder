@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-10-11
+
 ### Added
 
 - **ktl-prose writes for younger readers.** `references/young-readers.md` gives two bands of age, 8 to 12 and 13 to 18, and a pass for dyslexic readers, with the limits of each. A text for a younger reader is a retelling in a new file, which ktl-librarian writes in the bundle and ktl-prose writes beside a file a person names; a pass for dyslexic readers is a rewording at tighter limits.
