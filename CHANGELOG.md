@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **prose-check.py proves that a retelling adds nothing.** `--derived-from ADULT YOUNG` reports a number, link, code span, quotation, HTML tag or fenced block that the retelling holds and the text it retells does not, and notes what it left out. The retelling's first paragraph must link the original, and in a bundle `derivedFrom` must name the adult concept.
+
 ## [0.38.0] - 2026-10-11
 
 ### Added

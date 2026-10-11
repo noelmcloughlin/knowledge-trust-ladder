@@ -514,3 +514,147 @@ def test_no_band_means_no_vocabulary_note(tmp_path):
 def test_the_word_book_credits_its_source():
     text = (PROSE.parent.parent / "assets" / "voa-word-book.txt").read_text(encoding="ascii")
     assert "learningenglish.voanews.com" in text and "public domain" in text, "voa-word-book.txt lost its credit lines"
+
+
+# --derived-from: a retelling may say less than the text it retells, and
+# never more. Outside a bundle it links the adult file in its first
+# paragraph; in a bundle it also names the adult concept under derivedFrom.
+ADULT = """# The gate
+
+The gate checks 20 files, and [the guide](docs/guide.md) says why. It MUST run on every change.
+
+```sh
+just check
+```
+
+## Details
+
+The gate reads `config.yaml` and reports "drift" when it finds it. It runs 3 times a day.
+"""
+YOUNG = """# What does the gate do?
+
+This page is for readers aged 13 to 18. It retells [the full page](adult.md) in shorter words. The full page has every detail.
+
+The gate checks 20 files. It must run on every change.
+"""
+PEN = """---
+type: GlossaryTerm
+id: https://example.invalid/k/glossary/the-pen
+title: The pen
+{events}---
+
+# Overview
+
+The pen writes 3 kinds of change, and refuses a `human:` actor.
+"""
+PEN_YOUNG = """---
+type: GlossaryTerm
+id: https://example.invalid/k/young-readers/the-pen
+title: The pen, for readers aged 13 to 18
+{derived}tags:
+- {tag}
+{events}---
+
+This page is for readers aged 13 to 18. It retells [[the-pen]] in shorter words. The full page has every detail.
+
+The pen writes 3 kinds of change. A [[knowledge-bundle]] is the folder it writes.
+"""
+DERIVED_FROM = "derivedFrom:\n- https://example.invalid/k/glossary/the-pen\n"
+LIB_LATER = LIB.replace("09-01T05", "09-02T05")
+
+
+@pytest.fixture(scope="module")
+def retold(tmp_path_factory):
+    """An adult page and its retellings outside a bundle, and an adult concept and its retellings inside one."""
+    d = tmp_path_factory.mktemp("retold")
+    write(d / "adult.md", ADULT)
+    write(d / "young.md", YOUNG)
+    write(d / "young-number.md", YOUNG.replace("20 files", "25 files"))
+    write(d / "young-link.md", YOUNG + "\nRead [another page](docs/other.md) too.\n")
+    write(d / "young-code.md", YOUNG + "\nIt reads `other.yaml` too.\n")
+    write(d / "young-quote.md", YOUNG + '\nIt says "safe" when it passes.\n')
+    write(d / "young-nolink.md", YOUNG.replace("[the full page](adult.md)", "the full page"))
+    write(d / "young-openq.md", YOUNG + "\n## Open Questions\n")
+    write(d / "young-should.md", YOUNG.replace("It must run", "It should run"))
+    write(d / "young-caps.md", YOUNG.replace("It must run", "It MUST run"))
+    write(d / "young-noaud.md", YOUNG.replace("This page is for readers aged 13 to 18. ", ""))
+    k = d / "k"
+    write(k / "index.md", "---\nbase_iri: https://example.invalid/k/\n---\n\n# Index\n")
+    write(k / "glossary" / "the-pen.md", PEN.format(events=LIB))
+    young = k / "young-readers"
+    write(young / "the-pen.md", PEN_YOUNG.format(derived=DERIVED_FROM, tag="audience-13-18", events=LIB_LATER))
+    write(young / "no-derived.md", PEN_YOUNG.format(derived="", tag="audience-13-18", events=LIB_LATER))
+    write(young / "no-tag.md", PEN_YOUNG.format(derived=DERIVED_FROM, tag="glossary", events=LIB_LATER))
+    confirmed = LIB_LATER + 'verified:\n  - by: human:ada\n    at: "2026-09-08T14:00:00Z"\n'
+    write(young / "confirmed.md", PEN_YOUNG.format(derived=DERIVED_FROM, tag="audience-13-18", events=confirmed))
+    return d
+
+
+RETOLD = [
+    (
+        0,
+        "OK: the retelling holds nothing the adult text does not (1 file)",
+        "a retelling that says less, under another heading and with must for MUST, passes",
+        ["adult.md", "young.md"],
+    ),
+    (0, 'digits: 1 number of the adult text left out: "3"', "a number left out is a note", ["adult.md", "young.md"]),
+    (0, "fence: 1 fenced block of the adult text left out", "a fenced block left out is a note", ["adult.md", "young.md"]),
+    (0, "link: 1 link target of the adult text left out", "a link left out is a note", ["adult.md", "young.md"]),
+    (1, 'digits: the number "25" is not in the adult text', "a new number is a finding", ["adult.md", "young-number.md"]),
+    (1, 'link: the link target "docs/other.md" is not in the adult text', "a new link is a finding", ["adult.md", "young-link.md"]),
+    (1, 'code: the code span "other.yaml" is not in the adult text', "a new code span is a finding", ["adult.md", "young-code.md"]),
+    (1, 'quote: the quoted text "safe" is not in the adult text', "a new quotation is a finding", ["adult.md", "young-quote.md"]),
+    (
+        1,
+        "derived-from: the first paragraph does not link adult.md",
+        "a retelling that does not link the page it retells is a finding",
+        ["adult.md", "young-nolink.md"],
+    ),
+    (1, "open-questions:", "a misspelt open questions heading is a finding", ["adult.md", "young-openq.md"]),
+    (
+        0,
+        'strength: "should" appears once, and the adult text never has it',
+        "a should the adult text never has is a note",
+        ["adult.md", "young-should.md"],
+    ),
+    (0, 'rfc2119: "MUST" is in capitals', "a keyword left in capitals is a note", ["adult.md", "young-caps.md"]),
+    (0, "audience: the first paragraph names no readers", "a retelling that names no readers is a note", ["adult.md", "young-noaud.md"]),
+    (0, "OK", "a retelling in a bundle that names its concept passes", ["k/glossary/the-pen.md", "k/young-readers/the-pen.md"]),
+    (
+        0,
+        '"knowledge-bundle" is a concept the adult text does not link',
+        "a link to another concept of the bundle is a note, for a term the retelling explains",
+        ["k/glossary/the-pen.md", "k/young-readers/the-pen.md"],
+    ),
+    (
+        1,
+        "derived-from: derivedFrom does not name https://example.invalid/k/glossary/the-pen",
+        "a retelling in a bundle that does not name its concept under derivedFrom is a finding",
+        ["k/glossary/the-pen.md", "k/young-readers/no-derived.md"],
+    ),
+    (
+        0,
+        "the tags hold no audience-13-18",
+        "a band the tags do not carry is a note",
+        ["k/glossary/the-pen.md", "k/young-readers/no-tag.md"],
+    ),
+    (
+        0,
+        "confirmed: confirmed by a person (human:ada); this check changes nothing",
+        "a retelling a person confirmed is checked, and the confirmation is a note",
+        ["k/glossary/the-pen.md", "k/young-readers/confirmed.md"],
+    ),
+]
+
+
+@pytest.mark.parametrize(("status", "text", "what", "files"), RETOLD, ids=[w for _, _, w, _ in RETOLD])
+def test_a_retelling_says_less_and_never_more(retold, status, text, what, files):
+    expect(status, text, what, "--derived-from", *[retold / f for f in files])
+
+
+def test_derived_from_takes_no_file(retold):
+    expect(2, "takes no FILE", "--derived-from takes no FILE", "--derived-from", retold / "adult.md", retold / "young.md", retold / "young-link.md")
+
+
+def test_a_band_with_derived_from_is_a_usage_error(retold):
+    expect(2, "run them apart", "--audience with --derived-from is a usage error", "--audience", "8-12", "--derived-from", retold / "adult.md", retold / "young.md")

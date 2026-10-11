@@ -41,7 +41,7 @@ A person may ask for a version of a file for younger readers, such as a README f
    ```
 
 3. **Point the original to it.** Add one sentence to the original that names the new file, once the person agrees. That sentence changes a file concepts may rest on, so say first what it costs, as [Before you reword a source](#before-you-reword-a-source) describes.
-4. **Check it.** Run the style check on the new file. Its opening sentence names its band, so the script holds it to that band's limits. Then read it against the original, sentence by sentence: each sentence must rest on one the original holds.
+4. **Check it.** Run the style check on the new file. Its opening sentence names its band, so the script holds it to that band's limits. Then run `prose-check.py --derived-from <original> <new file>`, and fix each finding. No script reads meaning, so read the new file against the original, sentence by sentence: each sentence must rest on one the original holds.
 5. **Hand it off** with the band, both files, what the retelling left out and where each explanation came from. The person who reads the pull request checks that the meaning held.
 
 A new file costs the bundle nothing beyond that one sentence, because no concept rests on it yet. A file this page says you never touch is never retold either.
