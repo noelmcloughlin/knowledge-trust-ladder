@@ -215,7 +215,9 @@ for sibling in "$@"; do
       bash scripts/knowledge-preflight.sh | tail -1 | sed 's/^/   /'
     fi
     if command -v uv >/dev/null 2>&1; then
-      uv run --quiet lokf validate --check-refs knowledge 2>&1 | tail -1 | sed 's/^/   /'
+      # The recipe, as the gate runs it; just's own closing line on a failure
+      # is dropped, so the line shown is lokf's verdict.
+      uvx --from rust-just==1.47.0 just lokf-check-refs 2>&1 | grep -v '^error: Recipe ' | tail -1 | sed 's/^/   /'
     else
       echo "   uv not found: lokf validate skipped, and the conventions script runs without its parser's half"
     fi

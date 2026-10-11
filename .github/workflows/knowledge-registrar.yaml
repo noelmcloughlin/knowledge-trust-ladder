@@ -91,9 +91,10 @@ jobs:
       # resolves every target in the bundle's own namespace, taking the
       # relation slots from the schema. It is part of `lokf validate`, so it
       # rides on this step rather than validating the same bundle twice. A
-      # host with a domain schema passes `--schema` here too.
+      # host with a domain schema names it as `schema :=` in the justfile, and
+      # the recipe passes it; the workflow runs the recipe so no host edits this line.
       - name: Validate the knowledge bundle and its relation targets
-        run: uv run lokf validate --check-refs knowledge
+        run: uvx --from rust-just==1.47.0 just lokf-check-refs
         working-directory: .lokf
 
       # `lokf validate` reads a concept body as an opaque string and never

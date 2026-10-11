@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **A domain schema is one variable in the sidecar's justfile.** The `lokf-validate` and `lokf-check-refs` recipes pass `schema := ""` as `--schema`, and the registrar, librarian and release workflows run those recipes, so a host wires a domain schema by setting that one line, by hand or through the linkml-sidecar skill.
+
 ## [0.38.0] - 2026-10-11
 
 ### Added

@@ -316,7 +316,7 @@ jobs:
         id: validate-lokf
         if: steps.install-lokf.outcome == 'success'
         continue-on-error: true
-        run: uv run lokf validate --check-refs knowledge
+        run: uvx --from rust-just==1.47.0 just lokf-check-refs
         working-directory: .lokf
 
       # The registrar's gate does not run on the pull request this workflow

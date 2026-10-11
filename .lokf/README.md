@@ -54,6 +54,8 @@ uv run lokf serve knowledge
 uv run lokf convert knowledge --format ttl
 ```
 
+When the justfile's `schema` line names a domain schema, run the recipes instead: `uvx --from rust-just just lokf-validate` needs no install, and passes the schema.
+
 ## Add or edit a concept
 
 1. Create a Markdown file under `knowledge/<kind>/`, such as `services/` or `metrics/`.
