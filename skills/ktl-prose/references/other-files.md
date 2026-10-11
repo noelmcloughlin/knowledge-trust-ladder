@@ -29,6 +29,25 @@ A rewording changes no fact in the source, and it still costs those concepts som
 
 Say how many concepts rest on the file, and how many of those a person confirmed. Then wait for a yes. Afterwards name **ktl-librarian** as the next step, so those concepts are checked against the reworded source.
 
+## A version for younger readers
+
+A person may ask for a version of a file for younger readers, such as a README for teenagers or a docs page for a class. Write it as a retelling, under the rules in [young-readers.md](young-readers.md), in a new file. The original stays as it is, apart from one sentence that points to the new file.
+
+1. **Name both files.** The new file sits beside the original, and its name carries the register after the language: `README.en-simple.md` beside `README.md`. `simple` is the variant subtag the IANA language registry gives a simplified form. The band goes in the opening sentence, never in the name. Ask the person to agree the name.
+2. **Write the retelling** at its band's limits. Open with who it is for and a link back:
+
+   ```markdown
+   This page is for readers aged 13 to 18. It retells [README.md](README.md) in shorter words. The full page has every detail.
+   ```
+
+3. **Point the original to it.** Add one sentence to the original that names the new file, once the person agrees. That sentence changes a file concepts may rest on, so say first what it costs, as [Before you reword a source](#before-you-reword-a-source) describes.
+4. **Check it.** Hold the new file to its band's limits. Then read it against the original, sentence by sentence: each sentence must rest on one the original holds.
+5. **Hand it off** with the band, both files, what the retelling left out and where each explanation came from. The person who reads the pull request checks that the meaning held.
+
+A new file costs the bundle nothing beyond that one sentence, because no concept rests on it yet. A file this page says you never touch is never retold either.
+
+For dyslexic readers there is no second file. Reword the original where it stands, at the `dyslexia` limits in [young-readers.md](young-readers.md#the-pass-for-dyslexic-readers).
+
 ## Line breaks
 
 Lay out each paragraph you reword the way the host does, and leave the others as they are. Look for the layout in the host's tooling first: a markdownlint configuration that leaves MD013 on (as markdownlint does by default, at 80 columns), Prettier's `proseWrap`, or an `.editorconfig` `max_line_length` for Markdown. Otherwise follow the file: one line per paragraph, one sentence per line, or a fixed column. Change the file's layout only when the person asks. [rules.md](rules.md) gives the reasons under *Line breaks in the source*.
