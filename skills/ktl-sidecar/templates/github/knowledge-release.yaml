@@ -159,11 +159,12 @@ jobs:
         run: uv sync --locked
         working-directory: .lokf
 
-      # The registrar's two checks, so a release never carries a bundle its
-      # own gate would fail.
+      # The registrar's two checks, run as its gate runs them, so a release
+      # never carries a bundle that gate would fail. The recipe passes the
+      # domain schema the justfile's `schema` line names.
       - name: Validate the knowledge bundle and its relation targets
         if: steps.compare.outputs.changed == 'true'
-        run: uv run lokf validate --check-refs knowledge
+        run: uvx --from rust-just==1.47.0 just lokf-check-refs
         working-directory: .lokf
 
       - name: Check the conventions lokf validate cannot see

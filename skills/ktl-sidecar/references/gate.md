@@ -16,7 +16,7 @@ It runs on every pull request touching `.lokf/**` (or the workflow itself), week
 
 It runs two checks:
 
-1. `uv run lokf validate --check-refs knowledge`: the schema check, and every typed relation must point at a concept in the bundle.
+1. `just lokf-check-refs`, which runs `lokf validate --check-refs`: the schema check, and every typed relation must point at a concept in the bundle. When the justfile's `schema` line names a domain schema, the recipe checks against it too.
 2. `bash scripts/knowledge-conventions.sh knowledge`: the fourteen conventions below, which the toolkit cannot see. On a pull request it adds `--since` and the pull request's base, which convention 14 reads.
 
 It checks out the full history, because conventions 6, 11, 13 and 14 read each concept's commits. It installs the toolkit with `uv sync --locked`: what `.lokf/uv.lock` names, each file checked against its recorded hash. A lock that is missing or behind `.lokf/pyproject.toml` fails the job, so the gate never runs a toolkit nobody reviewed.
