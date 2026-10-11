@@ -4,16 +4,13 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **A band of readers is spared Latin abbreviations, and told which words may be hard.** Under a band, prose-check.py reports `i.e.`, `vs`, `cf.`, `etc.` and `via`, and notes the words a page uses that the VOA Learning English word book does not hold. The word book is in the public domain and sits in the skill's `assets/` folder with its credit.
-
 ## [0.38.0] - 2026-10-11
 
 ### Added
 
 - **ktl-prose writes for younger readers.** `references/young-readers.md` gives two bands of age, 8 to 12 and 13 to 18, and a pass for dyslexic readers, with the limits of each. A text for a younger reader is a retelling in a new file, which ktl-librarian writes in the bundle and ktl-prose writes beside a file a person names; a pass for dyslexic readers is a rewording at tighter limits.
 - **prose-check.py holds a page to a band of readers.** `--audience 8-12`, `13-18` or `dyslexia` sets the band's limits, counts the sentences in each paragraph, and notes the page's Automated Readability Index. A page that opens "This page is for readers aged 13 to 18." is held to that band with no flag.
+- **A band of readers is spared Latin abbreviations, and told which words may be hard.** Under a band, prose-check.py reports `i.e.`, `vs`, `cf.`, `etc.` and `via`, and notes the words a page uses that the VOA Learning English word book does not hold. The word book is in the public domain and sits in the skill's `assets/` folder with its credit.
 
 ## [0.37.1] - 2026-10-07
 
