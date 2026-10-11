@@ -10,7 +10,7 @@
     [
       "@semantic-release/exec",
       {
-        "verifyReleaseCmd": "node .github/scripts/changelog-release.mjs check",
+        "verifyReleaseCmd": "node .github/scripts/changelog-release.mjs check ${nextRelease.version}",
         "generateNotesCmd": "node .github/scripts/changelog-release.mjs notes ${nextRelease.version}"
       }
     ]
