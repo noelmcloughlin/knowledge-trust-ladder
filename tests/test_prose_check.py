@@ -169,6 +169,9 @@ def pc(tmp_path_factory):
     write(d / "names-band-ok.md", opening.format("readers aged 8 to 12"))
     write(d / "names-dyslexia.md", opening.format("dyslexic readers"))
     write(d / "names-other.md", opening.format("readers aged 10 to 14"))
+    # Words a band of readers is spared: a word of the trade and three Latin
+    # abbreviations.
+    write(d / "band-words.md", "# A page\n\nThe gate reads each file via the pen, etc. Use the short form, i.e. the label, vs the long one.\n")
     return d
 
 
@@ -311,6 +314,10 @@ STYLE = [
         "ages that match no band keep the adult limits",
         ["names-other.md"],
     ),
+    (1, 'band-words.md:3: words: "via"', "a word of the trade is reported for a band of readers", ["--audience", "8-12", "band-words.md"]),
+    (1, 'words: "etc."', "a Latin abbreviation is reported for a band of readers", ["--audience", "13-18", "band-words.md"]),
+    (1, 'words: "i.e."', "and so is another", ["--audience", "dyslexia", "band-words.md"]),
+    (0, "OK", "and none of them at the adult limits", ["band-words.md"]),
 ]
 
 
@@ -471,3 +478,39 @@ def test_a_reserved_bundle_file_is_not_held_to_the_style_rules(bundle):
 
 def test_no_argument_is_a_usage_error():
     expect(2, "usage", "no argument is a usage error")
+
+
+def test_the_vocabulary_note_names_the_words_the_word_book_lacks(tmp_path):
+    write(tmp_path / "v.md", "# A page\n\nThe curator confirms the concept. The curators read it.\n")
+    out = prose("--audience", "13-18", tmp_path / "v.md").out
+    want = "vocabulary: 3 of 9 words are outside the VOA Learning English word book, most often: curator (2), concept (1)"
+    assert want in out, f"prose-check.py did not note the words the word book lacks: {out}"
+
+
+def test_the_vocabulary_note_leaves_out_file_names_and_hyphenated_names(tmp_path):
+    write(tmp_path / "f.md", "# A page\n\nRead [docs/install.md](docs/install.md) to set ktl-xyzzy up today.\n")
+    out = prose("--audience", "13-18", tmp_path / "f.md").out
+    assert ": vocabulary: " not in out, f"prose-check.py counted a piece of a file name as a hard word: {out}"
+
+
+def test_the_vocabulary_note_counts_the_forms_of_a_word_together(tmp_path):
+    write(tmp_path / "g.md", "# A page\n\nThe file holds the files. The gate checked them, and it checks them again.\n")
+    out = prose("--audience", "13-18", tmp_path / "g.md").out
+    assert "most often: file (2), checked (2), gate (1)" in out, f"prose-check.py counted the forms of one word apart: {out}"
+
+
+def test_the_vocabulary_note_knows_inflected_and_irregular_forms(tmp_path):
+    write(tmp_path / "k.md", "# A page\n\nThe children were running to the stores, and they did not stop.\n")
+    out = prose("--audience", "13-18", tmp_path / "k.md").out
+    assert ": vocabulary: " not in out, f"prose-check.py took a plain form for a hard word: {out}"
+
+
+def test_no_band_means_no_vocabulary_note(tmp_path):
+    write(tmp_path / "v.md", "# A page\n\nThe curator confirms the concept.\n")
+    out = prose(tmp_path / "v.md").out
+    assert ": vocabulary: " not in out and ": grade: " not in out, f"prose-check.py noted a grade or words with no band: {out}"
+
+
+def test_the_word_book_credits_its_source():
+    text = (PROSE.parent.parent / "assets" / "voa-word-book.txt").read_text(encoding="ascii")
+    assert "learningenglish.voanews.com" in text and "public domain" in text, "voa-word-book.txt lost its credit lines"
