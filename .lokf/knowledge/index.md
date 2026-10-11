@@ -71,3 +71,9 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 * [When the built-in vocabulary stops fitting - domain schemas](explanation/domain-schemas.md) - How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's and checked with `lokf validate --schema`, reusing a domain's own vocabulary such as the AI Risk Ontology, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it.
 * [What Knowledge Trust Ladder is for, and what it is not](explanation/intended-uses.md) - A draft placeholder for a reader's question no source settles: which uses Knowledge Trust Ladder is meant for, such as DevSecOps or technology governance, and which it is not. The README states the purpose and names no use case or non-goal.
 * [WikiSkill's loop and Knowledge Trust Ladder](explanation/wikiskill.md) - The WikiSkill paper (Tang et al., 2026) set beside Knowledge Trust Ladder (KTL) part by part, as `docs/wikiskill.md` does: the same loop with different parts, what the paper found and what KTL does with each finding, where each design puts programs, models and people, and what the paper does not settle.
+
+# Young readers
+
+Retellings of concepts for younger readers, each derived from the concept it names. The folder's own [index](young-readers/index.md) lists them too.
+
+* [The pen, for readers aged 13 to 18](young-readers/the-pen.md) - The pen retold for readers aged 13 to 18, the script that is ktl-librarian's only way to write the bundle, and what it refuses.

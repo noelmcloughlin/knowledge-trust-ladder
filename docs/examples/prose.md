@@ -46,3 +46,51 @@ OK: the retelling holds nothing the adult text does not (1 file): 792 words, and
 - **Explanations, each from the README itself:** a deterministic check "gives the same answer every time"; a docent is "a museum's name for a guide"; `.lokf/` is a folder beside the code like `.git/`; and the bundle sits between the sources and whoever reads them, as the README's context layer does. CI is written out as continuous integration.
 - **Left unexplained,** because the README defines none of them: repository, agent, Markdown and pull request. Source, agent and concept are among the words the vocabulary note names.
 - **Who checks:** the person who reads the pull request, against `README.md`. No script shows the retelling is easier to read. Reading it with readers aged 13 to 18 is the test.
+
+## 2. The first retelling in the bundle
+
+The request was a retelling of `glossary/the-pen.md` for readers aged 13 to 18, in this repository's own bundle. In the bundle, ktl-librarian writes a retelling through the pen, as its `references/retellings.md` says, and ktl-prose checks it.
+
+**Through the pen.** One `create` operation in `.lokf/patch.yaml`, in the shape `references/retellings.md` shows:
+
+```text
+$ bash .lokf/scripts/knowledge-apply.sh
+wrote .lokf/knowledge/young-readers/the-pen.md
+wrote .lokf/knowledge/young-readers/index.md
+wrote .lokf/knowledge/index.md
+wrote .lokf/knowledge/log.md
+OK - 1 operation(s) by process:ktl-librarian at 2026-10-11T15:00:59Z; now run lokf validate --check-refs and knowledge-conventions.sh
+```
+
+**At its band, and against the adult concept.** The two links the adult concept does not hold go to glossary concepts, and explain a term each:
+
+```text
+$ python3 skills/ktl-prose/scripts/prose-check.py .lokf/knowledge/young-readers/the-pen.md
+note: .lokf/knowledge/young-readers/the-pen.md:23: audience: the page says it is for readers aged 13 to 18, so the 13-18 limits apply
+note: .lokf/knowledge/young-readers/the-pen.md:1: grade: Automated Readability Index 2.0, from 9.4 words a sentence and 4.0 letters or digits a word, with 15% of the words seven letters or longer; the 13-18 target is 9 or under
+note: .lokf/knowledge/young-readers/the-pen.md:1: vocabulary: 29 of 177 words are outside the VOA Learning English word book, most often: file (4), pen (4), page (2), bundle (2), readers (1), docs (1), script (1), edits (1), hand (1), checks (1); explain each where it first appears, or choose a plainer word
+OK: 1 file(s), and nothing a script can see breaks the style rules or hides from a reader
+
+$ python3 skills/ktl-prose/scripts/prose-check.py --derived-from .lokf/knowledge/glossary/the-pen.md .lokf/knowledge/young-readers/the-pen.md
+note: .lokf/knowledge/young-readers/the-pen.md:27: link: "knowledge-bundle" is a concept the adult text does not link; keep it only where it explains a term
+note: .lokf/knowledge/young-readers/the-pen.md:51: link: "registrar" is a concept the adult text does not link; keep it only where it explains a term
+note: .lokf/knowledge/young-readers/the-pen.md:1: code: 2 code spans of the adult text left out: ".lokf/questions.md", "handoff"
+OK: the retelling holds nothing the adult text does not (1 file): 238 words, and the adult text has 271
+```
+
+`lokf validate --check-refs` then passed on all 42 concepts, and so did the conventions script.
+
+**The index section.** The pen named the new section after the folder, `# Young-readers`. A person renamed it "Young readers", once, and added a line that links the folder's own `index.md`. The pen finds a section by that link, so a second retelling, made in a scratch copy of the bundle, went under the same heading.
+
+**What the retrieval score did.** The score reads the index alone. This repository's ledger held no reader's question in words yet, so the check used 12 questions about adult concepts and 2 asked for younger readers, written for the test. An agent answered each prompt from the index alone, twice before the retelling and twice after:
+
+| Run | Adult questions that reached their concept | Questions for younger readers |
+| --- | --- | --- |
+| Before, first | 12 of 12 | left out, with no concept to reach |
+| Before, second | 12 of 12 | left out, with no concept to reach |
+| After, first | 12 of 12 | 2 of 2 |
+| After, second | 12 of 12 | 2 of 2 |
+
+After the retelling, it appeared in one adult answer per run, for "Which script refuses a patch that adds a human: actor?", second after the adult concept. For both questions for younger readers it came first. So the section for younger readers did not move the score for adult questions here. The test is small: 42 concepts, one retelling, questions written for it, and one small model, Claude Haiku.
+
+**Still to do: the confirmation.** A curator confirms a retelling against the adult concept, and only a person can. Until a person does so with ktl-curator, the retelling is a draft that nobody has checked yet.
