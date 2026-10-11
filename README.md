@@ -23,7 +23,34 @@ A shorter version of this page, for readers aged 13 to 18, is in [README.en-simp
   </picture>
 </p>
 
-> **Prefer to ask?** `npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes` installs the docent, a museum's name for a guide, into any agent you already use. Ask it about this project, and it answers from this repository's own bundle, saying how far each answer has been checked. See [eight captured answers](docs/examples/docent.md). **Agents:** if `.lokf/knowledge/index.md` exists, read it first. `llms.txt` says how to weigh it.
+> **Agents:** if `.lokf/knowledge/index.md` exists, read it first. `llms.txt` says how to weigh it.
+
+## Quick start
+
+Install all five skills for your user, so they work in every repository you open:
+
+```bash
+npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
+  --skill ktl-sidecar --skill ktl-librarian --skill ktl-curator \
+  --skill ktl-docent --skill ktl-prose
+```
+
+Start with the sidecar and the librarian; the curator matters once there is a bundle worth trusting.
+
+**Only want to ask?** Each skill stands alone, so the docent, a museum's name for a guide, can go into any agent you already use. Ask it about this project, and it answers from this repository's own bundle, saying how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
+
+```bash
+npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes
+```
+
+**Claude Code plugin**, the same five skills as one plugin, with keywords a plugin catalog can search:
+
+```text
+/plugin marketplace add noelmcloughlin/knowledge-trust-ladder
+/plugin install knowledge-trust-ladder@knowledge-trust-ladder
+```
+
+**[docs/install.md](docs/install.md)** gives the `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release. Microsoft 365 Copilot gets the docent as a zip each release carries: **[docs/m365.md](docs/m365.md)**.
 
 ## Why libraries have catalogues
 
@@ -97,25 +124,6 @@ The **curator** reports each concept's trust record in plain words:
 </p>
 
 The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
-
-## Install
-
-Install all five skills for your user, so they work in every repository you open:
-
-```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
-  --skill ktl-sidecar --skill ktl-librarian --skill ktl-curator \
-  --skill ktl-docent --skill ktl-prose
-```
-
-Start with the sidecar and the librarian; the curator matters once there is a bundle worth trusting. Each skill also stands alone, so the docent can go anywhere an agent only *reads* a bundle. **[docs/install.md](docs/install.md)** gives the `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release. Microsoft 365 Copilot gets the docent as a zip each release carries: **[docs/m365.md](docs/m365.md)**.
-
-**Claude Code plugin** (the same five skills as one plugin, with keywords a plugin catalog can search):
-
-```text
-/plugin marketplace add noelmcloughlin/knowledge-trust-ladder
-/plugin install knowledge-trust-ladder@knowledge-trust-ladder
-```
 
 ## Read on
 

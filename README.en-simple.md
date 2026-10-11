@@ -9,6 +9,26 @@ This page is for readers aged 13 to 18. It retells [README.md](README.md) in sho
   </picture>
 </p>
 
+## Quick start
+
+Install all five skills with one command. They then work in every repository you open:
+
+```bash
+npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
+  --skill ktl-sidecar --skill ktl-librarian --skill ktl-curator \
+  --skill ktl-docent --skill ktl-prose
+```
+
+Start with the sidecar and the librarian. The curator matters once there is a bundle worth trusting.
+
+You can also just ask questions. Install the docent alone into an agent you already use:
+
+```bash
+npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes
+```
+
+The docent answers from this repository's own bundle. See [eight captured answers](docs/examples/docent.md). [docs/install.md](docs/install.md) gives the other ways to install, and what each skill needs on the machine.
+
 ## What does it do?
 
 Knowledge Trust Ladder keeps a repository's knowledge as a **collection**. Each entry shows where it came from and how far it has been checked.
@@ -53,24 +73,6 @@ Each entry carries a label in plain words:
 Other labels say an entry is **still a draft**, **edited since a person last confirmed it**, **past its review date** or **retired**.
 
 The labels are worked out from each entry every time it is read, and never stored. So they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
-
-## How do I try it?
-
-Install all five skills with one command. They then work in every repository you open:
-
-```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
-  --skill ktl-sidecar --skill ktl-librarian --skill ktl-curator \
-  --skill ktl-docent --skill ktl-prose
-```
-
-Start with the sidecar and the librarian. The curator matters once there is a bundle worth trusting. [docs/install.md](docs/install.md) gives the other ways to install, and what each skill needs on the machine.
-
-You can also just ask questions. Install the docent into an agent you already use:
-
-`npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes`
-
-The docent answers from this repository's own bundle. See [eight captured answers](docs/examples/docent.md).
 
 ## Where can I read more?
 

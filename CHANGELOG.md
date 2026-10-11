@@ -6,7 +6,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
-- **The install commands install all five skills for your user.** The README installs the whole set with `--global`, `docs/install.md` passes `--global` and `--scope user`, and a new section there says when a team installs into the repository instead.
+- **The install commands install all five skills for your user.** Both READMEs open with a Quick start that holds every install command, the docent alone included; it installs the whole set with `--global`, `docs/install.md` passes `--global` and `--scope user`, and a new section there says when a team installs into the repository instead.
 
 ## [0.38.0] - 2026-10-11
 

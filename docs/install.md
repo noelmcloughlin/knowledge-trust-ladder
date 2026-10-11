@@ -1,6 +1,6 @@
 # Install
 
-This page gives every way to install the five skills, what each needs on the machine, and how to pin them to one release. [The README](../README.md#install) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
+This page gives every way to install the five skills, what each needs on the machine, and how to pin them to one release. [The README](../README.md#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
 
 > Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
 > `npx skills add` paths, so an existing install keeps working. The skills
