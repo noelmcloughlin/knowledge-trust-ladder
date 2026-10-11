@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A bundle can declare its younger readers.** The curation policy's optional `Younger readers:` line names a band of age, and `prose-check.py --bundle` reports it as `audience: 8-12`, or `audience: none declared`.
+
 ## [0.38.0] - 2026-10-11
 
 ### Added

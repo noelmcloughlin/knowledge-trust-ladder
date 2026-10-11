@@ -472,6 +472,34 @@ def test_bundle_verdicts(bundle, want):
     assert want in verdicts, f"prose-check.py --bundle did not give '{want}' on a bundle staged for it: {verdicts}"
 
 
+def test_a_bundle_with_no_declared_readers_says_so(bundle):
+    expect(0, "audience: none declared\nOK:", "a bundle that declares no readers says so before its tally", "--bundle", bundle)
+
+
+POLICY = '---\ntype: Policy\ntitle: Knowledge curation\ngenerated:\n  by: human:ada\n  at: "2026-09-08T14:05:00Z"\n---\n\n# Younger readers\n\n{line}\n'
+
+
+@pytest.mark.parametrize(
+    ("policy", "description", "want", "what"),
+    [
+        ("Younger readers: 8-12", None, "audience: 8-12 (policies/knowledge-curation.md)", "the curation policy declares a band"),
+        ("Younger readers: 8-12, 13-18", None, "audience: 8-12, 13-18 (policies/knowledge-curation.md)", "and may declare two"),
+        ("Younger readers: no", None, "audience: none declared (policies/knowledge-curation.md says no)", "or none"),
+        ("Younger readers: kids", None, "names 'kids', which is no band of age", "a value that is no band declares nothing"),
+        (None, "A bundle for readers aged 13 to 18.", "audience: 13-18 (the description in index.md)", "with no policy line, the index description may declare a band"),
+        ("Younger readers: no", "A bundle for readers aged 13 to 18.", "says no", "the policy line decides over the description"),
+    ],
+)
+def test_a_bundle_declares_its_younger_readers(tmp_path, policy, description, want, what):
+    k = tmp_path / "k"
+    front = f"base_iri: https://example.invalid/k/\n" + (f"description: {description}\n" if description else "")
+    write(k / "index.md", f"---\n{front}---\n\n# Index\n")
+    write(k / "x" / "f-rewrite.md", concept(LIB, BODY_A))
+    if policy:
+        write(k / "policies" / "knowledge-curation.md", POLICY.format(line=policy))
+    expect(0, want, what, "--bundle", k)
+
+
 def test_a_reserved_bundle_file_is_not_held_to_the_style_rules(bundle):
     expect(0, "OK", "a reserved bundle file is not held to the style rules", bundle / "log.md")
 

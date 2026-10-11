@@ -75,7 +75,8 @@ A person names the band, and the skill never guesses it. Take the band from the 
 
 1. the request, in a live session: "for my class of ten-year-olds", "for teenagers", "explain it like I'm five";
 2. the page's own opening sentence, such as "This page is for readers aged 13 to 18.";
-3. in the bundle, a band in the concept's `tags`, such as `audience-13-18`.
+3. in the bundle, a band in the concept's `tags`, such as `audience-13-18`;
+4. in the bundle, the curation policy's `Younger readers:` line, which a person sets with ktl-curator. `prose-check.py --bundle` prints it as its `audience:` line, so repeat that line in Step 1's report.
 
 Map a request to a band by age. A school year or a grade maps through the table above. "Explain it like I'm five" means the band for 8 to 12, the lowest these limits cover. A range that crosses two bands takes the younger one. When a request names no age, grade or year, ask the person: "Which ages is it for: 8 to 12, or 13 to 18?"
 
