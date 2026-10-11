@@ -2,7 +2,7 @@
 > for a guide. Install
 > [`ktl-docent`](https://github.com/noelmcloughlin/knowledge-trust-ladder) into
 > whatever agent you already use
-> (`npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --yes`)
+> (`npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes`)
 > and ask it anything about this project. It answers from `.lokf/knowledge/`,
 > the checked part of what the project knows, and says how far each answer has
 > been trusted (still a draft, checked by automation only, or confirmed by a

@@ -56,18 +56,19 @@ The labels are worked out from each entry every time it is read, and never store
 
 ## How do I try it?
 
-Install the sidecar and the librarian with one command:
+Install all five skills with one command. They then work in every repository you open:
 
 ```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder \
-  --skill ktl-sidecar --skill ktl-librarian --yes
+npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
+  --skill ktl-sidecar --skill ktl-librarian --skill ktl-curator \
+  --skill ktl-docent --skill ktl-prose
 ```
 
-Add the curator once there is a bundle worth trusting. [docs/install.md](docs/install.md) gives the other ways to install, and what each skill needs on the machine.
+Start with the sidecar and the librarian. The curator matters once there is a bundle worth trusting. [docs/install.md](docs/install.md) gives the other ways to install, and what each skill needs on the machine.
 
 You can also just ask questions. Install the docent into an agent you already use:
 
-`npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --yes`
+`npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes`
 
 The docent answers from this repository's own bundle. See [eight captured answers](docs/examples/docent.md).
 
