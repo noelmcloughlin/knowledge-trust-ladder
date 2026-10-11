@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-11
+
+* **Added**: The pen, retold for readers aged 13 to 18 from `glossary/the-pen.md`, the first retelling for younger readers in this bundle.
+
 ## 2026-10-06
 
 * **Prose**: after the librarian's refresh, reworded 2 more concept bodies: a long sentence in the ktl-prose skill split in two, and the lokf toolkit's last paragraph split where it turns to the no-Python fallback. No fact, link, number or frontmatter changed.
