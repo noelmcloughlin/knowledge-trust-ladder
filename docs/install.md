@@ -1,6 +1,6 @@
 # Install
 
-This page gives every way to install the five skills, what each needs on the machine, and how to pin them to one release. [The README](../README.md#install) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
+This page gives every way to install the five skills, what each needs on the machine, and how to pin them to one release. [The README](../README.md#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
 
 > Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
 > `npx skills add` paths, so an existing install keeps working. The skills
@@ -12,11 +12,11 @@ This page gives every way to install the five skills, what each needs on the mac
 [`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+:
 
 ```bash
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-sidecar
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-librarian
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-curator
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-prose
+gh skill install noelmcloughlin/knowledge-trust-ladder ktl-sidecar --scope user
+gh skill install noelmcloughlin/knowledge-trust-ladder ktl-librarian --scope user
+gh skill install noelmcloughlin/knowledge-trust-ladder ktl-curator --scope user
+gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
+gh skill install noelmcloughlin/knowledge-trust-ladder ktl-prose --scope user
 ```
 
 ## Install with the Open Skills CLI
@@ -24,13 +24,17 @@ gh skill install noelmcloughlin/knowledge-trust-ladder ktl-prose
 [`npx skills`](https://github.com/vercel-labs/skills):
 
 ```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder \
+npx skills add noelmcloughlin/knowledge-trust-ladder --global \
   --skill ktl-sidecar \
   --skill ktl-librarian \
   --skill ktl-curator \
   --skill ktl-docent \
   --skill ktl-prose --yes
 ```
+
+## Install for your user, not into the repository
+
+The commands above install for your user, so one install serves every repository. A repository needs no copy of its own: the scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A user install also keeps the instructions an agent follows under your control, since a copy inside a repository comes from whoever controls that repository ([threat-model.md](threat-model.md)). Install into the repository only when a team wants every member on one version. Leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
 
 ## Pin to one tag
 
