@@ -34,9 +34,10 @@
 # none it prints one `OK` line and exits 0. A usage error exits 2. A note goes
 # to stderr and never changes the exit status.
 #
-# The script reads the files it is given and asks git for an earlier version.
-# It writes nothing and opens no network connection. It needs python3 3.9 or
-# later and nothing else. `uv run` reads the empty dependency block above.
+# The script reads the files it is given, and the word book in the skill's
+# assets/ folder, and asks git for an earlier version. It writes nothing
+# and opens no network connection. It needs python3 3.9 or later and
+# nothing else. `uv run` reads the empty dependency block above.
 
 from __future__ import annotations
 
@@ -64,6 +65,57 @@ BANDS = {
     "13-18": Band(20, 75, 5, 9),
     "dyslexia": Band(20, 75, 5, None),
 }
+# Words a band of readers is spared, on top of WORDS: a Latin abbreviation a
+# younger reader has not met, and a word of the trade with a plain one.
+BAND_WORDS = {
+    "i.e.": 'write "that is"',
+    "vs": 'write "against" or "compared with"',
+    "cf.": 'write "compare"',
+    "etc.": 'name the rest, or write "and others"',
+    "via": 'write "through" or "by"',
+}
+BAND_WORD = re.compile(r"(?<![A-Za-z])i\.e\.|(?<![\w.-])(?:vs|cf|etc|via)\b\.?", re.I)
+# The words a younger reader can be expected to know: the VOA Learning
+# English Word Book, in the skill's assets/ folder, which credits its
+# source. Under a band, a note names the words of a page that fall outside
+# it, most frequent first. A word is known when the book lists it, or a
+# form of it that a suffix, a prefix the book lists as common, or an
+# irregular form leads to.
+WORD_BOOK = Path(__file__).resolve().parent.parent / "assets" / "voa-word-book.txt"
+ENDINGS = (
+    ("ies", "y"), ("ied", "y"), ("ier", "y"), ("iest", "y"), ("ily", "y"), ("es", ""), ("s", ""),
+    ("ed", ""), ("ed", "e"), ("ing", ""), ("ing", "e"), ("er", ""), ("er", "e"), ("est", ""), ("est", "e"),
+    ("ly", ""), ("ness", ""), ("ment", ""), ("ful", ""), ("less", ""), ("al", ""), ("ion", ""), ("ion", "e"),
+)
+PREFIXES = ("anti", "dis", "mis", "pro", "re", "self", "un")
+IRREGULAR = {
+    form: word
+    for word, forms in {
+        "be": "am is are was were been being", "have": "has had", "do": "does did done", "go": "goes went gone",
+        "say": "said", "make": "made", "take": "took taken", "give": "gave given", "get": "got gotten",
+        "see": "saw seen", "know": "knew known", "think": "thought", "find": "found", "tell": "told",
+        "become": "became", "leave": "left", "feel": "felt", "bring": "brought", "begin": "began begun",
+        "keep": "kept", "hold": "held", "write": "wrote written", "stand": "stood", "hear": "heard",
+        "mean": "meant", "meet": "met", "run": "ran", "pay": "paid", "sit": "sat", "speak": "spoke spoken",
+        "lead": "led", "grow": "grew grown", "lose": "lost", "fall": "fell fallen", "send": "sent",
+        "build": "built", "understand": "understood", "draw": "drew drawn", "break": "broke broken",
+        "spend": "spent", "rise": "rose risen", "drive": "drove driven", "buy": "bought", "wear": "wore worn",
+        "choose": "chose chosen", "seek": "sought", "throw": "threw thrown", "catch": "caught", "win": "won",
+        "forget": "forgot forgotten", "sell": "sold", "fight": "fought", "teach": "taught", "eat": "ate eaten",
+        "fly": "flew flown", "hide": "hid hidden", "shoot": "shot", "steal": "stole stolen",
+        "child": "children", "man": "men", "woman": "women", "person": "people", "foot": "feet",
+        "good": "better best", "bad": "worse worst", "much": "more most", "little": "less least",
+        "i": "me my mine", "he": "him his", "she": "her hers", "it": "its", "we": "us our ours",
+        "they": "them their theirs", "you": "your yours", "can": "could", "will": "would", "shall": "should",
+        "may": "might",
+    }.items()
+    for form in forms.split()
+}
+CONTRACTION = re.compile(r"(?:n't|'s|'re|'ll|'ve|'d|'m)$")
+# A word of prose, and not a piece of a path or a file name such as
+# docs/install.md, which a link's text may show, nor a piece of a name joined
+# by hyphens, such as ktl-librarian.
+WORD_TOKEN = re.compile(r"(?<![\w./-])[A-Za-z]+(?:'[A-Za-z]+)?(?![\w/-]|\.\w)")
 # How a page names its readers in its first paragraph, as rule 12 asks of a
 # retelling: "This page is for readers aged 13 to 18."
 DECLARED = re.compile(
@@ -555,7 +607,11 @@ def spoken(hidden: str) -> list[list[str]]:
 
 
 def style(
-    doc: Doc, max_words: int, max_paragraph: int = MAX_PARAGRAPH, max_sentences: int | None = None
+    doc: Doc,
+    max_words: int,
+    max_paragraph: int = MAX_PARAGRAPH,
+    max_sentences: int | None = None,
+    band_words: bool = False,
 ) -> list[tuple[int, str, str]]:
     """Dash, long, paragraph, sentences and words: what a script can see of the house style.
 
@@ -601,6 +657,10 @@ def style(
                 findings.append((block.line_at(at), "dash", f'a dash used as punctuation: "{shown}"'))
             for word in WORD.finditer(sentence):
                 advice = WORDS[" ".join(word.group().lower().split())]
+                findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
+            for word in BAND_WORD.finditer(sentence) if band_words else ():
+                found = word.group().lower()
+                advice = BAND_WORDS.get(found) or BAND_WORDS.get(found.rstrip(".")) or BAND_WORDS[found.rstrip(".") + "."]
                 findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
     return findings
 
@@ -664,6 +724,97 @@ def graded(doc: Doc, name: str, band: Band) -> str | None:
     if index <= band.grade:
         return f"{said}; the {name} target is {band.grade} or under"
     return f"{said}; the {name} target is {band.grade} or under, so look first at the long words and the long sentences"
+
+
+def word_book() -> frozenset:
+    """The words of the word book, or none when the file is missing."""
+    try:
+        lines = WORD_BOOK.read_text(encoding="utf-8").split("\n")
+    except OSError:
+        return frozenset()
+    return frozenset(line.strip() for line in lines if line.strip() and not line.startswith("#"))
+
+
+def known(word: str, book: frozenset, prefixed: bool = True) -> bool:
+    """Whether the word book lists the word, or a form that leads to it."""
+    if word in book or IRREGULAR.get(word) in book:
+        return True
+    if word.endswith("n't"):
+        return known({"can't": "can", "won't": "will"}.get(word, word[:-3]), book)
+    if CONTRACTION.search(word):
+        return known(CONTRACTION.sub("", word), book)
+    for ending, put in ENDINGS:
+        if word.endswith(ending) and len(word) > len(ending) + 1:
+            stem = word[: -len(ending)] + put
+            if stem in book or IRREGULAR.get(stem) in book:
+                return True
+            # A doubled consonant: running, stopped, bigger.
+            if ending in ("ing", "ed", "er", "est") and len(stem) > 2 and stem[-1] == stem[-2] and stem[:-1] in book:
+                return True
+    return prefixed and any(
+        word.startswith(prefix) and len(word) - len(prefix) > 2 and known(word[len(prefix) :], book, False)
+        for prefix in PREFIXES
+    )
+
+
+def vocabulary(doc: Doc) -> str | None:
+    """The note on the words of a page the word book does not hold, or None.
+
+    It reads the paragraphs and list items, masked as the style rules mask
+    them. A word with a capital that the book does not hold is taken for a
+    name, and left out of the count along with every abbreviation in capitals.
+    """
+    book = word_book()
+    if not book:
+        return None
+    total, outside = 0, Counter()
+    for block in prose_blocks(doc):
+        if block.kind == "cell":
+            continue
+        for found in WORD_TOKEN.finditer(mask(block.text).replace("’", "'")):
+            word, lowered = found.group(), found.group().lower()
+            # A single letter is a list label or a piece of "i.e.", and a
+            # band word is reported as a finding already.
+            if len(lowered) == 1 and lowered not in book or lowered.rstrip(".") in ("etc", "vs", "cf", "via"):
+                continue
+            if known(lowered, book):
+                total += 1
+            elif not word[0].isupper():
+                total += 1
+                outside[lowered] += 1
+    if not outside:
+        return None
+    grouped, forms = Counter(), {}
+    for word, count in outside.items():
+        stem = lemma(word, outside)
+        grouped[stem] += count
+        forms.setdefault(stem, Counter())[word] += count
+    order = list(forms)
+    named = sorted(grouped, key=lambda stem: (-grouped[stem], order.index(stem)))[:10]
+    return (
+        f"{sum(outside.values())} of {total} words are outside the VOA Learning English word book, most often: "
+        + ", ".join(f"{forms[stem].most_common(1)[0][0]} ({grouped[stem]})" for stem in named)
+        + "; explain each where it first appears, or choose a plainer word"
+    )
+
+
+def lemma(word: str, seen) -> str:
+    """The form a word is counted under, so that "files" counts with "file", and "checks" with "checked".
+
+    A plain form the page also uses wins; otherwise the first rough stem does.
+    """
+    candidates = []
+    if word.endswith("ies") and len(word) > 4:
+        candidates.append(word[:-3] + "y")
+    if word.endswith("s") and not word.endswith("ss") and len(word) > 3:
+        candidates.append(word[:-1])
+    if word.endswith("es") and len(word) > 4:
+        candidates.append(word[:-2])
+    if word.endswith("ing") and len(word) > 5:
+        candidates += [word[:-3], word[:-3] + "e"]
+    if word.endswith("ed") and len(word) > 4:
+        candidates += [word[:-2], word[:-1]]
+    return next((candidate for candidate in candidates if candidate in seen), candidates[0] if candidates else word)
 
 
 def unseen_char(char: str) -> bool:
@@ -1030,10 +1181,10 @@ def check_style(files: list[Path], max_words: int | None = None, max_paragraph: 
             band = BANDS.get(name) if name else None
             words = max_words if max_words is not None else band.words if band else MAX_WORDS
             paragraph = max_paragraph if max_paragraph is not None else band.paragraph if band else MAX_PARAGRAPH
-            found += style(doc, words, paragraph, band.sentences if band else None)
-            note = graded(doc, name, band) if band else None
-            if note:
-                notes.append((path, 1, "grade", note))
+            found += style(doc, words, paragraph, band.sentences if band else None, band_words=band is not None)
+            for rule, note in (("grade", graded(doc, name, band)), ("vocabulary", vocabulary(doc))) if band else ():
+                if note:
+                    notes.append((path, 1, rule, note))
         findings.extend((path, *finding) for finding in sorted(found, key=lambda finding: finding[0]))
     return findings, notes, f"{len(files)} file(s), and nothing a script can see breaks the style rules or hides from a reader"
 

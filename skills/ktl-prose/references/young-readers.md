@@ -52,7 +52,10 @@ python3 <skill>/scripts/prose-check.py --audience 13-18 <file>
 
 A page that opens as rule 1 below asks, "This page is for readers aged 13 to 18.", names its own band. A plain style run then holds it to that band, and a note says so. Give `--audience` to a page that names no band, such as an original before its pass for dyslexic readers. A page that names one band while `--audience` asks for another is a finding. `--max-words` and `--max-paragraph` still set their own limit when given.
 
-Under a band, the script also counts the sentences in each paragraph. It notes the page's grade, with the words in a sentence, the letters in a word and the share of long words it comes from. The note never changes the exit status.
+Under a band, the script also counts the sentences in each paragraph, and reports "via" and the Latin abbreviations "i.e.", "vs", "cf." and "etc." It notes two things that never change the exit status:
+
+- **the grade**, with the words in a sentence, the letters in a word and the share of long words it comes from;
+- **the words a younger reader may not know**: those the VOA Learning English word book does not hold, most frequent first. The word book lists about 1,600 words that learners of English meet first, and sits in this skill's `assets/` folder with its credit. A technical page always has some words outside it, so explain each where it first appears, as rule 2 says.
 
 ## Who the reader is
 
