@@ -160,7 +160,9 @@ jobs:
       # writes `next_version` to $GITHUB_OUTPUT itself (see
       # changelog-release.mjs's `notes` subcommand) only when a release is
       # due; a push with no feat/fix/etc. commit since the last tag
-      # leaves it unset and the step below is skipped.
+      # leaves it unset and the step below is skipped. So does a push with
+      # nothing new after a promotion, such as a docs merge before
+      # publish.yml runs: the version it computes is already promoted.
       - name: Compute the next version (writes nothing)
         id: plan
         env:

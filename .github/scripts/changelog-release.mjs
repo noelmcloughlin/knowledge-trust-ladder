@@ -6,9 +6,13 @@
 // in-repo script over an inline command string (see knowledge-librarian.sh).
 //
 // Usage:
-//   node changelog-release.mjs check
+//   node changelog-release.mjs check [version]
 //       Exits 1 if "## [Unreleased]" is empty. Used as semantic-release's
 //       verifyReleaseCmd, so a release with nothing written up never goes out.
+//       With a version arg, an empty section passes when that version is
+//       already promoted and waits for publish.yml: a push with nothing
+//       to release, such as a docs merge after a feat, still finds the feat
+//       since the last tag, and its notes are already written.
 //
 //   node changelog-release.mjs notes [version]
 //       Prints the Unreleased section's body to stdout; it becomes the
@@ -16,6 +20,8 @@
 //       also appends `next_version=<version>` to $GITHUB_OUTPUT if that
 //       env var is set (a side channel a caller can read even from a
 //       --dry-run invocation, where nothing else is written anywhere).
+//       It appends nothing when the section is empty and that version is
+//       already promoted, so the workflow commits no promotion.
 //
 //   node changelog-release.mjs promote <version> <date>
 //       Retitles "## [Unreleased]" to "## [<version>] - <date>" and
@@ -113,17 +119,41 @@ function writeOutput(line) {
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, line);
 }
 
+// The promoted section that already holds `version`'s notes, when the
+// Unreleased section is empty: the case where a push has nothing new to
+// describe. Null otherwise, including when the version differs, since then
+// something new would release with no notes.
+function alreadyPromoted(version) {
+  const { text, body, end } = readUnreleased();
+  if (body || !version) return null;
+  const pending = pendingSection(text, end);
+  return pending && pending.version === version ? pending : null;
+}
+
+// semantic-release prints a failing command's error with its stack, so also
+// write the reason as a GitHub annotation, which the run's summary shows
+// on its own line.
+function fail(message) {
+  if (process.env.GITHUB_ACTIONS) console.log(`::error title=${FILE}::${message}`);
+  console.error(message);
+  process.exit(1);
+}
+
 const [, , cmd, ...args] = process.argv;
 
 switch (cmd) {
   case "check": {
+    const [version] = args;
     const { body } = readUnreleased();
+    if (!body && alreadyPromoted(version)) {
+      console.error(`ok - nothing new since "## [${version}]", which waits for publish.yml.`);
+      break;
+    }
     if (!body) {
-      console.error(
+      fail(
         `${FILE}'s "${HEADING}" section is empty. This pipeline only releases what a ` +
           "person or agent has already described there - write it before merging to main."
       );
-      process.exit(1);
     }
     console.error(`ok - "${HEADING}" has ${body.length} characters to release.`);
     break;
@@ -132,6 +162,11 @@ switch (cmd) {
   case "notes": {
     const [version] = args;
     const { body } = readUnreleased();
+    const pending = alreadyPromoted(version);
+    if (pending) {
+      process.stdout.write(pending.body + "\n");
+      break;
+    }
     if (version) writeOutput(`next_version=${version}\n`);
     process.stdout.write(body + "\n");
     break;

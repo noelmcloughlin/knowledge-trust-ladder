@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **A docs-only merge after a promotion no longer fails the release job.** The version semantic-release computes is already promoted and waits for `publish.yml`, so an empty Unreleased section passes and nothing is promoted twice. A failing check also writes its reason as a GitHub annotation.
+
 ## [0.38.0] - 2026-10-11
 
 ### Added

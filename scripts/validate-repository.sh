@@ -635,6 +635,24 @@ EOF
   else
     err "promote folded into 0.19.0 even though v0.19.0 is already tagged"
   fi
+  # A push with nothing to release, such as a docs merge, after a promote and
+  # before publish.yml: semantic-release still finds the feat since the last
+  # tag and asks for the version already promoted. Unreleased is empty and
+  # that is right, so check passes and notes asks for no second promote; on
+  # 2026-10-11 check failed main's release job there instead.
+  printf '## [Unreleased]\n\n## [0.20.0] - 2026-09-20\n\n### Added\n\n- promoted, not yet published\n\n## [0.19.1] - 2026-09-19\n' \
+    > "$cl/repo/CHANGELOG.md"
+  cl_out="$cl/github-output"
+  : > "$cl_out"
+  if (cd "$cl/repo" && node .github/scripts/changelog-release.mjs check 0.20.0 >/dev/null 2>&1) \
+     && (cd "$cl/repo" && GITHUB_OUTPUT="$cl_out" node .github/scripts/changelog-release.mjs notes 0.20.0 >/dev/null 2>&1) \
+     && [[ ! -s "$cl_out" ]] \
+     && ! (cd "$cl/repo" && node .github/scripts/changelog-release.mjs check 0.21.0 >/dev/null 2>&1) \
+     && ! (cd "$cl/repo" && node .github/scripts/changelog-release.mjs check >/dev/null 2>&1); then
+    ok "a push with nothing new passes for the version already promoted, and fails for any other"
+  else
+    err "check or notes mishandled an empty Unreleased above the promoted, untagged 0.20.0"
+  fi
   rm -rf "$cl"
 else
   say "node not installed locally - CI runs check 14; skipping here"
