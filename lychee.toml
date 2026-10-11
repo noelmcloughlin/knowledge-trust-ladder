@@ -23,6 +23,9 @@ exclude = [
   # Same for docs/m365.md, linked from ktl-sidecar/references/m365.md; drop
   # after 0.27 merges.
   '^https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/m365\.md$',
+  # Same for docs/examples/prose.md, linked from
+  # ktl-prose/references/young-readers.md; drop after it merges.
+  '^https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/prose\.md$',
   # conventionalcommits.org (Netlify) answers CI runners with 503 on every
   # retry while serving 200 elsewhere; not a dead link. Drop this exclusion
   # if CI reaches it again.

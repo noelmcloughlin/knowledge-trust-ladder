@@ -22,6 +22,14 @@ The point of a bundle is to *not* re-read the repository. Spend tokens in this o
 | "Where is X defined / configured?" | the concept's `resource` |
 | "What's the endpoint / version / schema of X?" | a `Service` (`endpoint`, `documentation`), `Dataset`/`Table` (`fields`, `distribution`), then confirm at `resource` |
 
+## A younger reader
+
+When the asker says an answer is for a younger reader, such as a child, a class or a teenager, use the band of age they name: 8 to 12, or 13 to 18. Never ask a reader's age, and never guess it from how anyone writes.
+
+Prefer a retelling: a concept under `young-readers/` whose `tags` carry that band, such as `audience-13-18`. It has its own label, so weigh it as any concept. It was checked against the adult concept it names under `derivedFrom`, not against the repository, so give that concept's label too.
+
+With no retelling, answer from the adult concept in shorter sentences and plainer words, and keep every fact, number and name exact. Keep the footer and its labels word for word, and say in the answer what a label means, such as "a person has checked this against its source". Write nothing to the bundle: the shorter answer is for this reader only.
+
 ## Deriving the label
 
 Run `bash "<skill>/scripts/knowledge-report.sh" labels <path>...` from the repository, with the bundle paths of the concepts you used, such as `services/orders-api.md`, and copy each line it prints into the footer. `<skill>` is this skill's directory: the script is this skill's own copy, never the repository's under `.lokf/scripts/`. It applies the rules below from the frontmatter, the same for every reader. Where it is missing, apply them by hand. They are the same as ktl-curator's `references/trust-fields.md`, restated here so this skill stands alone:
