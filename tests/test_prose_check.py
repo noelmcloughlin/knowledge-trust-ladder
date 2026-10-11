@@ -156,6 +156,19 @@ def pc(tmp_path_factory):
     write(d / "t-new.md", "# A page\n\nThe value is <sup>n</sup> here, and it holds.\n")
     write(d / "hb-old.md", "# A page\n\nFirst half here  \nsecond half here now.\n")
     write(d / "hb-new.md", "# A page\n\nFirst half here\nsecond half here now.\n")
+    # A band of readers: a sentence of 17 words, a paragraph of four
+    # sentences and 60 words, and a paragraph of four short sentences.
+    long_17 = "The librarian reads each changed file and writes one new concept for every source it finds today."
+    write(d / "band-long.md", f"# A page\n\n{long_17}\n")
+    write(d / "band-para.md", "# A page\n\n" + "The gate reads each file in the bundle and checks it against the earlier version. " * 4 + "\n")
+    write(d / "band-four.md", "# A page\n\n" + "The gate reads each file. " * 4 + "\n")
+    # A page that names its readers in its first paragraph, as rule 12 asks
+    # of a retelling.
+    opening = "# A page\n\nThis page is for {}. It says what the gate does.\n"
+    write(d / "names-band.md", opening.format("readers aged 8 to 12") + f"\n{long_17}\n")
+    write(d / "names-band-ok.md", opening.format("readers aged 8 to 12"))
+    write(d / "names-dyslexia.md", opening.format("dyslexic readers"))
+    write(d / "names-other.md", opening.format("readers aged 10 to 14"))
     return d
 
 
@@ -240,6 +253,64 @@ STYLE = [
     ),
     (1, "html:", "a changed inline HTML tag is reported", ["--before", "t-old.md", "t-new.md"]),
     (1, "hard-break:", "a dropped hard line break is reported", ["--before", "hb-old.md", "hb-new.md"]),
+    (
+        1,
+        "band-long.md:3: long: 17 words in one sentence, and the limit is 15",
+        "a sentence of 17 words is long for readers aged 8 to 12",
+        ["--audience", "8-12", "band-long.md"],
+    ),
+    (0, "OK", "the same sentence passes for readers aged 13 to 18", ["--audience", "13-18", "band-long.md"]),
+    (0, "OK", "and at the adult limits, with no band", ["band-long.md"]),
+    (0, "OK", "--max-words sets its own limit over a band's", ["--audience", "8-12", "--max-words", "30", "band-long.md"]),
+    (
+        1,
+        "band-para.md:3: paragraph: 60 words in one paragraph, and the limit is 50",
+        "a paragraph of 60 words is long for readers aged 8 to 12",
+        ["--audience", "8-12", "band-para.md"],
+    ),
+    (0, "OK", "the same paragraph passes for readers aged 13 to 18", ["--audience", "13-18", "band-para.md"]),
+    (
+        1,
+        "band-four.md:3: sentences: 4 sentences in one paragraph, and the limit is 3",
+        "a fourth sentence in a paragraph is reported for readers aged 8 to 12",
+        ["--audience", "8-12", "band-four.md"],
+    ),
+    (0, "OK", "four sentences in a paragraph pass for readers aged 13 to 18", ["--audience", "13-18", "band-four.md"]),
+    (
+        0,
+        "grade: Automated Readability Index",
+        "a band notes the grade, and a page within the limits still passes",
+        ["--audience", "13-18", "band-four.md"],
+    ),
+    (0, "the 13-18 target is 9 or under", "the grade note names the band's target", ["--audience", "13-18", "band-four.md"]),
+    (0, "the dyslexia band sets no target", "the dyslexia band notes the grade with no target", ["--audience", "dyslexia", "band-four.md"]),
+    (2, "invalid choice", "an unknown band is a usage error", ["--audience", "7-9", "band-long.md"]),
+    (2, "run them apart", "a band with a comparison is a usage error", ["--audience", "8-12", "--before", "p-old.md", "p-new.md"]),
+    (
+        1,
+        "names-band.md:5: long: 17 words in one sentence, and the limit is 15",
+        "a page that names its readers is held to their band with no flag",
+        ["names-band.md"],
+    ),
+    (
+        0,
+        "audience: the page says it is for readers aged 8 to 12, so the 8-12 limits apply",
+        "a note says which band a page named",
+        ["names-band-ok.md"],
+    ),
+    (
+        1,
+        "names-band-ok.md:3: audience: the page says it is for readers aged 8 to 12, and --audience asked for 13-18",
+        "a flag that asks for another band than the page names is a finding",
+        ["--audience", "13-18", "names-band-ok.md"],
+    ),
+    (0, "so the dyslexia limits apply", "a page for dyslexic readers names its band too", ["names-dyslexia.md"]),
+    (
+        0,
+        "which no band covers, so the adult limits apply",
+        "ages that match no band keep the adult limits",
+        ["names-other.md"],
+    ),
 ]
 
 
