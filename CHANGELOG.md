@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **A domain schema is one variable in the sidecar's justfile.** `templates/justfile` gains `schema := ""`; the `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema` and run from the schema's directory (the released linkml validator reads a schema's relative imports from the working directory; linkml PR 3855 fixes that), and the registrar and librarian workflows run the recipes instead of `lokf validate` inline, so a host wires a domain schema by setting that line and edits no workflow copy. The recipe in ktl-librarian's domain-schema.md says so, and points at the linkml-sidecar skill for a schema that wants the LinkML toolchain around it.
+
 ## [0.38.0] - 2026-10-11
 
 ### Added
