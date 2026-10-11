@@ -42,6 +42,18 @@ Ages are the scale, because readers come from many school systems. ISCED, UNESCO
 | 8 to 12 | 1, and the start of 2 | 3 to 7 | Years 4 to 8 | A1 to B1 |
 | 13 to 18 | 2 and 3 | 8 to 12 | Years 9 to 13 | B1 to C1 |
 
+## Checking a page against a band
+
+The check script holds a page to a band's limits:
+
+```sh
+python3 <skill>/scripts/prose-check.py --audience 13-18 <file>
+```
+
+A page that opens as rule 1 below asks, "This page is for readers aged 13 to 18.", names its own band. A plain style run then holds it to that band, and a note says so. Give `--audience` to a page that names no band, such as an original before its pass for dyslexic readers. A page that names one band while `--audience` asks for another is a finding. `--max-words` and `--max-paragraph` still set their own limit when given.
+
+Under a band, the script also counts the sentences in each paragraph. It notes the page's grade, with the words in a sentence, the letters in a word and the share of long words it comes from. The note never changes the exit status.
+
 ## Who the reader is
 
 A person names the band, and the skill never guesses it. Take the band from the first of these that holds:
@@ -118,7 +130,7 @@ ktl-prose writes the retelling itself, in a live session, in a new file beside o
 
 ## The pass for dyslexic readers
 
-A pass for dyslexic readers is a rewording at the `dyslexia` limits: the same facts, in shorter sentences and paragraphs, where the page stands. In the bundle it covers the concepts Step 1 marks `rewrite`. Outside the bundle it covers a file a person names, at the cost [other-files.md](other-files.md#before-you-reword-a-source) describes.
+A pass for dyslexic readers is a rewording at the `dyslexia` limits: the same facts, in shorter sentences and paragraphs, where the page stands. Run the style check with `--audience dyslexia` before and after, and prove the rewording with `--before` or `--against` as Step 3 says. In the bundle it covers the concepts Step 1 marks `rewrite`. Outside the bundle it covers a file a person names, at the cost [other-files.md](other-files.md#before-you-reword-a-source) describes.
 
 Two rules join the thirteen, because a dyslexic reader meets crowded text as a barrier:
 

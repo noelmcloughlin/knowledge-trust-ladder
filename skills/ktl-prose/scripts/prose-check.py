@@ -9,9 +9,17 @@
 # wording? Whether the meaning held is a question for a reader.
 #
 #   prose-check.py FILE...                what a script sees: dash, long, paragraph, words, unseen
+#   prose-check.py --audience BAND FILE...  the same at the limits of a band of readers, with sentences and a grade
 #   prose-check.py --before OLD NEW       what differs besides the wording, and the words before and after
 #   prose-check.py --against REF FILE...  the same, against the version git holds at REF
 #   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword
+#
+# A band holds a page to the limits references/young-readers.md gives for
+# readers aged 8 to 12, aged 13 to 18, or dyslexic. A page that opens by
+# naming its readers, as "This page is for readers aged 13 to 18." does, is
+# held to that band with no flag. Under a band the script also counts the
+# sentences in each paragraph, and notes the page's Automated Readability
+# Index with the counts it comes from. The index is a hint, never a finding.
 #
 # `unseen` is a character no reader sees: a control character other than a
 # tab, or a format character such as a zero-width space or the right-to-left
@@ -39,13 +47,29 @@ import subprocess
 import sys
 import textwrap
 import unicodedata
-from collections import Counter
+from collections import Counter, namedtuple
 from pathlib import Path
 
 RESERVED = {"index.md", "log.md", "diataxis.md"}
 MAX_WORDS = 40
 # The Federal Plain Language Guidelines' ceiling for a paragraph.
 MAX_PARAGRAPH = 150
+# The bands of readers, as references/young-readers.md gives them with their
+# sources: the words in a sentence and in a paragraph, the sentences in a
+# paragraph, and the Automated Readability Index a page should stay at or
+# under. A grade of None notes the index with no target.
+Band = namedtuple("Band", "words paragraph sentences grade")
+BANDS = {
+    "8-12": Band(15, 50, 3, 7),
+    "13-18": Band(20, 75, 5, 9),
+    "dyslexia": Band(20, 75, 5, None),
+}
+# How a page names its readers in its first paragraph, as rule 12 asks of a
+# retelling: "This page is for readers aged 13 to 18."
+DECLARED = re.compile(
+    r"\bthis [\w.-]+ is for (?P<who>readers aged (?P<low>\d{1,2}) to (?P<high>\d{1,2})|dyslexic readers|readers with dyslexia)\b",
+    re.I,
+)
 # One private-use character stands in for each character a rule skips, so
 # every offset and line number stays true after masking.
 MASK = ""
@@ -520,10 +544,24 @@ def excerpt(text: str, start: int, end: int, room: int = 30) -> str:
     return ("..." if left else "") + text[left:right].strip() + ("..." if right < len(text) else "")
 
 
-def style(doc: Doc, max_words: int, max_paragraph: int = MAX_PARAGRAPH) -> list[tuple[int, str, str]]:
-    """Dash, long, paragraph and words: what a script can see of the house style.
+def spoken(hidden: str) -> list[list[str]]:
+    """The words of each sentence of a masked block, leaving out a sentence with none. A word wholly masked is no word."""
+    said = []
+    for start, end in sentences(hidden):
+        words = [word for word in hidden[start:end].split() if word.strip(MASK)]
+        if words:
+            said.append(words)
+    return said
+
+
+def style(
+    doc: Doc, max_words: int, max_paragraph: int = MAX_PARAGRAPH, max_sentences: int | None = None
+) -> list[tuple[int, str, str]]:
+    """Dash, long, paragraph, sentences and words: what a script can see of the house style.
 
     A table cell is no paragraph, and a list item is held to the same limit.
+    Only a band sets a limit on the sentences in a paragraph, and a list item
+    has none.
     """
     findings: list[tuple[int, str, str]] = []
     for block in prose_blocks(doc):
@@ -535,6 +573,17 @@ def style(doc: Doc, max_words: int, max_paragraph: int = MAX_PARAGRAPH) -> list[
             findings.append(
                 (block.line_at(0), "paragraph", f'{size} words in one {what}, and the limit is {max_paragraph}: "{opening}..."')
             )
+        if max_sentences is not None and block.kind == "paragraph":
+            count = len(spoken(hidden))
+            if count > max_sentences:
+                opening = " ".join(block.text.split()[:8])
+                findings.append(
+                    (
+                        block.line_at(0),
+                        "sentences",
+                        f'{count} sentences in one paragraph, and the limit is {max_sentences}: "{opening}..."',
+                    )
+                )
         for start, end in sentences(hidden):
             sentence = hidden[start:end]
             if not sentence.strip():
@@ -554,6 +603,67 @@ def style(doc: Doc, max_words: int, max_paragraph: int = MAX_PARAGRAPH) -> list[
                 advice = WORDS[" ".join(word.group().lower().split())]
                 findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
     return findings
+
+
+def declared(doc: Doc):
+    """The readers a page names in its first paragraph, as (band, line, words), or None.
+
+    The band is None when the ages match none of the bands. The words are the
+    readers as the page names them, such as "readers aged 13 to 18".
+    """
+    block = next(iter(prose_blocks(doc)), None)
+    if block is None or block.kind != "paragraph":
+        return None
+    found = DECLARED.search(block.text)
+    if not found:
+        return None
+    line, who = block.line_at(found.start()), " ".join(found.group("who").split())
+    if found.group("low") is None:
+        return "dyslexia", line, who
+    name = f"{int(found.group('low'))}-{int(found.group('high'))}"
+    return (name if name in BANDS else None), line, who
+
+
+def grade(doc: Doc):
+    """The Automated Readability Index of a page, and what it is made of.
+
+    ARI = 4.71 x (letters and digits per word) + 0.5 x (words per sentence) - 21.43,
+    read from the paragraphs and list items the style rules read, on the
+    masked text. A table cell is left out: it is a label, not a sentence. The
+    result is (index, words a sentence, letters and digits a word, the share
+    of words of seven letters or more), or None for a page with no prose.
+    """
+    words = sentences_seen = characters = long_words = 0
+    for block in prose_blocks(doc):
+        if block.kind == "cell":
+            continue
+        for said in spoken(mask(block.text)):
+            sentences_seen += 1
+            words += len(said)
+            for word in said:
+                characters += sum(1 for char in word if char.isalnum())
+                long_words += sum(1 for char in word if char.isalpha()) >= 7
+    if not words:
+        return None
+    per_word, per_sentence = characters / words, words / sentences_seen
+    return 4.71 * per_word + 0.5 * per_sentence - 21.43, per_sentence, per_word, long_words / words
+
+
+def graded(doc: Doc, name: str, band: Band) -> str | None:
+    """The grade note for a page held to a band, or None for a page with no prose."""
+    measured = grade(doc)
+    if measured is None:
+        return None
+    index, per_sentence, per_word, share = measured
+    said = (
+        f"Automated Readability Index {index:.1f}, from {per_sentence:.1f} words a sentence and"
+        f" {per_word:.1f} letters or digits a word, with {share:.0%} of the words seven letters or longer"
+    )
+    if band.grade is None:
+        return f"{said}; the {name} band sets no target"
+    if index <= band.grade:
+        return f"{said}; the {name} target is {band.grade} or under"
+    return f"{said}; the {name} target is {band.grade} or under, so look first at the long words and the long sentences"
 
 
 def unseen_char(char: str) -> bool:
@@ -892,8 +1002,13 @@ def reserved_in_bundle(path: Path) -> bool:
     return path.name in RESERVED and bundle_root(path) is not None
 
 
-def check_style(files: list[Path], max_words: int, max_paragraph: int = MAX_PARAGRAPH):
-    """The style rules for each file, and a character no reader sees in any of them."""
+def check_style(files: list[Path], max_words: int | None = None, max_paragraph: int | None = None, audience: str | None = None):
+    """The style rules for each file, and a character no reader sees in any of them.
+
+    A file is held to the band --audience names, or else to the band its
+    first paragraph names, or else to the adult limits. --max-words and
+    --max-paragraph set their own limit over any band's.
+    """
     findings, notes = [], []
     for path in files:
         doc = Doc(read(path))
@@ -901,7 +1016,24 @@ def check_style(files: list[Path], max_words: int, max_paragraph: int = MAX_PARA
         if reserved_in_bundle(path):
             notes.append((path, 1, "reserved", "a reserved bundle file is not held to the style rules"))
         else:
-            found += style(doc, max_words, max_paragraph)
+            name = audience
+            said = declared(doc)
+            if said:
+                named, line, who = said
+                if audience and named != audience:
+                    found.append((line, "audience", f"the page says it is for {who}, and --audience asked for {audience}"))
+                elif not audience and named:
+                    name = named
+                    notes.append((path, line, "audience", f"the page says it is for {who}, so the {named} limits apply"))
+                elif not audience:
+                    notes.append((path, line, "audience", f"the page says it is for {who}, which no band covers, so the adult limits apply"))
+            band = BANDS.get(name) if name else None
+            words = max_words if max_words is not None else band.words if band else MAX_WORDS
+            paragraph = max_paragraph if max_paragraph is not None else band.paragraph if band else MAX_PARAGRAPH
+            found += style(doc, words, paragraph, band.sentences if band else None)
+            note = graded(doc, name, band) if band else None
+            if note:
+                notes.append((path, 1, "grade", note))
         findings.extend((path, *finding) for finding in sorted(found, key=lambda finding: finding[0]))
     return findings, notes, f"{len(files)} file(s), and nothing a script can see breaks the style rules or hides from a reader"
 
@@ -983,15 +1115,16 @@ def list_bundle(directory: Path) -> int:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="prose-check.py",
-        usage="prose-check.py [--max-words N] [--max-paragraph N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR",
+        usage="prose-check.py [--audience BAND] [--max-words N] [--max-paragraph N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR",
         description="Report what a script can see of plain prose, and prove that a rewording changed only wording.",
     )
     parser.add_argument("files", nargs="*", type=Path, metavar="FILE")
     parser.add_argument("--before", nargs=2, type=Path, metavar=("OLD", "NEW"))
     parser.add_argument("--against", metavar="REF")
     parser.add_argument("--bundle", type=Path, metavar="DIR")
-    parser.add_argument("--max-words", type=int, default=MAX_WORDS, metavar="N")
-    parser.add_argument("--max-paragraph", type=int, default=MAX_PARAGRAPH, metavar="N")
+    parser.add_argument("--audience", choices=sorted(BANDS), metavar="BAND")
+    parser.add_argument("--max-words", type=int, metavar="N")
+    parser.add_argument("--max-paragraph", type=int, metavar="N")
     if len(argv) < 2:
         parser.print_usage(sys.stderr)
         return 2
@@ -1003,6 +1136,8 @@ def main(argv: list[str]) -> int:
         parser.error(f"--{chosen[0]} takes no FILE")
     if not args.before and not args.bundle and not args.files:
         parser.error("name at least one FILE")
+    if args.audience and chosen:
+        parser.error(f"--audience holds a FILE to a band's limits, and --{chosen[0]} compares; run them apart")
 
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -1015,7 +1150,7 @@ def main(argv: list[str]) -> int:
         elif args.against:
             findings, notes, fine = check_against(args.against, args.files)
         else:
-            findings, notes, fine = check_style(args.files, args.max_words, args.max_paragraph)
+            findings, notes, fine = check_style(args.files, args.max_words, args.max_paragraph, args.audience)
     except Usage as exc:
         print(f"prose-check.py: {exc}", file=sys.stderr)
         return 2
