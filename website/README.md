@@ -29,6 +29,7 @@ Both commands run `npm run sync` first, which runs `lokf export` from the sideca
 - **A new page under `docs/`:** add it to `DOCS_GROUPS` in `site.config.mjs`. The sync stops with an error until every page has a place.
 - **How a concept page looks:** `src/components/ConceptCard.astro` and `src/styles/catalogue.css`; the trust colours are in `src/styles/theme.css`, and the map in the right-hand column is `src/components/Neighbourhood.astro`.
 - **The health page:** `src/pages/health.astro` and its chart, `src/components/TrustChart.astro`; the trust states' words are in `src/trust.ts`.
+- **A page's link preview:** `src/pages/og/[...route].ts` draws its social card, and `src/routeData.ts` points the page at it.
 - **How a link is rewritten:** `scripts/routes.mjs`, which the sync and the Markdown plugin both use.
 
 The graph explorer is adapted from the LOKF toolkit's own site under Apache-2.0; see [NOTICE](NOTICE).

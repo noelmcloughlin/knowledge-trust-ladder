@@ -1,10 +1,11 @@
 // Runs after `astro build`: every link and image from one page of the site
 // to another must reach a file in dist/, and a link to a heading must reach
-// an element with that id. A link that leaves the site is not checked here;
-// validate.yml's lychee run checks the repository's own Markdown.
+// an element with that id, and a page's social card, named by its full
+// address, must be a file too. A link that leaves the site is not checked
+// here; validate.yml's lychee run checks the repository's own Markdown.
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { BASE, SITE_DIR } from "../site.config.mjs";
+import { BASE, SITE, SITE_DIR, SITE_URL } from "../site.config.mjs";
 
 const DIST = resolve(SITE_DIR, "dist");
 const pages = [];
@@ -58,6 +59,10 @@ for (const file of pages) {
     else if (hash.length > 1 && hit.endsWith(".html") && !idsOf(hit).has(decodeURIComponent(hash.slice(1)))) {
       broken.push(`${from}: ${url} (no such heading)`);
     }
+  }
+  for (const m of html.matchAll(/<meta property="og:image" content="([^"]+)"/g)) {
+    checked++;
+    if (!m[1].startsWith(SITE_URL + "/") || !target(m[1].slice(SITE.length))) broken.push(`${from}: social card ${m[1]}`);
   }
 }
 

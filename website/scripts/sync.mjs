@@ -394,7 +394,9 @@ function writeConceptPages(concepts) {
       resolve(CONTENT, "knowledge", `${c.id}.md`),
       {
         title: c.title,
-        ...(c.data.description ? { description: String(c.data.description) } : {}),
+        // Plain words: the description is the page's meta description, which
+        // link previews and search engines show as it is.
+        ...(c.data.description ? { description: plain(String(c.data.description)) } : {}),
         ktlSource: `.lokf/knowledge/${c.id}.md`,
         ktlShiftHeadings: hasH1(c.body),
         editUrl: false,
