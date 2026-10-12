@@ -37,7 +37,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
 
 Start with the sidecar and the librarian; the curator matters once there is a bundle worth trusting.
 
-**Only want to ask?** Each skill stands alone, so the docent, a museum's name for a guide, can go into any agent you already use. Ask it about this project, and it answers from this repository's own bundle, saying how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
+**Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
 
 ```bash
 npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes
