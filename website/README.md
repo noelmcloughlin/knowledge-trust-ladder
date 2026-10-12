@@ -24,7 +24,9 @@ Both commands run `npm run sync` first, which runs `lokf export` from the sideca
 
 - **A page's words:** the file it comes from: the README, a page under `docs/`, or a concept, through the librarian and the curator like any other change to the bundle.
 - **A new page under `docs/`:** add it to `DOCS_GROUPS` in `site.config.mjs`. The sync stops with an error until every page has a place.
-- **How a concept page looks:** `src/components/ConceptPanel.astro` and `src/styles/theme.css`.
+- **How a concept page looks:** `src/components/ConceptCard.astro` and `src/styles/catalogue.css`; the trust colours are in `src/styles/theme.css`.
 - **How a link is rewritten:** `scripts/routes.mjs`, which the sync and the Markdown plugin both use.
 
 The graph explorer is adapted from the LOKF toolkit's own site under Apache-2.0; see [NOTICE](NOTICE).
+
+The two typefaces, Source Serif 4 for headings and Atkinson Hyperlegible Next for text, are self-hosted from Fontsource under the SIL Open Font License 1.1.

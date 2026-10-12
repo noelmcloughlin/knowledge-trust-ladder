@@ -36,7 +36,13 @@ export default defineConfig({
         dark: "./src/generated/logo-dark.svg",
       },
       social: [{ icon: "github", label: "GitHub", href: REPO_URL }],
-      customCss: ["./src/styles/theme.css"],
+      // The two typefaces are self-hosted, so no page calls a font service.
+      customCss: [
+        "@fontsource-variable/atkinson-hyperlegible-next",
+        "@fontsource-variable/source-serif-4",
+        "./src/styles/theme.css",
+        "./src/styles/catalogue.css",
+      ],
       components: { PageTitle: "./src/components/PageTitle.astro" },
       // The generated sources are untracked, so git cannot date them; a
       // concept page shows its own `generated` and `verified` times instead.

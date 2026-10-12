@@ -54,73 +54,11 @@
   text-decoration: line-through;
 }
 
-/* The concept record under a concept page's title. */
-.ktl-concept {
-  margin-top: 1rem;
-  padding: 0.9rem 1.1rem;
-  border: 1px solid var(--sl-color-gray-5);
-  border-radius: 0.5rem;
-  font-size: var(--sl-text-sm);
-}
-.ktl-concept__lede {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.6rem;
-}
-.ktl-concept__type,
-.ktl-concept__tag {
-  color: var(--sl-color-gray-2);
-  font-size: var(--sl-text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.ktl-concept__definition {
-  margin: 0 0 0.6rem;
-}
-.ktl-concept__facts {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.25rem 1rem;
-  margin: 0;
-}
-.ktl-concept__facts dt {
-  font-weight: 600;
-  color: var(--sl-color-gray-2);
-}
-.ktl-concept__facts dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.ktl-concept__facts ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.ktl-concept__facts li + li {
-  margin-top: 0;
-}
-.ktl-concept__kind {
-  color: var(--sl-color-gray-3);
-}
-@media (max-width: 30rem) {
-  .ktl-concept__facts {
-    grid-template-columns: 1fr;
-  }
-  .ktl-concept__facts dd {
-    margin-bottom: 0.4rem;
-  }
-}
-
-.ktl-concept a,
+/* Links in a concept's record and on a group page take the site's link
+   colour, not the browser's. */
+.ktl-card a,
 .ktl-list a {
   color: var(--sl-color-text-accent);
-}
-.ktl-concept__files {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
 }
 
 /* A group page lists its concepts with their labels. */

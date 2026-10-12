@@ -2,10 +2,10 @@
 // Starlight's page title, with a concept's record beneath it on the pages
 // the sync rendered from the knowledge bundle.
 import Default from "@astrojs/starlight/components/PageTitle.astro";
-import ConceptPanel from "./ConceptPanel.astro";
+import ConceptCard from "./ConceptCard.astro";
 
 const concept = Astro.locals.starlightRoute.entry.data.lokf;
 ---
 
 <Default />
-{concept && <ConceptPanel concept={concept} />}
+{concept && <ConceptCard concept={concept} />}
