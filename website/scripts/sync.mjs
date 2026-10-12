@@ -187,6 +187,16 @@ function asidesInProse(text) {
 }
 
 /**
+ * A figure's dark version on the site. The README's `<picture>` names the
+ * `-dimmed` set, which suits GitHub's dark theme; the site's dark theme takes
+ * the `-dark` set beside it in .assets/, drawn on a dark ground.
+ */
+function darkFigure(src) {
+  const name = src.match(/([^/]+)-dimmed\.svg$/)?.[1];
+  return name && existsSync(resolve(REPO_ROOT, ".assets", `${name}-dark.svg`)) ? src.replace(/-dimmed\.svg$/, "-dark.svg") : src;
+}
+
+/**
  * A `<picture>` that swaps in a dimmed figure for a dark system theme becomes
  * two images, one shown in each of Starlight's themes, so the figure follows
  * the site's theme switch rather than the system's. The theme's class goes
@@ -199,7 +209,7 @@ function picturesToThemedImages(body) {
     const img = inner.match(/<img\b([^>]*?)\s*\/?>/);
     if (!dark || !img) return whole;
     const attrs = img[1].replace(/\s+class="[^"]*"/, "");
-    const darkAttrs = attrs.replace(/\bsrc="[^"]*"/, `src="${dark[1]}"`);
+    const darkAttrs = attrs.replace(/\bsrc="[^"]*"/, `src="${darkFigure(dark[1])}"`);
     return `<span class="dark:sl-hidden"><img${attrs} /></span><span class="light:sl-hidden"><img${darkAttrs} /></span>`;
   });
 }
@@ -688,7 +698,7 @@ function copyAssets() {
   cpSync(resolve(REPO_ROOT, ".assets"), resolve(PUBLIC, "assets"), { recursive: true });
   mkdirSync(GENERATED, { recursive: true });
   cpSync(resolve(REPO_ROOT, ".assets", "knowledge-trust-ladder-logo.svg"), resolve(GENERATED, "logo-light.svg"));
-  cpSync(resolve(REPO_ROOT, ".assets", "knowledge-trust-ladder-logo-dimmed.svg"), resolve(GENERATED, "logo-dark.svg"));
+  cpSync(resolve(REPO_ROOT, ".assets", "knowledge-trust-ladder-logo-dark.svg"), resolve(GENERATED, "logo-dark.svg"));
   cpSync(resolve(REPO_ROOT, ".assets", "knowledge-trust-ladder-logo.svg"), resolve(PUBLIC, "favicon.svg"));
 }
 
