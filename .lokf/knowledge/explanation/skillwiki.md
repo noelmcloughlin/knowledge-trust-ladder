@@ -30,12 +30,12 @@ SkillWiki turns trajectories, documents, API specifications, scripts and earlier
 
 Reading the paper in October 2026 changed the skills in four places, which `CHANGELOG.md` lists:
 
-- **A program counts reliance.** `knowledge-report.sh` prints how many other concepts rely on each one through a typed relation, and ranks *Worth ten minutes today*, the curator's queue, which `ktl-curator` quotes.
+- **A program counts reliance.** `knowledge-report.sh` prints how many other concepts rely on each one through a typed relation. It ranks the curator's queue, *Worth ten minutes today*, and `ktl-curator` quotes that queue.
 - **A retired concept names what replaced it.** `ktl-curator` links the successor in the concept's `**Deprecation**` line in `log.md`, and the report's label reads *retired, replaced by* that path. The log holds the link until LOKF has a relation type for a successor, which nicholsn/lokf#112 asks for.
 - **A reader's dispute shows on the concept.** Until the librarian handles a docent's Disagreement, the concept's label adds *a reader disputed this* and the day.
 - **A confirming commit records the verdict.** Conventions rule 14 reads each commit of a pull request. A commit that records a person's confirmation may change what the concept says only when that person is also recorded as its author.
 
-One more waits for LOKF 0.9.0, whose `sources[].excerpt` lets a program check the exact passage a concept relies on against its source.
+One more change waits for LOKF 0.9.0, whose `sources[].excerpt` lets a program check the exact passage a concept relies on against its source.
 
 # Where the designs part
 

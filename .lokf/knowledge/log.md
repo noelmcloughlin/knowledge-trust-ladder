@@ -2,6 +2,7 @@
 
 ## 2026-10-12
 
+* **Prose**: reworded 2 concept bodies in plain English: WikiSkill and SkillWiki, after the librarian rewrote both. No fact, link, number or frontmatter changed.
 * **Changed**: WikiSkill takes the page's new title, and its description names what the page now holds.
 * **Changed**: SkillWiki takes the page's new title, and its description names what the page now holds.
 * **Rewrite**: `docs/wikiskill.md` was trimmed to what KTL took from the paper and what the paper leaves open, without the part-by-part table or the programs, models and people table. The concept follows it, under the page's new title.
