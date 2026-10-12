@@ -1,7 +1,7 @@
 name: Website
 
-# Builds the site in website/ from the README, docs/, .assets/ and the knowledge
-# bundle, and publishes main's build to GitHub Pages. A pull request that
+# Builds the site in website/ from the README, docs/, .assets/, the knowledge
+# bundle and CHANGELOG.md, and publishes main's build to GitHub Pages. A pull request that
 # touches any of them gets the same build, link check included, and no
 # deployment. website/README.md says what each page is built from.
 #
@@ -21,6 +21,7 @@ on:
       - ".lokf/**"
       - "README.md"
       - "README.en-simple.md"
+      - "CHANGELOG.md"
       - "llms.txt"
       - ".github/workflows/website.yml"
   pull_request:
@@ -31,6 +32,7 @@ on:
       - ".lokf/**"
       - "README.md"
       - "README.en-simple.md"
+      - "CHANGELOG.md"
       - "llms.txt"
       - ".github/workflows/website.yml"
   workflow_dispatch:
