@@ -120,7 +120,7 @@ TopQuadrant's documentation sub-pages, PoolParty's import API page, Kuzu's docum
 - Apache Jena Fuseki: <https://jena.apache.org/documentation/fuseki2/>; TDB2 commands: <https://jena.apache.org/documentation/tdb2/tdb2_cmds.html>
 - GraphDB: <https://graphdb.ontotext.com/documentation/11.5/talk-to-graph.html>, <https://graphdb.ontotext.com/documentation/11.5/loading-data.html>; AWS Marketplace: <https://aws.amazon.com/marketplace/pp/prodview-es5xupioynhd4>
 - Stardog: <https://docs.stardog.com/operating-stardog/database-administration/adding-data>, <https://docs.stardog.com/voicebox/>
-- OpenLink Virtuoso: <https://vos.openlinksw.com/owiki/wiki/VOS/VirtBulkRDFLoader>, <https://virtuoso.openlinksw.com/>
+- OpenLink Virtuoso: <https://vos.openlinksw.com/owiki/wiki/VOS/VirtBulkRDFLoader>
 - QLever: <https://github.com/ad-freiburg/qlever>
 - Eclipse RDF4J: <https://rdf4j.org/about/>
 - AllegroGraph: <https://franz.com/agraph/support/documentation/agraph-introduction.html>, <https://franz.com/agraph/support/documentation/llm.html>
