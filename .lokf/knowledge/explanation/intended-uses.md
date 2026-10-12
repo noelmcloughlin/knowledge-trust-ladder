@@ -25,9 +25,13 @@ verified:
 
 # Overview
 
-The README states what the project is. It keeps a repository's scattered knowledge as a collection: catalogued, authenticated and explained, with the trust in every claim visible. It calls that a **context layer**, a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent, that persists from one task to the next. The README frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim. The README's term now links `docs/context-layer.md`, which sets it beside the industry's and says one bundle is one repository's context layer ([the context layer](context-layer.md)).
+The README states what the project is. It keeps a repository's scattered knowledge as a collection: catalogued, authenticated and explained, with the trust in every claim visible. It calls that a **context layer**: a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent. The layer persists from one task to the next. The README's term now links `docs/context-layer.md`, which sets it beside the industry's and says one bundle is one repository's context layer ([the context layer](context-layer.md)).
 
-One page now answers this for one kind of repository. `docs/skills-repositories.md` says that in a repository whose content is Agent Skills, KTL helps with the knowledge around the skills and leaves the skills as they are. It leaves whether a skill works to an evaluation, since KTL's checks cover the form and the provenance of what the bundle says. No source says in general which kinds of use KTL fits and which it does not. Two neighbouring concepts cover parts of the ground: [three lines of defence](three-lines-of-defence.md) places the roles in a governance model, and [domain schemas](domain-schemas.md) covers modelling a regulated domain (AI governance among them). Neither states intended uses or non-goals.
+The README frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim.
+
+One page now answers this for one kind of repository. `docs/skills-repositories.md` says that in a repository whose content is Agent Skills, KTL helps with the knowledge around the skills and leaves the skills as they are. It leaves whether a skill works to an evaluation, since KTL's checks cover the form and the provenance of what the bundle says.
+
+No source says in general which kinds of use KTL fits and which it does not. Two neighbouring concepts cover parts of the ground: [three lines of defence](three-lines-of-defence.md) places the roles in a governance model, and [domain schemas](domain-schemas.md) covers modelling a regulated domain (AI governance among them). Neither states intended uses or non-goals.
 
 ## Open questions
 

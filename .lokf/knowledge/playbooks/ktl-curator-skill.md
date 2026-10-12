@@ -33,15 +33,17 @@ ktl-curator runs **a little, regularly**. Step 1 is always a read-only one-scree
 
 - a health line (including how many confirmations no signed commit backs);
 - at most five items "worth ten minutes today", which the script ranks and prints (since 2026-10-06), counting how many other concepts rely on each concept through the thirteen relation fields;
-- the open questions, with those a person's later confirmation answered listed apart;
+- the open questions, with those a person's later confirmation answered listed separately;
 - how many reader feedback entries wait, counted with `grep -c` and never read, so no reader's text enters the session;
 - vocabulary fit;
 - the confirmations git cannot back (named, only when there are any);
 - the confirmed concepts whose source has a commit after the one that recorded the confirmation, and each confirmed concept derived from one edited after that confirmation (again only when there are any);
 - n confirmed concepts, picked by a rule the curator cannot steer, with their sources for a second person to re-check (only when the curation policy sets `Independent re-check: <n>`);
-- a *Ready to record* line from the preflight (since 2026-09-17): the id a confirmation would carry, signing on or off, attended or not, so the session that follows offers only the verbs it can do.
+- a *Ready to record* line from the preflight (since 2026-09-17): the id a confirmation would carry, signing on or off, and attended or not. So the session that follows offers only the verbs it can do.
 
-What is missing is said in plain words before any command, because the curator is often the person who knows the subject and not the repository. A curator who cannot fix it themselves gets a request note for the maintainer, written from ktl-sidecar's `references/prerequisites.md`. Step 2 is an opt-in review session that shows the source *before* the claim and takes one verb per item. Step 3 covers the curation policy, gap intake, domain-schema guidance, and the same labels as SPARQL queries for `lokf serve` (`references/queries.md`).
+What is missing is said in plain words before any command, because the curator is often the person who knows the subject and not the repository. A curator who cannot fix it themselves gets a request note for the maintainer, written from ktl-sidecar's `references/prerequisites.md`.
+
+Step 2 is an opt-in review session that shows the source *before* the claim and takes one verb per item. Step 3 covers the curation policy, gap intake, domain-schema guidance, and the same labels as SPARQL queries for `lokf serve` (`references/queries.md`).
 
 **Vocabulary fit counts against the host's vocabulary, not only LOKF's** (stated 2026-09-14). Where the `schema` line in `.lokf/justfile` names a file, the skill reads that file and any schema it imports besides LOKF's, and counts their `Concept` descendants as known. That is the same widening the librarian's Rule 3 applies. It is also the reason the line goes quiet once a team adopts a domain schema, instead of naming every domain class a misfit for good. The Obsidian plugins cannot read a schema outside the vault, so they are told the list by hand in their *Known LOKF types* setting.
 

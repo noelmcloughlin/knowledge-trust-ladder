@@ -34,9 +34,11 @@ Before a pull request:
 - run `gh skill publish --dry-run` if the GitHub CLI is present;
 - add a line or two under `CHANGELOG.md`'s `[Unreleased]` when behaviour changes. The reasoning belongs beside the code, not in the changelog entry.
 
-Files here are deep-linked from the sibling repositories (KTL Registrar, and the KTL Curator), whose own link checks follow those URLs for real. `validate-repository.sh` check 9 lists the paths. Move one only together with its links, and when a change there needs something new here, merge this side first.
+Files here are deep-linked from the sibling repositories (KTL Registrar and KTL Curator), whose own link checks follow those URLs for real. `validate-repository.sh` check 9 lists the paths. Move one only together with its links, and when a change there needs something new here, merge this side first.
 
-A change under `skills/ktl-sidecar/templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11 and 11a name the pairs and hold each byte-identical, `knowledge-librarian.yaml` apart from its skills pin, which the release commit moves in the template only. When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`), because a squash merge takes its subject from the title and the `plan` job refuses a mismatch. Pinned action SHAs are bumped by Dependabot, and CI fails an action that floats on a tag or branch instead of a commit. The pull request template's checklist is the short form of this list.
+A change under `skills/ktl-sidecar/templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11 and 11a name the pairs and hold each byte-identical, `knowledge-librarian.yaml` apart from its skills pin, which the release commit moves in the template only.
+
+When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`). A squash merge takes its subject from the title, and the `plan` job refuses a mismatch. Pinned action SHAs are bumped by Dependabot, and CI fails an action that floats on a tag or branch instead of a commit. The pull request template's checklist is the short form of this list.
 
 A change to what an agent should actually *do* needs its *why* in the pull request, and must keep the role boundary intact:
 

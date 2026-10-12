@@ -27,15 +27,15 @@ sources:
 
 The README's section on the fifth role, the registrar, points at this page. The reference model is the Three Lines Model of The Institute of Internal Auditors (IIA), updated in [2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) and reissued as a [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf) in 2026. KTL was not built to it, but each of its roles fits. The page shows where, in a table and a diagram (`.assets/ktl-three-lines.svg`, with a dimmed counterpart for dark mode), for any organisation that adopts KTL.
 
-- **First line**: the **librarian**, which derives every record from a named source and marks what it cannot settle `status: draft`, and the **curator**, a named person who decides what the team accepts as true. They are maker and checker, since the agent cannot vouch and the person does not derive.
+- **First line**: the **librarian** and the **curator**. The librarian derives every record from a named source and marks what it cannot settle `status: draft`. The curator is a named person who decides what the team accepts as true. They are maker and checker, since the agent cannot vouch and the person does not derive.
 - **Second line**: the **registrar**, which keeps records well-formed: `lokf validate` on every change and in CI, `knowledge-apply.sh` as the librarian's only pen, `knowledge-report.sh` computing every trust label, and the KTL Registrar Obsidian plugin. The gate ties a `human:` verdict that is added or removed to that person's approval or signature, and the pen refuses to write a `human:` actor at all. Neither judges truth.
 - **Third line**: the bundle holds the evidence an independent reviewer needs, not the review.
 
-The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** installs the tools and the gate. Above the lines sits the governing body, the owners of the repository that holds the bundle, with the organisation's rules for AI-assisted work (this project's are its AI covenant) and the curation policy.
+The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** installs the tools and the gate. The governing body sits above the lines: the owners of the repository that holds the bundle, with the organisation's rules for AI-assisted work and the curation policy. This project's rules for AI-assisted work are its AI covenant.
 
 Lines are roles, not headcount: the IIA's text says the lines "are not intended to denote structural elements but a useful differentiation in roles" and "may overlap in practice" given "clear accountability, transparency, and safeguards". The adopting organisation decides who plays each line, and the tooling holds the lines apart either way.
 
-The page says the curator's identity comes from the forge, never from the person: the login the machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, and never what is typed into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where one person both authors and confirms, the signature is the route, and an Environment with required reviewers is the one logged exception.
+The page says the curator's identity comes from the forge, never from the person. It is the login the machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, and never what is typed into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where one person both authors and confirms, the signature is the route, and an Environment with required reviewers is the one logged exception.
 
 An auditor's questions each have a fixed place to look:
 
@@ -54,9 +54,9 @@ Four limits bound what that evidence proves:
 - A confirmation records who and when. It records the state of the source only when the event carries `revision`, and even then what the skill fetched rather than what the person read.
 - The gate checks identity, not entitlement: `.lokf/curators/` settles who may confirm at all, not yet what.
 - An Environment attestation records only that a listed reviewer clicked Approve.
-- The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file and nothing checks approvals, and a host without git has only its platform's version history.
+- The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file, and nothing checks approvals. A host without git has only its platform's version history.
 
-The critics have a page of their own, `docs/three-lines-critics.md`, marked as preliminary research and, since 2026-09-23, arranged by criticism rather than by critic. A table at the top lists nine points with who raised them and a verdict. Each section then quotes the criticism from its source, says what KTL does about it, and gives the verdict, and a sources list closes the page with every paper by DOI.
+The critics have a page of their own, `docs/three-lines-critics.md`, marked as preliminary research and, since 2026-09-23, arranged by criticism rather than by critic. A table at the top lists nine points with who raised them and a verdict. Each section then quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page with every paper by DOI.
 
 Three points are met by construction:
 

@@ -2,6 +2,7 @@
 
 ## 2026-10-12
 
+* **Prose**: reworded 22 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Changed**: the README's *context layer* now links `docs/context-layer.md`, which the concept now cites. That page, like the README, names no intended use or non-goal, so the open question stays.
 * **Changed**: `docs/three-lines.md` now lists the context layer's domain tiers and workspace among what remains for this project, and the concept follows it.
 * **Changed**: `README.md` no longer calls a docent a museum's name for a guide. `README.en-simple.md` does, and the concept now cites it.
