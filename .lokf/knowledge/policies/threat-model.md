@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T00:29:45Z"
 verified:
 - by: process:ktl-librarian
   at: "2026-10-06T11:10:52Z"
@@ -25,7 +25,7 @@ The page was added on 2026-09-14, when the design moved out of `SECURITY.md` and
 
 **Interactive use is advisory, not enforced.** A skill's `Scope:` line is prose, not a checked permission. An agent run interactively has whatever access its harness grants, and only the scheduled `knowledge-librarian.yaml` enforces its scope, because nothing is watching it run.
 
-The skills ktl-curator, ktl-librarian and ktl-sidecar also run the repository's scripts from `.lokf/scripts/`, which anyone who can commit to the repository can change, so a skill runs them as the repository's code. The preflight's `copies` line cannot check them, because the preflight is one of them. Since 2026-10-05, ktl-docent runs none of them. It runs its own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which a check in `knowledge-trust-ladder` holds byte-identical to their templates, so a question runs no code the repository supplies. That holds only where the skill comes from a source the reader trusts, since a repository that holds its own copy of a skill supplies the instructions and the scripts.
+The skills ktl-curator, ktl-librarian, ktl-prose and ktl-sidecar also run the repository's scripts from `.lokf/scripts/`, which anyone who can commit to the repository can change, so a skill runs them as the repository's code. The preflight's `copies` line cannot check them, because the preflight is one of them. Since 2026-10-05, ktl-docent runs none of them. It runs its own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which a check in `knowledge-trust-ladder` holds byte-identical to their templates, so a question runs no code the repository supplies. That holds only where the skill comes from a source the reader trusts, since a repository that holds its own copy of a skill supplies the instructions and the scripts.
 
 **Repository hardening**:
 
@@ -57,7 +57,7 @@ Where GitHub is not the forge, or as a second opinion where it is, `knowledge-pr
 
 - ktl-librarian resolves a `.lokf/feedback.md` entry only from the source it names, never from the entry's own wording, and ktl-curator only counts the waiting entries, with `grep -c`.
 - ktl-curator quotes a fetched source to a person rather than acting on it.
-- ktl-docent treats fetched or repository content as text to quote, never instructions, and is read-only on the bundle besides. Since 2026-09-23 it adds a feedback entry through `knowledge-feedback.sh`, its own copy since 2026-10-05, rather than by opening `feedback.md`, so the librarian is the only skill that reads what a reader wrote. Its one write path asks once per session first.
+- ktl-docent treats fetched or repository content as text to quote, never instructions, and is read-only on the bundle besides. Since 2026-09-23 it adds a feedback entry through `knowledge-feedback.sh`, its own copy since 2026-10-05, rather than by opening `feedback.md`, so the librarian is the only skill that reads what a reader wrote. Its one write path asks once per session first. A Disagreement may name its concept, which must be a concept file in the bundle's lowercase spelling. `knowledge-report.sh` reads that path back to mark the concept disputed, and reads nothing else of the entry.
 - ktl-prose never opens `.lokf/feedback.md`, and rewords only in a live session, on a request addressed to it. Its check script refuses a rewording that touches a concept a person wrote or confirmed, or a byte of frontmatter, or that adds a character no reader sees.
 - The registrar's `provenance` job, which reads pull-request metadata, runs no agent. Event fields enter through `env:`, API reads are narrowed to logins, SHAs and a verification flag, and the `human:<id>` is held to a login's characters. The token is read-only, and a path git still has to quote is refused (2026-09-19).
 - The librarian's `earlier` job, which lists the pull requests the workflow opened, runs no agent either and reads no title, body or comment. It counts a pull request only when its branch is `knowledge-librarian/...` in this repository, and matches each value it takes against a pattern. Only the hashes of the feedback entries those pull requests handled leave the job, since the entries are readers' words.
@@ -70,4 +70,6 @@ If a guard fails, the only unattended write path is `knowledge-librarian.yaml`'s
 
 **The librarian's hand-off (2026-10-04).** The patch file may carry up to ten lines for the person reviewing the pull request, in the agent's own words. It is the one free text that passes from the job that ran the agent to the pull request. The pen holds each line to printable text with no backtick and writes none of it to the bundle. Once the agent returns, the wrapper removes whatever is at the paths the workflow reads, so a file or a link the agent left there is gone. The retrieval test calls the agent again, with readers' words in its prompt, after the pen has written the hand-off. So the wrapper writes the pen's lines there again once that call returns. `publish` cleans the lines again and shows them in a code block, where nothing renders, and the curator never opens a pull request body.
 
-**A confirmation covers the text the person saw (2026-10-04).** The label *confirmed by a person* holds while `generated.at` is no later than the confirmation. The pen restamps every change it writes, and conventions rule 13 fails a pull request in which any other hand changes a confirmed concept's content and leaves `generated` behind.
+**A confirmation covers the text the person saw (2026-10-04).** The label *confirmed by a person* holds while `generated.at` is no later than the confirmation. The pen restamps every change it writes, and conventions rule 13 fails a pull request in which any other hand changes a confirmed concept's content and leaves `generated` behind. Rule 14 covers the commit that records the confirmation: on a pull request, such a commit may change what the concept says only when the person is also recorded as its author, as *Correct now* records them.
+
+**A skills repository.** A skills repository is the case where the content the librarian scrapes is all instructions, since every `SKILL.md` is written for an agent to follow. The same guards hold there. The librarian reads each source as data, writes only `patch.yaml` through the pen, and holds `contents: read` in a scheduled run. An instruction in a source can still shape what a concept says. Only the person reviewing the pull request catches that, since the pen checks a patch's form and never its truth.

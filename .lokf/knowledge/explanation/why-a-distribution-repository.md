@@ -12,7 +12,7 @@ sources:
 - resource: docs/m365.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T00:29:45Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -28,9 +28,11 @@ verified:
 
 The skills are installed from this repository rather than copied into each project that uses them. Each skill stands alone, and the optional fifth, `ktl-prose`, installs the same way. There are three routes to the same set:
 
-- the GitHub CLI (`gh skill install noelmcloughlin/knowledge-trust-ladder <skill>`);
-- the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --skill <skill>`);
+- the GitHub CLI (`gh skill install noelmcloughlin/knowledge-trust-ladder <skill> --scope user`);
+- the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --global --skill <skill>`);
 - a Claude Code plugin that bundles all five (`/plugin marketplace add noelmcloughlin/knowledge-trust-ladder`, then `/plugin install knowledge-trust-ladder@knowledge-trust-ladder`), declared by `.claude-plugin/plugin.json` and `marketplace.json`.
+
+These commands install for the user, so one install serves every repository. A repository needs no copy of its own: the scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A team that wants every member on one version installs into the repository instead: it leaves out `--global`, or passes `--scope project`, and commits the `skills-lock.json` that `npx skills` writes.
 
 All five skills are released together under one `vMAJOR.MINOR.PATCH` tag with one `CHANGELOG.md`, so a set pinned to one tag agrees with itself. To pin it, append the tag to the skill name (`ktl-docent@v0.16.0`) or pass `--pin`. `docs/install.md` carries the commands, the pinning rule, and what each skill needs on the machine.
 

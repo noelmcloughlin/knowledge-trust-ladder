@@ -17,7 +17,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/knowledge-sources
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T00:29:45Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -27,7 +27,7 @@ verified:
 
 `docs/wikiskill.md` sets one paper beside this design, part by part: *WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution* (Tang et al., Google Research, August 2026). The paper has an agent compile its own execution traces into a wiki and evolves the agent's skills from it. Knowledge Trust Ladder has an agent derive a bundle from a repository and has a person confirm it. Both take their shape from Andrej Karpathy's LLM Wiki: immutable sources, a corpus a model writes, an index a reader opens first, a log, and a conventions file the gist calls a schema.
 
-The two run the same loop and hold it together with different parts. WikiSkill puts programs and a score around its model, with no person in the loop. KTL puts a schema under its corpus, the bundle, a registrar around it and a person at the top. The page quotes the paper from its own text, and the measurements are its authors'.
+The two run the same loop and hold it together with different parts. WikiSkill puts programs and a score around its model, with no person in the loop. KTL puts a schema under its corpus, the bundle, a registrar around it and a person at the top. The page quotes the paper from its own text, and the measurements are its authors'. It also tells WikiSkill apart from SkillWiki, a 2026 paper on governing agent skills that `docs/skillwiki.md` reads.
 
 # The same loop, part by part
 

@@ -8,7 +8,7 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T00:29:45Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
@@ -28,6 +28,8 @@ The labels restate OKF v0.2 section 5's trust fields in words a non-specialist c
 - No `verified` key, or one with no events, means nobody has checked it.
 
 `knowledge-report.sh` reads `resource`, `sources[].resource` and git history for the label *a source moved since the confirmation*.
+
+It reads `.lokf/feedback.md` for the label *a reader disputed this*: a waiting `**Disagreement**` that names the concept, never on a retired concept. It reads the newest `**Deprecation**` line in `log.md` for the successor a retired concept names. It reads `derivedFrom` for the label *derived from a concept edited since its confirmation*.
 
 A `revision` on an event (proposed for lokf 0.9.0, not yet released) is shown beside that event's date but changes no label: its absence means unrecorded, never unchanged.
 

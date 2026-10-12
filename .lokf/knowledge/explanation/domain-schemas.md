@@ -2,16 +2,17 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
 title: When the built-in vocabulary stops fitting - domain schemas
-description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's and checked with `lokf validate --schema`, reusing a domain's own vocabulary such as the AI Risk Ontology, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
+description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's, named by one `schema` variable in the sidecar's justfile and checked with `lokf validate --schema`, reusing a domain's own vocabulary such as the AI Risk Ontology, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
 genre: explanation
 resource: skills/ktl-curator/references/domain-schemas.md
 sources:
 - resource: skills/ktl-curator/references/domain-schemas.md
 - resource: skills/ktl-librarian/references/domain-schema.md
+- resource: skills/ktl-sidecar/templates/justfile
 - resource: README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T00:29:45Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
@@ -37,7 +38,7 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 - Concepts gain many producer-defined keys, such as `dosage`, `jurisdiction` or `failure_mode`, that no validator checks.
 - The domain is one where a wrong or ambiguous field has consequences: medicine, law, finance, safety engineering, anything regulated.
 
-**The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly. The recipe keeps a pinned copy of `lokf.yaml` beside the domain schema and adds the flag to the justfile and both workflows. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting.
+**The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly. The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle: the linkml-sidecar skill lays it down under `.linkml/` and sets the variable itself. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting.
 
 The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, with nothing new to install. It leaves the graph as it is: `convert`, `serve` and `query` take no `--schema`, so domain keys project in LOKF's namespace. Up to lokf 0.8.0 an undeclared type projects there the same way, and from 0.9.0 it projects as `lokf:Concept` with the name kept in `schema:additionalType`.
 

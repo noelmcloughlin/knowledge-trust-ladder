@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-12T00:29:45Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -34,7 +34,7 @@ verified:
 
 A person no longer hand-picks the version, but two tools never race to tag it. `semantic-release.yml`'s `release` job runs on every push to `main`, behind the `release` GitHub Environment. `@semantic-release/commit-analyzer` computes the next version from Conventional Commits since the last *tag*, using `.releaserc.json`'s `releaseRules`: the Angular preset's defaults (`fix:` -> patch, `feat:` -> minor, a `BREAKING CHANGE:` footer or `!` -> major) plus one addition, `security:` -> patch.
 
-Semantic-release always runs with `--dry-run`, so it never writes, commits, tags, or publishes anything here. `@semantic-release/exec` calls `.github/scripts/changelog-release.mjs check`, which refuses to proceed if `CHANGELOG.md`'s `## [Unreleased]` section is empty, and `notes`, which supplies the release notes. A plain shell step afterward:
+Semantic-release always runs with `--dry-run`, so it never writes, commits, tags, or publishes anything here. `@semantic-release/exec` calls `.github/scripts/changelog-release.mjs check` with the computed version, which refuses to proceed if `CHANGELOG.md`'s `## [Unreleased]` section is empty, and `notes`, which supplies the release notes. Since 0.38.0 an empty `[Unreleased]` passes `check` when that version is already promoted and waits for `publish.yml`. A push with nothing new, such as a docs merge after a promotion, still finds the releasing commit since the last tag and asks for that version. `notes` then writes no `next_version`, so nothing is promoted twice. A failing `check` also writes its reason as a GitHub annotation. A plain shell step afterward:
 
 - reads the version `--dry-run` computed;
 - promotes that section to a dated heading itself;
@@ -57,7 +57,7 @@ Each `publish.yml` run validates:
 - that the tag does not already exist;
 - that the bare version matches the top released heading in CHANGELOG.md, skipping `## [Unreleased]`, which catches a typed version nobody wrote release notes for.
 
-It then sets up `uv` and re-runs the repository contract and `gh skill publish --dry-run`, and only then publishes. The version is typed *with* the `v` (`v0.16.0`). The changelog heading never carries one, and the cross-check strips it before comparing.
+It then sets up `uv` and re-runs the repository contract, the sidecar scripts' tests under `tests/` (run with pytest) and `gh skill publish --dry-run`, and only then publishes. The version is typed *with* the `v` (`v0.16.0`). The changelog heading never carries one, and the cross-check strips it before comparing.
 
 Since 2026-09-24 it then dispatches `knowledge-release.yaml` for the new tag. That workflow attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` (the repository's name, or the one its `KNOWLEDGE_RELEASE_NAME` variable sets) when the bundle changed since the last release that carries one. Beside it (since 2026-09-24) it attaches the docent as a Microsoft 365 Copilot skill, `ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`: one zip per instructions file under `.lokf/m365/`, each with its own checksum and attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release carries the bundle zip alone. The dispatch is needed because GitHub starts no workflow from a release made with `GITHUB_TOKEN`, so that workflow's own release trigger never fires here. If the dispatch fails, the job fails and names the manual run to make.
 
