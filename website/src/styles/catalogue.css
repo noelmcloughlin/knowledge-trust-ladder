@@ -29,11 +29,13 @@
   --sl-color-gray-1: hsl(45, 10%, 17%);
   --sl-color-gray-2: hsl(45, 8%, 24%);
   --sl-color-gray-3: hsl(45, 6%, 36%);
-  --sl-color-gray-4: hsl(45, 6%, 55%);
+  --sl-color-gray-4: hsl(45, 6%, 52%); /* 3:1 for borders and arrowheads, on the page and the nav */
   --sl-color-gray-5: hsl(45, 14%, 80%);
-  --sl-color-gray-6: hsl(45, 26%, 91%);
-  --sl-color-gray-7: hsl(45, 32%, 95%);
-  --sl-color-black: hsl(45, 40%, 98.5%);
+  --sl-color-gray-6: hsl(45, 22%, 88.5%);
+  --sl-color-gray-7: hsl(45, 26%, 92.5%);
+  /* The page: an off-white, less glaring than white at full brightness. The
+     two greys above keep their steps below it, for the nav and inline code. */
+  --sl-color-black: hsl(45, 30%, 96%);
 
   --ktl-rail: #a8a69d;
   --ktl-rung-off: hsl(45, 18%, 86%);
