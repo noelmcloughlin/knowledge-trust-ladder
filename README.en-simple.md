@@ -11,7 +11,9 @@ This page is for readers aged 13 to 18. It retells [README.md](README.md) in sho
 
 ## Quick start
 
-Install all five skills with one command. They then work in every repository you open:
+If you only want to ask questions, install the docent skill into an agent you already use. Then ask it about this project. It answers from this repository's own bundle, and says how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
+
+Install all five skills with one command:
 
 ```bash
 npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
@@ -19,15 +21,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
   --skill ktl-docent --skill ktl-prose
 ```
 
-Start with the sidecar and the librarian. The curator matters once there is a bundle worth trusting.
-
-You can also just ask questions. Install the docent alone into an agent you already use:
-
-```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes
-```
-
-The docent answers from this repository's own bundle. See [eight captured answers](docs/examples/docent.md). [docs/install.md](docs/install.md) gives the other ways to install, and what each skill needs on the machine.
+Start with the sidecar and the librarian. The curator matters once there is a bundle worth trusting. [docs/install.md](docs/install.md) gives the other ways to install, and what each skill needs on the machine.
 
 ## What does it do?
 
@@ -49,7 +43,7 @@ A catalogue is useful only when a reader can tell which entries are sound. So ea
 
 ## Who does the work?
 
-Knowledge Trust Ladder names its roles after people who work in libraries and museums. Four of the roles are [Agent Skills](https://agentskills.io/home).
+Knowledge Trust Ladder names its roles after people who work in libraries and museums. Four of the roles are Agent Skills.
 
 - The **sidecar** sets the project up, once. It adds `.lokf/`, a folder beside the code like `.git/`, kept out of the project's build.
 - The **librarian** fills the bundle, often and on a schedule. It reads the repository, writes each concept with its sources, and links the concepts together. It records facts about the repository, never verdicts about truth.
