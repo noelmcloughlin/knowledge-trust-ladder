@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`docs/context-layer.md` places Knowledge Trust Ladder in the context-layer discourse.** It quotes the people building context layers, shows one bundle as one repository's layer, and sets out a design for federating bundles through domain manifests and a rebuilt workspace, drawn in two diagrams with the unshipped parts dashed. `docs/context-layer-technology.md` surveys the stores, catalogs, agent surfaces and artifact repositories it would plug into.
+
+### Changed
+
+- **The README links OKF's specification in its own repository.** Google moved the Open Knowledge Format to `GoogleCloudPlatform/open-knowledge-format` and froze the copy under `knowledge-catalog/okf/`.
+
 ## [0.38.0] - 2026-10-11
 
 ### Added

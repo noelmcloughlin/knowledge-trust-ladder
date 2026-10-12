@@ -21,6 +21,8 @@ skills/
   publish.yml                maintainer-gated release (workflow_dispatch only)
 docs/
   for-the-curious.md    the README's mechanics: four levels of checking, domain schemas
+  context-layer.md      the context layer: one bundle, a federation of bundles, what exists and what is design
+  context-layer-technology.md  the stores, catalogs, agent surfaces and artifact repositories it integrates with
   obsidian.md           the bundle as a vault of its own, and the two plugins
   m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first
   three-lines.md        the roles in the three lines of defence, and what an auditor can check
