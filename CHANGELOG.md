@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.38.1] - 2026-10-12
+
 ### Added
 
 - **A website in `website/`, built with Astro Starlight from the README, `docs/` and the bundle.** Each concept page shows its trust label, sources and typed relations beside its own Markdown and JSON-LD, and `website.yml` publishes `main` to GitHub Pages with the four files `lokf export` writes.
