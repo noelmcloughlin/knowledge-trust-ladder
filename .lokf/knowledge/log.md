@@ -2,6 +2,7 @@
 
 ## 2026-10-12
 
+* **Changed**: check 16 is described without the repository's old name, which the check itself refuses outside the files that record history.
 * **Changed**: ktl-librarian now names the domain schema by one `schema` line in the justfile, has pages for a host of Agent Skills and for retellings, and the scheduled run validates through `just lokf-check-refs`. `references/domain-schema.md`, `references/agent-skills.md`, `references/retellings.md` and `knowledge-librarian.yaml` say so. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-sidecar's page now names the fourteenth convention, the curator's queue in the report script, and what is tested before a release. `references/gate.md`, `references/portability.md` and the CHANGELOG entries for 0.36.0 and 0.37.1 say so.
 * **Changed**: ktl-curator's page now says the script ranks the queue and counts reliance through thirteen relation fields, reads the justfile's `schema` line, offers a `Younger readers:` switch, and asks what replaced a retired concept. `SKILL.md`, `references/trust-fields.md` and `references/review-session.md` say so.
