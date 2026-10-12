@@ -3,15 +3,21 @@
 > [!NOTE]
 > For anyone choosing the artifact repository, the store and the agent surface for the workspace that [The KTL context layer](context-layer.md) describes. Every product fact below comes from that vendor's own documentation, read on 2026-10-12, and a product is listed only where its own page states the capability. Nothing here is an endorsement, and the pages that could not be read are named at the end.
 
-Below, *the toolkit* is `lokf` at 0.8.0, the floor the sidecar pins. A bundle leaves the toolkit in three forms: Markdown files; RDF, as Turtle, N-Triples, JSON-LD or TriG from `lokf convert`, and as the four files `lokf export` writes; and tables, as CSV, Parquet or SQLite from `lokf tables`. The workspace adds one named graph per bundle and a registry keyed by `base_iri`.
+Below, *the toolkit* is `lokf` at 0.8.0, the floor the sidecar pins. A bundle leaves the toolkit in three forms:
+
+- Markdown files;
+- RDF, as Turtle, N-Triples, JSON-LD or TriG from `lokf convert`, and as the four files `lokf export` writes;
+- tables, as CSV, Parquet or SQLite from `lokf tables`.
+
+The workspace adds one named graph per bundle and a registry keyed by `base_iri`.
 
 ## Find your case
 
 | Role in the workspace | What the toolkit does today | Where a product fits |
 | --- | --- | --- |
-| Artifact repository | The sidecar's release workflow attaches the bundle zip, its checksum and an attestation to a GitHub release | Any repository that stores a file and fires a webhook on arrival |
+| Artifact repository | The sidecar's release workflow attaches the bundle zip, its checksum and an attestation to a GitHub release | Any repository that stores a file and sends a webhook on arrival |
 | Store | `lokf serve` and `lokf query` run SPARQL over one bundle in an in-process Oxigraph store | A store that loads N-Quads or TriG and answers SPARQL 1.1 |
-| Agent surface | `lokf mcp` exposes seven tools over one bundle; the **docent** runs in any agent that installs it | A store's own MCP server or natural-language layer |
+| Agent surface | `lokf mcp` exposes seven tools over one bundle; the **docent** runs in any agent that installs it | A store's own Model Context Protocol (MCP) server or natural-language layer |
 | Catalog or semantic layer | `lokf tables` writes one table per concept type and a relations table, with BigQuery or Athena definitions | A catalog that takes tables or YAML and not RDF |
 | Stable identifiers | `base_iri` in each bundle's `index.md` | A persistent-identifier service, and a static host for exported files |
 
@@ -19,18 +25,18 @@ Below, *the toolkit* is `lokf` at 0.8.0, the floor the sidecar pins. A bundle le
 
 | Product | What it takes | How it notifies |
 | --- | --- | --- |
-| GitHub Releases | "Each file included in a release must be under 2 GiB", and "Up to 1000 release assets may be associated with a single release." The template workflow uploads the zip and its `.sha256` here and records an attestation that `gh attestation verify` checks | The `release` event. GitHub Packages has no generic format, so a zip reaches `ghcr.io` only as an OCI artifact |
+| GitHub Releases | "Each file included in a release must be under 2 GiB", and "Up to 1000 release assets may be associated with a single release." The template workflow uploads the zip and its `.sha256` here and records an attestation that `gh attestation verify` checks | The `release` event. GitHub Packages has no generic format, so a zip reaches `ghcr.io` only as an Open Container Initiative (OCI) artifact |
 | JFrog Artifactory | "You can define a repository as Generic, where you can upload packages of any type." | A webhook on the `deployed` artifact event, filtered by repository and path; JFrog's own example starts a GitHub Actions workflow through `workflow_dispatch` |
 | Sonatype Nexus Repository | The raw format: "A simple `HTTP PUT` can upload files." | Webhooks "defined as an HTTP callback", signed with "a sha1 hash of the JSON body using a shared secret key" |
 | GitLab generic package registry | "Use the generic packages repository to publish and manage generic files"; one `PUT` per file, up to 5 GB on object storage | Project webhooks and pipelines |
-| Cloudsmith raw | "Any file, any extension, suitable for datasets, images or whatever you want to throw at it"; not on the Core plan | Webhooks such as `package.synced`, with an HMAC in `X-Cloudsmith-Signature` |
+| Cloudsmith raw | "Any file, any extension, suitable for datasets, images or whatever you want to throw at it"; not on the Core plan | Webhooks such as `package.synced`, with a hash-based message authentication code (HMAC) in `X-Cloudsmith-Signature` |
 | An OCI registry with ORAS | "the ORAS project provides a way to push and pull OCI Artifacts to and from OCI Registries"; the compatibility list names GitHub's, Amazon's, Azure's and Google's registries, Artifactory and Harbor | The registry's own events; cosign signs the blob keyless through OpenID Connect, or `actions/attest` records provenance |
 
-Two services sit beside the repository. w3id.org is "a secure, permanent URL redirection service run by the W3C Permanent Identifier Community Group", registered by pull request, and gives a bundle a `base_iri` that outlives its host. GitHub Pages is "a static site hosting service" with sites "no larger than 1 GB" and "a soft bandwidth limit of 100 GB per month", which is enough to serve `lokf export`'s files as the LOKF specification's producer contract asks.
+Two services sit beside the repository. w3id.org is "a secure, permanent URL redirection service run by the W3C Permanent Identifier Community Group", registered by pull request, and gives a bundle a `base_iri` that outlives its host. GitHub Pages is "a static site hosting service" with sites "no larger than 1 GB" and "a soft bandwidth limit of 100 GB per month". That is enough to serve `lokf export`'s files as the LOKF specification's producer contract asks.
 
 ## RDF stores with SPARQL
 
-Each store below answers SPARQL 1.1. The second column says whether its own documentation lists TriG or N-Quads as a load format, which is what keeps one named graph per bundle through the load.
+Each store below answers SPARQL 1.1. The second column says whether its own documentation lists TriG or N-Quads as a load format, which keeps one named graph per bundle through the load.
 
 | Store | Hosting | TriG or N-Quads | How a graph gets in | Agent features |
 | --- | --- | --- | --- | --- |
@@ -56,7 +62,7 @@ Azure and Google Cloud offer no SPARQL service. Cosmos DB for Apache Gremlin is 
 - **FalkorDB.** "a high-performance graph database built as a Redis module", with openCypher, CSV bulk insert and an MCP server. No RDF import is documented.
 - **Kuzu.** Its repository was archived on 10 October 2025.
 
-So the bridge is narrow. n10s on self-hosted Neo4j keeps named graphs; Neptune Analytics keeps triples without their graph names; the rest take tables.
+So the bridge is narrow. n10s on self-hosted Neo4j keeps named graphs, Neptune Analytics keeps triples without their graph names, and the rest take tables.
 
 ## Catalogs and semantic layers
 
@@ -73,11 +79,11 @@ So the bridge is narrow. n10s on self-hosted Neo4j keeps named graphs; Neptune A
 | TopQuadrant TQ Data Foundation | "Built entirely on open knowledge-graph standards" of RDF, OWL and SHACL, serving context "through MCP, a Python SDK and REST" | RDF, in principle; the import pages could not be read | SPARQL and MCP, per its documentation index |
 | PoolParty (Semantic Web Company, Graphwise) | a thesaurus manager with "an internal SPARQL endpoint" per project | SKOS for a glossary; it exports TriG and N-Quads | SPARQL |
 
-The OKF repository's own README names BigQuery, Dataplex, Vertex AI, Gemini, the Agent Development Kit, LangChain, Unity Catalog, Collibra, Obsidian, Notion and the static site generators as places an OKF bundle can be consumed, by reading the files.
+The OKF repository's own README names the places an OKF bundle can be consumed, by reading the files: BigQuery, Dataplex, Vertex AI, Gemini, the Agent Development Kit, LangChain, Unity Catalog, Collibra, Obsidian, Notion and the static site generators.
 
 ## Agent-facing retrieval
 
-The Model Context Protocol (MCP) is "an open protocol that enables seamless integration between LLM applications and external data sources and tools"; its current version is 2026-07-28. The toolkit's `lokf mcp` serves one bundle today, and the stores above bring servers of their own. Microsoft 365 Copilot takes the **docent** as a skill ([m365.md](m365.md)). The retrieval frameworks that build graphs do the following:
+The Model Context Protocol (MCP) is "an open protocol that enables seamless integration between LLM applications and external data sources and tools". Its current version is 2026-07-28. The toolkit's `lokf mcp` serves one bundle today, and the stores above bring servers of their own. Microsoft 365 Copilot takes the **docent** as a skill ([m365.md](m365.md)). The retrieval frameworks that build graphs do the following:
 
 - **Amazon Bedrock Knowledge Bases GraphRAG**: "a fully managed GraphRAG feature with Amazon Neptune" that builds its own graph in Neptune Analytics from documents in S3; "Configuration options to customize the graph build are not supported."
 - **Azure AI Search agentic retrieval**: "a multi-query pipeline designed for complex questions" over indexed knowledge sources, reached through a retrieve action or an MCP endpoint; no graph.
@@ -87,11 +93,11 @@ The Model Context Protocol (MCP) is "an open protocol that enables seamless inte
 - **Cognee**: builds its own memory graph, and "An ontology is an optional RDF/OWL file you can provide to Cognee", parsed with RDFLib to validate the nodes it extracts. It is the one framework surveyed that reads an RDF file.
 - **Graphiti (Zep)**: "Build Real-Time Knowledge Graphs for AI Agents" over Neo4j, FalkorDB or Neptune, with an MCP server.
 
-None of them consumes a bundle's graph as its graph; each builds its own from text. The workspace's agent surface is therefore the store's: SPARQL behind an MCP server, with the index served first. The frameworks can still read the bundle's Markdown as documents, which is how OKF expects to be consumed.
+None of them consumes a bundle's graph as its graph. Each builds its own from text. The workspace's agent surface is therefore the store's: SPARQL behind an MCP server, with the index served first. The frameworks can still read the bundle's Markdown as documents, which is how OKF expects a bundle to be consumed.
 
 ## The tables route
 
-`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. That is the door into every catalog above that takes tables and not RDF. What crosses it is the structure and the frontmatter. The bound predicates, the meaning a graph carries, stay in the RDF.
+`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalog above that takes tables and not RDF can read that output. The tables carry the structure and the frontmatter. The bound predicates, the meaning a graph carries, stay in the RDF.
 
 ## What fits a Markdown-plus-RDF bundle
 
@@ -100,8 +106,8 @@ None of them consumes a bundle's graph as its graph; each builds its own from te
 - Among catalogs, only data.world is SPARQL-native, and it takes Turtle per dataset rather than TriG.
 - The property-graph bridge is n10s on self-hosted Neo4j, and nothing on Aura.
 - Fabric IQ takes the schema, with loss; the lakehouse catalogs take the tables; Knowledge Catalog takes the OKF bundle itself.
-- No retrieval framework surveyed consumes RDF as its graph. The RDF-native agent faces are the stores' MCP servers and the toolkit's own.
-- Every artifact repository surveyed stores a zip and its checksum; Artifactory, Nexus and Cloudsmith fire a filtered or signed webhook on arrival; an OCI registry adds a signature through ORAS and cosign.
+- No retrieval framework surveyed consumes RDF as its graph. The RDF-native agent surfaces are the stores' MCP servers and the toolkit's own.
+- Every artifact repository surveyed stores a zip and its checksum. Artifactory, Nexus and Cloudsmith send a filtered or signed webhook on arrival, and an OCI registry adds a signature through ORAS and cosign.
 - w3id.org gives a bundle a `base_iri` that outlives its host, and GitHub Pages serves `lokf export`'s files within its limits.
 
 ## Pages that could not be read
