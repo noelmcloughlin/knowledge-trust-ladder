@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T16:08:20Z"
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T03:11:32Z"
@@ -18,6 +18,7 @@ sources:
 - resource: docs/threat-model.md
 - resource: CHANGELOG.md
 - resource: scripts/validate-repository.sh
+- resource: skills/ktl-sidecar/templates/scripts/knowledge-conventions.sh
 ---
 # Overview
 

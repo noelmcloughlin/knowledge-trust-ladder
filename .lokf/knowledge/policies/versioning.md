@@ -13,12 +13,11 @@ sources:
 - resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
-about:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
+  at: "2026-10-12T16:12:27Z"
+about: []
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:00:09Z"
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
 - by: human:noelmcloughlin
@@ -26,6 +25,8 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-03T09:44:34Z"
 stale_after: 2027-10-03
+relatedTo:
+- https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 ---
 
 # Overview

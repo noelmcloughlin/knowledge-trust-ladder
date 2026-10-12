@@ -21,8 +21,11 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
+verified:
+- by: process:ktl-librarian
+  at: "2026-10-12T16:00:09Z"
 ---
 
 # Overview
@@ -35,7 +38,7 @@ status: draft
 
 **From bundles to a layer, a design.** A repository that installed the sidecar releases its bundle with the template workflow `knowledge-release.yaml`. The bundle is validated with the registrar's checks, packed as a reproducible zip, checksummed, and attested where the forge offers it.
 
-OKF says nothing about one bundle naming another or about a catalogue of bundles, and its trackers ask for both. Section 11 of the LOKF specification answers in linked-data terms. `lokf export` writes the files a registry reads, a `lokf-registry.yaml` keys each member bundle by its `base_iri`, and any IRI resolves to its owner by the longest matching `base_iri`. The toolkit's `lokf registry` commands do this offline today. The federated store that section 11.4 describes is marked informative and is not built.
+OKF says nothing about one bundle naming another, a catalogue of bundles, or what a reader may see of a bundle across a trust boundary, and its trackers ask for all three. Section 11 of the LOKF specification answers in linked-data terms. `lokf export` writes the files a registry reads, a `lokf-registry.yaml` keys each member bundle by its `base_iri`, and any IRI resolves to its owner by the longest matching `base_iri`. The toolkit's `lokf registry` commands do this offline today. The federated store that section 11.4 describes is marked informative and is not built.
 
 The design adds domains as manifests. A domain is a thin LOKF bundle of its own, released the same way, whose concepts are its member bundles. Each member is a `Dataset` concept that names the release zip in its `distribution`, the release tag in its `version` and the domain in its `isPartOf`. The domain's cross-bundle claims sit beside its member concepts. LOKF has no catalogue class and no checksum slot, so a domain carries a one-file domain schema. Nothing is copied upward, so a member's new release never leaves a stale copy inside a domain. A domain's confirmation attests two things only: that its members belong, and that its cross-bundle claims hold.
 
@@ -46,7 +49,7 @@ A reader gets the index first and traverses on demand, over a SPARQL endpoint an
 **Decisions an adopter makes.** The page lists them:
 
 - whether a manifest pins its members or floats, with a lock in the workspace as the usual middle;
-- whether a cross-bundle link no member owns fails the build;
+- whether a cross-bundle link no member owns fails the build (the page recommends making that resolution step a build gate from the start);
 - a `base_iri` kept constant across releases, and a domain's namespace beside its members', never above them;
 - who arbitrates when two bundles define one term differently;
 - how the report shows the members that moved since a domain was last confirmed;

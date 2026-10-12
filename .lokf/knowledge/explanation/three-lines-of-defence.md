@@ -7,14 +7,15 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:12:27Z"
 status: draft
-about:
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
+about: []
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://knowledge-trust-ladder.example/knowledge/explanation/context-layer
+- https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
+- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T00:29:45Z"
@@ -22,6 +23,7 @@ sources:
 - resource: docs/three-lines.md
 - resource: docs/three-lines-critics.md
 - resource: CHANGELOG.md
+- resource: README.md
 ---
 # Overview
 
@@ -56,7 +58,7 @@ Four limits bound what that evidence proves:
 - An Environment attestation records only that a listed reviewer clicked Approve.
 - The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file, and nothing checks approvals. A host without git has only its platform's version history.
 
-The critics have a page of their own, `docs/three-lines-critics.md`, marked as preliminary research and, since 2026-09-23, arranged by criticism rather than by critic. A table at the top lists nine points with who raised them and a verdict. Each section then quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page with every paper by DOI.
+The critics have a page of their own, `docs/three-lines-critics.md`, marked as preliminary research and, since 2026-09-23, arranged by criticism rather than by critic. A table at the top lists nine points with who raised them and a verdict. Each section then quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page, citing each paper by DOI and the two reports by URL.
 
 Three points are met by construction:
 
@@ -66,7 +68,7 @@ Three points are met by construction:
 
 Three are answered in part:
 
-- *process is followed, judgement is absent*, raised by the Commission, with Parasuraman and Manzey (2010), Bansal et al. (2021), Green (2022) and Buçinca et al. (2021) on why. The curator records only what the person says, the review session shows the source first, curation is a reviewed policy, and the docent's evidence-first mode is off by default. Left open: nothing proves the person read, a dynamic page reads as changed on every re-check, and evidence that the oversight works is third-line work the curator's sampling step only hands over.
+- *process is followed, judgement is absent*, raised by the Commission, with Parasuraman and Manzey (2010), Bansal et al. (2021), Green (2022) and Buçinca et al. (2021) on why. The curator records only what the person says, the review session shows the source first, curation is a reviewed policy, and the docent's evidence-first mode is off by default. Left open: nothing proves the person read, a dynamic page reads as changed on every re-check, and evidence that the oversight works is third-line work KTL should not produce about itself.
 - *the machine invents*, raised by Ji et al. (2023). Every record names its source, and unsettled concepts stay `draft`. Left open by design: the registrar never judges truth, and the librarian's re-check is self-review.
 - *the lines do not coordinate in practice*, raised by Bantleon et al. (2021) and by Valkenburg and Bongiovanni (2024). Every hand-off is written down, and no more is claimed.
 

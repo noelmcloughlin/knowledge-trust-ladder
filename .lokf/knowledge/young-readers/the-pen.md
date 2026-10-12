@@ -16,11 +16,13 @@ tags:
 - audience-13-18
 generated:
   by: process:ktl-librarian
-  at: "2026-10-11T15:00:59Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:00:31Z"
+relatedTo:
+- https://knowledge-trust-ladder.example/knowledge/glossary/registrar
 ---
 
 This page is for readers aged 13 to 18. It retells [[the-pen]] in shorter words. The full page has every detail.

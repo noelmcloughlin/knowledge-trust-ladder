@@ -21,6 +21,7 @@ verified:
 - by: process:ktl-librarian
   at: "2026-10-12T03:11:32Z"
 stale_after: 2028-09-24
+status: draft
 ---
 
 # Overview
@@ -44,3 +45,7 @@ semantic header (`base_iri`, `context`, versions, publisher) plus the table
 of contents; `knowledge/log.md` records knowledge changes only. The bundle is
 the durable layer between scattered sources and the next task - the thing that
 stops each session re-finding, re-connecting, and re-judging the same material.
+
+## Open questions
+
+- 2026-10-12, process:ktl-librarian: the body's library and museum terms, the workshop and the log and index details come from `README.md`, `docs/obsidian.md` and `skills/ktl-librarian/SKILL.md`, but `sources` names only `skills/ktl-sidecar/templates/README.md`. Should those three be added as sources?

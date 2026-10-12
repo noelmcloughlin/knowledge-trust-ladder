@@ -6,4 +6,4 @@
 * [LOKF toolkit (lokf on PyPI)](lokf-toolkit.md) - The lokf Python package, which validates, converts and serves a LOKF bundle and is the dependency the scaffolded .lokf/pyproject.toml declares.
 * [LinkML](linkml.md) - The schema-modelling language LOKF is written in, and the generator suite that turns a schema into JSON Schema, Pydantic models, SHACL shapes, docs, and OWL.
 * [gh skill (GitHub CLI)](gh-skill-cli.md) - The GitHub CLI command group that installs, pins, and publishes agent skills from GitHub repositories; the publish path this repository uses for releases.
-* [Open Skills CLI (npx skills)](open-skills-cli.md) - The vendor-neutral installer for agent skills, supporting GitHub, git, and local sources with repeatable --skill and --agent selection.
+* [Open Skills CLI (npx skills)](open-skills-cli.md) - The vendor-neutral installer for agent skills, `npx skills add`, which takes a local path as its source, so this repository uses it as a pre-publication install check.

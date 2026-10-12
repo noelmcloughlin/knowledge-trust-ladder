@@ -11,7 +11,7 @@ sources:
 - resource: docs/context-layer.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
@@ -20,12 +20,12 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/context-layer
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T16:00:09Z"
 ---
 
 # Overview
 
-The README states what the project is. It keeps a repository's scattered knowledge as a collection: catalogued, authenticated and explained, with the trust in every claim visible. It calls that a **context layer**: a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent. The layer persists from one task to the next. The README's term now links `docs/context-layer.md`, which sets it beside the industry's and says one bundle is one repository's context layer ([the context layer](context-layer.md)).
+The README states what the project is. It keeps a repository's scattered knowledge as a collection: catalogued, authenticated and explained, with the trust in every claim visible. It says what is missing is a **context layer**: a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent, and that a knowledge bundle is the catalogue. The layer persists from one task to the next. The README's term now links `docs/context-layer.md`, which sets it beside the industry's and says one bundle is one repository's context layer ([the context layer](context-layer.md)).
 
 The README frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim.
 

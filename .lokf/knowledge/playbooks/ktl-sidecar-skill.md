@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T16:12:27Z"
 hasPart:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
@@ -30,6 +30,7 @@ sources:
 - resource: skills/ktl-librarian/references/scheduled-task.md
 - resource: .lokf/scripts/knowledge-preflight.sh
 - resource: CHANGELOG.md
+- resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/61b9355f0dfa037ff8e165affa285344e451c209
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T03:11:32Z"
@@ -69,7 +70,7 @@ Every file the skill writes is copied from `templates/`, never retyped, which ke
 
 The forge-free gate verifies GPG keys with their subkeys and SSH keys alike against `.lokf/curators/<id>.asc` or `.pub`. It asks the person behind a confirmation that a change removes, as it asks the one behind a confirmation it adds. Its `--unattended` form refuses any change to a person's record in an unattended run.
 
-Its thirteenth convention fails an edit to a confirmed concept that leaves `generated` older than the confirmation (2026-10-04). Its fourteenth, given a base commit with `--since`, fails a commit that records a person's confirmation and also changes the concept's claims, unless `generated.by` names that same person. The `validate` job passes the pull request's base (2026-10-06).
+Its thirteenth convention fails an edit to a confirmed concept that leaves `generated` older than the confirmation (2026-10-04). Its fourteenth, given a base commit with `--since`, fails a commit that records a person's confirmation and also changes the concept's claims, unless `generated.by` names that same person. The `validate` job passes the merge-base of the pull request's base and head, the commit the `provenance` job also uses (2026-10-07).
 
 `gate.md` also carries what Step 5 points a curator at:
 

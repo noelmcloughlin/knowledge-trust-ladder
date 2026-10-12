@@ -7,7 +7,7 @@ genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -70,7 +70,7 @@ On 2026-09-12 the sidecar's Step 0 began asking which kind of host it was in. Fo
 - two extra layout test cases;
 - both workflows and the wrapper naming the bundle under both paths, because a git pathspec never traverses a symlink.
 
-A day later, the intent turned out to be the problem. Obsidian indexes a real folder inside a vault like any other, so the exhibition's concepts appeared in the workshop. Link suggestions, the quick switcher, graph and search all mixed exhibits with everyday notes. *Settings → Files and links → Excluded files* only makes an excluded folder less noticeable in the quick switcher and link suggestions.
+A day later, the intent turned out to be the problem. Obsidian indexes a real folder inside a vault like any other, so the exhibition's concepts appeared in the workshop. Link suggestions, the quick switcher, graph and search all mixed exhibits with everyday notes. *Settings → Files and links → Excluded files* hides an excluded folder from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions.
 
 The natural Obsidian workflow is two vaults: the one someone already has for the workshop, and the bundle opened as its own for the exhibition. The plugins do their work in the exhibition. A doorway link supports that on every host without ever appearing in the workshop. So on 2026-09-13 the visible layout was retired:
 

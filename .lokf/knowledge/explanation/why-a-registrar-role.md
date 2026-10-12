@@ -22,7 +22,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-03T09:42:48Z"
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:00:09Z"
 stale_after: 2027-09-10
 status: draft
 ---
@@ -42,3 +42,4 @@ The curator is always a person; the skill and the plugin that carry the name are
 
 - 2026-09-26, human:noelmcloughlin: the description still says "rather than by an agent"; the README doesn't.
 - 2026-10-03, process:ktl-librarian: `README.md` now says the gate ties each confirmation that is added or removed to its person, and names `knowledge-report.sh` as the registrar at the reader's desk and the curator's; this text, which a person wrote, says each new confirmation and names neither.
+- 2026-10-12, process:ktl-librarian: the body's account of the pen (stamps `generated`, keeps index bullets equal, files the log line, refuses some writes) and of the wrapper comes from `skills/ktl-librarian/SKILL.md` and `skills/ktl-sidecar/SKILL.md`, which are not in `sources`. The pen also refuses deleting a concept a person left a note on, not only one a person confirmed. And `about` names the knowledge bundle while `glossary/registrar` describes this role. Should these change?

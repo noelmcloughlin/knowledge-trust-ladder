@@ -15,13 +15,14 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-docent-skill
 - https://knowledge-trust-ladder.example/knowledge/playbooks/knowledge-sources
+- https://knowledge-trust-ladder.example/knowledge/explanation/skillwiki
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:00:09Z"
 ---
 # Overview
 
@@ -56,7 +57,7 @@ The paper holds the evidence for each finding. The page says what KTL does with 
 
 - **A rejected proposal is not proposed again.** The paper keeps each one in `skill-impact.md` for that reason. A person rejects the scheduled librarian's proposal by closing its pull request without merging. The workflow reads those pull requests before each scheduled run, and the work list names what each one changed. So the librarian proposes none of it again until it changes: the source moves, or a reader asks again. While a pull request is still open, a scheduled run opens no second one beside it.
 - **The index entry is the retrieval interface.** The paper's maintainer prompt calls the index entries "the MOST IMPORTANT part of the wiki". The docent reads the root `index.md`, picks one to three concepts from the bullets, and only then opens anything. A bullet copies the concept's `description`, which must let a reader choose from the index alone, and the pen keeps the three copies equal. A miss on a question an existing concept already answers is a defect in that description, and the librarian fixes the description rather than adding a twin.
-- **A recurring error is a signal.** The paper keeps every trace, and its wiki's log names the errors that came back, so a repeated error shows. The pen moves each feedback entry the librarian handles into `questions.md`, a ledger that only grows: the day, the concept that now answers it, and the reader's question. `knowledge-report.sh` counts it and names the concepts readers keep asking about.
+- **A recurring error is a signal.** The paper keeps every trace, and its wiki's log names the errors that came back, so a repeated error shows. The pen moves each feedback entry the librarian handles into `questions.md`, a ledger that only grows: the day, the concept that now answers it, and the reader's question. `knowledge-report.sh` counts it and names the concepts readers keep arriving at.
 - **The maintainer's run is bounded.** The paper caps the traces a maintainer reads and the skill changes a proposer makes per iteration, and a program does the sampling. The librarian starts from a work list `knowledge-report.sh` computes: the concepts with a source whose last commit comes after the commit that recorded their `generated` stamp or their latest check. History orders the two, never a clock. A local source that has not moved is not read again.
 
   A run handles at most ten feedback entries, which the pen enforces. It takes the oldest first and says how many remain. A scheduled week in which nothing waits runs no agent, and the first scheduled run of each month goes ahead regardless, for the sources no program compares.
