@@ -610,6 +610,7 @@ function writeReadmes(tagline) {
         actions: [
           { text: "Quick start", link: "#quick-start", icon: "right-arrow" },
           { text: "Browse the bundle", link: `${BASE}/knowledge/`, variant: "secondary" },
+          { text: "Context layer", link: `${BASE}/docs/context-layer/`, variant: "secondary" },
           { text: "GitHub", link: REPO_URL, icon: "external", variant: "minimal" },
         ],
       },
