@@ -1,9 +1,9 @@
 # Critics of the Three Lines Model
 
 > [!NOTE]
-> Preliminary research. Each source is quoted from its own text. The list is a starting point, not a literature review.
+> What the critics of the Three Lines Model say, each quoted from their own text, and what Knowledge Trust Ladder (KTL) answers.
 
-The model's own critics say its origins are opaque and its effectiveness untested. The UK Parliamentary Commission on Banking Standards (the Commission, below), academics, and the people applying the model to banks and to AI have each questioned its record. Two bodies of research question the kind of tool Knowledge Trust Ladder (KTL) is: a machine's output checked by a person. This page takes their points one at a time. Each section says what the criticism is and who made it, what KTL does about it, and gives one of three verdicts:
+The model's critics are the UK Parliamentary Commission on Banking Standards (the Commission, below), academics, and the people applying the model to banks and to AI. Two bodies of research also question the kind of tool KTL is: a machine's output checked by a person. Each section below says what the criticism is and who made it, what KTL does about it, and gives one of three verdicts:
 
 - **Met by construction.** KTL's design removes the ground for the point.
 - **Answered in part.** KTL does something about it, and the section says what is left open.
