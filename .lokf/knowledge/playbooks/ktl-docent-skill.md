@@ -20,7 +20,7 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T17:06:00Z"
+  at: "2026-10-12T23:54:05Z"
 sources:
 - resource: skills/ktl-docent/SKILL.md
 - resource: skills/ktl-docent/references/answering.md

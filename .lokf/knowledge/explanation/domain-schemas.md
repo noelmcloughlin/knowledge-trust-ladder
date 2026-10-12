@@ -12,7 +12,7 @@ sources:
 - resource: README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:12:27Z"
+  at: "2026-10-12T23:54:05Z"
 status: draft
 about: []
 references:
@@ -30,7 +30,7 @@ verified:
 
 # Overview
 
-LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. The README says that LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. It also says that a domain whose concepts stop fitting it extends the schema in LinkML, so its own types are checked rather than tolerated.
+LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. The README says that LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. It also says that a domain whose concepts stop fitting it extends the schema, so its own types are checked rather than tolerated.
 
 **The signs.** A domain schema is due when any of these holds:
 

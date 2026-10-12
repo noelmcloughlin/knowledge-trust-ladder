@@ -22,7 +22,7 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T17:06:00Z"
+  at: "2026-10-12T23:54:05Z"
 ---
 
 # Overview

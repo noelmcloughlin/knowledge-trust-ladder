@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T17:06:00Z"
+  at: "2026-10-12T23:54:05Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -34,6 +34,7 @@ status: draft
 | `docs/wikiskill.md` | what KTL took from the WikiSkill paper (Tang et al., 2026), since 2026-10-02, and what the paper leaves open | diff `explanation/wikiskill.md` |
 | `docs/skillwiki.md`, `docs/skills-repositories.md` | what KTL took from the SkillWiki paper (Huang et al., 2026), and where the designs part; and whether KTL helps a repository whose content is Agent Skills, with two runs and what remains to do | `explanation/skillwiki.md` and `explanation/skills-repositories.md`, one each; re-check the four changes and the run on `anthropics/skills` |
 | `docs/context-layer.md`, `docs/context-layer-technology.md` | what a context layer is, one bundle as one repository's layer, the design for federating bundles, and what such a layer integrates with; `explanation/context-layer.md` since 2026-10-12 | diff the concept; re-check a vendor's page only where the concept states what it says |
+| `website/`, `.github/workflows/website.yml` | the Astro Starlight site built from the README, `docs/`, the bundle and `CHANGELOG.md`, and the workflow that publishes it to GitHub Pages; `playbooks/website.md` since 2026-10-12 | diff `website/README.md` and the workflow's triggers and jobs against the concept; the components, styles and scripts under `website/` are consciously excluded as concepts |
 | `SECURITY.md` | the slim security policy (reporting, supported versions, a surface table) | diff the surface table and the reporting/supported-versions text |
 | `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the other two repositories' `SECURITY.md`, so a heading rename here is a breaking change there |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
@@ -51,6 +52,8 @@ status: draft
 | `LICENSE`, `llms.txt`, `.gitignore`, `docs/examples/docent.md`, `curator.md` and `prose.md` | licensing boilerplate, the agent-facing pointer file, the repository's ignore rules, and captured skill transcripts (the docent's, and ktl-prose's runs for younger readers; the curator's page is a placeholder) | consciously excluded as concepts - see note below; re-check that `llms.txt` still matches what the "Agents:" callout in `README.md` tells agents, and that `docs/examples/docent.md`'s trust-label claims still match `glossary/trust-label.md` |
 
 # Notes for the next run
+
+- **Steady-state refresh (2026-10-12, twenty-eighth pass)**, at `7bcb45f`, after the 0.38.1 release. Thirty-one concepts had a moved source. The context layer and domain schemas follow their sources again, and the website has a concept and a row above. The other twenty-eight were re-checked and still match: the workflow changes were pinned-SHA bumps and `website.yml` joining the `actionlint` list. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 
 - **Steady-state refresh (2026-10-12, twenty-seventh pass)**, at `6306e90`, after the README and docs settled on the spelling catalogue and the link check moved github.com file links to raw.githubusercontent.com. Twenty-two concepts had a moved source, all from that commit or from the last pass's own stamps. The context-layer concept follows its sources' spelling, and the other twenty were re-checked and still match. No tracked file was added or removed, and the `lychee.toml` row still holds. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 
