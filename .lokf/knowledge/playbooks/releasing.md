@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -27,7 +27,7 @@ sources:
 - resource: CHANGELOG.md
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T16:43:34Z"
 ---
 
 # Overview
@@ -47,7 +47,7 @@ The pin is two values, so the same step moves `TRUST_LADDER_SKILLS_SHA` to the c
 
 Two qualifying merges to `main` between one `publish.yml` run and the next compute the *same* next version twice. The next version is computed from the last tag, and `gh skill publish` is a separate, later, human-triggered step. `promote` now checks whether the top released heading's version is still untagged. If so, it folds the new entries into it by `###` subsection instead of inserting a second heading for the same version. That was the bug that wrote two `## [0.19.0] - 2026-09-17` headings, orphaning the second merge's entries above an empty `[Unreleased]`. Check 14 in `playbooks/repository-validation.md` proves the fold and would have caught the original duplication.
 
-The `plan` job also calls `changelog-release.mjs check` as its own step, not only inside `--dry-run`. Semantic-release detects a pull-request event and skips every plugin lifecycle hook, including `@semantic-release/exec`'s. So the `check` this page's next section describes never ran on a pull request until this fix, and an empty `[Unreleased]` would have merged silently. That step reads the pull request's own commits first, and runs `check` only when one of them would release (the types `.releaserc.json` acts on). So a `chore:` or `docs:` pull request, a Dependabot action bump among them, is not failed for notes it was never going to release.
+The `plan` job also calls `changelog-release.mjs check` as its own step, not only inside `--dry-run`. Semantic-release detects a pull-request event and skips every plugin lifecycle hook, including `@semantic-release/exec`'s. So the `check` the paragraph before describes never ran on a pull request until this fix, and an empty `[Unreleased]` would have merged silently. That step reads the pull request's own commits first, and runs `check` only when one of them would release (the types `.releaserc.json` acts on). So a `chore:` or `docs:` pull request, a Dependabot action bump among them, is not failed for notes it was never going to release.
 
 When the commits would release, a second step requires the pull request *title* to carry a releasing type, because a squash merge takes its subject from the title. GitHub's default title has none: pull request #46 merged that way and released nothing, its notes left waiting in `[Unreleased]`. The trigger names `edited` alongside the default pull-request types, because retitling is how that check is cleared and the default types never fire on a title change. Without it, the remedy the error message asks for could not clear the check.
 

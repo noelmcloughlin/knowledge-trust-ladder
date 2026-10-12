@@ -17,13 +17,13 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T16:43:34Z"
 status: draft
 ---
 
 # Overview
 
-`docs/skills-repositories.md` is for anyone deciding whether to install KTL in a repository whose content is Agent Skills: folders with a `SKILL.md`, and often `scripts/`, `references/` and `assets/`. Such a repository may be a collection, a library that includes skills in its package, or a project that keeps a few skills beside its code. The page reads two papers against KTL's design: WikiSkill, which [WikiSkill's loop](wikiskill.md) covers, and SkillWiki, which [SkillWiki's skill governance](skillwiki.md) covers.
+`docs/skills-repositories.md` is for anyone deciding whether to install KTL in a repository whose content is Agent Skills: folders with a `SKILL.md`, and often `scripts/`, `references/` and `assets/`. Such a repository may be a collection, a library that includes skills in its package, or a project that keeps a few skills beside its code. What KTL took from the two papers on skills is in [WikiSkill](wikiskill.md) and [SkillWiki](skillwiki.md).
 
 # The answer
 
@@ -35,7 +35,7 @@ KTL helps with the knowledge around a repository's skills, and leaves the skills
 
 # Evidence
 
-The page draws on this repository, which has kept a bundle since 9 September 2026. Each of its five skills has a `Playbook` concept. Every confirmation of the ktl-librarian concept was overtaken by the next derivation.
+The page reports two runs. This repository has kept a bundle since 9 September 2026. Each of its five skills has a `Playbook` concept. Every confirmation of the ktl-librarian concept was overtaken by the next derivation.
 
 It also reports a run on a clone of `anthropics/skills` at commit `683bc88`. The librarian derived 27 draft concepts, and `lokf validate --check-refs` and the conventions script passed on the first apply. The docent then named the expected skill for each of ten questions. A control agent given only the skills' `name` and `description` answered the same ten correctly in 28 seconds, where the docent took five and a half minutes. So on that collection the bundle did not route better than the descriptions do, and what it added was the detail the descriptions leave out.
 

@@ -12,9 +12,10 @@ sources:
 - resource: skills/ktl-sidecar/references/portability.md
 - resource: https://obsidian.md/help/settings
 - resource: CHANGELOG.md
+- resource: https://obsidian.md/help/symlinks
 generated:
   by: process:ktl-librarian
-  at: "2026-10-05T12:41:36Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 isPartOf:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -24,7 +25,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:43:34Z"
 ---
 
 # Overview

@@ -10,7 +10,7 @@ skills/
   ktl-docent/          SKILL.md + references/ + scripts/
   ktl-prose/           SKILL.md + references/ + scripts/
 .claude-plugin/
-  plugin.json           the five skills as one Claude Code plugin, with catalog keywords
+  plugin.json           the five skills as one Claude Code plugin, with catalogue keywords
   marketplace.json      lets `/plugin marketplace add` find that plugin
 .github/workflows/
   validate.yml               repository contract, Agent Skills spec, Markdown and links (every PR)
@@ -22,14 +22,14 @@ skills/
 docs/
   for-the-curious.md    the README's mechanics: four levels of checking, domain schemas
   context-layer.md      the context layer: one bundle, a federation of bundles, what exists and what is design
-  context-layer-technology.md  the stores, catalogs, agent surfaces and artifact repositories it integrates with
+  context-layer-technology.md  the stores, catalogues, agent surfaces and artifact repositories it integrates with
   obsidian.md           the bundle as a vault of its own, and the two plugins
   m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first
   three-lines.md        the roles in the three lines of defence, and what an auditor can check
   three-lines-critics.md  the model's critics, quoted, and what a bundle answers
-  wikiskill.md          the WikiSkill paper read against this design, part by part
-  skillwiki.md          the SkillWiki paper and its code read against this design
-  skills-repositories.md  KTL in a repository whose content is Agent Skills
+  wikiskill.md          what KTL took from the WikiSkill paper, and what it leaves open
+  skillwiki.md          what KTL took from the SkillWiki paper, and where the designs part
+  skills-repositories.md  KTL in a repository whose content is Agent Skills, and what remains to do
   releasing.md          how the three repositories release, and the settings it needs
   signing-commits.md    signing commits, which the provenance gate reads
   threat-model.md       shared security design: what an agent can reach, and what guards it

@@ -5,16 +5,16 @@
 
 # Knowledge Trust Ladder (ktl)
 
+A shorter version of this page, for readers aged 13 to 18, is in [README.en-simple.md](README.en-simple.md).
+
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies the schema and the tooling. Two Obsidian plugins are optional, for a vault with no CI.
+Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies schema and tooling. Two Obsidian plugins are optional, for a vault with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
-
-A shorter version of this page, for readers aged 13 to 18, is in [README.en-simple.md](README.en-simple.md).
 
 <p align="center">
   <picture>
@@ -27,6 +27,8 @@ A shorter version of this page, for readers aged 13 to 18, is in [README.en-simp
 
 ## Quick start
 
+> **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
+
 Install all five skills:
 
 ```bash
@@ -35,17 +37,10 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
   --skill ktl-docent --skill ktl-prose
 ```
 
-Start with the sidecar and the librarian; the curator matters once there is a bundle worth trusting.
-
-**Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
-
-```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes
-```
-
-**Claude Code plugin**:
+**Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting.
 
 ```text
+# Claude Code plugin
 /plugin marketplace add noelmcloughlin/knowledge-trust-ladder
 /plugin install knowledge-trust-ladder@knowledge-trust-ladder
 ```
@@ -54,17 +49,15 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global
 
 ## Why libraries have catalogues
 
-The knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a [**context layer**](docs/context-layer.md): a governed layer between those sources and whoever consumes them, that persists from one task to the next. Without it every task starts the same way: find the material, connect it, judge what's still true. The next person or assistant pays for that work again.
+Knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a [**context layer**](docs/context-layer.md): a governed layer between those sources and whoever consumes them, that persists from one task to the next. Without it every task starts the same way: find the material, connect it, judge what's still true. The next person or assistant pays for that work again.
 
-A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. It is useful only when a reader can tell which entries are sound, and that depends on one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry: where the entry came from and how far it has been checked, in [plain words](#trust-stays-visible).
+A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. It is useful only when a reader can tell which entries are sound, and that depends on one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry: where the entry came from and how far it has been checked, in [plain words](#trust-stays-visible). One bundle is one repository's context layer, and [docs/context-layer.md](docs/context-layer.md) says how many bundles become a catalogue.
 
 ## Prose, Structure, Meaning, Tools
 
-A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and tools that come with the standard rather than with this project. It is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). People, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html) can read it.
+A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and tools that come with the standard rather than this project. It is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). People, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html) can read it.
 
-**Knowledge Trust Ladder is an OKF runtime.** OKF's fourth goal is to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". Here those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer, and a domain whose concepts stop fitting it [extends the schema in LinkML](skills/ktl-curator/references/domain-schemas.md), so its own types are checked rather than tolerated.
-
-[WikiSkill](https://arxiv.org/abs/2608.27454) has an agent compile its own experience into a persistent wiki. A bundle runs that loop under a schema, with a registrar around it and a named person's verdict ([docs/wikiskill.md](docs/wikiskill.md)).
+**Knowledge Trust Ladder is an OKF runtime** to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". Here those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer, and a domain whose concepts stop fitting it [extends the schema in LinkML](skills/ktl-curator/references/domain-schemas.md), so its own types are checked rather than tolerated.
 
 ## Four skills, three lines of the poem
 
@@ -129,14 +122,13 @@ The labels are computed from the frontmatter on every read, never stored, so the
 
 | | |
 | --- | --- |
+| The context layer: how one bundle already is one, how bundles federate into one layer through domains and a workspace built ahead of time, what exists and what is design, and the decisions an adopter must make | [docs/context-layer.md](docs/context-layer.md), and [what it integrates with](docs/context-layer-technology.md) |
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [docs/for-the-curious.md](docs/for-the-curious.md) |
-| What a context layer is, in the words of the people building them; how one bundle already is one; and how bundles federate into one layer: domains as manifests, a workspace built ahead of time, and the decisions an adopter must make | [docs/context-layer.md](docs/context-layer.md), and [what it integrates with](docs/context-layer-technology.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [docs/obsidian.md](docs/obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](docs/three-lines-critics.md) | [docs/three-lines.md](docs/three-lines.md) |
-| WikiSkill, a 2026 paper on agent-maintained wikis, set beside this design part by part | [docs/wikiskill.md](docs/wikiskill.md) |
-| SkillWiki, a 2026 paper on governing agent skills, set beside this design part by part | [docs/skillwiki.md](docs/skillwiki.md) |
-| Whether KTL helps a repository whose content is Agent Skills, read through WikiSkill and SkillWiki | [docs/skills-repositories.md](docs/skills-repositories.md) |
+| What KTL took from two 2026 papers, WikiSkill on agent-maintained wikis and SkillWiki on governing agent skills | [docs/wikiskill.md](docs/wikiskill.md), [docs/skillwiki.md](docs/skillwiki.md) |
+| Whether KTL helps a repository whose content is Agent Skills, and what remains to do there | [docs/skills-repositories.md](docs/skills-repositories.md) |
 | Versioning: all five skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [docs/releasing.md](docs/releasing.md), [CHANGELOG.md](CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](CONTRIBUTING.md), [docs/repository-layout.md](docs/repository-layout.md), [SECURITY.md](SECURITY.md) |
 
@@ -146,8 +138,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 - The [LinkML Community](https://linkml.io/), creators of [LinkML](https://linkml.io/linkml/), the schema language LOKF is written in.
 - [Google Cloud](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing), creator of the Open Knowledge Format (OKF) specification that LOKF profiles.
 - [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), a pattern for building personal knowledge bases with LLMs.
-- [WikiSkill](https://arxiv.org/abs/2608.27454) by Tang et al. (Google Research, 2026), the paper on agent-maintained wikis that [docs/wikiskill.md](docs/wikiskill.md) reads against this design.
-- [SkillWiki](https://arxiv.org/abs/2606.16523) by Huang et al. (Harbin Institute of Technology, Tencent and Nanyang Technological University, 2026), the paper on governing agent skills that [docs/skillwiki.md](docs/skillwiki.md) reads against this design.
+- [WikiSkill](https://arxiv.org/abs/2608.27454) by Tang et al. (Google Research, 2026) and [SkillWiki](https://arxiv.org/abs/2606.16523) by Huang et al. (2026), the two papers that [docs/wikiskill.md](docs/wikiskill.md) and [docs/skillwiki.md](docs/skillwiki.md) took from.
 
 This is an independent project. It is not affiliated with, endorsed by, or an
 official distribution of LOKF or of the Open Knowledge Format. "LOKF" and

@@ -12,10 +12,9 @@ sources:
 - resource: README.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T16:12:27Z"
 status: draft
-about:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+about: []
 references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
 - https://knowledge-trust-ladder.example/knowledge/references/linkml
@@ -23,9 +22,10 @@ references:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T17:06:00Z"
 ---
 
 # Overview

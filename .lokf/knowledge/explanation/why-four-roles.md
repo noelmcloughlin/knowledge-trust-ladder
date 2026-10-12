@@ -9,9 +9,10 @@ sources:
 - resource: README.md
 - resource: skills/ktl-librarian/SKILL.md
 - resource: skills/ktl-docent/SKILL.md
+- resource: docs/three-lines-critics.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -25,7 +26,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T17:06:00Z"
 ---
 
 # Overview
@@ -41,8 +42,8 @@ Each skill takes one line of the poem, or the role the poem leaves implicit:
 
 On a fresh repository they run in order: sidecar, then librarian filling the bundle with drafts, then curator, where a person turns drafts into confirmed knowledge. After that it is a loop: the librarian refreshes on a schedule, readers report what the bundle missed, and the curator reviews what is new or changed.
 
-Each handoff is a frontmatter fact, not a convention:
+Each handoff is written down, not left to convention:
 
-- the librarian marks what it creates `status: draft`;
+- the pen marks what the librarian creates `status: draft`;
 - a curator's `verified` event by a `human:` actor confirms it;
 - the librarian consumes the docent's `.lokf/feedback.md` entries on its next run.

@@ -2,12 +2,12 @@
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/code-of-conduct
 title: Code of conduct
-description: "Contributor Covenant v2.1: the behavioural standards for issues, pull requests and discussions, and how to report unacceptable behaviour."
+description: "Contributor Covenant v2.1: its scope over issues, pull requests and discussions, and how to report unacceptable behaviour."
 genre: reference
 resource: CODE_OF_CONDUCT.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 verified:
 - by: process:ktl-librarian

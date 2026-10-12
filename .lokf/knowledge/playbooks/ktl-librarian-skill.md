@@ -20,9 +20,10 @@ sources:
 - resource: .lokf/scripts/knowledge-apply.sh
 - resource: .lokf/scripts/knowledge-report.sh
 - resource: CHANGELOG.md
+- resource: .lokf/scripts/knowledge-conventions.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T16:08:20Z"
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -33,6 +34,7 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+- https://knowledge-trust-ladder.example/knowledge/policies/security
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
@@ -41,8 +43,10 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-03T09:40:04Z"
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:43:34Z"
 stale_after: 2027-10-03
+relatedTo:
+- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
 ---
 # Overview
 
@@ -132,3 +136,5 @@ PowerShell the commands run through Git for Windows' bash; on macOS
 path is the id and case-insensitive hosts collide. The audit runs the
 preflight first, and the tooling-version check now uses `uvx --from pip pip
 index versions lokf`, since `uv pip` has no `index` subcommand.
+
+**Plain English and the prose pass.** The librarian writes each body, description and log line in plain English, under rules ktl-prose carries in full. In a live session, where ktl-prose is installed and the run created or rewrote concepts, the hand-off first names them and offers a plain-prose pass, which runs only when the person says yes. A scheduled run skips the offer.

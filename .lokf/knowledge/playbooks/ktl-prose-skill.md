@@ -24,11 +24,11 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T17:06:00Z"
 ---
 # Overview
 
@@ -77,12 +77,12 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 
 # Steps
 
-1. **Preflight**, as every skill that touches the bundle does.
-2. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph` and `words` run over those, with `unseen` for a character no reader sees. Then the agent reads them, because only a reader sees a late verb.
-3. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, lay out what it rewords the way the file's project does, and leave what cannot be fixed.
-4. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, such as a character no reader sees that the rewording added, and the agent undoes it. The script enforces the table above with no override.
-5. **Log** one **Prose** line in `log.md`.
-6. **Hand off** a change scoped to `.lokf/`. Give the counts before and after, the words before and after from the script's `OK` line, each sentence left alone, each concept skipped, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
+0. **Preflight**: run the preflight and the conventions script first, as every skill that touches the bundle does. The skill never opens `.lokf/feedback.md`.
+1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph` and `words` run over those, with `unseen` for a character no reader sees. Then the agent reads them, because only a reader sees a late verb.
+2. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, lay out what it rewords the way the file's project does, and leave what cannot be fixed.
+3. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, such as a character no reader sees that the rewording added, and the agent undoes it.
+4. **Log** one **Prose** line in `log.md`.
+5. **Hand off** a change scoped to `.lokf/`. Give the counts before and after, the words before and after from the script's `OK` line, each sentence left alone, each concept skipped, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
 
 # Outside the bundle
 

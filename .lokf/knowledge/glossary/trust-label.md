@@ -8,15 +8,16 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T16:08:55Z"
 status: draft
-definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
+definedBy: []
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 verified:
 - by: process:ktl-librarian
   at: "2026-10-06T11:10:52Z"
+references:
+- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 ---
 
 # Overview

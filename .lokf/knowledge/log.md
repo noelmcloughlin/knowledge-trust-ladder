@@ -2,6 +2,45 @@
 
 ## 2026-10-12
 
+* **Changed**: `docs/context-layer.md` and `docs/context-layer-technology.md` now write catalogue, as the README and the rest of the bundle do. The concept and its description follow them; product names such as Unity Catalog keep their own spelling.
+* **Changed**: Knowledge sources records the twenty-seventh pass. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Prose**: reworded 2 concept bodies in plain English: WikiSkill and SkillWiki, after the librarian rewrote both. No fact, link, number or frontmatter changed.
+* **Changed**: WikiSkill takes the page's new title, and its description names what the page now holds.
+* **Changed**: SkillWiki takes the page's new title, and its description names what the page now holds.
+* **Rewrite**: `docs/wikiskill.md` was trimmed to what KTL took from the paper and what the paper leaves open, without the part-by-part table or the programs, models and people table. The concept follows it, under the page's new title.
+* **Rewrite**: `docs/skillwiki.md` was trimmed to the four changes, the excerpt check and where the designs part, without the side-by-side table, the programs, models and people table or the paper's open points. The concept follows it, under the page's new title.
+* **Changed**: `docs/skills-repositories.md` no longer reads the two papers against KTL's design, and now gives the handling before the two runs. The overview says so.
+* **Changed**: `docs/context-layer.md` no longer quotes Tellius, Andreessen Horowitz, Forrester, Gartner and the other vendors, nor the analogies in its workspace steps. The concept drops the two quotations it carried.
+* **Changed**: `docs/three-lines-critics.md` is no longer marked as preliminary research, and the concept no longer says it is.
+* **Changed**: Knowledge sources: the `docs/wikiskill.md`, `docs/skillwiki.md` and `docs/skills-repositories.md` rows follow the trimmed pages, and the twenty-sixth pass is recorded. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Domain schemas now relates to the curator skill instead of naming it as its subject.
+* **Changed**: Three lines of defence now relates to the two role explanations instead of naming them as its subject.
+* **Changed**: Versioning now relates to the releasing playbook instead of naming it as its subject. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-sidecar skill now cites commit 61b9355, which split `gate.md` out of `automation.md` on 2026-09-24.
+* **Changed**: The source map's templates row now names every file the sidecar writes, and re-checks the `justfile`, which carries the domain-schema variable since 0.38.0. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Trust label keeps `definedBy` as an empty list, as every relation field is a list.
+* **Changed**: Context layer now names all three gaps `docs/context-layer.md` says OKF leaves open, and the page's recommendation on cross-bundle links.
+* **Changed**: Hosts and doorways now gives both halves of what Obsidian's *Excluded files* does, as `skills/ktl-sidecar/references/portability.md` states them.
+* **Changed**: Intended uses now says, as the README does, that the context layer is what is missing and the bundle is its catalogue.
+* **Changed**: Three lines of defence now matches `docs/three-lines-critics.md` on how its sources are cited and on who produces evidence that oversight works, and relates to the context layer it links.
+* **Changed**: Why a distribution repository's description now names the Microsoft 365 route and the rename its body covers, and its sources list `.claude-plugin/plugin.json`.
+* **Changed**: Why four roles no longer calls every handoff a frontmatter fact, since one is a feedback entry, and says the pen marks new concepts as drafts.
+* **Changed**: WikiSkill now quotes `docs/wikiskill.md` on the concepts readers keep arriving at, and relates to SkillWiki, which it sets itself apart from.
+* **Changed**: OKF now lists `README.md`, the source that names Google Cloud as the specification's creator.
+* **Changed**: Trust label now references the OKF specification rather than naming it as the definition, since the labels are defined in `trust-fields.md` and the specification defines only the fields.
+* **Changed**: The pen for younger readers now relates to the registrar its body links.
+* **Changed**: ktl-librarian skill now covers its plain-English rules and the offer of a prose pass before hand-off, and carries typed relations to the security policy and ktl-prose that its body names. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-prose skill now numbers its steps 0 to 5 as `SKILL.md` does, says step 0 runs the conventions script too, and drops an override claim no source makes.
+* **Changed**: ktl-sidecar skill now says the `validate` job passes the merge-base, as `knowledge-registrar.yaml` has done since 0.36.1.
+* **Changed**: Open the bundle in Obsidian now lists Obsidian's symlinks help page, the source of the sentence it quotes.
+* **Changed**: Releasing now points at the paragraph that describes `check`; the page has no next section.
+* **Changed**: Threat model now lists `knowledge-conventions.sh`, the source of its claim about conventions rule 10.
+* **Changed**: Code of conduct's description no longer promises the behavioural standards, which the body does not list.
+* **Changed**: Open Skills CLI's description now says what the body covers: the installer and its local-path use as a pre-publication check.
+* **Changed**: The source map no longer says all three release files sit behind the `release` Environment; only the `release` job does. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Open question**: Knowledge bundle: the body's library and museum terms, the workshop and the log and index details come from `README.md`, `docs/obsidian.md` and `skills/ktl-librarian/SKILL.md`, but `sources` names only `skills/ktl-sidecar/templates/README.md`. Should those three be added as sources?
+* **Open question**: Why a registrar role, and why it is not a skill: the body's account of the pen (stamps `generated`, keeps index bullets equal, files the log line, refuses some writes) and of the wrapper comes from `skills/ktl-librarian/SKILL.md` and `skills/ktl-sidecar/SKILL.md`, which are not in `sources`. The pen also refuses deleting a concept a person left a note on, not only one a person confirmed. And `about` names the knowledge bundle while `glossary/registrar` describes this role. Should these change?
+* **Open question**: Agent Skills specification: the body says the `description` is kept near ~100 tokens, but the specification's ~100 tokens is a startup budget for `name` and `description` together, and this repository enforces only the 1024-character limit (check 3c); its descriptions run to about 150 to 230 tokens. The `resource` is `agentskills.io/home` while the facts come from `agentskills.io/specification`. Should both change?
 * **Prose**: reworded 22 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Changed**: the README's *context layer* now links `docs/context-layer.md`, which the concept now cites. That page, like the README, names no intended use or non-goal, so the open question stays.
 * **Changed**: `docs/three-lines.md` now lists the context layer's domain tiers and workspace among what remains for this project, and the concept follows it.

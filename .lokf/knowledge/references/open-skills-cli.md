@@ -2,12 +2,12 @@
 type: Reference
 id: https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
 title: Open Skills CLI (npx skills)
-description: The vendor-neutral installer for agent skills, supporting GitHub, git, and local sources with repeatable --skill and --agent selection.
+description: The vendor-neutral installer for agent skills, `npx skills add`, which takes a local path as its source, so this repository uses it as a pre-publication install check.
 genre: reference
 resource: https://github.com/vercel-labs/skills
 generated:
   by: process:ktl-librarian
-  at: "2026-09-09T00:13:37Z"
+  at: "2026-10-12T16:08:20Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
