@@ -6,6 +6,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
+- **A website in `website/`, built with Astro Starlight from the README, `docs/` and the bundle.** Each concept page shows its trust label, sources and typed relations beside its own Markdown and JSON-LD, and `website.yml` publishes `main` to GitHub Pages with the four files `lokf export` writes.
+
 - **`docs/context-layer.md` places Knowledge Trust Ladder in the context-layer discourse.** It quotes the people building context layers, shows one bundle as one repository's layer, and sets out a design for federating bundles through domain manifests and a rebuilt workspace, drawn in two diagrams with the unshipped parts dashed. `docs/context-layer-technology.md` surveys the stores, catalogs, agent surfaces and artifact repositories it would plug into.
 
 ### Changed

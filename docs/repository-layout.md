@@ -19,6 +19,7 @@ skills/
   knowledge-release.yaml     the sidecar's release step: bundle and Copilot zips (from publish.yml)
   semantic-release.yml       version and changelog from Conventional Commits on main; never tags
   publish.yml                maintainer-gated release (workflow_dispatch only)
+  website.yml                builds website/ (PRs touching its sources) and publishes main's build to GitHub Pages
 docs/
   for-the-curious.md    the README's mechanics: four levels of checking, domain schemas
   context-layer.md      the context layer: one bundle, a federation of bundles, what exists and what is design
@@ -46,6 +47,10 @@ tests/                     the behavioural tests of the sidecar scripts and the 
   test_*.py                one module per script: the pen, the gate, the report, the conventions checker,
                            the feedback recorder, the preflight, the prose checker, and the layouts the
                            wrapper and the workflows run in
+website/                   the website: Astro Starlight, built from the README, docs/ and the bundle
+  site.config.mjs          the site's address and the sidebar place of every docs/ page
+  scripts/sync.mjs         writes the pages and the bundle's exported files before each build
+  scripts/check-links.mjs  fails the build on a link between two pages that does not resolve
 .lokf/                  this repository's own sidecar: the bundle and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
 ```

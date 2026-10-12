@@ -1,0 +1,28 @@
+{
+  "name": "knowledge-trust-ladder-website",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "sync": "node scripts/sync.mjs",
+    "predev": "npm run sync",
+    "dev": "astro dev",
+    "prebuild": "npm run sync",
+    "build": "astro build",
+    "postbuild": "node scripts/check-links.mjs",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/markdown-satteri": "^0.4.3",
+    "@astrojs/starlight": "^0.42.6",
+    "astro": "^7.3.8",
+    "cytoscape": "^3.34.3",
+    "cytoscape-fcose": "^2.2.0",
+    "sharp": "^0.35.5",
+    "yaml": "^2.9.1"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

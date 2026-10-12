@@ -28,3 +28,16 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "chore(actions)"
+
+  # The website's build dependencies (website/package.json). One weekly pull
+  # request for all of them, so a Starlight or Astro release arrives with
+  # what it needs; the website workflow builds it and checks every link.
+  - package-ecosystem: "npm"
+    directory: "/website"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(website)"
+    groups:
+      website:
+        patterns: ["*"]

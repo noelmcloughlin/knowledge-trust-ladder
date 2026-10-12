@@ -1,0 +1,111 @@
+name: Website
+
+# Builds the site in website/ from the README, docs/, .assets/ and the knowledge
+# bundle, and publishes main's build to GitHub Pages. A pull request that
+# touches any of them gets the same build, link check included, and no
+# deployment. website/README.md says what each page is built from.
+#
+# Two jobs, for least privilege. `build` runs the third-party packages, npm's
+# and the lokf toolkit's, under a read-only token. `deploy` runs nothing but
+# GitHub's own deploy-pages action, holds the Pages scopes, and runs for main
+# only. Pages must be told once to take its site from Actions, under
+# Settings > Pages > Source, or with:
+#   gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "docs/**"
+      - ".assets/**"
+      - ".lokf/**"
+      - "README.md"
+      - "README.en-simple.md"
+      - "llms.txt"
+      - ".github/workflows/website.yml"
+  pull_request:
+    paths:
+      - "website/**"
+      - "docs/**"
+      - ".assets/**"
+      - ".lokf/**"
+      - "README.md"
+      - "README.en-simple.md"
+      - "llms.txt"
+      - ".github/workflows/website.yml"
+  workflow_dispatch:
+
+permissions: {} # deny by default; each job requests only the scopes it needs
+
+# A newer push supersedes a pull request's build, but a deployment from main
+# always runs to the end.
+concurrency:
+  group: website-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build the site (read-only)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      # The whole history, because the health page's "a source moved" lines
+      # come from git, as knowledge-report.sh computes them anywhere else.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: .lokf/uv.lock
+
+      - name: Install the lokf toolkit the sidecar pins
+        run: uv sync --locked
+        working-directory: .lokf
+
+      - name: Use Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      # `build` runs the sync first and the link check after.
+      - name: Build the site and check its links
+        working-directory: website
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: website/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        id: deployment
