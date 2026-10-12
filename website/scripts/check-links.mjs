@@ -50,12 +50,12 @@ for (const file of pages) {
       }
       continue;
     }
-    if (!url.startsWith("/")) continue;
     checked++;
-    const [path, hash] = url.split("#");
-    const hit = target(path.split("?")[0]);
+    // A relative link resolves against the address its page is served at.
+    const { pathname, hash } = new URL(url, `https://site.invalid${BASE}${from}`);
+    const hit = target(pathname);
     if (!hit) broken.push(`${from}: ${url}`);
-    else if (hash && hit.endsWith(".html") && !idsOf(hit).has(decodeURIComponent(hash))) {
+    else if (hash.length > 1 && hit.endsWith(".html") && !idsOf(hit).has(decodeURIComponent(hash.slice(1)))) {
       broken.push(`${from}: ${url} (no such heading)`);
     }
   }

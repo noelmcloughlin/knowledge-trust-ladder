@@ -3,8 +3,9 @@
 // website/.gitignore lists each place:
 //
 //   src/content/docs/  a page for the README, each docs/ page and each concept
-//   src/generated/     the logo, for the header and the home page, and
-//                      health.json, the numbers the health page charts
+//   src/generated/     the logo, for the header and the home page;
+//                      health.json, the numbers the health page charts; and
+//                      CHANGELOG.md, which the releases section reads
 //   public/            the figures, llms.txt, and under knowledge/ the four
 //                      files `lokf export` writes, every bundle file as it is
 //                      in the repository, and each concept's JSON-LD
@@ -30,6 +31,7 @@ import {
   conceptIds,
   groupLabel,
 } from "../site.config.mjs";
+import { rewriteUrl } from "./routes.mjs";
 
 const CONTENT = resolve(SITE_DIR, "src", "content", "docs");
 const GENERATED = resolve(SITE_DIR, "src", "generated");
@@ -666,6 +668,22 @@ function copyBundleFiles() {
   walk(BUNDLE_DIR);
 }
 
+/**
+ * The releases section's copy of CHANGELOG.md. Its version headings lose
+ * their brackets, so each release page is titled with the bare version and
+ * starlight-changelogs skips `## Unreleased`, which it knows only unbracketed.
+ * Its links to repository files point at their pages, since a release page
+ * has no source file for the Markdown plugin to resolve them from.
+ */
+function writeChangelog() {
+  const text = mapProse(repoFile("CHANGELOG.md"), (line) =>
+    line
+      .replace(/^## \[([^\]]+)\]/, "## $1")
+      .replace(/\]\(([^)\s]+)\)/g, (_, url) => `](${rewriteUrl("CHANGELOG.md", url)})`),
+  );
+  write(resolve(GENERATED, "CHANGELOG.md"), text);
+}
+
 function copyAssets() {
   cpSync(resolve(REPO_ROOT, ".assets"), resolve(PUBLIC, "assets"), { recursive: true });
   mkdirSync(GENERATED, { recursive: true });
@@ -698,6 +716,7 @@ writeHealth(concepts, health, full);
 const docs = writeDocs();
 writeReadmes({ text: "" });
 writeLlmsTxt(docs, concepts);
+writeChangelog();
 
 console.log(
   `sync: ${concepts.length} concept pages, ${byGroup.size} groups, ${docs.length} docs pages, ` +

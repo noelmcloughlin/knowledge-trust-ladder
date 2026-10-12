@@ -5,7 +5,8 @@ This folder builds the site that `.github/workflows/website.yml` publishes to Gi
 - the README and `README.en-simple.md` become the home page and the page for readers aged 13 to 18;
 - each page under `docs/` becomes a page under `docs/`, placed in the sidebar by `site.config.mjs`;
 - each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its typed relations both ways;
-- the four files `lokf export` writes are served under `knowledge/`, beside each concept's own Markdown file and its JSON-LD.
+- the four files `lokf export` writes are served under `knowledge/`, beside each concept's own Markdown file and its JSON-LD;
+- `CHANGELOG.md` becomes a page per release under `changelog/`, which search leaves out. The commit that promotes a release's changelog skips CI, so its page appears with the next build, or when `website.yml` is run by hand.
 
 ## Preview it
 
@@ -19,6 +20,8 @@ npm run build      # dist/, then checks every link between its pages
 ```
 
 Both commands run `npm run sync` first, which runs `lokf export` from the sidecar's own environment in `.lokf/` and writes the generated pages. Nothing it writes is committed. Run `astro` commands through `npm run`, or run `npm run sync` first.
+
+`package.json` overrides the Astro that starlight-changelogs' loader helper asks for with the site's own. Without the override npm installs Astro 5 beside it, and the build fails.
 
 ## What to edit
 

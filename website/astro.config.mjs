@@ -8,6 +8,7 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { satteri } from "@astrojs/markdown-satteri";
 import markdownKtl from "./scripts/markdown-ktl.mjs";
+import starlightChangelogs, { makeChangelogsSidebarLinks } from "starlight-changelogs";
 import starlightImageZoom from "starlight-image-zoom";
 import starlightSidebarTopics from "starlight-sidebar-topics";
 import {
@@ -52,39 +53,56 @@ export default defineConfig({
         // Click a figure to see it at full size: KTL's diagrams are dense at
         // the page's width.
         starlightImageZoom(),
-        // The guide and the bundle each get a sidebar of their own, with a
-        // switch between them at its top.
-        starlightSidebarTopics([
-          {
-            label: "Guide",
-            link: "/",
-            icon: "open-book",
-            items: [
-              { label: "Home", link: "/" },
-              { label: "For readers aged 13 to 18", link: "/simple/" },
-              ...DOCS_GROUPS.map((group) => ({
-                label: group.label,
-                items: group.pages.map((page) => `docs/${page}`),
-              })),
-            ],
-          },
-          {
-            label: "Knowledge bundle",
-            link: "/knowledge/",
-            icon: "list-format",
-            items: [
-              { label: "About the bundle", link: "/knowledge/" },
-              { label: "Bundle health", link: "/health/" },
-              { label: "Knowledge graph", link: "/graph/" },
-              ...bundleGroups().map((group) => ({
-                label: groupLabel(group),
-                collapsed: true,
-                items: [{ autogenerate: { directory: `knowledge/${group}` } }],
-              })),
-              { label: "Bundle log", link: "/knowledge/log/" },
-            ],
-          },
-        ]),
+        // A page per release, read from CHANGELOG.md through the sync.
+        starlightChangelogs(),
+        // The guide, the bundle and the releases each get a sidebar of their
+        // own, with a switch between them at its top.
+        starlightSidebarTopics(
+          [
+            {
+              label: "Guide",
+              link: "/",
+              icon: "open-book",
+              items: [
+                { label: "Home", link: "/" },
+                { label: "For readers aged 13 to 18", link: "/simple/" },
+                ...DOCS_GROUPS.map((group) => ({
+                  label: group.label,
+                  items: group.pages.map((page) => `docs/${page}`),
+                })),
+              ],
+            },
+            {
+              label: "Knowledge bundle",
+              link: "/knowledge/",
+              icon: "list-format",
+              items: [
+                { label: "About the bundle", link: "/knowledge/" },
+                { label: "Bundle health", link: "/health/" },
+                { label: "Knowledge graph", link: "/graph/" },
+                ...bundleGroups().map((group) => ({
+                  label: groupLabel(group),
+                  collapsed: true,
+                  items: [{ autogenerate: { directory: `knowledge/${group}` } }],
+                })),
+                { label: "Bundle log", link: "/knowledge/log/" },
+              ],
+            },
+            {
+              label: "Releases",
+              id: "releases",
+              link: "/changelog/",
+              icon: "rocket",
+              items: makeChangelogsSidebarLinks([
+                { type: "all", base: "changelog", label: "All releases" },
+                { type: "recent", base: "changelog", count: 8 },
+              ]),
+            },
+          ],
+          // The sidebar lists the eight newest releases; this puts every release
+          // page under the Releases topic, the older ones and the comparisons too.
+          { topics: { releases: ["/changelog/**"] } },
+        ),
       ],
     }),
   ],
