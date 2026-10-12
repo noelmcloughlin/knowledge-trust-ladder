@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T03:11:32Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
@@ -79,5 +79,5 @@ Three are not KTL's role, and each is the job of the adopting organisation or of
 The main page closes with what remains and who owns it, in three lines:
 
 - upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
-- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`.
+- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names the domain tiers and the workspace of [the context layer](context-layer.md), which federate bundles under a person's confirmation of membership.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.

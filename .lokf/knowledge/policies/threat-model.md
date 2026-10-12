@@ -10,7 +10,7 @@ generated:
   at: "2026-10-12T00:29:45Z"
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T03:11:32Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/security
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant

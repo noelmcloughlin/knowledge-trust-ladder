@@ -8,6 +8,7 @@ genre: reference
 resource: README.md
 sources:
 - resource: README.md
+- resource: README.en-simple.md
 - resource: skills/ktl-docent/SKILL.md
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
@@ -17,7 +18,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T03:11:32Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -26,6 +27,6 @@ verified:
 
 # Overview
 
-A *docent* is a museum's name for a guide. The README says so where it first names the docent, and later adds that a docent "explains the exhibition without moving anything on the shelves". ktl-docent opens the same way: "A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle."
+A *docent* is a museum's name for a guide, as the README for readers aged 13 to 18 says. The README says that a docent "explains the exhibition without moving anything on the shelves". ktl-docent opens the same way: "A docent guides visitors through an exhibition. This skill guides an agent through the `.lokf/` knowledge bundle."
 
 In the README's table of roles the docent *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. It answers from the bundle, labels how far each concept has been trusted, and checks exact values at the source. When the bundle has no answer, it explores the repository and records the miss in `.lokf/feedback.md` through its own copy of `knowledge-feedback.sh`, and the miss becomes the librarian's next task. It writes nothing in the bundle.

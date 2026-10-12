@@ -23,7 +23,7 @@ sources:
 - resource: CHANGELOG.md
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T03:11:32Z"
 ---
 
 # The pattern

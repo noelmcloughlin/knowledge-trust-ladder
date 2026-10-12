@@ -19,7 +19,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-09-26T20:36:11Z"
 - by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T03:11:32Z"
 stale_after: 2028-09-24
 ---
 

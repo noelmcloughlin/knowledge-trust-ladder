@@ -19,7 +19,7 @@
 # The diff it leaves behind is the review.
 #
 # Usage: scripts/sync-sidecar.sh <tag> <sibling-dir>...
-#   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator ..
+#   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator
 #
 # For each sibling it copies every template the sibling already carries. It
 # adds a template the sibling never had in two cases only: ktl-sidecar

@@ -10,7 +10,7 @@
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Knowledge Trust Ladder keeps a repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies the schema and the tooling. Two Obsidian plugins are optional, for a vault with no CI.
+Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies the schema and the tooling. Two Obsidian plugins are optional, for a vault with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
@@ -27,7 +27,7 @@ A shorter version of this page, for readers aged 13 to 18, is in [README.en-simp
 
 ## Quick start
 
-Install all five skills for your user, so they work in every repository you open:
+Install all five skills:
 
 ```bash
 npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
@@ -43,18 +43,18 @@ Start with the sidecar and the librarian; the curator matters once there is a bu
 npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes
 ```
 
-**Claude Code plugin**, the same five skills as one plugin, with keywords a plugin catalog can search:
+**Claude Code plugin**:
 
 ```text
 /plugin marketplace add noelmcloughlin/knowledge-trust-ladder
 /plugin install knowledge-trust-ladder@knowledge-trust-ladder
 ```
 
-**[docs/install.md](docs/install.md)** gives the `gh skill` equivalents, what each skill needs on the machine, and how to pin a set to one release. Microsoft 365 Copilot gets the docent as a zip each release carries: **[docs/m365.md](docs/m365.md)**.
+**[docs/install.md](docs/install.md)** gives the `gh skill` equivalents, machine requirements, and how to pin to one release. Microsoft 365 Copilot gets the docent: **[docs/m365.md](docs/m365.md)**.
 
 ## Why libraries have catalogues
 
-The knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a [**context layer**](docs/context-layer.md): a governed layer between those sources and whoever consumes them, a person or an agent, that persists from one task to the next. Without it every task starts the same way: find the material, connect it, judge what's still true. The next person or assistant pays for that work again.
+The knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a [**context layer**](docs/context-layer.md): a governed layer between those sources and whoever consumes them, that persists from one task to the next. Without it every task starts the same way: find the material, connect it, judge what's still true. The next person or assistant pays for that work again.
 
 A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. It is useful only when a reader can tell which entries are sound, and that depends on one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry: where the entry came from and how far it has been checked, in [plain words](#trust-stays-visible).
 

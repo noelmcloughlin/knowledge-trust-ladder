@@ -25,7 +25,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T03:11:32Z"
 ---
 
 # Overview

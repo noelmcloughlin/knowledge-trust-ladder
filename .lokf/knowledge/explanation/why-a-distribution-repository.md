@@ -12,7 +12,7 @@ sources:
 - resource: docs/m365.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T03:11:32Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -26,7 +26,7 @@ verified:
 
 # Overview
 
-The skills are installed from this repository rather than copied into each project that uses them. Each skill stands alone, and the optional fifth, `ktl-prose`, installs the same way. There are three routes to the same set:
+The skills are installed from this repository rather than copied into each project that uses them. The optional fifth skill, `ktl-prose`, installs the same way. There are three routes to the same set:
 
 - the GitHub CLI (`gh skill install noelmcloughlin/knowledge-trust-ladder <skill> --scope user`);
 - the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --global --skill <skill>`);
