@@ -24,6 +24,27 @@
   --ktl-nobody-bg: #ecebe5;
 }
 
+/* The trust colours as chart marks on the health page, dark steps first, each
+   set checked for colour-vision deficiency against its own page colour. Two
+   light steps fall below 3:1 against the page, so every value a chart draws
+   is also in its legend and its table. */
+:root {
+  --ktl-chart-person: #5a9be0;
+  --ktl-chart-on-person: #10233a;
+  --ktl-chart-edited: #b7791f;
+  --ktl-chart-automation: #e4bd6e;
+  --ktl-chart-nobody: #6e6d66;
+  --ktl-chart-track: #142639;
+}
+:root[data-theme="light"] {
+  --ktl-chart-person: #185fa5;
+  --ktl-chart-on-person: #fff;
+  --ktl-chart-edited: #c99a3e;
+  --ktl-chart-automation: #7a4e0b;
+  --ktl-chart-nobody: #aba9a0;
+  --ktl-chart-track: #d3e1ef;
+}
+
 /* A trust label, in the words ktl-curator and ktl-docent use. */
 .ktl-label {
   display: inline-block;

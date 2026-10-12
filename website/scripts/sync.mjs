@@ -3,7 +3,8 @@
 // website/.gitignore lists each place:
 //
 //   src/content/docs/  a page for the README, each docs/ page and each concept
-//   src/generated/     the logo, for the header and the home page
+//   src/generated/     the logo, for the header and the home page, and
+//                      health.json, the numbers the health page charts
 //   public/            the figures, llms.txt, and under knowledge/ the four
 //                      files `lokf export` writes, every bundle file as it is
 //                      in the repository, and each concept's JSON-LD
@@ -259,6 +260,7 @@ function toneOf(label) {
   if (label.startsWith("checked by automation")) return "automation";
   return "nobody";
 }
+// The ladder, top first; src/trust.ts words each state in the same order.
 const TONE_ORDER = ["person", "edited", "automation", "nobody", "retired"];
 
 /** A relation slot's name as words, so derivedFrom reads "Derived from". */
@@ -504,34 +506,32 @@ function writeLog() {
   );
 }
 
+// The health page is an Astro page, src/pages/health.astro, which charts
+// these numbers; the sync only gathers them.
 function writeHealth(concepts, health, full) {
-  const rows = parseHealth(health).map(([k, v]) => `| ${k} | ${v} |`);
+  const count = (list) => Object.fromEntries(TONE_ORDER.map((t) => [t, list.filter((c) => c.tone === t).length]));
+  const groups = bundleGroups().map((group) => {
+    const list = concepts.filter((c) => c.record.group === group);
+    return { group, label: groupLabel(group), href: `${BASE}/knowledge/${group}/`, total: list.length, ...count(list) };
+  });
   const sorted = [...concepts].sort(
     (a, b) => TONE_ORDER.indexOf(a.tone) - TONE_ORDER.indexOf(b.tone) || a.title.localeCompare(b.title),
   );
-  const table = sorted.map(
-    (c) =>
-      `| [${c.title.replace(/\|/g, "\\|")}](${BASE}/knowledge/${c.id}/) | ${groupLabel(c.record.group)} | ${labelSpan(c)} |`,
-  );
-  const fence = full.includes("```") ? "~~~~" : "```";
-  const body = [
-    "These counts and labels come from `knowledge-report.sh`, which computes them from each concept's frontmatter and the repository's history when the site is built. None of them is stored in the bundle.",
-    "| Count | Concepts |\n| --- | --- |\n" + rows.join("\n"),
-    "## Every concept's label",
-    "| Concept | Group | How far it has been checked |\n| --- | --- | --- |\n" + table.join("\n"),
-    "## The full report",
-    "This is the report ktl-curator starts from, as `knowledge-report.sh` printed it for this build.",
-    `${fence}text\n${full}\n${fence}`,
-  ].join("\n\n");
-  page(
-    resolve(CONTENT, "health.md"),
-    {
-      title: "Bundle health",
-      description: "How far each concept in the knowledge bundle has been checked, computed when the site was built.",
-      editUrl: false,
-    },
-    body,
-  );
+  const data = {
+    line: parseHealth(health),
+    total: concepts.length,
+    counts: count(concepts),
+    groups,
+    concepts: sorted.map((c) => ({
+      title: c.title,
+      href: `${BASE}/knowledge/${c.id}/`,
+      group: groupLabel(c.record.group),
+      label: c.label,
+      tone: c.tone,
+    })),
+    report: full,
+  };
+  write(resolve(GENERATED, "health.json"), JSON.stringify(data, null, 2) + "\n");
 }
 
 function writeDocs() {
