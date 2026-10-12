@@ -304,7 +304,7 @@ function buildConcepts(exported, labels) {
   const byIri = new Map(concepts.map((c) => [c.iri, c]));
   const linkTo = (iri) => {
     const c = byIri.get(iri);
-    if (c) return { text: c.title, href: `${BASE}/knowledge/${c.id}/` };
+    if (c) return { text: c.title, href: `${BASE}/knowledge/${c.id}/`, tone: c.tone };
     const node = nodes.get(iri);
     if (node?.concept_id) return { text: node.label ?? iri, href: `${BASE}/knowledge/${node.concept_id}/` };
     return { text: iri, href: iri };

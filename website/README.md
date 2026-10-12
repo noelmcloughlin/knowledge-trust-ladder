@@ -27,7 +27,7 @@ Both commands run `npm run sync` first, which runs `lokf export` from the sideca
 
 - **A page's words:** the file it comes from: the README, a page under `docs/`, or a concept, through the librarian and the curator like any other change to the bundle.
 - **A new page under `docs/`:** add it to `DOCS_GROUPS` in `site.config.mjs`. The sync stops with an error until every page has a place.
-- **How a concept page looks:** `src/components/ConceptCard.astro` and `src/styles/catalogue.css`; the trust colours are in `src/styles/theme.css`.
+- **How a concept page looks:** `src/components/ConceptCard.astro` and `src/styles/catalogue.css`; the trust colours are in `src/styles/theme.css`, and the map in the right-hand column is `src/components/Neighbourhood.astro`.
 - **The health page:** `src/pages/health.astro` and its chart, `src/components/TrustChart.astro`; the trust states' words are in `src/trust.ts`.
 - **How a link is rewritten:** `scripts/routes.mjs`, which the sync and the Markdown plugin both use.
 

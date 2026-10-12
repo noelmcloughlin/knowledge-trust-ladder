@@ -44,7 +44,10 @@ export default defineConfig({
         "./src/styles/theme.css",
         "./src/styles/catalogue.css",
       ],
-      components: { PageTitle: "./src/components/PageTitle.astro" },
+      components: {
+        PageTitle: "./src/components/PageTitle.astro",
+        PageSidebar: "./src/components/PageSidebar.astro",
+      },
       // The generated sources are untracked, so git cannot date them; a
       // concept page shows its own `generated` and `verified` times instead.
       lastUpdated: false,

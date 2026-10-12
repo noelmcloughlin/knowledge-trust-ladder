@@ -7,7 +7,9 @@ import { changelogsLoader } from "starlight-changelogs/loader";
 // scripts/sync.mjs writes every page under src/content/docs/. The extra keys
 // say which repository file a page was rendered from, and carry what a
 // concept page shows above its body.
-const link = z.object({ text: z.string(), href: z.string() });
+const tone = z.enum(["person", "edited", "automation", "nobody", "retired"]);
+// A link to a concept carries its tone, which the neighbourhood map colours.
+const link = z.object({ text: z.string(), href: z.string(), tone: tone.optional() });
 
 const concept = z.object({
   id: z.string(),
@@ -16,7 +18,7 @@ const concept = z.object({
   group: z.string(),
   status: z.string().optional(),
   label: z.string(),
-  tone: z.enum(["person", "edited", "automation", "nobody", "retired"]),
+  tone,
   definition: z.string().optional(),
   reviewBy: z.string().optional(),
   tags: z.array(z.string()).default([]),
