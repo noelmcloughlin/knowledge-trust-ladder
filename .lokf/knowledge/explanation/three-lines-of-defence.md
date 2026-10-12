@@ -17,7 +17,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T00:29:45Z"
 sources:
 - resource: docs/three-lines.md
 - resource: docs/three-lines-critics.md

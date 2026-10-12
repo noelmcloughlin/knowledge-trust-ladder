@@ -1,5 +1,28 @@
 # Change Log
 
+## 2026-10-12
+
+* **Changed**: ktl-librarian now names the domain schema by one `schema` line in the justfile, has pages for a host of Agent Skills and for retellings, and the scheduled run validates through `just lokf-check-refs`. `references/domain-schema.md`, `references/agent-skills.md`, `references/retellings.md` and `knowledge-librarian.yaml` say so. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-sidecar's page now names the fourteenth convention, the curator's queue in the report script, and what is tested before a release. `references/gate.md`, `references/portability.md` and the CHANGELOG entries for 0.36.0 and 0.37.1 say so.
+* **Changed**: ktl-curator's page now says the script ranks the queue and counts reliance through thirteen relation fields, reads the justfile's `schema` line, offers a `Younger readers:` switch, and asks what replaced a retired concept. `SKILL.md`, `references/trust-fields.md` and `references/review-session.md` say so.
+* **Changed**: ktl-docent's page now follows all thirteen typed relations, names a retired concept's successor and the label for a reader's dispute, passes `--concept` with a Disagreement, and answers a younger reader. `SKILL.md`, `references/answering.md` and `references/feedback.md` say so.
+* **Changed**: ktl-prose's page now covers retellings for younger readers and the pass for dyslexic readers, with `prose-check.py --audience`, `--derived-from` and the VOA word book. `references/young-readers.md`, `prose-check.py` and the 0.38.0 CHANGELOG entry say so.
+* **Changed**: `changelog-release.mjs check` now passes an empty `[Unreleased]` for a version already promoted, as `.releaserc.json` and the script say since #114, and `publish.yml` runs the pytest suite under `tests/` before it publishes.
+* **Rewrite**: the behavioural checks moved out of `scripts/validate-repository.sh` into pytest modules under `tests/`, which `validate.yml` runs in a job of its own (0.37.1). The page now lists the contract's checks as the script numbers them, says which module carries each moved check, and adds checks 7c, 7d, 10a and 22.
+* **Changed**: `CONTRIBUTING.md` now asks for `pytest` beside the contract script before a pull request, lists `tests/` in its layout, and says the skills are written partly in Python, not in one Python script.
+* **Changed**: the limits list now names `skills/ktl-sidecar/references/m365.md` as the source of Agent Builder's 50 MB zip limit, beside the toolkit's 10 MB app package the builder enforces.
+* **Changed**: A domain schema is now one `schema` variable in the sidecar's justfile, which the validate and check-refs recipes and the three workflows use, as `skills/ktl-librarian/references/domain-schema.md` and the justfile template say since #116.
+* **Changed**: `docs/skills-repositories.md` now says what KTL does and leaves alone in a repository of Agent Skills; no source yet states intended uses or non-goals in general, so the question stays open.
+* **Changed**: The install commands now install for the user (`--global`, `--scope user`), and `docs/install.md` gained a section on when a team installs into the repository instead (#115).
+* **Changed**: `docs/wikiskill.md` now names WikiSkill apart from SkillWiki, the 2026 paper `docs/skillwiki.md` reads, and the concept says so.
+* **Changed**: the trust labels now include *a reader disputed this*, read from `.lokf/feedback.md`, and *derived from a concept edited since its confirmation*, and a retired concept names its successor from `log.md`; `skills/ktl-curator/references/trust-fields.md` says so.
+* **Changed**: `SECURITY.md` now counts four skills that run the repository's `.lokf/scripts/`, ktl-prose among them, and says `prose-check.py` also reads the skill's own word list. Every other claim was checked against `SECURITY.md` and `scripts/validate-repository.sh` check 10 and still holds. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: `docs/threat-model.md` now names ktl-prose among the skills that run `.lokf/scripts/`, adds conventions rule 14, says what a Disagreement's concept path is used for, and covers a skills repository. The concept follows all four.
+* **Changed**: the source map names the files tracked since the 2026-10-06 refresh (`tests/`, `pytest.ini`, `README.en-simple.md`, `docs/skillwiki.md`, `docs/skills-repositories.md`, `docs/examples/prose.md`, ktl-prose's word list and three new references) and follows the README's renamed agents callout. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Added**: SkillWiki's skill governance and KTL, from `docs/skillwiki.md`, which no concept covered.
+* **Added**: KTL in a skills repository, from `docs/skills-repositories.md`, which no concept covered.
+* **Prose**: after the librarian's refresh, reworded 3 concept bodies in plain English: repository validation now says which test module tests each moved check, and two long sentences in the SkillWiki and skills-repository concepts became lists. No fact, link, number or frontmatter changed.
+
 ## 2026-10-11
 
 * **Added**: The pen, retold for readers aged 13 to 18 from `glossary/the-pen.md`, the first retelling for younger readers in this bundle.

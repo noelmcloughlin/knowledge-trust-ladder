@@ -12,7 +12,7 @@ sources:
 - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T00:29:45Z"
 status: draft
 isPartOf:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -54,7 +54,7 @@ It writes `dist/ktl-docent-m365/` (with `SKILL.md`, `SNAPSHOT.md` and `knowledge
 - folders more than 3 deep;
 - file types Copilot does not accept;
 - more than 350 files;
-- more than 10 MB, the toolkit's limit on the whole app package (Agent Builder's own limit is a 50 MB zip);
+- more than 10 MB, the toolkit's limit on the whole app package (Agent Builder's own limit is a 50 MB zip, which `skills/ktl-sidecar/references/m365.md` gives from Microsoft's page on custom skills, preview as of 2026-09);
 - symbolic links.
 
 # 2. Add it to an agent

@@ -9,8 +9,10 @@ sources:
 - resource: skills/ktl-prose/SKILL.md
 - resource: skills/ktl-prose/references/rules.md
 - resource: skills/ktl-prose/references/other-files.md
+- resource: skills/ktl-prose/references/young-readers.md
 - resource: skills/ktl-prose/scripts/prose-check.py
 - resource: README.md
+- resource: CHANGELOG.md
 references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
@@ -22,7 +24,7 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T00:29:45Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -77,3 +79,12 @@ It rewords only a body an agent wrote that no person has confirmed. It never rew
 # Outside the bundle
 
 The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout, and how to apply the rules by hand to comments in scripts and workflows.
+
+# Younger readers
+
+A text for a younger reader is a retelling, not a rewording: it leaves detail out and explains terms, so it is a new file and the original stays as it is. In the bundle, ktl-librarian writes it and this skill checks it. Outside the bundle, this skill writes it beside a file a person names, such as `README.en-simple.md` beside `README.md`, and adds one sentence to the original that points to it. A pass for dyslexic readers is a rewording at tighter limits. `references/young-readers.md` gives the two bands of age, 8 to 12 and 13 to 18, and the pass for dyslexic readers, with the limits of each (since 2026-10-11). The script supports the work:
+
+- `prose-check.py --audience 8-12`, `13-18` or `dyslexia` sets the band's limits, counts the sentences in each paragraph, and notes the page's Automated Readability Index. A page that opens "This page is for readers aged 13 to 18." is held to that band with no flag.
+- Under a band, the script reports `i.e.`, `vs`, `cf.`, `etc.` and `via`, and notes the words a page uses that the VOA Learning English word book does not hold. The word book is in the public domain and sits in the skill's `assets/` folder with its credit.
+- `--derived-from ADULT YOUNG` reports a number, link, code span, quotation, HTML tag or fenced block that the retelling holds and the text it retells does not, and notes what it left out.
+- `--bundle` reports the band the curation policy's `Younger readers:` line declares, as `audience: 8-12`, or `audience: none declared`.

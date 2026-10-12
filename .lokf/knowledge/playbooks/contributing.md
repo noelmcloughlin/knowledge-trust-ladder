@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T00:29:45Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -26,11 +26,11 @@ verified:
 
 `CONTRIBUTING.md` is a checklist, not a design log. Each rule is a line or two linking to where its reasoning is written: a code comment, a workflow header, or a page under `docs/`. `scripts/validate-repository.sh` holds it to a word budget so it stays that way.
 
-There is no build step: the skills are Markdown, YAML, shell and one Python script. The repository packages and distributes the four skills and the `ktl-prose` helper, and all five are released together under one tag. Clone, then run `bash scripts/validate-repository.sh`. To try a change end-to-end before publishing, install from the local clone (`gh skill install ./knowledge-trust-ladder <skill> --from-local`, or `npx skills add ./knowledge-trust-ladder --skill <skill>`).
+There is no build step: the skills are Markdown, YAML, shell and Python. The repository packages and distributes the four skills and the `ktl-prose` helper, and all five are released together under one tag. Clone, then run `bash scripts/validate-repository.sh`. The sidecar scripts' behavioural tests are under `tests/`, and `conftest.py` there says how to run them. To try a change end-to-end before publishing, install from the local clone (`gh skill install ./knowledge-trust-ladder <skill> --from-local`, or `npx skills add ./knowledge-trust-ladder --skill <skill>`).
 
 Before a pull request:
 
-- run `validate-repository.sh`, which names each check as it runs (CI runs the same script plus ShellCheck, `actionlint`, markdownlint, lychee and codespell);
+- run `bash scripts/validate-repository.sh` and `pytest` (CI runs both plus ShellCheck, `actionlint`, markdownlint, lychee and codespell);
 - run `gh skill publish --dry-run` if the GitHub CLI is present;
 - add a line or two under `CHANGELOG.md`'s `[Unreleased]` when behaviour changes. The reasoning belongs beside the code, not in the changelog entry.
 

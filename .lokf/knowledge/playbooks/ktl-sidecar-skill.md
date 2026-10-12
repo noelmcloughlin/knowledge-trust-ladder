@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T09:49:14Z"
+  at: "2026-10-12T00:29:45Z"
 hasPart:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
@@ -50,17 +50,17 @@ The conventions script's Python half is among those scripts, since the `.sh` fai
 
 - the preflight;
 - since 2026-09-23, the feedback recorder;
-- the report script `knowledge-report.sh`, which computes each trust label, the health line, the librarian's work list and whether any work waits;
+- the report script `knowledge-report.sh`, which computes each trust label, the health line, the librarian's work list, whether any work waits and, since 2026-10-06, the curator's queue with how many other concepts rely on each concept;
 - the Microsoft 365 Copilot skills' builder with its instructions.
 
 The forge-free provenance gate needs git and gpg or ssh-keygen. The skill's frontmatter declares what it needs in the Agent Skills `compatibility` field, as every skill here does. ktl-docent runs its own copies of the feedback recorder and the report script, never the ones Step 5 installs (2026-10-05). The installed feedback recorder serves a person and an earlier ktl-docent, and ktl-curator and ktl-librarian quote the installed report script.
 
 The skill keeps its detail in five reference files, so the router itself stays small:
 
-- `references/portability.md` is a matrix, host by host: git or none, GitHub, GitLab or Forgejo, Linux, macOS, Windows and PowerShell, synced folders, an Obsidian vault and, since 2026-09-24, a Microsoft 365 Copilot declarative agent.
+- `references/portability.md` is a matrix, host by host: git or none, GitHub, GitLab or Forgejo, Linux, macOS, Windows and PowerShell, synced folders, an Obsidian vault and, since 2026-09-24, a Microsoft 365 Copilot declarative agent. Since 2026-10-07 it also says what the skills repository tests before a release: a host whose copies are as the sidecar laid them down need not test the templates again, while a copy the host edited, a port to another forge or shell, and another operating system stay the host's.
 - `references/m365.md`, added the same day, says what Copilot allows a custom skill, what the Agents Toolkit checks, and which roles can run there. The docent and a future auditor run there as snapshot skills. The sidecar and librarian do not run there at all, and the curator not until it has a write action and an identity other than a forge login ([The docent in Microsoft 365 Copilot](docent-in-m365-copilot.md)).
 - `references/automation.md` says what the librarian, wrapper, release and feedback files do and how to set them up.
-- `references/gate.md`, split out of `automation.md` on 2026-09-24, covers the registrar workflow and the forge-free gate. That gate verifies GPG keys with their subkeys and SSH keys alike against `.lokf/curators/<id>.asc` or `.pub`. The gate asks the person behind a confirmation that a change removes, as it asks the one behind a confirmation it adds, and its `--unattended` form refuses any change to a person's record in an unattended run. Its thirteenth convention fails an edit to a confirmed concept that leaves `generated` older than the confirmation (2026-10-04).
+- `references/gate.md`, split out of `automation.md` on 2026-09-24, covers the registrar workflow and the forge-free gate. That gate verifies GPG keys with their subkeys and SSH keys alike against `.lokf/curators/<id>.asc` or `.pub`. The gate asks the person behind a confirmation that a change removes, as it asks the one behind a confirmation it adds, and its `--unattended` form refuses any change to a person's record in an unattended run. Its thirteenth convention fails an edit to a confirmed concept that leaves `generated` older than the confirmation (2026-10-04). Its fourteenth, given a base commit with `--since`, fails a commit that records a person's confirmation and also changes the concept's claims, unless `generated.by` names that same person; the `validate` job passes the pull request's base (2026-10-06).
 - `references/prerequisites.md`, since 2026-09-17, gives each preflight line in plain words: what it means, what it stops, who fixes it and what to send them, for a person who cannot act on it themselves. The contract holds it to every line the preflight can print as missing or a warning.
 
 Every file the skill writes is copied from `templates/`, never retyped, which is what keeps a freshly installed bundle byte-identical to the reviewed template.

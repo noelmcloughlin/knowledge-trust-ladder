@@ -24,7 +24,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T00:29:45Z"
 ---
 
 # Overview
