@@ -2,7 +2,7 @@
 # Bring a sibling repository's sidecar copies and skills pin up to one release
 # of this repository, and leave it to a person to review and commit.
 #
-# A sibling (the two Obsidian plugins, ai-linkmo, any host ktl-sidecar
+# A sibling (the two Obsidian plugins, any host ktl-sidecar
 # installed into) carries byte-identical copies of the templates under
 # skills/ktl-sidecar/templates/ and pins its scheduled librarian to one tag of
 # this repository with TRUST_LADDER_SKILLS_REF, and to the commit that tag
@@ -19,7 +19,7 @@
 # The diff it leaves behind is the review.
 #
 # Usage: scripts/sync-sidecar.sh <tag> <sibling-dir>...
-#   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator ../ai-linkmo
+#   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator
 #
 # For each sibling it copies every template the sibling already carries. It
 # adds a template the sibling never had in two cases only: ktl-sidecar

@@ -16,6 +16,7 @@ verified:
 - by: process:ktl-librarian
   at: "2026-10-06T11:10:52Z"
 stale_after: 2027-09-26
+status: draft
 ---
 
 # Overview
@@ -31,3 +32,7 @@ rests on: `sources` (provenance) and `generated`, `verified` (trust events),
 from the actor strings, never stored. Section 7 fixes the actor convention
 (`human:<id>`, `process:<id>`, `<producer>/<version>`) that makes
 "confirmed by a person" a machine-checkable distinction.
+
+## Open questions
+
+- 2026-10-12, process:ktl-librarian: the `resource` is the copy under `knowledge-catalog/okf/`, whose folder's README now says OKF lives in its own repository and asks readers to stop using that copy. The README, the sidecar's README template and `CHANGELOG.md` now link `https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md`. A person wrote this concept, so moving its `resource` is the curator's to record.

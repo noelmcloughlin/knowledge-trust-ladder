@@ -56,5 +56,5 @@ The model has critics, and so has the kind of tool KTL is: a machine's output ch
 ## What remains to do, and who does it
 
 - **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and LOKF releasing it in 0.9.0.
-- **This project.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, of which the curator's sampling step is the first half; its Copilot form is one instructions file beside the docent's under `.lokf/m365/` ([m365.md](m365.md)).
+- **This project.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, of which the curator's sampling step is the first half; its Copilot form is one instructions file beside the docent's under `.lokf/m365/` ([m365.md](m365.md)). The domain tiers and the workspace of [the KTL context layer](context-layer.md), which federate bundles under a person's confirmation of membership.
 - **The organisation's.** Naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.

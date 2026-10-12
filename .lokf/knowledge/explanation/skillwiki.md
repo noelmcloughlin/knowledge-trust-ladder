@@ -28,7 +28,7 @@ SkillWiki turns trajectories, documents, API specifications, scripts and earlier
 
 # The same parts
 
-The page sets the two designs side by side part by part: the sources, the corpus, its conventions, the writer, the gate, the record, the verdict, the consumer, evolution, retirement and the graph. In SkillWiki an LLM reviewer approves on its own at a score of 8.0 or more. In KTL the verdict is the curator's, a named person tied to that person's forge account.
+The page sets the two designs side by side part by part: the sources, the corpus, its conventions, the writer, the gate, the record, the verdict, the consumer, evolution, retirement and the graph. In SkillWiki a large language model (LLM) reviewer approves on its own at a score of 8.0 or more. In KTL the verdict is the curator's, a named person tied to that person's forge account.
 
 # What KTL does with it
 

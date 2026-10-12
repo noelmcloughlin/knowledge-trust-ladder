@@ -20,7 +20,7 @@ generated:
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T03:11:32Z"
 ---
 
 This page is for readers aged 13 to 18. It retells [[the-pen]] in shorter words. The full page has every detail.

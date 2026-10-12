@@ -25,7 +25,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T03:11:32Z"
 ---
 
 # Overview
@@ -38,13 +38,17 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 - Concepts gain many producer-defined keys, such as `dosage`, `jurisdiction` or `failure_mode`, that no validator checks.
 - The domain is one where a wrong or ambiguous field has consequences: medicine, law, finance, safety engineering, anything regulated.
 
-**The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly. The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle: the linkml-sidecar skill lays it down under `.linkml/` and sets the variable itself. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting.
+**The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly.
+
+The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle: the linkml-sidecar skill creates it under `.linkml/` and sets the variable itself. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting.
 
 The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, with nothing new to install. It leaves the graph as it is: `convert`, `serve` and `query` take no `--schema`, so domain keys project in LOKF's namespace. Up to lokf 0.8.0 an undeclared type projects there the same way, and from 0.9.0 it projects as `lokf:Concept` with the name kept in `schema:additionalType`.
 
-**When the domain already has a vocabulary**, reuse it rather than re-describe it. For AI governance, the curator's guidance names IBM AI Atlas Nexus's [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/), a LinkML vocabulary covering risks, controls, obligations, taxonomies, incidents and evaluations. It also names [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) as a reference implementation over it, with a LOKF sidecar beside it. A domain schema can import that vocabulary beside LOKF's, so a concept names a control or an obligation by the identifier the domain already uses. Confirm the import path the toolkits support first. Such a vocabulary usually lacks the bundle's half: who encoded a record, from which edition, who confirmed it, and when to look again. Whether those fields belong on the domain's own records is left to the domain's owners and to OKF as it evolves.
+**When the domain already has a vocabulary**, reuse it rather than re-describe it. For AI governance, the curator's guidance names IBM AI Atlas Nexus's [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/), a LinkML vocabulary covering risks, controls, obligations, taxonomies, incidents and evaluations. It also names [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) as a reference implementation over it, with a LOKF sidecar beside it.
 
-**A shape held in reserve: Microsoft 365 provenance.** A host whose curators work in Microsoft 365 Copilot rather than a forge has no `gh` login and no signed commit to back a `human:` verdict. Nothing writes such a verdict yet (a Copilot curator needs a write action that does not exist) and nothing checks one (the gate reads `human:` only), so no schema is built. The curator's guidance records the shape it would take, so the decision is not made twice:
+A domain schema can import that vocabulary beside LOKF's, so a concept names a control or an obligation by the identifier the domain already uses. Confirm the import path the toolkits support first. Such a vocabulary usually lacks the bundle's half: who encoded a record, from which edition, who confirmed it, and when to look again. Whether those fields belong on the domain's own records is left to the domain's owners and to OKF as it evolves.
+
+**A shape held in reserve: Microsoft 365 provenance.** A host whose curators work in Microsoft 365 Copilot rather than a forge has no `gh` login and no signed commit to back a `human:` verdict. Nothing writes such a verdict yet, because a Copilot curator needs a write action that does not exist. Nothing checks one either, because the gate reads `human:` only. So no schema is built. The curator's guidance records the shape it would take, so the decision is not made twice:
 
 - a subclass of the verification event carrying the Entra `tenant_id` and `object_id`;
 - an `assurance` level (`attested`, `delegated-me`, `directory-lookup`, `platform-history`, `unverified`, `anonymous`);

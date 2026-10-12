@@ -15,7 +15,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/references/linkml
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T03:11:32Z"
 sources:
 - resource: https://pypi.org/project/lokf/
 - resource: skills/ktl-librarian/SKILL.md
@@ -24,7 +24,7 @@ sources:
 
 # Overview
 
-The toolkit is the implementation, not the specification. `lokf validate` checks frontmatter and bundle shape against the generated JSON Schema. With `--schema <file>.yaml` it checks against a domain schema that imports LOKF's instead, and the extension recipe depends on that flag. The generated SHACL shapes catch cardinality, datatype, and range violations on the projected graph. `lokf convert` projects to RDF and `lokf serve` exposes a SPARQL endpoint. `lokf query` runs a SPARQL query against the bundle, and the command line also carries `new`, `tables`, `propose`, `vocab`, `skills`, `export`, `mcp` and `registry`, with a `[tables]` extra beside `[build]`.
+The toolkit is the implementation, not the specification. `lokf validate` checks frontmatter and bundle shape against the generated JSON Schema. With `--schema <file>.yaml` it checks against a domain schema that imports LOKF's instead, and the extension recipe depends on that flag. The generated SHACL shapes catch cardinality, datatype, and range violations on the projected graph. `lokf convert` projects to RDF and `lokf serve` exposes a SPARQL endpoint. `lokf query` runs a SPARQL query against the bundle. The command line also carries `new`, `tables`, `propose`, `vocab`, `skills`, `export`, `mcp` and `registry`, with a `[tables]` extra beside `[build]`.
 
 `lokf validate --check-refs` finds typed-relation targets with no matching concept, and this repository's own `just lokf-check-refs` recipe now calls it. It takes the relation slots from the schema, so a domain schema's own slots are covered without the recipe restating a predicate list.
 

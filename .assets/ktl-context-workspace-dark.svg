@@ -1,0 +1,74 @@
+<svg width="720" height="564" viewBox="0 0 720 564" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">How the context workspace stays current</title>
+<desc id="d">Top panel: the artifact repository holds versioned releases of bundles today, and of schemas and manifests later; a publish event starts the refresh job, which resolves, verifies, builds and swaps, runs no agent, and keeps the old snapshot when a check fails. Bottom panel, inside the workspace: a manifest and lock, whose scope a named person confirms, names each release and its checksum; the bundle files, Markdown and schemas, are fetched and verified and kept read-only as released; the knowledge graph, one named graph per bundle named by its base_iri and loaded from the graph.nt that lokf export writes, is built from them and swapped in. A read interface serves the files and the graph - index first, then traverse on demand, with trust labels computed on every read - as a SPARQL endpoint and an MCP server over the store; lokf serve, query and mcp do this for one bundle today. Below, readers - agents, copilots and the people who ask them - query it over MCP or SPARQL, and every answer says how far it has been checked. The refresh job, the manifest and lock, and the knowledge graph are drawn with a dashed outline: they are the design this page describes, not yet shipped.</desc>
+<rect width="720" height="564" fill="#1C1C1A"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#ABA9A0"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#E4BD6E"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#1C1C1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#93C0F2" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#23301B" stroke="#6FA33F" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#6FA33F" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#6FA33F" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Trust Ladder</text><!-- ktl-brand:end -->
+<text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#E6E4DC">How the context workspace stays current</text>
+<rect x="20" y="48" width="680" height="128" rx="20" fill="#262623"/>
+<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">A release is published, and the workspace rebuilds</text>
+<rect x="44" y="92" width="196" height="66" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<g transform="translate(70,125)" stroke="#ABA9A0" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-9" width="20" height="5" rx="1"/><path d="M-8 -4 V9 H8 V-4"/><line x1="-3" y1="1" x2="3" y2="1"/></g>
+<text x="94" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E6E4DC">Artifact repository</text>
+<text x="94" y="130" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">versioned releases</text>
+<text x="94" y="145" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">bundles today, manifests later</text>
+<line x1="246" y1="125" x2="334" y2="125" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M327.4 129.5 L334 125 L327.4 120.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="290" y="117" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#8F8E86">publish event</text>
+<rect x="340" y="92" width="336" height="66" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2" stroke-dasharray="6 4"/>
+<g transform="translate(366,125)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-7.6 -2.6 A8 8 0 0 1 6.6 -4.6"/><path d="M8.4 -9 V-3.6 H3"/><path d="M7.6 2.6 A8 8 0 0 1 -6.6 4.6"/><path d="M-8.4 9 V3.6 H-3"/></g>
+<text x="390" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">Refresh job</text>
+<text x="390" y="130" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">resolve, verify, build, swap</text>
+<text x="390" y="145" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">no agent runs; a failed check keeps the old snapshot</text>
+<rect x="20" y="190" width="680" height="214" rx="20" fill="#262623"/>
+<text x="40" y="218" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">Inside the workspace</text>
+<line x1="360" y1="158" x2="360" y2="232" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M355.5 225.4 L360 232 L364.5 225.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="368" y="210" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">fetches and verifies</text>
+<line x1="578" y1="158" x2="578" y2="232" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M573.5 225.4 L578 232 L582.5 225.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="586" y="210" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">builds, then swaps</text>
+<rect x="44" y="232" width="196" height="66" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2" stroke-dasharray="6 4"/>
+<g transform="translate(70,265)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
+<text x="94" y="254" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">Manifest and lock</text>
+<text x="94" y="270" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">a person confirms the scope</text>
+<text x="94" y="285" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">each release and its checksum</text>
+<rect x="262" y="232" width="196" height="66" rx="12" fill="#23301B" stroke="#6FA33F" stroke-width="2"/>
+<g transform="translate(288,265)" stroke="#A9D27C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#23301B"/><circle cx="-8" cy="6" r="3" fill="#23301B"/><circle cx="8" cy="6" r="3" fill="#23301B"/></g>
+<text x="312" y="254" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#A9D27C">Bundle files</text>
+<text x="312" y="270" font-family="Arial, sans-serif" font-size="10.5" fill="#A9D27C">Markdown and schemas</text>
+<text x="312" y="285" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">read-only, as released</text>
+<rect x="480" y="232" width="196" height="66" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2" stroke-dasharray="6 4"/>
+<g transform="translate(506,265)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="-7" x2="8" y2="7"/><line x1="8" y1="-7" x2="-8" y2="7"/><line x1="-8" y1="-7" x2="8" y2="-7"/><circle cx="0" cy="0" r="3" fill="#33290F"/><circle cx="-8" cy="-7" r="2.5" fill="#33290F"/><circle cx="8" cy="-7" r="2.5" fill="#33290F"/><circle cx="-8" cy="7" r="2.5" fill="#33290F"/><circle cx="8" cy="7" r="2.5" fill="#33290F"/></g>
+<text x="530" y="254" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">Knowledge graph</text>
+<text x="530" y="270" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">one named graph per bundle</text>
+<text x="530" y="285" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">graph.nt, named by base_iri</text>
+<line x1="243" y1="265" x2="259" y2="265" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M252.4 269.5 L259 265 L252.4 260.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="461" y1="265" x2="477" y2="265" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M470.4 269.5 L477 265 L470.4 260.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="360" y1="298" x2="360" y2="320" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M355.5 313.4 L360 320 L364.5 313.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="578" y1="298" x2="578" y2="320" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M573.5 313.4 L578 320 L582.5 313.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="44" y="320" width="632" height="66" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
+<g transform="translate(70,353)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="-2" cy="-2" r="7"/><line x1="3.2" y1="3.2" x2="9" y2="9"/></g>
+<text x="94" y="342" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">Read interface</text>
+<text x="94" y="358" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">index first, then traverse on demand; trust labels computed on every read</text>
+<text x="94" y="373" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">a SPARQL endpoint and an MCP server over the store; lokf serve, query and mcp do this for one bundle today</text>
+<line x1="360" y1="408" x2="360" y2="434" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M355.5 427.4 L360 434 L364.5 427.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="368" y="425" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">over MCP or SPARQL</text>
+<rect x="20" y="438" width="680" height="66" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<g transform="translate(46,471)" stroke="#ABA9A0" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="-6" r="4"/><path d="M-8 9 a8 8 0 0 1 16 0"/></g>
+<text x="70" y="460" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E6E4DC">Readers</text>
+<text x="70" y="476" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">agents, copilots and the people who ask them</text>
+<text x="70" y="491" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">every answer says how far it has been checked</text>
+<circle cx="52" cy="526" r="5" fill="#23301B" stroke="#6FA33F" stroke-width="1"/>
+<text x="63" y="530" font-family="Arial, sans-serif" font-size="12" fill="#A9D27C">an agent derives it</text>
+<circle cx="206" cy="526" r="5" fill="#33290F" stroke="#C99A3E" stroke-width="1"/>
+<text x="217" y="530" font-family="Arial, sans-serif" font-size="12" fill="#E4BD6E">deterministic tools check it</text>
+<circle cx="418" cy="526" r="5" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
+<text x="429" y="530" font-family="Arial, sans-serif" font-size="12" fill="#93C0F2">a named person vouches for it</text>
+<rect x="47" y="542" width="14" height="10" rx="2" fill="none" stroke="#8F8E86" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="68" y="551" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#8F8E86">dashed outline: a design this page describes, not yet shipped; solid: what a repository has today</text>
+</svg>

@@ -19,12 +19,12 @@ sources:
 - resource: CHANGELOG.md
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-12T03:11:32Z"
 ---
 
 # Overview
 
-`validate.yml` runs separate jobs for the repository contract, the behavioural tests of the sidecar scripts, script linting, workflow linting, the install path, and Markdown and link checks, so a failure is easy to diagnose. It runs on every pull request, every push to `main`, weekly (Mondays at 06:00 UTC), and on demand.
+`validate.yml` runs separate jobs for the repository contract, the behavioural tests of the sidecar scripts, script linting, workflow linting, the install path, and Markdown and link checks. Separate jobs make a failure easy to diagnose. It runs on every pull request, every push to `main`, weekly (Mondays at 06:00 UTC), and on demand.
 
 # The repository contract
 
@@ -53,7 +53,7 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 - Check 12a: `tests/test_feedback.py` tests `knowledge-feedback.sh`.
 - Checks 13 and 13a: `tests/test_provenance.py` tests the forge-free provenance gate, with throwaway GPG and SSH keys, and its `--unattended` form.
 - Check 14: `CHANGELOG.md` never carries two headings for one released version. Where node is installed, a throwaway repository also proves three things. `changelog-release.mjs promote` folds a second qualifying push into the section that still waits for `publish.yml`. A version already tagged is left alone. A push with nothing new passes `check` for the version already promoted, and fails for any other.
-- Check 15: the librarian template's `TRUST_LADDER_SKILLS_REF` names one of the two newest released versions in `CHANGELOG.md`. It allows two headings of slack because the newest heading exists before its tag: `semantic-release.yml` promotes it on merge to `main`, and `publish.yml` creates the tag later. The commit the pin records must carry `skills/ktl-librarian`, the path the install step copies out of it, and the check reads it from that commit when the tag ref is absent. Where the tag is on the clone, `TRUST_LADDER_SKILLS_SHA` must be the commit the tag names. The install step must compare the commit it cloned with that one, and `semantic-release.yml` and `scripts/sync-sidecar.sh` must each move the commit with the tag.
+- Check 15: the librarian template's `TRUST_LADDER_SKILLS_REF` names one of the two newest released versions in `CHANGELOG.md`. Two are allowed because the newest heading exists before its tag: `semantic-release.yml` promotes it on merge to `main`, and `publish.yml` creates the tag later. The commit the pin records must carry `skills/ktl-librarian`, the path the install step copies out of it. The check reads it from that commit when the tag ref is absent. Where the tag is on the clone, `TRUST_LADDER_SKILLS_SHA` must be the commit the tag names. The install step must compare the commit it cloned with that one, and `semantic-release.yml` and `scripts/sync-sidecar.sh` must each move the commit with the tag.
 - Check 16: the name the repository had before it was renamed on 2026-09-19 stays out of every file but `CHANGELOG.md`, the bundle's `log.md`, `rename-plan.md`, the contract script and one "formerly" line in `docs/install.md`.
 - Check 16a: the skills' and plugins' old `lokf-` names stay out of every file but `CHANGELOG.md` and the contract script. They took the `ktl-` prefix on 2026-09-22.
 - Check 16b: no file calls a role, skill or repository of KTL a LOKF one, apart from `CHANGELOG.md`, the bundle's `log.md`, the source map (`playbooks/knowledge-sources.md`) and the contract script.
@@ -61,7 +61,7 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 - Check 18: `prose-check.py` gives this repository's bundle its verdicts, and ktl-prose's own pages pass the style rules they state. `tests/test_prose_check.py` tests what the script reports and refuses.
 - Check 19: `knowledge-apply.sh --format` prints the block `ktl-librarian/references/patch.md` shows. `tests/test_apply.py` tests what the pen writes and refuses.
 - Check 20: `tests/test_report.py` tests `knowledge-report.sh`, and check 20a its curator's queue.
-- Check 21: no tracked file holds a character a reader cannot see. That is a control character other than a tab or a line's closing carriage return, or a format character, such as a zero-width space, a byte order mark or the right-to-left override that the "Trojan Source" attack hides code behind. The check also proves that it finds a right-to-left override planted in a script.
+- Check 21: no tracked file holds a character a reader cannot see. That is a control character other than a tab or a line's closing carriage return, or a format character. Format characters include a zero-width space, a byte order mark and the right-to-left override that the "Trojan Source" attack hides code behind. The check also proves that it finds a right-to-left override planted in a script.
 - Check 22: `tests/test_provenance.py` tests parser parity, which holds the gate's event reader to a YAML parser.
 
 # The behavioural tests
@@ -85,7 +85,7 @@ Every subprocess runs under an isolated git config, so a global `commit.gpgsign=
 
 - `lint-scripts` runs ShellCheck on the whole tree.
 - `lint-workflows` runs `actionlint`, pointed by path at this repository's workflows and at the three workflow templates that get copied into other repositories. It would otherwise look only under `.github/workflows/`. It ignores the `copilot-requests` permission, which actionlint 1.7.12 predates. The job also checks that every `uses:` in this repository's workflows and those templates names a commit SHA or image digest rather than a floating tag or branch.
-- `smoke-test` installs the skills from the checkout into a throwaway consumer repository through `scripts/smoke-test-install.sh`. It checks that ktl-docent's two scripts come with the install and, run from where the installer put them, label a concept and record a gap in a reader's repository.
+- `smoke-test` installs the skills from the checkout into a throwaway consumer repository through `scripts/smoke-test-install.sh`. It checks that ktl-docent's two scripts come with the install. It also checks that, run from where the installer put them, they label a concept and record a gap in a reader's repository.
 - `validate-markdown` runs markdownlint, lychee, and codespell. Codespell skips `knowledge_bundle`, the link to `.lokf/knowledge`, which it already checks at its real path.
 
 The schedule runs weekly because otherwise link rot, an upstream `gh skill` change or drift in the install path would show up only on the next pull request that happens to run.

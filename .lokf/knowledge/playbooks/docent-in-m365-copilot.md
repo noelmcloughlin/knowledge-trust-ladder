@@ -31,7 +31,7 @@ verified:
 
 # Overview
 
-**ktl-docent-m365** is the docent as a custom skill for a Microsoft 365 Copilot declarative agent. It is not a skill of its own: it puts [ktl-docent](ktl-docent-skill.md) into Copilot. Copilot runs a skill with no repository, shell or network, so the skill carries a **snapshot** of the bundle and answers from it. Every answer names the snapshot (repository, revision, build date) and the trust label of each concept it used, in the same words ktl-docent uses. It cannot check a value at its source or write `.lokf/feedback.md`, so it says so and hands the reader a ready-to-paste Miss or Disagreement line to file in the repository instead.
+**ktl-docent-m365** is the docent as a custom skill for a Microsoft 365 Copilot declarative agent. It is not a skill of its own: it puts [ktl-docent](ktl-docent-skill.md) into Copilot. Copilot runs a skill with no repository, shell or network, so the skill carries a **snapshot** of the bundle and answers from it. Every answer names the snapshot (repository, revision, build date) and the trust label of each concept it used, in the same words ktl-docent uses. It cannot check a value at its source or write `.lokf/feedback.md`. So it says so, and hands the reader a ready-to-paste Miss or Disagreement line to file in the repository instead.
 
 Getting it running takes three steps, in this order: get the zip, add it to an agent, then ask it something and check that the answer names the snapshot. The short route installs nothing.
 
@@ -54,20 +54,22 @@ It writes `dist/ktl-docent-m365/` (with `SKILL.md`, `SNAPSHOT.md` and `knowledge
 - folders more than 3 deep;
 - file types Copilot does not accept;
 - more than 350 files;
-- more than 10 MB, the toolkit's limit on the whole app package (Agent Builder's own limit is a 50 MB zip, which `skills/ktl-sidecar/references/m365.md` gives from Microsoft's page on custom skills, preview as of 2026-09);
+- more than 10 MB, the toolkit's limit on the whole app package;
 - symbolic links.
+
+Agent Builder's own limit is a 50 MB zip, which `skills/ktl-sidecar/references/m365.md` gives from Microsoft's page on custom skills, preview as of 2026-09.
 
 # 2. Add it to an agent
 
 Custom skills are in preview, only for tenants in Microsoft's Frontier program and not with Information Barriers, so the page has the reader check that first. Without the preview, both routes fail with errors that do not say why. Two routes take the same zip, and the page recommends **Agent Builder** unless the reader already develops agents with the toolkit.
 
-With Agent Builder, nothing is installed: create or open an agent in Microsoft 365 Copilot and add the zip as a skill. If Agent Builder says skill attachments require the full Copilot Studio experience, the reader copies the agent to Copilot Studio and adds the zip there, which needs a Copilot Studio licence or trial.
+With Agent Builder, nothing is installed: create or open an agent in Microsoft 365 Copilot and add the zip as a skill. If Agent Builder says skill attachments require the full Copilot Studio experience, the reader copies the agent to Copilot Studio and adds the zip there. That needs a Copilot Studio licence or trial.
 
 With the **Agents Toolkit CLI** (`atk`, for developers, on Node.js):
 
 1. Log in, scaffold or reuse a declarative agent, and change into its folder.
 2. Export `TEAMSFX_AGENT_SKILLS=true` and `ATK_FRONTIER=true`. Skills are hidden without the variable its version reads: `TEAMSFX_AGENT_SKILLS` in the 1.1.17 release, `ATK_FRONTIER` from the 1.1.18 betas on.
-3. Run `atk add skill --from <zip> -i false`, then `atk provision --env dev` and `atk preview --env dev`, in the same shell: without the variable the toolkit packs the agent without the skill's files.
+3. Run `atk add skill --from <zip> -i false`, then `atk provision --env dev` and `atk preview --env dev`, in the same shell. Without the variable, the toolkit packs the agent without the skill's files.
 
 The page says to skip `atk validate` for now, because it rejects the `agent_skills` entry the toolkit itself wrote. Either way, an agent cannot yet have both skills and embedded files.
 
@@ -95,7 +97,7 @@ The snapshot does not update itself. After each release that changes the bundle,
 
 # Which roles go to Copilot
 
-`.lokf/m365/` holds one instructions file per read-only role, named after the skill it becomes (`ktl-docent-m365.md`, not `SKILL.md`, so no installer lists it), and the builder packs each file into its own zip. The auditor, the third line, is planned as `ktl-auditor-m365.md` beside it, with no change to the builder, workflow or checks. The sidecar and librarian need a repository and a shell, so they have no Copilot form. The curator has none yet: it needs a write action the agent can call and an identity that is not a forge login, and the shape of that identity record is held in reserve (see [domain-schemas](../explanation/domain-schemas.md)).
+`.lokf/m365/` holds one instructions file per read-only role, named after the skill it becomes: `ktl-docent-m365.md`, not `SKILL.md`, so no installer lists it. The builder packs each file into its own zip. The auditor, the third line, is planned as `ktl-auditor-m365.md` beside it, with no change to the builder, workflow or checks. The sidecar and librarian need a repository and a shell, so they have no Copilot form. The curator has none yet. It needs a write action the agent can call and an identity that is not a forge login. The shape of that identity record is held in reserve (see [domain-schemas](../explanation/domain-schemas.md)).
 
 A host's copy under `.lokf/m365/` is what its releases pack, so a host that edits it changes what its readers' Copilot follows. Its trust labels must match ktl-docent's, and the repository checks enforce that.
 

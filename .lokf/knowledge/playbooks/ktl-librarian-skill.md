@@ -40,6 +40,8 @@ verified:
   at: "2026-09-26T20:00:42Z"
 - by: human:noelmcloughlin
   at: "2026-10-03T09:40:04Z"
+- by: process:ktl-librarian
+  at: "2026-10-12T03:11:32Z"
 stale_after: 2027-10-03
 ---
 # Overview

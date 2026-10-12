@@ -23,14 +23,14 @@ sources:
 - resource: CHANGELOG.md
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T03:11:32Z"
 ---
 
 # The pattern
 
 A LOKF bundle is a **sidecar**: it sits beside the raw sources it distils, in the same folder tree and normally the same git repository. The sidecar is `.lokf/`, and the bundle is `.lokf/knowledge/`. The tooling (`pyproject.toml`, `justfile`, `scripts/`, `feedback.md`) sits next to the bundle. This is the same shape as `.git/`, `.github/`, `.devcontainer/` and, for an Obsidian user, `.obsidian/`: a dot-folder the tools own, kept beside the content people own.
 
-Because the dot-folder is hidden from Finder, from most folder pickers and, in effect, from a repository listing, `ktl-sidecar` Step 2 adds a **doorway**: `knowledge_bundle`, a link at the host root onto the bundle. The bundle therefore has **two names**:
+`ktl-sidecar` Step 2 adds a **doorway**: `knowledge_bundle`, a link at the host root onto the bundle. It does so because the dot-folder is hidden from Finder, from most folder pickers and, in effect, from a repository listing. The bundle therefore has **two names**:
 
 | Name | Who addresses it | What it is |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ Every tool and every person finds the bundle at the name they know. The sidecar 
 # Hosts
 
 - **Code repository.** Readers are developers, agents, and CI. The hidden real folder keeps the bundle out of the way. The doorway is how a person browses to it, and how Obsidian opens it as a vault of its own.
-- **Notes vault.** The sidecar is installed beside the notes. The vault never indexes `.lokf/`, and skips the doorway too, because its target resolves inside the vault being indexed (see [Open the knowledge bundle in Obsidian](../playbooks/open-bundle-in-obsidian.md)). So the **workshop** and the **exhibition** never index the same file: the person curates in a second vault opened through the doorway. What the vault does *not* get is the bundle in its own graph, search or Sync, and that is what keeps the workshop clean.
+- **Notes vault.** The sidecar is installed beside the notes. The vault never indexes `.lokf/`, and skips the doorway too, because its target resolves inside the vault being indexed (see [Open the knowledge bundle in Obsidian](../playbooks/open-bundle-in-obsidian.md)). So the **workshop** and the **exhibition** never index the same file: the person curates in a second vault opened through the doorway. The vault does *not* get the bundle in its own graph, search or Sync, and that keeps the workshop clean.
 - **Shared drive or SharePoint library.** Readers are whoever the service shows the folder to. `.lokf/` syncs (Microsoft's restricted-name list has nothing against a leading dot), so the real folder is the same on every machine. OneDrive syncs neither symbolic links nor junctions, so the doorway is per machine (`just lokf-link`) or the bundle is opened by path. A library nobody reaches through git may be rearranged by hand for a synced visible name, and the sidecar's `references/portability.md` says how. A shared folder that is also a vault must not be.
 
 # What each host can do
@@ -64,15 +64,15 @@ A preflight the sidecar installs, `.lokf/scripts/knowledge-preflight.sh`, report
 
 # The rule: one layout, and how it was settled
 
-On 2026-09-12 the sidecar's Step 0 began asking which kind of host it was in. For a notes vault or a shared folder, it installed the bundle the other way round: the **visible layout**. In it, `knowledge_bundle/` was a real folder at the host root (or inside the vault, when the vault was a subfolder of the host), and `.lokf/knowledge` was a link onto it. The intent was that an Obsidian user would see the bundle in their own vault's explorer, graph, search and Sync, and that both plugins would detect it with nothing to configure. The visible layout cost the tooling:
+On 2026-09-12 the sidecar's Step 0 began asking which kind of host it was in. For a notes vault or a shared folder, it installed the bundle the other way round: the **visible layout**. In it, `knowledge_bundle/` was a real folder at the host root, or inside the vault when the vault was a subfolder of the host. `.lokf/knowledge` was a link onto it. The intent was that an Obsidian user would see the bundle in their own vault's explorer, graph, search and Sync. The intent was also that both plugins would detect it with nothing to configure. The visible layout cost the tooling:
 
 - a `visible` variable and a `lokf-link` recipe that recreated the tools' link where a sync service dropped it;
 - two extra layout test cases;
 - both workflows and the wrapper naming the bundle under both paths, because a git pathspec never traverses a symlink.
 
-A day later, the intent turned out to be the problem. Obsidian indexes a real folder inside a vault like any other, so the exhibition's concepts appeared in the workshop: link suggestions, the quick switcher, graph and search all mixed exhibits with everyday notes. *Settings → Files and links → Excluded files* only makes an excluded folder less noticeable in the quick switcher and link suggestions.
+A day later, the intent turned out to be the problem. Obsidian indexes a real folder inside a vault like any other, so the exhibition's concepts appeared in the workshop. Link suggestions, the quick switcher, graph and search all mixed exhibits with everyday notes. *Settings → Files and links → Excluded files* only makes an excluded folder less noticeable in the quick switcher and link suggestions.
 
-The natural Obsidian workflow is two vaults: the one someone already has for the workshop, and the bundle opened as its own for the exhibition, which is where the plugins do their work. A doorway link supports that on every host without ever appearing in the workshop. So on 2026-09-13 the visible layout was retired:
+The natural Obsidian workflow is two vaults: the one someone already has for the workshop, and the bundle opened as its own for the exhibition. The plugins do their work in the exhibition. A doorway link supports that on every host without ever appearing in the workshop. So on 2026-09-13 the visible layout was retired:
 
 - one layout, with the doorway by default;
 - Step 0's host decision and the `visible` variable gone;

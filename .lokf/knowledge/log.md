@@ -2,6 +2,15 @@
 
 ## 2026-10-12
 
+* **Prose**: reworded 22 concept bodies in plain English. No fact, link, number or frontmatter changed.
+* **Changed**: the README's *context layer* now links `docs/context-layer.md`, which the concept now cites. That page, like the README, names no intended use or non-goal, so the open question stays.
+* **Changed**: `docs/three-lines.md` now lists the context layer's domain tiers and workspace among what remains for this project, and the concept follows it.
+* **Changed**: `README.md` no longer calls a docent a museum's name for a guide. `README.en-simple.md` does, and the concept now cites it.
+* **Changed**: `README.md` no longer says each skill stands alone, and no other source does, so the concept no longer says it.
+* **Changed**: `scripts/sync-sidecar.sh` no longer counts ai-linkmo among the siblings it brings up to a release, and the concept no longer does either.
+* **Changed**: the source map names `docs/context-layer.md` and `docs/context-layer-technology.md`, which the new context-layer concept follows. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Open question**: OKF specification (v0.2): the `resource` is the copy under `knowledge-catalog/okf/`, whose folder's README now says OKF lives in its own repository and asks readers to stop using that copy. The README, the sidecar's README template and `CHANGELOG.md` now link `https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md`. A person wrote this concept, so moving its `resource` is the curator's to record.
+* **Added**: The context layer, from `docs/context-layer.md` and `docs/context-layer-technology.md`, which the README now links.
 * **Changed**: check 16 is described without the repository's old name, which the check itself refuses outside the files that record history.
 * **Changed**: ktl-librarian now names the domain schema by one `schema` line in the justfile, has pages for a host of Agent Skills and for retellings, and the scheduled run validates through `just lokf-check-refs`. `references/domain-schema.md`, `references/agent-skills.md`, `references/retellings.md` and `knowledge-librarian.yaml` say so. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-sidecar's page now names the fourteenth convention, the curator's queue in the report script, and what is tested before a release. `references/gate.md`, `references/portability.md` and the CHANGELOG entries for 0.36.0 and 0.37.1 say so.

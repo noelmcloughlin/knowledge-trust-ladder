@@ -25,12 +25,12 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T03:11:32Z"
 ---
 
 # Overview
 
-The README names five roles, and four of them are skills: its section is "Four skills, three lines of the poem", after the three lines of Amy Lowell's *The Congressional Library* it opens with. The fifth role, the **registrar**, is not a skill: the `lokf` toolkit, CI's gate, `knowledge-apply.sh` at the librarian's desk, `knowledge-report.sh` at the reader's desk and the curator's, and two optional Obsidian plugins ([why a registrar role](why-a-registrar-role.md)). The README also names a fifth skill, which is not a role: `ktl-prose`, the librarian's optional copy editor, which rewords what an agent wrote before a person confirms it. The roles lose nothing without it ([ktl-prose skill](../playbooks/ktl-prose-skill.md)).
+The README names five roles, and four of them are skills. Its section is "Four skills, three lines of the poem", after the three lines of Amy Lowell's *The Congressional Library* it opens with. The fifth role, the **registrar**, is not a skill. It is the `lokf` toolkit, CI's gate, `knowledge-apply.sh` at the librarian's desk, `knowledge-report.sh` at the reader's desk and the curator's, and two optional Obsidian plugins ([why a registrar role](why-a-registrar-role.md)). The README also names a fifth skill, which is not a role: `ktl-prose`, the librarian's optional copy editor, which rewords what an agent wrote before a person confirms it. The roles lose nothing without it ([ktl-prose skill](../playbooks/ktl-prose-skill.md)).
 
 Each skill takes one line of the poem, or the role the poem leaves implicit:
 
@@ -41,4 +41,8 @@ Each skill takes one line of the poem, or the role the poem leaves implicit:
 
 On a fresh repository they run in order: sidecar, then librarian filling the bundle with drafts, then curator, where a person turns drafts into confirmed knowledge. After that it is a loop: the librarian refreshes on a schedule, readers report what the bundle missed, and the curator reviews what is new or changed.
 
-Each handoff is a frontmatter fact, not a convention: the librarian marks what it creates `status: draft`, a curator's `verified` event by a `human:` actor is what confirms it, and the docent's `.lokf/feedback.md` entries are what the librarian consumes next run.
+Each handoff is a frontmatter fact, not a convention:
+
+- the librarian marks what it creates `status: draft`;
+- a curator's `verified` event by a `human:` actor confirms it;
+- the librarian consumes the docent's `.lokf/feedback.md` entries on its next run.
