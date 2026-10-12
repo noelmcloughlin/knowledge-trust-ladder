@@ -5,16 +5,16 @@
 
 # Knowledge Trust Ladder (ktl)
 
+A shorter version of this page, for readers aged 13 to 18, is in [README.en-simple.md](README.en-simple.md).
+
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies the schema and the tooling. Two Obsidian plugins are optional, for a vault with no CI.
+Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies schema and tooling. Two Obsidian plugins are optional, for a vault with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
-
-A shorter version of this page, for readers aged 13 to 18, is in [README.en-simple.md](README.en-simple.md).
 
 <p align="center">
   <picture>
@@ -27,6 +27,8 @@ A shorter version of this page, for readers aged 13 to 18, is in [README.en-simp
 
 ## Quick start
 
+> **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
+
 Install all five skills:
 
 ```bash
@@ -35,17 +37,10 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
   --skill ktl-docent --skill ktl-prose
 ```
 
-Start with the sidecar and the librarian; the curator matters once there is a bundle worth trusting.
-
-**Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
-
-```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes
-```
-
-**Claude Code plugin**:
+**Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting.
 
 ```text
+# Claude Code plugin
 /plugin marketplace add noelmcloughlin/knowledge-trust-ladder
 /plugin install knowledge-trust-ladder@knowledge-trust-ladder
 ```
@@ -54,15 +49,15 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global
 
 ## Why libraries have catalogues
 
-The knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a [**context layer**](docs/context-layer.md): a governed layer between those sources and whoever consumes them, that persists from one task to the next. Without it every task starts the same way: find the material, connect it, judge what's still true. The next person or assistant pays for that work again.
+Knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a [**context layer**](docs/context-layer.md): a governed layer between those sources and whoever consumes them, that persists from one task to the next. Without it every task starts the same way: find the material, connect it, judge what's still true. The next person or assistant pays for that work again.
 
 A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. It is useful only when a reader can tell which entries are sound, and that depends on one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry: where the entry came from and how far it has been checked, in [plain words](#trust-stays-visible).
 
 ## Prose, Structure, Meaning, Tools
 
-A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and tools that come with the standard rather than with this project. It is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). People, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html) can read it.
+A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and tools that come with the standard rather than this project. It is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). People, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html) can read it.
 
-**Knowledge Trust Ladder is an OKF runtime.** OKF's fourth goal is to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". Here those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer, and a domain whose concepts stop fitting it [extends the schema in LinkML](skills/ktl-curator/references/domain-schemas.md), so its own types are checked rather than tolerated.
+**Knowledge Trust Ladder is an OKF runtime** to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". Here those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer, and a domain whose concepts stop fitting it [extends the schema in LinkML](skills/ktl-curator/references/domain-schemas.md), so its own types are checked rather than tolerated.
 
 [WikiSkill](https://arxiv.org/abs/2608.27454) has an agent compile its own experience into a persistent wiki. A bundle runs that loop under a schema, with a registrar around it and a named person's verdict ([docs/wikiskill.md](docs/wikiskill.md)).
 
