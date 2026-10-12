@@ -4,8 +4,11 @@
 // in the words ktl-curator and ktl-docent use; its definition; and the rest
 // of its record below. The label comes from knowledge-report.sh, so the site
 // never derives it a second way. Search indexes only the definition, so a
-// result's excerpt never opens on the card's labels run together.
+// result's excerpt never opens on the card's labels run together, and two
+// attributes give Pagefind a Type and a Trust filter, which Starlight's
+// search box shows: Pagefind still reads filters in a part it leaves out.
 import TrustRung from "./TrustRung.astro";
+import { trustLabel } from "../trust";
 
 const { concept } = Astro.props;
 
@@ -38,7 +41,7 @@ const checker = lastCheck && actor(lastCheck.by);
 <section class={`ktl-card ktl-card--${concept.tone}`} aria-label="The concept's record">
   <header class="ktl-card__head" data-pagefind-ignore>
     <span>
-      {words(concept.type)}
+      <span data-pagefind-filter="Type">{words(concept.type)}</span>
       {concept.tags.map((tag: string) => <span class="ktl-card__tag">{tag}</span>)}
     </span>
     <code class="ktl-card__call" translate="no">{concept.id}</code>
@@ -47,7 +50,9 @@ const checker = lastCheck && actor(lastCheck.by);
   <div class="ktl-card__trust" data-pagefind-ignore>
     <TrustRung tone={concept.tone} />
     <div>
-      <p class="ktl-card__label">{rung.charAt(0).toUpperCase() + rung.slice(1)}</p>
+      <p class="ktl-card__label" data-pagefind-filter={`Trust:${trustLabel(concept.tone)}`}>
+        {rung.charAt(0).toUpperCase() + rung.slice(1)}
+      </p>
       {also.length > 0 && <p class="ktl-card__also">{also.join(", ")}</p>}
       <p class="ktl-card__when">
         {written && (
