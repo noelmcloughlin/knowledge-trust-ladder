@@ -51,7 +51,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
 
 Knowledge already exists: in code, documents, diagrams, policies, operational records. What's missing is a [**context layer**](docs/context-layer.md): a governed layer between those sources and whoever consumes them, that persists from one task to the next. Without it every task starts the same way: find the material, connect it, judge what's still true. The next person or assistant pays for that work again.
 
-A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. It is useful only when a reader can tell which entries are sound, and that depends on one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry: where the entry came from and how far it has been checked, in [plain words](#trust-stays-visible). One bundle is one repository's context layer, and [docs/context-layer.md](docs/context-layer.md) says how many bundles become one.
+A **knowledge bundle** is the catalog: a plain folder of Markdown concept files that keeps the work instead of discarding it. It is useful only when a reader can tell which entries are sound, and that depends on one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry: where the entry came from and how far it has been checked, in [plain words](#trust-stays-visible). One bundle is one repository's context layer, and [docs/context-layer.md](docs/context-layer.md) says how many bundles become a catalog.
 
 ## Prose, Structure, Meaning, Tools
 
