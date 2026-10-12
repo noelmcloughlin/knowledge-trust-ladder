@@ -5,12 +5,12 @@
 
 # Knowledge Trust Ladder (ktl)
 
-A shorter version of this page, for readers aged 13 to 18, is in [README.en-simple.md](README.en-simple.md).
-
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
+
+A shorter version of this page, for readers aged 13 to 18, is in [README.en-simple.md](README.en-simple.md).
 
 Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies schema and tooling. Two Obsidian plugins are optional, for a vault with no CI.
 
@@ -53,7 +53,7 @@ Knowledge already exists: in code, documents, diagrams, policies, operational re
 
 A **knowledge bundle** is the catalogue: a plain folder of Markdown concept files that keeps the work instead of discarding it. It is useful only when a reader can tell which entries are sound, and that depends on one question: *who is responsible for the quality of this context?* The trust ladder is the answer, written into each entry: where the entry came from and how far it has been checked, in [plain words](#trust-stays-visible). One bundle is one repository's context layer, and [docs/context-layer.md](docs/context-layer.md) says how many bundles become a catalogue.
 
-## Prose, Structure, Meaning, Tools
+## Prose, Structure, Meaning, Context
 
 A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and tools that come with the standard rather than this project. It is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). People, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html) can read it.
 
