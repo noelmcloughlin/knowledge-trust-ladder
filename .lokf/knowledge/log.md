@@ -2,6 +2,11 @@
 
 ## 2026-10-12
 
+* **Prose**: reworded 2 concept bodies in plain English: the context layer, whose pin-or-float detail now follows the list of decisions, and the website playbook. No fact, link, number or frontmatter changed.
+* **Changed**: The context layer follows `docs/context-layer.md` again: its new title and federation heading, and the pin-or-float decision, which the page now settles by pinning and which absorbs the staleness bullet. Trust at read time moved from the decisions into the workspace section, as on the page.
+* **Changed**: Domain schemas quotes the README as it now reads, which says a domain "extends the schema" without naming LinkML.
+* **Added**: Build, preview and edit the website, from `website/README.md` and `.github/workflows/website.yml`, which the 0.38.1 release added.
+* **Changed**: The source map gains a row for `website/` and `website.yml`, which feed the new website playbook. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: `docs/context-layer.md` and `docs/context-layer-technology.md` now write catalogue, as the README and the rest of the bundle do. The concept and its description follow them; product names such as Unity Catalog keep their own spelling.
 * **Changed**: Knowledge sources records the twenty-seventh pass. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Prose**: reworded 2 concept bodies in plain English: WikiSkill and SkillWiki, after the librarian rewrote both. No fact, link, number or frontmatter changed.

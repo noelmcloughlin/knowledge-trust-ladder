@@ -20,7 +20,7 @@ generated:
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T17:06:00Z"
+  at: "2026-10-12T23:54:28Z"
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/registrar
 ---
