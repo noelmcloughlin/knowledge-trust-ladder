@@ -10,7 +10,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
-- **The README and the sidecar's README link OKF's specification in its own repository.** Google moved the Open Knowledge Format to `GoogleCloudPlatform/open-knowledge-format` and froze the copy under `knowledge-catalog/okf/`.
+- **The README, the sidecar's README and ktl-librarian's Golden Rule 1 link OKF's specification in its own repository.** Google moved the Open Knowledge Format to `GoogleCloudPlatform/open-knowledge-format` and froze the copy under `knowledge-catalog/okf/`.
 
 ## [0.38.0] - 2026-10-11
 
