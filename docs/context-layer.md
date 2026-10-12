@@ -1,4 +1,4 @@
-# The KTL context layer: one bundle, and a federation of bundles
+# The curated context layer: one bundle, and a federation of bundles
 
 > [!NOTE]
 > For anyone deciding what a context layer is, what one Knowledge Trust Ladder (KTL) bundle already provides, and what it would take to federate many LOKF bundles into one layer. Each quotation is from the source's own text, read on 2026-10-12. The domain tiers and the workspace on this page are a design, with no released code behind them yet, and both figures draw them with a dashed outline. [What a KTL context layer integrates with](context-layer-technology.md) surveys the stores, catalogues, agent surfaces and artifact repositories.
