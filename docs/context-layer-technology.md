@@ -18,7 +18,7 @@ The workspace adds one named graph per bundle and a registry keyed by `base_iri`
 | Artifact repository | The sidecar's release workflow attaches the bundle zip, its checksum and an attestation to a GitHub release | Any repository that stores a file and sends a webhook on arrival |
 | Store | `lokf serve` and `lokf query` run SPARQL over one bundle in an in-process Oxigraph store | A store that loads N-Quads or TriG and answers SPARQL 1.1 |
 | Agent surface | `lokf mcp` exposes seven tools over one bundle; the **docent** runs in any agent that installs it | A store's own Model Context Protocol (MCP) server or natural-language layer |
-| Catalog or semantic layer | `lokf tables` writes one table per concept type and a relations table, with BigQuery or Athena definitions | A catalog that takes tables or YAML and not RDF |
+| Catalogue or semantic layer | `lokf tables` writes one table per concept type and a relations table, with BigQuery or Athena definitions | A catalogue that takes tables or YAML and not RDF |
 | Stable identifiers | `base_iri` in each bundle's `index.md` | A persistent-identifier service, and a static host for exported files |
 
 ## Artifact repositories
@@ -55,7 +55,7 @@ Azure and Google Cloud offer no SPARQL service: Cosmos DB for Apache Gremlin, Gr
 
 **Property-graph stores.** The bridge from RDF is narrow. Neo4j's neosemantics (n10s) imports "Turtle, N-Triples, JSON-LD, RDF/XML, TriG and N-Quads" and keeps named graphs, but "is only available for Neo4j self-hosted (CE and EE) and is not available in Aura". Amazon Neptune Analytics loads N-Triples from S3 and drops the graph names. Memgraph, TigerGraph and FalkorDB document no RDF import and take tables.
 
-## Catalogs and semantic layers
+## Catalogues and semantic layers
 
 | Product | What a bundle can feed it | What comes out |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Azure and Google Cloud offer no SPARQL service: Cosmos DB for Apache Gremlin, Gr
 | Databricks Unity Catalog | `lokf tables` output as tables; metric views in SQL or YAML | Genie, and a `genie_one_mcp` server |
 | Snowflake | tables, and YAML for semantic views | Cortex Agents, and a managed MCP server |
 | dbt Semantic Layer | YAML metrics over tables | "AI tools like Claude and ChatGPT can connect to the Semantic Layer through the dbt MCP server" |
-| Google Cloud Knowledge Catalog (formerly Dataplex Universal Catalog) | the OKF bundle itself: Google's announcement says Knowledge Catalog ingests OKF, and the OKF repository carries a connector that pushes one bundle per entry group | the catalog's search and context APIs |
+| Google Cloud Knowledge Catalog (formerly Dataplex Universal Catalog) | the OKF bundle itself: Google's announcement says Knowledge Catalog ingests OKF, and the OKF repository carries a connector that pushes one bundle per entry group | the catalogue's search and context APIs |
 | TopQuadrant TQ Data Foundation, "Built entirely on open knowledge-graph standards" of RDF, OWL and SHACL | RDF, in principle; its import pages could not be read | SPARQL and MCP, per its documentation index |
 
 The OKF repository's own README names the places an OKF bundle can be consumed by reading the files: BigQuery, Dataplex, Vertex AI, Gemini, the Agent Development Kit, LangChain, Unity Catalog, Collibra, Obsidian, Notion and the static site generators.
@@ -77,13 +77,13 @@ The retrieval frameworks that build graphs, among them Amazon Bedrock Knowledge 
 
 ## The tables route
 
-`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalog above that takes tables and not RDF can read that output. The tables carry the structure and the frontmatter. The bound predicates, the meaning a graph carries, stay in the RDF.
+`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalogue above that takes tables and not RDF can read that output. The tables carry the structure and the frontmatter. The bound predicates, the meaning a graph carries, stay in the RDF.
 
 ## What fits a Markdown-plus-RDF bundle
 
 - Stores whose documentation lists TriG or N-Quads keep one named graph per bundle through the load: Oxigraph, Jena, GraphDB, Stardog, Virtuoso, RDF4J, AllegroGraph and MarkLogic. QLever and Neptune take N-Quads and not TriG.
 - Managed SPARQL exists on AWS, through Neptune, Stardog Cloud, GraphDB's marketplace offerings and AllegroGraph Cloud, and natively on neither Azure nor Google Cloud.
-- Among catalogs, only data.world is SPARQL-native, and it takes Turtle per dataset rather than TriG. Fabric IQ takes the schema, with loss; the lakehouse catalogs take the tables; Knowledge Catalog takes the OKF bundle itself.
+- Among catalogues, only data.world is SPARQL-native, and it takes Turtle per dataset rather than TriG. Fabric IQ takes the schema, with loss; the lakehouse catalogues take the tables; Knowledge Catalog takes the OKF bundle itself.
 - The property-graph bridge is n10s on self-hosted Neo4j, and nothing on Aura.
 - No retrieval framework surveyed consumes RDF as its graph. The RDF-native agent surfaces are the stores' MCP servers and the toolkit's own.
 - Every artifact repository surveyed stores a zip and its checksum. Artifactory, Nexus and Cloudsmith send a filtered or signed webhook on arrival, and an OCI registry adds a signature through ORAS and cosign.

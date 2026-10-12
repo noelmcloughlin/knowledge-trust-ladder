@@ -22,17 +22,6 @@ exclude = [
   # re-check these by hand on the bundle's refresh, not here.
   '^https://doi\.org/',
   '^https://www\.parliament\.uk/',
-  # skills/ktl-docent/SKILL.md links its examples page on main by absolute
-  # URL, since installed copies have no relative path to it. The page moved
-  # from EXAMPLES.md to docs/examples/docent.md on 2026-09-16 and exists
-  # only on the branch until that merges; drop this line after the merge.
-  '^https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/docent\.md$',
-  # Same for docs/m365.md, linked from ktl-sidecar/references/m365.md; drop
-  # after 0.27 merges.
-  '^https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/m365\.md$',
-  # Same for docs/examples/prose.md, linked from
-  # ktl-prose/references/young-readers.md; drop after it merges.
-  '^https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/examples/prose\.md$',
   # conventionalcommits.org (Netlify) answers CI runners with 503 on every
   # retry while serving 200 elsewhere; not a dead link. Drop this exclusion
   # if CI reaches it again.
@@ -46,10 +35,21 @@ exclude_path = [
   "(^|/)knowledge_bundle/",
 ]
 
-# github.com answers a burst of page requests from one CI runner with 503:
-# on 2026-10-12 three runs failed 15, 14 and 3 different blob pages, each
-# of which answered 200 when checked again. Pace the requests to it
-# rather than exclude it, so a moved or deleted file still fails.
+# github.com answers automated clients with 503 or 429 on a file page
+# (/blob/) while it serves the repository pages, and on 2026-10-12 it did
+# so to a CI runner and a workstation alike, past every retry above.
+# raw.githubusercontent.com serves the same file at the same commit, tag
+# or branch, and answers 404 once the file is gone, so lychee checks each
+# file link there instead. lychee remaps a link before it applies
+# `exclude`, so an exclusion for a file link must name its raw address.
+remap = [
+  '^https://github\.com/([^/]+/[^/]+)/blob/([^?#]+)([?#].*)?$ https://raw.githubusercontent.com/$1/$2',
+]
+
+# The rest of github.com, such as repository, folder and issue pages, also
+# answers a burst of requests from one CI runner with 503. Pace the
+# requests to it rather than exclude it, so a moved or deleted page still
+# fails.
 [hosts."github.com"]
 concurrency = 2
 request_interval = "250ms"
