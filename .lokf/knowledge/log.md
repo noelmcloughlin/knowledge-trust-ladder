@@ -2,6 +2,8 @@
 
 ## 2026-10-12
 
+* **Changed**: `docs/context-layer.md` and `docs/context-layer-technology.md` now write catalogue, as the README and the rest of the bundle do. The concept and its description follow them; product names such as Unity Catalog keep their own spelling.
+* **Changed**: Knowledge sources records the twenty-seventh pass. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Prose**: reworded 2 concept bodies in plain English: WikiSkill and SkillWiki, after the librarian rewrote both. No fact, link, number or frontmatter changed.
 * **Changed**: WikiSkill takes the page's new title, and its description names what the page now holds.
 * **Changed**: SkillWiki takes the page's new title, and its description names what the page now holds.

@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:43:34Z"
+  at: "2026-10-12T17:06:00Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -51,6 +51,8 @@ status: draft
 | `LICENSE`, `llms.txt`, `.gitignore`, `docs/examples/docent.md`, `curator.md` and `prose.md` | licensing boilerplate, the agent-facing pointer file, the repository's ignore rules, and captured skill transcripts (the docent's, and ktl-prose's runs for younger readers; the curator's page is a placeholder) | consciously excluded as concepts - see note below; re-check that `llms.txt` still matches what the "Agents:" callout in `README.md` tells agents, and that `docs/examples/docent.md`'s trust-label claims still match `glossary/trust-label.md` |
 
 # Notes for the next run
+
+- **Steady-state refresh (2026-10-12, twenty-seventh pass)**, at `6306e90`, after the README and docs settled on the spelling catalogue and the link check moved github.com file links to raw.githubusercontent.com. Twenty-two concepts had a moved source, all from that commit or from the last pass's own stamps. The context-layer concept follows its sources' spelling, and the other twenty were re-checked and still match. No tracked file was added or removed, and the `lychee.toml` row still holds. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 
 - **Steady-state refresh (2026-10-12, twenty-sixth pass)**, at `54ee9ce`, after the research pages were trimmed. Thirty-two concepts had a moved source, all from that one commit. Six follow their sources again: WikiSkill, SkillWiki, the skills repository, the context layer, three lines of defence and this map. The other twenty-six were re-checked and still match. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 

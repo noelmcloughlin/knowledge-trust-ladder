@@ -2,7 +2,7 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/context-layer
 title: "The context layer: one bundle, and a federation of bundles"
-description: "What the industry means by a context layer, why one KTL bundle is already one repository's context layer and where it stops, and a design for federating bundles into one layer: domains as thin LOKF bundles that select releases, and a workspace rebuilt on each release with one named graph per bundle. It also says what exists today, the decisions an adopter makes, and which SPARQL stores, catalogs, agent surfaces and artifact repositories such a layer can use."
+description: "What the industry means by a context layer, why one KTL bundle is already one repository's context layer and where it stops, and a design for federating bundles into one layer: domains as thin LOKF bundles that select releases, and a workspace rebuilt on each release with one named graph per bundle. It also says what exists today, the decisions an adopter makes, and which SPARQL stores, catalogues, agent surfaces and artifact repositories such a layer can use."
 genre: explanation
 resource: docs/context-layer.md
 sources:
@@ -21,7 +21,7 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:43:34Z"
+  at: "2026-10-12T17:06:00Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -57,4 +57,4 @@ A reader gets the index first and traverses on demand, over a SPARQL endpoint an
 - per-query permission in the artifact repository and the store, since OKF says trust tiers are not access control;
 - trust computed at read time.
 
-**What it integrates with.** `docs/context-layer-technology.md` surveys, from each vendor's own documentation, the artifact repositories, RDF stores with SPARQL, property-graph stores, catalogs and agent frameworks such a workspace could use. Stores whose documentation lists TriG or N-Quads keep one named graph per bundle through the load. Managed SPARQL exists on AWS, and natively on neither Azure nor Google Cloud. No retrieval framework it surveyed consumes RDF as its graph, so the agent surface is the store's own. Catalogs that take tables rather than RDF read what `lokf tables` writes.
+**What it integrates with.** `docs/context-layer-technology.md` surveys, from each vendor's own documentation, the artifact repositories, RDF stores with SPARQL, property-graph stores, catalogues and agent frameworks such a workspace could use. Stores whose documentation lists TriG or N-Quads keep one named graph per bundle through the load. Managed SPARQL exists on AWS, and natively on neither Azure nor Google Cloud. No retrieval framework it surveyed consumes RDF as its graph, so the agent surface is the store's own. Catalogues that take tables rather than RDF read what `lokf tables` writes.

@@ -18,7 +18,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  at: "2026-10-12T17:06:00Z"
 sources:
 - resource: docs/three-lines.md
 - resource: docs/three-lines-critics.md
