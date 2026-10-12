@@ -8,6 +8,8 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { satteri } from "@astrojs/markdown-satteri";
 import markdownKtl from "./scripts/markdown-ktl.mjs";
+import starlightImageZoom from "starlight-image-zoom";
+import starlightSidebarTopics from "starlight-sidebar-topics";
 import {
   BASE,
   DOCS_GROUPS,
@@ -40,27 +42,43 @@ export default defineConfig({
       // concept page shows its own `generated` and `verified` times instead.
       lastUpdated: false,
       routeMiddleware: "./src/routeData.ts",
-      sidebar: [
-        { label: "Home", link: "/" },
-        { label: "For readers aged 13 to 18", link: "/simple/" },
-        ...DOCS_GROUPS.map((group) => ({
-          label: group.label,
-          items: group.pages.map((page) => `docs/${page}`),
-        })),
-        {
-          label: "Knowledge bundle",
-          items: [
-            { label: "About the bundle", link: "/knowledge/" },
-            { label: "Bundle health", link: "/health/" },
-            { label: "Knowledge graph", link: "/graph/" },
-            ...bundleGroups().map((group) => ({
-              label: groupLabel(group),
-              collapsed: true,
-              items: [{ autogenerate: { directory: `knowledge/${group}` } }],
-            })),
-            { label: "Bundle log", link: "/knowledge/log/" },
-          ],
-        },
+      plugins: [
+        // Click a figure to see it at full size: KTL's diagrams are dense at
+        // the page's width.
+        starlightImageZoom(),
+        // The guide and the bundle each get a sidebar of their own, with a
+        // switch between them at its top.
+        starlightSidebarTopics([
+          {
+            label: "Guide",
+            link: "/",
+            icon: "open-book",
+            items: [
+              { label: "Home", link: "/" },
+              { label: "For readers aged 13 to 18", link: "/simple/" },
+              ...DOCS_GROUPS.map((group) => ({
+                label: group.label,
+                items: group.pages.map((page) => `docs/${page}`),
+              })),
+            ],
+          },
+          {
+            label: "Knowledge bundle",
+            link: "/knowledge/",
+            icon: "list-format",
+            items: [
+              { label: "About the bundle", link: "/knowledge/" },
+              { label: "Bundle health", link: "/health/" },
+              { label: "Knowledge graph", link: "/graph/" },
+              ...bundleGroups().map((group) => ({
+                label: groupLabel(group),
+                collapsed: true,
+                items: [{ autogenerate: { directory: `knowledge/${group}` } }],
+              })),
+              { label: "Bundle log", link: "/knowledge/log/" },
+            ],
+          },
+        ]),
       ],
     }),
   ],

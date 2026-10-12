@@ -186,7 +186,9 @@ function asidesInProse(text) {
 /**
  * A `<picture>` that swaps in a dimmed figure for a dark system theme becomes
  * two images, one shown in each of Starlight's themes, so the figure follows
- * the site's theme switch rather than the system's.
+ * the site's theme switch rather than the system's. The theme's class goes
+ * on a wrapper, so the zoom button image zoom adds beside each image is
+ * hidden with it, and a keyboard or a screen reader meets one per figure.
  */
 function picturesToThemedImages(body) {
   return body.replace(/<picture>([\s\S]*?)<\/picture>/g, (whole, inner) => {
@@ -195,7 +197,7 @@ function picturesToThemedImages(body) {
     if (!dark || !img) return whole;
     const attrs = img[1].replace(/\s+class="[^"]*"/, "");
     const darkAttrs = attrs.replace(/\bsrc="[^"]*"/, `src="${dark[1]}"`);
-    return `<img${attrs} class="dark:sl-hidden" /><img${darkAttrs} class="light:sl-hidden" />`;
+    return `<span class="dark:sl-hidden"><img${attrs} /></span><span class="light:sl-hidden"><img${darkAttrs} /></span>`;
   });
 }
 
