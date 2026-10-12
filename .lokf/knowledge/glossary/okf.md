@@ -15,7 +15,7 @@ definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T16:00:09Z"
+  at: "2026-10-12T16:43:34Z"
 sources:
 - resource: README.md
 ---

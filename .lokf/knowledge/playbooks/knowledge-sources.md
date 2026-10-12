@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:09:08Z"
+  at: "2026-10-12T16:43:34Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -31,8 +31,8 @@ status: draft
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
 | `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
 | `docs/three-lines.md`, `docs/three-lines-critics.md` | the roles placed in the three lines of defence, what an auditor can check and what remains to do and who does it; the critics, quoted, and what a bundle answers and leaves open, on the second page | diff `explanation/three-lines-of-defence.md`; confirm every external link on both pages still resolves and still says what is quoted, and that the cross-links between the two pages still meet their headings |
-| `docs/wikiskill.md` | the WikiSkill paper (Tang et al., 2026) read against this design, since 2026-10-02: the same loop part by part, what the paper found and what a bundle does with each finding, and where each design puts programs, models and people | diff `explanation/wikiskill.md` |
-| `docs/skillwiki.md`, `docs/skills-repositories.md` | the SkillWiki paper (Huang et al., 2026) read against this design; and whether KTL helps a repository whose content is Agent Skills, read through WikiSkill and SkillWiki | `explanation/skillwiki.md` and `explanation/skills-repositories.md`, one each; re-check the side-by-side table, the four changes and the run on `anthropics/skills` |
+| `docs/wikiskill.md` | what KTL took from the WikiSkill paper (Tang et al., 2026), since 2026-10-02, and what the paper leaves open | diff `explanation/wikiskill.md` |
+| `docs/skillwiki.md`, `docs/skills-repositories.md` | what KTL took from the SkillWiki paper (Huang et al., 2026), and where the designs part; and whether KTL helps a repository whose content is Agent Skills, with two runs and what remains to do | `explanation/skillwiki.md` and `explanation/skills-repositories.md`, one each; re-check the four changes and the run on `anthropics/skills` |
 | `docs/context-layer.md`, `docs/context-layer-technology.md` | what a context layer is, one bundle as one repository's layer, the design for federating bundles, and what such a layer integrates with; `explanation/context-layer.md` since 2026-10-12 | diff the concept; re-check a vendor's page only where the concept states what it says |
 | `SECURITY.md` | the slim security policy (reporting, supported versions, a surface table) | diff the surface table and the reporting/supported-versions text |
 | `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the other two repositories' `SECURITY.md`, so a heading rename here is a breaking change there |
@@ -51,6 +51,8 @@ status: draft
 | `LICENSE`, `llms.txt`, `.gitignore`, `docs/examples/docent.md`, `curator.md` and `prose.md` | licensing boilerplate, the agent-facing pointer file, the repository's ignore rules, and captured skill transcripts (the docent's, and ktl-prose's runs for younger readers; the curator's page is a placeholder) | consciously excluded as concepts - see note below; re-check that `llms.txt` still matches what the "Agents:" callout in `README.md` tells agents, and that `docs/examples/docent.md`'s trust-label claims still match `glossary/trust-label.md` |
 
 # Notes for the next run
+
+- **Steady-state refresh (2026-10-12, twenty-sixth pass)**, at `54ee9ce`, after the research pages were trimmed. Thirty-two concepts had a moved source, all from that one commit. Six follow their sources again: WikiSkill, SkillWiki, the skills repository, the context layer, three lines of defence and this map. The other twenty-six were re-checked and still match. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 
 - **Steady-state refresh (2026-10-12, twenty-fifth pass)**, on branch `ktl-context-layer` at `f79b7ae`, after the context-layer pages. Twenty-nine concepts had a moved source, every one from this branch's edits to `README.md`, `CHANGELOG.md`, `docs/three-lines.md`, `docs/for-the-curious.md`, the sidecar's README template and `scripts/sync-sidecar.sh`. Six follow their sources again and twenty-three re-checked unchanged. Four references were re-checked against their pages. A row above names the context-layer pages, which now have a concept. `lokf` on PyPI is still `0.8.0`, the floor; `.lokf/feedback.md` has no entries.
 

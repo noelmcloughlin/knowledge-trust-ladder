@@ -15,7 +15,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/references/linkml
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:43:34Z"
 sources:
 - resource: https://pypi.org/project/lokf/
 - resource: skills/ktl-librarian/SKILL.md

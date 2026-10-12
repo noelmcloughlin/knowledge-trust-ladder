@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:12:27Z"
+  at: "2026-10-12T16:43:34Z"
 status: draft
 about: []
 relatedTo:
@@ -58,7 +58,7 @@ Four limits bound what that evidence proves:
 - An Environment attestation records only that a listed reviewer clicked Approve.
 - The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file, and nothing checks approvals. A host without git has only its platform's version history.
 
-The critics have a page of their own, `docs/three-lines-critics.md`, marked as preliminary research and, since 2026-09-23, arranged by criticism rather than by critic. A table at the top lists nine points with who raised them and a verdict. Each section then quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page, citing each paper by DOI and the two reports by URL.
+The critics have a page of their own, `docs/three-lines-critics.md`, arranged since 2026-09-23 by criticism rather than by critic. A table at the top lists nine points with who raised them and a verdict. Each section then quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page, citing each paper by DOI and the two reports by URL.
 
 Three points are met by construction:
 

@@ -2,6 +2,14 @@
 
 ## 2026-10-12
 
+* **Changed**: WikiSkill takes the page's new title, and its description names what the page now holds.
+* **Changed**: SkillWiki takes the page's new title, and its description names what the page now holds.
+* **Rewrite**: `docs/wikiskill.md` was trimmed to what KTL took from the paper and what the paper leaves open, without the part-by-part table or the programs, models and people table. The concept follows it, under the page's new title.
+* **Rewrite**: `docs/skillwiki.md` was trimmed to the four changes, the excerpt check and where the designs part, without the side-by-side table, the programs, models and people table or the paper's open points. The concept follows it, under the page's new title.
+* **Changed**: `docs/skills-repositories.md` no longer reads the two papers against KTL's design, and now gives the handling before the two runs. The overview says so.
+* **Changed**: `docs/context-layer.md` no longer quotes Tellius, Andreessen Horowitz, Forrester, Gartner and the other vendors, nor the analogies in its workspace steps. The concept drops the two quotations it carried.
+* **Changed**: `docs/three-lines-critics.md` is no longer marked as preliminary research, and the concept no longer says it is.
+* **Changed**: Knowledge sources: the `docs/wikiskill.md`, `docs/skillwiki.md` and `docs/skills-repositories.md` rows follow the trimmed pages, and the twenty-sixth pass is recorded. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Domain schemas now relates to the curator skill instead of naming it as its subject.
 * **Changed**: Three lines of defence now relates to the two role explanations instead of naming them as its subject.
 * **Changed**: Versioning now relates to the releasing playbook instead of naming it as its subject. Edited since a person confirmed it; the label says so until the curator looks again.

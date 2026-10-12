@@ -21,7 +21,7 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:08:20Z"
+  at: "2026-10-12T16:43:34Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -32,7 +32,7 @@ verified:
 
 `docs/context-layer.md` places Knowledge Trust Ladder (KTL) in the industry's talk of a **context layer**. A context layer is a governed layer between an organisation's sources and whoever consumes them, a person or an agent, and it persists from one task to the next. The README uses the term in "Why libraries have catalogues" and links the page. The page quotes each source from its own text, read on 2026-10-12. Both of its diagrams give a dashed outline to the parts that are a design, with no released code behind them yet.
 
-**What the discourse means.** Tellius calls the context layer "the architectural tier between enterprise data and AI agents that translates raw data into governed business meaning the agent can act on reliably". Andreessen Horowitz lists the names in use, "context OS, context engine, contextual data layer, ontology, and more", and says the layer "should essentially become a superset of what a semantic layer would traditionally cover". Unblocked names four properties: "heterogeneous source ingestion, on-demand surfacing, cross-source conflict resolution, and per-query permission enforcement". Atlan adds multi-domain federation, in which "Each domain owns its definitions but contributes to one graph", and the page sets that beside Zhamak Dehghani's "federated computational governance". Google Cloud's Open Knowledge Format (OKF) took a different approach, under the heading "Format, not platform".
+**What the discourse means.** Unblocked names four properties: "heterogeneous source ingestion, on-demand surfacing, cross-source conflict resolution, and per-query permission enforcement". Atlan adds multi-domain federation, in which "Each domain owns its definitions but contributes to one graph", and the page sets that beside Zhamak Dehghani's "federated computational governance". Google Cloud's Open Knowledge Format (OKF) took a different approach, under the heading "Format, not platform", and left open the work KTL exists for: what counts as trusted knowledge and how updates are reviewed.
 
 **One bundle is one repository's context layer.** A table on the page sets those properties against what a bundle does. The librarian derives each concept from a source it names. A reader opens `index.md` first, and the docent answers from the bundle with each concept's label. The curator records a person's verdict on a conflict inside one bundle. Every concept carries `generated` and `verified` events, and each trust label is computed on read. The bundle has no permissions of its own: the repository's access control is the bundle's. So one bundle is already one repository's context layer, with per-query permission left to whatever hosts it.
 

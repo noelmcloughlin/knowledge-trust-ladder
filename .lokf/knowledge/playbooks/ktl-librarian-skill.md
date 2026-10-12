@@ -43,7 +43,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-03T09:40:04Z"
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-12T16:43:34Z"
 stale_after: 2027-10-03
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
