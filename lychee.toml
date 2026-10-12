@@ -26,6 +26,12 @@ exclude = [
   # retry while serving 200 elsewhere; not a dead link. Drop this exclusion
   # if CI reaches it again.
   '^https://www\.conventionalcommits\.org/',
+  # graphdb.ontotext.com (cited in docs/context-layer-technology.md) and
+  # dyslexia.ie (cited in ktl-prose's references/young-readers.md) time out
+  # for CI runners while serving 200 elsewhere within a second (checked
+  # 2026-10-12). Drop these lines if CI reaches them again.
+  '^https://graphdb\.ontotext\.com/',
+  '^https://dyslexia\.ie/',
   # The website's own address, which website/README.md links. It answers
   # 404 until website.yml first deploys main (checked 2026-10-12), and the
   # site's own link check covers every page under it. Drop this line once
