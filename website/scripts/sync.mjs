@@ -394,7 +394,9 @@ function writeConceptPages(concepts) {
         ktlSource: `.lokf/knowledge/${c.id}.md`,
         ktlShiftHeadings: hasH1(c.body),
         editUrl: false,
-        sidebar: { order },
+        // The sidebar entry carries the concept's trust: catalogue.css draws a
+        // dot from the tone, and the label is its tooltip.
+        sidebar: { order, attrs: { "data-ktl-tone": c.tone, title: c.label } },
         head,
         lokf: c.record,
       },
