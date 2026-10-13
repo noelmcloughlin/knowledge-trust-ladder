@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.38.2] - 2026-10-13
+
 ### Changed
 
 - **The README is a doorway, in the style of LinkML's.** It keeps the poem and the opening paragraph, names LOKF and LinkML as inspirations beside the poem, and links the website, the quick start and the retelling for readers aged 13 to 18. The library, museum and roles story moved to `docs/architecture.md`, which leads the website's Architecture group, and the quick start moved to `docs/install.md`.
