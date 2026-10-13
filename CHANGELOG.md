@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The website's home page highlights Browse the bundle.** It is now the first and primary button, and Quick start follows it as a secondary one.
+
 ## [0.38.1] - 2026-10-12
 
 ### Added
