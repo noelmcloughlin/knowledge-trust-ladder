@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.38.3] - 2026-10-13
+
 ### Fixed
 
 - **A concept's source link keeps its leading dot.** A source such as `.github/workflows/validate.yml` linked `github/...` on GitHub, which is no file there; `.` and `./` still read as the whole repository.
