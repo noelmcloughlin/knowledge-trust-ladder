@@ -16,7 +16,8 @@
     // What website/ generates from the files above, which are linted where they are.
     "website/dist/**",
     "website/public/**",
-    "website/src/content/**"
+    "website/src/content/**",
+    "website/src/generated/**"
   ],
   // Rules disabled for reasons specific to this repo's content, not because
   // the underlying style guidance is wrong in general:

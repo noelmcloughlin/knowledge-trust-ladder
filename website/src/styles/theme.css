@@ -106,8 +106,8 @@
   }
 }
 
-/* KTL's diagrams are drawn 720 wide with text of 9.5 to 14 units, too small
-   to read at that size. Every diagram carries width="720" in its source page,
+/* A diagram drawn 720 wide, with text of 9.5 to 14 units, is too small to
+   read at that size. Such a diagram carries width="720" in its source page,
    which marks it apart from the logo, so it fills the text column instead. */
 .sl-markdown-content img[width="720"] {
   width: 100%;

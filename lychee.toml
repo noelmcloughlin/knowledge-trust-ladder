@@ -48,7 +48,7 @@ exclude_path = [
   # The site's build writes these from the repository's own Markdown, with
   # links that only resolve once the site is served. website/'s own link check
   # covers them, and the files they come from are checked where they are.
-  "(^|/)website/(dist|public|src/content|node_modules)/",
+  "(^|/)website/(dist|public|src/content|src/generated|node_modules)/",
 ]
 
 # github.com answers automated clients with 503 or 429 on a file page
