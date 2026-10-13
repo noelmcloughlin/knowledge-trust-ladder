@@ -349,7 +349,7 @@ function buildConcepts(exported, labels) {
       verified: (Array.isArray(c.data.verified) ? c.data.verified : []).map(event),
       sources: sources.map((s) => {
         if (/^https?:/.test(s)) return { text: s, href: s };
-        const path = s.replace(/^\.\/?/, "").replace(/\/$/, "");
+        const path = s.replace(/^\.(?:\/|$)/, "").replace(/\/$/, "");
         if (path === "") return { text: "the whole repository", href: `${REPO_URL}/tree/${REF}` };
         return { text: s, href: githubFile(path) };
       }),
