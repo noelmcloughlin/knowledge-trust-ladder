@@ -187,7 +187,7 @@ function asidesInProse(text) {
 }
 
 /**
- * A figure's dark version on the site. The README's `<picture>` names the
+ * A figure's dark version on the site. A page's `<picture>` names the
  * `-dimmed` set, which suits GitHub's dark theme; the site's dark theme takes
  * the `-dark` set beside it in .assets/, drawn on a dark ground.
  */
@@ -580,6 +580,9 @@ function writeDocs() {
       {
         title: title ?? name,
         ...(description ? { description } : {}),
+        // A page named after its sidebar group opens the group, labelled as
+        // each bundle group's index is.
+        ...(DOCS_GROUPS.some((g) => g.label.toLowerCase() === name) ? { sidebar: { label: "Overview" } } : {}),
         ktlSource: source,
         editUrl: `${REPO_URL}/edit/main/${source}`,
       },
@@ -590,36 +593,57 @@ function writeDocs() {
   return docs.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
 }
 
-function writeReadmes(tagline) {
+/** The text from its first `# ` title down, passing over a `# ` inside fenced code. */
+function fromTitle(text, file) {
+  const lines = text.split("\n");
+  let fence = null;
+  for (const [i, line] of lines.entries()) {
+    const m = line.match(/^\s*(`{3,}|~{3,})/);
+    if (fence) {
+      if (m && m[1][0] === fence[0] && m[1].length >= fence.length) fence = null;
+    } else if (m) fence = m[1];
+    else if (/^# /.test(line)) return lines.slice(i).join("\n");
+  }
+  throw new Error(`${file} has no '# ' title, and the home page starts at it`);
+}
+
+function writeReadmes() {
   // The home page: the README from its title down, under a hero. The logo
-  // and the badges above the title are for GitHub, and the hero shows the
-  // logo itself. A line that links this site is dropped too, since here it
-  // would link to the page it is on. The tagline is the bold summary line
-  // that opens the architecture page, the story the README points to.
-  const source = repoFile("README.md");
-  let readme = takeTitle(source.slice(Math.max(0, source.search(/^# /m)))).body;
-  readme = readme
-    .split("\n")
-    .filter((line) => !line.includes(`](${SITE_URL}/)`))
-    .join("\n");
-  const summary = repoFile("docs/architecture.md").match(/^\*\*(.+)\*\*\s*$/m);
-  tagline.text = summary ? plain(summary[1]) : "";
+  // above the title is for GitHub, and the hero shows the logo itself. A line
+  // that links this site's home page is left out, since here it would link to
+  // the page it is on: the README keeps that link, and the pointers the site
+  // gives as buttons, on a line of their own. The tagline is the first line of
+  // docs/architecture.md that is bold throughout. Each step passes over fenced
+  // code, and a missing title or tagline stops the build.
+  const home = [`](${SITE_URL})`, `](${SITE_URL}/)`, `<${SITE_URL}>`, `<${SITE_URL}/>`];
+  const readme = takeTitle(
+    mapProse(fromTitle(repoFile("README.md"), "README.md"), (line) =>
+      home.some((link) => line.includes(link)) ? null : line,
+    ),
+  ).body;
+  let tagline = null;
+  mapProse(repoFile("docs/architecture.md"), (line) => {
+    const bold = tagline === null && line.match(/^\*\*((?:(?!\*\*).)+)\*\*\s*$/);
+    if (bold) tagline = plain(bold[1]);
+    return line;
+  });
+  if (!tagline) {
+    throw new Error("docs/architecture.md has no line bold throughout, and the home page's tagline comes from it");
+  }
   page(
     resolve(CONTENT, "index.md"),
     {
       title: "Knowledge Trust Ladder",
-      description: tagline.text,
+      description: tagline,
       template: "splash",
       hero: {
-        tagline: tagline.text,
+        tagline,
         image: { light: "../../generated/logo-light.svg", dark: "../../generated/logo-dark.svg", alt: "" },
         actions: [
           { text: "Browse the bundle", link: `${BASE}/knowledge/`, icon: "right-arrow" },
           { text: "Architecture", link: `${BASE}/docs/architecture/`, variant: "secondary" },
           { text: "Glossary", link: `${BASE}/knowledge/glossary/`, variant: "secondary" },
           { text: "Quick start", link: `${BASE}/docs/install/#quick-start`, variant: "secondary" },
-          { text: "Context layer", link: `${BASE}/docs/context-layer/`, variant: "secondary" },
-          { text: "GitHub", link: REPO_URL, icon: "external", variant: "minimal" },
         ],
       },
       ktlSource: "README.md",
@@ -735,7 +759,7 @@ writeOverview(root, concepts, health);
 writeLog();
 writeHealth(concepts, health, full);
 const docs = writeDocs();
-writeReadmes({ text: "" });
+writeReadmes();
 writeLlmsTxt(docs, concepts);
 writeChangelog();
 
