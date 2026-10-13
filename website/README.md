@@ -2,7 +2,7 @@
 
 This folder builds the site that `.github/workflows/website.yml` publishes to GitHub Pages at <https://noelmcloughlin.github.io/knowledge-trust-ladder/>. Every page comes from a file the repository already holds, so a change to the site is a change to that file:
 
-- the README and `README.en-simple.md` become the home page and the page for readers aged 13 to 18;
+- the README and `docs/architecture.en-simple.md` become the home page and the page for readers aged 13 to 18;
 - each page under `docs/` becomes a page under `docs/`, placed in the sidebar by `site.config.mjs`;
 - each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its typed relations both ways;
 - the four files `lokf export` writes are served under `knowledge/`, beside each concept's own Markdown file and its JSON-LD;
@@ -26,6 +26,7 @@ Both commands run `npm run sync` first, which runs `lokf export` from the sideca
 ## What to edit
 
 - **A page's words:** the file it comes from: the README, a page under `docs/`, or a concept, through the librarian and the curator like any other change to the bundle.
+- **The home page:** the README from its title down, without its line that links the site, under the tagline and buttons that `writeReadmes()` in `scripts/sync.mjs` sets. The tagline is the first line of `docs/architecture.md` that is bold throughout.
 - **A new page under `docs/`:** add it to `DOCS_GROUPS` in `site.config.mjs`. The sync stops with an error until every page has a place.
 - **How a concept page looks:** `src/components/ConceptCard.astro` and `src/styles/catalogue.css`; the trust colours are in `src/styles/theme.css`, and the map in the right-hand column is `src/components/Neighbourhood.astro`.
 - **The health page:** `src/pages/health.astro` and its chart, `src/components/TrustChart.astro`; the trust states' words are in `src/trust.ts`.

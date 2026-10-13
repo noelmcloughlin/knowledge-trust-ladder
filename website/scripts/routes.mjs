@@ -18,7 +18,7 @@ function isDirectory(repoPath) {
 export function route(repoPath) {
   const p = repoPath.replace(/^knowledge_bundle(?=\/|$)/, ".lokf/knowledge").replace(/\/$/, "");
   if (p === "" || p === "README.md") return `${BASE}/`;
-  if (p === "README.en-simple.md") return `${BASE}/simple/`;
+  if (p === "docs/architecture.en-simple.md") return `${BASE}/simple/`;
   if (p === ".lokf/knowledge" || p === ".lokf/knowledge/index.md") return `${BASE}/knowledge/`;
   if (p === ".assets" ) return `${REPO_URL}/tree/${REF}/.assets`;
   let m = p.match(/^docs\/(.+)\.md$/);

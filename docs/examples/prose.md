@@ -6,6 +6,8 @@ Captured runs of `ktl-prose` on this repository, following `skills/ktl-prose/ref
 
 The request was a version of `README.md` for readers aged 13 to 18. Outside the bundle, ktl-prose writes a retelling itself, in a new file beside the original, as `references/other-files.md` describes under *A version for younger readers*.
 
+These runs are from before 2026-10-13. On that day the README became a short doorway, and its former sections moved to `docs/architecture.md`. The retelling moved beside that page, as `docs/architecture.en-simple.md`, and now retells it, so today's check is `--derived-from docs/architecture.md docs/architecture.en-simple.md`.
+
 **The original, at the band's limits.** The README passes the adult limits. At the limits for 13 to 18 it has 31 sentences over 20 words and one paragraph over 75 words:
 
 ```text

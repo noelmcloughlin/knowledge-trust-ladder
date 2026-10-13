@@ -187,7 +187,7 @@ function asidesInProse(text) {
 }
 
 /**
- * A figure's dark version on the site. The README's `<picture>` names the
+ * A figure's dark version on the site. A page's `<picture>` names the
  * `-dimmed` set, which suits GitHub's dark theme; the site's dark theme takes
  * the `-dark` set beside it in .assets/, drawn on a dark ground.
  */
@@ -555,7 +555,8 @@ function writeDocs() {
     for (const name of readdirSync(dir).sort()) {
       const full = resolve(dir, name);
       if (statSync(full).isDirectory()) walk(full, prefix + name + "/");
-      else if (name.endsWith(".md")) found.push(prefix + name.slice(0, -3));
+      // A retelling for younger readers has its own page, /simple/, so it is no docs page.
+      else if (name.endsWith(".md") && !name.endsWith(".en-simple.md")) found.push(prefix + name.slice(0, -3));
     }
   };
   walk(resolve(REPO_ROOT, "docs"), "");
@@ -579,6 +580,9 @@ function writeDocs() {
       {
         title: title ?? name,
         ...(description ? { description } : {}),
+        // A page named after its sidebar group opens the group, labelled as
+        // each bundle group's index is.
+        ...(DOCS_GROUPS.some((g) => g.label.toLowerCase() === name) ? { sidebar: { label: "Overview" } } : {}),
         ktlSource: source,
         editUrl: `${REPO_URL}/edit/main/${source}`,
       },
@@ -589,29 +593,57 @@ function writeDocs() {
   return docs.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
 }
 
-function writeReadmes(tagline) {
-  // The home page: the README under a hero, which takes the README's logo
-  // and its bold summary line, so neither shows twice.
-  let readme = repoFile("README.md").replace(/<picture>[\s\S]*?<\/picture>\s*/, "");
-  readme = takeTitle(readme).body;
-  readme = readme.replace(/^\*\*(.+)\*\*\s*$/m, (_, line) => {
-    tagline.text = plain(line);
-    return "";
+/** The text from its first `# ` title down, passing over a `# ` inside fenced code. */
+function fromTitle(text, file) {
+  const lines = text.split("\n");
+  let fence = null;
+  for (const [i, line] of lines.entries()) {
+    const m = line.match(/^\s*(`{3,}|~{3,})/);
+    if (fence) {
+      if (m && m[1][0] === fence[0] && m[1].length >= fence.length) fence = null;
+    } else if (m) fence = m[1];
+    else if (/^# /.test(line)) return lines.slice(i).join("\n");
+  }
+  throw new Error(`${file} has no '# ' title, and the home page starts at it`);
+}
+
+function writeReadmes() {
+  // The home page: the README from its title down, under a hero. The logo
+  // above the title is for GitHub, and the hero shows the logo itself. A line
+  // that links this site's home page is left out, since here it would link to
+  // the page it is on: the README keeps that link, and the pointers the site
+  // gives as buttons, on a line of their own. The tagline is the first line of
+  // docs/architecture.md that is bold throughout. Each step passes over fenced
+  // code, and a missing title or tagline stops the build.
+  const home = [`](${SITE_URL})`, `](${SITE_URL}/)`, `<${SITE_URL}>`, `<${SITE_URL}/>`];
+  const readme = takeTitle(
+    mapProse(fromTitle(repoFile("README.md"), "README.md"), (line) =>
+      home.some((link) => line.includes(link)) ? null : line,
+    ),
+  ).body;
+  let tagline = null;
+  mapProse(repoFile("docs/architecture.md"), (line) => {
+    const bold = tagline === null && line.match(/^\*\*((?:(?!\*\*).)+)\*\*\s*$/);
+    if (bold) tagline = plain(bold[1]);
+    return line;
   });
+  if (!tagline) {
+    throw new Error("docs/architecture.md has no line bold throughout, and the home page's tagline comes from it");
+  }
   page(
     resolve(CONTENT, "index.md"),
     {
       title: "Knowledge Trust Ladder",
-      description: tagline.text,
+      description: tagline,
       template: "splash",
       hero: {
-        tagline: tagline.text,
+        tagline,
         image: { light: "../../generated/logo-light.svg", dark: "../../generated/logo-dark.svg", alt: "" },
         actions: [
           { text: "Browse the bundle", link: `${BASE}/knowledge/`, icon: "right-arrow" },
-          { text: "Quick start", link: "#quick-start", variant: "secondary" },
-          { text: "Context layer", link: `${BASE}/docs/context-layer/`, variant: "secondary" },
-          { text: "GitHub", link: REPO_URL, icon: "external", variant: "minimal" },
+          { text: "Architecture", link: `${BASE}/docs/architecture/`, variant: "secondary" },
+          { text: "Glossary", link: `${BASE}/knowledge/glossary/`, variant: "secondary" },
+          { text: "Quick start", link: `${BASE}/docs/install/#quick-start`, variant: "secondary" },
         ],
       },
       ktlSource: "README.md",
@@ -620,15 +652,15 @@ function writeReadmes(tagline) {
     prepare(readme),
   );
 
-  const simple = takeTitle(repoFile("README.en-simple.md"));
+  const simple = takeTitle(repoFile("docs/architecture.en-simple.md"));
   const description = describe(simple.body);
   page(
     resolve(CONTENT, "simple.md"),
     {
       title: simple.title ?? "Knowledge Trust Ladder, in short",
       ...(description ? { description } : {}),
-      ktlSource: "README.en-simple.md",
-      editUrl: `${REPO_URL}/edit/main/README.en-simple.md`,
+      ktlSource: "docs/architecture.en-simple.md",
+      editUrl: `${REPO_URL}/edit/main/docs/architecture.en-simple.md`,
     },
     prepare(simple.body),
   );
@@ -658,7 +690,7 @@ function writeLlmsTxt(docs, concepts) {
     "",
     `- [concepts.jsonld](${SITE_URL}/knowledge/concepts.jsonld): every concept's frontmatter and body under one JSON-LD context`,
     `- [graph.nt](${SITE_URL}/knowledge/graph.nt): the whole bundle as N-Triples`,
-    `- [README](${SITE_URL}/): what Knowledge Trust Ladder is, and how to install it`,
+    `- [README](${SITE_URL}/): what Knowledge Trust Ladder is`,
     "",
   ];
   write(resolve(PUBLIC, "llms.txt"), lines.join("\n"));
@@ -727,7 +759,7 @@ writeOverview(root, concepts, health);
 writeLog();
 writeHealth(concepts, health, full);
 const docs = writeDocs();
-writeReadmes({ text: "" });
+writeReadmes();
 writeLlmsTxt(docs, concepts);
 writeChangelog();
 

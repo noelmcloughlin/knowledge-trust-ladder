@@ -1,6 +1,6 @@
 # Repository layout
 
-[The README](../README.md) says what the skills are for. This is the tree behind it.
+[The architecture](architecture.md) says what each skill is for. This is the tree behind it.
 
 ```text
 skills/
@@ -21,7 +21,10 @@ skills/
   publish.yml                maintainer-gated release (workflow_dispatch only)
   website.yml                builds website/ (PRs touching its sources) and publishes main's build to GitHub Pages
 docs/
-  for-the-curious.md    the README's mechanics: four levels of checking, domain schemas
+  architecture.md       the architecture the poem, LOKF and LinkML inspired: the catalogue, the five roles and the trust ladder
+  architecture.en-simple.md  the architecture page retold for readers aged 13 to 18
+  install.md            the quick start, every way to install the five skills, and pinning to one release
+  for-the-curious.md    the architecture's mechanics: four levels of checking, domain schemas
   context-layer.md      the context layer: one bundle, a federation of bundles, what exists and what is design
   context-layer-technology.md  the stores, catalogues, agent surfaces and artifact repositories it integrates with
   obsidian.md           the bundle as a vault of its own, and the two plugins

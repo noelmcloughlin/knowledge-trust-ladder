@@ -1,6 +1,6 @@
 # The bundle in Obsidian
 
-[The README](../README.md) says where a bundle lives and which two plugins do the **registrar**'s and the **curator**'s work inside Obsidian. This page is for the people who open the bundle in Obsidian: what to open, what to install there, and where the rest is written down.
+[The architecture](architecture.md) says where a bundle lives, and which two plugins work inside Obsidian: one does the **registrar**'s work, and the other assists the **curator**. This page is for the people who open the bundle in Obsidian: what to open, what to install there, and where the rest is written down.
 
 ## Two vaults
 
