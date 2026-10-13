@@ -615,6 +615,7 @@ function writeReadmes(tagline) {
         actions: [
           { text: "Browse the bundle", link: `${BASE}/knowledge/`, icon: "right-arrow" },
           { text: "Architecture", link: `${BASE}/docs/architecture/`, variant: "secondary" },
+          { text: "Glossary", link: `${BASE}/knowledge/glossary/`, variant: "secondary" },
           { text: "Quick start", link: `${BASE}/docs/install/#quick-start`, variant: "secondary" },
           { text: "Context layer", link: `${BASE}/docs/context-layer/`, variant: "secondary" },
           { text: "GitHub", link: REPO_URL, icon: "external", variant: "minimal" },
