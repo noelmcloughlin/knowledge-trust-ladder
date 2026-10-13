@@ -63,7 +63,7 @@ At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is 
   </picture>
 </p>
 
-In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do the registrar's work inside the editor. [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) checks each record as it is typed, and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) runs this repository's `ktl-curator` review session with no agent in the loop ([The bundle in Obsidian](obsidian.md)).
+In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins work inside the editor. [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) does the registrar's work, checking each record as it is typed. [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) is the curator's assistant, and runs this repository's `ktl-curator` review session with no agent in the loop ([The bundle in Obsidian](obsidian.md)).
 
 In the **three lines of defence** that regulated industries use, the librarian and the curator are the first line, the registrar the second, and the bundle holds the evidence a third line would need ([three-lines.md](three-lines.md)).
 
