@@ -273,28 +273,49 @@ fi
 #    happened on 2026-09-14: the curator referenced domain-schema.md while it
 #    was still on a branch here, and its build failed with a 404 until this
 #    side merged. CONTRIBUTING.md carries the ordering rule; this check carries
-#    the paths.)
+#    the paths.) An entry that names a heading, as path#anchor, also needs that
+#    heading: on 2026-10-13 the README's sections moved to docs/architecture.md,
+#    and the siblings' links to them still found a page, only not the heading.
 say ""
 say "Checking the paths sibling repositories link into..."
 sibling_paths=(
   "AI_COVENANT.md"
   "SECURITY.md"
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md"
-  "docs/architecture.md"
+  ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md#why-the-bundle-is-never-a-real-folder-inside-a-vault"
+  "docs/architecture.md#four-skills-three-lines-of-the-poem"
+  "docs/architecture.md#the-fifth-role-which-is-not-a-skill"
+  "docs/architecture.md#trust-stays-visible"
+  "docs/for-the-curious.md#four-levels-of-checking"
+  "docs/install.md"
   "docs/obsidian.md"
+  "docs/obsidian.md#where-the-bundle-lives-host-by-host"
   "docs/releasing.md"
   "docs/signing-commits.md"
   "docs/threat-model.md"
+  "docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential"
+  "docs/threat-model.md#prompt-injection-guards"
+  "docs/threat-model.md#repository-hardening"
   "docs/three-lines.md"
   "skills/ktl-librarian/references/domain-schema.md"
   "skills/ktl-curator/references/review-session.md"
   "skills/ktl-curator/references/trust-fields.md"
 )
-for p in "${sibling_paths[@]}"; do
-  if [[ -e "$p" ]]; then
-    ok "sibling-linked path exists: $p"
-  else
+# The GitHub anchor of each heading in a Markdown file, one per line, passing
+# over fenced code. GitHub lowercases a heading, drops its punctuation and
+# writes each space as a hyphen.
+heading_anchors() {
+  awk '/^[[:space:]]*(```|~~~)/ { fence = !fence; next } !fence && /^#+ / { sub(/^#+ +/, ""); print }' "$1" \
+    | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9 _-]//g; s/ /-/g'
+}
+for entry in "${sibling_paths[@]}"; do
+  p="${entry%%#*}"
+  if [[ ! -e "$p" ]]; then
     err "sibling-linked path is gone: $p - obsidian-ktl-curator, and obsidian-ktl-registrar link to it by URL; restore it, or update their links in the same change"
+  elif [[ "$entry" == *#* ]] && ! heading_anchors "$p" | grep -qxF "${entry#*#}"; then
+    err "sibling-linked heading is gone: $entry - obsidian-ktl-curator, and obsidian-ktl-registrar link to it by URL; restore the heading, or update their links in the same change"
+  else
+    ok "sibling-linked path exists: $entry"
   fi
 done
 
@@ -314,11 +335,15 @@ else
   # self-links are not a sibling depending on us, and counting them reports
   # every page the skills link to internally. Skip them, and .venv, which is
   # only slow. (git-aware greps hide these via .gitignore; plain grep does not.)
-  mapfile -t linked < <(grep -rhoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder/blob/main/[^)"#[:space:]]+' \
+  # A link to a heading is recorded with it, as path#anchor; a heading of the
+  # repository's front page counts as README.md#anchor, apart from GitHub's own
+  # #readme.
+  mapfile -t linked < <(grep -rhoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder(/blob/main/[^)"#[:space:]]+)?(#[A-Za-z0-9_-]+)?' \
     "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
     --exclude-dir=.claude --exclude-dir=.venv 2>/dev/null \
-    | sed 's|.*/blob/main/||; s/[.,]$//' | sort -u || true)
+    | sed -E 's|^https://github\.com/noelmcloughlin/knowledge-trust-ladder||; s|^/blob/main/||; s|^#|README.md#|; s/[.,]$//; /^$/d; /^README\.md#readme$/d' \
+    | sort -u || true)
   unrecorded=0
   for l in "${linked[@]}"; do
     found=0
@@ -326,7 +351,12 @@ else
       [[ "$l" == "$p" ]] && { found=1; break; }
     done
     if [[ "$found" -eq 0 ]]; then
-      err "a sibling links to '$l', which check 9's list does not record - add it there"
+      lp="${l%%#*}"
+      if [[ ! -e "$lp" ]] || { [[ "$l" == *#* ]] && ! heading_anchors "$lp" | grep -qxF "${l#*#}"; }; then
+        err "a sibling links to '$l', which this repository no longer has - update the sibling's link"
+      else
+        err "a sibling links to '$l', which check 9's list does not record - add it there"
+      fi
       unrecorded=1
     fi
   done
