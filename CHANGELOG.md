@@ -10,6 +10,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The retelling for readers aged 13 to 18 sits beside the page it retells.** `docs/architecture.en-simple.md` retells `docs/architecture.md`, which links it, and the website still serves it at `/simple/`.
 - **The website's home page keeps four buttons**: Browse the bundle, Architecture, Glossary and Quick start. The site's header already links GitHub, and the context layer is in the Architecture group, which opens with the architecture page as its overview.
 
+### Fixed
+
+- **The pen adds its edited-since note to a log line once.** It now looks for the note whatever its case, so a log line that already carries it gets no second copy.
+
 ## [0.38.1] - 2026-10-13
 
 ### Added

@@ -258,6 +258,23 @@ def test_patch_on_a_confirmed_concept_keeps_the_persons_event_and_says_so_in_the
     ), f"patch on a confirmed concept lost the person's event or the log note: {confirmed}"
 
 
+def test_a_log_line_that_already_says_edited_since_gets_no_second_note(applied):
+    """The note is the pen's own sentence, so a log line that carries it, capital and all, keeps one copy."""
+    applies(
+        applied,
+        lines(
+            "ops:",
+            "  - op: patch",
+            "    path: playbooks/confirmed.md",
+            "    edits:",
+            '      - append: {content: "A second paragraph."}',
+            '    log: "**Changed**: a second paragraph. Edited since a person confirmed it; the label says so until the curator looks again."',
+        ),
+    )
+    entry = [line for line in read(kb_of(applied) / "log.md").split("\n") if "a second paragraph." in line]
+    assert len(entry) == 1 and entry[0].count("dited since a person confirmed it") == 1, f"the note was added twice: {entry}"
+
+
 def test_question_adds_the_curator_shaped_bullet_and_touches_neither_text_nor_generated(applied):
     authored = read(kb_of(applied) / "playbooks" / "authored.md")
     assert (
