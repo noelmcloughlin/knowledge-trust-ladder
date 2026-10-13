@@ -32,11 +32,6 @@ exclude = [
   # 2026-10-12). Drop these lines if CI reaches them again.
   '^https://graphdb\.ontotext\.com/',
   '^https://dyslexia\.ie/',
-  # The website's own address, which website/README.md links. It answers
-  # 404 until website.yml first deploys main (checked 2026-10-12), and the
-  # site's own link check covers every page under it. Drop this line once
-  # it serves.
-  '^https://noelmcloughlin\.github\.io/knowledge-trust-ladder/',
 ]
 
 # knowledge_bundle is a symlink to .lokf/knowledge (the Obsidian vault entry
