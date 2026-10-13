@@ -6,18 +6,19 @@ description: The Linked Open Knowledge Format, the semantic profile of OKF this 
 definition: Linked Open Knowledge Format - a semantic profile of OKF in which every field, type, and relationship is bound to a public vocabulary, so the same Markdown expands losslessly to JSON-LD and RDF.
 abbreviation: LOKF
 genre: reference
-resource: README.md
+resource: docs/architecture.md
 sources:
-- resource: README.md
+- resource: docs/architecture.md
 - resource: skills/ktl-librarian/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-03T01:25:58Z"
+  at: "2026-10-13T15:08:54Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/okf
+- https://knowledge-trust-ladder.example/knowledge/glossary/linkml
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"

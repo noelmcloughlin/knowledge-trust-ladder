@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/wikiskill.md
 sources:
 - resource: docs/wikiskill.md
-- resource: README.md
+- resource: docs/architecture.md
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 relatedTo:
@@ -18,7 +18,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/skillwiki
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:43:57Z"
+  at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
 - by: process:ktl-librarian

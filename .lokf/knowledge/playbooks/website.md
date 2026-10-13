@@ -23,6 +23,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-13T01:04:01Z"
 stale_after: 2026-10-14
+status: draft
 ---
 
 # Overview
@@ -67,3 +68,7 @@ Both commands run `npm run sync` first. The sync runs `lokf export` from the sid
 The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, and runs npm's and the toolkit's packages under a read-only token. `deploy` runs nothing but GitHub's own deploy-pages action, holds the Pages scopes, and runs for `main` only. A maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
 
 The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records. The two typefaces, Source Serif 4 and Atkinson Hyperlegible Next, are self-hosted under the SIL Open Font License.
+
+## Open questions
+
+- 2026-10-13, process:ktl-librarian: Since 2026-10-13 `website/README.md` says `docs/architecture.en-simple.md` becomes the page for readers aged 13 to 18, and that the home page's tagline is the first line of `docs/architecture.md` that is bold throughout; `.github/workflows/website.yml` no longer lists `README.en-simple.md`. This concept still names `README.en-simple.md`. `CHANGELOG.md` changed too, only in its unreleased notes, and still records the site under the 0.38.1 release.

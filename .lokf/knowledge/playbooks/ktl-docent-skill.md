@@ -19,7 +19,7 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  at: "2026-10-13T15:08:54Z"
 - by: human:noelmcloughlin
   at: "2026-10-13T01:17:30Z"
 sources:
@@ -28,6 +28,7 @@ sources:
 - resource: skills/ktl-docent/references/feedback.md
 - resource: README.md
 - resource: CHANGELOG.md
+status: draft
 ---
 
 # Overview
@@ -67,3 +68,7 @@ The skill never carries a secret, credential, token, or connection string into a
 The fallback is contained by what the skill cannot do. It never edits `.lokf/knowledge/`. Its one write is a feedback entry through the script, after asking once per session, and the script holds that entry to one line and one of two kinds. The Copilot variant cannot write the file at all and hands the reader the line to paste instead. The [threat model](../policies/threat-model.md) lists this surface and what it does not cover.
 
 **The Gen Agent Trust Hub audit of 2026-10-04, addressed.** For command and dynamic execution, a trust label and a feedback entry each come from a script in the skill's own `scripts/` folder. So no label depends on the model's arithmetic, and the model never opens `.lokf/feedback.md`. The scripts treat bundle and reader text as data only. For data exposure, the skill keeps only the asker's login from `gh` or `glab`, and an entry carries it only when the asker agreed. The threat model says where that stops: a repository that holds its own copy of the skill supplies the scripts as well.
+
+## Open questions
+
+- 2026-10-13, process:ktl-librarian: Since 2026-10-13 the Runs column ("whenever anyone asks") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.

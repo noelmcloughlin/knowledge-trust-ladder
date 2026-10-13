@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T00:39:30Z"
+  at: "2026-10-13T15:08:54Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
@@ -42,7 +42,7 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 - Check 7c: Rule 3's list equals the classes `lokf vocab --all --json` declares as types, at the lokf floor the templates pin, with the toolkit run through `uvx`. Without uv the check fails.
 - Check 7d: the relation fields `knowledge-report.sh` counts reliance from equal the slots the schema ranges over `Concept`, apart from the structural `concepts` and `target`.
 - Check 8: the layout tests are in `tests/test_layouts.py`.
-- Check 9: the paths the sibling repositories deep-link into by URL still exist. Check 9a runs only when the siblings are cloned beside this repository, and confirms that the recorded list of those paths is complete.
+- Check 9: the paths the sibling repositories deep-link into by URL still exist, and so does each heading such a link names. Check 9a runs only when the siblings are cloned beside this repository, and confirms that the recorded list of those paths and headings is complete.
 - Check 10: `CONTRIBUTING.md` stays within 1000 words and `SECURITY.md` within 900.
 - Check 10a: each `SKILL.md` stays within its own word budget: 2700 words for ktl-curator, 2200 for ktl-docent, 4000 for ktl-librarian, 2350 for ktl-prose and 3600 for ktl-sidecar. A skill with no budget fails.
 - Check 11: this repository's copies of the three knowledge workflows, the sidecar scripts, the two `.lokf/m365/` files and `.lokf/.gitattributes` stay byte-identical to their templates. The comparison leaves out the librarian workflow's skills pin, `TRUST_LADDER_SKILLS_REF` and `TRUST_LADDER_SKILLS_SHA`, which the release commit moves in the template only. `knowledge-apply.py` and `knowledge-conventions.py` must pin the same PyYAML release and the same cut-off date. Without `uv` the check fails up front and names the cause. Then `knowledge-conventions.sh` must pass on this repository's bundle. `tests/test_conventions.py` tests what it reports on a bundle that breaks each rule.

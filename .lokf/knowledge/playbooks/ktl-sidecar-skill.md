@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:12:27Z"
+  at: "2026-10-13T15:08:54Z"
 hasPart:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
 - https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
@@ -31,21 +31,29 @@ sources:
 - resource: .lokf/scripts/knowledge-preflight.sh
 - resource: CHANGELOG.md
 - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/61b9355f0dfa037ff8e165affa285344e451c209
+- resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/8fcdd867e45528a21f20f177fb63306afe8d278d
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"
 ---
 # Overview
 
-ktl-sidecar runs **once** per repository, or to repair a missing or broken sidecar file. It never authors concepts. It has seven steps, 0 to 6:
+ktl-sidecar runs **once** per repository, or to repair a missing or broken sidecar file. A repair rewrites only the missing or broken file, and never overwrites concept files. It never authors concepts. It has seven steps, 0 to 6:
 
 - **Step 0.** Run the preflight and gather the host project's facts. The preflight says what the machine can do, and the layout is the same on every host: `.lokf/knowledge` is the real folder (see [Hosts and doorways](../explanation/hosts-and-doorways.md)).
-- **Step 1.** Copy each file from `templates/` and substitute placeholders. Since 2026-09-17 that includes `.lokf/.gitattributes`, which keeps the bundle on LF.
+- **Step 1.** Copy each file from `templates/` and substitute placeholders as literal text with Python, not sed, since a value holding sed's delimiter or GNU sed's `e` command would change what the command does. Since 2026-09-17 the files include `.lokf/.gitattributes`, which keeps the bundle on LF.
 - **Step 2.** Add three root-level pointers: `llms.txt`, a README aside, and a `knowledge_bundle` symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian (see [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)).
 - **Step 3.** Verify no placeholder survives.
 - **Step 4.** Validate.
 - **Step 5.** Optionally install the CI automation: three workflows, nine scripts and, since 2026-09-24, the `m365/` folder, fourteen files in all.
 - **Step 6.** Hand off.
+
+Step 0 also settles two things. The bundle's base IRI, which every concept's id starts with, is never the code-host repository URL: that path space is not the project's, so the ids could never resolve. And Step 0 decides whether `.lokf/` is committed or gitignored. Committing it is the default the four skills assume. Gitignoring it is equally valid, for a personal bundle or under a policy against committing agent-authored content, and changes four things:
+
+- every file is still created, since the bundle is filesystem-based either way;
+- the commit in Step 4 is skipped, and so is Step 5 apart from the scripts and the `m365/` folder its table installs anyway;
+- the `knowledge_bundle` symlink from Step 2 goes into the root `.gitignore` instead of being committed;
+- the Step 6 hand-off says so.
 
 The conventions script's Python half is among those scripts, since the `.sh` fails without it, and so is the apply script's `knowledge-apply.py`, the librarian's only pen. Three of the scripts and the `m365/` folder are installed even when the rest of Step 5 is skipped, since they need neither git nor GitHub:
 
@@ -61,7 +69,7 @@ ktl-docent runs its own copies of the feedback recorder and the report script, n
 The skill keeps its detail in five reference files, so the router stays small:
 
 - `references/portability.md` is a matrix, host by host: git or none, GitHub, GitLab or Forgejo, Linux, macOS, Windows and PowerShell, synced folders, an Obsidian vault and, since 2026-09-24, a Microsoft 365 Copilot declarative agent. Since 2026-10-07 it also says what the skills repository tests before a release. A host whose copies are as the sidecar installed them need not test the templates again. A copy the host edited, a port to another forge or shell, and another operating system stay the host's.
-- `references/m365.md`, added the same day, says what Copilot allows a custom skill, what the Agents Toolkit checks, and which roles can run there. The docent and a future auditor run there as snapshot skills. The sidecar and librarian do not run there at all. The curator does not run there until it has a write action and an identity other than a forge login ([The docent in Microsoft 365 Copilot](docent-in-m365-copilot.md)).
+- `references/m365.md`, added on 2026-09-24, says what Copilot allows a custom skill, what the Agents Toolkit checks, and which roles can run there. The docent and a future auditor run there as snapshot skills. The sidecar and librarian do not run there at all. The curator does not run there until it has a write action and an identity other than a forge login ([The docent in Microsoft 365 Copilot](docent-in-m365-copilot.md)).
 - `references/automation.md` says what the librarian, wrapper, release and feedback files do and how to set them up.
 - `references/gate.md`, split out of `automation.md` on 2026-09-24, covers the registrar workflow and the forge-free gate.
 - `references/prerequisites.md`, since 2026-09-17, gives each preflight line in plain words: what it means, what it stops, who fixes it and what to send them, for a person who cannot act on it themselves. The contract holds it to every line the preflight can print as missing or a warning.
@@ -88,7 +96,7 @@ A first job, `earlier`, reads what became of the pull requests the workflow open
 
 The third workflow, `knowledge-release.yaml` (since 2026-09-24), needs no agent. It attaches the bundle to a GitHub release as `knowledge-<tag>-<repository>.zip` with a checksum. Since the `m365/` folder was added, it also attaches one Copilot skill zip per instructions file under `.lokf/m365/` beside it, built by `.lokf/m365/knowledge-m365.sh`. It skips a release whose bundle matches the last one released. It runs when dispatched by hand or, once `KNOWLEDGE_RELEASE_ENABLED` is `true`, on each published release.
 
-The librarian workflow template installs a pinned `ktl-librarian` into `.agents/skills/` on every scheduled run, since installed skills are gitignored runtime state a checkout does not carry. The step is skipped in the repository that publishes the skills (an `if` on the repository name, since 2026-09-24). There an install would shadow the source under bare `skills/`, because the wrapper searches `.agents/skills/` first. The preflight's `copies` line compares that workflow with its template apart from `TRUST_LADDER_SKILLS_REF` and the commit beside it in `TRUST_LADDER_SKILLS_SHA`, a pin each host moves on its own schedule. The install step installs nothing unless the tag still names that commit.
+The librarian workflow template installs a pinned `ktl-librarian` into `.agents/skills/` on every scheduled run, since installed skills are gitignored runtime state a checkout does not carry. The step is skipped in the repository that publishes the skills (an `if` on the repository name, since 2026-09-24). There an install would shadow the source under bare `skills/`, because the wrapper looks under `.claude/skills/`, `.github/skills/` and `.agents/skills/` before bare `skills/`. The preflight's `copies` line compares that workflow with its template apart from `TRUST_LADDER_SKILLS_REF` and the commit beside it in `TRUST_LADDER_SKILLS_SHA`, a pin each host moves on its own schedule. The install step installs nothing unless the tag still names that commit.
 
 ## Open questions
 

@@ -2,6 +2,51 @@
 
 ## 2026-10-13
 
+* **Changed**: The context layer now says the architecture page uses the term and links the page, since "Why libraries have catalogues" and "Prose, Structure, Meaning, Context" moved there from the README on 2026-10-13. It is about the glossary term of the same name.
+* **Changed**: Intended uses takes the context layer and the question of who is responsible from `docs/architecture.md`, where the README's sections moved on 2026-10-13, and keeps the README for what the project is.
+* **Changed**: Why a distribution repository now cites `docs/install.md`, which holds the quick start, the plugin commands and the docent-only route the README carried until 2026-10-13, and `docs/architecture.md` for the one-tag rule.
+* **Rewrite**: Why four roles follows `docs/architecture.md`, where the README's roles moved on 2026-10-13, and answers the note sent back that day. Only KTL Registrar does the registrar's work in Obsidian, and the concept now carries the Runs column, the curator always being a person, what ktl-prose never changes and the three lines of defence.
+* **Changed**: Why four roles cites `docs/architecture.md` and `docs/obsidian.md`, and relates to the three lines of defence its body links.
+* **Changed**: WikiSkill cites `docs/architecture.md` for the paper's credit, which moved there from the README on 2026-10-13.
+* **Changed**: Accession cites `docs/architecture.md`, where the README's fifth-role section moved on 2026-10-13, and relates to the collection an accession joins.
+* **Changed**: Desk cites `docs/architecture.md`, where the README's fifth-role section moved on 2026-10-13, and gives the registrar's work in Obsidian to KTL Registrar alone, as that page says.
+* **Changed**: Docent cites `docs/architecture.md`, where the README's table of roles moved on 2026-10-13, and the retelling beside it.
+* **Changed**: LOKF cites `docs/architecture.md`, where the README's format section and credits moved on 2026-10-13, and relates to LinkML, the language its schema is written in.
+* **Changed**: OKF cites `docs/architecture.md`, whose credits name Google Cloud as the specification's creator since they moved from the README on 2026-10-13.
+* **Changed**: Registrar cites `docs/architecture.md`, where the README's fifth-role section moved on 2026-10-13.
+* **Changed**: Sidecar cites `docs/architecture.md`, where the README's table of roles moved on 2026-10-13.
+* **Changed**: The pen cites `docs/architecture.md`, where the README's fifth-role section moved on 2026-10-13; the README no longer names the pen.
+* **Changed**: The pen for younger readers follows the pen, which now names the architecture page instead of the README.
+* **Changed**: ktl-prose skill cites `docs/architecture.md` for the fifth skill, which moved there from the README on 2026-10-13.
+* **Rewrite**: Versioning answers the note of 2026-10-13: it says what `.releaserc.json` does with `!` beside what `docs/releasing.md` says, from commit-analyzer's default preset and rules at the version the workflow pins. The one-tag rule cites `docs/architecture.md`, where the README's reading list moved. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Versioning cites `.releaserc.json`, the release workflow and commit-analyzer's README, default rules and Angular parser. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Open question**: Versioning policy: `docs/releasing.md` and the `plan` job in `.github/workflows/semantic-release.yml` treat `!` after the type as breaking. `.releaserc.json` names no preset, and the default Angular preset of commit-analyzer, which the workflow pins at 13.0.1, has no place for `!` in its header pattern, so a `feat!:` commit releases nothing. Which should change: the preset, or the page and the plan job?
+* **Changed**: Releasing now says which rules are `.releaserc.json`'s and which are commit-analyzer's defaults, and that the Angular preset it reads commits with has no place for `!`.
+* **Changed**: The lokf toolkit answers the note of 2026-10-13. It no longer says the SHACL shapes catch violations, which `CHANGELOG.md` withdrew, calls the template's `lokf[build]>=0.8.0` a floor, and carries the librarian's version check and the byte-identical schema. Its commands come from the toolkit's `cli.py` at v0.8.0, and its extras and their uses from the pages that name them.
+* **Changed**: ktl-sidecar skill answers the note of 2026-10-13. The wrapper looks under `.claude/skills/`, `.github/skills/` and `.agents/skills/` before bare `skills/`, `references/m365.md` dates from 2026-09-24, and the concept now carries the repair rule, the base IRI rule, the four things gitignoring changes and why placeholders are substituted with Python.
+* **Changed**: Repository validation says check 9 now also checks each heading a sibling repository links to, as `scripts/validate-repository.sh` does since 2026-10-13.
+* **Open question**: When the built-in vocabulary stops fitting - domain schemas: Since 2026-10-13 the section "Prose, Structure, Meaning, Context" is on `docs/architecture.md`, not in `README.md`. This concept says "The README says" for its quotation and lists `README.md` in `sources`; both should name `docs/architecture.md`.
+* **Open question**: Why a registrar role, and why it is not a skill: Since 2026-10-13 the fifth-role section is on `docs/architecture.md`, not in `README.md`, so `resource`, `sources` and "The README calls it the fifth role" should name that page. That page and `docs/obsidian.md` now say KTL Registrar does the registrar's work and KTL Curator assists the curator, while this concept and its description say both plugins do the registrar's work.
+* **Open question**: Three lines of defence - where each role sits, and what an auditor can check: Since 2026-10-13 the fifth-role section that points at `docs/three-lines.md` is on `docs/architecture.md`, not in `README.md`. The sentence "The README's section on the fifth role" and the `README.md` source should name `docs/architecture.md`.
+* **Open question**: Knowledge bundle: Since 2026-10-13 `README.md` keeps the poem, but "Why libraries have catalogues", which says a bundle is the catalogue, is on `docs/architecture.md`. `sources` should list `docs/architecture.md` beside `README.md`.
+* **Open question**: ktl-curator skill: Since 2026-10-13 the Runs column ("a little, regularly") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.
+* **Open question**: ktl-docent skill: Since 2026-10-13 the Runs column ("whenever anyone asks") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.
+* **Open question**: Build, preview and edit the website: Since 2026-10-13 `website/README.md` says `docs/architecture.en-simple.md` becomes the page for readers aged 13 to 18, and that the home page's tagline is the first line of `docs/architecture.md` that is bold throughout; `.github/workflows/website.yml` no longer lists `README.en-simple.md`. This concept still names `README.en-simple.md`. `CHANGELOG.md` changed too, only in its unreleased notes, and still records the site under the 0.38.1 release.
+* **Changed**: The LinkML reference is titled LinkML (linkml.io), as its siblings name their sites, so the index tells it from the glossary term.
+* **Added**: Librarian, a role the glossary lacked, from the table of roles on `docs/architecture.md` and ktl-librarian's `SKILL.md`.
+* **Added**: Curator, a role the glossary lacked, from the table of roles on `docs/architecture.md`, the verdicts in `docs/for-the-curious.md` and the plugin table in `docs/obsidian.md`.
+* **Added**: Collection, the word the README's opening paragraph sets in bold, from the README and `docs/architecture.md`.
+* **Added**: Context layer, the term `docs/architecture.md` sets in bold, beside the explanation of the same name, with `docs/context-layer.md`'s definition.
+* **Added**: Trust ladder, the project's own name for how far each claim has been checked, from `docs/architecture.md`.
+* **Added**: Workshop, one of the two vaults `docs/obsidian.md` sets in bold.
+* **Added**: Exhibition, one of the two vaults `docs/obsidian.md` sets in bold.
+* **Added**: Doorway, the name `docs/obsidian.md` gives the `knowledge_bundle` link, with ktl-sidecar's rule for a gitignored `.lokf/`.
+* **Added**: Health line, from the curator's `trust-fields.md` and `SKILL.md`, the report script and the architecture page.
+* **Added**: Work list, from ktl-librarian's `SKILL.md` and `docs/for-the-curious.md`.
+* **Added**: LinkML, the schema language LOKF is written in, from `docs/architecture.md`, `docs/for-the-curious.md`, ktl-librarian's `SKILL.md` and the curator's `domain-schemas.md`. The LinkML reference defines it.
+* **Added**: Domain schema, the term `docs/for-the-curious.md` defines, with what the architecture page says it gives a domain.
+* **Added**: Three lines of defence, the model `docs/architecture.md` sets in bold, from `docs/three-lines.md`.
+* **Changed**: The source map follows the README's move: `docs/architecture.md` joins the README's row, the retelling has its new path, the install count, the card and the release rows follow their pages, and the twenty-ninth pass is recorded. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Docent cites the retelling for readers aged 13 to 18 at its new path, `docs/architecture.en-simple.md`.
 * **Curation**: human:noelmcloughlin confirmed 2 concepts, corrected 16, sent 5 back and marked 1 for later. Two corrections added files the concept drew on to `sources`, two moved a `resource` to the page that holds the facts, ten restored facts a summary had dropped from its source, and two send-backs name claims from files the concept does not list, so the librarian may be citing too few sources and shortening too far.
 

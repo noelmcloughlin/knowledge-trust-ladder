@@ -28,6 +28,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-13T00:25:28Z"
 stale_after: 2027-09-10
+status: draft
 ---
 # Overview
 
@@ -40,3 +41,7 @@ In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins do t
 In the three lines of defence that regulated industries use, the librarian and the curator are the first line, the registrar the second, and the bundle ships the evidence a third line would need ([three lines of defence](three-lines-of-defence.md)).
 
 The curator is always a person; the skill and the plugin that carry the name are that person's assistants, and neither reaches a verdict of its own. Obsidian is optional in both directions: the plugins work on any LOKF bundle however it was made, and a vault with no bundle in it is left alone (`docs/obsidian.md`).
+
+## Open questions
+
+- 2026-10-13, process:ktl-librarian: Since 2026-10-13 the fifth-role section is on `docs/architecture.md`, not in `README.md`, so `resource`, `sources` and "The README calls it the fifth role" should name that page. That page and `docs/obsidian.md` now say KTL Registrar does the registrar's work and KTL Curator assists the curator, while this concept and its description say both plugins do the registrar's work.

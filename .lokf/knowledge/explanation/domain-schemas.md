@@ -24,9 +24,10 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T17:06:00Z"
+  at: "2026-10-13T15:08:54Z"
 - by: human:noelmcloughlin
   at: "2026-10-13T01:19:37Z"
+status: draft
 ---
 
 # Overview
@@ -61,3 +62,7 @@ The shape waits for the curator's write path.
 Where a domain schema binds a slot to an external code list (SNOMED CT, for example), neither LOKF's schema nor `lokf validate` checks that the term still exists. `linkml-term-validator` can, as an optional extra gate whose "service unreachable" counts as not passing.
 
 **Roles stay as they are.** The curator raises the question, as a report line and a conversation. The team decides whether a domain schema, a small piece of governed software, is worth owning. The librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge, since the spec says consumers MUST NOT reject unknown types. It is also still outside what `lokf validate` checks, so the registrar gate stays red.
+
+## Open questions
+
+- 2026-10-13, process:ktl-librarian: Since 2026-10-13 the section "Prose, Structure, Meaning, Context" is on `docs/architecture.md`, not in `README.md`. This concept says "The README says" for its quotation and lists `README.md` in `sources`; both should name `docs/architecture.md`.
