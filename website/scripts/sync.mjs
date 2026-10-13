@@ -608,8 +608,8 @@ function writeReadmes(tagline) {
         tagline: tagline.text,
         image: { light: "../../generated/logo-light.svg", dark: "../../generated/logo-dark.svg", alt: "" },
         actions: [
-          { text: "Quick start", link: "#quick-start", icon: "right-arrow" },
-          { text: "Browse the bundle", link: `${BASE}/knowledge/`, variant: "secondary" },
+          { text: "Browse the bundle", link: `${BASE}/knowledge/`, icon: "right-arrow" },
+          { text: "Quick start", link: "#quick-start", variant: "secondary" },
           { text: "Context layer", link: `${BASE}/docs/context-layer/`, variant: "secondary" },
           { text: "GitHub", link: REPO_URL, icon: "external", variant: "minimal" },
         ],
