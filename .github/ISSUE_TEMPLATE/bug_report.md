@@ -1,13 +1,13 @@
 ---
 name: Bug report
-about: One of the five KTL skills behaves incorrectly
+about: One of the six KTL skills behaves incorrectly
 title: ''
 labels: bug
 assignees: ''
 ---
 
 **Which skill?**
-ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose
+ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose / ktl-website
 
 **Installed via**
 `gh skill install` / `npx skills add` / manual copy, and which version or tag

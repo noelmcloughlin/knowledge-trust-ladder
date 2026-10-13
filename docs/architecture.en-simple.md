@@ -42,6 +42,8 @@ The librarian writes the bundle only through one script, `knowledge-apply.sh`, c
 
 One more skill has no role of its own. [`ktl-prose`](../skills/ktl-prose/SKILL.md) is the librarian's copy editor. It rewords what an agent wrote in plain English, and changes the wording but never a fact.
 
+Another, [`ktl-website`](../skills/ktl-website/SKILL.md), builds a website from the bundle. Anyone can browse it there and see each entry's label.
+
 ## How far can you trust an entry?
 
 Each entry carries a label in plain words:

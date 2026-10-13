@@ -1,10 +1,10 @@
 {
   "name": "knowledge-trust-ladder",
   "displayName": "Knowledge Trust Ladder",
-  "description": "Four agent skills that keep a LOKF knowledge bundle (Linked Open Knowledge Format, a semantic profile of OKF) current beside any repository, and record who checked each claim: a sidecar, a librarian, a curator and a docent. A fifth skill, ktl-prose, rewords a bundle's agent-written concepts in plain English.",
+  "description": "Four agent skills that keep a LOKF knowledge bundle (Linked Open Knowledge Format, a semantic profile of OKF) current beside any repository, and record who checked each claim: a sidecar, a librarian, a curator and a docent. A fifth skill, ktl-prose, rewords a bundle's agent-written concepts in plain English, and a sixth, ktl-website, builds a website for the bundle.",
   "author": { "name": "Noel McLoughlin", "url": "https://github.com/noelmcloughlin" },
   "homepage": "https://noelmcloughlin.github.io/knowledge-trust-ladder/",
   "repository": "https://github.com/noelmcloughlin/knowledge-trust-ladder",
   "license": "Apache-2.0",
-  "keywords": ["okf", "open-knowledge-format", "lokf", "linkml", "knowledge-graph", "linked-data", "json-ld", "rdf", "sparql", "provenance", "trust-ladder", "human-review", "agent-skills", "wikiskill"]
+  "keywords": ["okf", "open-knowledge-format", "lokf", "linkml", "knowledge-graph", "linked-data", "json-ld", "rdf", "sparql", "provenance", "trust-ladder", "human-review", "agent-skills", "wikiskill", "website"]
 }

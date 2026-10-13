@@ -73,6 +73,10 @@ In the **three lines of defence** that regulated industries use, the librarian a
 
 [`ktl-prose`](../skills/ktl-prose/SKILL.md) is the **librarian**'s copy editor. It rewords what an agent wrote, in plain English, before a person confirms it. It changes the wording and never a fact, it leaves every byte of frontmatter alone, and it never touches a concept a person wrote or confirmed. It is optional, and the roles above lose nothing without it.
 
+### The sixth skill, which publishes the bundle
+
+[`ktl-website`](../skills/ktl-website/SKILL.md) lays down a website for the bundle. It has a page per concept with its trust label, the health page, the knowledge graph and search by trust and type, and it serves the four files `lokf export` writes beside the pages. The repository's README, docs and changelog join them when it has them, and a workflow publishes the site to GitHub Pages. This repository's own [site](https://noelmcloughlin.github.io/knowledge-trust-ladder/) is the template's first copy. It is optional, like `ktl-prose`, and the roles above lose nothing without it.
+
 ## Trust stays visible
 
 The **curator** reports each concept's trust record in plain words:
@@ -95,7 +99,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 
 | | |
 | --- | --- |
-| How to install the five skills, which ones to start with, and how to pin them to one release | [install.md](install.md) |
+| How to install the six skills, which ones to start with, and how to pin them to one release | [install.md](install.md) |
 | The context layer: how one bundle already is one, how bundles federate into one layer through domains and a workspace built ahead of time, what exists and what is design, and the decisions an adopter must make | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [for-the-curious.md](for-the-curious.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
@@ -103,7 +107,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 | Where each role sits in the three lines of defence, and [the model's critics](three-lines-critics.md) | [three-lines.md](three-lines.md) |
 | What KTL took from two 2026 papers, WikiSkill on agent-maintained wikis and SkillWiki on governing agent skills | [wikiskill.md](wikiskill.md), [skillwiki.md](skillwiki.md) |
 | Whether KTL helps a repository whose content is Agent Skills, and what remains to do there | [skills-repositories.md](skills-repositories.md) |
-| Versioning: all five skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [releasing.md](releasing.md), [CHANGELOG.md](../CHANGELOG.md) |
+| Versioning: all six skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [releasing.md](releasing.md), [CHANGELOG.md](../CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](../CONTRIBUTING.md), [repository-layout.md](repository-layout.md), [SECURITY.md](../SECURITY.md) |
 
 ## Credits
