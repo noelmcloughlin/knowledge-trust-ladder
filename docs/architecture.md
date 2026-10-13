@@ -1,13 +1,15 @@
 # Architecture
 
-This page is for anyone deciding whether to use Knowledge Trust Ladder, and for anyone who keeps a bundle with it. It explains why a repository needs a catalogue, who keeps the catalogue, and how far each claim in it has been checked. A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
+This page explains why a repository needs a catalogue, who keeps the catalogue, and how far each claim in it has been checked. It is for anyone deciding whether to use Knowledge Trust Ladder, and for anyone who keeps a bundle with it. A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
 
-Knowledge Trust Ladder is an architecture inspired by this poem:
+Knowledge Trust Ladder is an architecture inspired by [LOKF](https://lokf.nolan-nichols.com/specification/), by [LinkML](https://linkml.io/linkml/) and by this poem:
 
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
+
+Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies schema and tooling. Two Obsidian plugins are optional, for a vault with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
@@ -54,7 +56,7 @@ On a fresh repository they run in order: **sidecar**, then **librarian** filling
 
 The **registrar** keeps the records themselves in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or their signed commit.
 
-At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is `knowledge-apply.sh`, called *the pen* because the librarian writes the bundle only through it. The librarian describes each change as an operation, and the pen writes the record, stamps its provenance, keeps the index in step, and refuses one that would forge or remove a confirmation. At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the opening line: a check gives the same answer every time, which neither the librarian nor the curator can promise.
+At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is `knowledge-apply.sh`, called *the pen* because the librarian writes the bundle only through it. The librarian describes each change as an operation, and the pen writes the record, stamps its provenance, keeps the index in step, and refuses one that would forge or remove a confirmation. At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the summary at the top of this page: a check gives the same answer every time, which neither the librarian nor the curator can promise.
 
 <p align="center">
   <picture>
