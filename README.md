@@ -18,6 +18,6 @@ Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collect
 
 The complete documentation is at [noelmcloughlin.github.io/knowledge-trust-ladder](https://noelmcloughlin.github.io/knowledge-trust-ladder/).
 
-Knowledge Trust Ladder is an architecture inspired by the poem above: each of its three lines is one role's work. [The architecture](docs/architecture.md) says who plays each role and what checks their work.
+Knowledge Trust Ladder is an architecture inspired by the poem above, by [LOKF](https://lokf.nolan-nichols.com/specification/) (Linked Open Knowledge Format), the format its bundles are written in, and by [LinkML](https://linkml.io/linkml/), the schema language LOKF is written in. Each of the poem's three lines is one role's work, and [the architecture](docs/architecture.md) says who plays each role and what checks their work.
 
 > **Agents:** if `.lokf/knowledge/index.md` exists, read it first. `llms.txt` says how to weigh it.

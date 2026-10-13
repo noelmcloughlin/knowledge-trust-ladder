@@ -6,7 +6,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
-- **The README is a doorway, in the style of LinkML's.** It keeps the poem and the opening paragraph, adds release, website and licence badges, and links the website. The library, museum and roles story moved to `docs/architecture.md`, which leads the website's Architecture group, and the quick start moved to `docs/install.md`.
+- **The README is a doorway, in the style of LinkML's.** It keeps the poem and the opening paragraph, names LOKF and LinkML as inspirations beside the poem, adds release, website and licence badges, and links the website. The library, museum and roles story moved to `docs/architecture.md`, which leads the website's Architecture group, and the quick start moved to `docs/install.md`.
 - **The website's home page has Architecture and Glossary buttons**, beside Browse the bundle, Quick start, Context layer and GitHub.
 
 ## [0.38.1] - 2026-10-13
