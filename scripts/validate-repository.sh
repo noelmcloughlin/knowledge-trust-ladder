@@ -23,7 +23,7 @@ ok() { printf 'OK:   %s\n' "$*"; }
 # 1. Exactly the intended published skill directories exist. This list is the
 #    one place their number is written: checks 1 and 4 count it.
 mapfile -t skill_dirs < <(find skills -mindepth 1 -maxdepth 1 -type d | sort)
-expected_dirs=("skills/ktl-curator" "skills/ktl-docent" "skills/ktl-librarian" "skills/ktl-prose" "skills/ktl-sidecar")
+expected_dirs=("skills/ktl-curator" "skills/ktl-docent" "skills/ktl-librarian" "skills/ktl-prose" "skills/ktl-sidecar" "skills/ktl-website")
 if [[ "${skill_dirs[*]}" == "${expected_dirs[*]}" ]]; then
   ok "exactly the ${#expected_dirs[@]} intended skill directories exist (${expected_dirs[*]})"
 else
@@ -401,6 +401,7 @@ declare -A skill_budget=(
   [skills/ktl-librarian]=4000
   [skills/ktl-prose]=2350
   [skills/ktl-sidecar]=3600
+  [skills/ktl-website]=2000
 )
 for dir in "${expected_dirs[@]}"; do
   file="$dir/SKILL.md"
@@ -454,6 +455,56 @@ for pair in \
   else
     err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
   fi
+done
+
+# 11w. The website skill's templates are this repository's own website/ and
+#      its deploy workflow, laid down by the same skill in every host, so the
+#      copies must stay byte-identical, as check 11 holds the sidecar's. Three
+#      files are each host's own once written, this repository's included:
+#      site.config.mjs, README.md and src/styles/custom.css. The README's
+#      placeholders are filled with this repository's values and compared, so
+#      the template and the copy still say the same thing. The reverse holds
+#      too: every tracked file under website/ is a template or one of the
+#      three, so nothing of this repository's site escapes the template.
+#      This repository's copy of the workflow keeps its first name,
+#      website.yml, which playbooks/website.md names as a source; that
+#      concept is a person's, so the rename waits for their correction.
+say ""
+say "Checking the website skill's templates are this repository's own site..."
+wtemplates="skills/ktl-website/templates"
+host_owned=("site.config.mjs" "README.md" "src/styles/custom.css")
+owned() { local f; for f in "${host_owned[@]}"; do [[ "$1" == "$f" ]] && return 0; done; return 1; }
+while IFS= read -r src; do
+  rel="${src#"$wtemplates/website/"}"
+  owned "$rel" && continue
+  dst="website/$rel"; [[ "$rel" == gitignore ]] && dst="website/.gitignore"
+  if [[ ! -f "$dst" ]]; then
+    err "$dst is missing, but $src is a template - copy the template over, or delete the template"
+  elif cmp -s "$src" "$dst"; then
+    ok "$dst matches its template"
+  else
+    err "$dst differs from $src - this repository runs the site its skill lays down, so the two must match: copy the template over the site file after editing the template, or the site file over the template after a Dependabot npm bump, which only ever edits website/package.json and package-lock.json"
+  fi
+done < <(find "$wtemplates/website" -type f | sort)
+if cmp -s "$wtemplates/github/knowledge-website.yaml" ".github/workflows/website.yml"; then
+  ok ".github/workflows/website.yml matches its template, knowledge-website.yaml"
+else
+  err ".github/workflows/website.yml differs from $wtemplates/github/knowledge-website.yaml - copy one over the other, as check 11 says"
+fi
+filled="$(sed -e 's|<REPO_OWNER>|noelmcloughlin|g' -e 's|<REPO_NAME>|knowledge-trust-ladder|g' -e 's|<PROJ_NAME>|Knowledge Trust Ladder|g' "$wtemplates/website/README.md")"
+if [[ "$filled" == "$(cat website/README.md)" ]]; then
+  ok "website/README.md is the template with this repository's values filled in"
+else
+  err "website/README.md is not $wtemplates/website/README.md with this repository's values filled in - edit the template and fill it, or carry an edit of the copy back into the template"
+fi
+while IFS= read -r f; do
+  rel="${f#website/}"
+  owned "$rel" && continue
+  t="$wtemplates/website/$rel"; [[ "$rel" == .gitignore ]] && t="$wtemplates/website/gitignore"
+  [[ -f "$t" ]] || err "$f is tracked under website/ but has no template under $wtemplates/website/ - a file of this repository's site that no host would get; add the template, or move the file"
+done < <(git ls-files website)
+for f in "${host_owned[@]}"; do
+  [[ -f "$wtemplates/website/$f" ]] || err "$wtemplates/website/$f is missing - a host-owned file still needs its template"
 done
 
 # The two Python halves install PyYAML through `uv run`, from the dependency
@@ -580,6 +631,19 @@ while IFS= read -r key; do
     err "prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
   fi
 done < <(grep -oE '\b(miss|warn) [a-z]+' "$templates/scripts/knowledge-preflight.sh" | awk '{print $2}' | sort -u)
+
+# 12w. The same for the website skill: every line its preflight can print as
+#      missing or a warning has a row on its own prerequisites page.
+say ""
+say "Checking the website skill's prerequisites page explains each preflight line..."
+wprereq="skills/ktl-website/references/prerequisites.md"
+while IFS= read -r key; do
+  if grep -q "^| \`$key\` |" "$wprereq"; then
+    ok "ktl-website prerequisites.md explains the preflight's '$key' line"
+  else
+    err "ktl-website prerequisites.md has no row for the preflight's '$key' line - add what it means, who fixes it and what to send them"
+  fi
+done < <(grep -oE '\b(miss|warn) [a-z]+' skills/ktl-website/scripts/website-preflight.sh | awk '{print $2}' | sort -u)
 
 # 12a. knowledge-feedback.sh, the recorder ktl-docent runs so that no other
 #      reader's report enters its session, is tests/test_feedback.py since
@@ -920,10 +984,10 @@ fi
 say ""
 say "Checking the Microsoft 365 Copilot skills build..."
 m365="$templates/m365"
-if [[ -n "$(find "$templates" -iname 'SKILL.md' 2>/dev/null)" ]]; then
-  err "a SKILL.md sits under $templates - installers would list it as a skill; name an instructions file after the skill it builds (ktl-docent-m365.md)"
+if [[ -n "$(find skills -path '*/templates/*' -iname 'SKILL.md' 2>/dev/null)" ]]; then
+  err "a SKILL.md sits under a skill's templates/ - installers would list it as a skill; name an instructions file after the skill it builds (ktl-docent-m365.md)"
 else
-  ok "no SKILL.md under $templates"
+  ok "no SKILL.md under any skill's templates/"
 fi
 labels() { awk '/^## Trust labels/{f=1; next} /^## /{f=0} f && /^\|/' "$1"; }
 docent_labels="$(labels skills/ktl-docent/SKILL.md)"

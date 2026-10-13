@@ -1,0 +1,57 @@
+# Step 5: the deploy workflow, GitHub Pages, and what collides with it
+
+`templates/github/knowledge-website.yaml` builds the site on every pull request that touches its inputs and publishes the default branch's build to GitHub Pages. This page says what the workflow needs, how Pages is switched on once, and what to do when the repository already publishes Pages another way.
+
+## The two jobs
+
+`build` checks the repository out with its full history, since the health page's "a source moved" lines come from git. It installs the lokf toolkit with `uv sync --locked` in `.lokf/`, installs the site's packages with `npm ci`, runs `npm run build` (the sync, the build, the link check) and uploads `website/dist` as the Pages artifact. It holds `contents: read` and nothing else, and third-party code runs there only.
+
+`deploy` runs GitHub's own `deploy-pages` action and nothing else, with the `pages: write` and `id-token: write` scopes, in the `github-pages` environment. It runs only on the default branch, and only once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Until then the workflow builds on every pull request and deploys nothing, which is the state to leave it in where another publisher exists.
+
+The workflow has no placeholders and names no branch: it reads the repository's default branch from the event.
+
+## Switching Pages on
+
+1. Tell Pages once to take its site from Actions: Settings, Pages, Source, GitHub Actions; or `gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`. A repository whose Pages is already on, from a branch, is switched with `-X PUT` instead.
+2. Set the variable: Settings, Secrets and variables, Actions, Variables; or `gh variable set KNOWLEDGE_WEBSITE_ENABLED --body true`.
+3. Push to the default branch, or run the workflow by hand, and open the address `site.config.mjs` names. The first deploy can take a minute to appear.
+
+A private repository publishes Pages only on a paid plan; the build still runs on every pull request.
+
+## Another publisher
+
+Two publishers overwrite each other's site, so the preflight's `pages` line warns when it finds one: a workflow that names `deploy-pages`, `upload-pages-artifact`, `gh-pages`, `gh-deploy` or `github-pages-deploy-action`, a `CNAME` file, or an `mkdocs.yml` with a `site_url`. Install the workflow, leave the variable unset, and put the choice to the maintainer:
+
+- **Retire the other publisher** and let this workflow publish the whole site. The knowledge site has a home page built from the README, so it can be the repository's site.
+- **Keep the other publisher and serve the bundle inside it.** The four files `lokf export` writes are plain files; a MkDocs or Sphinx build can copy them into its own output from a build step, which makes the repository a producer node without this site.
+- **Publish from the `gh-pages` branch under a sub-path**, with an action such as `peaceiris/actions-gh-pages` and a `destination_dir`, and `BASE` set to that path. This survives only beside a publisher that does not force-push the branch; `mkdocs gh-deploy --force` does.
+
+## A custom domain, or a user site
+
+Set `CUSTOM_DOMAIN` in `site.config.mjs`: the sync writes `public/CNAME`, `SITE` becomes `https://<domain>` and `BASE` becomes empty. The domain's DNS and the Pages setting for it stay the repository's own. A user site, the `<owner>.github.io` repository, keeps `SITE` and sets `BASE` to `""`.
+
+## A gitignored `.lokf/`
+
+The workflow builds from the checkout, which lacks a gitignored bundle. Build the site locally (Step 4) and publish `website/dist` by hand, or keep the bundle in git. Skip this step, as the sidecar skips its own Step 5.
+
+## Another forge
+
+The workflow is GitHub Actions. On GitLab, Codeberg or another forge, run the same commands in that forge's CI (`uv sync --locked` in `.lokf/`, then `npm ci` and `npm run build` in `website/`) and publish `website/dist` as its pages artifact. GitLab, for example, takes a `public/` folder from a job named `pages`. Links to repository files still name `github.com`, since `REPO_URL` does; a forge-neutral link is a change to `scripts/routes.mjs`.
+
+## Keeping the site's packages current
+
+The site's npm packages are pinned in `website/package-lock.json`. A Dependabot entry keeps them current, and the workflow builds each bump on its pull request:
+
+```yaml
+  - package-ecosystem: "npm"
+    directory: "/website"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(website)"
+    groups:
+      website:
+        patterns: ["*"]
+```
+
+A bump moves `website/package.json` and the lock away from the skill's templates, which the preflight's `website` line reports as drift. That drift is expected; the next release of the skill carries the same packages.

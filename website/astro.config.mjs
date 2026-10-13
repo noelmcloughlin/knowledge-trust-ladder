@@ -29,12 +29,12 @@ import {
 } from "./scripts/config.mjs";
 
 // The docs pages' place in the Guide sidebar: the groups site.config.mjs
-// gives, or one group of every page.
+// gives, or one group of every page, nested folders as subgroups.
 const docsSidebar = !DOCS
   ? []
   : DOCS.groups
     ? DOCS.groups.map((group) => ({ label: group.label, items: group.pages.map((page) => `docs/${page}`) }))
-    : [{ label: "Guides", autogenerate: { directory: "docs" } }];
+    : [{ label: "Guides", items: [{ autogenerate: { directory: "docs" } }] }];
 
 // The guide, the bundle and the releases each get a sidebar of their own,
 // with a switch between them at its top.

@@ -1,6 +1,6 @@
 # The Knowledge Trust Ladder website
 
-This folder builds the site that `.github/workflows/website.yml` publishes to GitHub Pages at `https://noelmcloughlin.github.io/knowledge-trust-ladder/`. Every page comes from a file the repository already holds, so a change to the site is a change to that file:
+This folder builds the site that the Knowledge website workflow publishes to GitHub Pages at `https://noelmcloughlin.github.io/knowledge-trust-ladder/`. Every page comes from a file the repository already holds, so a change to the site is a change to that file:
 
 - each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its typed relations both ways;
 - the four files `lokf export` writes are served under `knowledge/`, beside each concept's own Markdown file and its JSON-LD;

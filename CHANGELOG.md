@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **ktl-website lays a website down for any repository's knowledge bundle.** The skill copies the site from its templates into `website/`: a page per concept with its trust label, a health page, the knowledge graph, search by trust and type, and the four `lokf export` files served beside the pages, with the README, the docs and the changelog when the repository has them. Its workflow, `knowledge-website.yaml`, builds the site on every pull request and publishes to GitHub Pages once `KNOWLEDGE_WEBSITE_ENABLED` is `true`. This repository's own site is the template's first copy, which the contract holds byte-identical, and a smoke test builds the template on the sidecar's dummy bundle.
+
+### Changed
+
+- **This repository's website workflow, `website.yml`, is a copy of the skill's template.** Its deploy now waits for the repository variable `KNOWLEDGE_WEBSITE_ENABLED` to be `true`.
+
 ## [0.38.3] - 2026-10-13
 
 ### Changed
