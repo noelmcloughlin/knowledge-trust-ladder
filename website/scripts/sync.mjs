@@ -4,7 +4,8 @@
 //
 //   src/content/docs/  a page for the README, each docs/ page and each concept
 //   src/generated/     the logo, for the header and the home page;
-//                      health.json, the numbers the health page charts; and
+//                      health.json, the numbers the health page charts;
+//                      changelogs.ts, the releases collection or none; and
 //                      CHANGELOG.md, which the releases section reads
 //   public/            the figures, llms.txt, the favicon, and under knowledge/ the four
 //                      files `lokf export` writes, every bundle file as it is
@@ -764,6 +765,34 @@ function copyBundleFiles() {
 }
 
 /**
+ * The releases collection for src/content.config.ts: a page per release from
+ * the sync's copy of the changelog, kept out of search, where dozens of
+ * versions would bury every other page; or an empty object when the site
+ * shows no changelog, so that nothing imports the plugin's loader.
+ */
+function writeCollections() {
+  const lines = CHANGELOG
+    ? [
+        "// Written by scripts/sync.mjs before each build: the releases collection, since site.config.mjs shows a changelog.",
+        'import { defineCollection } from "astro:content";',
+        'import { changelogsLoader } from "starlight-changelogs/loader";',
+        "",
+        "export const changelogs = {",
+        "  changelogs: defineCollection({",
+        "    loader: changelogsLoader([",
+        '      { provider: "keep-a-changelog", base: "changelog", changelog: "src/generated/CHANGELOG.md", title: "Releases", pagefind: false },',
+        "    ]),",
+        "  }),",
+        "};",
+      ]
+    : [
+        "// Written by scripts/sync.mjs before each build: no releases collection, since site.config.mjs shows no changelog.",
+        "export const changelogs = {};",
+      ];
+  write(resolve(GENERATED, "changelogs.ts"), lines.join("\n") + "\n");
+}
+
+/**
  * The releases section's copy of the changelog. Its version headings lose
  * their brackets, so each release page is titled with the bare version and
  * starlight-changelogs skips `## Unreleased`, which it knows only unbracketed.
@@ -818,6 +847,7 @@ const docs = writeDocs();
 writeHome();
 writePages();
 writeLlmsTxt(docs, concepts);
+writeCollections();
 if (CHANGELOG) writeChangelog();
 
 console.log(

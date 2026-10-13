@@ -138,9 +138,9 @@ jobs:
 
       # Catches what YAML parsing alone misses (bad expressions, wrong
       # contexts, invalid `needs:`, shellcheck on `run:` blocks). Unlike
-      # `gh skill publish --dry-run`, it also reaches the three workflow
-      # templates under skills/ktl-sidecar/templates/github/ that get
-      # copied into other repositories and run there. With no paths given
+      # `gh skill publish --dry-run`, it also reaches the four workflow
+      # templates under skills/*/templates/github/ that get copied into
+      # other repositories and run there. With no paths given
       # actionlint looks only under .github/workflows/, so the templates are
       # named explicitly. The repository contract separately holds this
       # repository's own copy of each template byte-identical to it.
@@ -149,7 +149,7 @@ jobs:
         with:
           # -ignore: actionlint 1.7.12 predates the copilot-requests scope the
           # librarian template requests; drop the flag once a release knows it.
-          args: -color -ignore copilot-requests .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/knowledge-release.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml .github/workflows/website.yml skills/ktl-sidecar/templates/github/knowledge-librarian.yaml skills/ktl-sidecar/templates/github/knowledge-registrar.yaml skills/ktl-sidecar/templates/github/knowledge-release.yaml
+          args: -color -ignore copilot-requests .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/knowledge-release.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml .github/workflows/website.yml skills/ktl-sidecar/templates/github/knowledge-librarian.yaml skills/ktl-sidecar/templates/github/knowledge-registrar.yaml skills/ktl-sidecar/templates/github/knowledge-release.yaml skills/ktl-website/templates/github/knowledge-website.yaml
 
       # actionlint checks syntax, not pinning. A tag or branch ref floats, so
       # every `uses:`, here and in the templates hosts copy, must name a
@@ -157,7 +157,7 @@ jobs:
       # comment for Dependabot to bump.
       - name: Every action is pinned to a commit
         run: |
-          if grep -rnE '^\s*-?\s*uses:' .github/workflows/ skills/ktl-sidecar/templates/github/ \
+          if grep -rnE '^\s*-?\s*uses:' .github/workflows/ skills/ktl-sidecar/templates/github/ skills/ktl-website/templates/github/ \
             | grep -vE '@([0-9a-f]{40}|sha256:[0-9a-f]{64})\b' \
             | grep -vE 'uses:\s*\./'; then
             echo '::error::the action(s) above are not pinned to a commit SHA' >&2
@@ -190,6 +190,40 @@ jobs:
       # ever reaches a real consumer.
       - name: Run the install smoke test
         run: bash scripts/smoke-test-install.sh "$GITHUB_WORKSPACE"
+
+  smoke-test-website:
+    name: Build the website template on a dummy host
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      - name: Use Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: skills/ktl-website/templates/website/package-lock.json
+
+      # Lays the website templates down on a throwaway host made from the
+      # sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would, and
+      # builds the site twice: with a README, a docs page and a changelog,
+      # then with none of them. The repository's own site, which
+      # knowledge-website.yaml builds, proves the fuller configuration; this
+      # proves a bundle that is not this repository's.
+      - name: Run the website smoke test
+        run: bash scripts/smoke-test-website.sh
 
   validate-markdown:
     name: Lint Markdown & check links

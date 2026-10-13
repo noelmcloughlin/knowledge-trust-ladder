@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Isolated install smoke test. Installs the five skills into a throwaway
+# Isolated install smoke test. Installs the six skills into a throwaway
 # "consumer" repo via the open skills CLI, so generated agent directories
 # never contaminate this distribution source.
 #
@@ -41,6 +41,7 @@ mkdir -p "$test_root/consumer"
     --skill ktl-curator \
     --skill ktl-docent \
     --skill ktl-prose \
+    --skill ktl-website \
     --yes
 )
 
@@ -104,6 +105,18 @@ assert "the installed knowledge-report.sh labels a concept in a reader's reposit
   "[[ \"\$(cd \"$test_root/reader\" && bash \"$docent_dir/scripts/knowledge-report.sh\" labels x/auto.md 2>&1)\" == '- Auto (x/auto.md) - checked by automation only' ]]"
 assert "the installed knowledge-feedback.sh records a gap in that repository" \
   "(cd \"$test_root/reader\" && bash \"$docent_dir/scripts/knowledge-feedback.sh\" Miss 'smoke test gap' >/dev/null) && grep -qxF -- '- **Miss** - smoke test gap - docent' \"$test_root/reader/.lokf/feedback.md\""
+# ktl-website lays a whole site down from its templates and runs its preflight
+# in place, so both must arrive with the skill, the bracket file name
+# `[...route].ts` included, which an installer could mangle.
+website_dir="$(find "$test_root/consumer" \( -path "*.agents/skills/ktl-website" -o -path "*.claude/skills/ktl-website" \) -type d 2>/dev/null | head -1)"
+assert "ktl-website discovered by name" "[[ -n \"$website_dir\" ]]"
+assert "ktl-website SKILL.md installed" "[[ -f \"$website_dir/SKILL.md\" ]]"
+assert "ktl-website templates/website carried along, the lock file included" \
+  "[[ -f \"$website_dir/templates/website/package.json\" && -f \"$website_dir/templates/website/package-lock.json\" ]]"
+assert "the bracket file name survived the installer" "[[ -f \"$website_dir/templates/website/src/pages/og/[...route].ts\" ]]"
+assert "ktl-website templates/github/knowledge-website.yaml carried along" "[[ -f \"$website_dir/templates/github/knowledge-website.yaml\" ]]"
+assert "the installed website preflight runs on the reader's repository and ends on its summary line" \
+  "bash \"$website_dir/scripts/website-preflight.sh\" \"$test_root/reader\" 2>&1 | grep -qE '^Preflight: '"
 assert "no installer metadata leaked back into this source repo" \
   "[[ -z \"\$(git -C \"\$repo_root\" status --porcelain --untracked-files=all -- .agents .claude skills-lock.json 2>/dev/null)\" ]]"
 

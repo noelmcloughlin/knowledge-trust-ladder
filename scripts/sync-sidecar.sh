@@ -21,6 +21,10 @@
 # Usage: scripts/sync-sidecar.sh <tag> <sibling-dir>...
 #   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator
 #
+# A sibling that laid its site down with ktl-website carries that skill's
+# templates too, under website/ and as knowledge-website.yaml; those move
+# with the same tag, apart from the three files the host owns.
+#
 # For each sibling it copies every template the sibling already carries. It
 # adds a template the sibling never had in two cases only: ktl-sidecar
 # installs it on every host, or a file the sibling carries cannot run without
@@ -79,6 +83,12 @@ companions=(
   "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.sh"
   "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.sh"
 )
+# The website skill's templates, for a sibling that laid its site down with
+# ktl-website: every file under skills/ktl-website/templates/website/ but the
+# three the host owns, and the deploy workflow. A sibling with no
+# website/site.config.mjs gets none of them: that is ktl-website's decision.
+website_templates="skills/ktl-website/templates"
+website_owned=("site.config.mjs" "README.md" "src/styles/custom.css")
 
 if [[ $# -lt 2 ]]; then
   echo "usage: scripts/sync-sidecar.sh <tag> <sibling-dir>..." >&2
@@ -153,7 +163,7 @@ for sibling in "$@"; do
     if [[ ! -f "$sibling_root/$dst" ]]; then
       why="$(needed "$src" "$sibling_root")"
       if [[ -z "$why" ]]; then
-        absent+=("$dst")
+        absent+=("$dst (never laid down here: ktl-sidecar Step 5 decides, not this script)")
         continue
       fi
       mkdir -p "$(dirname "$sibling_root/$dst")"
@@ -182,10 +192,44 @@ for sibling in "$@"; do
     rm -f "$wf.sync-bak"
   fi
 
+  # The site, when the sibling has one: a template it lacks is added, since
+  # the site cannot build without any of them.
+  website=0
+  if [[ -f "$sibling_root/website/site.config.mjs" ]]; then
+    website=1
+    while IFS= read -r tpath; do
+      rel="${tpath#"$website_templates/website/"}"
+      skip=0; for o in "${website_owned[@]}"; do [[ "$rel" == "$o" ]] && skip=1; done
+      [[ "$skip" -eq 1 ]] && continue
+      dst="website/$rel"; [[ "$rel" == gitignore ]] && dst="website/.gitignore"
+      if [[ ! -f "$sibling_root/$dst" ]]; then
+        mkdir -p "$(dirname "$sibling_root/$dst")"
+        git -C "$repo_root" show "$tag:$tpath" > "$sibling_root/$dst"
+        added+=("$dst (the site cannot build without it)")
+      elif cmp -s <(git -C "$repo_root" show "$tag:$tpath") "$sibling_root/$dst"; then
+        same+=("$dst")
+      else
+        git -C "$repo_root" show "$tag:$tpath" > "$sibling_root/$dst"
+        copied+=("$dst")
+      fi
+    done < <(git -C "$repo_root" ls-tree -r --name-only "$tag" -- "$website_templates/website")
+    wsrc="$website_templates/github/knowledge-website.yaml"; wdst=".github/workflows/knowledge-website.yaml"
+    if git -C "$repo_root" cat-file -e "$tag:$wsrc" 2>/dev/null; then
+      if [[ ! -f "$sibling_root/$wdst" ]]; then
+        absent+=("$wdst (never laid down here: ktl-website Step 5 decides, not this script)")
+      elif cmp -s <(git -C "$repo_root" show "$tag:$wsrc") "$sibling_root/$wdst"; then
+        same+=("$wdst")
+      else
+        git -C "$repo_root" show "$tag:$wsrc" > "$sibling_root/$wdst"
+        copied+=("$wdst")
+      fi
+    fi
+  fi
+
   for f in "${copied[@]}"; do echo "   copied   $f"; done
   for f in "${same[@]}"; do echo "   same     $f"; done
   for f in "${added[@]}"; do echo "   added    $f"; done
-  for f in "${absent[@]}"; do echo "   absent   $f (never laid down here: ktl-sidecar Step 5 decides, not this script)"; done
+  for f in "${absent[@]}"; do echo "   absent   $f"; done
   if [[ -f "$wf" ]]; then
     if [[ "$old_pin" == "$tag" ]]; then
       echo "   pin      already $tag"
@@ -194,6 +238,9 @@ for sibling in "$@"; do
     fi
   else
     echo "   pin      no knowledge-librarian.yaml here, so no scheduled librarian to pin"
+  fi
+  if [[ "$website" -eq 1 ]]; then
+    echo "   website  the site's copies are synced; build it there to check: cd website && npm ci && npm run build"
   fi
   # Whether the skill the librarian runs changed between the two pins: a
   # sibling with identical copies and an unchanged skill has nothing to

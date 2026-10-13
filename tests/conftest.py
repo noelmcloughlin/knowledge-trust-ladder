@@ -42,6 +42,9 @@ REPO = Path(__file__).resolve().parent.parent
 TEMPLATES = REPO / "skills" / "ktl-sidecar" / "templates"
 SCRIPTS = TEMPLATES / "scripts"
 WORKFLOWS = TEMPLATES / "github"
+WEBSITE = REPO / "skills" / "ktl-website"
+WEBSITE_TEMPLATES = WEBSITE / "templates"
+WEBSITE_PREFLIGHT = WEBSITE / "scripts" / "website-preflight.sh"
 BOM = bytes([0xEF, 0xBB, 0xBF])
 
 
