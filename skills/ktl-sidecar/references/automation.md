@@ -58,6 +58,8 @@ The workflow is **inert until set up**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset
 | `AGENT_USE_JOB_TOKEN` | `true`: the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it; leave it unset for any other agent |
 | `KNOWLEDGE_RETRIEVAL` | optional. `true`: each run that changes the bundle makes one more agent call and the pull request carries a retrieval score ([below](#knowledge-reportsh-what-a-program-can-say-about-the-bundle)). Unset, nothing is scored |
 
+Set each one under **Repository variables** (Settings, Secrets and variables, Actions, Variables), or with `gh variable set <name> --body <value>`. A variable set on an environment, such as `release`, is never seen: no job in the sidecar's workflows names an environment, and a job's `if:` reads only repository and organization variables.
+
 | Repository secret | Value |
 | --- | --- |
 | `AGENT_API_KEY` | the agent's API key or token, when `AGENT_USE_JOB_TOKEN` is not set. The wrapper hands it to the agent under the `AGENT_API_KEY_ENV` name and to nothing else |
@@ -130,7 +132,7 @@ It attaches `.lokf/knowledge` to a GitHub release as `knowledge-<tag>-<repositor
 It starts in two ways:
 
 - **By hand, always.** Run it from the Actions tab, or `gh workflow run knowledge-release.yaml -f tag=<tag>`, naming an existing release's tag.
-- **On each published release, once turned on.** Set the `KNOWLEDGE_RELEASE_ENABLED` repository variable to `true`. Unset, each release shows the run as skipped.
+- **On each published release, once turned on.** Set the `KNOWLEDGE_RELEASE_ENABLED` repository variable to `true`, under Repository variables and not on an environment. Unset, each release shows the run as skipped.
 
 `<repository>` is the repository's name. A host that publishes under another name, such as a package renamed for PyPI, sets it in the `KNOWLEDGE_RELEASE_NAME` repository variable: letters, digits, `.`, `_` and `-`. The Copilot skill zips take the same name.
 

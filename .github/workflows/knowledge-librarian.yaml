@@ -223,7 +223,9 @@ jobs:
         with:
           node-version: "22"
 
-      # Set this up under Settings -> Secrets and variables -> Actions. The
+      # Set this up under Settings -> Secrets and variables -> Actions, as
+      # repository variables and secrets: this job names no environment, so it
+      # never sees an environment's. The
       # sidecar's references/automation.md gives the full commands for Copilot
       # CLI and for Claude Code.
       #   1. Set KNOWLEDGE_LIBRARIAN_ENABLED to "true" to turn on the run.

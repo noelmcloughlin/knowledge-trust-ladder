@@ -26,7 +26,7 @@ Five things this skill must keep true for it:
 
 The workflow invokes `.lokf/scripts/knowledge-librarian.sh` directly, a fixed, reviewed path. To turn it on:
 
-1. Set the `KNOWLEDGE_LIBRARIAN_ENABLED` repository variable to `true`.
+1. Set the `KNOWLEDGE_LIBRARIAN_ENABLED` repository variable to `true`. These settings go under Repository variables and secrets, never on an environment, which the workflow does not read.
 2. Set `AGENT_CLI` to your non-interactive agent command.
 3. Name the variable the agent reads its credential from in `AGENT_API_KEY_ENV`.
 4. Either set `AGENT_USE_JOB_TOKEN` to `true` (Copilot CLI, billed to the repository owner's seat) or put a key in the `AGENT_API_KEY` secret. The wrapper hands it to the agent under that name only.
