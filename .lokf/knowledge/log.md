@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-13
+
+* **Curation**: human:noelmcloughlin confirmed 2 concepts, corrected 16, sent 5 back and marked 1 for later. Two corrections added files the concept drew on to `sources`, two moved a `resource` to the page that holds the facts, ten restored facts a summary had dropped from its source, and two send-backs name claims from files the concept does not list, so the librarian may be citing too few sources and shortening too far.
+
 ## 2026-10-12
 
 * **Prose**: reworded 2 concept bodies in plain English: the context layer, whose pin-or-float detail now follows the list of decisions, and the website playbook. No fact, link, number or frontmatter changed.

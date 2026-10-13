@@ -15,9 +15,12 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T16:43:57Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-13T00:59:27Z"
+verified:
+- by: human:noelmcloughlin
+  at: "2026-10-13T00:59:27Z"
+stale_after: 2026-10-14
 ---
 
 # Overview
@@ -31,15 +34,15 @@ SkillWiki turns trajectories, documents, API specifications, scripts and earlier
 Reading the paper in October 2026 changed the skills in four places, which `CHANGELOG.md` lists:
 
 - **A program counts reliance.** `knowledge-report.sh` prints how many other concepts rely on each one through a typed relation. It ranks the curator's queue, *Worth ten minutes today*, and `ktl-curator` quotes that queue.
-- **A retired concept names what replaced it.** `ktl-curator` links the successor in the concept's `**Deprecation**` line in `log.md`, and the report's label reads *retired, replaced by* that path. The log holds the link until LOKF has a relation type for a successor, which nicholsn/lokf#112 asks for.
-- **A reader's dispute shows on the concept.** Until the librarian handles a docent's Disagreement, the concept's label adds *a reader disputed this* and the day.
-- **A confirming commit records the verdict.** Conventions rule 14 reads each commit of a pull request. A commit that records a person's confirmation may change what the concept says only when that person is also recorded as its author.
+- **A retired concept names what replaced it.** A deprecated SkillWiki skill carries a `replacement_skill_id`. `ktl-curator` links the successor in the concept's `**Deprecation**` line in `log.md`, and the report's label reads *retired, replaced by* that path, and the docent opens the successor before it falls back to the repository. The log holds the link until LOKF has a relation type for a successor, which nicholsn/lokf#112 asks for.
+- **A reader's dispute shows on the concept.** SkillWiki defines a *Degraded* state for a released skill that keeps failing while it stays usable. Until the librarian handles a docent's Disagreement, the concept's label adds *a reader disputed this* and the day.
+- **A confirming commit records the verdict.** SkillWiki's structured diff sorts a change by what it touches before review. Conventions rule 14 reads each commit of a pull request. A commit that records a person's confirmation may change what the concept says only when that person is also recorded as its author.
 
-One more change waits for LOKF 0.9.0, whose `sources[].excerpt` lets a program check the exact passage a concept relies on against its source.
+One more change waits for LOKF 0.9.0. SkillWiki's verifier specs check an output by program, and LOKF 0.9.0's `sources[].excerpt` lets a program check the exact passage a concept relies on against its source.
 
 # Where the designs part
 
 - **Who stands behind a decision.** SkillWiki records each transition with `author="repository"`, and the paper says its governance workflow "can operate fully autonomously". KTL records a verdict only for a person the forge can name.
 - **What a state names.** SkillWiki stores a skill's state. KTL stores no label: `knowledge-report.sh` computes each one from the events.
-- **Scores and signals.** SkillWiki attaches a `confidence` number. KTL records a named person's verdict where SkillWiki has a number.
+- **Scores and signals.** SkillWiki attaches a `confidence` number. LOKF's schema says that "OKF stores signals, never a score", and KTL records a named person's verdict where SkillWiki has a number.
 - **A declined proposal.** SkillWiki can raise a rejected proposal again. The librarian proposes nothing again from a pull request a person closed without merging, until the source moves or a reader asks again.

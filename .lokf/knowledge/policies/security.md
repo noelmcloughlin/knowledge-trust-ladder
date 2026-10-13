@@ -10,8 +10,8 @@ sources:
 - resource: scripts/validate-repository.sh
 - resource: CHANGELOG.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
+  by: human:noelmcloughlin
+  at: "2026-10-13T00:41:54Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/threat-model
 - https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
@@ -22,8 +22,9 @@ verified:
   at: "2026-09-26T20:21:41Z"
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T00:41:54Z"
 stale_after: 2027-03-26
-status: draft
 ---
 
 # Overview
@@ -48,8 +49,8 @@ The repository is mostly Markdown. Four things in it run, or are run by other sy
 
 | Surface | What guards it |
 | --- | --- |
-| the sidecar templates under `skills/ktl-sidecar/templates/`, which the sidecar copies into other repositories, where they run | the template's own design: separate jobs, so the agent never meets a write token; a `publish` job that confines the patch to the bundle and refuses a `human:` claim; a preflight and a forge-free gate that only read git and gpg |
-| this repository's workflows: `validate.yml` on every pull request; its own copies of the three knowledge workflows; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, and harden-runner in audit mode; each workflow's header comment says why it is shaped as it is |
+| the seven scripts and three workflows under `skills/ktl-sidecar/templates/`, which the sidecar copies into other repositories, where they run | the template's own design: separate jobs, so the agent never meets a write token; a `publish` job that confines the patch to the bundle and refuses a `human:` claim; a preflight and a forge-free gate that only read git and gpg |
+| this repository's workflows: `validate.yml` on every pull request; `knowledge-registrar.yaml`, `knowledge-librarian.yaml` and `knowledge-release.yaml`, its own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, and harden-runner in audit mode; each workflow's header comment says why it is shaped as it is |
 | `skills/ktl-prose/scripts/prose-check.py` and `skills/ktl-docent/scripts/`, the scripts a skill runs in place, in whichever repository installs it | `prose-check.py` uses the standard library only; it reads the files it is given and the skill's own word list, calls `git show` with an argument list and writes nothing. The docent's two are byte-identical copies of the sidecar's templates: `knowledge-report.sh` reads the bundle and git, and `knowledge-feedback.sh` writes one line to `.lokf/feedback.md`. None opens a network connection |
 | the five skills' `SKILL.md` and `references/` prose, executed by whichever LLM agent runs it, here and in every consumer | each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one |
 
@@ -62,7 +63,3 @@ A skill's `Scope:` line is prose, not a permission. Run interactively, an agent 
 - A reader's own words to ktl-docent. That boundary belongs to the agent harness, not to a Markdown file.
 
 Check 10 of `scripts/validate-repository.sh` fails when `SECURITY.md` outgrows a word budget of 900. Its comment says the file sits between 450 and 800 words and ran to 1,400 to 1,900 before `docs/threat-model.md` took the design.
-
-## Open questions
-
-- 2026-10-03, human:noelmcloughlin: ensrure this concept is check against source again

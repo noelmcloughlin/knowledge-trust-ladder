@@ -11,9 +11,8 @@ sources:
 - resource: skills/ktl-sidecar/templates/justfile
 - resource: README.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-13T01:19:37Z"
 about: []
 references:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
@@ -26,6 +25,8 @@ relatedTo:
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T17:06:00Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T01:19:37Z"
 ---
 
 # Overview
@@ -40,7 +41,7 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 
 **The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly.
 
-The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle: the linkml-sidecar skill creates it under `.linkml/` and sets the variable itself. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting.
+The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle: the linkml-sidecar skill creates it under `.linkml/` and sets the variable itself. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting. Neither plugin can read the schema itself, so the same list of classes goes into both. When the `lokf` floor moves, the pinned `lokf.yaml` is refreshed to the new version in the same change and `just lokf-validate` is run again.
 
 The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, with nothing new to install. It leaves the graph as it is: `convert`, `serve` and `query` take no `--schema`, so domain keys project in LOKF's namespace. Up to lokf 0.8.0 an undeclared type projects there the same way, and from 0.9.0 it projects as `lokf:Concept` with the name kept in `schema:additionalType`.
 
@@ -59,4 +60,4 @@ The shape waits for the curator's write path.
 
 Where a domain schema binds a slot to an external code list (SNOMED CT, for example), neither LOKF's schema nor `lokf validate` checks that the term still exists. `linkml-term-validator` can, as an optional extra gate whose "service unreachable" counts as not passing.
 
-**Roles stay as they are.** The curator raises the question, as a report line and a conversation. The team decides whether a domain schema, a small piece of governed software, is worth owning. The librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge.
+**Roles stay as they are.** The curator raises the question, as a report line and a conversation. The team decides whether a domain schema, a small piece of governed software, is worth owning. The librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge, since the spec says consumers MUST NOT reject unknown types. It is also still outside what `lokf validate` checks, so the registrar gate stays red.

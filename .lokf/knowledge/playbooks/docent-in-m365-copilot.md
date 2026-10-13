@@ -105,3 +105,4 @@ A host's copy under `.lokf/m365/` is what its releases pack, so a host that edit
 
 - 2026-09-26, human:noelmcloughlin: Agent Builder's zip limit is 50 MB; the limits sentence gives only 10 MB, the toolkit's app package (`skills/ktl-sidecar/references/m365.md`, line 18).
 - 2026-10-03, process:ktl-librarian: Microsoft's page on custom skills (updated 2026-09-04) says the Agents Toolkit takes a skill directory and that `.zip` isn't supported. `skills/ktl-sidecar/references/m365.md` says `atk add skill --from` takes a zip from any path, as checked against the toolkit's source, and this concept follows it. Which holds for the toolkit a reader installs?
+- 2026-10-13, human:noelmcloughlin: Microsoft's page on custom skills says the toolkit takes no zip ("Skill directory; `.zip` isn't supported"), but the repository's test in `skills/ktl-sidecar/references/m365.md` says `atk add skill --from` takes one. This needs testing.

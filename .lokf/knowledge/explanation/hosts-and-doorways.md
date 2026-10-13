@@ -6,9 +6,8 @@ description: Why the bundle is `.lokf/knowledge`, one real folder on every host,
 genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T16:08:20Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-13T01:20:21Z"
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
 - https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
@@ -24,6 +23,8 @@ sources:
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T01:20:21Z"
 ---
 
 # The pattern
@@ -38,6 +39,8 @@ A LOKF bundle is a **sidecar**: it sits beside the raw sources it distils, in th
 | `knowledge_bundle` | people, folder pickers, file managers, Obsidian's *Open folder as vault* | a symlink (junction on Windows), added by the sidecar's optional Step 2 |
 
 Every tool and every person finds the bundle at the name they know. The sidecar no longer chooses which of the two is the real folder: it is always the hidden one.
+
+The doorway is committed alongside a tracked `.lokf/`, or added to the root `.gitignore` alongside a gitignored one. If the host repository lints, spell-checks or link-checks `**/*.md` repo-wide, it excludes `knowledge_bundle/` from that config. Otherwise the same files under `.lokf/knowledge/` are processed twice, once at each path. Obsidian writes the bundle vault's workspace state through the link into `.lokf/knowledge/.obsidian/`, which the sidecar's gitignore excludes and `lokf validate` ignores. The release workflow resolves `.lokf/knowledge` to the real folder before packing it.
 
 # Hosts
 

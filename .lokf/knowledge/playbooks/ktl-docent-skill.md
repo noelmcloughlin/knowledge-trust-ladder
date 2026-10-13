@@ -6,9 +6,8 @@ description: "The reader's side: it answers questions from the bundle first, wit
 genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-13T01:17:30Z"
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -21,6 +20,8 @@ references:
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T01:17:30Z"
 sources:
 - resource: skills/ktl-docent/SKILL.md
 - resource: skills/ktl-docent/references/answering.md
@@ -53,7 +54,7 @@ It is **read-only on `knowledge/`**. Its single write is `.lokf/feedback.md`, af
 - a **Miss**: a question the bundle could not answer, plus where the answer was found;
 - a **Disagreement**: a concept versus what its source now says, with `--concept <path>` naming that concept so its label shows the dispute.
 
-It makes that write with `knowledge-feedback.sh` (2026-09-23). The script inserts the entry newest first and prints only a kind, a date and a count, so the reports other readers left in that file never enter the session. Before the script, an entry meant reading the file and rewriting it, and the only guard was a line of prose telling the agent to ignore what it had just read. The librarian consumes those entries on its next run. Its apply script moves each one into `.lokf/questions.md`, a ledger only programs read, which closes the loop from reader back to bundle.
+It makes that write with `knowledge-feedback.sh` (2026-09-23). The script inserts the entry newest first and prints only a kind, a date and a count, so the reports other readers left in that file never enter the session. Before the script, an entry meant reading the file and rewriting it, and the only guard was a line of prose telling the agent to ignore what it had just read. The librarian consumes those entries on its next run. Its apply script moves each one into `.lokf/questions.md`, a ledger only programs read, which closes the loop from reader back to bundle. In a gitignored `.lokf/` the docent still records feedback, but says the scheduled librarian doesn't run there, so someone has to run ktl-librarian by hand.
 
 **Its own scripts, never the repository's (2026-10-05).** Both scripts are copies in the skill's own `scripts/` folder, byte-identical to ktl-sidecar's templates. The skill never runs the copies under `.lokf/scripts/`, because anyone who can commit to a repository can change those, and a question is no reason to run its code. Where its own copies are missing, it works out each label by hand and gives the reader each feedback entry as one line to file, rather than recording it. It does not run the preflight.
 

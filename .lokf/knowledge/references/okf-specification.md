@@ -4,10 +4,10 @@ id: https://knowledge-trust-ladder.example/knowledge/references/okf-specificatio
 title: OKF specification (v0.2)
 description: Google's Open Knowledge Format - a folder of Markdown concept files with YAML frontmatter, requiring only `type`, plus the v0.2 provenance, trust, and lifecycle families.
 genre: reference
-resource: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
+resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
 generated:
   by: human:noelmcloughlin
-  at: "2026-09-26T20:42:16Z"
+  at: "2026-10-13T00:51:55Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T16:35:55Z"
@@ -15,8 +15,9 @@ verified:
   at: "2026-09-26T20:42:16Z"
 - by: process:ktl-librarian
   at: "2026-10-06T11:10:52Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T00:51:55Z"
 stale_after: 2027-09-26
-status: draft
 ---
 
 # Overview
@@ -32,7 +33,3 @@ rests on: `sources` (provenance) and `generated`, `verified` (trust events),
 from the actor strings, never stored. Section 7 fixes the actor convention
 (`human:<id>`, `process:<id>`, `<producer>/<version>`) that makes
 "confirmed by a person" a machine-checkable distinction.
-
-## Open questions
-
-- 2026-10-12, process:ktl-librarian: the `resource` is the copy under `knowledge-catalog/okf/`, whose folder's README now says OKF lives in its own repository and asks readers to stop using that copy. The README, the sidecar's README template and `CHANGELOG.md` now link `https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md`. A person wrote this concept, so moving its `resource` is the curator's to record.

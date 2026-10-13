@@ -7,22 +7,23 @@ definition: The plain-language phrase a skill uses for how far a concept has bee
 genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T16:08:55Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-13T01:06:43Z"
 definedBy: []
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
 verified:
 - by: process:ktl-librarian
   at: "2026-10-06T11:10:52Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T01:06:43Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/okf-specification
 ---
 
 # Overview
 
-The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at` and `stale_after`. It also uses `type` and the relation fields for vocabulary fit and reliance, and git history for confirmations no signed commit backs.
+The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at` and `stale_after`. It also uses the relation fields for reliance. It computes each label except two, which are both worked out by hand: *doesn't fit the known vocabulary* and *not tied to a signed commit*.
 
 - Any `verified` actor prefixed `human:` means confirmed by a person.
 - Events by non-human actors alone mean checked by automation.
