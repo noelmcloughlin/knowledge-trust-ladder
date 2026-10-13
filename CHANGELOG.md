@@ -4,11 +4,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **The website's home page highlights Browse the bundle.** It is now the first and primary button, and Quick start follows it as a secondary one.
-
-## [0.38.1] - 2026-10-12
+## [0.38.1] - 2026-10-13
 
 ### Added
 
@@ -21,6 +17,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The research pages are trimmed to what KTL took and what remains.** `docs/wikiskill.md` and `docs/skillwiki.md` keep the changes each paper led to and drop the part-by-part comparisons; `docs/skills-repositories.md`, `docs/context-layer.md` and `docs/context-layer-technology.md` lose the quotation surveys and keep the runs, the design, the status table and the decisions.
 
 - **The README, the sidecar's README and ktl-librarian's Golden Rule 1 link OKF's specification in its own repository.** Google moved the Open Knowledge Format to `GoogleCloudPlatform/open-knowledge-format` and froze the copy under `knowledge-catalog/okf/`.
+- **The website's home page highlights Browse the bundle.** It is now the first and primary button, and Quick start follows it as a secondary one.
 
 ## [0.38.0] - 2026-10-11
 
