@@ -1,5 +1,6 @@
 import { defineRouteMiddleware } from "@astrojs/starlight/route-data";
 import { cardFor } from "./socialCards";
+import { TITLE } from "../site.config.mjs";
 
 export const onRequest = defineRouteMiddleware((context) => {
   const route = context.locals.starlightRoute;
@@ -20,7 +21,7 @@ export const onRequest = defineRouteMiddleware((context) => {
     { tag: "meta", attrs: { property: "og:image:height", content: "630" } },
     {
       tag: "meta",
-      attrs: { property: "og:image:alt", content: card === "index" ? "Knowledge Trust Ladder" : route.entry.data.title },
+      attrs: { property: "og:image:alt", content: card === "index" ? TITLE : route.entry.data.title },
     },
   );
 });

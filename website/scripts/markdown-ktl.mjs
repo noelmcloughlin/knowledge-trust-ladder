@@ -7,7 +7,7 @@
 //   - moves every heading down one level when `ktlShiftHeadings` is set,
 //     since a concept's body starts its sections at `#` and the page title is
 //     already the one h1.
-import { BASE } from "../site.config.mjs";
+import { BASE } from "./config.mjs";
 import { rewriteHtml, rewriteUrl } from "./routes.mjs";
 
 const WIKILINK = /\[\[([^\]|#]+)(#[^\]|]*)?(?:\|([^\]]+))?\]\]/g;
