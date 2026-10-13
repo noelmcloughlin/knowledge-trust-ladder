@@ -5,7 +5,7 @@
 // here; validate.yml's lychee run checks the repository's own Markdown.
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { BASE, SITE, SITE_DIR, SITE_URL } from "../site.config.mjs";
+import { BASE, SITE, SITE_DIR, SITE_URL } from "./config.mjs";
 
 const DIST = resolve(SITE_DIR, "dist");
 const pages = [];

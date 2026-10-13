@@ -3,6 +3,7 @@ import { z } from "astro/zod";
 import { docsLoader } from "@astrojs/starlight/loaders";
 import { docsSchema } from "@astrojs/starlight/schema";
 import { changelogsLoader } from "starlight-changelogs/loader";
+import { CHANGELOG } from "../scripts/config.mjs";
 
 // scripts/sync.mjs writes every page under src/content/docs/. The extra keys
 // say which repository file a page was rendered from, and carry what a
@@ -31,19 +32,24 @@ const concept = z.object({
 });
 
 export const collections = {
-  // A page per release, from the sync's copy of CHANGELOG.md. The release
-  // pages stay out of search, where 45 versions would bury every other page.
-  changelogs: defineCollection({
-    loader: changelogsLoader([
-      {
-        provider: "keep-a-changelog",
-        base: "changelog",
-        changelog: "src/generated/CHANGELOG.md",
-        title: "Releases",
-        pagefind: false,
-      },
-    ]),
-  }),
+  // A page per release, from the sync's copy of the changelog, when
+  // site.config.mjs shows one. The release pages stay out of search, where
+  // dozens of versions would bury every other page.
+  ...(CHANGELOG
+    ? {
+        changelogs: defineCollection({
+          loader: changelogsLoader([
+            {
+              provider: "keep-a-changelog",
+              base: "changelog",
+              changelog: "src/generated/CHANGELOG.md",
+              title: "Releases",
+              pagefind: false,
+            },
+          ]),
+        }),
+      }
+    : {}),
   docs: defineCollection({
     loader: docsLoader(),
     schema: docsSchema({

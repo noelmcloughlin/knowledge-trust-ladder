@@ -6,7 +6,7 @@
 //   src/generated/     the logo, for the header and the home page;
 //                      health.json, the numbers the health page charts; and
 //                      CHANGELOG.md, which the releases section reads
-//   public/            the figures, llms.txt, and under knowledge/ the four
+//   public/            the figures, llms.txt, the favicon, and under knowledge/ the four
 //                      files `lokf export` writes, every bundle file as it is
 //                      in the repository, and each concept's JSON-LD
 //
@@ -16,21 +16,32 @@
 // second way.
 import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { dirname, extname, relative, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import {
+  ASSETS,
   BASE,
+  BRANCH,
   BUNDLE_DIR,
-  DOCS_GROUPS,
+  CHANGELOG,
+  CUSTOM_DOMAIN,
+  DESCRIPTION,
+  DOCS,
+  HOME,
+  LOGO,
+  LOGO_FILES,
+  PAGES,
   REF,
   REPO_ROOT,
   REPO_URL,
   SITE_URL,
   SITE_DIR,
+  TITLE,
   bundleGroups,
   conceptIds,
+  docsPages,
   groupLabel,
-} from "../site.config.mjs";
+} from "./config.mjs";
 import { rewriteUrl } from "./routes.mjs";
 
 const CONTENT = resolve(SITE_DIR, "src", "content", "docs");
@@ -189,11 +200,13 @@ function asidesInProse(text) {
 /**
  * A figure's dark version on the site. A page's `<picture>` names the
  * `-dimmed` set, which suits GitHub's dark theme; the site's dark theme takes
- * the `-dark` set beside it in .assets/, drawn on a dark ground.
+ * the `-dark` set beside it in the figures folder, drawn on a dark ground.
  */
 function darkFigure(src) {
   const name = src.match(/([^/]+)-dimmed\.svg$/)?.[1];
-  return name && existsSync(resolve(REPO_ROOT, ".assets", `${name}-dark.svg`)) ? src.replace(/-dimmed\.svg$/, "-dark.svg") : src;
+  return ASSETS && name && existsSync(resolve(REPO_ROOT, ASSETS, `${name}-dark.svg`))
+    ? src.replace(/-dimmed\.svg$/, "-dark.svg")
+    : src;
 }
 
 /**
@@ -478,7 +491,9 @@ function writeOverview(root, concepts, health) {
     `- [datasets.jsonld](${k}/datasets.jsonld): a schema.org Dataset description for each Dataset or Table concept.`,
     `- [index.md](${k}/index.md): the bundle's root file, which declares the header above.`,
     `- Each concept page links the concept's own Markdown file and its JSON-LD, at the concept's path with \`.md\` or \`.jsonld\` added.`,
-    `- The bundle as it stood at each release is a zip on the [releases page](${REPO_URL}/releases).`,
+    ...(existsSync(resolve(REPO_ROOT, ".github", "workflows", "knowledge-release.yaml"))
+      ? [`- The bundle as it stood at each release is a zip on the [releases page](${REPO_URL}/releases).`]
+      : []),
   ].join("\n");
   const generated = [
     intro.trim(),
@@ -549,48 +564,47 @@ function writeHealth(concepts, health, full) {
 }
 
 function writeDocs() {
-  const placed = new Set(DOCS_GROUPS.flatMap((g) => g.pages));
-  const found = [];
-  const walk = (dir, prefix) => {
-    for (const name of readdirSync(dir).sort()) {
-      const full = resolve(dir, name);
-      if (statSync(full).isDirectory()) walk(full, prefix + name + "/");
-      // A retelling for younger readers has its own page, /simple/, so it is no docs page.
-      else if (name.endsWith(".md") && !name.endsWith(".en-simple.md")) found.push(prefix + name.slice(0, -3));
+  if (!DOCS) return [];
+  const found = docsPages();
+  const groups = DOCS.groups;
+  if (groups) {
+    const placed = new Set(groups.flatMap((g) => g.pages));
+    const missing = found.filter((p) => !placed.has(p));
+    const gone = [...placed].filter((p) => !found.includes(p));
+    if (missing.length || gone.length) {
+      throw new Error(
+        `site.config.mjs DOCS.groups is out of step with ${DOCS.dir}/: ` +
+          (missing.length ? `not placed: ${missing.join(", ")}. ` : "") +
+          (gone.length ? `placed but missing: ${gone.join(", ")}.` : ""),
+      );
     }
-  };
-  walk(resolve(REPO_ROOT, "docs"), "");
-  const missing = found.filter((p) => !placed.has(p));
-  const gone = [...placed].filter((p) => !found.includes(p));
-  if (missing.length || gone.length) {
-    throw new Error(
-      `site.config.mjs DOCS_GROUPS is out of step with docs/: ` +
-        (missing.length ? `not placed: ${missing.join(", ")}. ` : "") +
-        (gone.length ? `placed but missing: ${gone.join(", ")}.` : ""),
-    );
   }
-  const docs = [];
-  for (const name of found) {
-    const source = `docs/${name}.md`;
+  const docs = found.map((name) => {
+    const source = `${DOCS.dir}/${name}.md`;
     const { title, body } = takeTitle(repoFile(source));
-    const description = describe(body);
-    docs.push({ name, title: title ?? name, description });
+    return { name, source, title: title ?? name, description: describe(body), body };
+  });
+  // Grouped pages keep their group's order; ungrouped ones sit by title, and
+  // each one's sidebar entry says where.
+  const order = groups ? groups.flatMap((g) => g.pages) : null;
+  docs.sort((a, b) => (order ? order.indexOf(a.name) - order.indexOf(b.name) : a.title.localeCompare(b.title)));
+  docs.forEach((d, i) => {
     page(
-      resolve(CONTENT, "docs", `${name}.md`),
+      resolve(CONTENT, "docs", `${d.name}.md`),
       {
-        title: title ?? name,
-        ...(description ? { description } : {}),
+        title: d.title,
+        ...(d.description ? { description: d.description } : {}),
         // A page named after its sidebar group opens the group, labelled as
         // each bundle group's index is.
-        ...(DOCS_GROUPS.some((g) => g.label.toLowerCase() === name) ? { sidebar: { label: "Overview" } } : {}),
-        ktlSource: source,
-        editUrl: `${REPO_URL}/edit/main/${source}`,
+        ...(groups && groups.some((g) => g.label.toLowerCase() === d.name) ? { sidebar: { label: "Overview" } } : {}),
+        ...(groups ? {} : { sidebar: { order: i + 1 } }),
+        ktlSource: d.source,
+        editUrl: `${REPO_URL}/edit/${BRANCH}/${d.source}`,
       },
-      prepare(body),
+      prepare(d.body),
     );
-  }
-  const order = DOCS_GROUPS.flatMap((g) => g.pages);
-  return docs.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
+  });
+  return docs.map(({ name, title, description }) => ({ name, title, description }));
 }
 
 /** The text from its first `# ` title down, passing over a `# ` inside fenced code. */
@@ -607,79 +621,115 @@ function fromTitle(text, file) {
   throw new Error(`${file} has no '# ' title, and the home page starts at it`);
 }
 
-function writeReadmes() {
-  // The home page: the README from its title down, under a hero. The logo
-  // above the title is for GitHub, and the hero shows the logo itself. A line
-  // that links this site's home page is left out, since here it would link to
-  // the page it is on: the README keeps that link, and the pointers the site
-  // gives as buttons, on a line of their own. The tagline is the first line of
-  // docs/architecture.md that is bold throughout. Each step passes over fenced
-  // code, and a missing title or tagline stops the build.
-  const home = [`](${SITE_URL})`, `](${SITE_URL}/)`, `<${SITE_URL}>`, `<${SITE_URL}/>`];
-  const readme = takeTitle(
-    mapProse(fromTitle(repoFile("README.md"), "README.md"), (line) =>
-      home.some((link) => line.includes(link)) ? null : line,
-    ),
-  ).body;
+/** The tagline under the home page's title: as given, the first line bold throughout of the file named, or the site's description. */
+function homeTagline() {
+  const given = HOME.tagline;
+  if (typeof given === "string") return given;
+  if (!given) return DESCRIPTION;
   let tagline = null;
-  mapProse(repoFile("docs/architecture.md"), (line) => {
+  mapProse(repoFile(given.boldLineOf), (line) => {
     const bold = tagline === null && line.match(/^\*\*((?:(?!\*\*).)+)\*\*\s*$/);
     if (bold) tagline = plain(bold[1]);
     return line;
   });
   if (!tagline) {
-    throw new Error("docs/architecture.md has no line bold throughout, and the home page's tagline comes from it");
+    throw new Error(`${given.boldLineOf} has no line bold throughout, and HOME.tagline takes the home page's tagline from it`);
   }
+  return tagline;
+}
+
+function writeHome() {
+  // The home page: the source from its title down, under a hero. The logo
+  // above a README's title is for GitHub, and the hero shows the logo itself.
+  // A line that links this site's home page is left out, since here it would
+  // link to the page it is on: the README keeps that link, and the pointers
+  // the site gives as buttons, on a line of their own. Each step passes over
+  // fenced code, and a source with no title stops the build. With no source,
+  // the page opens with the bundle's own introduction, the text its overview
+  // page opens with.
+  const home = [`](${SITE_URL})`, `](${SITE_URL}/)`, `<${SITE_URL}>`, `<${SITE_URL}/>`];
+  let body;
+  if (HOME.source) {
+    body = takeTitle(
+      mapProse(fromTitle(repoFile(HOME.source), HOME.source), (line) =>
+        home.some((link) => line.includes(link)) ? null : line,
+      ),
+    ).body;
+  } else {
+    const { body: index } = splitFrontmatter(read(resolve(BUNDLE_DIR, "index.md")));
+    body = takeTitle(index).body.trim().split(/\n(?=# )/)[0];
+  }
+  const tagline = homeTagline();
+  const actions = (
+    HOME.actions ?? [
+      { text: "Browse the bundle", link: "/knowledge/", icon: "right-arrow" },
+      { text: "Bundle health", link: "/health/", variant: "secondary" },
+      { text: "Knowledge graph", link: "/graph/", variant: "secondary" },
+    ]
+  ).map((a) => ({ ...a, link: a.link.startsWith("/") ? BASE + a.link : a.link }));
   page(
     resolve(CONTENT, "index.md"),
     {
-      title: "Knowledge Trust Ladder",
+      title: TITLE,
       description: tagline,
       template: "splash",
       hero: {
         tagline,
-        image: { light: "../../generated/logo-light.svg", dark: "../../generated/logo-dark.svg", alt: "" },
-        actions: [
-          { text: "Browse the bundle", link: `${BASE}/knowledge/`, icon: "right-arrow" },
-          { text: "Architecture", link: `${BASE}/docs/architecture/`, variant: "secondary" },
-          { text: "Glossary", link: `${BASE}/knowledge/glossary/`, variant: "secondary" },
-          { text: "Quick start", link: `${BASE}/docs/install/#quick-start`, variant: "secondary" },
-        ],
+        ...(LOGO_FILES
+          ? { image: { light: `../../generated/${LOGO_FILES.light}`, dark: `../../generated/${LOGO_FILES.dark}`, alt: "" } }
+          : {}),
+        actions,
       },
-      ktlSource: "README.md",
-      editUrl: `${REPO_URL}/edit/main/README.md`,
+      ktlSource: HOME.source ?? ".lokf/knowledge/index.md",
+      editUrl: HOME.source ? `${REPO_URL}/edit/${BRANCH}/${HOME.source}` : false,
     },
-    prepare(readme),
-  );
-
-  const simple = takeTitle(repoFile("docs/architecture.en-simple.md"));
-  const description = describe(simple.body);
-  page(
-    resolve(CONTENT, "simple.md"),
-    {
-      title: simple.title ?? "Knowledge Trust Ladder, in short",
-      ...(description ? { description } : {}),
-      ktlSource: "docs/architecture.en-simple.md",
-      editUrl: `${REPO_URL}/edit/main/docs/architecture.en-simple.md`,
-    },
-    prepare(simple.body),
+    prepare(body),
   );
 }
 
+/** A page per PAGES entry, from its file's title down. */
+function writePages() {
+  for (const extra of PAGES) {
+    const { title, body } = takeTitle(repoFile(extra.source));
+    const description = describe(body);
+    page(
+      resolve(CONTENT, `${extra.slug}.md`),
+      {
+        title: title ?? extra.label,
+        ...(description ? { description } : {}),
+        ktlSource: extra.source,
+        editUrl: `${REPO_URL}/edit/${BRANCH}/${extra.source}`,
+      },
+      prepare(body),
+    );
+  }
+}
+
 function writeLlmsTxt(docs, concepts) {
-  const repoLlms = repoFile("llms.txt");
-  const summary = (repoLlms.match(/^> (.+)$/m) ?? [, "Agent Skills that keep a repository's knowledge as a LOKF bundle."])[1];
+  // The summary is the repository's own llms.txt line when it has one.
+  const llms = existsSync(resolve(REPO_ROOT, "llms.txt")) ? repoFile("llms.txt") : "";
+  const summary = (llms.match(/^> (.+)$/m) ?? [, DESCRIPTION])[1];
+  const inputs = [
+    ...(HOME.source ? [HOME.source === "README.md" ? "its README" : `its ${HOME.source}`] : []),
+    ...(docs.length ? [`its ${DOCS.dir}/ pages`] : []),
+    "its LOKF knowledge bundle",
+  ];
+  const from = inputs.length > 1 ? `${inputs.slice(0, -1).join(", ")} and ${inputs[inputs.length - 1]}` : inputs[0];
   const lines = [
-    "# Knowledge Trust Ladder",
+    `# ${TITLE}`,
     "",
     `> ${summary}`,
     "",
-    `This site is built from ${REPO_URL}: its README, its docs/ pages and its LOKF knowledge bundle. Each concept below links its own Markdown file, the file as it is in the repository, followed by the label that says how far it has been checked. A concept marked \`status: draft\` has not yet been confirmed by a person; one with a \`human:\` entry under \`verified\` has. Weigh them accordingly.`,
+    `This site is built from ${REPO_URL}: ${from}. Each concept below links its own Markdown file, the file as it is in the repository, followed by the label that says how far it has been checked. A concept marked \`status: draft\` has not yet been confirmed by a person; one with a \`human:\` entry under \`verified\` has. Weigh them accordingly.`,
     "",
-    "## Docs",
-    "",
-    ...docs.map((d) => `- [${d.title}](${SITE_URL}/docs/${d.name}/)${d.description ? `: ${d.description}` : ""}`),
-    "",
+    ...(docs.length
+      ? [
+          "## Docs",
+          "",
+          ...docs.map((d) => `- [${d.title}](${SITE_URL}/docs/${d.name}/)${d.description ? `: ${d.description}` : ""}`),
+          "",
+        ]
+      : []),
     "## Knowledge bundle",
     "",
     ...[...concepts]
@@ -690,7 +740,7 @@ function writeLlmsTxt(docs, concepts) {
     "",
     `- [concepts.jsonld](${SITE_URL}/knowledge/concepts.jsonld): every concept's frontmatter and body under one JSON-LD context`,
     `- [graph.nt](${SITE_URL}/knowledge/graph.nt): the whole bundle as N-Triples`,
-    `- [README](${SITE_URL}/): what Knowledge Trust Ladder is`,
+    `- [${HOME.source === "README.md" ? "README" : "Home"}](${SITE_URL}/): what ${TITLE} is`,
     "",
   ];
   write(resolve(PUBLIC, "llms.txt"), lines.join("\n"));
@@ -714,14 +764,14 @@ function copyBundleFiles() {
 }
 
 /**
- * The releases section's copy of CHANGELOG.md. Its version headings lose
+ * The releases section's copy of the changelog. Its version headings lose
  * their brackets, so each release page is titled with the bare version and
  * starlight-changelogs skips `## Unreleased`, which it knows only unbracketed.
  * Its links to repository files point at their pages, since a release page
  * has no source file for the Markdown plugin to resolve them from.
  */
 function writeChangelog() {
-  const text = mapProse(repoFile("CHANGELOG.md"), (line) =>
+  const text = mapProse(repoFile(CHANGELOG), (line) =>
     line
       .replace(/^## \[([^\]]+)\]/, "## $1")
       .replace(/\]\(([^)\s]+)\)/g, (_, url) => `](${rewriteUrl("CHANGELOG.md", url)})`),
@@ -730,11 +780,17 @@ function writeChangelog() {
 }
 
 function copyAssets() {
-  cpSync(resolve(REPO_ROOT, ".assets"), resolve(PUBLIC, "assets"), { recursive: true });
+  if (ASSETS) cpSync(resolve(REPO_ROOT, ASSETS), resolve(PUBLIC, "assets"), { recursive: true });
   mkdirSync(GENERATED, { recursive: true });
-  cpSync(resolve(REPO_ROOT, ".assets", "knowledge-trust-ladder-logo.svg"), resolve(GENERATED, "logo-light.svg"));
-  cpSync(resolve(REPO_ROOT, ".assets", "knowledge-trust-ladder-logo-dark.svg"), resolve(GENERATED, "logo-dark.svg"));
-  cpSync(resolve(REPO_ROOT, ".assets", "knowledge-trust-ladder-logo.svg"), resolve(PUBLIC, "favicon.svg"));
+  mkdirSync(PUBLIC, { recursive: true });
+  if (LOGO) {
+    cpSync(resolve(REPO_ROOT, LOGO.light), resolve(GENERATED, LOGO_FILES.light));
+    cpSync(resolve(REPO_ROOT, LOGO.dark), resolve(GENERATED, LOGO_FILES.dark));
+  }
+  // The favicon: the one the logo gives, or the site's own ladder mark.
+  if (LOGO?.favicon) cpSync(resolve(REPO_ROOT, LOGO.favicon), resolve(PUBLIC, `favicon${extname(LOGO.favicon)}`));
+  else cpSync(resolve(SITE_DIR, "src", "assets", "favicon.svg"), resolve(PUBLIC, "favicon.svg"));
+  if (CUSTOM_DOMAIN) write(resolve(PUBLIC, "CNAME"), `${CUSTOM_DOMAIN}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -759,9 +815,10 @@ writeOverview(root, concepts, health);
 writeLog();
 writeHealth(concepts, health, full);
 const docs = writeDocs();
-writeReadmes();
+writeHome();
+writePages();
 writeLlmsTxt(docs, concepts);
-writeChangelog();
+if (CHANGELOG) writeChangelog();
 
 console.log(
   `sync: ${concepts.length} concept pages, ${byGroup.size} groups, ${docs.length} docs pages, ` +

@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The website reads the repository's values and options from `website/site.config.mjs`.** The README, the docs pages, the changelog, the figures and the logo are each optional there, so the same site builds for any repository with a knowledge bundle, and this repository's site is unchanged.
+
 ## [0.38.3] - 2026-10-13
 
 ### Fixed
