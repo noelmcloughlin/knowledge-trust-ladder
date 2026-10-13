@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
+  at: "2026-10-13T15:08:54Z"
 status: draft
 definedBy:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
@@ -18,19 +18,26 @@ verified:
   at: "2026-10-12T23:54:05Z"
 sources:
 - resource: https://pypi.org/project/lokf/
+- resource: https://github.com/nicholsn/lokf/blob/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/src/lokf/cli.py
 - resource: skills/ktl-librarian/SKILL.md
 - resource: CHANGELOG.md
+- resource: docs/context-layer.md
+- resource: docs/context-layer-technology.md
+- resource: skills/ktl-curator/references/domain-schemas.md
+- resource: skills/ktl-sidecar/templates/pyproject.toml
 ---
 
 # Overview
 
-The toolkit is the implementation, not the specification. `lokf validate` checks frontmatter and bundle shape against the generated JSON Schema. With `--schema <file>.yaml` it checks against a domain schema that imports LOKF's instead, and the extension recipe depends on that flag. The generated SHACL shapes catch cardinality, datatype, and range violations on the projected graph. `lokf convert` projects to RDF and `lokf serve` exposes a SPARQL endpoint. `lokf query` runs a SPARQL query against the bundle. The command line also carries `new`, `tables`, `propose`, `vocab`, `skills`, `export`, `mcp` and `registry`, with a `[tables]` extra beside `[build]`.
+The toolkit is the implementation, not the specification. `lokf validate` checks frontmatter and bundle shape against the generated JSON Schema. With `--schema <file>.yaml` it checks against a domain schema that imports LOKF's instead, and the extension recipe depends on that flag. The toolkit generates SHACL shapes but neither includes them in its package nor runs them, so the checks that run are `lokf validate` (JSON Schema) and `--check-refs`. `lokf convert` projects to RDF and `lokf serve` exposes a SPARQL endpoint. `lokf query` runs a SPARQL query against the bundle. The command line also carries `new`, `tables`, `propose`, `vocab`, `skills`, `export`, `mcp` and `registry`, with a `[tables]` extra beside `[build]`.
 
 `lokf validate --check-refs` finds typed-relation targets with no matching concept, and this repository's own `just lokf-check-refs` recipe now calls it. It takes the relation slots from the schema, so a domain schema's own slots are covered without the recipe restating a predicate list.
 
-Scaffolded bundles pin `lokf[build]`, and that `[build]` extra installs the full `linkml` package. So every sidecar already has the LinkML generators for a domain-schema extension, with no extra installation.
+Scaffolded bundles depend on `lokf[build]>=0.8.0`, a floor and not a pin, and that `[build]` extra installs the full `linkml` package: the whole generator suite, not just the runtime. So a scaffolded sidecar already has the LinkML generators for a domain-schema extension, with no extra installation.
 
-Where Python is unavailable, the skills fall back to a structural cross-check against the raw schema, which is not a validation run. They read it from the commit tagged `v0.8.0`, which matches the `lokf` floor: `raw.githubusercontent.com/nicholsn/lokf/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/lokf.yaml`. Since 2026-10-05 the URL names that commit, never a tag or `main`, because a tag can be moved. The pin moves with the floor, so the fallback cross-checks against the schema the installed toolkit enforces.
+Where Python is unavailable, the skills fall back to a structural cross-check against the raw schema, which is not a validation run. They read it from the commit tagged `v0.8.0`, which matches the `lokf` floor: `raw.githubusercontent.com/nicholsn/lokf/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/lokf.yaml`. Since 2026-10-05 the URL names that commit, never a tag or `main`, because a tag can be moved. The pin moves with the floor, so the fallback cross-checks against the schema the installed toolkit enforces. That file is byte-identical to the schema inside the `lokf` 0.8.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present.
+
+ktl-librarian checks the toolkit's version in a live session. It compares the latest `lokf` on PyPI with the `>=` floor in `.lokf/pyproject.toml`. For a minor or patch release it raises the floor, runs `uv sync` and validates again. For a major release, or a breaking change in the changelog, it asks the person first. It never bumps `linkml` on its own.
 
 ## Open questions
 

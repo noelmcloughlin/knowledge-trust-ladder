@@ -23,9 +23,10 @@ sources:
 - resource: CHANGELOG.md
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  at: "2026-10-13T15:08:54Z"
 - by: human:noelmcloughlin
   at: "2026-10-13T01:13:17Z"
+status: draft
 ---
 
 # Overview
@@ -67,3 +68,7 @@ The health line counts a concept edited since its confirmation once, under *Edit
 The curation policy carries three optional switches: `Independent re-check:`, `Evidence first:` and `Younger readers:` (`references/review-session.md`). The last names a band of age, 8-12 or 13-18, or both, and ktl-librarian may then write retellings of confirmed concepts for those readers on its scheduled runs. Each one is a new concept, which a person confirms against the concept it retells.
 
 *Retire* asks what replaced the concept. When the person names another concept, the `**Deprecation**` line in `log.md` links it after "replaced by", and `knowledge-report.sh` labels the retired concept *retired, replaced by* that path. The label *a reader disputed this* means a reader's Disagreement naming the concept waits for the librarian.
+
+## Open questions
+
+- 2026-10-13, process:ktl-librarian: Since 2026-10-13 the Runs column ("a little, regularly") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.

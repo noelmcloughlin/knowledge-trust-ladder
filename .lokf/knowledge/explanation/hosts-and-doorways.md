@@ -22,7 +22,7 @@ sources:
 - resource: CHANGELOG.md
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  at: "2026-10-13T15:08:54Z"
 - by: human:noelmcloughlin
   at: "2026-10-13T01:20:21Z"
 ---

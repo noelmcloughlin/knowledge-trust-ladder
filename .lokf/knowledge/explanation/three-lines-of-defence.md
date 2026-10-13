@@ -17,7 +17,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  at: "2026-10-13T15:08:54Z"
 - by: human:noelmcloughlin
   at: "2026-10-13T01:11:23Z"
 sources:
@@ -25,6 +25,7 @@ sources:
 - resource: docs/three-lines-critics.md
 - resource: CHANGELOG.md
 - resource: README.md
+status: draft
 ---
 # Overview
 
@@ -84,3 +85,7 @@ The main page closes with what remains and who owns it, in three lines:
 - upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
 - this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names the domain tiers and the workspace of [the context layer](context-layer.md), which federate bundles under a person's confirmation of membership.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
+
+## Open questions
+
+- 2026-10-13, process:ktl-librarian: Since 2026-10-13 the fifth-role section that points at `docs/three-lines.md` is on `docs/architecture.md`, not in `README.md`. The sentence "The README's section on the fifth role" and the `README.md` source should name `docs/architecture.md`.

@@ -23,10 +23,11 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-09-26T20:36:11Z"
 - by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-13T15:08:54Z"
 - by: human:noelmcloughlin
   at: "2026-10-13T00:16:44Z"
 stale_after: 2028-09-24
+status: draft
 ---
 
 # Overview
@@ -50,3 +51,7 @@ semantic header (`base_iri`, `context`, versions, publisher) plus the table
 of contents; `knowledge/log.md` records knowledge changes only. The bundle is
 the durable layer between scattered sources and the next task - the thing that
 stops each session re-finding, re-connecting, and re-judging the same material.
+
+## Open questions
+
+- 2026-10-13, process:ktl-librarian: Since 2026-10-13 `README.md` keeps the poem, but "Why libraries have catalogues", which says a bundle is the catalogue, is on `docs/architecture.md`. `sources` should list `docs/architecture.md` beside `README.md`.

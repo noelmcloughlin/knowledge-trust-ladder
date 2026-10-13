@@ -8,9 +8,10 @@ resource: docs/context-layer.md
 sources:
 - resource: docs/context-layer.md
 - resource: docs/context-layer-technology.md
-- resource: README.md
+- resource: docs/architecture.md
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://knowledge-trust-ladder.example/knowledge/glossary/context-layer
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/explanation/intended-uses
 - https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
@@ -21,7 +22,7 @@ references:
 - https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -30,7 +31,7 @@ verified:
 
 # Overview
 
-`docs/context-layer.md` places Knowledge Trust Ladder (KTL) in the industry's talk of a **context layer**. A context layer is a governed layer between an organisation's sources and whoever consumes them, a person or an agent, and it persists from one task to the next. The README uses the term in "Why libraries have catalogues" and links the page. It links the page again in "Prose, Structure, Meaning, Context", where it says that whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from many federated into one layer. The page quotes each source from its own text, read on 2026-10-12. Both of its diagrams give a dashed outline to the parts that are a design, with no released code behind them yet.
+`docs/context-layer.md` places Knowledge Trust Ladder (KTL) in the industry's talk of a **context layer**. A context layer is a governed layer between an organisation's sources and whoever consumes them, a person or an agent, and it persists from one task to the next. The architecture page uses the term in "Why libraries have catalogues" and links the page. It links the page again in "Prose, Structure, Meaning, Context", where it says that whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from many federated into one layer. The page quotes each source from its own text, read on 2026-10-12. Both of its diagrams give a dashed outline to the parts that are a design, with no released code behind them yet.
 
 **What the discourse means.** Unblocked names four properties: "heterogeneous source ingestion, on-demand surfacing, cross-source conflict resolution, and per-query permission enforcement". Atlan adds multi-domain federation, in which "Each domain owns its definitions but contributes to one graph", and the page sets that beside Zhamak Dehghani's "federated computational governance". Google Cloud's Open Knowledge Format (OKF) took a different approach, under the heading "Format, not platform", and left open the work KTL exists for: what counts as trusted knowledge and how updates are reviewed.
 

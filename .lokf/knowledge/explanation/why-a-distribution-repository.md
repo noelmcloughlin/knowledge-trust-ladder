@@ -4,16 +4,16 @@ id: https://knowledge-trust-ladder.example/knowledge/explanation/why-a-distribut
 title: Why the skills live in their own repository
 description: "Why the five skills are published from one installable repository: three install routes plus Microsoft 365 Copilot for the docent, one tag for all of them, one changelog, a bundle of its own that the docent answers from, and the repository's rename."
 genre: explanation
-resource: README.md
+resource: docs/install.md
 sources:
-- resource: README.md
 - resource: docs/install.md
+- resource: docs/architecture.md
 - resource: .claude-plugin/marketplace.json
 - resource: docs/m365.md
 - resource: .claude-plugin/plugin.json
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:08:20Z"
+  at: "2026-10-13T15:08:54Z"
 status: draft
 references:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli

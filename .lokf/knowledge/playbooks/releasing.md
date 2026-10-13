@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:08:20Z"
+  at: "2026-10-13T15:08:54Z"
 status: draft
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
@@ -25,6 +25,9 @@ sources:
 - resource: .github/workflows/knowledge-release.yaml
 - resource: scripts/sync-sidecar.sh
 - resource: CHANGELOG.md
+- resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
+- resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
+- resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-angular-v8.3.1/packages/conventional-changelog-angular/src/parser.js
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"
@@ -32,7 +35,7 @@ verified:
 
 # Overview
 
-A person no longer hand-picks the version, but two tools never race to tag it. `semantic-release.yml`'s `release` job runs on every push to `main`, behind the `release` GitHub Environment. `@semantic-release/commit-analyzer` computes the next version from Conventional Commits since the last *tag*, using `.releaserc.json`'s `releaseRules`. Those rules are the Angular preset's defaults, where `fix:` gives a patch, `feat:` a minor release, and a `BREAKING CHANGE:` footer or `!` a major one, plus one addition: `security:` gives a patch.
+A person no longer hand-picks the version, but two tools never race to tag it. `semantic-release.yml`'s `release` job runs on every push to `main`, behind the `release` GitHub Environment. `@semantic-release/commit-analyzer` computes the next version from Conventional Commits since the last *tag*, using `.releaserc.json`'s `releaseRules`. Those rules add one type, `security:`, as a patch. A commit they do not match falls to the analyzer's default rules, where `fix:`, `perf:` and a revert give a patch, `feat:` a minor release, and a `BREAKING CHANGE:` note a major one. The analyzer reads each commit with its default Angular preset, whose header pattern has no place for `!`, so a `feat!:` commit releases nothing. `docs/releasing.md` counts such a commit as a major release, and the `plan` job as one that would release.
 
 Semantic-release always runs with `--dry-run`, so it never writes, commits, tags, or publishes anything here. `@semantic-release/exec` calls `.github/scripts/changelog-release.mjs check` with the computed version, which refuses to proceed if `CHANGELOG.md`'s `## [Unreleased]` section is empty, and `notes`, which supplies the release notes.
 

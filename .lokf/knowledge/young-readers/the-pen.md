@@ -3,7 +3,7 @@ type: GlossaryTerm
 id: https://knowledge-trust-ladder.example/knowledge/young-readers/the-pen
 title: The pen, for readers aged 13 to 18
 description: The pen retold for readers aged 13 to 18, the script that is ktl-librarian's only way to write the bundle, and what it refuses.
-definition: The name the README and the docs give `knowledge-apply.sh`, the script through which ktl-librarian writes every change to the bundle.
+definition: The name the docs give `knowledge-apply.sh`, the script through which ktl-librarian writes every change to the bundle.
 genre: reference
 resource: skills/ktl-sidecar/templates/scripts/knowledge-apply.sh
 derivedFrom:
@@ -16,7 +16,7 @@ tags:
 - audience-13-18
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:08:20Z"
+  at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -29,7 +29,7 @@ This page is for readers aged 13 to 18. It retells [[the-pen]] in shorter words.
 
 # What is the pen?
 
-**The pen** is the name the README and the docs give `knowledge-apply.sh`. It is the script through which ktl-librarian writes every change to the bundle ([[knowledge-bundle]]).
+**The pen** is the name the docs give `knowledge-apply.sh`. It is the script through which ktl-librarian writes every change to the bundle ([[knowledge-bundle]]).
 
 # How does the librarian use it?
 
@@ -53,4 +53,4 @@ It also refuses a patch that would add, change or remove a person's record. That
 
 # Who else writes the bundle?
 
-The pen is the librarian's only way to write the bundle. A person writes the curator's verdicts another way, through ktl-curator or the KTL Curator plugin. The README names the pen as the [[registrar]] for the librarian.
+The pen is the librarian's only way to write the bundle. A person writes the curator's verdicts another way, through ktl-curator or the KTL Curator plugin. The architecture page names the pen as the [[registrar]] for the librarian.
