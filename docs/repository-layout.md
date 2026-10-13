@@ -19,7 +19,7 @@ skills/
   knowledge-release.yaml     the sidecar's release step: bundle and Copilot zips (from publish.yml)
   semantic-release.yml       version and changelog from Conventional Commits on main; never tags
   publish.yml                maintainer-gated release (workflow_dispatch only)
-  website.yml                builds website/ (PRs touching its sources) and publishes main's build to GitHub Pages
+  knowledge-website.yaml     builds website/ (PRs touching its sources) and publishes the default branch's build to GitHub Pages
 docs/
   architecture.md       the architecture the poem, LOKF and LinkML inspired: the catalogue, the five roles and the trust ladder
   architecture.en-simple.md  the architecture page retold for readers aged 13 to 18
