@@ -32,6 +32,12 @@ exclude = [
   # 2026-10-12). Drop these lines if CI reaches them again.
   '^https://graphdb\.ontotext\.com/',
   '^https://dyslexia\.ie/',
+  # docs.snowflake.com (cited in docs/context-layer-technology.md) answered
+  # a CI runner with 503 for one of its pages while the other pages it cites
+  # passed, and serves that page with 200 elsewhere (checked 2026-10-13).
+  # The whole host is excluded, since any of its pages can be next. Drop
+  # this line if CI reaches it again.
+  '^https://docs\.snowflake\.com/',
 ]
 
 # knowledge_bundle is a symlink to .lokf/knowledge (the Obsidian vault entry
