@@ -4,10 +4,10 @@ id: https://knowledge-trust-ladder.example/knowledge/references/agent-skills-spe
 title: Agent Skills specification
 description: The specification defining a skill directory - a required SKILL.md with name/description frontmatter, plus optional scripts/, references/, and assets/.
 genre: reference
-resource: https://agentskills.io/home
+resource: https://agentskills.io/specification
 generated:
   by: human:noelmcloughlin
-  at: "2026-09-26T20:33:12Z"
+  at: "2026-10-13T00:48:53Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T16:35:55Z"
@@ -15,8 +15,9 @@ verified:
   at: "2026-09-26T20:33:12Z"
 - by: process:ktl-librarian
   at: "2026-10-12T03:11:32Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T00:48:53Z"
 stale_after: 2027-09-26
-status: draft
 ---
 
 # Overview
@@ -27,11 +28,7 @@ and `description`; supporting files may sit alongside it and travel with the
 directory when installed.
 
 Two consequences shape the layout here: the `description` is always resident in
-the calling agent's context, so it is kept near ~100 tokens, while the body loads
+the calling agent's context, while the body loads
 only on trigger - which is why each `SKILL.md` is a lean router and detail
-lives in `references/`. `gh skill publish --dry-run` validates conformance in
+lives in `references/`. The spec's ~100 tokens covers `name` and `description` together, and is a startup estimate, not a rule. This repo only enforces 1024 characters (`validate-repository.sh`). `gh skill publish --dry-run` validates conformance in
 CI on every pull request.
-
-## Open questions
-
-- 2026-10-12, process:ktl-librarian: the body says the `description` is kept near ~100 tokens, but the specification's ~100 tokens is a startup budget for `name` and `description` together, and this repository enforces only the 1024-character limit (check 3c); its descriptions run to about 150 to 230 tokens. The `resource` is `agentskills.io/home` while the facts come from `agentskills.io/specification`. Should both change?

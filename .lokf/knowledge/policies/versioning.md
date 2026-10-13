@@ -25,6 +25,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-03T09:44:34Z"
 stale_after: 2027-10-03
+status: draft
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
 ---
@@ -46,3 +47,7 @@ One asymmetry to know: tags carry a `v` prefix (`v0.16.0`), and `publish.yml`
 refuses a version typed without it, while `CHANGELOG.md` headings never do
 (`## [0.16.0]`); the workflow's cross-check strips the `v` before comparing
 the two.
+
+## Open questions
+
+- 2026-10-13, human:noelmcloughlin: the table says `!` after the type gives a major release, as `docs/releasing.md` does, but `.releaserc.json` uses the default Angular preset, which may not parse a `feat!:` header. Check what the configuration actually does with `!` before this concept repeats the claim.

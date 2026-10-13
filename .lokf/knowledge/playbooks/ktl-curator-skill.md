@@ -6,9 +6,8 @@ description: "A human curator's assistant: it reports what needs a person's atte
 genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T00:29:45Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-13T01:13:17Z"
 dependsOn:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -25,6 +24,8 @@ sources:
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T01:13:17Z"
 ---
 
 # Overview
@@ -43,7 +44,7 @@ ktl-curator runs **a little, regularly**. Step 1 is always a read-only one-scree
 
 What is missing is said in plain words before any command, because the curator is often the person who knows the subject and not the repository. A curator who cannot fix it themselves gets a request note for the maintainer, written from ktl-sidecar's `references/prerequisites.md`.
 
-Step 2 is an opt-in review session that shows the source *before* the claim and takes one verb per item. Step 3 covers the curation policy, gap intake, domain-schema guidance, and the same labels as SPARQL queries for `lokf serve` (`references/queries.md`).
+Step 2 is an opt-in review session that shows the source *before* the claim and takes one verb per item. It runs only in a live session with that person, and stops after Step 1 if the run is unattended or automated. Before the first verb it asks once whether the confirmations will survive the gate: whether commit signing is on and `HEAD` is signed. *Correct now* is the widest verb, because a wrong fact recorded with it survives every later refresh. The hand-off pull request opens only when the person says so. Step 3 covers the curation policy, gap intake, domain-schema guidance, and the same labels as SPARQL queries for `lokf serve` (`references/queries.md`).
 
 **Vocabulary fit counts against the host's vocabulary, not only LOKF's** (stated 2026-09-14). Where the `schema` line in `.lokf/justfile` names a file, the skill reads that file and any schema it imports besides LOKF's, and counts their `Concept` descendants as known. That is the same widening the librarian's Rule 3 applies. It is also the reason the line goes quiet once a team adopts a domain schema, instead of naming every domain class a misfit for good. The Obsidian plugins cannot read a schema outside the vault, so they are told the list by hand in their *Known LOKF types* setting.
 

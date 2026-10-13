@@ -6,9 +6,8 @@ description: "The librarian, curator, registrar, sidecar and docent placed in th
 genre: explanation
 resource: docs/three-lines.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T16:43:34Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-13T01:11:23Z"
 about: []
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
@@ -19,6 +18,8 @@ relatedTo:
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T01:11:23Z"
 sources:
 - resource: docs/three-lines.md
 - resource: docs/three-lines-critics.md
@@ -33,7 +34,7 @@ The README's section on the fifth role, the registrar, points at this page. The 
 - **Second line**: the **registrar**, which keeps records well-formed: `lokf validate` on every change and in CI, `knowledge-apply.sh` as the librarian's only pen, `knowledge-report.sh` computing every trust label, and the KTL Registrar Obsidian plugin. The gate ties a `human:` verdict that is added or removed to that person's approval or signature, and the pen refuses to write a `human:` actor at all. Neither judges truth.
 - **Third line**: the bundle holds the evidence an independent reviewer needs, not the review.
 
-The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** installs the tools and the gate. The governing body sits above the lines: the owners of the repository that holds the bundle, with the organisation's rules for AI-assisted work and the curation policy. This project's rules for AI-assisted work are its AI covenant.
+The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: a copy editor that writes no `generated` record, although `log.md` and git record the pass. The governing body sits above the lines: the owners of the repository that holds the bundle, with the organisation's rules for AI-assisted work and the curation policy. The curation policy is itself a concept, reviewed like any other. The [four levels of checking](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/for-the-curious.md#four-levels-of-checking) are these same checks ordered by when they happen. This project's rules for AI-assisted work are its AI covenant.
 
 Lines are roles, not headcount: the IIA's text says the lines "are not intended to denote structural elements but a useful differentiation in roles" and "may overlap in practice" given "clear accountability, transparency, and safeguards". The adopting organisation decides who plays each line, and the tooling holds the lines apart either way.
 
@@ -46,7 +47,7 @@ An auditor's questions each have a fixed place to look:
 - Who confirmed it, and when: `verified[]`.
 - Which state of the source the check was made against: `revision`, a field proposed for lokf 0.9.0 and not yet released. The gate resolves it against the tree for a file, and nothing checks it for a URL. Until it is released, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
 - Whether the confirmed text is still the one the person saw: the `validate` job's log, where conventions rule 13 fails an edit that leaves `generated` older than the confirmation.
-- Whether that confirmation is really tied to the named person: the `provenance` job's log, where a confirmation struck out or gone with its concept needs that person as an added one does.
+- Whether that confirmation is really tied to the named person: the `provenance` job's log, where a confirmation struck out or gone with its concept needs that person as an added one does. Locally, the curator's *Not tied to a signed commit* count.
 - When it must be looked at again: `stale_after`.
 - What changed, and why: `log.md` and git.
 - Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which nothing here runs yet.
@@ -81,5 +82,5 @@ Three are not KTL's role, and each is the job of the adopting organisation or of
 The main page closes with what remains and who owns it, in three lines:
 
 - upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
-- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names the domain tiers and the workspace of [the context layer](context-layer.md), which federate bundles under a person's confirmation of membership.
+- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names the domain tiers and the workspace of [the context layer](context-layer.md), which federate bundles under a person's confirmation of membership.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.

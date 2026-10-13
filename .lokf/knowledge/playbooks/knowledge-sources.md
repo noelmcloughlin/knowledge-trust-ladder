@@ -13,8 +13,9 @@ verified:
   at: "2026-09-10T00:00:00Z"
 - by: process:ktl-librarian
   at: "2026-10-12T16:00:09Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T00:43:23Z"
 stale_after: 2027-09-10
-status: draft
 ---
 # Sources swept for this bootstrap discovery pass
 
@@ -436,8 +437,3 @@ status: draft
   reserved domain) pending a namespace the project actually controls. It mints
   every concept `@id` here, so migrating it later rewrites all of them - cheap
   now, expensive once anything external links in.
-
-## Open questions
-
-- 2026-09-26, human:noelmcloughlin: name the tracked files the table covers only by glob (`.github/ISSUE_TEMPLATE/`: `bug_report.md`, `feature_request.md`; `docs/examples/`: `docent.md`, `curator.md`), and add `.gitignore` to the `LICENSE`/`llms.txt` row as the repository's ignore rules.
-- 2026-10-03, human:noelmcloughlin: the issue-template row says "still names all four skills"; both `bug_report.md` and `feature_request.md` now say five.

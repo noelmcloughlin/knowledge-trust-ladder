@@ -6,9 +6,13 @@ description: The `.lokf/knowledge` directory - containing one-concept-per-file M
 definition: The `.lokf/knowledge` directory - containing one-concept-per-file Markdown, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph. Accessible via a `knowledge_bundle` link at the repository root if that link exists.
 genre: reference
 resource: skills/ktl-sidecar/templates/README.md
+sources:
+- resource: README.md
+- resource: docs/obsidian.md
+- resource: skills/ktl-librarian/SKILL.md
 generated:
   by: human:noelmcloughlin
-  at: "2026-09-24T01:09:00Z"
+  at: "2026-10-13T00:16:44Z"
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/lokf
 verified:
@@ -20,8 +24,9 @@ verified:
   at: "2026-09-26T20:36:11Z"
 - by: process:ktl-librarian
   at: "2026-10-12T03:11:32Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T00:16:44Z"
 stale_after: 2028-09-24
-status: draft
 ---
 
 # Overview
@@ -45,7 +50,3 @@ semantic header (`base_iri`, `context`, versions, publisher) plus the table
 of contents; `knowledge/log.md` records knowledge changes only. The bundle is
 the durable layer between scattered sources and the next task - the thing that
 stops each session re-finding, re-connecting, and re-judging the same material.
-
-## Open questions
-
-- 2026-10-12, process:ktl-librarian: the body's library and museum terms, the workshop and the log and index details come from `README.md`, `docs/obsidian.md` and `skills/ktl-librarian/SKILL.md`, but `sources` names only `skills/ktl-sidecar/templates/README.md`. Should those three be added as sources?

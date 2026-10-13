@@ -6,11 +6,13 @@ description: "The security design the three KTL repositories share, kept in one 
 genre: reference
 resource: docs/threat-model.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T16:08:20Z"
+  by: human:noelmcloughlin
+  at: "2026-10-13T01:15:05Z"
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T01:15:05Z"
 references:
 - https://knowledge-trust-ladder.example/knowledge/policies/security
 - https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
@@ -52,7 +54,7 @@ Since 2026-10-05, ktl-docent runs none of them. It runs its own copies of `knowl
 
 The scheduled wrapper applies the file after the agent has finished and refuses a run that changed anything else, so the agent never writes the bundle itself. `publish` checks the patched tree for the same refusals with `knowledge-provenance.sh --unattended`. `docs/threat-model.md` lists the pen under repository hardening.
 
-**Human attribution**: a `verified` event whose actor starts with `human:`, or a `generated` record written that way, is a claim, not a credential. It is a string in Markdown that any writer can type.
+**Human attribution**: a `verified` event whose actor starts with `human:`, or a `generated` record written that way, is a claim, not a credential. It is a string in Markdown that any writer can type. The realistic threat is not an outside attacker but **another agent** driving `ktl-curator` and recording confirmations nobody gave.
 
 `knowledge-registrar.yaml`'s `provenance` job is the authority. It requires an approving review from the named account, or their verified signature on the introducing commit: evidence GitHub holds, rather than evidence the bundle asserts. That job reads the events themselves: whole, from the frontmatter, against every parent of a commit, and keyed by the concept's `id`. So a re-dated event counts, while a rename, a merge and an example in a body code fence do not. Conventions rule 10 keeps those fields to spellings a line reader and a parser agree on.
 
@@ -71,7 +73,7 @@ Where `.lokf/` is gitignored, no pull request ever carries the bundle, so the CI
 - The registrar's `provenance` job, which reads pull-request metadata, runs no agent. Event fields enter through `env:`, API reads are narrowed to logins, SHAs and a verification flag, and the `human:<id>` is held to a login's characters. The token is read-only, and a path git still has to quote is refused (2026-09-19).
 - The librarian's `earlier` job, which lists the pull requests the workflow opened, runs no agent either and reads no title, body or comment. It counts a pull request only when its branch is `knowledge-librarian/...` in this repository, and matches each value it takes against a pattern. Only the hashes of the feedback entries those pull requests handled leave the job, since the entries are readers' words.
 
-If a guard fails, the only unattended write path is `knowledge-librarian.yaml`'s `publish` job. It re-derives the touched paths from the patch's own `git apply --numstat`, on a clean checkout the agent never shared. It confines them to `.lokf/knowledge`, `knowledge_bundle`, `.lokf/feedback.md` and `.lokf/questions.md`, the only pathspecs the patch is built from. It refuses a patch that touches a person's record: an event added, changed or removed in any YAML layout, a person's note added or removed, or text a person wrote changed.
+If a guard fails, the only unattended write path is `knowledge-librarian.yaml`'s `publish` job. It re-derives the touched paths from the patch's own `git apply --numstat`, on a clean checkout the agent never shared. It confines them to `.lokf/knowledge`, `knowledge_bundle`, `.lokf/feedback.md` and `.lokf/questions.md`, the only pathspecs the patch is built from. It separately refuses a patch that adds a `by: human:` line. It refuses a patch that touches a person's record: an event added, changed or removed in any YAML layout, a person's note added or removed, or text a person wrote changed.
 
 Inside `refresh`, the wrapper snapshots `.git/config` and `.git/hooks` before the agent call and restores them from an `EXIT` trap. It keeps its own checks in a `main()` called last, so neither a failed agent nor a cancelled job leaves a poisoned config behind.
 
@@ -84,5 +86,7 @@ Inside `refresh`, the wrapper snapshots `.git/config` and `.git/hooks` before th
 Once the agent returns, the wrapper removes whatever is at the paths the workflow reads, so a file or a link the agent left there is gone. The retrieval test calls the agent again, with readers' words in its prompt, after the pen has written the hand-off. So the wrapper writes the pen's lines there again once that call returns. `publish` cleans the lines again and shows them in a code block, where nothing renders, and the curator never opens a pull request body.
 
 **A confirmation covers the text the person saw (2026-10-04).** The label *confirmed by a person* holds while `generated.at` is no later than the confirmation. The pen restamps every change it writes, and conventions rule 13 fails a pull request in which any other writer changes a confirmed concept's content and leaves `generated` as it was. Rule 14 covers the commit that records the confirmation. On a pull request, such a commit may change what the concept says only when the person is also recorded as its author, as *Correct now* records them.
+
+**What this does not cover.** Ordinary repository content the librarian scrapes while building concepts, such as READMEs, docs and code, has no per-entry guard. Nothing here filters what a reader asks `ktl-docent`. Nor does any of this make a repository a sandbox.
 
 **A skills repository.** A skills repository is the case where the content the librarian scrapes is all instructions, since every `SKILL.md` is written for an agent to follow. The same guards hold there. The librarian reads each source as data, writes only `patch.yaml` through the pen, and holds `contents: read` in a scheduled run. An instruction in a source can still shape what a concept says. Only the person reviewing the pull request catches that, since the pen checks a patch's form and never its truth.

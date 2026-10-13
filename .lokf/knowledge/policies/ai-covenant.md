@@ -2,12 +2,12 @@
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
 title: AI covenant
-description: Community norms for AI use - contributors own what they submit regardless of tooling, AI must not post autonomously in discussions, AI co-authorship in commit messages is discouraged, and a repository-owned agent (e.g. ktl-librarian) must commit under a bot or maintainer identity with no trailer either way and land only as a human-reviewed PR.
+description: Community norms for AI use - contributors own what they submit regardless of tooling, AI systems must not be used to autonomously post comments, replies, or messages, AI co-authorship in commit messages is discouraged, and a repository-owned agent (e.g. ktl-librarian) must commit under a bot or maintainer identity with no trailer either way and land only as a human-reviewed PR.
 genre: reference
 resource: AI_COVENANT.md
 generated:
   by: human:noelmcloughlin
-  at: "2026-09-26T20:48:23Z"
+  at: "2026-10-13T00:37:18Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -17,6 +17,8 @@ verified:
   at: "2026-09-26T20:48:23Z"
 - by: process:ktl-librarian
   at: "2026-10-05T12:41:36Z"
+- by: human:noelmcloughlin
+  at: "2026-10-13T00:37:18Z"
 stale_after: 2027-09-26
 ---
 
@@ -30,8 +32,7 @@ The core principle is ownership: everything submitted is the contributor's,
 whatever tools helped create it, and they must be able to understand, verify,
 and defend it. AI review comments are suggestions, not requirements.
 
-Discussions are for human judgement - AI must not directly post comments in
-issues, Slack, or mailing lists. Disclosure is required when proposing changes
+Discussions are for human judgement - AI systems must not be used to autonomously post comments, replies, or messages. Disclosure is required when proposing changes
 to code the contributor does not fully understand, and AI co-authorship
 trailers in commit messages are actively discouraged. Adapted from the LinkML
 AI Covenant.

@@ -17,9 +17,12 @@ about:
 relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 generated:
-  by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-10-13T01:04:01Z"
+verified:
+- by: human:noelmcloughlin
+  at: "2026-10-13T01:04:01Z"
+stale_after: 2026-10-14
 ---
 
 # Overview
@@ -63,4 +66,4 @@ Both commands run `npm run sync` first. The sync runs `lokf export` from the sid
 
 The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, and runs npm's and the toolkit's packages under a read-only token. `deploy` runs nothing but GitHub's own deploy-pages action, holds the Pages scopes, and runs for `main` only. A maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
 
-The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records.
+The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records. The two typefaces, Source Serif 4 and Atkinson Hyperlegible Next, are self-hosted under the SIL Open Font License.
