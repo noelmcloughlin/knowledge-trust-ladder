@@ -11,7 +11,7 @@ This page gives every way to install the five skills, what each needs on the mac
 
 > **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](examples/docent.md).
 
-Install all five skills:
+Install all five skills with the Open Skills CLI, [`npx skills`](https://github.com/vercel-labs/skills):
 
 ```bash
 npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
@@ -37,19 +37,6 @@ gh skill install noelmcloughlin/knowledge-trust-ladder ktl-librarian --scope use
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-curator --scope user
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-prose --scope user
-```
-
-## Install with the Open Skills CLI
-
-[`npx skills`](https://github.com/vercel-labs/skills):
-
-```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder --global \
-  --skill ktl-sidecar \
-  --skill ktl-librarian \
-  --skill ktl-curator \
-  --skill ktl-docent \
-  --skill ktl-prose --yes
 ```
 
 ## Install for your user, not into the repository
