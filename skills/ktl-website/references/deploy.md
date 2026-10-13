@@ -13,7 +13,7 @@ The workflow has no placeholders and names no branch: it reads the repository's 
 ## Switching Pages on
 
 1. Tell Pages once to take its site from Actions: Settings, Pages, Source, GitHub Actions; or `gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`. A repository whose Pages is already on, from a branch, is switched with `-X PUT` instead.
-2. Set the variable: Settings, Secrets and variables, Actions, Variables; or `gh variable set KNOWLEDGE_WEBSITE_ENABLED --body true`.
+2. Set the variable on the repository: Settings, Secrets and variables, Actions, Variables, **Repository variables**; or `gh variable set KNOWLEDGE_WEBSITE_ENABLED --body true`, which sets it there. Do not set it on an environment such as `github-pages`: the deploy job's `if:` is read before any environment applies, and it sees only repository and organization variables, so the deploy stays skipped.
 3. Push to the default branch, or run the workflow by hand, and open the address `site.config.mjs` names. The first deploy can take a minute to appear.
 
 A private repository publishes Pages only on a paid plan; the build still runs on every pull request.
