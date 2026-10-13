@@ -555,7 +555,8 @@ function writeDocs() {
     for (const name of readdirSync(dir).sort()) {
       const full = resolve(dir, name);
       if (statSync(full).isDirectory()) walk(full, prefix + name + "/");
-      else if (name.endsWith(".md")) found.push(prefix + name.slice(0, -3));
+      // A retelling for younger readers has its own page, /simple/, so it is no docs page.
+      else if (name.endsWith(".md") && !name.endsWith(".en-simple.md")) found.push(prefix + name.slice(0, -3));
     }
   };
   walk(resolve(REPO_ROOT, "docs"), "");
@@ -627,15 +628,15 @@ function writeReadmes(tagline) {
     prepare(readme),
   );
 
-  const simple = takeTitle(repoFile("README.en-simple.md"));
+  const simple = takeTitle(repoFile("docs/architecture.en-simple.md"));
   const description = describe(simple.body);
   page(
     resolve(CONTENT, "simple.md"),
     {
       title: simple.title ?? "Knowledge Trust Ladder, in short",
       ...(description ? { description } : {}),
-      ktlSource: "README.en-simple.md",
-      editUrl: `${REPO_URL}/edit/main/README.en-simple.md`,
+      ktlSource: "docs/architecture.en-simple.md",
+      editUrl: `${REPO_URL}/edit/main/docs/architecture.en-simple.md`,
     },
     prepare(simple.body),
   );

@@ -1,11 +1,11 @@
 # Knowledge Trust Ladder
 
-This page is for readers aged 13 to 18. It retells [the architecture page](docs/architecture.md) in shorter words. The full page has every detail.
+This page is for readers aged 13 to 18. It retells [the architecture page](architecture.md) in shorter words. The full page has every detail.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".assets/knowledge-trust-ladder-card-dimmed.svg">
-    <img src=".assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/knowledge-trust-ladder-card-dimmed.svg">
+    <img src="../.assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
   </picture>
 </p>
 
@@ -36,11 +36,11 @@ Knowledge Trust Ladder names its roles after people who work in libraries and mu
 - The **curator** is always a person, and the skill only helps. It puts the source next to each claim. The person decides: confirm, correct, retire or send back.
 - The **docent** answers questions from the bundle, and says how far each answer has been checked. Docent is a museum's name for a guide. When the bundle has no answer, the docent records the miss for the librarian. It never changes the bundle.
 
-The fifth role, the **registrar**, keeps the records in order, and programs play it. The `lokf` toolkit checks every change. On each pull request that touches the bundle, [`knowledge-registrar.yaml`](.github/workflows/knowledge-registrar.yaml) checks it in continuous integration (CI).
+The fifth role, the **registrar**, keeps the records in order, and programs play it. The `lokf` toolkit checks every change. On each pull request that touches the bundle, [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks it in continuous integration (CI).
 
 The librarian writes the bundle only through one script, `knowledge-apply.sh`, called **the pen**. The pen stamps where each record came from. It refuses a change that would forge or remove a person's confirmation. Another script, `knowledge-report.sh`, works out each trust label, so no model does that arithmetic.
 
-One more skill has no role of its own. [`ktl-prose`](skills/ktl-prose/SKILL.md) is the librarian's copy editor. It rewords what an agent wrote in plain English, and changes the wording but never a fact.
+One more skill has no role of its own. [`ktl-prose`](../skills/ktl-prose/SKILL.md) is the librarian's copy editor. It rewords what an agent wrote in plain English, and changes the wording but never a fact.
 
 ## How far can you trust an entry?
 
@@ -56,12 +56,12 @@ The labels are worked out from each entry every time it is read, and never store
 
 ## Where can I read more?
 
-- [docs/install.md](docs/install.md): how to install the skills, and which ones to start with.
-- [docs/for-the-curious.md](docs/for-the-curious.md): who writes the bundle and what checks it.
-- [The bundle's glossary](.lokf/knowledge/glossary/index.md): what the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen*.
-- [docs/obsidian.md](docs/obsidian.md): the bundle in [Obsidian](https://obsidian.md/), and the two plugins.
-- [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md): how to help, and how to report a security issue.
+- [install.md](install.md): how to install the skills, and which ones to start with.
+- [for-the-curious.md](for-the-curious.md): who writes the bundle and what checks it.
+- [The bundle's glossary](../.lokf/knowledge/glossary/index.md): what the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen*.
+- [obsidian.md](obsidian.md): the bundle in [Obsidian](https://obsidian.md/), and the two plugins.
+- [CONTRIBUTING.md](../CONTRIBUTING.md) and [SECURITY.md](../SECURITY.md): how to help, and how to report a security issue.
 
 ## Who made the parts?
 
-[Nolan Nichols](https://lokf.nolan-nichols.com/) created [LOKF](https://lokf.nolan-nichols.com/specification/), the format the bundle is written in. This is an independent project, not an official distribution of LOKF or of the Open Knowledge Format. It is released under the [Apache License 2.0](LICENSE).
+[Nolan Nichols](https://lokf.nolan-nichols.com/) created [LOKF](https://lokf.nolan-nichols.com/specification/), the format the bundle is written in. This is an independent project, not an official distribution of LOKF or of the Open Knowledge Format. It is released under the [Apache License 2.0](../LICENSE).

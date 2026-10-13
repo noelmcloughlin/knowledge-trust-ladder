@@ -8,7 +8,7 @@ genre: reference
 resource: README.md
 sources:
 - resource: README.md
-- resource: README.en-simple.md
+- resource: docs/architecture.en-simple.md
 - resource: skills/ktl-docent/SKILL.md
 about:
 - https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
@@ -18,7 +18,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  at: "2026-10-13T14:51:18Z"
 status: draft
 verified:
 - by: process:ktl-librarian

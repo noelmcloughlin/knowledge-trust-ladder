@@ -1,6 +1,6 @@
 # Architecture
 
-This page is for anyone deciding whether to use Knowledge Trust Ladder, and for anyone who keeps a bundle with it. It explains why a repository needs a catalogue, who keeps the catalogue, and how far each claim in it has been checked. A shorter version, for readers aged 13 to 18, is in [README.en-simple.md](../README.en-simple.md).
+This page is for anyone deciding whether to use Knowledge Trust Ladder, and for anyone who keeps a bundle with it. It explains why a repository needs a catalogue, who keeps the catalogue, and how far each claim in it has been checked. A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
 
 Knowledge Trust Ladder is an architecture inspired by this poem:
 
