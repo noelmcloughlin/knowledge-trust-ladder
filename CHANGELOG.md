@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The README is a doorway, in the style of LinkML's.** It keeps the poem and the opening paragraph, adds release, website and licence badges, and links the website. The library, museum and roles story moved to `docs/architecture.md`, which leads the website's Architecture group, and the quick start moved to `docs/install.md`.
+
 ## [0.38.1] - 2026-10-13
 
 ### Added

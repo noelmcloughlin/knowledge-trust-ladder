@@ -280,6 +280,7 @@ sibling_paths=(
   "AI_COVENANT.md"
   "SECURITY.md"
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md"
+  "docs/architecture.md"
   "docs/obsidian.md"
   "docs/releasing.md"
   "docs/signing-commits.md"

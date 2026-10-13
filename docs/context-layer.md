@@ -11,7 +11,7 @@ Unblocked states the minimum: "A real context layer in 2026 has four non-negotia
 
 The ownership point is older than the agents. Efficiently Connected notes that federation technology "cannot make a Head of Retail Banking agree to share definitional ownership with an AML team", and that conversational agents return "whichever definition they encountered most frequently".
 
-Google Cloud took a different approach. The Open Knowledge Format (OKF) "formalizes the LLM-wiki pattern into a portable, interoperable format": "a directory of markdown files with YAML frontmatter". Under the heading "Format, not platform", Google adds: "No complex compression scheme, no new runtime, no required SDK." A format leaves the work open: deciding what counts as trusted knowledge, how updates are reviewed, and what a consumer does with an unknown type or stale context. KTL exists for that work. [Prose, Structure, Meaning, Context](../README.md#prose-structure-meaning-context) says how it reads OKF's trust goal.
+Google Cloud took a different approach. The Open Knowledge Format (OKF) "formalizes the LLM-wiki pattern into a portable, interoperable format": "a directory of markdown files with YAML frontmatter". Under the heading "Format, not platform", Google adds: "No complex compression scheme, no new runtime, no required SDK." A format leaves the work open: deciding what counts as trusted knowledge, how updates are reviewed, and what a consumer does with an unknown type or stale context. KTL exists for that work. [Prose, Structure, Meaning, Context](architecture.md#prose-structure-meaning-context) says how it reads OKF's trust goal.
 
 ## One bundle is one repository's context layer
 
@@ -23,7 +23,7 @@ The table sets Unblocked's four properties, and the two the others add, against 
 | On-demand surfacing | A reader opens `index.md` first. The **docent** answers from the bundle and labels each concept it used ([the index as the retrieval interface](wikiskill.md)) | Files, and one in-process graph, until something serves them |
 | Cross-source conflict resolution | The **curator**, a named person, records the verdict: confirm, correct, retire or send back. A reader's disagreement goes to `feedback.md` | One bundle. Two bundles that define one term differently have no arbiter yet |
 | Per-query permission enforcement | None of its own. The repository's access control is the bundle's | Nothing finer than the repository |
-| Provenance and trust | `generated` and `verified` events on every concept, and each label computed on read, never stored ([Trust stays visible](../README.md#trust-stays-visible), [four levels of checking](for-the-curious.md#four-levels-of-checking)) | Who checked and when, not that the source is right |
+| Provenance and trust | `generated` and `verified` events on every concept, and each label computed on read, never stored ([Trust stays visible](architecture.md#trust-stays-visible), [four levels of checking](for-the-curious.md#four-levels-of-checking)) | Who checked and when, not that the source is right |
 | Format, not platform | LOKF, a semantic profile of OKF: Markdown a person reads, a LinkML schema that checks it, a graph any SPARQL store loads | A domain outside LOKF's vocabulary needs a [domain schema](for-the-curious.md#when-the-vocabulary-stops-fitting) |
 
 So one bundle is already one repository's context layer, with the fourth of Unblocked's properties left to whatever hosts it.
@@ -87,7 +87,7 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 | Part | Status | Where |
 | --- | --- | --- |
 | A bundle validated, packed, checksummed, attested and attached to a release | exists | `knowledge-release.yaml` in the sidecar template |
-| The registrar's gate and the report script | exist | [the fifth role](../README.md#the-fifth-role-which-is-not-a-skill) |
+| The registrar's gate and the report script | exist | [the fifth role](architecture.md#the-fifth-role-which-is-not-a-skill) |
 | `lokf export`: `graph.nt`, `concepts.jsonld`, `graph.json`, `datasets.jsonld` | exists | lokf 0.8.0 |
 | `lokf registry init`, `add`, `list` and `resolve`: the routing table, offline | exists | lokf 0.8.0, specification sections 11.1 to 11.3 |
 | `lokf serve`, `query` and `mcp` over one bundle | exist | lokf 0.8.0 |

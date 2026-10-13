@@ -1,6 +1,6 @@
 # Knowledge Trust Ladder
 
-This page is for readers aged 13 to 18. It retells [README.md](README.md) in shorter words. The full page has every detail.
+This page is for readers aged 13 to 18. It retells [the architecture page](docs/architecture.md) in shorter words. The full page has every detail.
 
 <p align="center">
   <picture>
@@ -8,20 +8,6 @@ This page is for readers aged 13 to 18. It retells [README.md](README.md) in sho
     <img src=".assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
   </picture>
 </p>
-
-## Quick start
-
-If you only want to ask questions, install the docent skill into an agent you already use. Then ask it about this project. It answers from this repository's own bundle, and says how far each answer has been checked. See [eight captured answers](docs/examples/docent.md).
-
-Install all five skills with one command:
-
-```bash
-npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
-  --skill ktl-sidecar --skill ktl-librarian --skill ktl-curator \
-  --skill ktl-docent --skill ktl-prose
-```
-
-Start with the sidecar and the librarian. The curator matters once there is a bundle worth trusting. [docs/install.md](docs/install.md) gives the other ways to install, and what each skill needs on the machine.
 
 ## What does it do?
 
@@ -70,6 +56,7 @@ The labels are worked out from each entry every time it is read, and never store
 
 ## Where can I read more?
 
+- [docs/install.md](docs/install.md): how to install the skills, and which ones to start with.
 - [docs/for-the-curious.md](docs/for-the-curious.md): who writes the bundle and what checks it.
 - [The bundle's glossary](.lokf/knowledge/glossary/index.md): what the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen*.
 - [docs/obsidian.md](docs/obsidian.md): the bundle in [Obsidian](https://obsidian.md/), and the two plugins.

@@ -1,11 +1,31 @@
 # Install
 
-This page gives every way to install the five skills, what each needs on the machine, and how to pin them to one release. [The README](../README.md#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
+This page gives every way to install the five skills, what each needs on the machine, and how to pin them to one release. [Quick start](#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
 
 > Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
 > `npx skills add` paths, so an existing install keeps working. The skills
 > themselves took the `ktl-` prefix in 0.22.0; [CHANGELOG.md](../CHANGELOG.md)
 > lists their old names, which a host installed before then removes.
+
+## Quick start
+
+> **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](examples/docent.md).
+
+Install all five skills:
+
+```bash
+npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
+  --skill ktl-sidecar --skill ktl-librarian --skill ktl-curator \
+  --skill ktl-docent --skill ktl-prose
+```
+
+**Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting.
+
+```text
+# Claude Code plugin
+/plugin marketplace add noelmcloughlin/knowledge-trust-ladder
+/plugin install knowledge-trust-ladder@knowledge-trust-ladder
+```
 
 ## Install with the GitHub CLI
 

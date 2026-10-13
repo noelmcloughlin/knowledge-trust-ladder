@@ -590,14 +590,19 @@ function writeDocs() {
 }
 
 function writeReadmes(tagline) {
-  // The home page: the README under a hero, which takes the README's logo
-  // and its bold summary line, so neither shows twice.
-  let readme = repoFile("README.md").replace(/<picture>[\s\S]*?<\/picture>\s*/, "");
-  readme = takeTitle(readme).body;
-  readme = readme.replace(/^\*\*(.+)\*\*\s*$/m, (_, line) => {
-    tagline.text = plain(line);
-    return "";
-  });
+  // The home page: the README from its title down, under a hero. The logo
+  // and the badges above the title are for GitHub, and the hero shows the
+  // logo itself. A line that links this site is dropped too, since here it
+  // would link to the page it is on. The tagline is the bold summary line
+  // that opens the architecture page, the story the README points to.
+  const source = repoFile("README.md");
+  let readme = takeTitle(source.slice(Math.max(0, source.search(/^# /m)))).body;
+  readme = readme
+    .split("\n")
+    .filter((line) => !line.includes(`](${SITE_URL}/)`))
+    .join("\n");
+  const summary = repoFile("docs/architecture.md").match(/^\*\*(.+)\*\*\s*$/m);
+  tagline.text = summary ? plain(summary[1]) : "";
   page(
     resolve(CONTENT, "index.md"),
     {
@@ -609,7 +614,8 @@ function writeReadmes(tagline) {
         image: { light: "../../generated/logo-light.svg", dark: "../../generated/logo-dark.svg", alt: "" },
         actions: [
           { text: "Browse the bundle", link: `${BASE}/knowledge/`, icon: "right-arrow" },
-          { text: "Quick start", link: "#quick-start", variant: "secondary" },
+          { text: "Architecture", link: `${BASE}/docs/architecture/`, variant: "secondary" },
+          { text: "Quick start", link: `${BASE}/docs/install/#quick-start`, variant: "secondary" },
           { text: "Context layer", link: `${BASE}/docs/context-layer/`, variant: "secondary" },
           { text: "GitHub", link: REPO_URL, icon: "external", variant: "minimal" },
         ],
@@ -658,7 +664,7 @@ function writeLlmsTxt(docs, concepts) {
     "",
     `- [concepts.jsonld](${SITE_URL}/knowledge/concepts.jsonld): every concept's frontmatter and body under one JSON-LD context`,
     `- [graph.nt](${SITE_URL}/knowledge/graph.nt): the whole bundle as N-Triples`,
-    `- [README](${SITE_URL}/): what Knowledge Trust Ladder is, and how to install it`,
+    `- [README](${SITE_URL}/): what Knowledge Trust Ladder is`,
     "",
   ];
   write(resolve(PUBLIC, "llms.txt"), lines.join("\n"));

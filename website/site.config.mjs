@@ -34,8 +34,9 @@ export const REF = (() => {
 export const DOCS_GROUPS = [
   { label: "Guides", pages: ["install", "obsidian", "m365", "skills-repositories"] },
   {
-    label: "Background",
+    label: "Architecture",
     pages: [
+      "architecture",
       "for-the-curious",
       "context-layer",
       "context-layer-technology",
