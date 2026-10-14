@@ -25,6 +25,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-13T23:50:44Z"
 stale_after: 2027-10-14
+status: draft
 ---
 
 # Overview
@@ -69,3 +70,10 @@ Both commands run `npm run sync` first. The sync runs `lokf export` from the sid
 The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, and runs npm's and the toolkit's packages under a read-only token. `deploy` runs nothing but GitHub's own deploy-pages action, holds the Pages scopes, and runs for the default branch only, and only once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. A maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
 
 The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records. The two typefaces, Source Serif 4 and Atkinson Hyperlegible Next, are self-hosted under the SIL Open Font License.
+
+## Open questions
+
+- 2026-10-14, process:ktl-librarian: Since 0.41.0 (2026-10-14) `knowledge-website.yaml` also runs every Monday at 05:23 UTC from the default branch, and on a change to `.linkml/`, a justfile, a `pyproject.toml` or a `uv.lock`; the scheduled run deploys too. This concept lists the push and pull-request paths up to the workflow itself, and no weekly run.
+- 2026-10-14, process:ktl-librarian: `website/README.md` now says a promoted release's changelog page appears with the next build, the workflow's weekly run at the latest, or a run by hand. This concept says the next build, or a run by hand.
+- 2026-10-14, process:ktl-librarian: `website/README.md` now names `site.config.mjs` for the site's values and options, `src/styles/custom.css`, this repository's own, for its look, and `src/components/Mermaid.astro` for how a diagram is drawn, and says `node scripts/config.mjs` prints what the sync reads. This concept's What to edit section names none of them.
+- 2026-10-14, process:ktl-librarian: Since 0.42.0 (`CHANGELOG.md`) the README and the architecture page link the site at its persistent address, `https://w3id.org/ktl/`, which redirects to the GitHub Pages address this concept names.
