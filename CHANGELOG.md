@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.43.0] - 2026-10-14
+
 ### Added
 
 - **A ktl-website site serves the whole bundle as `llms-full.txt`.** Each concept's text follows its trust label, its type, its addresses and its sources, so a model that reads the file at once can tell a draft from a confirmed concept. The site's link check reads the text files too.
