@@ -69,6 +69,7 @@ SHAPES = ["default", "no-doorway", "rearranged"]
 # The wrapper must see no credential the test runner inherited.
 INHERITED = (
     "AGENT_API_KEY",
+    "AGENT_PROMPT_FLAG",
     "AGENT_API_KEY_ENV",
     "ANTHROPIC_API_KEY",
     "KNOWLEDGE_RETRIEVAL",
@@ -129,6 +130,13 @@ case "${POISON_THEN:-fail}" in
   fail) exit 7 ;;
   term) kill -TERM "$PPID"; exit 0 ;;
 esac
+""",
+        ),
+        # Records how many arguments it got, and the first line of the first and of the last.
+        "argv": executable(
+            d / "argv-agent.sh",
+            r"""#!/usr/bin/env bash
+{ printf '%s\n' "$#"; printf '%s\n' "$1" | head -1; printf '%s\n' "${@: -1}" | head -1; } > "$ARGV_OUT"
 """,
         ),
         # Records which of the credential names reached it.
@@ -296,6 +304,30 @@ def test_the_key_reaches_the_agent_under_the_given_name_only(host, agents, tmp_p
     assert (status, got) == (want, expect), (
         f"key/{label}: exit {status} (want {want}), agent saw: {got} (want: {expect})"
     )
+
+
+PROMPT = "You are the repository knowledge librarian. Follow this skill file verbatim:"
+PROMPT_CASES = [
+    ("default", "", 0, ["2", "-p", PROMPT]),
+    ("long flag", "--prompt", 0, ["2", "--prompt", PROMPT]),
+    ("last argument", "arg", 0, ["1", PROMPT, PROMPT]),
+    ("a word", "prompt", 2, None),
+    ("a flag with a value", "-p=x", 2, None),
+    ("a space", "-p x", 2, None),
+]
+
+
+@pytest.mark.parametrize(("label", "flag", "want", "head"), PROMPT_CASES, ids=[c[0] for c in PROMPT_CASES])
+def test_the_prompt_goes_where_the_prompt_flag_says(host, agents, tmp_path, label, flag, want, head):
+    """After -p by default, after another flag, or as the bare last argument with "arg"; anything else is refused before the agent runs."""
+    out = tmp_path / "argv.out"
+    status = wrapper(host, {"AGENT_CLI": agents["argv"], "ARGV_OUT": out, "AGENT_PROMPT_FLAG": flag})
+    assert status == want, f"prompt/{label}: exit {status} (want {want})"
+    if head is None:
+        assert not out.exists(), f"prompt/{label}: the agent ran with a refused flag"
+        return
+    got = read(out).strip().split("\n")
+    assert got == head, f"prompt/{label}: the agent got {got} (want {head})"
 
 
 def test_a_persons_event_the_pen_let_through_fails_the_run(host, agents):

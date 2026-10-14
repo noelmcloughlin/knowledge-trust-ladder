@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The scheduled librarian takes an agent that wants its prompt somewhere other than after `-p`.** The repository variable `AGENT_PROMPT_FLAG` names the flag, or `arg` for an agent such as Codex CLI that takes the prompt as its last argument. The sidecar's automation page now states the five conditions any agent must meet, beside the Copilot CLI and Claude Code commands it vouches for.
+
 ## [0.40.0] - 2026-10-14
 
 ### Added

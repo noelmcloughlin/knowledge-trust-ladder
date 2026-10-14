@@ -27,13 +27,13 @@ Five things this skill must keep true for it:
 The workflow invokes `.lokf/scripts/knowledge-librarian.sh` directly, a fixed, reviewed path. To turn it on:
 
 1. Set the `KNOWLEDGE_LIBRARIAN_ENABLED` repository variable to `true`. These settings go under Repository variables and secrets, never on an environment, which the workflow does not read.
-2. Set `AGENT_CLI` to your non-interactive agent command.
+2. Set `AGENT_CLI` to your non-interactive agent command. The prompt follows `-p`, or the flag `AGENT_PROMPT_FLAG` names, or comes last when that variable is `arg`.
 3. Name the variable the agent reads its credential from in `AGENT_API_KEY_ENV`.
 4. Either set `AGENT_USE_JOB_TOKEN` to `true` (Copilot CLI, billed to the repository owner's seat) or put a key in the `AGENT_API_KEY` secret. The wrapper hands it to the agent under that name only.
 5. Turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General. The `publish` job opens its pull request with the job's own token, which GitHub refuses while that setting is off.
 6. Optionally set `KNOWLEDGE_RETRIEVAL` to `true`. Each run that changes the bundle then makes one more agent call, which scores whether the index leads to the concept behind each question readers asked, and the pull request carries the score.
 
-The sidecar's automation.md gives the full settings for Copilot CLI and Claude Code. If `KNOWLEDGE_LIBRARIAN_ENABLED` is not `true`, the workflow's agent step is skipped, so the workflow does nothing until you set the agent up.
+The sidecar's automation.md gives the full settings for Copilot CLI and Claude Code, and the five conditions any other agent must meet. If `KNOWLEDGE_LIBRARIAN_ENABLED` is not `true`, the workflow's agent step is skipped, so the workflow does nothing until you set the agent up.
 
 The script selects the ktl-librarian skill, builds a prompt telling the agent to follow it and re-scrape the repository, then calls `AGENT_CLI`. On a scheduled run it first asks `knowledge-report.sh quiet`, and calls no agent when nothing waits. The prompt takes the patch file's format from `knowledge-apply.sh --format`, so it holds for whichever release of this skill the pin installs. Its contract: the agent writes one file, `.lokf/patch.yaml`, and the wrapper applies it with `knowledge-apply.sh` once the agent has finished. The pen writes the file's hand-off to the path the workflow names, after the wrapper has removed whatever the agent left there. The wrapper refuses a run that changed anything else, and one whose result touches a person's record. So `.lokf/knowledge/` changes only through that script, and the wrapper performs no git or pull request operations. The workflow owns the branch, the commit and the pull request.
 
