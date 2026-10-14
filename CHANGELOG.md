@@ -4,11 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-10-14
+
 ### Added
 
 - **A ktl-website home page offers an Architecture button when the docs have an architecture page.** The default buttons are now Browse the bundle, Architecture when `docs/architecture.md` is on the site, Bundle health and Knowledge graph.
-
-## [0.40.0] - 2026-10-14
 
 ### Changed
 
