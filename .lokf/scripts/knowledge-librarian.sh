@@ -156,7 +156,11 @@ Task (Karpathy rule - continuous small corrections, not a rewrite):
      administrative no-op runs.
   3. Write every change as an operation in .lokf/patch.yaml, in the shape
      "bash .lokf/scripts/knowledge-apply.sh --format" prints, and check it
-     with "bash .lokf/scripts/knowledge-apply.sh --dry-run". Do NOT edit any
+     with "bash .lokf/scripts/knowledge-apply.sh --dry-run". Create and edit
+     that file with your own file-writing tool, never with a shell redirect,
+     a heredoc or a script. An unattended run may deny a shell command that
+     writes, and a denied shell write does not mean the file cannot be
+     written. Do NOT edit any
      file under .lokf/knowledge/, .lokf/feedback.md or .lokf/questions.md
      yourself, do NOT run the apply script without --dry-run, and do NOT run
      git, open PRs, or touch any other path: this wrapper applies the file

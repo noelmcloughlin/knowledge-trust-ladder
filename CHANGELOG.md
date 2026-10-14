@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The scheduled librarian writes its patch with the agent's own file tool.** The wrapper's prompt now says so. An agent that tried a shell write first was denied and gave up without writing the patch. The documented Claude Code command drops `Write(.lokf/patch.yaml)`, which Claude Code ignores; `Edit(.lokf/patch.yaml)` already covers the Write tool.
+
 ## [0.40.0] - 2026-10-14
 
 ### Added

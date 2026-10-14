@@ -95,14 +95,14 @@ A personal access token can stand in for the job token. Use a fine-grained token
 
 | Setting | Value |
 | --- | --- |
-| `AGENT_CLI` | `npx -y @anthropic-ai/claude-code@2.1.281 --permission-mode dontAsk --allowedTools Read,Write(.lokf/patch.yaml),Edit(.lokf/patch.yaml),Bash(git:*),Bash(uv:*),Bash(uvx:*),Bash(just:*),Bash(bash:*)` |
+| `AGENT_CLI` | `npx -y @anthropic-ai/claude-code@2.1.281 --permission-mode dontAsk --allowedTools Read,Edit(.lokf/patch.yaml),Bash(git:*),Bash(uv:*),Bash(uvx:*),Bash(just:*),Bash(bash:*)` |
 | `AGENT_API_KEY_ENV` | `ANTHROPIC_API_KEY` with a Console key, or `CLAUDE_CODE_OAUTH_TOKEN` with a subscription token |
 | `AGENT_API_KEY` (secret) | an API key from the Claude Console, or the token `claude setup-token` prints |
 | `AGENT_USE_JOB_TOKEN` | unset. Claude Code cannot use the job's GitHub token |
 
 Pay for the runs in one of two ways. A Console API key is billed per use, apart from any subscription, and the Console can cap its spending. A Pro or Max subscription needs no API billing: run `claude setup-token` on your own machine, and it prints a long-lived token for your account. The runs then count against that subscription's usage limits, which your own sessions share.
 
-`dontAsk` denies any call that would otherwise prompt, so a run never waits for a person, and `--allowedTools` names what the skill needs. `Write(.lokf/patch.yaml)` and `Edit(.lokf/patch.yaml)` confine every file write to the patch file, which the wrapper applies with `knowledge-apply.sh` after the run; the bundle itself is on no list. `Bash(git:*)` is the prefix form, and it is why no pattern has a space: a rule such as `Bash(git log:*)` cannot be passed, since the wrapper splits on spaces.
+`dontAsk` denies any call that would otherwise prompt, so a run never waits for a person, and `--allowedTools` names what the skill needs. `Edit(.lokf/patch.yaml)` confines every file write to the patch file, which the wrapper applies with `knowledge-apply.sh` after the run; the bundle itself is on no list. An `Edit` rule covers every file-writing tool, the Write tool included; Claude Code ignores a `Write(<path>)` rule and says so in the log. `dontAsk` denies a shell write through a command not on the list, such as `echo` or `cat`, so the wrapper's prompt tells the agent to write the patch file with its own file tool. `Bash(git:*)` is the prefix form, and it is why no pattern has a space: a rule such as `Bash(git log:*)` cannot be passed, since the wrapper splits on spaces.
 
 ### Before turning on the schedule
 
