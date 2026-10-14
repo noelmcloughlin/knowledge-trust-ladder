@@ -75,7 +75,7 @@ In the **three lines of defence** that regulated industries use, the librarian a
 
 ### The sixth skill, which publishes the bundle
 
-[`ktl-website`](../skills/ktl-website/SKILL.md) builds a website for the bundle. It has a page per concept with its trust label, the health page, the knowledge graph and search by trust and type, and it serves the four files `lokf export` writes beside the pages. The repository's README, docs and changelog join them when it has them, and a workflow publishes the site to GitHub Pages. This repository's own [site](https://noelmcloughlin.github.io/knowledge-trust-ladder/) is the template's first copy. It is optional, like `ktl-prose`.
+[`ktl-website`](../skills/ktl-website/SKILL.md) builds a website for the bundle. It has a page per concept with its trust label, the health page, the knowledge graph and search by trust and type, and it serves the four files `lokf export` writes beside the pages. The repository's README, docs, changelog and LinkML schema pages join them when it has them. Its data joins them as SQLite databases to open in Datasette Lite, once a person turns that on. A workflow publishes the site to GitHub Pages. This repository's own [site](https://noelmcloughlin.github.io/knowledge-trust-ladder/) is the template's first copy. It is optional, like `ktl-prose`.
 
 ## Trust stays visible
 

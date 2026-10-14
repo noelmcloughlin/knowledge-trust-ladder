@@ -244,6 +244,61 @@ if [ -d "$root/.assets" ]; then
 else
   info assets "no .assets/ folder - set ASSETS to the figures folder and LOGO to a logo file, or leave both out"
 fi
+
+# These lines find the schema's pages and the data as scripts/config.mjs
+# finds them. The schema's pages come from a justfile with a gen-doc recipe,
+# in the root, a linkmo project's folder or .linkml/. The data comes from a
+# build-browse recipe, and its databases stay off the site until a person
+# sets BROWSE. A justfile goes by any name just reads, and a recipe line may
+# carry parameters and their defaults. An assignment such as
+# `gen-doc := ...` is not a recipe.
+justfile_in() {
+  for f in "$1"/.[Jj][Uu][Ss][Tt][Ff][Ii][Ll][Ee] "$1"/[Jj][Uu][Ss][Tt][Ff][Ii][Ll][Ee]; do
+    if [ -f "$f" ]; then printf '%s\n' "${f##*/}"; return 0; fi
+  done
+}
+has_recipe() { [ -f "$1" ] && grep -qE "^@?$2([[:space:]]+[^:=[:space:]][^:]*)?:([^=]|\$)" "$1"; }
+linkmo=""
+if [ -f "$root/.copier-answers.linkmo.yml" ]; then
+  linkmo="$(sed -n "s/^linkmo_dir:[[:space:]]*[\"']\{0,1\}\([A-Za-z0-9._-]*\).*/\1/p" "$root/.copier-answers.linkmo.yml" | head -n 1)"
+  { [ -n "$linkmo" ] && [ -d "$root/$linkmo" ]; } || linkmo=""
+fi
+schema_cmd=""; schema_dir=""
+for d in . ${linkmo:+"$linkmo"} .linkml; do
+  jf="$(justfile_in "$root/$d")"
+  if [ -n "$jf" ] && has_recipe "$root/$d/$jf" gen-doc; then
+    if [ "$d" = . ]; then schema_dir="docs/elements"; schema_cmd="just gen-doc"
+    else schema_dir="$d/docs/elements"; schema_cmd="just --justfile $d/$jf gen-doc"; fi
+    break
+  fi
+done
+if [ -n "$schema_cmd" ]; then
+  ok schema "a gen-doc recipe: the Schema topic, from $schema_dir, which the sync builds with $schema_cmd (SCHEMA)"
+else
+  info schema "no justfile with a gen-doc recipe in the root, a linkmo project or .linkml/ - no Schema topic (SCHEMA)"
+fi
+browse_cmd=""
+if [ -n "$linkmo" ]; then
+  jf="$(justfile_in "$root/$linkmo")"
+  if [ -n "$jf" ] && has_recipe "$root/$linkmo/$jf" build-browse; then browse_cmd="just --justfile $linkmo/$jf build-browse"; fi
+fi
+if [ -z "$browse_cmd" ]; then
+  jf="$(justfile_in "$root")"
+  if [ -n "$jf" ] && has_recipe "$root/$jf" build-browse; then browse_cmd="just build-browse"; fi
+fi
+if [ -n "$browse_cmd" ]; then
+  info data "a build-browse recipe ($browse_cmd): the data page shows its databases when BROWSE names the folder it writes; left out, BROWSE is null"
+else
+  info data "no build-browse recipe - no data page unless BROWSE names a folder of SQLite databases"
+fi
+if [ -n "$schema_cmd" ] || [ -n "$browse_cmd" ]; then
+  if have just; then
+    ok just "just $(just --version 2>/dev/null | awk '{print $2}'): the sync runs the recipes above"
+  else
+    warn just "just not found - the sync builds the schema's pages, and the data once BROWSE is set, through just; install it (uv tool install rust-just), or set SCHEMA to null; the workflow installs its own"
+  fi
+fi
+
 lint=""
 for f in "$root"/.markdownlint* "$root/lychee.toml" "$root/.codespellrc"; do
   [ -e "$f" ] && lint="${lint}${lint:+ }${f#"$root"/}"

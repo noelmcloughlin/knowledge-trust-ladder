@@ -1,6 +1,6 @@
 ---
 name: ktl-website
-description: 'Build a browsable website for the `.lokf/` knowledge bundle that ktl-sidecar installed in this repository: an Astro Starlight site in `website/`, with a page per concept and its trust label, a health page, a knowledge graph, search by trust and type, the four `lokf export` files served beside the pages, and the README, the docs and the changelog when the repository has them, deployed to GitHub Pages by a workflow. Use when: someone asks to publish, browse, present or deploy the knowledge bundle; wants a website, a docs site or GitHub Pages for it; or asks to repair or update a `website/` this skill laid down. Not for writing or confirming concepts; that is ktl-librarian and ktl-curator. Not for installing the bundle itself; that is ktl-sidecar, which runs first. Keywords: website, GitHub Pages, Astro, Starlight, documentation site, knowledge graph, OKF, LOKF, trust ladder.'
+description: 'Build a browsable website for the `.lokf/` knowledge bundle that ktl-sidecar installed in this repository: an Astro Starlight site in `website/`, with a page per concept and its trust label, a health page, a knowledge graph, search by trust and type, the four `lokf export` files served beside the pages, and the README, the docs, the changelog, the LinkML schema''s pages and the data in Datasette Lite when the repository has them, deployed to GitHub Pages by a workflow. Use when: someone asks to publish, browse, present or deploy the knowledge bundle; wants a website, a docs site or GitHub Pages for it; or asks to repair or update a `website/` this skill laid down. Not for writing or confirming concepts; that is ktl-librarian and ktl-curator. Not for installing the bundle itself; that is ktl-sidecar, which runs first. Keywords: website, GitHub Pages, Astro, Starlight, documentation site, knowledge graph, LinkML, Datasette, OKF, LOKF, trust ladder.'
 license: Apache-2.0
 compatibility: 'Requires a `.lokf/` sidecar from ktl-sidecar 0.30.0 or later (its `knowledge-report.sh`, and a committed `uv.lock`), uv, Node.js 22.12 or later with npm, a POSIX shell (bash; Git for Windows on Windows) and python3 or uv for placeholder substitution. Step 5''s workflow is GitHub Actions and GitHub Pages; on another forge the host publishes `website/dist` itself.'
 ---
@@ -33,7 +33,7 @@ Resolve every placeholder from real sources before writing anything; never leave
 
 `<REPO_OWNER>` and `<REPO_NAME>` come from the remote, never from a person's name: Pages serves the site at `https://<REPO_OWNER>.github.io/<REPO_NAME>/`, and the sidecar's `<OWNER_SLUG>` is a different thing. A user site (the `<owner>.github.io` repository) and a custom domain change `SITE` and `BASE` as [references/deploy.md](references/deploy.md) says.
 
-Then settle, from the preflight's lines, what the site shows: whether the README, the docs, the changelog and the figures are there. The logo (`LOGO`) stays `"auto"`, the Knowledge Trust Ladder logo, unless the person names a file of the repository's own, such as one the `assets` line lists. The template's `"auto"` settings take each when it is. [references/customising.md](references/customising.md) describes every option.
+Then settle, from the preflight's lines, what the site shows: whether the README, the docs, the changelog, the figures and the schema's pages are there, and whether a `build-browse` recipe writes data. The data goes on the site only when the person asks for it, since its databases become public. The logo (`LOGO`) stays `"auto"`, the Knowledge Trust Ladder logo, unless the person names a file of the repository's own, such as one the `assets` line lists. The template's `"auto"` settings take each when it is. [references/customising.md](references/customising.md) describes every option.
 
 ## Step 1 - Lay the site down
 
@@ -56,7 +56,7 @@ open(path, "w", encoding="utf-8").write(text)
 ' {}
 ```
 
-Then edit `website/site.config.mjs` for what the preflight settled: `LOGO` when the person named a logo of the repository's own, `BRANCH` when the default branch is not `main`, `CUSTOM_DOMAIN` for a custom domain, and `BASE = ""` for a user site. Leave the `"auto"` options alone unless the person wants a part left out (`null`) or placed (`DOCS.groups`, `PAGES`, `HOME.actions`).
+Then edit `website/site.config.mjs` for what the preflight settled: `LOGO` when the person named a logo of the repository's own, `BRANCH` when the default branch is not `main`, `CUSTOM_DOMAIN` for a custom domain, and `BASE = ""` for a user site. Leave the `"auto"` options alone unless the person wants a part left out (`null`) or placed (`DOCS.groups`, `PAGES`, `HOME.actions`). Set `BROWSE` to the data's folder and the command that writes it when the person wants the data published.
 
 **Repair or update.** When `website/site.config.mjs` already exists, the preflight's `website` line names each file that differs from its template or is missing. Copy those templates over, one file at a time, and never the three files the repository owns. A new option arrives with a default in `scripts/config.mjs`, so an older `site.config.mjs` keeps working.
 
@@ -78,7 +78,7 @@ Zero hits means fully resolved. Then `node website/scripts/config.mjs` prints wh
 cd website && npm ci && npm run build
 ```
 
-`npm ci` installs the pinned packages, and `npm run build` runs the sync (`lokf export` from `.lokf/`'s own environment, the report script, the pages), the build, and a check of every link between the pages. The three errors a first build meets: a docs page with no group (`DOCS.groups` is out of step), a home source with no `#` title (`HOME.source`), and a missing `knowledge-report.sh` (the sidecar repair). `npm run dev` serves the site at `http://localhost:4321<BASE>/`. Commit `website/`; the generated folders are ignored. With no Node.js or uv, report the build as skipped: the workflow builds in CI. [references/inputs.md](references/inputs.md) says what each page is built from.
+`npm ci` installs the pinned packages, and `npm run build` runs the sync (`lokf export` from `.lokf/`'s own environment, the report script, the pages), the build, and a check of every link between the pages. A schema or data folder not built yet is built first, with its command. The three errors a first build meets: a docs page with no group (`DOCS.groups` is out of step), a home source with no `#` title (`HOME.source`), and a missing `knowledge-report.sh` (the sidecar repair). `npm run dev` serves the site at `http://localhost:4321<BASE>/`. Commit `website/`; the generated folders are ignored. With no Node.js or uv, report the build as skipped: the workflow builds in CI. [references/inputs.md](references/inputs.md) says what each page is built from.
 
 ## Step 5 - Install the deploy workflow (optional)
 
@@ -90,7 +90,7 @@ Tell the person:
 
 - which Step 0 values were **guessed** rather than found (`<PROJ_DESC>` above all, and a logo when the person did not name one);
 - whether Step 4's build ran and passed, or was skipped, and what the sync printed (`sync: N concept pages, ...`);
-- which parts the site shows (README, docs, changelog, figures, logo) and which it left out, and why;
+- which parts the site shows (README, docs, changelog, figures, logo, the schema's pages, the data) and which it left out, and why;
 - what was left alone: an existing `website/`, the lint configurations, Pages and the variable;
 - the preflight's last line, as printed;
 - that the site serves the four `lokf export` files at `<SITE>/<BASE>/knowledge/`, so that address is a candidate `base_iri` for the bundle when its current one is a placeholder or a code-host URL (ktl-librarian's Rule 2 has the migration);

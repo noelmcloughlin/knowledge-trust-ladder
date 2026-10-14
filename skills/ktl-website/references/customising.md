@@ -16,15 +16,19 @@
 | `DOCS` | `{ dir, groups }`: the docs folder, and the sidebar groups its pages sit in, each page named by its path under the folder without `.md` | `docs/` when there is one, every page in one Guides group by title | no docs pages |
 | `CHANGELOG` | a Keep a Changelog file, read as a page per release | `CHANGELOG.md` when it holds a released version | no Releases topic |
 | `PAGES` | `[{ slug, source, label }]`: pages from files outside the docs folder, each at `/<slug>/`, listed after Home | none | |
+| `SCHEMA` | `{ dir, build }`: the folder of the LinkML schema's pages that `gen-doc` writes, and the command that writes it, which the sync runs when the folder is missing; a folder alone needs no command | the first of the root, a linkmo project's folder and `.linkml/` whose `justfile` has a `gen-doc` recipe: its `docs/elements`, built with that recipe | no Schema topic |
+| `BROWSE` | `{ dir, build }`: a folder of SQLite databases and their Datasette metadata, and the command that writes it | `null`, since the databases go on the public site; `"auto"` takes a linkmo project's `browse/` and its `build-browse` recipe | no data page |
 | `HOME` | `{ source, tagline, actions }`: the home page's source file, the tagline under its title, and its buttons | the README when it has a `#` title, else the bundle's own introduction; `DESCRIPTION` as the tagline; Browse the bundle, Architecture when the docs folder has `architecture.md`, Bundle health and Knowledge graph as the buttons | |
 
 `HOME.tagline` is a string, or `{ boldLineOf: "<file>" }` for the first line of that file that is bold throughout. `HOME.actions` is a list of `{ text, link, icon, variant }` with site-relative links such as `/knowledge/`; the first is the primary button, and `variant: "secondary"` marks the rest.
 
-With `DOCS.groups`, the sync stops with an error when a group names a page that is not there or a page has no group, so a new page cannot go missing from the sidebar. A page named after its group, such as `docs/guides.md` under a group labelled Guides, becomes that group's overview. The pages git sees count: a folder a generator writes and `.gitignore` names stays out.
+With `DOCS.groups`, the sync stops with an error when a group names a page that is not there or a page has no group, so a new page cannot go missing from the sidebar. A page named after its group, such as `docs/guides.md` under a group labelled Guides, becomes that group's overview. The pages git sees count: a folder a generator writes and `.gitignore` names stays out, and so does the `SCHEMA` folder.
+
+`SCHEMA` and `BROWSE` each name a folder the repository builds rather than commits. The sync runs the `build` command from the repository root when the folder is missing, which in CI is every time, and stops when the command fails or the folder is still not there. Locally it runs once, so run the command again, or remove the folder, to see a change to the schema or the data. A `build` that starts with `just` makes the workflow install `just`.
 
 ## Two configurations
 
-A bare repository, with a bundle and a README, is the template as Step 1 fills it: the five required values, `LOGO`, `ASSETS`, `DOCS` and `CHANGELOG` at `"auto"`, no `PAGES`, and `HOME` at its defaults. Such a site has the Knowledge Trust Ladder logo, a home page from the README, the bundle's pages, the health page, the graph and search. It gains a Guide topic or a Releases topic the day a `docs/` folder or a changelog appears.
+A bare repository, with a bundle and a README, is the template as Step 1 fills it: the five required values, `LOGO`, `ASSETS`, `DOCS`, `CHANGELOG` and `SCHEMA` at `"auto"`, no `PAGES`, no `BROWSE`, and `HOME` at its defaults. Such a site has the Knowledge Trust Ladder logo, a home page from the README, the bundle's pages, the health page, the graph and search. It gains a Guide topic, a Releases topic or a Schema topic the day a `docs/` folder, a changelog or a `gen-doc` recipe appears.
 
 The skills repository's own `website/site.config.mjs` sets every option: a logo, four docs groups, a tagline taken from a docs page, four buttons and a page for younger readers. It is the fuller example to copy from.
 
