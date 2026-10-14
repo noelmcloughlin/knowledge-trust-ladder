@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **The README and docs pages lose their dead sentences.** The install, Obsidian, Copilot and releasing pages say the step and stop, and the Obsidian page names the `knowledge_bundle` doorway once instead of narrating the link. No skill change.
-
 ## [0.40.0] - 2026-10-14
 
 ### Added
@@ -18,6 +14,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Changed
 
 - **A ktl-website site shows the Knowledge Trust Ladder logo unless its configuration names another.** `LOGO` now defaults to `"auto"`, which takes a `knowledge-trust-ladder-logo.svg` the repository already has, or else the light and dark copies the template now carries. `null` still shows the title as text.
+- **The README and docs pages lose their dead sentences.** The install, Obsidian, Copilot and releasing pages say the step and stop, and the Obsidian page names the `knowledge_bundle` doorway once instead of narrating the link. No skill change.
 
 ### Fixed
 
