@@ -45,6 +45,8 @@ The follow-up that does need a person is the sibling repositories. Each carries 
 
 So after `publish.yml` has tagged a release that changed a template or `skills/ktl-librarian/`, run `scripts/sync-sidecar.sh <tag> <sibling>...` from this repository. It refuses anything but a tag that is on origin and carries the skill. It reads the templates out of that tag rather than the working tree, and copies every template the sibling already carries. It also adds a template the sibling never had, in two cases. Either ktl-sidecar puts it on every host, as it does the report script, or a copy the sibling carries cannot run without it, as the gate cannot without the conventions script. Any other is reported, not added. Then it sets the pin, the tag and the commit that tag names, runs the sidecar's own checks there, and prints a draft changelog line and the commit command.
 
+In each sibling it starts a branch of its own, `sync-<tag>`, from the default branch as origin has it. It skips a sibling with uncommitted changes, so the diff is never written to `main` or into a feature branch.
+
 The script never commits: the diff is the review. Commit each sibling as `security(sidecar): ...` with a `### Security` changelog line, the type those repositories use for a template sync. Open the pull request after the tag exists: a sibling merged before its pin's tag fails at the install step on its next scheduled run. A release that touched neither the templates nor the librarian skill needs no sync; the script says so.
 
 ## What the repository settings mean for you
