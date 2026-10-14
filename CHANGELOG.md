@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **A move of the bundle's `base_iri` no longer reads as an edit of every confirmed concept.** Conventions rule 13 compares each id and relation target by its path under the base each commit held, so the migration ktl-librarian's Rule 2 describes keeps every confirmation.
+
 ### Changed
 
 - **The README, the architecture page and the plugin's homepage link to the site at `https://w3id.org/ktl/`.** The persistent address redirects to the GitHub Pages site.
