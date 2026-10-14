@@ -2,19 +2,22 @@
 // build, so that no page is written twice. Nothing it writes is committed;
 // website/.gitignore lists each place:
 //
-//   src/content/docs/  a page for the README, each docs/ page and each concept
+//   src/content/docs/  a page for the README, each docs/ page, each concept,
+//                      each of the schema's pages and the data page
 //   src/generated/     the logo, for the header and the home page;
 //                      health.json, the numbers the health page charts;
 //                      changelogs.ts, the releases collection or none; and
 //                      CHANGELOG.md, which the releases section reads
-//   public/            the figures, llms.txt, the favicon, and under knowledge/ the four
-//                      files `lokf export` writes, every bundle file as it is
-//                      in the repository, and each concept's JSON-LD
+//   public/            the figures, llms.txt, the favicon, the databases
+//                      under browse/, and under knowledge/ the four files
+//                      `lokf export` writes, every bundle file as it is in
+//                      the repository, and each concept's JSON-LD
 //
 // It runs two programs the repository already has: the lokf toolkit's
 // `export`, from the sidecar's own environment, and knowledge-report.sh,
 // whose labels the concept pages show, so the site never derives a label a
-// second way.
+// second way. When site.config.mjs shows the schema's pages or the data, it
+// also runs the command that builds each, when its folder is not built yet.
 import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, relative, resolve } from "node:path";
@@ -23,6 +26,7 @@ import {
   ASSETS,
   BASE,
   BRANCH,
+  BROWSE,
   BUNDLE_DIR,
   CHANGELOG,
   CUSTOM_DOMAIN,
@@ -35,6 +39,7 @@ import {
   REF,
   REPO_ROOT,
   REPO_URL,
+  SCHEMA,
   SITE_URL,
   SITE_DIR,
   TITLE,
@@ -42,8 +47,9 @@ import {
   conceptIds,
   docsPages,
   groupLabel,
+  schemaPages,
 } from "./config.mjs";
-import { rewriteUrl } from "./routes.mjs";
+import { rewriteUrl, route } from "./routes.mjs";
 
 const CONTENT = resolve(SITE_DIR, "src", "content", "docs");
 const GENERATED = resolve(SITE_DIR, "src", "generated");
@@ -59,9 +65,14 @@ function write(path, text) {
   writeFileSync(path, text);
 }
 
-// JSON is YAML, so the frontmatter needs no YAML writer.
+const MERMAID = /^\s*(`{3,}|~{3,})\s*mermaid\s*$/m;
+
+// JSON is YAML, so the frontmatter needs no YAML writer. A page with a
+// mermaid diagram is marked, so that only such a page loads the script that
+// draws it (src/components/Mermaid.astro).
 function page(path, frontmatter, body) {
-  write(path, `---\n${JSON.stringify(frontmatter, null, 2)}\n---\n\n${body.trim()}\n`);
+  const marked = MERMAID.test(body) ? { ...frontmatter, ktlMermaid: true } : frontmatter;
+  write(path, `---\n${JSON.stringify(marked, null, 2)}\n---\n\n${body.trim()}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -365,6 +376,9 @@ function buildConcepts(exported, labels) {
         if (/^https?:/.test(s)) return { text: s, href: s };
         const path = s.replace(/^\.(?:\/|$)/, "").replace(/\/$/, "");
         if (path === "") return { text: "the whole repository", href: `${REPO_URL}/tree/${REF}` };
+        // The schema's pages are built, never committed, so a source among
+        // them links its page on this site.
+        if (SCHEMA && (path === SCHEMA.dir || path.startsWith(`${SCHEMA.dir}/`))) return { text: s, href: route(path) };
         return { text: s, href: githubFile(path) };
       }),
       relations: [...out].map(([name, targets]) => ({
@@ -735,6 +749,8 @@ function writeLlmsTxt(docs, concepts) {
     "",
     `- [concepts.jsonld](${SITE_URL}/knowledge/concepts.jsonld): every concept's frontmatter and body under one JSON-LD context`,
     `- [graph.nt](${SITE_URL}/knowledge/graph.nt): the whole bundle as N-Triples`,
+    ...(SCHEMA ? [`- [Schema](${SITE_URL}/schema/): the LinkML schema's classes, slots, enumerations and types, a page each`] : []),
+    ...(BROWSE ? [`- [Browse the data](${SITE_URL}/browse/): the repository's data as SQLite databases`] : []),
     `- [${HOME.source === "README.md" ? "README" : "Home"}](${SITE_URL}/): what ${TITLE} is`,
     "",
   ];
@@ -817,6 +833,181 @@ function copyAssets() {
 }
 
 // ---------------------------------------------------------------------------
+// The schema's pages and the data, which the repository's own commands build.
+// ---------------------------------------------------------------------------
+
+const DATABASE = /\.(?:sqlite3?|db)$/;
+const METADATA = /^metadata\.(?:ya?ml|json)$/;
+const isFolder = (rel) => existsSync(resolve(REPO_ROOT, rel)) && statSync(resolve(REPO_ROOT, rel)).isDirectory();
+const databasesIn = (rel) =>
+  isFolder(rel) ? readdirSync(resolve(REPO_ROOT, rel)).filter((name) => DATABASE.test(name)).sort() : [];
+
+/**
+ * Runs the command that builds a part's folder when the folder is not built:
+ * in CI every time, since a checkout has none, and locally the first time,
+ * so a person rebuilds it with the same command after a change. It runs from
+ * the repository's root through the shell, as a person would type it, and
+ * its output goes to the build's log.
+ */
+function buildFolder(name, part, isBuilt) {
+  if (!part || isBuilt(part.dir)) return;
+  if (!part.build) throw new Error(`site.config.mjs ${name} names ${part.dir}, which is not built, and no command to build it`);
+  console.log(`sync: building ${part.dir} with \`${part.build}\``);
+  const run = spawnSync(part.build, { cwd: REPO_ROOT, shell: true, stdio: "inherit" });
+  if (run.error) throw run.error;
+  if (run.status !== 0) throw new Error(`\`${part.build}\`, which builds ${part.dir} for site.config.mjs ${name}, exited with ${run.status}`);
+  if (!isBuilt(part.dir)) {
+    throw new Error(`\`${part.build}\` ran, but ${part.dir} is still not built; set site.config.mjs ${name}.dir to the folder it writes`);
+  }
+}
+
+/**
+ * A gen-doc page as Markdown the site renders. mkdocs-material's
+ * frontmatter and its search wrapper go. A blank line goes after each line
+ * that opens a <details> or holds its <summary>, and before each that closes
+ * it, so the YAML inside is a code block, not raw HTML. The mermaid diagrams
+ * stay as written: the Markdown plugin hands them to the browser, and their
+ * links, such as ../Action/, resolve because each page's address keeps its
+ * element's name.
+ */
+function fromGenDoc(text) {
+  let wrapped = false;
+  const body = mapProse(splitFrontmatter(text).body, (line) => {
+    if (/^<div data-search-exclude markdown="1">\s*$/.test(line)) {
+      wrapped = true;
+      return null;
+    }
+    if (/^<details( open)?>\s*$|^<summary>.*<\/summary>\s*$/.test(line)) return [line, ""];
+    if (/^<\/details>/.test(line)) return ["", line];
+    return line;
+  });
+  if (!wrapped) return body;
+  // The wrapper's closing tag is the last </div> outside fenced code.
+  const lines = body.split("\n");
+  const inCode = [];
+  let fence = null;
+  for (const line of lines) {
+    const m = line.match(/^\s*(`{3,}|~{3,})/);
+    inCode.push(fence !== null || m !== null);
+    if (fence) {
+      if (m && m[1][0] === fence[0] && m[1].length >= fence.length) fence = null;
+    } else if (m) fence = m[1];
+  }
+  const last = lines.findLastIndex((line, i) => !inCode[i] && line.includes("</div>"));
+  if (last >= 0) {
+    const at = lines[last].lastIndexOf("</div>");
+    lines[last] = lines[last].slice(0, at) + lines[last].slice(at + "</div>".length);
+  }
+  return lines.join("\n");
+}
+
+/** gen-doc's description of an element, the italic paragraph under its title, as plain words. */
+function genDocDescription(body) {
+  const para = body
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .find(Boolean);
+  return para && /^_[\s\S]+_$/.test(para) ? describe(para) : undefined;
+}
+
+function writeSchemaPages() {
+  if (!SCHEMA) return 0;
+  const index = `${SCHEMA.dir}/index.md`;
+  const overview = takeTitle(fromGenDoc(repoFile(index)));
+  const summary = describe(overview.body);
+  page(
+    resolve(CONTENT, "schema", "index.md"),
+    {
+      title: overview.title ?? "Schema",
+      ...(summary ? { description: summary } : {}),
+      slug: "schema",
+      // The schema's hundreds of pages would bury the bundle's in search.
+      pagefind: false,
+      ktlSource: index,
+      editUrl: false,
+      sidebar: { label: "Overview" },
+    },
+    overview.body,
+  );
+  const pages = schemaPages();
+  for (const p of pages) {
+    const { title, body } = takeTitle(fromGenDoc(repoFile(p.file)));
+    const description = genDocDescription(body);
+    page(
+      resolve(CONTENT, "schema", `${p.name}.md`),
+      {
+        title: title ?? p.label,
+        ...(description ? { description } : {}),
+        slug: `schema/${p.name}`,
+        pagefind: false,
+        ktlSource: p.file,
+        editUrl: false,
+        sidebar: { label: p.label },
+      },
+      body,
+    );
+  }
+  return pages.length;
+}
+
+// Datasette Lite runs Datasette in the reader's browser, from a database at
+// any address that allows it, as GitHub Pages does. Each link turns its
+// analytics off, so the reader's visit is not logged there.
+const DATASETTE_LITE = "https://lite.datasette.io/";
+
+const fileSize = (bytes) => (bytes >= 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} kB`);
+
+/**
+ * The data: each database in BROWSE's folder, and its Datasette metadata,
+ * served under /browse/, and a page that opens each in Datasette Lite. Only
+ * the databases and the metadata are copied, never the rest of the folder.
+ */
+function writeBrowse() {
+  if (!BROWSE) return [];
+  const dir = resolve(REPO_ROOT, BROWSE.dir);
+  const databases = databasesIn(BROWSE.dir);
+  const metadataFile = readdirSync(dir).find((name) => METADATA.test(name)) ?? null;
+  mkdirSync(resolve(PUBLIC, "browse"), { recursive: true });
+  for (const name of [...databases, ...(metadataFile ? [metadataFile] : [])]) {
+    cpSync(resolve(dir, name), resolve(PUBLIC, "browse", name));
+  }
+  // JSON is YAML, so one parser reads either form.
+  const metadata = metadataFile ? (parseYaml(read(resolve(dir, metadataFile))) ?? {}) : {};
+  const sections = databases.map((file) => {
+    // Datasette names a database after its file, the extension dropped.
+    const name = file.replace(DATABASE, "");
+    const about = metadata.databases?.[name] ?? {};
+    const query = new URLSearchParams({ url: `${SITE_URL}/browse/${file}` });
+    if (metadataFile) query.set("metadata", `${SITE_URL}/browse/${metadataFile}`);
+    query.set("analytics", "off");
+    const size = fileSize(statSync(resolve(dir, file)).size);
+    const lite = `${DATASETTE_LITE}?${query}#/${encodeURIComponent(name)}`.replaceAll("&", "&amp;");
+    return [
+      `## ${about.title ? plain(String(about.title)) : name}`,
+      ...(about.description ? [plain(String(about.description))] : []),
+      `<p class="ktl-browse not-content"><a class="ktl-button ktl-button--primary" href="${lite}">Open in Datasette Lite</a> <a class="ktl-button" href="${BASE}/browse/${file}" download>Download ${file}</a> <span class="ktl-browse__size">${size}</span></p>`,
+    ].join("\n\n");
+  });
+  const count = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"][databases.length] ?? databases.length;
+  const which = `${count} SQLite database${databases.length === 1 ? "" : "s"}`;
+  const intro = [
+    `This site serves the repository's data as ${which}${BROWSE.build ? `, built by \`${BROWSE.build}\`` : ""}.`,
+    `[Datasette Lite](https://github.com/simonw/datasette-lite) opens each one in your browser, where you can filter its tables, follow their links and run SQL.`,
+    `It downloads Datasette and the whole database first, so the first page takes a while to appear.`,
+  ].join(" ");
+  page(
+    resolve(CONTENT, "browse.md"),
+    {
+      title: "Browse the data",
+      description: `The repository's data as ${which}, to open in Datasette Lite or download.`,
+      editUrl: false,
+    },
+    [intro, ...sections].join("\n\n"),
+  );
+  return databases;
+}
+
+// ---------------------------------------------------------------------------
 
 for (const dir of [CONTENT, GENERATED, PUBLIC]) {
   if (!dir.startsWith(SITE_DIR + "/")) throw new Error(`refusing to clear ${dir}`);
@@ -824,6 +1015,9 @@ for (const dir of [CONTENT, GENERATED, PUBLIC]) {
 }
 
 if (!existsSync(resolve(BUNDLE_DIR, "index.md"))) throw new Error(`no bundle at ${BUNDLE_DIR}`);
+// First, since a concept may cite one of the schema's pages.
+buildFolder("SCHEMA", SCHEMA, (dir) => existsSync(resolve(REPO_ROOT, dir, "index.md")));
+buildFolder("BROWSE", BROWSE, (dir) => databasesIn(dir).length > 0);
 const exported = lokfExport();
 const labels = readLabels();
 const health = report("health");
@@ -840,11 +1034,15 @@ writeHealth(concepts, health, full);
 const docs = writeDocs();
 writeHome();
 writePages();
+const schemaCount = writeSchemaPages();
+const databases = writeBrowse();
 writeLlmsTxt(docs, concepts);
 writeCollections();
 if (CHANGELOG) writeChangelog();
 
 console.log(
   `sync: ${concepts.length} concept pages, ${byGroup.size} groups, ${docs.length} docs pages, ` +
+    (SCHEMA ? `${schemaCount} schema pages, ` : "") +
+    (BROWSE ? `${databases.length} databases, ` : "") +
     `${labels.size} labels, built from ${REF.slice(0, 12)}`,
 );

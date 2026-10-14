@@ -1,7 +1,8 @@
 name: Knowledge website
 
 # Builds the site in website/ from the knowledge bundle, the README, docs/,
-# the figures and the changelog, and publishes the default branch's build to
+# the figures, the changelog and, when site.config.mjs shows them, the LinkML
+# schema's pages and the data, and publishes the default branch's build to
 # GitHub Pages. A pull request that touches any of them gets the same build,
 # link check included, and no deployment. website/README.md says what each
 # page is built from; the ktl-website skill laid both down.
@@ -30,6 +31,8 @@ on:
       - ".assets/**"
       - "CHANGELOG.md"
       - "llms.txt"
+      - ".linkml/**"
+      - "justfile"
       - ".github/workflows/knowledge-website.yaml"
   pull_request:
     paths:
@@ -41,6 +44,8 @@ on:
       - ".assets/**"
       - "CHANGELOG.md"
       - "llms.txt"
+      - ".linkml/**"
+      - "justfile"
       - ".github/workflows/knowledge-website.yaml"
   workflow_dispatch:
 
@@ -89,6 +94,18 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: website/package-lock.json
+
+      # A schema or a data folder that site.config.mjs shows is written by
+      # its own command, which the sync runs when the folder is missing, as it
+      # always is here. A LinkML project's commands are just recipes, and the
+      # runner has no just. setup-uv puts the tool directory on PATH on
+      # Windows only, so the step adds it.
+      - name: Install just, when the site builds a folder with it
+        run: |
+          if node website/scripts/config.mjs | grep -q '"build": "just '; then
+            uv tool install rust-just==1.47.0
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          fi
 
       # `build` runs the sync first and the link check after.
       - name: Build the site and check its links

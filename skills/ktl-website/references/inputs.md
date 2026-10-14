@@ -22,9 +22,25 @@ Every page comes from a file the repository already holds, so a change to the si
 - Each `.md` file git sees under the docs folder (tracked, or untracked and not ignored), except a file `PAGES` names. The title is the file's `#` line, and the description its first sentence.
 - With `DOCS.groups`, a page sits where its group says; without, every page sits in one group by title, nested folders included.
 
+## The schema's pages
+
+- Each `.md` file in the `SCHEMA` folder, as LinkML's `gen-doc` writes it: `index.md` is the Schema topic's overview at `/schema/`, and every other page sits at `/schema/<file name>/`, its case kept, so the links in its diagram resolve. Its title is its `#` line, such as `Class: Action`, and its description the italic line under it. The sidebar groups the pages by the word that opens the title: Classes, Slots, Enumerations, Types and Subsets. A page whose title opens with none of them, the schema's own, has a page and no sidebar entry.
+- mkdocs-material's frontmatter and its `<div data-search-exclude>` wrapper are dropped, and a blank line goes around each `<details>`, so the YAML inside is a code block.
+- Search leaves the schema's pages out, and they share the home page's social card.
+- A concept whose source is in the `SCHEMA` folder links that source's page on the site, since the folder is never on GitHub.
+
+## Diagrams
+
+- A ```` ```mermaid ```` block on any page, a schema page's class diagram among them, is drawn in the reader's browser, in the site's light or dark theme, with a button that shows it at its own size. The script that draws it loads only on a page that has one. A diagram's link to another page of the site opens in the same tab.
+
+## The data
+
+- Each `.sqlite`, `.sqlite3` or `.db` file in the `BROWSE` folder, and a `metadata.yaml`, `metadata.yml` or `metadata.json` beside them, are served under `/browse/`. Nothing else in the folder is.
+- The page at `/browse/` gives each database a section, titled and described from the metadata's `databases` entry when it has one, with its size, a download link and a link that opens it in Datasette Lite with the metadata. Datasette Lite runs Datasette in the reader's browser, and the link turns its analytics off.
+
 ## Links
 
-- A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`; `knowledge_bundle/...` reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
+- A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a schema page to `/schema/<name>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
 - An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does; otherwise the text stays as written.
 - After the build, `scripts/check-links.mjs` fails the build when a link between the site's own pages, a link to a heading, or a page's social card does not resolve. Links that leave the site are not checked.
 
@@ -39,8 +55,8 @@ Every page comes from a file the repository already holds, so a change to the si
 
 ## `llms.txt`
 
-- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`; `DESCRIPTION` stands in without it. The rest of that file is generated: the docs pages, then every concept with its Markdown file and its trust label.
+- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`; `DESCRIPTION` stands in without it. The rest of that file is generated: the docs pages, then every concept with its Markdown file and its trust label, and under Optional the schema's overview and the data page when the site has them.
 
 ## What search leaves out
 
-- The release pages, and a concept's record card apart from its definition. The card's type and trust label become the Trust and Type filters beside the search box.
+- The release pages, the schema's pages, and a concept's record card apart from its definition. The card's type and trust label become the Trust and Type filters beside the search box.

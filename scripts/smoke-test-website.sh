@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Lays the ktl-website templates down on a throwaway host built from the
 # sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would, and builds
-# the site twice: once with a README, a docs page and a changelog, and once
-# with none of them, so both shapes of host are proved before a template
-# change reaches one. This repository's own site proves the fuller
+# the site twice: once with a README, a docs page, a changelog, the schema's
+# pages and the data, and once with none of them, so both shapes of host are
+# proved before a template change reaches one. This repository's own site proves the fuller
 # configuration; this proves a bundle that is not this repository's.
 #
 # Usage: scripts/smoke-test-website.sh [--keep]   (--keep leaves the host behind)
@@ -109,6 +109,79 @@ assert "the settled configuration shows the docs and the changelog" \
   "(cd \"$host/website\" && node scripts/config.mjs | grep -q '\"CHANGELOG\": \"CHANGELOG.md\"' && node scripts/config.mjs | grep -q '\"dir\": \"docs\"')"
 
 echo ""
+echo "Step 1 again: the schema's pages and the data, which the host's own commands build"
+(
+  cd "$host"
+  # Stand-ins for LinkML's gen-doc and a build-browse recipe, so the test
+  # needs neither LinkML nor just. The pages carry what gen-doc writes and
+  # the site must undo: mkdocs-material's frontmatter and search wrapper, a
+  # type's title glued to its frontmatter, YAML in a <details>, and a class
+  # diagram whose links keep the element's case.
+  mkdir -p tools
+  cat > tools/schema-pages.py <<'PY'
+from pathlib import Path
+
+out = Path("docs/elements")
+out.mkdir(parents=True, exist_ok=True)
+fence = "`" * 3
+(out / "index.md").write_text(
+    "# acme\n\nThe Acme platform's schema\n\nURI: https://acme.example/schema\n\n"
+    "## Classes\n\n| Class | Description |\n| --- | --- |\n| [Service](Service.md) | A service the platform runs |\n\n"
+    "## Slots\n\n| Slot | Description |\n| --- | --- |\n| [owner](owner.md) | Who owns the service |\n\n"
+    "## Types\n\n| Type | Description |\n| --- | --- |\n| [String](String.md) | A character string |\n"
+)
+(out / "Service.md").write_text(
+    "---\nsearch:\n  boost: 10.0\n---\n\n# Class: Service \n\n\n_A service the platform runs_\n\n\n\n"
+    '<div data-search-exclude markdown="1">\n\n\n\nURI: [acme:Service](https://acme.example/schema/Service)\n\n\n\n'
+    f'{fence}mermaid\n classDiagram\n    class Service\n    click Service href "../Service/"\n'
+    f'      Service --> "0..1" String : owner\n        click String href "../String/"\n{fence}\n\n\n'
+    "## Slots\n\n| Name | Cardinality and Range | Description |\n| --- | --- | --- |\n"
+    "| [owner](owner.md) | 0..1 <br/> [String](String.md) | Who owns the service |\n\n"
+    f"## LinkML Source\n\n<details>\n{fence}yaml\nname: Service\nslots:\n- owner\n\n{fence}\n</details></div>\n"
+)
+(out / "owner.md").write_text(
+    "---\nsearch:\n  boost: 1.0\n---\n\n# Slot: owner \n\n\n_Who owns the service_\n\n\n\n"
+    '<div data-search-exclude markdown="1">\n\n## Applicable Classes\n\n| Name | Description |\n| --- | --- |\n'
+    "| [Service](Service.md) | A service the platform runs |\n\n</div>\n"
+)
+(out / "String.md").write_text(
+    "---\nsearch:\n  boost: 1.0\n---# Type: String \n\n\n\n\n_A character string_\n\n\n\n"
+    '<div data-search-exclude markdown="1">\n\nURI: [xsd:string](http://www.w3.org/2001/XMLSchema#string)\n\n</div>\n'
+)
+PY
+  cat > tools/data.py <<'PY'
+import sqlite3
+from pathlib import Path
+
+out = Path("data")
+out.mkdir(exist_ok=True)
+db = sqlite3.connect(out / "acme.sqlite")
+db.execute("create table Service (id text primary key, name text, owner text)")
+db.execute("insert into Service values ('svc-a', 'Service A', 'Acme')")
+db.commit()
+db.close()
+(out / "metadata.yaml").write_text("databases:\n  acme:\n    description: The services the platform runs.\n")
+(out / "notes.txt").write_text("Not a database, and never published.\n")
+PY
+  printf '/docs/elements/\n/data/\n' > .gitignore
+  python3 - <<'PY'
+from pathlib import Path
+
+config = Path("website/site.config.mjs")
+text = config.read_text(encoding="utf-8")
+for old, new in (
+    ('export const SCHEMA = "auto";', 'export const SCHEMA = { dir: "docs/elements", build: "python3 tools/schema-pages.py" };'),
+    ("export const BROWSE = null;", 'export const BROWSE = { dir: "data", build: "python3 tools/data.py" };'),
+):
+    assert text.count(old) == 1, old
+    text = text.replace(old, new)
+config.write_text(text, encoding="utf-8")
+PY
+  git add -A
+  git commit -q -m "the schema's pages and the data"
+)
+
+echo ""
 echo "Step 4: build, with a README, a docs page and a changelog"
 build() {
   # The whole log on a failure, its last line otherwise.
@@ -133,13 +206,34 @@ assert "the README's link to the guide goes to its page" "grep -q 'href=\"/acme-
 assert "the home page offers the architecture page as a button" "grep -q 'class=\"sl-link-button[^\"]*\" href=\"/acme-platform/docs/architecture/\"' \"$host/website/dist/index.html\""
 assert "the header shows the Knowledge Trust Ladder logo" "grep -q '_astro/logo-light[^\"]*\\.svg' \"$host/website/dist/index.html\""
 assert "a concept page carries its trust label" "grep -qi 'checked' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
+assert "the sync built the schema's pages and the data with their commands" \
+  "grep -q 'building docs/elements with' \"$test_root/build.log\" && grep -q 'building data with' \"$test_root/build.log\""
+for f in schema/index.html schema/Service/index.html schema/owner/index.html schema/String/index.html \
+         browse/index.html browse/acme.sqlite browse/metadata.yaml; do
+  assert "dist/$f is there" "[[ -f \"$host/website/dist/$f\" ]]"
+done
+dist="$host/website/dist"
+assert "a class page leaves its diagram for the browser to draw, with the script that draws it" \
+  "grep -q 'class=\"ktl-mermaid\"' \"$dist/schema/Service/index.html\" && grep -q '_astro/Mermaid' \"$dist/schema/Service/index.html\""
+assert "a page with no diagram loads no mermaid" "! grep -q '_astro/Mermaid' \"$dist/schema/owner/index.html\""
+assert "the YAML inside <details> is a code block" "grep -q 'data-language=\"yaml\"' \"$dist/schema/Service/index.html\""
+assert "gen-doc's search wrapper is gone" "! grep -q 'data-search-exclude' \"$dist/schema/Service/index.html\""
+assert "search leaves the schema's pages out" "! grep -q 'data-pagefind-body' \"$dist/schema/Service/index.html\""
+assert "a type's title glued to its frontmatter is its title" "grep -q '<title>Type: String' \"$dist/schema/String/index.html\""
+assert "a schema page links its neighbour by the neighbour's own name" "grep -q 'href=\"/acme-platform/schema/owner/\"' \"$dist/schema/Service/index.html\""
+assert "the data page opens the database in Datasette Lite, with its analytics off" \
+  "grep -q 'lite.datasette.io/?url=' \"$dist/browse/index.html\" && grep -q 'analytics=off' \"$dist/browse/index.html\""
+assert "the data page describes the database from its metadata" "grep -q 'The services the platform runs' \"$dist/browse/index.html\""
+assert "only the databases and their metadata are published" "[[ ! -e \"$dist/browse/notes.txt\" ]]"
+assert "llms.txt lists the schema and the data" "grep -q '/schema/)' \"$dist/llms.txt\" && grep -q '/browse/)' \"$dist/llms.txt\""
 assert "nothing of the template is left to commit" "[[ -z \$(git -C \"$host\" status --porcelain) ]]"
 
 echo ""
-echo "Step 4 again: the bare shape, with no README, docs or changelog, and the configuration untouched"
+echo "Step 4 again: the bare shape, with no README, docs or changelog, and the configuration as Step 1 left it"
 (
   cd "$host"
   git rm -rq README.md docs CHANGELOG.md
+  git checkout -q HEAD~1 -- website/site.config.mjs
   git commit -q -m "a bare host"
 )
 build
@@ -147,6 +241,7 @@ assert "the home page is there, from the bundle's own introduction" "[[ -f \"$ho
 assert "no docs pages" "[[ ! -d \"$host/website/dist/docs\" ]]"
 assert "the home page offers no architecture page" "! grep -q 'docs/architecture/' \"$host/website/dist/index.html\""
 assert "no release pages" "[[ ! -d \"$host/website/dist/changelog\" ]]"
+assert "no schema pages and no data page" "[[ ! -d \"$host/website/dist/schema\" && ! -d \"$host/website/dist/browse\" ]]"
 assert "the bundle's pages, the health page and the graph are still there" \
   "[[ -f \"$host/website/dist/knowledge/index.html\" && -f \"$host/website/dist/health/index.html\" && -f \"$host/website/dist/graph/index.html\" ]]"
 assert "the Knowledge Trust Ladder logo is the favicon" "cmp -s \"$host/website/dist/favicon.svg\" \"$skill/templates/website/src/assets/knowledge-trust-ladder-logo.svg\""

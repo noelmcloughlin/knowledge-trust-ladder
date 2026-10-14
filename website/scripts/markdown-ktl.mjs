@@ -6,11 +6,14 @@
 //   - turns an Obsidian [[wikilink]] in a concept into a link to that concept;
 //   - moves every heading down one level when `ktlShiftHeadings` is set,
 //     since a concept's body starts its sections at `#` and the page title is
-//     already the one h1.
+//     already the one h1;
+//   - leaves a ```mermaid block's source in a pre.ktl-mermaid, out of the
+//     code highlighter's reach, for src/components/Mermaid.astro to draw.
 import { BASE } from "./config.mjs";
 import { rewriteHtml, rewriteUrl } from "./routes.mjs";
 
 const WIKILINK = /\[\[([^\]|#]+)(#[^\]|]*)?(?:\|([^\]]+))?\]\]/g;
+const escapeHtml = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 function resolveWikilink(name, selfId, ids) {
   const want = name.trim().replace(/\.md$/, "");
@@ -42,6 +45,9 @@ export default function markdownKtl({ conceptIds = [] } = {}) {
       },
       heading(node, ctx) {
         if (fm.ktlShiftHeadings) ctx.setProperty(node, "depth", Math.min(6, node.depth + 1));
+      },
+      code(node, ctx) {
+        if (node.lang === "mermaid") ctx.replaceNode(node, { type: "html", value: `<pre class="ktl-mermaid">${escapeHtml(node.value)}</pre>` });
       },
       text(node, ctx) {
         if (selfId === null || !node.value.includes("[[")) return;

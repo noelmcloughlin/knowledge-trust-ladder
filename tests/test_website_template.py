@@ -3,7 +3,9 @@
 Step 1 of the skill copies templates/website/ into a host and fills four
 placeholders in two files. The copy must be complete, the bracket file name
 must survive, no placeholder may remain, and `node scripts/config.mjs` must
-settle the options against the host it sits in and refuse a placeholder. The
+settle the options against the host it sits in and refuse a placeholder. It
+finds a LinkML project's schema pages, and its data only when asked, and
+trusts no folder name a shell would read as a command. The
 three files a repair never replaces are named in the skill's page, its
 preflight, the contract and sync-sidecar.sh, and the four must agree. The
 build itself is scripts/smoke-test-website.sh, which needs the network.
@@ -146,6 +148,84 @@ def test_config_takes_one_logo_path_as_the_light_version(tmp_path):
     result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
     assert result, f"config.mjs failed: {result.out}"
     assert json.loads(result.out)["LOGO"] == {"light": "brand/acme.png", "dark": "brand/acme.png", "favicon": None}
+
+
+def settle(site, **options):
+    """`node scripts/config.mjs` with some options of site.config.mjs replaced, as the settled JSON."""
+    config = site / "site.config.mjs"
+    text = config.read_text(encoding="utf-8")
+    for name, value in options.items():
+        text, n = re.subn(rf"^export const {name} = .*$", f"export const {name} = {value};", text, flags=re.M)
+        assert n == 1, name
+    config.write_text(text, encoding="utf-8")
+    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
+    assert result, f"config.mjs failed: {result.out}"
+    return json.loads(result.out)
+
+
+def bundle(root):
+    write(root / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_takes_the_schema_from_a_gen_doc_recipe_and_leaves_the_data_off(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / "justfile", "# The schema's pages.\n[group('docs')]\ngen-doc: gen-examples\n    gen-doc s.yaml\n\nbuild-browse:\n    python b.py\n")
+    settled = settle(lay_down(tmp_path))
+    assert settled["SCHEMA"] == {"dir": "docs/elements", "build": "just gen-doc"}
+    assert settled["BROWSE"] is None
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_finds_a_linkmo_project_and_its_data_when_asked(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / ".copier-answers.linkmo.yml", "_commit: v0.1.0\nlinkmo_dir: acme-linkmo\n")
+    write(tmp_path / "acme-linkmo" / "justfile", "gen-doc: gen-examples\n    gen-doc s.yaml\n\nbuild-browse:\n    python b.py\n")
+    write(tmp_path / ".linkml" / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
+    settled = settle(lay_down(tmp_path), BROWSE='"auto"')
+    assert settled["SCHEMA"] == {"dir": "acme-linkmo/docs/elements", "build": "just --justfile acme-linkmo/justfile gen-doc"}
+    assert settled["BROWSE"] == {"dir": "acme-linkmo/browse", "build": "just --justfile acme-linkmo/justfile build-browse"}
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_takes_the_linkml_sidecar_s_schema_and_no_assignment_for_a_recipe(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / "justfile", 'gen-doc := "docs"\n\nbuild:\n    echo {{gen-doc}}\n')
+    write(tmp_path / ".linkml" / "justfile", "gen-doc: _gen-yaml\n    uv run gen-doc -d docs/elements s.yaml\n")
+    settled = settle(lay_down(tmp_path))
+    assert settled["SCHEMA"] == {"dir": ".linkml/docs/elements", "build": "just --justfile .linkml/justfile gen-doc"}
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_trusts_no_linkmo_folder_a_shell_would_read_as_a_command(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / ".copier-answers.linkmo.yml", "linkmo_dir: 'x;touch pwned'\n")
+    settled = settle(lay_down(tmp_path), BROWSE='"auto"')
+    assert settled["SCHEMA"] is None
+    assert settled["BROWSE"] is None
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_the_docs_pages_leave_the_schema_folder_out(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / "docs" / "guide.md", "# The guide\n")
+    write(tmp_path / "docs" / "elements" / "index.md", "# acme\n")
+    write(tmp_path / "docs" / "elements" / "Action.md", "# Class: Action\n")
+    write(tmp_path / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
+    settled = settle(lay_down(tmp_path))
+    assert settled["docsPages"] == ["guide"]
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_takes_a_built_folder_and_refuses_a_missing_one_with_no_command(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / "data" / "acme.sqlite", "not really a database\n")
+    site = lay_down(tmp_path)
+    assert settle(site, BROWSE='"data"')["BROWSE"] == {"dir": "data", "build": None}
+    config = site / "site.config.mjs"
+    config.write_text(re.sub(r"^export const SCHEMA = .*$", 'export const SCHEMA = { dir: "schema" };', config.read_text(encoding="utf-8"), flags=re.M), encoding="utf-8")
+    result = run(["node", "scripts/config.mjs"], cwd=site)
+    assert not result and "no build command" in result.out, f"config.mjs accepted a missing folder: {result.out}"
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")

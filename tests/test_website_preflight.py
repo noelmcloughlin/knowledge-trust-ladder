@@ -4,9 +4,10 @@ It runs on this repository, and on a bare directory with no bundle, no git and
 no site, where every section has to cope with absence rather than fail. It
 reads a README's title and says when there is none, warns of another Pages
 publisher but not of its own workflow, warns of a changelog with no released
-version, reads the owner and the name from the origin remote, and names the
-report script the sidecar must still lay down. Run under sh it stops on one
-line that names bash.
+version, reads the owner and the name from the origin remote, names the
+report script the sidecar must still lay down, and finds a linkmo project's
+gen-doc and build-browse recipes but not an assignment of the same name. Run
+under sh it stops on one line that names bash.
 
 The rows its prerequisites page must carry for each line stay in the contract
 script, check 12w: that is a fact about this repository's own pages.
@@ -94,6 +95,30 @@ def test_reads_the_owner_and_the_name_from_the_remote(tmp_path):
     git("remote", "add", "origin", "git@github.com:acme/acme-platform.git")
     result = preflight(tmp_path)
     assert result and matches(result.out, r"^ok      git .*acme/acme-platform"), f"preflight misread the remote: {result.out}"
+
+
+def test_finds_a_linkmo_project_s_schema_and_data_recipes(tmp_path):
+    skeleton(tmp_path)
+    write(tmp_path / ".copier-answers.linkmo.yml", "linkmo_dir: acme-linkmo\nproject_slug: acme\n")
+    write(tmp_path / "acme-linkmo" / "justfile", "gen-doc: gen-examples\n    gen-doc x\n\nbuild-browse:\n    python b.py\n")
+    result = preflight(tmp_path)
+    assert result and matches(
+        result.out, r"^ok      schema .*acme-linkmo/docs/elements.*just --justfile acme-linkmo/justfile gen-doc"
+    ), f"preflight missed linkmo's gen-doc recipe: {result.out}"
+    assert matches(result.out, r"^info    data .*just --justfile acme-linkmo/justfile build-browse"), (
+        f"preflight missed linkmo's build-browse recipe: {result.out}"
+    )
+    assert matches(result.out, r"^(ok|warn) +just "), f"preflight did not say whether just is installed: {result.out}"
+
+
+def test_takes_no_assignment_for_a_recipe(tmp_path):
+    skeleton(tmp_path)
+    write(tmp_path / "justfile", 'gen-doc := "docs"\n\nbuild:\n    echo {{gen-doc}}\n')
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^info    schema .*no justfile with a gen-doc recipe"), (
+        f"preflight read an assignment as a recipe: {result.out}"
+    )
+    assert not matches(result.out, r"^(ok|warn) +just "), f"preflight asked for just with no recipe to run: {result.out}"
 
 
 def test_names_the_report_script_the_sidecar_must_lay_down(tmp_path):

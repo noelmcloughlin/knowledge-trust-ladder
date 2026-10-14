@@ -80,6 +80,16 @@ export const CHANGELOG = "CHANGELOG.md";
 // Guide sidebar after Home under its label.
 export const PAGES = [{ slug: "simple", source: "docs/architecture.en-simple.md", label: "For readers aged 13 to 18" }];
 
+// The LinkML schema's pages, which gen-doc writes, under a Schema topic: a
+// folder, and the command that writes it, which the sync runs when the
+// folder is missing. This repository has no LinkML schema of its own.
+export const SCHEMA = null;
+
+// The data: a folder of SQLite databases and their Datasette metadata, served
+// under /browse/ with a page that opens each in Datasette Lite. This
+// repository has no data to browse.
+export const BROWSE = null;
+
 // The home page: its source, from the file's `# ` title down ("auto" takes
 // the README when it has one, else the bundle's own introduction); the
 // tagline under the title (a string, { boldLineOf: <file> } for the first

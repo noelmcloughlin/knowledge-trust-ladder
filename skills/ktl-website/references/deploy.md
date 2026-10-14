@@ -10,6 +10,12 @@
 
 The workflow has no placeholders and names no branch: it reads the repository's default branch from the event.
 
+## The schema's pages and the data
+
+A `SCHEMA` or `BROWSE` folder is never committed, so the sync builds it on every run of the workflow with the command `site.config.mjs` names. When that command starts with `just`, the build job installs `just` first. The command runs in the repository's own environment: `uv run` installs the project's dependencies from its lock, which can take minutes for a large project. The workflow also runs on a change to `.linkml/` or the root `justfile`. A schema or data change anywhere else reaches the site with the next run, on a push the workflow sees or by hand: `gh workflow run knowledge-website.yaml`.
+
+Datasette Lite fetches each database from the site, which GitHub Pages allows from any origin. It downloads the whole file, and Pages publishes at most 1 GB in all, so a database of a few tens of MB suits it. For larger data, publish Datasette itself elsewhere, with `datasette publish`, and link it from a docs page.
+
 ## Switching Pages on
 
 1. Tell Pages once to take its site from Actions: Settings, Pages, Source, GitHub Actions; or `gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`. A repository whose Pages is already on, from a branch, is switched with `-X PUT` instead.
@@ -22,7 +28,7 @@ A private repository publishes Pages only on a paid plan; the build still runs o
 
 Two publishers overwrite each other's site, so the preflight's `pages` line warns when it finds one: a workflow that names `deploy-pages`, `upload-pages-artifact`, `gh-pages`, `gh-deploy` or `github-pages-deploy-action`, a `CNAME` file, or an `mkdocs.yml` with a `site_url`. Install the workflow, leave the variable unset, and put the choice to the maintainer:
 
-- **Retire the other publisher** and let this workflow publish the whole site. The knowledge site has a home page built from the README, so it can be the repository's site.
+- **Retire the other publisher** and let this workflow publish the whole site. The knowledge site has a home page built from the README and shows the LinkML schema's `gen-doc` pages itself, so it can be the repository's site.
 - **Keep the other publisher and serve the bundle inside it.** The four files `lokf export` writes are plain files; a MkDocs or Sphinx build can copy them into its own output from a build step, which makes the repository a producer node without this site.
 - **Publish from the `gh-pages` branch under a sub-path**, with an action such as `peaceiris/actions-gh-pages` and a `destination_dir`, and `BASE` set to that path. This survives only beside a publisher that does not force-push the branch; `mkdocs gh-deploy --force` does.
 
