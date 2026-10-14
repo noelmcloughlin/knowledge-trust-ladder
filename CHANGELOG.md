@@ -4,11 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-10-14
+
 ### Changed
 
 - **A ktl-website site shows the Knowledge Trust Ladder logo unless its configuration names another.** `LOGO` now defaults to `"auto"`, which takes a `knowledge-trust-ladder-logo.svg` the repository already has, or else the light and dark copies the template now carries. `null` still shows the title as text.
-
-## [0.39.1] - 2026-10-14
 
 ### Fixed
 
