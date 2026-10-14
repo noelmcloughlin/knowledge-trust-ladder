@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.41.1] - 2026-10-14
+
 ### Fixed
 
 - **`sync-sidecar.sh` sets its next steps apart.** A blank line now comes before the changelog entry to add and before the commit commands, so each step reads on its own.
