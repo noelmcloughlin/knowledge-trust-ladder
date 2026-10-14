@@ -102,12 +102,18 @@ function subsections(body) {
 const ORDER = ["### Added", "### Changed", "### Deprecated", "### Removed", "### Fixed", "### Security"];
 const rank = (p) => (p.title === null ? -1 : ORDER.includes(p.title) ? ORDER.indexOf(p.title) : ORDER.length);
 
+// An entry the pending section already holds is left out: a branch stacked
+// on another still carries the other's entries under Unreleased after the
+// first one's promotion, and folding them again listed each one twice.
 function mergeBodies(older, newer) {
   const merged = subsections(older);
+  const held = new Set(merged.flatMap((m) => m.lines).filter((l) => l.startsWith("- ")));
   for (const part of subsections(newer)) {
+    const lines = part.lines.filter((l) => !l.startsWith("- ") || !held.has(l));
+    if (!lines.some((l) => l.startsWith("- ")) && part.lines.some((l) => l.startsWith("- "))) continue;
     const same = merged.find((m) => m.title === part.title);
-    if (same) same.lines.push(...part.lines);
-    else merged.push(part);
+    if (same) same.lines.push(...lines);
+    else merged.push({ ...part, lines });
   }
   merged.sort((a, b) => rank(a) - rank(b));
   return merged
