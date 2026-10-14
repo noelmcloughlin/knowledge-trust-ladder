@@ -32,7 +32,8 @@ const concept = z.object({
   sources: z.array(link).default([]),
   relations: z.array(z.object({ name: z.string(), targets: z.array(link) })).default([]),
   incoming: z.array(z.object({ name: z.string(), from: link })).default([]),
-  files: z.object({ markdown: z.string(), jsonld: z.string(), github: z.string() }),
+  licence: z.object({ text: z.string(), href: z.string().optional() }).optional(),
+  files: z.object({ markdown: z.string(), jsonld: z.string(), github: z.string(), history: z.string() }),
 });
 
 export const collections = {

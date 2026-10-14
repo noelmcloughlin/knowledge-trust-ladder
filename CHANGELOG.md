@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website concept page links the concept's history and names its licence.** The record links every commit to the concept's file up to the built one, and gives the bundle's licence, or the concept's own, which the page head names too. The overview page, the feed and the two text files name the bundle's licence by its short name.
+
 ## [0.43.0] - 2026-10-14
 
 ### Added
