@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **`sync-sidecar.sh` writes each sibling's sync on a branch of its own.** It starts `sync-<tag>` from the sibling's default branch as origin has it, skips a sibling with uncommitted changes, and names the files to stage, so the diff is never left on `main` or inside a feature branch.
+
 ## [0.39.0] - 2026-10-13
 
 ### Added

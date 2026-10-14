@@ -15,8 +15,12 @@
 #   - reads the templates out of that tag rather than the working tree;
 #   - refuses a tag that does not exist yet, which settles the merge order:
 #     release here first, then sync;
+#   - writes on a branch of its own in each sibling, sync-<tag>, made from the
+#     sibling's default branch as origin has it, and refuses a sibling with
+#     uncommitted changes, so the diff is the sync's alone and never lands on
+#     main or inside a feature branch;
 #   - never commits.
-# The diff it leaves behind is the review.
+# The diff it leaves behind on that branch is the review.
 #
 # Usage: scripts/sync-sidecar.sh <tag> <sibling-dir>...
 #   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator
@@ -146,6 +150,40 @@ for sibling in "$@"; do
     status=1
     continue
   fi
+
+  # The branch the copies land on. It starts from the sibling's default
+  # branch as origin has it, not from whatever is checked out, and it does not
+  # track that branch, so a plain push goes to a branch of the same name.
+  if [[ -n "$(git -C "$sibling_root" status --porcelain --untracked-files=no)" ]]; then
+    echo "   uncommitted changes here - commit or stash them first, so the diff left for review is the sync's alone; skipped"
+    status=1
+    continue
+  fi
+  git -C "$sibling_root" fetch --quiet origin 2>/dev/null || true
+  base="$(git -C "$sibling_root" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  if [[ -z "$base" ]]; then
+    for candidate in origin/main origin/master main master; do
+      if git -C "$sibling_root" rev-parse -q --verify "$candidate^{commit}" >/dev/null; then base="$candidate"; break; fi
+    done
+  fi
+  branch="sync-$tag"
+  if [[ -z "$base" ]]; then
+    echo "   no default branch to start from (origin/HEAD, main or master); skipped"
+    status=1
+    continue
+  fi
+  if git -C "$sibling_root" rev-parse -q --verify "refs/heads/$branch" >/dev/null; then
+    echo "   $branch already exists here - finish it, or delete it, first; skipped"
+    status=1
+    continue
+  fi
+  previous="$(git -C "$sibling_root" symbolic-ref --quiet --short HEAD 2>/dev/null || git -C "$sibling_root" rev-parse HEAD)"
+  if ! git -C "$sibling_root" switch --quiet --no-track -c "$branch" "$base"; then
+    echo "   could not start $branch from $base (git said why above); skipped"
+    status=1
+    continue
+  fi
+  echo "   branch   $branch, from $base"
 
   # What the sibling pins today, so the report can say what moves.
   wf="$sibling_root/.github/workflows/knowledge-librarian.yaml"
@@ -279,13 +317,18 @@ for sibling in "$@"; do
 
   echo ""
   if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 && "$old_pin" == "$tag" ]]; then
-    echo "   nothing to sync"
+    git -C "$sibling_root" switch --quiet "$previous" && git -C "$sibling_root" branch --quiet -D "$branch"
+    echo "   nothing to sync; back on $previous, and $branch removed"
     continue
   fi
+  # The files to stage, by name: what the sync changed, and what it added.
+  changed=()
+  while IFS= read -r f; do changed+=("$f"); done < <(git -C "$sibling_root" diff --name-only)
+  for f in "${added[@]}"; do changed+=("${f%% (*}"); done
   echo "   changelog (under ## [Unreleased], ### Security):"
   echo "   - **The sidecar copies and the skills pin match \`$tag\`.** <what the release changed in the copies, from its changelog>. No plugin change."
-  echo "   commit, from $sibling_root:"
-  echo "   git add -A && git commit -m \"security(sidecar): sync copies and skills pin from $tag\""
+  echo "   commit, from $sibling_root, on $branch:"
+  echo "   git add CHANGELOG.md ${changed[*]} && git commit -m \"security(sidecar): sync copies and skills pin from $tag\""
 done
 
 exit "$status"
