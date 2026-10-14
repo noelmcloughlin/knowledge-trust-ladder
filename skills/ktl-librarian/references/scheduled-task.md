@@ -30,7 +30,8 @@ The workflow invokes `.lokf/scripts/knowledge-librarian.sh` directly, a fixed, r
 2. Set `AGENT_CLI` to your non-interactive agent command.
 3. Name the variable the agent reads its credential from in `AGENT_API_KEY_ENV`.
 4. Either set `AGENT_USE_JOB_TOKEN` to `true` (Copilot CLI, billed to the repository owner's seat) or put a key in the `AGENT_API_KEY` secret. The wrapper hands it to the agent under that name only.
-5. Optionally set `KNOWLEDGE_RETRIEVAL` to `true`. Each run that changes the bundle then makes one more agent call, which scores whether the index leads to the concept behind each question readers asked, and the pull request carries the score.
+5. Turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General. The `publish` job opens its pull request with the job's own token, which GitHub refuses while that setting is off.
+6. Optionally set `KNOWLEDGE_RETRIEVAL` to `true`. Each run that changes the bundle then makes one more agent call, which scores whether the index leads to the concept behind each question readers asked, and the pull request carries the score.
 
 The sidecar's automation.md gives the full settings for Copilot CLI and Claude Code. If `KNOWLEDGE_LIBRARIAN_ENABLED` is not `true`, the workflow's agent step is skipped, so the workflow does nothing until you set the agent up.
 

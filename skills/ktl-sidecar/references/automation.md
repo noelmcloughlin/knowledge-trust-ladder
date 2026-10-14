@@ -110,6 +110,14 @@ Type every value in the Settings form without quotes. GitHub stores exactly what
 
 Both commands pin the CLI's version, as every action in the workflow is pinned, so a run executes the code you tried. A new CLI release reaches the librarian when you move the pin, not before. Move it on purpose, from the CLI's release notes; nothing bumps a repository variable for you.
 
+Let the workflow open its pull request. `publish` opens it with the job's own `GITHUB_TOKEN`, and GitHub refuses that with a 403 while the repository setting *Allow GitHub Actions to create and approve pull requests* is off, as it is by default. Turn it on under Settings, Actions, General, Workflow permissions, and keep the default token read-only, or run:
+
+```sh
+gh api -X PUT repos/<owner>/<repo>/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true
+```
+
+The same setting lets a workflow approve a pull request. No workflow the sidecar installs does, and the registrar's gate counts an approval only from the person a confirmation names, so a workflow's approval never stands in for one.
+
 Whichever agent, run the workflow once by hand from the Actions tab before turning on the schedule, and read the agent's log for denied tool calls.
 
 ## `knowledge-librarian.sh`: the agent wrapper
