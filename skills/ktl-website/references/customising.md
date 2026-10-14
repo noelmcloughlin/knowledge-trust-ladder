@@ -16,7 +16,7 @@
 | `DOCS` | `{ dir, groups }`: the docs folder, and the sidebar groups its pages sit in, each page named by its path under the folder without `.md` | `docs/` when there is one, every page in one Guides group by title | no docs pages |
 | `CHANGELOG` | a Keep a Changelog file, read as a page per release | `CHANGELOG.md` when it holds a released version | no Releases topic |
 | `PAGES` | `[{ slug, source, label }]`: pages from files outside the docs folder, each at `/<slug>/`, listed after Home | none | |
-| `HOME` | `{ source, tagline, actions }`: the home page's source file, the tagline under its title, and its buttons | the README when it has a `#` title, else the bundle's own introduction; `DESCRIPTION` as the tagline; Browse the bundle, Bundle health and Knowledge graph as the buttons | |
+| `HOME` | `{ source, tagline, actions }`: the home page's source file, the tagline under its title, and its buttons | the README when it has a `#` title, else the bundle's own introduction; `DESCRIPTION` as the tagline; Browse the bundle, Architecture when the docs folder has `architecture.md`, Bundle health and Knowledge graph as the buttons | |
 
 `HOME.tagline` is a string, or `{ boldLineOf: "<file>" }` for the first line of that file that is bold throughout. `HOME.actions` is a list of `{ text, link, icon, variant }` with site-relative links such as `/knowledge/`; the first is the primary button, and `variant: "secondary"` marks the rest.
 

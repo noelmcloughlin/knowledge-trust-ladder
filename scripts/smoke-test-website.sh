@@ -74,6 +74,7 @@ open(path, "w", encoding="utf-8").write(text)
   printf '# Acme Platform\n\nThe platform Acme runs. See [the bundle](.lokf/knowledge/index.md) and [the guide](docs/guide.md).\n' > README.md
   mkdir -p docs
   printf '# The guide\n\nHow to use the platform.\n' > docs/guide.md
+  printf '# Architecture\n\nHow the platform is built.\n' > docs/architecture.md
   printf '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- The platform.\n' > CHANGELOG.md
   (cd .lokf && UV_EXCLUDE_NEWER="$newest_upload" uv lock -q && UV_EXCLUDE_NEWER="$newest_upload" uv sync -q --locked)
   git add -A
@@ -129,6 +130,7 @@ for f in index.html knowledge/index.html knowledge/services/example-service-a/in
 done
 assert "the home page is the README's" "grep -q 'The platform Acme runs' \"$host/website/dist/index.html\""
 assert "the README's link to the guide goes to its page" "grep -q 'href=\"/acme-platform/docs/guide/\"' \"$host/website/dist/index.html\""
+assert "the home page offers the architecture page as a button" "grep -q 'class=\"sl-link-button[^\"]*\" href=\"/acme-platform/docs/architecture/\"' \"$host/website/dist/index.html\""
 assert "the header shows the Knowledge Trust Ladder logo" "grep -q '_astro/logo-light[^\"]*\\.svg' \"$host/website/dist/index.html\""
 assert "a concept page carries its trust label" "grep -qi 'checked' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
 assert "nothing of the template is left to commit" "[[ -z \$(git -C \"$host\" status --porcelain) ]]"
@@ -143,6 +145,7 @@ echo "Step 4 again: the bare shape, with no README, docs or changelog, and the c
 build
 assert "the home page is there, from the bundle's own introduction" "[[ -f \"$host/website/dist/index.html\" ]] && grep -q 'Acme Platform' \"$host/website/dist/index.html\""
 assert "no docs pages" "[[ ! -d \"$host/website/dist/docs\" ]]"
+assert "the home page offers no architecture page" "! grep -q 'docs/architecture/' \"$host/website/dist/index.html\""
 assert "no release pages" "[[ ! -d \"$host/website/dist/changelog\" ]]"
 assert "the bundle's pages, the health page and the graph are still there" \
   "[[ -f \"$host/website/dist/knowledge/index.html\" && -f \"$host/website/dist/health/index.html\" && -f \"$host/website/dist/graph/index.html\" ]]"
