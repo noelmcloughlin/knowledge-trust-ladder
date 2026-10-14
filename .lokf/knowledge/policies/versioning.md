@@ -2,7 +2,7 @@
 type: Policy
 id: https://knowledge-trust-ladder.example/knowledge/policies/versioning
 title: Versioning policy
-description: One repository-level semantic version covering all five skills, released together under a single tag, with patch, minor and major decided by Conventional Commits.
+description: One repository-level semantic version covering all six skills, released together under a single tag, with patch, minor and major decided by Conventional Commits.
 genre: reference
 resource: docs/releasing.md
 sources:
@@ -18,7 +18,7 @@ sources:
 - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-angular-v8.3.1/packages/conventional-changelog-angular/src/parser.js
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-14T00:35:00Z"
 about: []
 verified:
 - by: process:ktl-librarian
@@ -43,7 +43,7 @@ relatedTo:
 
 The configuration differs from that page on `!`. `.releaserc.json` names no preset, so `@semantic-release/commit-analyzer` reads each commit with its default, the Angular preset, whose header pattern has no place for `!`. A `feat!:` or `fix!:` commit therefore has no type, and no release rule matches it. Only a `BREAKING CHANGE:` note gives a major release. The analyzer's default rules also give `perf:` and a revert a patch, and `.releaserc.json` adds `security:` as a patch. The `plan` job in `semantic-release.yml` counts a commit with `!` as one that would release.
 
-All five skills are released together under one tag rather than versioned independently, so a set pinned to one tag agrees with itself (`docs/architecture.md`).
+All six skills are released together under one tag rather than versioned independently, so a set pinned to one tag agrees with itself (`docs/architecture.md`).
 
 One asymmetry to know: tags carry a `v` prefix (`v0.16.0`), and `publish.yml` refuses a version typed without it, while `CHANGELOG.md` headings never do (`## [0.16.0]`). The workflow's cross-check strips the `v` before comparing the two.
 

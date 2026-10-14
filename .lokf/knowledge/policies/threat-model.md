@@ -21,6 +21,7 @@ sources:
 - resource: CHANGELOG.md
 - resource: scripts/validate-repository.sh
 - resource: skills/ktl-sidecar/templates/scripts/knowledge-conventions.sh
+status: draft
 ---
 # Overview
 
@@ -90,3 +91,7 @@ Once the agent returns, the wrapper removes whatever is at the paths the workflo
 **What this does not cover.** Ordinary repository content the librarian scrapes while building concepts, such as READMEs, docs and code, has no per-entry guard. Nothing here filters what a reader asks `ktl-docent`. Nor does any of this make a repository a sandbox.
 
 **A skills repository.** A skills repository is the case where the content the librarian scrapes is all instructions, since every `SKILL.md` is written for an agent to follow. The same guards hold there. The librarian reads each source as data, writes only `patch.yaml` through the pen, and holds `contents: read` in a scheduled run. An instruction in a source can still shape what a concept says. Only the person reviewing the pull request catches that, since the pen checks a patch's form and never its truth.
+
+## Open questions
+
+- 2026-10-14, process:ktl-librarian: Since 2026-10-14 `docs/threat-model.md` names ktl-website among the skills that run the repository's scripts from `.lokf/scripts/`, counts four workflow templates under the two skills' `templates/github/` as pinned, and says six skills read content they did not author. This concept still names four skills that run those scripts.
