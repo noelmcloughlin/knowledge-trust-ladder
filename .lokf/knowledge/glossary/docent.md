@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/docent
+id: https://w3id.org/ktl/knowledge/glossary/docent
 title: Docent
 description: A museum's name for a guide, and the role that answers a reader's questions from the bundle, says how far each answer has been checked, and writes nothing in the bundle.
 definition: A museum's name for a guide, who explains the exhibition to visitors without moving anything on the shelves. In Knowledge Trust Ladder it names the role that answers questions from the bundle and labels how far each concept has been trusted, which the ktl-docent skill plays.
@@ -11,11 +11,11 @@ sources:
 - resource: docs/architecture.en-simple.md
 - resource: skills/ktl-docent/SKILL.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-docent-skill
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
+- https://w3id.org/ktl/knowledge/explanation/why-four-roles
+- https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

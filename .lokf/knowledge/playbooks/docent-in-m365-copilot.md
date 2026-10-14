@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
+id: https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
 title: The docent in Microsoft 365 Copilot
 description: How a person gets ktl-docent-m365, the docent packed with a snapshot of the bundle as a Microsoft 365 Copilot custom skill, from a release or by building it, adds it to a declarative agent, checks the first answer and keeps it current, what to do when a step fails, and why only the read-only roles go there.
 genre: how-to
@@ -15,15 +15,15 @@ generated:
   at: "2026-10-12T00:29:45Z"
 status: draft
 isPartOf:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 references:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-docent-skill
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-- https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/playbooks/releasing
+- https://w3id.org/ktl/knowledge/glossary/trust-label
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
-- https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
+- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+- https://w3id.org/ktl/knowledge/explanation/domain-schemas
 verified:
 - by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

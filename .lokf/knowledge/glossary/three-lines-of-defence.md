@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/three-lines-of-defence
+id: https://w3id.org/ktl/knowledge/glossary/three-lines-of-defence
 title: Three lines of defence
 description: The model regulated industries use to say who owns a risk, who keeps the rules and who checks independently, whose reference version is the IIA's Three Lines Model. In Knowledge Trust Ladder the librarian and the curator are the first line, the registrar the second, and the bundle holds the evidence a third line would need.
 definition: The model regulated industries use to say who owns a risk, who keeps the rules, and who checks independently.
@@ -10,10 +10,10 @@ sources:
 - resource: docs/three-lines.md
 - resource: docs/architecture.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
-- https://knowledge-trust-ladder.example/knowledge/glossary/librarian
-- https://knowledge-trust-ladder.example/knowledge/glossary/curator
-- https://knowledge-trust-ladder.example/knowledge/glossary/registrar
+- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+- https://w3id.org/ktl/knowledge/glossary/librarian
+- https://w3id.org/ktl/knowledge/glossary/curator
+- https://w3id.org/ktl/knowledge/glossary/registrar
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

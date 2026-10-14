@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/wikiskill
+id: https://w3id.org/ktl/knowledge/explanation/wikiskill
 title: What KTL took from WikiSkill
 description: "What Knowledge Trust Ladder (KTL) took from the WikiSkill paper (Tang et al., 2026), as `docs/wikiskill.md` says: the same loop of maintainer, pen, consumer and gate; the seven changes the reading made to the skills, such as a consumer that writes nothing, a bounded run and a retrieval score; and what the paper leaves open."
 genre: explanation
@@ -9,13 +9,13 @@ sources:
 - resource: docs/wikiskill.md
 - resource: docs/architecture.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-docent-skill
-- https://knowledge-trust-ladder.example/knowledge/playbooks/knowledge-sources
-- https://knowledge-trust-ladder.example/knowledge/explanation/skillwiki
+- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
+- https://w3id.org/ktl/knowledge/playbooks/knowledge-sources
+- https://w3id.org/ktl/knowledge/explanation/skillwiki
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

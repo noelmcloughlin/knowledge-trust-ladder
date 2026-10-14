@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
+id: https://w3id.org/ktl/knowledge/explanation/domain-schemas
 title: When the built-in vocabulary stops fitting - domain schemas
 description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's, named by one `schema` variable in the sidecar's justfile and checked with `lokf validate --schema`, reusing a domain's own vocabulary such as the AI Risk Ontology, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
 genre: explanation
@@ -15,13 +15,13 @@ generated:
   at: "2026-10-13T01:19:37Z"
 about: []
 references:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-- https://knowledge-trust-ladder.example/knowledge/references/linkml
-- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/references/linkml
+- https://w3id.org/ktl/knowledge/references/lokf-toolkit
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
-- https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
+- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 verified:
 - by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

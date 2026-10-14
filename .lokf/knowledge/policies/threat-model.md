@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://knowledge-trust-ladder.example/knowledge/policies/threat-model
+id: https://w3id.org/ktl/knowledge/policies/threat-model
 title: Threat model
 description: "The security design the three KTL repositories share, kept in one place so each SECURITY.md can link to it: repository hardening, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author."
 genre: reference
@@ -14,8 +14,8 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-13T01:15:05Z"
 references:
-- https://knowledge-trust-ladder.example/knowledge/policies/security
-- https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
+- https://w3id.org/ktl/knowledge/policies/security
+- https://w3id.org/ktl/knowledge/policies/ai-covenant
 sources:
 - resource: docs/threat-model.md
 - resource: CHANGELOG.md

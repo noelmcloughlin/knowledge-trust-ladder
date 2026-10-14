@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
+id: https://w3id.org/ktl/knowledge/explanation/why-four-roles
 title: Why four skill roles rather than one skill
 description: Why the work is split into four skills, sidecar, librarian, curator and docent, named for the library and museum professions and run first in order and then as a loop, beside a fifth role that is not a skill (the registrar) and two optional skills beside the roles (ktl-prose, and ktl-website, which publishes the bundle).
 genre: explanation
@@ -16,16 +16,16 @@ generated:
   at: "2026-10-14T00:35:00Z"
 status: draft
 about:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-docent-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
 references:
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/glossary/trust-label
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
-- https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
+- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
+- https://w3id.org/ktl/knowledge/playbooks/ktl-prose-skill
+- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"

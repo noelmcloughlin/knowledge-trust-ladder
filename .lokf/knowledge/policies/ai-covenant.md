@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
+id: https://w3id.org/ktl/knowledge/policies/ai-covenant
 title: AI covenant
 description: Community norms for AI use - contributors own what they submit regardless of tooling, AI systems must not be used to autonomously post comments, replies, or messages, AI co-authorship in commit messages is discouraged, and a repository-owned agent (e.g. ktl-librarian) must commit under a bot or maintainer identity with no trailer either way and land only as a human-reviewed PR.
 genre: reference

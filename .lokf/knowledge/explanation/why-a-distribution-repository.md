@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/why-a-distribution-repository
+id: https://w3id.org/ktl/knowledge/explanation/why-a-distribution-repository
 title: Why the skills live in their own repository
 description: "Why the six skills are published from one installable repository: three install routes plus Microsoft 365 Copilot for the docent, one tag for all of them, one changelog, a bundle of its own that the docent answers from, and the repository's rename."
 genre: explanation
@@ -16,10 +16,10 @@ generated:
   at: "2026-10-14T00:35:00Z"
 status: draft
 references:
-- https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
-- https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
-- https://knowledge-trust-ladder.example/knowledge/policies/versioning
-- https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
+- https://w3id.org/ktl/knowledge/references/gh-skill-cli
+- https://w3id.org/ktl/knowledge/references/open-skills-cli
+- https://w3id.org/ktl/knowledge/policies/versioning
+- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T23:54:05Z"

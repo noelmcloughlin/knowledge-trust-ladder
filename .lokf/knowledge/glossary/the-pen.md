@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/the-pen
+id: https://w3id.org/ktl/knowledge/glossary/the-pen
 title: The pen
 description: "The name for `knowledge-apply.sh`, the only way ktl-librarian writes the bundle: it applies the operations in `.lokf/patch.yaml`, stamps `generated`, keeps the index in step, and refuses a `human:` actor."
 definition: The name the docs give `knowledge-apply.sh`, the script through which ktl-librarian writes every change to the bundle. The librarian describes each change as an operation in `.lokf/patch.yaml`, and the pen checks every operation and writes the files, or writes nothing.
@@ -11,10 +11,10 @@ sources:
 - resource: docs/for-the-curious.md
 - resource: skills/ktl-librarian/references/patch.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

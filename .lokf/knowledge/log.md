@@ -2,6 +2,8 @@
 
 ## 2026-10-14
 
+* **Changed**: `base_iri` moved from the `knowledge-trust-ladder.example` placeholder to `https://w3id.org/ktl/knowledge/`, now that the w3id rule resolves it. Every concept id, the publisher id and every typed-relation target moved with it; no `verified` event changed.
+* **Changed**: Knowledge sources: `base_iri` is now `https://w3id.org/ktl/knowledge/`, no longer the `knowledge-trust-ladder.example` placeholder. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Added**: ktl-website skill, from `skills/ktl-website/SKILL.md` and its references, the sixth skill that 0.39.0 added.
 * **Changed**: Versioning policy: six skills under one tag, as `docs/architecture.md` and `CONTRIBUTING.md` now count since ktl-website. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Why the skills live in their own repository: six skills, as `docs/install.md`, `plugin.json` and `marketplace.json` now count since ktl-website.

@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/workshop
+id: https://w3id.org/ktl/knowledge/glossary/workshop
 title: Workshop
 description: In the two-vault arrangement for Obsidian, the vault a person already has, in which nothing is moved or migrated. The bundle opens beside it as the exhibition, a small vault of its own, and the two never index the same file.
 definition: The vault a person already has, in which nothing is moved or migrated, beside the bundle opened as the exhibition.
@@ -9,9 +9,9 @@ resource: docs/obsidian.md
 sources:
 - resource: docs/obsidian.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/exhibition
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-- https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
+- https://w3id.org/ktl/knowledge/glossary/exhibition
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

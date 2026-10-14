@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://knowledge-trust-ladder.example/knowledge/policies/security
+id: https://w3id.org/ktl/knowledge/policies/security
 title: Security policy
 description: How to report a vulnerability privately, supported versions, and a surface table (what executes here, what guards it) that links to the shared threat model instead of restating it.
 genre: reference
@@ -13,8 +13,8 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T00:41:54Z"
 references:
-- https://knowledge-trust-ladder.example/knowledge/policies/threat-model
-- https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
+- https://w3id.org/ktl/knowledge/policies/threat-model
+- https://w3id.org/ktl/knowledge/playbooks/repository-validation
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"

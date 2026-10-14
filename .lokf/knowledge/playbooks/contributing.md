@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
+id: https://w3id.org/ktl/knowledge/playbooks/contributing
 title: Contributing
 description: "How to work on the skills: no build step but the website's, the local checks to run before opening a pull request, the role boundary a change must respect, and which pages now hold the release and signing detail."
 genre: how-to
@@ -10,10 +10,10 @@ generated:
   at: "2026-10-14T00:35:00Z"
 status: draft
 references:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
-- https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
-- https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
-- https://knowledge-trust-ladder.example/knowledge/policies/code-of-conduct
+- https://w3id.org/ktl/knowledge/playbooks/repository-validation
+- https://w3id.org/ktl/knowledge/playbooks/releasing
+- https://w3id.org/ktl/knowledge/policies/ai-covenant
+- https://w3id.org/ktl/knowledge/policies/code-of-conduct
 sources:
 - resource: CONTRIBUTING.md
 - resource: docs/signing-commits.md

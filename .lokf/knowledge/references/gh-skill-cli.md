@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
+id: https://w3id.org/ktl/knowledge/references/gh-skill-cli
 title: gh skill (GitHub CLI)
 description: The GitHub CLI command group that installs, pins, and publishes agent skills from GitHub repositories; the publish path this repository uses for releases.
 genre: reference
@@ -10,7 +10,7 @@ generated:
   at: "2026-10-06T11:10:52Z"
 status: draft
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
 sources:
 - resource: https://cli.github.com/manual/gh_skill_install
 - resource: https://cli.github.com/manual/gh_skill

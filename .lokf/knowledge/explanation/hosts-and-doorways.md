@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
+id: https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 title: Hosts and doorways - where the bundle's real folder lives
 description: Why the bundle is `.lokf/knowledge`, one real folder on every host, with `knowledge_bundle` beside it as a link for people and folder pickers; what the visible layout tried and why it was retired; and what a shared folder that is not a vault may still do by hand.
 genre: explanation
@@ -9,12 +9,12 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:20:21Z"
 about:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
-- https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
+- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+- https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
+- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 sources:
 - resource: skills/ktl-sidecar/SKILL.md
 - resource: skills/ktl-sidecar/references/portability.md

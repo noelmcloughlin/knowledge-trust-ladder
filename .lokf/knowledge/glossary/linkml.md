@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/linkml
+id: https://w3id.org/ktl/knowledge/glossary/linkml
 title: LinkML
 description: The schema language LOKF is written in, created by the LinkML Community. LOKF's specification is a single LinkML schema, from which the JSON Schema, JSON-LD context, SHACL shapes and OWL ontology are generated, and a domain schema that extends it is written in LinkML too.
 definition: The schema language LOKF is written in, created by the LinkML Community. LOKF's specification is a single LinkML schema, `lokf.yaml`.
@@ -12,10 +12,10 @@ sources:
 - resource: skills/ktl-librarian/SKILL.md
 - resource: skills/ktl-curator/references/domain-schemas.md
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/linkml
+- https://w3id.org/ktl/knowledge/references/linkml
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/lokf
-- https://knowledge-trust-ladder.example/knowledge/glossary/domain-schema
+- https://w3id.org/ktl/knowledge/glossary/lokf
+- https://w3id.org/ktl/knowledge/glossary/domain-schema
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

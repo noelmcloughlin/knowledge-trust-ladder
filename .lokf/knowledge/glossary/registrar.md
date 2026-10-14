@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/registrar
+id: https://w3id.org/ktl/knowledge/glossary/registrar
 title: Registrar
 description: "The person in a museum who keeps the collection's records, and Knowledge Trust Ladder's fifth role, which programs play: the `lokf` toolkit, the gate `knowledge-registrar.yaml`, the pen and the report script."
 definition: In a museum, the person who keeps the collection's records. In Knowledge Trust Ladder, the role that keeps the bundle's records in order and ties each confirmation to the person who gave it, which no person has to play.
@@ -10,11 +10,11 @@ sources:
 - resource: docs/architecture.md
 - resource: docs/for-the-curious.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
-- https://knowledge-trust-ladder.example/knowledge/glossary/the-pen
-- https://knowledge-trust-ladder.example/knowledge/glossary/desk
+- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
+- https://w3id.org/ktl/knowledge/glossary/the-pen
+- https://w3id.org/ktl/knowledge/glossary/desk
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

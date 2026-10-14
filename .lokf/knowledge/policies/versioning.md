@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://knowledge-trust-ladder.example/knowledge/policies/versioning
+id: https://w3id.org/ktl/knowledge/policies/versioning
 title: Versioning policy
 description: One repository-level semantic version covering all six skills, released together under a single tag, with patch, minor and major decided by Conventional Commits.
 genre: reference
@@ -32,7 +32,7 @@ verified:
 stale_after: 2027-10-03
 status: draft
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
+- https://w3id.org/ktl/knowledge/playbooks/releasing
 ---
 
 # Overview

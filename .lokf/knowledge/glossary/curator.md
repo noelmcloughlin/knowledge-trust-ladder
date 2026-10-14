@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/curator
+id: https://w3id.org/ktl/knowledge/glossary/curator
 title: Curator
 description: "The role that holds the scales, always a person: in the museum sense, the one who authenticates, weighs provenance and decides what goes on exhibit. The ktl-curator skill and the KTL Curator plugin are that person's assistants, and reach no verdict of their own."
 definition: "The role, always played by a person, that records a verdict on a concept against its source: confirm, correct, retire or send back. Curator is the museum sense, the one who authenticates, weighs provenance and decides what goes on exhibit, not the data-management sense, which is the librarian's job."
@@ -12,12 +12,12 @@ sources:
 - resource: docs/obsidian.md
 - resource: skills/ktl-curator/SKILL.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-- https://knowledge-trust-ladder.example/knowledge/glossary/librarian
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
-- https://knowledge-trust-ladder.example/knowledge/glossary/health-line
+- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+- https://w3id.org/ktl/knowledge/glossary/librarian
+- https://w3id.org/ktl/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/glossary/health-line
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

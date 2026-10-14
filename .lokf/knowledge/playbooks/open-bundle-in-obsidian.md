@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
+id: https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
 title: Open the knowledge bundle in Obsidian
 description: "How a knowledge bundle meets an Obsidian vault: two vaults, the workshop someone keeps and the bundle opened as its own through the `knowledge_bundle` doorway, what Obsidian does with the link on each host, and why the bundle is never a real folder inside a vault."
 genre: how-to
@@ -18,11 +18,11 @@ generated:
   at: "2026-10-12T16:08:20Z"
 status: draft
 isPartOf:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
+- https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 verified:
 - by: process:ktl-librarian
   at: "2026-10-14T00:35:00Z"

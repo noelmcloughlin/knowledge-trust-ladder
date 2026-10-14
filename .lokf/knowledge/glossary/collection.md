@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/collection
+id: https://w3id.org/ktl/knowledge/glossary/collection
 title: Collection
 description: "A repository's scattered knowledge as Knowledge Trust Ladder keeps it: catalogued, authenticated and explained, with the trust in every claim left visible. Each item added to the collection is an accession."
 definition: A repository's scattered knowledge kept, in museum terms, catalogued, authenticated and explained, with the trust in every claim left visible.
@@ -10,10 +10,10 @@ sources:
 - resource: README.md
 - resource: docs/architecture.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/accession
-- https://knowledge-trust-ladder.example/knowledge/glossary/docent
+- https://w3id.org/ktl/knowledge/glossary/accession
+- https://w3id.org/ktl/knowledge/glossary/docent
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

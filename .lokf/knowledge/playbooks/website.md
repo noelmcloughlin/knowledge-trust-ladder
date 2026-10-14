@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/website
+id: https://w3id.org/ktl/knowledge/playbooks/website
 title: Build, preview and edit the website
 description: How the project website in `website/` is built with Astro Starlight from the README, `docs/`, the knowledge bundle and `CHANGELOG.md`, how to preview it locally with npm and uv, which file to edit for each kind of change, and how `knowledge-website.yaml` publishes it to GitHub Pages.
 genre: how-to
@@ -11,11 +11,11 @@ sources:
 - resource: website/NOTICE
 - resource: CHANGELOG.md
 dependsOn:
-- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
+- https://w3id.org/ktl/knowledge/references/lokf-toolkit
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: human:noelmcloughlin
   at: "2026-10-13T23:50:44Z"

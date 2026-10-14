@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/exhibition
+id: https://w3id.org/ktl/knowledge/glossary/exhibition
 title: Exhibition
 description: "In the two-vault arrangement for Obsidian, the bundle opened as a small vault of its own: the checked part of what the workshop knows, and the part that teammates, CI and agents read."
 definition: "The bundle as a vault of its own: the checked part of what the workshop knows, and the part that teammates, CI and agents read."
@@ -9,8 +9,8 @@ resource: docs/obsidian.md
 sources:
 - resource: docs/obsidian.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/workshop
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/workshop
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

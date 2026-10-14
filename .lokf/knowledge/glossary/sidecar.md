@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/sidecar
+id: https://w3id.org/ktl/knowledge/glossary/sidecar
 title: Sidecar
 description: "`.lokf/`, the folder beside a project's code that holds the bundle and the tooling that checks it, kept out of the project's build; also the role, and the ktl-sidecar skill, that installs it."
 definition: The `.lokf/` folder beside a project's code, like `.git/`, which holds the bundle and the tooling that validates it and is kept out of the project's build. The ktl-sidecar skill, the first role to run, installs it from bundled templates.
@@ -11,10 +11,10 @@ sources:
 - resource: skills/ktl-sidecar/SKILL.md
 - resource: skills/ktl-sidecar/templates/README.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
-- https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
+- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+- https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

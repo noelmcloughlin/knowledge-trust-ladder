@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/work-list
+id: https://w3id.org/ktl/knowledge/glossary/work-list
 title: Work list
 description: "What `knowledge-report.sh worklist` prints for ktl-librarian before each refresh, from frontmatter and git, in paths and dates and nobody's words: the concepts whose sources moved since they were derived or last checked, the notes a person left and the librarian's own open questions. It also counts the reader feedback that waits."
 definition: The list `knowledge-report.sh worklist` computes from frontmatter and git, which ktl-librarian starts every refresh from.
@@ -10,8 +10,8 @@ sources:
 - resource: skills/ktl-librarian/SKILL.md
 - resource: docs/for-the-curious.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-- https://knowledge-trust-ladder.example/knowledge/glossary/librarian
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/glossary/librarian
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
