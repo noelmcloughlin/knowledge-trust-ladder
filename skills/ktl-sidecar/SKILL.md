@@ -172,7 +172,7 @@ Nothing in the host lints these fourteen files yet. Check whether the host alrea
 
 ## Step 6 - Hand off to ktl-librarian
 
-The sidecar ends here. ktl-librarian's first run is a **bootstrap discovery** pass that records the repo's knowledge sources as `playbooks/knowledge-sources.md`. The librarian in turn hands off to **ktl-curator**, where a person confirms what it derived, and **ktl-docent** answers readers from the bundle, recording what it lacked for the librarian's next run. So all four skills should be installed. In the handoff, tell the user:
+The sidecar ends here. ktl-librarian's first run is a **bootstrap discovery** pass that records the repo's knowledge sources as `playbooks/knowledge-sources.md`. The librarian in turn hands off to **ktl-curator**, where a person confirms what it derived, and **ktl-docent** answers readers from the bundle, recording what it lacked for the librarian's next run. So all four skills should be installed, and **ktl-website** can publish the bundle as a site once it is worth showing. In the handoff, tell the user:
 
 - which Step 0 values were **guessed** rather than found (a fallback `<BASE_IRI>` above all; every `@id` starts with it, so it needs sign-off);
 - whether Step 4 validation ran, ran as the manual fallback, or was skipped;

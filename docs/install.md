@@ -1,6 +1,6 @@
 # Install
 
-This page gives every way to install the five skills, what each needs on the machine, and how to pin them to one release. [Quick start](#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
+This page gives every way to install the six skills, what each needs on the machine, and how to pin them to one release. [Quick start](#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
 
 > Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
 > `npx skills add` paths, so an existing install keeps working. The skills
@@ -11,15 +11,15 @@ This page gives every way to install the five skills, what each needs on the mac
 
 > **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](examples/docent.md).
 
-Install all five skills with the Open Skills CLI, [`npx skills`](https://github.com/vercel-labs/skills):
+Install all six skills with the Open Skills CLI, [`npx skills`](https://github.com/vercel-labs/skills):
 
 ```bash
 npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
   --skill ktl-sidecar --skill ktl-librarian --skill ktl-curator \
-  --skill ktl-docent --skill ktl-prose
+  --skill ktl-docent --skill ktl-prose --skill ktl-website
 ```
 
-**Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting.
+**Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
 
 ```text
 # Claude Code plugin
@@ -37,6 +37,7 @@ gh skill install noelmcloughlin/knowledge-trust-ladder ktl-librarian --scope use
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-curator --scope user
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-prose --scope user
+gh skill install noelmcloughlin/knowledge-trust-ladder ktl-website --scope user
 ```
 
 ## Install for your user, not into the repository
@@ -45,7 +46,7 @@ The commands above install for your user, so one install serves every repository
 
 ## Pin to one tag
 
-All five skills release together under one tag, so pin them to the same one. Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`. [releasing.md](releasing.md) says what each version level means.
+All six skills release together under one tag, so pin them to the same one. Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`. [releasing.md](releasing.md) says what each version level means.
 
 ## Microsoft 365 Copilot
 
@@ -61,5 +62,6 @@ Every skill runs from a POSIX shell and starts with a preflight that prints what
 | `ktl-curator` | this machine signed in to the forge (`gh` or `glab`) to record a confirmation in your name, and signed commits when you open your own curation pull requests ([signing-commits.md](signing-commits.md)) |
 | `ktl-docent` | nothing |
 | `ktl-prose` | `python3` 3.9 or newer, or `uv`, for its check script, and git to compare a file with its earlier version |
+| `ktl-website` | a sidecar from 0.30.0 or later, `uv`, and Node.js 22.12 or newer with npm to build the site here; GitHub Actions and Pages to publish it |
 
 Someone who cannot act on a line the preflight prints, such as a **curator** who knows the subject but not the repository, gets a request note for whoever set the repository up. The note comes from the **sidecar**'s [prerequisites page](../skills/ktl-sidecar/references/prerequisites.md).

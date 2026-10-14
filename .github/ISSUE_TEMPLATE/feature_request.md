@@ -1,13 +1,13 @@
 ---
 name: Feature request
-about: Suggest an improvement to one of the five KTL skills
+about: Suggest an improvement to one of the six KTL skills
 title: ''
 labels: enhancement
 assignees: ''
 ---
 
 **Which skill?**
-ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose / several
+ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose / ktl-website / several
 
 **What's missing or awkward**
 Describe the gap. Note whether it's about the skill's operational content

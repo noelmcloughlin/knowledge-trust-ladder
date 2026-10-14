@@ -10,7 +10,7 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | macOS | everything, on the stock bash 3.2 | `sha256sum` | `shasum -a 256` |
 | Windows, Git for Windows | everything from its bash | the `ln -s` doorway | a junction (below) |
 | Windows, PowerShell | the toolkit, git, the plugins | every script and command, which are bash | run them through Git for Windows' bash (below) |
-| GitLab, Forgejo, Gitea | the sidecar, librarian, docent; the curator with `glab` or the signing-key route | the three GitHub Actions workflows | the wrapper in that CI, the gate ported per the recipe below, or the forge-free gate |
+| GitLab, Forgejo, Gitea | the sidecar, librarian, docent; the curator with `glab` or the signing-key route | the GitHub Actions workflows, ktl-website's deploy included | the wrapper in that CI, the gate ported per the recipe below, or the forge-free gate |
 | No forge, git only | everything local | the gate, pull requests, the scheduled loop | review by the host's own mechanism; the forge-free gate for confirmations |
 | No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |

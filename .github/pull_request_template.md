@@ -7,6 +7,7 @@
 - [ ] ktl-curator
 - [ ] ktl-docent
 - [ ] ktl-prose
+- [ ] ktl-website
 - [ ] repository packaging only (CI, docs, templates unrelated to skill content)
 
 ## Checklist

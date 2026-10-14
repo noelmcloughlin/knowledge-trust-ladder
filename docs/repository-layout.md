@@ -9,8 +9,9 @@ skills/
   ktl-curator/         SKILL.md + references/
   ktl-docent/          SKILL.md + references/ + scripts/
   ktl-prose/           SKILL.md + references/ + scripts/
+  ktl-website/         SKILL.md + references/ + scripts/ + templates/
 .claude-plugin/
-  plugin.json           the five skills as one Claude Code plugin, with catalogue keywords
+  plugin.json           the six skills as one Claude Code plugin, with catalogue keywords
   marketplace.json      lets `/plugin marketplace add` find that plugin
 .github/workflows/
   validate.yml               repository contract, Agent Skills spec, Markdown and links (every PR)
@@ -19,11 +20,11 @@ skills/
   knowledge-release.yaml     the sidecar's release step: bundle and Copilot zips (from publish.yml)
   semantic-release.yml       version and changelog from Conventional Commits on main; never tags
   publish.yml                maintainer-gated release (workflow_dispatch only)
-  knowledge-website.yaml     builds website/ (PRs touching its sources) and publishes the default branch's build to GitHub Pages
+  knowledge-website.yaml     ktl-website's workflow: builds website/ on each PR, publishes the default branch's build to Pages
 docs/
   architecture.md       the architecture the poem, LOKF and LinkML inspired: the catalogue, the five roles and the trust ladder
   architecture.en-simple.md  the architecture page retold for readers aged 13 to 18
-  install.md            the quick start, every way to install the five skills, and pinning to one release
+  install.md            the quick start, every way to install the six skills, and pinning to one release
   for-the-curious.md    the architecture's mechanics: four levels of checking, domain schemas
   context-layer.md      the context layer: one bundle, a federation of bundles, what exists and what is design
   context-layer-technology.md  the stores, catalogues, agent surfaces and artifact repositories it integrates with
@@ -43,19 +44,21 @@ docs/
     curator.md          placeholder: the curator sessions still to capture
 scripts/
   validate-repository.sh   the contract: the checks validate.yml runs on this repository's own files
-  smoke-test-install.sh    installs the five skills into a throwaway repo and checks them
+  smoke-test-install.sh    installs the six skills into a throwaway repo and checks them
+  smoke-test-website.sh    lays the website templates down on a dummy bundle and builds the site twice
   sync-sidecar.sh          copies one release's templates and skills pin into a sibling repository
 tests/                     the behavioural tests of the sidecar scripts and the prose checker, run with pytest
   conftest.py              the shared helpers, and how to run the tests
   test_*.py                one module per script: the pen, the gate, the report, the conventions checker,
-                           the feedback recorder, the preflight, the prose checker, and the layouts the
-                           wrapper and the workflows run in
-website/                   the website: Astro Starlight, built from the README, docs/ and the bundle
-  site.config.mjs          the site's address and the sidebar place of every docs/ page
+                           the feedback recorder, the preflight, the prose checker, the layouts the
+                           wrapper and the workflows run in, and the website skill's preflight and templates
+website/                   the website: Astro Starlight, this repository's copy of ktl-website's templates
+  site.config.mjs          the site's values and options: addresses, title, logo, docs groups, extra pages
+  scripts/config.mjs       settles those options against the repository; `node scripts/config.mjs` prints them
   scripts/sync.mjs         writes the pages and the bundle's exported files before each build
   scripts/check-links.mjs  fails the build on a link between two pages that does not resolve
 .lokf/                  this repository's own sidecar: the bundle and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
 ```
 
-Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget. `ktl-sidecar/templates/` holds the files it installs, copied verbatim, never retyped. `ktl-prose/scripts/` holds the one script that skill runs in place.
+Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget. `ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/` and `ktl-website/scripts/` hold the one script each runs in place.
