@@ -253,6 +253,23 @@ jobs:
           args: --no-progress "**/*.md"
           fail: true
 
+      # lychee skips GitHub's issue and pull request pages, which can answer a
+      # runner with 500 while the issue is open (lychee.toml). Each one is
+      # checked here through the API with the job's own token: a deleted or
+      # moved issue still fails, and a page GitHub fails to render does not.
+      - name: Check GitHub issue and pull request links
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status=0
+          for link in $(git ls-files '*.md' | xargs grep -ohE 'https://github\.com/[^/ )>]+/[^/ )>]+/(issues|pull)/[0-9]+' | sort -u); do
+            path="${link#https://github.com/}"
+            repo="${path%/*/*}"
+            number="${path##*/}"
+            if gh api "repos/$repo/issues/$number" --silent; then echo "OK   $link"; else echo "FAIL $link"; status=1; fi
+          done
+          exit "$status"
+
       - name: codespell
         uses: codespell-project/actions-codespell@e3258cca84ce02b0bb36a3d41f2c18f719a0cc1a # v2.4.3
         with:
