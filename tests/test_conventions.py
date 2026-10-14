@@ -34,12 +34,12 @@ def _uv_is_needed():
         )
 
 
-def r13(x, name, title, description, generated_at, more, body):
+def r13(x, name, title, description, generated_at, more, body, base="https://example.invalid/k/"):
     """A concept human:contract confirmed on 2026-09-02, for rule 13."""
     write(
         x / f"{name}.md",
         "---\ntype: Service\n"
-        f"id: https://example.invalid/k/x/{name}\n"
+        f"id: {base}x/{name}\n"
         f"title: {title}\n"
         f"description: {description}\n"
         "generated:\n  by: process:ktl-librarian\n"
@@ -107,10 +107,12 @@ def findings(tmp_path_factory) -> str:
     # confirmation does not cover must pass: a person's note with the status
     # it sets, KTL Registrar's block with its own `## Related` heading, and
     # values written back requoted. So must an edit that moved `generated`
-    # past the confirmation, and one its person confirmed again.
-    for n in ["r13-edited", "r13-description", "r13-notes", "r13-restamped", "r13-reconfirmed"]:
+    # past the confirmation, one its person confirmed again, and an id that
+    # moved with the bundle's base_iri; an edit made beside that move fails.
+    for n in ["r13-edited", "r13-description", "r13-notes", "r13-restamped", "r13-reconfirmed", "r13-moved", "r13-moved-edited"]:
         r13(x, n, n, "what it was.", "2026-09-01T00:00:00Z", "", "The text a person confirmed.")
-    git("add", *[f"k/x/{p.name}" for p in sorted(x.glob("r13-*.md"))])
+    write(k / "index.md", "---\nbase_iri: https://example.invalid/k/\n---\n\n# K\n")
+    git("add", "k/index.md", *[f"k/x/{p.name}" for p in sorted(x.glob("r13-*.md"))])
     git("commit", "-q", "-m", "confirmed")
     r13(
         x,
@@ -133,6 +135,9 @@ def findings(tmp_path_factory) -> str:
         "The text a person confirmed.",
     )
     r13(x, "r13-restamped", "r13-restamped", "what it was.", "2026-09-03T00:00:00Z", "", "The text the pen changed.")
+    moved = "https://example.invalid/moved/"
+    r13(x, "r13-moved", "r13-moved", "what it was.", "2026-09-01T00:00:00Z", "", "The text a person confirmed.", moved)
+    r13(x, "r13-moved-edited", "r13-moved-edited", "what it was.", "2026-09-01T00:00:00Z", "", "The text changed in the move.", moved)
     r13(
         x,
         "r13-notes",
@@ -213,7 +218,7 @@ def findings(tmp_path_factory) -> str:
     )
     write(
         k / "index.md",
-        "# K\n\n* [Stale](x/idx-stale.md) - what the concept said before.\n* [Fresh](x/idx-fresh.md) - folded, and still equal.\n* [Fresh](x/idx-fresh.md), [Shared](x/idx-shared.md) - a line that lists two.\n",
+        "---\nbase_iri: https://example.invalid/moved/\n---\n\n# K\n\n* [Stale](x/idx-stale.md) - what the concept said before.\n* [Fresh](x/idx-fresh.md) - folded, and still equal.\n* [Fresh](x/idx-fresh.md), [Shared](x/idx-shared.md) - a line that lists two.\n",
     )
     write(
         x / "index.md",
@@ -250,6 +255,7 @@ REPORTED = [
     re.compile(r"idx-stale\.md: its bullet in .*/k/x/index\.md does not match"),
     "r13-edited.md: changed since human:contract confirmed it (2026-09-02, in ",
     "r13-description.md: changed since human:contract confirmed it",
+    "r13-moved-edited.md: changed since human:contract confirmed it",
 ]
 
 
@@ -272,6 +278,7 @@ ACCEPTED = [
     ),
     ("r13-restamped.md", "whose edit moved generated past the confirmation"),
     ("r13-reconfirmed.md", "whose person confirmed it again after the edit"),
+    ("r13-moved.md", "whose id moved with the bundle's base_iri and nothing else"),
 ]
 
 
