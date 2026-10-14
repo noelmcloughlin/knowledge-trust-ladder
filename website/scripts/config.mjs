@@ -101,6 +101,10 @@ export const LOGO = (() => {
 export const LOGO_FILES = LOGO ? { light: `logo-light${extname(LOGO.light)}`, dark: `logo-dark${extname(LOGO.dark)}` } : null;
 export const FAVICON = LOGO?.favicon ? `/favicon${extname(LOGO.favicon)}` : "/favicon.svg";
 
+// docsPages() keeps its list here once read. It is declared before HOME,
+// which asks for the list while this module is still loading.
+let docsPagesRead = null;
+
 export const DOCS = (() => {
   const value = given.DOCS === undefined ? "auto" : given.DOCS;
   if (value === null) return null;
@@ -146,6 +150,18 @@ function firstTitle(rel) {
   return null;
 }
 
+// The buttons under the home page's title when HOME.actions is not set: the
+// bundle, the docs' architecture page when the site has one, the health page
+// and the graph.
+function defaultActions() {
+  return [
+    { text: "Browse the bundle", link: "/knowledge/", icon: "right-arrow" },
+    ...(docsPages().includes("architecture") ? [{ text: "Architecture", link: "/docs/architecture/", variant: "secondary" }] : []),
+    { text: "Bundle health", link: "/health/", variant: "secondary" },
+    { text: "Knowledge graph", link: "/graph/", variant: "secondary" },
+  ];
+}
+
 export const HOME = (() => {
   const home = { source: "auto", tagline: null, actions: null, ...(given.HOME ?? {}) };
   let source = home.source ?? null;
@@ -155,7 +171,7 @@ export const HOME = (() => {
   if (tagline && typeof tagline === "object" && !isFile(tagline.boldLineOf ?? "")) {
     fail("HOME.tagline.boldLineOf names a file that is not in the repository");
   }
-  return { source, tagline, actions: home.actions ?? null };
+  return { source, tagline, actions: home.actions ?? defaultActions() };
 })();
 
 // ---- the bundle and the docs, as folders and files -------------------------
@@ -193,10 +209,13 @@ export function conceptIds() {
  * Every docs page, as its path under the docs folder without `.md`: the
  * files git sees there, tracked or untracked but never ignored, so a folder
  * a generator writes stays out; a walk of the folder where there is no git.
- * A file PAGES names has a page of its own and is left out here.
+ * A file PAGES names has a page of its own and is left out here. The list
+ * is read once per process, since the home page's buttons, the links and
+ * the sync all ask for it.
  */
 export function docsPages() {
-  if (!DOCS) return [];
+  if (docsPagesRead) return docsPagesRead;
+  if (!DOCS) return (docsPagesRead = Object.freeze([]));
   const dir = DOCS.dir;
   const extra = new Set(PAGES.map((p) => p.source));
   let files;
@@ -216,10 +235,12 @@ export function docsPages() {
     };
     walk(resolve(REPO_ROOT, dir), dir + "/");
   }
-  return files
-    .filter((f) => f.startsWith(dir + "/") && f.endsWith(".md") && !extra.has(f) && isFile(f))
-    .map((f) => f.slice(dir.length + 1, -3))
-    .sort();
+  return (docsPagesRead = Object.freeze(
+    files
+      .filter((f) => f.startsWith(dir + "/") && f.endsWith(".md") && !extra.has(f) && isFile(f))
+      .map((f) => f.slice(dir.length + 1, -3))
+      .sort(),
+  ));
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

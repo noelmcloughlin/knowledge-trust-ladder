@@ -84,8 +84,9 @@ export const PAGES = [{ slug: "simple", source: "docs/architecture.en-simple.md"
 // the README when it has one, else the bundle's own introduction); the
 // tagline under the title (a string, { boldLineOf: <file> } for the first
 // line of that file that is bold throughout, or DESCRIPTION when null); and
-// the buttons, with site-relative links (Browse the bundle, Bundle health
-// and Knowledge graph when null).
+// the buttons, with site-relative links (Browse the bundle, Architecture when
+// the docs have an architecture page, Bundle health and Knowledge graph when
+// null).
 export const HOME = {
   source: "README.md",
   tagline: { boldLineOf: "docs/architecture.md" },

@@ -105,6 +105,19 @@ def test_config_settles_the_options_against_the_host(tmp_path):
         "favicon": "website/src/assets/knowledge-trust-ladder-logo.svg",
     }
     assert settled["HOME"]["source"] == "README.md"
+    assert [a["text"] for a in settled["HOME"]["actions"]] == ["Browse the bundle", "Bundle health", "Knowledge graph"]
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_the_home_page_offers_the_architecture_page_when_the_docs_have_one(tmp_path):
+    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / "docs" / "architecture.md", "# Architecture\n\nHow the platform is built.\n")
+    site = lay_down(tmp_path)
+    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
+    assert result, f"config.mjs failed: {result.out}"
+    actions = json.loads(result.out)["HOME"]["actions"]
+    assert [a["text"] for a in actions] == ["Browse the bundle", "Architecture", "Bundle health", "Knowledge graph"]
+    assert actions[1]["link"] == "/docs/architecture/"
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")
