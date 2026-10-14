@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **A ktl-website data page opens Datasette Lite in a new tab.** The site stays open while Datasette Lite downloads Datasette and the database.
+
 ## [0.41.1] - 2026-10-14
 
 ### Fixed

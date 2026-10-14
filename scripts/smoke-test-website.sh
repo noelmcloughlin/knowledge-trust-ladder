@@ -235,8 +235,8 @@ assert "gen-doc's search wrapper is gone" "! grep -q 'data-search-exclude' \"$di
 assert "search leaves the schema's pages out" "! grep -q 'data-pagefind-body' \"$dist/schema/Service/index.html\""
 assert "a type's title glued to its frontmatter is its title" "grep -q '<title>Type: String' \"$dist/schema/String/index.html\""
 assert "a schema page links its neighbour by the neighbour's own name" "grep -q 'href=\"/acme-platform/schema/owner/\"' \"$dist/schema/Service/index.html\""
-assert "the data page opens the database in Datasette Lite, with its analytics off" \
-  "grep -q 'lite.datasette.io/?url=' \"$dist/browse/index.html\" && grep -q 'analytics=off' \"$dist/browse/index.html\""
+assert "the data page opens the database in Datasette Lite in a new tab, with its analytics off" \
+  "grep -q 'lite.datasette.io/?url=' \"$dist/browse/index.html\" && grep -q 'analytics=off' \"$dist/browse/index.html\" && grep -q 'target=\"_blank\" rel=\"noopener\">Open in Datasette Lite' \"$dist/browse/index.html\""
 assert "the data page describes the database from its metadata" "grep -q 'The services the platform runs' \"$dist/browse/index.html\""
 assert "only the databases and their metadata are published" "[[ ! -e \"$dist/browse/notes.txt\" && ! -e \"$dist/browse/metadata.yaml\" ]]"
 assert "the metadata is published without its plugins' settings" \
