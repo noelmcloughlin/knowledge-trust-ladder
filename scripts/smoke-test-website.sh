@@ -212,7 +212,7 @@ build
 for f in index.html knowledge/index.html knowledge/services/example-service-a/index.html health/index.html graph/index.html \
          knowledge/concepts.jsonld knowledge/graph.json knowledge/graph.nt knowledge/datasets.jsonld \
          knowledge/services/example-service-a.md knowledge/services/example-service-a.jsonld \
-         llms.txt llms-full.txt docs/guide/index.html changelog/index.html og/index.png favicon.svg; do
+         knowledge/log.xml llms.txt llms-full.txt docs/guide/index.html changelog/index.html og/index.png favicon.svg; do
   assert "dist/$f is there" "[[ -f \"$host/website/dist/$f\" ]]"
 done
 assert "the home page is the README's" "grep -q 'The platform Acme runs' \"$host/website/dist/index.html\""
@@ -224,6 +224,10 @@ assert "llms-full.txt opens each concept with its label and its page, its headin
   "grep -A2 '^## Example Service A$' \"$host/website/dist/llms-full.txt\" | grep -q '^- Label: ' && grep -q '^- Page: https://acme.github.io/acme-platform/knowledge/services/example-service-a/$' \"$host/website/dist/llms-full.txt\" && grep -q '^### Overview$' \"$host/website/dist/llms-full.txt\""
 assert "the link check reads the text files too" "grep -q 'text files all resolve' \"$test_root/build.log\""
 assert "llms.txt offers llms-full.txt" "grep -q '/llms-full.txt)' \"$host/website/dist/llms.txt\""
+assert "the log feed is well-formed, with the skeleton's day as an entry, dated from git, in its category" \
+  "python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' \"$host/website/dist/knowledge/log.xml\" && grep -q 'Initialization: 1</title>' \"$host/website/dist/knowledge/log.xml\" && grep -q '<published>' \"$host/website/dist/knowledge/log.xml\" && grep -q '<category term=\"Initialization\"/>' \"$host/website/dist/knowledge/log.xml\""
+assert "the feed's entries are named by the bundle's base_iri" "grep -q '<id>https://acme.example/knowledge/log#' \"$host/website/dist/knowledge/log.xml\""
+assert "every page names the log feed" "grep -q 'type=\"application/atom+xml\"[^>]*href=\"/acme-platform/knowledge/log.xml\"' \"$host/website/dist/index.html\""
 assert "the sync built the schema's pages and the data with their commands" \
   "grep -q 'building docs/elements with' \"$test_root/build.log\" && grep -q 'building data with' \"$test_root/build.log\""
 for f in schema/index.html schema/Service/index.html schema/owner/index.html schema/String/index.html \

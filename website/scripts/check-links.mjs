@@ -1,9 +1,9 @@
 // Runs after `astro build`: every link and image from one page of the site
 // to another must reach a file in dist/, and a link to a heading must reach
 // an element with that id, and a page's social card, named by its full
-// address, must be a file too. The generated text files, llms.txt and
-// llms-full.txt, name the site's pages by their full addresses, and those
-// must reach a file as well. A link that leaves
+// address, must be a file too. The generated text files, llms.txt,
+// llms-full.txt and the bundle log's feed, name the site's pages by their
+// full addresses, and those must reach a file as well. A link that leaves
 // the site is not checked here; validate.yml's lychee run checks the
 // repository's own Markdown.
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
@@ -69,11 +69,11 @@ for (const file of pages) {
   }
 }
 
-// The text files hold Markdown, so an address is read up to the first
-// character that ends one, less any punctuation after it.
+// The text files hold Markdown and escaped HTML, so an address is read up to
+// the first character that ends one in either, less any punctuation after it.
 const unescape = (text) => text.replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 let files = 0;
-for (const name of ["llms.txt", "llms-full.txt"]) {
+for (const name of ["llms.txt", "llms-full.txt", "knowledge/log.xml"]) {
   const file = resolve(DIST, name);
   if (!existsSync(file)) continue;
   files++;
