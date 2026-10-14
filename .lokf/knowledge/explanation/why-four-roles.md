@@ -2,7 +2,7 @@
 type: Explanation
 id: https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
 title: Why four skill roles rather than one skill
-description: Why the work is split into four skills, sidecar, librarian, curator and docent, named for the library and museum professions and run first in order and then as a loop, beside a fifth role that is not a skill (the registrar) and a fifth skill that is not a role (ktl-prose).
+description: Why the work is split into four skills, sidecar, librarian, curator and docent, named for the library and museum professions and run first in order and then as a loop, beside a fifth role that is not a skill (the registrar) and two optional skills beside the roles (ktl-prose, and ktl-website, which publishes the bundle).
 genre: explanation
 resource: docs/architecture.md
 sources:
@@ -13,7 +13,7 @@ sources:
 - resource: docs/obsidian.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-14T00:35:00Z"
 status: draft
 about:
 - https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
@@ -36,6 +36,8 @@ verified:
 The architecture page names five roles, and four of them are skills. Its section is "Four skills, three lines of the poem", after the three lines of Amy Lowell's *The Congressional Library* it opens with. The fifth role, the **registrar**, is not a skill. It is the `lokf` toolkit, CI's gate, `knowledge-apply.sh` at the librarian's desk and `knowledge-report.sh` at the reader's desk and the curator's ([why a registrar role](why-a-registrar-role.md)). In Obsidian, where there is no CI, the optional KTL Registrar plugin does the registrar's work, checking each record as it is typed.
 
 The page also names a fifth skill, which is not a role: `ktl-prose`, the librarian's copy editor, which rewords what an agent wrote, in plain English, before a person confirms it. It changes the wording and never a fact, it leaves every byte of frontmatter alone, and it never touches a concept a person wrote or confirmed. It is optional, and the roles lose nothing without it ([ktl-prose skill](../playbooks/ktl-prose-skill.md)).
+
+The page names a sixth skill too, `ktl-website`, which publishes the bundle. It lays down a website with a page per concept and its trust label, the health page, the knowledge graph and search by trust and type, and serves the four files `lokf export` writes beside the pages. A workflow publishes the site to GitHub Pages. It is optional, like `ktl-prose`, and the roles lose nothing without it ([ktl-website skill](../playbooks/ktl-website-skill.md)).
 
 Each skill takes one line of the poem, or the role the poem leaves implicit, and the page's table says how often each runs:
 

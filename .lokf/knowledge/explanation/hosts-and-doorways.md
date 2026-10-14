@@ -25,6 +25,7 @@ verified:
   at: "2026-10-13T15:08:54Z"
 - by: human:noelmcloughlin
   at: "2026-10-13T01:20:21Z"
+status: draft
 ---
 
 # The pattern
@@ -86,3 +87,7 @@ The reversal keeps these, because they cost nothing and still cover a shared fol
 - the dual pathspecs in the Step 5 templates;
 - the plugins' auto-detection of a top-level `knowledge_bundle/`, and their *Bundle root folders* setting;
 - the junction guidance for Windows.
+
+## Open questions
+
+- 2026-10-14, process:ktl-librarian: Since 2026-10-14 the portability matrix in `skills/ktl-sidecar/references/portability.md` says that on GitLab, Forgejo and Gitea the GitHub Actions workflows are lost, ktl-website's deploy included. This concept says the three GitHub Actions workflows are the only loss there.

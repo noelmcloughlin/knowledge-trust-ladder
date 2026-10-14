@@ -1,5 +1,20 @@
 # Change Log
 
+## 2026-10-14
+
+* **Added**: ktl-website skill, from `skills/ktl-website/SKILL.md` and its references, the sixth skill that 0.39.0 added.
+* **Changed**: Versioning policy: six skills under one tag, as `docs/architecture.md` and `CONTRIBUTING.md` now count since ktl-website. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Why the skills live in their own repository: six skills, as `docs/install.md`, `plugin.json` and `marketplace.json` now count since ktl-website.
+* **Changed**: Contributing: only `website/` builds, two helpers (`ktl-prose` and `ktl-website`) and six skills under one tag, check 11w among the template pairs, and the website's role boundary, as `CONTRIBUTING.md` now says.
+* **Changed**: Repository validation: six skill directories, ktl-website's word budget, checks 11w and 12w, check 17 over every skill's templates, the two website test modules, four workflow templates for actionlint and the `smoke-test-website` job, as `validate-repository.sh` and `validate.yml` now say.
+* **Changed**: Releasing: six skills under one tag since 0.39.0 (`CHANGELOG.md`), and `sync-sidecar.sh` also carries ktl-website's templates to a sibling that has a site.
+* **Changed**: ktl-sidecar skill: Step 6 names ktl-website as the skill that can publish the bundle, and the scheduled librarian's and the release's variables go under Repository variables, never on an environment, as `SKILL.md` and `references/automation.md` now say.
+* **Changed**: Why four skill roles: the architecture page now names a sixth skill, `ktl-website`, which publishes the bundle and is optional like `ktl-prose`.
+* **Changed**: The source map: six skill playbooks, a row for ktl-website's templates and preflight, the website workflow's new name, the website smoke test, and the thirtieth pass's notes. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Open question**: Security policy: Since 2026-10-14 `SECURITY.md` lists ktl-website's templates and its preflight as a surface of their own. It names `knowledge-website.yaml` among this repository's copies of the templates, counts the six skills' prose, and names five skills that run `.lokf/scripts/`, ktl-website among them. This concept carries the earlier table and four skills. `SECURITY.md` itself still says four surfaces above a table of five rows.
+* **Open question**: Threat model: Since 2026-10-14 `docs/threat-model.md` names ktl-website among the skills that run the repository's scripts from `.lokf/scripts/`, counts four workflow templates under the two skills' `templates/github/` as pinned, and says six skills read content they did not author. This concept still names four skills that run those scripts.
+* **Open question**: Hosts and doorways - where the bundle's real folder lives: Since 2026-10-14 the portability matrix in `skills/ktl-sidecar/references/portability.md` says that on GitLab, Forgejo and Gitea the GitHub Actions workflows are lost, ktl-website's deploy included. This concept says the three GitHub Actions workflows are the only loss there.
+
 ## 2026-10-13
 
 * **Curation**: human:noelmcloughlin corrected 1: Build, preview and edit the website, now naming `knowledge-website.yaml`, the default branch, the variable gate, `docs/architecture.en-simple.md` and `DOCS.groups`.

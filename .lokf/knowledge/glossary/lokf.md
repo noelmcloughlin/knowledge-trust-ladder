@@ -21,7 +21,7 @@ relatedTo:
 - https://knowledge-trust-ladder.example/knowledge/glossary/linkml
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  at: "2026-10-14T00:35:00Z"
 ---
 
 # Overview

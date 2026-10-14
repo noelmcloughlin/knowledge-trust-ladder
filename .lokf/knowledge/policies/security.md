@@ -25,6 +25,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-13T00:41:54Z"
 stale_after: 2027-03-26
+status: draft
 ---
 
 # Overview
@@ -63,3 +64,7 @@ A skill's `Scope:` line is prose, not a permission. Run interactively, an agent 
 - A reader's own words to ktl-docent. That boundary belongs to the agent harness, not to a Markdown file.
 
 Check 10 of `scripts/validate-repository.sh` fails when `SECURITY.md` outgrows a word budget of 900. Its comment says the file sits between 450 and 800 words and ran to 1,400 to 1,900 before `docs/threat-model.md` took the design.
+
+## Open questions
+
+- 2026-10-14, process:ktl-librarian: Since 2026-10-14 `SECURITY.md` lists ktl-website's templates and its preflight as a surface of their own. It names `knowledge-website.yaml` among this repository's copies of the templates, counts the six skills' prose, and names five skills that run `.lokf/scripts/`, ktl-website among them. This concept carries the earlier table and four skills. `SECURITY.md` itself still says four surfaces above a table of five rows.
