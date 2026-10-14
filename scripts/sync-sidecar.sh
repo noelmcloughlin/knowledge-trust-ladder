@@ -325,10 +325,22 @@ for sibling in "$@"; do
   changed=()
   while IFS= read -r f; do changed+=("$f"); done < <(git -C "$sibling_root" diff --name-only)
   for f in "${added[@]}"; do changed+=("${f%% (*}"); done
-  echo "   changelog (under ## [Unreleased], ### Security):"
+  # Two steps, each set apart by a blank line: the changelog entry to write,
+  # since a sync that adds none leaves its release undocumented, and the
+  # commit, one file to a line, ready to paste.
+  echo "   Next, add this entry to CHANGELOG.md, under ## [Unreleased] and ### Security:"
+  echo ""
   echo "   - **The sidecar copies and the skills pin match \`$tag\`.** <what the release changed in the copies, from its changelog>. No plugin change."
-  echo "   commit, from $sibling_root, on $branch:"
-  echo "   git add CHANGELOG.md ${changed[*]} && git commit -m \"security(sidecar): sync copies and skills pin from $tag\""
+  echo ""
+  echo "   Then commit, from $sibling_root, on $branch:"
+  echo ""
+  staged=(CHANGELOG.md "${changed[@]}")
+  for i in "${!staged[@]}"; do
+    line="     ${staged[$i]}"; [[ "$i" -eq 0 ]] && line="   git add ${staged[$i]}"
+    if [[ "$i" -lt $((${#staged[@]} - 1)) ]]; then echo "$line \\"; else echo "$line"; fi
+  done
+  echo "   git commit -m \"security(sidecar): sync copies and skills pin from $tag\""
 done
+echo ""
 
 exit "$status"
