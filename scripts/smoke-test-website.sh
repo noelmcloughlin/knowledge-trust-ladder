@@ -9,11 +9,18 @@
 # Usage: scripts/smoke-test-website.sh [--keep]   (--keep leaves the host behind)
 # Needs: uv, node 22.12 or later, npm, git and python3, and the network for
 # `uv lock` and `npm ci`.
+#
+# The host's toolkit is resolved as of the newest file this repository's own
+# .lokf/uv.lock took, never as of today. A release uploaded since then could
+# otherwise fail the test before anyone relocks here: wrapt 2.5.1 reached
+# PyPI with wheels for CPython 3.10 and 3.11 only, and broke every run.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 skill="$repo_root/skills/ktl-website"
 sidecar="$repo_root/skills/ktl-sidecar/templates"
+newest_upload="$(grep -o 'upload-time = "[^"]*"' "$repo_root/.lokf/uv.lock" | cut -d'"' -f2 | sort | tail -1)"
+[[ -n "$newest_upload" ]] || { echo "no upload-time in .lokf/uv.lock - the host's toolkit cannot be resolved as of this repository's lock" >&2; exit 1; }
 for tool in uv node npm git python3; do
   command -v "$tool" >/dev/null 2>&1 || { echo "$tool not found - the website smoke test needs uv, node, npm, git and python3" >&2; exit 1; }
 done
@@ -68,7 +75,7 @@ open(path, "w", encoding="utf-8").write(text)
   mkdir -p docs
   printf '# The guide\n\nHow to use the platform.\n' > docs/guide.md
   printf '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- The platform.\n' > CHANGELOG.md
-  (cd .lokf && uv lock -q && uv sync -q --locked)
+  (cd .lokf && UV_EXCLUDE_NEWER="$newest_upload" uv lock -q && UV_EXCLUDE_NEWER="$newest_upload" uv sync -q --locked)
   git add -A
   git commit -q -m "a host with a bundle"
 )
