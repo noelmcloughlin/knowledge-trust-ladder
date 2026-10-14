@@ -54,7 +54,7 @@ On a fresh repository they run in order: **sidecar**, then **librarian** filling
 
 ### The fifth role, which is not a skill
 
-The **registrar** keeps the records themselves in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or their signed commit.
+The **registrar** keeps the records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or their signed commit.
 
 At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is `knowledge-apply.sh`, called *the pen* because the librarian writes the bundle only through it. The librarian describes each change as an operation, and the pen writes the record, stamps its provenance, keeps the index in step, and refuses one that would forge or remove a confirmation. At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the summary at the top of this page: a check gives the same answer every time, which neither the librarian nor the curator can promise.
 
@@ -75,7 +75,7 @@ In the **three lines of defence** that regulated industries use, the librarian a
 
 ### The sixth skill, which publishes the bundle
 
-[`ktl-website`](../skills/ktl-website/SKILL.md) lays down a website for the bundle. It has a page per concept with its trust label, the health page, the knowledge graph and search by trust and type, and it serves the four files `lokf export` writes beside the pages. The repository's README, docs and changelog join them when it has them, and a workflow publishes the site to GitHub Pages. This repository's own [site](https://noelmcloughlin.github.io/knowledge-trust-ladder/) is the template's first copy. It is optional, like `ktl-prose`, and the roles above lose nothing without it.
+[`ktl-website`](../skills/ktl-website/SKILL.md) builds a website for the bundle. It has a page per concept with its trust label, the health page, the knowledge graph and search by trust and type, and it serves the four files `lokf export` writes beside the pages. The repository's README, docs and changelog join them when it has them, and a workflow publishes the site to GitHub Pages. This repository's own [site](https://noelmcloughlin.github.io/knowledge-trust-ladder/) is the template's first copy. It is optional, like `ktl-prose`.
 
 ## Trust stays visible
 

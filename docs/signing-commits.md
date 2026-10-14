@@ -6,7 +6,7 @@ The `provenance` job in each repository's `knowledge-registrar.yaml` checks thos
 
 You are encouraged to sign everything. It costs one setup and nothing afterwards.
 
-**Choose one format: GPG or SSH.** They are not interchangeable, and mixing them is the usual beginner failure. Git reads `user.signingkey` in whichever format `gpg.format` names, so a file in the wrong format fails with `could not load public key`. If you have no preference, GPG is the one to pick: it carries an identity and an expiry of its own, which is what the sections below manage. Either way, the address in `git config user.email` must be a **verified email** on your GitHub account, or every commit stays `Unverified`.
+**Choose one format: GPG or SSH.** Mixing them is the usual failure. Git reads `user.signingkey` in whichever format `gpg.format` names, so a file in the wrong format fails with `could not load public key`. If you have no preference, GPG is the one to pick: it carries an identity and an expiry of its own, which is what the sections below manage. Either way, the address in `git config user.email` must be a **verified email** on your GitHub account, or every commit stays `Unverified`.
 
 ## GPG, step by step
 
@@ -71,7 +71,7 @@ Add it at github.com/settings/keys under **SSH keys** → **New SSH key** → **
 
 ## Renew a GPG key before it expires
 
-Put a calendar reminder a month before the expiry date `gpg --list-secret-keys` shows. Renewing is routine maintenance and takes a minute:
+Put a calendar reminder a month before the expiry date `gpg --list-secret-keys` shows. Renewing takes a minute:
 
 ```bash
 gpg --quick-set-expire <fingerprint> 2y
@@ -80,7 +80,7 @@ gpg --armor --export <fingerprint>
 
 Then, on github.com/settings/keys, **delete the old entry and add the exported key again**. GitHub stores the expiry from the copy you uploaded and does not re-read it, so this step is what renews it there.
 
-Two things worth knowing so you renew calmly rather than in a panic:
+Two things to know:
 
 - **Extending keeps the same key and fingerprint**, so past commits keep verifying and nothing else needs reconfiguring. Prefer it to making a new key.
 - **An expiry is not a compromise.** GitHub still shows commits signed before the key expired as `Verified`. What an expired key stops is *new* signatures. So renew whenever you notice. But if the key is ever stolen, revoke it instead, and do not extend it.

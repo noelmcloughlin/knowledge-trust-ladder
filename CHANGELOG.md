@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The README and docs pages lose their dead sentences.** The install, Obsidian, Copilot and releasing pages say the step and stop, and the Obsidian page names the `knowledge_bundle` doorway once instead of narrating the link. No skill change.
+
 ## [0.40.0] - 2026-10-14
 
 ### Added

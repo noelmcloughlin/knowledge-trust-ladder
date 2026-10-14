@@ -3,7 +3,7 @@
 > [!NOTE]
 > What Knowledge Trust Ladder (KTL) took from one paper, and what the paper leaves open. WikiSkill is not SkillWiki, a 2026 paper on governing agent skills that [docs/skillwiki.md](skillwiki.md) covers.
 
-*WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution* (Tang et al., Google Research, August 2026) has an agent compile its own execution traces into a wiki and evolves the agent's skills from it. KTL has an agent derive a bundle from a repository and has a person confirm it. Both take their shape from [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): immutable sources, a corpus a model writes, an index a reader opens first, a log, and a conventions file.
+*WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution* (Tang et al., Google Research, August 2026) describes an agent compiling its execution traces into a wiki and evolving its skills from it. In KTL an agent derives a bundle from a repository and a person confirms it. Both take their shape from [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): immutable sources, a corpus a model writes, an index a reader opens first, a log, and a conventions file.
 
 The two run the same loop. A model maintains the corpus, a program applies its changes and keeps the record, a separate agent consumes the corpus without writing it, and a gate decides what stays. WikiSkill's gate is a validation score, with no person in the loop. KTL's gate is the registrar, and the verdict is a named person's. Below, *the bundle* is the corpus KTL keeps in `.lokf/knowledge/`.
 

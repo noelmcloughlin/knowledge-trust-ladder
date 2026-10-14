@@ -42,7 +42,7 @@ gh skill install noelmcloughlin/knowledge-trust-ladder ktl-website --scope user
 
 ## Install for your user, not into the repository
 
-The commands above install for your user, so one install serves every repository. A repository needs no copy of its own: the scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A user install also keeps the instructions an agent follows under your control, since a copy inside a repository comes from whoever controls that repository ([threat-model.md](threat-model.md)). Install into the repository only when a team wants every member on one version. Leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
+The commands above install for your user. The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts, and a user install keeps the instructions an agent follows under your control ([threat-model.md](threat-model.md)). Install into the repository only when a team wants every member on one version: leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
 
 ## Turn on the workflows
 
