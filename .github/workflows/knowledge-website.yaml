@@ -93,9 +93,12 @@ jobs:
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
-          # The lokf toolkit's lock, and the project's, whose environment a
-          # schema or data command builds.
-          cache-dependency-glob: "**/uv.lock"
+          cache-dependency-glob: .lokf/uv.lock
+          # A schema or data command builds the project's own environment in
+          # the same cache, gigabytes for a project with machine-learning
+          # packages, so the downloaded wheels are pruned before it is saved:
+          # a repository's caches share 10 GB.
+          prune-cache: true
 
       - name: Install the lokf toolkit the sidecar pins
         run: uv sync --locked
