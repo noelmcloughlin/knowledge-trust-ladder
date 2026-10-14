@@ -2,6 +2,11 @@
 
 ## 2026-10-14
 
+* **Changed**: ktl-website skill: the Schema topic, the data pages in Datasette Lite, the preflight's recipe and `just` lines, the weekly run and its new triggers, and the smoke test's schema and data, as 0.41.0 and 0.42.0 brought them.
+* **Open question**: Build, preview and edit the website: Since 0.41.0 (2026-10-14) `knowledge-website.yaml` also runs every Monday at 05:23 UTC from the default branch, and on a change to `.linkml/`, a justfile, a `pyproject.toml` or a `uv.lock`; the scheduled run deploys too. This concept lists the push and pull-request paths up to the workflow itself, and no weekly run.
+* **Open question**: Build, preview and edit the website: `website/README.md` now says a promoted release's changelog page appears with the next build, the workflow's weekly run at the latest, or a run by hand. This concept says the next build, or a run by hand.
+* **Open question**: Build, preview and edit the website: `website/README.md` now names `site.config.mjs` for the site's values and options, `src/styles/custom.css`, this repository's own, for its look, and `src/components/Mermaid.astro` for how a diagram is drawn, and says `node scripts/config.mjs` prints what the sync reads. This concept's What to edit section names none of them.
+* **Open question**: Build, preview and edit the website: Since 0.42.0 (`CHANGELOG.md`) the README and the architecture page link the site at its persistent address, `https://w3id.org/ktl/`, which redirects to the GitHub Pages address this concept names.
 * **Changed**: `base_iri` moved from the `knowledge-trust-ladder.example` placeholder to `https://w3id.org/ktl/knowledge/`, now that the w3id rule resolves it. Every concept id, the publisher id and every typed-relation target moved with it; no `verified` event changed.
 * **Changed**: Knowledge sources: `base_iri` is now `https://w3id.org/ktl/knowledge/`, no longer the `knowledge-trust-ladder.example` placeholder. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Added**: ktl-website skill, from `skills/ktl-website/SKILL.md` and its references, the sixth skill that 0.39.0 added.
