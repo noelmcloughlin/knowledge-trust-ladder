@@ -44,6 +44,10 @@ gh skill install noelmcloughlin/knowledge-trust-ladder ktl-website --scope user
 
 The commands above install for your user, so one install serves every repository. A repository needs no copy of its own: the scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A user install also keeps the instructions an agent follows under your control, since a copy inside a repository comes from whoever controls that repository ([threat-model.md](threat-model.md)). Install into the repository only when a team wants every member on one version. Leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
 
+## Turn on the workflows
+
+Each workflow the skills install does nothing until a repository variable turns it on. Set these under Repository variables (Settings, Secrets and variables, Actions, Variables), never on an environment such as `release`, which the workflows cannot read. [The sidecar's automation page](../skills/ktl-sidecar/references/automation.md#switches-and-where-they-go) lists every switch and secret, and where each goes.
+
 ## Pin to one tag
 
 All six skills release together under one tag, so pin them to the same one. Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`. [releasing.md](releasing.md) says what each version level means.
