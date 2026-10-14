@@ -697,9 +697,15 @@ if command -v node >/dev/null 2>&1; then
     && cl_git tag v0.18.0
   # The state right after the first push's promote merged and a second push
   # then wrote its own Unreleased entry above it, with v0.19.0 still untagged:
-  # exactly main's state before publish.yml ever ran for it.
+  # exactly main's state before publish.yml ever ran for it. The second push
+  # also carries the first one's entry, as a branch stacked on it does; on
+  # 2026-10-14 the fold listed such entries twice.
   cat > "$cl/repo/CHANGELOG.md" <<'EOF'
 ## [Unreleased]
+
+### Added
+
+- first push's entry
 
 ### Fixed
 
@@ -718,12 +724,12 @@ EOF
   (cd "$cl/repo" && node .github/scripts/changelog-release.mjs promote 0.19.0 2026-09-18 >/dev/null 2>&1)
   count="$(grep -cE '^## \[0\.19\.0\]' "$cl/repo/CHANGELOG.md")"
   if [[ "$count" -eq 1 ]] \
-     && grep -q "first push's entry" "$cl/repo/CHANGELOG.md" \
+     && [[ "$(grep -c "first push's entry" "$cl/repo/CHANGELOG.md")" -eq 1 ]] \
      && grep -q "second push's entry" "$cl/repo/CHANGELOG.md" \
      && grep -qE '^## \[Unreleased\]$' "$cl/repo/CHANGELOG.md"; then
-    ok "a second push before publish.yml tags folds into the one pending section"
+    ok "a second push before publish.yml tags folds into the one pending section, each entry once"
   else
-    err "promote wrote $count heading(s) for 0.19.0 instead of folding"
+    err "promote wrote $count heading(s) for 0.19.0 instead of folding, or listed an entry the section held twice"
   fi
   cl_git tag v0.19.0
   # promote already left one empty "## [Unreleased]" at the top; fill it in
