@@ -8,10 +8,11 @@
 //                      health.json, the numbers the health page charts;
 //                      changelogs.ts, the releases collection or none; and
 //                      CHANGELOG.md, which the releases section reads
-//   public/            the figures, llms.txt, the favicon, the databases
-//                      under browse/, and under knowledge/ the four files
-//                      `lokf export` writes, every bundle file as it is in
-//                      the repository, and each concept's JSON-LD
+//   public/            the figures, llms.txt, llms-full.txt, the favicon,
+//                      the databases under browse/, and under knowledge/
+//                      the four files `lokf export` writes, every bundle
+//                      file as it is in the repository, and each concept's
+//                      JSON-LD
 //
 // It runs two programs the repository already has: the lokf toolkit's
 // `export`, from the sidecar's own environment, and knowledge-report.sh,
@@ -40,6 +41,7 @@ import {
   REPO_ROOT,
   REPO_URL,
   SCHEMA,
+  SITE,
   SITE_URL,
   SITE_DIR,
   TITLE,
@@ -50,6 +52,7 @@ import {
   groupLabel,
   schemaPages,
 } from "./config.mjs";
+import { WIKILINK, resolveWikilink } from "./markdown-ktl.mjs";
 import { rewriteUrl, route } from "./routes.mjs";
 
 const CONTENT = resolve(SITE_DIR, "src", "content", "docs");
@@ -718,10 +721,14 @@ function writePages() {
   }
 }
 
-function writeLlmsTxt(docs, concepts) {
-  // The summary is the repository's own llms.txt line when it has one.
+/** The summary under the title: the repository's own llms.txt line when it has one. */
+function llmsSummary() {
   const llms = existsSync(resolve(REPO_ROOT, "llms.txt")) ? repoFile("llms.txt") : "";
-  const summary = (llms.match(/^> (.+)$/m) ?? [, DESCRIPTION])[1];
+  return (llms.match(/^> (.+)$/m) ?? [, DESCRIPTION])[1];
+}
+
+function writeLlmsTxt(docs, concepts) {
+  const summary = llmsSummary();
   const inputs = [
     ...(HOME.source ? [HOME.source === "README.md" ? "its README" : `its ${HOME.source}`] : []),
     ...(docs.length ? [`its ${DOCS.dir}/ pages`] : []),
@@ -751,6 +758,7 @@ function writeLlmsTxt(docs, concepts) {
     "",
     "## Optional",
     "",
+    `- [The bundle in full](${SITE_URL}/llms-full.txt): every concept's text in one file, each after its label`,
     `- [concepts.jsonld](${SITE_URL}/knowledge/concepts.jsonld): every concept's frontmatter and body under one JSON-LD context`,
     `- [graph.nt](${SITE_URL}/knowledge/graph.nt): the whole bundle as N-Triples`,
     ...(SCHEMA ? [`- [Schema](${SITE_URL}/schema/): the LinkML schema's classes, slots, enumerations and types, a page each`] : []),
@@ -759,6 +767,81 @@ function writeLlmsTxt(docs, concepts) {
     "",
   ];
   write(resolve(PUBLIC, "llms.txt"), lines.join("\n"));
+}
+
+/**
+ * A link written in the file at `fromPath`, as an address that works
+ * anywhere, for text read away from its page: a link to a heading goes to
+ * that heading on `page`.
+ */
+function absoluteUrl(fromPath, page, url) {
+  if (url.startsWith("#")) return page + url;
+  const out = rewriteUrl(fromPath, url);
+  return /^\/(?!\/)/.test(out) ? SITE + out : out;
+}
+
+// A Markdown link's address: bare, or in angle brackets, with a title or
+// none; the brackets and the title are kept.
+const MD_LINK = /\]\((<[^>]*>|[^)\s]+)((?:\s+"[^"]*")?)\)/g;
+
+/**
+ * The whole bundle in one file, for a model that reads it at once: each
+ * concept's text after its label, its type, its addresses and its sources.
+ * Its headings move under its title and its links become absolute, the
+ * wikilinks too, since the file has no address of its own to resolve them
+ * against.
+ */
+function writeLlmsFullTxt(concepts) {
+  const ids = concepts.map((c) => c.id);
+  const entry = (c) => {
+    const levels = [];
+    mapProse(c.body, (line) => {
+      const m = line.match(/^(#{1,6}) /);
+      if (m) levels.push(m[1].length);
+      return line;
+    });
+    const shift = levels.length ? 3 - Math.min(...levels) : 0;
+    const from = `.lokf/knowledge/${c.id}.md`;
+    const page = `${SITE_URL}/knowledge/${c.id}/`;
+    const body = mapProse(c.body, (line) =>
+      line
+        .replace(/^(#{1,6}) /, (_, h) => "#".repeat(Math.min(6, h.length + shift)) + " ")
+        .replace(MD_LINK, (_, url, title) => {
+          const bare = url.startsWith("<") ? url.slice(1, -1) : url;
+          const abs = absoluteUrl(from, page, bare);
+          return `](${url.startsWith("<") ? `<${abs}>` : abs}${title})`;
+        })
+        .replace(WIKILINK, (_, name, heading = "", alias) => {
+          const id = resolveWikilink(name, c.id, ids);
+          const text = alias ?? name.trim();
+          return id ? `[${text}](${SITE_URL}/knowledge/${id}/${heading})` : text;
+        }),
+    );
+    const sources = c.record.sources.map((s) => `[${s.text}](${s.href})`);
+    return [
+      `## ${c.title}`,
+      "",
+      `- Label: ${c.label}`,
+      `- Type: ${slotName(c.record.type)}`,
+      `- Address: ${c.iri}`,
+      `- Page: ${page}`,
+      `- Markdown: ${SITE_URL}/knowledge/${c.id}.md`,
+      ...(sources.length ? [`- Sources: ${sources.join(", ")}`] : []),
+      ...(c.data.definition ? [`- Definition: ${plain(String(c.data.definition))}`] : []),
+      "",
+      body.trim(),
+    ].join("\n");
+  };
+  const lines = [
+    `# ${TITLE}: the knowledge bundle in full`,
+    "",
+    `> ${llmsSummary()}`,
+    "",
+    `Every concept in the knowledge bundle of ${REPO_URL}, as the site at ${SITE_URL}/ shows it. Each one opens with its label, which says how far it has been checked. Only a label that starts "confirmed by a person" means that a named person has confirmed the text as it stands. Weigh the rest accordingly.`,
+    "",
+    ...[...concepts].sort((a, b) => a.id.localeCompare(b.id)).map((c) => entry(c) + "\n"),
+  ];
+  write(resolve(PUBLIC, "llms-full.txt"), lines.join("\n"));
 }
 
 /** Every file of the bundle as it is in the repository, so `<concept>.md` sits beside its page. */
@@ -1065,6 +1148,7 @@ writePages();
 const schemaCount = writeSchemaPages();
 const databases = writeBrowse();
 writeLlmsTxt(docs, concepts);
+writeLlmsFullTxt(concepts);
 writeCollections();
 if (CHANGELOG) writeChangelog();
 

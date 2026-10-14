@@ -45,7 +45,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 - A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a schema page to `/schema/<name>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
 - An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does; otherwise the text stays as written.
-- After the build, `scripts/check-links.mjs` fails the build when a link between the site's own pages, a link to a heading, or a page's social card does not resolve. Links that leave the site are not checked.
+- After the build, `scripts/check-links.mjs` fails the build when a link between the site's own pages, a link to a heading, or a page's social card does not resolve. It reads `llms.txt` and `llms-full.txt` too, and fails when either names a page of the site that is not there. Links that leave the site are not checked.
 
 ## The changelog
 
@@ -56,9 +56,10 @@ Every page comes from a file the repository already holds, so a change to the si
 - The figures folder is served under `/assets/`. The logo's light and dark files are copied to `src/generated/`, and the favicon to `/favicon.<type>`; with `LOGO = null`, the site's own ladder mark is the favicon and the title is shown as text.
 - `LOGO` left out or `"auto"` takes the Knowledge Trust Ladder logo. That is a `knowledge-trust-ladder-logo.svg` git sees in the repository, tracked or untracked but never ignored, outside `website/` and outside a skill's templates, the one nearest the root first. With none, it is the copy in `website/src/assets/`. The `-dark.svg` file beside it is the dark version when there is one.
 
-## `llms.txt`
+## `llms.txt` and `llms-full.txt`
 
-- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`; `DESCRIPTION` stands in without it. The rest of that file is generated: the docs pages, then every concept with its Markdown file and its trust label, and under Optional the schema's overview and the data page when the site has them.
+- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`; `DESCRIPTION` stands in without it. The rest of that file is generated: the docs pages, then every concept with its Markdown file and its trust label. Under Optional come the bundle in full, then the schema's overview and the data page when the site has them.
+- `/llms-full.txt` holds every concept's text in one file, under the same summary. Each concept opens with its trust label, its type, its address, its page, its Markdown file and its sources. Its headings move down under its title, and its links and wikilinks become full addresses, since the file has none of its own to resolve them against.
 
 ## What search leaves out
 
