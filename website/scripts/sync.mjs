@@ -11,8 +11,8 @@
 //   public/            the figures, llms.txt, llms-full.txt, the favicon,
 //                      the databases under browse/, and under knowledge/
 //                      the four files `lokf export` writes, every bundle
-//                      file as it is in the repository, and each concept's
-//                      JSON-LD
+//                      file as it is in the repository, each concept's
+//                      JSON-LD, and log.xml, the bundle log as a feed
 //
 // It runs two programs the repository already has: the lokf toolkit's
 // `export`, from the sidecar's own environment, and knowledge-report.sh,
@@ -22,6 +22,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, relative, resolve } from "node:path";
+import { markdownToHtml } from "satteri";
 import { parse as parseYaml } from "yaml";
 import {
   ASSETS,
@@ -60,6 +61,9 @@ const GENERATED = resolve(SITE_DIR, "src", "generated");
 const PUBLIC = resolve(SITE_DIR, "public");
 const PUBLIC_KNOWLEDGE = resolve(PUBLIC, "knowledge");
 const REPORT = resolve(REPO_ROOT, ".lokf", "scripts", "knowledge-report.sh");
+// The bundle log's feed holds the log's newest days, a day to an entry; the
+// log page holds them all.
+const FEED_DAYS = 20;
 
 const read = (path) => readFileSync(path, "utf8");
 const repoFile = (rel) => read(resolve(REPO_ROOT, rel));
@@ -86,11 +90,11 @@ function page(path, frontmatter, body) {
 // Markdown helpers. Each one leaves fenced code alone.
 // ---------------------------------------------------------------------------
 
-/** Call fn(line) on every line outside a fenced code block; fn returns the replacement line(s). */
+/** Call fn(line, index) on every line outside a fenced code block; fn returns the replacement line(s). */
 function mapProse(text, fn) {
   const out = [];
   let fence = null;
-  for (const line of text.split("\n")) {
+  text.split("\n").forEach((line, index) => {
     const m = line.match(/^\s*(`{3,}|~{3,})/);
     if (fence) {
       if (m && m[1][0] === fence[0] && m[1].length >= fence.length) fence = null;
@@ -99,11 +103,11 @@ function mapProse(text, fn) {
       fence = m[1];
       out.push(line);
     } else {
-      const r = fn(line);
+      const r = fn(line, index);
       if (Array.isArray(r)) out.push(...r);
       else if (r !== null) out.push(r);
     }
-  }
+  });
   return out.join("\n");
 }
 
@@ -512,6 +516,7 @@ function writeOverview(root, concepts, health) {
     `- [graph.json](${k}/graph.json): the typed relations as cytoscape.js elements, which the [knowledge graph](${BASE}/graph/) draws.`,
     `- [datasets.jsonld](${k}/datasets.jsonld): a schema.org Dataset description for each Dataset or Table concept.`,
     `- [index.md](${k}/index.md): the bundle's root file, which declares the header above.`,
+    `- [log.xml](${k}/log.xml): the [bundle log](${k}/log/) as an Atom feed, its newest ${FEED_DAYS} days.`,
     `- Each concept page links the concept's own Markdown file and its JSON-LD, at the concept's path with \`.md\` or \`.jsonld\` added.`,
     ...(existsSync(resolve(REPO_ROOT, ".github", "workflows", "knowledge-release.yaml"))
       ? [`- The bundle as it stood at each release is a zip on the [releases page](${REPO_URL}/releases).`]
@@ -553,8 +558,144 @@ function writeLog() {
       ktlShiftHeadings: hasH1(rest),
       editUrl: false,
     },
-    rest,
+    `A feed reader can follow this log: [log.xml](${BASE}/knowledge/log.xml) holds its newest ${FEED_DAYS} days.\n\n${rest}`,
   );
+}
+
+const isoTime = (seconds) => new Date(seconds * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+/**
+ * The commit time of each line of the log, line number to time, as git
+ * blame reports it. A line changed in the working tree is dated now. The map
+ * is empty without git, or for a log not yet committed.
+ */
+function logLineTimes() {
+  const times = new Map();
+  try {
+    const log = relative(REPO_ROOT, resolve(BUNDLE_DIR, "log.md")).replaceAll("\\", "/");
+    const out = execFileSync("git", ["-C", REPO_ROOT, "blame", "--porcelain", "--", log], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      maxBuffer: 256 * 1024 * 1024,
+    });
+    // Each line opens with its commit and its number; the commit's details
+    // follow the first line it owns, and a tab opens the line's own text.
+    const bySha = new Map();
+    let sha = null;
+    let line = 0;
+    for (const row of out.split("\n")) {
+      const head = row.match(/^([0-9a-f]{40}) \d+ (\d+)/);
+      if (head) [sha, line] = [head[1], Number(head[2])];
+      else if (row.startsWith("committer-time ")) bySha.set(sha, isoTime(Number(row.slice("committer-time ".length))));
+      else if (row.startsWith("\t") && bySha.has(sha)) times.set(line, bySha.get(sha));
+    }
+  } catch {
+    /* no git: each day is dated at its midnight, with no published time */
+  }
+  return times;
+}
+
+// XML allows no control character but tab and the two line ends, so one in
+// the log is dropped rather than left to break the whole feed.
+const xml = (text) =>
+  String(text)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+/**
+ * The bundle log as an Atom feed, so a reader can follow what changed without
+ * watching the repository. Each `## YYYY-MM-DD` section the pen writes is an
+ * entry, titled with the kinds of change it holds, which are its categories
+ * too, and rendered as the page renders it. Git dates it: published when its
+ * first line was committed, updated when its newest was, so a correction to
+ * an old day reaches a reader too. An entry's id is the bundle's `base_iri`
+ * with `log#` and the date, the identity that outlives a move of the site.
+ */
+async function writeLogFeed(root) {
+  const text = read(resolve(BUNDLE_DIR, "log.md"));
+  const { body } = splitFrontmatter(text);
+  // The file's number for the body's first line, which git blame counts from.
+  const first = text.slice(0, text.length - body.length).split("\n").length;
+  // The day headings, outside fenced code, by line; a `#` or another `##`
+  // heading ends a day.
+  const headings = new Map();
+  mapProse(body, (line, index) => {
+    const m = line.match(/^(#{1,2}) (.*?)\s*$/);
+    if (m) headings.set(index, m[1] === "##" && /^\d{4}-\d{2}-\d{2}$/.test(m[2]) ? m[2] : null);
+    return line;
+  });
+  // A date written twice is still one day, since an entry's id is its date.
+  // Blank lines are left undated: a diff may credit one to an older commit.
+  const byDate = new Map();
+  let day = null;
+  body.split("\n").forEach((line, index) => {
+    if (headings.has(index)) {
+      const date = headings.get(index);
+      if (date && !byDate.has(date)) byDate.set(date, { date, lines: [], numbers: [] });
+      day = date ? byDate.get(date) : null;
+      if (day) day.numbers.push(first + index);
+    } else if (day) {
+      day.lines.push(line);
+      if (line.trim()) day.numbers.push(first + index);
+    }
+  });
+  const days = [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date)).slice(0, FEED_DAYS);
+  const times = logLineTimes();
+  const span = (d) => {
+    const at = d.numbers.map((n) => times.get(n)).filter(Boolean).sort();
+    return { published: at[0], updated: at.at(-1) ?? `${d.date}T00:00:00Z` };
+  };
+  const log = `${SITE_URL}/knowledge/log/`;
+  const feedId = `${String(root.base_iri ?? `${SITE_URL}/knowledge/`).replace(/\/?$/, "/")}log`;
+
+  const entries = [];
+  let newest = "1970-01-01T00:00:00Z";
+  for (const d of days) {
+    const text = d.lines.join("\n").trim();
+    const kinds = new Map();
+    for (const m of text.matchAll(/^[*-] \*\*([^*]+)\*\*:/gm)) kinds.set(m[1], (kinds.get(m[1]) ?? 0) + 1);
+    const title = [d.date, ...[...kinds].sort((a, b) => b[1] - a[1]).map(([kind, n]) => `${kind}: ${n}`)].join(" · ");
+    const { html } = await markdownToHtml(text);
+    const content = html.replace(
+      /(<(?:a|img)\b[^>]*?\s(?:href|src)=")([^"]*)"/g,
+      (_, before, url) => `${before}${absoluteUrl(".lokf/knowledge/log.md", log, url)}"`,
+    );
+    const { published, updated } = span(d);
+    if (updated > newest) newest = updated;
+    entries.push(
+      [
+        "  <entry>",
+        `    <title>${xml(title)}</title>`,
+        `    <link rel="alternate" type="text/html" href="${xml(`${log}#${d.date}`)}"/>`,
+        `    <id>${xml(`${feedId}#${d.date}`)}</id>`,
+        ...(published ? [`    <published>${published}</published>`] : []),
+        `    <updated>${updated}</updated>`,
+        ...[...kinds.keys()].map((kind) => `    <category term="${xml(kind)}"/>`),
+        `    <content type="html">${xml(content)}</content>`,
+        "  </entry>",
+      ].join("\n"),
+    );
+  }
+  const lines = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<feed xmlns="http://www.w3.org/2005/Atom">',
+    `  <title>${xml(`${TITLE}: bundle log`)}</title>`,
+    "  <subtitle>What changed in the knowledge bundle, a day to an entry, newest first.</subtitle>",
+    `  <link rel="self" type="application/atom+xml" href="${xml(`${SITE_URL}/knowledge/log.xml`)}"/>`,
+    `  <link rel="alternate" type="text/html" href="${xml(log)}"/>`,
+    `  <link rel="alternate" type="text/markdown" href="${xml(`${SITE_URL}/knowledge/log.md`)}"/>`,
+    `  <id>${xml(feedId)}</id>`,
+    `  <updated>${newest}</updated>`,
+    `  <author><name>${xml(root.publisher?.name ?? TITLE)}</name></author>`,
+    ...(root.license ? [`  <rights>${xml(root.license)}</rights>`] : []),
+    ...entries,
+    "</feed>",
+    "",
+  ];
+  write(resolve(PUBLIC_KNOWLEDGE, "log.xml"), lines.join("\n"));
 }
 
 // The health page is an Astro page, src/pages/health.astro, which charts
@@ -1141,6 +1282,7 @@ const byGroup = writeConceptPages(concepts);
 writeGroupPages(byGroup);
 writeOverview(root, concepts, health);
 writeLog();
+await writeLogFeed(root);
 writeHealth(concepts, health, full);
 const docs = writeDocs();
 writeHome();

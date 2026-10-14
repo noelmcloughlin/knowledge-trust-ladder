@@ -6,7 +6,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 - `.lokf/knowledge/index.md`: its frontmatter (`base_iri`, `context`, `license`, `publisher`, `title`, `description`) fills the table on the bundle's overview page, and its text before the first heading opens that page. The sync stops without this file.
 - Each concept file: `title` (the page title; the concept's path when absent), `description` (the page's meta description, as plain words), `type`, `status`, `definition`, `stale_after` (shown as the review date), `tags`, `generated` and `verified`. Its `sources`, or its `resource`, each become a link to the file on GitHub at the built commit, or to the address given. The body is rendered from its first line, with every heading moved down one level when the body starts at `#`. The typed relations come from the `graph.json` that `lokf export` writes, both ways, not from the frontmatter.
-- `.lokf/knowledge/log.md`: the bundle log page.
+- `.lokf/knowledge/log.md`: the bundle log page, and `/knowledge/log.xml`, an Atom feed of its newest 20 days. Each `## YYYY-MM-DD` section is an entry, titled with the kinds of change it holds, which are its categories too. Git dates it: published when its first line was committed, updated when its newest was. Its id is the bundle's `base_iri` with `log#` and the date, so it outlives a move of the site. Every page names the feed in its head, so a feed reader finds it from any of the site's addresses.
 - `.lokf/scripts/knowledge-report.sh labels` and `health`: the trust label on each concept page and the numbers the health page charts. The site never derives a label itself.
 - `lokf export`, from the sidecar's own environment: `concepts.jsonld`, `graph.json`, `graph.nt` and `datasets.jsonld` under `/knowledge/`, with every bundle `.md` file as it is in the repository and one `.jsonld` per concept beside it. Each concept page links its own two files in its head.
 
@@ -45,7 +45,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 - A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a schema page to `/schema/<name>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
 - An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does; otherwise the text stays as written.
-- After the build, `scripts/check-links.mjs` fails the build when a link between the site's own pages, a link to a heading, or a page's social card does not resolve. It reads `llms.txt` and `llms-full.txt` too, and fails when either names a page of the site that is not there. Links that leave the site are not checked.
+- After the build, `scripts/check-links.mjs` fails the build when a link between the site's own pages, a link to a heading, or a page's social card does not resolve. It reads `llms.txt`, `llms-full.txt` and the bundle log's feed too, and fails when one names a page of the site that is not there. Links that leave the site are not checked.
 
 ## The changelog
 

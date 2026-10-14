@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website site offers the bundle log as an Atom feed, `knowledge/log.xml`.** Each day of the log is an entry, titled and categorised by the kinds of change it holds and dated from git, so a reader can follow the bundle without watching the repository.
+
 ## [0.43.0] - 2026-10-14
 
 ### Added
