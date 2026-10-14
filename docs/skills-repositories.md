@@ -35,7 +35,7 @@ KTL helps with the knowledge around a repository's skills, and leaves the skills
 
 ## What remains to do
 
-These are designs, not features. Each would extend KTL's checks from what the bundle says to whether a host's skills still work. That is a condition check, the work a museum gives its conservator, who examines objects and writes condition reports without cataloguing or authenticating them. If KTL takes these on, they belong to a new role, not to the librarian.
+These are designs, not features. Each would extend KTL's checks from what the bundle says to whether a host's skills still work: a condition check, the work a museum gives its conservator rather than its librarian. If KTL takes these on, they belong to a new role.
 
 - **A record of skill runs.** A feedback kind for a skill run, recorded by the agent that ran the skill, would give WikiSkill's raw layer KTL's guards. It would accept only a skill name the host holds and a short failure signature, keep the entry's text from every session but the librarian's, and leave the librarian its only consumer.
 - **A trigger test.** The retrieval score could be run over the host's skill descriptions, which is what an agent chooses skills by. It needs task prompts paired with the skill each should start, where the ledger holds the questions readers asked.
