@@ -289,9 +289,10 @@ export function conceptIds() {
 }
 
 /**
- * Every docs page, as its path under the docs folder without `.md`: the
- * files git sees there, tracked or untracked but never ignored, so a folder
- * a generator writes stays out; a walk of the folder where there is no git.
+ * Every docs page, as its path under the docs folder without `.md`. The
+ * pages are the files git sees there, tracked or untracked but never
+ * ignored, so a folder a generator writes stays out. Where there is no git,
+ * they are the files a walk of the folder finds.
  * A file PAGES names has a page of its own and is left out here, and so is
  * the schema's folder, which has a topic of its own. The list is read once
  * per process, since the home page's buttons, the links and the sync all ask
