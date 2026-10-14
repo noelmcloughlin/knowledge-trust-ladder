@@ -16,6 +16,24 @@ Each file has a section on one of the two pages. Read the one you are setting up
 | `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to turn it on, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 
+## Switches and where they go
+
+Every switch below is a **repository variable** or a **repository secret**: Settings, Secrets and variables, Actions, then Variables or Secrets, under the Repository heading. Never set one on an environment such as `release`, or under the Agents tab, which is the Copilot cloud agent's store. A job's `if:` reads only repository and organization variables, so a switch set anywhere else stays off without a word.
+
+| Name | Kind | Workflow | What it does |
+| --- | --- | --- | --- |
+| `KNOWLEDGE_LIBRARIAN_ENABLED` | variable | `knowledge-librarian.yaml` | `true` runs the agent; anything else skips it |
+| `AGENT_CLI` | variable, or a secret when it must embed a credential | `knowledge-librarian.yaml` | the agent command ([below](#setting-it-up)) |
+| `AGENT_API_KEY_ENV` | variable | `knowledge-librarian.yaml` | the name the agent reads its credential from |
+| `AGENT_API_KEY` | secret | `knowledge-librarian.yaml` | the agent's key or token; never a variable, which anyone with access can read |
+| `AGENT_USE_JOB_TOKEN` | variable | `knowledge-librarian.yaml` | `true` for Copilot CLI, which pays with the job's token |
+| `KNOWLEDGE_RETRIEVAL` | variable | `knowledge-librarian.yaml` | optional: `true` scores retrieval on each run that changes the bundle |
+| `KNOWLEDGE_RELEASE_ENABLED` | variable | `knowledge-release.yaml` | `true` attaches the bundle to each published release |
+| `KNOWLEDGE_RELEASE_NAME` | variable | `knowledge-release.yaml` | optional: the name in the zip file when the repository's own name is not the one it publishes under |
+| `KNOWLEDGE_WEBSITE_ENABLED` | variable | `knowledge-website.yaml` | `true` publishes the site to GitHub Pages, as ktl-website's [deploy.md](../../ktl-website/references/deploy.md) says |
+
+The librarian also needs one repository setting: Settings, Actions, General, Workflow permissions, *Allow GitHub Actions to create and approve pull requests* ([below](#before-turning-on-the-schedule)).
+
 ## `knowledge-librarian.yaml`: the scheduled refresh loop
 
 It runs weekly (Mondays 05:00 UTC) and on demand, in three jobs:
