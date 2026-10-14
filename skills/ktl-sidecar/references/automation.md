@@ -24,6 +24,7 @@ Every switch below is a **repository variable** or a **repository secret**: Sett
 | --- | --- | --- | --- |
 | `KNOWLEDGE_LIBRARIAN_ENABLED` | variable | `knowledge-librarian.yaml` | `true` runs the agent; anything else skips it |
 | `AGENT_CLI` | variable, or a secret when it must embed a credential | `knowledge-librarian.yaml` | the agent command ([below](#setting-it-up)) |
+| `AGENT_PROMPT_FLAG` | variable | `knowledge-librarian.yaml` | optional: where the prompt goes, `-p` by default ([below](#any-other-agent)) |
 | `AGENT_API_KEY_ENV` | variable | `knowledge-librarian.yaml` | the name the agent reads its credential from |
 | `AGENT_API_KEY` | secret | `knowledge-librarian.yaml` | the agent's key or token; never a variable, which anyone with access can read |
 | `AGENT_USE_JOB_TOKEN` | variable | `knowledge-librarian.yaml` | `true` for Copilot CLI, which pays with the job's token |
@@ -71,7 +72,8 @@ The workflow is **inert until set up**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset
 | Repository variable | Value |
 | --- | --- |
 | `KNOWLEDGE_LIBRARIAN_ENABLED` | `true`: turns on the scheduled run; anything else (or unset) leaves the agent step skipped |
-| `AGENT_CLI` | your non-interactive agent command; the wrapper appends `-p "<prompt>"`. The two commands below are the ones this file vouches for. Keep the credential out of it; if it must embed one, make it a *secret* named `AGENT_CLI` instead, which the workflow also reads |
+| `AGENT_CLI` | your non-interactive agent command; the wrapper appends `-p "<prompt>"`. The two commands below are the ones this file vouches for, and [any other agent](#any-other-agent) says what a third must do. Keep the credential out of it; if it must embed one, make it a *secret* named `AGENT_CLI` instead, which the workflow also reads |
+| `AGENT_PROMPT_FLAG` | optional. The flag the prompt follows, `-p` unless set, or `arg` for an agent that takes the prompt as its bare last argument. Leave it unset for the two commands below |
 | `AGENT_API_KEY_ENV` | the environment variable the agent reads its credential from: `COPILOT_GITHUB_TOKEN` for Copilot CLI, `ANTHROPIC_API_KEY` for Claude Code |
 | `AGENT_USE_JOB_TOKEN` | `true`: the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it; leave it unset for any other agent |
 | `KNOWLEDGE_RETRIEVAL` | optional. `true`: each run that changes the bundle makes one more agent call and the pull request carries a retrieval score ([below](#knowledge-reportsh-what-a-program-can-say-about-the-bundle)). Unset, nothing is scored |
@@ -89,7 +91,8 @@ The wrapper splits `AGENT_CLI` on whitespace and honours no quotes, so no flag v
 - `knowledge-apply.sh` or its Python half is not beside it, since the bundle is written through them alone;
 - only one of the credential and `AGENT_API_KEY_ENV` is set;
 - the name does not end `_API_KEY`, `_TOKEN` or `_KEY`, so a slip cannot overwrite `PATH` or `LD_PRELOAD`;
-- the name starts `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, because `gh`, git and the runner read those too.
+- the name starts `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`, because `gh`, git and the runner read those too;
+- `AGENT_PROMPT_FLAG` is anything but a short flag, a long flag or the word `arg`, so the variable can move the prompt and add nothing else.
 
 The key reaches the agent's environment only, never an argument list or the wrapper's own git commands. The workflow sets up Node 22 before the agent step, since both commands below run through `npx`.
 
@@ -122,6 +125,27 @@ Pay for the runs in one of two ways. A Console API key is billed per use, apart 
 
 `dontAsk` denies any call that would otherwise prompt, so a run never waits for a person, and `--allowedTools` names what the skill needs. `Edit(.lokf/patch.yaml)` confines every file write to the patch file, which the wrapper applies with `knowledge-apply.sh` after the run; the bundle itself is on no list. An `Edit` rule covers every file-writing tool, the Write tool included; Claude Code ignores a `Write(<path>)` rule and says so in the log. `dontAsk` denies a shell write through a command not on the list, such as `echo` or `cat`, so the wrapper's prompt tells the agent to write the patch file with its own file tool. `Bash(git:*)` is the prefix form, and it is why no pattern has a space: a rule such as `Bash(git log:*)` cannot be passed, since the wrapper splits on spaces.
 
+### Any other agent
+
+The wrapper is written for no one vendor. It runs the command `AGENT_CLI` names, puts the prompt where `AGENT_PROMPT_FLAG` says, hands the credential over under the name `AGENT_API_KEY_ENV` gives, and checks the result the same way whoever ran. So a third agent works when it meets five conditions:
+
+1. It runs one prompt without a terminal and exits when the prompt is done, as `-p` does for the two above.
+2. It takes that prompt after a flag or as its last argument, with no quoting in between. Set `AGENT_PROMPT_FLAG` to the flag, or to `arg`.
+3. It asks no question in that run, and denies rather than waits where it would ask. A denied call shows in the log; a call that waits for an answer runs until the job's timeout.
+4. It can write `.lokf/patch.yaml` with its own file tool, and run `git`, `uv`, `uvx`, `just` and `bash` in the checkout. Pre-approve those in the command. Where the agent lets you scope the file approval to a path, scope it to the patch file; where it does not, the wrapper's post-run check still refuses a run that wrote anywhere else.
+5. It reads its credential from one environment variable whose name ends `_API_KEY`, `_TOKEN` or `_KEY`. Name it in `AGENT_API_KEY_ENV` and put the value in the `AGENT_API_KEY` secret.
+
+Two agents known to fit, neither of which this file has run unattended:
+
+| Agent | What differs |
+| --- | --- |
+| Gemini CLI | `-p`, as the two above, and `GEMINI_API_KEY`. Approval is `--approval-mode yolo`, which pre-approves every tool, so the wrapper's post-run check is the one boundary |
+| Codex CLI | `codex exec` takes the prompt as its last argument, and `-p` names a profile. Set `AGENT_PROMPT_FLAG` to `arg`. The credential is `CODEX_API_KEY`, and the sandbox must be `--sandbox workspace-write` for the patch file to be written |
+
+The job sets up Node 22 and uv before the agent step, so a command that runs through `npx` or `uvx` needs no install step. An agent installed another way needs a step of its own in the workflow, before the wrapper runs, in a copy you maintain.
+
+Whichever agent, the wrapper's prompt names no vendor. It tells the agent to write the patch file with its own file-writing tool, since an unattended run may deny a shell write, and the skill it follows says the same.
+
 ### Before turning on the schedule
 
 Type every value in the Settings form without quotes. GitHub stores exactly what you type, so a quote becomes part of the value: `AGENT_API_KEY_ENV` is then refused, and `AGENT_CLI` passes the quote to the agent.
@@ -136,7 +160,7 @@ gh api -X PUT repos/<owner>/<repo>/actions/permissions/workflow -f default_workf
 
 The same setting lets a workflow approve a pull request. No workflow the sidecar installs does, and the registrar's gate counts an approval only from the person a confirmation names, so a workflow's approval never stands in for one.
 
-Whichever agent, run the workflow once by hand from the Actions tab before turning on the schedule, and read the agent's log for denied tool calls.
+Whichever agent, run the workflow once by hand from the Actions tab before turning on the schedule, and read the agent's log for denied tool calls. A run that ends with *the agent wrote no `.lokf/patch.yaml`* on a bundle with work waiting usually means a denied write: look for the agent's file tool in the log, and widen the approval to the patch file.
 
 ## `knowledge-librarian.sh`: the agent wrapper
 
