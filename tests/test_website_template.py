@@ -99,8 +99,40 @@ def test_config_settles_the_options_against_the_host(tmp_path):
     assert settled["CHANGELOG"] == "CHANGELOG.md"
     assert settled["DOCS"] is None
     assert settled["ASSETS"] is None
-    assert settled["LOGO"] is None
+    assert settled["LOGO"] == {
+        "light": "website/src/assets/knowledge-trust-ladder-logo.svg",
+        "dark": "website/src/assets/knowledge-trust-ladder-logo-dark.svg",
+        "favicon": "website/src/assets/knowledge-trust-ladder-logo.svg",
+    }
     assert settled["HOME"]["source"] == "README.md"
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_takes_the_repository_s_own_ktl_logo(tmp_path):
+    """A knowledge-trust-ladder-logo.svg the repository already has wins over the site's copy."""
+    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / ".assets" / "knowledge-trust-ladder-logo.svg", '<svg xmlns="http://www.w3.org/2000/svg"/>\n')
+    site = lay_down(tmp_path)
+    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
+    assert result, f"config.mjs failed: {result.out}"
+    logo = json.loads(result.out)["LOGO"]
+    assert logo == {
+        "light": ".assets/knowledge-trust-ladder-logo.svg",
+        "dark": ".assets/knowledge-trust-ladder-logo.svg",
+        "favicon": ".assets/knowledge-trust-ladder-logo.svg",
+    }
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_takes_one_logo_path_as_the_light_version(tmp_path):
+    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / "brand" / "acme.png", "not really a png\n")
+    site = lay_down(tmp_path)
+    config = site / "site.config.mjs"
+    config.write_text(config.read_text(encoding="utf-8").replace('export const LOGO = "auto";', 'export const LOGO = "brand/acme.png";'), encoding="utf-8")
+    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
+    assert result, f"config.mjs failed: {result.out}"
+    assert json.loads(result.out)["LOGO"] == {"light": "brand/acme.png", "dark": "brand/acme.png", "favicon": None}
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")

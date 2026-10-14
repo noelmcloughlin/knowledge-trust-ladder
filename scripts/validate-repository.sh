@@ -489,6 +489,15 @@ if cmp -s "$wtemplates/github/knowledge-website.yaml" ".github/workflows/knowled
 else
   err ".github/workflows/knowledge-website.yaml differs from $wtemplates/github/knowledge-website.yaml - copy one over the other, as check 11 says"
 fi
+# The Knowledge Trust Ladder logo a host's site shows when its LOGO is left
+# at "auto" is a copy of this repository's own, so the two cannot drift.
+for logo in knowledge-trust-ladder-logo.svg knowledge-trust-ladder-logo-dark.svg; do
+  if cmp -s ".assets/$logo" "$wtemplates/website/src/assets/$logo"; then
+    ok "$wtemplates/website/src/assets/$logo matches .assets/$logo"
+  else
+    err "$wtemplates/website/src/assets/$logo differs from .assets/$logo - copy .assets/$logo over it, and over website/src/assets/$logo, so every site shows this repository's logo"
+  fi
+done
 filled="$(sed -e 's|<REPO_OWNER>|noelmcloughlin|g' -e 's|<REPO_NAME>|knowledge-trust-ladder|g' -e 's|<PROJ_NAME>|Knowledge Trust Ladder|g' "$wtemplates/website/README.md")"
 if [[ "$filled" == "$(cat website/README.md)" ]]; then
   ok "website/README.md is the template with this repository's values filled in"

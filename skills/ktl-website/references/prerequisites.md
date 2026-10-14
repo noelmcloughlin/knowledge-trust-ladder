@@ -20,7 +20,7 @@ When a person cannot act on a `missing` or `warn` line, write them a short reque
 | `readme` | Whether `README.md` exists and opens with a `#` title, the home page's source. | Nothing; the home page opens with the bundle's own introduction instead. | you | Nothing, or add a `#` title to the README. |
 | `docs` | Whether a `docs/` folder exists and how many Markdown pages git sees in it. | Nothing; the Guide topic lists the home page alone. | nobody | Nothing. |
 | `changelog` | Whether `CHANGELOG.md` exists and holds a released version in Keep a Changelog form. | Nothing; no Releases topic. | the maintainer | "The changelog has no `## [version] - date` heading, so it cannot become release pages. Keep a Changelog form would do it." |
-| `assets` | Whether a `.assets/` folder of figures exists, and which files in it look like a logo. | Nothing; the site shows the title as text. | you | Nothing, or name the logo file in `LOGO`. |
+| `assets` | Whether a `.assets/` folder of figures exists, and which files in it look like a logo. | Nothing; the site shows the Knowledge Trust Ladder logo. | you | Nothing, or name the logo file in `LOGO`. |
 | `lint` | Which Markdown lint configurations the repository has, for Step 2 to exclude the generated folders from. | Nothing; a lint run over the generated folders fails until they are excluded. | the maintainer | "Please exclude `website/(dist\|public\|src/content\|src/generated\|node_modules)/` from the Markdown lint and link checks." |
 | `session` | Whether a person is present or the run is automated. | Unattended: the placeholders and the options need a person's values, so the skill stops after the screen. | nobody | Nothing. |
 

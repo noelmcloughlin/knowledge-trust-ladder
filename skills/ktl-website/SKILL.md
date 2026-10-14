@@ -33,7 +33,7 @@ Resolve every placeholder from real sources before writing anything; never leave
 
 `<REPO_OWNER>` and `<REPO_NAME>` come from the remote, never from a person's name: Pages serves the site at `https://<REPO_OWNER>.github.io/<REPO_NAME>/`, and the sidecar's `<OWNER_SLUG>` is a different thing. A user site (the `<owner>.github.io` repository) and a custom domain change `SITE` and `BASE` as [references/deploy.md](references/deploy.md) says.
 
-Then settle, from the preflight's lines, what the site shows: the logo (`LOGO`, a file the `assets` line lists or the person names), and whether the README, the docs, the changelog and the figures are there. The template's `"auto"` settings take each when it is. [references/customising.md](references/customising.md) describes every option.
+Then settle, from the preflight's lines, what the site shows: whether the README, the docs, the changelog and the figures are there. The logo (`LOGO`) stays `"auto"`, the Knowledge Trust Ladder logo, unless the person names a file of the repository's own, such as one the `assets` line lists. The template's `"auto"` settings take each when it is. [references/customising.md](references/customising.md) describes every option.
 
 ## Step 1 - Lay the site down
 
@@ -56,7 +56,7 @@ open(path, "w", encoding="utf-8").write(text)
 ' {}
 ```
 
-Then edit `website/site.config.mjs` for what the preflight settled: `LOGO` when there is a logo, `BRANCH` when the default branch is not `main`, `CUSTOM_DOMAIN` for a custom domain, and `BASE = ""` for a user site. Leave the `"auto"` options alone unless the person wants a part left out (`null`) or placed (`DOCS.groups`, `PAGES`, `HOME.actions`).
+Then edit `website/site.config.mjs` for what the preflight settled: `LOGO` when the person named a logo of the repository's own, `BRANCH` when the default branch is not `main`, `CUSTOM_DOMAIN` for a custom domain, and `BASE = ""` for a user site. Leave the `"auto"` options alone unless the person wants a part left out (`null`) or placed (`DOCS.groups`, `PAGES`, `HOME.actions`).
 
 **Repair or update.** When `website/site.config.mjs` already exists, the preflight's `website` line names each file that differs from its template or is missing. Copy those templates over, one file at a time, and never the three files the repository owns. A new option arrives with a default in `scripts/config.mjs`, so an older `site.config.mjs` keeps working.
 
@@ -88,7 +88,7 @@ Skip this step when `.lokf/` is gitignored (the workflow builds from the checkou
 
 Tell the person:
 
-- which Step 0 values were **guessed** rather than found (`<PROJ_DESC>` and the logo above all);
+- which Step 0 values were **guessed** rather than found (`<PROJ_DESC>` above all, and a logo when the person did not name one);
 - whether Step 4's build ran and passed, or was skipped, and what the sync printed (`sync: N concept pages, ...`);
 - which parts the site shows (README, docs, changelog, figures, logo) and which it left out, and why;
 - what was left alone: an existing `website/`, the lint configurations, Pages and the variable;

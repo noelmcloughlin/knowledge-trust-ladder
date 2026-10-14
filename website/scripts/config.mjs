@@ -6,7 +6,7 @@
 // pages that show the title import it directly.
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, extname, resolve } from "node:path";
+import { dirname, extname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as given from "../site.config.mjs";
 
@@ -66,9 +66,29 @@ function settle(name, fallback, present) {
 
 export const ASSETS = settle("ASSETS", ".assets", isDir);
 
+// The Knowledge Trust Ladder logo, which "auto" takes: a copy the repository
+// already holds, outside this site and outside a skill's templates, the one
+// nearest the root first, or else the copy this site carries in src/assets/.
+// The -dark.svg file beside it is the dark version when there is one.
+const KTL_LOGO = "knowledge-trust-ladder-logo.svg";
+function ktlLogo() {
+  const site = relative(REPO_ROOT, SITE_DIR).replaceAll("\\", "/");
+  const ls = spawnSync("git", ["-C", REPO_ROOT, "ls-files", "--cached", "--others", "--exclude-standard", "--", `*${KTL_LOGO}`], {
+    encoding: "utf8",
+  });
+  const own = (ls.status === 0 ? ls.stdout.split("\n") : [KTL_LOGO, `.assets/${KTL_LOGO}`])
+    .filter((f) => (f === KTL_LOGO || f.endsWith(`/${KTL_LOGO}`)) && !f.startsWith(`${site}/`) && !f.includes("templates/website/"))
+    .filter(isFile)
+    .sort((a, b) => a.split("/").length - b.split("/").length || (a < b ? -1 : a > b ? 1 : 0));
+  const light = own[0] ?? `${site}/src/assets/${KTL_LOGO}`;
+  const dark = light.replace(/\.svg$/, "-dark.svg");
+  return { light, dark: isFile(dark) ? dark : light };
+}
+
 export const LOGO = (() => {
-  const logo = given.LOGO ?? null;
-  if (!logo) return null;
+  const value = given.LOGO === undefined ? "auto" : given.LOGO;
+  if (value === null) return null;
+  const logo = value === "auto" ? ktlLogo() : typeof value === "string" ? { light: value } : value;
   const light = logo.light ?? fail("LOGO needs at least a light file");
   const dark = logo.dark ?? light;
   const favicon = logo.favicon ?? (extname(light) === ".svg" ? light : null);

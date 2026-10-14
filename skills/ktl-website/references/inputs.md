@@ -34,7 +34,8 @@ Every page comes from a file the repository already holds, so a change to the si
 
 ## The figures and the logo
 
-- The figures folder is served under `/assets/`. The logo's light and dark files are copied to `src/generated/`, and the favicon to `/favicon.<type>`; with no logo, the site's own ladder mark is the favicon and the title is shown as text.
+- The figures folder is served under `/assets/`. The logo's light and dark files are copied to `src/generated/`, and the favicon to `/favicon.<type>`; with `LOGO = null`, the site's own ladder mark is the favicon and the title is shown as text.
+- `LOGO` left out or `"auto"` takes the Knowledge Trust Ladder logo. That is a `knowledge-trust-ladder-logo.svg` git sees in the repository, tracked or untracked but never ignored, outside `website/` and outside a skill's templates, the one nearest the root first. With none, it is the copy in `website/src/assets/`. The `-dark.svg` file beside it is the dark version when there is one.
 
 ## `llms.txt`
 
