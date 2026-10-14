@@ -4,11 +4,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **A ktl-website data page opens Datasette Lite in a new tab.** The site stays open while Datasette Lite downloads Datasette and the database.
-
-## [0.41.1] - 2026-10-14
+## [0.42.0] - 2026-10-14
 
 ### Changed
 
@@ -19,6 +15,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The README, the architecture page and the plugin's homepage link to the site at `https://w3id.org/ktl/`.** The persistent address redirects to the GitHub Pages site.
 - **The bundle's `base_iri` is `https://w3id.org/ktl/knowledge/`.** It replaces the `knowledge-trust-ladder.example` placeholder, so every concept's IRI resolves to its page, its JSON-LD or its Markdown file.
 - **The README lists Exhibitions, the sites that show a repository's collection.** It names this repository's own bundle and AI-LinkMO's.
+- **A ktl-website data page opens Datasette Lite in a new tab.** The site stays open while Datasette Lite downloads Datasette and the database.
 
 ### Fixed
 
