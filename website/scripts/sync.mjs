@@ -411,6 +411,8 @@ function buildConcepts(exported, labels) {
         .map((e) => ({ name: slotName(e.slot ?? e.predicate).toLowerCase(), from: linkTo(e.source) }))
         .sort((a, b) => a.from.text.localeCompare(b.from.text)),
       ...(licence ? { licence: licenceOf(licence) } : {}),
+      // The graph explorer opened on this concept; the id keeps its slashes.
+      graph: `${BASE}/graph/?concept=${encodeURIComponent(c.id).replace(/%2F/g, "/")}`,
       files: {
         markdown: `${BASE}/knowledge/${c.id}.md`,
         jsonld: `${BASE}/knowledge/${c.id}.jsonld`,

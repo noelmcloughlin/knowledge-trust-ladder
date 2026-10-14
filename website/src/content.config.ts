@@ -33,6 +33,7 @@ const concept = z.object({
   relations: z.array(z.object({ name: z.string(), targets: z.array(link) })).default([]),
   incoming: z.array(z.object({ name: z.string(), from: link })).default([]),
   licence: z.object({ text: z.string(), href: z.string().optional() }).optional(),
+  graph: z.string(),
   files: z.object({ markdown: z.string(), jsonld: z.string(), github: z.string(), history: z.string() }),
 });
 

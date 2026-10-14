@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website concept page opens the knowledge graph on the concept.** The record and the neighbourhood map link `/graph/?concept=<id>`, which selects the concept and frames its neighbours, and the address follows the selected node, so a view can be shared.
+
+### Fixed
+
+- **The ktl-website graph explorer fits the graph to its stage once the layout settles.** The re-fit waited for an event that had already fired, so it never ran.
+
 ## [0.43.0] - 2026-10-15
 
 ### Added
