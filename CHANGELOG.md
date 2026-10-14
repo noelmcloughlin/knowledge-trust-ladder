@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.41.0] - 2026-10-14
+
 ### Added
 
 - **A ktl-website site shows a LinkML schema's pages under a Schema topic.** `SCHEMA` renders the pages `gen-doc` writes, found through a `gen-doc` recipe by default and built by the sync when missing. A mermaid diagram on any page is drawn in the browser.
