@@ -129,6 +129,7 @@ for f in index.html knowledge/index.html knowledge/services/example-service-a/in
 done
 assert "the home page is the README's" "grep -q 'The platform Acme runs' \"$host/website/dist/index.html\""
 assert "the README's link to the guide goes to its page" "grep -q 'href=\"/acme-platform/docs/guide/\"' \"$host/website/dist/index.html\""
+assert "the header shows the Knowledge Trust Ladder logo" "grep -q '_astro/logo-light[^\"]*\\.svg' \"$host/website/dist/index.html\""
 assert "a concept page carries its trust label" "grep -qi 'checked' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
 assert "nothing of the template is left to commit" "[[ -z \$(git -C \"$host\" status --porcelain) ]]"
 
@@ -145,7 +146,7 @@ assert "no docs pages" "[[ ! -d \"$host/website/dist/docs\" ]]"
 assert "no release pages" "[[ ! -d \"$host/website/dist/changelog\" ]]"
 assert "the bundle's pages, the health page and the graph are still there" \
   "[[ -f \"$host/website/dist/knowledge/index.html\" && -f \"$host/website/dist/health/index.html\" && -f \"$host/website/dist/graph/index.html\" ]]"
-assert "the site's own favicon stands in" "[[ -f \"$host/website/dist/favicon.svg\" ]]"
+assert "the Knowledge Trust Ladder logo is the favicon" "cmp -s \"$host/website/dist/favicon.svg\" \"$skill/templates/website/src/assets/knowledge-trust-ladder-logo.svg\""
 
 echo ""
 if [[ "$fail" -eq 0 ]]; then

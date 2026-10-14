@@ -11,7 +11,7 @@
 | `TITLE`, `DESCRIPTION` | the site's title, and one sentence for search engines and link previews | required | |
 | `BRANCH` | the branch an "Edit page" link opens | `main` | |
 | `CUSTOM_DOMAIN` | a domain the sync writes to `public/CNAME`; `SITE` and `BASE` follow from it | no custom domain | the same |
-| `LOGO` | `{ light, dark, favicon }`, paths from the repository root; `dark` defaults to `light`, and `favicon` to `light` when that is an SVG | the title as text, and the site's own ladder mark as favicon | the same |
+| `LOGO` | `{ light, dark, favicon }`, paths from the repository root, or one path as the light version alone; `dark` defaults to `light`, and `favicon` to `light` when that is an SVG | the Knowledge Trust Ladder logo, also the favicon: a `knowledge-trust-ladder-logo.svg` the repository already has, or else the copy in `src/assets/` | the title as text, and the site's own ladder mark as favicon |
 | `ASSETS` | the folder of figures the README and the docs pages show, served under `/assets/` | `.assets/` when there is one | no figures folder; a link to a figure goes to the repository |
 | `DOCS` | `{ dir, groups }`: the docs folder, and the sidebar groups its pages sit in, each page named by its path under the folder without `.md` | `docs/` when there is one, every page in one Guides group by title | no docs pages |
 | `CHANGELOG` | a Keep a Changelog file, read as a page per release | `CHANGELOG.md` when it holds a released version | no Releases topic |
@@ -24,7 +24,7 @@ With `DOCS.groups`, the sync stops with an error when a group names a page that 
 
 ## Two configurations
 
-A bare repository, with a bundle and a README, is the template as Step 1 fills it: the five required values, `LOGO = null`, `ASSETS`, `DOCS` and `CHANGELOG` at `"auto"`, no `PAGES`, and `HOME` at its defaults. Such a site has a home page from the README, the bundle's pages, the health page, the graph and search, and gains a Guide topic or a Releases topic the day a `docs/` folder or a changelog appears.
+A bare repository, with a bundle and a README, is the template as Step 1 fills it: the five required values, `LOGO`, `ASSETS`, `DOCS` and `CHANGELOG` at `"auto"`, no `PAGES`, and `HOME` at its defaults. Such a site has the Knowledge Trust Ladder logo, a home page from the README, the bundle's pages, the health page, the graph and search. It gains a Guide topic or a Releases topic the day a `docs/` folder or a changelog appears.
 
 The skills repository's own `website/site.config.mjs` sets every option: a logo, four docs groups, a tagline taken from a docs page, four buttons and a page for younger readers. It is the fuller example to copy from.
 

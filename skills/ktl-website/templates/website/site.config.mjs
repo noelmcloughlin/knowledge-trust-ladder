@@ -30,9 +30,12 @@ export const CUSTOM_DOMAIN = null;
 
 // The logo, as paths from the repository root: a light version, a dark one
 // (the light one again when left out) and a favicon (the light logo when it
-// is an SVG, else the site's own ladder mark). null shows the title as text.
+// is an SVG, else the site's own ladder mark). "auto" takes the Knowledge
+// Trust Ladder logo: a knowledge-trust-ladder-logo.svg the repository
+// already has, or else the copy in src/assets/. A single path is the light
+// version alone. null shows the title as text.
 //   export const LOGO = { light: ".assets/logo.svg", dark: ".assets/logo-dark.svg" };
-export const LOGO = null;
+export const LOGO = "auto";
 
 // The folder of figures the README and the docs pages show, served under
 // /assets/. "auto" takes .assets/ when there is one.
