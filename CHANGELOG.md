@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **A release's changelog lists each entry once.** A pull request stacked on another still carries the other's entries under Unreleased, and the promotion no longer folds them into the pending section a second time.
-
 ## [0.42.0] - 2026-10-14
 
 ### Changed
@@ -21,6 +17,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **`sync-sidecar.sh` sets its next steps apart.** A blank line now comes before the changelog entry to add and before the commit commands, so each step reads on its own.
 - **A move of the bundle's `base_iri` no longer reads as an edit of every confirmed concept.** Conventions rule 13 compares each id and relation target by its path under the base each commit held, so the migration ktl-librarian's Rule 2 describes keeps every confirmation.
+- **A release's changelog lists each entry once.** A pull request stacked on another still carries the other's entries under Unreleased, and the promotion no longer folds them into the pending section a second time.
 
 ## [0.41.0] - 2026-10-14
 
