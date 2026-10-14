@@ -1,14 +1,18 @@
 """website-preflight.sh always ends on its summary line and exits 0, whatever the host lacks.
 
 It runs on this repository, and on a bare directory with no bundle, no git and
-no site, where every section has to cope with absence rather than fail. It
-reads a README's title and says when there is none, warns of another Pages
-publisher but not of its own workflow, warns of a changelog with no released
-version, reads the owner and the name from the origin remote, names the
-report script the sidecar must still lay down, and finds a linkmo project's
-gen-doc and build-browse recipes, in a justfile of any name just reads and
-with parameters, but not an assignment of the same name. Run under sh it
-stops on one line that names bash.
+no site, where every section has to cope with absence rather than fail. It:
+
+- reads a README's title, and says when there is none;
+- warns of another Pages publisher, but not of its own workflow;
+- warns of a changelog with no released version;
+- reads the owner and the name from the origin remote;
+- names the report script the sidecar must still install;
+- finds a linkmo project's gen-doc and build-browse recipes, in a justfile of
+  any name just reads and with parameters, but not an assignment of the same
+  name.
+
+Run under sh it stops on one line that names bash.
 
 The rows its prerequisites page must carry for each line stay in the contract
 script, check 12w: that is a fact about this repository's own pages.

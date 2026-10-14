@@ -4,11 +4,11 @@ name: Knowledge website
 # the figures, the changelog and, when site.config.mjs shows them, the LinkML
 # schema's pages and the data, and publishes the default branch's build to
 # GitHub Pages. A pull request that touches any of them gets the same build,
-# link check included, and no deployment. A weekly run rebuilds the default
-# branch for what reaches the site without a push the paths name: a schema
-# or data change elsewhere, and the changelog's promotion, whose commit skips
-# CI. website/README.md says what each page is built from; the ktl-website
-# skill laid both down.
+# link check included, and no deployment. A weekly run rebuilds the site
+# from the default branch. It catches what no push to the paths below brings:
+# a schema or data change elsewhere, and the changelog's promotion, whose
+# commit skips CI. website/README.md says what each page is built from; the
+# ktl-website skill installed both.
 #
 # Two jobs, for least privilege. `build` runs the third-party packages, npm's
 # and the lokf toolkit's, under a read-only token. `deploy` runs nothing but
@@ -94,10 +94,10 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: .lokf/uv.lock
-          # A schema or data command builds the project's own environment in
+          # The downloaded wheels are pruned before the cache is saved. A
+          # schema or data command builds the project's own environment in
           # the same cache, gigabytes for a project with machine-learning
-          # packages, so the downloaded wheels are pruned before it is saved:
-          # a repository's caches share 10 GB.
+          # packages, and a repository's caches share 10 GB.
           prune-cache: true
 
       - name: Install the lokf toolkit the sidecar pins
@@ -113,9 +113,9 @@ jobs:
 
       # A schema or a data folder that site.config.mjs shows is written by
       # its own command, which the sync runs when the folder is missing, as it
-      # always is here. A LinkML project's commands are just recipes, and the
-      # runner has no just. setup-uv puts the tool directory on PATH on
-      # Windows only, so the step adds it.
+      # always is here. A LinkML project's commands are recipes for just, a
+      # command runner the runner image lacks. setup-uv puts the tool
+      # directory on PATH on Windows only, so the step adds it.
       - name: Install just, when the site builds a folder with it
         run: |
           if node website/scripts/config.mjs | grep -q '"build": "just '; then

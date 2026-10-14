@@ -1,7 +1,7 @@
 // @ts-check
-// The site. Every page is built from a file the repository already holds:
-// each concept in the knowledge bundle becomes a page with its trust label,
-// the four files `lokf export` writes are served beside them, and the README,
+// The site. Every page is built from a file the repository already holds.
+// Each concept in the knowledge bundle becomes a page with its trust label,
+// and the four files `lokf export` writes are served beside them. The README,
 // the docs pages, the changelog, the schema's pages and the data become
 // pages when site.config.mjs shows them. scripts/sync.mjs writes the
 // generated sources before every build; nothing it writes is committed.

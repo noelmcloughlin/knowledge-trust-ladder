@@ -8,9 +8,9 @@
 //     since a concept's body starts its sections at `#` and the page title is
 //     already the one h1;
 //   - leaves a ```mermaid block's source in a pre.ktl-mermaid, out of the
-//     code highlighter's reach, for src/components/Mermaid.astro to draw, on
-//     a page the sync marked `ktlMermaid`, the only pages that load it; on
-//     any other page the block stays code, never a diagram nothing draws.
+//     code highlighter's reach, for src/components/Mermaid.astro to draw.
+//     It does so only on a page the sync marked `ktlMermaid`, since only
+//     those pages load that script. On any other page the block stays code.
 import { BASE } from "./config.mjs";
 import { rewriteHtml, rewriteUrl } from "./routes.mjs";
 

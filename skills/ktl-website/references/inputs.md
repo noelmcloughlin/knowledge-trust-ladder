@@ -24,7 +24,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 ## The schema's pages
 
-- Each `.md` file in the `SCHEMA` folder becomes a page, as LinkML's `gen-doc` writes them by default, all in one folder. `index.md` is the Schema topic's overview at `/schema/`, and every other page sits at `/schema/<file name>/`, its case kept, so the links in its diagram resolve. Its title is its `#` line, such as `Class: Action`, and its description the italic line under it. The sidebar groups the pages by the word that opens the title: Classes, Slots, Enumerations, Types and Subsets. A page whose title opens with none of them, the schema's own, has a page and no sidebar entry.
+- LinkML's `gen-doc` writes its pages into one folder by default, and each `.md` file in that `SCHEMA` folder becomes a page. `index.md` is the Schema topic's overview at `/schema/`, and every other page sits at `/schema/<file name>/`, its case kept, so the links in its diagram resolve. Its title is its `#` line, such as `Class: Action`, and its description the italic line under it. The sidebar groups the pages by the word that opens the title: Classes, Slots, Enumerations, Types and Subsets. A page whose title opens with none of them, the schema's own, has a page and no sidebar entry.
 - mkdocs-material's frontmatter and its `<div data-search-exclude>` wrapper are dropped, and a blank line goes around each `<details>`, so the YAML inside is a code block.
 - Search leaves the schema's pages out, and they share the home page's social card.
 - A concept whose source is in the `SCHEMA` folder links that source's page on the site, since the folder is never on GitHub.
@@ -38,7 +38,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 - Each `.sqlite`, `.sqlite3` or `.db` file in the `BROWSE` folder is served under `/browse/`, and nothing else in the folder is.
 - The Datasette metadata beside them, `metadata.yaml`, `metadata.yml` or `metadata.json`, is served as `metadata.json` without its `plugins` settings. Datasette Lite runs no plugin, and those settings can hold a credential.
-- Two metadata files stop the sync, and so does a database with a journal beside it that is not empty, since a copy of it could be torn.
+- Two metadata files stop the sync, and so does a database with a journal beside it that is not empty, since a copy of the database could be inconsistent.
 - The page at `/browse/` gives each database a section, titled and described from the metadata's `databases` entry when it has one, with its size, a download link and a link that opens it in Datasette Lite with the metadata. Datasette Lite runs Datasette in the reader's browser, and the link turns its analytics off.
 
 ## Links

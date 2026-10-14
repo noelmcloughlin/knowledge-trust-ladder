@@ -245,11 +245,12 @@ else
   info assets "no .assets/ folder - set ASSETS to the figures folder and LOGO to a logo file, or leave both out"
 fi
 
-# The schema's pages and the data, found as scripts/config.mjs finds them: a
-# justfile with a gen-doc recipe in the root, a linkmo project's folder or
-# .linkml/; and a build-browse recipe, whose databases stay off the site
-# until a person sets BROWSE. A justfile goes by any name just reads, and a
-# recipe line may carry parameters and their defaults; an assignment such as
+# These lines find the schema's pages and the data as scripts/config.mjs
+# finds them. The schema's pages come from a justfile with a gen-doc recipe,
+# in the root, a linkmo project's folder or .linkml/. The data comes from a
+# build-browse recipe, and its databases stay off the site until a person
+# sets BROWSE. A justfile goes by any name just reads, and a recipe line may
+# carry parameters and their defaults. An assignment such as
 # `gen-doc := ...` is not a recipe.
 justfile_in() {
   for f in "$1"/.[Jj][Uu][Ss][Tt][Ff][Ii][Ll][Ee] "$1"/[Jj][Uu][Ss][Tt][Ff][Ii][Ll][Ee]; do

@@ -12,7 +12,7 @@ The workflow has no placeholders and names no branch: it reads the repository's 
 
 ## The schema's pages and the data
 
-A `SCHEMA` or `BROWSE` folder is never committed, so the sync builds it on every run of the workflow with the command `site.config.mjs` names. When that command starts with `just`, the build job installs `just` first. The command runs in the repository's own environment: `uv run` installs the project's dependencies from its lock, which can take minutes for a large project. The workflow also runs on a change to `.linkml/`, a justfile, a `pyproject.toml` or a `uv.lock`, and every Monday from the default branch. A schema or data change anywhere else reaches the site with that weekly run, or at once by hand: `gh workflow run knowledge-website.yaml`.
+A `SCHEMA` or `BROWSE` folder is never committed, so the sync builds it on every run of the workflow with the command `site.config.mjs` names. When that command starts with `just`, the build job installs `just` first. A command that uses `uv run` installs the project's dependencies from its lock first, which can take minutes for a large project. The workflow also runs on a change to `.linkml/`, a justfile, a `pyproject.toml` or a `uv.lock`, and every Monday from the default branch. A schema or data change anywhere else reaches the site with that weekly run, or at once by hand: `gh workflow run knowledge-website.yaml`.
 
 Datasette Lite fetches each database from the site, which GitHub Pages allows from any origin. It downloads the whole file, and Pages publishes at most 1 GB in all, so a database of a few tens of MB suits it. For larger data, publish Datasette itself elsewhere, with `datasette publish`, and link it from a docs page.
 

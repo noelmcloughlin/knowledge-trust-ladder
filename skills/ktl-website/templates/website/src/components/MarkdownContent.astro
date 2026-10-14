@@ -1,7 +1,8 @@
 ---
-// Starlight's Markdown body as starlight-image-zoom renders it, which a site
-// that overrides this component must keep, with the script that draws
-// mermaid diagrams on the pages the sync marked as having one.
+// Renders Starlight's Markdown body through starlight-image-zoom's own
+// override, which a site that overrides this component must keep. On a page
+// the sync marked as having a mermaid diagram, it adds the script that draws
+// it.
 import Default from "starlight-image-zoom/overrides/MarkdownContent.astro";
 import Mermaid from "./Mermaid.astro";
 

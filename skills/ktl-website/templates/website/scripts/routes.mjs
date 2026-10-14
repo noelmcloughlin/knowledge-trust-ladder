@@ -8,8 +8,8 @@ const ABSOLUTE = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
 // The docs pages the site renders: a link to any other file under the docs
 // folder goes to the repository.
 const DOC_PAGES = new Set(docsPages());
-// The schema's pages, read when a link first asks once they exist, since the
-// sync builds the folder after this module loads.
+// The schema's pages, read the first time a link needs them after the folder
+// exists, since the sync builds the folder after this module loads.
 let schemaNames = null;
 function isSchemaPage(name) {
   if (!schemaNames) {

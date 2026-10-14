@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Lays the ktl-website templates down on a throwaway host built from the
-# sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would, and builds
+# Copies the ktl-website templates into a throwaway host built from the
+# sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would. It builds
 # the site twice: once with a README, a docs page, a changelog, the schema's
-# pages and the data, and once with none of them, so both shapes of host are
+# pages and the data, and once with none of them. So both shapes of host are
 # proved before a template change reaches one. This repository's own site
 # proves the fuller configuration; this proves a bundle that is not this
 # repository's.
@@ -116,8 +116,8 @@ echo "Step 1 again: the schema's pages and the data, which the host's own comman
   # Stand-ins for LinkML's gen-doc and a build-browse recipe, so the test
   # needs neither LinkML nor just. The pages carry what gen-doc writes and
   # the site must undo: mkdocs-material's frontmatter and search wrapper, a
-  # type's title glued to its frontmatter, YAML in a <details>, and a class
-  # diagram whose links keep the element's case.
+  # type's title with no line break after its frontmatter, YAML in a
+  # <details>, and a class diagram whose links keep the element's case.
   mkdir -p tools
   cat > tools/schema-pages.py <<'PY'
 from pathlib import Path
@@ -169,8 +169,8 @@ db.close()
 (out / "notes.txt").write_text("Not a database, and never published.\n")
 PY
   printf '/docs/elements/\n/data/\n' > .gitignore
-  # A diagram the Markdown parser reads as one, quoted and with more words
-  # after its language, which the sync must still mark for drawing.
+  # The Markdown parser reads this quoted block, with more words after its
+  # language, as a diagram, so the sync must still mark the page for drawing.
   cat >> docs/architecture.md <<'MD'
 
 > ```mermaid title="The platform"

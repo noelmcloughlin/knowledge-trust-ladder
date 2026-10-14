@@ -216,12 +216,13 @@ jobs:
           cache: npm
           cache-dependency-path: skills/ktl-website/templates/website/package-lock.json
 
-      # Lays the website templates down on a throwaway host made from the
-      # sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would, and
-      # builds the site twice: with a README, a docs page, a changelog, the
-      # schema's pages and the data, then with none of them. The repository's
-      # own site, which knowledge-website.yaml builds, proves the fuller
-      # configuration; this proves a bundle that is not this repository's.
+      # Copies the website templates into a throwaway host made from the
+      # sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would. It
+      # builds the site twice: first with a README, a docs page, a changelog,
+      # the schema's pages and the data, then with none of them. The
+      # repository's own site, which knowledge-website.yaml builds, proves the
+      # fuller configuration; this proves a bundle that is not this
+      # repository's.
       - name: Run the website smoke test
         run: bash scripts/smoke-test-website.sh
 

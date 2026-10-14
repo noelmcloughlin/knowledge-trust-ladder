@@ -71,9 +71,9 @@ function write(path, text) {
 const MERMAID = /^[ \t>]*(`{3,}|~{3,})[ \t]*mermaid(?=\s|$)/m;
 
 // JSON is YAML, so the frontmatter needs no YAML writer. A page with a
-// mermaid diagram is marked, so that only such a page loads the script that
-// draws it (src/components/Mermaid.astro), and only on such a page does the
-// Markdown plugin hand a diagram to that script; elsewhere it stays code.
+// mermaid diagram is marked, and only such a page loads the script that draws
+// it (src/components/Mermaid.astro). Only on such a page does the Markdown
+// plugin leave a diagram for that script; elsewhere it stays code.
 function page(path, frontmatter, body) {
   const marked = MERMAID.test(body) ? { ...frontmatter, ktlMermaid: true } : frontmatter;
   write(path, `---\n${JSON.stringify(marked, null, 2)}\n---\n\n${body.trim()}\n`);
@@ -842,8 +842,8 @@ function copyAssets() {
 
 /**
  * Runs the command that builds a part's folder when the folder is not built:
- * in CI every time, since a checkout has none, and locally the first time,
- * so a person rebuilds it with the same command after a change. It runs from
+ * in CI every time, since a checkout has none, and locally only the first
+ * time, so after a change a person runs the same command again. It runs from
  * the repository's root through the shell, as a person would type it, and
  * its output goes to the build's log.
  */
@@ -861,10 +861,11 @@ function buildFolder(name, part, isBuilt) {
 
 /**
  * A gen-doc page as Markdown the site renders. mkdocs-material's
- * frontmatter and its search wrapper go. A blank line goes after each line
- * that opens a <details> or holds its <summary>, and before each that closes
- * it, so the YAML inside is a code block, not raw HTML. The mermaid diagrams
- * stay as written: the Markdown plugin hands them to the browser, and their
+ * frontmatter and its search wrapper are removed. A blank line goes after
+ * each line that opens a <details> or holds its <summary>, and before each
+ * that closes it, so the YAML inside is a code block, not raw HTML. The
+ * mermaid diagrams stay as written: the Markdown plugin leaves them for the
+ * browser to draw, and their
  * links, such as ../Action/, resolve because each page's address keeps its
  * element's name.
  */
@@ -919,7 +920,7 @@ function writeSchemaPages() {
       title: overview.title ?? "Schema",
       ...(summary ? { description: summary } : {}),
       slug: "schema",
-      // The schema's hundreds of pages would bury the bundle's in search.
+      // The schema's hundreds of pages would outnumber the bundle's in search.
       pagefind: false,
       ktlSource: index,
       editUrl: false,
@@ -949,8 +950,8 @@ function writeSchemaPages() {
 }
 
 // Datasette Lite runs Datasette in the reader's browser, from a database at
-// any address that allows it, as GitHub Pages does. Each link turns its
-// analytics off, so the reader's visit is not logged there.
+// any address that allows cross-origin requests, as GitHub Pages does. Each
+// link turns its analytics off, so the reader's visit is not logged there.
 const DATASETTE_LITE = "https://lite.datasette.io/";
 
 const fileSize = (bytes) => (bytes >= 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} kB`);

@@ -161,9 +161,10 @@ function hasRecipe(justfile, recipe) {
 }
 
 /**
- * The first of these folders whose justfile has the recipe, as the folder the
- * recipe writes, `out` under it, and the command that runs the recipe from
- * the repository's root. just runs a recipe in its justfile's own folder.
+ * The first of these folders whose justfile has the recipe, as { dir, build }.
+ * dir is the folder the recipe writes, `out` under that folder. build is the
+ * command that runs the recipe from the repository's root. just runs a recipe
+ * in its justfile's own folder.
  */
 function recipeIn(dirs, recipe, out) {
   for (const dir of dirs) {
@@ -343,8 +344,9 @@ let schemaPagesRead = null;
  *
  * The pages are read from one flat folder, as gen-doc writes them by default.
  * Its --subfolder-type-separation option writes each kind to a folder of its
- * own, which would leave the topic with no element and the overview's links
- * pointing at GitHub, where the folder is not committed, so that stops here.
+ * own. The topic would then show no element, and the overview's links would
+ * point at GitHub, where the folder is not committed, so such a folder stops
+ * the sync here.
  */
 export function schemaPages() {
   if (schemaPagesRead) return schemaPagesRead;
@@ -373,12 +375,13 @@ const DATABASE = /\.(?:sqlite3?|db)$/;
 const METADATA = /^metadata\.(?:ya?ml|json)$/;
 
 /**
- * The data's files in BROWSE's folder: each SQLite database, as its file and
- * the name Datasette gives it, the file's own without its extension, and the
- * Datasette metadata file, or null. Nothing else in the folder is published.
- * A database with a journal beside it that is not empty stops the build: a
- * write to it is unfinished or still open, so a copy of it could be torn.
- * So do two metadata files, since Datasette reads one.
+ * The data's files in BROWSE's folder: each SQLite database, as its file name
+ * and the name Datasette gives it, which is the file name without its
+ * extension; and the Datasette metadata file, or null. Nothing else in the
+ * folder is published. A database with a journal beside it that is not empty
+ * stops the sync: a write to it is unfinished or still open, so a copy of the
+ * database could be inconsistent. So do two metadata files, since Datasette
+ * reads one.
  */
 export function browseFiles() {
   if (!BROWSE || !isDir(BROWSE.dir)) return { databases: [], metadata: null };

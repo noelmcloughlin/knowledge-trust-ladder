@@ -6,8 +6,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
-- **A ktl-website site shows a LinkML schema's pages under a Schema topic.** `SCHEMA` renders the pages `gen-doc` writes, found through a `gen-doc` recipe by default and built by the sync when missing, and a mermaid diagram on any page is drawn in the browser.
-- **A ktl-website site can serve the data as SQLite databases to open in Datasette Lite.** `BROWSE` names their folder and the command that builds it, and stays off until set, since the databases go on the public site. Their Datasette metadata goes without its plugins' settings.
+- **A ktl-website site shows a LinkML schema's pages under a Schema topic.** `SCHEMA` renders the pages `gen-doc` writes, found through a `gen-doc` recipe by default and built by the sync when missing. A mermaid diagram on any page is drawn in the browser.
+- **A ktl-website site can serve the data as SQLite databases to open in Datasette Lite.** `BROWSE` names their folder and the command that builds it, and stays off until set, since the databases go on the public site. Their Datasette metadata is published without its `plugins` settings.
 
 ### Changed
 

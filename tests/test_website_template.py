@@ -5,12 +5,12 @@ placeholders in two files. The copy must be complete, the bracket file name
 must survive, no placeholder may remain, and `node scripts/config.mjs` must
 settle the options against the host it sits in and refuse a placeholder. It
 finds a LinkML project's schema pages in a justfile of any name just reads,
-and its data only when asked, trusts no folder name a shell would read as a
-command, and refuses gen-doc's subfolders, two metadata files and a database
-caught mid-write. The
-three files a repair never replaces are named in the skill's page, its
-preflight, the contract and sync-sidecar.sh, and the four must agree. The
-build itself is scripts/smoke-test-website.sh, which needs the network.
+and its data only when asked. It trusts no folder name a shell would read as
+a command, and refuses gen-doc's subfolders, two metadata files and a
+database caught mid-write. The three files a repair never replaces are named
+in the skill's page, its preflight, the contract and sync-sidecar.sh, and the
+four must agree. The build itself is scripts/smoke-test-website.sh, which
+needs the network.
 """
 
 from __future__ import annotations
