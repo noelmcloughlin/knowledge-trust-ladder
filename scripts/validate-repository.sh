@@ -283,6 +283,7 @@ sibling_paths=(
   "SECURITY.md"
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md"
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md#why-the-bundle-is-never-a-real-folder-inside-a-vault"
+  "docs/architecture.md"
   "docs/architecture.md#four-skills-three-lines-of-the-poem"
   "docs/architecture.md#the-fifth-role-which-is-not-a-skill"
   "docs/architecture.md#trust-stays-visible"
