@@ -16,7 +16,7 @@ An automated skill audit, such as Snyk's or Socket's on a skills catalog, gets i
 
 ## What executes here
 
-This repository is mostly Markdown. Four things in it run, or are run by other systems, and are the attack surface.
+This repository is mostly Markdown. Five things in it run, or are run by other systems, and are the attack surface.
 
 | Surface | What guards it |
 | --- | --- |
