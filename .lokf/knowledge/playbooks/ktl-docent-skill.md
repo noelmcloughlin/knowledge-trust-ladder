@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-docent-skill
+id: https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
 title: ktl-docent skill
 description: "The reader's side: it answers questions from the bundle first, with each concept's trust label, falls back to the repository when the bundle cannot answer, and records misses and disagreements for the librarian."
 genre: how-to
@@ -9,14 +9,14 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:17:30Z"
 dependsOn:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/glossary/trust-label
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
 references:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-- https://knowledge-trust-ladder.example/knowledge/policies/threat-model
+- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+- https://w3id.org/ktl/knowledge/policies/threat-model
 verified:
 - by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

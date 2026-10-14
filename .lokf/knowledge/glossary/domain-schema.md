@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/domain-schema
+id: https://w3id.org/ktl/knowledge/glossary/domain-schema
 title: Domain schema
 description: A schema written in LinkML that extends LOKF's, for a domain whose concepts stop fitting LOKF's short list of classes, so the domain's own types are checked rather than tolerated. The curator flags the drift, the team decides, and the librarian applies it.
 definition: A schema written in LinkML that extends LOKF's, for a domain whose concepts stop fitting LOKF's classes.
@@ -11,9 +11,9 @@ sources:
 - resource: docs/architecture.md
 - resource: skills/ktl-curator/references/domain-schemas.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
-- https://knowledge-trust-ladder.example/knowledge/glossary/linkml
-- https://knowledge-trust-ladder.example/knowledge/glossary/lokf
+- https://w3id.org/ktl/knowledge/explanation/domain-schemas
+- https://w3id.org/ktl/knowledge/glossary/linkml
+- https://w3id.org/ktl/knowledge/glossary/lokf
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

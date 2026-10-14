@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
+id: https://w3id.org/ktl/knowledge/references/lokf-specification
 title: LOKF specification
 description: The canonical definition of the Linked Open Knowledge Format - a semantic profile of OKF binding every field, type, and relationship to schema.org, DCAT, and PROV-O.
 genre: reference
@@ -9,9 +9,9 @@ generated:
   by: process:ktl-librarian
   at: "2026-09-24T16:46:12Z"
 references:
-- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
+- https://w3id.org/ktl/knowledge/references/lokf-toolkit
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
+- https://w3id.org/ktl/knowledge/references/okf-specification
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T16:35:55Z"

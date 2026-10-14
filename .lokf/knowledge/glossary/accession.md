@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/accession
+id: https://w3id.org/ktl/knowledge/glossary/accession
 title: Accession
 description: A museum's word for an item added to its collection, which the registrar keeps documented with its provenance filed; in the bundle, each concept added is one.
 definition: A museum's word for an item added to its collection. The registrar keeps each accession documented and its provenance filed.
@@ -10,10 +10,10 @@ sources:
 - resource: docs/architecture.md
 - resource: skills/ktl-librarian/references/golden-rules.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/registrar
-- https://knowledge-trust-ladder.example/knowledge/glossary/collection
+- https://w3id.org/ktl/knowledge/glossary/registrar
+- https://w3id.org/ktl/knowledge/glossary/collection
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

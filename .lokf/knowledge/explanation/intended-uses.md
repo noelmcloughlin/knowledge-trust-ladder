@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/intended-uses
+id: https://w3id.org/ktl/knowledge/explanation/intended-uses
 title: What Knowledge Trust Ladder is for, and what it is not
 description: "A draft placeholder for a reader's question no source settles: which uses Knowledge Trust Ladder is meant for, such as DevSecOps or technology governance, and which it is not. The README, `docs/architecture.md` and `docs/context-layer.md` state the purpose and name no use case or non-goal, and `docs/skills-repositories.md` answers it only for a repository whose content is Agent Skills."
 genre: explanation
@@ -15,10 +15,10 @@ generated:
   at: "2026-10-13T15:08:54Z"
 status: draft
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
-- https://knowledge-trust-ladder.example/knowledge/policies/threat-model
-- https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
-- https://knowledge-trust-ladder.example/knowledge/explanation/context-layer
+- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+- https://w3id.org/ktl/knowledge/policies/threat-model
+- https://w3id.org/ktl/knowledge/explanation/domain-schemas
+- https://w3id.org/ktl/knowledge/explanation/context-layer
 verified:
 - by: process:ktl-librarian
   at: "2026-10-14T00:35:00Z"

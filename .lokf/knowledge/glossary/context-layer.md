@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/context-layer
+id: https://w3id.org/ktl/knowledge/glossary/context-layer
 title: Context layer
 description: A governed layer between an organisation's sources and whoever consumes them, person or agent, that persists from one task to the next. One knowledge bundle is one repository's context layer, and a design sets out how bundles federate into one layer.
 definition: A governed layer between an organisation's sources (code, documents, diagrams, policies, operational records) and whoever consumes them, a person or an agent, that persists from one task to the next.
@@ -10,8 +10,8 @@ sources:
 - resource: docs/architecture.md
 - resource: docs/context-layer.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/context-layer
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/explanation/context-layer
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

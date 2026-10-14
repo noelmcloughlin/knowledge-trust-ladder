@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/trust-ladder
+id: https://w3id.org/ktl/knowledge/glossary/trust-ladder
 title: Trust ladder
 description: "Knowledge Trust Ladder's answer to who is responsible for the quality of the context: written into each concept, where it came from and how far it has been checked, as rungs a claim climbs from still a draft to confirmed by a person."
 definition: The answer, written into each entry of the bundle, to who is responsible for the quality of the context. It says where the entry came from and how far it has been checked, in plain words.
@@ -9,9 +9,9 @@ resource: docs/architecture.md
 sources:
 - resource: docs/architecture.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
-- https://knowledge-trust-ladder.example/knowledge/glossary/health-line
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/glossary/health-line
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

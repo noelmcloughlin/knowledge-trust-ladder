@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/health-line
+id: https://w3id.org/ktl/knowledge/glossary/health-line
 title: Health line
 description: "The one line `knowledge-report.sh` prints for the whole bundle, counting its concepts under seven trust labels, such as \"Confirmed by a person: 3 of 40\". It is derived on every read and never stored, and it is the number to watch over time."
 definition: The line `knowledge-report.sh` computes for the whole bundle, counting its concepts under seven trust labels. "Confirmed by a person, a of N" rising is the bundle earning trust.
@@ -12,9 +12,9 @@ sources:
 - resource: skills/ktl-sidecar/templates/scripts/knowledge-report.sh
 - resource: docs/architecture.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-ladder
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+- https://w3id.org/ktl/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/glossary/trust-ladder
+- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

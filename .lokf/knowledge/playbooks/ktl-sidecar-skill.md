@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
+id: https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 title: ktl-sidecar skill
 description: Procedure that creates a .lokf/ sidecar, tooling, docs, a dummy skeleton, and the knowledge_bundle doorway link beside it, from bundled templates, or repairs a missing or broken sidecar file, then hands off to ktl-librarian.
 genre: how-to
@@ -9,16 +9,16 @@ generated:
   by: process:ktl-librarian
   at: "2026-10-14T00:35:00Z"
 hasPart:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
-- https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
+- https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
+- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
 status: draft
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
 references:
-- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
-- https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
+- https://w3id.org/ktl/knowledge/references/lokf-toolkit
+- https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 sources:
 - resource: skills/ktl-sidecar/SKILL.md
 - resource: skills/ktl-sidecar/references/automation.md

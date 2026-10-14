@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/skillwiki
+id: https://w3id.org/ktl/knowledge/explanation/skillwiki
 title: What KTL took from SkillWiki
 description: "What Knowledge Trust Ladder (KTL) took from the SkillWiki paper (Huang et al., 2026) and its code, as `docs/skillwiki.md` says: the four changes the reading made to the skills, the excerpt check that waits for LOKF 0.9.0, and where the two designs part, such as who stands behind a decision."
 genre: explanation
@@ -8,12 +8,12 @@ resource: docs/skillwiki.md
 sources:
 - resource: docs/skillwiki.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/wikiskill
-- https://knowledge-trust-ladder.example/knowledge/explanation/skills-repositories
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+- https://w3id.org/ktl/knowledge/explanation/wikiskill
+- https://w3id.org/ktl/knowledge/explanation/skills-repositories
+- https://w3id.org/ktl/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: human:noelmcloughlin
   at: "2026-10-13T00:59:27Z"

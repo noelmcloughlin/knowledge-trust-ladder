@@ -28,7 +28,7 @@ ops:
       genre: reference
       resource: skills/ktl-sidecar/templates/scripts/knowledge-apply.sh
       derivedFrom:
-        - https://knowledge-trust-ladder.example/knowledge/glossary/the-pen
+        - https://w3id.org/ktl/knowledge/glossary/the-pen
       sources:
         - resource: .lokf/knowledge/glossary/the-pen.md
       tags:

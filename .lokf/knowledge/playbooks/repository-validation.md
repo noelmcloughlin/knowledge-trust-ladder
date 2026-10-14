@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
+id: https://w3id.org/ktl/knowledge/playbooks/repository-validation
 title: Repository validation
 description: "What CI checks on every pull request and weekly: the repository contract, the Agent Skills spec, shell and workflow linting, the install and website smoke tests, and Markdown, link and spelling checks."
 genre: how-to
@@ -10,9 +10,9 @@ generated:
   at: "2026-10-14T00:35:00Z"
 status: draft
 references:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
-- https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
-- https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/open-skills-cli
+- https://w3id.org/ktl/knowledge/playbooks/contributing
 sources:
 - resource: .github/workflows/validate.yml
 - resource: scripts/validate-repository.sh

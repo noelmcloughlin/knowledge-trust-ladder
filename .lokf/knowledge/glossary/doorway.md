@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/doorway
+id: https://w3id.org/ktl/knowledge/glossary/doorway
 title: Doorway
 description: "`knowledge_bundle`, the link at a host's root that ktl-sidecar creates onto the bundle, so the hidden `.lokf/knowledge` folder has a name a folder picker can see. Obsidian opens the bundle as a vault of its own through it."
 definition: The `knowledge_bundle` link at a host's root onto the bundle, which ktl-sidecar creates so the bundle has a name a folder picker can see.
@@ -10,10 +10,10 @@ sources:
 - resource: docs/obsidian.md
 - resource: skills/ktl-sidecar/SKILL.md
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/hosts-and-doorways
-- https://knowledge-trust-ladder.example/knowledge/glossary/sidecar
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-- https://knowledge-trust-ladder.example/knowledge/playbooks/open-bundle-in-obsidian
+- https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
+- https://w3id.org/ktl/knowledge/glossary/sidecar
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

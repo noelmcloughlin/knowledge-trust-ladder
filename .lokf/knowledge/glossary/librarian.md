@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/librarian
+id: https://w3id.org/ktl/knowledge/glossary/librarian
 title: Librarian
 description: "The role that binds a repository's knowledge into order, played by the ktl-librarian skill: it derives concepts with their sources, classifies and links them, audits, and hands off for review. It catalogues without vouching, and writes the bundle only through the pen."
 definition: The role that derives the bundle's concepts from the repository with their sources, classifies them, links them with typed relationships, audits, and hands off for review. It records facts about the repository, never verdicts about truth.
@@ -10,12 +10,12 @@ sources:
 - resource: docs/architecture.md
 - resource: skills/ktl-librarian/SKILL.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
-- https://knowledge-trust-ladder.example/knowledge/glossary/the-pen
-- https://knowledge-trust-ladder.example/knowledge/glossary/curator
-- https://knowledge-trust-ladder.example/knowledge/glossary/work-list
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/glossary/the-pen
+- https://w3id.org/ktl/knowledge/glossary/curator
+- https://w3id.org/ktl/knowledge/glossary/work-list
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

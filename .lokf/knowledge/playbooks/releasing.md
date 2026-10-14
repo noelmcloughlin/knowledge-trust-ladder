@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/releasing
+id: https://w3id.org/ktl/knowledge/playbooks/releasing
 title: Releasing
 description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, and dispatches `knowledge-release.yaml` to attach the bundle and Copilot zips."
 genre: how-to
@@ -10,12 +10,12 @@ generated:
   at: "2026-10-14T00:35:00Z"
 status: draft
 dependsOn:
-- https://knowledge-trust-ladder.example/knowledge/references/gh-skill-cli
+- https://w3id.org/ktl/knowledge/references/gh-skill-cli
 references:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/docent-in-m365-copilot
-- https://knowledge-trust-ladder.example/knowledge/policies/versioning
-- https://knowledge-trust-ladder.example/knowledge/playbooks/repository-validation
-- https://knowledge-trust-ladder.example/knowledge/playbooks/contributing
+- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
+- https://w3id.org/ktl/knowledge/policies/versioning
+- https://w3id.org/ktl/knowledge/playbooks/repository-validation
+- https://w3id.org/ktl/knowledge/playbooks/contributing
 sources:
 - resource: .github/workflows/publish.yml
 - resource: docs/releasing.md

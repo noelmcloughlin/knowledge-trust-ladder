@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
+id: https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 title: ktl-curator skill
 description: "A human curator's assistant: it reports what needs a person's attention, then records that person's confirm, correct, retire or send-back verdicts in the bundle's frontmatter."
 genre: how-to
@@ -9,11 +9,11 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:13:17Z"
 dependsOn:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/glossary/trust-label
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
 sources:
 - resource: skills/ktl-curator/SKILL.md
 - resource: skills/ktl-curator/references/review-session.md

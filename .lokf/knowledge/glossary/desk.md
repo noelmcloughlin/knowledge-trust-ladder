@@ -1,16 +1,16 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/desk
+id: https://w3id.org/ktl/knowledge/glossary/desk
 title: Desk
 description: "The library word for the place where a role does its work with the bundle: the registrar is `knowledge-apply.sh` at the librarian's desk, and `knowledge-report.sh` at the reader's and the curator's."
 definition: In the project's library and museum terms, the place where a role does its work with the bundle. A program does the registrar's work at each desk.
 genre: reference
 resource: docs/architecture.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/glossary/the-pen
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
+- https://w3id.org/ktl/knowledge/glossary/the-pen
+- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

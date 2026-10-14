@@ -1,13 +1,13 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/knowledge-sources
+id: https://w3id.org/ktl/knowledge/playbooks/knowledge-sources
 title: Knowledge sources
 description: Map of the repository locations this bundle was derived from, and how to re-check each on a future refresh.
 genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-14T00:35:00Z"
+  at: "2026-10-14T20:04:37Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-10T00:00:00Z"
@@ -438,7 +438,7 @@ stale_after: 2027-09-10
 - **No `Person`/`Organization` concept.** The maintainer is recorded once as
   the bundle's `publisher` in `index.md`; nothing else links to a person, and
   the skill says to add such concepts only when something does.
-- **`base_iri` is a placeholder** (`knowledge-trust-ladder.example`, an RFC 2606
-  reserved domain) pending a namespace the project actually controls. It mints
-  every concept `@id` here, so migrating it later rewrites all of them - cheap
-  now, expensive once anything external links in.
+- **`base_iri` is `https://w3id.org/ktl/knowledge/`**, a persistent
+  namespace the project controls. It mints every concept `@id` here, and the
+  w3id rule redirects each one to the concept's page on the site, its JSON-LD
+  or its Markdown file.

@@ -1,6 +1,6 @@
 ---
 type: Reference
-id: https://knowledge-trust-ladder.example/knowledge/references/open-skills-cli
+id: https://w3id.org/ktl/knowledge/references/open-skills-cli
 title: Open Skills CLI (npx skills)
 description: The vendor-neutral installer for agent skills, `npx skills add`, which takes a local path as its source, so this repository uses it as a pre-publication install check.
 genre: reference
@@ -10,7 +10,7 @@ generated:
   at: "2026-10-12T16:08:20Z"
 status: draft
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
 verified:
 - by: process:ktl-librarian
   at: "2026-10-12T03:11:32Z"

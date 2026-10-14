@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-website-skill
+id: https://w3id.org/ktl/knowledge/playbooks/ktl-website-skill
 title: ktl-website skill
 description: Procedure that lays down an Astro Starlight website for the knowledge bundle in `website/` from bundled templates, with a page per concept and its trust label, a health page and the knowledge graph, and a workflow that publishes it to GitHub Pages once `KNOWLEDGE_WEBSITE_ENABLED` is set; or repairs and updates a site it laid down.
 genre: how-to
@@ -17,14 +17,14 @@ sources:
 - resource: docs/architecture.md
 - resource: CHANGELOG.md
 dependsOn:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
-- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
+- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+- https://w3id.org/ktl/knowledge/references/lokf-toolkit
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/website
+- https://w3id.org/ktl/knowledge/playbooks/website
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
   at: "2026-10-14T00:35:00Z"

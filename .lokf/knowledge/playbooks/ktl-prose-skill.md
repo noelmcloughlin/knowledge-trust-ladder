@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
+id: https://w3id.org/ktl/knowledge/playbooks/ktl-prose-skill
 title: ktl-prose skill
 description: The librarian's copy editor. It rewords the body of a concept an agent wrote, in plain English, before a person confirms it, changing the wording and never a fact or a frontmatter byte, and its script proves that only the wording changed.
 genre: how-to
@@ -14,14 +14,14 @@ sources:
 - resource: docs/architecture.md
 - resource: CHANGELOG.md
 references:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-- https://knowledge-trust-ladder.example/knowledge/policies/threat-model
+- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+- https://w3id.org/ktl/knowledge/policies/threat-model
 dependsOn:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

@@ -1,6 +1,6 @@
 ---
 type: Playbook
-id: https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-librarian-skill
+id: https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 title: ktl-librarian skill
 description: Recurring procedure that scrapes the host repository, derives and maintains the .lokf/ concepts and their typed relations, audits the bundle, and hands off for human review.
 genre: how-to
@@ -25,16 +25,16 @@ generated:
   by: process:ktl-librarian
   at: "2026-10-12T16:08:20Z"
 dependsOn:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-sidecar-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://knowledge-trust-ladder.example/knowledge/references/agent-skills-specification
+- https://w3id.org/ktl/knowledge/references/agent-skills-specification
 references:
-- https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
-- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-curator-skill
-- https://knowledge-trust-ladder.example/knowledge/policies/security
+- https://w3id.org/ktl/knowledge/references/lokf-specification
+- https://w3id.org/ktl/knowledge/references/okf-specification
+- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+- https://w3id.org/ktl/knowledge/policies/security
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T18:36:00Z"
@@ -48,7 +48,7 @@ verified:
   at: "2026-10-13T00:19:38Z"
 stale_after: 2027-10-13
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/playbooks/ktl-prose-skill
+- https://w3id.org/ktl/knowledge/playbooks/ktl-prose-skill
 ---
 # Overview
 

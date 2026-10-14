@@ -1,6 +1,6 @@
 ---
 type: Policy
-id: https://knowledge-trust-ladder.example/knowledge/policies/code-of-conduct
+id: https://w3id.org/ktl/knowledge/policies/code-of-conduct
 title: Code of conduct
 description: "Contributor Covenant v2.1: its scope over issues, pull requests and discussions, and how to report unacceptable behaviour."
 genre: reference

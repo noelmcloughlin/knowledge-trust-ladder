@@ -1,14 +1,14 @@
 ---
 lokf_version: "0.2"
 okf_version: "0.2"
-base_iri: https://knowledge-trust-ladder.example/knowledge/
+base_iri: https://w3id.org/ktl/knowledge/
 context: https://w3id.org/lokf/context.jsonld
 title: Knowledge Trust Ladder Knowledge Bundle
 description: Four Agent Skills that turn a repository's scattered knowledge into a maintained, trusted LOKF knowledge bundle.
 license: https://creativecommons.org/licenses/by/4.0/
 publisher:
   type: Person
-  id: https://knowledge-trust-ladder.example/knowledge/person/noel-mcloughlin
+  id: https://w3id.org/ktl/knowledge/person/noel-mcloughlin
   name: Noel McLoughlin
 ---
 

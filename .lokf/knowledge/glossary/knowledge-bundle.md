@@ -1,6 +1,6 @@
 ---
 type: GlossaryTerm
-id: https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
+id: https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 title: Knowledge bundle
 description: The `.lokf/knowledge` directory - containing one-concept-per-file Markdown, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph.
 definition: The `.lokf/knowledge` directory - containing one-concept-per-file Markdown, carrying a semantic header, that is simultaneously human-readable documentation and a queryable graph. Accessible via a `knowledge_bundle` link at the repository root if that link exists.
@@ -14,7 +14,7 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T00:16:44Z"
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/lokf
+- https://w3id.org/ktl/knowledge/glossary/lokf
 verified:
 - by: human:noelmcloughlin
   at: "2026-09-09T16:35:55Z"

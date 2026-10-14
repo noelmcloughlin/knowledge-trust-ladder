@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/context-layer
+id: https://w3id.org/ktl/knowledge/explanation/context-layer
 title: "The curated context layer: one bundle, and a federation of bundles"
 description: "What the industry means by a context layer, why one KTL bundle is already one repository's context layer and where it stops, and a design for federating bundles into one layer: domains as thin LOKF bundles that select releases, and a workspace rebuilt on each release with one named graph per bundle. It also says what exists today, the decisions an adopter makes, and which SPARQL stores, catalogues, agent surfaces and artifact repositories such a layer can use."
 genre: explanation
@@ -10,16 +10,16 @@ sources:
 - resource: docs/context-layer-technology.md
 - resource: docs/architecture.md
 about:
-- https://knowledge-trust-ladder.example/knowledge/glossary/knowledge-bundle
-- https://knowledge-trust-ladder.example/knowledge/glossary/context-layer
+- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+- https://w3id.org/ktl/knowledge/glossary/context-layer
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/explanation/intended-uses
-- https://knowledge-trust-ladder.example/knowledge/explanation/domain-schemas
-- https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
+- https://w3id.org/ktl/knowledge/explanation/intended-uses
+- https://w3id.org/ktl/knowledge/explanation/domain-schemas
+- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 references:
-- https://knowledge-trust-ladder.example/knowledge/references/lokf-specification
-- https://knowledge-trust-ladder.example/knowledge/references/okf-specification
-- https://knowledge-trust-ladder.example/knowledge/references/lokf-toolkit
+- https://w3id.org/ktl/knowledge/references/lokf-specification
+- https://w3id.org/ktl/knowledge/references/okf-specification
+- https://w3id.org/ktl/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"

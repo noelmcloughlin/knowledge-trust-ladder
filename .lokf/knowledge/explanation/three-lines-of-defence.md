@@ -1,6 +1,6 @@
 ---
 type: Explanation
-id: https://knowledge-trust-ladder.example/knowledge/explanation/three-lines-of-defence
+id: https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 title: Three lines of defence - where each role sits, and what an auditor can check
 description: "The librarian, curator, registrar, sidecar and docent placed in the IIA's Three Lines Model, for whoever adopts KTL: who owns a claim, what a machine checks, what a person can examine afterwards, the four limits on that evidence, what the critics page answers, and what remains to do and who does it."
 genre: explanation
@@ -10,11 +10,11 @@ generated:
   at: "2026-10-13T01:11:23Z"
 about: []
 relatedTo:
-- https://knowledge-trust-ladder.example/knowledge/policies/ai-covenant
-- https://knowledge-trust-ladder.example/knowledge/glossary/trust-label
-- https://knowledge-trust-ladder.example/knowledge/explanation/context-layer
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-four-roles
-- https://knowledge-trust-ladder.example/knowledge/explanation/why-a-registrar-role
+- https://w3id.org/ktl/knowledge/policies/ai-covenant
+- https://w3id.org/ktl/knowledge/glossary/trust-label
+- https://w3id.org/ktl/knowledge/explanation/context-layer
+- https://w3id.org/ktl/knowledge/explanation/why-four-roles
+- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 verified:
 - by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
