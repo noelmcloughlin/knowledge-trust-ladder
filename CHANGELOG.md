@@ -4,16 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **A move of the bundle's `base_iri` no longer reads as an edit of every confirmed concept.** Conventions rule 13 compares each id and relation target by its path under the base each commit held, so the migration ktl-librarian's Rule 2 describes keeps every confirmation.
-
-### Changed
-
-- **The README, the architecture page and the plugin's homepage link to the site at `https://w3id.org/ktl/`.** The persistent address redirects to the GitHub Pages site.
-- **The bundle's `base_iri` is `https://w3id.org/ktl/knowledge/`.** It replaces the `knowledge-trust-ladder.example` placeholder, so every concept's IRI resolves to its page, its JSON-LD or its Markdown file.
-- **The README lists Exhibitions, the sites that show a repository's collection.** It names this repository's own bundle and AI-LinkMO's.
-
 ## [0.41.1] - 2026-10-14
 
 ### Changed
@@ -22,10 +12,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The README lists Exhibitions, the sites that show a repository's collection.** It names this repository's own bundle and AI-LinkMO's.
 - **The README, the architecture page and the plugin's homepage link to the site at `https://w3id.org/ktl/`.** The persistent address redirects to the GitHub Pages site.
 - **The README lists Exhibitions, the sites that show a repository's collection.** It names this repository's own bundle and AI-LinkMO's.
+- **The README, the architecture page and the plugin's homepage link to the site at `https://w3id.org/ktl/`.** The persistent address redirects to the GitHub Pages site.
+- **The bundle's `base_iri` is `https://w3id.org/ktl/knowledge/`.** It replaces the `knowledge-trust-ladder.example` placeholder, so every concept's IRI resolves to its page, its JSON-LD or its Markdown file.
+- **The README lists Exhibitions, the sites that show a repository's collection.** It names this repository's own bundle and AI-LinkMO's.
 
 ### Fixed
 
 - **`sync-sidecar.sh` sets its next steps apart.** A blank line now comes before the changelog entry to add and before the commit commands, so each step reads on its own.
+- **A move of the bundle's `base_iri` no longer reads as an edit of every confirmed concept.** Conventions rule 13 compares each id and relation target by its path under the base each commit held, so the migration ktl-librarian's Rule 2 describes keeps every confirmation.
 - **A move of the bundle's `base_iri` no longer reads as an edit of every confirmed concept.** Conventions rule 13 compares each id and relation target by its path under the base each commit held, so the migration ktl-librarian's Rule 2 describes keeps every confirmation.
 
 ## [0.41.0] - 2026-10-14
