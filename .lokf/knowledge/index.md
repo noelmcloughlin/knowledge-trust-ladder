@@ -29,7 +29,7 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 * [Releasing](playbooks/releasing.md) - How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, and dispatches `knowledge-release.yaml` to attach the bundle and Copilot zips.
 * [Repository validation](playbooks/repository-validation.md) - What CI checks on every pull request and weekly: the repository contract, the Agent Skills spec, shell and workflow linting, the install smoke test, and Markdown, link and spelling checks.
 * [ktl-prose skill](playbooks/ktl-prose-skill.md) - The librarian's copy editor. It rewords the body of a concept an agent wrote, in plain English, before a person confirms it, changing the wording and never a fact or a frontmatter byte, and its script proves that only the wording changed.
-* [Build, preview and edit the website](playbooks/website.md) - How the project website in `website/` is built with Astro Starlight from the README, `docs/`, the knowledge bundle and `CHANGELOG.md`, how to preview it locally with npm and uv, which file to edit for each kind of change, and how `website.yml` publishes it to GitHub Pages.
+* [Build, preview and edit the website](playbooks/website.md) - How the project website in `website/` is built with Astro Starlight from the README, `docs/`, the knowledge bundle and `CHANGELOG.md`, how to preview it locally with npm and uv, which file to edit for each kind of change, and how `knowledge-website.yaml` publishes it to GitHub Pages.
 
 # References
 

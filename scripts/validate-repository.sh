@@ -466,9 +466,6 @@ done
 #      the template and the copy still say the same thing. The reverse holds
 #      too: every tracked file under website/ is a template or one of the
 #      three, so nothing of this repository's site escapes the template.
-#      This repository's copy of the workflow keeps its first name,
-#      website.yml, which playbooks/website.md names as a source; that
-#      concept is a person's, so the rename waits for their correction.
 say ""
 say "Checking the website skill's templates are this repository's own site..."
 wtemplates="skills/ktl-website/templates"
@@ -486,10 +483,10 @@ while IFS= read -r src; do
     err "$dst differs from $src - this repository runs the site its skill lays down, so the two must match: copy the template over the site file after editing the template, or the site file over the template after a Dependabot npm bump, which only ever edits website/package.json and package-lock.json"
   fi
 done < <(find "$wtemplates/website" -type f | sort)
-if cmp -s "$wtemplates/github/knowledge-website.yaml" ".github/workflows/website.yml"; then
-  ok ".github/workflows/website.yml matches its template, knowledge-website.yaml"
+if cmp -s "$wtemplates/github/knowledge-website.yaml" ".github/workflows/knowledge-website.yaml"; then
+  ok ".github/workflows/knowledge-website.yaml matches its template"
 else
-  err ".github/workflows/website.yml differs from $wtemplates/github/knowledge-website.yaml - copy one over the other, as check 11 says"
+  err ".github/workflows/knowledge-website.yaml differs from $wtemplates/github/knowledge-website.yaml - copy one over the other, as check 11 says"
 fi
 filled="$(sed -e 's|<REPO_OWNER>|noelmcloughlin|g' -e 's|<REPO_NAME>|knowledge-trust-ladder|g' -e 's|<PROJ_NAME>|Knowledge Trust Ladder|g' "$wtemplates/website/README.md")"
 if [[ "$filled" == "$(cat website/README.md)" ]]; then

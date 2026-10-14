@@ -20,7 +20,7 @@ updates:
   #          ".github/workflows/$f.yaml"
   #   done
   #   diff skills/ktl-website/templates/github/knowledge-website.yaml \
-  #        .github/workflows/website.yml
+  #        .github/workflows/knowledge-website.yaml
   #
   # A template may differ from this repository's copy on purpose. If one ever
   # needs to, say why here, so the diff above is not read as a defect.

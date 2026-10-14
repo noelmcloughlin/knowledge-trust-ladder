@@ -2,6 +2,7 @@
 
 ## 2026-10-13
 
+* **Curation**: human:noelmcloughlin corrected 1: Build, preview and edit the website, now naming `knowledge-website.yaml`, the default branch, the variable gate, `docs/architecture.en-simple.md` and `DOCS.groups`.
 * **Curation**: human:noelmcloughlin sent 1 back: Build, preview and edit the website, for the `website.yml` changes the ktl-website skill brings.
 * **Changed**: The context layer now says the architecture page uses the term and links the page, since "Why libraries have catalogues" and "Prose, Structure, Meaning, Context" moved there from the README on 2026-10-13. It is about the glossary term of the same name.
 * **Changed**: Intended uses takes the context layer and the question of who is responsible from `docs/architecture.md`, where the README's sections moved on 2026-10-13, and keeps the README for what the project is.
