@@ -43,20 +43,23 @@
     viewer.scrollTo({ left: (viewer.scrollWidth - viewer.clientWidth) / 2, top: 0 });
   }
 
-  // Closing puts the diagram back under its button, at the column's width.
-  viewer.addEventListener("close", () => {
+  // Puts the diagram the dialog shows back under its button, at the column's
+  // width: when the dialog closes, and before a redraw replaces the diagram.
+  function restore() {
     if (!shown) return;
     if (shown.style === null) shown.svg.removeAttribute("style");
     else shown.svg.setAttribute("style", shown.style);
     shown.block.prepend(shown.svg);
     shown = null;
-  });
+  }
+  viewer.addEventListener("close", restore);
   // A click anywhere but on a link in the diagram closes it.
   viewer.addEventListener("click", (event) => {
     if (!(event.target instanceof Element && event.target.closest("a"))) viewer.close();
   });
 
   async function draw() {
+    restore();
     if (viewer.open) viewer.close();
     let mermaid: typeof import("mermaid").default;
     try {
@@ -99,9 +102,14 @@
     }
   }
 
+  // One drawing at a time: a theme switch during one draws again after it.
+  let drawing = Promise.resolve();
+  const redraw = () => {
+    drawing = drawing.then(draw).catch((error) => console.error(error));
+  };
   if (blocks.length > 0) {
-    draw();
-    new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    redraw();
+    new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   }
 </script>
 

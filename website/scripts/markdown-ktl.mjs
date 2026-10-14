@@ -8,7 +8,9 @@
 //     since a concept's body starts its sections at `#` and the page title is
 //     already the one h1;
 //   - leaves a ```mermaid block's source in a pre.ktl-mermaid, out of the
-//     code highlighter's reach, for src/components/Mermaid.astro to draw.
+//     code highlighter's reach, for src/components/Mermaid.astro to draw, on
+//     a page the sync marked `ktlMermaid`, the only pages that load it; on
+//     any other page the block stays code, never a diagram nothing draws.
 import { BASE } from "./config.mjs";
 import { rewriteHtml, rewriteUrl } from "./routes.mjs";
 
@@ -47,7 +49,7 @@ export default function markdownKtl({ conceptIds = [] } = {}) {
         if (fm.ktlShiftHeadings) ctx.setProperty(node, "depth", Math.min(6, node.depth + 1));
       },
       code(node, ctx) {
-        if (node.lang === "mermaid") ctx.replaceNode(node, { type: "html", value: `<pre class="ktl-mermaid">${escapeHtml(node.value)}</pre>` });
+        if (fm.ktlMermaid && node.lang === "mermaid") ctx.replaceNode(node, { type: "html", value: `<pre class="ktl-mermaid">${escapeHtml(node.value)}</pre>` });
       },
       text(node, ctx) {
         if (selfId === null || !node.value.includes("[[")) return;

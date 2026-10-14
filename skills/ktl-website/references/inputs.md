@@ -24,18 +24,21 @@ Every page comes from a file the repository already holds, so a change to the si
 
 ## The schema's pages
 
-- Each `.md` file in the `SCHEMA` folder, as LinkML's `gen-doc` writes it: `index.md` is the Schema topic's overview at `/schema/`, and every other page sits at `/schema/<file name>/`, its case kept, so the links in its diagram resolve. Its title is its `#` line, such as `Class: Action`, and its description the italic line under it. The sidebar groups the pages by the word that opens the title: Classes, Slots, Enumerations, Types and Subsets. A page whose title opens with none of them, the schema's own, has a page and no sidebar entry.
+- Each `.md` file in the `SCHEMA` folder becomes a page, as LinkML's `gen-doc` writes them by default, all in one folder. `index.md` is the Schema topic's overview at `/schema/`, and every other page sits at `/schema/<file name>/`, its case kept, so the links in its diagram resolve. Its title is its `#` line, such as `Class: Action`, and its description the italic line under it. The sidebar groups the pages by the word that opens the title: Classes, Slots, Enumerations, Types and Subsets. A page whose title opens with none of them, the schema's own, has a page and no sidebar entry.
 - mkdocs-material's frontmatter and its `<div data-search-exclude>` wrapper are dropped, and a blank line goes around each `<details>`, so the YAML inside is a code block.
 - Search leaves the schema's pages out, and they share the home page's social card.
 - A concept whose source is in the `SCHEMA` folder links that source's page on the site, since the folder is never on GitHub.
+- Pages that `gen-doc --subfolder-type-separation` writes into a folder per kind stop the sync, since the site would show none of them.
 
 ## Diagrams
 
-- A ```` ```mermaid ```` block on any page, a schema page's class diagram among them, is drawn in the reader's browser, in the site's light or dark theme, with a button that shows it at its own size. The script that draws it loads only on a page that has one. A diagram's link to another page of the site opens in the same tab.
+- A ```` ```mermaid ```` block on any page the sync writes, quoted or not, is drawn in the reader's browser in the site's light or dark theme, as each schema page's class diagram is. A button under it shows it at its own size. The script that draws it loads only on a page that has one. A diagram's link to another page of the site opens in the same tab.
 
 ## The data
 
-- Each `.sqlite`, `.sqlite3` or `.db` file in the `BROWSE` folder, and a `metadata.yaml`, `metadata.yml` or `metadata.json` beside them, are served under `/browse/`. Nothing else in the folder is.
+- Each `.sqlite`, `.sqlite3` or `.db` file in the `BROWSE` folder is served under `/browse/`, and nothing else in the folder is.
+- The Datasette metadata beside them, `metadata.yaml`, `metadata.yml` or `metadata.json`, is served as `metadata.json` without its `plugins` settings. Datasette Lite runs no plugin, and those settings can hold a credential.
+- Two metadata files stop the sync, and so does a database with a journal beside it that is not empty, since a copy of it could be torn.
 - The page at `/browse/` gives each database a section, titled and described from the metadata's `databases` entry when it has one, with its size, a download link and a link that opens it in Datasette Lite with the metadata. Datasette Lite runs Datasette in the reader's browser, and the link turns its analytics off.
 
 ## Links

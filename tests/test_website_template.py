@@ -4,8 +4,10 @@ Step 1 of the skill copies templates/website/ into a host and fills four
 placeholders in two files. The copy must be complete, the bracket file name
 must survive, no placeholder may remain, and `node scripts/config.mjs` must
 settle the options against the host it sits in and refuse a placeholder. It
-finds a LinkML project's schema pages, and its data only when asked, and
-trusts no folder name a shell would read as a command. The
+finds a LinkML project's schema pages in a justfile of any name just reads,
+and its data only when asked, trusts no folder name a shell would read as a
+command, and refuses gen-doc's subfolders, two metadata files and a database
+caught mid-write. The
 three files a repair never replaces are named in the skill's page, its
 preflight, the contract and sync-sidecar.sh, and the four must agree. The
 build itself is scripts/smoke-test-website.sh, which needs the network.
@@ -226,6 +228,71 @@ def test_config_takes_a_built_folder_and_refuses_a_missing_one_with_no_command(t
     config.write_text(re.sub(r"^export const SCHEMA = .*$", 'export const SCHEMA = { dir: "schema" };', config.read_text(encoding="utf-8"), flags=re.M), encoding="utf-8")
     result = run(["node", "scripts/config.mjs"], cwd=site)
     assert not result and "no build command" in result.out, f"config.mjs accepted a missing folder: {result.out}"
+
+
+def evaluate(site, expression):
+    """An expression over scripts/config.mjs's exports, as `config.<name>`, run by node; its value is the last line, as JSON."""
+    script = f"import * as config from './scripts/config.mjs'; console.log(JSON.stringify({expression}));"
+    return run(["node", "--input-type=module", "-e", script], cwd=site)
+
+
+def value(result):
+    """The value `evaluate` printed, after whatever git said about a host that is not a repository."""
+    return json.loads(result.out.splitlines()[-1])
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_reads_a_justfile_by_any_name_just_reads_and_a_recipe_with_parameters(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / ".linkml" / ".justfile", 'gen-doc dir="docs/elements": _gen-yaml\n    uv run gen-doc -d {{dir}} s.yaml\n')
+    site = lay_down(tmp_path)
+    assert settle(site)["SCHEMA"] == {"dir": ".linkml/docs/elements", "build": "just --justfile .linkml/.justfile gen-doc"}
+    write(tmp_path / "Justfile", "gen-doc *ARGS:\n    gen-doc {{ARGS}} s.yaml\n")
+    assert settle(site)["SCHEMA"] == {"dir": "docs/elements", "build": "just gen-doc"}
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_the_schema_pages_come_from_one_flat_folder_and_gen_doc_s_subfolders_stop_the_build(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / "docs" / "elements" / "index.md", "# acme\n")
+    write(tmp_path / "docs" / "elements" / "Service.md", "---\nsearch:\n  boost: 10.0\n---\n\n# Class: Service \n")
+    write(tmp_path / "docs" / "elements" / "String.md", "---\nsearch:\n  boost: 1.0\n---# Type: String \n")
+    write(tmp_path / "docs" / "elements" / "acme.md", "# acme \n")
+    site = lay_down(tmp_path)
+    settle(site, SCHEMA='{ dir: "docs/elements", build: null }')
+    result = evaluate(site, "config.schemaPages().map((p) => [p.name, p.label, p.kind])")
+    assert result, f"schemaPages failed: {result.out}"
+    assert value(result) == [["acme", "acme", None], ["Service", "Service", "Class"], ["String", "String", "Type"]]
+    for name in ("Service.md", "String.md", "acme.md"):
+        (tmp_path / "docs" / "elements" / name).unlink()
+    write(tmp_path / "docs" / "elements" / "classes" / "Service.md", "# Class: Service\n")
+    result = evaluate(site, "config.schemaPages()")
+    assert not result and "--subfolder-type-separation" in result.out, f"schemaPages took gen-doc's subfolders: {result.out}"
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_the_data_is_its_databases_and_one_metadata_file_and_a_torn_copy_stops_the_build(tmp_path):
+    bundle(tmp_path)
+    data = tmp_path / "data"
+    for name in ("acme.sqlite", "audit.db", "notes.txt", "metadata.yaml"):
+        write(data / name, "stand-in\n")
+    site = lay_down(tmp_path)
+    settle(site, BROWSE='"data"')
+    result = evaluate(site, "config.browseFiles()")
+    assert result, f"browseFiles failed: {result.out}"
+    assert value(result) == {
+        "databases": [{"file": "acme.sqlite", "name": "acme"}, {"file": "audit.db", "name": "audit"}],
+        "metadata": "metadata.yaml",
+    }
+    write(data / "acme.sqlite-wal", b"")
+    assert evaluate(site, "config.browseFiles()"), "an empty journal stopped the build"
+    write(data / "acme.sqlite-wal", b"\x37\x7f\x06\x82")
+    result = evaluate(site, "config.browseFiles()")
+    assert not result and "could be torn" in result.out, f"browseFiles copied a database mid-write: {result.out}"
+    (data / "acme.sqlite-wal").unlink()
+    write(data / "metadata.json", "{}\n")
+    result = evaluate(site, "config.browseFiles()")
+    assert not result and "Datasette reads one" in result.out, f"browseFiles chose between two metadata files: {result.out}"
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")

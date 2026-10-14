@@ -6,8 +6,9 @@ reads a README's title and says when there is none, warns of another Pages
 publisher but not of its own workflow, warns of a changelog with no released
 version, reads the owner and the name from the origin remote, names the
 report script the sidecar must still lay down, and finds a linkmo project's
-gen-doc and build-browse recipes but not an assignment of the same name. Run
-under sh it stops on one line that names bash.
+gen-doc and build-browse recipes, in a justfile of any name just reads and
+with parameters, but not an assignment of the same name. Run under sh it
+stops on one line that names bash.
 
 The rows its prerequisites page must carry for each line stay in the contract
 script, check 12w: that is a fact about this repository's own pages.
@@ -109,6 +110,18 @@ def test_finds_a_linkmo_project_s_schema_and_data_recipes(tmp_path):
         f"preflight missed linkmo's build-browse recipe: {result.out}"
     )
     assert matches(result.out, r"^(ok|warn) +just "), f"preflight did not say whether just is installed: {result.out}"
+
+
+def test_reads_a_justfile_by_any_name_just_reads_and_a_recipe_with_parameters(tmp_path):
+    skeleton(tmp_path)
+    write(tmp_path / ".linkml" / ".justfile", 'gen-doc dir="docs/elements": _gen-yaml\n    uv run gen-doc -d {{dir}} s.yaml\n')
+    result = preflight(tmp_path)
+    assert result and matches(
+        result.out, r"^ok      schema .*\.linkml/docs/elements.*just --justfile \.linkml/\.justfile gen-doc"
+    ), f"preflight missed a recipe with a parameter in .justfile: {result.out}"
+    write(tmp_path / "Justfile", "build-browse *ARGS:\n    python b.py {{ARGS}}\n")
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^info    data .*\(just build-browse\)"), f"preflight missed the Justfile: {result.out}"
 
 
 def test_takes_no_assignment_for_a_recipe(tmp_path):

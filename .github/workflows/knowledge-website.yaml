@@ -4,8 +4,11 @@ name: Knowledge website
 # the figures, the changelog and, when site.config.mjs shows them, the LinkML
 # schema's pages and the data, and publishes the default branch's build to
 # GitHub Pages. A pull request that touches any of them gets the same build,
-# link check included, and no deployment. website/README.md says what each
-# page is built from; the ktl-website skill laid both down.
+# link check included, and no deployment. A weekly run rebuilds the default
+# branch for what reaches the site without a push the paths name: a schema
+# or data change elsewhere, and the changelog's promotion, whose commit skips
+# CI. website/README.md says what each page is built from; the ktl-website
+# skill laid both down.
 #
 # Two jobs, for least privilege. `build` runs the third-party packages, npm's
 # and the lokf toolkit's, under a read-only token. `deploy` runs nothing but
@@ -32,7 +35,10 @@ on:
       - "CHANGELOG.md"
       - "llms.txt"
       - ".linkml/**"
-      - "justfile"
+      - "**/[Jj]ustfile"
+      - "**/.justfile"
+      - "**/pyproject.toml"
+      - "**/uv.lock"
       - ".github/workflows/knowledge-website.yaml"
   pull_request:
     paths:
@@ -45,8 +51,13 @@ on:
       - "CHANGELOG.md"
       - "llms.txt"
       - ".linkml/**"
-      - "justfile"
+      - "**/[Jj]ustfile"
+      - "**/.justfile"
+      - "**/pyproject.toml"
+      - "**/uv.lock"
       - ".github/workflows/knowledge-website.yaml"
+  schedule:
+    - cron: "23 5 * * 1" # Mondays at 05:23 UTC
   workflow_dispatch:
 
 permissions: {} # deny by default; each job requests only the scopes it needs
@@ -82,7 +93,9 @@ jobs:
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
-          cache-dependency-glob: .lokf/uv.lock
+          # The lokf toolkit's lock, and the project's, whose environment a
+          # schema or data command builds.
+          cache-dependency-glob: "**/uv.lock"
 
       - name: Install the lokf toolkit the sidecar pins
         run: uv sync --locked
@@ -120,7 +133,9 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    if: vars.KNOWLEDGE_WEBSITE_ENABLED == 'true' && github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    # A scheduled run is always the default branch's, and its event carries
+    # no repository to compare the branch with, so it is let through by name.
+    if: vars.KNOWLEDGE_WEBSITE_ENABLED == 'true' && (github.event_name == 'schedule' || (github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)))
     needs: build
     runs-on: ubuntu-latest
     permissions:

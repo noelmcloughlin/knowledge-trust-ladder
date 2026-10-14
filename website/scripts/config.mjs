@@ -139,15 +139,40 @@ export const PAGES = (given.PAGES ?? []).map((p) => {
 
 // ---- the schema's pages and the data, which the repository's commands build --
 
-/** Whether a justfile has a recipe of this name: a line that starts the recipe, not an assignment. */
+/** A folder's justfile, by any name just reads (justfile in any case, or .justfile), or null. */
+function justfileIn(dir) {
+  if (!isDir(dir)) return null;
+  const name = readdirSync(resolve(REPO_ROOT, dir))
+    .filter((n) => /^\.?justfile$/i.test(n) && isFile(posix.join(dir, n)))
+    .sort()[0];
+  return name ? posix.join(dir, name) : null;
+}
+
+/**
+ * Whether a justfile has a recipe of this name: a line that opens it, with or
+ * without parameters and their defaults, and not an assignment such as
+ * `name := value`. website-preflight.sh's has_recipe uses the same pattern.
+ */
 function hasRecipe(justfile, recipe) {
-  if (!isFile(justfile)) return false;
+  const opens = new RegExp(`^@?${recipe}(?:[ \\t]+[^:=\\s][^:]*)?:(?!=)`);
   return readFileSync(resolve(REPO_ROOT, justfile), "utf8")
     .split("\n")
-    .some((line) => {
-      const m = line.match(/^@?([A-Za-z_][\w-]*)(.*)$/);
-      return m !== null && m[1] === recipe && !/^\s*:=/.test(m[2]) && /:(?!=)/.test(m[2]);
-    });
+    .some((line) => opens.test(line));
+}
+
+/**
+ * The first of these folders whose justfile has the recipe, as the folder the
+ * recipe writes, `out` under it, and the command that runs the recipe from
+ * the repository's root. just runs a recipe in its justfile's own folder.
+ */
+function recipeIn(dirs, recipe, out) {
+  for (const dir of dirs) {
+    const justfile = dir ? justfileIn(dir) : null;
+    if (justfile && hasRecipe(justfile, recipe)) {
+      return { dir: posix.join(dir, out), build: dir === "." ? `just ${recipe}` : `just --justfile ${justfile} ${recipe}` };
+    }
+  }
+  return null;
 }
 
 /** A linkmo project's folder, as its answers file at the root names it, or null. */
@@ -157,9 +182,6 @@ function linkmoDir() {
   // The folder goes into a shell command, so only a name linkmo's own question accepts is used.
   return m && /^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$/.test(m[1]) && isDir(m[1]) ? m[1] : null;
 }
-
-/** The command that runs a recipe of the justfile in a folder, from the repository's root. */
-const justRecipe = (dir, recipe) => (dir === "." ? `just ${recipe}` : `just --justfile ${dir}/justfile ${recipe}`);
 
 /** A { dir, build } option given in full or as a folder alone; build is the command that writes the folder, or null. */
 function folderOption(name, value) {
@@ -182,8 +204,7 @@ export const SCHEMA = (() => {
   const value = given.SCHEMA === undefined ? "auto" : given.SCHEMA;
   if (value === null) return null;
   if (value !== "auto") return folderOption("SCHEMA", value);
-  const project = [".", linkmoDir(), ".linkml"].find((dir) => dir && hasRecipe(`${dir}/justfile`, "gen-doc"));
-  return project ? { dir: posix.join(project, "docs", "elements"), build: justRecipe(project, "gen-doc") } : null;
+  return recipeIn([".", linkmoDir(), ".linkml"], "gen-doc", "docs/elements");
 })();
 
 // The data: a folder of SQLite databases, which the site serves under
@@ -195,10 +216,7 @@ export const BROWSE = (() => {
   const value = given.BROWSE ?? null;
   if (value === null) return null;
   if (value !== "auto") return folderOption("BROWSE", value);
-  const project = linkmoDir();
-  return project && hasRecipe(`${project}/justfile`, "build-browse")
-    ? { dir: `${project}/browse`, build: justRecipe(project, "build-browse") }
-    : null;
+  return recipeIn([linkmoDir()], "build-browse", "browse");
 })();
 
 /** The first `# ` line of a file outside fenced code, or null. */
@@ -322,12 +340,18 @@ let schemaPagesRead = null;
  * name from its title; its kind; and its file from the repository root. A
  * page of no kind, the schema's own, has a page and no place in the sidebar.
  * The folder is read once it exists, since the sync builds it first.
+ *
+ * The pages are read from one flat folder, as gen-doc writes them by default.
+ * Its --subfolder-type-separation option writes each kind to a folder of its
+ * own, which would leave the topic with no element and the overview's links
+ * pointing at GitHub, where the folder is not committed, so that stops here.
  */
 export function schemaPages() {
   if (schemaPagesRead) return schemaPagesRead;
   if (!SCHEMA || !isDir(SCHEMA.dir)) return [];
-  const pages = readdirSync(resolve(REPO_ROOT, SCHEMA.dir))
-    .filter((name) => name.endsWith(".md") && name !== "index.md" && isFile(`${SCHEMA.dir}/${name}`))
+  const markdownIn = (dir) => (isDir(dir) ? readdirSync(resolve(REPO_ROOT, dir)).filter((name) => name.endsWith(".md") && isFile(`${dir}/${name}`)) : []);
+  const pages = markdownIn(SCHEMA.dir)
+    .filter((name) => name !== "index.md")
     .map((name) => {
       const file = `${SCHEMA.dir}/${name}`;
       // A type's title follows its frontmatter's closing line with no line break: "---# Type: String".
@@ -335,7 +359,47 @@ export function schemaPages() {
       return { name: name.slice(0, -3), label: m ? m[2] : name.slice(0, -3), kind: m ? m[1] : null, file };
     })
     .sort((a, b) => a.label.localeCompare(b.label, "en", { sensitivity: "base" }) || (a.name < b.name ? -1 : 1));
+  const nested = ["classes", "slots", "enums", "types", "subsets", "schemas"].filter((sub) => markdownIn(`${SCHEMA.dir}/${sub}`).length > 0);
+  if (nested.length > 0 && !pages.some((p) => p.kind)) {
+    fail(
+      `SCHEMA's folder ${SCHEMA.dir} holds gen-doc's pages in ${nested.map((sub) => `${sub}/`).join(", ")}, as its ` +
+        "--subfolder-type-separation option writes them; the site reads one flat folder, gen-doc's default, so build it without that option",
+    );
+  }
   return (schemaPagesRead = Object.freeze(pages));
+}
+
+const DATABASE = /\.(?:sqlite3?|db)$/;
+const METADATA = /^metadata\.(?:ya?ml|json)$/;
+
+/**
+ * The data's files in BROWSE's folder: each SQLite database, as its file and
+ * the name Datasette gives it, the file's own without its extension, and the
+ * Datasette metadata file, or null. Nothing else in the folder is published.
+ * A database with a journal beside it that is not empty stops the build: a
+ * write to it is unfinished or still open, so a copy of it could be torn.
+ * So do two metadata files, since Datasette reads one.
+ */
+export function browseFiles() {
+  if (!BROWSE || !isDir(BROWSE.dir)) return { databases: [], metadata: null };
+  const names = readdirSync(resolve(REPO_ROOT, BROWSE.dir))
+    .filter((name) => isFile(`${BROWSE.dir}/${name}`))
+    .sort();
+  const databases = names.filter((name) => DATABASE.test(name)).map((file) => ({ file, name: file.replace(DATABASE, "") }));
+  for (const { file } of databases) {
+    for (const journal of [`${file}-wal`, `${file}-journal`]) {
+      const path = `${BROWSE.dir}/${journal}`;
+      if (isFile(path) && statSync(resolve(REPO_ROOT, path)).size > 0) {
+        throw new Error(
+          `${path} is not empty: a write to ${file} is unfinished or still open, and a copy of it could be torn. ` +
+            "Close what has it open, or build it again, then build the site",
+        );
+      }
+    }
+  }
+  const metadata = names.filter((name) => METADATA.test(name));
+  if (metadata.length > 1) throw new Error(`${BROWSE.dir} holds ${metadata.join(" and ")}, and Datasette reads one: keep one`);
+  return { databases, metadata: metadata[0] ?? null };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

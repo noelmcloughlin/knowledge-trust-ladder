@@ -3,8 +3,9 @@
 # sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would, and builds
 # the site twice: once with a README, a docs page, a changelog, the schema's
 # pages and the data, and once with none of them, so both shapes of host are
-# proved before a template change reaches one. This repository's own site proves the fuller
-# configuration; this proves a bundle that is not this repository's.
+# proved before a template change reaches one. This repository's own site
+# proves the fuller configuration; this proves a bundle that is not this
+# repository's.
 #
 # Usage: scripts/smoke-test-website.sh [--keep]   (--keep leaves the host behind)
 # Needs: uv, node 22.12 or later, npm, git and python3, and the network for
@@ -160,10 +161,23 @@ db.execute("create table Service (id text primary key, name text, owner text)")
 db.execute("insert into Service values ('svc-a', 'Service A', 'Acme')")
 db.commit()
 db.close()
-(out / "metadata.yaml").write_text("databases:\n  acme:\n    description: The services the platform runs.\n")
+(out / "metadata.yaml").write_text(
+    "plugins:\n  datasette-auth-tokens:\n    secret: not-for-the-site\n"
+    "databases:\n  acme:\n    description: The services the platform runs.\n"
+    "    plugins:\n      datasette-cluster-map:\n        api_key: not-for-the-site-either\n"
+)
 (out / "notes.txt").write_text("Not a database, and never published.\n")
 PY
   printf '/docs/elements/\n/data/\n' > .gitignore
+  # A diagram the Markdown parser reads as one, quoted and with more words
+  # after its language, which the sync must still mark for drawing.
+  cat >> docs/architecture.md <<'MD'
+
+> ```mermaid title="The platform"
+> flowchart LR
+>   web --> api
+> ```
+MD
   python3 - <<'PY'
 from pathlib import Path
 
@@ -209,7 +223,7 @@ assert "a concept page carries its trust label" "grep -qi 'checked' \"$host/webs
 assert "the sync built the schema's pages and the data with their commands" \
   "grep -q 'building docs/elements with' \"$test_root/build.log\" && grep -q 'building data with' \"$test_root/build.log\""
 for f in schema/index.html schema/Service/index.html schema/owner/index.html schema/String/index.html \
-         browse/index.html browse/acme.sqlite browse/metadata.yaml; do
+         browse/index.html browse/acme.sqlite browse/metadata.json; do
   assert "dist/$f is there" "[[ -f \"$host/website/dist/$f\" ]]"
 done
 dist="$host/website/dist"
@@ -224,7 +238,11 @@ assert "a schema page links its neighbour by the neighbour's own name" "grep -q 
 assert "the data page opens the database in Datasette Lite, with its analytics off" \
   "grep -q 'lite.datasette.io/?url=' \"$dist/browse/index.html\" && grep -q 'analytics=off' \"$dist/browse/index.html\""
 assert "the data page describes the database from its metadata" "grep -q 'The services the platform runs' \"$dist/browse/index.html\""
-assert "only the databases and their metadata are published" "[[ ! -e \"$dist/browse/notes.txt\" ]]"
+assert "only the databases and their metadata are published" "[[ ! -e \"$dist/browse/notes.txt\" && ! -e \"$dist/browse/metadata.yaml\" ]]"
+assert "the metadata is published without its plugins' settings" \
+  "grep -q 'The services the platform runs' \"$dist/browse/metadata.json\" && ! grep -q 'not-for-the-site' \"$dist/browse/metadata.json\""
+assert "a quoted diagram with words after its language is drawn" \
+  "grep -q 'class=\"ktl-mermaid\"' \"$dist/docs/architecture/index.html\" && grep -q '_astro/Mermaid' \"$dist/docs/architecture/index.html\""
 assert "llms.txt lists the schema and the data" "grep -q '/schema/)' \"$dist/llms.txt\" && grep -q '/browse/)' \"$dist/llms.txt\""
 assert "nothing of the template is left to commit" "[[ -z \$(git -C \"$host\" status --porcelain) ]]"
 

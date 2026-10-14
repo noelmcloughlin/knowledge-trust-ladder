@@ -43,6 +43,7 @@ import {
   SITE_URL,
   SITE_DIR,
   TITLE,
+  browseFiles,
   bundleGroups,
   conceptIds,
   docsPages,
@@ -65,11 +66,14 @@ function write(path, text) {
   writeFileSync(path, text);
 }
 
-const MERMAID = /^\s*(`{3,}|~{3,})\s*mermaid\s*$/m;
+// A fence whose language is mermaid, indented or quoted, with or without more
+// words after the language, as the Markdown parser reads one.
+const MERMAID = /^[ \t>]*(`{3,}|~{3,})[ \t]*mermaid(?=\s|$)/m;
 
 // JSON is YAML, so the frontmatter needs no YAML writer. A page with a
 // mermaid diagram is marked, so that only such a page loads the script that
-// draws it (src/components/Mermaid.astro).
+// draws it (src/components/Mermaid.astro), and only on such a page does the
+// Markdown plugin hand a diagram to that script; elsewhere it stays code.
 function page(path, frontmatter, body) {
   const marked = MERMAID.test(body) ? { ...frontmatter, ktlMermaid: true } : frontmatter;
   write(path, `---\n${JSON.stringify(marked, null, 2)}\n---\n\n${body.trim()}\n`);
@@ -836,12 +840,6 @@ function copyAssets() {
 // The schema's pages and the data, which the repository's own commands build.
 // ---------------------------------------------------------------------------
 
-const DATABASE = /\.(?:sqlite3?|db)$/;
-const METADATA = /^metadata\.(?:ya?ml|json)$/;
-const isFolder = (rel) => existsSync(resolve(REPO_ROOT, rel)) && statSync(resolve(REPO_ROOT, rel)).isDirectory();
-const databasesIn = (rel) =>
-  isFolder(rel) ? readdirSync(resolve(REPO_ROOT, rel)).filter((name) => DATABASE.test(name)).sort() : [];
-
 /**
  * Runs the command that builds a part's folder when the folder is not built:
  * in CI every time, since a checkout has none, and locally the first time,
@@ -958,27 +956,56 @@ const DATASETTE_LITE = "https://lite.datasette.io/";
 const fileSize = (bytes) => (bytes >= 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} kB`);
 
 /**
- * The data: each database in BROWSE's folder, and its Datasette metadata,
- * served under /browse/, and a page that opens each in Datasette Lite. Only
- * the databases and the metadata are copied, never the rest of the folder.
+ * Datasette metadata without its plugins' settings, at the top, for each
+ * database and for each table: Datasette Lite runs no plugin, and a plugin's
+ * settings can hold a credential that must not reach a public site.
+ */
+function withoutPlugins(metadata) {
+  const drop = (part) => {
+    if (part === null || typeof part !== "object" || Array.isArray(part)) return part;
+    const { plugins, ...rest } = part;
+    return rest;
+  };
+  const each = (map, fn) =>
+    map !== null && typeof map === "object" && !Array.isArray(map) ? Object.fromEntries(Object.entries(map).map(([k, v]) => [k, fn(v)])) : map;
+  const top = drop(metadata);
+  if (top === null || typeof top !== "object" || !("databases" in top)) return top;
+  return {
+    ...top,
+    databases: each(top.databases, (database) => {
+      const db = drop(database);
+      return db !== null && typeof db === "object" && "tables" in db ? { ...db, tables: each(db.tables, drop) } : db;
+    }),
+  };
+}
+
+/**
+ * The data: each database in BROWSE's folder, served under /browse/ with its
+ * Datasette metadata, and a page that opens each in Datasette Lite.
+ * config.mjs's browseFiles says which files those are; the rest of the
+ * folder is never copied. The metadata is published as metadata.json, which
+ * Datasette reads as readily as YAML, without its plugins' settings.
  */
 function writeBrowse() {
   if (!BROWSE) return [];
   const dir = resolve(REPO_ROOT, BROWSE.dir);
-  const databases = databasesIn(BROWSE.dir);
-  const metadataFile = readdirSync(dir).find((name) => METADATA.test(name)) ?? null;
+  const { databases, metadata: metadataFile } = browseFiles();
   mkdirSync(resolve(PUBLIC, "browse"), { recursive: true });
-  for (const name of [...databases, ...(metadataFile ? [metadataFile] : [])]) {
-    cpSync(resolve(dir, name), resolve(PUBLIC, "browse", name));
+  for (const { file } of databases) cpSync(resolve(dir, file), resolve(PUBLIC, "browse", file));
+  let metadata = null;
+  if (metadataFile) {
+    // JSON is YAML, so one parser reads either form.
+    try {
+      metadata = parseYaml(read(resolve(dir, metadataFile))) ?? {};
+    } catch (error) {
+      throw new Error(`${BROWSE.dir}/${metadataFile} is neither YAML nor JSON: ${error.message}`);
+    }
+    write(resolve(PUBLIC, "browse", "metadata.json"), `${JSON.stringify(withoutPlugins(metadata))}\n`);
   }
-  // JSON is YAML, so one parser reads either form.
-  const metadata = metadataFile ? (parseYaml(read(resolve(dir, metadataFile))) ?? {}) : {};
-  const sections = databases.map((file) => {
-    // Datasette names a database after its file, the extension dropped.
-    const name = file.replace(DATABASE, "");
-    const about = metadata.databases?.[name] ?? {};
+  const sections = databases.map(({ file, name }) => {
+    const about = metadata?.databases?.[name] ?? {};
     const query = new URLSearchParams({ url: `${SITE_URL}/browse/${file}` });
-    if (metadataFile) query.set("metadata", `${SITE_URL}/browse/${metadataFile}`);
+    if (metadata) query.set("metadata", `${SITE_URL}/browse/metadata.json`);
     query.set("analytics", "off");
     const size = fileSize(statSync(resolve(dir, file)).size);
     const lite = `${DATASETTE_LITE}?${query}#/${encodeURIComponent(name)}`.replaceAll("&", "&amp;");
@@ -1017,7 +1044,7 @@ for (const dir of [CONTENT, GENERATED, PUBLIC]) {
 if (!existsSync(resolve(BUNDLE_DIR, "index.md"))) throw new Error(`no bundle at ${BUNDLE_DIR}`);
 // First, since a concept may cite one of the schema's pages.
 buildFolder("SCHEMA", SCHEMA, (dir) => existsSync(resolve(REPO_ROOT, dir, "index.md")));
-buildFolder("BROWSE", BROWSE, (dir) => databasesIn(dir).length > 0);
+buildFolder("BROWSE", BROWSE, () => browseFiles().databases.length > 0);
 const exported = lokfExport();
 const labels = readLabels();
 const health = report("health");
