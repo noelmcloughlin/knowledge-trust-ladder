@@ -4,14 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **A ktl-website concept page opens the knowledge graph on the concept.** The record and the neighbourhood map link `/graph/?concept=<id>`, which selects the concept and frames its neighbours, and the address follows the selected node, so a view can be shared.
-
-### Fixed
-
-- **The ktl-website graph explorer fits the graph to its stage once the layout settles.** The re-fit waited for an event that had already fired, so it never ran.
-
 ## [0.43.0] - 2026-10-15
 
 ### Added
@@ -19,10 +11,15 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A ktl-website site serves the whole bundle as `llms-full.txt`.** Each concept's text follows its trust label, its type, its addresses and its sources, so a model that reads the file at once can tell a draft from a confirmed concept. The site's link check reads the text files too.
 - **A ktl-website site offers the bundle log as an Atom feed, `knowledge/log.xml`.** Each day of the log is an entry, titled and categorised by the kinds of change it holds and dated from git, so a reader can follow the bundle without watching the repository.
 - **A ktl-website concept page links the concept's history and names its licence.** The record links every commit to the concept's file up to the built one, and gives the bundle's licence, or the concept's own, which the page head names too. The overview page, the feed and the two text files name the bundle's licence by its short name.
+- **A ktl-website concept page opens the knowledge graph on the concept.** The record and the neighbourhood map link `/graph/?concept=<id>`, which selects the concept and frames its neighbours, and the address follows the selected node, so a view can be shared.
 
 ### Changed
 
 - **GitHub's dark theme shows the `-dark` figures.** Every `<picture>` dark source in the README and the docs pages names the `-dark` set, which the site already showed, so a figure is the same on GitHub and on the site. The sync no longer swaps a `-dimmed` source for its `-dark` neighbour; the `-dimmed` set stays in `.assets/`, unreferenced.
+
+### Fixed
+
+- **The ktl-website graph explorer fits the graph to its stage once the layout settles.** The re-fit waited for an event that had already fired, so it never ran.
 
 ## [0.42.0] - 2026-10-14
 
