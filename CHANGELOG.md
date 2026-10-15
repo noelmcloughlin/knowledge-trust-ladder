@@ -15,6 +15,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A ktl-website site serves the whole bundle as `llms-full.txt`.** Each concept's text follows its trust label, its type, its addresses and its sources, so a model that reads the file at once can tell a draft from a confirmed concept. The site's link check reads the text files too.
 - **A ktl-website site offers the bundle log as an Atom feed, `knowledge/log.xml`.** Each day of the log is an entry, titled and categorised by the kinds of change it holds and dated from git, so a reader can follow the bundle without watching the repository.
 
+### Changed
+
+- **GitHub's dark theme shows the `-dark` figures.** Every `<picture>` dark source in the README and the docs pages names the `-dark` set, which the site already showed, so a figure is the same on GitHub and on the site. The sync no longer swaps a `-dimmed` source for its `-dark` neighbour; the `-dimmed` set stays in `.assets/`, unreferenced.
+
 ## [0.42.0] - 2026-10-14
 
 ### Changed

@@ -221,21 +221,9 @@ function asidesInProse(text) {
 }
 
 /**
- * A figure's dark version on the site. A page's `<picture>` names the
- * `-dimmed` set, which suits GitHub's dark theme; the site's dark theme takes
- * the `-dark` set beside it in the figures folder, drawn on a dark ground.
- */
-function darkFigure(src) {
-  const name = src.match(/([^/]+)-dimmed\.svg$/)?.[1];
-  return ASSETS && name && existsSync(resolve(REPO_ROOT, ASSETS, `${name}-dark.svg`))
-    ? src.replace(/-dimmed\.svg$/, "-dark.svg")
-    : src;
-}
-
-/**
- * A `<picture>` that swaps in a dimmed figure for a dark system theme becomes
- * two images, one shown in each of Starlight's themes, so the figure follows
- * the site's theme switch rather than the system's. The theme's class goes
+ * A `<picture>` with a source for a dark system theme becomes two images,
+ * one shown in each of Starlight's themes, so the figure follows the site's
+ * theme switch rather than the system's. The theme's class goes
  * on a wrapper, so the zoom button image zoom adds beside each image is
  * hidden with it, and a keyboard or a screen reader meets one per figure.
  */
@@ -245,7 +233,7 @@ function picturesToThemedImages(body) {
     const img = inner.match(/<img\b([^>]*?)\s*\/?>/);
     if (!dark || !img) return whole;
     const attrs = img[1].replace(/\s+class="[^"]*"/, "");
-    const darkAttrs = attrs.replace(/\bsrc="[^"]*"/, `src="${darkFigure(dark[1])}"`);
+    const darkAttrs = attrs.replace(/\bsrc="[^"]*"/, `src="${dark[1]}"`);
     return `<span class="dark:sl-hidden"><img${attrs} /></span><span class="light:sl-hidden"><img${darkAttrs} /></span>`;
   });
 }
