@@ -10,7 +10,7 @@ Regulated industries use the **three lines of defence** to say who owns a risk, 
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-three-lines-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-three-lines-dark.svg">
     <img src="../.assets/ktl-three-lines.svg" alt="The three lines of defence with each KTL role in place: the governing body above, the librarian and curator in the first line, the registrar in the second, the evidence for a third line that does not exist yet, and the docent outside the lines feeding back to the librarian" width="720" />
   </picture>
 </p>

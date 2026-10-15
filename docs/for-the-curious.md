@@ -14,7 +14,7 @@ On GitHub, every change reaches the default branch as a pull request. There the 
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-architecture-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-architecture-dark.svg">
     <img src="../.assets/ktl-architecture.svg" alt="Who writes the bundle and what checks it: the librarian writes only patch.yaml, which the pen, knowledge-apply.sh, applies to the bundle; the curator writes a verified event in that person's name through ktl-curator or the plugin; the docent writes nothing there, and knowledge-feedback.sh records a reader's miss. Below, the registrar's gate checks each pull request, and knowledge-report.sh computes every trust label on each read" width="720" />
   </picture>
 </p>

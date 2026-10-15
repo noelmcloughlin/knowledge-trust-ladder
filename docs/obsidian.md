@@ -8,7 +8,7 @@ The Obsidian vault you already have is the **workshop**, and nothing in it is mo
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-two-vaults-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-two-vaults-dark.svg">
     <img src="../.assets/ktl-two-vaults.svg" alt="Workshop vault and exhibition vault: one folder, no shared index" width="720" />
   </picture>
 </p>

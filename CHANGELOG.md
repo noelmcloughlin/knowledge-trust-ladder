@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **GitHub's dark theme shows the `-dark` figures.** Every `<picture>` dark source in the README and the docs pages names the `-dark` set, which the site already showed, so a figure is the same on GitHub and on the site. The sync no longer swaps a `-dimmed` source for its `-dark` neighbour; the `-dimmed` set stays in `.assets/`, unreferenced.
+
 ## [0.43.0] - 2026-10-14
 
 ### Added
