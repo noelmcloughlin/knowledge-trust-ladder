@@ -15,6 +15,7 @@
 | `ASSETS` | the folder of figures the README and the docs pages show, served under `/assets/` | `.assets/` when there is one | no figures folder; a link to a figure goes to the repository |
 | `DOCS` | `{ dir, groups }`: the docs folder, and the sidebar groups its pages sit in, each page named by its path under the folder without `.md` | `docs/` when there is one, every page in one Guides group by title | no docs pages |
 | `CHANGELOG` | a Keep a Changelog file, read as a page per release | `CHANGELOG.md` when it holds a released version | no Releases topic |
+| `RELEASE_TAG` | the tag a release carries, with `{version}` for its number; a release page links the repository, the docs and the bundle at that tag, and the release itself, when git has the tag | `v{version}` | no such links |
 | `PAGES` | `[{ slug, source, label }]`: pages from files outside the docs folder, each at `/<slug>/`, listed after Home | none | |
 | `SCHEMA` | `{ dir, build }`: the folder of the LinkML schema's pages that `gen-doc` writes, and the command that writes it, which the sync runs when the folder is missing; a folder alone needs no command | the first of the root, a linkmo project's folder and `.linkml/` whose `justfile` has a `gen-doc` recipe: its `docs/elements`, built with that recipe | no Schema topic |
 | `BROWSE` | `{ dir, build }`: a folder of SQLite databases and their Datasette metadata, and the command that writes it | `null`, since the databases go on the public site; `"auto"` takes a linkmo project's `browse/` and its `build-browse` recipe | no data page |

@@ -76,6 +76,11 @@ export const DOCS = {
 // CHANGELOG.md when it holds a released version.
 export const CHANGELOG = "CHANGELOG.md";
 
+// The tag a release carries, with {version} for its number. A release page
+// links the repository, the docs and the bundle at that tag, and the release
+// itself, when git has the tag. null links nothing.
+export const RELEASE_TAG = "v{version}";
+
 // Pages from files outside the docs folder, each at /<slug>/, listed in the
 // Guide sidebar after Home under its label.
 export const PAGES = [{ slug: "simple", source: "docs/architecture.en-simple.md", label: "For readers aged 13 to 18" }];

@@ -53,6 +53,7 @@ Every page comes from a file the repository already holds, so a change to the si
 ## The changelog
 
 - Keep a Changelog headings, `## [x.y.z] - YYYY-MM-DD`, become one page per release and a comparison page between each pair; `## [Unreleased]` is skipped. The brackets are stripped for the plugin, and links to repository files are rewritten as above.
+- A release whose tag git has, `RELEASE_TAG` with its number in place of `{version}`, opens with a line that links the repository, the docs folder and `.lokf/knowledge/` at that tag on GitHub, and the release itself, so a reader can see each as it stood. A release promoted but not yet tagged, or a tag not yet fetched, has no such line until the next build.
 
 ## The figures and the logo
 

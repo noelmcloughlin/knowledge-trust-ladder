@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website release page links the repository, the docs and the bundle as they stood at the release.** The links go to the release's tag on GitHub, named by the new `RELEASE_TAG` option, and to the release itself.
+
 ## [0.43.0] - 2026-10-15
 
 ### Added
