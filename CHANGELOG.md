@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **A ktl-website page and its retelling offer each other as reading levels.** A `PAGES` entry's `retells` names the page it retells, and in the bundle a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names; both pages open with a Reading level line.
-
 ## [0.43.0] - 2026-10-15
 
 ### Added
@@ -19,6 +15,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A ktl-website page previews a concept link.** A link to a concept shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, from `knowledge/previews.json`, which the sync writes; Escape dismisses it.
 - **A ktl-website site serves each docs page as Markdown beside it.** The home page and the extra pages too, at the page's path with `.md` added and every link a full address, so `llms.txt` sends a model to the words rather than the HTML.
 - **A ktl-website release page links the repository, the docs and the bundle as they stood at the release.** The links go to the release's tag on GitHub, named by the new `RELEASE_TAG` option, and to the release itself.
+- **A ktl-website page and its retelling offer each other as reading levels.** A `PAGES` entry's `retells` names the page it retells, and in the bundle a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names; both pages open with a Reading level line.
 
 ### Changed
 
