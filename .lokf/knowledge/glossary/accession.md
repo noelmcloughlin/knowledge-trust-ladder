@@ -16,7 +16,7 @@ relatedTo:
 - https://w3id.org/ktl/knowledge/glossary/collection
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-15T01:30:10Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -25,6 +25,6 @@ verified:
 
 # Overview
 
-An *accession* is a museum's word for an item added to its collection. The architecture page uses it where it says what the registrar does: the registrar "keeps the records themselves in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read".
+An *accession* is a museum's word for an item added to its collection. The architecture page uses it where it says what the registrar does: the registrar "keeps the records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read".
 
 In the bundle, the item added is a concept. Its record is its frontmatter: the `sources` it derives from, and the `generated` stamp that says who or what produced its content, and when. The `lokf` toolkit checks every change, and CI's `knowledge-registrar.yaml` checks every pull request that touches the bundle.

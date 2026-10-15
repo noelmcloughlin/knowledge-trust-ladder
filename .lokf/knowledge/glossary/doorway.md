@@ -9,6 +9,7 @@ resource: docs/obsidian.md
 sources:
 - resource: docs/obsidian.md
 - resource: skills/ktl-sidecar/SKILL.md
+- resource: skills/ktl-docent/references/obsidian.md
 relatedTo:
 - https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 - https://w3id.org/ktl/knowledge/glossary/sidecar
@@ -16,7 +17,7 @@ relatedTo:
 - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-15T01:30:10Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -25,6 +26,6 @@ verified:
 
 # Overview
 
-`docs/obsidian.md` calls `knowledge_bundle` the **doorway**: the link that `ktl-sidecar` creates at the root of the host, the repository or vault the bundle sits in, beside the sidecar's `.lokf/` folder, so the bundle has a name a folder picker can see. To open the bundle in Obsidian, open the link itself, never the host root: a vault opened at the root lists neither the dot-folder nor the link, which keeps the [workshop](workshop.md) clean.
+`docs/obsidian.md` calls `knowledge_bundle` the **doorway**: the link that `ktl-sidecar` creates at the root of the host, the repository or vault the bundle sits in, beside the sidecar's `.lokf/` folder, so the bundle has a name a folder picker can see. ktl-docent's `references/obsidian.md` gives the rule for opening it in Obsidian: open the link itself, never the host root: a vault opened at the root lists neither the dot-folder nor the link, which keeps the [workshop](workshop.md) clean.
 
 A host that commits `.lokf/` commits the link too. A host that gitignores `.lokf/` adds the link to the root `.gitignore` instead ([hosts and doorways](../explanation/hosts-and-doorways.md)).

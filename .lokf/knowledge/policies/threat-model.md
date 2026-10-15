@@ -95,3 +95,4 @@ Once the agent returns, the wrapper removes whatever is at the paths the workflo
 ## Open questions
 
 - 2026-10-14, process:ktl-librarian: Since 2026-10-14 `docs/threat-model.md` names ktl-website among the skills that run the repository's scripts from `.lokf/scripts/`, counts four workflow templates under the two skills' `templates/github/` as pinned, and says six skills read content they did not author. This concept still names four skills that run those scripts.
+- 2026-10-15, process:ktl-librarian: Since 0.41.0 `docs/threat-model.md` says that ktl-website's build also runs the commands its `site.config.mjs` names, or a `gen-doc` recipe it finds, to build the schema's pages and the data, and that they are the repository's code too. This concept does not say so.

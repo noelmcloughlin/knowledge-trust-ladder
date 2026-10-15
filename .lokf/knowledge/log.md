@@ -1,5 +1,28 @@
 # Change Log
 
+## 2026-10-15
+
+* **Changed**: Why the skills live in their own repository: `docs/install.md` no longer says one install serves every repository or that a repository needs no copy; it says a user install keeps the agent's instructions under the user's control.
+* **Changed**: Why four skill roles: ktl-website now builds the schema's pages and the data too, as `docs/architecture.md` says since 0.41.0, and the concept no longer says the roles lose nothing without it, which the page says only of ktl-prose.
+* **Changed**: ktl-website skill: what 0.43.0 added to the site (the full-text and Markdown files, the log feed, concept history and licence, hover previews, release links and reading levels), and the site's address; the architecture page does not say the roles lose nothing without it.
+* **Changed**: ktl-sidecar skill: the scheduled librarian's `AGENT_PROMPT_FLAG`, the five conditions for any other agent, the patch file written with the agent's own file tool, the pull-request setting the `publish` job needs, and rule 13's `base_iri` exception, as `references/automation.md` and `references/gate.md` now say.
+* **Changed**: ktl-librarian skill: the scheduled run's prompt flag, the rule that the agent writes its patch with its own file tool, and the pull-request setting, as `knowledge-librarian.sh` and `references/scheduled-task.md` now say. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Releasing: `sync-sidecar.sh` works on a `sync-<tag>` branch in each sibling and sets its next steps apart, and the changelog fold lists each entry once, as 0.40.0 and 0.42.0 brought them.
+* **Changed**: Repository validation: check 11w also holds the website template's logos equal to `.assets/`, check 14 proves the fold lists each entry once, and the website smoke test builds the schema's pages and the data, as `validate-repository.sh` and `smoke-test-website.sh` now do.
+* **Changed**: The docent in Microsoft 365 Copilot: `docs/m365.md` now says an auditor would be `ktl-auditor-m365.md`, not that it is planned, and no longer says the identity record is held in reserve.
+* **Changed**: Accession: the quotation follows `docs/architecture.md`, which now says the registrar "keeps the records in order".
+* **Changed**: Registrar: the quotation follows `docs/architecture.md`, which now says the registrar "keeps the records in order".
+* **Changed**: Domain schema: `docs/architecture.md` and `docs/for-the-curious.md` no longer say "not a looser bundle", so the term no longer does.
+* **Changed**: Doorway: `docs/obsidian.md` no longer says to open the link itself and never the host root, so the term cites ktl-docent's `references/obsidian.md`, which still does.
+* **Changed**: Workshop: `docs/obsidian.md` no longer says what keeps the workshop clean, so the term cites ktl-docent's `references/obsidian.md`, which still does.
+* **Changed**: Exhibition: the README's Exhibitions section, added in 0.42.0, lists the sites that show a repository's collection.
+* **Changed**: The source map: the README's row names the Exhibitions and the site's address, and the thirty-first pass is recorded. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Open question**: Security policy: Since 0.41.0 the ktl-website row of `SECURITY.md` says the build job also runs `just` when the site builds a folder through a recipe, and that the sync runs the commands `site.config.mjs` names to build the schema's pages and the data. Since 2026-10-14 `SECURITY.md` also counts five surfaces, matching its table. This concept carries neither.
+* **Open question**: Threat model: Since 0.41.0 `docs/threat-model.md` says that ktl-website's build also runs the commands its `site.config.mjs` names, or a `gen-doc` recipe it finds, to build the schema's pages and the data, and that they are the repository's code too. This concept does not say so.
+* **Open question**: Knowledge Trust Ladder in a skills repository: Since 2026-10-14 `docs/skills-repositories.md` says each of this repository's six skills has a `Playbook` concept. This concept still says five.
+* **Open question**: Knowledge bundle: Since 2026-10-14 `docs/obsidian.md` sends readers to each plugin's usage page, not its README, and says the plugins' architecture pages name the cost of putting exhibits in a vault's index. This concept says the plugin READMEs name the cost of a folder inside a vault. Which page names that cost now?
+* **Open question**: Build, preview and edit the website: Since 0.43.0 `website/README.md` says the site also serves the bundle log as an Atom feed, `knowledge/log.xml`, and the home, docs and extra pages as Markdown beside them, and that each release page links the repository, the docs and the bundle at the release's tag. It names `src/components/ReadingLevels.astro` and `src/components/ConceptPreviews.astro` for the reading levels and the hover preview. This concept names none of them.
+
 ## 2026-10-14
 
 * **Changed**: ktl-website skill: the Schema topic, the data pages in Datasette Lite, the preflight's recipe and `just` lines, the weekly run and its new triggers, and the smoke test's schema and data, as 0.41.0 and 0.42.0 brought them.

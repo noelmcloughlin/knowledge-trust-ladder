@@ -13,7 +13,7 @@ sources:
 - resource: .claude-plugin/plugin.json
 generated:
   by: process:ktl-librarian
-  at: "2026-10-14T00:35:00Z"
+  at: "2026-10-15T01:30:10Z"
 status: draft
 references:
 - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -33,7 +33,7 @@ The skills are installed from this repository rather than copied into each proje
 - the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --global --skill <skill>`);
 - a Claude Code plugin that bundles all six (`/plugin marketplace add noelmcloughlin/knowledge-trust-ladder`, then `/plugin install knowledge-trust-ladder@knowledge-trust-ladder`), declared by `.claude-plugin/plugin.json` and `marketplace.json`.
 
-These commands install for the user, so one install serves every repository. A repository needs no copy of its own: the scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A team that wants every member on one version installs into the repository instead: it leaves out `--global`, or passes `--scope project`, and commits the `skills-lock.json` that `npx skills` writes.
+These commands install for the user. The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts, and a user install keeps the instructions an agent follows under the user's control. A team that wants every member on one version installs into the repository instead: it leaves out `--global`, or passes `--scope project`, and commits the `skills-lock.json` that `npx skills` writes.
 
 All six skills are released together under one `vMAJOR.MINOR.PATCH` tag with one `CHANGELOG.md`, so a set pinned to one tag agrees with itself. To pin it, append the tag to the skill name (`ktl-docent@v0.16.0`) or pass `--pin`. `docs/install.md` carries the commands, the pinning rule, and what each skill needs on the machine.
 

@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-14T00:35:00Z"
+  at: "2026-10-15T01:30:10Z"
 status: draft
 references:
 - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -52,12 +52,12 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 - Check 11a: ktl-docent's copies of `knowledge-report.sh` and `knowledge-feedback.sh` match their templates, and no ktl-docent page runs a script under `.lokf/scripts/`. Each copy, run from outside the repository as an installer leaves it, labels a concept and records a gap in the repository it is run in.
 - Check 11b: every page that gives the no-Python schema URL names the same commit, and names the tag of the `lokf` floor that the sidecar's `pyproject.toml` template sets.
 - Check 11c: `tests/test_conventions.py` tests conventions rule 14, which reads the commits after a pull request's base.
-- Check 11w: the website skill's templates are this repository's own `website/` and `.github/workflows/knowledge-website.yaml`, held byte-identical, apart from the three files each host owns once written: `site.config.mjs`, `README.md` and `src/styles/custom.css`. The README template, with this repository's values filled in, must equal `website/README.md`. Every tracked file under `website/` must have a template or be one of the three.
+- Check 11w: the website skill's templates are this repository's own `website/` and `.github/workflows/knowledge-website.yaml`, held byte-identical, apart from the three files each host owns once written: `site.config.mjs`, `README.md` and `src/styles/custom.css`. The README template, with this repository's values filled in, must equal `website/README.md`. Every tracked file under `website/` must have a template or be one of the three. The template's two logos, `knowledge-trust-ladder-logo.svg` and `knowledge-trust-ladder-logo-dark.svg`, must equal this repository's copies in `.assets/`.
 - Check 12: every line `knowledge-preflight.sh` can print as missing or a warning has a row on `ktl-sidecar/references/prerequisites.md`. `tests/test_preflight.py` tests how the preflight behaves.
 - Check 12w: every line `website-preflight.sh` can print as missing or a warning has a row on `ktl-website/references/prerequisites.md`.
 - Check 12a: `tests/test_feedback.py` tests `knowledge-feedback.sh`.
 - Checks 13 and 13a: `tests/test_provenance.py` tests the forge-free provenance gate, with throwaway GPG and SSH keys, and its `--unattended` form.
-- Check 14: `CHANGELOG.md` never carries two headings for one released version. Where node is installed, a throwaway repository also proves three things. `changelog-release.mjs promote` folds a second qualifying push into the section that still waits for `publish.yml`. A version already tagged is left alone. A push with nothing new passes `check` for the version already promoted, and fails for any other.
+- Check 14: `CHANGELOG.md` never carries two headings for one released version. Where node is installed, a throwaway repository also proves three things. `changelog-release.mjs promote` folds a second qualifying push into the section that still waits for `publish.yml`, listing each entry once. A version already tagged is left alone. A push with nothing new passes `check` for the version already promoted, and fails for any other.
 - Check 15: the librarian template's `TRUST_LADDER_SKILLS_REF` names one of the two newest released versions in `CHANGELOG.md`. Two are allowed because the newest heading exists before its tag: `semantic-release.yml` promotes it on merge to `main`, and `publish.yml` creates the tag later. The commit the pin records must carry `skills/ktl-librarian`, the path the install step copies out of it. The check reads it from that commit when the tag ref is absent. Where the tag is on the clone, `TRUST_LADDER_SKILLS_SHA` must be the commit the tag names. The install step must compare the commit it cloned with that one, and `semantic-release.yml` and `scripts/sync-sidecar.sh` must each move the commit with the tag.
 - Check 16: the name the repository had before it was renamed on 2026-09-19 stays out of every file but `CHANGELOG.md`, the bundle's `log.md`, `rename-plan.md`, the contract script and one "formerly" line in `docs/install.md`.
 - Check 16a: the skills' and plugins' old `lokf-` names stay out of every file but `CHANGELOG.md` and the contract script. They took the `ktl-` prefix on 2026-09-22.
@@ -93,7 +93,7 @@ Every subprocess runs under an isolated git config, so a global `commit.gpgsign=
 - `lint-scripts` runs ShellCheck on the whole tree.
 - `lint-workflows` runs `actionlint`, pointed by path at this repository's workflows and at the four workflow templates that get copied into other repositories, the sidecar's three and ktl-website's one. It would otherwise look only under `.github/workflows/`. It ignores the `copilot-requests` permission, which actionlint 1.7.12 predates. The job also checks that every `uses:` in this repository's workflows and those templates names a commit SHA or image digest rather than a floating tag or branch.
 - `smoke-test` installs the skills from the checkout into a throwaway consumer repository through `scripts/smoke-test-install.sh`. It checks that ktl-docent's two scripts come with the install. It also checks that, run from where the installer put them, they label a concept and record a gap in a reader's repository.
-- `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, twice: once with a README, a docs page and a changelog, and once with none of them. This repository's own site, which `knowledge-website.yaml` builds, proves the fuller configuration.
+- `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, twice: once with a README, a docs page, a changelog, the schema's pages and the data, and once with none of them. This repository's own site, which `knowledge-website.yaml` builds, proves the fuller configuration.
 - `validate-markdown` runs markdownlint, lychee, and codespell. Codespell skips `knowledge_bundle`, the link to `.lokf/knowledge`, which it already checks at its real path.
 
 The schedule runs weekly because otherwise link rot, an upstream `gh skill` change or drift in the install path would show up only on the next pull request that happens to run.

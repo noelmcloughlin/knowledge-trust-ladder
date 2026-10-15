@@ -55,3 +55,4 @@ stops each session re-finding, re-connecting, and re-judging the same material.
 ## Open questions
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 `README.md` keeps the poem, but "Why libraries have catalogues", which says a bundle is the catalogue, is on `docs/architecture.md`. `sources` should list `docs/architecture.md` beside `README.md`.
+- 2026-10-15, process:ktl-librarian: Since 2026-10-14 `docs/obsidian.md` sends readers to each plugin's usage page, not its README, and says the plugins' architecture pages name the cost of putting exhibits in a vault's index. This concept says the plugin READMEs name the cost of a folder inside a vault. Which page names that cost now?

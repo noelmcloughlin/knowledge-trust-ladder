@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-14T00:35:00Z"
+  at: "2026-10-15T01:30:10Z"
 status: draft
 dependsOn:
 - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -48,7 +48,7 @@ Since 0.38.0 an empty `[Unreleased]` passes `check` when that version is already
 
 The pin is two values, so the same step moves `TRUST_LADDER_SKILLS_SHA` to the commit that tag names: the install step refuses a tag that names any other commit. Only the template's pin moves. `GITHUB_TOKEN` may not push a change under `.github/workflows/`, so this repository's own copy keeps its old pin, which check 11 ignores (2026-09-24). `gh skill publish` stays this repository's only tag creator, for the reasons below.
 
-Two qualifying merges to `main` between one `publish.yml` run and the next compute the *same* next version twice. The next version is computed from the last tag, and `gh skill publish` is a separate, later, human-triggered step. `promote` now checks whether the top released heading's version is still untagged. If so, it folds the new entries into it by `###` subsection instead of inserting a second heading for the same version. That was the bug that wrote two `## [0.19.0] - 2026-09-17` headings, orphaning the second merge's entries above an empty `[Unreleased]`. Check 14 in `playbooks/repository-validation.md` proves the fold and would have caught the original duplication.
+Two qualifying merges to `main` between one `publish.yml` run and the next compute the *same* next version twice. The next version is computed from the last tag, and `gh skill publish` is a separate, later, human-triggered step. `promote` now checks whether the top released heading's version is still untagged. If so, it folds the new entries into it by `###` subsection instead of inserting a second heading for the same version. That was the bug that wrote two `## [0.19.0] - 2026-09-17` headings, orphaning the second merge's entries above an empty `[Unreleased]`. Check 14 in `playbooks/repository-validation.md` proves the fold and would have caught the original duplication. Since 0.42.0 the fold leaves out an entry the pending section already holds, because a pull request stacked on another still carries the other's entries under `[Unreleased]`, and check 14 proves that each entry is listed once.
 
 The `plan` job also calls `changelog-release.mjs check` as its own step, not only inside `--dry-run`. Semantic-release detects a pull-request event and skips every plugin lifecycle hook, including `@semantic-release/exec`'s. So the `check` the paragraph before describes never ran on a pull request until this fix, and an empty `[Unreleased]` would have merged silently. That step reads the pull request's own commits first, and runs `check` only when one of them would release (the types `.releaserc.json` acts on). So a `chore:` or `docs:` pull request, a Dependabot action bump among them, is not failed for notes it was never going to release.
 
@@ -73,12 +73,13 @@ This release-process detail moved out of `CONTRIBUTING.md` on 2026-09-14 to `doc
 The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates and their own skills pin. Since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up to one release. The script:
 
 - refuses anything but a tag that is on origin and carries `skills/ktl-librarian`;
+- works in each sibling on a branch of its own, `sync-<tag>`, started from the default branch as origin has it, and skips a sibling with uncommitted changes, so the diff is never left on `main` or inside a feature branch (0.40.0);
 - copies that tag's templates over the copies the sibling already has;
 - adds a template the sibling lacks when ktl-sidecar puts it on every host or a copy there cannot run without it;
 - reports any other template, and adds nothing more;
 - copies ktl-website's templates to a sibling that laid its site down with that skill, one with a `website/site.config.mjs`, apart from the three files the host owns, and prints the command that builds the site there;
 - then moves the sibling's `TRUST_LADDER_SKILLS_REF` to the same tag, and its `TRUST_LADDER_SKILLS_SHA` to the commit that tag names;
-- runs the sidecar's checks there, prints a draft changelog line and the commit command, and never commits.
+- runs the sidecar's checks there, prints the changelog entry to add and then the commit command, each set apart and naming the files to stage, and never commits.
 
 The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync. The template's pin is never bumped by hand, which would cut a pointless release. The sibling's pull request is opened after the tag exists, since a sibling merged before its pin's tag fails at the install step on its next scheduled run.
 

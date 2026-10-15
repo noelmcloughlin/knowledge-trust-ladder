@@ -68,3 +68,4 @@ Check 10 of `scripts/validate-repository.sh` fails when `SECURITY.md` outgrows a
 ## Open questions
 
 - 2026-10-14, process:ktl-librarian: Since 2026-10-14 `SECURITY.md` lists ktl-website's templates and its preflight as a surface of their own. It names `knowledge-website.yaml` among this repository's copies of the templates, counts the six skills' prose, and names five skills that run `.lokf/scripts/`, ktl-website among them. This concept carries the earlier table and four skills. `SECURITY.md` itself still says four surfaces above a table of five rows.
+- 2026-10-15, process:ktl-librarian: Since 0.41.0 the ktl-website row of `SECURITY.md` says the build job also runs `just` when the site builds a folder through a recipe, and that the sync runs the commands `site.config.mjs` names to build the schema's pages and the data. Since 2026-10-14 `SECURITY.md` also counts five surfaces, matching its table. This concept carries neither.
