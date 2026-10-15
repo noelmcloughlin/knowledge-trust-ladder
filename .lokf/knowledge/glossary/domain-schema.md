@@ -16,7 +16,7 @@ relatedTo:
 - https://w3id.org/ktl/knowledge/glossary/lokf
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-15T01:30:10Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -25,6 +25,6 @@ verified:
 
 # Overview
 
-LOKF's vocabulary is a short list of classes and typed relations. It is kept small, which is what keeps bundles portable. When concepts stop fitting those classes, it is typically in a deep or safety-critical domain: medicine, law, finance, safety engineering. The answer is a **domain schema** written in [LinkML](linkml.md) that extends [LOKF](lokf.md)'s, not a looser bundle. The [curator](curator.md) flags the drift, the team decides, and the [librarian](librarian.md) applies it.
+LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. Concepts stop fitting those classes typically in a deep or safety-critical domain, such as medicine, law, finance or safety engineering. The answer is then a **domain schema** written in [LinkML](linkml.md) that extends [LOKF](lokf.md)'s. The [curator](curator.md) flags the drift, the team decides, and the [librarian](librarian.md) applies it.
 
 The architecture page says that a domain that extends the schema has its own types checked rather than tolerated ([when the built-in vocabulary stops fitting](../explanation/domain-schemas.md)).

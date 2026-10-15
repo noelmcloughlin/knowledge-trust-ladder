@@ -21,6 +21,7 @@ generated:
 verified:
 - by: human:noelmcloughlin
   at: "2026-10-13T01:02:36Z"
+status: draft
 ---
 
 # Overview
@@ -63,3 +64,7 @@ The page lists designs, not features. Each would extend KTL from what the bundle
 - the excerpt check, once LOKF 0.9.0 is released.
 
 That is a condition check, the work a museum gives its conservator, who examines objects and writes condition reports without cataloguing or authenticating them. If KTL takes these on, they belong to a new role, not to the librarian.
+
+## Open questions
+
+- 2026-10-15, process:ktl-librarian: Since 2026-10-14 `docs/skills-repositories.md` says each of this repository's six skills has a `Playbook` concept. This concept still says five.

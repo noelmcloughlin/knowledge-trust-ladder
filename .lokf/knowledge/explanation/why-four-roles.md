@@ -13,7 +13,7 @@ sources:
 - resource: docs/obsidian.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-14T00:35:00Z"
+  at: "2026-10-15T01:30:10Z"
 status: draft
 about:
 - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
@@ -37,7 +37,7 @@ The architecture page names five roles, and four of them are skills. Its section
 
 The page also names a fifth skill, which is not a role: `ktl-prose`, the librarian's copy editor, which rewords what an agent wrote, in plain English, before a person confirms it. It changes the wording and never a fact, it leaves every byte of frontmatter alone, and it never touches a concept a person wrote or confirmed. It is optional, and the roles lose nothing without it ([ktl-prose skill](../playbooks/ktl-prose-skill.md)).
 
-The page names a sixth skill too, `ktl-website`, which publishes the bundle. It lays down a website with a page per concept and its trust label, the health page, the knowledge graph and search by trust and type, and serves the four files `lokf export` writes beside the pages. A workflow publishes the site to GitHub Pages. It is optional, like `ktl-prose`, and the roles lose nothing without it ([ktl-website skill](../playbooks/ktl-website-skill.md)).
+The page names a sixth skill too, `ktl-website`, which publishes the bundle. It builds a website with a page per concept and its trust label, the health page, the knowledge graph and search by trust and type, and serves the four files `lokf export` writes beside the pages. The repository's README, docs, changelog and LinkML schema pages join them when it has them, and its data as SQLite databases to open in Datasette Lite once a person turns that on. A workflow publishes the site to GitHub Pages. It is optional, like `ktl-prose` ([ktl-website skill](../playbooks/ktl-website-skill.md)).
 
 Each skill takes one line of the poem, or the role the poem leaves implicit, and the page's table says how often each runs:
 

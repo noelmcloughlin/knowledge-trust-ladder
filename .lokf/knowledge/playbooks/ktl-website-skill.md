@@ -27,7 +27,7 @@ definedBy:
 - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-14T22:07:45Z"
+  at: "2026-10-15T01:30:10Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -36,7 +36,7 @@ verified:
 
 # Overview
 
-ktl-website lays a website for the knowledge bundle down in the repository it is invoked from: an Astro Starlight site under `website/`, built from the bundle and from the repository's README, docs and changelog. The site shows a page per concept with the trust label `knowledge-report.sh` gives it, a health page, a knowledge graph, and search that filters by trust and type. It serves the four files `lokf export` writes under `/knowledge/`. When the repository has them, it also shows the LinkML schema's pages, which `gen-doc` writes, under a Schema topic, and it can serve SQLite databases that open in Datasette Lite in a new tab. The architecture page names it the sixth skill, optional like `ktl-prose`, and says the roles lose nothing without it.
+ktl-website lays a website for the knowledge bundle down in the repository it is invoked from: an Astro Starlight site under `website/`, built from the bundle and from the repository's README, docs and changelog. The site shows a page per concept with the trust label `knowledge-report.sh` gives it, a health page, a knowledge graph, and search that filters by trust and type. It serves the four files `lokf export` writes under `/knowledge/`. When the repository has them, it also shows the LinkML schema's pages, which `gen-doc` writes, under a Schema topic, and it can serve SQLite databases that open in Datasette Lite in a new tab. The architecture page names it the sixth skill, optional like `ktl-prose`, and links this repository's own site, at `https://w3id.org/ktl/`, as the template's first copy.
 
 It runs once, to lay `website/` down, or again to repair or update it. It writes nothing into the bundle, the README, the docs or the changelog. ktl-sidecar runs first, since the site builds from the sidecar's scripts and toolkit, and ktl-librarian and ktl-curator change what the pages say. Every file is copied from the skill's `templates/`, never retyped.
 
@@ -53,6 +53,8 @@ It has seven steps, 0 to 6:
 - **Step 6.** Hand off: the guessed values, the build's result, what the site shows and leaves out, the preflight's last line, and the site's `/knowledge/` address as a candidate `base_iri`.
 
 `references/customising.md` describes every option in `site.config.mjs`. Five are required: `REPO`, `SITE`, `BASE`, `TITLE` and `DESCRIPTION`. For each part of the repository the site can show, `"auto"` shows it when the repository has it, and `null` leaves it out. `SCHEMA` and `BROWSE` each name a folder the repository builds rather than commits, and the command the sync runs when the folder is missing. A command that starts with `just` makes the workflow install `just`. `references/inputs.md` says what each page is built from. `references/prerequisites.md` gives each preflight line in plain words, and the contract's check 12w holds that page to every line the preflight can print as missing or a warning.
+
+Since 0.43.0 (2026-10-15, `CHANGELOG.md`) the site also serves the whole bundle as `llms-full.txt`, each concept after its trust label, and the bundle log as an Atom feed, `knowledge/log.xml`, one entry per day. It serves the home page, each docs page and each extra page as Markdown too, at the page's path with `.md` added. A concept page links the concept's history and names its licence, and opens the knowledge graph on the concept at `/graph/?concept=<id>`. A link to a concept shows the concept's title, type, trust label and definition on hover and on focus, from `knowledge/previews.json`. A release page links the repository, the docs and the bundle at the release's tag, which the `RELEASE_TAG` option names. A page and its retelling offer each other as reading levels: a `PAGES` entry's `retells` names the page it retells, and a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names.
 
 # Deployment
 
