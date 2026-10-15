@@ -46,6 +46,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 - A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a schema page to `/schema/<name>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
 - An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does; otherwise the text stays as written.
+- A link to a concept page, in a page's content, shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, and Escape dismisses it. The script reads `/knowledge/previews.json`, which the sync writes, once per page. The sidebars' links are left out, since each sidebar entry carries its label as a tooltip.
 - After the build, `scripts/check-links.mjs` fails the build when a link between the site's own pages, a link to a heading, or a page's social card does not resolve. It reads `llms.txt`, `llms-full.txt` and the bundle log's feed too, and fails when one names a page of the site that is not there. Links that leave the site are not checked.
 
 ## The changelog

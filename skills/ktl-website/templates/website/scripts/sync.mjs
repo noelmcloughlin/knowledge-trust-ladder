@@ -479,6 +479,33 @@ function writeConceptPages(concepts) {
 
 const labelSpan = (c) => `<span class="ktl-label ktl-label--${c.tone}">${c.label}</span>`;
 
+/**
+ * What a link to a concept shows before the reader follows it: the title,
+ * the type, the trust label and the definition, by concept id, for
+ * src/components/ConceptPreviews.astro to read. The definition keeps its
+ * code spans, as the card shows them; the description stands in without one.
+ */
+function writePreviews(concepts) {
+  const previews = Object.fromEntries(
+    [...concepts]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((c) => {
+        const definition = c.data.definition ?? c.data.description;
+        return [
+          c.id,
+          {
+            title: c.title,
+            type: slotName(c.record.type),
+            label: c.label,
+            tone: c.tone,
+            ...(definition ? { definition: String(definition) } : {}),
+          },
+        ];
+      }),
+  );
+  write(resolve(PUBLIC_KNOWLEDGE, "previews.json"), JSON.stringify(previews) + "\n");
+}
+
 function writeGroupPages(byGroup) {
   for (const group of bundleGroups()) {
     const list = byGroup.get(group) ?? [];
@@ -533,6 +560,7 @@ function writeOverview(root, concepts, health) {
     `- [datasets.jsonld](${k}/datasets.jsonld): a schema.org Dataset description for each Dataset or Table concept.`,
     `- [index.md](${k}/index.md): the bundle's root file, which declares the header above.`,
     `- [log.xml](${k}/log.xml): the [bundle log](${k}/log/) as an Atom feed, its newest ${FEED_DAYS} days.`,
+    `- [previews.json](${k}/previews.json): each concept's title, type, trust label and definition, which a link to the concept shows before it is followed.`,
     `- Each concept page links the concept's own Markdown file and its JSON-LD, at the concept's path with \`.md\` or \`.jsonld\` added.`,
     ...(existsSync(resolve(REPO_ROOT, ".github", "workflows", "knowledge-release.yaml"))
       ? [`- The bundle as it stood at each release is a zip on the [releases page](${REPO_URL}/releases).`]
@@ -1306,6 +1334,7 @@ copyAssets();
 copyBundleFiles();
 const byGroup = writeConceptPages(concepts);
 writeGroupPages(byGroup);
+writePreviews(concepts);
 writeOverview(root, concepts, health);
 writeLog();
 await writeLogFeed(root);

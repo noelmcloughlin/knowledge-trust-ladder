@@ -29,6 +29,7 @@ Both commands run `npm run sync` first, which runs `lokf export` from the sideca
 - **The site's values and options:** `site.config.mjs`: the addresses, the title, the logo, the home page's tagline and buttons, the docs groups, the extra pages. A comment above each option says what it takes.
 - **Its look:** `src/styles/custom.css`, loaded last, is this repository's own. `theme.css` and `catalogue.css` are the house style; the trust colours are in `theme.css`.
 - **How a concept page looks:** `src/components/ConceptCard.astro` and `src/styles/catalogue.css`; the map in the right-hand column is `src/components/Neighbourhood.astro`.
+- **What a link to a concept shows on hover:** `src/components/ConceptPreviews.astro`, from `knowledge/previews.json`, which the sync writes.
 - **The health page:** `src/pages/health.astro` and its chart, `src/components/TrustChart.astro`; the trust states' words are in `src/trust.ts`.
 - **A page's link preview:** `src/pages/og/[...route].ts` draws its social card, and `src/routeData.ts` points the page at it.
 - **How a link is rewritten:** `scripts/routes.mjs`, which the sync and the Markdown plugin both use.
