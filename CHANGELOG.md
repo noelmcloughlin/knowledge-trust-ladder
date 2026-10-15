@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The README links the website's pages.** The quick start, the architecture page and the shorter version open on `w3id.org/ktl` rather than as Markdown files on GitHub.
+
 ## [0.43.0] - 2026-10-15
 
 ### Added
