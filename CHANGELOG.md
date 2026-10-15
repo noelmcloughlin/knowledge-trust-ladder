@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **A ktl-website page previews a concept link.** A link to a concept shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, from `knowledge/previews.json`, which the sync writes; Escape dismisses it.
-
 ## [0.43.0] - 2026-10-15
 
 ### Added
@@ -16,6 +12,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A ktl-website site offers the bundle log as an Atom feed, `knowledge/log.xml`.** Each day of the log is an entry, titled and categorised by the kinds of change it holds and dated from git, so a reader can follow the bundle without watching the repository.
 - **A ktl-website concept page links the concept's history and names its licence.** The record links every commit to the concept's file up to the built one, and gives the bundle's licence, or the concept's own, which the page head names too. The overview page, the feed and the two text files name the bundle's licence by its short name.
 - **A ktl-website concept page opens the knowledge graph on the concept.** The record and the neighbourhood map link `/graph/?concept=<id>`, which selects the concept and frames its neighbours, and the address follows the selected node, so a view can be shared.
+- **A ktl-website page previews a concept link.** A link to a concept shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, from `knowledge/previews.json`, which the sync writes; Escape dismisses it.
 
 ### Changed
 
