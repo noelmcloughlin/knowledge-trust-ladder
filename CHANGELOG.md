@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website site serves each docs page as Markdown beside it.** The home page and the extra pages too, at the page's path with `.md` added and every link a full address, so `llms.txt` sends a model to the words rather than the HTML.
+
 ## [0.43.0] - 2026-10-15
 
 ### Added
