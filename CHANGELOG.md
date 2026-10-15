@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website page previews a concept link.** A link to a concept shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, from `knowledge/previews.json`, which the sync writes; Escape dismisses it.
+
 ## [0.43.0] - 2026-10-15
 
 ### Added
