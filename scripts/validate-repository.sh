@@ -457,6 +457,13 @@ for pair in \
     err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
   fi
 done
+# The justfile's first line names the host (Step 1's <PROJ_NAME>), so it is
+# held to its template from the second line on, as sync-sidecar.sh copies it.
+if cmp -s <(tail -n +2 "$templates/justfile") <(tail -n +2 .lokf/justfile); then
+  ok ".lokf/justfile matches its template below the first line"
+else
+  err ".lokf/justfile differs from $templates/justfile below the first line - copy the template over it and keep this repository's own first line"
+fi
 
 # 11w. The website skill's templates are this repository's own website/ and
 #      its deploy workflow, laid down by the same skill in every host, so the

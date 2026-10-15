@@ -8,6 +8,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The README links the website's pages.** The quick start, the architecture page and the shorter version open on `w3id.org/ktl` rather than as Markdown files on GitHub.
 
+### Fixed
+
+- **`scripts/sync-sidecar.sh` carries `.lokf/justfile`.** It keeps the sibling's first line, which names the host, so a recipe change such as the v0.38.0 `schema` variable reaches every sibling; check 11 holds this repository's copy to the template the same way.
+
 ## [0.43.0] - 2026-10-15
 
 ### Added

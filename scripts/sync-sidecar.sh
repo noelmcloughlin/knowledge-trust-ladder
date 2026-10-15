@@ -60,7 +60,12 @@ pairs=(
   "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh"
   "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
   "gitattributes:.lokf/.gitattributes"
+  "justfile:.lokf/justfile"
 )
+# Templates whose first line names the host (Step 1's <PROJ_NAME>). The sync
+# keeps the sibling's own first line and copies the rest, so a recipe change
+# reaches every host without a placeholder landing in one.
+host_titled=("justfile")
 # ktl-sidecar installs these on every host, whatever else the host chose,
 # so a sibling that lacks one gets it: <template>|<the step that says so>.
 always=(
@@ -123,6 +128,14 @@ tag_sha="$(git -C "$repo_root" rev-parse "$tag^{commit}")"
 # The skills pin is each repository's own to move, so it is not drift.
 unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/'; }
 at_tag() { git -C "$repo_root" show "$tag:$templates/$1"; }
+# The template as the sibling should carry it: <template> <sibling copy>.
+rendered() {
+  local t
+  for t in "${host_titled[@]}"; do
+    if [[ "$t" == "$1" ]]; then head -n 1 "$2"; at_tag "$1" | tail -n +2; return; fi
+  done
+  at_tag "$1"
+}
 # Why the sibling needs a template it never installed, or nothing when it does
 # not: <template> <sibling-root>.
 needed() {
@@ -212,10 +225,14 @@ for sibling in "$@"; do
       added+=("$dst ($why)")
       continue
     fi
-    if cmp -s <(at_tag "$src" | unpin) <(unpin < "$sibling_root/$dst"); then
+    want="$(mktemp)"
+    rendered "$src" "$sibling_root/$dst" > "$want"
+    if cmp -s <(unpin < "$want") <(unpin < "$sibling_root/$dst"); then
       same+=("$dst")
+      rm -f "$want"
     else
-      at_tag "$src" > "$sibling_root/$dst"
+      cat "$want" > "$sibling_root/$dst"
+      rm -f "$want"
       copied+=("$dst")
     fi
   done
