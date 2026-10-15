@@ -315,6 +315,26 @@ function githubFile(repoPath) {
   return `${REPO_URL}/${kind}/${REF}/${repoPath}`;
 }
 
+// A licence as the site names it: a Creative Commons or SPDX address by its
+// short name, an `spdx:` CURIE by its identifier with the address that
+// resolves it, and any other value as it is written, linked when it is an
+// address.
+function licenceOf(value) {
+  const licence = String(value);
+  const cc = licence.match(/creativecommons\.org\/licenses\/([a-z-]+)\/(\d\.\d)/i);
+  if (cc) return { text: `CC ${cc[1].toUpperCase()} ${cc[2]}`, href: licence };
+  if (/creativecommons\.org\/publicdomain\/zero\/1\.0/i.test(licence)) return { text: "CC0 1.0", href: licence };
+  const spdx = licence.match(/^(?:https?:\/\/spdx\.org\/licenses\/|spdx:)([^/]+?)(?:\.html)?\/?$/i);
+  if (spdx) return { text: spdx[1], href: `https://spdx.org/licenses/${spdx[1]}` };
+  return /^https?:\/\//.test(licence) ? { text: licence, href: licence } : { text: licence };
+}
+
+// A licence in Markdown: its name, linked to its address when it has one.
+const licenceMd = (value) => {
+  const l = licenceOf(value);
+  return l.href ? `[${l.text}](${l.href})` : l.text;
+};
+
 // The page head carries the concept as JSON-LD. Escaping <, > and & keeps a
 // field value such as "</script>" from ending the block; \uXXXX is still JSON.
 const scriptSafe = (doc) =>
@@ -357,6 +377,8 @@ function buildConcepts(exported, labels) {
       .map(String);
     if (sources.length === 0 && c.data.resource) sources.push(String(c.data.resource));
     const event = (e) => ({ by: String(e.by ?? ""), at: String(e.at ?? ""), ...(e.note ? { note: String(e.note) } : {}) });
+    // A concept takes the bundle's licence unless it declares its own.
+    const licence = c.data.license ?? root.license;
 
     c.record = {
       id: c.id,
@@ -388,10 +410,13 @@ function buildConcepts(exported, labels) {
         .filter((e) => e.target === c.iri && byIri.has(e.source))
         .map((e) => ({ name: slotName(e.slot ?? e.predicate).toLowerCase(), from: linkTo(e.source) }))
         .sort((a, b) => a.from.text.localeCompare(b.from.text)),
+      ...(licence ? { licence: licenceOf(licence) } : {}),
       files: {
         markdown: `${BASE}/knowledge/${c.id}.md`,
         jsonld: `${BASE}/knowledge/${c.id}.jsonld`,
         github: githubFile(`.lokf/knowledge/${c.id}.md`),
+        // Every commit that changed the file, up to the one the site was built from.
+        history: `${REPO_URL}/commits/${REF}/.lokf/knowledge/${c.id}.md`,
       },
     };
 
@@ -418,6 +443,7 @@ function writeConceptPages(concepts) {
     const order = byGroup.get(c.record.group).indexOf(c) + 1;
     const head = [
       { tag: "link", attrs: { rel: "alternate", type: "text/markdown", href: c.record.files.markdown } },
+      ...(c.record.licence?.href ? [{ tag: "link", attrs: { rel: "license", href: c.record.licence.href } }] : []),
     ];
     if (c.jsonld) {
       const { body: _body, ...summary } = c.jsonld;
@@ -484,7 +510,7 @@ function writeOverview(root, concepts, health) {
   const { body: rest } = takeTitle(body);
   const [intro, ...after] = rest.trim().split(/\n(?=# )/);
   const k = `${BASE}/knowledge`;
-  const license = root.license ? `[${root.license}](${root.license})` : "not stated";
+  const license = root.license ? licenceMd(root.license) : "not stated";
   const publisher = root.publisher?.name ?? root.publisher?.id ?? "not stated";
   const facts = [
     "| The root file declares | |",
@@ -667,6 +693,7 @@ async function writeLogFeed(root) {
       ].join("\n"),
     );
   }
+  const licence = root.license ? licenceOf(root.license) : null;
   const lines = [
     '<?xml version="1.0" encoding="utf-8"?>',
     '<feed xmlns="http://www.w3.org/2005/Atom">',
@@ -678,7 +705,8 @@ async function writeLogFeed(root) {
     `  <id>${xml(feedId)}</id>`,
     `  <updated>${newest}</updated>`,
     `  <author><name>${xml(root.publisher?.name ?? TITLE)}</name></author>`,
-    ...(root.license ? [`  <rights>${xml(root.license)}</rights>`] : []),
+    ...(licence ? [`  <rights>${xml(licence.text)}</rights>`] : []),
+    ...(licence?.href ? [`  <link rel="license" href="${xml(licence.href)}"/>`] : []),
     ...entries,
     "</feed>",
     "",
@@ -856,7 +884,14 @@ function llmsSummary() {
   return (llms.match(/^> (.+)$/m) ?? [, DESCRIPTION])[1];
 }
 
-function writeLlmsTxt(docs, concepts) {
+// The bundle's licence, as a sentence for the two text files, or nothing.
+function licenceSentence(root) {
+  if (!root.license) return "";
+  const { text, href } = licenceOf(root.license);
+  return ` The bundle is offered under ${text}${href ? ` (${href})` : ""}.`;
+}
+
+function writeLlmsTxt(docs, concepts, root) {
   const summary = llmsSummary();
   const inputs = [
     ...(HOME.source ? [HOME.source === "README.md" ? "its README" : `its ${HOME.source}`] : []),
@@ -869,7 +904,7 @@ function writeLlmsTxt(docs, concepts) {
     "",
     `> ${summary}`,
     "",
-    `This site is built from ${REPO_URL}: ${from}. Each concept below links its own Markdown file, the file as it is in the repository, followed by the label that says how far it has been checked. A concept marked \`status: draft\` has not yet been confirmed by a person; one with a \`human:\` entry under \`verified\` has. Weigh them accordingly.`,
+    `This site is built from ${REPO_URL}: ${from}. Each concept below links its own Markdown file, the file as it is in the repository, followed by the label that says how far it has been checked. A concept marked \`status: draft\` has not yet been confirmed by a person; one with a \`human:\` entry under \`verified\` has. Weigh them accordingly.${licenceSentence(root)}`,
     "",
     ...(docs.length
       ? [
@@ -920,7 +955,7 @@ const MD_LINK = /\]\((<[^>]*>|[^)\s]+)((?:\s+"[^"]*")?)\)/g;
  * wikilinks too, since the file has no address of its own to resolve them
  * against.
  */
-function writeLlmsFullTxt(concepts) {
+function writeLlmsFullTxt(concepts, root) {
   const ids = concepts.map((c) => c.id);
   const entry = (c) => {
     const levels = [];
@@ -956,6 +991,7 @@ function writeLlmsFullTxt(concepts) {
       `- Page: ${page}`,
       `- Markdown: ${SITE_URL}/knowledge/${c.id}.md`,
       ...(sources.length ? [`- Sources: ${sources.join(", ")}`] : []),
+      ...(c.data.license ? [`- Licence: ${licenceMd(c.data.license)}`] : []),
       ...(c.data.definition ? [`- Definition: ${plain(String(c.data.definition))}`] : []),
       "",
       body.trim(),
@@ -966,7 +1002,7 @@ function writeLlmsFullTxt(concepts) {
     "",
     `> ${llmsSummary()}`,
     "",
-    `Every concept in the knowledge bundle of ${REPO_URL}, as the site at ${SITE_URL}/ shows it. Each one opens with its label, which says how far it has been checked. Only a label that starts "confirmed by a person" means that a named person has confirmed the text as it stands. Weigh the rest accordingly.`,
+    `Every concept in the knowledge bundle of ${REPO_URL}, as the site at ${SITE_URL}/ shows it. Each one opens with its label, which says how far it has been checked. Only a label that starts "confirmed by a person" means that a named person has confirmed the text as it stands. Weigh the rest accordingly.${licenceSentence(root)}`,
     "",
     ...[...concepts].sort((a, b) => a.id.localeCompare(b.id)).map((c) => entry(c) + "\n"),
   ];
@@ -1277,8 +1313,8 @@ writeHome();
 writePages();
 const schemaCount = writeSchemaPages();
 const databases = writeBrowse();
-writeLlmsTxt(docs, concepts);
-writeLlmsFullTxt(concepts);
+writeLlmsTxt(docs, concepts, root);
+writeLlmsFullTxt(concepts, root);
 writeCollections();
 if (CHANGELOG) writeChangelog();
 

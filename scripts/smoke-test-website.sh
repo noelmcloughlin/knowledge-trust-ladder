@@ -220,6 +220,8 @@ assert "the README's link to the guide goes to its page" "grep -q 'href=\"/acme-
 assert "the home page offers the architecture page as a button" "grep -q 'class=\"sl-link-button[^\"]*\" href=\"/acme-platform/docs/architecture/\"' \"$host/website/dist/index.html\""
 assert "the header shows the Knowledge Trust Ladder logo" "grep -q '_astro/logo-light[^\"]*\\.svg' \"$host/website/dist/index.html\""
 assert "a concept page carries its trust label" "grep -qi 'checked' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
+assert "a concept page links its file's history and names the bundle's licence" \
+  "grep -q 'href=\"https://github.com/acme/acme-platform/commits/[0-9a-f]*/.lokf/knowledge/services/example-service-a.md\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\" && grep -q '>CC BY 4.0</a>' \"$host/website/dist/knowledge/services/example-service-a/index.html\" && grep -q 'rel=\"license\"[^>]*href=\"https://creativecommons.org/licenses/by/4.0/\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
 assert "llms-full.txt opens each concept with its label and its page, its headings under its title" \
   "grep -A2 '^## Example Service A$' \"$host/website/dist/llms-full.txt\" | grep -q '^- Label: ' && grep -q '^- Page: https://acme.github.io/acme-platform/knowledge/services/example-service-a/$' \"$host/website/dist/llms-full.txt\" && grep -q '^### Overview$' \"$host/website/dist/llms-full.txt\""
 assert "the link check reads the text files too" "grep -q 'text files all resolve' \"$test_root/build.log\""
@@ -227,6 +229,8 @@ assert "llms.txt offers llms-full.txt" "grep -q '/llms-full.txt)' \"$host/websit
 assert "the log feed is well-formed, with the skeleton's day as an entry, dated from git, in its category" \
   "python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' \"$host/website/dist/knowledge/log.xml\" && grep -q 'Initialization: 1</title>' \"$host/website/dist/knowledge/log.xml\" && grep -q '<published>' \"$host/website/dist/knowledge/log.xml\" && grep -q '<category term=\"Initialization\"/>' \"$host/website/dist/knowledge/log.xml\""
 assert "the feed's entries are named by the bundle's base_iri" "grep -q '<id>https://acme.example/knowledge/log#' \"$host/website/dist/knowledge/log.xml\""
+assert "the feed, the overview page and the text files name the bundle's licence" \
+  "grep -q '<rights>CC BY 4.0</rights>' \"$host/website/dist/knowledge/log.xml\" && grep -q '<link rel=\"license\" href=\"https://creativecommons.org/licenses/by/4.0/\"/>' \"$host/website/dist/knowledge/log.xml\" && grep -q 'href=\"https://creativecommons.org/licenses/by/4.0/\"[^>]*>CC BY 4.0</a>' \"$host/website/dist/knowledge/index.html\" && grep -q 'offered under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)' \"$host/website/dist/llms.txt\" && grep -q 'offered under CC BY 4.0' \"$host/website/dist/llms-full.txt\""
 assert "every page names the log feed" "grep -q 'type=\"application/atom+xml\"[^>]*href=\"/acme-platform/knowledge/log.xml\"' \"$host/website/dist/index.html\""
 assert "the sync built the schema's pages and the data with their commands" \
   "grep -q 'building docs/elements with' \"$test_root/build.log\" && grep -q 'building data with' \"$test_root/build.log\""
