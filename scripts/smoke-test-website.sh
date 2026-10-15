@@ -220,6 +220,7 @@ assert "the README's link to the guide goes to its page" "grep -q 'href=\"/acme-
 assert "the home page offers the architecture page as a button" "grep -q 'class=\"sl-link-button[^\"]*\" href=\"/acme-platform/docs/architecture/\"' \"$host/website/dist/index.html\""
 assert "the header shows the Knowledge Trust Ladder logo" "grep -q '_astro/logo-light[^\"]*\\.svg' \"$host/website/dist/index.html\""
 assert "a concept page carries its trust label" "grep -qi 'checked' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
+assert "a concept page links the graph opened on it" "grep -q 'href=\"/acme-platform/graph/?concept=services/example-service-a\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
 assert "a concept page links its file's history and names the bundle's licence" \
   "grep -q 'href=\"https://github.com/acme/acme-platform/commits/[0-9a-f]*/.lokf/knowledge/services/example-service-a.md\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\" && grep -q '>CC BY 4.0</a>' \"$host/website/dist/knowledge/services/example-service-a/index.html\" && grep -q 'rel=\"license\"[^>]*href=\"https://creativecommons.org/licenses/by/4.0/\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
 assert "llms-full.txt opens each concept with its label and its page, its headings under its title" \
