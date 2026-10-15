@@ -9,10 +9,12 @@
 //                      changelogs.ts, the releases collection or none; and
 //                      CHANGELOG.md, which the releases section reads
 //   public/            the figures, llms.txt, llms-full.txt, the favicon,
-//                      the databases under browse/, and under knowledge/
-//                      the four files `lokf export` writes, every bundle
-//                      file as it is in the repository, each concept's
-//                      JSON-LD, and log.xml, the bundle log as a feed
+//                      the databases under browse/, the home page, each
+//                      docs page and each extra page as Markdown beside its
+//                      page, and under knowledge/ the four files `lokf
+//                      export` writes, every bundle file as it is in the
+//                      repository, each concept's JSON-LD, and log.xml, the
+//                      bundle log as a feed
 //
 // It runs two programs the repository already has: the lokf toolkit's
 // `export`, from the sidecar's own environment, and knowledge-report.sh,
@@ -798,6 +800,7 @@ function writeDocs() {
   const order = groups ? groups.flatMap((g) => g.pages) : null;
   docs.sort((a, b) => (order ? order.indexOf(a.name) - order.indexOf(b.name) : a.title.localeCompare(b.title)));
   docs.forEach((d, i) => {
+    d.markdown = writeMarkdown(d.source, `/docs/${d.name}/`);
     page(
       resolve(CONTENT, "docs", `${d.name}.md`),
       {
@@ -809,11 +812,12 @@ function writeDocs() {
         ...(groups ? {} : { sidebar: { order: i + 1 } }),
         ktlSource: d.source,
         editUrl: `${REPO_URL}/edit/${BRANCH}/${d.source}`,
+        head: [markdownAlternate(d.markdown)],
       },
       prepare(d.body),
     );
   });
-  return docs.map(({ name, title, description }) => ({ name, title, description }));
+  return docs.map(({ name, title, description, markdown }) => ({ name, title, description, markdown: SITE + markdown }));
 }
 
 /** The text from its first `# ` title down, passing over a `# ` inside fenced code. */
@@ -828,6 +832,24 @@ function fromTitle(text, file) {
     else if (/^# /.test(line)) return lines.slice(i).join("\n");
   }
   throw new Error(`${file} has no '# ' title, and the home page starts at it`);
+}
+
+/** The text from its first `# ` title down, or after its frontmatter when it has no title. */
+const fromTitleOrAll = (text) => (hasH1(text) ? fromTitle(text, "") : splitFrontmatter(text).body);
+
+const markdownAlternate = (href) => ({ tag: "link", attrs: { rel: "alternate", type: "text/markdown", href } });
+
+/**
+ * A page's source as a Markdown file beside the page, at the page's path with
+ * `.md` added, for a reader or a model that wants the words without the
+ * site: the text from its title down, with every link a full address. It
+ * returns the file's site path, which the page's head names as an alternate.
+ */
+function writeMarkdown(source, pagePath) {
+  const path = `${pagePath.replace(/\/$/, "") || "/index"}.md`;
+  const text = absoluteMarkdown(source, SITE_URL + pagePath, fromTitleOrAll(repoFile(source)));
+  write(resolve(PUBLIC, path.slice(1)), text.trim() + "\n");
+  return BASE + path;
 }
 
 /** The tagline under the home page's title: as given, the first line bold throughout of the file named, or the site's description. */
@@ -885,16 +907,18 @@ function writeHome() {
       },
       ktlSource: HOME.source ?? ".lokf/knowledge/index.md",
       editUrl: HOME.source ? `${REPO_URL}/edit/${BRANCH}/${HOME.source}` : false,
+      ...(HOME.source ? { head: [markdownAlternate(writeMarkdown(HOME.source, "/"))] } : {}),
     },
     prepare(body),
   );
 }
 
-/** A page per PAGES entry, from its file's title down. */
+/** A page per PAGES entry, from its file's title down; each is returned as llms.txt lists it. */
 function writePages() {
-  for (const extra of PAGES) {
+  return PAGES.map((extra) => {
     const { title, body } = takeTitle(repoFile(extra.source));
     const description = describe(body);
+    const markdown = writeMarkdown(extra.source, `/${extra.slug}/`);
     page(
       resolve(CONTENT, `${extra.slug}.md`),
       {
@@ -902,10 +926,13 @@ function writePages() {
         ...(description ? { description } : {}),
         ktlSource: extra.source,
         editUrl: `${REPO_URL}/edit/${BRANCH}/${extra.source}`,
+        head: [markdownAlternate(markdown)],
       },
       prepare(body),
     );
-  }
+    // llms.txt names the page by its label, which says what the page is for.
+    return { title: extra.label, description, markdown: SITE + markdown };
+  });
 }
 
 /** The summary under the title: the repository's own llms.txt line when it has one. */
@@ -921,7 +948,7 @@ function licenceSentence(root) {
   return ` The bundle is offered under ${text}${href ? ` (${href})` : ""}.`;
 }
 
-function writeLlmsTxt(docs, concepts, root) {
+function writeLlmsTxt(docs, extra, concepts, root) {
   const summary = llmsSummary();
   const inputs = [
     ...(HOME.source ? [HOME.source === "README.md" ? "its README" : `its ${HOME.source}`] : []),
@@ -929,20 +956,16 @@ function writeLlmsTxt(docs, concepts, root) {
     "its LOKF knowledge bundle",
   ];
   const from = inputs.length > 1 ? `${inputs.slice(0, -1).join(", ")} and ${inputs[inputs.length - 1]}` : inputs[0];
+  const pages = [...docs, ...extra];
   const lines = [
     `# ${TITLE}`,
     "",
     `> ${summary}`,
     "",
-    `This site is built from ${REPO_URL}: ${from}. Each concept below links its own Markdown file, the file as it is in the repository, followed by the label that says how far it has been checked. A concept marked \`status: draft\` has not yet been confirmed by a person; one with a \`human:\` entry under \`verified\` has. Weigh them accordingly.${licenceSentence(root)}`,
+    `This site is built from ${REPO_URL}: ${from}. Each page below links its own Markdown file: a docs page's text with its links made full addresses, and a concept's file as it is in the repository, followed by the label that says how far it has been checked. A concept marked \`status: draft\` has not yet been confirmed by a person; one with a \`human:\` entry under \`verified\` has. Weigh them accordingly.${licenceSentence(root)}`,
     "",
-    ...(docs.length
-      ? [
-          "## Docs",
-          "",
-          ...docs.map((d) => `- [${d.title}](${SITE_URL}/docs/${d.name}/)${d.description ? `: ${d.description}` : ""}`),
-          "",
-        ]
+    ...(pages.length
+      ? ["## Docs", "", ...pages.map((d) => `- [${d.title}](${d.markdown})${d.description ? `: ${d.description}` : ""}`), ""]
       : []),
     "## Knowledge bundle",
     "",
@@ -957,7 +980,7 @@ function writeLlmsTxt(docs, concepts, root) {
     `- [graph.nt](${SITE_URL}/knowledge/graph.nt): the whole bundle as N-Triples`,
     ...(SCHEMA ? [`- [Schema](${SITE_URL}/schema/): the LinkML schema's classes, slots, enumerations and types, a page each`] : []),
     ...(BROWSE ? [`- [Browse the data](${SITE_URL}/browse/): the repository's data as SQLite databases`] : []),
-    `- [${HOME.source === "README.md" ? "README" : "Home"}](${SITE_URL}/): what ${TITLE} is`,
+    `- [${HOME.source === "README.md" ? "README" : "Home"}](${SITE_URL}/${HOME.source ? "index.md" : ""}): what ${TITLE} is`,
     "",
   ];
   write(resolve(PUBLIC, "llms.txt"), lines.join("\n"));
@@ -977,6 +1000,46 @@ function absoluteUrl(fromPath, page, url) {
 // A Markdown link's address: bare, or in angle brackets, with a title or
 // none; the brackets and the title are kept.
 const MD_LINK = /\]\((<[^>]*>|[^)\s]+)((?:\s+"[^"]*")?)\)/g;
+// A src, srcset or href attribute in raw HTML, quoted either way.
+const HTML_ATTR = /\b(src|srcset|href)=("([^"]*)"|'([^']*)')/g;
+
+/**
+ * Markdown written in the file at `fromPath` and shown at `page`, as text
+ * read away from the site: every link, image and raw-HTML address becomes a
+ * full one, and in a concept the wikilinks too, since the text has no
+ * address of its own to resolve them against. Fenced code is left as written.
+ */
+function absoluteMarkdown(fromPath, page, text, selfId = null, ids = []) {
+  return mapProse(text, (line) => {
+    const out = line
+      .replace(MD_LINK, (_, url, title) => {
+        const bare = url.startsWith("<") ? url.slice(1, -1) : url;
+        const abs = absoluteUrl(fromPath, page, bare);
+        return `](${url.startsWith("<") ? `<${abs}>` : abs}${title})`;
+      })
+      .replace(HTML_ATTR, (_, attr, _q, dq, sq) => {
+        const value = dq ?? sq;
+        const each = (u) => absoluteUrl(fromPath, page, u);
+        const abs =
+          attr === "srcset"
+            ? value
+                .split(",")
+                .map((part) => {
+                  const [u, ...rest] = part.trim().split(/\s+/);
+                  return [each(u), ...rest].join(" ");
+                })
+                .join(", ")
+            : each(value);
+        return `${attr}="${abs}"`;
+      });
+    if (selfId === null) return out;
+    return out.replace(WIKILINK, (_, name, heading = "", alias) => {
+      const id = resolveWikilink(name, selfId, ids);
+      const text = alias ?? name.trim();
+      return id ? `[${text}](${SITE_URL}/knowledge/${id}/${heading})` : text;
+    });
+  });
+}
 
 /**
  * The whole bundle in one file, for a model that reads it at once: each
@@ -997,20 +1060,8 @@ function writeLlmsFullTxt(concepts, root) {
     const shift = levels.length ? 3 - Math.min(...levels) : 0;
     const from = `.lokf/knowledge/${c.id}.md`;
     const page = `${SITE_URL}/knowledge/${c.id}/`;
-    const body = mapProse(c.body, (line) =>
-      line
-        .replace(/^(#{1,6}) /, (_, h) => "#".repeat(Math.min(6, h.length + shift)) + " ")
-        .replace(MD_LINK, (_, url, title) => {
-          const bare = url.startsWith("<") ? url.slice(1, -1) : url;
-          const abs = absoluteUrl(from, page, bare);
-          return `](${url.startsWith("<") ? `<${abs}>` : abs}${title})`;
-        })
-        .replace(WIKILINK, (_, name, heading = "", alias) => {
-          const id = resolveWikilink(name, c.id, ids);
-          const text = alias ?? name.trim();
-          return id ? `[${text}](${SITE_URL}/knowledge/${id}/${heading})` : text;
-        }),
-    );
+    const shifted = mapProse(c.body, (line) => line.replace(/^(#{1,6}) /, (_, h) => "#".repeat(Math.min(6, h.length + shift)) + " "));
+    const body = absoluteMarkdown(from, page, shifted, c.id, ids);
     const sources = c.record.sources.map((s) => `[${s.text}](${s.href})`);
     return [
       `## ${c.title}`,
@@ -1341,10 +1392,10 @@ await writeLogFeed(root);
 writeHealth(concepts, health, full);
 const docs = writeDocs();
 writeHome();
-writePages();
+const extra = writePages();
 const schemaCount = writeSchemaPages();
 const databases = writeBrowse();
-writeLlmsTxt(docs, concepts, root);
+writeLlmsTxt(docs, extra, concepts, root);
 writeLlmsFullTxt(concepts, root);
 writeCollections();
 if (CHANGELOG) writeChangelog();

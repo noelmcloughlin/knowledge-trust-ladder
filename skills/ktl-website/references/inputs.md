@@ -15,6 +15,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 - The home page's source, from its first `#` title down (a `#` heading inside fenced code does not count). A line that links the site's own address is dropped, since on the site it would link to the page it is on. With no source, the page opens with the bundle's own introduction.
 - A `PAGES` entry, from its file's `#` title down, with the entry's label as the title when the file has none.
+- The home page, each `PAGES` entry and each docs page is served as Markdown too, at the page's path with `.md` added (`/index.md`, `/<slug>.md`, `/docs/<name>.md`): the file from its `#` title down, with every link, image and raw-HTML address made a full one, as in `llms-full.txt`. The page's head names the file as its `text/markdown` alternate, and `llms.txt` links it.
 - GitHub's `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]` alerts become the site's asides.
 - A `<picture>` with a dark source becomes two images, one shown in each of the site's themes.
 
@@ -60,7 +61,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 ## `llms.txt` and `llms-full.txt`
 
-- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`; `DESCRIPTION` stands in without it. The rest of that file is generated: the docs pages, then every concept with its Markdown file and its trust label. Under Optional come the bundle in full, then the schema's overview and the data page when the site has them.
+- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`; `DESCRIPTION` stands in without it. The rest of that file is generated: the docs pages and the extra pages, each by its Markdown file, then every concept with its Markdown file and its trust label. Under Optional come the bundle in full, then the schema's overview and the data page when the site has them.
 - `/llms-full.txt` holds every concept's text in one file, under the same summary. Each concept opens with its trust label, its type, its address, its page, its Markdown file and its sources. Its headings move down under its title, and its links and wikilinks become full addresses, since the file has none of its own to resolve them against.
 
 ## What search leaves out
