@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **A ktl-website release page links the repository, the docs and the bundle as they stood at the release.** The links go to the release's tag on GitHub, named by the new `RELEASE_TAG` option, and to the release itself.
-
 ## [0.43.0] - 2026-10-15
 
 ### Added
@@ -18,6 +14,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A ktl-website concept page opens the knowledge graph on the concept.** The record and the neighbourhood map link `/graph/?concept=<id>`, which selects the concept and frames its neighbours, and the address follows the selected node, so a view can be shared.
 - **A ktl-website page previews a concept link.** A link to a concept shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, from `knowledge/previews.json`, which the sync writes; Escape dismisses it.
 - **A ktl-website site serves each docs page as Markdown beside it.** The home page and the extra pages too, at the page's path with `.md` added and every link a full address, so `llms.txt` sends a model to the words rather than the HTML.
+- **A ktl-website release page links the repository, the docs and the bundle as they stood at the release.** The links go to the release's tag on GitHub, named by the new `RELEASE_TAG` option, and to the release itself.
 
 ### Changed
 
