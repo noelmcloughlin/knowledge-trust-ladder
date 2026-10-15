@@ -41,6 +41,7 @@ import {
   LOGO_FILES,
   PAGES,
   REF,
+  RELEASE_TAG,
   REPO_ROOT,
   REPO_URL,
   SCHEMA,
@@ -1135,19 +1136,48 @@ function writeCollections() {
   write(resolve(GENERATED, "changelogs.ts"), lines.join("\n") + "\n");
 }
 
+/** The repository's tags, as git has them; none without git. */
+function gitTags() {
+  try {
+    const out = execFileSync("git", ["-C", REPO_ROOT, "tag", "--list"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    return new Set(out.split("\n").filter(Boolean));
+  } catch {
+    return new Set();
+  }
+}
+
 /**
  * The releases section's copy of the changelog. Its version headings lose
  * their brackets, so each release page is titled with the bare version and
  * starlight-changelogs skips `## Unreleased`, which it knows only unbracketed.
  * Its links to repository files point at their pages, since a release page
- * has no source file for the Markdown plugin to resolve them from.
+ * has no source file for the Markdown plugin to resolve them from. Under the
+ * heading of a release whose tag git has, a line links the repository, the
+ * docs and the bundle at that tag, and the release itself, so a reader can
+ * see each as it stood. A release promoted but not yet tagged, or a tag not
+ * yet fetched, gets no line.
  */
 function writeChangelog() {
-  const text = mapProse(repoFile(CHANGELOG), (line) =>
-    line
+  const tags = RELEASE_TAG ? gitTags() : new Set();
+  const frozen = (version) => {
+    const tag = RELEASE_TAG.replace("{version}", version);
+    if (!tags.has(tag)) return [];
+    const at = `${REPO_URL}/tree/${tag}`;
+    const links = [
+      `[the repository](${at})`,
+      ...(DOCS ? [`[the docs](${at}/${DOCS.dir})`] : []),
+      `[the knowledge bundle](${at}/.lokf/knowledge)`,
+      `[the release](${REPO_URL}/releases/tag/${tag})`,
+    ];
+    return ["", `*As it stood at this release:* ${links.join(" · ")}`];
+  };
+  const text = mapProse(repoFile(CHANGELOG), (line) => {
+    const out = line
       .replace(/^## \[([^\]]+)\]/, "## $1")
-      .replace(/\]\(([^)\s]+)\)/g, (_, url) => `](${rewriteUrl("CHANGELOG.md", url)})`),
-  );
+      .replace(/\]\(([^)\s]+)\)/g, (_, url) => `](${rewriteUrl("CHANGELOG.md", url)})`);
+    const release = line.match(/^## \[([^\]]+)\] - \d{4}-\d{2}-\d{2}/);
+    return release ? [out, ...frozen(release[1])] : out;
+  });
   write(resolve(GENERATED, "CHANGELOG.md"), text);
 }
 

@@ -62,6 +62,7 @@ open(path, "w", encoding="utf-8").write(text)
   git config user.name smoke
   git config user.email smoke@example.invalid
   git config commit.gpgsign false
+  git config tag.gpgsign false
   git remote add origin https://github.com/acme/acme-platform.git
   mkdir -p .lokf/scripts
   cp -R "$sidecar/knowledge" .lokf/knowledge
@@ -80,6 +81,7 @@ open(path, "w", encoding="utf-8").write(text)
   (cd .lokf && UV_EXCLUDE_NEWER="$newest_upload" uv lock -q && UV_EXCLUDE_NEWER="$newest_upload" uv sync -q --locked)
   git add -A
   git commit -q -m "a host with a bundle"
+  git tag v1.0.0
 )
 
 echo ""
@@ -227,6 +229,8 @@ assert "a concept page links its file's history and names the bundle's licence" 
   "grep -q 'href=\"https://github.com/acme/acme-platform/commits/[0-9a-f]*/.lokf/knowledge/services/example-service-a.md\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\" && grep -q '>CC BY 4.0</a>' \"$host/website/dist/knowledge/services/example-service-a/index.html\" && grep -q 'rel=\"license\"[^>]*href=\"https://creativecommons.org/licenses/by/4.0/\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
 assert "llms-full.txt opens each concept with its label and its page, its headings under its title" \
   "grep -A2 '^## Example Service A$' \"$host/website/dist/llms-full.txt\" | grep -q '^- Label: ' && grep -q '^- Page: https://acme.github.io/acme-platform/knowledge/services/example-service-a/$' \"$host/website/dist/llms-full.txt\" && grep -q '^### Overview$' \"$host/website/dist/llms-full.txt\""
+assert "a release page links the repository, the docs and the bundle at the release's tag, and the release" \
+  "grep -q 'href=\"https://github.com/acme/acme-platform/tree/v1.0.0/docs\"' \"$host/website/dist/changelog/version/1-0-0/index.html\" && grep -q 'href=\"https://github.com/acme/acme-platform/tree/v1.0.0/.lokf/knowledge\"' \"$host/website/dist/changelog/version/1-0-0/index.html\" && grep -q 'href=\"https://github.com/acme/acme-platform/releases/tag/v1.0.0\"' \"$host/website/dist/changelog/version/1-0-0/index.html\""
 assert "the link check reads the text files too" "grep -q 'text files all resolve' \"$test_root/build.log\""
 assert "llms.txt offers llms-full.txt" "grep -q '/llms-full.txt)' \"$host/website/dist/llms.txt\""
 assert "a docs page and the home page are served as Markdown, their links full addresses, named by the page's head and by llms.txt" \
