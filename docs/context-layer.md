@@ -34,7 +34,7 @@ Domains select released bundles, and a person confirms each domain. A top domain
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-federated-context-layer-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-federated-context-layer-dark.svg">
     <img src="../.assets/ktl-federated-context-layer.svg" alt="From repository bundles to a context layer: four bundles, each released from its own repository into an artifact repository; domains as manifests that select releases and are confirmed by a person; one context layer built from the top domain; and the readers. The domains and the layer are dashed, because they are a design" width="720" />
   </picture>
 </p>
@@ -65,7 +65,7 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-context-workspace-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-context-workspace-dark.svg">
     <img src="../.assets/ktl-context-workspace.svg" alt="How the context workspace stays current: a publish event in the artifact repository starts a refresh job that resolves, verifies, builds and swaps; inside the workspace a manifest and lock, the released bundle files and one named graph per bundle sit behind a read interface that readers query over MCP or SPARQL. The job, the lock and the graph are dashed, because they are a design" width="720" />
   </picture>
 </p>

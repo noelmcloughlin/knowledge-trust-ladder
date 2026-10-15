@@ -4,7 +4,7 @@ This page is for readers aged 13 to 18. It retells [the architecture page](archi
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/knowledge-trust-ladder-card-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/knowledge-trust-ladder-card-dark.svg">
     <img src="../.assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
   </picture>
 </p>

@@ -15,7 +15,7 @@ Every page comes from a file the repository already holds, so a change to the si
 - The home page's source, from its first `#` title down (a `#` heading inside fenced code does not count). A line that links the site's own address is dropped, since on the site it would link to the page it is on. With no source, the page opens with the bundle's own introduction.
 - A `PAGES` entry, from its file's `#` title down, with the entry's label as the title when the file has none.
 - GitHub's `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]` alerts become the site's asides.
-- A `<picture>` with a dark source becomes two images, one shown in each of the site's themes. When the dark source names a `-dimmed` figure and the figures folder holds a `-dark` one beside it, the site's dark theme takes the `-dark` one.
+- A `<picture>` with a dark source becomes two images, one shown in each of the site's themes.
 
 ## The docs pages
 

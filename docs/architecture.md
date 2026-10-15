@@ -15,7 +15,7 @@ Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collect
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/knowledge-trust-ladder-card-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/knowledge-trust-ladder-card-dark.svg">
     <img src="../.assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
   </picture>
 </p>
@@ -45,7 +45,7 @@ A bundle is prose a person reads, structure a schema checks, meaning a graph can
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-review-session-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-review-session-dark.svg">
     <img src="../.assets/ktl-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
   </picture>
 </p>
@@ -60,7 +60,7 @@ At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is 
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-architecture-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-architecture-dark.svg">
     <img src="../.assets/ktl-architecture.svg" alt="Who writes the bundle and what checks it: the librarian writes only patch.yaml, which the pen, knowledge-apply.sh, applies to the bundle; the curator writes a verified event in that person's name through ktl-curator or the plugin; the docent writes nothing there, and knowledge-feedback.sh records a reader's miss. Below, the registrar's gate checks each pull request, and knowledge-report.sh computes every trust label on each read" width="720" />
   </picture>
 </p>
@@ -88,7 +88,7 @@ The **curator** reports each concept's trust record in plain words:
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/trust-ladder-dimmed.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/trust-ladder-dark.svg">
     <img src="../.assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - and what drops a concept a rung" width="720" />
   </picture>
 </p>
