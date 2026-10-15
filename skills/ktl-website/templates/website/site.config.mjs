@@ -61,8 +61,11 @@ export const CHANGELOG = "auto";
 export const RELEASE_TAG = "v{version}";
 
 // Pages from files outside the docs folder, each at /<slug>/, listed in the
-// Guide sidebar after Home under its label.
-//   export const PAGES = [{ slug: "simple", source: "docs/overview.en-simple.md", label: "In short" }];
+// Guide sidebar after Home under its label. An entry's `retells` names the
+// file whose page it retells, and `level` the words for its reading level
+// (the label when left out): both pages then offer each other under their
+// titles.
+//   export const PAGES = [{ slug: "simple", source: "docs/overview.en-simple.md", label: "In short", retells: "docs/overview.md" }];
 export const PAGES = [];
 
 // The LinkML schema's pages, which gen-doc writes, under a Schema topic: a

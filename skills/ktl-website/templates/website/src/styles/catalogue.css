@@ -56,6 +56,20 @@ h1#_top,
   padding-bottom: 0.2em;
 }
 
+/* The reading levels of a page that has a retelling, under the title. */
+.ktl-levels {
+  margin-top: 0.75rem;
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+}
+.ktl-levels > * + * {
+  margin-inline-start: 0.4rem;
+}
+.ktl-levels b {
+  color: var(--sl-color-white);
+  font-weight: 600;
+}
+
 /* The record, as a catalogue card. */
 .ktl-card {
   margin-top: 1.25rem;
