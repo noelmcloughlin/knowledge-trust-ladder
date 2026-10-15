@@ -82,8 +82,18 @@ export const CHANGELOG = "CHANGELOG.md";
 export const RELEASE_TAG = "v{version}";
 
 // Pages from files outside the docs folder, each at /<slug>/, listed in the
-// Guide sidebar after Home under its label.
-export const PAGES = [{ slug: "simple", source: "docs/architecture.en-simple.md", label: "For readers aged 13 to 18" }];
+// Guide sidebar after Home under its label. An entry's `retells` names the
+// file whose page it retells, and `level` the words for its reading level:
+// both pages then offer each other under their titles.
+export const PAGES = [
+  {
+    slug: "simple",
+    source: "docs/architecture.en-simple.md",
+    label: "For readers aged 13 to 18",
+    retells: "docs/architecture.md",
+    level: "Ages 13 to 18",
+  },
+];
 
 // The LinkML schema's pages, which gen-doc writes, under a Schema topic: a
 // folder, and the command that writes it, which the sync runs when the

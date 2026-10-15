@@ -180,6 +180,24 @@ PY
 >   web --> api
 > ```
 MD
+  # A retelling of the guide, and one of a concept, each for one audience.
+  printf '# The guide, in short\n\nThe platform, in fewer words.\n' > docs/guide.en-simple.md
+  cat > .lokf/knowledge/services/example-service-a-simple.md <<'MD'
+---
+type: Service
+id: https://acme.example/knowledge/services/example-service-a-simple
+title: Example Service A, for readers aged 13 to 18
+description: Example Service A retold for readers aged 13 to 18.
+derivedFrom:
+- https://acme.example/knowledge/services/example-service-a
+tags:
+- audience-13-18
+---
+
+# Overview
+
+Example Service A, in fewer words.
+MD
   python3 - <<'PY'
 from pathlib import Path
 
@@ -188,6 +206,7 @@ text = config.read_text(encoding="utf-8")
 for old, new in (
     ('export const SCHEMA = "auto";', 'export const SCHEMA = { dir: "docs/elements", build: "python3 tools/schema-pages.py" };'),
     ("export const BROWSE = null;", 'export const BROWSE = { dir: "data", build: "python3 tools/data.py" };'),
+    ("export const PAGES = [];", 'export const PAGES = [{ slug: "simple", source: "docs/guide.en-simple.md", label: "In short", retells: "docs/guide.md" }];'),
 ):
     assert text.count(old) == 1, old
     text = text.replace(old, new)
@@ -264,6 +283,8 @@ assert "the metadata is published without its plugins' settings" \
   "grep -q 'The services the platform runs' \"$dist/browse/metadata.json\" && ! grep -q 'not-for-the-site' \"$dist/browse/metadata.json\""
 assert "a quoted diagram with words after its language is drawn" \
   "grep -q 'class=\"ktl-mermaid\"' \"$dist/docs/architecture/index.html\" && grep -q '_astro/Mermaid' \"$dist/docs/architecture/index.html\""
+assert "a page and its retelling offer each other as reading levels, among the docs and in the bundle" \
+  "grep -q 'aria-label=\"Reading levels\"' \"$dist/docs/guide/index.html\" && grep -q 'href=\"/acme-platform/simple/\">In short</a>' \"$dist/docs/guide/index.html\" && grep -q 'href=\"/acme-platform/docs/guide/\">Full</a>' \"$dist/simple/index.html\" && grep -q 'href=\"/acme-platform/knowledge/services/example-service-a-simple/\">Ages 13 to 18</a>' \"$dist/knowledge/services/example-service-a/index.html\" && grep -q 'href=\"/acme-platform/knowledge/services/example-service-a/\">Full</a>' \"$dist/knowledge/services/example-service-a-simple/index.html\" && ! grep -q 'Reading levels' \"$dist/docs/architecture/index.html\""
 assert "llms.txt lists the schema and the data" "grep -q '/schema/)' \"$dist/llms.txt\" && grep -q '/browse/)' \"$dist/llms.txt\""
 assert "nothing of the template is left to commit" "[[ -z \$(git -C \"$host\" status --porcelain) ]]"
 

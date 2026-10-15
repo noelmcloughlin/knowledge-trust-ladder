@@ -302,6 +302,22 @@ function toneOf(label) {
 // The ladder, top first; src/trust.ts words each state in the same order.
 const TONE_ORDER = ["person", "edited", "automation", "nobody", "retired"];
 
+/**
+ * Whom a concept is retold for, as words: its `audience` field, or an
+ * `audience-` tag, where `audience-13-18` reads "Ages 13 to 18" and
+ * `audience-beginners` reads "Beginners". Null for a concept written for
+ * everyone.
+ */
+function audienceOf(data) {
+  if (data.audience) return [].concat(data.audience).map(String).join(", ");
+  const tag = (Array.isArray(data.tags) ? data.tags : []).map(String).find((t) => t.startsWith("audience-"));
+  if (!tag) return null;
+  const ages = tag.match(/^audience-(\d+)-(\d+)$/);
+  if (ages) return `Ages ${ages[1]} to ${ages[2]}`;
+  const words = tag.slice("audience-".length).replace(/[-_]+/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 /** A relation slot's name as words, so derivedFrom reads "Derived from". */
 function slotName(slot) {
   const words = slot.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ").toLowerCase();
@@ -427,8 +443,51 @@ function buildConcepts(exported, labels) {
 
     const doc = docs.get(c.iri);
     c.jsonld = doc ? { "@context": context, ...doc } : null;
+
+    // A retelling for an audience names its audience, and `derivedFrom`
+    // names the one concept it retells.
+    c.audience = audienceOf(c.data);
+    const derived = [].concat(c.data.derivedFrom ?? []).map((iri) => byIri.get(String(iri))).filter(Boolean);
+    c.retells = c.audience && derived.length === 1 ? derived[0] : null;
   }
   return { concepts, root, context };
+}
+
+// The reading levels of each page that has a retelling, by the page's site
+// path, found before the pages are written: the page as Full, then each
+// retelling by its audience. The same list sits on the page and on each of
+// its retellings, so a reader can move between them from either.
+let readingLevels = new Map();
+
+function findReadingLevels(concepts) {
+  const retellings = [];
+  for (const p of PAGES) {
+    if (!p.retells) continue;
+    const of = route(p.retells);
+    if (/^https?:/.test(of)) throw new Error(`site.config.mjs PAGES: ${p.source} retells ${p.retells}, which has no page on this site`);
+    retellings.push({ of, href: `${BASE}/${p.slug}/`, level: p.level });
+  }
+  for (const c of concepts) {
+    if (c.retells) retellings.push({ of: `${BASE}/knowledge/${c.retells.id}/`, href: `${BASE}/knowledge/${c.id}/`, level: c.audience });
+  }
+  const levels = new Map();
+  for (const of of new Set(retellings.map((r) => r.of))) {
+    const list = [
+      { label: "Full", href: of },
+      ...retellings
+        .filter((r) => r.of === of)
+        .sort((a, b) => a.level.localeCompare(b.level))
+        .map((r) => ({ label: r.level, href: r.href })),
+    ];
+    for (const { href } of list) levels.set(href, list);
+  }
+  return levels;
+}
+
+/** The `ktlLevels` frontmatter of the page at `path`, its own level unlinked, or nothing. */
+function levelsOf(path) {
+  const list = readingLevels.get(path);
+  return list ? { ktlLevels: list.map((l) => (l.href === path ? { label: l.label } : l)) } : {};
 }
 
 // ---------------------------------------------------------------------------
@@ -473,6 +532,7 @@ function writeConceptPages(concepts) {
         sidebar: { order, attrs: { "data-ktl-tone": c.tone, title: c.label } },
         head,
         lokf: c.record,
+        ...levelsOf(`${BASE}/knowledge/${c.id}/`),
       },
       c.body,
     );
@@ -814,6 +874,7 @@ function writeDocs() {
         ktlSource: d.source,
         editUrl: `${REPO_URL}/edit/${BRANCH}/${d.source}`,
         head: [markdownAlternate(d.markdown)],
+        ...levelsOf(`${BASE}/docs/${d.name}/`),
       },
       prepare(d.body),
     );
@@ -909,6 +970,7 @@ function writeHome() {
       ktlSource: HOME.source ?? ".lokf/knowledge/index.md",
       editUrl: HOME.source ? `${REPO_URL}/edit/${BRANCH}/${HOME.source}` : false,
       ...(HOME.source ? { head: [markdownAlternate(writeMarkdown(HOME.source, "/"))] } : {}),
+      ...levelsOf(`${BASE}/`),
     },
     prepare(body),
   );
@@ -928,6 +990,7 @@ function writePages() {
         ktlSource: extra.source,
         editUrl: `${REPO_URL}/edit/${BRANCH}/${extra.source}`,
         head: [markdownAlternate(markdown)],
+        ...levelsOf(`${BASE}/${extra.slug}/`),
       },
       prepare(body),
     );
@@ -1410,6 +1473,7 @@ const labels = readLabels();
 const health = report("health");
 const full = report();
 const { concepts, root } = buildConcepts(exported, labels);
+readingLevels = findReadingLevels(concepts);
 
 copyAssets();
 copyBundleFiles();

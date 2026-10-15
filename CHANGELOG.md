@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website page and its retelling offer each other as reading levels.** A `PAGES` entry's `retells` names the page it retells, and in the bundle a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names; both pages open with a Reading level line.
+
 ## [0.43.0] - 2026-10-15
 
 ### Added

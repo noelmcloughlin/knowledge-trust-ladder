@@ -144,7 +144,10 @@ export const RELEASE_TAG = (() => {
 export const PAGES = (given.PAGES ?? []).map((p) => {
   if (!p.slug || !p.source) fail("each PAGES entry needs a slug and a source");
   if (!isFile(p.source)) fail(`PAGES names ${p.source}, which is not in the repository`);
-  return { slug: p.slug, source: p.source, label: p.label ?? p.slug };
+  if (p.retells && !isFile(p.retells)) fail(`PAGES names ${p.retells}, which ${p.source} retells, and it is not in the repository`);
+  // A retelling's level is the words a reader chooses it by, its label unless given.
+  const label = p.label ?? p.slug;
+  return { slug: p.slug, source: p.source, label, retells: p.retells ?? null, level: p.level ?? label };
 });
 
 // ---- the schema's pages and the data, which the repository's commands build --
