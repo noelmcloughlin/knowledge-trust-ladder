@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **`scripts/sync-sidecar.sh` writes the sibling's changelog entry in full.** It names the copies the sync changed, or says the pin moved alone. It used to print a placeholder, which two plugins released unfilled.
+
 ## [0.44.0] - 2026-10-16
 
 ### Added

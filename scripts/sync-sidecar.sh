@@ -350,9 +350,21 @@ for sibling in "$@"; do
   # Two steps, each set apart by a blank line: the changelog entry to write,
   # since a sync that adds none leaves its release undocumented, and the
   # commit, one file to a line, ready to paste.
+  # The entry is written from what the sync did, never left as a prompt to
+  # fill in: a placeholder merged unfilled became a release's notes.
   echo "   Next, add this entry to CHANGELOG.md, under ## [Unreleased] and ### Security:"
   echo ""
-  echo "   - **The sidecar copies and the skills pin match \`$tag\`.** <what the release changed in the copies, from its changelog>. No plugin change."
+  if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 ]]; then
+    echo "   - **The skills pin matches \`$tag\`.** The release changed none of the sidecar copies this repository carries. No plugin change."
+  else
+    files=()
+    for f in "${copied[@]}" "${added[@]}"; do files+=("\`${f%% (*}\`"); done
+    list="${files[0]}"
+    for ((i = 1; i < ${#files[@]}; i++)); do
+      if [[ "$i" -eq $((${#files[@]} - 1)) ]]; then list+=" and ${files[$i]}"; else list+=", ${files[$i]}"; fi
+    done
+    echo "   - **The sidecar copies and the skills pin match \`$tag\`.** The release changed $list here; its [changelog](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/$tag/CHANGELOG.md) says how. No plugin change."
+  fi
   echo ""
   echo "   Then commit, from $sibling_root, on $branch:"
   echo ""
