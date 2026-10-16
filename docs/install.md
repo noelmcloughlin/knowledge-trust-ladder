@@ -2,16 +2,27 @@
 
 This page gives every way to install the six skills, what each needs on the machine, and how to pin them to one release. [Quick start](#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
 
-> Formerly `lokf-agent-skills`. GitHub redirects the old links, clones and
-> `npx skills add` paths, so an existing install keeps working. The skills
-> themselves took the `ktl-` prefix in 0.22.0; [CHANGELOG.md](../CHANGELOG.md)
-> lists their old names, which a host installed before then removes.
-
 ## Quick start
 
 > **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](examples/docent.md).
 
-Install all six skills with the Open Skills CLI, [`npx skills`](https://github.com/vercel-labs/skills):
+### Github CLI
+
+[`gh skill`](https://cli.github.com/manual/gh_skill_install) version 2.90.0 or later; it defaults to GitHub Copilot, so pass `--agent` to name your agent (`claude-code`, `github-copilot`, `cursor`, `codex`, `gemini-cli`, or another from `gh skill install --help`):
+
+```bash
+gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user
+```
+
+`--all` installs the six skills; to install one, name it . The line runs unchanged in bash, zsh, PowerShell and cmd.
+
+```bash
+gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
+```
+
+### Open Skills CLI
+
+Install all six skills with the Open Skills CLI, [`npx skills`](https://github.com/vercel-labs/skills). Behind a company proxy or an internal npm registry, this could fail.
 
 ```bash
 npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
@@ -23,23 +34,12 @@ In PowerShell or cmd, type the command on one line without the `\` continuations
 
 **Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
 
-Behind a company proxy or an internal npm registry, `npx skills` could fail. Use [the GitHub CLI](#install-with-the-github-cli) there; it uses github.com.
+### Claude Code plugin
 
 ```text
-# Claude Code plugin
 /plugin marketplace add noelmcloughlin/knowledge-trust-ladder
 /plugin install knowledge-trust-ladder@knowledge-trust-ladder
 ```
-
-## Install with the GitHub CLI
-
-[`gh skill`](https://cli.github.com/manual/gh_skill_install) needs GitHub CLI 2.90.0 or later from [cli.github.com](https://cli.github.com/); an older `gh` has no `skill` command. `--agent` names the agent that receives the skills (`claude-code`, `github-copilot`, `cursor`, `codex`, `gemini-cli`, or another from `gh skill install --help`); without it, `gh` defaults to GitHub Copilot.
-
-```bash
-gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user
-```
-
-`--all` installs the six skills; to install one, put its name in place of `--all`. The line runs unchanged in bash, zsh, PowerShell and cmd.
 
 ## Install for your user, not into the repository
 
