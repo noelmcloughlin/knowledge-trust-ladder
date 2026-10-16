@@ -1,7 +1,7 @@
 # The curated context layer: one bundle, and a federation of bundles
 
 > [!NOTE]
-> For anyone deciding what a context layer is, what one Knowledge Trust Ladder (KTL) bundle already provides, and what it would take to federate many LOKF bundles into one layer. Each quotation is from the source's own text, read on 2026-10-12. The domain tiers and the workspace on this page are a design, with no released code behind them yet, and both figures draw them with a dashed outline. [What a KTL context layer integrates with](context-layer-technology.md) surveys the stores, catalogues, agent surfaces and artifact repositories.
+> For anyone deciding what a context layer is, what one Knowledge Trust Ladder (KTL) bundle already provides, and what it would take to federate many LOKF bundles into one layer. Each quotation is from the source's own text, read on 2026-10-12. The domain tiers and the workspace on this page shipped on 2026-10-16 as the sidecar's federation templates, and [ktl-federation](https://github.com/noelmcloughlin/ktl-federation) is the first host; the table under [What exists today](#what-exists-today-and-what-is-design) says what remains a design. [What a KTL context layer integrates with](context-layer-technology.md) surveys the stores, catalogues, agent surfaces and artifact repositories.
 
 Below, a *context layer* is a governed layer between an organisation's sources and whoever consumes them, a person or an agent, that persists from one task to the next. *The bundle* is the corpus KTL keeps in `.lokf/knowledge/`, one Markdown concept per file. A *domain* is a named set of bundles with one accountable owner. *The workspace* is the built graph a reader queries.
 
@@ -35,7 +35,7 @@ Domains select released bundles, and a person confirms each domain. A top domain
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-federated-context-layer-dark.svg">
-    <img src="../.assets/ktl-federated-context-layer.svg" alt="From repository bundles to a context layer: four bundles, each released from its own repository into an artifact repository; domains as manifests that select releases and are confirmed by a person; one context layer built from the top domain; and the readers. The domains and the layer are dashed, because they are a design" width="720" />
+    <img src="../.assets/ktl-federated-context-layer.svg" alt="From repository bundles to a context layer: four bundles, each released from its own repository into an artifact repository; domains as manifests that select releases and are confirmed by a person; one context layer built from the top domain; and the readers." width="720" />
   </picture>
 </p>
 
@@ -66,7 +66,7 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-context-workspace-dark.svg">
-    <img src="../.assets/ktl-context-workspace.svg" alt="How the context workspace stays current: a publish event in the artifact repository starts a refresh job that resolves, verifies, builds and swaps; inside the workspace a manifest and lock, the released bundle files and one named graph per bundle sit behind a read interface that readers query over MCP or SPARQL. The job, the lock and the graph are dashed, because they are a design" width="720" />
+    <img src="../.assets/ktl-context-workspace.svg" alt="How the context workspace stays current: a publish event in the artifact repository starts a refresh job that resolves, verifies, builds and swaps; inside the workspace a manifest and lock, the released bundle files and one named graph per bundle sit behind a read interface that readers query over MCP or SPARQL." width="720" />
   </picture>
 </p>
 
@@ -92,8 +92,8 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 | `lokf registry init`, `add`, `list` and `resolve`: the routing table, offline | exists | lokf 0.8.0, specification sections 11.1 to 11.3 |
 | `lokf serve`, `query` and `mcp` over one bundle | exist | lokf 0.8.0 |
 | `lokf tables` to Parquet, with BigQuery or Athena table definitions | exists | lokf 0.8.0 |
-| Domains as thin bundles, their domain schema, a person's confirmation of membership | design | this page |
-| The lock, the refresh job and the atomic swap | design | this page |
+| Domains as thin bundles, their domain schema, a person's confirmation of membership | exists | `domain.yaml` in the sidecar's templates, and the first domain host, [ktl-federation](https://github.com/noelmcloughlin/ktl-federation), whose members are this bundle, ai-linkmo's and lmodel/gist's; the curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md) |
+| The lock, the refresh job and the atomic swap | exists | `knowledge-federate.py` and `knowledge-federation.yaml` in the sidecar's templates ([automation.md](../skills/ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host)) |
 | One named graph per bundle, lazy loading, a `lokf-registry` MCP server | design | specification section 11.4, marked informative |
 | Harvesting remote artifacts, and the `sensitivity` gate | design | specification section 11.5; the field exists, and nothing reads it |
 | Per-query permissions | design | the store's and the artifact repository's access control, not the bundle's |
