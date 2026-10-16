@@ -21,7 +21,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
 
 **Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
 
-On a work machine, `npx skills` often fails before it starts: a company proxy or an internal package registry (Nexus, Artifactory, or whatever the company named it) answers for npm, and it serves only the packages it mirrors, which rarely include `skills`. Nothing in the skills needs npm. [Install with the GitHub CLI](#install-with-the-github-cli) reaches github.com alone, which a proxy that allows cloning already permits, so take that route there, or wherever `npx` is not yours to configure.
+Behind a company proxy or an internal npm registry, `npx skills` could fail. Use [the GitHub CLI](#install-with-the-github-cli) there; it uses github.com.
 
 ```text
 # Claude Code plugin
@@ -31,15 +31,12 @@ On a work machine, `npx skills` often fails before it starts: a company proxy or
 
 ## Install with the GitHub CLI
 
-[`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+, installs each skill from the repository with no npm in the path. It is the route for a machine behind a company proxy or an internal registry, and it works anywhere `gh auth status` does:
+[`gh skill`](https://cli.github.com/manual/gh_skill_install) needs GitHub CLI 2.90.0 or later from [cli.github.com](https://cli.github.com/); an older `gh` has no `skill` command. `--agent` names the agent that receives the skills (`claude-code`, `github-copilot`, `cursor`, `codex`, `gemini-cli`, or another from `gh skill install --help`); without it, `gh` defaults to GitHub Copilot.
 
 ```bash
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-sidecar --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-librarian --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-curator --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-prose --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-website --scope user
+for skill in ktl-sidecar ktl-librarian ktl-curator ktl-docent ktl-prose ktl-website; do
+  gh skill install noelmcloughlin/knowledge-trust-ladder "$skill" --agent claude-code --scope user
+done
 ```
 
 ## Install for your user, not into the repository
