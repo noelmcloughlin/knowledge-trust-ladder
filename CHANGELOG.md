@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.43.2] - 2026-10-16
+
 ### Fixed
 
 - **ktl-website's link check reads an address in a code span without its closing backtick.** A concept that named the site's address in backticks failed the build with a broken link in `llms.txt`.
