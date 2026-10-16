@@ -17,7 +17,7 @@ The worked example is ktl-federation's `members/knowledge-trust-ladder.md`:
 ```yaml
 type: MemberBundle
 genre: reference
-id: https://w3id.org/ktl/federation/members/knowledge-trust-ladder
+id: https://w3id.org/ktl/federation/knowledge/members/knowledge-trust-ladder
 title: Knowledge Trust Ladder knowledge bundle
 resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/releases/tag/v0.43.0
 base_iri: https://w3id.org/ktl/knowledge/
@@ -29,7 +29,7 @@ distribution:
   media_type: application/zip
   checksum: sha256:a0a80fc411c23597968699716278d04918b795530f1fe55825709453eb6b8083
 isPartOf:
-- https://w3id.org/ktl/federation/domains/top
+- https://w3id.org/ktl/federation/knowledge/domains/top
 ```
 
 ## What a confirmation attests
@@ -38,7 +38,14 @@ Confirming a member concept is the ordinary confirm, in a signed commit the regi
 
 Before confirming, open the release the concept names and check three things: the zip and its `.sha256` are attached, the digest in `.sha256` is the `checksum` in the concept, and the release's repository is the one the `base_iri` belongs to. The federation workflow's `check` job does the same against the real zip on every pull request that touches `members/`, and `gh attestation verify <zip> --repo <owner>/<repo>` confirms which workflow built it.
 
-The admission rule a domain states in its policy concept: released with the sidecar's release workflow; valid on LOKF core or on a schema the bundle publishes; a stable `base_iri` under an authority its publisher controls, so no two members' namespaces nest; one accountable owner. A `.example` namespace fails the third.
+A domain states its admission rule in its policy concept. A member:
+
+- is released with the sidecar's release workflow;
+- validates on LOKF core or on a schema the bundle publishes;
+- has a stable `base_iri` under an authority its publisher controls, so no two members' namespaces nest;
+- has one accountable owner.
+
+A `.example` namespace fails the third.
 
 ## Cross-bundle claims
 
@@ -50,4 +57,4 @@ The domain's librarian is a script, `knowledge-federate.py members`, which the s
 
 ## Reading the workspace
 
-The workspace is served under `/workspace/` of the host's site and attached to each release as `workspace-<tag>.zip`. Its `index.md` lists the members, their versions and their health lines at the release; `queries/labels.rq` computes every concept's trust label with the bundle that asserted it, `queries/moved.rq` lists the members that moved since the domain's last confirmation, and `queries/unowned.rq` is the gate. `knowledge-federate.py serve` opens the toolkit's SPARQL endpoint and graph page over it.
+The workspace is served under `/workspace/` of the host's site and attached to each release as `workspace-<tag>.zip`. Its `index.md` lists the members, their versions and their health lines at the release. `queries/labels.rq` computes every concept's trust label with the bundle that asserted it, `queries/moved.rq` lists the members that moved since the domain's last confirmation, and `queries/unowned.rq` is the gate. `knowledge-federate.py serve` opens the toolkit's SPARQL endpoint and graph page over it.
