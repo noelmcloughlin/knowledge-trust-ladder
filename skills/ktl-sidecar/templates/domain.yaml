@@ -1,0 +1,63 @@
+# The domain schema: what a thin bundle that federates other bundles needs
+# beyond LOKF core. ktl-sidecar lays it down as .lokf/domain.yaml, beside a
+# pinned copy of lokf.yaml, on a host whose bundle is a domain, and the
+# justfile's `schema := "domain.yaml"` line hands it to the validator. Its
+# namespace is Knowledge Trust Ladder's, so every domain host shares one
+# meaning for Domain and MemberBundle; a host that needs more writes a
+# schema of its own that imports this one. Why each class is shaped as it
+# is: knowledge-trust-ladder's docs/context-layer.md, and the librarian's
+# references/domain-schema.md for the recipe it follows.
+#
+# Domain: a Dataset that is a dcat:Catalog of bundles. `unowned_targets`
+#   is the gate policy the federation build reads: `fail` stops the build
+#   on a typed relation whose target no member owns; `report` lists it.
+# MemberBundle: a Dataset naming one released bundle: its `base_iri`
+#   (LOKF's own slot, which the registry routes by), the release `version`
+#   it pins, the `release` page, and its distribution.
+# ReleaseDistribution: LOKF's Distribution plus the `checksum` of the zip,
+#   where DCAT puts a digest, so a member may later publish a second
+#   distribution with a checksum of its own.
+id: https://w3id.org/ktl/schema/domain
+name: domain
+imports:
+  - linkml:types
+  - lokf
+default_range: string
+default_prefix: domain
+prefixes:
+  domain: https://w3id.org/ktl/schema/domain/
+  linkml: https://w3id.org/linkml/
+  lokf: https://w3id.org/lokf/
+  dcat: http://www.w3.org/ns/dcat#
+  spdx: http://spdx.org/rdf/terms#
+classes:
+  Domain:
+    is_a: Dataset
+    class_uri: dcat:Catalog
+    slots: [unowned_targets]
+  MemberBundle:
+    is_a: Dataset
+    slots: [base_iri, release]
+    slot_usage:
+      base_iri: {required: true}
+      distribution: {range: ReleaseDistribution, required: true}
+  ReleaseDistribution:
+    is_a: Distribution
+    slots: [checksum]
+    slot_usage:
+      checksum: {required: true}
+slots:
+  release:
+    range: uri
+    slot_uri: dcat:landingPage
+  checksum:
+    range: string
+    slot_uri: spdx:checksumValue
+    pattern: "^sha256:[0-9a-f]{64}$"
+  unowned_targets:
+    range: UnownedTargetPolicy
+enums:
+  UnownedTargetPolicy:
+    permissible_values:
+      fail: {description: an unowned cross-bundle target fails the build}
+      report: {description: an unowned cross-bundle target is listed and the build goes on}
