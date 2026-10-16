@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **`scripts/sync-sidecar.sh` ends the entry with "No plugin change" only for an Obsidian plugin.** ai-linkmo and gist are not plugins, so their entries end with what changed.
+
 ## [0.44.1] - 2026-10-16
 
 ### Fixed
