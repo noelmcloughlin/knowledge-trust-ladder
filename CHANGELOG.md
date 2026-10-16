@@ -6,6 +6,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [0.44.1] - 2026-10-16
 
+### Fixed
+
 - **`scripts/sync-sidecar.sh` writes the sibling's changelog entry in full.** It names the copies the sync changed, or says the pin moved alone. It used to print a placeholder, which two plugins released unfilled.
 
 - **The repository contract skips a sibling's website build output.** Its copies of the curator's pages quote two links inside folded YAML strings, which the check read as links ending in a backslash and failed on.
@@ -14,7 +16,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
-- The federation build, as three ktl-sidecar templates for a host whose bundle is a domain: `scripts/knowledge-federate.py` resolves the member bundles a domain names into a lock, fetches and verifies each released zip (checksum, attestation, no symbolic link or path outside the archive), registers and exports each with the lokf toolkit, loads one named graph per bundle with canonical blank nodes, gates the typed relations that cross bundles against the registry, and swaps the workspace in whole; its `members` subcommand is the domain's librarian, a script the sidecar's librarian workflow runs as `AGENT_CLI`; `serve` and `query` read the snapshot through the toolkit's own store and server. `github/knowledge-federation.yaml` runs it on a release, verifies a member a pull request changes, deploys the site with the workspace under `/workspace/`, and nudges the librarian weekly. `domain.yaml` is the domain schema: `Domain`, `MemberBundle` and `ReleaseDistribution` over LOKF core. The design is `docs/context-layer.md`; the first host is `noelmcloughlin/ktl-federation`.
+- **Federation templates for a domain host.** ktl-sidecar gains `knowledge-federate.py`, `knowledge-federation.yaml` and `domain.yaml`, which build one workspace from the released bundles a domain names, with one named graph per bundle and a gate on links no member owns. The design is `docs/context-layer.md`, and the first host is `noelmcloughlin/ktl-federation`.
 
 ### Changed
 
