@@ -4,12 +4,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-10-16
+
 ### Changed
 
 - **A skill page's word budget no longer counts table pipes or separator rows.** A table is the densest way to state a vocabulary, and a plain word count taxed it hardest. The budgets are unchanged.
 - **A confirmed concept that a question put back to draft reads "reopened", not "still a draft".** `knowledge-report.sh` keeps the rung a person's confirmation earned and adds a flag naming the day, the asker and how many questions wait; the health line counts those under *Reopened*. The curator's and docent's tables, the SPARQL page, the ladder figure and the website's card say the same, and the card now shows the open questions beside the label.
-
-## [0.44.1] - 2026-10-16
 
 ### Fixed
 
