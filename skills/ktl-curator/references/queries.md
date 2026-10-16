@@ -73,6 +73,19 @@ WHERE { ?c schema:name ?title ; schema:creativeWorkStatus ?status .
 ORDER BY ?status ?title
 ```
 
+## Reopened (a draft a person had confirmed)
+
+```sparql
+SELECT ?c ?title (MAX(?at) AS ?lastConfirmed)
+WHERE { ?c schema:name ?title ; schema:creativeWorkStatus "draft" ; lokf:verified ?v .
+        ?v prov:wasAssociatedWith ?by ; prov:endedAtTime ?at .
+        FILTER(STRSTARTS(STR(?by), "human:")) }
+GROUP BY ?c ?title
+ORDER BY ?lastConfirmed
+```
+
+The open questions themselves are body text, not frontmatter, so the graph does not hold them; `knowledge-report.sh questions` lists each with its day and asker.
+
 ## Most relied-upon (inbound typed relations)
 
 ```sparql

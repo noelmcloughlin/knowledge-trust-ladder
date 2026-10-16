@@ -56,14 +56,14 @@ A docent guides visitors through an exhibition. This skill guides an agent throu
 | Confirmed by a person | any `verified[].by` starts with `human:` |
 | Checked by automation only | `verified` holds events, none by a `human:` actor |
 | Nobody has checked this yet | no `verified` key, or one with no events |
-| Still a draft | `status: draft` |
+| Still a draft / Reopened | `status: draft` with no `human:` `verified` event / with one: say the confirmation first, then when it was reopened, by whom, and how many questions wait |
 | Edited since a person last confirmed it | `generated.at` is later than the latest `human:` `verified[].at` |
 | Past its review date | `stale_after` is on or before today |
 | Retired | `status: deprecated` |
 
 `knowledge-report.sh labels` applies this table and prints one line per concept, in the shape of the footer below, so two readers of one concept print one label. Quote its line. The table is what it applies, and what to apply by hand where the script is missing.
 
-A bare `verified: { by, at }` counts as one event. Absent `status` means stable. Labels overlap (confirmed *and* past its review date is common). For *edited since a person last confirmed it*, compare the two times whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. Say that label first and give both dates.
+A bare `verified: { by, at }` counts as one event, absent `status` means stable, and labels overlap. [references/answering.md](references/answering.md) has the comparison rules, such as comparing two times whole and never by the day.
 
 ## Answer footer
 

@@ -25,7 +25,7 @@
 <line x1="454" y1="140" x2="494" y2="140" stroke="#6E6D66" stroke-width="1.3"/><path d="M487.4 144.5 L494 140 L487.4 135.5" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><text x="474.0" y="132.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#6E6D66">person</text>
 <path d="M588 188 v18 h-456 v-18" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-dasharray="3 3"/>
 <path d="M126 194 L132 187 L138 194" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="360" y="202" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#6E6D66">edited since confirmed · past its review date · sent back - and it drops a rung</text>
+<text x="360" y="202" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#6E6D66">edited since confirmed drops a rung · a question reopens it: the rung stays, a flag says what waits</text>
 <text x="40" y="232" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#5F5E5A">Also shown:</text>
 <rect x="110" y="218" width="60" height="20" rx="10.0" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/><text x="140.0" y="232.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#5F5E5A">retired</text>
 <rect x="178" y="218" width="132" height="20" rx="10.0" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/><text x="244.0" y="232.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#5F5E5A">edited since confirmed</text>

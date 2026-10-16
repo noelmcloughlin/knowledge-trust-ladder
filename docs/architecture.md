@@ -84,12 +84,12 @@ The **curator** reports each concept's trust record in plain words:
 - **Confirmed by a person**: a named person checked it against its source.
 - **Checked by automation only**: automation re-checked that the source still matches; no person has.
 - **Nobody has checked this yet**: no check of any kind is recorded.
-- **Still a draft**, **edited since a person last confirmed it**, **past its review date**, **retired**; and, for prioritising, how many other concepts rely on each one.
+- **Still a draft**, **reopened**, **edited since a person last confirmed it**, **past its review date**, **retired**; and, for prioritising, how many other concepts rely on each one. A question asked after a confirmation reopens a concept and flags what waits; it never drops the rung. Only an edit after the confirmation does that.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/trust-ladder-dark.svg">
-    <img src="../.assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - and what drops a concept a rung" width="720" />
+    <img src="../.assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - what drops a concept a rung, and what only flags it" width="720" />
   </picture>
 </p>
 
