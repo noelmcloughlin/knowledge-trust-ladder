@@ -21,6 +21,8 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
 
 **Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
 
+On a work machine, `npx skills` often fails before it starts: a company proxy or an internal package registry (Nexus, Artifactory, or whatever the company named it) answers for npm, and it serves only the packages it mirrors, which rarely include `skills`. Nothing in the skills needs npm. [Install with the GitHub CLI](#install-with-the-github-cli) reaches github.com alone, which a proxy that allows cloning already permits, so take that route there, or wherever `npx` is not yours to configure.
+
 ```text
 # Claude Code plugin
 /plugin marketplace add noelmcloughlin/knowledge-trust-ladder
@@ -29,7 +31,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
 
 ## Install with the GitHub CLI
 
-[`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+:
+[`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+, installs each skill from the repository with no npm in the path. It is the route for a machine behind a company proxy or an internal registry, and it works anywhere `gh auth status` does:
 
 ```bash
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-sidecar --scope user
