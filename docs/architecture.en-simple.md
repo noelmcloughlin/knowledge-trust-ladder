@@ -52,7 +52,7 @@ Each entry carries a label in plain words:
 - **Checked by automation only**: automation re-checked that the source still matches, and no person has.
 - **Nobody has checked this yet**: no check of any kind is recorded.
 
-Other labels say an entry is **still a draft**, **edited since a person last confirmed it**, **past its review date** or **retired**.
+Other labels say an entry is **still a draft**, **edited since a person last confirmed it**, **past its review date** or **retired**. **Reopened** means a person confirmed it, and a new question is waiting.
 
 The labels are worked out from each entry every time it is read, and never stored. So they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
 

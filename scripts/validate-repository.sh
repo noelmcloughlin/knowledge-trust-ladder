@@ -397,7 +397,9 @@ done
 #      three commits added 328 words back within two days. Each budget sits
 #      just above the page's size when this check was added, so an edit that
 #      adds words moves as many into references/. A skill with no budget
-#      fails, so a new skill starts with one.
+#      fails, so a new skill starts with one. A table's pipes and its
+#      separator row are not words: a table is the densest way to state a
+#      vocabulary, and a plain count taxed it hardest.
 say ""
 say "Checking each SKILL.md stays within its word budget..."
 declare -A skill_budget=(
@@ -415,7 +417,7 @@ for dir in "${expected_dirs[@]}"; do
     err "$file has no word budget in check 10a - give it one there"
     continue
   fi
-  words="$(wc -w < "$file")"
+  words="$(sed -E -e '/^\|[ :-]+(\|[ :-]+)*\|?[[:space:]]*$/d' -e 's/\|/ /g' "$file" | wc -w)"
   if (( words <= budget )); then
     ok "$file is $words words (budget $budget)"
   else

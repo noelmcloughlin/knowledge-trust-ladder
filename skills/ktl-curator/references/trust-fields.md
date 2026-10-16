@@ -9,7 +9,8 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | Confirmed by a person | any `verified[].by` starts with `human:` | `verified` | `lokf:verified` -> `prov:wasAssociatedWith` |
 | Checked by automation only | `verified` holds events, none by a `human:` actor | `verified` | same |
 | Nobody has checked this yet | no `verified` key, or one with no events | `verified` | - |
-| Still a draft | `status: draft` | `status` | `schema:creativeWorkStatus` |
+| Still a draft | `status: draft`, and no `human:` `verified` event | `status`, `verified` | `schema:creativeWorkStatus` |
+| Reopened | `status: draft` on a concept with a `human:` `verified` event: the pen's `question` and the curator's *send back* set it. The label gives the earliest open question asked on or after the confirmation's day, its asker, and how many wait. The confirmation still counts as one, so the rung stays | `status`, `verified`, `## Open questions` | same |
 | Retired | `status: deprecated`; names its successor when the newest `**Deprecation**` line in `log.md` links one | `status`, `log.md` | same |
 | Edited since a person last confirmed it | `generated.at` later than the latest `human:` `verified[].at` | `generated`, `verified` | `prov:wasGeneratedBy` -> `prov:endedAtTime` |
 | A source moved since the confirmation | the source's last commit comes after the commit that recorded the latest `human:` event, or the source carries an uncommitted edit and the concept does not | `resource`, `sources[].resource` + git history | - |
@@ -35,6 +36,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 - Skip `index.md` and `log.md` at every level; they are reserved files, not concepts.
 - **`## Open questions` is a heading, not a substring.** Match a line that *is* the heading (start of line, nothing else on it), never a mention of it anywhere in the text. Concept bodies legitimately quote the string in prose. A bundle describing these very skills does it repeatedly. A substring match then invents open questions that don't exist and pushes those concepts up the queue. The same applies when extracting the first bullet: read the lines *after* that heading, not around the match.
 - **Retired concepts** carry `status: deprecated`. They are counted once, under *Retired*, and excluded from every other label and from the queue: nobody needs to re-check something that is no longer current. `N` in "*a* of *N*" counts every concept, retired ones included.
+- **A reopened concept is counted as confirmed.** *Drafts* counts the concepts no person has confirmed, and *Reopened* those a person confirmed and a question since put back to `status: draft`. A question flags a concept and never drops it a rung; only an edit after the confirmation does that.
 - **Labels overlap by design.** A concept can be confirmed by a person *and* past its review date. The health counts are not a partition, so don't expect them to add up. Only `N` is a total. One pair never overlaps: a concept edited since its confirmation is counted under *Edited since confirmed* and not under *Confirmed by a person*, because the person confirmed an earlier text.
 - **A source that moved is a fact about history, not about meaning.** The script asks git for the commit that first recorded the confirmation's time, and lists the concept when a source's last commit comes after it. A source changed in that same commit has not moved, and a clock is never consulted. The edit may have changed no fact: only reading the source says. With no git history the script says it compared nothing, and the line is left out.
 - **An open question can be answered without being cleared.** The script lists apart each one dated no later than a person's later confirmation of a concept that is no longer a draft: the person looked again after it was asked. Clearing it is still that person's word to give, in *Confirm* or *Correct now*.
@@ -45,9 +47,9 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 `knowledge-report.sh` prints this queue under *Worth ten minutes today*. It takes at most five, in this order. Within a group, most-relied-upon first, then newest `generated.at`:
 
 1. Past its review date, edited since a person last confirmed it, or confirmed by a person with a source that moved since.
-2. Still a draft **with** an `## Open questions` heading (the **librarian** or a previous session asked for a human).
+2. Reopened, or still a draft, **with** an `## Open questions` heading (the **librarian** or a previous session asked for a human).
 3. Nobody has checked this yet.
-4. Still a draft without open questions; checked by automation only.
+4. Reopened or still a draft without open questions; checked by automation only.
 
 Never rank by class alone: a glossary term twelve concepts rely on outranks an unreferenced service.
 
@@ -57,7 +59,7 @@ Fill every placeholder; keep the order; add nothing else. `<Source>` is the conc
 
 ```text
 Knowledge bundle - <bundle title> - <YYYY-MM-DD>
-Confirmed by a person: <a> of <N> · Checked by automation only: <b> · Nobody has checked: <c> · Drafts: <d> · Past review date: <e> · Edited since confirmed: <f> · Retired: <g> · Not tied to a signed commit: <h>   | drop this last field when .lokf/ isn't git-tracked
+Confirmed by a person: <a> of <N> · Checked by automation only: <b> · Nobody has checked: <c> · Drafts: <d> · Reopened: <r> · Past review date: <e> · Edited since confirmed: <f> · Retired: <g> · Not tied to a signed commit: <h>   | drop this last field when .lokf/ isn't git-tracked
 
 Worth ten minutes today
 1. <Title> (<Class>) - <why: e.g. "past its review date (2026-08-01)" / "4 other concepts rely on this; nobody has checked it"> - <Source>
