@@ -67,7 +67,9 @@ pairs=(
 )
 # Templates whose first line names the host (Step 1's <PROJ_NAME>). The sync
 # keeps the sibling's own first line and copies the rest, so a recipe change
-# reaches every host without a placeholder landing in one.
+# reaches every host without a placeholder landing in one. It keeps the
+# sibling's own `schema :=` line too: a host with a domain schema names it
+# there, and the template's empty one would validate it on LOKF core.
 host_titled=("justfile")
 # ktl-sidecar installs these on every host, whatever else the host chose,
 # so a sibling that lacks one gets it: <template>|<the step that says so>.
@@ -137,7 +139,12 @@ at_tag() { git -C "$repo_root" show "$tag:$templates/$1"; }
 rendered() {
   local t
   for t in "${host_titled[@]}"; do
-    if [[ "$t" == "$1" ]]; then head -n 1 "$2"; at_tag "$1" | tail -n +2; return; fi
+    if [[ "$t" == "$1" ]]; then
+      head -n 1 "$2"
+      at_tag "$1" | tail -n +2 | OWN="$(grep -m 1 '^schema := ' "$2" || true)" \
+        awk '/^schema := / && ENVIRON["OWN"] != "" { print ENVIRON["OWN"]; next } { print }'
+      return
+    fi
   done
   at_tag "$1"
 }
