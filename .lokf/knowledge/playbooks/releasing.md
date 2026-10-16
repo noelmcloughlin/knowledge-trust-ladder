@@ -73,7 +73,7 @@ This release-process detail moved out of `CONTRIBUTING.md` on 2026-09-14 to `doc
 The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates, apart from the first line of `.lokf/justfile`, which names the host, and their own skills pin. Since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up to one release. The script:
 
 - refuses anything but a tag that is on origin and carries `skills/ktl-librarian`;
-- works in each sibling on a branch of its own, `sync-<tag>`, started from the default branch as origin has it, and skips a sibling with uncommitted changes, so the diff is never left on `main` or inside a feature branch (0.40.0);
+- works in each sibling on a branch of its own, `sync-<tag>`, started from the default branch as origin has it, so the diff is never left on `main` or inside a feature branch. It skips a sibling with uncommitted changes (0.40.0);
 - copies that tag's templates over the copies the sibling already has, `.lokf/justfile` among them since 0.43.1, keeping the sibling's own first line there;
 - adds a template the sibling lacks when ktl-sidecar puts it on every host or a copy there cannot run without it;
 - reports any other template, and adds nothing more;

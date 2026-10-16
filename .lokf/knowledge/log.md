@@ -2,6 +2,7 @@
 
 ## 2026-10-16
 
+* **Prose**: reworded 4 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Changed**: Exhibition names the four sites the README's Exhibitions section lists since 2026-10-16, the two Obsidian plugins' sites among them.
 * **Changed**: Knowledge sources says the README links the site's pages since 0.43.1 and lists the two Obsidian plugins' exhibitions since 2026-10-16, and records the thirty-second pass. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Releasing says `sync-sidecar.sh` carries `.lokf/justfile` since 0.43.1 and keeps the sibling's first line, which names the host, as `docs/releasing.md` now says.
