@@ -1042,6 +1042,20 @@ if command -v zip >/dev/null 2>&1; then
 fi
 rm -rf "${m365_out:?}"
 
+# 17a. docs/install.md installs with `gh skill install --all`, and `npx skills
+#      add` lists the same set, so every SKILL.md git tracks must be one of
+#      the ktl- skills at skills/ktl-*/SKILL.md. Both installers discover a
+#      SKILL.md anywhere in the tree, including under a prefix, so the walk
+#      is the whole index and not skills/ alone.
+say ""
+say "Checking every tracked SKILL.md is a ktl- skill..."
+stray_skills="$(git ls-files | grep -iE '(^|/)SKILL\.md$' | grep -vE '^skills/ktl-[a-z]+/SKILL\.md$' || true)"
+if [[ -n "$stray_skills" ]]; then
+  err "a SKILL.md outside skills/ktl-*/ would be installed by --all: $(printf '%s' "$stray_skills" | tr '\n' ' ')"
+else
+  ok "every tracked SKILL.md is at skills/ktl-*/SKILL.md ($(git ls-files 'skills/ktl-*/SKILL.md' | wc -l | tr -d ' ') skills), so --all installs the ktl- skills only"
+fi
+
 # 18. ktl-prose's check script runs on this repository's own files: the
 #     bundle is given its verdicts, and the skill's own pages pass the style
 #     rules they state. What the script reports on staged files, and what it
