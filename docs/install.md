@@ -14,11 +14,12 @@ This page gives every way to install the six skills, what each needs on the mach
 gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user
 ```
 
-`--all` installs the six skills; to install one, name it . The line runs unchanged in bash, zsh, PowerShell and cmd.
+`--all` installs the six skills; to install one, name it:
 
 ```bash
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
 ```
+The line runs unchanged in bash, zsh, PowerShell and cmd.
 
 ### Open Skills CLI
 
