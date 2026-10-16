@@ -23,4 +23,6 @@ Knowledge Trust Ladder is an architecture inspired by the poem above, by [LOKF](
 Each site below shows a repository's collection, built by `ktl-website`:
 
 - [Knowledge Trust Ladder](https://w3id.org/ktl/knowledge/): this repository's own bundle, the knowledge behind the skills.
+- [Obsidian KTL Curator](https://noelmcloughlin.github.io/obsidian-ktl-curator/knowledge/): the Obsidian plugin that helps a person judge what a bundle claims.
+- [Obsidian KTL Registrar](https://noelmcloughlin.github.io/obsidian-ktl-registrar/knowledge/): the Obsidian plugin that keeps a bundle well-formed as a person edits it.
 - [AI-LinkMO](https://noelmcloughlin.github.io/ai-linkmo/knowledge/): a reference implementation of operational AI governance over open AI-risk data.
