@@ -89,3 +89,4 @@ The main page closes with what remains and who owns it, in three lines:
 ## Open questions
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 the fifth-role section that points at `docs/three-lines.md` is on `docs/architecture.md`, not in `README.md`. The sentence "The README's section on the fifth role" and the `README.md` source should name `docs/architecture.md`.
+- 2026-10-16, process:ktl-librarian: Since 0.43.0 `docs/three-lines.md` shows `.assets/ktl-three-lines-dark.svg` in GitHub's dark theme, and `CHANGELOG.md` says the `-dimmed` set stays in `.assets/` unreferenced. This concept says the diagram has a dimmed counterpart for dark mode.

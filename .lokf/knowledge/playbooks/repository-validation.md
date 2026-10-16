@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  at: "2026-10-16T00:41:23Z"
 status: draft
 references:
 - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -48,7 +48,7 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 - Check 9: the paths the sibling repositories deep-link into by URL still exist, and so does each heading such a link names. Check 9a runs only when the siblings are cloned beside this repository, and confirms that the recorded list of those paths and headings is complete.
 - Check 10: `CONTRIBUTING.md` stays within 1000 words and `SECURITY.md` within 900.
 - Check 10a: each `SKILL.md` stays within its own word budget: 2700 words for ktl-curator, 2200 for ktl-docent, 4000 for ktl-librarian, 2350 for ktl-prose, 3600 for ktl-sidecar and 2000 for ktl-website. A skill with no budget fails.
-- Check 11: this repository's copies of the three knowledge workflows, the sidecar scripts, the two `.lokf/m365/` files and `.lokf/.gitattributes` stay byte-identical to their templates. The comparison leaves out the librarian workflow's skills pin, `TRUST_LADDER_SKILLS_REF` and `TRUST_LADDER_SKILLS_SHA`, which the release commit moves in the template only. `knowledge-apply.py` and `knowledge-conventions.py` must pin the same PyYAML release and the same cut-off date. Without `uv` the check fails up front and names the cause. Then `knowledge-conventions.sh` must pass on this repository's bundle. `tests/test_conventions.py` tests what it reports on a bundle that breaks each rule.
+- Check 11: this repository's copies of the three knowledge workflows, the sidecar scripts, the two `.lokf/m365/` files and `.lokf/.gitattributes` stay byte-identical to their templates. Since 0.43.1 the check also holds `.lokf/justfile` to its template below the first line, which names the host. The comparison leaves out the librarian workflow's skills pin, `TRUST_LADDER_SKILLS_REF` and `TRUST_LADDER_SKILLS_SHA`, which the release commit moves in the template only. `knowledge-apply.py` and `knowledge-conventions.py` must pin the same PyYAML release and the same cut-off date. Without `uv` the check fails up front and names the cause. Then `knowledge-conventions.sh` must pass on this repository's bundle. `tests/test_conventions.py` tests what it reports on a bundle that breaks each rule.
 - Check 11a: ktl-docent's copies of `knowledge-report.sh` and `knowledge-feedback.sh` match their templates, and no ktl-docent page runs a script under `.lokf/scripts/`. Each copy, run from outside the repository as an installer leaves it, labels a concept and records a gap in the repository it is run in.
 - Check 11b: every page that gives the no-Python schema URL names the same commit, and names the tag of the `lokf` floor that the sidecar's `pyproject.toml` template sets.
 - Check 11c: `tests/test_conventions.py` tests conventions rule 14, which reads the commits after a pull request's base.

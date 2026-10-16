@@ -43,7 +43,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-03T09:40:04Z"
 - by: process:ktl-librarian
-  at: "2026-10-14T00:35:00Z"
+  at: "2026-10-16T00:41:23Z"
 - by: human:noelmcloughlin
   at: "2026-10-13T00:19:38Z"
 stale_after: 2027-10-13
