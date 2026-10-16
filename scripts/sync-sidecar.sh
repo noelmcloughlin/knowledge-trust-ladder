@@ -354,8 +354,14 @@ for sibling in "$@"; do
   # fill in: a placeholder merged unfilled became a release's notes.
   echo "   Next, add this entry to CHANGELOG.md, under ## [Unreleased] and ### Security:"
   echo ""
+  # "No plugin change" is true only of an Obsidian plugin, whose root
+  # manifest.json names the app version it needs; another host has no plugin.
+  tail=""
+  if [[ -f "$sibling_root/manifest.json" ]] && grep -q '"minAppVersion"' "$sibling_root/manifest.json"; then
+    tail=" No plugin change."
+  fi
   if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 ]]; then
-    echo "   - **The skills pin matches \`$tag\`.** The release changed none of the sidecar copies this repository carries. No plugin change."
+    echo "   - **The skills pin matches \`$tag\`.** The release changed none of the sidecar copies this repository carries.$tail"
   else
     files=()
     for f in "${copied[@]}" "${added[@]}"; do files+=("\`${f%% (*}\`"); done
@@ -363,7 +369,7 @@ for sibling in "$@"; do
     for ((i = 1; i < ${#files[@]}; i++)); do
       if [[ "$i" -eq $((${#files[@]} - 1)) ]]; then list+=" and ${files[$i]}"; else list+=", ${files[$i]}"; fi
     done
-    echo "   - **The sidecar copies and the skills pin match \`$tag\`.** The release changed $list here; its [changelog](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/$tag/CHANGELOG.md) says how. No plugin change."
+    echo "   - **The sidecar copies and the skills pin match \`$tag\`.** The release changed $list here; its [changelog](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/$tag/CHANGELOG.md) says how.$tail"
   fi
   echo ""
   echo "   Then commit, from $sibling_root, on $branch:"
