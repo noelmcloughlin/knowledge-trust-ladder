@@ -19,6 +19,8 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
   --skill ktl-docent --skill ktl-prose --skill ktl-website
 ```
 
+In PowerShell, type the command on one line without the `\` continuations.
+
 **Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
 
 Behind a company proxy or an internal npm registry, `npx skills` could fail. Use [the GitHub CLI](#install-with-the-github-cli) there; it uses github.com.
@@ -34,10 +36,10 @@ Behind a company proxy or an internal npm registry, `npx skills` could fail. Use
 [`gh skill`](https://cli.github.com/manual/gh_skill_install) needs GitHub CLI 2.90.0 or later from [cli.github.com](https://cli.github.com/); an older `gh` has no `skill` command. `--agent` names the agent that receives the skills (`claude-code`, `github-copilot`, `cursor`, `codex`, `gemini-cli`, or another from `gh skill install --help`); without it, `gh` defaults to GitHub Copilot.
 
 ```bash
-for skill in ktl-sidecar ktl-librarian ktl-curator ktl-docent ktl-prose ktl-website; do
-  gh skill install noelmcloughlin/knowledge-trust-ladder "$skill" --agent claude-code --scope user
-done
+gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user
 ```
+
+`--all` installs the six skills; name one instead (`... ktl-docent --agent claude-code --scope user`) to install it alone. The line runs unchanged in bash, zsh, PowerShell and cmd.
 
 ## Install for your user, not into the repository
 
@@ -57,7 +59,7 @@ Copilot runs custom skills in a sandbox with no repository, so only the **docent
 
 ## What each skill needs
 
-Every skill runs from a POSIX shell and starts with a preflight that prints what this machine can do and which steps that disables.
+Every skill runs from a POSIX shell (on Windows, the bash of Git for Windows, as [portability.md](../skills/ktl-sidecar/references/portability.md#not-linux-windows-and-powershell) says) and starts with a preflight that prints what this machine can do and which steps that disables.
 
 | Skill | Needs |
 | --- | --- |
