@@ -90,6 +90,12 @@ def kr(tmp_path):
         kk / "x" / "draft.md",
         "---\ntype: Service\ntitle: Draft one\nstatus: draft\n---\n\n# Overview\n\n```markdown\n## Open questions\n\n- 2026-01-01, human:example: only an example in a fence\n```\n\n## Open questions\n\n- 2026-01-05, human:ada: send it back, with these words for the curator\n",
     )
+    # reopened.md: a person confirmed it, and the librarian asked a question
+    # since, which set status: draft. The rung stays; the label says what waits.
+    write(
+        kk / "x" / "reopened.md",
+        '---\ntype: Service\ntitle: Reopened\nstatus: draft\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n---\n\n## Open questions\n\n- 2026-01-06, process:ktl-librarian: does the source still say so?\n',
+    )
     write(
         kk / "x" / "retired.md",
         '---\ntype: Service\ntitle: Retired\nstatus: deprecated\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n---\n',
@@ -148,7 +154,7 @@ def moved(kr):
     return kr
 
 
-HEALTH = "Confirmed by a person: 2 of 7 · Checked by automation only: 1 · Nobody has checked: 2 · Drafts: 1 · Past review date: 1 · Edited since confirmed: 1 · Retired: 1"
+HEALTH = "Confirmed by a person: 3 of 8 · Checked by automation only: 1 · Nobody has checked: 2 · Drafts: 1 · Reopened: 1 · Past review date: 1 · Edited since confirmed: 1 · Retired: 1"
 
 
 def test_the_health_line_counts_each_label_an_edited_concept_under_its_own_and_a_retired_one_once(moved):
@@ -161,6 +167,7 @@ LABELS = [
     "- Edited (x/edited.md) - edited since a person last confirmed it (confirmed 2026-01-02T10:00:00Z, edited 2026-01-02T14:00:00Z)",
     "- Auto (x/auto.md) - checked by automation only",
     "- Draft one (x/draft.md) - nobody has checked this yet, still a draft",
+    "- Reopened (x/reopened.md) - confirmed by a person, 2026-01-02, reopened 2026-01-06 by the librarian: 1 question waits",
     "- Retired (x/retired.md) - retired",
     "- Ada's answered concept (x/answered.md) - confirmed by a person, 2026-02-01",
     "- x/none.md - no such concept in this bundle",
@@ -176,6 +183,7 @@ def test_labels(moved, want):
         "x/edited.md",
         "x/auto.md",
         "x/draft.md",
+        "x/reopened.md",
         "x/retired.md",
         "x/answered.md",
         "x/none.md",
@@ -807,6 +815,12 @@ def queue(tmp_path):
         "id: https://acme.example/knowledge/x/e\ntitle: E\ndependsOn: https://acme.example/knowledge/x/no-id\n",
     )
     zc(
+        "r",
+        "Policy",
+        'id: https://acme.example/knowledge/x/r\ntitle: R\nstatus: draft\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n',
+        "\n## Open questions\n\n- 2026-01-06, process:ktl-librarian: still so?\n",
+    )
+    zc(
         "stale",
         "Policy",
         'id: https://acme.example/knowledge/x/stale\ntitle: Stale\nresource: src/c.md\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\nstale_after: 2020-01-01\n',
@@ -819,12 +833,12 @@ def queue(tmp_path):
 
 
 QUEUE = [
-    "Worth ten minutes today: 5 of 8 waiting",
+    "Worth ten minutes today: 5 of 9 waiting",
     "1. Stale (Policy) - past its review date (2020-01-01) - src/c.md",
-    "2. B (Playbook) - still a draft, with an open question - no source recorded",
-    "3. No id (Service) - nobody has checked this yet; 1 other concept relies on this - no source recorded",
-    "4. A (Service) - nobody has checked this yet - no source recorded",
-    "5. E (Service) - nobody has checked this yet - no source recorded",
+    "2. R (Policy) - reopened 2026-01-06 by the librarian: 1 question waits - no source recorded",
+    "3. B (Playbook) - still a draft, with an open question - no source recorded",
+    "4. No id (Service) - nobody has checked this yet; 1 other concept relies on this - no source recorded",
+    "5. A (Service) - nobody has checked this yet - no source recorded",
     "Due soon, a review date within 30 days: 1",
     "- x/hub.md ({soon})",
     "Confirmed by a person, and derived from a concept edited after that confirmation: 1",
