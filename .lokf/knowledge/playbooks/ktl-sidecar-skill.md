@@ -34,7 +34,7 @@ sources:
 - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/8fcdd867e45528a21f20f177fb63306afe8d278d
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  at: "2026-10-16T00:41:23Z"
 ---
 # Overview
 
@@ -88,7 +88,9 @@ Its thirteenth convention fails an edit to a confirmed concept that leaves `gene
 
 GitHub does not start `pull_request` workflows for a pull request opened with the default `GITHUB_TOKEN`. So `publish` runs its own checks first, the unattended form of the forge-free gate among them. A required check stays at "Expected" there until a person triggers a new event.
 
-`automation.md` says how to turn on the scheduled librarian. Its agent's credential goes in the `AGENT_API_KEY` secret or, for Copilot CLI, the job's own token with `AGENT_USE_JOB_TOKEN`. `AGENT_API_KEY_ENV` names the variable the agent reads it from. The page gives pinned `AGENT_CLI` commands for Copilot CLI and Claude Code, both run through `npx` on the Node 22 the workflow sets up. Each of these variables goes under Repository variables, never on an environment: no job in the sidecar's workflows names one, and a job's `if:` reads only repository and organization variables. A table on that page lists every switch and secret. The prompt follows `-p` unless the optional `AGENT_PROMPT_FLAG` names another flag, or `arg` for an agent that takes the prompt as its last argument, such as Codex CLI, and the page states the five conditions any other agent must meet (0.40.0). The wrapper's prompt tells the agent to write `.lokf/patch.yaml` with its own file tool, and the Claude Code command confines writes with `Edit(.lokf/patch.yaml)` alone, since Claude Code ignores a `Write(<path>)` rule. `publish` opens its pull request with the job's own `GITHUB_TOKEN`, which GitHub refuses while the repository setting *Allow GitHub Actions to create and approve pull requests* is off. The page says to turn it on and keep the default token read-only, and gives the `gh api` command that does both.
+`automation.md` says how to turn on the scheduled librarian. Its agent's credential goes in the `AGENT_API_KEY` secret or, for Copilot CLI, the job's own token with `AGENT_USE_JOB_TOKEN`. `AGENT_API_KEY_ENV` names the variable the agent reads it from. The page gives pinned `AGENT_CLI` commands for Copilot CLI and Claude Code, both run through `npx` on the Node 22 the workflow sets up. Each of these variables goes under Repository variables, never on an environment: no job in the sidecar's workflows names one, and a job's `if:` reads only repository and organization variables. A table on that page lists every switch and secret.
+
+The prompt follows `-p` unless the optional `AGENT_PROMPT_FLAG` names another flag, or `arg` for an agent that takes the prompt as its last argument, such as Codex CLI. The page states the five conditions any other agent must meet (0.40.0). The wrapper's prompt tells the agent to write `.lokf/patch.yaml` with its own file tool, and the Claude Code command confines writes with `Edit(.lokf/patch.yaml)` alone, since Claude Code ignores a `Write(<path>)` rule. `publish` opens its pull request with the job's own `GITHUB_TOKEN`, which GitHub refuses while the repository setting *Allow GitHub Actions to create and approve pull requests* is off. The page says to turn it on and keep the default token read-only, and gives the `gh api` command that does both.
 
 With an optional variable, `KNOWLEDGE_RETRIEVAL`, each run that changes the bundle scores whether the index leads to the concept that answers each question readers asked. The pull request carries the score. A scheduled week with nothing waiting for the librarian runs no agent, since `knowledge-report.sh quiet` decides first. A scheduled run in a month's first seven days and a run a person starts always go ahead.
 

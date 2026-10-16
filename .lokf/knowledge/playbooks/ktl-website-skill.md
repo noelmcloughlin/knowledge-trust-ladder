@@ -31,7 +31,7 @@ generated:
 status: draft
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-14T22:07:45Z"
+  at: "2026-10-16T00:41:23Z"
 ---
 
 # Overview
@@ -54,7 +54,9 @@ It has seven steps, 0 to 6:
 
 `references/customising.md` describes every option in `site.config.mjs`. Five are required: `REPO`, `SITE`, `BASE`, `TITLE` and `DESCRIPTION`. For each part of the repository the site can show, `"auto"` shows it when the repository has it, and `null` leaves it out. `SCHEMA` and `BROWSE` each name a folder the repository builds rather than commits, and the command the sync runs when the folder is missing. A command that starts with `just` makes the workflow install `just`. `references/inputs.md` says what each page is built from. `references/prerequisites.md` gives each preflight line in plain words, and the contract's check 12w holds that page to every line the preflight can print as missing or a warning.
 
-Since 0.43.0 (2026-10-15, `CHANGELOG.md`) the site also serves the whole bundle as `llms-full.txt`, each concept after its trust label, and the bundle log as an Atom feed, `knowledge/log.xml`, one entry per day. It serves the home page, each docs page and each extra page as Markdown too, at the page's path with `.md` added. A concept page links the concept's history and names its licence, and opens the knowledge graph on the concept at `/graph/?concept=<id>`. A link to a concept shows the concept's title, type, trust label and definition on hover and on focus, from `knowledge/previews.json`. A release page links the repository, the docs and the bundle at the release's tag, which the `RELEASE_TAG` option names. A page and its retelling offer each other as reading levels: a `PAGES` entry's `retells` names the page it retells, and a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names.
+Since 0.43.0 (2026-10-15, `CHANGELOG.md`) the site also serves the whole bundle as `llms-full.txt`, each concept after its trust label, and the bundle log as an Atom feed, `knowledge/log.xml`, one entry per day. It serves the home page, each docs page and each extra page as Markdown too, at the page's path with `.md` added. A concept page links the concept's history and names its licence, and opens the knowledge graph on the concept at `/graph/?concept=<id>`. A link to a concept shows the concept's title, type, trust label and definition on hover and on focus, from `knowledge/previews.json`.
+
+A release page links the repository, the docs and the bundle at the release's tag, which the `RELEASE_TAG` option names. A page and its retelling offer each other as reading levels: a `PAGES` entry's `retells` names the page it retells, and a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names.
 
 # Deployment
 

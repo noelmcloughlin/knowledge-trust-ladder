@@ -26,6 +26,6 @@ verified:
 
 # Overview
 
-`docs/obsidian.md` calls `knowledge_bundle` the **doorway**: the link that `ktl-sidecar` creates at the root of the host, the repository or vault the bundle sits in, beside the sidecar's `.lokf/` folder, so the bundle has a name a folder picker can see. ktl-docent's `references/obsidian.md` gives the rule for opening it in Obsidian: open the link itself, never the host root: a vault opened at the root lists neither the dot-folder nor the link, which keeps the [workshop](workshop.md) clean.
+`docs/obsidian.md` calls `knowledge_bundle` the **doorway**. It is the link that `ktl-sidecar` creates at the root of the host (the repository or vault the bundle sits in), beside the sidecar's `.lokf/` folder. The link gives the bundle a name a folder picker can see. ktl-docent's `references/obsidian.md` gives the rule for opening it in Obsidian: open the link itself, never the host root. A vault opened at the root lists neither the dot-folder nor the link, which keeps the [workshop](workshop.md) clean.
 
 A host that commits `.lokf/` commits the link too. A host that gitignores `.lokf/` adds the link to the root `.gitignore` instead ([hosts and doorways](../explanation/hosts-and-doorways.md)).

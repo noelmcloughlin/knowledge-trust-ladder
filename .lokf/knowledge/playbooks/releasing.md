@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  at: "2026-10-16T00:41:23Z"
 status: draft
 dependsOn:
 - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -70,11 +70,11 @@ The dispatch is needed because GitHub starts no workflow from a release made wit
 
 This release-process detail moved out of `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for the three KTL repositories in one place. All six skills are released together under one tag, so a consumer can pin them to a single release. The `release` Environment's required reviewers are configured once, by hand, in each repository's settings, or a qualifying merge is released unattended. Changes reach `main` by pull request, but no ruleset enforces it, and "Require signed commits" as a branch rule is off and must stay off.
 
-The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates and their own skills pin. Since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up to one release. The script:
+The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates, apart from the first line of `.lokf/justfile`, which names the host, and their own skills pin. Since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up to one release. The script:
 
 - refuses anything but a tag that is on origin and carries `skills/ktl-librarian`;
-- works in each sibling on a branch of its own, `sync-<tag>`, started from the default branch as origin has it, and skips a sibling with uncommitted changes, so the diff is never left on `main` or inside a feature branch (0.40.0);
-- copies that tag's templates over the copies the sibling already has;
+- works in each sibling on a branch of its own, `sync-<tag>`, started from the default branch as origin has it, so the diff is never left on `main` or inside a feature branch. It skips a sibling with uncommitted changes (0.40.0);
+- copies that tag's templates over the copies the sibling already has, `.lokf/justfile` among them since 0.43.1, keeping the sibling's own first line there;
 - adds a template the sibling lacks when ktl-sidecar puts it on every host or a copy there cannot run without it;
 - reports any other template, and adds nothing more;
 - copies ktl-website's templates to a sibling that laid its site down with that skill, one with a `website/site.config.mjs`, apart from the three files the host owns, and prints the command that builds the site there;

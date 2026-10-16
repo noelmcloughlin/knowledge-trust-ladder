@@ -1,5 +1,14 @@
 # Change Log
 
+## 2026-10-16
+
+* **Prose**: reworded 4 concept bodies in plain English. No fact, link, number or frontmatter changed.
+* **Changed**: Exhibition names the four sites the README's Exhibitions section lists since 2026-10-16, the two Obsidian plugins' sites among them.
+* **Changed**: Knowledge sources says the README links the site's pages since 0.43.1 and lists the two Obsidian plugins' exhibitions since 2026-10-16, and records the thirty-second pass. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Releasing says `sync-sidecar.sh` carries `.lokf/justfile` since 0.43.1 and keeps the sibling's first line, which names the host, as `docs/releasing.md` now says.
+* **Changed**: Repository validation says check 11 holds `.lokf/justfile` to its template below the first line since 0.43.1.
+* **Open question**: Three lines of defence - where each role sits, and what an auditor can check: Since 0.43.0 `docs/three-lines.md` shows `.assets/ktl-three-lines-dark.svg` in GitHub's dark theme, and `CHANGELOG.md` says the `-dimmed` set stays in `.assets/` unreferenced. This concept says the diagram has a dimmed counterpart for dark mode.
+
 ## 2026-10-15
 
 * **Changed**: Why the skills live in their own repository: `docs/install.md` no longer says one install serves every repository or that a repository needs no copy; it says a user install keeps the agent's instructions under the user's control.
