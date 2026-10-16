@@ -7,6 +7,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **`scripts/sync-sidecar.sh` keeps a host's own `schema :=` line in its justfile.** It copied the template's empty one, so a domain host's members were validated on LOKF core and failed.
+- **`scripts/sync-sidecar.sh` reports a sibling whose bundle fails `lokf-check-refs`.** It printed lokf's verdict and still passed, because only the last check's status counted.
 
 ## [0.45.0] - 2026-10-16
 

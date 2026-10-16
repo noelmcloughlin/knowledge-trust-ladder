@@ -322,8 +322,11 @@ for sibling in "$@"; do
   fi
 
   # The sidecar's own checks, run from the sibling's copies as its gate would.
+  # `set -e` is off inside a subshell followed by `||`, so each check records
+  # its own failure, or only the last one's would count.
   ok=1
   (
+    rc=0
     cd "$sibling_root/.lokf"
     if [[ -x scripts/knowledge-preflight.sh ]]; then
       bash scripts/knowledge-preflight.sh | tail -1 | sed 's/^/   /'
@@ -331,13 +334,14 @@ for sibling in "$@"; do
     if command -v uv >/dev/null 2>&1; then
       # The recipe, as the gate runs it; just's own closing line on a failure
       # is dropped, so the line shown is lokf's verdict.
-      uvx --from rust-just==1.47.0 just lokf-check-refs 2>&1 | grep -v '^error: Recipe ' | tail -1 | sed 's/^/   /'
+      uvx --from rust-just==1.47.0 just lokf-check-refs 2>&1 | grep -v '^error: Recipe ' | tail -1 | sed 's/^/   /' || rc=1
     else
       echo "   uv not found: lokf validate skipped, and the conventions script runs without its parser's half"
     fi
     if [[ -f scripts/knowledge-conventions.sh ]]; then
-      bash scripts/knowledge-conventions.sh knowledge 2>&1 | sed 's/^/   /'
+      bash scripts/knowledge-conventions.sh knowledge 2>&1 | sed 's/^/   /' || rc=1
     fi
+    exit "$rc"
   ) || ok=0
   if [[ "$ok" -eq 0 ]]; then
     echo "   FAIL     a check above failed - fix the bundle in the same change (a time later than its commit, say), or the sibling's gate fails on it"
