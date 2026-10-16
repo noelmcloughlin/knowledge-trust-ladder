@@ -339,10 +339,14 @@ else
   # A link to a heading is recorded with it, as path#anchor; a heading of the
   # repository's front page counts as README.md#anchor, apart from GitHub's own
   # #readme.
-  mapfile -t linked < <(grep -rhoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder(/blob/main/[^)"#[:space:]]+)?(#[A-Za-z0-9_-]+)?' \
+  # A sibling's website build writes copies of its pages under website/, which
+  # git ignores; one quotes a link inside a folded YAML string, and read as a
+  # link it ends in a backslash. Only what the sibling keeps counts.
+  mapfile -t linked < <(grep -rHoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder(/blob/main/[^)"#[:space:]]+)?(#[A-Za-z0-9_-]+)?' \
     "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
     --exclude-dir=.claude --exclude-dir=.venv 2>/dev/null \
+    | grep -vE '/website/(dist|public|src/content|src/generated)/' | sed -E 's|^[^:]*:||' \
     | sed -E 's|^https://github\.com/noelmcloughlin/knowledge-trust-ladder||; s|^/blob/main/||; s|^#|README.md#|; s/[.,]$//; /^$/d; /^README\.md#readme$/d' \
     | sort -u || true)
   unrecorded=0
