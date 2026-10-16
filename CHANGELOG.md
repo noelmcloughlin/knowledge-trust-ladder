@@ -4,11 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **`scripts/sync-sidecar.sh` keeps a host's own `schema :=` line in its justfile.** It copied the template's empty one, so a domain host's members were validated on LOKF core and failed.
-- **`scripts/sync-sidecar.sh` reports a sibling whose bundle fails `lokf-check-refs`.** It printed lokf's verdict and still passed, because only the last check's status counted.
-
 ## [0.45.0] - 2026-10-16
 
 ### Changed
@@ -22,6 +17,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The repository contract skips a sibling's website build output.** Its copies of the curator's pages quote two links inside folded YAML strings, which the check read as links ending in a backslash and failed on.
 - **`scripts/sync-sidecar.sh` ends the entry with "No plugin change" only for an Obsidian plugin.** ai-linkmo and gist are not plugins, so their entries end with what changed.
+- **`scripts/sync-sidecar.sh` keeps a host's own `schema :=` line in its justfile.** It copied the template's empty one, so a domain host's members were validated on LOKF core and failed.
+- **`scripts/sync-sidecar.sh` reports a sibling whose bundle fails `lokf-check-refs`.** It printed lokf's verdict and still passed, because only the last check's status counted.
 
 ## [0.44.0] - 2026-10-16
 
