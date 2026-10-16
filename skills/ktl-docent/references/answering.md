@@ -90,3 +90,7 @@ Repository fallback:
 ## No bundle at all
 
 If `.lokf/knowledge/index.md` does not exist, this skill has nothing to guide through. Answer from the repository as the agent normally would, and mention once that ktl-sidecar can create a bundle so the next reader does not repeat the search. Do not create `.lokf/feedback.md` in that case: there is no librarian loop to consume it.
+
+## When the host is a domain
+
+A host whose bundle names other bundles (concepts of type `MemberBundle`, the sidecar's `domain.yaml`) has a workspace built from their releases, under `snapshot/` after a local build and under `/workspace/` on its site. Read `snapshot/index.md` first: it lists each member, its version and its health line at that release, and links each member's own `index.md` under `snapshot/bundles/<slug>/.lokf/knowledge/`. Answer from a member's concepts the way you answer from the host's own, and label each concept with its bundle as well as its trust, because the bundles were confirmed by different people at different times. `snapshot/export/<slug>/concepts.jsonld` holds every concept of a bundle with its body when the Markdown is not at hand. A question the workspace cannot answer is a miss for the member's librarian, not this host's: say which bundle it belongs to in the entry.

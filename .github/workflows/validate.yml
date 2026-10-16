@@ -149,7 +149,7 @@ jobs:
         with:
           # -ignore: actionlint 1.7.12 predates the copilot-requests scope the
           # librarian template requests; drop the flag once a release knows it.
-          args: -color -ignore copilot-requests .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/knowledge-release.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml .github/workflows/knowledge-website.yaml skills/ktl-sidecar/templates/github/knowledge-librarian.yaml skills/ktl-sidecar/templates/github/knowledge-registrar.yaml skills/ktl-sidecar/templates/github/knowledge-release.yaml skills/ktl-website/templates/github/knowledge-website.yaml
+          args: -color -ignore copilot-requests .github/workflows/knowledge-librarian.yaml .github/workflows/knowledge-registrar.yaml .github/workflows/knowledge-release.yaml .github/workflows/publish.yml .github/workflows/semantic-release.yml .github/workflows/validate.yml .github/workflows/knowledge-website.yaml skills/ktl-sidecar/templates/github/knowledge-librarian.yaml skills/ktl-sidecar/templates/github/knowledge-registrar.yaml skills/ktl-sidecar/templates/github/knowledge-release.yaml skills/ktl-sidecar/templates/github/knowledge-federation.yaml skills/ktl-website/templates/github/knowledge-website.yaml
 
       # actionlint checks syntax, not pinning. A tag or branch ref floats, so
       # every `uses:`, here and in the templates hosts copy, must name a

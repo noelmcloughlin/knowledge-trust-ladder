@@ -15,6 +15,7 @@ Each file has a section on one of the two pages. Read the one you are setting up
 | `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, whether any work waits, what a change does to the record, and the retrieval score | Nothing, or one variable for the retrieval score | below |
 | `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to turn it on, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
+| `knowledge-federation.yaml` and `knowledge-federate.py` *(a domain host only)* | Build the workspace of a domain host from the released bundles its member concepts name, publish it, and keep the members current | One variable to turn it on, Pages taken from Actions, and `AGENT_CLI` set to the script | below |
 
 ## Switches and where they go
 
@@ -32,6 +33,7 @@ Every switch below is a **repository variable** or a **repository secret**: Sett
 | `KNOWLEDGE_RELEASE_ENABLED` | variable | `knowledge-release.yaml` | `true` attaches the bundle to each published release |
 | `KNOWLEDGE_RELEASE_NAME` | variable | `knowledge-release.yaml` | optional: the name in the zip file when the repository's own name is not the one it publishes under |
 | `KNOWLEDGE_WEBSITE_ENABLED` | variable | `knowledge-website.yaml` | `true` publishes the site to GitHub Pages, as ktl-website's [deploy.md](../../ktl-website/references/deploy.md) says |
+| `KNOWLEDGE_FEDERATION_ENABLED` | variable | `knowledge-federation.yaml` | `true` builds the workspace on each release and deploys the site with it; a domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer |
 
 The librarian also needs one repository setting: Settings, Actions, General, Workflow permissions, *Allow GitHub Actions to create and approve pull requests* ([below](#before-turning-on-the-schedule)).
 
@@ -202,6 +204,16 @@ When the bundle changed, `pack` runs the registrar's two checks, so a release ne
 - It is built with `zip` and checked with `unzip`, which GitHub's hosted Ubuntu runners carry. A self-hosted runner needs both installed.
 
 The `attach` job holds `contents: write`, runs no third-party packages, checks the zip against its checksum and uploads both files, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
+
+## `knowledge-federation.yaml`: the workspace of a domain host
+
+A domain host is one whose bundle names other bundles: each `MemberBundle` concept names one released zip and its checksum, a person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. The design is the skills repository's `docs/context-layer.md`; `templates/domain.yaml` is the schema. Three files make it run, and nothing in them runs a model.
+
+- **The build.** `uv run --project .lokf .lokf/scripts/knowledge-federate.py build --tag <tag>` resolves the members into `snapshot/workspace.lock.yaml`, fetches each zip into `.lokf/.cache/federation/` by digest, checks it against the checksum the member concept names, refuses a zip holding a symbolic link or a path outside its root, verifies its attestation with `gh attestation verify` when `gh` is present, checks that the zip's `index.md` names the `base_iri` the concept declares, registers and exports each bundle with the toolkit, loads one named graph per bundle (blank nodes relabelled so the same releases give the same bytes), writes the lock as a graph of its own, gates every typed relation whose target lies in no member's namespace as the domain's `unowned_targets` says, and renames `snapshot.new/` to `snapshot/` in one step. A member whose zip is itself a domain is followed one tier down. `--verify-only` stops after the zips are checked.
+- **The workflow.** On a release of the host (the host's release job dispatches it, since a release made with `GITHUB_TOKEN` starts no workflow), `build` runs the build from the tag and the website build when there is one, and `publish` attaches `workspace-<tag>.zip` with its checksum and attestation to the release and deploys the Pages artifact with the workspace under `/workspace/`. On a push to the default branch it rebuilds the site and reuses the newest released workspace. On a pull request that changes a member it runs `build --verify-only`. Weekly it dispatches the librarian workflow, because a bundle whose sources are release URLs is always quiet to the schedule.
+- **The members script.** `knowledge-federate.py members` lists each member's releases through the public GitHub API, picks the newest release that carries a `knowledge-*.zip`, verifies it, and writes the change as `patch` and `question` operations in `.lokf/patch.yaml` for the pen, with what it verified in the hand-off lines. Set `AGENT_CLI` to `uv run --project .lokf .lokf/scripts/knowledge-federate.py members`; the wrapper's `-p` prompt is ignored. The pen restamps `generated`, so a moved member reads "edited since a person confirmed it" until the curator confirms the new release.
+
+To set it up: tell Pages once to take its site from Actions (`gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow`), set `KNOWLEDGE_FEDERATION_ENABLED` to `true`, leave `KNOWLEDGE_WEBSITE_ENABLED` unset, set `AGENT_CLI` as above with `KNOWLEDGE_LIBRARIAN_ENABLED` `true`, and add `gh workflow run knowledge-federation.yaml --ref "$tag" -f tag="$tag"` to the host's release job beside its dispatch of `knowledge-release.yaml`.
 
 ## `knowledge-feedback.sh`: how a reader's gap gets recorded without being read back
 

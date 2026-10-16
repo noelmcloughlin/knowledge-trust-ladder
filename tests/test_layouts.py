@@ -64,6 +64,7 @@ WRAPPER = SCRIPTS / "knowledge-librarian.sh"
 LIBRARIAN_YAML = WORKFLOWS / "knowledge-librarian.yaml"
 REGISTRAR_YAML = WORKFLOWS / "knowledge-registrar.yaml"
 RELEASE_YAML = WORKFLOWS / "knowledge-release.yaml"
+FEDERATION_YAML = WORKFLOWS / "knowledge-federation.yaml"
 JUSTFILE = TEMPLATES / "justfile"
 SHAPES = ["default", "no-doorway", "rearranged"]
 # The wrapper must see no credential the test runner inherited.
@@ -1000,7 +1001,7 @@ def test_the_publish_path_check(host, tmp_path, where, path):
 # 3. The registrar workflow.
 
 
-@pytest.mark.parametrize("yaml_path", [REGISTRAR_YAML, LIBRARIAN_YAML, RELEASE_YAML], ids=lambda p: p.name)
+@pytest.mark.parametrize("yaml_path", [REGISTRAR_YAML, LIBRARIAN_YAML, RELEASE_YAML, FEDERATION_YAML], ids=lambda p: p.name)
 def test_each_template_installs_the_sidecar_from_its_lock(yaml_path):
     text = read(yaml_path)
     assert has_line(text, "        run: uv sync --locked") and not matches(text, r"^ *run: uv sync *$"), (

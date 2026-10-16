@@ -48,6 +48,7 @@ pairs=(
   "github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml"
   "github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml"
   "github/knowledge-release.yaml:.github/workflows/knowledge-release.yaml"
+  "github/knowledge-federation.yaml:.github/workflows/knowledge-federation.yaml"
   "scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh"
   "scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh"
   "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py"
@@ -57,6 +58,8 @@ pairs=(
   "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh"
   "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py"
   "scripts/knowledge-report.sh:.lokf/scripts/knowledge-report.sh"
+  "scripts/knowledge-federate.py:.lokf/scripts/knowledge-federate.py"
+  "domain.yaml:.lokf/domain.yaml"
   "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh"
   "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
   "gitattributes:.lokf/.gitattributes"
@@ -91,6 +94,8 @@ companions=(
   "scripts/knowledge-apply.py:.lokf/scripts/knowledge-librarian.sh"
   "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.sh"
   "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.sh"
+  "scripts/knowledge-federate.py:.github/workflows/knowledge-federation.yaml"
+  "domain.yaml:.github/workflows/knowledge-federation.yaml"
 )
 # The website skill's templates, for a sibling that laid its site down with
 # ktl-website: every file under skills/ktl-website/templates/website/ but the

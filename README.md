@@ -25,4 +25,5 @@ Each site below shows a repository's collection, built by `ktl-website`:
 - [Knowledge Trust Ladder](https://w3id.org/ktl/knowledge/): this repository's own bundle, the knowledge behind the skills.
 - [Obsidian KTL Curator](https://noelmcloughlin.github.io/obsidian-ktl-curator/knowledge/): the Obsidian plugin that helps a person judge what a bundle claims.
 - [Obsidian KTL Registrar](https://noelmcloughlin.github.io/obsidian-ktl-registrar/knowledge/): the Obsidian plugin that keeps a bundle well-formed as a person edits it.
+- [KTL Federation](https://github.com/noelmcloughlin/ktl-federation): the top domain that federates the bundles above with ai-linkmo's and gist's into one workspace, as [the context layer page](docs/context-layer.md) designs it.
 - [AI-LinkMO](https://noelmcloughlin.github.io/ai-linkmo/knowledge/): a reference implementation of operational AI governance over open AI-risk data.

@@ -457,6 +457,23 @@ for pair in \
     err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
   fi
 done
+# The federation templates are laid down on a domain host only (ktl-sidecar
+# Step 5), and this repository's bundle is not a domain, so each copy is held
+# to its template only where one exists here; actionlint reads the template
+# itself, and tests/test_federation.py runs the script from the template.
+for pair in \
+  "$templates/github/knowledge-federation.yaml:.github/workflows/knowledge-federation.yaml" \
+  "$templates/scripts/knowledge-federate.py:.lokf/scripts/knowledge-federate.py" \
+  "$templates/domain.yaml:.lokf/domain.yaml"; do
+  src="${pair%%:*}"; dst="${pair##*:}"
+  if [ ! -f "$dst" ]; then
+    ok "$dst is not laid down here (a domain host's file); its template is checked directly"
+  elif cmp -s "$src" "$dst"; then
+    ok "$dst matches its template"
+  else
+    err "$dst differs from $src - copy the template over it"
+  fi
+done
 # The justfile's first line names the host (Step 1's <PROJ_NAME>), so it is
 # held to its template from the second line on, as sync-sidecar.sh copies it.
 if cmp -s <(tail -n +2 "$templates/justfile") <(tail -n +2 .lokf/justfile); then
