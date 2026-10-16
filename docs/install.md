@@ -4,6 +4,8 @@ This page gives every way to install the six skills, what each needs on the mach
 
 ## Quick start
 
+**Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
+
 > **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](examples/docent.md).
 
 ### Github CLI
@@ -14,7 +16,7 @@ This page gives every way to install the six skills, what each needs on the mach
 gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user
 ```
 
-`--all` installs the six skills; to install one, name it . The line runs unchanged in bash, zsh, PowerShell and cmd.
+To install only one, name it:
 
 ```bash
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
