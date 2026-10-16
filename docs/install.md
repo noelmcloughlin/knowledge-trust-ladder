@@ -19,7 +19,11 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
   --skill ktl-docent --skill ktl-prose --skill ktl-website
 ```
 
+In PowerShell or cmd, type the command on one line without the `\` continuations.
+
 **Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
+
+Behind a company proxy or an internal npm registry, `npx skills` could fail. Use [the GitHub CLI](#install-with-the-github-cli) there; it uses github.com.
 
 ```text
 # Claude Code plugin
@@ -29,16 +33,13 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
 
 ## Install with the GitHub CLI
 
-[`gh skill`](https://cli.github.com/manual/gh_skill_install), GitHub CLI v2.90.0+:
+[`gh skill`](https://cli.github.com/manual/gh_skill_install) needs GitHub CLI 2.90.0 or later from [cli.github.com](https://cli.github.com/); an older `gh` has no `skill` command. `--agent` names the agent that receives the skills (`claude-code`, `github-copilot`, `cursor`, `codex`, `gemini-cli`, or another from `gh skill install --help`); without it, `gh` defaults to GitHub Copilot.
 
 ```bash
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-sidecar --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-librarian --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-curator --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-prose --scope user
-gh skill install noelmcloughlin/knowledge-trust-ladder ktl-website --scope user
+gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user
 ```
+
+`--all` installs the six skills; to install one, put its name in place of `--all`. The line runs unchanged in bash, zsh, PowerShell and cmd.
 
 ## Install for your user, not into the repository
 
@@ -58,7 +59,7 @@ Copilot runs custom skills in a sandbox with no repository, so only the **docent
 
 ## What each skill needs
 
-Every skill runs from a POSIX shell and starts with a preflight that prints what this machine can do and which steps that disables.
+Every skill runs from a POSIX shell (on Windows, the bash of Git for Windows, as [portability.md](../skills/ktl-sidecar/references/portability.md#not-linux-windows-and-powershell) says) and starts with a preflight that prints what this machine can do and which steps that disables.
 
 | Skill | Needs |
 | --- | --- |
