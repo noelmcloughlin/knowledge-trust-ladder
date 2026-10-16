@@ -1049,7 +1049,7 @@ rm -rf "${m365_out:?}"
 #      is the whole index and not skills/ alone.
 say ""
 say "Checking every tracked SKILL.md is a ktl- skill..."
-stray_skills="$(git ls-files | grep -iE '(^|/)SKILL\.md$' | grep -vE '^skills/ktl-[a-z]+/SKILL\.md$' || true)"
+stray_skills="$(git ls-files | grep -iE '(^|/)SKILL\.md$' | grep -vE '^skills/ktl-[a-z0-9-]+/SKILL\.md$' || true)"
 if [[ -n "$stray_skills" ]]; then
   err "a SKILL.md outside skills/ktl-*/ would be installed by --all: $(printf '%s' "$stray_skills" | tr '\n' ' ')"
 else

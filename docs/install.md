@@ -19,7 +19,7 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
   --skill ktl-docent --skill ktl-prose --skill ktl-website
 ```
 
-In PowerShell, type the command on one line without the `\` continuations.
+In PowerShell or cmd, type the command on one line without the `\` continuations.
 
 **Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
 
@@ -39,7 +39,7 @@ Behind a company proxy or an internal npm registry, `npx skills` could fail. Use
 gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user
 ```
 
-`--all` installs the six skills; name one instead (`... ktl-docent --agent claude-code --scope user`) to install it alone. The line runs unchanged in bash, zsh, PowerShell and cmd.
+`--all` installs the six skills; to install one, put its name in place of `--all`. The line runs unchanged in bash, zsh, PowerShell and cmd.
 
 ## Install for your user, not into the repository
 

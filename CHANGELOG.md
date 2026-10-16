@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/install.md`: one `gh skill install --all` line with `--agent`, the GitHub CLI 2.90.0 floor, and when `npx skills` fails behind a proxy. The contract keeps every tracked `SKILL.md` under `skills/ktl-*/`, so `--all` installs the ktl- skills only.
+
 ## [0.43.2] - 2026-10-16
 
 ### Fixed
