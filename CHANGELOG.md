@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **`scripts/sync-sidecar.sh` ends the entry with "No plugin change" only for an Obsidian plugin.** ai-linkmo and gist are not plugins, so their entries end with what changed.
-
 ## [0.44.1] - 2026-10-16
 
 ### Fixed
@@ -15,6 +11,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`scripts/sync-sidecar.sh` writes the sibling's changelog entry in full.** It names the copies the sync changed, or says the pin moved alone. It used to print a placeholder, which two plugins released unfilled.
 
 - **The repository contract skips a sibling's website build output.** Its copies of the curator's pages quote two links inside folded YAML strings, which the check read as links ending in a backslash and failed on.
+- **`scripts/sync-sidecar.sh` ends the entry with "No plugin change" only for an Obsidian plugin.** ai-linkmo and gist are not plugins, so their entries end with what changed.
 
 ## [0.44.0] - 2026-10-16
 
