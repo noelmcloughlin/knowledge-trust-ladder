@@ -1,4 +1,4 @@
-# Contributing to Knowledge Trust Ladder
+# Contributing to Knowledge Trust Ladder (KTL)
 
 *This file is a checklist, not a design log. Each rule is a line or two that links to where its reasoning lives: a code comment, a workflow header, or a page under `docs/`. `bash scripts/validate-repository.sh` fails when the file outgrows its word budget, so it stays that way.*
 

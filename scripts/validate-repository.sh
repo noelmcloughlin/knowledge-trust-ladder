@@ -265,10 +265,12 @@ fi
 #    recipe, with and without the doorway link. validate.yml runs them in a
 #    job of their own.
 
-# 9. Three sibling repositories deep-link into files here by URL
-#    (github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path>), and their
-#    link checks follow those for real. Moving or renaming one of these paths
-#    passes every check in this repo, and breaks the build in
+# 9. Three sibling repositories deep-link into files here by URL, as
+#    github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path> or as the
+#    site's persistent address, w3id.org/ktl/docs/<page>/ and
+#    w3id.org/ktl/knowledge/<id>, and their link checks follow those for real.
+#    Moving or renaming one of these paths passes every check in this repo,
+#    and breaks the build in
 #    obsidian-ktl-curator and obsidian-ktl-registrar. (The mirror image
 #    happened on 2026-09-14: the curator referenced domain-schema.md while it
 #    was still on a branch here, and its build failed with a 404 until this
@@ -338,16 +340,19 @@ else
   # only slow. (git-aware greps hide these via .gitignore; plain grep does not.)
   # A link to a heading is recorded with it, as path#anchor; a heading of the
   # repository's front page counts as README.md#anchor, apart from GitHub's own
-  # #readme.
+  # #readme. A w3id.org/ktl address names a file by its page: docs/<page>/ is
+  # docs/<page>.md, knowledge/<id> is .lokf/knowledge/<id>.md, and the site's
+  # root is the README. A sibling's own namespace under w3id.org/ktl/ is not
+  # a link into this repository and is dropped.
   # A sibling's website build writes copies of its pages under website/, which
   # git ignores; one quotes a link inside a folded YAML string, and read as a
   # link it ends in a backslash. Only what the sibling keeps counts.
-  mapfile -t linked < <(grep -rHoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder(/blob/main/[^)"#[:space:]]+)?(#[A-Za-z0-9_-]+)?' \
+  mapfile -t linked < <(grep -rHoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder(/blob/main/[^)"#[:space:]]+)?(#[A-Za-z0-9_-]+)?|https://w3id\.org/ktl/(docs/[a-z0-9.-]+/|knowledge/[a-z0-9-]+(/[a-z0-9-]+)*/?)?(#[A-Za-z0-9_-]+)?' \
     "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
     --exclude-dir=.claude --exclude-dir=.venv 2>/dev/null \
     | grep -vE '/website/(dist|public|src/content|src/generated)/' | sed -E 's|^[^:]*:||' \
-    | sed -E 's|^https://github\.com/noelmcloughlin/knowledge-trust-ladder||; s|^/blob/main/||; s|^#|README.md#|; s/[.,]$//; /^$/d; /^README\.md#readme$/d' \
+    | sed -E 's|^https://w3id\.org/ktl/docs/([a-z0-9.-]+)/|docs/\1.md|; s|^https://w3id\.org/ktl/knowledge/([a-z0-9-]+(/[a-z0-9-]+)*)/?|.lokf/knowledge/\1.md|; s|^https://w3id\.org/ktl/#|README.md#|; /^https:\/\/w3id\.org\/ktl\//d; s|^https://github\.com/noelmcloughlin/knowledge-trust-ladder||; s|^/blob/main/||; s|^#|README.md#|; s/[.,]$//; /^$/d; /^README\.md#readme$/d' \
     | sort -u || true)
   unrecorded=0
   for l in "${linked[@]}"; do

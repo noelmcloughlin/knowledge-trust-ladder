@@ -10,7 +10,7 @@ Three roles write to the bundle, each in one way only, and programs check every 
 - **The curator**, a named person, writes the verdicts through `ktl-curator` or the KTL Curator plugin. A verdict is a `verified` event in that person's name, or a change of `status` or review date, with one line in `log.md`.
 - **The docent**, an agent, writes nothing in the bundle. `knowledge-feedback.sh` records what a reader missed in `.lokf/feedback.md`, and the pen moves each entry the librarian handles into `.lokf/questions.md`.
 
-On GitHub, every change reaches the default branch as a pull request. There the registrar's gate, `knowledge-registrar.yaml`, runs `lokf validate`, the conventions script and the `provenance` job. That job accepts a `human:` event that a change adds or removes only with that person's approval of the pull request or their signature on the commit. No trust label is stored: `knowledge-report.sh` computes each one from the frontmatter on every read, for the docent's answers, the curator's report and the librarian's work list.
+On GitHub, every change reaches the default branch as a pull request. There the registrar's gate, `knowledge-registrar.yaml`, runs `lokf validate`, the conventions script and the `provenance` job. That job accepts a `human:` event that a change adds or removes only with that person's approval of the pull request or their signature on the commit. On another forge, or with none, `knowledge-provenance.sh` checks each confirmation's signature against the keys under `.lokf/curators/` instead. No trust label is stored: `knowledge-report.sh` computes each one from the frontmatter on every read, for the docent's answers, the curator's report and the librarian's work list.
 
 <p align="center">
   <picture>

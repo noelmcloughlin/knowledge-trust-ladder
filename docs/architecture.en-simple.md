@@ -11,7 +11,7 @@ This page is for readers aged 13 to 18. It retells [the architecture page](archi
 
 ## What does it do?
 
-Knowledge Trust Ladder keeps a repository's knowledge as a **collection**. Each entry shows where it came from and how far it has been checked.
+Knowledge Trust Ladder (KTL) keeps a repository's knowledge as a **collection**. Each entry shows where it came from and how far it has been checked.
 
 Three things can happen to every entry, and the bundle records which of them happened:
 
@@ -29,7 +29,7 @@ A catalogue is useful only when a reader can tell which entries are sound. So ea
 
 ## Who does the work?
 
-Knowledge Trust Ladder names its roles after people who work in libraries and museums. Four of the roles are Agent Skills.
+KTL names its roles after people who work in libraries and museums. Four of the roles are Agent Skills.
 
 - The **sidecar** sets the project up, once. It adds `.lokf/`, a folder beside the code like `.git/`, kept out of the project's build.
 - The **librarian** fills the bundle, often and on a schedule. It reads the repository, writes each concept with its sources, and links the concepts together. It records facts about the repository, never verdicts about truth.
