@@ -30,12 +30,12 @@ So one bundle is already one repository's context layer, with the fourth of Unbl
 
 ## Many bundles federated into one context layer: the design
 
-Domains select released bundles, and a person confirms each domain. A top domain selects domains and bounds the workspace.
+Domains select released bundles, and a person confirms each domain. A domain may select domains in turn, and the one a build starts from bounds the workspace.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-federated-context-layer-dark.svg">
-    <img src="../.assets/ktl-federated-context-layer.svg" alt="From repository bundles to a context layer: four bundles, each released from its own repository into an artifact repository; domains as manifests that select releases and are confirmed by a person; one context layer built from the top domain; and the readers." width="720" />
+    <img src="../.assets/ktl-federated-context-layer.svg" alt="From repository bundles to a context layer: four bundles, each released from its own repository into an artifact repository; domains as manifests that select releases and are confirmed by a person, labelled domains/domain-1, domains/domain-2 and domains/federation, where the build starts; one context layer built from domains/federation; and the readers." width="720" />
   </picture>
 </p>
 
