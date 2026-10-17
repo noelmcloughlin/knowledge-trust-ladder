@@ -13,6 +13,8 @@ This was check 19 in scripts/validate-repository.sh:
 - a reader's question reaches the ledger, and a hand-off line its file, with
   no character a reader cannot see;
 - the index bullets and the log heading are kept in step;
+- a log line many operations give, or the patch gives for them, is written once;
+- a bare web address in a log line or a question is written as an autolink;
 - the lokf:related block survives a rewrite, and a rewrite sets frontmatter
   as a patch does;
 - an operation takes only the keys it reads, and any other is refused by name;
@@ -275,6 +277,62 @@ def test_a_log_line_that_already_says_edited_since_gets_no_second_note(applied):
     )
     entry = [line for line in read(kb_of(applied) / "log.md").split("\n") if "a second paragraph." in line]
     assert len(entry) == 1 and entry[0].count("dited since a person confirmed it") == 1, f"the note was added twice: {entry}"
+
+
+def test_the_same_log_line_from_many_operations_is_written_once(applied):
+    """A conversion that gave each of 22 concepts the same line once left 21 copies to delete by hand."""
+    applies(
+        applied,
+        lines(
+            "ops:",
+            '  - {op: patch, path: playbooks/draft.md, edits: [{append: {content: "One."}}], log: cites its source by path}',
+            '  - {op: patch, path: playbooks/new.md, edits: [{append: {content: "Two."}}], log: cites its source by path}',
+        ),
+    )
+    log = read(kb_of(applied) / "log.md")
+    assert log.count("* **Changed**: cites its source by path") == 1, f"the same line was written more than once: {log}"
+
+
+def test_the_patchs_log_line_stands_in_for_each_operation_that_gives_none(applied):
+    """An operation's own line still wins, and a concept a person confirmed is named beside the shared line."""
+    applies(
+        applied,
+        lines(
+            "log: each playbook cites its source by path",
+            "ops:",
+            '  - {op: patch, path: playbooks/draft.md, edits: [{append: {content: "One."}}]}',
+            '  - {op: patch, path: playbooks/new.md, edits: [{append: {content: "Two."}}]}',
+            '  - {op: create, path: playbooks/newer.md, frontmatter: {type: Playbook, title: Newer, description: newer.}, body: "# Overview"}',
+            '  - {op: patch, path: playbooks/confirmed.md, edits: [{append: {content: "Three."}}]}',
+            '  - {op: delete, path: playbooks/new.md, log: "**Removal**: New; its source is gone."}',
+        ),
+    )
+    today = read(kb_of(applied) / "log.md").split(f"## {today_utc()}")[1].split("\n## ")[0]
+    assert (
+        today.count("* **Changed**: each playbook cites its source by path\n") == 1
+        and "`playbooks/confirmed.md` was edited since a person confirmed it" in today
+        and "**Added**: Newer" not in today
+        and has_line(today, "* **Removal**: New; its source is gone.")
+    ), f"the patch's line did not stand in once for the operations without one: {today}"
+
+
+def test_a_bare_web_address_in_a_question_and_its_log_line_becomes_an_autolink(applied):
+    """markdownlint refused the bare addresses a question carried into the concept and log.md; one in a code span or a link stays as written."""
+    applies(
+        applied,
+        lines(
+            "ops:",
+            "  - op: question",
+            "    path: playbooks/draft.md",
+            '    text: "https://a.example/x/ moved (see https://a.example/y). `curl https://a.example/z` and [the page](https://a.example/p) agree?"',
+        ),
+    )
+    wanted = "<https://a.example/x/> moved (see <https://a.example/y>). `curl https://a.example/z` and [the page](https://a.example/p) agree?"
+    draft = read(kb_of(applied) / "playbooks" / "draft.md")
+    log = read(kb_of(applied) / "log.md")
+    assert has_line(draft, f"- {today_utc()}, process:ktl-librarian: {wanted}") and has_line(
+        log, f"* **Open question**: Draft: {wanted}"
+    ), f"the addresses were not written as autolinks: {draft} // {log}"
 
 
 def test_question_adds_the_curator_shaped_bullet_and_touches_neither_text_nor_generated(applied):

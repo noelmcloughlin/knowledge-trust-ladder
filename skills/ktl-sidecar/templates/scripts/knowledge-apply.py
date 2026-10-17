@@ -12,7 +12,10 @@
 # reaches the bundle is what this script allows. It:
 #   - stamps `generated` from the clock;
 #   - keeps a concept's description and its two index bullets equal;
-#   - files each log line under the day's heading;
+#   - files each log line under the day's heading, once however many
+#     operations give the same line;
+#   - writes a bare web address in a log line or an open question as an
+#     autolink, <https://...>, which Markdown linters ask for;
 #   - moves a feedback entry an operation says it handled out of feedback.md
 #     and into the ledger of questions readers asked, ten to a patch at most;
 #   - refuses an operation that would write a `human:` actor, rewrite text a
@@ -31,6 +34,11 @@
 # script that enforces it, and a host needs no particular release of the skill
 # to learn it. ktl-librarian's references/patch.md carries the same block, and
 # the repository contract checks that the two are equal.
+#
+# A patch may carry one `log` line of its own. It stands in for the line of
+# every operation that gives none, so a change made the same way to many
+# concepts is logged once rather than once for each. An operation's own `log`
+# still wins.
 #
 # A patch may also carry `handoff`: at most ten lines for the person who
 # reviews the change, in the librarian's own words. They are never written to
@@ -92,6 +100,12 @@ DENIED_CREATE = {"generated", "verified", "status", "stale_after", "timestamp", 
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
 BULLET_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, (\S+?): ")  # an open question's actor, in the shape the curator writes
+# A web address that is not already an autolink, a link's target or a link's
+# text: no `<`, `](` or `[` before it. A pair of parentheses inside it stays
+# in it, as Wikipedia's addresses need, and its last character is no
+# punctuation, so a full stop, a comma or a closing parenthesis after it
+# stays in the sentence.
+BARE_URL_RE = re.compile(r"(?<!\]\()(?<![<\[\w/])https?://(?:[^\s<>`()]|\([^\s<>`()]*\))*(?:[^\s<>`().,;:!?'\"]|\([^\s<>`()]*\))")
 HEADING_RE = re.compile(r"^(#{1,6})[ \t]+(.*\S)[ \t]*$")  # a Markdown heading: its level and its text
 OWN_BULLET_RE = re.compile(r"^\* \[[^\]]*\]\([^)]+\)(?: - .*)?$")  # any concept's own index bullet: its link alone, then its description
 FEEDBACK_KIND_RE = re.compile(r"^- \*\*(Miss|Disagreement)\*\* ")
@@ -125,6 +139,7 @@ LEDGER_HEAD = (
 # What `--format` prints. ktl-librarian's references/patch.md carries the same
 # block, and check 19 of the repository contract holds the two equal.
 FORMAT = r'''by: process:ktl-librarian        # optional; the actor every stamp carries, always process:<id>
+log: "**Changed**: each service concept now cites its source by repository path."   # optional; the line for every operation that gives none, written once
 ops:
   - op: create                   # a concept that does not exist yet
     path: services/orders-api.md # lowercase, under a folder, .md; the id is base_iri plus this path
@@ -343,6 +358,12 @@ def questions_span(body: str):
     return None
 
 
+def autolinked(text: str) -> str:
+    """The line with each bare web address outside a code span written as an autolink, <https://...>. Markdown linters refuse a bare one (markdownlint's MD034), and the curator reads the line in a rendered view, where an autolink is a link."""
+    parts = re.split(r"(`[^`]*`)", text)
+    return "".join(part if part.startswith("`") else BARE_URL_RE.sub(r"<\g<0>>", part) for part in parts)
+
+
 def clean_question(value, what: str) -> str:
     """A reader's question as the ledger holds it: one line, no character a reader cannot see, no backtick to close the code span it sits in, and no longer than a question is."""
     text = shown(one_line(value, what)).replace("`", "'")
@@ -436,7 +457,7 @@ class Concept:
 
 
 class Bundle:
-    def __init__(self, root: Path, by: str, now: str, today: str):
+    def __init__(self, root: Path, by: str, now: str, today: str, log: str | None = None):
         self.root = root
         self.knowledge = root / ".lokf" / "knowledge"
         self.feedback = root / ".lokf" / "feedback.md"
@@ -445,6 +466,7 @@ class Bundle:
         self.concepts: dict[str, Concept] = {}
         self.indexes: dict[Path, str] = {}
         self.log_lines: list[str] = []
+        self.patch_log = log  # the patch's own line, already labelled, for each operation that gives none
         self.feedback_handled: list[str] = []
         self.ledger_lines: list[str] = []
         self.demoted: list[str] = []  # concepts a person confirmed that this run edited
@@ -629,7 +651,7 @@ class Bundle:
     def question(self, op: dict) -> None:
         path = op["path"]
         c = self.concept(path, must_exist=True)
-        text = shown(one_line(op.get("text"), f"{path}: question text"))
+        text = autolinked(shown(one_line(op.get("text"), f"{path}: question text")))
         if not text:
             raise Refused(f"{path}: question text has no visible characters")
         bullet = f"- {self.today}, {self.by}: {text}"
@@ -847,18 +869,19 @@ class Bundle:
 
     def log(self, op: dict, default: str | None, c: Concept | None = None, label: str = "Changed") -> None:
         text = op.get("log")
+        shared = text is None and self.patch_log is not None
         if text is not None:
-            text = shown(one_line(text, f"{op['path']}: log"))
-            if not text:
-                raise Refused(f"{op['path']}: log line has no visible characters")
-        if text is None and default is None:
-            raise Refused(f"{op['path']}: {op['op']} needs a log line naming what changed and why")
-        if text is None:
+            text = log_line(text, f"{op['path']}: log", label)
+        elif shared:
+            text = self.patch_log
+        elif default is None:
+            raise Refused(f"{op['path']}: {op['op']} needs a log line naming what changed and why, its own or the patch's")
+        else:
             text = default
-        elif not text.startswith("**"):
-            text = f"**{label}**: {text}"
         if c is not None and c.confirmed_by_person() and "edited since" not in text.lower():
-            text += " Edited since a person confirmed it; the label says so until the curator looks again."
+            # The patch's line speaks for many concepts, so the note names the
+            # one a person had confirmed.
+            text += f" `{c.path}` was edited since a person confirmed it; the label says so until the curator looks again." if shared else " Edited since a person confirmed it; the label says so until the curator looks again."
         fb = op.get("from_feedback")
         asked = op.get("asked")
         if asked is not None and fb is None:
@@ -879,11 +902,14 @@ class Bundle:
             if asked is not None:
                 line += ": `" + clean_question(asked, f"{op['path']}: asked") + "`"
             self.ledger_lines.append(line)
-        self.log_lines.append("* " + text)
+        self.log_lines.append("* " + autolinked(text))
 
     def log_text(self) -> str | None:
         if not self.log_lines:
             return None
+        # A line given by many operations, the patch's own or the same words
+        # in each, is written once, where it first appears.
+        self.log_lines = list(dict.fromkeys(self.log_lines))
         file = self.knowledge / "log.md"
         lines = file.read_text(encoding="utf-8").split("\n") if file.is_file() else ["# Change Log", ""]
         first = next((k for k, line in enumerate(lines) if line.startswith("## ")), None)
@@ -941,6 +967,14 @@ def check_path(path) -> str:
     return path
 
 
+def log_line(text, what: str, label: str = "Changed") -> str:
+    """One log line as log.md shows it: a single line of visible text, given the operation's label, or `**Changed**`, when it brings none of its own."""
+    text = shown(one_line(text, what))
+    if not text:
+        raise Refused(f"{what} line has no visible characters")
+    return text if text.startswith("**") else f"**{label}**: {text}"
+
+
 def check_keys(op: dict) -> None:
     """Refuses a key the operation does not read, and names it, along with the keys the operation does read."""
     known = ("op", "path", *KEYS[op["op"]])
@@ -995,10 +1029,16 @@ def main(argv: list[str]) -> int:
         handoff = handoff_lines(doc.get("handoff"))
     except Refused as exc:
         findings.append(str(exc))
+    patch_log = None
+    if doc.get("log") is not None:
+        try:
+            patch_log = log_line(doc["log"], "log")
+        except Refused as exc:
+            findings.append(str(exc))
     bundle = None
     if not findings:
         try:
-            bundle = Bundle(root, by, now.strftime("%Y-%m-%dT%H:%M:%SZ"), now.strftime("%Y-%m-%d"))
+            bundle = Bundle(root, by, now.strftime("%Y-%m-%dT%H:%M:%SZ"), now.strftime("%Y-%m-%d"), patch_log)
         except Refused as exc:
             findings.append(str(exc))
     if bundle is not None:
