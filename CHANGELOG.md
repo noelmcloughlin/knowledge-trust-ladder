@@ -4,6 +4,21 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-federate.py mcp` serves a workspace to agents.** It is the `lokf-registry` server the LOKF specification's section 11.4 describes, over the snapshot: `resolve_iri`, `neighbors`, `subgraph`, `federated_sparql` and `read_document`, each bounded in depth and size, with the workspace index as the server's instructions so an agent reads it first. `serve`, `query` and `mcp` take an absolute `--snapshot`, so an unpacked `workspace-<tag>.zip` is read anywhere a sidecar environment exists.
+- **`knowledge-release.yaml` attaches the domain schema the justfile names.** `schema-<tag>-<name>.yaml` goes beside the bundle zip with its own `.sha256` and attestation, so a federation can validate the bundle on its own terms. `knowledge-federate.py` names it as a second distribution when a member moves, and the build validates that member against it instead of LOKF core alone.
+- **`knowledge-federate.py members --add <owner>/<repo>` drafts a new member.** It verifies the repository's newest bundle release, reads the bundle's namespace and title from the zip, refuses a namespace that nests with a member's, and writes a `create` with a question for the pen.
+
+### Changed
+
+- **The sidecar's `llms.txt` and README aside no longer assume `npx skills` works.** The agent context offers the GitHub CLI route beside it and says when a company proxy blocks the other; the README aside points at the install page.
+
+### Fixed
+
+- **The workspace registry no longer names the runner's own folder as the domain's `source_base`.** The domain's entry now points at the host's repository at the tag, or at the served copy of the unpacked bundle, and the index names the address that is served (`.../workspace/index.md`) rather than a folder that answers 404.
+- **`postcss-selector-parser` 7.1.6 in the website template's lockfile** (GHSA-rj75-hqrm-r3gf, quadratic selector parsing), and in this repository's own site.
+
 ## [0.45.1] - 2026-10-17
 
 ### Changed

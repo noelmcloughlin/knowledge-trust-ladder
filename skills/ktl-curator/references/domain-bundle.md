@@ -7,7 +7,7 @@ This page is for the **curator** of a domain host: a repository whose bundle nam
 `templates/domain.yaml` in ktl-sidecar, laid down as `.lokf/domain.yaml` with `schema := "domain.yaml"` in the justfile, adds three classes over LOKF core. `lokf validate` checks them like any other.
 
 - **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner. One concept, under `domains/`. Its `unowned_targets` is the build's gate policy: `fail` stops the build on a typed relation whose target lies in no member's namespace; `report` lists it and goes on.
-- **`MemberBundle`** (a `Dataset`): one bundle the domain admits, under `members/`. It names the bundle's `base_iri`, the release `version` it pins, the `release` page, and one `distribution` whose `access_url` is the release's zip and whose `checksum` is that zip's digest. `isPartOf` names the domain concept.
+- **`MemberBundle`** (a `Dataset`): one bundle the domain admits, under `members/`. It names the bundle's `base_iri`, the release `version` it pins, the `release` page, and one `distribution` whose `access_url` is the release's zip and whose `checksum` is that zip's digest. A second distribution names the schema released beside the zip (`schema-<tag>-<name>.yaml`), when the member's justfile names one; the build then validates the bundle against it rather than LOKF core alone. `isPartOf` names the domain concept.
 - **`ReleaseDistribution`** (a `Distribution`): the zip with its `checksum`, `sha256:` and 64 hex digits, as the release's `.sha256` file gives it.
 
 A member names the newest release that carries a `knowledge-*.zip`, because a release whose bundle did not change carries none. Nothing is copied from a member into the domain: a member's new release changes nothing until a person confirms a member concept that names it.
@@ -55,6 +55,21 @@ A claim the domain makes across bundles is a concept with typed relations whose 
 
 The domain's librarian is a script, `knowledge-federate.py members`, which the sidecar's librarian workflow runs as `AGENT_CLI`. It lists each member's releases, picks the newest that carries a bundle zip, verifies its checksum and attestation, and writes the move as a `patch` with a `question` for the pen. The pen restamps `generated`, so the member reads "edited since a person confirmed it" until you confirm the new release, and the health line counts it among what moved. Accepting the move is the same confirm again, after the same three checks; declining it is a note on the concept, or closing the pull request.
 
+A new member starts the same way: `knowledge-federate.py members --add <owner>/<repo>` verifies that repository's newest bundle release, reads its `base_iri`, title and description from the zip, refuses a namespace that nests with a member's, and writes a `create` with a `question` for the pen. The concept arrives as a draft; your confirmation admits it.
+
 ## Reading the workspace
 
-The workspace is served under `/workspace/` of the host's site and attached to each release as `workspace-<tag>.zip`. Its `index.md` lists the members, their versions and their health lines at the release. `queries/labels.rq` computes every concept's trust label with the bundle that asserted it, `queries/moved.rq` lists the members that moved since the domain's last confirmation, and `queries/unowned.rq` is the gate. `knowledge-federate.py serve` opens the toolkit's SPARQL endpoint and graph page over it.
+The workspace is served under `/workspace/` of the host's site, its `index.md` first, and attached to each release as `workspace-<tag>.zip`. The index lists the members, their versions and their health lines at the release. `queries/labels.rq` computes every concept's trust label with the bundle that asserted it, `queries/moved.rq` lists the members that moved since the domain's last confirmation, and `queries/unowned.rq` is the gate.
+
+Three ways to read it, each from the host's sidecar environment, or anywhere with `--snapshot <path>` pointing at an unpacked `workspace-<tag>.zip`:
+
+- **An agent, over MCP.** `uv run --project .lokf .lokf/scripts/knowledge-federate.py mcp` is the `lokf-registry` server the LOKF specification's section 11.4 describes: `resolve_iri` says which bundle owns an IRI and what concept it names, `neighbors` and `subgraph` give a neighbourhood bounded in hops and size, `federated_sparql` queries the union with `GRAPH ?g` binding the asserting bundle (a stored query by name, such as `labels.rq`, works too), and `read_document` returns a concept as released with its trust summary. The server's instructions are the workspace index, so an agent reads it before anything else. Register it as any stdio server: the command above, with the host as the working directory.
+- **A person, over SPARQL.** `knowledge-federate.py serve` opens the toolkit's SPARQL endpoint and graph page over the union of the graphs.
+- **A read-only endpoint from a container**, for a team: load `graph.nq` once and serve it with the Oxigraph server image, which answers queries and refuses updates.
+
+  ```bash
+  podman run --rm -v "$PWD/snapshot:/snapshot:ro" -v oxigraph-data:/data ghcr.io/oxigraph/oxigraph:0.5.11 load --location /data --file /snapshot/graph.nq
+  podman run -d -p 7878:7878 -v oxigraph-data:/data:ro ghcr.io/oxigraph/oxigraph:0.5.11 serve-read-only --location /data --bind 0.0.0.0:7878 --union-default-graph
+  ```
+
+  `docker` takes the same arguments. The endpoint is then `http://localhost:7878/query`; `GRAPH ?g { ... }` still names the asserting bundle, and `--union-default-graph` lets a query without `GRAPH` see every bundle. Nothing is hosted by default: that is the team's decision, and the container is the whole setup.

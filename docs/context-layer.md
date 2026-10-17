@@ -39,7 +39,7 @@ Domains select released bundles, and a person confirms each domain. A top domain
   </picture>
 </p>
 
-**What exists.** A repository that installed the sidecar releases its bundle. The template workflow [`knowledge-release.yaml`](../skills/ktl-sidecar/templates/github/knowledge-release.yaml) validates the bundle with the registrar's checks and packs it as a reproducible zip whose root is `knowledge/`. It writes a `.sha256` beside the zip, attaches both to the release, and records a build attestation where the forge offers one. Nothing in that zip is edited afterwards. A domain schema, where the bundle has one, is a file in the repository, released with the bundle only if the repository chooses to.
+**What exists.** A repository that installed the sidecar releases its bundle. The template workflow [`knowledge-release.yaml`](../skills/ktl-sidecar/templates/github/knowledge-release.yaml) validates the bundle with the registrar's checks and packs it as a reproducible zip whose root is `knowledge/`. It writes a `.sha256` beside the zip, attaches both to the release, and records a build attestation where the forge offers one. Nothing in that zip is edited afterwards. A domain schema, where the bundle has one, is released beside the bundle as `schema-<tag>-<name>.yaml` with its own checksum, when the justfile's `schema` line names it.
 
 **What OKF leaves open.** OKF calls a bundle "The unit of distribution" and lets it be distributed as a git repository, as a tarball or zip, or as a subdirectory of a larger repository. It says nothing about one bundle naming another, a catalogue of bundles, or what a reader may see of a bundle across a trust boundary. Its trackers ask for all three, in these requests:
 
@@ -95,7 +95,10 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 | Domains as thin bundles, their domain schema, a person's confirmation of membership | exists | `domain.yaml` in the sidecar's templates, and the first domain host, [ktl-federation](https://github.com/noelmcloughlin/ktl-federation), whose members are this bundle, ai-linkmo's and lmodel/gist's; the curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md) |
 | The lock, the refresh job and the atomic swap | exists | `knowledge-federate.py` and `knowledge-federation.yaml` in the sidecar's templates ([automation.md](../skills/ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host)) |
 | One named graph per bundle | exists | `knowledge-federate.py build` in the sidecar's federation templates |
-| Lazy loading, and a `lokf-registry` MCP server | design | specification section 11.4, marked informative |
+| A `lokf-registry` MCP server: `resolve_iri`, `neighbors`, `subgraph`, `federated_sparql`, `read_document` | exists | `knowledge-federate.py mcp` in the sidecar's federation templates, over the workspace, the index as its instructions; specification section 11.4 |
+| A read-only SPARQL endpoint over the workspace | exists | `knowledge-federate.py serve`, or the Oxigraph server image loading `graph.nq` ([domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md#reading-the-workspace)) |
+| A domain schema released beside its bundle | exists | `knowledge-release.yaml` attaches `schema-<tag>-<name>.yaml` when the justfile names one; the build validates the member against it |
+| Lazy loading of a member's graph on first use | design | specification section 11.4, marked informative; the workspace loads every member at build |
 | Harvesting remote artifacts, and the `sensitivity` gate | design | specification section 11.5; the field exists, and nothing reads it |
 | Per-query permissions | design | the store's and the artifact repository's access control, not the bundle's |
 
