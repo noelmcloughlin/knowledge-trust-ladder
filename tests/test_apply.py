@@ -490,6 +490,33 @@ def test_reindex_restores_a_drifted_bullet_and_touches_neither_the_concept_nor_t
     ), "reindex did not restore the bullet, or touched the concept or the log"
 
 
+def test_a_concept_with_no_description_gets_its_link_alone_in_both_indexes(ka):
+    kb = kb_of(ka)
+    write(
+        kb / "playbooks" / "bare.md",
+        lines(
+            "---",
+            "type: Playbook",
+            "id: https://acme.example/knowledge/playbooks/bare",
+            "title: Bare",
+            "generated:",
+            "  by: process:ktl-librarian",
+            '  at: "2026-01-01T00:00:00Z"',
+            "status: draft",
+            "---",
+            "",
+            "# Overview",
+            "",
+            "Bare.",
+        ),
+    )
+    applies(ka, lines("ops:", "  - {op: patch, path: playbooks/bare.md, edits: [{append: {content: More.}}], log: x}"))
+    folder, root = read(kb / "playbooks" / "index.md"), read(kb / "index.md")
+    assert has_line(folder, "* [Bare](bare.md)") and has_line(root, "* [Bare](playbooks/bare.md)") and " - \n" not in folder + root, (
+        "a concept with no description got a bullet that ends in a bare dash"
+    )
+
+
 def test_resolve_withdraws_the_librarians_own_question_and_leaves_the_rest_alone(applied):
     """The heading goes with its last question; the person's text, their generated record and the status stay."""
     kb = kb_of(applied)

@@ -689,11 +689,14 @@ class Bundle:
         folder_text = self.index_text(folder_file, f"# {section}\n")
         if not folder_text.strip():  # an empty file starts from its heading, as a new one does
             folder_text = f"# {section}\n"
+        # The " - " in a bullet introduces the description. A concept with no
+        # description gets its link alone, so no bullet ends in a bare dash.
+        tail = f" - {description}" if description else ""
         self.indexes[folder_file] = self.place_bullet(
-            folder_text, name, None if title is None else f"* [{title}]({name}) - {description}", path, f"{folder}/index.md")
+            folder_text, name, None if title is None else f"* [{title}]({name}){tail}", path, f"{folder}/index.md")
         self.indexes[root_file] = self.place_bullet(
             self.index_text(root_file, ""), path,
-            None if title is None else f"* [{title}]({path}) - {description}", path, "index.md",
+            None if title is None else f"* [{title}]({path}){tail}", path, "index.md",
             section=(section, f"]({folder}/index.md)"))
 
     @staticmethod

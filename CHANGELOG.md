@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **`knowledge-apply.sh` lists a concept with no description by its link alone.** Its index bullets ended in a bare " - ", the separator for a description that was not there.
+
 ## [0.45.0] - 2026-10-16
 
 ### Changed
