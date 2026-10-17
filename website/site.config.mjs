@@ -60,6 +60,7 @@ export const DOCS = {
         "architecture",
         "for-the-curious",
         "context-layer",
+        "federation",
         "context-layer-technology",
         "three-lines",
         "three-lines-critics",
