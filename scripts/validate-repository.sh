@@ -925,9 +925,9 @@ rm -rf "$p15"
 #       - the bundle's log.md, whose entries describe the repository as it
 #         was on the day they were written, since a log that renames its own
 #         past is no longer a record;
-#       - one "formerly" line in docs/install.md, where the install commands
-#         moved on 2026-09-19. Anywhere else is a merge that predates the rename; run
-#     the same replacement over it.
+#       - rename-plan.md, the plan of the rename, while it exists.
+#     Anywhere else is a merge that predates the rename; run the same
+#     replacement over it.
 say ""
 say "Checking the old repository name has not come back..."
 old_name="lokf-agent-skills"
@@ -950,16 +950,12 @@ else
     for h in "${history_files[@]}"; do
       if [[ "$f" == "$h" ]]; then skip=1; fi
     done
-    # The install page names it on one line, as history; more is a stale merge.
-    if [[ "$f" == "docs/install.md" ]]; then
-      if [[ "$(git grep -c -- "$old_name" -- "$f" | cut -d: -f2)" -le 1 ]]; then skip=1; fi
-    fi
     if [[ -z "$skip" ]]; then unexpected+=("$f"); fi
   done <<<"$hits"
   if [[ "${#unexpected[@]}" -eq 0 ]]; then
     ok "no file outside the ones that record history reintroduces $old_name"
   else
-    err "these files name $old_name again, which this repository was renamed from: ${unexpected[*]} - a branch written before the rename was merged; replace $old_name with knowledge-trust-ladder there (CHANGELOG.md, the bundle's log.md, the rename plan and one 'formerly' line in docs/install.md are the exceptions, because they record history)"
+    err "these files name $old_name again, which this repository was renamed from: ${unexpected[*]} - a branch written before the rename was merged; replace $old_name with knowledge-trust-ladder there (CHANGELOG.md, the bundle's log.md and the rename plan are the exceptions, because they record history)"
   fi
 fi
 
