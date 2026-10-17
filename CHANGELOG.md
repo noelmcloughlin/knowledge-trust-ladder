@@ -13,6 +13,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`knowledge-apply.sh` lists a concept with no description by its link alone.** Its index bullets ended in a bare " - ", the separator for a description that was not there.
 - **`knowledge-apply.sh` applies a `set` on a `rewrite` as it does on a `patch`.** It used to drop the key without a word while the dry run passed, and now every operation refuses a key it does not take, naming it.
 - **`knowledge-federate.py members` moves a member's text with its version.** The patch now moves the old tag, zip name and release day in the description and body too, calls a member "confirmed" only when a person confirmed it as it stands, and `--dry-run` prints the patch even while a librarian pull request is open.
+- **`knowledge-apply.sh` writes a log line once, however many operations give it.** A patch can also carry one `log` line for every operation that gives none, so a change made to many concepts no longer leaves one identical bullet for each.
 - **The sidecar's `.lokf/.gitignore` leaves out `.cache/`.** A domain host's federation build keeps the members' release zips there, and the first domain host committed four of them.
 
 ## [0.45.0] - 2026-10-16
