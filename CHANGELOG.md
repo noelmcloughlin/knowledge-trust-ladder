@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.47.0] - 2026-10-17
+
 ### Added
 
 - **A host keeps its sidecar current by itself.** `knowledge-sync.yaml`, a new ktl-sidecar template, reads the skills pin and the newest release each week. When the pin is behind, it runs the host's own `knowledge-sync.sh` in a read-only job and, in a separate job, opens one pull request from `.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md` with the `KNOWLEDGE_SYNC_TOKEN` secret, or attaches the change to the run without it. The pull request stays one, refreshed to the newest release each week until it is merged. `publish.yml` asks the hosts named in `KNOWLEDGE_SYNC_HOSTS` to sync as soon as a release is tagged.
@@ -16,13 +18,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
-- **The sync writes the changelog entry instead of printing it with a hint.** The hint named `### Security` with a sentence's colon after it, and a heading typed that way once failed the lint.
-
-## [0.46.1] - 2026-10-17
-
-### Fixed
-
 - **`knowledge-federate.py members` verifies attestations under the librarian wrapper.** The wrapper strips every token, so `gh attestation verify` failed; the script now takes the job's read-only token as `KNOWLEDGE_FEDERATE_TOKEN` (`AGENT_USE_JOB_TOKEN` `true`, `AGENT_API_KEY_ENV` set to that name), hands it to `gh` alone, and says which variables to set when it has no credential.
+- **The sync writes the changelog entry instead of printing it with a hint.** The hint named `### Security` with a sentence's colon after it, and a heading typed that way once failed the lint.
 
 ## [0.46.0] - 2026-10-17
 
