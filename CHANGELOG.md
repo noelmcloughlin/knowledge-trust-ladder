@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **`knowledge-report.sh coverage` counts the tracked files no concept names.** Per top-level folder, the files under no path a concept names in its `resource` or `sources`, and the list under a folder you name: ktl-librarian's sweep for orphans as arithmetic, where a folder the source map names is accounted for and the map's row says why it is left out.
-
 ## [0.48.0] - 2026-10-17
 
 ### Added
@@ -15,6 +11,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A domain may name domains, tier by tier.** `knowledge-federate.py build` follows a member whose released bundle is itself a domain as deep as the top `Domain` concept's `max_depth` allows, 3 unless set, and `domain.yaml` adds `max_depth` and a `MemberDomain` class so a manifest says which members are domains. The lock records each member's tier and every domain that named it, and the workspace index says who named each.
 - **The diamond rule.** A bundle two domains name at one release joins the workspace once, named by both; named at two releases it stops the build, because a named graph holds one release. `members --add` drafts a `MemberDomain` when the release it admits is a domain.
 - **`docs/federation.md` takes the federation's mechanics out of the context-layer page.** It holds the tiers of domains with the figure `ktl-federation-tiers.svg`, how the workspace stays current, what exists today and the decisions, two of them new: namespaces that mirror the tree, and what a member adds. `docs/context-layer.md` keeps the discourse, the one-bundle table and the design.
+- **`knowledge-report.sh coverage` counts the tracked files no concept names.** Per top-level folder, the files under no path a concept names in its `resource` or `sources`, and the list under a folder you name: ktl-librarian's sweep for orphans as arithmetic, where a folder the source map names is accounted for and the map's row says why it is left out.
 
 ### Changed
 
