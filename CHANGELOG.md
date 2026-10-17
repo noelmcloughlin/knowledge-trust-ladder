@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A domain may name domains, tier by tier.** `knowledge-federate.py build` follows a member whose released bundle is itself a domain as deep as the top `Domain` concept's `max_depth` allows, 3 unless set, and `domain.yaml` adds `max_depth` and a `MemberDomain` class so a manifest says which members are domains. The lock records each member's tier and every domain that named it, and the workspace index says who named each.
+- **The diamond rule.** A bundle two domains name at one release joins the workspace once, named by both; named at two releases it stops the build, because a named graph holds one release. `members --add` drafts a `MemberDomain` when the release it admits is a domain.
+- **`docs/context-layer.md` has a section on tiers**, with the figure `ktl-federation-tiers.svg`, the definitions a tree of domains rests on, and two decisions more: namespaces that mirror the tree, and what a member adds.
+
+### Fixed
+
+- **Two tiers may each name a `members/<slug>.md`.** Each bundle keeps a folder of its own under `bundles/` and `export/`, and none can take the domain's own `domain` folder.
+
 ## [0.47.1] - 2026-10-17
 
 ### Changed
