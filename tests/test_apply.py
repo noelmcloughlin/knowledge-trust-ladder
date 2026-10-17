@@ -13,7 +13,9 @@ This was check 19 in scripts/validate-repository.sh:
 - a reader's question reaches the ledger, and a hand-off line its file, with
   no character a reader cannot see;
 - the index bullets and the log heading are kept in step;
-- the lokf:related block survives a rewrite;
+- the lokf:related block survives a rewrite, and a rewrite sets frontmatter
+  as a patch does;
+- an operation takes only the keys it reads, and any other is refused by name;
 - a handled feedback entry leaves feedback.md for the ledger, with the
   reader's question in a code span;
 - a dry run writes nothing;
@@ -325,6 +327,28 @@ def test_rewrite_carries_the_related_block_over_and_reuses_todays_heading(applie
     ), f"rewrite lost the lokf:related block or doubled today's heading: {confirmed}"
 
 
+def test_rewrite_sets_frontmatter_as_patch_does_and_both_bullets_follow(applied):
+    """A `set` on a rewrite was once dropped without a word, and the dry run passed."""
+    kb = kb_of(applied)
+    applies(
+        applied,
+        lines(
+            "ops:",
+            '  - {op: rewrite, path: playbooks/draft.md, body: "# Overview'
+            + r"\n\nRewritten from the source.\n"
+            + '", set: {title: Draft Two, description: a rewritten draft.}, log: rewritten}',
+        ),
+    )
+    draft = read(kb / "playbooks" / "draft.md")
+    assert (
+        "Rewritten from the source." in draft
+        and has_line(draft, "title: Draft Two")
+        and has_line(draft, "description: a rewritten draft.")
+        and has_line(read(kb / "index.md"), "* [Draft Two](playbooks/draft.md) - a rewritten draft.")
+        and has_line(read(kb / "playbooks" / "index.md"), "* [Draft Two](draft.md) - a rewritten draft.")
+    ), f"rewrite did not set the title and description, or the bullets did not follow: {draft}"
+
+
 def test_delete_removes_a_draft_both_its_bullets_and_logs_why(applied):
     kb = kb_of(applied)
     applies(
@@ -370,11 +394,52 @@ REFUSED = [
         lines("ops:", '  - {op: patch, path: playbooks/new.md, set: {by: "human:ada"}, log: x}'),
         "set may not touch by",
     ),
+    (
+        "setting status on a rewrite",
+        lines("ops:", "  - {op: rewrite, path: playbooks/new.md, body: b, set: {status: stable}, log: x}"),
+        "set may not touch status",
+    ),
+    (
+        "setting a title with square brackets on a rewrite",
+        lines("ops:", '  - {op: rewrite, path: playbooks/new.md, body: b, set: {title: "New [2]"}, log: x}'),
+        "a title may not contain square brackets",
+    ),
 ]
 
 
 @pytest.mark.parametrize(("what", "text", "expected"), REFUSED, ids=[w for w, _, _ in REFUSED])
 def test_refuses(applied, what, text, expected):
+    refuses(applied, text, what, expected)
+
+
+# An operation takes only the keys it reads. Any other key is refused by name,
+# so a patch never passes a dry run with a key the pen would drop.
+UNKNOWN_KEY_REFUSED = [
+    (
+        "edits on a rewrite",
+        lines("ops:", "  - {op: rewrite, path: playbooks/new.md, body: b, edits: [{append: {content: x}}], log: x}"),
+        "playbooks/new.md: rewrite does not take edits; it takes op, path, body, set, revision, log, from_feedback, asked",
+    ),
+    (
+        "a revision on a recheck",
+        lines("ops:", '  - {op: recheck, path: playbooks/new.md, revision: "0123456789abcdef0123456789abcdef01234567"}'),
+        "playbooks/new.md: recheck does not take revision; it takes op, path",
+    ),
+    (
+        "a misspelt set on a patch",
+        lines("ops:", "  - {op: patch, path: playbooks/new.md, edits: [{append: {content: x}}], sets: {description: d.}, log: x}"),
+        "patch does not take sets",
+    ),
+    (
+        "an actor on one operation",
+        lines("ops:", '  - {op: question, path: playbooks/new.md, text: "is this right?", by: "process:other"}'),
+        "question does not take by",
+    ),
+]
+
+
+@pytest.mark.parametrize(("what", "text", "expected"), UNKNOWN_KEY_REFUSED, ids=[w for w, _, _ in UNKNOWN_KEY_REFUSED])
+def test_refuses_a_key_the_operation_does_not_take(applied, what, text, expected):
     refuses(applied, text, what, expected)
 
 

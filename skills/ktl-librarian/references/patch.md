@@ -42,6 +42,8 @@ ops:
     body: |
       # Overview
       ...
+    set:                         # optional; frontmatter keys to set, as on patch
+      description: How a release is cut and published by the release workflow.
     log: "the release page was rewritten around the new workflow"
 
   - op: question                 # one open question in the curator's shape; sets status: draft
@@ -70,11 +72,21 @@ handoff:                         # optional; at most ten lines of 300 characters
 
 The values are fictional, as in the skill page's example; build ids from the bundle's real `base_iri`.
 
+Each operation takes `op`, `path` and the keys below, and the script refuses any other key by name:
+
+- `create`: `frontmatter`, `body`, `revision`, `log`, `from_feedback`, `asked`
+- `patch`: `edits`, `set`, `revision`, `log`, `from_feedback`, `asked`
+- `rewrite`: `body`, `set`, `revision`, `log`, `from_feedback`, `asked`
+- `question`: `text`, `log`, `from_feedback`, `asked`
+- `resolve`: `target`, `log`, `from_feedback`, `asked`
+- `delete`: `log`, `from_feedback`, `asked`
+- `recheck` and `reindex`: no other key
+
 ## What the script does for you
 
-- **Provenance.** `create`, `patch` and `rewrite` stamp `generated: { by, at }` with this run's actor and the clock. Pass `revision: "<full commit hash>"` on an operation to record it where the toolkit accepts the key.
+- **Provenance.** `create`, `patch` and `rewrite` stamp `generated: { by, at }` with this run's actor and the clock. Pass `revision: "<full commit hash>"` on one of those three to record it where the toolkit accepts the key.
 - **Status.** `create` sets `status: draft`; `question` sets it too. Nothing else touches `status`.
-- **The index.** `create` adds the concept's bullet, its title linked to its file and followed by its description, to the folder's `index.md` and to the root `index.md`. `set` of `title` or `description` rewrites both, and `delete` removes both. `reindex` re-derives both from the frontmatter as it stands, for a bullet that drifted or a concept the script may not patch, and touches neither the concept nor the log.
+- **The index.** `create` adds the concept's bullet, its title linked to its file and followed by its description, to the folder's `index.md` and to the root `index.md`. `set` of `title` or `description`, on a `patch` or a `rewrite`, rewrites both, and `delete` removes both. `reindex` re-derives both from the frontmatter as it stands, for a bullet that drifted or a concept the script may not patch, and touches neither the concept nor the log.
 
   In the root, a bullet goes under the heading named after its folder, at any level, or else in a section below the title that links the folder's `index.md`. A new folder gets a new section, at the level the root's other sections use. A concept's bullet is a line that holds its link alone, optionally followed by its description, and the script rewrites every such line. An index that lists the concept another way, among other links on one line or in a sentence, keeps that line: `create`, `set` and `reindex` leave it alone, and `delete` takes the link out of a comma-separated list of links. A link inside another concept's bullet does not count as a listing.
 - **The log.** Every operation but `recheck` and `reindex` gives one bullet under today's `## YYYY-MM-DD` heading, newest day first, reusing the heading a run earlier today made. A `log` line that does not start with `**` gets the label `**Changed**` (or `**Rewrite**`, or `**Resolved**`). A `from_feedback` operation's bullet is labelled `**From reader feedback**`. Say there what changed and why, in your own words, and never copy the reader's.
@@ -92,6 +104,7 @@ Any one of these refuses the whole file, and nothing is written:
 - a patch after which any concept it writes would hold a person's record other than the one the file held: a `human:` event or a person's note added, changed or removed, however the operations spelt it;
 - `by` that is not `process:<id>`;
 - a path that is not lowercase a-z, 0-9 and hyphens under a folder, or that is `index.md`, `log.md` or `diataxis.md`;
+- a key the operation does not take, such as `edits` on a `rewrite` or `log` on a `recheck`;
 - `create` on a path that exists, or any other operation on one that does not;
 - `create` or `set` carrying `generated`, `verified`, `status`, `stale_after` or `timestamp`; `set` carrying `id` or `type`; an `id` that is not `base_iri` plus the path;
 - `patch`, `rewrite`, `set` or `delete` on a concept whose `generated.by` starts with `human:` (a person wrote that text; add a `question` instead);

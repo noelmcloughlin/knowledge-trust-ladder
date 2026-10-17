@@ -7,6 +7,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **`knowledge-apply.sh` lists a concept with no description by its link alone.** Its index bullets ended in a bare " - ", the separator for a description that was not there.
+- **`knowledge-apply.sh` applies a `set` on a `rewrite` as it does on a `patch`.** It used to drop the key without a word while the dry run passed, and now every operation refuses a key it does not take, naming it.
 
 ## [0.45.0] - 2026-10-16
 
