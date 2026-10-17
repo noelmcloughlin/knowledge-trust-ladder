@@ -42,7 +42,7 @@ The workflow builds from the checkout, which lacks a gitignored bundle. Build th
 
 ## Another forge
 
-The workflow is GitHub Actions. On GitLab, Codeberg or another forge, run the same commands in that forge's CI (`uv sync --locked` in `.lokf/`, then `npm ci` and `npm run build` in `website/`) and publish `website/dist` as its pages artifact. GitLab, for example, takes a `public/` folder from a job named `pages`. Links to repository files still name `github.com`, since `REPO_URL` does; a forge-neutral link is a change to `scripts/routes.mjs`.
+The workflow is GitHub Actions. On GitLab, Codeberg, Forgejo, Gitea or another forge, run the same commands in that forge's CI (`uv sync --locked` in `.lokf/`, then `npm ci` and `npm run build` in `website/`) and publish `website/dist` as its pages artifact. GitLab, for example, takes a `public/` folder from a job named `pages`. Links to repository files still name `github.com`, since `REPO_URL` does; a forge-neutral link is a change to `scripts/routes.mjs`.
 
 ## Keeping the site's packages current
 

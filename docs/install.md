@@ -47,7 +47,7 @@ The commands above install for your user. The scheduled librarian run installs `
 
 ## Turn on the workflows
 
-Each workflow the skills install does nothing until a repository variable turns it on. Set these under Repository variables (Settings, Secrets and variables, Actions, Variables), never on an environment such as `release`, which the workflows cannot read. [The sidecar's automation page](../skills/ktl-sidecar/references/automation.md#switches-and-where-they-go) lists every switch and secret, and where each goes.
+Each workflow the skills install does nothing until a repository variable turns it on. Set these under Repository variables (Settings, Secrets and variables, Actions, Variables), never on an environment such as `release`, which the workflows cannot read. [The sidecar's automation page](../skills/ktl-sidecar/references/automation.md#switches-and-where-they-go) lists every switch and secret, and where each goes. The workflows are GitHub Actions. On GitLab, Codeberg, Forgejo or Gitea, [the sidecar's portability page](../skills/ktl-sidecar/references/portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says what their CI runs instead, and what the forge-free gate replaces.
 
 ## Pin to one tag
 
@@ -67,6 +67,6 @@ Every skill runs from a POSIX shell (on Windows, the bash of Git for Windows, as
 | `ktl-curator` | this machine signed in to the forge (`gh` or `glab`) to record a confirmation in your name, and signed commits when you open your own curation pull requests ([signing-commits.md](signing-commits.md)) |
 | `ktl-docent` | nothing |
 | `ktl-prose` | `python3` 3.9 or newer, or `uv`, for its check script, and git to compare a file with its earlier version |
-| `ktl-website` | a sidecar from 0.30.0 or later, `uv`, and Node.js 22.12 or newer with npm to build the site here; GitHub Actions and Pages to publish it |
+| `ktl-website` | a sidecar from 0.30.0 or later, `uv`, and Node.js 22.12 or newer with npm to build the site here; GitHub Actions and Pages to publish it, or the same build in another forge's CI ([deploy.md](../skills/ktl-website/references/deploy.md#another-forge)) |
 
 Someone who cannot act on a line the preflight prints, such as a **curator** who knows the subject but not the repository, gets a request note for whoever set the repository up. The note comes from the **sidecar**'s [prerequisites page](../skills/ktl-sidecar/references/prerequisites.md).

@@ -1,6 +1,6 @@
 # Portability: reusing the KTL skills on another host
 
-The skills are repository-agnostic. Run them in any directory tree, including an empty one. The bundle is the same on every host: `.lokf/knowledge/`, one Markdown file per concept, validated by the same toolkit. What varies is the shell, the version control, the forge (GitHub, GitLab, Forgejo, or none), and what each of the four skills can do there.
+The skills are repository-agnostic. Run them in any directory tree, including an empty one. The bundle is the same on every host: `.lokf/knowledge/`, one Markdown file per concept, validated by the same toolkit. What varies is the shell, the version control, the forge (GitHub, GitLab, Codeberg, Forgejo, Gitea, or none), and what each of the four skills can do there.
 
 **Run the preflight first.** Before the sidecar exists it is `bash templates/scripts/knowledge-preflight.sh`; afterwards it is `.lokf/scripts/knowledge-preflight.sh`. Its last line names your case, and the matching section below says what to do. If a line names something you cannot fix yourself, [prerequisites.md](prerequisites.md) says who can, and what to send them.
 
@@ -10,7 +10,7 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | macOS | everything, on the stock bash 3.2 | `sha256sum` | `shasum -a 256` |
 | Windows, Git for Windows | everything from its bash | the `ln -s` doorway | a junction (below) |
 | Windows, PowerShell | the toolkit, git, the plugins | every script and command, which are bash | run them through Git for Windows' bash (below) |
-| GitLab, Forgejo, Gitea | the sidecar, librarian, docent; the curator with `glab` or the signing-key route | the GitHub Actions workflows, ktl-website's deploy included | the wrapper in that CI, the gate ported per the recipe below, or the forge-free gate |
+| GitLab, Codeberg, Forgejo, Gitea | the sidecar, librarian, docent; the curator with `glab` or the signing-key route | the GitHub Actions workflows, ktl-website's deploy included | the wrapper in that CI, the gate ported per the recipe below, or the forge-free gate |
 | No forge, git only | everything local | the gate, pull requests, the scheduled loop | review by the host's own mechanism; the forge-free gate for confirmations |
 | No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |
@@ -48,17 +48,17 @@ The scaffold is files, so any directory tree works: a local or shared filesystem
 
 `.lokf/.gitignore` and `.lokf/.gitattributes` are inert. Keep them, since version control may arrive later, or drop them. Skip the "commit" instructions, rely on the platform's own versioning or backup, and review changes by whatever mechanism the host offers instead of pull requests. Step 5 does not apply, except the preflight and `knowledge-feedback.sh`, which need nothing. The **librarian** leaves `revision` out and hands off by pointing at the changed files. The **curator**'s identity is the account the platform's version history shows, and that history is the only thing that checks a confirmation; the curator's [portability.md](../../ktl-curator/references/portability.md) has the rule. A SharePoint or OneDrive workspace whose curators sign in to Microsoft 365 would need an identity of its own, which the curator's [domain-schemas.md](../../ktl-curator/references/domain-schemas.md) records as a shape held in reserve.
 
-### Not GitHub: GitLab, Forgejo, Gitea, another forge, or none
+### Not GitHub: GitLab, Codeberg, Forgejo, Gitea, another forge, or none
 
 Step 5's workflow files are GitHub Actions. What ports unchanged: the wrapper script (bash), the conventions and preflight scripts, and `lokf validate` as the gate. The `publish` job's own guards port too: the patch-scope check and the refusal of an added `by: human:` line, both plain shell.
 
 What has to be rewritten is what talks to GitHub:
 
 - In the librarian workflow, the review pull request is opened with `actions/github-script`. On GitLab, open a merge request with `glab mr create` or the API, using a project access token with `api` scope; a job token cannot open one.
-- In the registrar workflow, the `provenance` job reads reviews and commit verification through `gh api`. GitLab exposes the same facts as `GET /projects/:id/merge_requests/:iid/approvals` and `GET /projects/:id/repository/commits/:sha/signature`. Forgejo and Gitea expose them as the pull request's reviews and the commit's `verification` object.
+- In the registrar workflow, the `provenance` job reads reviews and commit verification through `gh api`. GitLab exposes the same facts as `GET /projects/:id/merge_requests/:iid/approvals` and `GET /projects/:id/repository/commits/:sha/signature`. Forgejo, which Codeberg runs, and Gitea expose them as the pull request's reviews and the commit's `verification` object.
 - The release workflow uploads the zip with `gh release upload` and records a GitHub attestation. On another forge, attach the zip through that forge's release API, or skip the workflow; the bundle is in git either way.
 
-One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions runs GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below needs no forge at all.
+One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions, on Codeberg among other hosts, and Gitea Actions run GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below needs no forge at all.
 
 ### Not Linux: Windows and PowerShell
 

@@ -1,6 +1,6 @@
 # Signing your commits
 
-A signature ties a commit to you cryptographically, so GitHub can show it `Verified`. In the KTL repositories it is *required* for one thing: a pull request that adds or removes a `by: human:` verification event in `.lokf/knowledge/`.
+A signature ties a commit to you cryptographically, so the forge can show it `Verified`. In the KTL repositories it is *required* for one thing: a pull request that adds or removes a `by: human:` verification event in `.lokf/knowledge/`.
 
 The `provenance` job in each repository's `knowledge-registrar.yaml` checks those. It accepts either an approving review from the confirming account or a verified commit attributed to it. A sole maintainer cannot approve their own pull request, so for them the signature is the only path. The job exists because a claim that a named person checked a concept has to be tied back to that person: [threat-model.md](threat-model.md) says what such a confirmation proves.
 
@@ -34,7 +34,7 @@ The key lives in `~/.gnupg/`. You never save it to a file of your own: exporting
    git config --global commit.gpgsign true
    ```
 
-5. **Give the public half to GitHub.** Copy the whole block, `BEGIN`/`END` lines included, and paste it at github.com/settings/keys → **New GPG key**:
+5. **Give the public half to the forge.** Copy the whole block, `BEGIN`/`END` lines included, and paste it at github.com/settings/keys → **New GPG key**, or under your profile's GPG keys on GitLab, Codeberg or Gitea:
 
    ```bash
    gpg --armor --export <fingerprint>
@@ -64,10 +64,10 @@ ssh-keygen -t ed25519 -C "you@example.com"     # skip if ~/.ssh/id_ed25519 exist
 git config --global gpg.format ssh
 git config --global user.signingkey ~/.ssh/id_ed25519.pub
 git config --global commit.gpgsign true
-cat ~/.ssh/id_ed25519.pub                      # paste this into GitHub
+cat ~/.ssh/id_ed25519.pub                      # paste this into the forge
 ```
 
-Add it at github.com/settings/keys under **SSH keys** → **New SSH key** → **Key type: Signing Key**. GitHub keeps authentication and signing keys in separate lists. A key registered only for authentication leaves every commit `Unverified`, even though it is the same key.
+Add it at github.com/settings/keys under **SSH keys** → **New SSH key** → **Key type: Signing Key**. GitHub keeps authentication and signing keys in separate lists. A key registered only for authentication leaves every commit `Unverified`, even though it is the same key. GitLab asks the same as the key's *usage type*.
 
 ## Renew a GPG key before it expires
 
@@ -87,7 +87,7 @@ Two things to know:
 
 ## Put your key on file for the forge-free gate
 
-A repository that runs `knowledge-provenance.sh` (ktl-sidecar Step 5) checks each confirmation's signature against a public key it carries under `.lokf/curators/`. The file is named after your login on the forge (GitHub, GitLab or Forgejo). Export the key you sign with and open a pull request holding only that file. The gate, the CI job that checks a pull request, refuses a change that adds a key and a confirmation by its holder together:
+A repository that runs `knowledge-provenance.sh` (ktl-sidecar Step 5) checks each confirmation's signature against a public key it carries under `.lokf/curators/`. The file is named after your login on the forge (GitHub, GitLab, Codeberg or another). Export the key you sign with and open a pull request holding only that file. The gate, the CI job that checks a pull request, refuses a change that adds a key and a confirmation by its holder together:
 
 ```bash
 gpg --armor --export YOUR_KEY_ID > .lokf/curators/YOUR_LOGIN.asc   # GPG (the export includes the subkeys)

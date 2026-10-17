@@ -1,6 +1,6 @@
 # Step 5 automation: what the files do and how to set them up
 
-You install these files once. This page covers the librarian loop, the release asset and the feedback script, and how to set each up. [gate.md](gate.md) covers the registrar workflow and the two scripts it runs, and ktl-librarian's [scheduled-task.md](../../ktl-librarian/references/scheduled-task.md) says how the librarian loop behaves at run time. The workflows apply only to a **git-tracked** `.lokf/` on **GitHub**; SKILL.md Step 5 says why a gitignored bundle makes them a permanent no-op.
+You install these files once. This page covers the librarian loop, the release asset and the feedback script, and how to set each up. [gate.md](gate.md) covers the registrar workflow and the two scripts it runs, and ktl-librarian's [scheduled-task.md](../../ktl-librarian/references/scheduled-task.md) says how the librarian loop behaves at run time. The workflows apply only to a **git-tracked** `.lokf/` on **GitHub**; SKILL.md Step 5 says why a gitignored bundle makes them a permanent no-op. [portability.md](portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says what GitLab, Codeberg, Forgejo or Gitea keep of them, and what a port rewrites.
 
 Each file has a section on one of the two pages. Read the one you are setting up.
 
