@@ -26,7 +26,7 @@ docs/
   architecture.en-simple.md  the architecture page retold for readers aged 13 to 18
   install.md            the quick start, every way to install the six skills, and pinning to one release
   for-the-curious.md    the architecture's mechanics: four levels of checking, domain schemas
-  context-layer.md      the context layer: one bundle, a federation of bundles, what exists and what is design
+  context-layer.md      the context layer: one bundle, and a federation of bundles
   context-layer-technology.md  the stores, catalogues, agent surfaces and artifact repositories it integrates with
   obsidian.md           the bundle as a vault of its own, and the two plugins
   m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first

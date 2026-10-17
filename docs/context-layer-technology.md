@@ -1,7 +1,7 @@
 # What a KTL context layer integrates with
 
 > [!NOTE]
-> This page is for anyone choosing the artifact repository, the store and the agent surface for the workspace that [A federation of bundles](federation.md) describes. Every product fact below comes from that vendor's own documentation, read on 2026-10-12, and a product is listed only where its own page states the capability. Nothing here is an endorsement.
+> This page is for anyone choosing the artifact repository, the store and the agent surface for the workspace that [A federation of bundles](federation.md) describes. Every product fact comes from the vendor's own documentation, read on 2026-10-12, and nothing here is an endorsement.
 
 Below, *the toolkit* is `lokf` at 0.8.0, the floor the sidecar pins. A bundle leaves the toolkit in three forms:
 
@@ -32,11 +32,11 @@ The workspace adds one named graph per bundle and a registry keyed by `base_iri`
 | Cloudsmith raw | "Any file, any extension, suitable for datasets, images or whatever you want to throw at it"; not on the Core plan | Webhooks such as `package.synced`, with a hash-based message authentication code (HMAC) in `X-Cloudsmith-Signature` |
 | An OCI registry with ORAS | "the ORAS project provides a way to push and pull OCI Artifacts to and from OCI Registries"; the compatibility list names GitHub's, Amazon's, Azure's and Google's registries, Artifactory and Harbor | The registry's own events; cosign signs the blob keyless through OpenID Connect, or `actions/attest` records provenance |
 
-Two services sit beside the repository. w3id.org is "a secure, permanent URL redirection service run by the W3C Permanent Identifier Community Group", registered by pull request, and gives a bundle a `base_iri` that outlives its host. GitHub Pages is "a static site hosting service" with sites "no larger than 1 GB" and "a soft bandwidth limit of 100 GB per month". That is enough to serve `lokf export`'s files as the LOKF specification's producer contract asks.
+Two services sit beside the repository. w3id.org, "a secure, permanent URL redirection service run by the W3C Permanent Identifier Community Group", gives a bundle a `base_iri` that outlives its host. A namespace is registered by pull request. GitHub Pages, "a static site hosting service" with sites "no larger than 1 GB" and "a soft bandwidth limit of 100 GB per month", is enough to serve `lokf export`'s files as the LOKF specification's producer contract asks.
 
 ## RDF stores with SPARQL
 
-Each store below answers SPARQL 1.1. The second column says whether its own documentation lists TriG or N-Quads as a load format, which keeps one named graph per bundle through the load.
+Each store below answers SPARQL 1.1. The third column says whether its documentation lists TriG or N-Quads as a load format, which keeps one named graph per bundle through the load.
 
 | Store | Hosting | TriG or N-Quads | How a graph gets in | Agent features |
 | --- | --- | --- | --- | --- |
@@ -67,17 +67,17 @@ Azure and Google Cloud offer no SPARQL service: Cosmos DB for Apache Gremlin, Gr
 | Google Cloud Knowledge Catalog (formerly Dataplex Universal Catalog) | the OKF bundle itself: Google's announcement says Knowledge Catalog ingests OKF, and the OKF repository carries a connector that pushes one bundle per entry group | the catalogue's search and context APIs |
 | TopQuadrant TQ Data Foundation, "Built entirely on open knowledge-graph standards" of RDF, OWL and SHACL | RDF, in principle; its import pages could not be read | SPARQL and MCP, per its documentation index |
 
-The OKF repository's own README names the places an OKF bundle can be consumed by reading the files: BigQuery, Dataplex, Vertex AI, Gemini, the Agent Development Kit, LangChain, Unity Catalog, Collibra, Obsidian, Notion and the static site generators.
+The OKF repository's README names the places an OKF bundle can be consumed by reading the files: BigQuery, Dataplex, Vertex AI, Gemini, the Agent Development Kit, LangChain, Unity Catalog, Collibra, Obsidian, Notion and the static site generators.
 
 ## Agent-facing retrieval
 
 The Model Context Protocol (MCP) is "an open protocol that enables seamless integration between LLM applications and external data sources and tools". The toolkit's `lokf mcp` serves one bundle today, the stores above bring servers of their own, and Microsoft 365 Copilot takes the **docent** as a skill ([m365.md](m365.md)).
 
-The retrieval frameworks that build graphs, among them Amazon Bedrock Knowledge Bases GraphRAG, Microsoft GraphRAG, LightRAG, Cognee and Graphiti, each extract a graph of their own from text. None consumes a bundle's graph as its graph, and only Cognee reads an RDF file, as an optional ontology that validates the nodes it extracts. The workspace's agent surface is therefore the store's: SPARQL behind an MCP server, with the index served first. The frameworks can still read the bundle's Markdown as documents, which is how OKF expects a bundle to be consumed.
+The retrieval frameworks that build graphs, among them Amazon Bedrock Knowledge Bases GraphRAG, Microsoft GraphRAG, LightRAG, Cognee and Graphiti, each extract a graph of their own from text. None consumes a bundle's graph, and only Cognee reads an RDF file, as an optional ontology that validates the nodes it extracts. So the workspace's agent surface is the store's: SPARQL behind an MCP server, with the index served first. The frameworks can still read the bundle's Markdown as documents, as OKF expects.
 
 ## The tables route
 
-`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalogue above that takes tables and not RDF can read that output. The tables carry the structure and the frontmatter. The bound predicates, the meaning a graph carries, stay in the RDF.
+`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalogue above that takes tables can read that output. The tables carry the structure and the frontmatter; the bound predicates, the meaning a graph carries, stay in the RDF.
 
 ## What fits a Markdown-plus-RDF bundle
 
@@ -85,7 +85,7 @@ The retrieval frameworks that build graphs, among them Amazon Bedrock Knowledge 
 - Managed SPARQL exists on AWS, through Neptune, Stardog Cloud, GraphDB's marketplace offerings and AllegroGraph Cloud, and natively on neither Azure nor Google Cloud.
 - Among catalogues, only data.world is SPARQL-native, and it takes Turtle per dataset rather than TriG. Fabric IQ takes the schema, with loss; the lakehouse catalogues take the tables; Knowledge Catalog takes the OKF bundle itself.
 - The property-graph bridge is n10s on self-hosted Neo4j, and nothing on Aura.
-- No retrieval framework surveyed consumes RDF as its graph. The RDF-native agent surfaces are the stores' MCP servers and the toolkit's own.
+- No retrieval framework surveyed consumes RDF as its graph. The RDF-native agent surfaces are the stores' MCP servers and the toolkit's.
 - Every artifact repository surveyed stores a zip and its checksum. Artifactory, Nexus and Cloudsmith send a filtered or signed webhook on arrival, and an OCI registry adds a signature through ORAS and cosign.
 - w3id.org gives a bundle a `base_iri` that outlives its host, and GitHub Pages serves `lokf export`'s files within its limits.
 
