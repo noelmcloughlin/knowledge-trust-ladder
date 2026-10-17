@@ -1,6 +1,6 @@
 # A domain bundle: confirming that a bundle belongs
 
-This page is for the **curator** of a domain host: a repository whose bundle names other repositories' knowledge bundles and whose releases build the workspace a reader queries across all of them. The design is the skills repository's [context layer page](https://w3id.org/ktl/docs/context-layer/), and its [federation page](https://w3id.org/ktl/docs/federation/) says how the workspace is built; the first such host is [ktl-federation](https://github.com/noelmcloughlin/ktl-federation). What follows is what its concepts are, what a confirmation of one attests, and what moves them.
+This page is for the **curator** of a domain host: a repository whose bundle names other repositories' knowledge bundles and whose releases build the workspace a reader queries across all of them. The design is the skills repository's [context layer page](https://w3id.org/ktl/docs/context-layer/), and the federation page it links to says how the workspace is built; the first such host is [ktl-federation](https://github.com/noelmcloughlin/ktl-federation). What follows is what its concepts are, what a confirmation of one attests, and what moves them.
 
 ## The four concept types
 
