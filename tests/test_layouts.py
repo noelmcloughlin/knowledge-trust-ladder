@@ -1261,3 +1261,27 @@ def test_the_release_compares_and_packs_a_bundle_the_same_in_each_shape(tmp_path
         zipfile.read_bytes() != (tmp_path / "rt-v3" / "release" / "knowledge.zip").read_bytes(),
         f"{shape}: a changed bundle packed to the same bytes",
     )
+
+
+def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
+    """The step's own lines, run against a justfile that names a schema, names none, names a path, and names a missing file."""
+    body = step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]")
+    assert 'asset="schema-${TAG//\\//-}-$NAME.yaml"' in body, "knowledge-release.yaml no longer packs the schema as schema-<tag>-<name>.yaml"
+    script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + body)
+
+    def attempt(line):
+        host = tmp_path / f"host{len(list(tmp_path.iterdir()))}"
+        write(host / ".lokf" / "justfile", f'set shell := ["bash", "-cu"]\n{line}\n')
+        write(host / ".lokf" / "domain.yaml", "id: https://x.example/schema\nname: x\n")
+        (host / "temp" / "release").mkdir(parents=True)
+        return run(["bash", script], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v1.2.3", "NAME": "host"}), host / "temp" / "release"
+
+    r, out = attempt('schema := "domain.yaml"')
+    assert r.rc == 0 and read(out / "schema-v1.2.3-host.yaml") == "id: https://x.example/schema\nname: x\n", r.out
+    assert run(["sha256sum", "-c", "schema-v1.2.3-host.yaml.sha256"], cwd=out).rc == 0
+    r, out = attempt('schema := ""')
+    assert r.rc == 0 and "none is attached" in r.out and not list(out.iterdir()), r.out
+    r, out = attempt('schema := "../lokf.yaml"')
+    assert r.rc == 1 and "not a path" in r.out, r.out
+    r, out = attempt('schema := "missing.yaml"')
+    assert r.rc == 1 and "not in .lokf/" in r.out, r.out
