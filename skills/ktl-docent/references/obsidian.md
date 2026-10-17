@@ -12,8 +12,8 @@ bundle is the **exhibition**, and it is opened as a vault of its own:
 1. **File → Open folder as vault**, and pick `knowledge_bundle` at the host root, the link `ktl-sidecar` laid beside `.lokf/` so that the bundle has a
    name a folder picker can see. Open the link *itself*, never the host root: a vault opened at the root cannot see a dot-folder or a link that
    resolves inside it, which is exactly what keeps the workshop clean.
-2. Install [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) and
-   [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) *in that vault*; Obsidian installs plugins per vault. There is nothing to
+2. Install [KTL Registrar](https://w3id.org/ktl/registrar/docs/install/) and
+   [KTL Curator](https://w3id.org/ktl/curator/docs/install/) *in that vault*; Obsidian installs plugins per vault. There is nothing to
    configure: the root `index.md` carries the bundle's header, so the whole vault is the bundle. Both are optional; the bundle is only Markdown.
 
 `knowledge_bundle` can be missing: a sync service such as OneDrive drops links, and a Windows checkout without `core.symlinks` shows it as a small

@@ -1,15 +1,15 @@
 # Architecture
 
-This page explains why a repository needs a catalogue, who keeps the catalogue, and how far each claim in it has been checked. It is for anyone deciding whether to use Knowledge Trust Ladder, and for anyone who keeps a bundle with it. A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
+This page explains why a repository needs a catalogue, who keeps the catalogue, and how far each claim in it has been checked. It is for anyone deciding whether to use Knowledge Trust Ladder (KTL), and for anyone who keeps a bundle with it. A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
 
-Knowledge Trust Ladder is an architecture inspired by [LOKF](https://lokf.nolan-nichols.com/specification/), by [LinkML](https://linkml.io/linkml/) and by this poem:
+KTL is an architecture inspired by [LOKF](https://lokf.nolan-nichols.com/specification/), by [LinkML](https://linkml.io/linkml/) and by this poem:
 
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Knowledge Trust Ladder keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies schema and tooling. Two Obsidian plugins are optional, for a vault with no CI.
+KTL keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. Four Agent Skills build and keep it. Registrar automation checks every record and guards every confirmation, in CI on each pull request, as a museum's registrar keeps its collection's records. A toolkit underneath supplies schema and tooling. Two Obsidian plugins are optional, for a vault with no CI.
 
 **An agent derives it. Deterministic tools check it. A named person vouches for it. The bundle records which of the three happened to every claim.**
 
@@ -30,7 +30,7 @@ A **knowledge bundle** is the catalogue: a plain folder of Markdown concept file
 
 A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and context the next task can start from. It is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). People, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html) can read it.
 
-**Knowledge Trust Ladder is an OKF runtime** to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". Here those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. A domain whose concepts stop fitting it [extends the schema](../skills/ktl-curator/references/domain-schemas.md), so its own types are checked rather than tolerated. Whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from [many federated into one layer](context-layer.md#many-bundles-federated-into-one-context-layer-the-design).
+**KTL is an OKF runtime** to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". Here those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. A domain whose concepts stop fitting it [extends the schema](../skills/ktl-curator/references/domain-schemas.md), so its own types are checked rather than tolerated. Whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from [many federated into one layer](context-layer.md#many-bundles-federated-into-one-context-layer-the-design).
 
 ## Four skills, three lines of the poem
 
@@ -65,7 +65,7 @@ At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is 
   </picture>
 </p>
 
-In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins work inside the editor. [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) does the registrar's work, checking each record as it is typed. [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) is the curator's assistant, and runs this repository's `ktl-curator` review session with no agent in the loop ([The bundle in Obsidian](obsidian.md)).
+In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins work inside the editor. [KTL Registrar](https://w3id.org/ktl/registrar/) does the registrar's work, checking each record as it is typed. [KTL Curator](https://w3id.org/ktl/curator/) is the curator's assistant, and runs this repository's `ktl-curator` review session with no agent in the loop ([The bundle in Obsidian](obsidian.md)).
 
 In the **three lines of defence** that regulated industries use, the librarian and the curator are the first line, the registrar the second, and the bundle holds the evidence a third line would need ([three-lines.md](three-lines.md)).
 
