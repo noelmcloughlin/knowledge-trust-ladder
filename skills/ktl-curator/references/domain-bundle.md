@@ -52,7 +52,7 @@ A `.example` namespace fails the third.
 
 Every domain bounds a workspace of its own. The domain a build starts from is that build's top, and the same domain may be a member of another; a domain may not name itself or a domain above it. Confirming a `MemberDomain` attests that the domain belongs under the admission rule and who answers for it: the owner of that domain, whose own confirmations cover its members. It does not vouch for the members below it.
 
-The diamond rule: a bundle two domains name at one release joins once, named by both in the lock, because the two name the same bytes. Named at two releases it stops the build, because a named graph holds one release, so the two domains' owners align their pins. An upper ontology such as gist is reached by several paths as a matter of course. The workspace index's "Named by" column says which domain's concept named each bundle.
+The diamond rule: a bundle two domains name at one release joins once, named by both in the lock, because the two name the same bytes. Named at two releases it stops the build, because a named graph holds one release, so the two domains' owners align their pins. A model many domains share, an upper ontology such as gist or a domain model, is reached by several paths as a matter of course. The workspace index's "Named by" column says which domain's concept named each bundle.
 
 ## Cross-bundle claims
 
