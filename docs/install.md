@@ -8,12 +8,12 @@ This page gives every way to install the six skills, what each needs on the mach
 
 > **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](examples/docent.md).
 
-### Github CLI
+### GitHub CLI
 
 [`gh skill`](https://cli.github.com/manual/gh_skill_install) version 2.90.0 or later; it defaults to GitHub Copilot, so pass `--agent` to name your agent (`claude-code`, `github-copilot`, `cursor`, `codex`, `gemini-cli`, or another from `gh skill install --help`):
 
 ```bash
-gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user
+gh skill install noelmcloughlin/knowledge-trust-ladder --all --scope user
 ```
 
 To install only one, name it:
@@ -33,8 +33,6 @@ npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
 ```
 
 In PowerShell or cmd, type the command on one line without the `\` continuations.
-
-**Start with the sidecar and the librarian**; the curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
 
 ### Claude Code plugin
 
