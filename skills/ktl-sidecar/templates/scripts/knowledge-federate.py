@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 # The federation build: the job that turns a domain bundle into a workspace.
 # A domain is a thin LOKF bundle whose concepts are other bundles, each a
-# `MemberBundle` that names one released zip and that zip's checksum (the
+# `MemberBundle`, or a `MemberDomain` when that bundle is a domain in turn,
+# that names one released zip and that zip's checksum (the
 # schema is .lokf/domain.yaml, laid down by ktl-sidecar for a domain host).
 # This script reads those concepts and builds the workspace the KTL context
 # layer page describes: resolve the members into a lock, fetch and verify
 # each zip, register and export each bundle with the lokf toolkit, load one
 # named graph per bundle, gate the links that cross bundles, and swap the
 # result in whole. It runs no agent, and it never writes to the bundle.
+# A member whose zip is itself a domain is followed, tier by tier, as deep
+# as the top Domain concept's `max_depth` allows (3 unless it says
+# otherwise); its members join the same workspace, and the lock says which
+# domain named each. A bundle two domains name at one release joins once,
+# named by both (the diamond rule); named at two releases it stops the
+# build, because a named graph holds one release. The domain a build starts
+# from is that build's top, and may itself be a member of another domain:
+# every domain bounds a workspace of its own.
 #
 # Run it from the host's sidecar environment, so it uses the lokf and
 # pyoxigraph the host's lock names and installs nothing of its own:
@@ -99,7 +108,9 @@ DEFAULT_MAX_BYTES = 200 * 1024 * 1024
 # so the job's token arrives under this one. It leaves this process's
 # environment here and reaches gh alone, never lokf or anything else run.
 JOB_TOKEN = os.environ.pop("KNOWLEDGE_FEDERATE_TOKEN", "")
-MAX_DEPTH = 3
+# How many tiers of members a build follows unless the top Domain concept's
+# `max_depth` says otherwise; the domain's own members are tier 1.
+DEFAULT_MAX_DEPTH = 3
 DCAT = "http://www.w3.org/ns/dcat#"
 VOID = "http://rdfs.org/ns/void#"
 DCTERMS = "http://purl.org/dc/terms/"
@@ -153,14 +164,24 @@ def read_frontmatter(path: pathlib.Path) -> dict:
 
 
 class Member:
-    """One MemberBundle concept, resolved: where its zip is and what it must be."""
+    """One MemberBundle or MemberDomain concept, resolved: where its zip is and what it must be."""
 
-    def __init__(self, concept_path: pathlib.Path, data: dict, parent_iri: str, tier: int):
+    def __init__(self, concept_path: pathlib.Path, data: dict, parent_iri: str, tier: int, ancestors: tuple[str, ...] = ()):
         self.concept_path = concept_path
         self.slug = concept_path.stem
         self.data = data
-        self.parent_iri = parent_iri
+        # The domain concepts that name this bundle: one, or more when two
+        # domains name it at one release; and the base_iris of the domains
+        # above it, the build's own first, so a domain that names one of
+        # them is told so.
+        self.parents = [parent_iri]
+        self.ancestors = tuple(ancestors)
         self.tier = tier
+        # A MemberDomain says the zip is a domain; a MemberBundle whose zip
+        # turns out to hold one is followed all the same, and is_domain then
+        # says so in the lock.
+        self.declared_domain = str(data.get("type") or "") == "MemberDomain"
+        self.is_domain = self.declared_domain
         self.base_iri = str(data.get("base_iri") or "")
         self.version = str(data.get("version") or "")
         self.release = str(data.get("release") or "")
@@ -208,8 +229,9 @@ class Member:
             "version": self.version,
             "zip": self.zip_url,
             "sha256": self.sha256,
-            "member_of": self.parent_iri,
+            "member_of": sorted(self.parents),
             "tier": self.tier,
+            "kind": "domain" if self.is_domain else "bundle",
         }
         if self.release:
             entry["release"] = self.release
@@ -222,17 +244,17 @@ class Member:
 
 
 def read_domain(knowledge: pathlib.Path):
-    """The top Domain concept and the MemberBundle concepts of one bundle folder."""
+    """The Domain concepts and the member concepts (MemberBundle or MemberDomain) of one bundle folder."""
     from lokf.model import load_bundle
 
     bundle = load_bundle(knowledge)
     domains = [c for c in bundle.concepts if c.type == "Domain"]
-    members = [c for c in bundle.concepts if c.type == "MemberBundle"]
+    members = [c for c in bundle.concepts if c.type in ("MemberBundle", "MemberDomain")]
     return bundle, domains, members
 
 
 def top_domain(bundle, domains):
-    """The one Domain concept no other Domain in the bundle contains."""
+    """The one Domain concept no other Domain in the bundle contains: the top of a build that starts here, whatever domain names this bundle in turn."""
     if not domains:
         raise Failed(f"{bundle.root}: no concept of type Domain; this bundle is not a domain")
     iris = {bundle.iri(d) for d in domains}
@@ -499,8 +521,14 @@ def lock_graph(snapshot_iri: str, domain_iri: str, domain_title: str, records: l
             add(d, DCTERMS + "license", ox.NamedNode(r["license"]))
         if r.get("publisher"):
             add(d, DCTERMS + "publisher", ox.NamedNode(r["publisher"]))
-        if r.get("member_of"):
-            add(d, DCTERMS + "isPartOf", ox.NamedNode(r["member_of"]))
+        if r.get("kind") == "domain":
+            add(d, RDF_TYPE, ox.NamedNode(DCAT + "Catalog"))
+        for parent in r.get("member_of") or []:
+            # The domain concept that named it lists it as DCAT lists a
+            # catalogue inside a catalogue: dcat:catalog for a domain,
+            # dcat:dataset for a bundle.
+            add(d, DCTERMS + "isPartOf", ox.NamedNode(parent))
+            add(ox.NamedNode(parent), DCAT + ("catalog" if r.get("kind") == "domain" else "dataset"), d)
         add(d, VOID + "triples", ox.Literal(str(r["triples"]), datatype=ox.NamedNode(XSD + "integer")))
         if r.get("zip") and r["zip"].startswith("http"):
             dist = ox.NamedNode(r["zip"])
@@ -551,7 +579,7 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT ?member ?title ?edited (MAX(?at) AS ?lastConfirmed) WHERE {
   GRAPH ?g {
     ?member rdf:type ?t ; schema:name ?title ; prov:wasGeneratedBy ?gen . ?gen prov:endedAtTime ?edited .
-    FILTER(STRENDS(STR(?t), "MemberBundle"))
+    FILTER(STRENDS(STR(?t), "MemberBundle") || STRENDS(STR(?t), "MemberDomain"))
     OPTIONAL { ?member lokf:verified ?v . ?v prov:wasAssociatedWith ?by ; prov:endedAtTime ?at . FILTER(STRSTARTS(STR(?by), "human:")) }
   }
 }
@@ -609,6 +637,10 @@ def _build(args, note_new) -> int:
     policy = str(top.data.get("unowned_targets") or "fail")
     if policy not in ("fail", "report"):
         raise Failed(f"{top.path}: unowned_targets must be fail or report, not {policy!r}")
+    raw_depth = top.data.get("max_depth")
+    max_depth = DEFAULT_MAX_DEPTH if raw_depth is None else raw_depth
+    if isinstance(max_depth, bool) or not isinstance(max_depth, int) or max_depth < 1:
+        raise Failed(f"{top.path}: max_depth must be a whole number of tiers, 1 or more, not {raw_depth!r}")
     domain_base = bundle.base_iri
     domain_title = str(bundle.meta.get("title") or top.title)
     tag = args.tag or ""
@@ -616,7 +648,7 @@ def _build(args, note_new) -> int:
     out = root / args.out
     new = root / (args.out + ".new")
     cache = pathlib.Path(args.cache).expanduser() if args.cache else root / ".lokf" / ".cache" / "federation"
-    say(f"domain {domain_iri} ({len(member_concepts)} members), policy unowned_targets={policy}")
+    say(f"domain {domain_iri} ({len(member_concepts)} members), policy unowned_targets={policy}, max_depth={max_depth}")
 
     # 1. Resolve: follow the members, and a member that is itself a domain, into a lock.
     work = pathlib.Path(tempfile.mkdtemp(prefix="federate-")) if args.verify_only else new / "bundles"
@@ -626,14 +658,29 @@ def _build(args, note_new) -> int:
         note_new(new)
     sys._federate_swapped = False
     work.mkdir(parents=True, exist_ok=True)
-    queue: list[tuple[Member, int]] = [(Member(c.path, c.data, domain_iri, 1), 1) for c in member_concepts]
-    seen: dict[str, str] = {domain_base: "the domain itself"}
+    queue: list[tuple[Member, int]] = [(Member(c.path, c.data, domain_iri, 1, (domain_base,)), 1) for c in member_concepts]
+    seen: dict[str, Member] = {}  # base_iri -> the member it joined as
+    slugs = {"domain"}  # the folder names under bundles/ and export/; "domain" is this bundle's own
     resolved: list[tuple[Member, pathlib.Path, pathlib.Path, str]] = []  # member, zip, knowledge dir, verdict
     while queue:
         member, depth = queue.pop(0)
+        if member.base_iri in member.ancestors:
+            raise Failed(f"{member.slug}: base_iri {member.base_iri} is already in the federation as a domain above this one; a domain may not name itself or its ancestors")
         if member.base_iri in seen:
-            raise Failed(f"{member.slug}: base_iri {member.base_iri} is already in the federation as {seen[member.base_iri]}; a bundle joins once, and a domain may not name its own ancestors")
-        seen[member.base_iri] = member.slug
+            # The diamond rule: two domains that name one bundle at one
+            # release name the same bytes, so it joins once, under both; at
+            # two releases the build stops, because a named graph holds one.
+            earlier = seen[member.base_iri]
+            if earlier.sha256 != member.sha256:
+                raise Failed(f"{member.slug}: base_iri {member.base_iri} is already in the federation as {earlier.slug} at {earlier.version}, named by <{earlier.parents[0]}>, and this concept names it at {member.version} under <{member.parents[0]}>; a bundle joins once, at one release, so two domains that name it must pin the same zip")
+            earlier.parents.extend(p for p in member.parents if p not in earlier.parents)
+            say(f"{member.slug}: {member.base_iri} is already in the federation as {earlier.slug} at the same release; named by a second domain, not followed again")
+            continue
+        seen[member.base_iri] = member
+        if member.slug in slugs:
+            # Two tiers may each name a members/<slug>.md; the folders stay apart.
+            member.slug = next(f"{member.slug}-{n}" for n in range(2, len(slugs) + 3) if f"{member.slug}-{n}" not in slugs)
+        slugs.add(member.slug)
         zip_path, verdict = obtain(member, cache, args.max_bytes, not args.no_attestation)
         bundle_dir = work / member.slug
         kdir = unpack(zip_path, bundle_dir)
@@ -643,15 +690,18 @@ def _build(args, note_new) -> int:
         say(f"{member.slug}: {member.version} {verdict}; base_iri checked")
         resolved.append((member, zip_path, kdir, verdict))
         if sub_domains:
-            if depth >= MAX_DEPTH:
-                raise Failed(f"{member.slug}: a domain nested deeper than {MAX_DEPTH} tiers")
+            member.is_domain = True
+            if depth >= max_depth:
+                raise Failed(f"{member.slug}: a domain at tier {depth}, and this domain's max_depth is {max_depth}; set max_depth on the Domain concept to follow it")
             sub_top = top_domain(sub_bundle, sub_domains)
             sub_iri = sub_bundle.iri(sub_top)
             for c in sub_members:
-                queue.append((Member(c.path, c.data, sub_iri, depth + 1), depth + 1))
+                queue.append((Member(c.path, c.data, sub_iri, depth + 1, (*member.ancestors, member.base_iri)), depth + 1))
             say(f"{member.slug}: a domain of {len(sub_members)} members, followed")
+        elif member.declared_domain:
+            raise Failed(f"{member.slug}: the concept is a MemberDomain, but the zip holds no concept of type Domain")
     lock = {
-        "knowledge_federate_lock": "1",
+        "knowledge_federate_lock": "2",
         "domain": domain_iri,
         "domain_base_iri": domain_base,
         "snapshot": snapshot_iri,
@@ -713,7 +763,8 @@ def _build(args, note_new) -> int:
         records.append({
             "slug": slug, "base_iri": entry.base_iri, "title": entry.title, "version": member.version if member else tag,
             "license": meta.get("license"), "publisher": pub.get("id") if isinstance(pub, dict) else None,
-            "member_of": member.parent_iri if member else None, "triples": entry.void.get("triples", 0),
+            "member_of": sorted(member.parents) if member else [], "kind": "domain" if member is None or member.is_domain else "bundle",
+            "triples": entry.void.get("triples", 0),
             "zip": member.zip_url if member else None, "sha256": member.sha256 if member else None,
             "bytes": zip_path_size(resolved, member), "description": meta.get("description", ""),
             "health": health_line(root, kdir.parent.parent), "kdir": kdir,
@@ -794,14 +845,24 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
                 records: list[dict], unowned, public: str) -> None:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     lines = [f"# {domain_title}: the workspace", "",
-             f"The graph built from the releases the domain <{domain_iri}> names, one named graph per bundle, named by that bundle's `base_iri`, with the lock as a graph of its own, <{snapshot_iri}>. Built on {today}; the members and their versions below are the lock's, and each health line is that member's own at the release named, computed when this was built. A trust label is never stored: `queries/labels.rq` computes each from the events at the moment it runs.",
+             f"The graph built from the releases the domain <{domain_iri}> names, one named graph per bundle, named by that bundle's `base_iri`, with the lock as a graph of its own, <{snapshot_iri}>. Built on {today}; the members and their versions below are the lock's, 'Named by' is the bundle whose domain concept names each (two when two domains name one bundle at one release), and each health line is that member's own at the release named, computed when this was built. A trust label is never stored: `queries/labels.rq` computes each from the events at the moment it runs.",
              "", "Read a member's own `index.md` first, then its concepts; `export/<slug>/concepts.jsonld` holds every concept of a bundle with its body.", "",
-             "## Members", "", "| Bundle | Version | Namespace | Licence | Health at this release |", "| --- | --- | --- | --- | --- |"]
+             "## Members", "", "| Bundle | Version | Namespace | Named by | Licence | Health at this release |", "| --- | --- | --- | --- | --- | --- |"]
+
+    def named_by(r: dict) -> str:
+        """The titles of the bundles whose domain concepts name this one: two when two domains name it at one release."""
+        titles = []
+        for parent in r.get("member_of") or []:
+            owner = max((x for x in records if parent.startswith(x["base_iri"])), key=lambda x: len(x["base_iri"]), default=None)
+            titles.append(owner["title"] if owner else parent)
+        return ", ".join(titles)
+
     for r in records:
         if r["slug"] == "domain":
             continue
         licence = f"<{r['license']}>" if r.get("license") else ""
-        lines.append(f"| [{r['title']}](bundles/{r['slug']}/.lokf/knowledge/index.md) | {r['version']} | `{r['base_iri']}` | {licence} | {r['health']} |")
+        title = r["title"] + (" (a domain)" if r.get("kind") == "domain" else "")
+        lines.append(f"| [{title}](bundles/{r['slug']}/.lokf/knowledge/index.md) | {r['version']} | `{r['base_iri']}` | {named_by(r)} | {licence} | {r['health']} |")
     dom = next((r for r in records if r["slug"] == "domain"), None)
     if dom:
         lines += ["", f"The domain bundle itself: [{dom['title']}](bundles/domain/.lokf/knowledge/index.md) at `{dom['base_iri']}`, {dom['triples']} triples; its health line: {dom['health']}."]
@@ -1134,6 +1195,10 @@ def members(args) -> int:
             if other and (base_iri.startswith(other) or other.startswith(base_iri)):
                 raise Failed(f"{owner}/{repo}: its namespace {base_iri} nests with {who}'s {other}; a bundle joins once, under a namespace of its own")
         taken[base_iri] = slug
+        # A release that holds a Domain concept is a domain in turn: the
+        # concept says so, and the build follows its members.
+        _, sub_domains, sub_members = read_domain(kdir)
+        in_turn = f" It is itself a domain of {len(sub_members)} member{'s' if len(sub_members) != 1 else ''}, which the build follows." if sub_domains else ""
         day = release_day(release)
         title = str(meta.get("title") or f"{repo} knowledge bundle")
         about = str(meta.get("description") or "").strip()
@@ -1143,13 +1208,13 @@ def members(args) -> int:
                 + f" It was released at {tag}" + (f" on {day}" if day else "")
                 + f", and the release workflow attached the bundle as `{zip_asset['name']}`, with a `.sha256` file and a build attestation"
                 + (f", and the bundle's schema as `{probe.schema_name}`" if probe.schema_url else "")
-                + f". Its concepts are in the namespace `{base_iri}`.\n")
-        fm = {"type": "MemberBundle", "genre": "reference", "title": title, "description": description, "resource": release_url,
+                + f". Its concepts are in the namespace `{base_iri}`.{in_turn}\n")
+        fm = {"type": "MemberDomain" if sub_domains else "MemberBundle", "genre": "reference", "title": title, "description": description, "resource": release_url,
               "base_iri": base_iri, "version": tag, "release": release_url, "distribution": distribution, "isPartOf": [domain_iri]}
         ops.append({"op": "create", "path": path, "frontmatter": fm, "body": body,
                     "log": f"**Added**: {title}, {owner}/{repo} at {tag}; a person confirms the member to admit it."})
         ops.append({"op": "question", "path": path, "text": f"{owner}/{repo} is proposed as a member at {tag}; does it belong under the admission rule?"})
-        handoff.append(f"{slug}: new member at {tag}; {verdict}; base_iri {base_iri} read from the zip; a person confirms the member to admit it.")
+        handoff.append(f"{slug}: new member at {tag}; {verdict}; base_iri {base_iri} read from the zip{'; a domain in turn' if sub_domains else ''}; a person confirms the member to admit it.")
         added += 1
     for line in current:
         say(line)
