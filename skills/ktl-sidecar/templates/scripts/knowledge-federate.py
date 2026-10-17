@@ -61,6 +61,13 @@
 # check the toolkit's own registry cannot make; and blank nodes are given
 # canonical labels before the graph is written, because lokf export labels
 # them at random and the same releases must give the same bytes.
+#
+# gh needs a credential to verify an attestation. The sidecar's librarian
+# wrapper strips every token from the agent's environment and passes one
+# back only under a name gh does not read, so a domain host sets the
+# variables AGENT_USE_JOB_TOKEN to true and AGENT_API_KEY_ENV to
+# KNOWLEDGE_FEDERATE_TOKEN: the refresh job's read-only token then arrives
+# under that name, and this script hands it to gh alone, as GH_TOKEN.
 """The federation build, the domain's librarian, and a reader over the snapshot."""
 
 from __future__ import annotations
@@ -68,7 +75,9 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import functools
 import json
+import os
 import pathlib
 import re
 import shutil
@@ -86,6 +95,10 @@ NAME = "knowledge-federate"
 ACTOR = "process:knowledge-federate"
 USER_AGENT = "knowledge-federate (https://github.com/noelmcloughlin/knowledge-trust-ladder)"
 DEFAULT_MAX_BYTES = 200 * 1024 * 1024
+# The librarian wrapper refuses to pass a credential under a name gh reads,
+# so the job's token arrives under this one. It leaves this process's
+# environment here and reaches gh alone, never lokf or anything else run.
+JOB_TOKEN = os.environ.pop("KNOWLEDGE_FEDERATE_TOKEN", "")
 MAX_DEPTH = 3
 DCAT = "http://www.w3.org/ns/dcat#"
 VOID = "http://rdfs.org/ns/void#"
@@ -280,13 +293,29 @@ def check_zip(path: pathlib.Path, max_bytes: int) -> None:
                 raise Failed(f"{path.name}: entry {name!r} is a symbolic link, which a bundle zip never carries")
 
 
+def gh_env() -> dict | None:
+    """The environment gh runs in: this one, with the job's token as GH_TOKEN when it came."""
+    return {**os.environ, "GH_TOKEN": JOB_TOKEN} if JOB_TOKEN else None
+
+
+@functools.cache
+def gh_has_credential(gh: str) -> bool:
+    if JOB_TOKEN or os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"):
+        return True
+    return subprocess.run([gh, "auth", "status"], capture_output=True, text=True).returncode == 0
+
+
 def verify_attestation(path: pathlib.Path, owner: str, repo: str) -> str:
     """gh attestation verify, when gh is present; the verdict as one line."""
     gh = shutil.which("gh")
     if not gh:
         return "not checked: gh is not installed"
+    if not gh_has_credential(gh):
+        raise Failed(f"{path.name}: gh has no credential to verify the attestation of {owner}/{repo}. "
+                     "In the librarian workflow, set the repository variables AGENT_USE_JOB_TOKEN to true and "
+                     "AGENT_API_KEY_ENV to KNOWLEDGE_FEDERATE_TOKEN; elsewhere, run gh auth login, or pass --no-attestation")
     done = subprocess.run([gh, "attestation", "verify", str(path), "--repo", f"{owner}/{repo}"],
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, env=gh_env())
     if done.returncode != 0:
         raise Failed(f"{path.name}: gh attestation verify failed for {owner}/{repo}: {(done.stderr or done.stdout).strip()[:300]}")
     return f"attested by {owner}/{repo}"
@@ -847,7 +876,7 @@ def open_librarian_pr() -> bool:
     if not gh:
         return False
     done = subprocess.run([gh, "pr", "list", "--state", "open", "--search", "head:knowledge-librarian/", "--json", "number"],
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, env=gh_env())
     return done.returncode == 0 and bool(json.loads(done.stdout or "[]"))
 
 
