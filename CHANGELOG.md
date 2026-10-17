@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.47.1] - 2026-10-17
+
 ### Changed
 
 - **The website's figures stay in the text column.** On a wide screen a diagram no longer grows into the main pane's spare width; a click opens it at full size. The change is in the template's `theme.css` and `Mermaid.astro`, so a host gets it with its next website repair.
