@@ -94,7 +94,8 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 | `lokf tables` to Parquet, with BigQuery or Athena table definitions | exists | lokf 0.8.0 |
 | Domains as thin bundles, their domain schema, a person's confirmation of membership | exists | `domain.yaml` in the sidecar's templates, and the first domain host, [ktl-federation](https://github.com/noelmcloughlin/ktl-federation), whose members are this bundle, ai-linkmo's and lmodel/gist's; the curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md) |
 | The lock, the refresh job and the atomic swap | exists | `knowledge-federate.py` and `knowledge-federation.yaml` in the sidecar's templates ([automation.md](../skills/ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host)) |
-| One named graph per bundle, lazy loading, a `lokf-registry` MCP server | design | specification section 11.4, marked informative |
+| One named graph per bundle | exists | `knowledge-federate.py build` in the sidecar's federation templates |
+| Lazy loading, and a `lokf-registry` MCP server | design | specification section 11.4, marked informative |
 | Harvesting remote artifacts, and the `sensitivity` gate | design | specification section 11.5; the field exists, and nothing reads it |
 | Per-query permissions | design | the store's and the artifact repository's access control, not the bundle's |
 
