@@ -1,9 +1,66 @@
 <svg width="720" height="784" viewBox="0 0 720 784" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
 <title id="t">Context layer</title>
-<desc id="d">Top to bottom. Four sub-domain bundles, A to D, are each built and curated in their own repository on their own trust ladder. Each validates against a LinkML schema and projects to a graph: A and C against the LOKF schema, B and D against a domain schema that imports it. Each release is validated, packed, checksummed and attested into an artifact repository, which holds versioned releases of bundles today, and of domain schemas and manifests once a domain is built. Domains are manifests, not copies: Domain 1 selects bundles A and B, Domain 2 selects C and D, and the top domain selects both domains; a named person confirms each one's membership, and they are bound only when the workspace is built. The context layer is one traversable knowledge graph in a workspace bounded by the top domain, built ahead of time and refreshed on each release, with every trust label computed on read. Readers - agents, copilots and the people who ask them - traverse it on demand. The domain manifests and the context layer shipped on 2026-10-16 as the sidecar's federation templates, with ktl-federation as the first host; the bundles, the release step and the artifact repository are what every repository has.</desc>
+<desc id="d">Bottom to top. Four sub-domain bundles, A to D, are each built and curated in their own repository on their own trust ladder. Each validates against a LinkML schema and projects to a graph: A and C against the LOKF schema, B and D against a domain schema that imports it. Each release is validated, packed, checksummed and attested into an artifact repository, which holds versioned releases of bundles today, and of domain schemas and manifests once a domain is built. Domains are manifests, not copies, each labelled with its domain concept's path: domains/domain1 selects bundles A and B, domains/domain2 selects C and D, and domains/federation, where the build starts, selects both domains; a named person confirms each one's membership, and they are bound only when the workspace is built. The context layer is one traversable knowledge graph in the workspace domains/federation bounds, built ahead of time and refreshed on each release, with every trust label computed on read. Readers - agents, copilots and the people who ask them - traverse it on demand. The domain manifests and the context layer shipped on 2026-10-16 as the sidecar's federation templates, with ktl-federation as the first host; the bundles, the release step and the artifact repository are what every repository has.</desc>
 <rect width="720" height="784" fill="#1C1C1A"/>
 <!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#ABA9A0"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#E4BD6E"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#1C1C1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#93C0F2" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#23301B" stroke="#6FA33F" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#6FA33F" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#6FA33F" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Trust Ladder</text><!-- ktl-brand:end -->
 <text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#E6E4DC">Context layer</text>
+<g transform="translate(0,-610)">
+<rect x="20" y="658" width="680" height="66" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<g transform="translate(46,691)" stroke="#ABA9A0" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="-6" r="4"/><path d="M-8 9 a8 8 0 0 1 16 0"/></g>
+<text x="70" y="680" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E6E4DC">Readers</text>
+<text x="70" y="696" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">agents, copilots and the people who ask them</text>
+<text x="70" y="711" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">every answer says how far it has been checked</text>
+</g>
+<line x1="360" y1="144" x2="360" y2="118" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M355.5 124.6 L360 118 L364.5 124.6" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="368" y="135" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">index first, then traverse on demand</text>
+<g transform="translate(0,-410)">
+<rect x="20" y="558" width="680" height="66" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
+<g transform="translate(46,591)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="-7" x2="8" y2="7"/><line x1="8" y1="-7" x2="-8" y2="7"/><line x1="-8" y1="-7" x2="8" y2="-7"/><circle cx="0" cy="0" r="3" fill="#33290F"/><circle cx="-8" cy="-7" r="2.5" fill="#33290F"/><circle cx="8" cy="-7" r="2.5" fill="#33290F"/><circle cx="-8" cy="7" r="2.5" fill="#33290F"/><circle cx="8" cy="7" r="2.5" fill="#33290F"/></g>
+<text x="70" y="580" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">The context layer</text>
+<text x="70" y="596" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">one traversable knowledge graph, in the workspace domains/federation bounds</text>
+<text x="70" y="611" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">built ahead of time, refreshed on each release; every trust label computed on read</text>
+</g>
+<line x1="360" y1="244" x2="360" y2="218" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M355.5 224.6 L360 218 L364.5 224.6" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="368" y="235" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">resolved, fetched and verified when the workspace is built</text>
+<g transform="translate(0,-148)">
+<rect x="20" y="396" width="680" height="128" rx="20" fill="#262623"/>
+<text x="40" y="424" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">Domains: manifests on the same ladder, bound when the workspace is built</text>
+<rect x="44" y="440" width="196" height="66" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
+<g transform="translate(70,473)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
+<text x="94" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">domains/domain1</text>
+<text x="94" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">selects bundles A and B</text>
+<text x="94" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">a thin LOKF bundle</text>
+<rect x="262" y="440" width="196" height="66" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
+<g transform="translate(288,473)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
+<text x="312" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">domains/federation</text>
+<text x="312" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">selects both domains</text>
+<text x="312" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">the workspace boundary</text>
+<rect x="480" y="440" width="196" height="66" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
+<g transform="translate(506,473)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
+<text x="530" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">domains/domain2</text>
+<text x="530" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">selects bundles C and D</text>
+<text x="530" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">a thin LOKF bundle</text>
+<line x1="243" y1="473" x2="259" y2="473" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M252.4 477.5 L259 473 L252.4 468.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="477" y1="473" x2="461" y2="473" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M467.6 477.5 L461 473 L467.6 468.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<line x1="360" y1="406" x2="360" y2="380" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M355.5 386.6 L360 380 L364.5 386.6" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="368" y="397" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">a manifest names the releases it selects, each by its base_iri</text>
+<g transform="translate(0,114)">
+<rect x="20" y="296" width="680" height="66" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
+<g transform="translate(46,329)" stroke="#ABA9A0" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-9" width="20" height="5" rx="1"/><path d="M-8 -4 V9 H8 V-4"/><line x1="-3" y1="1" x2="3" y2="1"/></g>
+<text x="70" y="318" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E6E4DC">Artifact repository</text>
+<text x="70" y="334" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">versioned releases of bundles today; domain schemas and manifests join them when a domain is built</text>
+<text x="70" y="349" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">each one a zip with its checksum; nothing here is edited, only added</text>
+</g>
+<line x1="360" y1="506" x2="360" y2="480" stroke="#8F8E86" stroke-width="1.3"/>
+<path d="M355.5 486.6 L360 480 L364.5 486.6" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="368" y="497" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">each release is validated, packed, checksummed and attested</text>
+<g transform="translate(0,462)">
 <rect x="20" y="48" width="680" height="214" rx="20" fill="#262623"/>
 <text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">Sub-domains: one bundle per repository, each on its own trust ladder</text>
 <rect x="44" y="92" width="149" height="136" rx="12" fill="#23301B" stroke="#6FA33F" stroke-width="2"/>
@@ -43,54 +100,7 @@
 <rect x="543.5" y="198" width="116" height="18" rx="9.0" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
 <text x="601.5" y="211" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#93C0F2">confirmed n of N</text>
 <text x="360" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#ABA9A0">Each validates against a LinkML schema and projects to a graph; a domain schema imports LOKF's and adds its own types.</text>
-<line x1="360" y1="266" x2="360" y2="292" stroke="#8F8E86" stroke-width="1.3"/>
-<path d="M355.5 285.4 L360 292 L364.5 285.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="283" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">each release is validated, packed, checksummed and attested</text>
-<rect x="20" y="296" width="680" height="66" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
-<g transform="translate(46,329)" stroke="#ABA9A0" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-9" width="20" height="5" rx="1"/><path d="M-8 -4 V9 H8 V-4"/><line x1="-3" y1="1" x2="3" y2="1"/></g>
-<text x="70" y="318" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E6E4DC">Artifact repository</text>
-<text x="70" y="334" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">versioned releases of bundles today; domain schemas and manifests join them when a domain is built</text>
-<text x="70" y="349" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">each one a zip with its checksum; nothing here is edited, only added</text>
-<line x1="360" y1="366" x2="360" y2="392" stroke="#8F8E86" stroke-width="1.3"/>
-<path d="M355.5 385.4 L360 392 L364.5 385.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="383" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">a manifest names the releases it selects, each by its base_iri</text>
-<rect x="20" y="396" width="680" height="128" rx="20" fill="#262623"/>
-<text x="40" y="424" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">Domains: manifests on the same ladder, bound when the workspace is built</text>
-<rect x="44" y="440" width="196" height="66" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
-<g transform="translate(70,473)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="94" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">Domain 1</text>
-<text x="94" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">selects bundles A and B</text>
-<text x="94" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">a thin LOKF bundle</text>
-<rect x="262" y="440" width="196" height="66" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
-<g transform="translate(288,473)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="312" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">Top domain</text>
-<text x="312" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">selects both domains</text>
-<text x="312" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">the workspace boundary</text>
-<rect x="480" y="440" width="196" height="66" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
-<g transform="translate(506,473)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="530" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">Domain 2</text>
-<text x="530" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#93C0F2">selects bundles C and D</text>
-<text x="530" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">a thin LOKF bundle</text>
-<line x1="243" y1="473" x2="259" y2="473" stroke="#8F8E86" stroke-width="1.3"/>
-<path d="M252.4 477.5 L259 473 L252.4 468.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="477" y1="473" x2="461" y2="473" stroke="#8F8E86" stroke-width="1.3"/>
-<path d="M467.6 477.5 L461 473 L467.6 468.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="360" y1="528" x2="360" y2="554" stroke="#8F8E86" stroke-width="1.3"/>
-<path d="M355.5 547.4 L360 554 L364.5 547.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="545" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">resolved, fetched and verified when the workspace is built</text>
-<rect x="20" y="558" width="680" height="66" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
-<g transform="translate(46,591)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="-7" x2="8" y2="7"/><line x1="8" y1="-7" x2="-8" y2="7"/><line x1="-8" y1="-7" x2="8" y2="-7"/><circle cx="0" cy="0" r="3" fill="#33290F"/><circle cx="-8" cy="-7" r="2.5" fill="#33290F"/><circle cx="8" cy="-7" r="2.5" fill="#33290F"/><circle cx="-8" cy="7" r="2.5" fill="#33290F"/><circle cx="8" cy="7" r="2.5" fill="#33290F"/></g>
-<text x="70" y="580" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">The context layer</text>
-<text x="70" y="596" font-family="Arial, sans-serif" font-size="10.5" fill="#E4BD6E">one traversable knowledge graph, in a workspace bounded by the top domain</text>
-<text x="70" y="611" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">built ahead of time, refreshed on each release; every trust label computed on read</text>
-<line x1="360" y1="628" x2="360" y2="654" stroke="#8F8E86" stroke-width="1.3"/>
-<path d="M355.5 647.4 L360 654 L364.5 647.4" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="645" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">index first, then traverse on demand</text>
-<rect x="20" y="658" width="680" height="66" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
-<g transform="translate(46,691)" stroke="#ABA9A0" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="-6" r="4"/><path d="M-8 9 a8 8 0 0 1 16 0"/></g>
-<text x="70" y="680" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E6E4DC">Readers</text>
-<text x="70" y="696" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">agents, copilots and the people who ask them</text>
-<text x="70" y="711" font-family="Arial, sans-serif" font-size="9.5" fill="#8F8E86">every answer says how far it has been checked</text>
+</g>
 <circle cx="52" cy="746" r="5" fill="#23301B" stroke="#6FA33F" stroke-width="1"/>
 <text x="63" y="750" font-family="Arial, sans-serif" font-size="12" fill="#A9D27C">an agent derives it</text>
 <circle cx="206" cy="746" r="5" fill="#33290F" stroke="#C99A3E" stroke-width="1"/>
