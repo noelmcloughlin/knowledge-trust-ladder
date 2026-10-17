@@ -26,9 +26,11 @@
 # releases, picks the newest that carries a bundle zip, verifies it, and
 # writes the change as operations in .lokf/patch.yaml for the pen
 # (knowledge-apply.sh) to apply, so the sidecar's librarian workflow can run
-# it as AGENT_CLI. `serve` and `query` read the snapshot through the
-# toolkit's own store and server, with the union of the named graphs as the
-# default graph.
+# it as AGENT_CLI. The change moves the old release's tag, zip name and day
+# in the concept's description and body as well as its frontmatter, so the
+# text never contradicts `version`. `serve` and `query` read the snapshot
+# through the toolkit's own store and server, with the union of the named
+# graphs as the default graph.
 #
 # What the snapshot holds: index.md (the members, their versions, licences
 # and health lines, each member's own index first), llms.txt,
@@ -738,16 +740,22 @@ def github_releases(owner: str, repo: str) -> list[dict]:
     return json.loads(raw)
 
 
-def newest_bundle_release(releases: list[dict]) -> tuple[str, dict, dict] | None:
-    """The newest published release that carries a knowledge-*.zip and its .sha256: (tag, zip asset, sum asset)."""
+def newest_bundle_release(releases: list[dict]) -> tuple[dict, dict, dict] | None:
+    """The newest published release that carries a knowledge-*.zip and its .sha256: (release, zip asset, sum asset)."""
     for rel in releases:  # the API lists newest first
         if rel.get("draft"):
             continue
         assets = {a["name"]: a for a in rel.get("assets", [])}
         for name, asset in assets.items():
             if name.startswith("knowledge-") and name.endswith(".zip") and name + ".sha256" in assets:
-                return rel["tag_name"], asset, assets[name + ".sha256"]
+                return rel, asset, assets[name + ".sha256"]
     return None
+
+
+def release_day(release: dict | None) -> str:
+    """The day a release was published, as a concept's text writes it (YYYY-MM-DD), or "" when the release list does not say."""
+    day = str((release or {}).get("published_at") or "")[:10]
+    return day if re.fullmatch(r"\d{4}-\d{2}-\d{2}", day) else ""
 
 
 def open_librarian_pr() -> bool:
@@ -757,6 +765,123 @@ def open_librarian_pr() -> bool:
     done = subprocess.run([gh, "pr", "list", "--state", "open", "--search", "head:knowledge-librarian/", "--json", "number"],
                           capture_output=True, text=True)
     return done.returncode == 0 and bool(json.loads(done.stdout or "[]"))
+
+
+def when(value) -> dt.datetime | None:
+    """A provenance time as an aware datetime, or None when it is not one. The toolkit's parser gives times as ISO text, and one with no offset is read as UTC."""
+    try:
+        t = dt.datetime.fromisoformat(str(value).strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
+
+
+def confirmed_by_person(data: dict) -> bool:
+    """Whether a person confirmed the concept as it stands, by the rule knowledge-report.sh uses.
+
+    That takes a `verified` event whose actor starts human:, and no edit
+    stamped after the latest such event, because a later edit means the
+    person confirmed an earlier text.
+    """
+    events = data.get("verified")
+    events = [events] if isinstance(events, dict) else events if isinstance(events, list) else []
+    times = [when(e.get("at")) for e in events if isinstance(e, dict) and str(e.get("by", "")).startswith("human:")]
+    if not times:
+        return False
+    generated = data.get("generated")
+    edited = when(generated.get("at")) if isinstance(generated, dict) else None
+    confirmed = max((t for t in times if t is not None), default=None)
+    return not (edited and confirmed and edited > confirmed)
+
+
+def written_by_person(data: dict) -> bool:
+    """Whether a person wrote the concept's text, which the pen refuses to patch."""
+    generated = data.get("generated")
+    return isinstance(generated, dict) and str(generated.get("by", "")).startswith("human:")
+
+
+# The lines of a concept's body the pen never edits, and the lines it reads
+# as a person's event or note, with the same markers and patterns the pen
+# (knowledge-apply.py) uses, so no edit built here is one the pen refuses.
+RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
+OPEN_Q = "## Open questions"
+PERSON_LINE = re.compile(r"^\s*-?\s*by:\s*human:|^\s*-\s*\d{4}-\d{2}-\d{2},\s*human:")
+
+
+def mover(pairs: dict[str, str]):
+    """A function that writes each old value in a text as its new one.
+
+    It works in one pass, so a value already moved is never moved again, and
+    a value counts only as a whole token: the tag is not moved inside
+    v0.43.10 or v0.43.0-rc1, nor the day inside a timestamp.
+    """
+    pairs = {old: new for old, new in pairs.items() if old and new and old != new}
+    if not pairs:
+        return lambda text: text
+    alternatives = "|".join(re.escape(old) for old in sorted(pairs, key=len, reverse=True))
+    pattern = re.compile(rf"(?<![\w.])(?:{alternatives})(?![\w-]|\.\w)")
+    return lambda text: pattern.sub(lambda m: pairs[m.group(0)], text)
+
+
+def concept_body(path: pathlib.Path) -> str | None:
+    """A concept's body as the pen reads it: everything after the line that closes the frontmatter."""
+    lines = path.read_text(encoding="utf-8").split("\n")
+    if not lines or lines[0] != "---":
+        return None
+    for i in range(1, len(lines)):
+        if lines[i] == "---":
+            return "\n".join(lines[i + 1:])
+    return None
+
+
+def protected_lines(lines: list[str]) -> set[int]:
+    """The numbers of the lines in the lokf:related block and the ## Open questions section, found as the pen finds them."""
+    kept: set[int] = set()
+    for i, line in enumerate(lines):
+        if line.strip() == RELATED_START:
+            end = next((j for j in range(i + 1, len(lines)) if lines[j].strip() == RELATED_END), None)
+            if end is not None:
+                kept.update(range(i, end + 1))
+            break
+    fenced = False
+    for i, line in enumerate(lines):
+        if line.startswith(("```", "~~~")):
+            fenced = not fenced
+            continue
+        if not fenced and line.strip() == OPEN_Q:
+            end = next((j for j in range(i + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+            kept.update(range(i, end))
+            break
+    return kept
+
+
+def body_edits(body: str, move) -> tuple[list[dict], int]:
+    """The pen's edits that move the old release in a body, and how many lines naming it are left as they were.
+
+    Each edit replaces one whole line. The pen applies the edits in order
+    and refuses the whole patch when a target occurs other than exactly once
+    in the body as it then stands, so each target is counted in the body the
+    edits before it leave. A line that occurs more than once, or that reads
+    as a person's event or note, is left for a person and counted. Lines in
+    the lokf:related block and under ## Open questions are never edited and
+    are not counted, since an open question may name the old release on
+    purpose.
+    """
+    lines = body.split("\n")
+    kept = protected_lines(lines)
+    edits: list[dict] = []
+    left = 0
+    current = body
+    for i, line in enumerate(lines):
+        moved = move(line)
+        if i in kept or moved == line:
+            continue
+        if current.count(line) != 1 or PERSON_LINE.match(line):
+            left += 1
+            continue
+        current = current.replace(line, moved, 1)
+        edits.append({"replace": {"target": line, "content": moved}})
+    return edits, left
 
 
 def members(args) -> int:
@@ -774,11 +899,13 @@ def members(args) -> int:
             current.append(f"{member.slug}: not a GitHub release, left as it is")
             continue
         owner, repo, _ = member.github
-        found = newest_bundle_release(github_releases(owner, repo))
+        releases = github_releases(owner, repo)
+        found = newest_bundle_release(releases)
         if not found:
             current.append(f"{member.slug}: no release of {owner}/{repo} carries a bundle zip")
             continue
-        tag, zip_asset, sum_asset = found
+        release, zip_asset, sum_asset = found
+        tag = release["tag_name"]
         if tag == member.version:
             current.append(f"{member.slug}: {tag} is current")
             continue
@@ -786,31 +913,68 @@ def members(args) -> int:
         if not sum_text or not re.fullmatch(r"[0-9a-f]{64}", sum_text[0]):
             raise Failed(f"{member.slug}: {sum_asset['name']} does not start with a sha256 digest")
         new_sha = sum_text[0]
-        moved = Member(c.path, {**c.data, "version": tag, "distribution": [{"name": zip_asset["name"], "access_url": zip_asset["browser_download_url"], "media_type": "application/zip", "checksum": f"sha256:{new_sha}"}]}, "", 1)
+        distribution = [{"name": zip_asset["name"], "access_url": zip_asset["browser_download_url"], "media_type": "application/zip", "checksum": f"sha256:{new_sha}"}]
+        moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
         _, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
         release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
-        ops.append({"op": "patch", "path": c.concept_id + ".md",
-                    "set": {"version": tag, "release": release_url, "resource": release_url,
-                            "distribution": [{"name": zip_asset["name"], "access_url": zip_asset["browser_download_url"], "media_type": "application/zip", "checksum": f"sha256:{new_sha}"}]},
-                    "log": f"**Changed**: {member.title} moved from {member.version} to {tag}; the release carries `{zip_asset['name']}`."})
-        ops.append({"op": "question", "path": c.concept_id + ".md",
-                    "text": f"{owner}/{repo} released {tag} after the confirmed {member.version}; does this member move to it?"})
-        handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}; a person confirms the member again to accept it.")
+        path = c.concept_id + ".md"
+        # "Confirmed" only when a person confirmed the concept as it stands; a
+        # draft, or a member moved since its confirmation, names the release
+        # it holds and claims nothing more.
+        confirmed = confirmed_by_person(c.data)
+        asked = f"{owner}/{repo} released {tag} after {'the confirmed ' if confirmed else ''}{member.version}; does this member move to it?"
+        if written_by_person(c.data):
+            # The pen refuses any patch of a concept a person wrote, so the
+            # move goes to the curator as a question alone.
+            ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
+            handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}; a person wrote the concept, so only a question was added.")
+            continue
+        # The move reaches the text too: the old tag, zip name and day become
+        # the new ones in the description and in the body, so the concept no
+        # longer says one release in `version` and another in its prose.
+        old_day = release_day(next((r for r in releases if r.get("tag_name") == member.version), None))
+        move = mover({member.version: tag, member.zip_name: zip_asset["name"], old_day: release_day(release)})
+        sets: dict = {"version": tag, "release": release_url, "resource": release_url, "distribution": distribution}
+        description = str(c.data.get("description") or "")
+        if move(description) != description:
+            sets["description"] = move(description)
+        body = concept_body(c.path)
+        edits, left = body_edits(body, move) if body is not None else ([], 0)
+        op: dict = {"op": "patch", "path": path}
+        if edits:
+            op["edits"] = edits
+        op["set"] = sets
+        op["log"] = f"**Changed**: {member.title} moved from {member.version} to {tag}; the release carries `{zip_asset['name']}`."
+        ops.append(op)
+        if left:
+            asked += (f" {left} line(s) of the body still name {member.version}, its zip or its day; this patch left them as they were,"
+                      " because each occurs more than once in the body or reads as a person's record.")
+        ops.append({"op": "question", "path": path, "text": asked})
+        note = "" if old_day else f"; {member.version} is not in the release list, so its day was not moved"
+        handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}{note}; a person confirms the member{' again' if confirmed else ''} to accept it.")
     for line in current:
         say(line)
     if not ops:
         say("every member is current; no patch written")
         return 0
-    if open_librarian_pr():
-        say(f"{len(ops) // 2} member(s) moved, but a knowledge-librarian pull request is already open; no patch written")
-        return 0
     patch = {"by": ACTOR, "ops": ops, "handoff": handoff[:10]}
-    target = root / ".lokf" / "patch.yaml"
+    # One line per value, so a replace target reaches the pen exactly as the
+    # body holds it and no folded line can start like a person's event.
+    text = yaml.safe_dump(patch, sort_keys=False, allow_unicode=True, width=1_000_000)
+    pr_open = open_librarian_pr()
     if args.dry_run:
-        print(yaml.safe_dump(patch, sort_keys=False, allow_unicode=True))
+        # A dry run always shows the patch it would write; only a real run
+        # stands back for an open pull request, so the note goes to stderr.
+        print(text)
+        if pr_open:
+            warn("a knowledge-librarian pull request is already open, so a run without --dry-run would write no patch")
         return 0
-    target.write_text(yaml.safe_dump(patch, sort_keys=False, allow_unicode=True), encoding="utf-8")
-    say(f"{len(ops) // 2} member(s) moved; operations written to {target} for the pen")
+    if pr_open:
+        say(f"{len(handoff)} member(s) moved, but a knowledge-librarian pull request is already open; no patch written")
+        return 0
+    target = root / ".lokf" / "patch.yaml"
+    target.write_text(text, encoding="utf-8")
+    say(f"{len(handoff)} member(s) moved; operations written to {target} for the pen")
     return 0
 
 
