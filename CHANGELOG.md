@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.46.0] - 2026-10-17
+
 ### Added
 
 - **`knowledge-federate.py mcp` serves a workspace to agents.** It is the `lokf-registry` server the LOKF specification's section 11.4 describes, over the snapshot: `resolve_iri`, `neighbors`, `subgraph`, `federated_sparql` and `read_document`, each bounded in depth and size, with the workspace index as the server's instructions so an agent reads it first. `serve`, `query` and `mcp` take an absolute `--snapshot`, so an unpacked `workspace-<tag>.zip` is read anywhere a sidecar environment exists.
