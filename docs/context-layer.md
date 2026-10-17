@@ -35,7 +35,7 @@ Domains select released bundles, and a person confirms each domain. A domain may
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-federated-context-layer-dark.svg">
-    <img src="../.assets/ktl-federated-context-layer.svg" alt="From repository bundles to a context layer: four bundles, each released from its own repository into an artifact repository; domains as manifests that select releases and are confirmed by a person, labelled domains/domain-1, domains/domain-2 and domains/federation, where the build starts; one context layer built from domains/federation; and the readers." width="720" />
+    <img src="../.assets/ktl-federated-context-layer.svg" alt="Drawn bottom to top, from repository bundles to a context layer and its readers: four bundles, each released from its own repository into an artifact repository; domains as manifests that select releases and are confirmed by a person, labelled domains/domain1, domains/domain2 and domains/federation, where the build starts; one context layer built from domains/federation; and, at the top, the readers." width="720" />
   </picture>
 </p>
 
