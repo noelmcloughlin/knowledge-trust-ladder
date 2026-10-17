@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  at: "2026-10-16T23:58:13Z"
 hasPart:
 - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
 - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -45,7 +45,7 @@ ktl-sidecar runs **once** per repository, or to repair a missing or broken sidec
 - **Step 2.** Add three root-level pointers: `llms.txt`, a README aside, and a `knowledge_bundle` symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian (see [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)).
 - **Step 3.** Verify no placeholder survives.
 - **Step 4.** Validate.
-- **Step 5.** Optionally install the CI automation: three workflows, nine scripts and, since 2026-09-24, the `m365/` folder, fourteen files in all.
+- **Step 5.** Optionally install the CI automation: three workflows, nine scripts and, since 2026-09-24, the `m365/` folder, fourteen files in all. Since 0.44.0 a domain host, whose bundle names other bundles, also gets `.lokf/domain.yaml`, `.lokf/scripts/knowledge-federate.py` and `.github/workflows/knowledge-federation.yaml`.
 - **Step 6.** Hand off to ktl-librarian. All four skills should be installed, and ktl-website can publish the bundle as a site once it is worth showing.
 
 Step 0 also settles two things. The bundle's base IRI, which every concept's id starts with, is never the code-host repository URL: that path space is not the project's, so the ids could never resolve. And Step 0 decides whether `.lokf/` is committed or gitignored. Committing it is the default the four skills assume. Gitignoring it is equally valid, for a personal bundle or under a policy against committing agent-authored content, and changes four things:
@@ -70,7 +70,7 @@ The skill keeps its detail in five reference files, so the router stays small:
 
 - `references/portability.md` is a matrix, host by host: git or none, GitHub, GitLab or Forgejo, Linux, macOS, Windows and PowerShell, synced folders, an Obsidian vault and, since 2026-09-24, a Microsoft 365 Copilot declarative agent. Since 2026-10-07 it also says what the skills repository tests before a release. A host whose copies are as the sidecar installed them need not test the templates again. A copy the host edited, a port to another forge or shell, and another operating system stay the host's.
 - `references/m365.md`, added on 2026-09-24, says what Copilot allows a custom skill, what the Agents Toolkit checks, and which roles can run there. The docent and a future auditor run there as snapshot skills. The sidecar and librarian do not run there at all. The curator does not run there until it has a write action and an identity other than a forge login ([The docent in Microsoft 365 Copilot](docent-in-m365-copilot.md)).
-- `references/automation.md` says what the librarian, wrapper, release and feedback files do and how to set them up.
+- `references/automation.md` says what the librarian, wrapper, release and feedback files do and how to set them up, and since 0.44.0 the federation workflow and script of a domain host.
 - `references/gate.md`, split out of `automation.md` on 2026-09-24, covers the registrar workflow and the forge-free gate.
 - `references/prerequisites.md`, since 2026-09-17, gives each preflight line in plain words: what it means, what it stops, who fixes it and what to send them, for a person who cannot act on it themselves. The contract holds it to every line the preflight can print as missing or a warning.
 
@@ -97,6 +97,12 @@ With an optional variable, `KNOWLEDGE_RETRIEVAL`, each run that changes the bund
 A first job, `earlier`, reads what became of the pull requests the workflow opened before. While one is still open, every scheduled run stops before the agent, in the first seven days too. On a scheduled run, the quiet check counts none of what a person declined by closing one without merging, and the librarian proposes none of it again until it changes. The librarian's hand-off, its own words for the reviewer, goes with the patch, and `publish` shows it under *From the librarian*, in a code block (2026-10-04).
 
 The third workflow, `knowledge-release.yaml` (since 2026-09-24), needs no agent. It attaches the bundle to a GitHub release as `knowledge-<tag>-<repository>.zip` with a checksum. Since the `m365/` folder was added, it also attaches one Copilot skill zip per instructions file under `.lokf/m365/` beside it, built by `.lokf/m365/knowledge-m365.sh`. It skips a release whose bundle matches the last one released. It runs when dispatched by hand or, once the `KNOWLEDGE_RELEASE_ENABLED` repository variable is `true`, on each published release.
+
+**A domain host (0.44.0).** `references/automation.md` describes a domain host as one whose bundle names other bundles. Each `MemberBundle` concept names one released zip and its checksum, a person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. Nothing in the host's three files runs a model:
+
+- `knowledge-federate.py build --tag <tag>` resolves the members into a lock, fetches each zip, and checks it against the checksum its concept names and, where `gh` is present, its attestation. It registers and exports each bundle with the toolkit, and loads one named graph per bundle. It gates every typed relation whose target lies in no member's namespace, as the domain's `unowned_targets` says, and renames `snapshot.new/` to `snapshot/` in one step. `--verify-only` stops after the zips are checked.
+- `knowledge-federation.yaml` runs the build on each release of the host and deploys the workspace under `/workspace/` of the host's site, once the `KNOWLEDGE_FEDERATION_ENABLED` repository variable is `true`. A domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer.
+- `knowledge-federate.py members` is the domain's librarian, a script the librarian workflow runs as `AGENT_CLI`. It picks each member's newest release that carries a bundle zip, verifies it, and writes the change as operations for the pen.
 
 The librarian workflow template installs a pinned `ktl-librarian` into `.agents/skills/` on every scheduled run, since installed skills are gitignored runtime state a checkout does not carry. The step is skipped in the repository that publishes the skills (an `if` on the repository name, since 2026-09-24). There an install would shadow the source under bare `skills/`, because the wrapper looks under `.claude/skills/`, `.github/skills/` and `.agents/skills/` before bare `skills/`. The preflight's `copies` line compares that workflow with its template apart from `TRUST_LADDER_SKILLS_REF` and the commit beside it in `TRUST_LADDER_SKILLS_SHA`, a pin each host moves on its own schedule. The install step installs nothing unless the tag still names that commit.
 

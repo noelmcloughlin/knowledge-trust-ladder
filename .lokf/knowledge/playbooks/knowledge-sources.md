@@ -16,6 +16,7 @@ verified:
 - by: human:noelmcloughlin
   at: "2026-10-13T00:43:23Z"
 stale_after: 2027-09-10
+status: draft
 ---
 # Sources swept for this bootstrap discovery pass
 
@@ -446,3 +447,7 @@ stale_after: 2027-09-10
   namespace the project controls. It mints every concept `@id` here, and the
   w3id rule redirects each one to the concept's page on the site, its JSON-LD
   or its Markdown file.
+
+## Open questions
+
+- 2026-10-16, process:ktl-librarian: Since 0.44.0 ktl-sidecar's templates also hold a domain host's `domain.yaml`, `scripts/knowledge-federate.py` and `github/knowledge-federation.yaml`, which `sync-sidecar.sh` carries and check 11 holds to their templates where a copy exists. The templates row counts nine scripts and three workflows and names none of them. The README's Exhibitions list KTL Federation since 2026-10-16, and `docs/context-layer.md` says the federation design was released that day. The README row and the context-layer row say neither.

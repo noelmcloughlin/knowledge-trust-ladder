@@ -19,7 +19,7 @@ sources:
 - resource: docs/signing-commits.md
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  at: "2026-10-16T23:58:13Z"
 ---
 
 # Overview
@@ -34,9 +34,9 @@ Before a pull request:
 - run `gh skill publish --dry-run` if the GitHub CLI is present;
 - add a line or two under `CHANGELOG.md`'s `[Unreleased]` when behaviour changes. The reasoning belongs beside the code, not in the changelog entry.
 
-Files here are deep-linked from the sibling repositories (KTL Registrar and KTL Curator), whose own link checks follow those URLs. `validate-repository.sh` check 9 lists the paths. Move one only together with its links, and when a change there needs something new here, merge this side first.
+The sibling repositories (KTL Registrar and KTL Curator) link deep into files here, and their own link checks follow those URLs. `validate-repository.sh` check 9 lists the paths. Move one only together with its links, and when a change there needs something new here, merge this side first.
 
-A change under a skill's `templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical, `knowledge-librarian.yaml` apart from its skills pin, which the release commit moves in the template only.
+A change under a skill's `templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical. The one exception is the skills pin in `knowledge-librarian.yaml`, which the release commit moves in the template only.
 
 When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`). A squash merge takes its subject from the title, and the `plan` job refuses a mismatch. Pinned action SHAs are bumped by Dependabot, and CI fails an action that floats on a tag or branch instead of a commit. The pull request template's checklist is the short form of this list.
 

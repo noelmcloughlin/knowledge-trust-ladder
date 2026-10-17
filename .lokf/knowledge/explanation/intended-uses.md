@@ -21,12 +21,12 @@ relatedTo:
 - https://w3id.org/ktl/knowledge/explanation/context-layer
 verified:
 - by: process:ktl-librarian
-  at: "2026-10-16T00:41:23Z"
+  at: "2026-10-16T23:58:13Z"
 ---
 
 # Overview
 
-The README states what the project is. It keeps a repository's scattered knowledge as a collection: catalogued, authenticated and explained, with the trust in every claim visible. The architecture page says what is missing is a **context layer**: a governed layer between the sources (code, documents, diagrams, policies, operational records) and whoever consumes them, person or agent, and that a knowledge bundle is the catalogue. The layer persists from one task to the next. The architecture page's term links `docs/context-layer.md`, which sets it beside the industry's and says one bundle is one repository's context layer ([the context layer](context-layer.md)).
+The README states what the project is. It keeps a repository's scattered knowledge as a collection: catalogued, authenticated and explained, with the trust in every claim visible. The architecture page says what is missing is a **context layer**, and that a knowledge bundle is the catalogue. A context layer is a governed layer between the sources and whoever consumes them, person or agent. The sources are code, documents, diagrams, policies and operational records. The layer persists from one task to the next. The architecture page's term links `docs/context-layer.md`, which sets it beside the industry's and says one bundle is one repository's context layer ([the context layer](context-layer.md)).
 
 The architecture page frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim.
 

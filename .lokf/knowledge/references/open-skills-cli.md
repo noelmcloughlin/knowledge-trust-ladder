@@ -20,4 +20,4 @@ verified:
 
 `npx skills add <source> --skill <name> ...` installs selected skills into whichever agent directories a repository uses, and accepts a **local path** as the source. That makes it usable as a pre-publication check.
 
-That local-source support is why `scripts/smoke-test-install.sh` can exercise the real install path in CI against the checked-out branch, in a throwaway consumer repository, before any change reaches a published release.
+That local-source support is why `scripts/smoke-test-install.sh` can run the real install path in CI against the checked-out branch, in a throwaway consumer repository, before any change reaches a published release.
