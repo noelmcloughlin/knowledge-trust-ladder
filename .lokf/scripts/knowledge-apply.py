@@ -14,6 +14,8 @@
 #   - keeps a concept's description and its two index bullets equal;
 #   - files each log line under the day's heading, once however many
 #     operations give the same line;
+#   - writes a bare web address in a log line or an open question as an
+#     autolink, <https://...>, which Markdown linters ask for;
 #   - moves a feedback entry an operation says it handled out of feedback.md
 #     and into the ledger of questions readers asked, ten to a patch at most;
 #   - refuses an operation that would write a `human:` actor, rewrite text a
@@ -98,6 +100,12 @@ DENIED_CREATE = {"generated", "verified", "status", "stale_after", "timestamp", 
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
 BULLET_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, (\S+?): ")  # an open question's actor, in the shape the curator writes
+# A web address that is not already an autolink, a link's target or a link's
+# text: no `<`, `](` or `[` before it. A pair of parentheses inside it stays
+# in it, as Wikipedia's addresses need, and its last character is no
+# punctuation, so a full stop, a comma or a closing parenthesis after it
+# stays in the sentence.
+BARE_URL_RE = re.compile(r"(?<!\]\()(?<![<\[\w/])https?://(?:[^\s<>`()]|\([^\s<>`()]*\))*(?:[^\s<>`().,;:!?'\"]|\([^\s<>`()]*\))")
 HEADING_RE = re.compile(r"^(#{1,6})[ \t]+(.*\S)[ \t]*$")  # a Markdown heading: its level and its text
 OWN_BULLET_RE = re.compile(r"^\* \[[^\]]*\]\([^)]+\)(?: - .*)?$")  # any concept's own index bullet: its link alone, then its description
 FEEDBACK_KIND_RE = re.compile(r"^- \*\*(Miss|Disagreement)\*\* ")
@@ -348,6 +356,12 @@ def questions_span(body: str):
                     break
             return (offsets[i], end)
     return None
+
+
+def autolinked(text: str) -> str:
+    """The line with each bare web address outside a code span written as an autolink, <https://...>. Markdown linters refuse a bare one (markdownlint's MD034), and the curator reads the line in a rendered view, where an autolink is a link."""
+    parts = re.split(r"(`[^`]*`)", text)
+    return "".join(part if part.startswith("`") else BARE_URL_RE.sub(r"<\g<0>>", part) for part in parts)
 
 
 def clean_question(value, what: str) -> str:
@@ -637,7 +651,7 @@ class Bundle:
     def question(self, op: dict) -> None:
         path = op["path"]
         c = self.concept(path, must_exist=True)
-        text = shown(one_line(op.get("text"), f"{path}: question text"))
+        text = autolinked(shown(one_line(op.get("text"), f"{path}: question text")))
         if not text:
             raise Refused(f"{path}: question text has no visible characters")
         bullet = f"- {self.today}, {self.by}: {text}"
@@ -888,7 +902,7 @@ class Bundle:
             if asked is not None:
                 line += ": `" + clean_question(asked, f"{op['path']}: asked") + "`"
             self.ledger_lines.append(line)
-        self.log_lines.append("* " + text)
+        self.log_lines.append("* " + autolinked(text))
 
     def log_text(self) -> str | None:
         if not self.log_lines:

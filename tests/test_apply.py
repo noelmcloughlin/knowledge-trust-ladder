@@ -14,6 +14,7 @@ This was check 19 in scripts/validate-repository.sh:
   no character a reader cannot see;
 - the index bullets and the log heading are kept in step;
 - a log line many operations give, or the patch gives for them, is written once;
+- a bare web address in a log line or a question is written as an autolink;
 - the lokf:related block survives a rewrite, and a rewrite sets frontmatter
   as a patch does;
 - an operation takes only the keys it reads, and any other is refused by name;
@@ -313,6 +314,25 @@ def test_the_patchs_log_line_stands_in_for_each_operation_that_gives_none(applie
         and "**Added**: Newer" not in today
         and has_line(today, "* **Removal**: New; its source is gone.")
     ), f"the patch's line did not stand in once for the operations without one: {today}"
+
+
+def test_a_bare_web_address_in_a_question_and_its_log_line_becomes_an_autolink(applied):
+    """markdownlint refused the bare addresses a question carried into the concept and log.md; one in a code span or a link stays as written."""
+    applies(
+        applied,
+        lines(
+            "ops:",
+            "  - op: question",
+            "    path: playbooks/draft.md",
+            '    text: "https://a.example/x/ moved (see https://a.example/y). `curl https://a.example/z` and [the page](https://a.example/p) agree?"',
+        ),
+    )
+    wanted = "<https://a.example/x/> moved (see <https://a.example/y>). `curl https://a.example/z` and [the page](https://a.example/p) agree?"
+    draft = read(kb_of(applied) / "playbooks" / "draft.md")
+    log = read(kb_of(applied) / "log.md")
+    assert has_line(draft, f"- {today_utc()}, process:ktl-librarian: {wanted}") and has_line(
+        log, f"* **Open question**: Draft: {wanted}"
+    ), f"the addresses were not written as autolinks: {draft} // {log}"
 
 
 def test_question_adds_the_curator_shaped_bullet_and_touches_neither_text_nor_generated(applied):
