@@ -106,3 +106,49 @@ jobs:
         run: |
           gh workflow run knowledge-release.yaml --ref "$VERSION" -f tag="$VERSION" \
             || { echo "::error::The skills published under $VERSION, but the bundle zip was not requested. Run the Knowledge Release workflow by hand with tag=$VERSION."; exit 1; }
+
+      # Each sibling's knowledge-sync.yaml syncs it to the newest release on
+      # its own schedule. This step asks the ones named in the
+      # KNOWLEDGE_SYNC_HOSTS repository variable, as owner/repo separated by
+      # spaces, to do it now. The dispatch needs a token with Actions write
+      # on each of them, the KNOWLEDGE_SYNC_DISPATCH_TOKEN secret; the job's
+      # own token reaches no other repository. Unset, nothing is dispatched
+      # and the schedule does the work. The variable is a list, not a
+      # switch, but it reads like one: "false" asks nobody, as unset does,
+      # and "true" names no host, which the step says. A host that cannot
+      # be dispatched is reported and the others go ahead.
+      - name: Ask the siblings to sync
+        if: vars.KNOWLEDGE_SYNC_HOSTS != ''
+        env:
+          GH_TOKEN: ${{ secrets.KNOWLEDGE_SYNC_DISPATCH_TOKEN }}
+          HOSTS: ${{ vars.KNOWLEDGE_SYNC_HOSTS }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          case "$(printf '%s' "$HOSTS" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')" in
+            false|off|no|0|none)
+              echo "::notice::KNOWLEDGE_SYNC_HOSTS is '$HOSTS', so no host was asked to sync; each syncs on its own schedule. The variable names hosts as owner/repo, and unset means the same as this."
+              exit 0 ;;
+            true|on|yes|1)
+              echo "::warning::KNOWLEDGE_SYNC_HOSTS is '$HOSTS', which names no host, so none was asked to sync. Set it to the hosts to ask, as owner/repo separated by spaces, or leave it unset."
+              exit 0 ;;
+          esac
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::KNOWLEDGE_SYNC_HOSTS names hosts, and KNOWLEDGE_SYNC_DISPATCH_TOKEN is not set, so none was asked to sync; each syncs on its own schedule."
+            exit 0
+          fi
+          failed=""
+          for host in $HOSTS; do
+            if ! printf '%s\n' "$host" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+              echo "::warning::'$host' in KNOWLEDGE_SYNC_HOSTS is not owner/repo, so it was not asked to sync."
+              continue
+            fi
+            if gh workflow run knowledge-sync.yaml -R "$host" -f tag="$VERSION"; then
+              echo "Asked $host to sync to $VERSION."
+            else
+              failed="${failed}${failed:+ }$host"
+            fi
+          done
+          if [ -n "$failed" ]; then
+            echo "::warning::These hosts could not be asked to sync, so each syncs on its own schedule: $failed"
+          fi

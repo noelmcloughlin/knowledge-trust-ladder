@@ -1,0 +1,81 @@
+# What a sync keeps current in a host: each template of ktl-sidecar that a
+# host carries a copy of, where the copy lives, and the rule for it.
+#
+# The host's own .lokf/scripts/knowledge-sync.sh reads this file out of the
+# release it syncs to, so a release is data to it: this list and the
+# templates it names. The host's preflight reads it from the installed
+# sidecar's templates, and the skills repository's contract from the
+# templates beside it. One entry a line, its fields separated by spaces; a
+# line that starts with # is a comment. The rules:
+#
+#   copy   <template> <copy>
+#       The host's copy is held byte-identical to the template, and the
+#       template is copied over it when the two differ. A host that lacks
+#       the copy gets it only when an always or a needs line says so, and is
+#       otherwise told: that is ktl-sidecar's Step 5, a decision for the
+#       host.
+#   titled <template> <copy>
+#       As copy, but the host keeps its own first line, which names the
+#       host, and its own `schema :=` line, which names its domain schema.
+#   always <template> <step>
+#       ktl-sidecar's <step> installs the template on every host, whatever
+#       else the host chose, so a host that lacks the copy gets it.
+#   needs  <template> <copy> <why>
+#       A host that carries <copy> needs the template, for the reason given,
+#       so a host that lacks the template gets it.
+#
+# A template that another template's copy needs comes after that template,
+# so an add in one run sees the copy it is for. A rule a host's script does
+# not know is reported there and left for the next run, once the pull
+# request that brings the newer script is merged.
+
+copy   github/knowledge-registrar.yaml         .github/workflows/knowledge-registrar.yaml
+copy   github/knowledge-librarian.yaml         .github/workflows/knowledge-librarian.yaml
+copy   github/knowledge-release.yaml           .github/workflows/knowledge-release.yaml
+copy   github/knowledge-federation.yaml        .github/workflows/knowledge-federation.yaml
+copy   github/knowledge-sync.yaml              .github/workflows/knowledge-sync.yaml
+copy   github/knowledge-sync-pull-request.md   .github/PULL_REQUEST_TEMPLATE/knowledge-sync.md
+copy   scripts/knowledge-librarian.sh          .lokf/scripts/knowledge-librarian.sh
+copy   scripts/knowledge-conventions.sh        .lokf/scripts/knowledge-conventions.sh
+copy   scripts/knowledge-conventions.py        .lokf/scripts/knowledge-conventions.py
+copy   scripts/knowledge-preflight.sh          .lokf/scripts/knowledge-preflight.sh
+copy   scripts/knowledge-provenance.sh         .lokf/scripts/knowledge-provenance.sh
+copy   scripts/knowledge-feedback.sh           .lokf/scripts/knowledge-feedback.sh
+copy   scripts/knowledge-apply.sh              .lokf/scripts/knowledge-apply.sh
+copy   scripts/knowledge-apply.py              .lokf/scripts/knowledge-apply.py
+copy   scripts/knowledge-report.sh             .lokf/scripts/knowledge-report.sh
+copy   scripts/knowledge-federate.py           .lokf/scripts/knowledge-federate.py
+copy   scripts/knowledge-sync.sh               .lokf/scripts/knowledge-sync.sh
+copy   domain.yaml                             .lokf/domain.yaml
+copy   m365/knowledge-m365.sh                  .lokf/m365/knowledge-m365.sh
+copy   m365/ktl-docent-m365.md                 .lokf/m365/ktl-docent-m365.md
+copy   gitattributes                           .lokf/.gitattributes
+titled justfile                                .lokf/justfile
+
+always gitattributes                   Step 1
+always scripts/knowledge-preflight.sh  Step 5
+always scripts/knowledge-feedback.sh   Step 5
+always scripts/knowledge-report.sh     Step 5
+always m365/knowledge-m365.sh          Step 5
+always m365/ktl-docent-m365.md         Step 5
+
+# Each workflow runs a script with no check that it is there, the wrapper
+# refuses to start without the pen, and each shell half runs its Python
+# half. The librarian workflow pins a release, and only the sync workflow
+# and the sync script keep that pin current.
+needs scripts/knowledge-librarian.sh        .github/workflows/knowledge-librarian.yaml   cannot run without it
+needs scripts/knowledge-conventions.sh      .github/workflows/knowledge-registrar.yaml   cannot run without it
+needs scripts/knowledge-conventions.py      .github/workflows/knowledge-registrar.yaml   cannot run without it
+needs scripts/knowledge-provenance.sh       .github/workflows/knowledge-registrar.yaml   cannot run without it
+needs scripts/knowledge-conventions.sh      .github/workflows/knowledge-release.yaml     cannot run without it
+needs scripts/knowledge-conventions.py      .github/workflows/knowledge-release.yaml     cannot run without it
+needs scripts/knowledge-apply.sh            .lokf/scripts/knowledge-librarian.sh         cannot run without it
+needs scripts/knowledge-apply.py            .lokf/scripts/knowledge-librarian.sh         cannot run without it
+needs scripts/knowledge-apply.py            .lokf/scripts/knowledge-apply.sh             cannot run without it
+needs scripts/knowledge-conventions.py      .lokf/scripts/knowledge-conventions.sh       cannot run without it
+needs scripts/knowledge-federate.py         .github/workflows/knowledge-federation.yaml  cannot run without it
+needs domain.yaml                           .github/workflows/knowledge-federation.yaml  cannot run without it
+needs github/knowledge-sync.yaml            .github/workflows/knowledge-librarian.yaml   pins a release, and only this keeps the pin current
+needs scripts/knowledge-sync.sh             .github/workflows/knowledge-librarian.yaml   pins a release, and only this keeps the pin current
+needs scripts/knowledge-sync.sh             .github/workflows/knowledge-sync.yaml        cannot run without it
+needs github/knowledge-sync-pull-request.md .github/workflows/knowledge-sync.yaml        opens its pull request from it

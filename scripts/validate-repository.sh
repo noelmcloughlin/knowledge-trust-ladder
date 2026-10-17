@@ -434,59 +434,81 @@ done
 #     release commit moves the template's pin but may not touch
 #     .github/workflows/, and the install step that reads the pin is skipped
 #     in this repository anyway.
+#     Which copies there are is the sidecar's knowledge-sync.manifest, the
+#     one list the sync script, the preflight and this check read. So the
+#     manifest is checked first: every template it names exists, every
+#     always and needs line names a template it lists, and every file under
+#     the templates' github/, scripts/ and m365/ folders is in it, so a new
+#     workflow or script cannot be released without a sync for it.
 #     Then the conventions script runs on this repository's own bundle. What
 #     it reports on a bundle that breaks each rule is tests/test_conventions.py.
+say ""
+say "Checking the sidecar's manifest names every template, and nothing else..."
+manifest="$templates/knowledge-sync.manifest"
+listed=""
+while read -r rule template copy _; do
+  [ -n "$rule" ] || continue
+  case "$rule" in
+    copy|titled)
+      [ -f "$templates/$template" ] || err "$manifest lists $template, which is not under $templates/"
+      [ -n "$copy" ] || err "$manifest has a $rule line for $template with no copy path"
+      listed="$listed $template" ;;
+    always|needs)
+      case " $listed " in
+        *" $template "*) ;;
+        *) err "$manifest has a $rule line for $template, which no copy or titled line before it lists" ;;
+      esac ;;
+    *) err "$manifest has a rule knowledge-sync.sh does not know: $rule $template" ;;
+  esac
+done < <(sed 's/#.*//' "$manifest")
+while IFS= read -r f; do
+  rel="${f#"$templates/"}"
+  case " $listed " in
+    *" $rel "*) ok "$rel is in the manifest" ;;
+    *) err "$f is not in $manifest, so no host would get a sync of it" ;;
+  esac
+done < <(find "$templates/github" "$templates/scripts" "$templates/m365" -type f ! -path '*/__pycache__/*' | sort)
+for rule in copy titled always needs; do
+  grep -qE "^rules=\".*\b$rule\b" "$templates/scripts/knowledge-sync.sh" || err "knowledge-sync.sh does not know the manifest rule $rule"
+done
+
 say ""
 say "Checking the sidecar templates are the copies CI lints..."
 # The skills pin is each repository's own to move, so it is not drift.
 unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/' "$1"; }
-for pair in \
-  "$templates/github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
-  "$templates/github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml" \
-  "$templates/github/knowledge-release.yaml:.github/workflows/knowledge-release.yaml" \
-  "$templates/scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh" \
-  "$templates/scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh" \
-  "$templates/scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py" \
-  "$templates/scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh" \
-  "$templates/scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh" \
-  "$templates/scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh" \
-  "$templates/scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh" \
-  "$templates/scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py" \
-  "$templates/scripts/knowledge-report.sh:.lokf/scripts/knowledge-report.sh" \
-  "$templates/m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh" \
-  "$templates/m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md" \
-  "$templates/gitattributes:.lokf/.gitattributes"; do
-  src="${pair%%:*}"; dst="${pair##*:}"
-  if cmp -s <(unpin "$src") <(unpin "$dst"); then
-    ok "$dst matches its template"
-  else
-    err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
-  fi
-done
-# The federation templates are laid down on a domain host only (ktl-sidecar
-# Step 5), and this repository's bundle is not a domain, so each copy is held
-# to its template only where one exists here; actionlint reads the template
-# itself, and tests/test_federation.py runs the script from the template.
-for pair in \
-  "$templates/github/knowledge-federation.yaml:.github/workflows/knowledge-federation.yaml" \
-  "$templates/scripts/knowledge-federate.py:.lokf/scripts/knowledge-federate.py" \
-  "$templates/domain.yaml:.lokf/domain.yaml"; do
-  src="${pair%%:*}"; dst="${pair##*:}"
-  if [ ! -f "$dst" ]; then
-    ok "$dst is not laid down here (a domain host's file); its template is checked directly"
-  elif cmp -s "$src" "$dst"; then
-    ok "$dst matches its template"
-  else
-    err "$dst differs from $src - copy the template over it"
-  fi
-done
-# The justfile's first line names the host (Step 1's <PROJ_NAME>), so it is
-# held to its template from the second line on, as sync-sidecar.sh copies it.
-if cmp -s <(tail -n +2 "$templates/justfile") <(tail -n +2 .lokf/justfile); then
-  ok ".lokf/justfile matches its template below the first line"
-else
-  err ".lokf/justfile differs from $templates/justfile below the first line - copy the template over it and keep this repository's own first line"
-fi
+# The federation templates are installed on a domain host only (ktl-sidecar
+# Step 5), and this repository's bundle is not a domain. The sync templates
+# bring a host up to a release of this repository, which has nothing to sync
+# itself to. So each of those copies is held to its template only where one
+# exists here; actionlint reads the template itself, tests/test_federation.py
+# runs the federation script from the template, and tests/test_sync.py the
+# sync. Every other copy must be here.
+optional_here=" github/knowledge-federation.yaml scripts/knowledge-federate.py domain.yaml github/knowledge-sync.yaml github/knowledge-sync-pull-request.md scripts/knowledge-sync.sh "
+while read -r rule template copy _; do
+  src="$templates/$template"; dst="$copy"
+  case "$rule" in
+    copy)
+      if [ ! -f "$dst" ]; then
+        case "$optional_here" in
+          *" $template "*) ok "$dst is not installed here (a domain host's file, or a host's sync); its template is checked directly" ;;
+          *) err "$dst is missing, but $src is a template every host carries - copy the template over" ;;
+        esac
+      elif cmp -s <(unpin "$src") <(unpin "$dst"); then
+        ok "$dst matches its template"
+      else
+        err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
+      fi ;;
+    titled)
+      # The justfile's first line names the host (Step 1's <PROJ_NAME>), so
+      # it is held to its template from the second line on, as the sync
+      # copies it.
+      if cmp -s <(tail -n +2 "$src") <(tail -n +2 "$dst"); then
+        ok "$dst matches its template below the first line"
+      else
+        err "$dst differs from $src below the first line - copy the template over it and keep this repository's own first line"
+      fi ;;
+  esac
+done < <(sed 's/#.*//' "$manifest")
 
 # 11w. The website skill's templates are this repository's own website/ and
 #      its deploy workflow, laid down by the same skill in every host, so the
@@ -886,7 +908,7 @@ if grep -qF '"$TRUST_LADDER_SKILLS_SHA"' skills/ktl-sidecar/templates/github/kno
 else
   err "the librarian template's install step no longer compares the cloned commit with TRUST_LADDER_SKILLS_SHA"
 fi
-for mover in .github/workflows/semantic-release.yml scripts/sync-sidecar.sh; do
+for mover in .github/workflows/semantic-release.yml skills/ktl-sidecar/templates/scripts/knowledge-sync.sh; do
   if grep -qF 's/(TRUST_LADDER_SKILLS_REF: )' "$mover" && grep -qF 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/' "$mover"; then
     ok "$mover moves the pinned commit with the pinned tag"
   else
