@@ -13,7 +13,7 @@ The Obsidian vault you already have is the **workshop**, and nothing in it is mo
   </picture>
 </p>
 
-1. **File → Open folder as vault**, and pick `knowledge_bundle` at the root of the host, the repository or vault the bundle sits in. `ktl-sidecar` creates that doorway beside `.lokf/`, so the bundle has a name a folder picker can see.
+1. **Open the bundle as a vault.** Choose **File → Open folder as vault**, and pick `knowledge_bundle` at the root of the host, the repository or vault the bundle sits in. `ktl-sidecar` creates that doorway beside `.lokf/`, so the bundle has a name a folder picker can see.
 2. **Install the plugins in that vault.** Obsidian installs plugins per vault. There is nothing to configure: the root `index.md` carries the bundle's header, so the whole vault is the bundle.
 3. **Edit and confirm there.** Obsidian writes that vault's workspace state to `.lokf/knowledge/.obsidian/`, which the sidecar's `.gitignore` excludes.
 

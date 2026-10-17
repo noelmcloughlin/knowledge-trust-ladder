@@ -1,6 +1,6 @@
 # For the curious: how a claim gets checked, and where the vocabulary ends
 
-[The architecture](architecture.md) says everything you need to decide whether to install these skills. What follows is the mechanics: who writes the bundle and what checks each write, exactly what "confirmed by a person" is standing on, and what to do when a bundle outgrows the built-in vocabulary.
+[The architecture](architecture.md) says everything you need to decide whether to install these skills. This page gives the mechanics: who writes the bundle and what checks each write, exactly what "confirmed by a person" rests on, and what to do when a bundle outgrows the built-in vocabulary.
 
 ## Who writes the bundle, and what checks it
 
@@ -30,11 +30,11 @@ Each proves less than its name suggests. Only the third yields a claim someone h
 | Human-confirmed | a named person, through `ktl-curator` or the KTL Curator plugin, shown as *confirmed by a person* | someone accountable read the source and agreed | that it stays true, which is what review dates are for |
 | Proven in use | readers, through `ktl-docent`, which records misses and disagreements in `.lokf/feedback.md`; and, where the retrieval score is switched on, `knowledge-report.sh` on each scheduled refresh | the bundle answered a real question, or didn't, and the gap became the librarian's next task; the score says whether the index still leads to the concept behind each question readers asked | nothing further: this is the feedback loop that feeds the other three |
 
-The first and third rows also run live, outside these skills and the CLI, for anyone maintaining a bundle in Obsidian rather than through an agent. That is the KTL Registrar plugin for the first and the KTL Curator plugin for the third: see [the fifth role](architecture.md#the-fifth-role-which-is-not-a-skill).
+The first and third rows also run live, outside these skills and the CLI, for anyone maintaining a bundle in Obsidian rather than through an agent. The KTL Registrar plugin runs the first, and the KTL Curator plugin the third: see [the fifth role](architecture.md#the-fifth-role-which-is-not-a-skill).
 
 ## When the vocabulary stops fitting
 
-LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. When concepts stop fitting those classes, typically in a deep or safety-critical domain such as medicine, law, finance or safety engineering, the answer is a domain schema written in [LinkML](https://linkml.io) that extends LOKF's. The **curator** flags the drift; the team decides; the **librarian** applies it.
+LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. When concepts stop fitting those classes, typically in a deep or safety-critical domain such as medicine, law, finance or safety engineering, the answer is a domain schema written in [LinkML](https://linkml.io) that extends LOKF's. The **curator** flags the drift, the team decides, and the **librarian** applies it.
 
 [`ktl-curator/references/domain-schemas.md`](../skills/ktl-curator/references/domain-schemas.md) says what it costs (no new tooling) and how to write one. It also says what to do when the domain already has a LinkML vocabulary of its own, and how to validate values it binds to an external domain ontology. [`ktl-librarian/references/domain-schema.md`](../skills/ktl-librarian/references/domain-schema.md) gives the recipe that writes one and validates against it with the toolkit you already have.
 
