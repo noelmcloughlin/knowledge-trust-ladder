@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The website's figures stay in the text column.** On a wide screen a diagram no longer grows into the main pane's spare width; a click opens it at full size. The change is in the template's `theme.css` and `Mermaid.astro`, so a host gets it with its next website repair.
+- **The sidecar's pages name Codeberg beside GitLab, Forgejo and Gitea.** The install, signing, automation and scheduled-task pages point at the portability recipe for another forge, and the registrar template's header links the three-lines page through w3id.
+
 ## [0.47.0] - 2026-10-17
 
 ### Added
