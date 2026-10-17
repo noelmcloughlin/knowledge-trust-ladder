@@ -17,6 +17,7 @@
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py members
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py serve
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py query snapshot/queries/labels.rq
+#   uv run --project .lokf .lokf/scripts/knowledge-federate.py mcp
 #
 # `build` writes snapshot.new/ and renames it to snapshot/ in one step, so a
 # reader never sees half a federation; a failed build leaves the previous
@@ -28,9 +29,21 @@
 # (knowledge-apply.sh) to apply, so the sidecar's librarian workflow can run
 # it as AGENT_CLI. The change moves the old release's tag, zip name and day
 # in the concept's description and body as well as its frontmatter, so the
-# text never contradicts `version`. `serve` and `query` read the snapshot
-# through the toolkit's own store and server, with the union of the named
-# graphs as the default graph.
+# text never contradicts `version`. `members --add owner/repo` drafts a
+# member concept from a repository's newest bundle release, as a `create`
+# for the pen, so admitting a bundle is the same verified step as moving one.
+# A release that carries the bundle's own schema beside the zip
+# (`schema-<tag>-<name>.yaml`, which knowledge-release.yaml attaches when the
+# host's justfile names one) is named as a second distribution, and the build
+# validates that bundle against it instead of LOKF core alone. `serve` and
+# `query` read the snapshot through the toolkit's own store and server, with
+# the union of the named graphs as the default graph. `mcp` is the
+# `lokf-registry` server the LOKF specification's section 11.4 describes,
+# over the same snapshot: resolve_iri, neighbors, subgraph, federated_sparql
+# and read_document, each bounded in depth and size, with the workspace index
+# as the server's instructions so an agent reads it before anything else.
+# `--snapshot` may be an absolute path, so a downloaded workspace-<tag>.zip
+# is read anywhere a sidecar environment exists.
 #
 # What the snapshot holds: index.md (the members, their versions, licences
 # and health lines, each member's own index first), llms.txt,
@@ -56,7 +69,6 @@ import argparse
 import datetime as dt
 import hashlib
 import json
-import os
 import pathlib
 import re
 import shutil
@@ -152,6 +164,20 @@ class Member:
         self.sha256 = checksum[7:].lower()
         if not self.base_iri or not self.zip_url:
             raise Failed(f"{concept_path}: base_iri and distribution.access_url are required")
+        # A further distribution ending .yaml is the bundle's own schema, as
+        # knowledge-release.yaml attaches it beside the zip. The build
+        # validates the bundle against it instead of LOKF core alone.
+        self.schema_url = self.schema_name = self.schema_sha256 = ""
+        for extra in dists[1:]:
+            url = str(extra.get("access_url") or "")
+            name = str(extra.get("name") or pathlib.PurePosixPath(urllib.parse.urlparse(url).path).name)
+            if not name.endswith((".yaml", ".yml")):
+                continue
+            checksum = str(extra.get("checksum") or "")
+            if not checksum.startswith("sha256:") or len(checksum) != 71:
+                raise Failed(f"{concept_path}: the schema distribution {name} needs checksum sha256:<64 hex digits>")
+            self.schema_url, self.schema_name, self.schema_sha256 = url, name, checksum[7:].lower()
+            break
         m = GITHUB_RELEASE.match(self.zip_url)
         self.github = (m.group("owner"), m.group("repo"), m.group("tag")) if m else None
         if self.github:
@@ -174,6 +200,8 @@ class Member:
         }
         if self.release:
             entry["release"] = self.release
+        if self.schema_url:
+            entry["schema"] = {"url": self.schema_url, "sha256": self.schema_sha256}
         if self.github:
             entry["repository"] = f"{self.github[0]}/{self.github[1]}"
             entry["source_base"] = self.source_base
@@ -298,6 +326,51 @@ def unpack(zip_path: pathlib.Path, into: pathlib.Path) -> pathlib.Path:
     if not (knowledge / "index.md").is_file():
         raise Failed(f"{zip_path.name}: no knowledge/index.md inside")
     return knowledge
+
+
+def obtain_file(url: str, sha256: str, cache: pathlib.Path, what: str) -> pathlib.Path:
+    """A released file other than the zip, in the cache under its digest, checked against the checksum the member names."""
+    cache.mkdir(parents=True, exist_ok=True)
+    suffix = pathlib.PurePosixPath(urllib.parse.urlparse(url).path).suffix or ".bin"
+    cached = cache / f"{sha256}{suffix}"
+    if cached.is_file() and digest(cached) == sha256:
+        return cached
+    tmp = cache / f"{sha256}.part"
+    fetch(url, tmp)
+    got = digest(tmp)
+    if got != sha256:
+        tmp.unlink(missing_ok=True)
+        raise Failed(f"{what}: {url} has sha256 {got}, not the {sha256} the member concept names")
+    tmp.replace(cached)
+    return cached
+
+
+def toolkit_schema() -> pathlib.Path:
+    """The lokf.yaml packaged with the installed toolkit, the file a host pins beside its own schema."""
+    import lokf
+
+    found = next(pathlib.Path(lokf.__file__).parent.rglob("lokf.yaml"), None)
+    if found is None:
+        raise Failed("the installed lokf package carries no lokf.yaml")
+    return found
+
+
+def member_schema_file(member: Member, cache: pathlib.Path, attest: bool, bundle_dir: pathlib.Path) -> pathlib.Path | None:
+    """The schema released with a member's bundle, verified and placed beside the unpacked bundle with the toolkit's lokf.yaml, or None.
+
+    A host's schema imports `lokf` by that name and keeps a pinned copy
+    beside it (the librarian's domain-schema recipe), so the released schema
+    is given the same neighbour here and validates as it does at home.
+    """
+    if not member.schema_url:
+        return None
+    cached = obtain_file(member.schema_url, member.schema_sha256, cache, member.slug)
+    if member.github and attest:
+        verify_attestation(cached, member.github[0], member.github[1])
+    schema = bundle_dir / ".lokf" / member.schema_name
+    shutil.copyfile(cached, schema)
+    shutil.copyfile(toolkit_schema(), schema.parent / "lokf.yaml")
+    return schema
 
 
 # ---------------------------------------------------------------------------
@@ -567,6 +640,10 @@ def _build(args, note_new) -> int:
     export_root = new / "export"
     export_root.mkdir()
     public = public_url(root, args.public_url)
+    # The domain's own concepts, read from the host's repository at the tag
+    # when the release page says where that is.
+    rb = re.match(r"^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/releases/tag/?$", args.release_base or "")
+    domain_source = f"https://raw.githubusercontent.com/{rb.group(1)}/{rb.group(2)}/{tag}/.lokf/knowledge" if rb and tag else ""
     registry = Registry(path=new / "lokf-registry.yaml", id=domain_iri, title=f"{domain_title}: registry",
                         publisher={}, version=REGISTRY_VERSION, repos=[])
     records: list[dict] = []
@@ -580,6 +657,11 @@ def _build(args, note_new) -> int:
         entry = entry_for_bundle(kdir, source_base or None)
         entry.path = None
         entry.status = "ok"
+        if not source_base:
+            # The toolkit fills source_base with the runner's own path, which
+            # no reader can follow; the public copy of the unpacked release is
+            # the next best, and nothing when there is no public address.
+            entry.source_base = (domain_source if member is None else "") or (f"{public}/bundles/{slug}/.lokf/knowledge" if public else "")
         if member and member.repo:
             entry.repo = member.repo
         if public:
@@ -589,10 +671,11 @@ def _build(args, note_new) -> int:
         done = run_lokf(["export", str(kdir), "--out-dir", str(out_dir), *(["--source-base", source_base] if source_base else [])])
         if done.returncode != 0:
             raise Failed(f"{slug}: lokf export failed: {(done.stderr or done.stdout).strip()[:400]}")
-        schema = host_schema(root) if member is None else None
+        schema = host_schema(root) if member is None else member_schema_file(member, cache, not args.no_attestation, kdir.parent.parent)
         if schema:
             check = subprocess.run([*lokf_cli(), "validate", "--schema", schema.name, str(kdir)], capture_output=True, text=True, cwd=str(schema.parent))
-            fit.append(f"- `{slug}`: " + (f"validates against its domain schema `{schema.name}`" if check.returncode == 0 else f"does not validate against `{schema.name}`: " + (check.stderr or check.stdout).strip().splitlines()[-1][:200]))
+            whose = "its domain schema" if member is None else "the schema released with it,"
+            fit.append(f"- `{slug}`: " + (f"validates against {whose} `{schema.name}`" if check.returncode == 0 else f"does not validate against `{schema.name}`: " + (check.stderr or check.stdout).strip().splitlines()[-1][:200]))
         else:
             check = run_lokf(["validate", str(kdir)])
             fit.append(f"- `{slug}`: " + ("validates against LOKF core" if check.returncode == 0 else "does not validate against LOKF core alone (a schema of its own, or a vocabulary outside LOKF): " + (check.stderr or check.stdout).strip().splitlines()[-1][:200]))
@@ -694,7 +777,7 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
     if dom:
         lines += ["", f"The domain bundle itself: [{dom['title']}](bundles/domain/.lokf/knowledge/index.md) at `{dom['base_iri']}`, {dom['triples']} triples; its health line: {dom['health']}."]
     lines += ["", "## Files", "",
-              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace.",
+              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace, and the schema released with its bundle when there is one.",
               "- `lokf-registry.yaml` and `registry.jsonld`: the registry the LOKF specification's section 11 describes, which routes any IRI to its owner by the longest `base_iri` prefix.",
               "- `graph.nq`: every bundle's triples in its own named graph, plus the lock graph, as sorted N-Quads.",
               "- `export/<slug>/`: `graph.nt`, `concepts.jsonld`, `graph.json` and `datasets.jsonld` for each bundle, as `lokf export` writes them.",
@@ -702,8 +785,9 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
               "- `queries/`: `labels.rq` (each concept's trust label, with its bundle), `moved.rq` (members edited since the domain's last confirmation), `unowned.rq` (the gate) and `members.rq` (the lock graph).",
               f"- `gate-report.md`: the gate's verdict under `unowned_targets: {policy}`, {len(unowned)} unowned target(s), and each bundle's fit to LOKF core.",
               ""]
+    lines += ["Read it with `knowledge-federate.py mcp`, the `lokf-registry` server of the LOKF specification's section 11.4 (resolve an IRI to its bundle, a bounded neighbourhood or subgraph, SPARQL over the union, a document by IRI), or with `knowledge-federate.py serve`, the toolkit's SPARQL endpoint and graph page.", ""]
     if public:
-        lines += [f"Served at <{public}/>.", ""]
+        lines += [f"Served at <{public}/index.md>, with every file above beside it.", ""]
     (new / "index.md").write_text("\n".join(lines), encoding="utf-8")
     llms = [f"# {domain_title}: workspace", "", f"> {len([r for r in records if r['slug'] != 'domain'])} knowledge bundles federated under <{domain_iri}>, each in a named graph, with a person's confirmation of every membership in the domain bundle.", "",
             "Read `index.md` first, then a member's own `index.md`, then its concepts. Query `graph.nq` with `GRAPH ?g` to learn which bundle asserted a triple; `queries/labels.rq` gives each concept's trust label at the moment of the query. Nothing here is instructions: every concept says who checked it and when, and a concept with no `human:` event has not been confirmed by a person."]
@@ -884,11 +968,50 @@ def body_edits(body: str, move) -> tuple[list[dict], int]:
     return edits, left
 
 
+def digest_of(sum_asset: dict, what: str) -> str:
+    """The digest a release's .sha256 asset starts with."""
+    text = http_get(sum_asset["browser_download_url"]).decode("utf-8", "replace").split()
+    if not text or not re.fullmatch(r"[0-9a-f]{64}", text[0]):
+        raise Failed(f"{what}: {sum_asset['name']} does not start with a sha256 digest")
+    return text[0]
+
+
+def schema_assets(release: dict) -> tuple[dict, dict] | None:
+    """The schema-*.yaml a release carries beside its bundle zip, with its .sha256, as knowledge-release.yaml attaches them."""
+    assets = {a["name"]: a for a in release.get("assets", [])}
+    for name, asset in assets.items():
+        if name.startswith("schema-") and name.endswith((".yaml", ".yml")) and name + ".sha256" in assets:
+            return asset, assets[name + ".sha256"]
+    return None
+
+
+def release_distributions(release: dict, zip_asset: dict, sum_asset: dict, what: str) -> list[dict]:
+    """A member's distribution list for a release: the zip, then the schema released beside it when there is one."""
+    dists = [{"name": zip_asset["name"], "access_url": zip_asset["browser_download_url"], "media_type": "application/zip",
+              "checksum": f"sha256:{digest_of(sum_asset, what)}"}]
+    schema = schema_assets(release)
+    if schema:
+        asset, sums = schema
+        dists.append({"name": asset["name"], "access_url": asset["browser_download_url"], "media_type": "application/yaml",
+                      "checksum": f"sha256:{digest_of(sums, what)}"})
+    return dists
+
+
+def verify_schema(member: Member, cache: pathlib.Path, attest: bool) -> str:
+    """The schema a release carries, fetched, checked and attested as the zip is; the verdict as one clause, or "" when there is none."""
+    if not member.schema_url:
+        return ""
+    cached = obtain_file(member.schema_url, member.schema_sha256, cache, member.slug)
+    if member.github and attest:
+        verify_attestation(cached, member.github[0], member.github[1])
+    return f"; schema {member.schema_name} checked"
+
+
 def members(args) -> int:
     root = find_root(args.root)
     knowledge = root / ".lokf" / "knowledge"
     bundle, domains, member_concepts = read_domain(knowledge)
-    top_domain(bundle, domains)
+    domain_iri = bundle.iri(top_domain(bundle, domains))
     cache = pathlib.Path(args.cache).expanduser() if args.cache else root / ".lokf" / ".cache" / "federation"
     ops: list[dict] = []
     handoff: list[str] = []
@@ -909,13 +1032,10 @@ def members(args) -> int:
         if tag == member.version:
             current.append(f"{member.slug}: {tag} is current")
             continue
-        sum_text = http_get(sum_asset["browser_download_url"]).decode("utf-8", "replace").split()
-        if not sum_text or not re.fullmatch(r"[0-9a-f]{64}", sum_text[0]):
-            raise Failed(f"{member.slug}: {sum_asset['name']} does not start with a sha256 digest")
-        new_sha = sum_text[0]
-        distribution = [{"name": zip_asset["name"], "access_url": zip_asset["browser_download_url"], "media_type": "application/zip", "checksum": f"sha256:{new_sha}"}]
+        distribution = release_distributions(release, zip_asset, sum_asset, member.slug)
         moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
         _, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
+        verdict += verify_schema(moved, cache, not args.no_attestation)
         release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
         path = c.concept_id + ".md"
         # "Confirmed" only when a person confirmed the concept as it stands; a
@@ -933,7 +1053,7 @@ def members(args) -> int:
         # the new ones in the description and in the body, so the concept no
         # longer says one release in `version` and another in its prose.
         old_day = release_day(next((r for r in releases if r.get("tag_name") == member.version), None))
-        move = mover({member.version: tag, member.zip_name: zip_asset["name"], old_day: release_day(release)})
+        move = mover({member.version: tag, member.zip_name: zip_asset["name"], old_day: release_day(release), member.schema_name: moved.schema_name})
         sets: dict = {"version": tag, "release": release_url, "resource": release_url, "distribution": distribution}
         description = str(c.data.get("description") or "")
         if move(description) != description:
@@ -952,11 +1072,62 @@ def members(args) -> int:
         ops.append({"op": "question", "path": path, "text": asked})
         note = "" if old_day else f"; {member.version} is not in the release list, so its day was not moved"
         handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}{note}; a person confirms the member{' again' if confirmed else ''} to accept it.")
+    # A repository named with --add joins the same way a member moves: its
+    # newest bundle release is verified first, then its own index.md says what
+    # it is and where its namespace lies, and the pen creates the concept as
+    # a draft with a question, for a person to confirm.
+    taken = {str(c.data.get("base_iri") or ""): c.concept_id for c in member_concepts}
+    added = 0
+    for spec in args.add or []:
+        owner, _, repo = spec.partition("/")
+        if not owner or not repo or not re.fullmatch(r"[A-Za-z0-9_.-]+", owner) or not re.fullmatch(r"[A-Za-z0-9_.-]+", repo):
+            raise Failed(f"--add takes owner/repo, not {spec!r}")
+        slug, path = repo, f"members/{repo}.md"
+        if (knowledge / path).exists():
+            raise Failed(f"{path} exists already; `members` moves an existing member on its own")
+        releases = github_releases(owner, repo)
+        found = newest_bundle_release(releases)
+        if not found:
+            raise Failed(f"{owner}/{repo}: no published release carries a knowledge-*.zip with its .sha256, so there is no bundle to admit yet")
+        release, zip_asset, sum_asset = found
+        tag = release["tag_name"]
+        release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
+        distribution = release_distributions(release, zip_asset, sum_asset, slug)
+        probe = Member(knowledge / path, {"base_iri": "https://pending.invalid/", "version": tag, "distribution": distribution}, domain_iri, 1)
+        zip_path, verdict = obtain(probe, cache, args.max_bytes, not args.no_attestation)
+        verdict += verify_schema(probe, cache, not args.no_attestation)
+        kdir = unpack(zip_path, pathlib.Path(tempfile.mkdtemp(prefix="federate-add-")) / slug)
+        meta = read_frontmatter(kdir / "index.md")
+        base_iri = str(meta.get("base_iri") or "")
+        if not base_iri:
+            raise Failed(f"{owner}/{repo}: the zip's index.md names no base_iri")
+        for other, who in taken.items():
+            if other and (base_iri.startswith(other) or other.startswith(base_iri)):
+                raise Failed(f"{owner}/{repo}: its namespace {base_iri} nests with {who}'s {other}; a bundle joins once, under a namespace of its own")
+        taken[base_iri] = slug
+        day = release_day(release)
+        title = str(meta.get("title") or f"{repo} knowledge bundle")
+        about = str(meta.get("description") or "").strip()
+        description = f"The bundle of the {owner}/{repo} repository as released at {tag}" + (f" on {day}." if day else ".")
+        body = (f"# Overview\n\nThis member is the knowledge bundle of [{owner}/{repo}](https://github.com/{owner}/{repo})."
+                + (f" Its own index describes it as: {about}" if about else "")
+                + f" It was released at {tag}" + (f" on {day}" if day else "")
+                + f", and the release workflow attached the bundle as `{zip_asset['name']}`, with a `.sha256` file and a build attestation"
+                + (f", and the bundle's schema as `{probe.schema_name}`" if probe.schema_url else "")
+                + f". Its concepts are in the namespace `{base_iri}`.\n")
+        fm = {"type": "MemberBundle", "genre": "reference", "title": title, "description": description, "resource": release_url,
+              "base_iri": base_iri, "version": tag, "release": release_url, "distribution": distribution, "isPartOf": [domain_iri]}
+        ops.append({"op": "create", "path": path, "frontmatter": fm, "body": body,
+                    "log": f"**Added**: {title}, {owner}/{repo} at {tag}; a person confirms the member to admit it."})
+        ops.append({"op": "question", "path": path, "text": f"{owner}/{repo} is proposed as a member at {tag}; does it belong under the admission rule?"})
+        handoff.append(f"{slug}: new member at {tag}; {verdict}; base_iri {base_iri} read from the zip; a person confirms the member to admit it.")
+        added += 1
     for line in current:
         say(line)
     if not ops:
         say("every member is current; no patch written")
         return 0
+    what = "moved" if not added else "moved or proposed"
     patch = {"by": ACTOR, "ops": ops, "handoff": handoff[:10]}
     # One line per value, so a replace target reaches the pen exactly as the
     # body holds it and no folded line can start like a person's event.
@@ -970,11 +1141,11 @@ def members(args) -> int:
             warn("a knowledge-librarian pull request is already open, so a run without --dry-run would write no patch")
         return 0
     if pr_open:
-        say(f"{len(handoff)} member(s) moved, but a knowledge-librarian pull request is already open; no patch written")
+        say(f"{len(handoff)} member(s) {what}, but a knowledge-librarian pull request is already open; no patch written")
         return 0
     target = root / ".lokf" / "patch.yaml"
     target.write_text(text, encoding="utf-8")
-    say(f"{len(handoff)} member(s) moved; operations written to {target} for the pen")
+    say(f"{len(handoff)} member(s) {what}; operations written to {target} for the pen")
     return 0
 
 
@@ -1015,11 +1186,19 @@ def union_store(snapshot: pathlib.Path):
     return UnionStore(store, prefixes)
 
 
+def snapshot_dir(args) -> pathlib.Path:
+    """The snapshot to read: --snapshot as given when it is absolute (an unpacked workspace-<tag>.zip anywhere), else under the host's root."""
+    given = pathlib.Path(args.snapshot).expanduser()
+    snapshot = given if given.is_absolute() else find_root(args.root) / given
+    if not (snapshot / "graph.nq").is_file():
+        raise Failed(f"{snapshot / 'graph.nq'} not found; run build first, or point --snapshot at an unpacked workspace-<tag>.zip")
+    return snapshot
+
+
 def serve(args) -> int:
     from lokf.server import build_server
 
-    root = find_root(args.root)
-    store = union_store(root / args.snapshot)
+    store = union_store(snapshot_dir(args))
     httpd = build_server(store, args.host, args.port)
     say(f"{len(store)} quads from {args.snapshot}; SPARQL at http://{args.host}:{args.port}/sparql, graph at http://{args.host}:{args.port}/ ; Ctrl-C to stop")
     try:
@@ -1032,8 +1211,7 @@ def serve(args) -> int:
 
 
 def query(args) -> int:
-    root = find_root(args.root)
-    store = union_store(root / args.snapshot)
+    store = union_store(snapshot_dir(args))
     text = pathlib.Path(args.query).read_text(encoding="utf-8") if pathlib.Path(args.query).is_file() else args.query
     if args.format == "json":
         sys.stdout.buffer.write(store.serialize_results(text, "json"))
@@ -1046,6 +1224,206 @@ def query(args) -> int:
     print("\t".join(cols))
     for row in rows:
         print("\t".join(str(row.get(c, "")) for c in cols))
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# mcp: the lokf-registry server of the specification's section 11.4, over the snapshot
+# ---------------------------------------------------------------------------
+# Every answer is bounded: a neighbourhood stops at DEPTH_MAX hops and
+# LIMIT_MAX triples, a SELECT at ROWS_MAX rows, and each says when it was cut,
+# so a reader asks again from a narrower place instead of being handed the
+# graph. Nothing is written: the snapshot is read-only and the server holds
+# no state between calls.
+DEPTH_MAX, LIMIT_DEFAULT, LIMIT_MAX, ROWS_MAX = 3, 200, 2000, 1000
+STORED_QUERY = re.compile(r"^[A-Za-z0-9_-]+\.rq$")
+
+
+class Workspace:
+    """A snapshot opened for reading: the union store, the registry, the lock, the index, and each bundle's unpacked release."""
+
+    def __init__(self, snapshot: pathlib.Path):
+        from lokf.registry import load_registry
+
+        self.snapshot = snapshot
+        self.store = union_store(snapshot)
+        self.registry = load_registry(snapshot / "lokf-registry.yaml")
+        self.lock = yaml.safe_load((snapshot / "workspace.lock.yaml").read_text(encoding="utf-8")) or {}
+        self.index = (snapshot / "index.md").read_text(encoding="utf-8")
+        self.members = {m["base_iri"]: m for m in self.lock.get("members", [])}
+        domain_base = str(self.lock.get("domain_base_iri") or "")
+        self.members.setdefault(domain_base, {"slug": "domain", "base_iri": domain_base, "version": "", "source_base": ""})
+
+    def owner(self, iri: str) -> dict | None:
+        """The lock entry of the bundle whose namespace holds the IRI, with the registry's title, or None."""
+        entry = self.registry.owner(iri)
+        if entry is None:
+            return None
+        record = dict(self.members.get(entry.base_iri) or {"slug": None, "base_iri": entry.base_iri})
+        record["title"] = entry.title
+        return record
+
+    def document(self, iri: str) -> tuple[dict, pathlib.Path, str] | None:
+        """The owner, the Markdown file and the source URL of a concept, or of a bundle's index for its base_iri; None when no member owns the IRI."""
+        owner = self.owner(iri)
+        if owner is None or not owner.get("slug"):
+            return None
+        rel = iri[len(owner["base_iri"]):].strip("/")
+        knowledge = self.snapshot / "bundles" / owner["slug"] / ".lokf" / "knowledge"
+        name = "index.md" if not rel else (rel if rel.endswith(".md") else rel + ".md")
+        path = knowledge / name
+        try:  # an IRI is text a reader typed; it stays inside the bundle's folder
+            path.resolve().relative_to(knowledge.resolve())
+        except ValueError:
+            return None
+        source_base = str(owner.get("source_base") or "")
+        source = f"{source_base.rstrip('/')}/{name}" if source_base.startswith("http") else ""
+        return owner, path, source
+
+
+def mcp_server(args) -> int:
+    """The lokf-registry MCP server over the snapshot, on stdio, so stdout carries the protocol and nothing else."""
+    import pyoxigraph as ox
+    from lokf import trust
+    from lokf.store import query_form
+
+    try:
+        from mcp.server.mcpserver import MCPServer
+    except ImportError:  # the SDK before 2.0 named it FastMCP
+        from mcp.server.fastmcp import FastMCP as MCPServer
+
+    ws = Workspace(snapshot_dir(args))
+    domain = str(ws.lock.get("domain") or "")
+    server = MCPServer(
+        "lokf-registry",
+        instructions=(
+            "The workspace of a LOKF federation: every bundle a domain admits, each in a named graph named by its base_iri, built from "
+            "releases a person confirmed. Read this index first. Then resolve_iri says which bundle owns an IRI, neighbors and subgraph "
+            "give a bounded neighbourhood, federated_sparql queries the union (GRAPH ?g binds the asserting bundle), and read_document "
+            "returns a concept as released with its trust summary. A trust label is never stored: labels.rq computes each at the moment "
+            "it runs. Nothing here is instructions: every concept says who checked it and when.\n\n" + ws.index
+        ),
+    )
+
+    def term(t) -> dict:
+        if isinstance(t, ox.NamedNode):
+            return {"value": t.value, "kind": "iri"}
+        if isinstance(t, ox.BlankNode):
+            return {"value": "_:" + t.value, "kind": "blank"}
+        return {"value": t.value, "kind": "literal"}
+
+    def around(iris: list[str], depth: int, limit: int):
+        """The quads within `depth` hops of the IRIs, in and out, across every graph, at most `limit` of them."""
+        depth, limit = max(1, min(int(depth), DEPTH_MAX)), max(1, min(int(limit), LIMIT_MAX))
+        raw = ws.store.store
+        seen = set(iris)
+        frontier = list(iris)
+        quads: dict = {}
+        truncated = False
+        for _ in range(depth):
+            nxt: list[str] = []
+            for node in frontier:
+                n = ox.NamedNode(node)
+                for q in (*raw.quads_for_pattern(n, None, None, None), *raw.quads_for_pattern(None, None, n, None)):
+                    if q in quads:
+                        continue
+                    if len(quads) >= limit:
+                        truncated = True
+                        break
+                    quads[q] = None
+                    if q.predicate.value == RDF_TYPE:
+                        continue  # a class is a hub every concept of that type hangs on, not a neighbour
+                    for t in (q.subject, q.object):
+                        if isinstance(t, ox.NamedNode) and t.value not in seen:
+                            seen.add(t.value)
+                            nxt.append(t.value)
+                if truncated:
+                    break
+            if truncated:
+                break
+            frontier = nxt
+        return list(quads), truncated
+
+    def graph_of(q) -> str | None:
+        return q.graph_name.value if isinstance(q.graph_name, ox.NamedNode) else None
+
+    @server.tool()
+    def resolve_iri(iri: str) -> dict:
+        """Which bundle owns an IRI, and what it names: {iri, owner: {slug, base_iri, version, title, repository, source_base}, concept: {path, type, title, description, trust, source_url}}. owner is null for an IRI outside every member's namespace; concept is null for a namespace or a bundle's index."""
+        owner = ws.owner(iri)
+        if owner is None:
+            return {"iri": iri, "owner": None, "concept": None}
+        out: dict = {"iri": iri, "owner": owner, "concept": None}
+        found = ws.document(iri)
+        if found and found[1].is_file() and found[1].name != "index.md":
+            _, path, source = found
+            data = read_frontmatter(path)
+            out["concept"] = {"path": path.relative_to(ws.snapshot).as_posix(), "type": data.get("type"), "title": data.get("title"),
+                              "description": data.get("description"), "trust": trust.trust_summary(data), "source_url": source}
+        return out
+
+    @server.tool()
+    def neighbors(iri: str, depth: int = 1, limit: int = LIMIT_DEFAULT) -> dict:
+        """The triples around an IRI, in and out, across every bundle's graph, with the graph that asserted each: {iri, triples: [{graph, subject, predicate, object: {value, kind}}], count, truncated}. depth is at most 3 hops and limit at most 2000 triples; truncated says when the limit cut the answer."""
+        quads, truncated = around([iri], depth, limit)
+        return {"iri": iri, "count": len(quads), "truncated": truncated,
+                "triples": [{"graph": graph_of(q), "subject": term(q.subject)["value"], "predicate": q.predicate.value, "object": term(q.object)} for q in quads]}
+
+    @server.tool()
+    def subgraph(iris: list[str], depth: int = 1, limit: int = LIMIT_DEFAULT, format: str = "trig") -> dict:
+        """The neighbourhood of one or more IRIs as RDF: {format, rdf, count, truncated}. trig and nquads keep each triple's graph, turtle flattens them. Bounded as neighbors is."""
+        formats = {"trig": ox.RdfFormat.TRIG, "nquads": ox.RdfFormat.N_QUADS, "turtle": ox.RdfFormat.TURTLE}
+        if format not in formats:
+            return {"error": f"format must be one of {', '.join(formats)}"}
+        quads, truncated = around(list(iris), depth, limit)
+        if format == "turtle":
+            data = ox.serialize([ox.Triple(q.subject, q.predicate, q.object) for q in quads], format=formats[format], prefixes=ws.store.prefixes)
+        else:
+            ds = ox.Dataset()
+            for q in quads:
+                ds.add(q)
+            data = ox.serialize(ds, format=formats[format], prefixes=ws.store.prefixes)
+        return {"format": format, "count": len(quads), "truncated": truncated, "rdf": data.decode("utf-8")}
+
+    @server.tool()
+    def federated_sparql(query: str, limit: int = ROWS_MAX) -> dict:
+        """SPARQL over the union of every bundle's graph, the schema prefixes preset; GRAPH ?g binds the asserting bundle's base_iri. query may name a stored query (labels.rq, moved.rq, unowned.rq, members.rq). SELECT gives {columns, rows, truncated} with at most limit rows (1000 at most); ASK {boolean}; CONSTRUCT or DESCRIBE {turtle}. SERVICE is refused, as the toolkit refuses it."""
+        text = query.strip()
+        if STORED_QUERY.match(text):
+            stored = ws.snapshot / "queries" / text
+            if not stored.is_file():
+                return {"error": f"no stored query {text}; those here are {', '.join(sorted(p.name for p in (ws.snapshot / 'queries').glob('*.rq')))}"}
+            query = stored.read_text(encoding="utf-8")
+        limit = max(1, min(int(limit), ROWS_MAX))
+        try:
+            form = query_form(query)
+            if form in ("construct", "describe"):
+                return {"turtle": ws.store.construct(query, fmt="ttl")}
+            if form == "ask":
+                return {"boolean": ws.store.ask(query)}
+            rows = ws.store.select(query)
+            columns = list(dict.fromkeys(k for row in rows for k in row))
+            return {"columns": columns, "rows": rows[:limit], "truncated": len(rows) > limit}
+        except Exception as exc:  # noqa: BLE001 - the engine's message is the answer
+            return {"error": f"query failed: {exc}"}
+
+    @server.tool()
+    def read_document(iri: str = "") -> dict:
+        """A document by IRI, as released: the workspace index with no IRI (read it first), a bundle's own index for its base_iri, else the concept's Markdown with its trust summary and the bundle that holds it: {iri, bundle, path, source_url, markdown, trust}."""
+        if not iri:
+            return {"iri": domain, "bundle": None, "path": "index.md", "source_url": "", "markdown": ws.index, "trust": None}
+        found = ws.document(iri)
+        if found is None:
+            return {"error": f"no member of this workspace owns {iri}"}
+        owner, path, source = found
+        if not path.is_file():
+            return {"error": f"{owner['slug']} has no document at {path.relative_to(ws.snapshot).as_posix()}"}
+        text = path.read_text(encoding="utf-8")
+        summary = trust.trust_summary(read_frontmatter(path)) if path.name != "index.md" and text.startswith("---") else None
+        return {"iri": iri, "bundle": owner, "path": path.relative_to(ws.snapshot).as_posix(), "source_url": source, "markdown": text, "trust": summary}
+
+    warn(f"lokf-registry over {ws.snapshot}: {len(ws.store)} quads, {len(ws.members)} bundles, five tools; stdio")
+    server.run(transport="stdio")
     return 0
 
 
@@ -1070,9 +1448,10 @@ def main(argv=None) -> int:
     m.add_argument("--max-bytes", type=int, default=DEFAULT_MAX_BYTES)
     m.add_argument("--no-attestation", action="store_true")
     m.add_argument("--dry-run", action="store_true", help="print the patch instead of writing .lokf/patch.yaml")
+    m.add_argument("--add", action="append", metavar="OWNER/REPO", help="draft a member concept from this repository's newest bundle release, as a create for the pen")
     m.set_defaults(func=members)
     s = sub.add_parser("serve", help="SPARQL endpoint and graph page over the snapshot")
-    s.add_argument("--snapshot", default="snapshot")
+    s.add_argument("--snapshot", default="snapshot", help="the snapshot folder under the root, or an absolute path to an unpacked workspace")
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8000)
     s.set_defaults(func=serve)
@@ -1081,6 +1460,9 @@ def main(argv=None) -> int:
     q.add_argument("--snapshot", default="snapshot")
     q.add_argument("--format", choices=["table", "json"], default="table")
     q.set_defaults(func=query)
+    x = sub.add_parser("mcp", help="the lokf-registry MCP server (stdio) over the snapshot: resolve_iri, neighbors, subgraph, federated_sparql, read_document")
+    x.add_argument("--snapshot", default="snapshot", help="the snapshot folder under the root, or an absolute path to an unpacked workspace")
+    x.set_defaults(func=mcp_server)
     args = ap.parse_args(argv)
     # The librarian wrapper hands its prompt to AGENT_CLI as `-p "<prompt>"`;
     # argparse rejects it, so it is stripped before parsing above.

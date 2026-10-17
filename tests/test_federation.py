@@ -15,6 +15,11 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 4. a member that is itself a domain is followed one tier down;
 5. `--verify-only` writes nothing, and `members` leaves a non-GitHub member
    as it is;
+5a. a schema released beside a member's zip, named as a second distribution,
+   is what the member's fit is checked against, and a wrong digest for it
+   stops the build;
+5b. `mcp` serves the workspace index as its instructions and answers the
+   five tools of the specification's section 11.4, each bounded;
 6. `members` moves a member's old tag, zip name and day in its description
    and body as well as its frontmatter, in a patch the pen applies, and
    names the lines it had to leave in its question;
@@ -22,7 +27,10 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    concept as it stands, and puts the move to a person as a question alone
    when a person wrote the concept;
 8. a dry run prints the patch while a librarian pull request is open, and a
-   real run then writes nothing.
+   real run then writes nothing;
+9. `members --add owner/repo` drafts a member concept from that repository's
+   newest bundle release, with the schema released beside it, and refuses a
+   path that exists or a namespace that nests with a member's.
 
 The `members` tests run the script through a small runner that serves the
 GitHub API and the release files from fixture files, and put a stand-in
@@ -139,7 +147,9 @@ def test_a_build_locks_loads_gates_and_repeats(federation):
     lock = (snap / "workspace.lock.yaml").read_text(encoding="utf-8")
     assert lock.index(federation["a_iri"]) < lock.index(federation["b_iri"]), "members are locked in base_iri order"
     assert federation["a_sha"] in lock and federation["b_sha"] in lock
-    assert "path:" not in (snap / "lokf-registry.yaml").read_text(encoding="utf-8"), "the registry carries no runner path"
+    registry = (snap / "lokf-registry.yaml").read_text(encoding="utf-8")
+    assert "path:" not in registry and "file://" not in registry, "the registry carries no runner path, in `path` or in `source_base`"
+    assert "knowledge-federate.py mcp" in (snap / "index.md").read_text(encoding="utf-8")
     assert graphs_in(snap / "graph.nq") == {federation["a_iri"], federation["b_iri"], federation["d_iri"], "https://d.example/snapshots/v0.2.0"}
     assert "0 typed-relation target(s) lie in no member's namespace" in (snap / "gate-report.md").read_text(encoding="utf-8")
     for name in ("index.md", "llms.txt", "registry.jsonld", "queries/labels.rq", "queries/unowned.rq", "export/a/graph.nt", "export/b/concepts.jsonld", "bundles/a/.lokf/knowledge/index.md", "bundles/domain/.lokf/knowledge/index.md"):
@@ -219,6 +229,105 @@ def test_verify_only_writes_nothing_and_members_leaves_a_local_zip_alone(federat
     r = federate(host, "members", "--dry-run", "--no-attestation")
     assert r.rc == 0 and "not a GitHub release" in r.out and "no patch written" in r.out, r.out
     assert not (host / ".lokf" / "patch.yaml").exists()
+
+
+SCHEMA = """\
+id: https://b.example/schema
+name: bschema
+imports:
+  - linkml:types
+  - lokf
+default_prefix: bschema
+default_range: string
+prefixes:
+  bschema: https://b.example/schema/
+  linkml: https://w3id.org/linkml/
+  lokf: https://w3id.org/lokf/
+classes:
+  Widget:
+    is_a: Concept
+"""
+
+
+def test_a_schema_released_with_a_bundle_is_what_its_fit_is_checked_against(federation, tmp_path):
+    """b's new release holds a Widget, a class outside LOKF core, and the schema that declares it is released beside the zip."""
+    host = federation["host"]
+    b2 = make_bundle(tmp_path / "b2", federation["b_iri"], "B", {"glossary/other.md": {"type": "Widget", "title": "Other", "description": "A widget.", "resource": "https://example.test/b"}})
+    sha = zip_bundle(b2, federation["b_zip"])
+    concept = host / ".lokf" / "knowledge" / "members" / "b.md"
+    text = concept.read_text(encoding="utf-8").replace(federation["b_sha"], sha)
+    concept.write_text(text, encoding="utf-8")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    assert "`b`: does not validate against LOKF core alone" in (host / "snapshot" / "gate-report.md").read_text(encoding="utf-8")
+    schema = write(tmp_path / "schema-v1.0.0-b.yaml", SCHEMA)
+    schema_sha = hashlib.sha256(schema.read_bytes()).hexdigest()
+    fm = yaml.safe_load(text.split("---\n")[1])
+    fm["distribution"].append({"name": schema.name, "access_url": schema.as_uri(), "media_type": "application/yaml", "checksum": f"sha256:{schema_sha}"})
+    concept.write_text(frontmatter(**fm) + "\n# Overview\n\nb bundle.\n", encoding="utf-8")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    assert "`b`: validates against the schema released with it, `schema-v1.0.0-b.yaml`" in (host / "snapshot" / "gate-report.md").read_text(encoding="utf-8")
+    lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert next(m for m in lock["members"] if m["slug"] == "b")["schema"] == {"url": schema.as_uri(), "sha256": schema_sha}
+    concept.write_text(concept.read_text(encoding="utf-8").replace(schema_sha, "1" * 64), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 1 and "has sha256" in r.out, "a schema whose digest is not the one named stops the build"
+
+
+# Drives the server over stdio with the SDK's own client: initialize, list
+# the tools, then the calls named on the command line, and prints one JSON
+# document with every answer.
+MCP_CLIENT = """\
+import asyncio, json, sys
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+project, script, snapshot, calls = sys.argv[1:5]
+
+def text(result):
+    return "\\n".join(c.text for c in result.content if getattr(c, "type", "") == "text")
+
+async def main():
+    out = {"calls": []}
+    params = StdioServerParameters(command="uv", args=["run", "--project", project, script, "mcp", "--snapshot", snapshot])
+    async with stdio_client(params) as (r, w):
+        async with ClientSession(r, w) as s:
+            init = await s.initialize()
+            out["server"], out["instructions"] = init.server_info.name, init.instructions
+            out["tools"] = [t.name for t in (await s.list_tools()).tools]
+            for name, args in json.loads(calls):
+                out["calls"].append(json.loads(text(await s.call_tool(name, args))))
+    print(json.dumps(out))
+
+asyncio.run(main())
+"""
+
+
+def test_mcp_serves_the_index_first_and_each_tool_bounded(federation, tmp_path):
+    host = federation["host"]
+    assert federate(host, "build", "--snapshot-iri", "https://d.example/snapshots/v0.2.0", "--no-attestation").rc == 0
+    a_term, b_other = federation["a_iri"] + "glossary/term", federation["b_iri"] + "glossary/other"
+    calls = [("read_document", {}), ("resolve_iri", {"iri": b_other}), ("neighbors", {"iri": a_term, "depth": 1, "limit": 50}),
+             ("subgraph", {"iris": [a_term], "depth": 1, "format": "trig"}), ("federated_sparql", {"query": "labels.rq"}),
+             ("federated_sparql", {"query": "SELECT * WHERE { SERVICE <https://x.example/sparql> { ?s ?p ?o } }"}),
+             ("read_document", {"iri": b_other}), ("read_document", {"iri": federation["a_iri"] + "../../etc/passwd"}),
+             ("resolve_iri", {"iri": "https://nobody.example/knowledge/x"}), ("neighbors", {"iri": a_term, "depth": 9, "limit": 1})]
+    client = write(tmp_path / "client.py", MCP_CLIENT)
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-I", client, REPO / ".lokf", SCRIPT, host / "snapshot", json.dumps(calls)], cwd=tmp_path, stdout_only=True)
+    assert r.rc == 0, r.out
+    out = json.loads(r.out)
+    assert out["server"] == "lokf-registry" and out["tools"] == ["resolve_iri", "neighbors", "subgraph", "federated_sparql", "read_document"]
+    assert out["instructions"].startswith("The workspace of a LOKF federation") and "# D: the workspace" in out["instructions"], "the index is the server's instructions"
+    index, resolved, near, sub, labels, service, doc, traversal, outside, cut = out["calls"]
+    assert index["path"] == "index.md" and index["markdown"].startswith("# D: the workspace")
+    assert resolved["owner"]["slug"] == "b" and resolved["concept"]["type"] == "GlossaryTerm" and resolved["concept"]["trust"]["trust_tier"]
+    assert any(t["graph"] == federation["a_iri"] and t["object"]["value"] == b_other for t in near["triples"]), "the cross-bundle edge is asserted by a's graph"
+    assert sub["format"] == "trig" and federation["a_iri"] in sub["rdf"] and sub["count"] == near["count"]
+    assert "g" in labels["columns"] and labels["rows"] and not labels["truncated"]
+    assert "SERVICE" in service["error"]
+    assert doc["bundle"]["slug"] == "b" and doc["markdown"].startswith("---") and doc["trust"]["status"]
+    assert "error" in traversal and outside["owner"] is None
+    assert cut["truncated"] and cut["count"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -322,14 +431,37 @@ def released(tmp_path):
     zip_path = tmp_path / "release.zip"
     sha = zip_bundle(bundle, zip_path)
     sums = write(tmp_path / "release.zip.sha256", f"{sha}  release.zip\n")
+    schema = write(tmp_path / "schema.yaml", SCHEMA)
+    schema_sums = write(tmp_path / "schema.yaml.sha256", f"{hashlib.sha256(schema.read_bytes()).hexdigest()}  schema.yaml\n")
+
+    def with_schema(release: dict) -> dict:
+        """The release with schema-<tag>-<slug>.yaml and its .sha256 beside the zip, as knowledge-release.yaml attaches them."""
+        base = release["assets"][0]["browser_download_url"].rsplit("/", 1)[0] + "/"
+        name = f"schema-{release['tag_name']}-{base.split('/')[4]}.yaml"
+        release["assets"] += [{"name": name, "browser_download_url": base + name}, {"name": name + ".sha256", "browser_download_url": base + name + ".sha256"}]
+        served[base + name], served[base + name + ".sha256"] = str(schema), str(schema_sums)
+        return release
+
     served = {}
     for slug in concepts:
         releases = [github_release(slug, *NEW), github_release(slug, *OLD)]
+        if slug == "b":
+            with_schema(releases[0])
         listing = write(tmp_path / "api" / f"{slug}.json", json.dumps(releases))
         served[f"https://api.github.com/repos/acme/{slug}/releases?per_page=100"] = str(listing)
-        asset, checksum = releases[0]["assets"]
+        asset, checksum = releases[0]["assets"][:2]
         served[asset["browser_download_url"]] = str(zip_path)
         served[checksum["browser_download_url"]] = str(sums)
+    # e has a bundle release of its own and no member concept yet; nested's
+    # release is bundle A again, whose namespace a member already holds.
+    e_bundle = make_bundle(tmp_path / "e_bundle", "https://e.example/knowledge/", "E", {"glossary/e.md": {"type": "GlossaryTerm", "title": "E term", "description": "E's term.", "resource": "https://example.test/e"}})
+    e_zip = tmp_path / "e.zip"
+    e_sums = write(tmp_path / "e.zip.sha256", f"{zip_bundle(e_bundle, e_zip)}  e.zip\n")
+    for slug, zipped, summed in (("e", e_zip, e_sums), ("nested", zip_path, sums)):
+        release = with_schema(github_release(slug, *NEW)) if slug == "e" else github_release(slug, *NEW)
+        served[f"https://api.github.com/repos/acme/{slug}/releases?per_page=100"] = str(write(tmp_path / "api" / f"{slug}.json", json.dumps([release])))
+        asset, checksum = release["assets"][:2]
+        served[asset["browser_download_url"]], served[checksum["browser_download_url"]] = str(zipped), str(summed)
     write(tmp_path / "served.json", json.dumps(served))
     write(tmp_path / "runner.py", RUNNER)
     gh = write(tmp_path / "bin" / "gh", FAKE_GH)
@@ -370,6 +502,9 @@ def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(rele
     for slug in ("b", "c"):
         moved = read(host / ".lokf" / "knowledge" / "members" / f"{slug}.md")
         assert "version: v1.1.0" in moved and f"The {slug} bundle as released at v1.1.0 on 2026-10-20." in moved, moved
+    b = yaml.safe_load(read(host / ".lokf" / "knowledge" / "members" / "b.md").split("---\n")[1])
+    assert [d["name"] for d in b["distribution"]] == ["knowledge-v1.1.0-b.zip", "schema-v1.1.0-b.yaml"], "a schema released beside the zip is named as a second distribution"
+    assert b["distribution"][1]["media_type"] == "application/yaml" and b["distribution"][1]["checksum"] == "sha256:" + hashlib.sha256(SCHEMA.encode()).hexdigest()
     person = read(host / ".lokf" / "knowledge" / "members" / "d.md")
     assert "version: v1.0.0" in person and "The d bundle as released at v1.0.0 on 2026-10-15." in person, "a concept a person wrote keeps its text"
     assert "A person wrote this concept, so this patch leaves its text and frontmatter as they are." in person, person
@@ -394,3 +529,25 @@ def test_a_dry_run_prints_the_patch_while_a_librarian_pull_request_is_open(relea
     r = members_run(released, prs='[{"number": 7}]')
     assert r.rc == 0 and "already open; no patch written" in r.out, r.out
     assert not (host / ".lokf" / "patch.yaml").exists()
+
+
+def test_members_add_drafts_a_member_from_a_repository_release(released):
+    host = released["host"]
+    r = members_run(released, "--add", "acme/e")
+    assert r.rc == 0 and "5 member(s) moved or proposed" in r.out, r.out
+    r = run(["bash", APPLY, "--root", host], cwd=host)
+    assert r.rc == 0, r.out
+    text = read(host / ".lokf" / "knowledge" / "members" / "e.md")
+    fm = yaml.safe_load(text.split("---\n")[1])
+    assert fm["type"] == "MemberBundle" and fm["status"] == "draft" and fm["version"] == "v1.1.0" and fm["base_iri"] == "https://e.example/knowledge/"
+    assert fm["id"] == "https://d.example/federation/members/e" and fm["isPartOf"] == ["https://d.example/federation/domains/top"] and fm["title"] == "E"
+    assert [d["name"] for d in fm["distribution"]] == ["knowledge-v1.1.0-e.zip", "schema-v1.1.0-e.yaml"] and fm["distribution"][1]["media_type"] == "application/yaml"
+    assert "This member is the knowledge bundle of [acme/e](https://github.com/acme/e). Its own index describes it as: E." in text
+    assert "acme/e is proposed as a member at v1.1.0; does it belong under the admission rule?" in text
+    assert "**Added**: E, acme/e at v1.1.0" in read(host / ".lokf" / "knowledge" / "log.md")
+    r = members_run(released, "--add", "acme/a")
+    assert r.rc == 1 and "members/a.md exists already" in r.out, r.out
+    r = members_run(released, "--add", "acme/nested")
+    assert r.rc == 1 and "nests with members/a's https://a.example/knowledge/" in r.out, r.out
+    r = members_run(released, "--add", "acme")
+    assert r.rc == 1 and "--add takes owner/repo" in r.out, r.out
