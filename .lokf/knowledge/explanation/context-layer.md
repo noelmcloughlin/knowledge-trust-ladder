@@ -2,7 +2,7 @@
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/context-layer
 title: "The curated context layer: one bundle, and a federation of bundles"
-description: "What the industry means by a context layer, why one KTL bundle is already one repository's context layer and where it stops, and a design for federating bundles into one layer: domains as thin LOKF bundles that select releases, and a workspace rebuilt on each release with one named graph per bundle. It also says what exists today, the decisions an adopter makes, and which SPARQL stores, catalogues, agent surfaces and artifact repositories such a layer can use."
+description: "What the industry means by a context layer, why one KTL bundle is already one repository's context layer and where it stops, and how bundles federate into one layer: domains as thin LOKF bundles that select releases, and a workspace rebuilt on each release with one named graph per bundle. The sidecar's federation templates released the domain tiers and the workspace on 2026-10-16. It also says what exists today and what remains a design, the decisions an adopter makes, and which SPARQL stores, catalogues, agent surfaces and artifact repositories such a layer can use."
 genre: explanation
 resource: docs/context-layer.md
 sources:
@@ -22,7 +22,7 @@ references:
 - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-16T23:58:13Z"
 status: draft
 verified:
 - by: process:ktl-librarian
@@ -31,7 +31,7 @@ verified:
 
 # Overview
 
-`docs/context-layer.md` places Knowledge Trust Ladder (KTL) in the industry's talk of a **context layer**. A context layer is a governed layer between an organisation's sources and whoever consumes them, a person or an agent, and it persists from one task to the next. The architecture page uses the term in "Why libraries have catalogues" and links the page. It links the page again in "Prose, Structure, Meaning, Context", where it says that whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from many federated into one layer. The page quotes each source from its own text, read on 2026-10-12. Both of its diagrams give a dashed outline to the parts that are a design, with no released code behind them yet.
+`docs/context-layer.md` places Knowledge Trust Ladder (KTL) in the industry's talk of a **context layer**. A context layer is a governed layer between an organisation's sources and whoever consumes them, a person or an agent, and it persists from one task to the next. The architecture page uses the term in "Why libraries have catalogues" and links the page. It links the page again in "Prose, Structure, Meaning, Context". There it says that whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from many federated into one layer. The page quotes each source from its own text, read on 2026-10-12. It says that the domain tiers and the workspace it describes were released on 2026-10-16 as the sidecar's federation templates, and that [ktl-federation](https://github.com/noelmcloughlin/ktl-federation) is the first host. A table on the page says what remains a design.
 
 **What the discourse means.** Unblocked names four properties: "heterogeneous source ingestion, on-demand surfacing, cross-source conflict resolution, and per-query permission enforcement". Atlan adds multi-domain federation, in which "Each domain owns its definitions but contributes to one graph", and the page sets that beside Zhamak Dehghani's "federated computational governance". Google Cloud's Open Knowledge Format (OKF) took a different approach, under the heading "Format, not platform", and left open the work KTL exists for: what counts as trusted knowledge and how updates are reviewed.
 
@@ -47,6 +47,20 @@ The design adds domains as manifests. A domain is a thin LOKF bundle of its own,
 
 A reader gets the index first and traverses on demand, over a SPARQL endpoint and an MCP server. Each trust label is computed from the events at the moment of the query, and never stored in the snapshot, since a snapshot that stores labels drifts from what it describes within a day.
 
+**What exists today, and what is design.** A table on the page sorts the parts. It counts these as existing:
+
+- a bundle validated, packed, checksummed, attested and attached to a release, by the template workflow `knowledge-release.yaml`;
+- the registrar's gate and the report script;
+- `lokf export`, `lokf registry init`, `add`, `list` and `resolve`, `lokf serve`, `query` and `mcp` over one bundle, and `lokf tables`, all in lokf 0.8.0;
+- domains as thin bundles, their domain schema and a person's confirmation of membership: `domain.yaml` in the sidecar's templates, the first domain host, ktl-federation, whose members are this bundle, ai-linkmo's and lmodel/gist's, and the curator's `domain-bundle.md`;
+- the lock, the refresh job and the atomic swap: `knowledge-federate.py` and `knowledge-federation.yaml` in the sidecar's templates.
+
+It lists these as design:
+
+- one named graph per bundle, lazy loading and a `lokf-registry` MCP server, from section 11.4 of the specification, which is marked informative;
+- harvesting remote artifacts, and the `sensitivity` gate, from section 11.5, where the field exists and nothing reads it;
+- per-query permissions, which are the store's and the artifact repository's access control, not the bundle's.
+
 **Decisions an adopter makes.** The page lists them:
 
 - whether a manifest pins its members or floats;
@@ -59,3 +73,7 @@ A reader gets the index first and traverses on demand, over a SPARQL endpoint an
 The design pins. Each member concept names one release, so a pinned domain needs a release of its own for every member release. A floating manifest is fresher, but its curator has not seen each release it picks up, and the workspace's lock then holds the exact releases. Either way, the report must say at each tier which members have moved since the domain was last confirmed.
 
 **What it integrates with.** `docs/context-layer-technology.md` surveys, from each vendor's own documentation, the artifact repositories, RDF stores with SPARQL, property-graph stores, catalogues and agent frameworks such a workspace could use. Stores whose documentation lists TriG or N-Quads keep one named graph per bundle through the load. Managed SPARQL exists on AWS, and natively on neither Azure nor Google Cloud. No retrieval framework it surveyed consumes RDF as its graph, so the agent surface is the store's own. Catalogues that take tables rather than RDF read what `lokf tables` writes.
+
+## Open questions
+
+- 2026-10-16, process:ktl-librarian: `docs/context-layer.md`'s table under What exists today lists one named graph per bundle as design, beside lazy loading and a `lokf-registry` MCP server. Since 0.44.0 `knowledge-federate.py build` loads each member's `graph.nt` into a named graph named by its `base_iri` and writes them all to `graph.nq`, as `CHANGELOG.md` and the description in `.assets/ktl-context-workspace.svg` say. Is one named graph per bundle now built, with lazy loading and the MCP server still a design?

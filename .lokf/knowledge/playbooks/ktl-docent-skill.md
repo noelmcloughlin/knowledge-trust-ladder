@@ -72,3 +72,4 @@ The fallback is contained by what the skill cannot do. It never edits `.lokf/kno
 ## Open questions
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 the Runs column ("whenever anyone asks") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.
+- 2026-10-16, process:ktl-librarian: Since 0.45.0 the docent's label table reads *Still a draft / Reopened*: for a confirmed concept a question put back to draft, the docent says the confirmation first, then when it was reopened, by whom and how many questions wait (`SKILL.md`, `references/answering.md`). Since 0.44.0 `references/answering.md` also says how to answer on a domain host from the workspace under `snapshot/`, labelling each concept with its bundle. This concept carries neither.

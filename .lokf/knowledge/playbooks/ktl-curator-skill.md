@@ -72,3 +72,4 @@ The curation policy carries three optional switches: `Independent re-check:`, `E
 ## Open questions
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 the Runs column ("a little, regularly") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.
+- 2026-10-16, process:ktl-librarian: Since 0.45.0 the curator's label table reads *Still a draft / Reopened*, and the health line counts *Reopened*, a confirmed concept a question put back to draft, apart from *Drafts* (`SKILL.md`, `references/trust-fields.md`). Since 0.44.0 `references/domain-bundle.md` says how a person confirms a member of a domain bundle. This concept carries neither.

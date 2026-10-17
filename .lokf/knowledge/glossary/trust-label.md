@@ -19,6 +19,7 @@ verified:
   at: "2026-10-13T01:06:43Z"
 references:
 - https://w3id.org/ktl/knowledge/references/okf-specification
+status: draft
 ---
 
 # Overview
@@ -36,3 +37,7 @@ It reads `.lokf/feedback.md` for the label *a reader disputed this*: a waiting `
 A `revision` on an event (proposed for lokf 0.9.0, not yet released) is shown beside that event's date but changes no label: its absence means unrecorded, never unchanged.
 
 The labels overlap. A concept can be confirmed *and* past its review date, so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.
+
+## Open questions
+
+- 2026-10-16, process:ktl-librarian: Since 0.45.0 `skills/ktl-curator/references/trust-fields.md` has a label *Reopened*: `status: draft` on a concept with a `human:` `verified` event, naming the earliest question asked on or after the confirmation's day, its asker and how many wait. A reopened concept still counts as confirmed, and *Still a draft* now needs no `human:` event. This concept does not name the label.

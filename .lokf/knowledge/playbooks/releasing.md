@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T00:41:23Z"
+  at: "2026-10-16T23:58:13Z"
 status: draft
 dependsOn:
 - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -74,12 +74,13 @@ The sibling repositories (the two Obsidian plugins) carry byte-identical copies 
 
 - refuses anything but a tag that is on origin and carries `skills/ktl-librarian`;
 - works in each sibling on a branch of its own, `sync-<tag>`, started from the default branch as origin has it, so the diff is never left on `main` or inside a feature branch. It skips a sibling with uncommitted changes (0.40.0);
-- copies that tag's templates over the copies the sibling already has, `.lokf/justfile` among them since 0.43.1, keeping the sibling's own first line there;
+- copies that tag's templates over the copies the sibling already has, `.lokf/justfile` among them since 0.43.1, keeping the sibling's own first line there and, since 0.45.0, its own `schema :=` line, which names a domain schema;
 - adds a template the sibling lacks when ktl-sidecar puts it on every host or a copy there cannot run without it;
 - reports any other template, and adds nothing more;
 - copies ktl-website's templates to a sibling that laid its site down with that skill, one with a `website/site.config.mjs`, apart from the three files the host owns, and prints the command that builds the site there;
 - then moves the sibling's `TRUST_LADDER_SKILLS_REF` to the same tag, and its `TRUST_LADDER_SKILLS_SHA` to the commit that tag names;
-- runs the sidecar's checks there, prints the changelog entry to add and then the commit command, each set apart and naming the files to stage, and never commits.
+- runs the sidecar's checks there, and since 0.45.0 reports a failure of any of them, `lokf-check-refs` included;
+- prints the changelog entry to add and then the commit command, each set apart and naming the files to stage, and never commits. Since 0.45.0 it writes the entry in full: it names the copies the sync changed, or says the pin moved alone. It ends the entry with "No plugin change" only for an Obsidian plugin, one whose root `manifest.json` names `minAppVersion`.
 
 The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync. The template's pin is never bumped by hand, which would cut a pointless release. The sibling's pull request is opened after the tag exists, since a sibling merged before its pin's tag fails at the install step on its next scheduled run.
 
