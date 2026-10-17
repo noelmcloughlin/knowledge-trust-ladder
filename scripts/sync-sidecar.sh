@@ -1,397 +1,145 @@
 #!/usr/bin/env bash
-# Bring a sibling repository's sidecar copies and skills pin up to one release
-# of this repository, and leave it to a person to review and commit.
+# Bring sibling repositories' sidecar copies and skills pins up to one release
+# of this repository, each on a branch of its own, and finish the branches
+# once their pull requests are merged.
 #
-# A sibling (the two Obsidian plugins, any host ktl-sidecar
-# installed into) carries byte-identical copies of the templates under
-# skills/ktl-sidecar/templates/ and pins its scheduled librarian to one tag of
-# this repository with TRUST_LADDER_SKILLS_REF, and to the commit that tag
-# names with TRUST_LADDER_SKILLS_SHA. The copies and the pin must move together.
-# The skill that tag installs is written against the wrapper, gate and
-# preflight that tag includes. And once the librarian is turned on, the pin
-# decides which agent instructions run unattended with a credential in the
-# job. So this script:
-#   - takes a *tag* and nothing looser;
-#   - reads the templates out of that tag rather than the working tree;
-#   - refuses a tag that does not exist yet, which settles the merge order:
-#     release here first, then sync;
-#   - writes on a branch of its own in each sibling, sync-<tag>, made from the
-#     sibling's default branch as origin has it, and refuses a sibling with
-#     uncommitted changes, so the diff is the sync's alone and never lands on
-#     main or inside a feature branch;
-#   - never commits.
-# The diff it leaves behind on that branch is the review.
+# The sync itself is skills/ktl-sidecar/templates/scripts/knowledge-sync.sh,
+# a template every sibling carries as .lokf/scripts/knowledge-sync.sh. That
+# script's header says what a sync copies, adds and refuses, and why the
+# copies and the pin move together from one tag. This script runs the copy
+# of it in the tag being synced, once in each sibling, so a template the
+# release added is known to the sync. A sibling's own knowledge-sync.yaml
+# workflow does the same on a schedule; this script is for the day of the
+# release, and for a sibling with no workflow.
 #
-# Usage: scripts/sync-sidecar.sh <tag> <sibling-dir>...
-#   scripts/sync-sidecar.sh v0.26.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator
+# Usage: scripts/sync-sidecar.sh [--commit | --push | --pr] [--no-checks] [--source <dir>] <tag> <sibling-dir>...
+#        scripts/sync-sidecar.sh --finish <tag> <sibling-dir>...
+#   scripts/sync-sidecar.sh --pr v0.47.0 ../obsidian-ktl-registrar ../obsidian-ktl-curator
 #
-# A sibling that laid its site down with ktl-website carries that skill's
-# templates too, under website/ and as knowledge-website.yaml; those move
-# with the same tag, apart from the three files the host owns.
+#   --commit   commit each sibling's sync on its sync-<tag> branch
+#   --push     --commit, then push the branch to the sibling's origin
+#   --pr       --push, then open the pull request with gh, from the
+#              sibling's .github/PULL_REQUEST_TEMPLATE/knowledge-sync.md
+#   --no-checks  skip the sidecar's checks in each sibling
+#   --source <dir>  read the tag from another clone of this repository
+#   --finish   after the pull requests are merged: in each sibling, go back
+#              to the default branch, bring it up to date, and delete the
+#              sync-<tag> branch. A branch whose remote branch still exists,
+#              or that was never pushed, is kept and reported.
 #
-# For each sibling it copies every template the sibling already carries. It
-# adds a template the sibling never had in two cases only: ktl-sidecar
-# installs it on every host, or a file the sibling carries cannot run without
-# it. A file cannot run without it when a workflow runs the script, or when
-# the wrapper writes the bundle through the apply script. Any other is
-# reported, not added: that is ktl-sidecar's Step 5, a decision for the host.
-# Then it sets the pin to the tag, runs the sidecar's own checks there, and
-# prints a draft changelog line and the commit command. Exit 1 when a sibling's
-# checks fail after the copy; exit 2 when the arguments are wrong or the tag
-# is not usable.
+# Without --commit the sync is left uncommitted on the branch, with the
+# commit command printed, and the diff is the review. Exit 1 when a sibling
+# was skipped or a check failed there; exit 2 when the arguments are wrong
+# or the tag is not usable.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-templates="skills/ktl-sidecar/templates"
-# The same pairs check 11 in validate-repository.sh holds this repository to.
-pairs=(
-  "github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml"
-  "github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml"
-  "github/knowledge-release.yaml:.github/workflows/knowledge-release.yaml"
-  "github/knowledge-federation.yaml:.github/workflows/knowledge-federation.yaml"
-  "scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh"
-  "scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh"
-  "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py"
-  "scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh"
-  "scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh"
-  "scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh"
-  "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh"
-  "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py"
-  "scripts/knowledge-report.sh:.lokf/scripts/knowledge-report.sh"
-  "scripts/knowledge-federate.py:.lokf/scripts/knowledge-federate.py"
-  "domain.yaml:.lokf/domain.yaml"
-  "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh"
-  "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
-  "gitattributes:.lokf/.gitattributes"
-  "justfile:.lokf/justfile"
-)
-# Templates whose first line names the host (Step 1's <PROJ_NAME>). The sync
-# keeps the sibling's own first line and copies the rest, so a recipe change
-# reaches every host without a placeholder landing in one. It keeps the
-# sibling's own `schema :=` line too: a host with a domain schema names it
-# there, and the template's empty one would validate it on LOKF core.
-host_titled=("justfile")
-# ktl-sidecar installs these on every host, whatever else the host chose,
-# so a sibling that lacks one gets it: <template>|<the step that says so>.
-always=(
-  "gitattributes|Step 1"
-  "scripts/knowledge-preflight.sh|Step 5"
-  "scripts/knowledge-feedback.sh|Step 5"
-  "scripts/knowledge-report.sh|Step 5"
-  "m365/knowledge-m365.sh|Step 5"
-  "m365/ktl-docent-m365.md|Step 5"
-)
-# A template and a copy that cannot run without it: <template>:<copy>. Each
-# workflow runs a script with no check that it is there, the wrapper refuses
-# to start without the apply script, and each shell half runs its Python
-# half. A sync that carried the copy alone would leave the sibling failing.
-companions=(
-  "scripts/knowledge-librarian.sh:.github/workflows/knowledge-librarian.yaml"
-  "scripts/knowledge-conventions.sh:.github/workflows/knowledge-registrar.yaml"
-  "scripts/knowledge-conventions.py:.github/workflows/knowledge-registrar.yaml"
-  "scripts/knowledge-provenance.sh:.github/workflows/knowledge-registrar.yaml"
-  "scripts/knowledge-conventions.sh:.github/workflows/knowledge-release.yaml"
-  "scripts/knowledge-conventions.py:.github/workflows/knowledge-release.yaml"
-  "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-librarian.sh"
-  "scripts/knowledge-apply.py:.lokf/scripts/knowledge-librarian.sh"
-  "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.sh"
-  "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.sh"
-  "scripts/knowledge-federate.py:.github/workflows/knowledge-federation.yaml"
-  "domain.yaml:.github/workflows/knowledge-federation.yaml"
-)
-# The website skill's templates, for a sibling that laid its site down with
-# ktl-website: every file under skills/ktl-website/templates/website/ but the
-# three the host owns, and the deploy workflow. A sibling with no
-# website/site.config.mjs gets none of them: that is ktl-website's decision.
-website_templates="skills/ktl-website/templates"
-website_owned=("site.config.mjs" "README.md" "src/styles/custom.css")
+sync_template="skills/ktl-sidecar/templates/scripts/knowledge-sync.sh"
 
-if [[ $# -lt 2 ]]; then
-  echo "usage: scripts/sync-sidecar.sh <tag> <sibling-dir>..." >&2
+usage() {
+  sed -n '/^# Usage:/,/^# Without --commit/p' "$0" | sed -e '$d' -e 's/^# \{0,1\}//' >&2
   exit 2
-fi
-tag="$1"; shift
-if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "sync-sidecar: '$tag' is not a release tag (vMAJOR.MINOR.PATCH) - a branch or commit would let unreleased instructions into a sibling" >&2
-  exit 2
-fi
-# The tag must exist on the remote, not only here: a sibling's librarian
-# clones it from GitHub, and a local tag nobody pushed installs nothing there.
-git -C "$repo_root" fetch --quiet --tags origin 2>/dev/null || true
-if ! git -C "$repo_root" rev-parse -q --verify "refs/tags/$tag^{commit}" >/dev/null; then
-  echo "sync-sidecar: no tag $tag in this repository - publish the release first, then sync (that order is the point)" >&2
-  exit 2
-fi
-if ! git -C "$repo_root" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
-  echo "sync-sidecar: tag $tag is not on origin - a sibling's scheduled librarian clones from there and would fail to install" >&2
-  exit 2
-fi
-if ! git -C "$repo_root" cat-file -e "$tag:skills/ktl-librarian/SKILL.md" 2>/dev/null; then
-  echo "sync-sidecar: $tag has no skills/ktl-librarian/SKILL.md - the install step copies that path, so a sibling pinned to it fails every scheduled run" >&2
-  exit 2
-fi
-tag_sha="$(git -C "$repo_root" rev-parse "$tag^{commit}")"
-
-# The skills pin is each repository's own to move, so it is not drift.
-unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/'; }
-at_tag() { git -C "$repo_root" show "$tag:$templates/$1"; }
-# The template as the sibling should carry it: <template> <sibling copy>.
-rendered() {
-  local t
-  for t in "${host_titled[@]}"; do
-    if [[ "$t" == "$1" ]]; then
-      head -n 1 "$2"
-      at_tag "$1" | tail -n +2 | OWN="$(grep -m 1 '^schema := ' "$2" || true)" \
-        awk '/^schema := / && ENVIRON["OWN"] != "" { print ENVIRON["OWN"]; next } { print }'
-      return
-    fi
-  done
-  at_tag "$1"
 }
-# Why the sibling needs a template it never installed, or nothing when it does
-# not: <template> <sibling-root>.
-needed() {
-  local entry
-  for entry in "${always[@]}"; do
-    if [[ "${entry%%|*}" == "$1" ]]; then echo "ktl-sidecar's ${entry##*|} lays it down on every host"; return; fi
-  done
-  for entry in "${companions[@]}"; do
-    if [[ "${entry%%:*}" == "$1" && -f "$2/${entry##*:}" ]]; then echo "${entry##*:} cannot run without it"; return; fi
-  done
+
+flags=(); finish=0; source="$repo_root"; tag=""; siblings=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --commit|--push|--pr|--no-checks) flags+=("$1"); shift ;;
+    --finish) finish=1; shift ;;
+    --source) [[ $# -ge 2 ]] || usage; source="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    -*) echo "sync-sidecar: unknown option $1" >&2; usage ;;
+    *) if [[ -z "$tag" ]]; then tag="$1"; else siblings+=("$1"); fi; shift ;;
+  esac
+done
+[[ -n "$tag" && ${#siblings[@]} -gt 0 ]] || usage
+if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "sync-sidecar: '$tag' is not a release tag (vMAJOR.MINOR.PATCH); a branch or commit would let unreleased instructions into a sibling" >&2
+  exit 2
+fi
+
+# The default branch of a sibling, as origin has it: origin/main or the like.
+default_branch() {
+  local base
+  base="$(git -C "$1" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  if [[ -z "$base" ]]; then
+    local candidate
+    for candidate in origin/main origin/master main master; do
+      if git -C "$1" rev-parse -q --verify "$candidate^{commit}" >/dev/null; then base="$candidate"; break; fi
+    done
+  fi
+  printf '%s\n' "$base"
 }
 
 status=0
-for sibling in "$@"; do
+if [[ "$finish" -eq 1 ]]; then
+  branch="sync-$tag"
+  for sibling in "${siblings[@]}"; do
+    echo ""
+    echo "== $sibling"
+    if ! git -C "$sibling" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      echo "   not a git work tree; skipped"; status=1; continue
+    fi
+    if ! git -C "$sibling" rev-parse -q --verify "refs/heads/$branch" >/dev/null; then
+      echo "   no $branch here; nothing to finish"; continue
+    fi
+    git -C "$sibling" fetch --quiet --prune origin 2>/dev/null || true
+    if [[ -z "$(git -C "$sibling" config --get "branch.$branch.remote" || true)" ]]; then
+      echo "   $branch was never pushed, so it is kept: push it, or delete it yourself"; status=1; continue
+    fi
+    if git -C "$sibling" rev-parse -q --verify "refs/remotes/origin/$branch" >/dev/null; then
+      echo "   origin/$branch still exists, so its pull request is not merged and deleted yet; kept"; continue
+    fi
+    base="$(default_branch "$sibling")"
+    if [[ -z "$base" ]]; then
+      echo "   no default branch to go back to (origin/HEAD, main or master); kept"; status=1; continue
+    fi
+    local_base="${base#origin/}"
+    if [[ -n "$(git -C "$sibling" status --porcelain --untracked-files=no)" ]]; then
+      echo "   uncommitted changes here; commit or stash them first; kept"; status=1; continue
+    fi
+    git -C "$sibling" switch --quiet "$local_base"
+    git -C "$sibling" merge --quiet --ff-only "$base" || { echo "   $local_base cannot fast-forward to $base; kept"; status=1; continue; }
+    git -C "$sibling" branch --quiet -D "$branch"
+    echo "   on $local_base at $(git -C "$sibling" rev-parse --short HEAD); $branch removed"
+  done
+  echo ""
+  exit "$status"
+fi
+
+# The tag must exist on the remote, not only here: a sibling's librarian
+# clones it from GitHub, and a local tag nobody pushed installs nothing there.
+source="$(cd "$source" 2>/dev/null && pwd)" || { echo "sync-sidecar: no such directory: $source" >&2; exit 2; }
+git -C "$source" fetch --quiet --tags origin 2>/dev/null || true
+if ! git -C "$source" rev-parse -q --verify "refs/tags/$tag^{commit}" >/dev/null; then
+  echo "sync-sidecar: no tag $tag in $source: publish the release first, then sync (that order is the point)" >&2
+  exit 2
+fi
+if ! git -C "$source" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+  echo "sync-sidecar: tag $tag is not on origin: a sibling's scheduled librarian clones from there and would fail to install" >&2
+  exit 2
+fi
+if ! git -C "$source" cat-file -e "$tag:skills/ktl-librarian/SKILL.md" 2>/dev/null; then
+  echo "sync-sidecar: $tag has no skills/ktl-librarian/SKILL.md: the install step copies that path, so a sibling pinned to it fails every scheduled run" >&2
+  exit 2
+fi
+if ! git -C "$source" cat-file -e "$tag:$sync_template" 2>/dev/null; then
+  echo "sync-sidecar: $tag has no $sync_template, so it predates the sync script; sync to a release that carries it" >&2
+  exit 2
+fi
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+git -C "$source" show "$tag:$sync_template" > "$tmp/knowledge-sync.sh"
+
+for sibling in "${siblings[@]}"; do
   echo ""
   echo "== $sibling"
-  if [[ ! -d "$sibling/.lokf" ]]; then
-    echo "   no .lokf/ here - not a sidecar host; skipped"
-    status=1
-    continue
-  fi
-  sibling_root="$(cd "$sibling" && pwd)"
-  if ! git -C "$sibling_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "   not a git work tree - the sync leaves a diff for review, and there is no diff to leave here; skipped"
-    status=1
-    continue
-  fi
-
-  # The branch the copies land on. It starts from the sibling's default
-  # branch as origin has it, not from whatever is checked out, and it does not
-  # track that branch, so a plain push goes to a branch of the same name.
-  if [[ -n "$(git -C "$sibling_root" status --porcelain --untracked-files=no)" ]]; then
-    echo "   uncommitted changes here - commit or stash them first, so the diff left for review is the sync's alone; skipped"
-    status=1
-    continue
-  fi
-  git -C "$sibling_root" fetch --quiet origin 2>/dev/null || true
-  base="$(git -C "$sibling_root" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
-  if [[ -z "$base" ]]; then
-    for candidate in origin/main origin/master main master; do
-      if git -C "$sibling_root" rev-parse -q --verify "$candidate^{commit}" >/dev/null; then base="$candidate"; break; fi
-    done
-  fi
-  branch="sync-$tag"
-  if [[ -z "$base" ]]; then
-    echo "   no default branch to start from (origin/HEAD, main or master); skipped"
-    status=1
-    continue
-  fi
-  if git -C "$sibling_root" rev-parse -q --verify "refs/heads/$branch" >/dev/null; then
-    echo "   $branch already exists here - finish it, or delete it, first; skipped"
-    status=1
-    continue
-  fi
-  previous="$(git -C "$sibling_root" symbolic-ref --quiet --short HEAD 2>/dev/null || git -C "$sibling_root" rev-parse HEAD)"
-  if ! git -C "$sibling_root" switch --quiet --no-track -c "$branch" "$base"; then
-    echo "   could not start $branch from $base (git said why above); skipped"
-    status=1
-    continue
-  fi
-  echo "   branch   $branch, from $base"
-
-  # What the sibling pins today, so the report can say what moves.
-  wf="$sibling_root/.github/workflows/knowledge-librarian.yaml"
-  old_pin=""
-  if [[ -f "$wf" ]]; then
-    old_pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' "$wf" | head -1 | sed 's/.*: //' || true)"
-  fi
-
-  copied=(); same=(); added=(); absent=()
-  for pair in "${pairs[@]}"; do
-    src="${pair%%:*}"; dst="${pair##*:}"
-    if ! git -C "$repo_root" cat-file -e "$tag:$templates/$src" 2>/dev/null; then
-      continue  # a template this release did not have yet
-    fi
-    if [[ ! -f "$sibling_root/$dst" ]]; then
-      why="$(needed "$src" "$sibling_root")"
-      if [[ -z "$why" ]]; then
-        absent+=("$dst (never laid down here: ktl-sidecar Step 5 decides, not this script)")
-        continue
-      fi
-      mkdir -p "$(dirname "$sibling_root/$dst")"
-      at_tag "$src" > "$sibling_root/$dst"
-      if [[ "$(git -C "$repo_root" ls-tree "$tag" -- "$templates/$src" | cut -c1-6)" == 100755 ]]; then
-        chmod +x "$sibling_root/$dst"
-      fi
-      added+=("$dst ($why)")
-      continue
-    fi
-    want="$(mktemp)"
-    rendered "$src" "$sibling_root/$dst" > "$want"
-    if cmp -s <(unpin < "$want") <(unpin < "$sibling_root/$dst"); then
-      same+=("$dst")
-      rm -f "$want"
-    else
-      cat "$want" > "$sibling_root/$dst"
-      rm -f "$want"
-      copied+=("$dst")
-    fi
-  done
-  # The template's own pin is one release behind by design (the release
-  # commit moves it to the newest tag that existed then), so the copy above
-  # would move a sibling backwards. Set it to the tag being synced, and the
-  # commit beside it to the one that tag names, which the install step checks
-  # the tag against on every run.
-  if [[ -f "$wf" ]]; then
-    sed -i.sync-bak -E -e "s/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1$tag/" \
-                       -e "s/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1$tag_sha/" "$wf"
-    rm -f "$wf.sync-bak"
-  fi
-
-  # The site, when the sibling has one: a template it lacks is added, since
-  # the site cannot build without any of them.
-  website=0
-  if [[ -f "$sibling_root/website/site.config.mjs" ]]; then
-    website=1
-    while IFS= read -r tpath; do
-      rel="${tpath#"$website_templates/website/"}"
-      skip=0; for o in "${website_owned[@]}"; do [[ "$rel" == "$o" ]] && skip=1; done
-      [[ "$skip" -eq 1 ]] && continue
-      dst="website/$rel"; [[ "$rel" == gitignore ]] && dst="website/.gitignore"
-      if [[ ! -f "$sibling_root/$dst" ]]; then
-        mkdir -p "$(dirname "$sibling_root/$dst")"
-        git -C "$repo_root" show "$tag:$tpath" > "$sibling_root/$dst"
-        added+=("$dst (the site cannot build without it)")
-      elif cmp -s <(git -C "$repo_root" show "$tag:$tpath") "$sibling_root/$dst"; then
-        same+=("$dst")
-      else
-        git -C "$repo_root" show "$tag:$tpath" > "$sibling_root/$dst"
-        copied+=("$dst")
-      fi
-    done < <(git -C "$repo_root" ls-tree -r --name-only "$tag" -- "$website_templates/website")
-    wsrc="$website_templates/github/knowledge-website.yaml"; wdst=".github/workflows/knowledge-website.yaml"
-    if git -C "$repo_root" cat-file -e "$tag:$wsrc" 2>/dev/null; then
-      if [[ ! -f "$sibling_root/$wdst" ]]; then
-        absent+=("$wdst (never laid down here: ktl-website Step 5 decides, not this script)")
-      elif cmp -s <(git -C "$repo_root" show "$tag:$wsrc") "$sibling_root/$wdst"; then
-        same+=("$wdst")
-      else
-        git -C "$repo_root" show "$tag:$wsrc" > "$sibling_root/$wdst"
-        copied+=("$wdst")
-      fi
-    fi
-  fi
-
-  for f in "${copied[@]}"; do echo "   copied   $f"; done
-  for f in "${same[@]}"; do echo "   same     $f"; done
-  for f in "${added[@]}"; do echo "   added    $f"; done
-  for f in "${absent[@]}"; do echo "   absent   $f"; done
-  if [[ -f "$wf" ]]; then
-    if [[ "$old_pin" == "$tag" ]]; then
-      echo "   pin      already $tag"
-    else
-      echo "   pin      ${old_pin:-none} -> $tag ($tag_sha)"
-    fi
-  else
-    echo "   pin      no knowledge-librarian.yaml here, so no scheduled librarian to pin"
-  fi
-  if [[ "$website" -eq 1 ]]; then
-    echo "   website  the site's copies are synced; build it there to check: cd website && npm ci && npm run build"
-  fi
-  # Whether the skill the librarian runs changed between the two pins: a
-  # sibling with identical copies and an unchanged skill has nothing to
-  # sync, and that is the usual case.
-  if [[ -n "$old_pin" && "$old_pin" != "$tag" ]] && git -C "$repo_root" rev-parse -q --verify "refs/tags/$old_pin^{commit}" >/dev/null; then
-    skill_changes="$(git -C "$repo_root" diff --name-only "$old_pin" "$tag" -- skills/ktl-librarian | wc -l | tr -d ' ')"
-    if [[ "$skill_changes" -gt 0 ]]; then
-      echo "   skill    ktl-librarian changed in $skill_changes file(s) between $old_pin and $tag"
-    else
-      echo "   skill    ktl-librarian unchanged between $old_pin and $tag"
-    fi
-  fi
-
-  # The sidecar's own checks, run from the sibling's copies as its gate would.
-  # `set -e` is off inside a subshell followed by `||`, so each check records
-  # its own failure, or only the last one's would count.
-  ok=1
-  (
-    rc=0
-    cd "$sibling_root/.lokf"
-    if [[ -x scripts/knowledge-preflight.sh ]]; then
-      bash scripts/knowledge-preflight.sh | tail -1 | sed 's/^/   /'
-    fi
-    if command -v uv >/dev/null 2>&1; then
-      # The recipe, as the gate runs it; just's own closing line on a failure
-      # is dropped, so the line shown is lokf's verdict.
-      uvx --from rust-just==1.47.0 just lokf-check-refs 2>&1 | grep -v '^error: Recipe ' | tail -1 | sed 's/^/   /' || rc=1
-    else
-      echo "   uv not found: lokf validate skipped, and the conventions script runs without its parser's half"
-    fi
-    if [[ -f scripts/knowledge-conventions.sh ]]; then
-      bash scripts/knowledge-conventions.sh knowledge 2>&1 | sed 's/^/   /' || rc=1
-    fi
-    exit "$rc"
-  ) || ok=0
-  if [[ "$ok" -eq 0 ]]; then
-    echo "   FAIL     a check above failed - fix the bundle in the same change (a time later than its commit, say), or the sibling's gate fails on it"
-    status=1
-  fi
-
-  echo ""
-  if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 && "$old_pin" == "$tag" ]]; then
-    git -C "$sibling_root" switch --quiet "$previous" && git -C "$sibling_root" branch --quiet -D "$branch"
-    echo "   nothing to sync; back on $previous, and $branch removed"
-    continue
-  fi
-  # The files to stage, by name: what the sync changed, and what it added.
-  changed=()
-  while IFS= read -r f; do changed+=("$f"); done < <(git -C "$sibling_root" diff --name-only)
-  for f in "${added[@]}"; do changed+=("${f%% (*}"); done
-  # Two steps, each set apart by a blank line: the changelog entry to write,
-  # since a sync that adds none leaves its release undocumented, and the
-  # commit, one file to a line, ready to paste.
-  # The entry is written from what the sync did, never left as a prompt to
-  # fill in: a placeholder merged unfilled became a release's notes.
-  echo "   Next, add this entry to CHANGELOG.md, under ## [Unreleased] and ### Security:"
-  echo ""
-  # "No plugin change" is true only of an Obsidian plugin, whose root
-  # manifest.json names the app version it needs; another host has no plugin.
-  tail=""
-  if [[ -f "$sibling_root/manifest.json" ]] && grep -q '"minAppVersion"' "$sibling_root/manifest.json"; then
-    tail=" No plugin change."
-  fi
-  if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 ]]; then
-    echo "   - **The skills pin matches \`$tag\`.** The release changed none of the sidecar copies this repository carries.$tail"
-  else
-    files=()
-    for f in "${copied[@]}" "${added[@]}"; do files+=("\`${f%% (*}\`"); done
-    list="${files[0]}"
-    for ((i = 1; i < ${#files[@]}; i++)); do
-      if [[ "$i" -eq $((${#files[@]} - 1)) ]]; then list+=" and ${files[$i]}"; else list+=", ${files[$i]}"; fi
-    done
-    echo "   - **The sidecar copies and the skills pin match \`$tag\`.** The release changed $list here; its [changelog](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/$tag/CHANGELOG.md) says how.$tail"
-  fi
-  echo ""
-  echo "   Then commit, from $sibling_root, on $branch:"
-  echo ""
-  staged=(CHANGELOG.md "${changed[@]}")
-  for i in "${!staged[@]}"; do
-    line="     ${staged[$i]}"; [[ "$i" -eq 0 ]] && line="   git add ${staged[$i]}"
-    if [[ "$i" -lt $((${#staged[@]} - 1)) ]]; then echo "$line \\"; else echo "$line"; fi
-  done
-  echo "   git commit -m \"security(sidecar): sync copies and skills pin from $tag\""
+  rc=0
+  bash "$tmp/knowledge-sync.sh" --source "$source" --host "$sibling" --branch ${flags[@]+"${flags[@]}"} "$tag" || rc=$?
+  if [[ "$rc" -ge 2 ]]; then exit "$rc"; fi
+  [[ "$rc" -eq 0 ]] || status=1
 done
 echo ""
-
+echo "When the pull requests are merged: scripts/sync-sidecar.sh --finish $tag ${siblings[*]}"
+echo ""
 exit "$status"

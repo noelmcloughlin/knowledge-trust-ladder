@@ -273,12 +273,15 @@ if [ -n "$templates" ] && [ -d "$root/.lokf" ]; then
               "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh" \
               "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py" \
               "scripts/knowledge-report.sh:.lokf/scripts/knowledge-report.sh" \
+              "scripts/knowledge-sync.sh:.lokf/scripts/knowledge-sync.sh" \
               "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh" \
               "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md" \
               "gitattributes:.lokf/.gitattributes" \
               "github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml" \
               "github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml" \
-              "github/knowledge-release.yaml:.github/workflows/knowledge-release.yaml"; do
+              "github/knowledge-release.yaml:.github/workflows/knowledge-release.yaml" \
+              "github/knowledge-sync.yaml:.github/workflows/knowledge-sync.yaml" \
+              "github/knowledge-sync-pull-request.md:.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md"; do
     src="$templates/${pair%%:*}"; dst="$root/${pair##*:}"
     [ -f "$dst" ] || continue
     [ -f "$src" ] || { drift="${drift}${drift:+, }${pair##*:} (the installed sidecar predates it)"; continue; }

@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A host keeps its sidecar current by itself.** `knowledge-sync.yaml`, a new ktl-sidecar template, reads the skills pin and the newest release each day. When the pin is behind, it runs the host's `knowledge-sync.sh` and opens one pull request from `.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md` with the `KNOWLEDGE_SYNC_TOKEN` secret, or attaches the change to the run without it. `publish.yml` asks the hosts named in `KNOWLEDGE_SYNC_HOSTS` to sync as soon as a release is tagged.
+- **`knowledge-sync.sh` is the sync, as a sidecar script.** It copies a release's templates over a host's copies, moves the pin, writes the changelog entry under `## [Unreleased]` and `### Security`, runs the sidecar's checks, and takes the sync to a pull request with `--commit`, `--push` and `--pr`. Without `--source` it clones the tag and runs the copy of itself there, so a template the release added is known.
+
+### Changed
+
+- **`scripts/sync-sidecar.sh` runs the tag's `knowledge-sync.sh` in each sibling.** It takes `--commit`, `--push` and `--pr`, and `--finish <tag>` puts each sibling back on its default branch and removes a merged sync branch. The entry links the comparison between the two pins, so a sync that skipped releases points at all of them.
+
+### Fixed
+
+- **The sync writes the changelog entry instead of printing it with a hint.** The hint named `### Security` with a sentence's colon after it, and a heading typed that way once failed the lint.
+
 ## [0.46.1] - 2026-10-17
 
 ### Fixed

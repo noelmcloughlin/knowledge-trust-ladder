@@ -16,6 +16,7 @@ Each file has a section on one of the two pages. Read the one you are setting up
 | `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to turn it on, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 | `knowledge-federation.yaml` and `knowledge-federate.py` *(a domain host only)* | Build the workspace of a domain host from the released bundles its member concepts name, publish it, and keep the members current | One variable to turn it on, Pages taken from Actions, and `AGENT_CLI` set to the script | below |
+| `knowledge-sync.yaml`, `knowledge-sync.sh` and `PULL_REQUEST_TEMPLATE/knowledge-sync.md` | Keep the sidecar copies and the skills pin at the newest release of the skills repository, and open the pull request that moves them | One secret, so the workflow can open the pull request; without it the run attaches the change | below |
 
 ## Switches and where they go
 
@@ -34,6 +35,7 @@ Every switch below is a **repository variable** or a **repository secret**: Sett
 | `KNOWLEDGE_RELEASE_NAME` | variable | `knowledge-release.yaml` | optional: the name in the zip file when the repository's own name is not the one it publishes under |
 | `KNOWLEDGE_WEBSITE_ENABLED` | variable | `knowledge-website.yaml` | `true` publishes the site to GitHub Pages, as ktl-website's [deploy.md](../../ktl-website/references/deploy.md) says |
 | `KNOWLEDGE_FEDERATION_ENABLED` | variable | `knowledge-federation.yaml` | `true` builds the workspace on each release and deploys the site with it; a domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer |
+| `KNOWLEDGE_SYNC_TOKEN` | secret | `knowledge-sync.yaml` | a fine-grained personal access token for this repository, with Contents, Pull requests and Workflows set to read and write ([below](#knowledge-syncyaml-keeping-the-sidecar-current)). The workflow pushes under `.github/workflows/` and opens the pull request with it. Unset, each run attaches its change and opens nothing |
 
 The librarian also needs one repository setting: Settings, Actions, General, Workflow permissions, *Allow GitHub Actions to create and approve pull requests* ([below](#before-turning-on-the-schedule)).
 
@@ -219,6 +221,43 @@ A domain host is one whose bundle names other bundles: each `MemberBundle` conce
 - **The readers.** `knowledge-federate.py mcp` is the `lokf-registry` MCP server over the snapshot (`resolve_iri`, `neighbors`, `subgraph`, `federated_sparql`, `read_document`, each bounded, the workspace index as its instructions), `serve` the toolkit's SPARQL endpoint and graph page, and `query` a one-off query; each takes `--snapshot <path>` to read an unpacked `workspace-<tag>.zip` anywhere. The curator's [domain-bundle.md](../../ktl-curator/references/domain-bundle.md#reading-the-workspace) says how to use each, and how to serve `graph.nq` read-only from a container.
 
 To set it up: tell Pages once to take its site from Actions (`gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow`), set `KNOWLEDGE_FEDERATION_ENABLED` to `true`, leave `KNOWLEDGE_WEBSITE_ENABLED` unset, set `AGENT_CLI`, `AGENT_USE_JOB_TOKEN` and `AGENT_API_KEY_ENV` as above with `KNOWLEDGE_LIBRARIAN_ENABLED` `true`, let the workflow open its pull request as [Before turning on the schedule](#before-turning-on-the-schedule) says, and add `gh workflow run knowledge-federation.yaml --ref "$tag" -f tag="$tag"` to the host's release job beside its dispatch of `knowledge-release.yaml`.
+
+## `knowledge-sync.yaml`: keeping the sidecar current
+
+A release of the skills repository changes the templates, and a host carries copies of them. The copies and the skills pin in `knowledge-librarian.yaml` move together from one release, because the skill a release installs is written against the wrapper, gate and preflight that release includes. The pin also decides which instructions the scheduled librarian follows unattended. This workflow moves them.
+
+It runs each day at 04:10 UTC and on demand, in three jobs:
+
+- **`earlier`** reads the pin and the address of the skills repository out of `knowledge-librarian.yaml`, asks that repository for its newest release, and reads what became of the pull requests this workflow opened before. Its token can read the repository and its pull requests, and nothing else. When the pin is at the newest release, the run stops here.
+- **`sync`** is read-only. It runs the host's `.lokf/scripts/knowledge-sync.sh`, which clones the release and hands over to the copy of itself in that clone, so a template the release added is known. That copy writes the release's templates over the host's copies, adds a template a file here needs, and moves the pin to the tag and the commit it names. Then it writes the changelog entry under `## [Unreleased]` and `### Security`, and runs the sidecar's checks. The change goes to `publish` as a patch, and to the run as an artifact.
+- **`publish`** runs no code from the release. It refuses a patch that touches anything but the sidecar's copies, the site's copies, the pin and `CHANGELOG.md`, and checks that the tag names the pinned commit at the skills repository. Then it applies the patch on a clean checkout, commits it as `knowledge-sync[bot]`, pushes `sync-<tag>` and opens the pull request. The body is the sync's report, then `.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md`, whose checklist is the reviewer's.
+
+**A scheduled run waits its turn.** While a pull request of this workflow is open, a scheduled run opens no second one. A tag whose pull request a person closed without merging is not proposed again by the schedule. A run you start from the Actions tab goes ahead in both cases, and may name a tag; a tag whose pull request is still open is refused until that one is closed.
+
+### Setting it up
+
+The pull request changes files under `.github/workflows/`, which the job's own `GITHUB_TOKEN` may not push. So `publish` pushes and opens the pull request with one repository secret:
+
+| Repository secret | Value |
+| --- | --- |
+| `KNOWLEDGE_SYNC_TOKEN` | a fine-grained personal access token (Settings, Developer settings, Personal access tokens, Fine-grained tokens) for this repository alone, with the repository permissions Contents, Pull requests and Workflows set to read and write, and an expiry you will renew. A GitHub App's installation token, made in a step of your own before `publish` pushes, serves the same |
+
+Without the secret the workflow still runs: `sync` attaches the change to the run as `sync.patch` and writes the summary, and `publish` says so and opens nothing. A pull request opened with the token is opened under the token's owner and starts this repository's checks, as one opened with `GITHUB_TOKEN` would not.
+
+The skills repository can ask for the sync as soon as a release is tagged. Its `publish.yml` dispatches this workflow in each host named in its `KNOWLEDGE_SYNC_HOSTS` variable, with a token that holds Actions write there. A host it does not name, or cannot reach, syncs on its own schedule.
+
+### By hand
+
+The script the workflow runs is yours too. From the host, once the tag exists:
+
+```sh
+.lokf/scripts/knowledge-sync.sh --pr v0.47.0       # branch, commit, push and open the pull request
+.lokf/scripts/knowledge-sync.sh --branch v0.47.0   # the sync alone, on sync-v0.47.0, with the commit command printed
+```
+
+Without `--source` it clones the tag from the address `knowledge-librarian.yaml` names; `--source <dir>` reads it from a clone you have. It refuses a tree with uncommitted changes, a branch that exists, and a tag that is not a published release. `--no-checks` skips the sidecar's checks, which the pull request's checks run again.
+
+**Reviewing the pull request.** Read the diff as you would any change to a workflow or a script: the copies are what the host runs. The report at the top names the release, the files that moved, the pin, and how the checks ended. The release's own changelog, linked from the entry, says why each file changed. A sync that moves only the pin releases nothing new in the host apart from the pin, and still deserves the read: it decides what the librarian runs next.
 
 ## `knowledge-feedback.sh`: how a reader's gap gets recorded without being read back
 

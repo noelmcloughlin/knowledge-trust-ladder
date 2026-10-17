@@ -8,8 +8,8 @@ finds a LinkML project's schema pages in a justfile of any name just reads,
 and its data only when asked. It trusts no folder name a shell would read as
 a command, and refuses gen-doc's subfolders, two metadata files and a
 database caught mid-write. The three files a repair never replaces are named
-in the skill's page, its preflight, the contract and sync-sidecar.sh, and the
-four must agree. The build itself is scripts/smoke-test-website.sh, which
+in the skill's page, its preflight, the contract and the sidecar's
+knowledge-sync.sh, and the four must agree. The build itself is scripts/smoke-test-website.sh, which
 needs the network.
 """
 
@@ -78,7 +78,7 @@ def named_in(text, pattern):
 def test_the_host_owned_files_are_named_alike_everywhere():
     expected = {"site.config.mjs", "README.md", "src/styles/custom.css"}
     contract = (REPO / "scripts" / "validate-repository.sh").read_text()
-    sync = (REPO / "scripts" / "sync-sidecar.sh").read_text()
+    sync = (REPO / "skills" / "ktl-sidecar" / "templates" / "scripts" / "knowledge-sync.sh").read_text()
     preflight = (WEBSITE / "scripts" / "website-preflight.sh").read_text()
     skill = (WEBSITE / "SKILL.md").read_text()
     assert named_in(contract, r"host_owned=\(([^)]*)\)") == expected

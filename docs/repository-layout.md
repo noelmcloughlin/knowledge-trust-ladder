@@ -46,7 +46,7 @@ scripts/
   validate-repository.sh   the contract: the checks validate.yml runs on this repository's own files
   smoke-test-install.sh    installs the six skills into a throwaway repo and checks them
   smoke-test-website.sh    lays the website templates down on a dummy bundle and builds the site twice
-  sync-sidecar.sh          copies one release's templates and skills pin into a sibling repository
+  sync-sidecar.sh          runs one release's knowledge-sync.sh in each sibling repository, and finishes the branches
 tests/                     the behavioural tests of the sidecar scripts and the prose checker, run with pytest
   conftest.py              the shared helpers, and how to run the tests
   test_*.py                one module per script: the pen, the gate, the report, the conventions checker,

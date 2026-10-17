@@ -463,17 +463,22 @@ for pair in \
     err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
   fi
 done
-# The federation templates are laid down on a domain host only (ktl-sidecar
-# Step 5), and this repository's bundle is not a domain, so each copy is held
-# to its template only where one exists here; actionlint reads the template
-# itself, and tests/test_federation.py runs the script from the template.
+# The federation templates are installed on a domain host only (ktl-sidecar
+# Step 5), and this repository's bundle is not a domain. The sync templates
+# bring a host up to a release of this repository, which has nothing to sync
+# itself to. So each copy is held to its template only where one exists
+# here; actionlint reads the template itself, tests/test_federation.py runs
+# the federation script from the template, and tests/test_sync.py the sync.
 for pair in \
   "$templates/github/knowledge-federation.yaml:.github/workflows/knowledge-federation.yaml" \
   "$templates/scripts/knowledge-federate.py:.lokf/scripts/knowledge-federate.py" \
-  "$templates/domain.yaml:.lokf/domain.yaml"; do
+  "$templates/domain.yaml:.lokf/domain.yaml" \
+  "$templates/github/knowledge-sync.yaml:.github/workflows/knowledge-sync.yaml" \
+  "$templates/github/knowledge-sync-pull-request.md:.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md" \
+  "$templates/scripts/knowledge-sync.sh:.lokf/scripts/knowledge-sync.sh"; do
   src="${pair%%:*}"; dst="${pair##*:}"
   if [ ! -f "$dst" ]; then
-    ok "$dst is not laid down here (a domain host's file); its template is checked directly"
+    ok "$dst is not installed here (a domain host's file, or a host's sync); its template is checked directly"
   elif cmp -s "$src" "$dst"; then
     ok "$dst matches its template"
   else
@@ -886,7 +891,7 @@ if grep -qF '"$TRUST_LADDER_SKILLS_SHA"' skills/ktl-sidecar/templates/github/kno
 else
   err "the librarian template's install step no longer compares the cloned commit with TRUST_LADDER_SKILLS_SHA"
 fi
-for mover in .github/workflows/semantic-release.yml scripts/sync-sidecar.sh; do
+for mover in .github/workflows/semantic-release.yml skills/ktl-sidecar/templates/scripts/knowledge-sync.sh; do
   if grep -qF 's/(TRUST_LADDER_SKILLS_REF: )' "$mover" && grep -qF 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/' "$mover"; then
     ok "$mover moves the pinned commit with the pinned tag"
   else
