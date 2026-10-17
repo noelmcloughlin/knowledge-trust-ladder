@@ -903,9 +903,9 @@ def with_kept(applied):
         "window: 12:30:00",
         "flag: yes",
         "build: 1.20",
-        "- by: human:ada",
-        "  at: 2026-02-02T10:00:00Z",
-        "  revision: 0123456",
+        "  - by: human:ada",
+        "    at: 2026-02-02T10:00:00Z",
+        "    revision: 0123456",
         '  revision: "1234567"',
     ],
 )
@@ -920,6 +920,24 @@ def test_a_value_the_operation_did_not_name_goes_back_as_the_file_held_it(with_k
     )
     kept = read(kb_of(with_kept) / "playbooks" / "kept.md")
     assert has_line(kept, want), f"the pen did not keep '{want}': {kept}"
+
+
+def test_a_list_is_written_indented_under_its_key(ka):
+    """PyYAML on its own writes a list's dashes at its key's column, which yamllint's default rules reject."""
+    applies(
+        ka,
+        lines(
+            "ops:",
+            "  - op: create",
+            "    path: playbooks/listed.md",
+            "    frontmatter: {type: Playbook, title: Listed, description: listed., tags: [a, b], references: [https://acme.example/knowledge/playbooks/draft]}",
+            '    body: "# Overview\n\nListed.\n"',
+        ),
+    )
+    text = read(kb_of(ka) / "playbooks" / "listed.md")
+    assert all(has_line(text, line) for line in ("tags:", "  - a", "  - b", "references:", "  - https://acme.example/knowledge/playbooks/draft")), (
+        f"a list was not indented under its key: {text}"
+    )
 
 
 def test_a_readers_question_and_a_handoff_line_lose_every_character_a_reader_cannot_see(with_kept):

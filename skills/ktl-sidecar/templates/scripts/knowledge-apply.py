@@ -228,6 +228,13 @@ class Dumper(yaml.SafeDumper):
         style = super().choose_scalar_style()
         return '"' if style == "'" else style
 
+    def increase_indent(self, flow=False, indentless=False):
+        # PyYAML writes a list under a key with its dashes at the key's own
+        # column, as the YAML specification's examples do. People indent it,
+        # and yamllint's default rules reject the other form, so every list
+        # is indented under its key.
+        return super().increase_indent(flow, False)
+
 
 Dumper.add_representer(Plain, lambda dumper, text: dumper.represent_scalar(text.tag, str(text)))
 

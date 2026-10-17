@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **`knowledge-apply.sh` indents a list under its key.** PyYAML put the dashes at the key's own column, which yamllint's default rules reject, so each concept the pen writes now takes the indented form.
+
 ### Fixed
 
 - **`knowledge-apply.sh` lists a concept with no description by its link alone.** Its index bullets ended in a bare " - ", the separator for a description that was not there.
