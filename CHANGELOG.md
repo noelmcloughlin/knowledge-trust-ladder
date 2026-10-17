@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-report.sh coverage` counts the tracked files no concept names.** Per top-level folder, the files under no path a concept names in its `resource` or `sources`, and the list under a folder you name: ktl-librarian's sweep for orphans as arithmetic, where a folder the source map names is accounted for and the map's row says why it is left out.
+
 ## [0.48.0] - 2026-10-17
 
 ### Added

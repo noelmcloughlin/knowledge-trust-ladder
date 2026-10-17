@@ -907,3 +907,77 @@ def test_reliance_counts_measures_member_of_and_holder(tmp_path):
     assert result and has_line(result.out, "- x/hub.md (2)"), (
         f"report script did not count measures, memberOf and holder as reliance: {result.out}"
     )
+
+
+# ---- coverage ----------------------------------------------------------------
+@pytest.fixture
+def cov(tmp_path):
+    """A host whose concepts name one file, one folder and a file with a fragment, beside files nothing names and the sidecar's own tree."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    for p in ("README.md", "docs/kept.md", "docs/orphan.md", "src/lib/a.py", "src/lib/b.py", "data/raw.csv", ".lokf/scripts/x.sh"):
+        write(tmp_path / p, p + "\n")
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "x" / "kept.md", "---\ntype: Service\ntitle: Kept\nresource: docs/kept.md\n---\n")
+    # The map names the root, which accounts for nothing, a folder with a
+    # trailing slash, a file with a fragment, and a URL.
+    write(
+        kk / "x" / "map.md",
+        "---\ntype: Playbook\ntitle: Sources\nresource: .\nsources:\n- resource: src/lib/\n- resource: README.md#top\n- resource: https://example.invalid/x\n---\n",
+    )
+    write(kk / "x" / "url.md", "---\ntype: Service\ntitle: Elsewhere\nresource: https://example.invalid/y\n---\n")
+    write(kk / "log.md", "# Change Log\n")
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "host and bundle")
+    return tmp_path
+
+
+def test_coverage_counts_the_tracked_files_no_concept_names_per_folder_and_leaves_the_sidecar_out(cov):
+    r = report(cov, "coverage")
+    assert r, r.out
+    assert has_line(r.out, "Tracked files under a path a concept names as its resource or one of its sources: 4 of 6 · under none: 2")
+    assert has_line(r.out, "- data/: 1")
+    assert has_line(r.out, "- docs/: 1")
+    assert "README" not in r.out and ".lokf" not in r.out and "src/" not in r.out
+
+
+def test_coverage_lists_the_files_under_a_folder_and_rejects_a_path_outside_the_root(cov):
+    r = report(cov, "coverage", "docs/", "src")
+    assert r, r.out
+    assert has_line(r.out, "docs/: 1 under no named path")
+    assert has_line(r.out, "- docs/orphan.md")
+    assert has_line(r.out, "src/: none under no named path")
+    assert "kept" not in r.out
+    assert report(cov, "coverage", "/etc").rc == 2
+    assert report(cov, "coverage", "../x").rc == 2
+
+
+def test_coverage_counts_a_path_git_quotes_apart_and_never_prints_it(cov):
+    try:
+        write(cov / "docs" / "tab\there.md", "t\n")
+    except OSError:
+        pytest.skip("this filesystem refuses a tab in a file name")
+    git = Git(cov)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a path git quotes")
+    r = report(cov, "coverage")
+    assert r, r.out
+    assert has_line(r.out, "Tracked files under a path a concept names as its resource or one of its sources: 4 of 6 · under none: 2")
+    assert has_line(r.out, "- and 1 more, whose paths hold characters this report does not print")
+    assert "tab" not in r.out
+
+
+def test_without_git_coverage_says_the_tracked_files_were_not_listed(cov, tmp_path):
+    plain = tmp_path / "plain"
+    shutil.copytree(cov, plain, ignore=shutil.ignore_patterns(".git"))
+    # The copy sits in no repository: git must not find one above it either.
+    r = report(plain, "coverage", env={"GIT_CEILING_DIRECTORIES": str(tmp_path)})
+    assert r, r.out
+    assert r.out == "Coverage: not computed here, since this folder has no git history to list the tracked files"
+    # The same copy inside another repository, which tracks nothing under it.
+    inside = cov / "copy"
+    shutil.copytree(plain, inside)
+    r = report(inside, "coverage")
+    assert r, r.out
+    assert r.out == "Coverage: not computed here, since git tracks no file under this folder"
