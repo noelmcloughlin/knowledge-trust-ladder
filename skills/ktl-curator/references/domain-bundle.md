@@ -1,6 +1,6 @@
 # A domain bundle: confirming that a bundle belongs
 
-This page is for the **curator** of a domain host: a repository whose bundle names other repositories' knowledge bundles and whose releases build the workspace a reader queries across all of them. The design is the skills repository's [context layer page](https://noelmcloughlin.github.io/knowledge-trust-ladder/docs/context-layer/); the first such host is [ktl-federation](https://github.com/noelmcloughlin/ktl-federation). What follows is what its concepts are, what a confirmation of one attests, and what moves them.
+This page is for the **curator** of a domain host: a repository whose bundle names other repositories' knowledge bundles and whose releases build the workspace a reader queries across all of them. The design is the skills repository's [context layer page](https://w3id.org/ktl/docs/context-layer/), and its [federation page](https://w3id.org/ktl/docs/federation/) says how the workspace is built; the first such host is [ktl-federation](https://github.com/noelmcloughlin/ktl-federation). What follows is what its concepts are, what a confirmation of one attests, and what moves them.
 
 ## The four concept types
 
@@ -62,7 +62,7 @@ A claim the domain makes across bundles is a concept with typed relations whose 
 
 The domain's librarian is a script, `knowledge-federate.py members`, which the sidecar's librarian workflow runs as `AGENT_CLI`, with the job's read-only token for the attestations ([automation.md](../../ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host) has the variables). It lists each member's releases, picks the newest that carries a bundle zip, verifies its checksum and attestation, and writes the move as a `patch` with a `question` for the pen. The pen restamps `generated`, so the member reads "edited since a person confirmed it" until you confirm the new release, and the health line counts it among what moved. Accepting the move is the same confirm again, after the same three checks; declining it is a note on the concept, or closing the pull request.
 
-A new member starts the same way: `knowledge-federate.py members --add <owner>/<repo>` verifies that repository's newest bundle release, reads its `base_iri`, title and description from the zip, refuses a namespace that nests with a member's, and writes a `create` with a `question` for the pen. When that release is itself a domain, the concept is a `MemberDomain`, and its body says how many members the build will follow. The concept arrives as a draft; your confirmation admits it.
+A new member starts the same way. `knowledge-federate.py members --add <owner>/<repo>` verifies that repository's newest bundle release, reads its `base_iri`, title and description from the zip, refuses a namespace that nests with a member's, and writes a `create` with a `question` for the pen. When that release is itself a domain, the concept is a `MemberDomain`, and its body says how many members the build will follow. The concept arrives as a draft; your confirmation admits it.
 
 ## Reading the workspace
 
@@ -70,7 +70,7 @@ The workspace is served under `/workspace/` of the host's site, its `index.md` f
 
 Three ways to read it, each from the host's sidecar environment, or anywhere with `--snapshot <path>` pointing at an unpacked `workspace-<tag>.zip`:
 
-- **An agent, over MCP.** `uv run --project .lokf .lokf/scripts/knowledge-federate.py mcp` is the `lokf-registry` server the LOKF specification's section 11.4 describes: `resolve_iri` says which bundle owns an IRI and what concept it names, `neighbors` and `subgraph` give a neighbourhood bounded in hops and size, `federated_sparql` queries the union with `GRAPH ?g` binding the asserting bundle (a stored query by name, such as `labels.rq`, works too), and `read_document` returns a concept as released with its trust summary. The server's instructions are the workspace index, so an agent reads it before anything else. Register it as any stdio server: the command above, with the host as the working directory.
+- **An agent, over MCP.** `uv run --project .lokf .lokf/scripts/knowledge-federate.py mcp` is the `lokf-registry` server the LOKF specification's section 11.4 describes. `resolve_iri` says which bundle owns an IRI and what concept it names. `neighbors` and `subgraph` give a neighbourhood bounded in hops and size. `federated_sparql` queries the union with `GRAPH ?g` binding the asserting bundle, and takes a stored query by name, such as `labels.rq`. `read_document` returns a concept as released with its trust summary. The server's instructions are the workspace index, so an agent reads it before anything else. Register it as any stdio server: the command above, with the host as the working directory.
 - **A person, over SPARQL.** `knowledge-federate.py serve` opens the toolkit's SPARQL endpoint and graph page over the union of the graphs.
 - **A read-only endpoint from a container**, for a team: load `graph.nq` once and serve it with the Oxigraph server image, which answers queries and refuses updates.
 

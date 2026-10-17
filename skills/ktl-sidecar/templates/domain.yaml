@@ -5,8 +5,8 @@
 # namespace is Knowledge Trust Ladder's, so every domain host shares one
 # meaning for Domain and MemberBundle; a host that needs more writes a
 # schema of its own that imports this one. Why each class is shaped as it
-# is: knowledge-trust-ladder's docs/context-layer.md, and the librarian's
-# references/domain-schema.md for the recipe it follows.
+# is: knowledge-trust-ladder's docs/context-layer.md and docs/federation.md,
+# and the librarian's references/domain-schema.md for the recipe it follows.
 #
 # Domain: a Dataset that is a dcat:Catalog of bundles. `unowned_targets`
 #   is the gate policy the federation build reads: `fail` stops the build
