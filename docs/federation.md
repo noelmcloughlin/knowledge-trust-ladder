@@ -1,7 +1,7 @@
 # A federation of bundles: domains, tiers and the workspace
 
 > [!NOTE]
-> This page is for whoever runs a domain host of Knowledge Trust Ladder (KTL), or reads its workspace. It says how a domain names bundles and other domains, how the workspace is built and kept current, what remains a design, and what an adopter decides. [The curated context layer](context-layer.md) says what a context layer is and why KTL federates by domains. [ktl-federation](https://w3id.org/ktl/federation/) is the first host. The curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md) has the worked example, and the sidecar's [automation.md](../skills/ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host) the workflow and its variables.
+> This page is for whoever runs a domain host of Knowledge Trust Ladder (KTL), or reads its workspace. It says how a domain names bundles and other domains, how the workspace is built and kept current, what exists and what remains a design, and what an adopter decides. [The curated context layer](context-layer.md) says what a context layer is and why KTL federates by domains. [ktl-federation](https://w3id.org/ktl/federation/) is the first host. The curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md) has the worked example, and the sidecar's [automation.md](../skills/ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host) the workflow and its variables.
 
 A *domain* is a named set of bundles with one accountable owner, kept as a thin LOKF bundle in a repository of its own. A domain may name other domains. The domain a build starts from is that build's *top domain*, and the same domain may be a member of another. *The workspace* is the graph built from the top domain's members, one named graph per bundle.
 
@@ -48,9 +48,19 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 
 **Trust at read time.** No trust label is stored in the snapshot, because a stored label drifts from what it describes within a day. SPARQL over `generated` and `verified` gives the labels the report script computes from frontmatter ([the same labels as SPARQL](../skills/ktl-curator/references/queries.md)), against the clock at the moment of the query. So a concept reads as past its review date the day after, with no rebuild.
 
-## What remains a design
+## What exists, and what remains a design
 
-The release, the domain schema, the build with its lock and swap, the `lokf-registry` MCP server and the SPARQL endpoint exist, in the sidecar's templates and in lokf 0.8.0. The curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md#reading-the-workspace) says how to read the workspace. Three parts remain designs:
+| Part | Where |
+| --- | --- |
+| A bundle validated, packed, checksummed, attested and attached to a release, with its domain schema beside it as `schema-<tag>-<name>.yaml` when the justfile names one | `knowledge-release.yaml` in the sidecar's templates |
+| `lokf export`; `lokf registry init`, `add`, `list` and `resolve`, the routing table offline; `lokf serve`, `query` and `mcp` over one bundle; `lokf tables` to Parquet | lokf 0.8.0; specification sections 11.1 to 11.3 |
+| The registrar's gate and the report script | [the fifth role](architecture.md#the-fifth-role-which-is-not-a-skill) |
+| Domains as thin bundles, their domain schema, and a person's confirmation of membership | `domain.yaml` in the sidecar's templates; the first host, [ktl-federation](https://w3id.org/ktl/federation/); the curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md) |
+| The lock, one named graph per bundle, tiers followed to the depth the top domain sets, the diamond rule, the gate on unowned targets and the atomic swap | `knowledge-federate.py build` and `knowledge-federation.yaml` in the sidecar's templates ([automation.md](../skills/ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host)) |
+| A `lokf-registry` MCP server: `resolve_iri`, `neighbors`, `subgraph`, `federated_sparql`, `read_document` | `knowledge-federate.py mcp`, the index as its instructions; specification section 11.4 |
+| A read-only SPARQL endpoint over the workspace | `knowledge-federate.py serve`, or the Oxigraph server image loading `graph.nq` ([domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md#reading-the-workspace)) |
+
+Three parts remain designs:
 
 - lazy loading of a member's graph on first use, which section 11.4 of the LOKF specification marks informative; the workspace loads every member at build;
 - harvesting remote artifacts, and the `sensitivity` gate of section 11.5; the field exists, and nothing reads it;
