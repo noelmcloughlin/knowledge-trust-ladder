@@ -129,6 +129,10 @@ jobs:
           fi
           failed=""
           for host in $HOSTS; do
+            if ! printf '%s\n' "$host" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+              echo "::warning::'$host' in KNOWLEDGE_SYNC_HOSTS is not owner/repo, so it was not asked to sync."
+              continue
+            fi
             if gh workflow run knowledge-sync.yaml -R "$host" -f tag="$VERSION"; then
               echo "Asked $host to sync to $VERSION."
             else

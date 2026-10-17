@@ -34,7 +34,7 @@ import shutil
 
 import pytest
 
-from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_TEMPLATES, Git, has_line, matches, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_TEMPLATES, WORKFLOWS, Git, has_line, matches, read, run, write
 
 SYNC = SCRIPTS / "knowledge-sync.sh"
 FANOUT = REPO / "scripts" / "sync-sidecar.sh"
@@ -296,3 +296,76 @@ def test_the_fan_out_runs_the_tags_copy_in_each_sibling_and_finishes_merged_bran
     Git(two)("branch", "--unset-upstream", "sync-v1.1.0")
     never = run(["bash", FANOUT, "--finish", "v1.1.0", two], cwd=tmp_path, env=IDENT)
     checks.ok(never.rc == 1 and "was never pushed" in never.out, "a branch with no upstream is kept and reported", never.out)
+
+
+def test_a_changelog_with_crlf_endings_keeps_them(tmp_path, skills, checks):
+    changelog = CHANGELOG.replace("\n", "\r\n")
+    host = make_host(tmp_path, skills, changelog=changelog)
+    result = sync(host, skills)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    raw = (host / "CHANGELOG.md").read_bytes()
+    checks.ok(b"\n" not in raw.replace(b"\r\n", b""), "every line still ends with CRLF")
+    checks.ok(b"## [Unreleased]\r\n\r\n### Security\r\n\r\n" + ENTRY_START.encode() in raw, "the entry sits under Unreleased and Security", raw.decode())
+
+
+def test_a_sync_to_an_older_release_says_so(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    librarian = read(host / LIBRARIAN).replace("TRUST_LADDER_SKILLS_REF: v1.0.0", "TRUST_LADDER_SKILLS_REF: v1.2.0")
+    write(host / LIBRARIAN, librarian)
+    git = Git(host)
+    git("add", "-A")
+    git("commit", "-qm", "pinned ahead")
+    result = sync(host, skills)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(matches(result.out, r"^   pin      v1\.2\.0 back to v1\.1\.0 \([0-9a-f]{40}\): an older release than the host had$"), "the backwards move is named", result.out)
+
+
+def test_a_copy_bumped_by_dependabot_is_reported(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    copy = host / ".github" / "workflows" / "knowledge-release.yaml"
+    text = read(copy)
+    line = next(l for l in text.split("\n") if "uses: actions/checkout@" in l)
+    write(copy, text.replace(line, line.replace("actions/checkout@", "actions/checkout@0000000000000000000000000000000000000000 # v9.9.9 was "), 1))
+    git = Git(host)
+    git("add", "-A")
+    git("commit", "-qm", "dependabot bump")
+    result = sync(host, skills)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(has_line(result.out, "   copied   .github/workflows/knowledge-release.yaml"), "the copy is brought back to the template", result.out)
+    checks.ok(matches(result.out, r"^   pins     \.github/workflows/knowledge-release\.yaml differed only on its action pins"), "the report names the bump", result.out)
+
+
+WORKFLOW = WORKFLOWS / "knowledge-sync.yaml"
+PREFLIGHT = SCRIPTS / "knowledge-preflight.sh"
+SKILL = REPO / "skills" / "ktl-sidecar" / "SKILL.md"
+
+
+def synced_pairs():
+    """The <template>:<copy> pairs knowledge-sync.sh carries."""
+    text = read(SYNC)
+    block = re.search(r"^pairs=\(\n(.*?)^\)", text, re.S | re.M).group(1)
+    return re.findall(r'"([^:"]+):([^"]+)"', block)
+
+
+def test_every_synced_copy_passes_the_publish_jobs_path_check():
+    """A template the script lays down that the privileged job would refuse is a sync that can never open its pull request."""
+    text = read(WORKFLOW)
+    allow = re.search(r"grep -Ev '(\^\(.*?\)\$)' \|\| true", text).group(1)
+    odd = re.search(r"grep -Ev '(\^\[[^']+\]\+\$)' \|\| true", text).group(1)
+    for _, copy in synced_pairs() + [("", "CHANGELOG.md"), ("", "website/src/pages/og/[...route].ts")]:
+        assert re.search(allow, copy), f"{copy} is outside the paths the publish job allows"
+        assert re.search(odd, copy), f"{copy} has a character the publish job refuses"
+    for owned in ("website/site.config.mjs", "website/README.md", "website/src/styles/custom.css"):
+        assert re.search(r"\^website/\(site\\\.config\\\.mjs\|README\\\.md\|src/styles/custom\\\.css\)\$", text), owned
+
+
+def test_every_synced_template_is_named_in_step_5_and_the_preflight():
+    """A new template lands in three lists: the sync script's pairs, ktl-sidecar's Step 5 table and the preflight's drift list."""
+    skill = read(SKILL)
+    preflight = read(PREFLIGHT)
+    for template, copy in synced_pairs():
+        assert f"`templates/{template}`" in skill, f"templates/{template} is not in SKILL.md's Step 5 table"
+        assert f"`{copy}`" in skill, f"{copy} is not in SKILL.md's Step 5 table"
+        if template in ("domain.yaml", "scripts/knowledge-federate.py", "github/knowledge-federation.yaml", "justfile"):
+            continue  # a domain host's files are not held to drift, and the justfile is the host's from its first line
+        assert f'"{template}:{copy}"' in preflight, f"{template}:{copy} is not in the preflight's drift list"

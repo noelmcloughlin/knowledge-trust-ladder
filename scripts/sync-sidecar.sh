@@ -98,7 +98,7 @@ if [[ "$finish" -eq 1 ]]; then
     if [[ -n "$(git -C "$sibling" status --porcelain --untracked-files=no)" ]]; then
       echo "   uncommitted changes here; commit or stash them first; kept"; status=1; continue
     fi
-    git -C "$sibling" switch --quiet "$local_base"
+    git -C "$sibling" switch --quiet "$local_base" || { echo "   could not switch to $local_base (git said why above); kept"; status=1; continue; }
     git -C "$sibling" merge --quiet --ff-only "$base" || { echo "   $local_base cannot fast-forward to $base; kept"; status=1; continue; }
     git -C "$sibling" branch --quiet -D "$branch"
     echo "   on $local_base at $(git -C "$sibling" rev-parse --short HEAD); $branch removed"
@@ -136,7 +136,8 @@ for sibling in "${siblings[@]}"; do
   echo "== $sibling"
   rc=0
   bash "$tmp/knowledge-sync.sh" --source "$source" --host "$sibling" --branch ${flags[@]+"${flags[@]}"} "$tag" || rc=$?
-  if [[ "$rc" -ge 2 ]]; then exit "$rc"; fi
+  # The tag was checked above, so a 2 here is the sibling's: a path that
+  # is not there, say. It is reported, and the others go ahead.
   [[ "$rc" -eq 0 ]] || status=1
 done
 echo ""

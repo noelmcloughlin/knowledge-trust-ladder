@@ -168,35 +168,37 @@ web_url() {
 }
 
 # Add the entry to the changelog under "## [Unreleased]", in its
-# "### Security" section. A section that has none gets one at its end.
+# "### Security" section. A section that has none gets one at its end. A
+# file with CRLF line endings keeps them, and the lines added get the same.
 # Exit 3 when the file has no "## [Unreleased]" heading.
 add_entry() {
   local file="$1" entry="$2" tmp
   tmp="$(mktemp)"
   if awk -v entry="$entry" '
-    { line[NR] = $0 }
+    { line[NR] = $0; key[NR] = $0; sub(/\r$/, "", key[NR]) }
     END {
-      u = 0; e = NR + 1; s = 0
-      for (i = 1; i <= NR; i++) if (line[i] == "## [Unreleased]") { u = i; break }
+      u = 0; e = NR + 1; s = 0; nl = ""
+      for (i = 1; i <= NR; i++) if (key[i] == "## [Unreleased]") { u = i; break }
       if (u == 0) exit 3
-      for (i = u + 1; i <= NR; i++) if (line[i] ~ /^## /) { e = i; break }
-      for (i = u + 1; i < e; i++) if (line[i] ~ /^### Security[ \t]*$/) { s = i; break }
+      if (line[u] ~ /\r$/) nl = "\r"
+      for (i = u + 1; i <= NR; i++) if (key[i] ~ /^## /) { e = i; break }
+      for (i = u + 1; i < e; i++) if (key[i] ~ /^### Security[ \t]*$/) { s = i; break }
       if (s) {
         t = e
-        for (i = s + 1; i < e; i++) if (line[i] ~ /^### /) { t = i; break }
+        for (i = s + 1; i < e; i++) if (key[i] ~ /^### /) { t = i; break }
         last = s
-        for (i = s + 1; i < t; i++) if (line[i] !~ /^[ \t]*$/) last = i
+        for (i = s + 1; i < t; i++) if (key[i] !~ /^[ \t]*$/) last = i
         for (i = 1; i <= last; i++) print line[i]
-        if (last == s) print ""
-        print entry
+        if (last == s) print nl
+        print entry nl
       } else {
         last = u
-        for (i = u + 1; i < e; i++) if (line[i] !~ /^[ \t]*$/) last = i
+        for (i = u + 1; i < e; i++) if (key[i] !~ /^[ \t]*$/) last = i
         for (i = 1; i <= last; i++) print line[i]
-        print ""
-        print "### Security"
-        print ""
-        print entry
+        print nl
+        print "### Security" nl
+        print nl
+        print entry nl
       }
       for (i = last + 1; i <= NR; i++) print line[i]
     }' "$file" > "$tmp"; then
@@ -262,6 +264,7 @@ main() {
     repo="$(grep -oE 'TRUST_LADDER_SKILLS_REPO: *[^ ]+' "$host/$librarian_copy" | head -1 | sed -E 's/^TRUST_LADDER_SKILLS_REPO: *//' || true)"
   fi
   [[ -n "$repo" ]] || repo="$default_repo"
+  [[ "$repo" != -* ]] || die "'$repo' is not an address to clone from"
   if [[ -n "$source" ]]; then
     source="$(cd "$source" 2>/dev/null && pwd -P)" || die "no such directory: $source"
     git -C "$source" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "$source is not a git work tree"
@@ -275,7 +278,7 @@ main() {
     fi
     tmp_clone="$(mktemp -d)"
     echo "   cloning $tag from $repo"
-    git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$tag" "$repo" "$tmp_clone"
+    git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$tag" -- "$repo" "$tmp_clone"
     source="$tmp_clone"
     repo_url="$(web_url "$repo")"
     # The tag's copy of this script knows every template the release has, so
@@ -365,7 +368,7 @@ main() {
     old_pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' "$wf" | head -1 | sed 's/^TRUST_LADDER_SKILLS_REF: //' || true)"
   fi
 
-  local copied=() same=() added=() absent=() pair src dst why want
+  local copied=() same=() added=() absent=() pins_only=() pair src dst why want
   for pair in "${pairs[@]}"; do
     src="${pair%%:*}"; dst="${pair##*:}"
     if ! git -C "$source" cat-file -e "$tag:$templates/$src" 2>/dev/null; then
@@ -390,6 +393,13 @@ main() {
     if cmp -s <(unpin < "$want") <(unpin < "$host/$dst"); then
       same+=("$dst")
     else
+      # A copy that differs only on its `uses:` lines was bumped by the
+      # host's Dependabot ahead of the template. The template's pins win,
+      # since the copy must match it, and the report says so: the next
+      # bump in the skills repository brings the same release back.
+      if ! diff <(unpin < "$want") <(unpin < "$host/$dst") | grep -E '^[<>]' | grep -qvE '^[<>].*uses: '; then
+        pins_only+=("$dst")
+      fi
       cat "$want" > "$host/$dst"
       copied+=("$dst")
     fi
@@ -447,9 +457,16 @@ main() {
   for f in ${same[@]+"${same[@]}"}; do echo "   same     $f"; done
   for f in ${added[@]+"${added[@]}"}; do echo "   added    $f"; done
   for f in ${absent[@]+"${absent[@]}"}; do echo "   absent   $f (never installed here: ktl-sidecar's Step 5 decides, not this script)"; done
+  for f in ${pins_only[@]+"${pins_only[@]}"}; do echo "   pins     $f differed only on its action pins, which Dependabot bumped here first; the template's pins are back until the skills repository bumps them"; done
   local pin_line
   if [[ -f "$wf" ]]; then
-    if [[ "$pin_moved" -eq 0 ]]; then pin_line="already $tag"; else pin_line="${old_pin:-none} to $tag ($tag_sha)"; fi
+    if [[ "$pin_moved" -eq 0 ]]; then
+      pin_line="already $tag"
+    elif [[ -n "$old_pin" && "$(printf '%s\n%s\n' "$old_pin" "$tag" | sort -V | tail -n 1)" == "$old_pin" ]]; then
+      pin_line="$old_pin back to $tag ($tag_sha): an older release than the host had"
+    else
+      pin_line="${old_pin:-none} to $tag ($tag_sha)"
+    fi
   else
     pin_line="no $librarian_copy here, so no scheduled librarian to pin"
   fi

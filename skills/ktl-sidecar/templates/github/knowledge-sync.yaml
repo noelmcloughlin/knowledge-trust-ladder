@@ -1,7 +1,7 @@
 name: Knowledge sync
 
 # Keeps this host's sidecar copies and skills pin at the newest release of
-# Knowledge Trust Ladder, the repository that publishes the skills. Each day
+# Knowledge Trust Ladder, the repository that publishes the skills. Each week
 # it reads the pin in knowledge-librarian.yaml and the newest release there.
 # When the pin is behind, it runs the host's own copy of
 # .lokf/scripts/knowledge-sync.sh. That script copies the release's templates
@@ -27,7 +27,8 @@ name: Knowledge sync
 # `publish` as a patch artifact. `publish` runs no code from the release. It
 # checks that the patch touches only the files a sync may touch, that the
 # pin names the commit the tag names at the skills repository, applies the
-# patch on a clean checkout, and opens the pull request.
+# patch on a clean checkout, writes the pull request's body from that patch
+# and nothing the `sync` job wrote, and opens the pull request.
 #
 # The pull request changes files under .github/workflows/, which the job's
 # own GITHUB_TOKEN may not push. So `publish` pushes and opens the pull
@@ -45,9 +46,24 @@ name: Knowledge sync
 # the copies, which is what a sync is. The person who reviews the pull
 # request reads that change, as they would after running the script by hand.
 # The sidecar's references/automation.md says how to set the token up.
+#
+# SECURITY SCANNER NOTE. No LLM, AI agent or AI tool runs in this workflow,
+# so a finding about third-party content reaching a model (Snyk W011,
+# indirect prompt injection) does not apply: there is no prompt. Three other
+# findings are expected, and the skills repository's docs/threat-model.md
+# answers each under "The sync workflow":
+#   - code fetched at run time: `sync` runs the release's copy of the sync
+#     script under contents: read, with no credential on disk, only after
+#     the tag was found at the address this repository's own librarian
+#     workflow names, and the pull request shows every byte it proposes;
+#   - a token that can write workflows: KNOWLEDGE_SYNC_TOKEN is scoped to
+#     this repository, reaches `publish` alone, and pushes one branch and
+#     opens one pull request; the job's own token keeps contents: read;
+#   - a forced push: only to sync-<tag>, this workflow's own branch, and
+#     never while a pull request from it is open.
 on:
   schedule:
-    - cron: "10 4 * * *" # daily at 04:10 UTC, so a Monday librarian runs on a current pin
+    - cron: "10 4 * * 1" # Mondays at 04:10 UTC, so the librarian's Monday run follows a current pin once the pull request is merged
   workflow_dispatch:
     inputs:
       tag:
@@ -70,6 +86,7 @@ jobs:
     # changes the name in both places.
     if: github.repository != 'noelmcloughlin/knowledge-trust-ladder'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read # read the pin out of the librarian workflow
       pull-requests: read # list this workflow's pull requests
@@ -96,7 +113,8 @@ jobs:
       # published, not a draft and not a pre-release. A pull request this
       # workflow opened comes from a branch of this repository named
       # sync-<tag>; only a branch of this repository counts, since anyone can
-      # open a pull request from a fork's branch of the same name.
+      # open a pull request from a fork's branch of the same name. The input
+      # is read through `env:` and held to the shape of a tag.
       - name: Read the pin, the newest release and the earlier pull requests
         id: read
         env:
@@ -111,6 +129,10 @@ jobs:
             pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' "$wf" | head -n 1 | sed 's/^TRUST_LADDER_SKILLS_REF: //' || true)"
           fi
           [ -n "$repo" ] || repo="https://github.com/noelmcloughlin/knowledge-trust-ladder"
+          case "$repo" in
+            https://github.com/*) ;;
+            *) echo "::error::The librarian workflow names '$repo' as the skills repository. This workflow reads releases and tags from a GitHub repository over https."; exit 1 ;;
+          esac
           slug="${repo#https://github.com/}"; slug="${slug%.git}"; slug="${slug%/}"
           if [ -n "$WANTED" ]; then
             if ! printf '%s\n' "$WANTED" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
@@ -119,7 +141,10 @@ jobs:
             fi
             tag="$WANTED"
           else
-            tag="$(gh api "repos/$slug/releases/latest" --jq .tag_name)"
+            if ! tag="$(gh api "repos/$slug/releases/latest" --jq .tag_name 2>/dev/null)"; then
+              echo "::error::The newest release of $slug could not be read. A private skills repository is not readable with the job's token."
+              exit 1
+            fi
             if ! printf '%s\n' "$tag" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
               echo "::error::The newest release of $slug is '$tag', which is not a release tag this workflow can sync to."
               exit 1
@@ -165,10 +190,12 @@ jobs:
     needs: earlier
     if: needs.earlier.outputs.tag != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read # read the repository only; no write token near the release's code
     outputs:
       changed: ${{ steps.run.outputs.changed }}
+      checks: ${{ steps.run.outputs.checks }}
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -191,8 +218,10 @@ jobs:
       # The host's copy of the script clones the release and hands over to
       # the copy of itself there, so a template the release added is known.
       # Exit 1 means a check failed on the synced copies: the change is
-      # still proposed, and the pull request says how each check ended.
-      # Exit 2 means the tag could not be used, which fails the run.
+      # still proposed, and the pull request says so. Exit 2 means the tag
+      # could not be used, which fails the run. The verdict leaves this job
+      # as one word, mapped here from the exit status, and the script's own
+      # lines go to this job's summary and no further.
       - name: Run the sync script
         id: run
         env:
@@ -207,6 +236,7 @@ jobs:
           rc=0
           bash "$script" --changed "$RUNNER_TEMP/changed.txt" --report "$RUNNER_TEMP/report.md" "$TAG" || rc=$?
           if [ "$rc" -ge 2 ]; then exit "$rc"; fi
+          if [ "$rc" -eq 0 ]; then echo "checks=pass" >> "$GITHUB_OUTPUT"; else echo "checks=failed" >> "$GITHUB_OUTPUT"; fi
           if [ -s "$RUNNER_TEMP/changed.txt" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             { echo "## Knowledge sync to $TAG"; echo; cat "$RUNNER_TEMP/report.md"; } >> "$GITHUB_STEP_SUMMARY"
@@ -242,6 +272,7 @@ jobs:
     needs: [earlier, sync]
     if: needs.sync.outputs.changed == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read # the push and the pull request use the sync token, not this one
     steps:
@@ -265,8 +296,9 @@ jobs:
       # script. A sync touches the sidecar's copies, the site's copies, the
       # pin and the changelog, and nothing else, so any other path refuses
       # the patch before it touches disk. The three site files a host owns
-      # are refused by name. Then the pin is checked against the skills
-      # repository itself: the tag must name the commit beside it.
+      # are refused by name, and so is a path with a character outside the
+      # plain set the templates use. Then the pin is checked against the
+      # skills repository itself: the tag must name the commit beside it.
       - name: Check the patch and apply it
         env:
           TAG: ${{ needs.earlier.outputs.tag }}
@@ -276,9 +308,10 @@ jobs:
           paths="$(git -c core.quotePath=false apply --numstat "$RUNNER_TEMP/sync.patch" | cut -f3-)"
           bad="$(printf '%s\n' "$paths" | grep -Ev '^(\.github/workflows/knowledge-[a-z]+\.yaml|\.github/PULL_REQUEST_TEMPLATE/knowledge-[a-z]+\.md|\.lokf/scripts/knowledge-[a-z]+\.(sh|py)|\.lokf/m365/[A-Za-z0-9._-]+|\.lokf/domain\.yaml|\.lokf/\.gitattributes|\.lokf/justfile|website/.+|CHANGELOG\.md)$' || true)"
           owned="$(printf '%s\n' "$paths" | grep -E '^website/(site\.config\.mjs|README\.md|src/styles/custom\.css)$' || true)"
-          if [ -n "${bad//[$'\n\t ']/}" ] || [ -n "${owned//[$'\n\t ']/}" ]; then
+          odd="$(printf '%s\n' "$paths" | grep -Ev '^[]A-Za-z0-9._/@+[-]+$' || true)"
+          if [ -n "${bad//[$'\n\t ']/}" ] || [ -n "${owned//[$'\n\t ']/}" ] || [ -n "${odd//[$'\n\t ']/}" ]; then
             echo "::error::The patch touches paths a sync may not:"
-            printf '%s\n%s\n' "$bad" "$owned" | sed '/^$/d; s/^/  /'
+            printf '%s\n%s\n%s\n' "$bad" "$owned" "$odd" | sed '/^$/d; s/^/  /'
             exit 1
           fi
           git apply --index --whitespace=nowarn "$RUNNER_TEMP/sync.patch"
@@ -298,16 +331,23 @@ jobs:
             fi
           fi
 
-      # The body is the sync's report, then the pull request template the
-      # host carries, whose checklist is the reviewer's. The commit is made
-      # under a bot identity, which the AI covenant asks of a repository's
-      # own automation, and carries no trailer. The push and the pull
-      # request use the sync token (see the header). Without it the run
-      # ends here, green, with the patch attached and the summary written.
+      # The body is written here, from the patch this job applied and from
+      # this checkout, and from nothing the `sync` job wrote: the files the
+      # patch changes, the pin it sets, and the checks' verdict as the one
+      # word that job's own step mapped the exit status to. Then comes the
+      # pull request template the host carries, whose checklist is the
+      # reviewer's. The commit is made under a bot identity, which the AI
+      # covenant asks of a repository's own automation, and carries no
+      # trailer. The push and the pull request use the sync token (see the
+      # header). Without it the run ends here, green, with the patch
+      # attached and the summary written.
       - name: Commit, push and open the pull request
         env:
           SYNC_TOKEN: ${{ secrets.KNOWLEDGE_SYNC_TOKEN }}
           TAG: ${{ needs.earlier.outputs.tag }}
+          FROM: ${{ needs.earlier.outputs.from }}
+          REPO: ${{ needs.earlier.outputs.repo }}
+          CHECKS: ${{ needs.sync.outputs.checks }}
           OPEN_PR: ${{ needs.earlier.outputs.open }}
           DECLINED_PR: ${{ needs.earlier.outputs.declined }}
         run: |
@@ -323,16 +363,52 @@ jobs:
             echo "::warning::KNOWLEDGE_SYNC_TOKEN is not set, so no pull request was opened; the patch is attached to this run."
             exit 0
           fi
-          git config user.name "knowledge-sync[bot]"
-          git config user.email "knowledge-sync[bot]@users.noreply.github.com"
-          git checkout --quiet -b "$branch"
-          git commit --quiet -m "$subject"
-          # The branch is this workflow's own: a run a person starts after
-          # a declined pull request writes over the earlier branch.
-          git push --quiet --force "https://x-access-token:${SYNC_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"
+          link="$REPO/blob/$TAG/CHANGELOG.md"
+          if [ -n "$FROM" ] && [ "$FROM" != "$TAG" ]; then link="$REPO/compare/$FROM...$TAG"; fi
+          wf=.github/workflows/knowledge-librarian.yaml
+          copies="$(git -c core.quotePath=false diff --cached --name-status | awk -F'\t' '$1 == "M" && $2 != "CHANGELOG.md" { print $2 }')"
+          added="$(git -c core.quotePath=false diff --cached --name-status | awk -F'\t' '$1 == "A" { print $2 }')"
+          # The librarian workflow counts as a changed copy only when more
+          # than its two pin lines moved.
+          if printf '%s\n' "$copies" | grep -qx "$wf" \
+             && ! git diff --cached -U0 -- "$wf" | grep -E '^[-+][^-+]' | grep -qvE 'TRUST_LADDER_SKILLS_(REF|SHA): '; then
+            copies="$(printf '%s\n' "$copies" | grep -vx "$wf" || true)"
+          fi
           body="$RUNNER_TEMP/body.md"
+          bt="$(printf '\140')" # a backtick, for the code spans below
           {
-            cat "$RUNNER_TEMP/report.md"
+            if [ -n "$FROM" ] && [ "$FROM" != "$TAG" ]; then
+              echo "Brings the sidecar copies and the skills pin of this repository to Knowledge Trust Ladder [$TAG]($link), from $FROM."
+            else
+              echo "Brings the sidecar copies and the skills pin of this repository to Knowledge Trust Ladder [$TAG]($link)."
+            fi
+            if [ -n "$copies" ]; then
+              echo; echo "The release changed these copies:"; echo
+              printf '%s\n' "$copies" | sed "s/.*/- ${bt}&${bt}/"
+            fi
+            if [ -n "$added" ]; then
+              echo; echo "Added, because a file here needs it:"; echo
+              printf '%s\n' "$added" | sed "s/.*/- ${bt}&${bt}/"
+            fi
+            echo
+            if [ -f "$wf" ]; then
+              sha="$(grep -oE 'TRUST_LADDER_SKILLS_SHA: [0-9a-f]{40}' "$wf" | head -n 1 | sed 's/^TRUST_LADDER_SKILLS_SHA: //')"
+              echo "The skills pin moves from ${FROM:-none} to $TAG, commit \`$sha\`."
+            else
+              echo "There is no knowledge-librarian.yaml here, so no scheduled librarian to pin."
+            fi
+            echo
+            case "$CHECKS" in
+              pass) echo "The sidecar's checks passed on the synced copies; the sync job's summary has each line." ;;
+              failed) echo "A sidecar check failed on the synced copies; the sync job's summary says which. Fix the bundle in this pull request, or the gate fails on it." ;;
+              *) echo "The sidecar's checks did not run." ;;
+            esac
+            echo
+            if git diff --cached --name-only | grep -qx 'CHANGELOG.md'; then
+              echo "CHANGELOG.md has the entry under its Unreleased heading and Security."
+            else
+              echo "CHANGELOG.md is unchanged: it has the entry already, or it has no Unreleased heading, in which case add the entry by hand."
+            fi
             echo
             if [ -n "$OPEN_PR" ]; then
               echo "Pull request #$OPEN_PR from this workflow is still open. A person started this run, so both move the pin: merge one and close the other."
@@ -346,6 +422,17 @@ jobs:
               cat .github/PULL_REQUEST_TEMPLATE/knowledge-sync.md
             fi
           } > "$body"
+          git config user.name "knowledge-sync[bot]"
+          git config user.email "knowledge-sync[bot]@users.noreply.github.com"
+          git checkout --quiet -b "$branch"
+          git commit --quiet -m "$subject"
+          # The branch is this workflow's own: a run a person starts after
+          # a declined pull request writes over the earlier branch. The
+          # token travels in the push address, which GitHub masks in the log.
+          if ! git push --quiet --force "https://x-access-token:${SYNC_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"; then
+            echo "::error::The push was refused. KNOWLEDGE_SYNC_TOKEN needs Contents and Workflows set to read and write on this repository; a change under .github/workflows/ needs the second."
+            exit 1
+          fi
           base="$(GH_TOKEN="$SYNC_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .default_branch)"
           url="$(GH_TOKEN="$SYNC_TOKEN" gh pr create --title "$subject" --body-file "$body" --head "$branch" --base "$base")"
           echo "Opened $url"
