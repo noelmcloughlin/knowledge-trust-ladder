@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **`knowledge-federate.py members` verifies attestations under the librarian wrapper.** The wrapper strips every token, so `gh attestation verify` failed; the script now takes the job's read-only token as `KNOWLEDGE_FEDERATE_TOKEN` (`AGENT_USE_JOB_TOKEN` `true`, `AGENT_API_KEY_ENV` set to that name), hands it to `gh` alone, and says which variables to set when it has no credential.
+
 ## [0.46.0] - 2026-10-17
 
 ### Added

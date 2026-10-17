@@ -31,6 +31,9 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 9. `members --add owner/repo` drafts a member concept from that repository's
    newest bundle release, with the schema released beside it, and refuses a
    path that exists or a namespace that nests with a member's.
+10. under the librarian wrapper, `members` hands the job token that arrives
+    as KNOWLEDGE_FEDERATE_TOKEN to gh alone, and with no credential at all
+    it stops and says which variables give it one.
 
 The `members` tests run the script through a small runner that serves the
 GitHub API and the release files from fixture files, and put a stand-in
@@ -356,6 +359,10 @@ sys.exit(federate.main(argv))
 FAKE_GH = """\
 #!/bin/sh
 [ "$1 $2" = "pr list" ] && { printf '%s\\n' "${FAKE_GH_PRS:-[]}"; exit 0; }
+if [ "$1 $2" = "attestation verify" ]; then
+  [ "${GH_TOKEN:-}" = job-token ] && [ -z "${KNOWLEDGE_FEDERATE_TOKEN:-}" ] && exit 0
+  echo "gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable." >&2
+fi
 exit 1
 """
 
@@ -469,11 +476,12 @@ def released(tmp_path):
     return {"host": host, "tmp": tmp_path, "sha": sha}
 
 
-def members_run(released, *args: str, prs: str = "[]", stdout_only: bool = False):
+def members_run(released, *args: str, prs: str = "[]", stdout_only: bool = False, attest: bool = False, env: dict | None = None):
     tmp = released["tmp"]
     return run(["uv", "run", "--project", REPO / ".lokf", tmp / "runner.py", SCRIPT, tmp / "served.json",
-                "--root", released["host"], "members", "--no-attestation", *args],
-               cwd=released["host"], env={"PATH": f"{tmp / 'bin'}:{os.environ['PATH']}", "FAKE_GH_PRS": prs}, stdout_only=stdout_only)
+                "--root", released["host"], "members", *([] if attest else ["--no-attestation"]), *args],
+               cwd=released["host"], env={"PATH": f"{tmp / 'bin'}:{os.environ['PATH']}", "FAKE_GH_PRS": prs, **(env or {})},
+               stdout_only=stdout_only, unset=("GH_TOKEN", "GITHUB_TOKEN", "KNOWLEDGE_FEDERATE_TOKEN"))
 
 
 def ops_for(patch: dict, slug: str) -> dict:
@@ -551,3 +559,10 @@ def test_members_add_drafts_a_member_from_a_repository_release(released):
     assert r.rc == 1 and "nests with members/a's https://a.example/knowledge/" in r.out, r.out
     r = members_run(released, "--add", "acme")
     assert r.rc == 1 and "--add takes owner/repo" in r.out, r.out
+
+
+def test_members_hands_the_job_token_to_gh_alone(released):
+    r = members_run(released, "--dry-run", attest=True)
+    assert r.rc != 0 and "gh has no credential" in r.out and "AGENT_API_KEY_ENV to KNOWLEDGE_FEDERATE_TOKEN" in r.out, r.out
+    r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token"})
+    assert r.rc == 0 and "attested by acme/a" in r.out, r.out
