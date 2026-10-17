@@ -1,6 +1,6 @@
 <svg width="720" height="676" viewBox="0 0 720 676" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
 <title id="t">Tiers of domains</title>
-<desc id="d">Top to bottom. A top domain, the top of this build and perhaps a member of another, names Domain 1 and Domain 2, each a thin LOKF bundle with its own curator and releases and a namespace beside its parent's. Each names a domain in turn, Domain 1.1 and Domain 2.1, and those name the bundles: any number under each, one repository each, drawn as a stack of cards, and one shared model such as gist-linkml, biolink-model or the FINOS CDM, named by both at one release, so it joins once: the diamond rule. Four numbered rules follow: every domain bounds a workspace of its own; confirming a domain member attests that it belongs and who answers for it, not what its members say; one bundle at one release, however many domains name it, and two releases stop the build; and max_depth on the top domain says how many tiers the build follows, three unless set, with namespaces that may mirror the tree when each ends in its own segment.</desc>
+<desc id="d">Top to bottom. A top domain, the top of this build and perhaps a member of another, names Domain 1 and Domain 2, each a thin LOKF bundle with its own curator and releases and a namespace beside its parent's. Each names a domain in turn, Domain 1.1 and Domain 2.1, and those name the bundles: any number under each, one repository each, drawn as a stack of cards, and one shared model such as gist-linkml, biolink-model or the FINOS CDM, named by both at one release, so it joins once: the diamond rule. Each card carries a small ladder whose rungs are the three actors, and three pills reading derived, checked and confirmed: green for what an agent derived, gold for what deterministic tools checked, blue for what a named person confirmed; each domain box carries the same three dots. Four numbered rules follow: every domain bounds a workspace of its own; confirming a domain member attests that it belongs and who answers for it, not what its members say; one bundle at one release, however many domains name it, and two releases stop the build; and max_depth on the top domain says how many tiers the build follows, three unless set, with namespaces that may mirror the tree when each ends in its own segment.</desc>
 <rect width="720" height="676" fill="#E4E1D7"/>
 <!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#E4E1D7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Trust Ladder</text><!-- ktl-brand:end -->
 <text x="360" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#2C2C2A">Tiers of domains</text>
@@ -10,6 +10,9 @@
 <g transform="translate(288,114)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
 <text x="312" y="110" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">Top domain</text>
 <text x="312" y="127" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">the top of this build</text>
+<circle cx="420" cy="105" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<circle cx="431" cy="105" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<circle cx="442" cy="105" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
 <line x1="360" y1="138" x2="360" y2="152" stroke="#6E6D66" stroke-width="1.3"/>
 <path d="M355.5 145.4 L360 152 L364.5 145.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
 <line x1="166" y1="152" x2="554" y2="152" stroke="#6E6D66" stroke-width="1.3"/>
@@ -21,10 +24,16 @@
 <g transform="translate(79,190)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
 <text x="103" y="186" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">Domain 1</text>
 <text x="103" y="203" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">example.org/d1/knowledge/</text>
+<circle cx="241" cy="181" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<circle cx="252" cy="181" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<circle cx="263" cy="181" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
 <rect x="441" y="166" width="226" height="48" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
 <g transform="translate(467,190)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
 <text x="491" y="186" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">Domain 2</text>
 <text x="491" y="203" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">example.org/d2/knowledge/</text>
+<circle cx="629" cy="181" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<circle cx="640" cy="181" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<circle cx="651" cy="181" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
 <line x1="166" y1="214" x2="166" y2="242" stroke="#6E6D66" stroke-width="1.3"/>
 <path d="M161.5 235.4 L166 242 L170.5 235.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
 <line x1="554" y1="214" x2="554" y2="242" stroke="#6E6D66" stroke-width="1.3"/>
@@ -33,29 +42,53 @@
 <g transform="translate(79,266)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
 <text x="103" y="262" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">Domain 1.1</text>
 <text x="103" y="279" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">example.org/d1/d1-1/knowledge/</text>
+<circle cx="241" cy="257" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<circle cx="252" cy="257" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<circle cx="263" cy="257" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
 <rect x="441" y="242" width="226" height="48" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
 <g transform="translate(467,266)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
 <text x="491" y="262" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">Domain 2.1</text>
 <text x="491" y="279" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">example.org/d2/d2-1/knowledge/</text>
+<circle cx="629" cy="257" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<circle cx="640" cy="257" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<circle cx="651" cy="257" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
 <rect x="20" y="330" width="680" height="156" rx="20" fill="#F1EFE8"/>
-<rect x="96.5" y="342" width="149" height="90" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
-<rect x="91.5" y="347" width="149" height="90" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
-<rect x="86.5" y="352" width="149" height="90" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(161.0,376)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
+<rect x="96.5" y="342" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
+<rect x="91.5" y="347" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
+<rect x="86.5" y="352" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
+<g transform="translate(161.0,374)" stroke-linecap="round"><line x1="-7" y1="-11" x2="-7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="7" y1="-11" x2="7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="-7" y1="7" x2="7" y2="7" stroke="#3B6D11" stroke-width="3"/><line x1="-7" y1="0" x2="7" y2="0" stroke="#B7791F" stroke-width="3"/><line x1="-7" y1="-7" x2="7" y2="-7" stroke="#185FA5" stroke-width="3"/></g>
 <text x="161.0" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Bundles</text>
-<text x="161.0" y="416" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">any number, one repository each</text>
-<rect x="260" y="352" width="200" height="90" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(360.0,376)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
+<text x="161.0" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">any number, one repository each</text>
+<rect x="91.0" y="422" width="44" height="15" rx="7.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<text x="113.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#27500A">derived</text>
+<rect x="139.0" y="422" width="44" height="15" rx="7.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<text x="161.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#7A4E0B">checked</text>
+<rect x="187.0" y="422" width="44" height="15" rx="7.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="209.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#0C447C">confirmed</text>
+<rect x="260" y="352" width="200" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
+<g transform="translate(360.0,374)" stroke-linecap="round"><line x1="-7" y1="-11" x2="-7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="7" y1="-11" x2="7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="-7" y1="7" x2="7" y2="7" stroke="#3B6D11" stroke-width="3"/><line x1="-7" y1="0" x2="7" y2="0" stroke="#B7791F" stroke-width="3"/><line x1="-7" y1="-7" x2="7" y2="-7" stroke="#185FA5" stroke-width="3"/></g>
 <text x="360.0" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">A shared model</text>
-<text x="360.0" y="416" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">gist-linkml, biolink-model, FINOS CDM…</text>
-<text x="360.0" y="431" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-style="italic" fill="#7A4E0B">named by both, at one release</text>
-<rect x="484.5" y="342" width="149" height="90" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
-<rect x="479.5" y="347" width="149" height="90" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
-<rect x="474.5" y="352" width="149" height="90" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(549.0,376)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
+<text x="360.0" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">gist-linkml, biolink-model, FINOS CDM…</text>
+<rect x="290.0" y="422" width="44" height="15" rx="7.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<text x="312.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#27500A">derived</text>
+<rect x="338.0" y="422" width="44" height="15" rx="7.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<text x="360.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#7A4E0B">checked</text>
+<rect x="386.0" y="422" width="44" height="15" rx="7.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="408.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#0C447C">confirmed</text>
+<text x="360.0" y="447" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-style="italic" fill="#7A4E0B">named by both, at one release</text>
+<rect x="484.5" y="342" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
+<rect x="479.5" y="347" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
+<rect x="474.5" y="352" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
+<g transform="translate(549.0,374)" stroke-linecap="round"><line x1="-7" y1="-11" x2="-7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="7" y1="-11" x2="7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="-7" y1="7" x2="7" y2="7" stroke="#3B6D11" stroke-width="3"/><line x1="-7" y1="0" x2="7" y2="0" stroke="#B7791F" stroke-width="3"/><line x1="-7" y1="-7" x2="7" y2="-7" stroke="#185FA5" stroke-width="3"/></g>
 <text x="549.0" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Bundles</text>
-<text x="549.0" y="416" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">any number, one repository each</text>
-<text x="360" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#5F5E5A">Bundles: each on its own trust ladder, named by the tier above it.</text>
+<text x="549.0" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">any number, one repository each</text>
+<rect x="479.0" y="422" width="44" height="15" rx="7.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<text x="501.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#27500A">derived</text>
+<rect x="527.0" y="422" width="44" height="15" rx="7.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
+<text x="549.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#7A4E0B">checked</text>
+<rect x="575.0" y="422" width="44" height="15" rx="7.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="597.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#0C447C">confirmed</text>
+<text x="360" y="474" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#5F5E5A">Bundles: each on its own trust ladder, named by the tier above it; the rungs and pills are the three actors below.</text>
 <line x1="166" y1="290" x2="166" y2="342" stroke="#6E6D66" stroke-width="1.3"/>
 <path d="M161.5 335.4 L166 342 L170.5 335.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
 <line x1="554" y1="290" x2="554" y2="342" stroke="#6E6D66" stroke-width="1.3"/>
