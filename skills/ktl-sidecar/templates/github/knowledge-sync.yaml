@@ -3,32 +3,36 @@ name: Knowledge sync
 # Keeps this host's sidecar copies and skills pin at the newest release of
 # Knowledge Trust Ladder, the repository that publishes the skills. Each week
 # it reads the pin in knowledge-librarian.yaml and the newest release there.
-# When the pin is behind, it runs the host's own copy of
-# .lokf/scripts/knowledge-sync.sh. That script copies the release's templates
-# over the host's copies, moves the pin, writes the changelog entry and runs
-# the sidecar's checks. Then this workflow opens one pull request with the
-# diff. It runs no LLM or agent. It never pushes to the default branch and
-# never merges.
+# When the pin is behind, it runs this host's own copy of
+# .lokf/scripts/knowledge-sync.sh. That script clones the release and reads
+# its knowledge-sync.manifest, the list of each template, its copy and the
+# rule for it, so the release is data to it. It copies the release's
+# templates over the host's copies, moves the pin and writes the changelog
+# entry. Then this workflow opens one pull request with the diff. It runs no
+# LLM or agent, and no code from the release. It never pushes to the default
+# branch and never merges.
 #
-# A run a person starts from the Actions tab may name a release tag. Without
-# one it takes the newest release, as a scheduled run does.
-#
-# A scheduled run also reads what became of the pull requests this workflow
-# opened before. While one is still open it opens no second one beside it.
-# And a tag whose pull request a person closed without merging is not
-# proposed again. A run a person starts goes ahead in both cases, apart from
-# a tag whose pull request is still open: close that one first.
+# One pull request at a time, refreshed until it is merged. The pull request
+# comes from this workflow's own branch, knowledge-sync. While it is open, a
+# later run that finds a newer release replaces the branch's one commit with
+# a sync to that release, and sets the title and body to match, so the week's
+# releases fold into one pull request. A pull request a person added a commit
+# to is left alone. A tag whose pull request a person closed without merging
+# is not proposed again by the schedule. A run a person starts from the
+# Actions tab may name a tag, and goes ahead in every case but one: a pull
+# request that proposes that tag and is still open.
 #
 # Three jobs, for least privilege. `earlier` reads the pin, the release and
-# the earlier pull requests under a token that can read the repository and
-# its pull requests, and nothing else. `sync` runs the sync script, which
-# clones the release and runs the copy of itself in that clone, under a
-# read-only token with no git credentials on disk, and hands the change to
-# `publish` as a patch artifact. `publish` runs no code from the release. It
+# the state of this workflow's last pull request under a token that can read
+# the repository and its pull requests, and nothing else. `sync` runs the
+# host's own sync script under a read-only token with no git credentials on
+# disk, and hands the change to `publish` as a patch artifact. `publish`
 # checks that the patch touches only the files a sync may touch, that the
 # pin names the commit the tag names at the skills repository, applies the
 # patch on a clean checkout, writes the pull request's body from that patch
-# and nothing the `sync` job wrote, and opens the pull request.
+# and nothing the `sync` job wrote, and opens or refreshes the pull request.
+# The pull request's own checks then run the synced copies, as they run on
+# any change here.
 #
 # The pull request changes files under .github/workflows/, which the job's
 # own GITHUB_TOKEN may not push. So `publish` pushes and opens the pull
@@ -38,29 +42,26 @@ name: Knowledge sync
 # App's installation token made in a step of your own. A pull request opened
 # with it starts this repository's checks, as one opened with GITHUB_TOKEN
 # would not. Without the secret the workflow still runs: it attaches the
-# patch to the run, writes the summary, and opens nothing.
-#
-# The release's own sync script runs in `sync`, before any person here has
-# read that release. It runs with no credential, and `publish` applies only
-# what the path check allows, so the most it can do is propose a change to
-# the copies, which is what a sync is. The person who reviews the pull
-# request reads that change, as they would after running the script by hand.
-# The sidecar's references/automation.md says how to set the token up.
+# patch to the run, writes the summary, and opens nothing. The sidecar's
+# references/automation.md says how to set the token up.
 #
 # SECURITY SCANNER NOTE. No LLM, AI agent or AI tool runs in this workflow,
 # so a finding about third-party content reaching a model (Snyk W011,
 # indirect prompt injection) does not apply: there is no prompt. Three other
 # findings are expected, and the skills repository's docs/threat-model.md
 # answers each under "The sync workflow":
-#   - code fetched at run time: `sync` runs the release's copy of the sync
-#     script under contents: read, with no credential on disk, only after
-#     the tag was found at the address this repository's own librarian
-#     workflow names, and the pull request shows every byte it proposes;
+#   - a repository fetched at run time: `sync` clones the release as data,
+#     a manifest and the templates it names, under contents: read, with no
+#     credential on disk, only after the tag was found at the address this
+#     repository's own librarian workflow names. The script that reads it is
+#     this repository's own, reviewed and merged here, and the pull request
+#     shows every byte the sync proposes;
 #   - a token that can write workflows: KNOWLEDGE_SYNC_TOKEN is scoped to
 #     this repository, reaches `publish` alone, and pushes one branch and
-#     opens one pull request; the job's own token keeps contents: read;
-#   - a forced push: only to sync-<tag>, this workflow's own branch, and
-#     never while a pull request from it is open.
+#     opens or edits one pull request; the job's own token keeps
+#     contents: read;
+#   - a forced push: only to knowledge-sync, this workflow's own branch,
+#     and only over this workflow's own single commit there.
 on:
   schedule:
     - cron: "10 4 * * 1" # Mondays at 04:10 UTC, so the librarian's Monday run follows a current pin once the pull request is merged
@@ -79,7 +80,7 @@ concurrency:
 
 jobs:
   earlier:
-    name: Read the pin, the newest release and the earlier pull requests (read-only)
+    name: Read the pin, the newest release and the last pull request (read-only)
     # The repository that publishes the skills has nothing to sync to.
     # Repository identity is the switch, not a file in the tree, as in the
     # librarian workflow's install step. A fork that develops the skills
@@ -88,13 +89,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read # read the pin out of the librarian workflow
-      pull-requests: read # list this workflow's pull requests
+      contents: read # read the pin out of the librarian workflow, here and on the sync branch
+      pull-requests: read # read this workflow's pull requests
     outputs:
       tag: ${{ steps.read.outputs.tag }}
       from: ${{ steps.read.outputs.from }}
       repo: ${{ steps.read.outputs.repo }}
       open: ${{ steps.read.outputs.open }}
+      open_tag: ${{ steps.read.outputs.open_tag }}
       declined: ${{ steps.read.outputs.declined }}
     steps:
       - name: Harden the runner
@@ -110,12 +112,20 @@ jobs:
       # The pin and the address of the skills repository come from the
       # librarian workflow's copy here, so there is one place to move them.
       # The newest release is what that repository's API calls its latest:
-      # published, not a draft and not a pre-release. A pull request this
-      # workflow opened comes from a branch of this repository named
-      # sync-<tag>; only a branch of this repository counts, since anyone can
-      # open a pull request from a fork's branch of the same name. The input
-      # is read through `env:` and held to the shape of a tag.
-      - name: Read the pin, the newest release and the earlier pull requests
+      # published, not a draft and not a pre-release. When the pin is there
+      # already the step ends after that one read.
+      #
+      # Otherwise it reads the pull requests from two branches of this
+      # repository, each by exact name: knowledge-sync, this workflow's own,
+      # and sync-<tag>, the branch the sync script makes by hand. A fork's
+      # branch of the same name does not count, since anyone can open a pull
+      # request from one. From each it takes the newest pull request's
+      # number, state, head commit and commit count, and reads the pin out
+      # of the librarian workflow at that commit, which says what the pull
+      # request proposed whether or not its branch still exists. A title,
+      # body or comment is never read. The input is read through `env:` and
+      # held to the shape of a tag.
+      - name: Read the pin, the newest release and the last pull request
         id: read
         env:
           GH_TOKEN: ${{ github.token }}
@@ -154,33 +164,65 @@ jobs:
             echo "::notice::The pin is at $pin and the newest release is $tag, so there is nothing to sync."
             tag=""
           fi
-          # The hundred newest pull requests, newest first, one line each:
-          # number, state, merged or not, its branch and that branch's
-          # repository. A title, body or comment is never read.
-          mine="$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=all&sort=created&direction=desc&per_page=100" \
-            --jq '.[] | [.number, .state, (.merged_at != null), .head.ref, (.head.repo.full_name // "-")] | @tsv' \
-            | awk -F'\t' -v repo="$GITHUB_REPOSITORY" '$1 ~ /^[0-9]+$/ && $4 ~ /^sync-v[0-9]+\.[0-9]+\.[0-9]+$/ && $5 == repo')"
-          open="$(printf '%s\n' "$mine" | awk -F'\t' '$2 == "open" { print $1; exit }')"
-          open_branch="$(printf '%s\n' "$mine" | awk -F'\t' '$2 == "open" { print $4; exit }')"
-          declined="$(printf '%s\n' "$mine" | awk -F'\t' -v b="sync-$tag" '$2 == "closed" && $3 == "false" && $4 == b { print $1; exit }')"
-          if [ -n "$tag" ] && [ -n "$open" ]; then
-            if [ "$open_branch" = "sync-$tag" ]; then
-              echo "::notice::Pull request #$open from this workflow already proposes $tag and is still open, so this run stops here."
-              tag=""
-            elif [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
-              echo "::notice::Pull request #$open from this workflow is still open. A scheduled run opens no second one beside it, so it stops here. A run a person starts goes ahead."
+          # The newest pull request from a branch of this repository, as
+          # one line: number, state, merged or not, head commit.
+          newest() {
+            gh api "repos/${GITHUB_REPOSITORY}/pulls?head=${GITHUB_REPOSITORY_OWNER}:$1&state=all&sort=created&direction=desc&per_page=5" \
+              --jq '.[] | [.number, .state, (.merged_at != null), .head.sha, (.head.repo.full_name // "-")] | @tsv' \
+              | awk -F'\t' -v repo="$GITHUB_REPOSITORY" '$1 ~ /^[0-9]+$/ && $4 ~ /^[0-9a-f]{40}$/ && $5 == repo { print; exit }'
+          }
+          # The pin the librarian workflow carries at a commit, or nothing.
+          pin_at() {
+            gh api "repos/${GITHUB_REPOSITORY}/contents/$wf?ref=$1" --jq .content 2>/dev/null | tr -d '\n' | base64 -d 2>/dev/null \
+              | grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 | sed 's/^TRUST_LADDER_SKILLS_REF: //' || true
+          }
+          open=""; open_tag=""; declined=""
+          if [ -n "$tag" ]; then
+            mine="$(newest knowledge-sync)"
+            hand="$(newest "sync-$tag")"
+            if [ -n "$mine" ]; then
+              n="$(printf '%s' "$mine" | cut -f1)"; state="$(printf '%s' "$mine" | cut -f2)"; merged="$(printf '%s' "$mine" | cut -f3)"; sha="$(printf '%s' "$mine" | cut -f4)"
+              proposed="$(pin_at "$sha")"
+              if [ "$state" = open ]; then
+                if [ "$proposed" = "$tag" ]; then
+                  echo "::notice::Pull request #$n from this workflow already proposes $tag and is still open, so this run stops here."
+                  tag=""
+                else
+                  # Only this workflow's own single commit is replaced. A
+                  # person's commit on the branch is a change in review.
+                  commits="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/$n/commits?per_page=2" --jq '[length, (.[0].commit.committer.name // "-")] | @tsv')"
+                  if [ "$commits" = "$(printf '1\tknowledge-sync[bot]')" ]; then
+                    open="$n"; open_tag="$proposed"
+                    echo "Pull request #$n from this workflow proposes ${proposed:-an unknown release} and is still open, so this run refreshes it to $tag."
+                  else
+                    echo "::notice::Pull request #$n from this workflow is still open and carries a commit a person added, so this run leaves it alone and stops here. Merge or close it first."
+                    tag=""
+                  fi
+                fi
+              elif [ "$merged" = false ] && [ "$proposed" = "$tag" ]; then
+                declined="$n"
+              fi
+            fi
+            if [ -n "$tag" ] && [ -n "$hand" ]; then
+              n="$(printf '%s' "$hand" | cut -f1)"; state="$(printf '%s' "$hand" | cut -f2)"; merged="$(printf '%s' "$hand" | cut -f3)"
+              if [ "$state" = open ]; then
+                echo "::notice::Pull request #$n, opened by hand from sync-$tag, already proposes $tag and is still open, so this run stops here."
+                tag=""
+              elif [ "$merged" = false ]; then
+                declined="$n"
+              fi
+            fi
+            if [ -n "$tag" ] && [ -n "$declined" ] && [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+              echo "::notice::A person closed pull request #$declined, which proposed $tag, without merging. A scheduled run proposes it no more. A run a person starts takes it up again."
               tag=""
             fi
-          fi
-          if [ -n "$tag" ] && [ -n "$declined" ] && [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
-            echo "::notice::A person closed pull request #$declined, which proposed $tag, without merging. A scheduled run proposes it no more. A run a person starts takes it up again."
-            tag=""
           fi
           {
             echo "tag=$tag"
             echo "from=$pin"
             echo "repo=$repo"
             echo "open=$open"
+            echo "open_tag=$open_tag"
             echo "declined=$declined"
           } >> "$GITHUB_OUTPUT"
           [ -z "$tag" ] || echo "Syncing to $tag, from ${pin:-no pin}."
@@ -190,38 +232,28 @@ jobs:
     needs: earlier
     if: needs.earlier.outputs.tag != ''
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
-      contents: read # read the repository only; no write token near the release's code
+      contents: read # read the repository only; no write token near the clone of the release
     outputs:
       changed: ${{ steps.run.outputs.changed }}
-      checks: ${{ steps.run.outputs.checks }}
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
-      # The full history, since the sidecar's conventions read each
-      # concept's commits, as the gate does.
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-          persist-credentials: false # keep GITHUB_TOKEN off disk while the release's script runs
+          persist-credentials: false # keep GITHUB_TOKEN off disk while the release is cloned
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          python-version: "3.12"
-
-      # The host's copy of the script clones the release and hands over to
-      # the copy of itself there, so a template the release added is known.
-      # Exit 1 means a check failed on the synced copies: the change is
-      # still proposed, and the pull request says so. Exit 2 means the tag
-      # could not be used, which fails the run. The verdict leaves this job
-      # as one word, mapped here from the exit status, and the script's own
-      # lines go to this job's summary and no further.
+      # The host's own copy of the script clones the release and reads its
+      # manifest. The sidecar's checks are skipped here: the pull request's
+      # own checks run the synced copies, on the pull request, as they run
+      # on any change. Exit 2 means the tag could not be used, which fails
+      # the run. The script's own lines go to this job's summary and no
+      # further.
       - name: Run the sync script
         id: run
         env:
@@ -233,10 +265,7 @@ jobs:
             echo "::error::No $script here. ktl-sidecar's Step 5 installs it beside this workflow."
             exit 1
           fi
-          rc=0
-          bash "$script" --changed "$RUNNER_TEMP/changed.txt" --report "$RUNNER_TEMP/report.md" "$TAG" || rc=$?
-          if [ "$rc" -ge 2 ]; then exit "$rc"; fi
-          if [ "$rc" -eq 0 ]; then echo "checks=pass" >> "$GITHUB_OUTPUT"; else echo "checks=failed" >> "$GITHUB_OUTPUT"; fi
+          bash "$script" --no-checks --changed "$RUNNER_TEMP/changed.txt" --report "$RUNNER_TEMP/report.md" "$TAG"
           if [ -s "$RUNNER_TEMP/changed.txt" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             { echo "## Knowledge sync to $TAG"; echo; cat "$RUNNER_TEMP/report.md"; } >> "$GITHUB_STEP_SUMMARY"
@@ -268,7 +297,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Open the review pull request (privileged, no code from the release)
+    name: Open or refresh the review pull request (privileged)
     needs: [earlier, sync]
     if: needs.sync.outputs.changed == 'true'
     runs-on: ubuntu-latest
@@ -292,13 +321,14 @@ jobs:
           name: knowledge-sync-patch
           path: ${{ runner.temp }}
 
-      # Trust nothing the `sync` job decided on its own: it ran the release's
-      # script. A sync touches the sidecar's copies, the site's copies, the
-      # pin and the changelog, and nothing else, so any other path refuses
-      # the patch before it touches disk. The three site files a host owns
-      # are refused by name, and so is a path with a character outside the
-      # plain set the templates use. Then the pin is checked against the
-      # skills repository itself: the tag must name the commit beside it.
+      # Trust nothing the `sync` job decided on its own: it read a release
+      # nobody here has reviewed. A sync touches the sidecar's copies, the
+      # site's copies, the pin and the changelog, and nothing else, so any
+      # other path refuses the patch before it touches disk. The three site
+      # files a host owns are refused by name, and so is a path with a
+      # character outside the plain set the templates use. Then the pin is
+      # checked against the skills repository itself: the tag must name the
+      # commit beside it.
       - name: Check the patch and apply it
         env:
           TAG: ${{ needs.earlier.outputs.tag }}
@@ -333,26 +363,25 @@ jobs:
 
       # The body is written here, from the patch this job applied and from
       # this checkout, and from nothing the `sync` job wrote: the files the
-      # patch changes, the pin it sets, and the checks' verdict as the one
-      # word that job's own step mapped the exit status to. Then comes the
-      # pull request template the host carries, whose checklist is the
-      # reviewer's. The commit is made under a bot identity, which the AI
-      # covenant asks of a repository's own automation, and carries no
-      # trailer. The push and the pull request use the sync token (see the
-      # header). Without it the run ends here, green, with the patch
-      # attached and the summary written.
-      - name: Commit, push and open the pull request
+      # patch changes and the pin it sets. Then comes the pull request
+      # template the host carries, whose checklist is the reviewer's. The
+      # commit is made under a bot identity, which the AI covenant asks of a
+      # repository's own automation, and carries no trailer. The push and
+      # the pull request use the sync token (see the header). Without it
+      # the run ends here, green, with the patch attached and the summary
+      # written.
+      - name: Commit, push and open or refresh the pull request
         env:
           SYNC_TOKEN: ${{ secrets.KNOWLEDGE_SYNC_TOKEN }}
           TAG: ${{ needs.earlier.outputs.tag }}
           FROM: ${{ needs.earlier.outputs.from }}
           REPO: ${{ needs.earlier.outputs.repo }}
-          CHECKS: ${{ needs.sync.outputs.checks }}
           OPEN_PR: ${{ needs.earlier.outputs.open }}
+          OPEN_TAG: ${{ needs.earlier.outputs.open_tag }}
           DECLINED_PR: ${{ needs.earlier.outputs.declined }}
         run: |
           set -euo pipefail
-          branch="sync-$TAG"
+          branch="knowledge-sync"
           subject="security(sidecar): sync copies and skills pin from $TAG"
           if [ -z "$SYNC_TOKEN" ]; then
             {
@@ -382,6 +411,10 @@ jobs:
             else
               echo "Brings the sidecar copies and the skills pin of this repository to Knowledge Trust Ladder [$TAG]($link)."
             fi
+            if [ -n "$OPEN_PR" ]; then
+              echo
+              echo "**Refreshed on $(date -u +%Y-%m-%d).** This pull request proposed ${OPEN_TAG:-an earlier release} before. This run replaced its one commit with a sync to $TAG, so read the diff again."
+            fi
             if [ -n "$copies" ]; then
               echo; echo "The release changed these copies:"; echo
               printf '%s\n' "$copies" | sed "s/.*/- ${bt}&${bt}/"
@@ -398,11 +431,7 @@ jobs:
               echo "There is no knowledge-librarian.yaml here, so no scheduled librarian to pin."
             fi
             echo
-            case "$CHECKS" in
-              pass) echo "The sidecar's checks passed on the synced copies; the sync job's summary has each line." ;;
-              failed) echo "A sidecar check failed on the synced copies; the sync job's summary says which. Fix the bundle in this pull request, or the gate fails on it." ;;
-              *) echo "The sidecar's checks did not run." ;;
-            esac
+            echo "This repository's own checks run on this pull request, on the synced copies. A failure there is a bundle to fix in this pull request, or the gate fails on it after the merge."
             echo
             if git diff --cached --name-only | grep -qx 'CHANGELOG.md'; then
               echo "CHANGELOG.md has the entry under its Unreleased heading and Security."
@@ -410,12 +439,8 @@ jobs:
               echo "CHANGELOG.md is unchanged: it has the entry already, or it has no Unreleased heading, in which case add the entry by hand."
             fi
             echo
-            if [ -n "$OPEN_PR" ]; then
-              echo "Pull request #$OPEN_PR from this workflow is still open. A person started this run, so both move the pin: merge one and close the other."
-              echo
-            fi
             if [ -n "$DECLINED_PR" ]; then
-              echo "Pull request #$DECLINED_PR from this workflow proposed this release and was closed without merging. A person started this run, so it proposes the release again."
+              echo "Pull request #$DECLINED_PR proposed this release and was closed without merging. A person started this run, so it proposes the release again."
               echo
             fi
             if [ -f .github/PULL_REQUEST_TEMPLATE/knowledge-sync.md ]; then
@@ -426,14 +451,21 @@ jobs:
           git config user.email "knowledge-sync[bot]@users.noreply.github.com"
           git checkout --quiet -b "$branch"
           git commit --quiet -m "$subject"
-          # The branch is this workflow's own: a run a person starts after
-          # a declined pull request writes over the earlier branch. The
-          # token travels in the push address, which GitHub masks in the log.
+          # The branch is this workflow's own, and holds its one commit: a
+          # refresh writes over the last run's, and so does a run a person
+          # starts after a declined pull request. The token travels in the
+          # push address, which GitHub masks in the log.
           if ! git push --quiet --force "https://x-access-token:${SYNC_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"; then
             echo "::error::The push was refused. KNOWLEDGE_SYNC_TOKEN needs Contents and Workflows set to read and write on this repository; a change under .github/workflows/ needs the second."
             exit 1
           fi
-          base="$(GH_TOKEN="$SYNC_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .default_branch)"
-          url="$(GH_TOKEN="$SYNC_TOKEN" gh pr create --title "$subject" --body-file "$body" --head "$branch" --base "$base")"
-          echo "Opened $url"
+          if [ -n "$OPEN_PR" ]; then
+            GH_TOKEN="$SYNC_TOKEN" gh pr edit "$OPEN_PR" --title "$subject" --body-file "$body" >/dev/null
+            url="$(GH_TOKEN="$SYNC_TOKEN" gh pr view "$OPEN_PR" --json url --jq .url)"
+            echo "Refreshed $url"
+          else
+            base="$(GH_TOKEN="$SYNC_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .default_branch)"
+            url="$(GH_TOKEN="$SYNC_TOKEN" gh pr create --title "$subject" --body-file "$body" --head "$branch" --base "$base")"
+            echo "Opened $url"
+          fi
           { echo; echo "Pull request: $url"; } >> "$GITHUB_STEP_SUMMARY"

@@ -6,11 +6,12 @@
 # The sync itself is skills/ktl-sidecar/templates/scripts/knowledge-sync.sh,
 # a template every sibling carries as .lokf/scripts/knowledge-sync.sh. That
 # script's header says what a sync copies, adds and refuses, and why the
-# copies and the pin move together from one tag. This script runs the copy
-# of it in the tag being synced, once in each sibling, so a template the
-# release added is known to the sync. A sibling's own knowledge-sync.yaml
-# workflow does the same on a schedule; this script is for the day of the
-# release, and for a sibling with no workflow.
+# copies and the pin move together from one tag. It reads what to sync out
+# of the release's knowledge-sync.manifest, so the release is data to it.
+# This script runs each sibling's own copy, as the sibling's workflow does,
+# and the tag's copy in a sibling that has none yet. A sibling's own
+# knowledge-sync.yaml workflow does the same on a schedule; this script is
+# for the day of the release, and for a sibling with no workflow.
 #
 # Usage: scripts/sync-sidecar.sh [--commit | --push | --pr] [--no-checks] [--source <dir>] <tag> <sibling-dir>...
 #        scripts/sync-sidecar.sh --finish <tag> <sibling-dir>...
@@ -35,6 +36,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 sync_template="skills/ktl-sidecar/templates/scripts/knowledge-sync.sh"
+manifest_template="skills/ktl-sidecar/templates/knowledge-sync.manifest"
 
 usage() {
   sed -n '/^# Usage:/,/^# Without --commit/p' "$0" | sed -e '$d' -e 's/^# \{0,1\}//' >&2
@@ -123,10 +125,12 @@ if ! git -C "$source" cat-file -e "$tag:skills/ktl-librarian/SKILL.md" 2>/dev/nu
   echo "sync-sidecar: $tag has no skills/ktl-librarian/SKILL.md: the install step copies that path, so a sibling pinned to it fails every scheduled run" >&2
   exit 2
 fi
-if ! git -C "$source" cat-file -e "$tag:$sync_template" 2>/dev/null; then
-  echo "sync-sidecar: $tag has no $sync_template, so it predates the sync script; sync to a release that carries it" >&2
-  exit 2
-fi
+for needed in "$sync_template" "$manifest_template"; do
+  if ! git -C "$source" cat-file -e "$tag:$needed" 2>/dev/null; then
+    echo "sync-sidecar: $tag has no $needed, so it predates the sync; sync to a release that carries it" >&2
+    exit 2
+  fi
+done
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 git -C "$source" show "$tag:$sync_template" > "$tmp/knowledge-sync.sh"
@@ -134,8 +138,18 @@ git -C "$source" show "$tag:$sync_template" > "$tmp/knowledge-sync.sh"
 for sibling in "${siblings[@]}"; do
   echo ""
   echo "== $sibling"
+  # The sibling's own copy does the sync, as its workflow's run does. A
+  # sibling that has none yet is synced by the tag's copy, which lays the
+  # sibling's own down.
+  script="$sibling/.lokf/scripts/knowledge-sync.sh"
+  if [[ -f "$script" ]]; then
+    echo "   running  the sibling's own .lokf/scripts/knowledge-sync.sh"
+  else
+    script="$tmp/knowledge-sync.sh"
+    echo "   running  $tag's knowledge-sync.sh, since the sibling has no copy yet"
+  fi
   rc=0
-  bash "$tmp/knowledge-sync.sh" --source "$source" --host "$sibling" --branch ${flags[@]+"${flags[@]}"} "$tag" || rc=$?
+  bash "$script" --source "$source" --host "$sibling" --branch ${flags[@]+"${flags[@]}"} "$tag" || rc=$?
   # The tag was checked above, so a 2 here is the sibling's: a path that
   # is not there, say. It is reported, and the others go ahead.
   [[ "$rc" -eq 0 ]] || status=1

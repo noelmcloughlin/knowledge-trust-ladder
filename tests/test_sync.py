@@ -17,11 +17,13 @@ first tag, and pin what the script's header says:
    default branch and the tree as they were, and a tree with uncommitted
    changes, a branch that exists, a tag that is not a release and a tag the
    source lacks are each refused;
-6. without --source the host's copy clones the tag and hands over to the
-   copy of itself there;
-7. scripts/sync-sidecar.sh runs the tag's copy in each sibling, and its
-   --finish keeps a branch that was never pushed, or whose remote branch
-   still exists, and removes one whose pull request was merged.
+6. without --source the host's copy clones the tag and reads its manifest,
+   and a manifest rule the copy does not know is reported, not guessed at;
+7. a manifest that names a copy path outside the host is refused;
+8. scripts/sync-sidecar.sh runs each sibling's own copy, or the tag's in a
+   sibling that has none, and its --finish keeps a branch that was never
+   pushed, or whose remote branch still exists, and removes one whose pull
+   request was merged.
 
 Every run skips the sidecar's checks (--no-checks): the preflight, the
 toolkit and the conventions script have modules of their own.
@@ -94,6 +96,8 @@ def skills(tmp_path):
         f.write("\n# a line the next release adds to the sync script\n")
     with (templates / "justfile").open("a") as f:
         f.write("\n# a recipe comment the next release adds\n")
+    with (templates / "knowledge-sync.manifest").open("a") as f:
+        f.write("mirror docs/example.md .lokf/example.md\n")
     git("add", "-A")
     git("commit", "-qm", "v1.1.0")
     git("tag", "v1.1.0")
@@ -145,6 +149,8 @@ def test_a_sync_copies_adds_reports_pins_and_writes_the_entry(tmp_path, skills, 
     checks.ok(matches(out, r"^   added    \.github/workflows/knowledge-sync\.yaml \(\.github/workflows/knowledge-librarian\.yaml pins"), "the sync workflow is added beside a pinned librarian", out)
     checks.ok(matches(out, r"^   added    \.github/PULL_REQUEST_TEMPLATE/knowledge-sync\.md \(\.github/workflows/knowledge-sync\.yaml opens"), "the pull request template is added beside the workflow", out)
     checks.ok(matches(out, r"^   absent   \.lokf/domain\.yaml \(never installed here"), "a domain host's file is reported, not added", out)
+    checks.ok(matches(out, r"^   unknown  mirror docs/example\.md: a manifest rule this copy of knowledge-sync\.sh does not know"), "a rule the script does not know is reported", out)
+    checks.ok(not (host / ".lokf" / "example.md").exists(), "and nothing is done for it")
     checks.ok(has_line(out, "   same     .github/workflows/knowledge-registrar.yaml"), "an unchanged copy is left alone", out)
     sha = Git(skills)("rev-parse", "v1.1.0^{commit}")
     checks.ok(has_line(out, f"   pin      v1.0.0 to v1.1.0 ({sha})"), "the pin moves to the tag and its commit", out)
@@ -249,21 +255,43 @@ def test_what_is_refused(tmp_path, skills, checks):
     checks.ok(nowhere.rc == 1 and "no .lokf/" in nowhere.out, "a directory with no sidecar is skipped", nowhere.out)
 
 
-def test_without_a_source_the_hosts_copy_clones_the_tag_and_hands_over(tmp_path, skills, checks):
+def test_without_a_source_the_hosts_copy_clones_the_tag_and_reads_its_manifest(tmp_path, skills, checks):
     host = make_host(tmp_path, skills)
     result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--repo", f"file://{skills}", "--no-checks", "v1.1.0"], cwd=host, env=IDENT)
     checks.ok(result.rc == 0, "exit 0", result.out)
     checks.ok(has_line(result.out, f"   cloning v1.1.0 from file://{skills}"), "the tag is cloned", result.out)
-    checks.ok(has_line(result.out, "   handing over to v1.1.0's copy of this script"), "the tag's copy takes over", result.out)
+    checks.ok("handing over" not in result.out, "the host's own copy does the sync", result.out)
+    checks.ok(has_line(result.out, "   copied   .lokf/scripts/knowledge-sync.sh"), "the script's own copy is synced like any other", result.out)
     checks.ok("a line the next release adds to the sync script" in read(host / ".lokf" / "scripts" / "knowledge-sync.sh"), "the host's copy is the tag's afterwards")
     checks.ok("TRUST_LADDER_SKILLS_REF: v1.1.0" in read(host / LIBRARIAN), "the pin moved")
 
 
-def test_the_fan_out_runs_the_tags_copy_in_each_sibling_and_finishes_merged_branches(tmp_path, skills, checks):
+def test_a_manifest_that_names_a_path_outside_the_host_is_refused(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    git = Git(skills)
+    with (skills / "skills" / "ktl-sidecar" / "templates" / "knowledge-sync.manifest").open("a") as f:
+        f.write("copy scripts/knowledge-report.sh ../escaped.sh\n")
+    git("add", "-A")
+    git("commit", "-qm", "v1.2.0")
+    git("tag", "v1.2.0")
+    result = run(["bash", SYNC, "--source", skills, "--host", host, "--no-checks", "v1.2.0"], cwd=host, env=IDENT)
+    checks.ok(result.rc == 2 and "outside the host" in result.out, "the manifest is refused before anything is written", result.out)
+    checks.ok(not Git(host)("status", "--porcelain"), "the host is untouched")
+
+
+def test_the_fan_out_runs_each_siblings_own_copy_and_finishes_merged_branches(tmp_path, skills, checks):
     one = make_host(tmp_path, skills, "one")
     two = make_host(tmp_path, skills, "two")
+    # The second sibling predates the sync script, so the tag's copy runs
+    # there and lays the sibling's own down.
+    (two / ".lokf" / "scripts" / "knowledge-sync.sh").unlink()
+    Git(two)("commit", "-qam", "no sync script yet")
+    Git(two)("push", "-q", "origin", "main")
     result = run(["bash", FANOUT, "--push", "--no-checks", "--source", skills, "v1.1.0", one, two], cwd=tmp_path, env=IDENT)
     checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(has_line(result.out, "   running  the sibling's own .lokf/scripts/knowledge-sync.sh"), "a sibling's own copy runs", result.out)
+    checks.ok(has_line(result.out, "   running  v1.1.0's knowledge-sync.sh, since the sibling has no copy yet"), "the tag's copy runs where there is none", result.out)
+    checks.ok((two / ".lokf" / "scripts" / "knowledge-sync.sh").is_file(), "and lays the sibling's own copy down")
     for host in (one, two):
         git = Git(host)
         checks.ok(has_line(result.out, f"== {host}"), f"{host.name} is reported", result.out)
@@ -340,11 +368,23 @@ PREFLIGHT = SCRIPTS / "knowledge-preflight.sh"
 SKILL = REPO / "skills" / "ktl-sidecar" / "SKILL.md"
 
 
+MANIFEST = TEMPLATES / "knowledge-sync.manifest"
+CONTRACT = REPO / "scripts" / "validate-repository.sh"
+
+
+def manifest():
+    """The manifest's lines, as (rule, template, copy-or-step, rest)."""
+    lines = []
+    for line in read(MANIFEST).split("\n"):
+        line = line.split("#", 1)[0].split()
+        if line:
+            lines.append((line[0], line[1], line[2] if len(line) > 2 else "", " ".join(line[3:])))
+    return lines
+
+
 def synced_pairs():
-    """The <template>:<copy> pairs knowledge-sync.sh carries."""
-    text = read(SYNC)
-    block = re.search(r"^pairs=\(\n(.*?)^\)", text, re.S | re.M).group(1)
-    return re.findall(r'"([^:"]+):([^"]+)"', block)
+    """The <template>:<copy> pairs the manifest holds a host to."""
+    return [(t, c) for rule, t, c, _ in manifest() if rule in ("copy", "titled")]
 
 
 def test_every_synced_copy_passes_the_publish_jobs_path_check():
@@ -359,13 +399,23 @@ def test_every_synced_copy_passes_the_publish_jobs_path_check():
         assert re.search(r"\^website/\(site\\\.config\\\.mjs\|README\\\.md\|src/styles/custom\\\.css\)\$", text), owned
 
 
-def test_every_synced_template_is_named_in_step_5_and_the_preflight():
-    """A new template lands in three lists: the sync script's pairs, ktl-sidecar's Step 5 table and the preflight's drift list."""
+def test_every_synced_template_is_in_step_5_and_the_manifest_is_the_one_list():
+    """A new template lands in two places: the manifest, which the sync script, the preflight and contract check 11 read, and ktl-sidecar's Step 5 table."""
     skill = read(SKILL)
-    preflight = read(PREFLIGHT)
-    for template, copy in synced_pairs():
+    pairs = synced_pairs()
+    assert pairs, "the manifest lists nothing"
+    for template, copy in pairs:
         assert f"`templates/{template}`" in skill, f"templates/{template} is not in SKILL.md's Step 5 table"
         assert f"`{copy}`" in skill, f"{copy} is not in SKILL.md's Step 5 table"
-        if template in ("domain.yaml", "scripts/knowledge-federate.py", "github/knowledge-federation.yaml", "justfile"):
-            continue  # a domain host's files are not held to drift, and the justfile is the host's from its first line
-        assert f'"{template}:{copy}"' in preflight, f"{template}:{copy} is not in the preflight's drift list"
+        assert (TEMPLATES / template).is_file(), f"the manifest lists {template}, which is not a template"
+    listed = {t for t, _ in pairs}
+    for rule, template, _, _ in manifest():
+        assert rule in ("copy", "titled", "always", "needs"), f"the manifest has a rule the script does not know: {rule}"
+        assert template in listed, f"the {rule} line for {template} names a template no copy line lists"
+    for name in ("github", "scripts", "m365"):
+        for f in (TEMPLATES / name).rglob("*"):
+            if f.is_file() and "__pycache__" not in f.parts:
+                assert str(f.relative_to(TEMPLATES)) in listed, f"{f.relative_to(TEMPLATES)} is not in the manifest"
+    assert "knowledge-sync.manifest" in read(PREFLIGHT), "the preflight does not read the manifest"
+    assert "knowledge-sync.manifest" in read(CONTRACT), "contract check 11 does not read the manifest"
+    assert "\npairs=(\n" not in read(SYNC), "the sync script carries a list of its own beside the manifest"

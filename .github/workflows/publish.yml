@@ -113,8 +113,10 @@ jobs:
       # spaces, to do it now. The dispatch needs a token with Actions write
       # on each of them, the KNOWLEDGE_SYNC_DISPATCH_TOKEN secret; the job's
       # own token reaches no other repository. Unset, nothing is dispatched
-      # and the schedule does the work. A host that cannot be dispatched is
-      # reported and the others go ahead.
+      # and the schedule does the work. The variable is a list, not a
+      # switch, but it reads like one: "false" asks nobody, as unset does,
+      # and "true" names no host, which the step says. A host that cannot
+      # be dispatched is reported and the others go ahead.
       - name: Ask the siblings to sync
         if: vars.KNOWLEDGE_SYNC_HOSTS != ''
         env:
@@ -123,6 +125,14 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
+          case "$(printf '%s' "$HOSTS" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')" in
+            false|off|no|0|none)
+              echo "::notice::KNOWLEDGE_SYNC_HOSTS is '$HOSTS', so no host was asked to sync; each syncs on its own schedule. The variable names hosts as owner/repo, and unset means the same as this."
+              exit 0 ;;
+            true|on|yes|1)
+              echo "::warning::KNOWLEDGE_SYNC_HOSTS is '$HOSTS', which names no host, so none was asked to sync. Set it to the hosts to ask, as owner/repo separated by spaces, or leave it unset."
+              exit 0 ;;
+          esac
           if [ -z "$GH_TOKEN" ]; then
             echo "::warning::KNOWLEDGE_SYNC_HOSTS names hosts, and KNOWLEDGE_SYNC_DISPATCH_TOKEN is not set, so none was asked to sync; each syncs on its own schedule."
             exit 0

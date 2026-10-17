@@ -12,8 +12,11 @@
 # decides which agent instructions run unattended with a credential in the
 # job. So this script:
 #   - takes a release tag and nothing looser;
-#   - reads the templates out of that tag, from a clone it makes or from a
-#     clone it is given, never from a working tree;
+#   - reads the release's knowledge-sync.manifest, which lists each template
+#     a host may carry, its copy and the rule for it, out of that tag, from
+#     a clone it makes or from a clone it is given, never from a working
+#     tree. The release is data to this script: the list and the templates
+#     it names. No code from the release runs;
 #   - refuses a tag that is not on the remote, which settles the order:
 #     release first, then sync;
 #   - copies every template the host already carries, and adds one the host
@@ -32,13 +35,13 @@
 #   - a person, in the host: .lokf/scripts/knowledge-sync.sh --pr v0.47.0;
 #   - the host's knowledge-sync.yaml workflow, which runs it in place and
 #     opens the pull request itself;
-#   - the skills repository's scripts/sync-sidecar.sh, which runs this
-#     script from the tag in each sibling it is given.
+#   - the skills repository's scripts/sync-sidecar.sh, which runs each
+#     sibling's own copy, or the tag's copy in a sibling that has none.
 #
-# The copy that runs is the tag's. Without --source the script clones the tag
-# and hands over to the copy of itself in that clone, so a template the
-# release added is known to the sync. The tag's copy is given --source and
-# hands over to nothing.
+# The copy that runs is the host's: reviewed and merged there, as every file
+# the host runs is. A manifest rule this copy does not know is reported and
+# left for the next run, once the pull request that brings the newer copy of
+# this script is merged.
 #
 # Usage: knowledge-sync.sh [options] <tag>
 #   --host <dir>      the host to sync; by default the nearest parent of the
@@ -72,74 +75,11 @@ templates="skills/ktl-sidecar/templates"
 website_templates="skills/ktl-website/templates"
 librarian_copy=".github/workflows/knowledge-librarian.yaml"
 
-# The templates a host may carry, and where: <template>:<copy>. The same
-# pairs check 11 of the skills repository's validate-repository.sh holds
-# that repository to. A template that another template's copy needs is
-# listed after it, so the add in one run sees the copy it is for.
-pairs=(
-  "github/knowledge-registrar.yaml:.github/workflows/knowledge-registrar.yaml"
-  "github/knowledge-librarian.yaml:.github/workflows/knowledge-librarian.yaml"
-  "github/knowledge-release.yaml:.github/workflows/knowledge-release.yaml"
-  "github/knowledge-federation.yaml:.github/workflows/knowledge-federation.yaml"
-  "github/knowledge-sync.yaml:.github/workflows/knowledge-sync.yaml"
-  "github/knowledge-sync-pull-request.md:.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md"
-  "scripts/knowledge-librarian.sh:.lokf/scripts/knowledge-librarian.sh"
-  "scripts/knowledge-conventions.sh:.lokf/scripts/knowledge-conventions.sh"
-  "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.py"
-  "scripts/knowledge-preflight.sh:.lokf/scripts/knowledge-preflight.sh"
-  "scripts/knowledge-provenance.sh:.lokf/scripts/knowledge-provenance.sh"
-  "scripts/knowledge-feedback.sh:.lokf/scripts/knowledge-feedback.sh"
-  "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-apply.sh"
-  "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.py"
-  "scripts/knowledge-report.sh:.lokf/scripts/knowledge-report.sh"
-  "scripts/knowledge-federate.py:.lokf/scripts/knowledge-federate.py"
-  "scripts/knowledge-sync.sh:.lokf/scripts/knowledge-sync.sh"
-  "domain.yaml:.lokf/domain.yaml"
-  "m365/knowledge-m365.sh:.lokf/m365/knowledge-m365.sh"
-  "m365/ktl-docent-m365.md:.lokf/m365/ktl-docent-m365.md"
-  "gitattributes:.lokf/.gitattributes"
-  "justfile:.lokf/justfile"
-)
-# Templates whose first line names the host (Step 1's <PROJ_NAME>). The sync
-# keeps the host's own first line and copies the rest, so a recipe change
-# reaches every host without a placeholder. It keeps the host's own
-# `schema :=` line too: a host with a domain schema names it there, and the
-# template's empty one would validate it on LOKF core.
-host_titled=("justfile")
-# ktl-sidecar installs these on every host, whatever else the host chose, so
-# a host that lacks one gets it: <template>|<the step that says so>.
-always=(
-  "gitattributes|Step 1"
-  "scripts/knowledge-preflight.sh|Step 5"
-  "scripts/knowledge-feedback.sh|Step 5"
-  "scripts/knowledge-report.sh|Step 5"
-  "m365/knowledge-m365.sh|Step 5"
-  "m365/ktl-docent-m365.md|Step 5"
-)
-# A template and a copy that needs it: <template>:<copy>:<why>. Each
-# workflow runs a script with no check that it is there, the wrapper refuses
-# to start without the pen, and each shell half runs its Python half. The
-# librarian workflow pins a release, and only the sync workflow and this
-# script keep that pin current. A sync that carried the copy alone would
-# leave the host failing, or falling behind.
-companions=(
-  "scripts/knowledge-librarian.sh:.github/workflows/knowledge-librarian.yaml:cannot run without it"
-  "scripts/knowledge-conventions.sh:.github/workflows/knowledge-registrar.yaml:cannot run without it"
-  "scripts/knowledge-conventions.py:.github/workflows/knowledge-registrar.yaml:cannot run without it"
-  "scripts/knowledge-provenance.sh:.github/workflows/knowledge-registrar.yaml:cannot run without it"
-  "scripts/knowledge-conventions.sh:.github/workflows/knowledge-release.yaml:cannot run without it"
-  "scripts/knowledge-conventions.py:.github/workflows/knowledge-release.yaml:cannot run without it"
-  "scripts/knowledge-apply.sh:.lokf/scripts/knowledge-librarian.sh:cannot run without it"
-  "scripts/knowledge-apply.py:.lokf/scripts/knowledge-librarian.sh:cannot run without it"
-  "scripts/knowledge-apply.py:.lokf/scripts/knowledge-apply.sh:cannot run without it"
-  "scripts/knowledge-conventions.py:.lokf/scripts/knowledge-conventions.sh:cannot run without it"
-  "scripts/knowledge-federate.py:.github/workflows/knowledge-federation.yaml:cannot run without it"
-  "domain.yaml:.github/workflows/knowledge-federation.yaml:cannot run without it"
-  "github/knowledge-sync.yaml:.github/workflows/knowledge-librarian.yaml:pins a release, and only this keeps the pin current"
-  "scripts/knowledge-sync.sh:.github/workflows/knowledge-librarian.yaml:pins a release, and only this keeps the pin current"
-  "scripts/knowledge-sync.sh:.github/workflows/knowledge-sync.yaml:cannot run without it"
-  "github/knowledge-sync-pull-request.md:.github/workflows/knowledge-sync.yaml:opens its pull request from it"
-)
+# The manifest in the release lists what a sync keeps current: each
+# template, its copy and the rule for it. Its header says what each rule
+# means. The rules this copy of the script knows:
+manifest="knowledge-sync.manifest"
+rules="copy titled always needs"
 # The website skill's templates, for a host that built its site with
 # ktl-website: every file under skills/ktl-website/templates/website/ but the
 # three the host owns, and the deploy workflow. A host with no
@@ -213,19 +153,18 @@ add_entry() {
 main() {
   local host="" source="" repo="" tag="" changed_out="" report_out="" out
   local branch_mode=0 commit=0 push=0 pr=0 checks=1
-  local passthrough=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --host) [[ $# -ge 2 ]] || usage; host="$2"; shift 2 ;;
       --source) [[ $# -ge 2 ]] || usage; source="$2"; shift 2 ;;
       --repo) [[ $# -ge 2 ]] || usage; repo="$2"; shift 2 ;;
-      --branch) branch_mode=1; passthrough+=("$1"); shift ;;
-      --commit) commit=1; branch_mode=1; passthrough+=("$1"); shift ;;
-      --push) push=1; commit=1; branch_mode=1; passthrough+=("$1"); shift ;;
-      --pr) pr=1; push=1; commit=1; branch_mode=1; passthrough+=("$1"); shift ;;
-      --changed) [[ $# -ge 2 ]] || usage; changed_out="$2"; passthrough+=("$1" "$2"); shift 2 ;;
-      --report) [[ $# -ge 2 ]] || usage; report_out="$2"; passthrough+=("$1" "$2"); shift 2 ;;
-      --no-checks) checks=0; passthrough+=("$1"); shift ;;
+      --branch) branch_mode=1; shift ;;
+      --commit) commit=1; branch_mode=1; shift ;;
+      --push) push=1; commit=1; branch_mode=1; shift ;;
+      --pr) pr=1; push=1; commit=1; branch_mode=1; shift ;;
+      --changed) [[ $# -ge 2 ]] || usage; changed_out="$2"; shift 2 ;;
+      --report) [[ $# -ge 2 ]] || usage; report_out="$2"; shift 2 ;;
+      --no-checks) checks=0; shift ;;
       -h|--help) usage ;;
       -*) echo "knowledge-sync: unknown option $1" >&2; usage ;;
       *) [[ -z "$tag" ]] || usage; tag="$1"; shift ;;
@@ -281,27 +220,52 @@ main() {
     git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$tag" -- "$repo" "$tmp_clone"
     source="$tmp_clone"
     repo_url="$(web_url "$repo")"
-    # The tag's copy of this script knows every template the release has, so
-    # it does the sync. A tag that predates the script is synced by this one.
-    local tag_copy="$source/$templates/scripts/knowledge-sync.sh" rc=0
-    if [[ -f "$tag_copy" ]] && ! cmp -s "$tag_copy" "$0"; then
-      echo "   handing over to $tag's copy of this script"
-      bash "$tag_copy" --source "$source" --host "$host" ${passthrough[@]+"${passthrough[@]}"} "$tag" || rc=$?
-      rm -rf "$tmp_clone"
-      return "$rc"
-    fi
   fi
   if ! git -C "$source" cat-file -e "$tag:skills/ktl-librarian/SKILL.md" 2>/dev/null; then
     [[ -z "$tmp_clone" ]] || rm -rf "$tmp_clone"
     die "$tag has no skills/ktl-librarian/SKILL.md; the install step copies that path, so a host pinned to it fails every scheduled run"
   fi
+  if ! git -C "$source" cat-file -e "$tag:$templates/$manifest" 2>/dev/null; then
+    [[ -z "$tmp_clone" ]] || rm -rf "$tmp_clone"
+    die "$tag has no $templates/$manifest, so it predates the sync this script does; sync to a release that carries it"
+  fi
   local tag_sha; tag_sha="$(git -C "$source" rev-parse "$tag^{commit}")"
+
+  # The manifest, read as data: each copy or titled line is a pair to sync,
+  # in the release's order; the always and needs lines say when a copy the
+  # host lacks is added. A copy path is held to the plain characters the
+  # templates use and to the host's tree, so a release cannot name a path
+  # outside it, and a rule this copy of the script does not know is kept to
+  # report. A line with a field missing is a release's mistake, and stops
+  # the sync before it writes.
+  local pairs=() titled=() always=() needs=() unknown=() rule a b rest line
+  while IFS= read -r line; do
+    line="${line%%#*}"
+    read -r rule a b rest <<< "$line" || true
+    [[ -n "$rule" ]] || continue
+    case " $rules " in
+      *" $rule "*) ;;
+      *) unknown+=("$rule $a"); continue ;;
+    esac
+    [[ -n "$a" && -n "$b" ]] || die "$tag's $manifest has a $rule line with a field missing: $line"
+    case "$rule" in
+      copy|titled)
+        if [[ ! "$b" =~ ^[A-Za-z0-9._/@+-]+$ || "$b" == /* || "$b" == *..* || "$a" == /* || "$a" == *..* ]]; then
+          die "$tag's $manifest names a path outside the host, or with a character no template uses: $line"
+        fi
+        pairs+=("$a:$b")
+        [[ "$rule" != titled ]] || titled+=("$a") ;;
+      always) always+=("$a|$b${rest:+ $rest}") ;;
+      needs) needs+=("$a:$b:${rest:-is here}") ;;
+    esac
+  done < <(git -C "$source" show "$tag:$templates/$manifest")
+  [[ ${#pairs[@]} -gt 0 ]] || die "$tag's $manifest lists nothing to sync"
 
   at_tag() { git -C "$source" show "$tag:$templates/$1"; }
   # The template as the host should carry it: <template> <host copy>.
   rendered() {
     local t
-    for t in "${host_titled[@]}"; do
+    for t in ${titled[@]+"${titled[@]}"}; do
       if [[ "$t" == "$1" ]]; then
         head -n 1 "$2"
         at_tag "$1" | tail -n +2 | OWN="$(grep -m 1 '^schema := ' "$2" || true)" \
@@ -315,10 +279,10 @@ main() {
   # does not: <template>.
   needed() {
     local entry
-    for entry in "${always[@]}"; do
+    for entry in ${always[@]+"${always[@]}"}; do
       if [[ "${entry%%|*}" == "$1" ]]; then echo "ktl-sidecar's ${entry##*|} installs it on every host"; return; fi
     done
-    for entry in "${companions[@]}"; do
+    for entry in ${needs[@]+"${needs[@]}"}; do
       local t="${entry%%:*}" rest="${entry#*:}"
       local copy="${rest%%:*}" why="${rest#*:}"
       if [[ "$t" == "$1" && -f "$host/$copy" ]]; then echo "$copy $why"; return; fi
@@ -458,6 +422,7 @@ main() {
   for f in ${added[@]+"${added[@]}"}; do echo "   added    $f"; done
   for f in ${absent[@]+"${absent[@]}"}; do echo "   absent   $f (never installed here: ktl-sidecar's Step 5 decides, not this script)"; done
   for f in ${pins_only[@]+"${pins_only[@]}"}; do echo "   pins     $f differed only on its action pins, which Dependabot bumped here first; the template's pins are back until the skills repository bumps them"; done
+  for f in ${unknown[@]+"${unknown[@]}"}; do echo "   unknown  $f: a manifest rule this copy of knowledge-sync.sh does not know; it is left for the next sync, once the copy $tag brings is merged"; done
   local pin_line
   if [[ -f "$wf" ]]; then
     if [[ "$pin_moved" -eq 0 ]]; then

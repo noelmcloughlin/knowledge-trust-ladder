@@ -1,4 +1,4 @@
-<!-- A sidecar sync. The sync writes the lines above this template when it opens the pull request: the release, the files it changed, the pin, and how the sidecar's checks ended. Opening one by hand: .lokf/scripts/knowledge-sync.sh --pr <tag> writes them too. -->
+<!-- A sidecar sync. The lines above this template are the sync's: the release, the files it changed and the pin. The workflow leaves the sidecar's checks to this pull request's own checks; a sync opened by hand with .lokf/scripts/knowledge-sync.sh --pr <tag> writes its check lines above too. -->
 
 ## Reviewer checklist
 
