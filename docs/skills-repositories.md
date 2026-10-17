@@ -1,7 +1,7 @@
 # Knowledge Trust Ladder in a skills repository
 
 > [!NOTE]
-> For anyone deciding whether to install Knowledge Trust Ladder (KTL) in a repository whose content is Agent Skills. What KTL took from the two papers on skills is in [docs/wikiskill.md](wikiskill.md) and [docs/skillwiki.md](skillwiki.md).
+> This page is for anyone deciding whether to install Knowledge Trust Ladder (KTL) in a repository whose content is Agent Skills. [docs/wikiskill.md](wikiskill.md) and [docs/skillwiki.md](skillwiki.md) say what KTL took from the two papers on skills.
 
 A skills repository holds Agent Skills: folders with a `SKILL.md`, and often `scripts/`, `references/` and `assets/`. It may be a collection, such as this repository or `anthropics/skills`, a library that includes skills in its package, or a project that keeps a few skills beside its code. Below, *the bundle* is the corpus KTL keeps in `.lokf/knowledge/`.
 

@@ -67,11 +67,11 @@ git config --global commit.gpgsign true
 cat ~/.ssh/id_ed25519.pub                      # paste this into GitHub
 ```
 
-Add it at github.com/settings/keys under **SSH keys** → **New SSH key** → **Key type: Signing Key**. GitHub keeps authentication and signing keys in separate lists; a key registered only for auth leaves every commit `Unverified`, even though it is the same key.
+Add it at github.com/settings/keys under **SSH keys** → **New SSH key** → **Key type: Signing Key**. GitHub keeps authentication and signing keys in separate lists. A key registered only for authentication leaves every commit `Unverified`, even though it is the same key.
 
 ## Renew a GPG key before it expires
 
-Put a calendar reminder a month before the expiry date `gpg --list-secret-keys` shows. Renewing takes a minute:
+Set a calendar reminder for a month before the expiry date `gpg --list-secret-keys` shows. Renewing takes a minute:
 
 ```bash
 gpg --quick-set-expire <fingerprint> 2y
@@ -94,10 +94,10 @@ gpg --armor --export YOUR_KEY_ID > .lokf/curators/YOUR_LOGIN.asc   # GPG (the ex
 cp ~/.ssh/id_ed25519.pub .lokf/curators/YOUR_LOGIN.pub               # SSH
 ```
 
-One kind per login. When the key changes, replace the file in its own pull request the same way; a maintainer reviewing that change is what makes the key on file worth anything.
+Keep one kind of key per login. When the key changes, replace the file in its own pull request the same way. A maintainer reviewing that change is what makes the key on file worth anything.
 
 ## If signing fails
 
 - `could not load public key`: `gpg.format` does not match the key `user.signingkey` points at. Check the file is what its name implies: a GPG export begins `-----BEGIN PGP PUBLIC KEY BLOCK-----`, an SSH key begins `ssh-ed25519`.
 - **No prompt appears and the commit fails**: GPG has nowhere to ask for your passphrase, common over SSH or in a terminal-less session. Add `export GPG_TTY=$(tty)` to your shell profile and open a new shell.
-- **Signed locally but GitHub says `Unverified`**: the commit email is not a verified address on your account, or the key was added to the wrong list (auth instead of signing).
+- **Signed locally but GitHub says `Unverified`**: the commit email is not a verified address on your account, or the key was added to the wrong list (authentication instead of signing).

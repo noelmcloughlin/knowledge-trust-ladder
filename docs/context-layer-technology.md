@@ -1,7 +1,7 @@
 # What a KTL context layer integrates with
 
 > [!NOTE]
-> For anyone choosing the artifact repository, the store and the agent surface for the workspace that [The KTL context layer](context-layer.md) describes. Every product fact below comes from that vendor's own documentation, read on 2026-10-12, and a product is listed only where its own page states the capability. Nothing here is an endorsement.
+> This page is for anyone choosing the artifact repository, the store and the agent surface for the workspace that [The KTL context layer](context-layer.md) describes. Every product fact below comes from that vendor's own documentation, read on 2026-10-12, and a product is listed only where its own page states the capability. Nothing here is an endorsement.
 
 Below, *the toolkit* is `lokf` at 0.8.0, the floor the sidecar pins. A bundle leaves the toolkit in three forms:
 

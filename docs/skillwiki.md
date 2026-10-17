@@ -1,7 +1,7 @@
 # What KTL took from SkillWiki
 
 > [!NOTE]
-> What Knowledge Trust Ladder (KTL) took from one paper and its code, and where the two designs part. SkillWiki is not WikiSkill, the Google Research paper that [docs/wikiskill.md](wikiskill.md) covers. The code is cited at commit `050d540`.
+> This page says what Knowledge Trust Ladder (KTL) took from one paper and its code, and where the two designs part. SkillWiki is not WikiSkill, the Google Research paper that [docs/wikiskill.md](wikiskill.md) covers. The code is cited at commit `050d540`.
 
 *SkillWiki: A Living Knowledge Infrastructure for Agent Skills* (Huang et al., Harbin Institute of Technology, Tencent and Nanyang Technological University, June 2026) turns trajectories, documents, API specifications, scripts and earlier skills into skills. It governs them through a lifecycle of eight stored states, a provenance graph and feedback from their runs. A SkillWiki skill is executable: an interface, an implementation, tests, an evaluation contract and runtime metrics. A KTL concept is a claim about a repository, with the sources it rests on. So SkillWiki asks whether a skill still works, and KTL asks who stands behind a claim. Below, *the bundle* is the corpus KTL keeps in `.lokf/knowledge/`.
 

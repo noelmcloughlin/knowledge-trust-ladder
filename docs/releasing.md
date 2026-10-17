@@ -15,7 +15,7 @@ Nobody picks a version number. Commits typed with [Conventional Commits](https:/
 
 Type the commit for what the change *is*. A behaviour change is a `feat:` even when most of the diff is prose. If a pull request should release and its commits are typed too quietly, squash-merge it and give the squash commit the right type.
 
-The reverse trap is a squash merge that takes its subject from the pull request *title*, which GitHub defaults to the branch name in words, with no type. So a typed `fix:` commit reaches `main` as "Fix the thing (#46)" and releases nothing. The `plan` job refuses a pull request whose commits would release but whose title would not; type the title like a commit. The workflow listens for `edited` pull requests as well as pushes, so retitling re-runs the check on its own.
+The reverse trap is a squash merge that takes its subject from the pull request *title*, which GitHub defaults to the branch name in words, with no type. So a typed `fix:` commit reaches `main` as "Fix the thing (#46)" and releases nothing. The `plan` job refuses a pull request whose commits would release but whose title would not. Type the title like a commit. The workflow listens for `edited` pull requests as well as pushes, so retitling re-runs the check on its own.
 
 The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you go: a line or two per change, with the detail left to the code's comments. The pipeline releases only what has already been written up.
 
@@ -41,7 +41,7 @@ The scaffolding template's `TRUST_LADDER_SKILLS_REF` sits one release behind. Wh
 
 The pin is two values, `TRUST_LADDER_SKILLS_REF` and `TRUST_LADDER_SKILLS_SHA`, the commit the tag names, and the install step refuses a tag that names any other commit. Check 15 of `validate-repository.sh` requires the pin to name one of the two newest releases, a tag that carries `skills/ktl-librarian`, and the commit that tag names. Never bump the pin by hand: that commit triggers a needless release, and the next promotion moves the pin anyway.
 
-The sibling repositories need a person. Each carries byte-identical copies of the templates (only the first line of `.lokf/justfile`, which names the host, is its own) and its own pin, and the two must move together from one tag, because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin decides which agent instructions run unattended.
+The sibling repositories need a person. Each carries byte-identical copies of the templates and its own pin. Only the first line of `.lokf/justfile`, which names the host, is the sibling's own. The copies and the pin must move together from one tag, because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin decides which agent instructions run unattended.
 
 After `publish.yml` has tagged a release that changed a template or `skills/ktl-librarian/`, run `scripts/sync-sidecar.sh <tag> <sibling>...` from this repository. It accepts only a tag that is on origin and carries the skill. From that tag it copies every template the sibling already carries, adds one the sibling lacks only when ktl-sidecar puts it on every host or a template the sibling carries needs it, and reports any other. Then it sets the pin, runs the sidecar's checks there, and prints a draft changelog line and the commit command.
 

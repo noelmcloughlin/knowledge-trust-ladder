@@ -14,7 +14,19 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    `unowned_targets: fail` and is reported under `report`;
 4. a member that is itself a domain is followed one tier down;
 5. `--verify-only` writes nothing, and `members` leaves a non-GitHub member
-   as it is.
+   as it is;
+6. `members` moves a member's old tag, zip name and day in its description
+   and body as well as its frontmatter, in a patch the pen applies, and
+   names the lines it had to leave in its question;
+7. its question calls a member "confirmed" only when a person confirmed the
+   concept as it stands, and puts the move to a person as a question alone
+   when a person wrote the concept;
+8. a dry run prints the patch while a librarian pull request is open, and a
+   real run then writes nothing.
+
+The `members` tests run the script through a small runner that serves the
+GitHub API and the release files from fixture files, and put a stand-in
+`gh` first on PATH, so no test reaches the network or a real repository.
 
 `uv` is required: without it every test here skips and says so.
 """
@@ -22,16 +34,20 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 from __future__ import annotations
 
 import hashlib
+import json
+import os
 import shutil
 import stat
 import zipfile
 from pathlib import Path
 
 import pytest
+import yaml
 
-from conftest import REPO, SCRIPTS, have, run, write
+from conftest import REPO, SCRIPTS, have, read, run, write
 
 SCRIPT = SCRIPTS / "knowledge-federate.py"
+APPLY = SCRIPTS / "knowledge-apply.sh"
 needs_uv = pytest.mark.skipif(not have("uv"), reason="uv is not installed - the federation build runs in the sidecar's environment")
 pytestmark = needs_uv
 
@@ -202,4 +218,179 @@ def test_verify_only_writes_nothing_and_members_leaves_a_local_zip_alone(federat
     assert not (host / "snapshot").exists() and not (host / "snapshot.new").exists()
     r = federate(host, "members", "--dry-run", "--no-attestation")
     assert r.rc == 0 and "not a GitHub release" in r.out and "no patch written" in r.out, r.out
+    assert not (host / ".lokf" / "patch.yaml").exists()
+
+
+# ---------------------------------------------------------------------------
+# members against GitHub releases, served from fixture files
+# ---------------------------------------------------------------------------
+# Loads the script as a module, answers its HTTP requests from the files a
+# JSON map names, and runs its main(); any other address fails as an
+# unreachable one would.
+RUNNER = """\
+import importlib.util, json, pathlib, sys, urllib.error
+script, served, *argv = sys.argv[1:]
+spec = importlib.util.spec_from_file_location("knowledge_federate", script)
+federate = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(federate)
+urls = json.loads(pathlib.Path(served).read_text(encoding="utf-8"))
+def http_get(url, accept=None, timeout=60):
+    if url not in urls:
+        raise urllib.error.URLError(url + " is not served by this test")
+    return pathlib.Path(urls[url]).read_bytes()
+federate.http_get = http_get
+sys.exit(federate.main(argv))
+"""
+
+# Answers `gh pr list` with the pull requests FAKE_GH_PRS names, and fails
+# every other command, so the script never asks a real repository.
+FAKE_GH = """\
+#!/bin/sh
+[ "$1 $2" = "pr list" ] && { printf '%s\\n' "${FAKE_GH_PRS:-[]}"; exit 0; }
+exit 1
+"""
+
+OLD, NEW = ("v1.0.0", "2026-10-15T08:00:00Z"), ("v1.1.0", "2026-10-20T09:00:00Z")
+
+
+def github_member(slug: str, domain_iri: str, **extra) -> dict:
+    """A member concept that names its zip in a GitHub release of acme/<slug> at the old tag."""
+    tag, day = OLD[0], OLD[1][:10]
+    name = f"knowledge-{tag}-{slug}.zip"
+    page = f"https://github.com/acme/{slug}/releases/tag/{tag}"
+    return {
+        "type": "MemberBundle", "title": f"{slug} bundle", "description": f"The {slug} bundle as released at {tag} on {day}.",
+        "resource": page, "base_iri": f"https://{slug}.example/knowledge/", "version": tag, "release": page,
+        "distribution": [{"name": name, "access_url": f"https://github.com/acme/{slug}/releases/download/{tag}/{name}",
+                          "media_type": "application/zip", "checksum": "sha256:" + "0" * 64}],
+        "isPartOf": [domain_iri], **extra,
+    }
+
+
+def github_release(slug: str, tag: str, published_at: str) -> dict:
+    """One release as the GitHub API lists it, carrying a bundle zip and its .sha256."""
+    name = f"knowledge-{tag}-{slug}.zip"
+    base = f"https://github.com/acme/{slug}/releases/download/{tag}/"
+    return {"tag_name": tag, "draft": False, "published_at": published_at,
+            "assets": [{"name": name, "browser_download_url": base + name}, {"name": name + ".sha256", "browser_download_url": base + name + ".sha256"}]}
+
+
+A_BODY = f"""
+# Overview
+
+The a bundle as released at {OLD[0]} on {OLD[1][:10]}, attached as `knowledge-{OLD[0]}-a.zip`.
+
+Download it from https://github.com/acme/a/releases/download/{OLD[0]}/knowledge-{OLD[0]}-a.zip.
+
+Built at {OLD[0]}.
+
+Built at {OLD[0]}.
+
+Neither {OLD[0]}-rc1, {OLD[0]}1 nor the build at {OLD[1]} is this release.
+
+<!-- lokf:related -->
+- [Release {OLD[0]}](https://github.com/acme/a/releases/tag/{OLD[0]})
+<!-- /lokf:related -->
+
+## Open questions
+
+- 2026-10-16, process:knowledge-federate: acme/a released {OLD[0]} after v0.9.0; does this member move to it?
+"""
+
+
+@pytest.fixture
+def released(tmp_path):
+    """A domain of four members released on GitHub, each with a newer release, and stand-ins for the GitHub API and gh.
+
+    a is a draft whose body names the old release in lines that move, in a
+    line that occurs twice, and in its lokf:related block and open
+    questions; b is confirmed by a person; c was edited after a person
+    confirmed it; d was written by a person.
+    """
+    d_iri = "https://d.example/federation/"
+    top = d_iri + "domains/top"
+    agent = {"by": "process:knowledge-federate", "at": "2026-10-16T10:00:00Z"}
+    concepts = {
+        "a": github_member("a", top, generated=agent, status="draft"),
+        "b": github_member("b", top, generated=agent, verified=[{"by": "human:noel", "at": "2026-10-16T12:00:00Z"}]),
+        "c": github_member("c", top, generated=agent, verified=[{"by": "human:noel", "at": "2026-10-16T09:00:00Z"}]),
+        "d": github_member("d", top, generated={"by": "human:noel", "at": "2026-10-16T10:00:00Z"}),
+    }
+    host = make_domain(tmp_path / "host", d_iri, concepts)
+    write(host / ".lokf" / "knowledge" / "members" / "a.md", frontmatter(**concepts["a"]) + A_BODY)
+    bundle = make_bundle(tmp_path / "bundle", "https://a.example/knowledge/", "A", {"glossary/term.md": {"type": "GlossaryTerm", "title": "Term", "description": "A term.", "resource": "https://example.test/a"}})
+    zip_path = tmp_path / "release.zip"
+    sha = zip_bundle(bundle, zip_path)
+    sums = write(tmp_path / "release.zip.sha256", f"{sha}  release.zip\n")
+    served = {}
+    for slug in concepts:
+        releases = [github_release(slug, *NEW), github_release(slug, *OLD)]
+        listing = write(tmp_path / "api" / f"{slug}.json", json.dumps(releases))
+        served[f"https://api.github.com/repos/acme/{slug}/releases?per_page=100"] = str(listing)
+        asset, checksum = releases[0]["assets"]
+        served[asset["browser_download_url"]] = str(zip_path)
+        served[checksum["browser_download_url"]] = str(sums)
+    write(tmp_path / "served.json", json.dumps(served))
+    write(tmp_path / "runner.py", RUNNER)
+    gh = write(tmp_path / "bin" / "gh", FAKE_GH)
+    gh.chmod(0o755)
+    return {"host": host, "tmp": tmp_path, "sha": sha}
+
+
+def members_run(released, *args: str, prs: str = "[]", stdout_only: bool = False):
+    tmp = released["tmp"]
+    return run(["uv", "run", "--project", REPO / ".lokf", tmp / "runner.py", SCRIPT, tmp / "served.json",
+                "--root", released["host"], "members", "--no-attestation", *args],
+               cwd=released["host"], env={"PATH": f"{tmp / 'bin'}:{os.environ['PATH']}", "FAKE_GH_PRS": prs}, stdout_only=stdout_only)
+
+
+def ops_for(patch: dict, slug: str) -> dict:
+    return {op["op"]: op for op in patch["ops"] if op["path"] == f"members/{slug}.md"}
+
+
+def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(released):
+    host = released["host"]
+    r = members_run(released)
+    assert r.rc == 0 and "4 member(s) moved" in r.out, r.out
+    r = run(["bash", APPLY, "--root", host], cwd=host)
+    assert r.rc == 0, r.out
+    text = read(host / ".lokf" / "knowledge" / "members" / "a.md")
+    fm = yaml.safe_load(text.split("---\n")[1])
+    assert fm["version"] == "v1.1.0" and fm["release"] == fm["resource"] == "https://github.com/acme/a/releases/tag/v1.1.0"
+    assert fm["distribution"][0]["name"] == "knowledge-v1.1.0-a.zip" and fm["distribution"][0]["checksum"] == "sha256:" + released["sha"]
+    assert fm["description"] == "The a bundle as released at v1.1.0 on 2026-10-20."
+    for line in ("The a bundle as released at v1.1.0 on 2026-10-20, attached as `knowledge-v1.1.0-a.zip`.",
+                 "Download it from https://github.com/acme/a/releases/download/v1.1.0/knowledge-v1.1.0-a.zip.",
+                 "Neither v1.0.0-rc1, v1.0.01 nor the build at 2026-10-15T08:00:00Z is this release.",
+                 "- [Release v1.0.0](https://github.com/acme/a/releases/tag/v1.0.0)",
+                 "- 2026-10-16, process:knowledge-federate: acme/a released v1.0.0 after v0.9.0; does this member move to it?"):
+        assert line in text.split("\n"), f"{line!r} is not a line of:\n{text}"
+    assert text.count("\nBuilt at v1.0.0.\n") == 2, "a line that occurs twice is left as it was"
+    assert "acme/a released v1.1.0 after v1.0.0; does this member move to it? 2 line(s) of the body still name v1.0.0" in text, text
+    for slug in ("b", "c"):
+        moved = read(host / ".lokf" / "knowledge" / "members" / f"{slug}.md")
+        assert "version: v1.1.0" in moved and f"The {slug} bundle as released at v1.1.0 on 2026-10-20." in moved, moved
+    person = read(host / ".lokf" / "knowledge" / "members" / "d.md")
+    assert "version: v1.0.0" in person and "The d bundle as released at v1.0.0 on 2026-10-15." in person, "a concept a person wrote keeps its text"
+    assert "A person wrote this concept, so this patch leaves its text and frontmatter as they are." in person, person
+
+
+def test_members_calls_a_member_confirmed_only_when_a_person_confirmed_it(released):
+    r = members_run(released, "--dry-run", stdout_only=True)
+    assert r.rc == 0, r.out
+    patch = yaml.safe_load(r.out)
+    asked = {slug: ops_for(patch, slug)["question"]["text"] for slug in "abcd"}
+    assert asked["a"].startswith("acme/a released v1.1.0 after v1.0.0; "), "a draft is not called confirmed"
+    assert asked["b"].startswith("acme/b released v1.1.0 after the confirmed v1.0.0; "), "a person confirmed b as it stands"
+    assert asked["c"].startswith("acme/c released v1.1.0 after v1.0.0; "), "c was edited after its confirmation"
+    assert asked["d"].startswith("acme/d released v1.1.0 after v1.0.0; ") and "patch" not in ops_for(patch, "d"), "a person wrote d"
+    assert not (released["host"] / ".lokf" / "patch.yaml").exists(), "a dry run writes nothing"
+
+
+def test_a_dry_run_prints_the_patch_while_a_librarian_pull_request_is_open(released):
+    host = released["host"]
+    r = members_run(released, "--dry-run", prs='[{"number": 7}]')
+    assert r.rc == 0 and "op: patch" in r.out and "pull request is already open" in r.out, r.out
+    r = members_run(released, prs='[{"number": 7}]')
+    assert r.rc == 0 and "already open; no patch written" in r.out, r.out
     assert not (host / ".lokf" / "patch.yaml").exists()

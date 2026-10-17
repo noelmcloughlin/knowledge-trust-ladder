@@ -47,12 +47,14 @@
 # Operations (each a mapping under `ops:` with `op:` and `path:`):
 #   create    frontmatter + body for a concept that does not exist yet
 #   patch     edits (replace / insert_after / append) and `set` frontmatter keys
-#   rewrite   a whole new body; the lokf:related block and open questions carry over
+#   rewrite   a whole new body, and `set` as on patch; the lokf:related block and open questions carry over
 #   question  one open question, in the curator's shape, with this run's actor
 #   resolve   withdraws one open question this run's actor asked; never a person's note
 #   recheck   this run's own `verified` event, replacing its previous one
 #   delete    the concept, its index bullets, and a log line saying why
 #   reindex   both index bullets re-derived from the frontmatter; the concept itself is not touched
+# An operation may carry only the keys it reads, which KEYS below lists. Any
+# other key is refused by name, so no key is dropped without a word.
 #
 # Usage: knowledge-apply.py [--dry-run] [--keep] [--handoff <file>] --root <repo-root> [<patch-file>]
 #        knowledge-apply.py --format
@@ -95,7 +97,23 @@ OWN_BULLET_RE = re.compile(r"^\* \[[^\]]*\]\([^)]+\)(?: - .*)?$")  # any concept
 FEEDBACK_KIND_RE = re.compile(r"^- \*\*(Miss|Disagreement)\*\* ")
 HANDOFF_LINES, HANDOFF_CHARS = 10, 300
 FEEDBACK_ENTRIES = 10  # the reader entries one patch may handle; the rest wait for the next run
-OPS = {"create", "patch", "rewrite", "question", "resolve", "recheck", "delete", "reindex"}
+# The keys each operation reads besides `op` and `path`. The script refuses
+# any other key, naming it, because a key it skipped would pass a dry run and
+# change nothing. A `set` on a rewrite was once dropped that way. Every
+# operation that writes a log line reads the keys in LOGGED, and every one
+# that stamps `generated` reads `revision`.
+LOGGED = ("log", "from_feedback", "asked")
+KEYS = {
+    "create": ("frontmatter", "body", "revision", *LOGGED),
+    "patch": ("edits", "set", "revision", *LOGGED),
+    "rewrite": ("body", "set", "revision", *LOGGED),
+    "question": ("text", *LOGGED),
+    "resolve": ("target", *LOGGED),
+    "recheck": (),
+    "delete": LOGGED,
+    "reindex": (),
+}
+OPS = set(KEYS)
 EDITS = {"replace", "insert_after", "append"}
 LEDGER_HEAD = (
     "# Questions readers asked\n"
@@ -141,6 +159,8 @@ ops:
     body: |
       # Overview
       ...
+    set:                         # optional; frontmatter keys to set, as on patch
+      description: How a release is cut and published by the release workflow.
     log: "the release page was rewritten around the new workflow"
 
   - op: question                 # one open question in the curator's shape; sets status: draft
@@ -207,6 +227,13 @@ class Dumper(yaml.SafeDumper):
     def choose_scalar_style(self):
         style = super().choose_scalar_style()
         return '"' if style == "'" else style
+
+    def increase_indent(self, flow=False, indentless=False):
+        # PyYAML writes a list under a key with its dashes at the key's own
+        # column, as the YAML specification's examples do. People indent it,
+        # and yamllint's default rules reject the other form, so every list
+        # is indented under its key.
+        return super().increase_indent(flow, False)
 
 
 Dumper.add_representer(Plain, lambda dumper, text: dumper.represent_scalar(text.tag, str(text)))
@@ -501,21 +528,27 @@ class Bundle:
             raise Refused(f"{path}: patch changes nothing")
         for edit in edits:
             self.apply_edit(c, edit)
-        denied = sorted(k for k in sets if k.lower() in DENIED_SET)
-        if denied:
-            raise Refused(f"{path}: set may not touch {', '.join(denied)}; those belong to the script, the curator or the schema")
-        for k, v in sets.items():
-            if k in ("title", "description"):
-                v = one_line(v, f"{path}: {k}")
-                if k == "title" and ("[" in v or "]" in v):
-                    raise Refused(f"{path}: a title may not contain square brackets")
-            c.fm[k] = v
+        self.set_frontmatter(c, sets)
         c.fm["generated"] = self.stamp(op)
         c.touched = True
         if c.confirmed_by_person() and path not in self.demoted:
             self.demoted.append(path)
         self.index_set(path, c.title(), c.description())
         self.log(op, None, c)
+
+    def set_frontmatter(self, c: Concept, sets) -> None:
+        """Sets the frontmatter keys an operation's `set` names. `patch` and `rewrite` both call it, so the two refuse the same keys and check a title and a description the same way. Each calls it before it stamps `generated` and rewrites the index bullets, so the bullets carry a changed title or description."""
+        if not isinstance(sets, dict):
+            raise Refused(f"{c.path}: set is a mapping of frontmatter keys to their values")
+        denied = sorted(k for k in sets if k.lower() in DENIED_SET)
+        if denied:
+            raise Refused(f"{c.path}: set may not touch {', '.join(denied)}; those belong to the script, the curator or the schema")
+        for k, v in sets.items():
+            if k in ("title", "description"):
+                v = one_line(v, f"{c.path}: {k}")
+                if k == "title" and ("[" in v or "]" in v):
+                    raise Refused(f"{c.path}: a title may not contain square brackets")
+            c.fm[k] = v
 
     def apply_edit(self, c: Concept, edit) -> None:
         if not isinstance(edit, dict) or len(edit) != 1 or next(iter(edit)) not in EDITS:
@@ -585,6 +618,7 @@ class Bundle:
         if questions and questions_span(new) is None:
             new = new.rstrip("\n") + "\n\n" + c.body[questions[0]:questions[1]].strip("\n") + "\n"
         c.body = new
+        self.set_frontmatter(c, op.get("set", {}))
         c.fm["generated"] = self.stamp(op)
         c.touched = True
         if c.confirmed_by_person() and path not in self.demoted:
@@ -689,11 +723,14 @@ class Bundle:
         folder_text = self.index_text(folder_file, f"# {section}\n")
         if not folder_text.strip():  # an empty file starts from its heading, as a new one does
             folder_text = f"# {section}\n"
+        # The " - " in a bullet introduces the description. A concept with no
+        # description gets its link alone, so no bullet ends in a bare dash.
+        tail = f" - {description}" if description else ""
         self.indexes[folder_file] = self.place_bullet(
-            folder_text, name, None if title is None else f"* [{title}]({name}) - {description}", path, f"{folder}/index.md")
+            folder_text, name, None if title is None else f"* [{title}]({name}){tail}", path, f"{folder}/index.md")
         self.indexes[root_file] = self.place_bullet(
             self.index_text(root_file, ""), path,
-            None if title is None else f"* [{title}]({path}) - {description}", path, "index.md",
+            None if title is None else f"* [{title}]({path}){tail}", path, "index.md",
             section=(section, f"]({folder}/index.md)"))
 
     @staticmethod
@@ -904,6 +941,14 @@ def check_path(path) -> str:
     return path
 
 
+def check_keys(op: dict) -> None:
+    """Refuses a key the operation does not read, and names it, along with the keys the operation does read."""
+    known = ("op", "path", *KEYS[op["op"]])
+    unknown = sorted(str(k) for k in op if k not in known)
+    if unknown:
+        raise Refused(f"{op['path']}: {op['op']} does not take {', '.join(unknown)}; it takes {', '.join(known)}")
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="knowledge-apply.py", add_help=True)
     ap.add_argument("--root")
@@ -962,6 +1007,7 @@ def main(argv: list[str]) -> int:
                 if not isinstance(op, dict) or op.get("op") not in OPS:
                     raise Refused(f"op {n}: each operation is a mapping whose op is one of {', '.join(sorted(OPS))}")
                 check_path(op.get("path"))
+                check_keys(op)
                 getattr(bundle, op["op"])(op)
             except Refused as exc:
                 findings.append(f"op {n}: {exc}")

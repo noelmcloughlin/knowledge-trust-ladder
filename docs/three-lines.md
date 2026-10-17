@@ -21,7 +21,7 @@ Above the lines sits a governing body: for a bundle, the owners of the repositor
 
 ## Lines are roles, not people
 
-The IIA's own text says the lines "are not intended to denote structural elements but a useful differentiation in roles", and that roles "may overlap in practice" given "clear accountability, transparency, and safeguards to preserve objectivity and avoid self-review risks". KTL does not decide who plays each line; the organisation that adopts it does, one person or a department per line.
+The IIA's own text says the lines "are not intended to denote structural elements but a useful differentiation in roles", and that roles "may overlap in practice" given "clear accountability, transparency, and safeguards to preserve objectivity and avoid self-review risks". KTL does not decide who plays each line. The organisation that adopts it does, with one person or a department per line.
 
 The tooling keeps the lines apart either way. The **curator**'s identity comes from the forge, never from the person. It is the login this machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, which anyone can edit, and never what the person types into the agent's chat. Where an organisation lets one person both author and confirm, the gate takes their signature on the commit, since GitHub will not let them approve their own pull request. An Environment with required reviewers is the one logged exception.
 
@@ -45,9 +45,9 @@ Every trust label is computed from the frontmatter on each read and never stored
 Four limits on what that evidence shows:
 
 - A confirmation records who and when. It records which state of the source only when the event carries `revision`, and even then the state the skill fetched, not what the person read.
-- The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person. A repository carrying `.lokf/curators/` settles who may confirm at all; which kinds of concept each may confirm is still the curation policy's prose.
+- The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person. A repository carrying `.lokf/curators/` settles who may confirm at all. Which kinds of concept each may confirm is still the curation policy's prose.
 - An Environment attestation records only that a listed reviewer clicked Approve, not that they opened the source.
-- The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file and nothing checks approvals; a host without git has only its platform's version history.
+- The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file and nothing checks approvals. A host without git has only its platform's version history.
 
 ## What the critics say
 
@@ -56,5 +56,5 @@ The model has critics, and so has the kind of tool KTL is: a machine's output ch
 ## What remains to do, and who does it
 
 - **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and LOKF releasing it in 0.9.0.
-- **This project.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, of which the curator's sampling step is the first half; its Copilot form is one instructions file beside the docent's under `.lokf/m365/` ([m365.md](m365.md)). The domain tiers and the workspace of [the KTL context layer](context-layer.md), which federate bundles under a person's confirmation of membership.
+- **This project.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, of which the curator's sampling step is the first half; its Copilot form is one instructions file beside the docent's under `.lokf/m365/` ([m365.md](m365.md)). The parts of [the KTL context layer](context-layer.md) that remain a design: lazy loading, a `lokf-registry` MCP server, and harvesting remote artifacts behind the `sensitivity` gate.
 - **The organisation's.** Naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.

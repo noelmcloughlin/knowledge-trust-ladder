@@ -82,9 +82,9 @@ In the **three lines of defence** that regulated industries use, the librarian a
 The **curator** reports each concept's trust record in plain words:
 
 - **Confirmed by a person**: a named person checked it against its source.
-- **Checked by automation only**: automation re-checked that the source still matches; no person has.
+- **Checked by automation only**: automation re-checked that the source still matches, and no person has.
 - **Nobody has checked this yet**: no check of any kind is recorded.
-- **Still a draft**, **reopened**, **edited since a person last confirmed it**, **past its review date**, **retired**; and, for prioritising, how many other concepts rely on each one. A question asked after a confirmation reopens a concept and flags what waits; it never drops the rung. Only an edit after the confirmation does that.
+- **Still a draft**, **reopened**, **edited since a person last confirmed it**, **past its review date**, **retired**; and, for prioritising, how many other concepts rely on each one. A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung. Only an edit after the confirmation does that.
 
 <p align="center">
   <picture>

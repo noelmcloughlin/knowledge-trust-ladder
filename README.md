@@ -16,7 +16,7 @@ The documentation is at [w3id.org/ktl](https://w3id.org/ktl/). To install, see [
 
 > **Only want to ask?** Install `ktl-docent` into any agent you use, by a route from [the install page](https://w3id.org/ktl/docs/install/), and ask it about this project. It answers from the bundle and says how far each answer has been checked.
 >
-> **Agents:** if `.lokf/knowledge/index.md` exists, read it first; `llms.txt` says how to weigh it.
+> **Agents:** if `.lokf/knowledge/index.md` exists, read it first. `llms.txt` says how to weigh it.
 
 Knowledge Trust Ladder is an architecture inspired by the poem above, by [LOKF](https://lokf.nolan-nichols.com/specification/) (Linked Open Knowledge Format), its bundle format, and by [LinkML](https://linkml.io/linkml/), the schema language. Each of the poem's three lines is one role's work, and [the architecture](https://w3id.org/ktl/docs/architecture/) says who plays each role and what checks their work.
 
@@ -27,5 +27,5 @@ Each site below shows a repository's collection, built by `ktl-website`:
 - [Knowledge Trust Ladder](https://w3id.org/ktl/knowledge/): this repository's own bundle, the knowledge behind the skills.
 - [Obsidian KTL Curator](https://noelmcloughlin.github.io/obsidian-ktl-curator/knowledge/): the Obsidian plugin that helps a person judge what a bundle claims.
 - [Obsidian KTL Registrar](https://noelmcloughlin.github.io/obsidian-ktl-registrar/knowledge/): the Obsidian plugin that keeps a bundle well-formed as a person edits it.
-- [KTL Federation](https://github.com/noelmcloughlin/ktl-federation): the top domain that federates member bundles into one workspace, as [a context layer](docs/context-layer.md)
+- [KTL Federation](https://github.com/noelmcloughlin/ktl-federation): the top domain that federates member bundles into one workspace, as [a context layer](docs/context-layer.md).
 - [AI-LinkMO](https://noelmcloughlin.github.io/ai-linkmo/knowledge/): a reference implementation of operational AI governance over open AI-risk data.

@@ -1,7 +1,7 @@
 # Critics of the Three Lines Model
 
 > [!NOTE]
-> What the critics of the Three Lines Model say, each quoted from their own text, and what Knowledge Trust Ladder (KTL) answers.
+> This page gives what the critics of the Three Lines Model say, each quoted from their own text, and what Knowledge Trust Ladder (KTL) answers.
 
 The model's critics are the UK Parliamentary Commission on Banking Standards (the Commission, below), academics, and the people applying the model to banks and to AI. Two bodies of research also question the kind of tool KTL is: a machine's output checked by a person. Each section below says what the criticism is and who made it, what KTL does about it, and gives one of three verdicts:
 
