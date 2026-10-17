@@ -1,9 +1,9 @@
 > **Two ways in.** This README is one; the other is a docent, a museum's name
 > for a guide. Install
 > [`ktl-docent`](https://github.com/noelmcloughlin/knowledge-trust-ladder) into
-> whatever agent you already use
-> (`npx skills add noelmcloughlin/knowledge-trust-ladder --skill ktl-docent --global --yes`)
-> and ask it anything about this project. It answers from `.lokf/knowledge/`,
+> whatever agent you already use, by a route from
+> [the install page](https://w3id.org/ktl/docs/install/), and ask it anything
+> about this project. It answers from `.lokf/knowledge/`,
 > the checked part of what the project knows, and says how far each answer has
 > been trusted (still a draft, checked by automation only, or confirmed by a
 > named person). It opens the source for exact values, and records what it
