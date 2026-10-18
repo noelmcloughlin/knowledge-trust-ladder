@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.50.0] - 2026-10-18
+
 ### Added
 
 - **The ingest restores a lost mirror file and prunes on a schedule.** A file the lock names and the disk has lost is fetched again and reported as restored. A scheduled run removes a gone or unlisted file no concept cites, once an earlier run recorded it so, and the preflight counts missing, stray and prunable files.
