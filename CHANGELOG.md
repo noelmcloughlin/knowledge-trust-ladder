@@ -16,6 +16,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **A domain concept is named for the domain, never for its position.** The curator's domain-bundle.md says so, its worked example names ktl-federation's `domains/ktl-federation`, and it says a confirmation stays with the concept's `id`.
 
+### Removed
+
+- **The figures nobody shows.** Every `-dimmed` figure, unreferenced since the dark theme moved to the `-dark` set, and both files of the lifecycle loop, which no page has shown since the README dropped it.
+
 ## [0.48.0] - 2026-10-17
 
 ### Added
