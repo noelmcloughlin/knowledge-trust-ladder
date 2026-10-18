@@ -48,6 +48,11 @@ exclude = [
   # through GitHub's API with the job's own token instead, so a deleted or
   # moved issue still fails and a page GitHub fails to render does not.
   '^https://github\.com/[^/]+/[^/]+/(issues|pull)/[0-9]+',
+  # docs/ingest.md is new, and the site publishes a docs page only on a
+  # release, so its w3id address answers 404 until the release after the
+  # ingest merges (added 2026-10-18). Drop this line once
+  # https://w3id.org/ktl/docs/ingest/ answers 200.
+  '^https://w3id\.org/ktl/docs/ingest/$',
 ]
 
 # knowledge_bundle is a symlink to .lokf/knowledge (the Obsidian vault entry
