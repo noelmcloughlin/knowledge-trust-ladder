@@ -5,6 +5,10 @@ name: Knowledge ingest
 # the host's own .lokf/scripts/knowledge-ingest.sh. No LLM or agent runs
 # here, nothing fetched runs, and nothing is pushed to the default branch.
 #
+# A scheduled run also prunes: a mirror file whose source is gone or has
+# left the selection, that no concept cites, and that an earlier run already
+# recorded so, is removed, and the diff shows the removal.
+#
 # One pull request at a time, from this workflow's own branch
 # knowledge-ingest, refreshed until it is merged. A pull request a person
 # committed to is left alone. One a person closed without merging is a no:
@@ -37,10 +41,10 @@ on:
         required: false
         type: string
       prune:
-        description: "Delete gone and unlisted mirror files that no concept cites"
+        description: "Remove gone and unlisted mirror files that no concept cites, as a scheduled run does"
         required: false
         type: boolean
-        default: false
+        default: true
 
 permissions: {} # deny by default; each job requests only the scopes it needs
 
@@ -115,7 +119,9 @@ jobs:
             fi
             args+=(--only "$ONLY")
           fi
-          [ "$PRUNE" != "true" ] || args+=(--prune)
+          if [ "$GITHUB_EVENT_NAME" = schedule ] || [ "$PRUNE" = true ]; then
+            args+=(--prune)
+          fi
           bash "$script" "${args[@]}"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
           # A source the run could not fetch is a warning on the run, so a

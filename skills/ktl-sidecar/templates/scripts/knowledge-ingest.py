@@ -24,7 +24,8 @@
 # command's output; the command's own digest is recorded too). Listing comes
 # before fetching, so an unchanged source costs a listing and no body. The
 # mirror and the lock change only when content changes. An entry that leaves
-# the manifest takes its folder with it.
+# the manifest takes its folder with it. A file the lock names and the disk
+# has lost is fetched again and reported as restored.
 #
 # Refused and recorded: a token in the manifest (auth names environment
 # variables starting KNOWLEDGE_INGEST_); an entry the repository's
@@ -43,7 +44,8 @@
 #                       [--summary FILE] [--status] [--patch [FILE]]
 #   --dry-run   compare and fetch, write nothing
 #   --only      one entry; the others keep their lock state
-#   --prune     delete a gone or unlisted file no concept cites
+#   --prune     delete a gone or unlisted file no concept cites, once an
+#               earlier run recorded it so; the lock's `since` says when
 #   --strict    exit 1 when any entry failed or was refused
 #   --summary   the run's summary, in Markdown, to FILE
 #   --status    one line for the preflight
@@ -1478,7 +1480,7 @@ class Run:
         self.failed = 0
         self.writes: list[tuple[Path, str]] = []
         self.removals: list[Path] = []
-        self.counts = {"fetched": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
+        self.counts = {"fetched": 0, "restored": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
 
     def mirror_root(self, entry: Entry) -> Path:
         if entry.sensitivity == "confidential":
@@ -1497,7 +1499,11 @@ class Run:
     def run_entry(self, entry: Entry) -> None:
         record = self.lock["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
         prior = record.get("items", {})
-        counts = {"fetched": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
+        counts = {"fetched": 0, "restored": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
+        # A file the lock calls current and the disk has lost is handed to the
+        # kind as if new, so it is fetched again instead of skipped as unchanged.
+        missing = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not (self.root / was["path"]).is_file()}
+        present = {i: was for i, was in prior.items() if i not in missing}
         why = allowed_here(entry.sensitivity, self.visibility)
         if why:
             record.update({"status": "refused", "reason": why})
@@ -1506,13 +1512,13 @@ class Run:
             return
         try:
             if entry.kind == "confluence":
-                items, unchanged, listed = run_confluence(self.ctx, entry, prior)
+                items, unchanged, listed = run_confluence(self.ctx, entry, present)
             elif entry.kind == "http":
-                items, unchanged, listed = run_http(self.ctx, entry, prior)
+                items, unchanged, listed = run_http(self.ctx, entry, present)
             elif entry.kind == "git":
-                items, unchanged, listed = run_git(self.ctx, entry, prior)
+                items, unchanged, listed = run_git(self.ctx, entry, present)
             else:
-                items, unchanged, listed = run_command(self.ctx, entry, prior, self.root)
+                items, unchanged, listed = run_command(self.ctx, entry, present, self.root)
         except Refused as e:
             record.update({"status": "refused", "reason": str(e)})
             self.failed += 1
@@ -1554,7 +1560,7 @@ class Run:
                 counts["failed"] += 1
                 continue
             if it.version == "gone":
-                new_items[it.item] = dict(was, status="gone", origin=it.origin)
+                new_items[it.item] = dict(was, status="gone", origin=it.origin, since=self.away_since(was))
                 counts["gone"] += 1
                 continue
             target = (folder / (it.item if it.item.endswith(".md") else it.item + ".md")).resolve()
@@ -1589,11 +1595,11 @@ class Run:
             if getattr(it, "command_sha256", ""):
                 lock_item["command_sha256"] = it.command_sha256  # type: ignore[attr-defined]
             new_items[it.item] = lock_item
-            counts["fetched"] += 1
+            counts["restored" if it.item in missing else "fetched"] += 1
             self.writes.append((target, mirror_header(entry, it, lock_item) + it.text))
         for item_id, was in prior.items():
             if item_id not in new_items:
-                new_items[item_id] = dict(was, status="unlisted")
+                new_items[item_id] = dict(was, status="unlisted", since=self.away_since(was))
                 counts["unlisted"] += 1
         record["items"] = new_items
         for k, v in counts.items():
@@ -1601,14 +1607,20 @@ class Run:
         parts = [f"{v} {k}" for k, v in counts.items() if v]
         self.summary.append(f"- {entry.id} ({entry.describe()}): " + (", ".join(parts) if parts else "nothing listed"))
         for item_id, it in sorted(new_items.items()):
-            if it.get("status") in ("refused", "failed", "gone"):
+            if it.get("status") in ("refused", "failed", "gone", "unlisted"):
                 reason = f", {it['reason']}" if it.get("reason") else ""
-                self.summary.append(f"  - {item_id}: {it['status']}{reason}")
+                since = f" since {it['since'][:10]}" if it.get("since") and it["status"] in ("gone", "unlisted") else ""
+                self.summary.append(f"  - {item_id}: {it['status']}{since}{reason}")
         self.summary.extend(skipped)
         if counts["failed"] or counts["refused"]:
             self.failed += 1
 
+    def away_since(self, was: dict) -> str:
+        """When the item first went gone or unlisted: kept from the lock while it stays away, else this run."""
+        return str(was.get("since") or self.now) if was.get("status") in ("gone", "unlisted") else self.now
+
     def prune(self) -> None:
+        """Remove a gone or unlisted file no concept cites, once an earlier run recorded it so: the pull request shows the status one week and the removal the next."""
         cited = cited_paths(self.root)
         for eid, record in self.lock["entries"].items():
             for item_id in list(record.get("items", {})):
@@ -1619,9 +1631,12 @@ class Run:
                 if path in cited:
                     self.summary.append(f"- {eid}: {path} is {it['status']} and a concept still cites it, so it stays")
                     continue
+                if str(it.get("since", "")) >= self.now:
+                    self.summary.append(f"- {eid}: {path} went {it['status']} on this run, so it stays until the next")
+                    continue
                 self.removals.append(self.root / path)
                 del record["items"][item_id]
-                self.summary.append(f"- {eid}: {path} was {it['status']} and no concept cites it; removed")
+                self.summary.append(f"- {eid}: {path} was {it['status']} since {str(it.get('since', ''))[:10] or 'an earlier run'} and no concept cites it; removed")
 
     def commit(self, lock_path: Path) -> bool:
         """Write the mirror files and the lock, or say what would be written. True when anything changed on disk."""
@@ -1674,17 +1689,31 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     names = sorted({n for e in manifest.entries for n in e.auth.names()})
     present = [n for n in names if environ.get(n)]
     absent = [n for n in names if not environ.get(n)]
-    files, newest = 0, ""
+    files, newest, missing, away, named = 0, "", 0, 0, set()
     try:
         lock = read_lock(lock_path)
         for record in lock["entries"].values():
             for it in record.get("items", {}).values():
+                path = str(it.get("path", ""))
+                named.add(path)
                 if it.get("status") == "ok":
                     files += 1
                     newest = max(newest, str(it.get("retrieved_at", "")))
+                    if path and not (root / path).is_file():
+                        missing += 1
+                elif it.get("status") in ("gone", "unlisted"):
+                    away += 1
     except Stop:
         pass
+    mirror = root / MIRROR
+    stray = sum(1 for f in mirror.rglob("*") if f.is_file() and f.relative_to(root).as_posix() not in named) if mirror.is_dir() else 0
     parts = [f"{len(manifest.entries)} entries in .lokf/ingest.yaml", f"{files} mirrored files" + (f", newest {newest[:10]}" if newest else ", no lock yet")]
+    if missing:
+        parts.append(f"{missing} missing from the mirror, which a run restores")
+    if stray:
+        parts.append(f"{stray} files in the mirror the lock does not name")
+    if away:
+        parts.append(f"{away} gone or unlisted, which --prune removes once no concept cites them")
     if present:
         parts.append("tokens present: " + ", ".join(present))
     if absent:
