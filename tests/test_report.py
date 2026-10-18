@@ -933,10 +933,14 @@ def cov(tmp_path):
     return tmp_path
 
 
-def test_coverage_counts_the_files_no_concept_names_per_folder_and_leaves_the_sidecar_out(cov):
+COUNT = "Tracked files under a path a concept names as its resource or one of its sources: "
+SKIPPED = "skipped, since the sidecar's own files are the preflight's to compare with its templates"
+
+
+def test_coverage_counts_the_tracked_files_no_concept_names_per_folder_and_leaves_the_sidecar_out(cov):
     r = report(cov, "coverage")
     assert r, r.out
-    assert has_line(r.out, "Files git tracks or would add, under a path a concept names as its resource or one of its sources: 4 of 6 · under none: 2")
+    assert has_line(r.out, COUNT + "4 of 6 · under none: 2")
     assert has_line(r.out, "- data/: 1")
     assert has_line(r.out, "- docs/: 1")
     assert "README" not in r.out and ".lokf" not in r.out and "src/" not in r.out
@@ -949,8 +953,20 @@ def test_coverage_lists_the_files_under_a_folder_and_rejects_a_path_outside_the_
     assert has_line(r.out, "- docs/orphan.md")
     assert has_line(r.out, "src/: none under no named path")
     assert "kept" not in r.out
+    # Every spelling of one folder reads as that folder, and a file as a file.
+    for spelt in ("./docs", "docs//", "docs/.", "./docs/./"):
+        assert has_line(report(cov, "coverage", spelt).out, "docs/: 1 under no named path"), spelt
+    assert has_line(report(cov, "coverage", "data/raw.csv").out, "data/raw.csv: 1 under no named path")
     assert report(cov, "coverage", "/etc").rc == 2
     assert report(cov, "coverage", "../x").rc == 2
+
+
+def test_coverage_says_a_mistyped_folder_and_the_sidecar_hold_nothing_it_counts(cov):
+    r = report(cov, "coverage", "typo", ".lokf/scripts")
+    assert r, r.out
+    assert has_line(r.out, "typo/: git tracks no file here")
+    assert has_line(r.out, ".lokf/scripts: " + SKIPPED)
+    assert "none under no named path" not in r.out
 
 
 def test_coverage_counts_a_path_git_quotes_apart_and_never_prints_it(cov):
@@ -963,28 +979,33 @@ def test_coverage_counts_a_path_git_quotes_apart_and_never_prints_it(cov):
     git("commit", "-q", "-m", "a path git quotes")
     r = report(cov, "coverage")
     assert r, r.out
-    assert has_line(r.out, "Files git tracks or would add, under a path a concept names as its resource or one of its sources: 4 of 6 · under none: 2")
+    assert has_line(r.out, COUNT + "4 of 6 · under none: 2")
     assert has_line(r.out, "- and 1 more, whose paths hold characters this report does not print")
     assert "tab" not in r.out
+    # A path it cannot compare is no pass under --strict.
+    assert report(cov, "coverage", "--strict", "src").rc == 0
+    write(cov / "data" / "raw.csv", "now named\n")
+    write(cov / ".lokf" / "knowledge" / "x" / "data.md", "---\ntype: Dataset\ntitle: Data\nresource: data\n---\n")
+    write(cov / ".lokf" / "knowledge" / "x" / "docs.md", "---\ntype: Service\ntitle: Docs\nresource: docs\n---\n")
+    assert report(cov, "coverage", "--strict").rc == 1
 
 
-def test_without_git_coverage_says_the_tracked_files_were_not_listed(cov, tmp_path):
+def test_without_git_coverage_says_the_tracked_files_were_not_listed_and_strict_fails(cov, tmp_path):
     plain = tmp_path / "plain"
     shutil.copytree(cov, plain, ignore=shutil.ignore_patterns(".git"))
     # The copy sits in no repository: git must not find one above it either.
-    r = report(plain, "coverage", env={"GIT_CEILING_DIRECTORIES": str(tmp_path)})
+    env = {"GIT_CEILING_DIRECTORIES": str(tmp_path)}
+    r = report(plain, "coverage", env=env)
     assert r, r.out
     assert r.out == "Coverage: not computed here, since this folder has no git history to list the tracked files"
-    # The same copy inside another repository counts as files git would add,
-    # until that repository's ignore rules leave the copy out.
+    assert report(plain, "coverage", "--strict", env=env).rc == 1
+    # The same copy inside another repository, which tracks nothing under it.
     inside = cov / "copy"
     shutil.copytree(plain, inside)
     r = report(inside, "coverage")
-    assert r and has_line(r.out, "- docs/: 1"), r.out
-    append(cov / ".git" / "info" / "exclude", "copy/\n")
-    r = report(inside, "coverage")
     assert r, r.out
-    assert r.out == "Coverage: not computed here, since git neither tracks nor would add a file under this folder"
+    assert r.out.startswith("Coverage: not computed here, since git tracks no file under this folder")
+    assert report(inside, "coverage", "--strict").rc == 1
 
 
 def test_coverage_of_the_whole_tree_lists_every_file_nobody_named(cov):
@@ -994,15 +1015,32 @@ def test_coverage_of_the_whole_tree_lists_every_file_nobody_named(cov):
     assert has_line(r.out, "- data/raw.csv") and has_line(r.out, "- docs/orphan.md")
 
 
-def test_coverage_counts_a_file_git_would_add_and_not_one_it_ignores(cov):
+def test_coverage_counts_a_file_git_would_add_apart_and_not_one_it_ignores(cov):
     write(cov / "docs" / "new.md", "new\n")
     write(cov / "docs" / "ignored.md", "ignored\n")
-    append(cov / ".git" / "info" / "exclude", "docs/ignored.md\n")
-    r = report(cov, "coverage", "docs")
+    # The ignore file sits inside .git/, where git lists nothing, and does not
+    # rely on git init having laid down info/exclude.
+    write(cov / ".git" / "test-ignore", "docs/ignored.md\n")
+    Git(cov)("config", "core.excludesFile", str(cov / ".git" / "test-ignore"))
+    r = report(cov, "coverage")
     assert r, r.out
-    assert has_line(r.out, "docs/: 2 under no named path")
-    assert has_line(r.out, "- docs/new.md")
+    assert has_line(r.out, COUNT + "4 of 6 · under none: 2")
+    assert has_line(r.out, "Files git would add but does not track yet, so not counted: 1 · under no named path: 1")
+    assert has_line(r.out, "Commit each file not tracked yet before a concept names it, or ignore it if it is runtime state, such as an installed skill.")
+    r = report(cov, "coverage", "docs")
+    assert has_line(r.out, "docs/: 1 under no named path, and 1 more not tracked yet")
+    assert has_line(r.out, "- docs/new.md (not tracked yet)")
     assert "ignored" not in r.out
+    # A file git would add never fails --strict, which reads what git tracks.
+    assert report(cov, "coverage", "--strict", "src").rc == 0
+
+
+def test_coverage_leaves_out_a_tracked_file_deleted_from_the_working_tree(cov):
+    (cov / "docs" / "orphan.md").unlink()
+    r = report(cov, "coverage")
+    assert r, r.out
+    assert has_line(r.out, COUNT + "4 of 5 · under none: 1")
+    assert "docs" not in r.out
 
 
 def test_coverage_why_names_the_concept_behind_a_path_with_or_without_git(cov, tmp_path):
@@ -1010,9 +1048,11 @@ def test_coverage_why_names_the_concept_behind_a_path_with_or_without_git(cov, t
         "- docs/kept.md: named by x/kept.md",
         "- src/lib/a.py: under src/lib, which x/map.md names",
         "- docs/orphan.md: under no named path",
-        "- .lokf/scripts/x.sh: skipped, since the sidecar's own files are the preflight's to compare with its templates",
+        "- .lokf/scripts/x.sh: " + SKIPPED,
+        "- docs: under no named path; concepts name 1 path inside it, and coverage docs lists the files they leave out",
+        "- docs/typo.md: under no named path (no such file or folder here)",
     ]
-    args = ["coverage", "--why", "docs/kept.md", "./src/lib/a.py", "docs/orphan.md", ".lokf/scripts/x.sh"]
+    args = ["coverage", "--why", "docs/kept.md", "./src/lib/a.py", "docs/orphan.md", ".lokf/scripts/x.sh", "docs/", "docs/typo.md"]
     r = report(cov, *args)
     assert r, r.out
     for line in want:
@@ -1022,14 +1062,19 @@ def test_coverage_why_names_the_concept_behind_a_path_with_or_without_git(cov, t
     r = report(plain, *args, env={"GIT_CEILING_DIRECTORIES": str(tmp_path)})
     assert r and all(has_line(r.out, line) for line in want), r.out
     assert report(cov, "coverage", "--why").rc == 2
-    assert report(cov, "coverage", "--why", "/etc/passwd").rc == 2
+    # Every path is checked before anything is printed.
+    r = report(cov, "coverage", "--why", "docs/kept.md", "/etc/passwd")
+    assert r.rc == 2 and "named by" not in r.out
 
 
-def test_coverage_strict_exits_1_while_a_file_in_scope_is_named_by_nobody(cov):
+def test_coverage_strict_exits_1_while_a_file_in_scope_is_named_by_nobody_or_a_folder_holds_none(cov):
     assert report(cov, "coverage", "--strict").rc == 1
     assert report(cov, "coverage", "--strict", "docs").rc == 1
     assert report(cov, "coverage", "--strict", "src").rc == 0
+    assert report(cov, "coverage", "--strict", "typo").rc == 1
+    assert report(cov, "coverage", "--strict", ".lokf").rc == 1
     assert report(cov, "coverage", "--strict", "--why", "docs").rc == 2
+    assert report(cov, "coverage", "docs", "--why", "src").rc == 2
     assert report(cov, "coverage", "--bogus").rc == 2
 
 
@@ -1048,6 +1093,6 @@ def test_coverage_reads_a_sidecar_in_a_subfolder_from_its_own_root(tmp_path):
     git("commit", "-q", "-m", "a host in a subfolder")
     r = report(host, "coverage")
     assert r, r.out
-    assert has_line(r.out, "Files git tracks or would add, under a path a concept names as its resource or one of its sources: 1 of 2 · under none: 1")
+    assert has_line(r.out, COUNT + "1 of 2 · under none: 1")
     assert has_line(r.out, "- docs/: 1")
     assert "elsewhere" not in r.out and "outside" not in r.out
