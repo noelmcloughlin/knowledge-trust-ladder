@@ -6,7 +6,7 @@ description: "A human curator's assistant: it reports what needs a person's atte
 genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-13T01:13:17Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
