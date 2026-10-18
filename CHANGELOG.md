@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.49.0] - 2026-10-18
+
 ### Added
 
 - **The ingest mirrors knowledge from outside the repository.** `knowledge-ingest.py`, a new ktl-sidecar template with a shell half, reads `.lokf/ingest.yaml`, fetches the sources it names, converts each to Markdown and writes it under `.lokf/mirror/`, with `.lokf/ingest.lock.yaml` recording the version, the digest and the status of each. Four kinds: a Confluence selection, a list of addresses, a path in another repository at a ref, and a command the host committed. The librarian derives concepts from a mirror file as from any tracked file, so nothing in the trust ladder changes.
