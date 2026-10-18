@@ -41,3 +41,4 @@ The labels overlap. A concept can be confirmed *and* past its review date, so th
 ## Open questions
 
 - 2026-10-16, process:ktl-librarian: Since 0.45.0 `skills/ktl-curator/references/trust-fields.md` has a label *Reopened*: `status: draft` on a concept with a `human:` `verified` event, naming the earliest question asked on or after the confirmation's day, its asker and how many wait. A reopened concept still counts as confirmed, and *Still a draft* now needs no `human:` event. This concept does not name the label.
+- 2026-10-18, human:noelmcloughlin: update the concept to capture the gaps from `skills/ktl-curator/references/trust-fields.md`: the change to *Still a draft*, the new label and rule *Reopened*, the health line's new field, and the rung impacts of a question and of an edit after a confirmation.
