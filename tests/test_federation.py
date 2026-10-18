@@ -116,8 +116,8 @@ def member(slug: str, base_iri: str, zip_path: Path, sha: str, domain_iri: str, 
 
 def make_domain(host: Path, base_iri: str, members: dict[str, dict], policy: str = "fail", title: str = "D") -> Path:
     """A domain host: .lokf/knowledge with a Domain concept and the member concepts, and the report script for health lines."""
-    domain_iri = base_iri + "domains/top"
-    concepts = {"domains/top.md": {"type": "Domain", "title": "The top domain", "description": "The domain.", "resource": "https://example.test/d", "unowned_targets": policy}}
+    domain_iri = base_iri + "domains/federation"
+    concepts = {"domains/federation.md": {"type": "Domain", "title": "The federation domain", "description": "The domain.", "resource": "https://example.test/d", "unowned_targets": policy}}
     concepts.update({f"members/{slug}.md": fm for slug, fm in members.items()})
     make_bundle(host / ".lokf", base_iri, title, concepts)
     scripts = host / ".lokf" / "scripts"
@@ -128,7 +128,7 @@ def make_domain(host: Path, base_iri: str, members: dict[str, dict], policy: str
 
 def domain_zip(tmp_path: Path, slug: str, base_iri: str, members: dict[str, dict]) -> tuple[Path, str]:
     """A domain bundle zipped as its release would be: a Domain concept and the member concepts. Returns the zip and its sha256."""
-    concepts = {"domains/top.md": {"type": "Domain", "title": f"{slug} domain", "description": "A domain.", "resource": f"https://example.test/{slug}", "unowned_targets": "fail"}}
+    concepts = {f"domains/{slug}.md": {"type": "Domain", "title": f"{slug} domain", "description": "A domain.", "resource": f"https://example.test/{slug}", "unowned_targets": "fail"}}
     concepts.update({f"members/{m}.md": fm for m, fm in members.items()})
     k = make_bundle(tmp_path / f"{slug}-domain", base_iri, slug.upper(), concepts)
     zip_path = tmp_path / f"{slug}.zip"
@@ -143,7 +143,7 @@ def federation(tmp_path):
     b = make_bundle(tmp_path / "b", b_iri, "B", {"glossary/other.md": {"type": "GlossaryTerm", "title": "Other", "description": "Another term.", "resource": "https://example.test/b"}})
     a_zip, b_zip = tmp_path / "a.zip", tmp_path / "b.zip"
     a_sha, b_sha = zip_bundle(a, a_zip), zip_bundle(b, b_zip)
-    host = make_domain(tmp_path / "host", d_iri, {"a": member("a", a_iri, a_zip, a_sha, d_iri + "domains/top"), "b": member("b", b_iri, b_zip, b_sha, d_iri + "domains/top")})
+    host = make_domain(tmp_path / "host", d_iri, {"a": member("a", a_iri, a_zip, a_sha, d_iri + "domains/federation"), "b": member("b", b_iri, b_zip, b_sha, d_iri + "domains/federation")})
     return {"host": host, "a": a, "b": b, "a_zip": a_zip, "b_zip": b_zip, "a_sha": a_sha, "b_sha": b_sha, "a_iri": a_iri, "b_iri": b_iri, "d_iri": d_iri}
 
 
@@ -187,7 +187,7 @@ def test_a_cross_bundle_target_no_member_owns_fails_or_is_reported(federation, t
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 1 and "lie in no member's namespace" in r.out and "glossary/nowhere" in r.out, r.out
     assert not (host / "snapshot").exists() and not (host / "snapshot.new").exists()
-    top = host / ".lokf" / "knowledge" / "domains" / "top.md"
+    top = host / ".lokf" / "knowledge" / "domains" / "federation.md"
     top.write_text(top.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: report"), encoding="utf-8")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0, r.out
@@ -226,46 +226,46 @@ def test_a_member_that_is_a_domain_is_followed(federation, tmp_path):
     c = make_bundle(tmp_path / "c", c_iri, "C", {"glossary/third.md": {"type": "GlossaryTerm", "title": "Third", "description": "A third term.", "resource": "https://example.test/c"}})
     c_zip = tmp_path / "c.zip"
     c_sha = zip_bundle(c, c_zip)
-    sub = make_bundle(tmp_path / "s", s_iri, "S", {"domains/top.md": {"type": "Domain", "title": "Sub", "description": "A sub-domain.", "resource": "https://example.test/s"},
-                                                  "members/c.md": member("c", c_iri, c_zip, c_sha, s_iri + "domains/top")})
+    sub = make_bundle(tmp_path / "s", s_iri, "S", {"domains/s.md": {"type": "Domain", "title": "Sub", "description": "A sub-domain.", "resource": "https://example.test/s"},
+                                                  "members/c.md": member("c", c_iri, c_zip, c_sha, s_iri + "domains/s")})
     s_zip = tmp_path / "s.zip"
     s_sha = zip_bundle(sub, s_zip)
-    write(host / ".lokf" / "knowledge" / "members" / "s.md", frontmatter(**member("s", s_iri, s_zip, s_sha, federation["d_iri"] + "domains/top")) + "\n# Overview\n\nS.\n")
+    write(host / ".lokf" / "knowledge" / "members" / "s.md", frontmatter(**member("s", s_iri, s_zip, s_sha, federation["d_iri"] + "domains/federation")) + "\n# Overview\n\nS.\n")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0, r.out
     lock = (host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8")
     entries = {m["base_iri"]: m for m in yaml.safe_load(lock)["members"]}
-    assert entries[c_iri]["tier"] == 2 and entries[c_iri]["member_of"] == [s_iri + "domains/top"] and entries[s_iri]["kind"] == "domain"
+    assert entries[c_iri]["tier"] == 2 and entries[c_iri]["member_of"] == [s_iri + "domains/s"] and entries[s_iri]["kind"] == "domain"
     assert c_iri in graphs_in(host / "snapshot" / "graph.nq")
 
 
 def test_a_bundle_two_domains_name_at_one_release_joins_once(federation, tmp_path):
     """The diamond rule: sub-domains s and t both name c at one zip, so c joins once under both; t naming another release of c stops the build."""
-    host, top = federation["host"], federation["d_iri"] + "domains/top"
+    host, top = federation["host"], federation["d_iri"] + "domains/federation"
     c_iri, s_iri, t_iri = "https://c.example/knowledge/", "https://s.example/federation/", "https://t.example/federation/"
     c = make_bundle(tmp_path / "c", c_iri, "C", {"glossary/third.md": {"type": "GlossaryTerm", "title": "Third", "description": "A third term.", "resource": "https://example.test/c"}})
     c_zip = tmp_path / "c.zip"
     c_sha = zip_bundle(c, c_zip)
-    s_zip, s_sha = domain_zip(tmp_path, "s", s_iri, {"c": member("c", c_iri, c_zip, c_sha, s_iri + "domains/top")})
-    t_zip, t_sha = domain_zip(tmp_path, "t", t_iri, {"c": member("c", c_iri, c_zip, c_sha, t_iri + "domains/top")})
+    s_zip, s_sha = domain_zip(tmp_path, "s", s_iri, {"c": member("c", c_iri, c_zip, c_sha, s_iri + "domains/s")})
+    t_zip, t_sha = domain_zip(tmp_path, "t", t_iri, {"c": member("c", c_iri, c_zip, c_sha, t_iri + "domains/t")})
     write(host / ".lokf" / "knowledge" / "members" / "s.md", frontmatter(**member("s", s_iri, s_zip, s_sha, top, kind="MemberDomain")) + "\n# Overview\n\nS.\n")
     write(host / ".lokf" / "knowledge" / "members" / "t.md", frontmatter(**member("t", t_iri, t_zip, t_sha, top)) + "\n# Overview\n\nT.\n")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0 and "named by a second domain, not followed again" in r.out, r.out
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
     entries = [m for m in lock["members"] if m["base_iri"] == c_iri]
-    assert len(entries) == 1 and entries[0]["member_of"] == [s_iri + "domains/top", t_iri + "domains/top"] and entries[0]["kind"] == "bundle"
+    assert len(entries) == 1 and entries[0]["member_of"] == [s_iri + "domains/s", t_iri + "domains/t"] and entries[0]["kind"] == "bundle"
     kinds = {m["base_iri"]: m["kind"] for m in lock["members"]}
     assert kinds[s_iri] == "domain" and kinds[t_iri] == "domain", "a MemberBundle whose zip is a domain is a domain in the lock, as a MemberDomain is"
     nq = (host / "snapshot" / "graph.nq").read_text(encoding="utf-8")
-    assert f"<{s_iri}domains/top> <http://www.w3.org/ns/dcat#dataset> <{c_iri}>" in nq and f"<{top}> <http://www.w3.org/ns/dcat#catalog> <{s_iri}>" in nq
+    assert f"<{s_iri}domains/s> <http://www.w3.org/ns/dcat#dataset> <{c_iri}>" in nq and f"<{top}> <http://www.w3.org/ns/dcat#catalog> <{s_iri}>" in nq
     index = (host / "snapshot" / "index.md").read_text(encoding="utf-8")
     assert "| [S (a domain)](bundles/s/" in index and "| S, T |" in index, index
     before = (host / "snapshot" / "graph.nq").read_bytes()
     c2 = make_bundle(tmp_path / "c2", c_iri, "C", {"glossary/fourth.md": {"type": "GlossaryTerm", "title": "Fourth", "description": "A fourth term.", "resource": "https://example.test/c"}})
     c2_zip = tmp_path / "c2.zip"
     c2_sha = zip_bundle(c2, c2_zip)
-    t_zip, t_sha = domain_zip(tmp_path, "t", t_iri, {"c": member("c", c_iri, c2_zip, c2_sha, t_iri + "domains/top", version="v2.0.0")})
+    t_zip, t_sha = domain_zip(tmp_path, "t", t_iri, {"c": member("c", c_iri, c2_zip, c2_sha, t_iri + "domains/t", version="v2.0.0")})
     write(host / ".lokf" / "knowledge" / "members" / "t.md", frontmatter(**member("t", t_iri, t_zip, t_sha, top)) + "\n# Overview\n\nT.\n")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 1 and "a bundle joins once, at one release" in r.out and "v2.0.0" in r.out, r.out
@@ -274,20 +274,20 @@ def test_a_bundle_two_domains_name_at_one_release_joins_once(federation, tmp_pat
 
 def test_the_depth_a_build_follows_is_the_domain_s_to_set(federation, tmp_path):
     """Domains t1 > t2 > t3 > a leaf: the default depth of 3 stops at t3, max_depth: 4 on the top Domain concept follows it, and a depth below 1 is refused."""
-    host, top = federation["host"], federation["d_iri"] + "domains/top"
+    host, top = federation["host"], federation["d_iri"] + "domains/federation"
     leaf_iri = "https://leaf.example/knowledge/"
     leaf = make_bundle(tmp_path / "leaf", leaf_iri, "Leaf", {"glossary/l.md": {"type": "GlossaryTerm", "title": "L", "description": "A leaf term.", "resource": "https://example.test/l"}})
     leaf_zip = tmp_path / "leaf.zip"
     zip_path, sha, inner = leaf_zip, zip_bundle(leaf, leaf_zip), leaf_iri
     for slug in ("t3", "t2", "t1"):  # from the bottom up: t3 names the leaf, t2 names t3, t1 names t2, each as members/inner.md
         iri = f"https://{slug}.example/federation/"
-        zip_path, sha = domain_zip(tmp_path, slug, iri, {"inner": member("inner", inner, zip_path, sha, iri + "domains/top")})
+        zip_path, sha = domain_zip(tmp_path, slug, iri, {"inner": member("inner", inner, zip_path, sha, iri + f"domains/{slug}")})
         inner = iri
     write(host / ".lokf" / "knowledge" / "members" / "t1.md", frontmatter(**member("t1", inner, zip_path, sha, top, kind="MemberDomain")) + "\n# Overview\n\nT1.\n")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 1 and "a domain at tier 3, and this domain's max_depth is 3" in r.out, r.out
     assert not (host / "snapshot").exists()
-    top_md = host / ".lokf" / "knowledge" / "domains" / "top.md"
+    top_md = host / ".lokf" / "knowledge" / "domains" / "federation.md"
     top_md.write_text(top_md.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: fail\nmax_depth: 4"), encoding="utf-8")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0, r.out
@@ -508,7 +508,7 @@ def released(tmp_path):
     confirmed it; d was written by a person.
     """
     d_iri = "https://d.example/federation/"
-    top = d_iri + "domains/top"
+    top = d_iri + "domains/federation"
     agent = {"by": "process:knowledge-federate", "at": "2026-10-16T10:00:00Z"}
     concepts = {
         "a": github_member("a", top, generated=agent, status="draft"),
@@ -549,7 +549,7 @@ def released(tmp_path):
     e_zip = tmp_path / "e.zip"
     e_sums = write(tmp_path / "e.zip.sha256", f"{zip_bundle(e_bundle, e_zip)}  e.zip\n")
     # f's release is a domain in turn: a Domain concept and one member.
-    f_zip, f_sha = domain_zip(tmp_path, "f", "https://f.example/federation/", {"a": github_member("a", "https://f.example/federation/domains/top")})
+    f_zip, f_sha = domain_zip(tmp_path, "f", "https://f.example/federation/", {"a": github_member("a", "https://f.example/federation/domains/f")})
     f_sums = write(tmp_path / "f.zip.sha256", f"{f_sha}  f.zip\n")
     for slug, zipped, summed in (("e", e_zip, e_sums), ("nested", zip_path, sums), ("f", f_zip, f_sums)):
         release = with_schema(github_release(slug, *NEW)) if slug == "e" else github_release(slug, *NEW)
@@ -635,7 +635,7 @@ def test_members_add_drafts_a_member_from_a_repository_release(released):
     text = read(host / ".lokf" / "knowledge" / "members" / "e.md")
     fm = yaml.safe_load(text.split("---\n")[1])
     assert fm["type"] == "MemberBundle" and fm["status"] == "draft" and fm["version"] == "v1.1.0" and fm["base_iri"] == "https://e.example/knowledge/"
-    assert fm["id"] == "https://d.example/federation/members/e" and fm["isPartOf"] == ["https://d.example/federation/domains/top"] and fm["title"] == "E"
+    assert fm["id"] == "https://d.example/federation/members/e" and fm["isPartOf"] == ["https://d.example/federation/domains/federation"] and fm["title"] == "E"
     assert [d["name"] for d in fm["distribution"]] == ["knowledge-v1.1.0-e.zip", "schema-v1.1.0-e.yaml"] and fm["distribution"][1]["media_type"] == "application/yaml"
     assert "This member is the knowledge bundle of [acme/e](https://github.com/acme/e). Its own index describes it as: E." in text
     assert "acme/e is proposed as a member at v1.1.0; does it belong under the admission rule?" in text

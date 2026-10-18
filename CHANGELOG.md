@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **A domain concept is named for the domain, never for its position.** The curator's domain-bundle.md says so, its worked example names ktl-federation's `domains/ktl-federation`, and it says a confirmation stays with the concept's `id`.
+
 ## [0.48.0] - 2026-10-17
 
 ### Added

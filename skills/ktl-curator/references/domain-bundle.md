@@ -6,7 +6,7 @@ This page is for the **curator** of a domain host: a repository whose bundle nam
 
 `templates/domain.yaml` in ktl-sidecar, laid down as `.lokf/domain.yaml` with `schema := "domain.yaml"` in the justfile, adds four classes over LOKF core. `lokf validate` checks them like any other.
 
-- **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner. One concept, under `domains/`. Its `unowned_targets` is the build's gate policy: `fail` stops the build on a typed relation whose target lies in no member's namespace; `report` lists it and goes on. Its `max_depth` is how many tiers of members the build follows when a member is itself a domain, 3 unless set.
+- **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner. One concept, under `domains/`, named for the domain, as in `domains/ktl-federation`, and never for its position: the same domain is where its own build starts and a member of another domain. Its `unowned_targets` is the build's gate policy: `fail` stops the build on a typed relation whose target lies in no member's namespace; `report` lists it and goes on. Its `max_depth` is how many tiers of members the build follows when a member is itself a domain, 3 unless set.
 - **`MemberBundle`** (a `Dataset`): one bundle the domain admits, under `members/`. It names the bundle's `base_iri`, the release `version` it pins, the `release` page, and one `distribution` whose `access_url` is the release's zip and whose `checksum` is that zip's digest. A second distribution names the schema released beside the zip (`schema-<tag>-<name>.yaml`), when the member's justfile names one; the build then validates the bundle against it rather than LOKF core alone. `isPartOf` names the domain concept.
 - **`MemberDomain`** (a `MemberBundle`, `dcat:Catalog`): a member whose bundle is itself a domain. The build follows its members into the same workspace, tier by tier, as deep as `max_depth` allows. A `MemberBundle` whose zip turns out to hold a `Domain` concept is followed too, and the lock marks it a domain.
 - **`ReleaseDistribution`** (a `Distribution`): the zip with its `checksum`, `sha256:` and 64 hex digits, as the release's `.sha256` file gives it.
@@ -25,17 +25,19 @@ base_iri: https://w3id.org/ktl/knowledge/
 version: v0.43.0
 release: https://github.com/noelmcloughlin/knowledge-trust-ladder/releases/tag/v0.43.0
 distribution:
-- name: knowledge-v0.43.0-knowledge-trust-ladder.zip
-  access_url: https://github.com/noelmcloughlin/knowledge-trust-ladder/releases/download/v0.43.0/knowledge-v0.43.0-knowledge-trust-ladder.zip
-  media_type: application/zip
-  checksum: sha256:a0a80fc411c23597968699716278d04918b795530f1fe55825709453eb6b8083
+  - name: knowledge-v0.43.0-knowledge-trust-ladder.zip
+    access_url: https://github.com/noelmcloughlin/knowledge-trust-ladder/releases/download/v0.43.0/knowledge-v0.43.0-knowledge-trust-ladder.zip
+    media_type: application/zip
+    checksum: sha256:a0a80fc411c23597968699716278d04918b795530f1fe55825709453eb6b8083
 isPartOf:
-- https://w3id.org/ktl/federation/knowledge/domains/top
+  - https://w3id.org/ktl/federation/knowledge/domains/ktl-federation
 ```
 
 ## What a confirmation attests
 
 Confirming a member concept is the ordinary confirm, in a signed commit the registrar's `provenance` job backs. It attests two things, and the note should say so: that this bundle belongs under the domain's admission rule, and that any claim the domain makes across bundles holds. It does not vouch for the member's own concepts; each member keeps its own trust labels, computed from its own events when the workspace is read.
+
+A confirmation belongs to the concept's `id`. A concept moved to a new id waits for a confirmation of its own, and the `provenance` job reads an event copied across as a new confirmation.
 
 Before confirming, open the release the concept names and check three things: the zip and its `.sha256` are attached, the digest in `.sha256` is the `checksum` in the concept, and the release's repository is the one the `base_iri` belongs to. The members script checked the zip's checksum and attestation when it wrote the change, and the pull request's hand-off lines say so. `knowledge-federate.py build --verify-only` checks the zip again before the merge, and also that its `index.md` names the member's `base_iri`. On GitHub the federation workflow's `check` job runs it on a pull request that touches `members/`. GitHub starts no workflow for a pull request the librarian's job token opened, so there it first runs when you push your confirmation. Elsewhere, run it yourself. `gh attestation verify <zip> --repo <owner>/<repo>` checks an attestation by hand.
 
