@@ -6,32 +6,32 @@ description: Procedure that lays down an Astro Starlight website for the knowled
 genre: how-to
 resource: skills/ktl-website/SKILL.md
 sources:
-- resource: skills/ktl-website/SKILL.md
-- resource: skills/ktl-website/references/customising.md
-- resource: skills/ktl-website/references/deploy.md
-- resource: skills/ktl-website/references/inputs.md
-- resource: skills/ktl-website/references/prerequisites.md
-- resource: skills/ktl-website/templates/github/knowledge-website.yaml
-- resource: scripts/validate-repository.sh
-- resource: .github/workflows/validate.yml
-- resource: docs/architecture.md
-- resource: CHANGELOG.md
+  - resource: skills/ktl-website/SKILL.md
+  - resource: skills/ktl-website/references/customising.md
+  - resource: skills/ktl-website/references/deploy.md
+  - resource: skills/ktl-website/references/inputs.md
+  - resource: skills/ktl-website/references/prerequisites.md
+  - resource: skills/ktl-website/templates/github/knowledge-website.yaml
+  - resource: scripts/validate-repository.sh
+  - resource: .github/workflows/validate.yml
+  - resource: docs/architecture.md
+  - resource: CHANGELOG.md
 dependsOn:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
-- https://w3id.org/ktl/knowledge/references/lokf-toolkit
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+  - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 relatedTo:
-- https://w3id.org/ktl/knowledge/playbooks/website
+  - https://w3id.org/ktl/knowledge/playbooks/website
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  at: "2026-10-18T10:22:18Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T00:41:23Z"
+  - by: process:ktl-librarian
+    at: "2026-10-16T00:41:23Z"
 ---
 
 # Overview
@@ -57,6 +57,8 @@ It has seven steps, 0 to 6:
 Since 0.43.0 (2026-10-15, `CHANGELOG.md`) the site also serves the whole bundle as `llms-full.txt`, each concept after its trust label, and the bundle log as an Atom feed, `knowledge/log.xml`, one entry per day. It serves the home page, each docs page and each extra page as Markdown too, at the page's path with `.md` added. A concept page links the concept's history and names its licence, and opens the knowledge graph on the concept at `/graph/?concept=<id>`. A link to a concept shows the concept's title, type, trust label and definition on hover and on focus, from `knowledge/previews.json`.
 
 Since 0.45.0 (2026-10-16, `CHANGELOG.md`) a concept's card shows its open questions beside its trust label. The label of a confirmed concept that a question put back to draft reads *reopened*, not *still a draft*.
+
+Since 0.48.0 (2026-10-17, `CHANGELOG.md`) a figure on a wide screen stays in the text column, and a click opens it at full size. The change is in the template's `theme.css` and `Mermaid.astro`, so a host gets it with its next website repair.
 
 A release page links the repository, the docs and the bundle at the release's tag, which the `RELEASE_TAG` option names. A page and its retelling offer each other as reading levels: a `PAGES` entry's `retells` names the page it retells, and a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names.
 

@@ -2,35 +2,35 @@
 type: Playbook
 id: https://w3id.org/ktl/knowledge/playbooks/releasing
 title: Releasing
-description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, and dispatches `knowledge-release.yaml` to attach the bundle and Copilot zips."
+description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, dispatches `knowledge-release.yaml` to attach the bundle, domain schema and Copilot zips, and asks the sibling hosts to sync."
 genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  at: "2026-10-18T10:22:18Z"
 status: draft
 dependsOn:
-- https://w3id.org/ktl/knowledge/references/gh-skill-cli
+  - https://w3id.org/ktl/knowledge/references/gh-skill-cli
 references:
-- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
-- https://w3id.org/ktl/knowledge/policies/versioning
-- https://w3id.org/ktl/knowledge/playbooks/repository-validation
-- https://w3id.org/ktl/knowledge/playbooks/contributing
+  - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
+  - https://w3id.org/ktl/knowledge/policies/versioning
+  - https://w3id.org/ktl/knowledge/playbooks/repository-validation
+  - https://w3id.org/ktl/knowledge/playbooks/contributing
 sources:
-- resource: .github/workflows/publish.yml
-- resource: docs/releasing.md
-- resource: .github/workflows/semantic-release.yml
-- resource: .github/scripts/changelog-release.mjs
-- resource: .releaserc.json
-- resource: .github/workflows/knowledge-release.yaml
-- resource: scripts/sync-sidecar.sh
-- resource: CHANGELOG.md
-- resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
-- resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
-- resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-angular-v8.3.1/packages/conventional-changelog-angular/src/parser.js
+  - resource: .github/workflows/publish.yml
+  - resource: docs/releasing.md
+  - resource: .github/workflows/semantic-release.yml
+  - resource: .github/scripts/changelog-release.mjs
+  - resource: .releaserc.json
+  - resource: .github/workflows/knowledge-release.yaml
+  - resource: scripts/sync-sidecar.sh
+  - resource: CHANGELOG.md
+  - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
+  - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
+  - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-angular-v8.3.1/packages/conventional-changelog-angular/src/parser.js
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  - by: process:ktl-librarian
+    at: "2026-10-12T23:54:05Z"
 ---
 
 # Overview
@@ -64,24 +64,27 @@ Each `publish.yml` run validates:
 
 It then sets up `uv` and re-runs the repository contract, the sidecar scripts' tests under `tests/` (run with pytest) and `gh skill publish --dry-run`, and only then publishes. The version is typed *with* the `v` (`v0.16.0`). The changelog heading never carries one, and the cross-check strips it before comparing.
 
-Since 2026-09-24 it then dispatches `knowledge-release.yaml` for the new tag. That workflow attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle changed since the last release that carries one. The zip is named after the repository, or after the name its `KNOWLEDGE_RELEASE_NAME` variable sets. Beside it (since 2026-09-24) it attaches the docent as a Microsoft 365 Copilot skill, `ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`. It attaches one zip per instructions file under `.lokf/m365/`, each with its own checksum and attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release carries the bundle zip alone.
+Since 2026-09-24 it then dispatches `knowledge-release.yaml` for the new tag. That workflow attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle changed since the last release that carries one. The zip is named after the repository, or after the name its `KNOWLEDGE_RELEASE_NAME` variable sets. Beside it (since 2026-09-24) it attaches the docent as a Microsoft 365 Copilot skill, `ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`. It attaches one zip per instructions file under `.lokf/m365/`, each with its own checksum and attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release carries the bundle zip alone. Since 0.46.0, when the host's `.lokf/justfile` names a domain schema on its `schema :=` line, the workflow also attaches that file as `schema-<tag>-<name>.yaml`, with its own `.sha256` and attestation, so a federation that admits the bundle can validate it on its own terms. The name must be a file in `.lokf/`, not a path.
 
 The dispatch is needed because GitHub starts no workflow from a release made with `GITHUB_TOKEN`, so that workflow's own release trigger never fires here. If the dispatch fails, the job fails and names the manual run to make.
 
+Since 0.47.0 `publish.yml` then asks the hosts named in the `KNOWLEDGE_SYNC_HOSTS` repository variable, as `owner/repo` separated by spaces, to run their `knowledge-sync.yaml` for the new tag. The dispatch needs the `KNOWLEDGE_SYNC_DISPATCH_TOKEN` secret, a token with Actions write on each host. Unset, or set to `false`, the variable asks nobody, and each host syncs on its own schedule. A host that cannot be asked is reported, and the others go ahead.
+
 This release-process detail moved out of `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for the three KTL repositories in one place. All six skills are released together under one tag, so a consumer can pin them to a single release. The `release` Environment's required reviewers are configured once, by hand, in each repository's settings, or a qualifying merge is released unattended. Changes reach `main` by pull request, but no ruleset enforces it, and "Require signed commits" as a branch rule is off and must stay off.
 
-The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates, apart from the first line of `.lokf/justfile`, which names the host, and their own skills pin. Since 2026-09-24 `scripts/sync-sidecar.sh <tag> <sibling>...` brings each up to one release. The script:
+The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates and their own skills pin. Only the first line of `.lokf/justfile`, which names the host, and its `schema :=` line are a sibling's own. Since 0.47.0 each sibling keeps itself current. Its `knowledge-sync.yaml` reads the pin and this repository's newest release each week. When the pin is behind, it runs the sibling's own `.lokf/scripts/knowledge-sync.sh`, which reads what to copy from the release's `templates/knowledge-sync.manifest`, and opens one pull request with the diff: the copies, the pin, and the changelog entry under `## [Unreleased]` and `### Security`. A later week's run refreshes that one pull request to the newest release until it is merged. The header of `knowledge-sync.sh` says what a sync copies, adds and refuses.
 
-- refuses anything but a tag that is on origin and carries `skills/ktl-librarian`;
-- works in each sibling on a branch of its own, `sync-<tag>`, started from the default branch as origin has it, so the diff is never left on `main` or inside a feature branch. It skips a sibling with uncommitted changes (0.40.0);
-- copies that tag's templates over the copies the sibling already has, `.lokf/justfile` among them since 0.43.1, keeping the sibling's own first line there and, since 0.45.0, its own `schema :=` line, which names a domain schema;
-- adds a template the sibling lacks when ktl-sidecar puts it on every host or a copy there cannot run without it;
-- reports any other template, and adds nothing more;
-- copies ktl-website's templates to a sibling that laid its site down with that skill, one with a `website/site.config.mjs`, apart from the three files the host owns, and prints the command that builds the site there;
-- then moves the sibling's `TRUST_LADDER_SKILLS_REF` to the same tag, and its `TRUST_LADDER_SKILLS_SHA` to the commit that tag names;
-- runs the sidecar's checks there, and since 0.45.0 reports a failure of any of them, `lokf-check-refs` included;
-- prints the changelog entry to add and then the commit command, each set apart and naming the files to stage, and never commits. Since 0.45.0 it writes the entry in full: it names the copies the sync changed, or says the pin moved alone. It ends the entry with "No plugin change" only for an Obsidian plugin, one whose root `manifest.json` names `minAppVersion`.
+A new template goes in the manifest and in ktl-sidecar's Step 5 table, and nowhere else, because the preflight and contract check 11 read the manifest.
 
-The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync. The template's pin is never bumped by hand, which would cut a pointless release. The sibling's pull request is opened after the tag exists, since a sibling merged before its pin's tag fails at the install step on its next scheduled run.
+To open the pull requests on the day of a release, a maintainer runs `scripts/sync-sidecar.sh --pr <tag> <sibling>...` from this repository once the tag is on origin. The script:
+
+- refuses anything but a release tag that is on origin and carries `skills/ktl-librarian/SKILL.md`;
+- runs each sibling's own copy of `knowledge-sync.sh`, or the tag's copy in a sibling that has none, on a branch of its own, `sync-<tag>`, from origin's default branch;
+- skips a sibling with uncommitted changes;
+- without `--pr`, `--push` or `--commit`, leaves the sync uncommitted on the branch with the commit command printed, so the diff is the review.
+
+Once the pull requests are merged, `scripts/sync-sidecar.sh --finish <tag> <sibling>...` puts each sibling back on its default branch, brings it up to date and removes the branch.
+
+The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync. The template's pin is never bumped by hand, which would cut a pointless release. A tag that is not on origin is refused, because a sibling's scheduled librarian clones from there and would fail to install.
 
 Both checks read the `workflow_dispatch` version input through an `env:` variable rather than interpolating `${{ inputs.version }}` straight into the shell script. That hardening change (2026-09-12) closes a script-injection vector without changing what the checks verify.

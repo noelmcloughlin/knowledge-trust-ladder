@@ -7,34 +7,34 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  at: "2026-10-18T10:22:18Z"
 hasPart:
-- https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
-- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
+  - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
+  - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
 status: draft
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 references:
-- https://w3id.org/ktl/knowledge/references/lokf-toolkit
-- https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
+  - https://w3id.org/ktl/knowledge/references/lokf-toolkit
+  - https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 sources:
-- resource: skills/ktl-sidecar/SKILL.md
-- resource: skills/ktl-sidecar/references/automation.md
-- resource: skills/ktl-sidecar/references/gate.md
-- resource: skills/ktl-sidecar/references/portability.md
-- resource: skills/ktl-sidecar/references/prerequisites.md
-- resource: skills/ktl-sidecar/references/m365.md
-- resource: .github/workflows/knowledge-librarian.yaml
-- resource: skills/ktl-librarian/references/scheduled-task.md
-- resource: .lokf/scripts/knowledge-preflight.sh
-- resource: CHANGELOG.md
-- resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/61b9355f0dfa037ff8e165affa285344e451c209
-- resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/8fcdd867e45528a21f20f177fb63306afe8d278d
+  - resource: skills/ktl-sidecar/SKILL.md
+  - resource: skills/ktl-sidecar/references/automation.md
+  - resource: skills/ktl-sidecar/references/gate.md
+  - resource: skills/ktl-sidecar/references/portability.md
+  - resource: skills/ktl-sidecar/references/prerequisites.md
+  - resource: skills/ktl-sidecar/references/m365.md
+  - resource: .github/workflows/knowledge-librarian.yaml
+  - resource: skills/ktl-librarian/references/scheduled-task.md
+  - resource: .lokf/scripts/knowledge-preflight.sh
+  - resource: CHANGELOG.md
+  - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/61b9355f0dfa037ff8e165affa285344e451c209
+  - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/8fcdd867e45528a21f20f177fb63306afe8d278d
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T00:41:23Z"
+  - by: process:ktl-librarian
+    at: "2026-10-16T00:41:23Z"
 ---
 # Overview
 
@@ -45,7 +45,7 @@ ktl-sidecar runs **once** per repository, or to repair a missing or broken sidec
 - **Step 2.** Add three root-level pointers: `llms.txt`, a README aside, and a `knowledge_bundle` symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian (see [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)).
 - **Step 3.** Verify no placeholder survives.
 - **Step 4.** Validate.
-- **Step 5.** Optionally install the CI automation: three workflows, nine scripts and, since 2026-09-24, the `m365/` folder, fourteen files in all. Since 0.44.0 a domain host, whose bundle names other bundles, also gets `.lokf/domain.yaml`, `.lokf/scripts/knowledge-federate.py` and `.github/workflows/knowledge-federation.yaml`.
+- **Step 5.** Optionally install the CI automation: the workflows, the scripts and, since 2026-09-24, the `m365/` folder. The step's lint advice names nine `scripts/*.sh` and six `.github/workflows/*.yaml`. Since 0.44.0 a domain host, whose bundle names other bundles, also gets `.lokf/domain.yaml`, `.lokf/scripts/knowledge-federate.py` and `.github/workflows/knowledge-federation.yaml`. Since 0.47.0, wherever the librarian workflow is, the step also installs `knowledge-sync.yaml`, `.lokf/scripts/knowledge-sync.sh` and a pull request template, which keep the copies and the skills pin at the newest release of the skills repository. Since 0.49.0 a host with knowledge outside its repository also gets `.lokf/ingest.yaml`, `.lokf/scripts/knowledge-ingest.sh` with its Python half, `knowledge-ingest.yaml` and a pull request template.
 - **Step 6.** Hand off to ktl-librarian. All four skills should be installed, and ktl-website can publish the bundle as a site once it is worth showing.
 
 Step 0 also settles two things. The bundle's base IRI, which every concept's id starts with, is never the code-host repository URL: that path space is not the project's, so the ids could never resolve. And Step 0 decides whether `.lokf/` is committed or gitignored. Committing it is the default the four skills assume. Gitignoring it is equally valid, for a personal bundle or under a policy against committing agent-authored content, and changes four things:
@@ -59,7 +59,7 @@ The conventions script's Python half is among those scripts, since the `.sh` fai
 
 - the preflight;
 - since 2026-09-23, the feedback recorder;
-- the report script `knowledge-report.sh`, which computes each trust label, the health line, the librarian's work list, whether any work waits and, since 2026-10-06, the curator's queue with how many other concepts rely on each concept;
+- the report script `knowledge-report.sh`, which computes each trust label, the health line, the librarian's work list, whether any work waits and, since 2026-10-06, the curator's queue with how many other concepts rely on each concept, and, since 0.48.0, counts the tracked files no concept names;
 - the Microsoft 365 Copilot skills' builder with its instructions.
 
 The forge-free provenance gate needs git and gpg or ssh-keygen. The skill's frontmatter declares what it needs in the Agent Skills `compatibility` field, as every skill here does.
@@ -68,11 +68,11 @@ ktl-docent runs its own copies of the feedback recorder and the report script, n
 
 The skill keeps its detail in five reference files, so the router stays small:
 
-- `references/portability.md` is a matrix, host by host: git or none, GitHub, GitLab or Forgejo, Linux, macOS, Windows and PowerShell, synced folders, an Obsidian vault and, since 2026-09-24, a Microsoft 365 Copilot declarative agent. Since 2026-10-07 it also says what the skills repository tests before a release. A host whose copies are as the sidecar installed them need not test the templates again. A copy the host edited, a port to another forge or shell, and another operating system stay the host's.
+- `references/portability.md` is a matrix, host by host: git or none, GitHub, GitLab, Codeberg, Forgejo or Gitea, Linux, macOS, Windows and PowerShell, synced folders, an Obsidian vault and, since 2026-09-24, a Microsoft 365 Copilot declarative agent. Since 2026-10-07 it also says what the skills repository tests before a release. A host whose copies are as the sidecar installed them need not test the templates again. A copy the host edited, a port to another forge or shell, and another operating system stay the host's.
 - `references/m365.md`, added on 2026-09-24, says what Copilot allows a custom skill, what the Agents Toolkit checks, and which roles can run there. The docent and a future auditor run there as snapshot skills. The sidecar and librarian do not run there at all. The curator does not run there until it has a write action and an identity other than a forge login ([The docent in Microsoft 365 Copilot](docent-in-m365-copilot.md)).
 - `references/automation.md` says what the librarian, wrapper, release and feedback files do and how to set them up, and since 0.44.0 the federation workflow and script of a domain host.
 - `references/gate.md`, split out of `automation.md` on 2026-09-24, covers the registrar workflow and the forge-free gate.
-- `references/prerequisites.md`, since 2026-09-17, gives each preflight line in plain words: what it means, what it stops, who fixes it and what to send them, for a person who cannot act on it themselves. The contract holds it to every line the preflight can print as missing or a warning.
+- `references/prerequisites.md`, since 2026-09-17, gives each preflight line in plain words: what it means, what it stops, who fixes it and what to send them, for a person who cannot act on it themselves. The contract holds it to every line the preflight can print as missing or a warning. Since 0.49.0 it explains the `ingest` line too.
 
 Every file the skill writes is copied from `templates/`, never retyped, which keeps a freshly installed bundle byte-identical to the reviewed template.
 
@@ -98,13 +98,18 @@ A first job, `earlier`, reads what became of the pull requests the workflow open
 
 The third workflow, `knowledge-release.yaml` (since 2026-09-24), needs no agent. It attaches the bundle to a GitHub release as `knowledge-<tag>-<repository>.zip` with a checksum. Since the `m365/` folder was added, it also attaches one Copilot skill zip per instructions file under `.lokf/m365/` beside it, built by `.lokf/m365/knowledge-m365.sh`. It skips a release whose bundle matches the last one released. It runs when dispatched by hand or, once the `KNOWLEDGE_RELEASE_ENABLED` repository variable is `true`, on each published release.
 
-**A domain host (0.44.0).** `references/automation.md` describes a domain host as one whose bundle names other bundles. Each `MemberBundle` concept names one released zip and its checksum, a person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. Nothing in the host's three files runs a model:
+**A domain host (0.44.0).** `references/automation.md` describes a domain host as one whose bundle names other bundles. Each `MemberBundle` concept (or `MemberDomain`, when that bundle is a domain in turn) names one released zip and its checksum, a person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. Nothing in the host's three files runs a model:
 
-- `knowledge-federate.py build --tag <tag>` resolves the members into a lock, fetches each zip, and checks it against the checksum its concept names and, where `gh` is present, its attestation. It registers and exports each bundle with the toolkit, and loads one named graph per bundle. It gates every typed relation whose target lies in no member's namespace, as the domain's `unowned_targets` says, and renames `snapshot.new/` to `snapshot/` in one step. `--verify-only` stops after the zips are checked.
+- `knowledge-federate.py build --tag <tag>` resolves the members into a lock, fetches each zip, and checks it against the checksum its concept names and, where `gh` is present, its attestation. It registers and exports each bundle with the toolkit, and loads one named graph per bundle. It gates every typed relation whose target lies in no member's namespace, as the domain's `unowned_targets` says, and renames `snapshot.new/` to `snapshot/` in one step. A member whose zip is itself a domain is followed, tier by tier, as deep as the top `Domain` concept's `max_depth` allows (3 unless set). A bundle two domains name at one release joins once, and named at two releases it stops the build (0.48.0). `--verify-only` stops after the zips are checked.
 - `knowledge-federation.yaml` runs the build on each release of the host and deploys the workspace under `/workspace/` of the host's site, once the `KNOWLEDGE_FEDERATION_ENABLED` repository variable is `true`. A domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer.
-- `knowledge-federate.py members` is the domain's librarian, a script the librarian workflow runs as `AGENT_CLI`. It picks each member's newest release that carries a bundle zip, verifies it, and writes the change as operations for the pen.
+- `knowledge-federate.py members` is the domain's librarian, a script the librarian workflow runs as `AGENT_CLI`. It picks each member's newest release that carries a bundle zip, verifies it, and writes the change as operations for the pen. It verifies attestations with the job's read-only token, under `AGENT_USE_JOB_TOKEN` set to `true` and `AGENT_API_KEY_ENV` set to `KNOWLEDGE_FEDERATE_TOKEN`.
+- `knowledge-federate.py mcp` is the `lokf-registry` MCP server over the snapshot, `serve` the toolkit's SPARQL endpoint and graph page, and `query` a one-off query (0.46.0).
 
-The librarian workflow template installs a pinned `ktl-librarian` into `.agents/skills/` on every scheduled run, since installed skills are gitignored runtime state a checkout does not carry. The step is skipped in the repository that publishes the skills (an `if` on the repository name, since 2026-09-24). There an install would shadow the source under bare `skills/`, because the wrapper looks under `.claude/skills/`, `.github/skills/` and `.agents/skills/` before bare `skills/`. The preflight's `copies` line compares that workflow with its template apart from `TRUST_LADDER_SKILLS_REF` and the commit beside it in `TRUST_LADDER_SKILLS_SHA`, a pin each host moves on its own schedule. The install step installs nothing unless the tag still names that commit.
+The librarian workflow template installs a pinned `ktl-librarian` into `.agents/skills/` on every scheduled run, since installed skills are gitignored runtime state a checkout does not carry. The step is skipped in the repository that publishes the skills (an `if` on the repository name, since 2026-09-24). There an install would shadow the source under bare `skills/`, because the wrapper looks under `.claude/skills/`, `.github/skills/` and `.agents/skills/` before bare `skills/`. The preflight's `copies` line compares that workflow with its template apart from `TRUST_LADDER_SKILLS_REF` and the commit beside it in `TRUST_LADDER_SKILLS_SHA`, a pin each host moves on its own schedule. The install step installs nothing unless the tag still names that commit. Since 0.47.0 the preflight compares the copies `templates/knowledge-sync.manifest` lists, and warns when the installed sidecar has no manifest.
+
+**Keeping the sidecar current (0.47.0).** `knowledge-sync.yaml` runs weekly and on demand. When the skills pin is behind the newest release, its read-only `sync` job runs the host's own `knowledge-sync.sh`, which reads the release's `knowledge-sync.manifest` and writes the release's templates over the host's copies, moves the pin and writes the changelog entry. Its `publish` job opens one pull request on the branch `knowledge-sync`, refreshed until it is merged, with the `KNOWLEDGE_SYNC_TOKEN` secret. Without the secret the run attaches its change and opens nothing.
+
+**Knowledge outside the repository (0.49.0).** `.lokf/ingest.yaml` names each source outside the repository, `knowledge-ingest.sh` fetches it and writes it as Markdown under `.lokf/mirror/<entry id>/`, and `.lokf/ingest.lock.yaml` records what was fetched. `knowledge-ingest.yaml` runs weekly and on demand once `KNOWLEDGE_INGEST_ENABLED` is `true`. Its read-only `ingest` job hands the script only the repository secrets whose names start `KNOWLEDGE_INGEST_`, and its `publish` job opens one pull request on the branch `knowledge-ingest`, refreshed until it is merged. A scheduled run also prunes a mirror file whose source is gone or has left the selection and that no concept cites.
 
 ## Open questions
 

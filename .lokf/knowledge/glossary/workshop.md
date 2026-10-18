@@ -7,19 +7,19 @@ definition: The vault a person already has, in which nothing is moved or migrate
 genre: reference
 resource: docs/obsidian.md
 sources:
-- resource: docs/obsidian.md
-- resource: skills/ktl-docent/references/obsidian.md
+  - resource: docs/obsidian.md
+  - resource: skills/ktl-docent/references/obsidian.md
 relatedTo:
-- https://w3id.org/ktl/knowledge/glossary/exhibition
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
-- https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
+  - https://w3id.org/ktl/knowledge/glossary/exhibition
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
 generated:
   by: process:ktl-librarian
   at: "2026-10-15T01:30:10Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

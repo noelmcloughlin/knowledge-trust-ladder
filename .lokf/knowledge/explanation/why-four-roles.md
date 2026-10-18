@@ -6,29 +6,29 @@ description: Why the work is split into four skills, sidecar, librarian, curator
 genre: explanation
 resource: docs/architecture.md
 sources:
-- resource: docs/architecture.md
-- resource: skills/ktl-librarian/SKILL.md
-- resource: skills/ktl-docent/SKILL.md
-- resource: docs/three-lines-critics.md
-- resource: docs/obsidian.md
+  - resource: docs/architecture.md
+  - resource: skills/ktl-librarian/SKILL.md
+  - resource: skills/ktl-docent/SKILL.md
+  - resource: docs/three-lines-critics.md
+  - resource: docs/obsidian.md
 generated:
   by: process:ktl-librarian
   at: "2026-10-15T01:30:10Z"
 status: draft
 about:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
-- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
-- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
-- https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
 references:
-- https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
-- https://w3id.org/ktl/knowledge/playbooks/ktl-prose-skill
-- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+  - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-prose-skill
+  - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

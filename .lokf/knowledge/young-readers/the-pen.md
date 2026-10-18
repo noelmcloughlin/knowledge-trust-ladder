@@ -7,22 +7,22 @@ definition: The name the docs give `knowledge-apply.sh`, the script through whic
 genre: reference
 resource: skills/ktl-sidecar/templates/scripts/knowledge-apply.sh
 derivedFrom:
-- https://w3id.org/ktl/knowledge/glossary/the-pen
+  - https://w3id.org/ktl/knowledge/glossary/the-pen
 sources:
-- resource: .lokf/knowledge/glossary/the-pen.md
+  - resource: .lokf/knowledge/glossary/the-pen.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 tags:
-- audience-13-18
+  - audience-13-18
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:23:11Z"
 relatedTo:
-- https://w3id.org/ktl/knowledge/glossary/registrar
+  - https://w3id.org/ktl/knowledge/glossary/registrar
 ---
 
 This page is for readers aged 13 to 18. It retells [[the-pen]] in shorter words. The full page has every detail.

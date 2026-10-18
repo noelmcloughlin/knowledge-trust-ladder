@@ -9,25 +9,25 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:17:30Z"
 dependsOn:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
-- https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
 definedBy:
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 references:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
-- https://w3id.org/ktl/knowledge/policies/threat-model
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+  - https://w3id.org/ktl/knowledge/policies/threat-model
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T00:41:23Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:17:30Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:17:30Z"
 sources:
-- resource: skills/ktl-docent/SKILL.md
-- resource: skills/ktl-docent/references/answering.md
-- resource: skills/ktl-docent/references/feedback.md
-- resource: README.md
-- resource: CHANGELOG.md
+  - resource: skills/ktl-docent/SKILL.md
+  - resource: skills/ktl-docent/references/answering.md
+  - resource: skills/ktl-docent/references/feedback.md
+  - resource: README.md
+  - resource: CHANGELOG.md
 status: draft
 ---
 
@@ -73,3 +73,4 @@ The fallback is contained by what the skill cannot do. It never edits `.lokf/kno
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 the Runs column ("whenever anyone asks") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.
 - 2026-10-16, process:ktl-librarian: Since 0.45.0 the docent's label table reads *Still a draft / Reopened*: for a confirmed concept a question put back to draft, the docent says the confirmation first, then when it was reopened, by whom and how many questions wait (`SKILL.md`, `references/answering.md`). Since 0.44.0 `references/answering.md` also says how to answer on a domain host from the workspace under `snapshot/`, labelling each concept with its bundle. This concept carries neither.
+- 2026-10-18, process:ktl-librarian: Since 0.49.0 `skills/ktl-docent/references/answering.md` says a `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or document outside the repository: the docent names its origin, version and retrieval date from its header in the footer, and never fetches the origin. The same page now reads a domain host's members of type `MemberDomain` as well as `MemberBundle`. This concept carries neither, and a person wrote its text, so the librarian cannot add them.

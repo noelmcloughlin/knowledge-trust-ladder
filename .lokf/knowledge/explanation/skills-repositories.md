@@ -6,21 +6,23 @@ description: "Whether to install Knowledge Trust Ladder (KTL) in a repository wh
 genre: explanation
 resource: docs/skills-repositories.md
 sources:
-- resource: docs/skills-repositories.md
-- resource: skills/ktl-librarian/references/agent-skills.md
+  - resource: docs/skills-repositories.md
+  - resource: skills/ktl-librarian/references/agent-skills.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/wikiskill
-- https://w3id.org/ktl/knowledge/explanation/skillwiki
-- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/explanation/wikiskill
+  - https://w3id.org/ktl/knowledge/explanation/skillwiki
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:02:36Z"
 verified:
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:02:36Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:02:36Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 status: draft
 ---
 

@@ -10,21 +10,21 @@ generated:
   at: "2026-10-13T15:08:54Z"
 status: draft
 definedBy:
-- https://w3id.org/ktl/knowledge/references/lokf-specification
+  - https://w3id.org/ktl/knowledge/references/lokf-specification
 relatedTo:
-- https://w3id.org/ktl/knowledge/references/linkml
+  - https://w3id.org/ktl/knowledge/references/linkml
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 sources:
-- resource: https://pypi.org/project/lokf/
-- resource: https://github.com/nicholsn/lokf/blob/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/src/lokf/cli.py
-- resource: skills/ktl-librarian/SKILL.md
-- resource: CHANGELOG.md
-- resource: docs/context-layer.md
-- resource: docs/context-layer-technology.md
-- resource: skills/ktl-curator/references/domain-schemas.md
-- resource: skills/ktl-sidecar/templates/pyproject.toml
+  - resource: https://pypi.org/project/lokf/
+  - resource: https://github.com/nicholsn/lokf/blob/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/src/lokf/cli.py
+  - resource: skills/ktl-librarian/SKILL.md
+  - resource: CHANGELOG.md
+  - resource: docs/context-layer.md
+  - resource: docs/context-layer-technology.md
+  - resource: skills/ktl-curator/references/domain-schemas.md
+  - resource: skills/ktl-sidecar/templates/pyproject.toml
 ---
 
 # Overview

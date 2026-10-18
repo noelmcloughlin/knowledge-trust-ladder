@@ -7,21 +7,21 @@ definition: The `.lokf/` folder beside a project's code, like `.git/`, which hol
 genre: reference
 resource: docs/architecture.md
 sources:
-- resource: docs/architecture.md
-- resource: skills/ktl-sidecar/SKILL.md
-- resource: skills/ktl-sidecar/templates/README.md
+  - resource: docs/architecture.md
+  - resource: skills/ktl-sidecar/SKILL.md
+  - resource: skills/ktl-sidecar/templates/README.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
-- https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+  - https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

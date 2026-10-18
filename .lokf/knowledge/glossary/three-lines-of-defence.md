@@ -7,20 +7,20 @@ definition: The model regulated industries use to say who owns a risk, who keeps
 genre: reference
 resource: docs/three-lines.md
 sources:
-- resource: docs/three-lines.md
-- resource: docs/architecture.md
+  - resource: docs/three-lines.md
+  - resource: docs/architecture.md
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
-- https://w3id.org/ktl/knowledge/glossary/librarian
-- https://w3id.org/ktl/knowledge/glossary/curator
-- https://w3id.org/ktl/knowledge/glossary/registrar
+  - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+  - https://w3id.org/ktl/knowledge/glossary/librarian
+  - https://w3id.org/ktl/knowledge/glossary/curator
+  - https://w3id.org/ktl/knowledge/glossary/registrar
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

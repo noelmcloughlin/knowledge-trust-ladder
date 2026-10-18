@@ -7,20 +7,20 @@ definition: A schema written in LinkML that extends LOKF's, for a domain whose c
 genre: reference
 resource: docs/for-the-curious.md
 sources:
-- resource: docs/for-the-curious.md
-- resource: docs/architecture.md
-- resource: skills/ktl-curator/references/domain-schemas.md
+  - resource: docs/for-the-curious.md
+  - resource: docs/architecture.md
+  - resource: skills/ktl-curator/references/domain-schemas.md
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/domain-schemas
-- https://w3id.org/ktl/knowledge/glossary/linkml
-- https://w3id.org/ktl/knowledge/glossary/lokf
+  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/glossary/linkml
+  - https://w3id.org/ktl/knowledge/glossary/lokf
 generated:
   by: process:ktl-librarian
   at: "2026-10-16T23:58:13Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-14T00:35:00Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

@@ -6,24 +6,26 @@ description: How the project website in `website/` is built with Astro Starlight
 genre: how-to
 resource: website/README.md
 sources:
-- resource: website/README.md
-- resource: .github/workflows/knowledge-website.yaml
-- resource: website/NOTICE
-- resource: CHANGELOG.md
+  - resource: website/README.md
+  - resource: .github/workflows/knowledge-website.yaml
+  - resource: website/NOTICE
+  - resource: CHANGELOG.md
 dependsOn:
-- https://w3id.org/ktl/knowledge/references/lokf-toolkit
+  - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: human:noelmcloughlin
   at: "2026-10-13T23:50:44Z"
 verified:
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:04:01Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T23:50:44Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:04:01Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T23:50:44Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 stale_after: 2027-10-14
 status: draft
 ---

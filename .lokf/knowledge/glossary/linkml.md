@@ -7,22 +7,22 @@ definition: The schema language LOKF is written in, created by the LinkML Commun
 genre: reference
 resource: docs/architecture.md
 sources:
-- resource: docs/architecture.md
-- resource: docs/for-the-curious.md
-- resource: skills/ktl-librarian/SKILL.md
-- resource: skills/ktl-curator/references/domain-schemas.md
+  - resource: docs/architecture.md
+  - resource: docs/for-the-curious.md
+  - resource: skills/ktl-librarian/SKILL.md
+  - resource: skills/ktl-curator/references/domain-schemas.md
 definedBy:
-- https://w3id.org/ktl/knowledge/references/linkml
+  - https://w3id.org/ktl/knowledge/references/linkml
 relatedTo:
-- https://w3id.org/ktl/knowledge/glossary/lokf
-- https://w3id.org/ktl/knowledge/glossary/domain-schema
+  - https://w3id.org/ktl/knowledge/glossary/lokf
+  - https://w3id.org/ktl/knowledge/glossary/domain-schema
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

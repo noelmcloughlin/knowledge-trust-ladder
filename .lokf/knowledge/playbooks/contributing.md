@@ -7,19 +7,19 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-14T00:35:00Z"
+  at: "2026-10-18T10:22:18Z"
 status: draft
 references:
-- https://w3id.org/ktl/knowledge/playbooks/repository-validation
-- https://w3id.org/ktl/knowledge/playbooks/releasing
-- https://w3id.org/ktl/knowledge/policies/ai-covenant
-- https://w3id.org/ktl/knowledge/policies/code-of-conduct
+  - https://w3id.org/ktl/knowledge/playbooks/repository-validation
+  - https://w3id.org/ktl/knowledge/playbooks/releasing
+  - https://w3id.org/ktl/knowledge/policies/ai-covenant
+  - https://w3id.org/ktl/knowledge/policies/code-of-conduct
 sources:
-- resource: CONTRIBUTING.md
-- resource: docs/signing-commits.md
+  - resource: CONTRIBUTING.md
+  - resource: docs/signing-commits.md
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-16T23:58:13Z"
 ---
 
 # Overview
@@ -51,12 +51,7 @@ Participation is covered by the Contributor Covenant, shared with the sibling KT
 
 Releasing is maintainer-gated. Conventional Commits decide the version, and `[Unreleased]` is the release note. A merge to `main` promotes the changelog but never tags, and a maintainer runs `publish.yml` by hand ([releasing](releasing.md)).
 
-After a release that changes a template or `skills/ktl-librarian/`, and once the tag is on origin, `scripts/sync-sidecar.sh <tag> obsidian-ktl-curator obsidian-ktl-registrar`:
-
-- copies that release's templates over each sibling's copies;
-- moves each sibling's `TRUST_LADDER_SKILLS_REF` to the same tag, and `TRUST_LADDER_SKILLS_SHA` to the commit that tag names;
-- runs the sidecar's checks there;
-- leaves the diff for a person to review and commit.
+After a release that changes a template or `skills/ktl-librarian/`, each sibling's `knowledge-sync.yaml` opens a pull request that moves its copies and pin to the release within a week. To open those pull requests at once, a maintainer runs `scripts/sync-sidecar.sh --pr <tag> ../obsidian-ktl-curator ../obsidian-ktl-registrar` once the tag is on origin, and `--finish <tag>` once they are merged.
 
 The pin and the copies move together because, once a sibling turns on its scheduled librarian, the pin decides which instructions run unattended.
 

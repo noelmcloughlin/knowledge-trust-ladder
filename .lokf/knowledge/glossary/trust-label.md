@@ -11,14 +11,14 @@ generated:
   at: "2026-10-13T01:06:43Z"
 definedBy: []
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-06T11:10:52Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:06:43Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:06:43Z"
 references:
-- https://w3id.org/ktl/knowledge/references/okf-specification
+  - https://w3id.org/ktl/knowledge/references/okf-specification
 status: draft
 ---
 

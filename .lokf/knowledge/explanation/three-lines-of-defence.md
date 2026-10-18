@@ -10,21 +10,21 @@ generated:
   at: "2026-10-13T01:11:23Z"
 about: []
 relatedTo:
-- https://w3id.org/ktl/knowledge/policies/ai-covenant
-- https://w3id.org/ktl/knowledge/glossary/trust-label
-- https://w3id.org/ktl/knowledge/explanation/context-layer
-- https://w3id.org/ktl/knowledge/explanation/why-four-roles
-- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
+  - https://w3id.org/ktl/knowledge/policies/ai-covenant
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/explanation/context-layer
+  - https://w3id.org/ktl/knowledge/explanation/why-four-roles
+  - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:11:23Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:11:23Z"
 sources:
-- resource: docs/three-lines.md
-- resource: docs/three-lines-critics.md
-- resource: CHANGELOG.md
-- resource: README.md
+  - resource: docs/three-lines.md
+  - resource: docs/three-lines-critics.md
+  - resource: CHANGELOG.md
+  - resource: README.md
 status: draft
 ---
 # Overview
@@ -90,3 +90,4 @@ The main page closes with what remains and who owns it, in three lines:
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 the fifth-role section that points at `docs/three-lines.md` is on `docs/architecture.md`, not in `README.md`. The sentence "The README's section on the fifth role" and the `README.md` source should name `docs/architecture.md`.
 - 2026-10-16, process:ktl-librarian: Since 0.43.0 `docs/three-lines.md` shows `.assets/ktl-three-lines-dark.svg` in GitHub's dark theme, and `CHANGELOG.md` says the `-dimmed` set stays in `.assets/` unreferenced. This concept says the diagram has a dimmed counterpart for dark mode.
+- 2026-10-18, process:ktl-librarian: `docs/three-lines.md` under What remains to do now lists, for this project, the parts of the context layer that remain a design: lazy loading, a `lokf-registry` MCP server, and harvesting remote artifacts behind the `sensitivity` gate. This concept says the list names the domain tiers and the workspace. `docs/federation.md` and `CHANGELOG.md` list the `lokf-registry` MCP server, `knowledge-federate.py mcp`, as existing, so the two pages also disagree on the MCP server.

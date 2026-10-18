@@ -6,29 +6,29 @@ description: The librarian's copy editor. It rewords the body of a concept an ag
 genre: how-to
 resource: skills/ktl-prose/SKILL.md
 sources:
-- resource: skills/ktl-prose/SKILL.md
-- resource: skills/ktl-prose/references/rules.md
-- resource: skills/ktl-prose/references/other-files.md
-- resource: skills/ktl-prose/references/young-readers.md
-- resource: skills/ktl-prose/scripts/prose-check.py
-- resource: docs/architecture.md
-- resource: CHANGELOG.md
+  - resource: skills/ktl-prose/SKILL.md
+  - resource: skills/ktl-prose/references/rules.md
+  - resource: skills/ktl-prose/references/other-files.md
+  - resource: skills/ktl-prose/references/young-readers.md
+  - resource: skills/ktl-prose/scripts/prose-check.py
+  - resource: docs/architecture.md
+  - resource: CHANGELOG.md
 references:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
-- https://w3id.org/ktl/knowledge/policies/threat-model
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+  - https://w3id.org/ktl/knowledge/policies/threat-model
 dependsOn:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 definedBy:
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 # Overview
 

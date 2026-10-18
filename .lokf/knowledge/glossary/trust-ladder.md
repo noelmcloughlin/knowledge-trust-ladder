@@ -7,18 +7,18 @@ definition: The answer, written into each entry of the bundle, to who is respons
 genre: reference
 resource: docs/architecture.md
 sources:
-- resource: docs/architecture.md
+  - resource: docs/architecture.md
 relatedTo:
-- https://w3id.org/ktl/knowledge/glossary/trust-label
-- https://w3id.org/ktl/knowledge/glossary/health-line
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/glossary/health-line
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
   at: "2026-10-16T23:58:13Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview
