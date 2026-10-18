@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.51.0] - 2026-10-18
+
 ### Added
 
 - **A person who sends back text they wrote can release it to the librarian.** ktl-curator then writes `process:ktl-curator` in `generated`, in a commit that person signs, so the librarian's next run rewrites the text from its sources instead of only adding a question.
