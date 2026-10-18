@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.52.0] - 2026-10-18
+
 ### Added
 
 - **A member that waits in a member domain joins at the release that domain built.** The members script now names a member domain's released `workspace-<tag>.zip` and its checksum in the `MemberDomain` concept. The build then takes such a member at the release the lock inside that zip records, and the lock names each member concept (format 3). A member names the files of one release, and the build refuses a schema or workspace from another.
