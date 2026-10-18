@@ -7,18 +7,18 @@ definition: "The bundle as a vault of its own: the checked part of what the work
 genre: reference
 resource: docs/obsidian.md
 sources:
-- resource: docs/obsidian.md
-- resource: README.md
+  - resource: docs/obsidian.md
+  - resource: README.md
 relatedTo:
-- https://w3id.org/ktl/knowledge/glossary/workshop
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/workshop
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  at: "2026-10-18T01:24:15Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T00:41:23Z"
+  - by: process:ktl-librarian
+    at: "2026-10-16T00:41:23Z"
 ---
 
 # Overview
@@ -30,5 +30,5 @@ Since 0.42.0 the README uses the word for the sites too. Its Exhibitions section
 - this repository's own bundle, at `https://w3id.org/ktl/knowledge/`;
 - the KTL Curator Obsidian plugin's, at `https://noelmcloughlin.github.io/obsidian-ktl-curator/knowledge/`;
 - the KTL Registrar Obsidian plugin's, at `https://noelmcloughlin.github.io/obsidian-ktl-registrar/knowledge/`;
-- KTL Federation's, the top domain that federates member bundles into one workspace as a context layer, linked at its repository, `https://github.com/noelmcloughlin/ktl-federation`;
+- KTL Federation's, the domain that federates member bundles into one workspace as a context layer, linked at its repository, `https://github.com/noelmcloughlin/ktl-federation`;
 - AI-LinkMO's.

@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-18
+
+* **Changed**: the context layer explanation and the exhibition term no longer name a domain by its position. As `docs/context-layer.md` and `README.md` now say, the domain a build starts from bounds the workspace, and KTL Federation is the domain that federates member bundles.
+
 ## 2026-10-16
 
 * **Prose**: reworded 8 concept bodies in plain English. No fact, link, number or frontmatter changed.
