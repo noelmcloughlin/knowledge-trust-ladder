@@ -18,7 +18,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T01:52:47Z"
+  at: "2026-10-18T15:19:11Z"
 status: draft
 ---
 
@@ -30,7 +30,7 @@ A **domain host** is a repository whose bundle names other repositories' knowled
 
 ktl-sidecar's `templates/domain.yaml` is laid down as `.lokf/domain.yaml`, with `schema := "domain.yaml"` in the justfile. It adds four classes over LOKF core, and `lokf validate` checks them like any other.
 
-- **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner. It is one concept under `domains/`, named for the domain, as in `domains/ktl-federation`, and never for its position, because the same domain is where its own build starts and a member of another domain. Its `unowned_targets` is the build's gate policy: `fail` stops the build on a typed relation whose target lies in no member's namespace, and `report` lists it and goes on. Its `max_depth` is how many tiers of members the build follows, 3 unless set.
+- **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner. It is one concept under `domains/`, named for the domain, as in `domains/ktl-federation`, and never for its position, because the same domain is where its own build starts and a member of another domain. Its `unowned_targets` is the build's gate policy: `fail` stops the build on a typed relation whose target lies in no member's namespace, and `report` lists it and goes on. Its `max_depth` is how many tiers of members the build follows, 3 unless set. The build reads both as a person last confirmed them, and uses the defaults until then.
 - **`MemberBundle`** (a `Dataset`): one bundle the domain admits, under `members/`. It names the bundle's `base_iri`, the release `version` it pins, the `release` page, and one `distribution` whose `access_url` is the release's zip and whose `checksum` is that zip's digest. A second distribution names the schema released beside the zip, `schema-<tag>-<name>.yaml`, when the member's justfile names one, and the build then validates the bundle against it. `isPartOf` names the domain concept.
 - **`MemberDomain`** (a `MemberBundle`, `dcat:Catalog`): a member whose bundle is a domain in turn. The build follows its members into the same workspace, tier by tier, as deep as `max_depth` allows. A `MemberBundle` whose zip holds a `Domain` concept is followed too, and the lock marks it a domain.
 - **`ReleaseDistribution`** (a `Distribution`): the zip with its `checksum`, `sha256:` and 64 hexadecimal digits, as the release's `.sha256` file gives it.
@@ -79,13 +79,15 @@ The domain states its admission rule in its policy concept. A member is released
 
 # A member that is a domain
 
-Every domain bounds a workspace of its own, and a domain may not name itself or a domain above it. Confirming a `MemberDomain` attests that the domain belongs under the admission rule and who answers for it: the owner of that domain, whose own confirmations cover its members. It does not vouch for the members below it.
+Every domain bounds a workspace of its own, and a domain may not name itself or a domain above it. Confirming a `MemberDomain` attests that the domain belongs under the admission rule and who answers for it: the owner of that domain, whose own confirmations cover its members. It does not vouch for the members below it. A member that waits for a confirmation in that domain's release is left out above it, since a zip holds no history to find the release confirmed before.
 
-The diamond rule: when two domains name the same bundle at the same release, the bundle joins once, and the lock records both domains. When they name different releases, the build stops, because one named graph holds one release, and the two owners agree on one. The workspace index's "Named by" column says which domain's concept named each bundle.
+The diamond rule: when two domains name the same bundle at the same release, the bundle joins once, and the lock records both domains. When they name different releases, the build stops, because one named graph holds one release. The two owners then agree on one release. The workspace index's "Named by" column says which domain's concept named each bundle.
 
 # What moves a member
 
-The domain's librarian is a script, `knowledge-federate.py members`, which the sidecar's librarian workflow runs as `AGENT_CLI`. It picks each member's newest release that carries a bundle zip, verifies its checksum and attestation, and writes the move for the pen with a question for the curator. The member then reads as edited since a person confirmed it, until a person confirms the new release after the same three checks. `knowledge-federate.py members --add <owner>/<repo>` drafts a new member the same way, and drafts a `MemberDomain` when that release is a domain.
+The domain's librarian is a script, `knowledge-federate.py members`, which the sidecar's librarian workflow runs as `AGENT_CLI`. It picks each member's newest release that carries a bundle zip, verifies its checksum and attestation, and writes the move for the pen with a question for the curator. The member then reads as edited since a person confirmed it, until a person confirms the new release after the same three checks. Until then the build keeps the release a person last confirmed, and the workspace index lists the move under *Waiting for a person*. `knowledge-federate.py members --add <owner>/<repo>` drafts a new member the same way, and drafts a `MemberDomain` when that release is a domain. The build leaves a new member out until a person confirms it, and a link into its namespace counts as unowned.
+
+A member leaves when the curator retires its concept. The concept stays for links and history with `status: deprecated`, the next build leaves its bundle out of the workspace, and the members script proposes no move for it. The build passes over a retired `Domain` concept the same way, so a renamed domain's old concept can stay beside the new one. A member the curator sends back stays at the release a person confirmed, because that confirmation stands; retiring it takes it out. A confirmation its person removes, in a signed commit, counts for no earlier release either.
 
 # Reading the workspace
 
