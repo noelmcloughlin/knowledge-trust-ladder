@@ -2,6 +2,7 @@
 
 ## 2026-10-18
 
+* **Added**: Curating a domain bundle, from `skills/ktl-curator/references/domain-bundle.md` as `docs/domain-name` leaves it, so a domain host can link the curator's page by its w3id IRI.
 * **Changed**: the context layer explanation and the exhibition term no longer name a domain by its position. As `docs/context-layer.md` and `README.md` now say, the domain a build starts from bounds the workspace, and KTL Federation is the domain that federates member bundles.
 
 ## 2026-10-16
