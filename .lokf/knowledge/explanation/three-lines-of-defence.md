@@ -6,7 +6,7 @@ description: "The librarian, curator, registrar, sidecar and docent placed in th
 genre: explanation
 resource: docs/three-lines.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-13T01:11:23Z"
 about: []
 relatedTo:

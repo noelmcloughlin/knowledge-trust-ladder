@@ -7,7 +7,7 @@ definition: The plain-language phrase a skill uses for how far a concept has bee
 genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-13T01:06:43Z"
 definedBy: []
 about:
