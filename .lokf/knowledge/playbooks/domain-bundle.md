@@ -18,7 +18,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T15:19:11Z"
+  at: "2026-10-18T23:28:35Z"
 status: draft
 ---
 
@@ -81,7 +81,7 @@ The domain states its admission rule in its policy concept. A member is released
 
 Every domain bounds a workspace of its own, and a domain may not name itself or a domain above it. Confirming a `MemberDomain` attests that the domain belongs under the admission rule and who answers for it: the owner of that domain, whose own confirmations cover its members. It does not vouch for the members below it. A member that waits for a confirmation in that domain's release is left out above it, since a zip holds no history to find the release confirmed before.
 
-The diamond rule: when two domains name the same bundle at the same release, the bundle joins once, and the lock records both domains. When they name different releases, the build stops, because one named graph holds one release. The two owners then agree on one release. The workspace index's "Named by" column says which domain's concept named each bundle.
+The diamond rule: when two domains name the same bundle at the same release, the bundle joins once, and the lock records both domains. When they name different releases, the build stops, because one named graph holds one release. It stays stopped until the two owners agree on one release and both pin it. The workspace index's "Named by" column says which domain's concept named each bundle.
 
 # What moves a member
 

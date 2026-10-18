@@ -2,6 +2,7 @@
 
 ## 2026-10-18
 
+* **Changed**: Curating a domain bundle says the diamond rule's stop lasts until both owners pin one release, as the curator's domain-bundle.md now does.
 * **Changed**: the source map names the site's `src/components` and `src/styles` folders instead of all of `src/`, in `website/` and in ktl-website's template, since its rows exclude only the components, styles and scripts. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Open question**: Knowledge sources: The website rows exclude the site's components, styles and scripts. Is the rest of `src/`, in `website/` and in ktl-website's template, excluded too: its pages, `assets/`, `content.config.ts`, `routeData.ts`, `socialCards.ts` and `trust.ts`? If not, `playbooks/website.md` and `playbooks/ktl-website-skill.md` should cite them.
 * **Changed**: the source map now lists in `sources` every path its rows consciously exclude, so `knowledge-report.sh coverage` counts those files as looked at. Each row still gives the reason, and the site's components, styles and scripts are taken as its `src/` and `scripts/` folders. Edited since a person confirmed it; the label says so until the curator looks again.
