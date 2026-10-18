@@ -4,6 +4,13 @@ The librarian reads the repository, and a bundle cites what the librarian can re
 
 Nothing in the trust ladder changes. A concept derived from a wiki page is agent-derived until a person confirms it, as one derived from a README is. Knowledge Trust Ladder (KTL) keeps the same work list, gate and review; the ingest adds reach.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-ingest-dark.svg">
+    <img src="../.assets/ktl-ingest.svg" alt="Four kinds of source outside the repository feed the ingest: the manifest names them, the script fetches and converts them in a read-only job with no agent, and writes the mirror and the lock. A pull request each Sunday is the review; the librarian on Monday derives concepts that cite the mirror file and the origin page" width="720" />
+  </picture>
+</p>
+
 ## What can be mirrored
 
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
