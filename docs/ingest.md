@@ -124,7 +124,7 @@ Set the same variable names in the environment. The librarian runs the first com
 
 The body is the run's summary, then the checklist. Read the diff as you would read the page: is this text something the repository should hold? A page that should not be here comes out of the manifest, not out of the diff. A file marked `gone` or `unlisted` stays until the librarian has asked about the concepts that cite it. A line marked `failed` with a credential's name is a secret not yet set, or expired; the run shows it as a warning too.
 
-A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed, and a run started by hand proposes it now. The pull request starts no checks, since the job's own token opened it, and the mirror is text the registrar's conventions do not read. Merge it, and the librarian's next run reads what changed.
+A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed, and a run started by hand proposes it now. No checks run on this pull request, and that is expected: GitHub starts none for a pull request a workflow opens, and the mirror holds no bundle file to check. Merge it, and the librarian's next run reads what changed.
 
 ## What the librarian does next
 
