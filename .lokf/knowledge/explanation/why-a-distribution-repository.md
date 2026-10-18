@@ -6,24 +6,24 @@ description: "Why the six skills are published from one installable repository: 
 genre: explanation
 resource: docs/install.md
 sources:
-- resource: docs/install.md
-- resource: docs/architecture.md
-- resource: .claude-plugin/marketplace.json
-- resource: docs/m365.md
-- resource: .claude-plugin/plugin.json
-- resource: CHANGELOG.md
+  - resource: docs/install.md
+  - resource: docs/architecture.md
+  - resource: .claude-plugin/marketplace.json
+  - resource: docs/m365.md
+  - resource: .claude-plugin/plugin.json
+  - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
   at: "2026-10-16T23:58:13Z"
 status: draft
 references:
-- https://w3id.org/ktl/knowledge/references/gh-skill-cli
-- https://w3id.org/ktl/knowledge/references/open-skills-cli
-- https://w3id.org/ktl/knowledge/policies/versioning
-- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
+  - https://w3id.org/ktl/knowledge/references/gh-skill-cli
+  - https://w3id.org/ktl/knowledge/references/open-skills-cli
+  - https://w3id.org/ktl/knowledge/policies/versioning
+  - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

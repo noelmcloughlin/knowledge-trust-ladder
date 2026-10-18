@@ -7,25 +7,25 @@ definition: The `.lokf/knowledge` directory - containing one-concept-per-file Ma
 genre: reference
 resource: skills/ktl-sidecar/templates/README.md
 sources:
-- resource: README.md
-- resource: docs/obsidian.md
-- resource: skills/ktl-librarian/SKILL.md
+  - resource: README.md
+  - resource: docs/obsidian.md
+  - resource: skills/ktl-librarian/SKILL.md
 generated:
   by: human:noelmcloughlin
   at: "2026-10-13T00:16:44Z"
 about:
-- https://w3id.org/ktl/knowledge/glossary/lokf
+  - https://w3id.org/ktl/knowledge/glossary/lokf
 verified:
-- by: human:noelmcloughlin
-  at: "2026-09-09T16:35:55Z"
-- by: human:noelmcloughlin
-  at: "2026-09-24T01:09:00Z"
-- by: human:noelmcloughlin
-  at: "2026-09-26T20:36:11Z"
-- by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T00:16:44Z"
+  - by: human:noelmcloughlin
+    at: "2026-09-09T16:35:55Z"
+  - by: human:noelmcloughlin
+    at: "2026-09-24T01:09:00Z"
+  - by: human:noelmcloughlin
+    at: "2026-09-26T20:36:11Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T00:16:44Z"
 stale_after: 2028-09-24
 status: draft
 ---

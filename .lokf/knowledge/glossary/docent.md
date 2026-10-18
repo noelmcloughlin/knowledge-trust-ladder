@@ -7,22 +7,22 @@ definition: A museum's name for a guide, who explains the exhibition to visitors
 genre: reference
 resource: docs/architecture.md
 sources:
-- resource: docs/architecture.md
-- resource: docs/architecture.en-simple.md
-- resource: skills/ktl-docent/SKILL.md
+  - resource: docs/architecture.md
+  - resource: docs/architecture.en-simple.md
+  - resource: skills/ktl-docent/SKILL.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
-- https://w3id.org/ktl/knowledge/explanation/why-four-roles
-- https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
+  - https://w3id.org/ktl/knowledge/explanation/why-four-roles
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

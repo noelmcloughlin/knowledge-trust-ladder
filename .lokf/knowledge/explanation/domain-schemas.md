@@ -6,27 +6,27 @@ description: "How a bundle in a specialised or regulated domain goes beyond LOKF
 genre: explanation
 resource: skills/ktl-curator/references/domain-schemas.md
 sources:
-- resource: skills/ktl-curator/references/domain-schemas.md
-- resource: skills/ktl-librarian/references/domain-schema.md
-- resource: skills/ktl-sidecar/templates/justfile
-- resource: README.md
+  - resource: skills/ktl-curator/references/domain-schemas.md
+  - resource: skills/ktl-librarian/references/domain-schema.md
+  - resource: skills/ktl-sidecar/templates/justfile
+  - resource: README.md
 generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:19:37Z"
 about: []
 references:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
-- https://w3id.org/ktl/knowledge/references/linkml
-- https://w3id.org/ktl/knowledge/references/lokf-toolkit
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+  - https://w3id.org/ktl/knowledge/references/linkml
+  - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
-- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
-- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+  - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+  - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:19:37Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:19:37Z"
 status: draft
 ---
 

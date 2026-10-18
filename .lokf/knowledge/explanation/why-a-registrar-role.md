@@ -6,27 +6,27 @@ description: "What the registrar does, keeping every bundle record in order and 
 genre: explanation
 resource: README.md
 sources:
-- resource: README.md
-- resource: docs/obsidian.md
-- resource: skills/ktl-librarian/SKILL.md
-- resource: skills/ktl-sidecar/SKILL.md
+  - resource: README.md
+  - resource: docs/obsidian.md
+  - resource: skills/ktl-librarian/SKILL.md
+  - resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: human:noelmcloughlin
   at: "2026-10-13T00:25:28Z"
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/why-four-roles
-- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+  - https://w3id.org/ktl/knowledge/explanation/why-four-roles
+  - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 about:
-- https://w3id.org/ktl/knowledge/glossary/registrar
+  - https://w3id.org/ktl/knowledge/glossary/registrar
 verified:
-- by: human:noelmcloughlin
-  at: "2026-09-10T00:00:00Z"
-- by: human:noelmcloughlin
-  at: "2026-10-03T09:42:48Z"
-- by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T00:25:28Z"
+  - by: human:noelmcloughlin
+    at: "2026-09-10T00:00:00Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-03T09:42:48Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T00:25:28Z"
 stale_after: 2027-09-10
 status: draft
 ---

@@ -6,26 +6,26 @@ description: "How a knowledge bundle meets an Obsidian vault: two vaults, the wo
 genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 sources:
-- resource: skills/ktl-sidecar/SKILL.md
-- resource: docs/obsidian.md
-- resource: skills/ktl-docent/references/obsidian.md
-- resource: skills/ktl-sidecar/references/portability.md
-- resource: https://obsidian.md/help/settings
-- resource: CHANGELOG.md
-- resource: https://obsidian.md/help/symlinks
+  - resource: skills/ktl-sidecar/SKILL.md
+  - resource: docs/obsidian.md
+  - resource: skills/ktl-docent/references/obsidian.md
+  - resource: skills/ktl-sidecar/references/portability.md
+  - resource: https://obsidian.md/help/settings
+  - resource: CHANGELOG.md
+  - resource: https://obsidian.md/help/symlinks
 generated:
   by: process:ktl-librarian
   at: "2026-10-12T16:08:20Z"
 status: draft
 isPartOf:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
+  - https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

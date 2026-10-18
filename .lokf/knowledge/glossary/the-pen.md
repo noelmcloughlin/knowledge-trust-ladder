@@ -7,21 +7,21 @@ definition: The name the docs give `knowledge-apply.sh`, the script through whic
 genre: reference
 resource: skills/ktl-sidecar/templates/scripts/knowledge-apply.sh
 sources:
-- resource: docs/architecture.md
-- resource: docs/for-the-curious.md
-- resource: skills/ktl-librarian/references/patch.md
+  - resource: docs/architecture.md
+  - resource: docs/for-the-curious.md
+  - resource: skills/ktl-librarian/references/patch.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
-- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+  - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

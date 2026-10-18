@@ -7,20 +7,20 @@ definition: A museum's word for an item added to its collection. The registrar k
 genre: reference
 resource: docs/architecture.md
 sources:
-- resource: docs/architecture.md
-- resource: skills/ktl-librarian/references/golden-rules.md
+  - resource: docs/architecture.md
+  - resource: skills/ktl-librarian/references/golden-rules.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/glossary/registrar
-- https://w3id.org/ktl/knowledge/glossary/collection
+  - https://w3id.org/ktl/knowledge/glossary/registrar
+  - https://w3id.org/ktl/knowledge/glossary/collection
 generated:
   by: process:ktl-librarian
   at: "2026-10-15T01:30:10Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

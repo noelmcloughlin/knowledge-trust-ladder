@@ -6,33 +6,33 @@ description: One repository-level semantic version covering all six skills, rele
 genre: reference
 resource: docs/releasing.md
 sources:
-- resource: docs/releasing.md
-- resource: docs/architecture.md
-- resource: CONTRIBUTING.md
-- resource: CHANGELOG.md
-- resource: .github/workflows/publish.yml
-- resource: .releaserc.json
-- resource: .github/workflows/semantic-release.yml
-- resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
-- resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
-- resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-angular-v8.3.1/packages/conventional-changelog-angular/src/parser.js
+  - resource: docs/releasing.md
+  - resource: docs/architecture.md
+  - resource: CONTRIBUTING.md
+  - resource: CHANGELOG.md
+  - resource: .github/workflows/publish.yml
+  - resource: .releaserc.json
+  - resource: .github/workflows/semantic-release.yml
+  - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
+  - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
+  - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-angular-v8.3.1/packages/conventional-changelog-angular/src/parser.js
 generated:
   by: process:ktl-librarian
   at: "2026-10-14T00:35:00Z"
 about: []
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T00:41:23Z"
-- by: human:noelmcloughlin
-  at: "2026-09-10T00:00:00Z"
-- by: human:noelmcloughlin
-  at: "2026-09-26T20:08:48Z"
-- by: human:noelmcloughlin
-  at: "2026-10-03T09:44:34Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-09-10T00:00:00Z"
+  - by: human:noelmcloughlin
+    at: "2026-09-26T20:08:48Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-03T09:44:34Z"
 stale_after: 2027-10-03
 status: draft
 relatedTo:
-- https://w3id.org/ktl/knowledge/playbooks/releasing
+  - https://w3id.org/ktl/knowledge/playbooks/releasing
 ---
 
 # Overview

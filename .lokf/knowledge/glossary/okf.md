@@ -12,12 +12,12 @@ generated:
   at: "2026-10-13T15:08:54Z"
 status: draft
 definedBy:
-- https://w3id.org/ktl/knowledge/references/okf-specification
+  - https://w3id.org/ktl/knowledge/references/okf-specification
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 sources:
-- resource: docs/architecture.md
+  - resource: docs/architecture.md
 ---
 
 # Overview

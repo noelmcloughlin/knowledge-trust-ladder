@@ -9,23 +9,23 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:13:17Z"
 dependsOn:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
-- https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
 definedBy:
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 sources:
-- resource: skills/ktl-curator/SKILL.md
-- resource: skills/ktl-curator/references/review-session.md
-- resource: skills/ktl-curator/references/trust-fields.md
-- resource: skills/ktl-curator/references/portability.md
-- resource: README.md
-- resource: CHANGELOG.md
+  - resource: skills/ktl-curator/SKILL.md
+  - resource: skills/ktl-curator/references/review-session.md
+  - resource: skills/ktl-curator/references/trust-fields.md
+  - resource: skills/ktl-curator/references/portability.md
+  - resource: README.md
+  - resource: CHANGELOG.md
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T00:41:23Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:13:17Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:13:17Z"
 status: draft
 ---
 
@@ -73,3 +73,4 @@ The curation policy carries three optional switches: `Independent re-check:`, `E
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 the Runs column ("a little, regularly") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.
 - 2026-10-16, process:ktl-librarian: Since 0.45.0 the curator's label table reads *Still a draft / Reopened*, and the health line counts *Reopened*, a confirmed concept a question put back to draft, apart from *Drafts* (`SKILL.md`, `references/trust-fields.md`). Since 0.44.0 `references/domain-bundle.md` says how a person confirms a member of a domain bundle. This concept carries neither.
+- 2026-10-18, process:ktl-librarian: Since 0.49.0 `skills/ktl-curator/references/review-session.md` says a `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or document outside the repository. The curator quotes it as any source, shows the header above it (the origin, the version and the retrieval date), and offers the origin link to a person with access to it. The confirmation attests the concept against the copy as retrieved, and `revision` pins that state. This concept carries none of it, and a person wrote its text, so the librarian cannot add it.

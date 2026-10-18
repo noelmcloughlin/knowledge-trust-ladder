@@ -6,27 +6,27 @@ description: How a person gets ktl-docent-m365, the docent packed with a snapsho
 genre: how-to
 resource: docs/m365.md
 sources:
-- resource: docs/m365.md
-- resource: skills/ktl-sidecar/references/m365.md
-- resource: skills/ktl-sidecar/templates/m365/ktl-docent-m365.md
-- resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
+  - resource: docs/m365.md
+  - resource: skills/ktl-sidecar/references/m365.md
+  - resource: skills/ktl-sidecar/templates/m365/ktl-docent-m365.md
+  - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
   at: "2026-10-15T01:30:10Z"
 status: draft
 isPartOf:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 references:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
-- https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
-- https://w3id.org/ktl/knowledge/playbooks/releasing
-- https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-docent-skill
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+  - https://w3id.org/ktl/knowledge/playbooks/releasing
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
-- https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

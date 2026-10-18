@@ -9,22 +9,22 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:20:21Z"
 about:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
-- https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+  - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
 relatedTo:
-- https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
-- https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
+  - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 sources:
-- resource: skills/ktl-sidecar/SKILL.md
-- resource: skills/ktl-sidecar/references/portability.md
-- resource: docs/obsidian.md
-- resource: CHANGELOG.md
+  - resource: skills/ktl-sidecar/SKILL.md
+  - resource: skills/ktl-sidecar/references/portability.md
+  - resource: docs/obsidian.md
+  - resource: CHANGELOG.md
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:20:21Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:20:21Z"
 status: draft
 ---
 
@@ -91,3 +91,4 @@ The reversal keeps these, because they cost nothing and still cover a shared fol
 ## Open questions
 
 - 2026-10-14, process:ktl-librarian: Since 2026-10-14 the portability matrix in `skills/ktl-sidecar/references/portability.md` says that on GitLab, Forgejo and Gitea the GitHub Actions workflows are lost, ktl-website's deploy included. This concept says the three GitHub Actions workflows are the only loss there.
+- 2026-10-18, process:ktl-librarian: Step 5 of `skills/ktl-sidecar/SKILL.md` now installs the federation, sync and ingest templates and asks for lint coverage of six `.github/workflows/*.yaml`, and `CHANGELOG.md` (0.48.0) says the sidecar's pages name Codeberg beside GitLab, Forgejo and Gitea. This concept speaks of three GitHub Actions workflows and names only GitLab, Forgejo and Gitea.

@@ -9,18 +9,18 @@ generated:
   by: human:noelmcloughlin
   at: "2026-10-13T01:15:05Z"
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
-- by: human:noelmcloughlin
-  at: "2026-10-13T01:15:05Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T01:15:05Z"
 references:
-- https://w3id.org/ktl/knowledge/policies/security
-- https://w3id.org/ktl/knowledge/policies/ai-covenant
+  - https://w3id.org/ktl/knowledge/policies/security
+  - https://w3id.org/ktl/knowledge/policies/ai-covenant
 sources:
-- resource: docs/threat-model.md
-- resource: CHANGELOG.md
-- resource: scripts/validate-repository.sh
-- resource: skills/ktl-sidecar/templates/scripts/knowledge-conventions.sh
+  - resource: docs/threat-model.md
+  - resource: CHANGELOG.md
+  - resource: scripts/validate-repository.sh
+  - resource: skills/ktl-sidecar/templates/scripts/knowledge-conventions.sh
 status: draft
 ---
 # Overview
@@ -96,3 +96,4 @@ Once the agent returns, the wrapper removes whatever is at the paths the workflo
 
 - 2026-10-14, process:ktl-librarian: Since 2026-10-14 `docs/threat-model.md` names ktl-website among the skills that run the repository's scripts from `.lokf/scripts/`, counts four workflow templates under the two skills' `templates/github/` as pinned, and says six skills read content they did not author. This concept still names four skills that run those scripts.
 - 2026-10-15, process:ktl-librarian: Since 0.41.0 `docs/threat-model.md` says that ktl-website's build also runs the commands its `site.config.mjs` names, or a `gen-doc` recipe it finds, to build the schema's pages and the data, and that they are the repository's code too. This concept does not say so.
+- 2026-10-18, process:ktl-librarian: Since 2026-10-17 `docs/threat-model.md` counts six templates under the two skills' `templates/github/` as pinned, and says the release step, the sidecar's `knowledge-sync.sh` and its `knowledge-sync.yaml` workflow move the skills pin. It adds a measure for a domain host's federation build and a section on the sync workflow. Since 2026-10-18 it also has a section on the ingest workflow, and lists the mirror under `.lokf/mirror/` as an input path the librarian reads. This concept carries none of these.

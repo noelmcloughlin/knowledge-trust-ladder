@@ -10,17 +10,17 @@ generated:
   at: "2026-10-16T23:58:13Z"
 status: draft
 definedBy:
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 sources:
-- resource: https://cli.github.com/manual/gh_skill_install
-- resource: https://cli.github.com/manual/gh_skill
-- resource: https://cli.github.com/manual/gh_skill_publish
-- resource: https://github.com/cli/cli/releases/tag/v2.90.0
-- resource: .github/workflows/validate.yml
-- resource: .github/workflows/publish.yml
+  - resource: https://cli.github.com/manual/gh_skill_install
+  - resource: https://cli.github.com/manual/gh_skill
+  - resource: https://cli.github.com/manual/gh_skill_publish
+  - resource: https://github.com/cli/cli/releases/tag/v2.90.0
+  - resource: .github/workflows/validate.yml
+  - resource: .github/workflows/publish.yml
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

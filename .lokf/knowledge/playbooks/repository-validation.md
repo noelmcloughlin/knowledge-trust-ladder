@@ -7,23 +7,28 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  at: "2026-10-18T10:22:18Z"
 status: draft
 references:
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
-- https://w3id.org/ktl/knowledge/references/open-skills-cli
-- https://w3id.org/ktl/knowledge/playbooks/contributing
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/references/open-skills-cli
+  - https://w3id.org/ktl/knowledge/playbooks/contributing
 sources:
-- resource: .github/workflows/validate.yml
-- resource: scripts/validate-repository.sh
-- resource: CHANGELOG.md
-- resource: tests/test_website_preflight.py
-- resource: tests/test_website_template.py
-- resource: scripts/smoke-test-website.sh
-- resource: tests/test_federation.py
+  - resource: .github/workflows/validate.yml
+  - resource: scripts/validate-repository.sh
+  - resource: CHANGELOG.md
+  - resource: tests/test_website_preflight.py
+  - resource: tests/test_website_template.py
+  - resource: scripts/smoke-test-website.sh
+  - resource: tests/test_federation.py
+  - resource: tests/test_ingest.py
+  - resource: tests/test_sync.py
+  - resource: tests/requirements.txt
+  - resource: scripts/smoke-test-install.sh
+  - resource: skills/ktl-sidecar/templates/knowledge-sync.manifest
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-12T23:54:05Z"
+  - by: process:ktl-librarian
+    at: "2026-10-12T23:54:05Z"
 ---
 
 # Overview
@@ -46,12 +51,14 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 - Check 7c: Rule 3's list equals the classes `lokf vocab --all --json` declares as types, at the lokf floor the templates pin, with the toolkit run through `uvx`. Without uv the check fails.
 - Check 7d: the relation fields `knowledge-report.sh` counts reliance from equal the slots the schema ranges over `Concept`, apart from the structural `concepts` and `target`.
 - Check 8: the layout tests are in `tests/test_layouts.py`.
-- Check 9: the paths the sibling repositories deep-link into by URL still exist, and so does each heading such a link names. Check 9a runs only when the siblings are cloned beside this repository, and confirms that the recorded list of those paths and headings is complete. Since 0.45.0 it skips the copies a sibling's website build writes under `website/`, which git ignores there.
+- Check 9: the paths the sibling repositories deep-link into still exist, and so does each heading such a link names. A link counts whether it names a file on GitHub or the site's persistent address: `w3id.org/ktl/docs/<page>/` names `docs/<page>.md`, and `w3id.org/ktl/knowledge/<id>` names `.lokf/knowledge/<id>.md`. Check 9a runs only when the siblings are cloned beside this repository, and confirms that the recorded list of those paths and headings is complete. Since 0.45.0 it skips the copies a sibling's website build writes under `website/`, which git ignores there.
 - Check 10: `CONTRIBUTING.md` stays within 1000 words and `SECURITY.md` within 900.
 - Check 10a: each `SKILL.md` stays within its own word budget: 2700 words for ktl-curator, 2200 for ktl-docent, 4000 for ktl-librarian, 2350 for ktl-prose, 3600 for ktl-sidecar and 2000 for ktl-website. A skill with no budget fails. Since 0.45.0 a table's pipes and its separator row are not counted as words.
-- Check 11: this repository's copies of the three knowledge workflows, the sidecar scripts, the two `.lokf/m365/` files and `.lokf/.gitattributes` stay byte-identical to their templates. Since 0.43.1 the check also holds `.lokf/justfile` to its template below the first line, which names the host. The comparison leaves out the librarian workflow's skills pin, `TRUST_LADDER_SKILLS_REF` and `TRUST_LADDER_SKILLS_SHA`, which the release commit moves in the template only. `knowledge-apply.py` and `knowledge-conventions.py` must pin the same PyYAML release and the same cut-off date. Without `uv` the check fails up front and names the cause. Then `knowledge-conventions.sh` must pass on this repository's bundle. `tests/test_conventions.py` tests what it reports on a bundle that breaks each rule.
+- Check 11: the sidecar's `knowledge-sync.manifest`, which since 0.47.0 lists the copies, is checked first. Every template it names must exist, and every `always` and `needs` line must name a template it lists. Every file under the templates' `github/`, `scripts/` and `m365/` folders must be in it, so a new workflow or script cannot be released without a sync for it. Then each copy the manifest names must be byte-identical to its template, and `.lokf/justfile` to its template below the first line, which names the host.
 
-  Since 0.44.0 the check also holds a domain host's three files, `knowledge-federation.yaml`, `knowledge-federate.py` and `.lokf/domain.yaml`, to their templates where this repository has a copy, and it has none, since its bundle is not a domain. `actionlint` reads the workflow template itself, and `tests/test_federation.py` runs the script from its template.
+  The comparison leaves out the librarian workflow's skills pin, `TRUST_LADDER_SKILLS_REF` and `TRUST_LADDER_SKILLS_SHA`, which the release commit moves in the template only. `knowledge-apply.py` and `knowledge-conventions.py` must pin the same PyYAML release and the same cut-off date. Without `uv` the check fails up front and names the cause. Then `knowledge-conventions.sh` must pass on this repository's bundle. `tests/test_conventions.py` tests what it reports on a bundle that breaks each rule.
+
+  The federation, sync and ingest copies are held to their templates only where this repository has a copy, and it has none. Its bundle is not a domain, it has nothing to sync itself to, and it has no sources outside the repository. Every other copy must be here. `tests/test_federation.py`, `tests/test_sync.py` and `tests/test_ingest.py` run those scripts from their templates.
 
 - Check 11a: ktl-docent's copies of `knowledge-report.sh` and `knowledge-feedback.sh` match their templates, and no ktl-docent page runs a script under `.lokf/scripts/`. Each copy, run from outside the repository as an installer leaves it, labels a concept and records a gap in the repository it is run in.
 - Check 11b: every page that gives the no-Python schema URL names the same commit, and names the tag of the `lokf` floor that the sidecar's `pyproject.toml` template sets.
@@ -62,7 +69,7 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 - Check 12a: `tests/test_feedback.py` tests `knowledge-feedback.sh`.
 - Checks 13 and 13a: `tests/test_provenance.py` tests the forge-free provenance gate, with throwaway GPG and SSH keys, and its `--unattended` form.
 - Check 14: `CHANGELOG.md` never carries two headings for one released version. Where node is installed, a throwaway repository also proves three things. `changelog-release.mjs promote` folds a second qualifying push into the section that still waits for `publish.yml`, listing each entry once. A version already tagged is left alone. A push with nothing new passes `check` for the version already promoted, and fails for any other.
-- Check 15: the librarian template's `TRUST_LADDER_SKILLS_REF` names one of the two newest released versions in `CHANGELOG.md`. Two are allowed because the newest heading exists before its tag: `semantic-release.yml` promotes it on merge to `main`, and `publish.yml` creates the tag later. The commit the pin records must carry `skills/ktl-librarian`, the path the install step copies out of it. The check reads it from that commit when the tag ref is absent. Where the tag is on the clone, `TRUST_LADDER_SKILLS_SHA` must be the commit the tag names. The install step must compare the commit it cloned with that one, and `semantic-release.yml` and `scripts/sync-sidecar.sh` must each move the commit with the tag.
+- Check 15: the librarian template's `TRUST_LADDER_SKILLS_REF` names one of the two newest released versions in `CHANGELOG.md`. Two are allowed because the newest heading exists before its tag: `semantic-release.yml` promotes it on merge to `main`, and `publish.yml` creates the tag later. The commit the pin records must carry `skills/ktl-librarian`, the path the install step copies out of it. The check reads it from that commit when the tag ref is absent. Where the tag is on the clone, `TRUST_LADDER_SKILLS_SHA` must be the commit the tag names. The install step must compare the commit it cloned with that one, and `semantic-release.yml` and the sidecar's `knowledge-sync.sh` template must each move the commit with the tag.
 - Check 16: the name the repository had before it was renamed on 2026-09-19 stays out of every file but `CHANGELOG.md`, the bundle's `log.md`, `rename-plan.md`, the contract script and one "formerly" line in `docs/install.md`.
 - Check 16a: the skills' and plugins' old `lokf-` names stay out of every file but `CHANGELOG.md` and the contract script. They took the `ktl-` prefix on 2026-09-22.
 - Check 16b: no file calls a role, skill or repository of KTL a LOKF one, apart from `CHANGELOG.md`, the bundle's `log.md`, the source map (`playbooks/knowledge-sources.md`) and the contract script.
@@ -76,28 +83,30 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 
 # The behavioural tests
 
-The `test-scripts` job sets up `uv`, installs `just` (`rust-just==1.47.0`) and Node.js 22, and runs `uv run --no-project --with-requirements tests/requirements.txt pytest`. `tests/requirements.txt` pins `pytest==9.1.1` and `pyyaml==6.0.3`, and `pytest.ini` points pytest at `tests/`. `publish.yml` runs the same command before a release.
+The `test-scripts` job sets up `uv`, installs `just` (`rust-just==1.47.0`) and Node.js 22, and runs `uv run --no-project --with-requirements tests/requirements.txt pytest`. `tests/requirements.txt` pins `pytest==9.1.1`, `pyyaml==6.0.3` and `pypdf==6.19.0`, and `pytest.ini` points pytest at `tests/`. `publish.yml` runs the same command before a release.
 
 The tests run the scripts under `skills/ktl-sidecar/templates/`, `skills/ktl-prose/scripts/` and `skills/ktl-website/` on throwaway bundles and repositories. Each module says which contract check it carries:
 
 - `test_apply.py`: the pen, `knowledge-apply.sh` (check 19).
 - `test_conventions.py`: `knowledge-conventions.sh` on a bundle that breaks each rule, and on a bundle that keeps every rule with CRLF line endings, through a link and without uv (check 11's synthetic bundle, and check 11c).
-- `test_federation.py`: `knowledge-federate.py` on two fixture bundles and a domain that names them (0.44.0). It checks the lock, one named graph per bundle, and the same bytes from two builds. It also covers the checks that stop a build and keep the previous snapshot, the gate on a target no member owns, a member that is itself a domain, `--verify-only` and `members`. Without uv every test in it skips.
+- `test_federation.py`: `knowledge-federate.py` on two fixture bundles and a domain that names them (0.44.0). It checks the lock, one named graph per bundle, and the same bytes from two builds. It also covers the checks that stop a build and keep the previous snapshot, and the gate on a target no member owns. It covers a member that is itself a domain, the diamond rule, the depth a build follows, a schema released beside a member's zip, the `mcp` server, `--verify-only` and `members`. Without uv every test in it skips.
 - `test_feedback.py`: `knowledge-feedback.sh` (check 12a).
+- `test_ingest.py`: `knowledge-ingest.py` on throwaway repositories against servers of its own: each kind of source, the manifest's refusals, `--patch`, `--status`, and the shell half's refusal to run under `sh`.
 - `test_layouts.py`: the librarian wrapper, the librarian, registrar and release workflows, and the `just lokf-link` recipe, with and without the doorway link (formerly `scripts/test-sidecar-layouts.sh`).
 - `test_preflight.py`: `knowledge-preflight.sh`, and each sidecar script's refusal to run under `sh` (check 12).
 - `test_prose_check.py`: `prose-check.py` (check 18).
 - `test_provenance.py`: `knowledge-provenance.sh` with throwaway keys, its `--unattended` form and parser parity (checks 13, 13a and 22).
 - `test_report.py`: `knowledge-report.sh` and the curator's queue (checks 20 and 20a).
+- `test_sync.py`: `knowledge-sync.sh` on a stand-in for the skills repository at two tags and a host at the first, and `scripts/sync-sidecar.sh`, which runs each sibling's own copy, and its `--finish`.
 - `test_website_preflight.py`: `website-preflight.sh` on this repository and on a bare directory, and its refusal to run under `sh`; check 12w keeps the rows its lines need.
-- `test_website_template.py`: the ktl-website templates laid down on a temporary host, with no placeholder left, and the three files a host owns named alike in the skill's page, its preflight, the contract and `sync-sidecar.sh`.
+- `test_website_template.py`: the ktl-website templates laid down on a temporary host, with no placeholder left, and the three files a host owns named alike in the skill's page, its preflight, the contract and the sidecar's `knowledge-sync.sh`.
 
 Every subprocess runs under an isolated git config, so a global `commit.gpgsign=true` signs no fixture commit, and under a temporary directory of pytest's own. A layout test that needs `just`, `jq`, `node`, `zip` or `unzip` skips and says so when the tool is missing. The conventions tests fail, rather than skip, when uv is missing.
 
 # The other jobs
 
 - `lint-scripts` runs ShellCheck on the whole tree.
-- `lint-workflows` runs `actionlint`, pointed by path at this repository's workflows and at the five workflow templates that get copied into other repositories, the sidecar's four and ktl-website's one. The sidecar's fourth, `knowledge-federation.yaml`, joined in 0.44.0. It would otherwise look only under `.github/workflows/`. It ignores the `copilot-requests` permission, which actionlint 1.7.12 predates. The job also checks that every `uses:` in this repository's workflows and those templates names a commit SHA or image digest rather than a floating tag or branch.
+- `lint-workflows` runs `actionlint`, pointed by path at this repository's workflows and at the workflow templates that get copied into other repositories: the sidecar's `knowledge-librarian.yaml`, `knowledge-registrar.yaml`, `knowledge-release.yaml`, `knowledge-federation.yaml` (since 0.44.0) and `knowledge-sync.yaml`, and ktl-website's `knowledge-website.yaml`. It would otherwise look only under `.github/workflows/`. It ignores the `copilot-requests` permission, which actionlint 1.7.12 predates. The job also checks that every `uses:` in this repository's workflows and those templates names a commit SHA or image digest rather than a floating tag or branch.
 - `smoke-test` installs the skills from the checkout into a throwaway consumer repository through `scripts/smoke-test-install.sh`. It checks that ktl-docent's two scripts come with the install. It also checks that, run from where the installer put them, they label a concept and record a gap in a reader's repository.
 - `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, twice: once with a README, a docs page, a changelog, the schema's pages and the data, and once with none of them. This repository's own site, which `knowledge-website.yaml` builds, proves the fuller configuration.
 - `validate-markdown` runs markdownlint, lychee, and codespell. Codespell skips `knowledge_bundle`, the link to `.lokf/knowledge`, which it already checks at its real path.

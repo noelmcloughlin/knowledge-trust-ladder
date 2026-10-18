@@ -6,22 +6,22 @@ description: "A draft placeholder for a reader's question no source settles: whi
 genre: explanation
 resource: README.md
 sources:
-- resource: README.md
-- resource: docs/architecture.md
-- resource: docs/skills-repositories.md
-- resource: docs/context-layer.md
+  - resource: README.md
+  - resource: docs/architecture.md
+  - resource: docs/skills-repositories.md
+  - resource: docs/context-layer.md
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
-- https://w3id.org/ktl/knowledge/policies/threat-model
-- https://w3id.org/ktl/knowledge/explanation/domain-schemas
-- https://w3id.org/ktl/knowledge/explanation/context-layer
+  - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+  - https://w3id.org/ktl/knowledge/policies/threat-model
+  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/explanation/context-layer
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview

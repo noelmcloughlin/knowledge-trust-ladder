@@ -7,24 +7,24 @@ definition: "The role, always played by a person, that records a verdict on a co
 genre: reference
 resource: docs/architecture.md
 sources:
-- resource: docs/architecture.md
-- resource: docs/for-the-curious.md
-- resource: docs/obsidian.md
-- resource: skills/ktl-curator/SKILL.md
+  - resource: docs/architecture.md
+  - resource: docs/for-the-curious.md
+  - resource: docs/obsidian.md
+  - resource: skills/ktl-curator/SKILL.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
-- https://w3id.org/ktl/knowledge/glossary/librarian
-- https://w3id.org/ktl/knowledge/glossary/trust-label
-- https://w3id.org/ktl/knowledge/glossary/health-line
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+  - https://w3id.org/ktl/knowledge/glossary/librarian
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/glossary/health-line
 generated:
   by: process:ktl-librarian
   at: "2026-10-13T15:08:54Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  - by: process:ktl-librarian
+    at: "2026-10-18T10:22:18Z"
 ---
 
 # Overview
