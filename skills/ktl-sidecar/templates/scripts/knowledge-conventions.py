@@ -42,6 +42,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import sys
@@ -426,12 +427,15 @@ def check_file(path: Path, bundle: Path, ids: dict[str, list[Path]], entries: di
     # 2. every `at:` a quoted time in one shape: unquoted, YAML resolves it to
     #    a datetime, a date or a number, and only a string reaches every
     #    consumer the same. In any other shape not every consumer reads it
-    #    alike, as UTC_TIME says.
+    #    alike, as UTC_TIME says. The finding prints the time as JSON writes
+    #    it, so it stays on one line and shows a character no reader would
+    #    see. The fix respells the same moment, since a new time from the
+    #    clock would re-date the event.
     for where, value in find_odd_at(frontmatter, ""):
         if isinstance(value, str):
             findings.append(
-                f'{path}: timestamp "{value[:40]}" at {where} is not a UTC time to the second, such as '
-                '"2026-09-08T14:00:00Z" - write the time date -u +%Y-%m-%dT%H:%M:%SZ gives, in quotes'
+                f"{path}: timestamp {json.dumps(value[:40])} at {where} is not a UTC time to the second, such as "
+                '"2026-09-08T14:00:00Z" - write the same moment in that shape, in quotes'
             )
         else:
             findings.append(f"{path}: unquoted timestamp at {where}")
