@@ -339,7 +339,7 @@ Three more pins decide what a run installs, and no update tool moves them:
 It has no placeholders and writes nothing. A trust label, the health line and the librarian's work list are arithmetic over frontmatter and git history, and this script does that arithmetic so that no model has to:
 
 ```sh
-bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | coverage [<dir>...]]
+bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | coverage [--strict] [<dir>...] | coverage --why <path>...]
 ```
 
 - With no command it prints the whole report ktl-curator's Step 1 starts from: the health line, every concept's label, the open questions, and the confirmed concepts whose source moved after the confirmation.
@@ -348,7 +348,7 @@ bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>..
 - `quiet` exits 0 when nothing waits for the librarian and 1 when work does, with one line of counts. A note counts while its commit comes after the one that recorded the concept's latest stamp, so a note the librarian has read waits for the curator alone. The two kinds the work list names apart do not count, and the line says how many it set aside. A bundle git holds no full history of is never quiet. The wrapper asks it before a scheduled run.
 - `changes` says what the working tree does to the record against `HEAD`. It names each confirmed concept the change touches, and says how that concept reads afterwards: still confirmed, edited since that confirmation, or removed. The librarian workflow's `publish` job fills its pull request from it.
 - `retrieval` measures what the index promises, and the next section covers it.
-- `coverage` counts, per top-level folder, the tracked files under no path a concept names in its `resource` or `sources`, and lists them under a folder you name. It is ktl-librarian's sweep for orphans, and it makes no scheduled run busy.
+- `coverage` counts, per top-level folder, the tracked files under no path a concept names in its `resource` or `sources`. It lists them under a folder you name, or under `.` for the whole tree. A file git would add but does not track yet is counted apart, since a concept names only a path git tracks. `coverage --why <path>` names each concept that names the path or a folder above it. `--strict` exits 1 when a tracked file in scope is named by nobody, when a folder you name holds no tracked file, and when it cannot count, so a check built on it never passes by default. It is ktl-librarian's sweep for orphans, and it makes no scheduled run busy.
 
 A source has moved when its last commit comes after the commit that recorded the event it is compared with, or when it carries an edit not yet committed and the concept does not. History orders the two, never a clock, so a source changed in that same commit has not moved. That is the file's history and not its meaning: only reading the source says whether a fact changed. Without git, or with a shallow clone or a gitignored `.lokf/`, the script says the sources were not compared.
 

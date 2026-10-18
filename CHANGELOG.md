@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-report.sh coverage --why <path>` names the concept that claims a file**, directly or through a folder above it, so a reviewer can find the row of the source map that excludes it. It reads frontmatter only.
+- **`coverage --strict` exits 1 when a tracked file is named by nobody.** It also fails on a folder that holds no tracked file, such as a mistyped one, and when it cannot count, so a check built on it never passes by default.
+
+### Changed
+
+- **`coverage` counts apart the files git would add.** A concept names only a path git tracks, so a new file shows with the advice to commit it, or to ignore it if it is runtime state. A tracked file deleted from the working tree no longer counts.
+
+### Fixed
+
+- **`coverage .` lists every file nobody named, and a mistyped folder says git tracks nothing there.** Both printed "none", which read as fully covered. A flag `coverage` does not know is refused instead of being read as a folder.
+
 ## [0.52.0] - 2026-10-18
 
 ### Added
