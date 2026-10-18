@@ -18,7 +18,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T01:52:47Z"
+  at: "2026-10-18T12:25:08Z"
 status: draft
 ---
 
@@ -81,11 +81,13 @@ The domain states its admission rule in its policy concept. A member is released
 
 Every domain bounds a workspace of its own, and a domain may not name itself or a domain above it. Confirming a `MemberDomain` attests that the domain belongs under the admission rule and who answers for it: the owner of that domain, whose own confirmations cover its members. It does not vouch for the members below it.
 
-The diamond rule: when two domains name the same bundle at the same release, the bundle joins once, and the lock records both domains. When they name different releases, the build stops, because one named graph holds one release, and the two owners agree on one. The workspace index's "Named by" column says which domain's concept named each bundle.
+The diamond rule: when two domains name the same bundle at the same release, the bundle joins once, and the lock records both domains. When they name different releases, the build stops, because one named graph holds one release. The two owners then agree on one release. The workspace index's "Named by" column says which domain's concept named each bundle.
 
 # What moves a member
 
 The domain's librarian is a script, `knowledge-federate.py members`, which the sidecar's librarian workflow runs as `AGENT_CLI`. It picks each member's newest release that carries a bundle zip, verifies its checksum and attestation, and writes the move for the pen with a question for the curator. The member then reads as edited since a person confirmed it, until a person confirms the new release after the same three checks. `knowledge-federate.py members --add <owner>/<repo>` drafts a new member the same way, and drafts a `MemberDomain` when that release is a domain.
+
+A member leaves when the curator retires its concept. The concept stays for links and history with `status: deprecated`, the next build leaves its bundle out of the workspace, and the members script proposes no move for it. The build passes over a retired `Domain` concept the same way, so a renamed domain's old concept can stay beside the new one.
 
 # Reading the workspace
 
