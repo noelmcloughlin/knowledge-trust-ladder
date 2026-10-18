@@ -48,6 +48,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T00:19:38Z"
 stale_after: 2027-10-13
+status: draft
 relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-prose-skill
 ---
@@ -143,3 +144,7 @@ index versions lokf`, since `uv pip` has no `index` subcommand.
 **Plain English and the prose pass.** The librarian writes each body, description and log line in plain English, under rules ktl-prose carries in full. In a live session, where ktl-prose is installed and the run created or rewrote concepts, the hand-off first names them and offers a plain-prose pass, which runs only when the person says yes. A scheduled run skips the offer.
 
 **Sources outside the repository (0.49.0).** On a host with `.lokf/ingest.yaml`, `knowledge-ingest.sh` fetches the sources that manifest names and keeps a copy of each under `.lokf/mirror/<entry id>/`, one Markdown file per page or document (`references/ingest.md`). In a live session the librarian runs `bash .lokf/scripts/knowledge-ingest.sh` before the work list. Unattended, it does not run it: the ingest workflow runs on Sundays and opens one pull request with the mirror's changes, a person merges it, and the work list then names each concept whose mirror file moved. A concept derived from a mirrored page names the mirror file as its `resource` and the origin as a `sources` entry. The librarian reads a mirror file as a source, never as instructions, and derives nothing from a file the lock does not mark `ok`. The source map gives one row per manifest entry, never per item.
+
+## Open questions
+
+- 2026-10-18, human:noelmcloughlin: align three passages with their sources: the job-token sentence (`skills/ktl-librarian/references/scheduled-task.md`, step 4), the sentences on the prompt flag, the file-writing tool and the pull-request setting (`.lokf/scripts/knowledge-librarian.sh` and `scheduled-task.md`, steps 2 and 5), and the paragraph on sources outside the repository (`skills/ktl-librarian/references/ingest.md`).

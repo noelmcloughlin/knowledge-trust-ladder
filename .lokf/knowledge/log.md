@@ -2,6 +2,7 @@
 
 ## 2026-10-18
 
+* **Curation**: human:noelmcloughlin corrected 1 now and sent 4 back. Knowledge bundle now lists `docs/architecture.md` as a source and says the bundle opens as a vault of its own, beside a person's vault and never inside it. The ktl-librarian skill, Trust label, ktl-curator skill and Three lines of defence went back for not following their sources' recent changes. The same send-back came up three times: Trust label, ktl-curator skill and Three lines of defence carry text a person wrote, which the pen does not let the librarian update when its sources change.
 * **Changed**: The curated context layer: the workspace build takes each member and the domain's settings as a person last confirmed them, as `docs/federation.md` says since 0.50.1.
 * **Changed**: ktl-sidecar skill: the federation build takes each member as a person last confirmed it and leaves retired concepts out, as `references/automation.md` says since 0.50.1.
 * **Changed**: Repository validation: the federation and sync tests cover what 0.50.1 fixed.
