@@ -22,6 +22,10 @@ Five things this skill must keep true for it:
 - A source you can do nothing about gets your question, once. When a concept's source moved or is gone and the pen refuses the change, add a `question` that says so and names the source by its path, as the concept's `resource` gives it. The quiet check then counts that source as put to a person, until it changes again. A question that names no source covers none. The work list names it under *where your own question has waited for a person since*, and you ask nothing again.
 - What a person declined stays declined. On a scheduled run the work list ends with a *Declined* section when a person closed one of this workflow's pull requests without merging. It names what that pull request changed and has not changed since: a concept's moved source, a note, a concept it added, feedback entries by their line numbers. Propose none of it again, and say in the hand-off what you left. A person who wants it tried again starts a run by hand, which reads no such record.
 
+## `knowledge-ingest.yaml`: the mirror before the run
+
+A host with `.lokf/ingest.yaml` also runs the ingest workflow, on Sundays, which fetches the sources outside the repository that the manifest names and opens one pull request with the mirror's changes under `.lokf/mirror/`. A person merges it, and your Monday run finds each concept whose mirror file moved in the work list, as it finds any moved source. The ingest runs no agent and writes nothing to the bundle; what it mirrors reaches you only through that merge. A gone or unlisted status in `.lokf/ingest.lock.yaml` is a source that went away: [ingest.md](ingest.md) says what to do with the concepts that cite it.
+
 ## `knowledge-librarian.sh`: the agent wrapper
 
 The workflow invokes `.lokf/scripts/knowledge-librarian.sh` directly, a fixed, reviewed path. To turn it on:

@@ -7,7 +7,7 @@ The point of a bundle is to *not* re-read the repository. Spend tokens in this o
 1. `.lokf/knowledge/index.md`, header and TOC only. It may be long; scan the section headings first (Services, References, Glossary, Playbooks, Policies, ...).
 2. One to three concept files chosen from the TOC. A concept's `description` in the TOC bullet usually tells you whether to open it.
 3. Concepts reached by following a typed relation from one you already have.
-4. The concept's `resource` (or a `sources[].resource`), only for exact values or when the label demands a check.
+4. The concept's `resource` (or a `sources[].resource`), only for exact values or when the label demands a check. A `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or document outside the repository: name its origin, version and retrieval date from its header in the footer, and never fetch the origin.
 5. The repository at large, only after 1-4 have failed, and say so.
 
 ## Finding the right concept

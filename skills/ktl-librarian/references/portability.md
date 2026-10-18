@@ -12,6 +12,7 @@ Run `.lokf/scripts/knowledge-preflight.sh` first. Its summary line says which of
 | Windows | nothing, from Git for Windows' bash | from PowerShell, run every command here through that bash (launch line in the same page); write `uv run python` where this skill says `python3` |
 | macOS | `sha256sum` | `shasum -a 256` |
 | No `uv` | `lokf validate`, `convert`, `query`, `lokf-check-refs` | the manual schema cross-check in [audit.md](audit.md), reported as such. A bundle that has only passed it is not proven schema-valid |
+| No git, with `.lokf/ingest.yaml` | the ingest workflow and its pull request | run `knowledge-ingest.sh` by hand with the credentials in the environment; the lock is the record, and the mirror files are read as any other |
 | Synced folder (OneDrive, SharePoint, Drive, Dropbox, iCloud) | nothing in the bundle | a conflict copy shares its original's `id`: conventions rule 7 reports it, rule 8 its name; delete the copy after reading it. Files On-Demand placeholders download on first read, so the first refresh is slow, not broken |
 
 Three rules that hold on every host:

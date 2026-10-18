@@ -76,6 +76,8 @@ verified:
 stale_after: 2027-03-08
 ```
 
+A `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or document outside the repository. Quote it as any source, and show the header above it: the origin, the version and the retrieval date, so the person knows the live page may have moved since. Offer the origin link to a person with access to it. The confirmation attests the concept against the copy as retrieved, and `revision` pins that state.
+
 `revision` is the state of the `resource` you quoted from in the evidence-first step, so a later reader can tell whether the page they see is the one the confirmation rested on. Fill it like this:
 
 - **A committed path in the repository**: the last commit that touched it, `git log -1 --format=%H -- <path>`, as the full hash. An abbreviation can become ambiguous as the repository grows, and the registrar gate resolves the pin against the tree. If the file has uncommitted changes, or the host has no version control, say so and leave the key out.

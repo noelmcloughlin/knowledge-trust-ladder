@@ -17,6 +17,7 @@ Each file has a section on one of the two pages. Read the one you are setting up
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 | `knowledge-federation.yaml` and `knowledge-federate.py` *(a domain host only)* | Build the workspace of a domain host from the released bundles its member concepts name, publish it, and keep the members current | One variable to turn it on, Pages taken from Actions, and `AGENT_CLI` set to the script | below |
 | `knowledge-sync.yaml`, `knowledge-sync.sh` and `PULL_REQUEST_TEMPLATE/knowledge-sync.md` | Keep the sidecar copies and the skills pin at the newest release of the skills repository, and open the pull request that moves them | One secret, so the workflow can open the pull request; without it the run attaches the change | below |
+| `knowledge-ingest.yaml`, `knowledge-ingest.sh` and `PULL_REQUEST_TEMPLATE/knowledge-ingest.md` *(a host with `.lokf/ingest.yaml`)* | Mirror the sources outside the repository that the manifest names into `.lokf/mirror/`, and open one pull request with what changed | One variable to turn it on, and the secrets the manifest names | [below](#knowledge-ingestyaml-knowledge-outside-the-repository) |
 
 ## Switches and where they go
 
@@ -36,6 +37,8 @@ Every switch below is a **repository variable** or a **repository secret**: Sett
 | `KNOWLEDGE_WEBSITE_ENABLED` | variable | `knowledge-website.yaml` | `true` publishes the site to GitHub Pages, as ktl-website's [deploy.md](../../ktl-website/references/deploy.md) says |
 | `KNOWLEDGE_FEDERATION_ENABLED` | variable | `knowledge-federation.yaml` | `true` builds the workspace on each release and deploys the site with it; a domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer |
 | `KNOWLEDGE_SYNC_TOKEN` | secret | `knowledge-sync.yaml` | a fine-grained personal access token for this repository, with Contents, Pull requests and Workflows set to read and write ([below](#knowledge-syncyaml-keeping-the-sidecar-current)). The workflow pushes under `.github/workflows/` and opens the pull request with it. Unset, each run attaches its change and opens nothing |
+| `KNOWLEDGE_INGEST_ENABLED` | variable | `knowledge-ingest.yaml` | `true` turns the ingest on; unset or anything else, the workflow does nothing ([below](#knowledge-ingestyaml-knowledge-outside-the-repository)) |
+| `KNOWLEDGE_INGEST_*` | secrets | `knowledge-ingest.yaml` | the credentials `.lokf/ingest.yaml` names, one secret per name; the workflow hands these names over and no other secret |
 
 The librarian also needs one repository setting: Settings, Actions, General, Workflow permissions, *Allow GitHub Actions to create and approve pull requests* ([below](#before-turning-on-the-schedule)).
 
@@ -262,6 +265,40 @@ Without `--source` it clones the tag from the address `knowledge-librarian.yaml`
 **Reviewing the pull request.** Read the diff as you would any change to a workflow or a script: the copies are what the host runs. The report at the top names the release, the files that moved and the pin, and says when the run refreshed an earlier diff. The release's own changelog, linked from the entry, says why each file changed. A sync that moves only the pin releases nothing new in the host apart from the pin, and still deserves the read: it decides what the librarian runs next. The `sync` job's summary holds the script's own lines, among them a copy that differed only on its action pins, which Dependabot bumped in the host first; the template's pins are back until the skills repository bumps them.
 
 A private host should turn harden-runner's egress policy from `audit` to `block` in the `sync` job, with the skills repository and GitHub allowed: that job clones the release with the host's checkout readable.
+
+## `knowledge-ingest.yaml`: knowledge outside the repository
+
+A bundle cites what the librarian can read, and the librarian reads the repository. A wiki page, a document on an intranet address, a file in another repository or the output of a command is outside it. The ingest brings a copy in. `.lokf/ingest.yaml` names each source, `knowledge-ingest.sh` fetches it and writes it as Markdown under `.lokf/mirror/<entry id>/`, and `.lokf/ingest.lock.yaml` records what was fetched. A mirror file is repository content: the librarian derives concepts from it as from any tracked file, and names it as the concept's `resource` with the origin as a `sources` entry. [ingest.md](https://w3id.org/ktl/docs/ingest/) in this skill's home repository is the guide to the manifest; this section is the workflow.
+
+It runs weekly (Sundays 04:10 UTC) and on demand, in two jobs:
+
+- **`ingest`** is read-only. It hands the script the repository secrets whose names start `KNOWLEDGE_INGEST_` and no other, reads the repository's visibility, and runs the host's own `.lokf/scripts/knowledge-ingest.sh`. The script lists each entry, fetches what moved, converts it, writes the mirror and the lock, and refuses what the manifest's caps and the repository's visibility do not allow. The change goes to `publish` as a patch, and the run's summary to the job's page.
+- **`publish`** holds the write token and no secret. It refuses a patch that touches anything but `.lokf/mirror/` and the lock, applies it on a clean checkout, commits it as `knowledge-ingest[bot]`, pushes the branch `knowledge-ingest` and opens the pull request, or refreshes the open one. The body is the run's summary and then `.github/PULL_REQUEST_TEMPLATE/knowledge-ingest.md`, whose checklist is the reviewer's.
+
+**One pull request at a time, refreshed until it is merged.** A later run replaces the branch's one commit with today's mirror and writes the body again. A pull request a person added a commit to is left alone. The librarian's Monday run then finds each concept whose mirror file moved in its work list, as it finds any moved source, and reads only those.
+
+### Setting it up
+
+1. Copy `templates/ingest.yaml` to `.lokf/ingest.yaml` and replace its examples with your sources. Each `auth` block names environment variables, never a value.
+2. Store each credential as a repository secret of the name the manifest gives, such as `KNOWLEDGE_INGEST_ATLASSIAN_TOKEN`. For Confluence Cloud that is an API token with read scopes and an expiry, used as HTTP Basic with the account's email in `KNOWLEDGE_INGEST_ATLASSIAN_USER`; for a repository, a fine-grained token with Contents read.
+3. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General, which the `publish` job needs to open the pull request with the job's own token.
+4. Start one run from the Actions tab and read its summary. An entry that says *failed* with a credential's name is a secret not yet set.
+
+The pull request starts no checks, since the job's own token opened it; the mirror is text, and the registrar's conventions run on the bundle alone. Merge it, and the librarian's next run reads the mirror.
+
+### By hand
+
+The script the workflow runs is yours too, with the credentials in the environment:
+
+```sh
+KNOWLEDGE_INGEST_ATLASSIAN_USER=me@example.com KNOWLEDGE_INGEST_ATLASSIAN_TOKEN=... \
+  bash .lokf/scripts/knowledge-ingest.sh --visibility private     # every entry
+bash .lokf/scripts/knowledge-ingest.sh --dry-run --only platform-runbooks   # one entry, nothing written
+bash .lokf/scripts/knowledge-ingest.sh --prune                   # remove gone and unlisted files no concept cites
+bash .lokf/scripts/knowledge-ingest.sh --patch                   # Reference concepts for the entries that ask, for the pen
+```
+
+`--visibility` says whether the repository is public or private, which decides whether an `internal` entry may be committed. By hand the script asks `gh` when it is signed in, and otherwise counts the repository as public and refuses internal entries until told. Commit the mirror and the lock with the bundle change, as the person who ran it. A private host should set harden-runner's egress policy to `block` in the `ingest` job, with the sources' hosts allowed, since the host's checkout and its secrets are readable there.
 
 ## `knowledge-feedback.sh`: how a reader's gap gets recorded without being read back
 
