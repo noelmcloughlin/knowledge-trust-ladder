@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A person who sends back text they wrote can release it to the librarian.** ktl-curator then writes `process:ktl-curator` in `generated`, in a commit that person signs, so the librarian's next run rewrites the text from its sources instead of only adding a question.
+
+### Fixed
+
+- **`docs/three-lines.md` no longer lists the `lokf-registry` MCP server as a design.** `knowledge-federate.py mcp` serves it, as `docs/federation.md` says.
+
 ## [0.50.1] - 2026-10-18
 
 ### Fixed

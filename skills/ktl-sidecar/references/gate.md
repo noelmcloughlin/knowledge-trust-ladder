@@ -60,7 +60,7 @@ So the job collects the actor of every `human:` event the pull request adds, cha
 - a renamed concept does not;
 - an id quoted in an `## Open questions` note or a body code fence is not an event at all.
 
-A removal is a claim too, because a person's record is never removed without that person. A `verified` event that the base holds and the head does not needs its actor's backing, whether the event was struck out or its concept deleted. A person's `generated` record may give way to another person's, which is what the curator's Correct writes and which the second person backs as an addition. It may give way to nothing else without the first person.
+A removal is a claim too, because a person's record is never removed without that person. A `verified` event that the base holds and the head does not needs its actor's backing, whether the event was struck out or its concept deleted. A person's `generated` record may give way to another person's, which is what the curator's Correct writes and which the second person backs as an addition. It may give way to nothing else without the first person. With that person's backing, it may give way to `process:ktl-curator`, which ktl-curator writes when that person sends a concept back and releases the text they wrote to the librarian.
 
 For each actor it then requires evidence from the forge, one of:
 
