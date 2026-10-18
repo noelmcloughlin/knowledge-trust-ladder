@@ -1212,10 +1212,18 @@ def members(args) -> int:
         in_turn = f" It is itself a domain of {len(sub_members)} member{'s' if len(sub_members) != 1 else ''}, which the build follows." if sub_domains else ""
         day = release_day(release)
         title = str(meta.get("title") or f"{repo} knowledge bundle")
-        about = str(meta.get("description") or "").strip()
+        # The member's own description is quoted, word for word, whatever
+        # its form: a noun phrase, an instruction or a sentence. One that
+        # ends a sentence keeps its own full stop inside the quotation
+        # marks, and one that does not is given a full stop after them. A
+        # double quotation mark inside it becomes a single one.
+        about = " ".join(str(meta.get("description") or "").split()).replace('"', "'")
+        quoted = ""
+        if about:
+            quoted = f' The description in its own index reads "{about}"' + ("" if about.endswith((".", "!", "?")) else ".")
         description = f"The bundle of the {owner}/{repo} repository as released at {tag}" + (f" on {day}." if day else ".")
         body = (f"# Overview\n\nThis member is the knowledge bundle of [{owner}/{repo}](https://github.com/{owner}/{repo})."
-                + (f" Its own index describes it as: {about}" if about else "")
+                + quoted
                 + f" It was released at {tag}" + (f" on {day}" if day else "")
                 + f", and the release workflow attached the bundle as `{zip_asset['name']}`, with a `.sha256` file and a build attestation"
                 + (f", and the bundle's schema as `{probe.schema_name}`" if probe.schema_url else "")

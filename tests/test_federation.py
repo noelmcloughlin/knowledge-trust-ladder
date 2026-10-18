@@ -36,7 +36,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 8. a dry run prints the patch while a librarian pull request is open, and a
    real run then writes nothing;
 9. `members --add owner/repo` drafts a member concept from that repository's
-   newest bundle release, with the schema released beside it, as a
+   newest bundle release, quoting the description in the release's own
+   index, with the schema released beside it, as a
    `MemberDomain` when that release is a domain, and refuses a path that
    exists or a namespace that nests with a member's.
 10. under the librarian wrapper, `members` hands the job token that arrives
@@ -81,11 +82,11 @@ def frontmatter(**fields) -> str:
     return "---\n" + yaml.safe_dump(fields, sort_keys=False) + "---\n"
 
 
-def make_bundle(root: Path, base_iri: str, title: str, concepts: dict[str, dict]) -> Path:
+def make_bundle(root: Path, base_iri: str, title: str, concepts: dict[str, dict], description: str | None = None) -> Path:
     """A bundle folder: index.md with the base_iri, and one concept per path."""
     k = root / "knowledge"
     write(k / "index.md", frontmatter(lokf_version="0.2", okf_version="0.2", base_iri=base_iri, title=title,
-                                      description=f"{title}.", license="https://creativecommons.org/licenses/by/4.0/",
+                                      description=description or f"{title}.", license="https://creativecommons.org/licenses/by/4.0/",
                                       publisher={"type": "Person", "id": base_iri + "person/x", "name": "X"})
           + f"\n# {title}\n")
     write(k / "log.md", "# Change Log\n\n## 2026-01-01\n\n* **Initialization**: fixture.\n")
@@ -568,9 +569,11 @@ def released(tmp_path):
         asset, checksum = releases[0]["assets"][:2]
         served[asset["browser_download_url"]] = str(zip_path)
         served[checksum["browser_download_url"]] = str(sums)
-    # e has a bundle release of its own and no member concept yet; nested's
-    # release is bundle A again, whose namespace a member already holds.
-    e_bundle = make_bundle(tmp_path / "e_bundle", "https://e.example/knowledge/", "E", {"glossary/e.md": {"type": "GlossaryTerm", "title": "E term", "description": "E's term.", "resource": "https://example.test/e"}})
+    # e has a bundle release of its own and no member concept yet, and its
+    # index describes it with no full stop; nested's release is bundle A
+    # again, whose namespace a member already holds.
+    e_bundle = make_bundle(tmp_path / "e_bundle", "https://e.example/knowledge/", "E", {"glossary/e.md": {"type": "GlossaryTerm", "title": "E term", "description": "E's term.", "resource": "https://example.test/e"}},
+                           description='Help a person check the "E" bundle')
     e_zip = tmp_path / "e.zip"
     e_sums = write(tmp_path / "e.zip.sha256", f"{zip_bundle(e_bundle, e_zip)}  e.zip\n")
     # f's release is a domain in turn: a Domain concept and one member.
@@ -670,7 +673,7 @@ def test_members_add_drafts_a_member_from_a_repository_release(released):
     assert fm["type"] == "MemberBundle" and fm["status"] == "draft" and fm["version"] == "v1.1.0" and fm["base_iri"] == "https://e.example/knowledge/"
     assert fm["id"] == "https://d.example/federation/members/e" and fm["isPartOf"] == ["https://d.example/federation/domains/federation"] and fm["title"] == "E"
     assert [d["name"] for d in fm["distribution"]] == ["knowledge-v1.1.0-e.zip", "schema-v1.1.0-e.yaml"] and fm["distribution"][1]["media_type"] == "application/yaml"
-    assert "This member is the knowledge bundle of [acme/e](https://github.com/acme/e). Its own index describes it as: E." in text
+    assert "This member is the knowledge bundle of [acme/e](https://github.com/acme/e). The description in its own index reads \"Help a person check the 'E' bundle\". It was released at v1.1.0" in text, text
     assert "acme/e is proposed as a member at v1.1.0; does it belong under the admission rule?" in text
     assert "**Added**: E, acme/e at v1.1.0" in read(host / ".lokf" / "knowledge" / "log.md")
     r = members_run(released, "--add", "acme/a")
@@ -685,6 +688,7 @@ def test_members_add_drafts_a_member_from_a_repository_release(released):
     assert r.rc == 0, r.out
     text = read(host / ".lokf" / "knowledge" / "members" / "f.md")
     assert yaml.safe_load(text.split("---\n")[1])["type"] == "MemberDomain" and "It is itself a domain of 1 member, which the build follows." in text, text
+    assert 'The description in its own index reads "F." It was released at v1.1.0' in text, "a description that ends a sentence keeps its own full stop"
 
 
 def test_members_hands_the_job_token_to_gh_alone(released):
