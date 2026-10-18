@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The sync calls a copy a pin bump only when its `uses:` lines are all that differ.** It reported every copy the release changed as "differed only on its action pins", because under `pipefail` its test took `diff`'s exit status.
+
 ## [0.50.0] - 2026-10-18
 
 ### Added

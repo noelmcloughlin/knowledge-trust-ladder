@@ -363,6 +363,22 @@ def test_a_copy_bumped_by_dependabot_is_reported(tmp_path, skills, checks):
     checks.ok(matches(result.out, r"^   pins     \.github/workflows/knowledge-release\.yaml differed only on its action pins"), "the report names the bump", result.out)
 
 
+def test_a_copy_that_differs_on_another_line_is_not_called_a_pin_bump(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    copy = host / ".github" / "workflows" / "knowledge-release.yaml"
+    text = read(copy)
+    line = next(l for l in text.split("\n") if "uses: actions/checkout@" in l)
+    write(copy, text.replace(line, line.replace("actions/checkout@", "actions/checkout@0000000000000000000000000000000000000000 # v9.9.9 was "), 1) + "# a line the host added\n")
+    git = Git(host)
+    git("add", "-A")
+    git("commit", "-qm", "dependabot bump and an edit")
+    result = sync(host, skills)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(has_line(result.out, "   copied   .github/workflows/knowledge-release.yaml"), "the copy is brought back to the template", result.out)
+    checks.ok(has_line(result.out, "   copied   .lokf/scripts/knowledge-report.sh"), "the release's own change is copied", result.out)
+    checks.ok(not matches(result.out, r"^   pins     "), "neither copy is called a pin bump, since each differs on a line that is not a pin", result.out)
+
+
 WORKFLOW = WORKFLOWS / "knowledge-sync.yaml"
 PREFLIGHT = SCRIPTS / "knowledge-preflight.sh"
 SKILL = REPO / "skills" / "ktl-sidecar" / "SKILL.md"
