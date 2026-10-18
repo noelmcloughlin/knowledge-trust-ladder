@@ -26,7 +26,7 @@ It checks out the full history, because conventions 6, 11, 13 and 14 read each c
 `lokf validate` reads a concept body as an opaque string and never opens `log.md`. `knowledge-conventions.sh` checks the bundle against fourteen conventions the toolkit never sees. ktl-librarian's audit runs the same script before handing off.
 
 1. `log.md` has one bare `## YYYY-MM-DD` heading per day, newest first (OKF §9, and how the KTL Curator plugin finds today).
-2. Every `at:` is quoted.
+2. Every `at:` is quoted, and is a UTC time to the second, such as `"2026-09-08T14:00:00Z"`. In another shape the readers disagree. The report script cannot read a lower-case `t`, which the federation build reads, and no script reads a lower-case `z`. The workspace's stored queries compare times as written, so they put an offset or a fraction out of order. A person's event that no script reads would confirm every later edit.
 3. `verified` is a list, carrying at most one `process:ktl-librarian` event.
 4. Each `## Open questions` bullet has the `- YYYY-MM-DD, <actor>: ...` shape the curator quotes.
 5. Every `resource:` that is not a URL names a file or directory that still exists relative to the repository root, so a vanished source fails the gate rather than waiting for the librarian's next refresh. URLs are never fetched.
