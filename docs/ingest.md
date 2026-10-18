@@ -123,7 +123,7 @@ The curator and the docent need nothing new. A mirror file is a tracked path: th
 
 ## What stays out
 
-There is no fetcher for Jira: issues are unsuitable as knowledge sources. A PDF is supported when its text can be selected and copied in a viewer, which is the case for one saved from a word processor or exported from a wiki. A PDF made by scanning paper holds pictures of pages, so there is no text to copy, and it is refused. Attachments and images are not fetched; a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only when a `command` can print it.
+There is no fetcher for Jira: issues are unsuitable as knowledge sources. Most PDFs are supported: any whose text can be selected and copied in a viewer. The exception is a scan of paper, which holds pictures of pages and no text, and is refused. Attachments and images are not fetched; a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only when a `command` can print it.
 
 ## Security
 
