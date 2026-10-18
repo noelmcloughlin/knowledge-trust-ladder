@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A member that waits in a member domain joins at the release that domain built.** The members script now names a member domain's released `workspace-<tag>.zip` and its checksum in the `MemberDomain` concept. The build then takes such a member at the release the lock inside that zip records, and the lock names each member concept (format 3). A member names the files of one release, and the build refuses a schema or workspace from another.
+
+### Fixed
+
+- **The federation check runs the gate as the next release build would.** `build --verify-only` stopped after the zips, so a pull request with a link into a namespace no member owns, or into a member no person had confirmed, passed and the release build after the merge failed. The check now exports, loads and gates the bundles without writing anything, names the members the next release would leave out, and runs on any change to the domain bundle.
+
 ## [0.51.0] - 2026-10-18
 
 ### Added
