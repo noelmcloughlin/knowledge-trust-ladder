@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **`docs/three-lines.md` no longer lists the `lokf-registry` MCP server as a design.** `knowledge-federate.py mcp` serves it, as `docs/federation.md` says.
+
 ## [0.50.1] - 2026-10-18
 
 ### Fixed
