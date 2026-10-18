@@ -66,6 +66,8 @@ The domain's librarian is a script, `knowledge-federate.py members`, which the s
 
 A new member starts the same way. `knowledge-federate.py members --add <owner>/<repo>` verifies that repository's newest bundle release, reads its `base_iri`, title and description from the zip, refuses a namespace that nests with a member's, and writes a `create` with a `question` for the pen. When that release is itself a domain, the concept is a `MemberDomain`, and its body says how many members the build will follow. The concept arrives as a draft; your confirmation admits it.
 
+A member leaves when you *Retire* its concept. The concept stays for links and history with `status: deprecated`, the next build leaves its bundle out of the workspace, and the members script proposes no move for it. The build passes over a retired `Domain` concept the same way, so a renamed domain's old concept can stay beside the new one.
+
 ## Reading the workspace
 
 The workspace is served under `/workspace/` of the host's site, its `index.md` first, and attached to each release as `workspace-<tag>.zip`. The index lists the members, their versions, which domain named each and their health lines at the release. `queries/labels.rq` computes every concept's trust label with the bundle that asserted it, `queries/moved.rq` lists the members that moved since the domain's last confirmation, and `queries/unowned.rq` is the gate.

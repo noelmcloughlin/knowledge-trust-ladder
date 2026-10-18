@@ -9,6 +9,8 @@
 # each zip, register and export each bundle with the lokf toolkit, load one
 # named graph per bundle, gate the links that cross bundles, and swap the
 # result in whole. It runs no agent, and it never writes to the bundle.
+# A concept a curator retired (`status: deprecated`) takes no part: a
+# retired Domain concept is no top, and a retired member is not built.
 # A member whose zip is itself a domain is followed, tier by tier, as deep
 # as the top Domain concept's `max_depth` allows (3 unless it says
 # otherwise); its members join the same workspace, and the lock says which
@@ -244,12 +246,21 @@ class Member:
 
 
 def read_domain(knowledge: pathlib.Path):
-    """The Domain concepts and the member concepts (MemberBundle or MemberDomain) of one bundle folder."""
+    """The Domain concepts and the member concepts (MemberBundle or MemberDomain) of one bundle folder, each one a curator retired left out."""
     from lokf.model import load_bundle
 
     bundle = load_bundle(knowledge)
-    domains = [c for c in bundle.concepts if c.type == "Domain"]
-    members = [c for c in bundle.concepts if c.type in ("MemberBundle", "MemberDomain")]
+    domains, members = [], []
+    for c in bundle.concepts:
+        if c.type not in ("Domain", "MemberBundle", "MemberDomain"):
+            continue
+        if str(c.data.get("status") or "") == "deprecated":
+            # A retired concept stays for links and history and takes no
+            # part: a renamed domain's old concept is no second top, and a
+            # retired member is neither built nor moved.
+            say(f"{bundle.iri(c)}: retired (status: deprecated), left out")
+            continue
+        (domains if c.type == "Domain" else members).append(c)
     return bundle, domains, members
 
 

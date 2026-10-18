@@ -17,6 +17,9 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    named by both, and named at two releases it stops the build;
 4b. the depth a build follows is the top Domain concept's `max_depth`, 3
    unless set, and a `MemberDomain` whose zip holds no Domain stops it;
+4c. a concept a curator retired (`status: deprecated`) takes no part: a
+   retired Domain concept is not a second top, and a retired member is
+   neither built into the workspace nor moved by `members`;
 5. `--verify-only` writes nothing, and `members` leaves a non-GitHub member
    as it is;
 5a. a schema released beside a member's zip, named as a second distribution,
@@ -306,6 +309,28 @@ def test_a_member_declared_a_domain_must_hold_one(federation):
     concept.write_text(concept.read_text(encoding="utf-8").replace("type: MemberBundle", "type: MemberDomain"), encoding="utf-8")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 1 and "the concept is a MemberDomain, but the zip holds no concept of type Domain" in r.out, r.out
+
+
+def test_a_retired_domain_concept_is_not_a_second_top(federation):
+    """A renamed domain keeps its old concept, retired, beside the new one."""
+    host = federation["host"]
+    old = {"type": "Domain", "title": "The old domain", "description": "The domain before its rename.", "resource": "https://example.test/d", "status": "deprecated"}
+    write(host / ".lokf" / "knowledge" / "domains" / "old.md", frontmatter(**old) + "\n# Overview\n\nRetired.\n")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "domains/old: retired" in r.out, r.out
+    lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert lock["domain"] == federation["d_iri"] + "domains/federation"
+
+
+def test_a_retired_member_is_left_out_of_the_workspace(federation):
+    host = federation["host"]
+    concept = host / ".lokf" / "knowledge" / "members" / "a.md"
+    concept.write_text(concept.read_text(encoding="utf-8").replace("type: MemberBundle\n", "type: MemberBundle\nstatus: deprecated\n"), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "members/a: retired" in r.out, r.out
+    lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert [m["base_iri"] for m in lock["members"]] == [federation["b_iri"]], "the retired member is not in the lock"
+    assert federation["a_iri"] not in graphs_in(host / "snapshot" / "graph.nq") and not (host / "snapshot" / "bundles" / "a").exists()
 
 
 def test_verify_only_writes_nothing_and_members_leaves_a_local_zip_alone(federation):
@@ -615,6 +640,14 @@ def test_members_calls_a_member_confirmed_only_when_a_person_confirmed_it(releas
     assert asked["c"].startswith("acme/c released v1.1.0 after v1.0.0; "), "c was edited after its confirmation"
     assert asked["d"].startswith("acme/d released v1.1.0 after v1.0.0; ") and "patch" not in ops_for(patch, "d"), "a person wrote d"
     assert not (released["host"] / ".lokf" / "patch.yaml").exists(), "a dry run writes nothing"
+
+
+def test_members_leaves_a_retired_member_alone(released):
+    concept = released["host"] / ".lokf" / "knowledge" / "members" / "a.md"
+    concept.write_text(concept.read_text(encoding="utf-8").replace("status: draft", "status: deprecated"), encoding="utf-8")
+    r = members_run(released, "--dry-run")
+    assert r.rc == 0 and "members/a: retired" in r.out and "path: members/b.md" in r.out, r.out
+    assert "path: members/a.md" not in r.out, "no move is proposed for a retired member"
 
 
 def test_a_dry_run_prints_the_patch_while_a_librarian_pull_request_is_open(released):

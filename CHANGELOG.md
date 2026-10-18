@@ -6,6 +6,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
+- **The federation build leaves out a concept a curator retired.** A retired `Domain` concept no longer counts as a second top, and a retired member is neither built into the workspace nor moved by `members`. The curator's domain-bundle.md says how a member leaves.
 - **The sync calls a copy a pin bump only when its `uses:` lines are all that differ.** It reported every copy the release changed as "differed only on its action pins", because under `pipefail` its test took `diff`'s exit status.
 
 ## [0.50.0] - 2026-10-18
