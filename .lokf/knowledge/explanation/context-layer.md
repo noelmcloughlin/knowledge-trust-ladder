@@ -6,27 +6,27 @@ description: "What the industry means by a context layer, why one KTL bundle is 
 genre: explanation
 resource: docs/context-layer.md
 sources:
-- resource: docs/context-layer.md
-- resource: docs/context-layer-technology.md
-- resource: docs/architecture.md
+  - resource: docs/context-layer.md
+  - resource: docs/context-layer-technology.md
+  - resource: docs/architecture.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
-- https://w3id.org/ktl/knowledge/glossary/context-layer
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/context-layer
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/intended-uses
-- https://w3id.org/ktl/knowledge/explanation/domain-schemas
-- https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+  - https://w3id.org/ktl/knowledge/explanation/intended-uses
+  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 references:
-- https://w3id.org/ktl/knowledge/references/lokf-specification
-- https://w3id.org/ktl/knowledge/references/okf-specification
-- https://w3id.org/ktl/knowledge/references/lokf-toolkit
+  - https://w3id.org/ktl/knowledge/references/lokf-specification
+  - https://w3id.org/ktl/knowledge/references/okf-specification
+  - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  at: "2026-10-18T01:24:15Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  - by: process:ktl-librarian
+    at: "2026-10-15T01:30:10Z"
 ---
 
 # Overview
@@ -37,7 +37,7 @@ verified:
 
 **One bundle is one repository's context layer.** A table on the page sets those properties against what a bundle does. The librarian derives each concept from a source it names. A reader opens `index.md` first, and the docent answers from the bundle with each concept's label. The curator records a person's verdict on a conflict inside one bundle. Every concept carries `generated` and `verified` events, and each trust label is computed on read. The bundle has no permissions of its own: the repository's access control is the bundle's. So one bundle is already one repository's context layer, with per-query permission left to whatever hosts it.
 
-**Many bundles federated into one context layer: the design.** Domains select released bundles, and a person confirms each domain. A top domain selects domains and bounds the workspace. A repository that installed the sidecar releases its bundle with the template workflow `knowledge-release.yaml`. The bundle is validated with the registrar's checks, packed as a reproducible zip, checksummed, and attested where the forge offers it.
+**Many bundles federated into one context layer: the design.** Domains select released bundles, and a person confirms each domain. A domain may select domains in turn, and the one a build starts from bounds the workspace. A repository that installed the sidecar releases its bundle with the template workflow `knowledge-release.yaml`. The bundle is validated with the registrar's checks, packed as a reproducible zip, checksummed, and attested where the forge offers it.
 
 OKF says nothing about one bundle naming another, a catalogue of bundles, or what a reader may see of a bundle across a trust boundary, and its trackers ask for all three. Section 11 of the LOKF specification answers in linked-data terms. `lokf export` writes the files a registry reads, a `lokf-registry.yaml` keys each member bundle by its `base_iri`, and any IRI resolves to its owner by the longest matching `base_iri`. The toolkit's `lokf registry` commands do this offline today. The federated store that section 11.4 describes is marked informative and is not built.
 
