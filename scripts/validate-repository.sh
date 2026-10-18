@@ -283,6 +283,8 @@ say "Checking the paths sibling repositories link into..."
 sibling_paths=(
   "AI_COVENANT.md"
   "SECURITY.md"
+  ".lokf/knowledge/glossary/registrar.md"
+  ".lokf/knowledge/playbooks/ktl-curator-skill.md"
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md"
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md#why-the-bundle-is-never-a-real-folder-inside-a-vault"
   "docs/architecture.md"
