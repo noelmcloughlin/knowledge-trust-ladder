@@ -2,6 +2,7 @@
 
 ## 2026-10-18
 
+* **Changed**: the source map now lists in `sources` every path its rows consciously exclude, so `knowledge-report.sh coverage` counts those files as looked at. Each row still gives the reason, and the site's components, styles and scripts are taken as its `src/` and `scripts/` folders. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Curation**: human:noelmcloughlin released 3 concepts they wrote, so the librarian may rewrite them from their sources: Trust label, ktl-curator skill and Three lines of defence, each sent back earlier today. Each keeps its confirmation and note, and stays a draft until a person confirms the new text.
 * **Curation**: human:noelmcloughlin corrected 1 now and sent 4 back. Knowledge bundle now lists `docs/architecture.md` as a source and says the bundle opens as a vault of its own, beside a person's vault and never inside it. The ktl-librarian skill, Trust label, ktl-curator skill and Three lines of defence went back for not following their sources' recent changes. The same send-back came up three times: Trust label, ktl-curator skill and Three lines of defence carry text a person wrote, which the pen does not let the librarian update when its sources change.
 * **Changed**: The curated context layer: the workspace build takes each member and the domain's settings as a person last confirmed them, as `docs/federation.md` says since 0.50.1.

@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T17:45:03Z"
+  at: "2026-10-18T21:19:15Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -40,6 +40,20 @@ sources:
   - resource: .github/dependabot.yml
   - resource: .github/workflows/knowledge-registrar.yaml
   - resource: CHANGELOG.md
+  - resource: docs/architecture.en-simple.md
+  - resource: website/src
+  - resource: website/scripts
+  - resource: skills/ktl-website/templates/website/src
+  - resource: skills/ktl-website/templates/website/scripts
+  - resource: .lokf/curators
+  - resource: tests
+  - resource: pytest.ini
+  - resource: .assets
+  - resource: .markdownlint-cli2.jsonc
+  - resource: lychee.toml
+  - resource: LICENSE
+  - resource: llms.txt
+  - resource: .gitignore
 ---
 # Sources swept for this bootstrap discovery pass
 
