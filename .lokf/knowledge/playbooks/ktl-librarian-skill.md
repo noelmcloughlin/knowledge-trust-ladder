@@ -44,7 +44,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-03T09:40:04Z"
   - by: process:ktl-librarian
-    at: "2026-10-16T23:58:13Z"
+    at: "2026-10-18T17:45:03Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T00:19:38Z"
 stale_after: 2027-10-13

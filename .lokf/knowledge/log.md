@@ -2,6 +2,10 @@
 
 ## 2026-10-18
 
+* **Changed**: The curated context layer: the workspace build takes each member and the domain's settings as a person last confirmed them, as `docs/federation.md` says since 0.50.1.
+* **Changed**: ktl-sidecar skill: the federation build takes each member as a person last confirmed it and leaves retired concepts out, as `references/automation.md` says since 0.50.1.
+* **Changed**: Repository validation: the federation and sync tests cover what 0.50.1 fixed.
+* **Changed**: Knowledge sources: the thirty-fourth pass, after 0.50.1. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the domain bundle playbook says which release a member joins at while a move waits, what a send-back and a removed confirmation do, and that the Domain concept's settings count as a person confirmed them, as domain-bundle.md now says.
 * **Changed**: Curating a domain bundle: the diamond rule gives its reason apart from what the two owners then do, as `docs/federation.md` puts it, and a member leaves when the curator retires its concept, as the curator's `domain-bundle.md` says.
 * **Prose**: reworded 4 concept bodies in plain English. No fact, link, number or frontmatter changed.
