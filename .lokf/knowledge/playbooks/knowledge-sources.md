@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T17:45:03Z"
+  at: "2026-10-18T22:05:10Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -40,6 +40,22 @@ sources:
   - resource: .github/dependabot.yml
   - resource: .github/workflows/knowledge-registrar.yaml
   - resource: CHANGELOG.md
+  - resource: docs/architecture.en-simple.md
+  - resource: website/src/components
+  - resource: website/src/styles
+  - resource: website/scripts
+  - resource: skills/ktl-website/templates/website/src/components
+  - resource: skills/ktl-website/templates/website/src/styles
+  - resource: skills/ktl-website/templates/website/scripts
+  - resource: .lokf/curators
+  - resource: tests
+  - resource: pytest.ini
+  - resource: .assets
+  - resource: .markdownlint-cli2.jsonc
+  - resource: lychee.toml
+  - resource: LICENSE
+  - resource: llms.txt
+  - resource: .gitignore
 ---
 # Sources swept for this bootstrap discovery pass
 
@@ -476,3 +492,7 @@ sources:
   namespace the project controls. It mints every concept `@id` here, and the
   w3id rule redirects each one to the concept's page on the site, its JSON-LD
   or its Markdown file.
+
+## Open questions
+
+- 2026-10-18, process:ktl-librarian: The website rows exclude the site's components, styles and scripts. Is the rest of `src/`, in `website/` and in ktl-website's template, excluded too: its pages, `assets/`, `content.config.ts`, `routeData.ts`, `socialCards.ts` and `trust.ts`? If not, `playbooks/website.md` and `playbooks/ktl-website-skill.md` should cite them.
