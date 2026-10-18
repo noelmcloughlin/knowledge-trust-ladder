@@ -123,7 +123,7 @@ The curator and the docent need nothing new. A mirror file is a tracked path: th
 
 ## What stays out
 
-There is no fetcher for Jira. An issue moves whenever anyone comments, service desk customers raise requests without a licence, and most issues carry work rather than knowledge. A host that keeps decisions in labelled issues reaches them through a `command` entry with a client of its own. A scanned PDF has no text layer and is refused. Attachments and images are not fetched; a link to one keeps its origin address. A source that is not text stays a scope descriptor in a concept's `sources`, unless a command can print it.
+There is no fetcher for Jira: issues are unsuitable as knowledge sources. A PDF made of scanned page images holds no text, so it is refused. Attachments and images are not fetched; a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only when a `command` can print it.
 
 ## Security
 
