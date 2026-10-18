@@ -37,7 +37,7 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 </p>
 
 1. **A publish event starts it.** On GitHub, the host's release starts the job. An artifact repository's webhook does the same: Artifactory sends one when an artifact is "deployed to a repository", and its documentation shows it starting a GitHub Actions workflow through `workflow_dispatch`.
-2. **Resolve.** The job reads the top domain's manifest, follows each domain to its members, and writes a lock: one entry per release with its URL, its checksum, its tier and the domains that named it.
+2. **Resolve.** The job reads the top domain's manifest, follows each domain to its members, and writes a lock: one entry per release with its URL, its checksum, its tier and the domains that named it. It takes each member at the release a person last confirmed, and lists a member that waits for a confirmation.
 3. **Verify.** Each zip is checked against its `.sha256`, and on GitHub against its attestation with `gh attestation verify`. A failure stops the job, and the old snapshot stays.
 4. **Register and export.** Each release is unpacked, registered with `lokf registry add` and exported with `lokf export`. Registering it counts its triples and checks that its concepts sit under its declared `base_iri`.
 5. **Load.** Each `graph.nt` goes into a named graph whose IRI is the bundle's `base_iri`, as section 11.4 of the LOKF specification intends. In SPARQL, `GRAPH ?g` then says which bundle asserted a triple.

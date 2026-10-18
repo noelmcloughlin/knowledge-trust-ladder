@@ -20,6 +20,11 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 4c. a concept a curator retired (`status: deprecated`) takes no part: a
    retired Domain concept is not a second top, and a retired member is
    neither built into the workspace nor moved by `members`;
+4d. a member joins only as a person confirmed it: one no person confirmed
+   is left out and listed as waiting, at the top tier and in a member
+   domain's zip, while `--verify-only` still checks its zip; one moved by a
+   commit no person confirmed is built at the release git history shows a
+   person confirmed, until a person confirms the move;
 5. `--verify-only` writes nothing, and `members` leaves a non-GitHub member
    as it is;
 5a. a schema released beside a member's zip, named as a second distribution,
@@ -64,7 +69,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import REPO, SCRIPTS, have, read, run, write
+from conftest import REPO, SCRIPTS, Git, have, read, run, write
 
 SCRIPT = SCRIPTS / "knowledge-federate.py"
 APPLY = SCRIPTS / "knowledge-apply.sh"
@@ -109,13 +114,22 @@ def zip_bundle(knowledge: Path, zip_path: Path, symlink: bool = False) -> str:
     return hashlib.sha256(zip_path.read_bytes()).hexdigest()
 
 
-def member(slug: str, base_iri: str, zip_path: Path, sha: str, domain_iri: str, version: str = "v1.0.0", kind: str = "MemberBundle") -> dict:
-    return {
+CONFIRMED = [{"by": "human:noel", "at": "2026-01-02T00:00:00Z"}]
+
+
+def member(slug: str, base_iri: str, zip_path: Path, sha: str, domain_iri: str, version: str = "v1.0.0", kind: str = "MemberBundle", confirmed: bool = True) -> dict:
+    """A member concept naming one zip; a person confirmed it unless `confirmed` is false, since a build takes only what a person confirmed."""
+    concept = {
         "type": kind, "title": f"{slug} bundle", "description": f"The {slug} bundle at {version}.",
         "resource": zip_path.as_uri(), "base_iri": base_iri, "version": version,
         "distribution": [{"name": zip_path.name, "access_url": zip_path.as_uri(), "media_type": "application/zip", "checksum": f"sha256:{sha}"}],
         "isPartOf": [domain_iri],
     }
+    if confirmed:
+        concept["verified"] = CONFIRMED
+    else:
+        concept["status"] = "draft"
+    return concept
 
 
 def make_domain(host: Path, base_iri: str, members: dict[str, dict], policy: str = "fail", title: str = "D") -> Path:
@@ -231,7 +245,8 @@ def test_a_member_that_is_a_domain_is_followed(federation, tmp_path):
     c_zip = tmp_path / "c.zip"
     c_sha = zip_bundle(c, c_zip)
     sub = make_bundle(tmp_path / "s", s_iri, "S", {"domains/s.md": {"type": "Domain", "title": "Sub", "description": "A sub-domain.", "resource": "https://example.test/s"},
-                                                  "members/c.md": member("c", c_iri, c_zip, c_sha, s_iri + "domains/s")})
+                                                  "members/c.md": member("c", c_iri, c_zip, c_sha, s_iri + "domains/s"),
+                                                  "members/e.md": member("e", "https://e.example/knowledge/", c_zip, c_sha, s_iri + "domains/s", confirmed=False)})
     s_zip = tmp_path / "s.zip"
     s_sha = zip_bundle(sub, s_zip)
     write(host / ".lokf" / "knowledge" / "members" / "s.md", frontmatter(**member("s", s_iri, s_zip, s_sha, federation["d_iri"] + "domains/federation")) + "\n# Overview\n\nS.\n")
@@ -241,6 +256,8 @@ def test_a_member_that_is_a_domain_is_followed(federation, tmp_path):
     entries = {m["base_iri"]: m for m in yaml.safe_load(lock)["members"]}
     assert entries[c_iri]["tier"] == 2 and entries[c_iri]["member_of"] == [s_iri + "domains/s"] and entries[s_iri]["kind"] == "domain"
     assert c_iri in graphs_in(host / "snapshot" / "graph.nq")
+    assert "https://e.example/knowledge/" not in entries, "a member domain's member no person confirmed is left out"
+    assert yaml.safe_load(lock)["waiting"] == [{"concept": s_iri + "members/e", "proposed": "v1.0.0", "built": None}]
 
 
 def test_a_bundle_two_domains_name_at_one_release_joins_once(federation, tmp_path):
@@ -332,6 +349,52 @@ def test_a_retired_member_is_left_out_of_the_workspace(federation):
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
     assert [m["base_iri"] for m in lock["members"]] == [federation["b_iri"]], "the retired member is not in the lock"
     assert federation["a_iri"] not in graphs_in(host / "snapshot" / "graph.nq") and not (host / "snapshot" / "bundles" / "a").exists()
+
+
+def test_a_member_no_person_confirmed_waits_outside_the_workspace(federation):
+    """A merged pull request that adds a member admits nothing until a person confirms it."""
+    host = federation["host"]
+    write(host / ".lokf" / "knowledge" / "members" / "a.md",
+          frontmatter(**member("a", federation["a_iri"], federation["a_zip"], federation["a_sha"], federation["d_iri"] + "domains/federation", confirmed=False)) + "\n# Overview\n\na.\n")
+    r = federate(host, "build", "--verify-only", "--no-attestation")
+    assert r.rc == 0 and "a: v1.0.0" in r.out, "--verify-only checks the zip a person is asked to confirm\n" + r.out
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "members/a: left out, because no person has confirmed it" in r.out, r.out
+    lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert [m["base_iri"] for m in lock["members"]] == [federation["b_iri"]]
+    assert lock["waiting"] == [{"concept": federation["d_iri"] + "members/a", "proposed": "v1.0.0", "built": None}]
+    assert federation["a_iri"] not in graphs_in(host / "snapshot" / "graph.nq")
+    index = (host / "snapshot" / "index.md").read_text(encoding="utf-8")
+    assert "## Waiting for a person" in index and "members/a>: v1.0.0 waits; left out." in index, index
+
+
+def test_a_moved_member_is_built_at_the_release_a_person_confirmed(federation, tmp_path):
+    """The members librarian's move, merged, waits for a person; git history holds the release they confirmed."""
+    host = federation["host"]
+    git = Git(host)
+    git.init()
+    git("add", "-A")
+    git("commit", "-qm", "the members as a person confirmed them")
+    b2 = make_bundle(tmp_path / "b2", federation["b_iri"], "B", {"glossary/other.md": {"type": "GlossaryTerm", "title": "Other", "description": "Another term, revised.", "resource": "https://example.test/b"}})
+    b2_zip = tmp_path / "b2.zip"
+    b2_sha = zip_bundle(b2, b2_zip)
+    moved = member("b", federation["b_iri"], b2_zip, b2_sha, federation["d_iri"] + "domains/federation", version="v2.0.0")
+    moved["generated"] = {"by": "process:knowledge-federate", "at": "2026-02-01T00:00:00Z"}
+    concept = host / ".lokf" / "knowledge" / "members" / "b.md"
+    write(concept, frontmatter(**moved) + "\n# Overview\n\nb at v2.0.0.\n")
+    git("commit", "-qam", "move b to v2.0.0")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "members/b: v2.0.0 waits for a person's confirmation; built at v1.0.0, as a person confirmed it at commit" in r.out, r.out
+    lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    entries = {m["base_iri"]: m for m in lock["members"]}
+    assert entries[federation["b_iri"]]["version"] == "v1.0.0" and entries[federation["b_iri"]]["sha256"] == federation["b_sha"]
+    assert lock["waiting"] == [{"concept": federation["d_iri"] + "members/b", "proposed": "v2.0.0", "built": "v1.0.0"}]
+    moved["verified"] = [*CONFIRMED, {"by": "human:noel", "at": "2026-02-02T00:00:00Z"}]
+    write(concept, frontmatter(**moved) + "\n# Overview\n\nb at v2.0.0.\n")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert {m["base_iri"]: m["sha256"] for m in lock["members"]}[federation["b_iri"]] == b2_sha and "waiting" not in lock, "a person's confirmation admits the move"
 
 
 def test_verify_only_writes_nothing_and_members_leaves_a_local_zip_alone(federation):
