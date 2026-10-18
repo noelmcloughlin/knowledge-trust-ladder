@@ -4,6 +4,13 @@ The librarian reads the repository, and a bundle cites what the librarian can re
 
 Nothing in the trust ladder changes. A concept derived from a wiki page is agent-derived until a person confirms it, as one derived from a README is. Knowledge Trust Ladder (KTL) keeps the same work list, gate and review; the ingest adds reach.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-ingest-dark.svg">
+    <img src="../.assets/ktl-ingest.svg" alt="Four kinds of source outside the repository feed the ingest: the manifest names them, the script fetches and converts them in a read-only job with no agent, and writes the mirror and the lock. A pull request each Sunday is the review; the librarian on Monday derives concepts that cite the mirror file and the origin page" width="720" />
+  </picture>
+</p>
+
 ## What can be mirrored
 
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
@@ -20,6 +27,8 @@ There is no fetcher for Jira, since issues are unsuitable as knowledge sources. 
 **The mirror**, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, a page id or a path, never its title, so a retitled page is the same file. Links are made absolute, and a PDF carries a comment before each page so a concept can cite the page.
 
 **The lock**, `.lokf/ingest.lock.yaml`, records the same per item with a status: `ok`, `gone` after a 404 or 410, `unlisted` when the selector no longer returns it, `failed` when a request did not complete, `refused` with the reason. The mirror and the lock change only when content changes.
+
+The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian holds no secret with which to fetch. Never clear it before a run; refresh it instead, since a run fetches only what moved and restores any file the disk has lost. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
 
 A workflow runs the script on Sundays and keeps one pull request open with the changes, refreshed until a person merges it. The librarian's Monday run then finds each concept whose mirror file moved in its work list.
 
@@ -114,15 +123,15 @@ The pull request is opened on the branch `knowledge-ingest`. The sidecar's [auto
 bash .lokf/scripts/knowledge-ingest.sh --dry-run                 # list and compare, write nothing
 bash .lokf/scripts/knowledge-ingest.sh --visibility private      # every entry
 bash .lokf/scripts/knowledge-ingest.sh --only platform-runbooks  # one entry
-bash .lokf/scripts/knowledge-ingest.sh --prune                   # remove gone and unlisted files no concept cites
+bash .lokf/scripts/knowledge-ingest.sh --prune                   # remove gone and unlisted files no concept cites, recorded so by an earlier run
 bash .lokf/scripts/knowledge-ingest.sh --patch                   # Reference concepts for the entries that ask
 ```
 
-Set the same variable names in the environment. The librarian runs the first command itself at the start of a live session. Commit the mirror and the lock with the bundle change. A host with no git runs the script the same way, and the lock is its record.
+Set the same variable names in the environment. The librarian runs the first command itself at the start of a live session. Commit the mirror and the lock with the bundle change. A host with no git runs the script the same way, and the lock is its record. The preflight's `ingest` line counts files the lock names that are missing, files the lock does not name, and files waiting for a prune. The confidential cache under `.lokf/.cache/mirror/` may be deleted at any time; the next run fetches it again.
 
 ## The pull request
 
-The body is the run's summary, then the checklist. Read the diff as you would read the page: is this text something the repository should hold? A page that should not be here comes out of the manifest, not out of the diff. A file marked `gone` or `unlisted` stays until the librarian has asked about the concepts that cite it. A line marked `failed` with a credential's name is a secret not yet set, or expired; the run shows it as a warning too.
+The body is the run's summary, then the checklist. Read the diff as you would read the page: is this text something the repository should hold? A page that should not be here comes out of the manifest, not out of the diff. A file marked `gone` or `unlisted` stays while a concept cites it, until the librarian has handled that concept. Once none does, the next scheduled run removes it, and the diff shows the removal; the lock's `since` date says how long it has been away. A line marked `failed` with a credential's name is a secret not yet set, or expired; the run shows it as a warning too.
 
 A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed, and a run started by hand proposes it now. No checks run on this pull request, and that is expected: GitHub starts none for a pull request a workflow opens, and the mirror holds no bundle file to check. Merge it, and the librarian's next run reads what changed.
 

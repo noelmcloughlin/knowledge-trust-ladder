@@ -301,14 +301,17 @@ def test_a_confluence_selection_is_listed_fetched_and_kept_current(tmp_path, ser
     del pages["124"]
     confluence_routes(server, cloud, pages)
     result = ingest(root, "--visibility", "private")
-    checks.ok(result and "1 unlisted" in result.out, "a page that left the selection is unlisted", result.out)
+    checks.ok(result and "1 unlisted" in result.out and "124: unlisted since 2026-10-18" in result.out, "a page that left the selection is unlisted, dated", result.out)
     checks.ok((root / ".lokf" / "mirror" / "runbooks" / "124.md").is_file(), "the unlisted file stays")
-    write(root / ".lokf" / "knowledge" / "playbooks" / "rollback.md", "---\ntype: Playbook\ntitle: Rollback\nresource: .lokf/mirror/runbooks/124.md\n---\n# Rollback\n")
     result = ingest(root, "--visibility", "private", "--prune")
+    checks.ok(result and "went unlisted on this run, so it stays until the next" in result.out and (root / ".lokf" / "mirror" / "runbooks" / "124.md").is_file(), "a prune on the same run keeps it", result.out)
+    write(root / ".lokf" / "knowledge" / "playbooks" / "rollback.md", "---\ntype: Playbook\ntitle: Rollback\nresource: .lokf/mirror/runbooks/124.md\n---\n# Rollback\n")
+    later = ("--now", "2026-10-25T06:00:00Z")
+    result = ingest(root, "--visibility", "private", "--prune", *later)
     checks.ok(result and "a concept still cites it, so it stays" in result.out, "a cited file is kept by --prune", result.out)
     (root / ".lokf" / "knowledge" / "playbooks" / "rollback.md").unlink()
-    result = ingest(root, "--visibility", "private", "--prune")
-    checks.ok(result and "no concept cites it; removed" in result.out, "an uncited file is removed by --prune", result.out)
+    result = ingest(root, "--visibility", "private", "--prune", *later)
+    checks.ok(result and "was unlisted since 2026-10-18 and no concept cites it; removed" in result.out, "an uncited file is removed by a later --prune", result.out)
     checks.ok(not (root / ".lokf" / "mirror" / "runbooks" / "124.md").exists(), "the file is gone")
     checks.ok("124" not in lock_of(root)["entries"]["runbooks"]["items"], "and so is its lock record")
 
@@ -619,6 +622,29 @@ def test_an_entry_that_leaves_the_manifest_takes_its_folder(tmp_path, server, ch
     result = ingest(root)
     checks.ok(result and not (root / ".lokf" / "mirror" / "b").exists() and "b" not in lock_of(root)["entries"], "the folder and the record are gone", result.out)
     checks.ok((root / ".lokf" / "mirror" / "a").is_dir() and "a" in lock_of(root)["entries"], "the other entry is untouched")
+
+
+# 15b. a cleared mirror
+
+
+def test_a_cleared_mirror_is_restored_and_the_status_line_counts_what_is_off(tmp_path, server, checks):
+    Stub.routes["/a.md"] = (200, {"Content-Type": "text/markdown", "ETag": '"a1"'}, b"# A\n")
+    root = host(tmp_path, manifest_for([{"id": "a", "kind": "http", "urls": [f"{server}/a.md"], "sensitivity": "public"}]))
+    ingest(root)
+    a_file = next((root / ".lokf" / "mirror" / "a").glob("*.md"))
+    a_file.unlink()
+    write(root / ".lokf" / "mirror" / "a" / "copied-by-hand.md", "# stray\n")
+    result = ingest(root, "--status")
+    checks.ok(result and "1 missing from the mirror, which a run restores" in result.out and "1 files in the mirror the lock does not name" in result.out, "the status counts the missing and the stray file", result.out)
+    result = ingest(root, "--dry-run")
+    checks.ok(result and "1 restored" in result.out and not a_file.is_file(), "a dry run says restored and writes nothing", result.out)
+    result = ingest(root)
+    checks.ok(result and "- a (http, 1 address): 1 restored" in result.out and a_file.is_file() and "# A" in read(a_file), "the run fetches the file again", result.out)
+    checks.ok(any(h.get("If-None-Match") is None for p, h in Stub.requests if p == "/a.md"), "without a conditional header, since the copy is gone")
+    Stub.routes.pop("/a.md")
+    ingest(root)
+    result = ingest(root, "--status")
+    checks.ok(result and "1 gone or unlisted, which --prune removes" in result.out, "the status counts what waits for a prune", result.out)
 
 
 # 16. the mirror cap

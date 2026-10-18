@@ -4,6 +4,15 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The ingest restores a lost mirror file and prunes on a schedule.** A file the lock names and the disk has lost is fetched again and reported as restored. A scheduled run removes a gone or unlisted file no concept cites, once an earlier run recorded it so, and the preflight counts missing, stray and prunable files.
+- **`docs/ingest.md` has a figure**, `.assets/ktl-ingest.svg` with its dark variant: the sources, the ingest, the review and the concept that cites the mirror.
+
+### Removed
+
+- **The figures nobody shows.** Every `-dimmed` figure, unreferenced since the dark theme moved to the `-dark` set, and both files of the lifecycle loop, which no page has shown since the README dropped it.
+
 ## [0.49.0] - 2026-10-18
 
 ### Added
