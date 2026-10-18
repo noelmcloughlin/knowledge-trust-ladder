@@ -11,6 +11,8 @@ This page is for the **curator** of a domain host: a repository whose bundle nam
 - **`MemberDomain`** (a `MemberBundle`, `dcat:Catalog`): a member whose bundle is itself a domain. The build follows its members into the same workspace, tier by tier, as deep as `max_depth` allows. A `MemberBundle` whose zip turns out to hold a `Domain` concept is followed too, and the lock marks it a domain.
 - **`ReleaseDistribution`** (a `Distribution`): the zip with its `checksum`, `sha256:` and 64 hex digits, as the release's `.sha256` file gives it.
 
+**In Obsidian.** List `Domain`, `MemberBundle` and `MemberDomain` under *Settings → Type vocabulary → Known LOKF types* in both KTL Curator and KTL Registrar, the same list in each. Neither plugin can read `.lokf/domain.yaml`, because the vault is the bundle's own folder and the schema sits outside it. Until the classes are listed, KTL Registrar warns on every domain and member concept, and KTL Curator counts each against *Vocabulary fit*. `ReleaseDistribution` needs no entry, because it is the type of a member's `distribution` and no concept's `type` names it. The librarian's [domain-schema.md](../../ktl-librarian/references/domain-schema.md) says what the setting changes and what an edited list costs.
+
 A member names the newest release that carries a `knowledge-*.zip`, because a release whose bundle did not change carries none. Nothing is copied from a member into the domain: a member's new release changes nothing until a person confirms a member concept that names it.
 
 The worked example is ktl-federation's `members/knowledge-trust-ladder.md`:
