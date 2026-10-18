@@ -46,6 +46,10 @@ copy   scripts/knowledge-apply.py              .lokf/scripts/knowledge-apply.py
 copy   scripts/knowledge-report.sh             .lokf/scripts/knowledge-report.sh
 copy   scripts/knowledge-federate.py           .lokf/scripts/knowledge-federate.py
 copy   scripts/knowledge-sync.sh               .lokf/scripts/knowledge-sync.sh
+copy   github/knowledge-ingest.yaml            .github/workflows/knowledge-ingest.yaml
+copy   github/knowledge-ingest-pull-request.md .github/PULL_REQUEST_TEMPLATE/knowledge-ingest.md
+copy   scripts/knowledge-ingest.sh             .lokf/scripts/knowledge-ingest.sh
+copy   scripts/knowledge-ingest.py             .lokf/scripts/knowledge-ingest.py
 copy   domain.yaml                             .lokf/domain.yaml
 copy   m365/knowledge-m365.sh                  .lokf/m365/knowledge-m365.sh
 copy   m365/ktl-docent-m365.md                 .lokf/m365/ktl-docent-m365.md
@@ -78,4 +82,8 @@ needs domain.yaml                           .github/workflows/knowledge-federati
 needs github/knowledge-sync.yaml            .github/workflows/knowledge-librarian.yaml   pins a release, and only this keeps the pin current
 needs scripts/knowledge-sync.sh             .github/workflows/knowledge-librarian.yaml   pins a release, and only this keeps the pin current
 needs scripts/knowledge-sync.sh             .github/workflows/knowledge-sync.yaml        cannot run without it
+needs scripts/knowledge-ingest.sh           .github/workflows/knowledge-ingest.yaml      cannot run without it
+needs scripts/knowledge-ingest.py           .github/workflows/knowledge-ingest.yaml      cannot run without it
+needs scripts/knowledge-ingest.py           .lokf/scripts/knowledge-ingest.sh            cannot run without it
+needs github/knowledge-ingest-pull-request.md .github/workflows/knowledge-ingest.yaml    writes the pull request's checklist from it
 needs github/knowledge-sync-pull-request.md .github/workflows/knowledge-sync.yaml        opens its pull request from it

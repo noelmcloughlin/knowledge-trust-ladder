@@ -1,0 +1,241 @@
+name: Knowledge ingest
+
+# Mirrors the sources .lokf/ingest.yaml names, from outside this repository,
+# into .lokf/mirror/, and opens one pull request with what changed. It runs
+# the host's own .lokf/scripts/knowledge-ingest.sh. No LLM or agent runs
+# here, nothing fetched runs, and nothing is pushed to the default branch.
+#
+# One pull request at a time, from this workflow's own branch
+# knowledge-ingest, refreshed until it is merged. A pull request a person
+# committed to is left alone.
+#
+# Two jobs. `ingest` holds the repository secrets whose names start
+# KNOWLEDGE_INGEST_ and a read-only token, runs the script, and hands the
+# change on as a patch. `publish` holds the write token and no secret,
+# refuses a patch outside the mirror and the lock, and opens or refreshes
+# the pull request with GITHUB_TOKEN, which needs "Allow GitHub Actions to
+# create and approve pull requests" under Settings, Actions, General. A pull
+# request that token opens starts no checks, and needs none: the mirror is
+# text, and the registrar's conventions read the bundle alone.
+#
+# SECURITY SCANNER NOTE. No LLM, AI agent or AI tool runs here, so a finding
+# about content reaching a model (Snyk W011, indirect prompt injection) has
+# no prompt to reach. The mirror reaches the scheduled librarian only after
+# a person merges this pull request. The skills repository's
+# docs/threat-model.md answers the other findings under "The ingest
+# workflow": content fetched at run time, secrets in a job, and a forced
+# push to this workflow's own branch.
+on:
+  schedule:
+    - cron: "10 4 * * 0" # Sundays at 04:10 UTC, so the librarian's Monday run follows a merged mirror
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "One entry id from .lokf/ingest.yaml to run; empty for every entry"
+        required: false
+        type: string
+      prune:
+        description: "Delete gone and unlisted mirror files that no concept cites"
+        required: false
+        type: boolean
+        default: false
+
+permissions: {} # deny by default; each job requests only the scopes it needs
+
+concurrency:
+  group: knowledge-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    name: Mirror the sources the manifest names (read-only)
+    if: vars.KNOWLEDGE_INGEST_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read # read the repository and its visibility; no write token near the fetched content
+    outputs:
+      changed: ${{ steps.run.outputs.changed }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # keep GITHUB_TOKEN off disk while the sources are fetched
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.12"
+
+      # The repository secrets whose names start KNOWLEDGE_INGEST_, and no
+      # other, reach the job's environment. A value that spans lines is left
+      # out, since a token is one line.
+      - name: Hand over the ingest secrets
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ALL_SECRETS" \
+            | jq -r 'to_entries[] | select(.key | test("^KNOWLEDGE_INGEST_[A-Z0-9_]+$")) | select(.value | test("\n") | not) | "\(.key)=\(.value)"' \
+            >> "$GITHUB_ENV"
+
+      # The repository's visibility decides what may be committed; the
+      # script refuses what it does not allow and records why.
+      - name: Run the ingest
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ONLY: ${{ inputs.only }}
+          PRUNE: ${{ inputs.prune }}
+        run: |
+          set -euo pipefail
+          script=.lokf/scripts/knowledge-ingest.sh
+          if [ ! -f "$script" ]; then
+            echo "::error::No $script here. ktl-sidecar's Step 5 installs it beside this workflow."
+            exit 1
+          fi
+          if [ ! -f .lokf/ingest.yaml ]; then
+            echo "::notice::No .lokf/ingest.yaml here, so there is nothing to mirror. The sidecar's templates/ingest.yaml is the shape."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
+          args=(--visibility "$visibility" --summary "$RUNNER_TEMP/summary.md")
+          if [ -n "$ONLY" ]; then
+            if ! printf '%s\n' "$ONLY" | grep -qE '^[a-z0-9][a-z0-9-]*$'; then
+              echo "::error::'$ONLY' is not an entry id."
+              exit 1
+            fi
+            args+=(--only "$ONLY")
+          fi
+          [ "$PRUNE" != "true" ] || args+=(--prune)
+          bash "$script" "${args[@]}"
+          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$(git status --porcelain -- .lokf/mirror .lokf/ingest.lock.yaml)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nothing changed since the last run."
+          fi
+
+      # Hand the change to the privileged job as a patch: the mirror and
+      # the lock, and nothing else.
+      - name: Package the change
+        if: steps.run.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git add -A -- .lokf/mirror .lokf/ingest.lock.yaml
+          git diff --cached --binary > "$RUNNER_TEMP/ingest.patch"
+
+      - name: Upload the patch
+        if: steps.run.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: knowledge-ingest-patch
+          path: |
+            ${{ runner.temp }}/ingest.patch
+            ${{ runner.temp }}/summary.md
+          retention-days: 7
+          if-no-files-found: error
+
+  publish:
+    name: Open or refresh the review pull request (privileged, no secret)
+    needs: ingest
+    if: needs.ingest.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # push the knowledge-ingest branch
+      pull-requests: write # open or edit the pull request
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download the patch
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: knowledge-ingest-patch
+          path: ${{ runner.temp }}
+
+      # Trust nothing the `ingest` job decided: it read content nobody here
+      # has reviewed. A patch that touches anything but the mirror and the
+      # lock, or a path with a character outside the plain set, is refused
+      # before it touches disk. An open pull request from this workflow with
+      # its single commit is refreshed; one a person committed to is left
+      # alone.
+      - name: Check the patch, then commit, push and open or refresh the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          paths="$(git -c core.quotePath=false apply --numstat "$RUNNER_TEMP/ingest.patch" | cut -f3-)"
+          bad="$(printf '%s\n' "$paths" | grep -Ev '^(\.lokf/mirror/.+|\.lokf/ingest\.lock\.yaml)$' || true)"
+          odd="$(printf '%s\n' "$paths" | grep -Ev '^[A-Za-z0-9._/@+-]+$' || true)"
+          if [ -n "${bad//[$'\n\t ']/}" ] || [ -n "${odd//[$'\n\t ']/}" ]; then
+            echo "::error::The patch touches paths an ingest may not:"
+            printf '%s\n%s\n' "$bad" "$odd" | sed '/^$/d; s/^/  /'
+            exit 1
+          fi
+          branch="knowledge-ingest"
+          subject="chore(lokf): mirror the sources outside the repository"
+          # This workflow's open pull request, if any, and whether it holds
+          # only this workflow's one commit.
+          open=""; refresh=true
+          line="$(gh api "repos/${GITHUB_REPOSITORY}/pulls?head=${GITHUB_REPOSITORY_OWNER}:${branch}&state=open&per_page=5" \
+            --jq '.[] | [.number, (.head.repo.full_name // "-")] | @tsv' \
+            | awk -F'\t' -v repo="$GITHUB_REPOSITORY" '$1 ~ /^[0-9]+$/ && $2 == repo { print $1; exit }')"
+          if [ -n "$line" ]; then
+            open="$line"
+            commits="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/$open/commits?per_page=2" --jq '[length, (.[0].commit.committer.name // "-")] | @tsv')"
+            if [ "$commits" != "$(printf '1\tknowledge-ingest[bot]')" ]; then
+              refresh=false
+            fi
+          fi
+          if [ "$refresh" = false ]; then
+            echo "::notice::Pull request #$open from this workflow carries a commit a person added, so this run leaves it alone. Merge or close it first; the change is attached to this run as ingest.patch."
+            exit 0
+          fi
+          git apply --index --whitespace=nowarn "$RUNNER_TEMP/ingest.patch"
+          body="$RUNNER_TEMP/body.md"
+          {
+            echo "Brings the mirror of the sources outside this repository, named in \`.lokf/ingest.yaml\`, up to what those sources hold today. Nothing here is knowledge yet: the librarian derives concepts from these files on its next run, and a person confirms them after that."
+            echo
+            if [ -n "$open" ]; then
+              echo "**Refreshed on $(date -u +%Y-%m-%d).** This run replaced the pull request's one commit with today's mirror, so read the diff again."
+              echo
+            fi
+            cat "$RUNNER_TEMP/summary.md"
+            echo
+            if [ -f .github/PULL_REQUEST_TEMPLATE/knowledge-ingest.md ]; then
+              cat .github/PULL_REQUEST_TEMPLATE/knowledge-ingest.md
+            fi
+          } > "$body"
+          git config user.name "knowledge-ingest[bot]"
+          git config user.email "knowledge-ingest[bot]@users.noreply.github.com"
+          git checkout --quiet -b "$branch"
+          git commit --quiet -m "$subject"
+          # The branch holds this workflow's one commit; a refresh writes over it.
+          git push --quiet --force origin "HEAD:refs/heads/$branch"
+          if [ -n "$open" ]; then
+            gh pr edit "$open" --title "$subject" --body-file "$body" >/dev/null
+            url="$(gh pr view "$open" --json url --jq .url)"
+            echo "Refreshed $url"
+          else
+            base="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .default_branch)"
+            if ! url="$(gh pr create --title "$subject" --body-file "$body" --head "$branch" --base "$base")"; then
+              echo "::error::The pull request could not be opened. Turn on \"Allow GitHub Actions to create and approve pull requests\" under Settings, Actions, General; the branch $branch is pushed."
+              exit 1
+            fi
+            echo "Opened $url"
+          fi
+          { echo; echo "Pull request: $url"; } >> "$GITHUB_STEP_SUMMARY"

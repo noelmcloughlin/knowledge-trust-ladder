@@ -1,0 +1,77 @@
+# What the ingest mirrors from outside this repository. knowledge-ingest.sh
+# reads this file, fetches each entry, converts it to Markdown and writes it
+# under .lokf/mirror/<entry id>/; ingest.lock.yaml records what was fetched.
+# No token goes here: an auth block names environment variables starting
+# KNOWLEDGE_INGEST_, and the workflow hands over the secrets of those names.
+#
+# An entry is the place, the selector, who answers for the source (owner)
+# and why this repository mirrors it (why: the source map's row). Replace
+# the examples with your own, or delete this file to mirror nothing.
+#
+# sensitivity: public may be committed anywhere; internal, the default, to a
+# private repository only; confidential never, and goes to the ignored
+# .lokf/.cache/mirror/. An entry the repository's visibility does not allow
+# is refused.
+
+ingest_version: "1"
+mirror: .lokf/mirror
+max_total_bytes: 50000000
+allow_private_addresses: false
+
+services:
+  confluence:
+    kind: confluence
+    site: https://acme.atlassian.net
+    auth:
+      scheme: basic
+      user_env: KNOWLEDGE_INGEST_ATLASSIAN_USER
+      env: KNOWLEDGE_INGEST_ATLASSIAN_TOKEN
+  github:
+    kind: git
+    auth:
+      scheme: basic
+      env: KNOWLEDGE_INGEST_GITHUB_TOKEN
+
+defaults:
+  sensitivity: internal
+  max_items: 200
+  max_item_bytes: 1000000
+  authors: true
+
+entries:
+  - id: platform-runbooks
+    service: confluence
+    select:
+      label: ktl
+      space: PLAT
+    owner: team:platform
+    why: the runbooks the on-call rota follows; this repository holds the code they run
+
+  - id: ops-wiki
+    service: github
+    url: https://github.com/acme/platform.wiki.git
+    ref: master
+    path: runbooks
+    include:
+      - "*.md"
+    owner: team:ops
+    why: the on-call wiki, which lives beside the repository and not in its tree
+
+  - id: vendor-protocol
+    kind: http
+    urls:
+      - https://vendor.example/spec/v3.pdf
+    convert: pdf-text
+    sensitivity: public
+    license: https://vendor.example/terms
+    owner: vendor-example/v3
+    reference: true
+    why: the wire protocol the gateway implements
+
+  - id: schema-dump
+    kind: command
+    command: .lokf/ingest/schema-dump.sh
+    timeout: 120
+    owner: team:data
+    disabled: true
+    why: the live database schema, printed by a script this repository holds
