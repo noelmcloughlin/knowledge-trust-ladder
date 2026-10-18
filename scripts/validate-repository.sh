@@ -488,7 +488,10 @@ unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y
 # exists here; actionlint reads the template itself, tests/test_federation.py
 # runs the federation script from the template, and tests/test_sync.py the
 # sync. Every other copy must be here.
-optional_here=" github/knowledge-federation.yaml scripts/knowledge-federate.py domain.yaml github/knowledge-sync.yaml github/knowledge-sync-pull-request.md scripts/knowledge-sync.sh "
+# The ingest templates serve a host with sources outside its repository,
+# which this one has none of; tests/test_ingest.py runs the script from the
+# template.
+optional_here=" github/knowledge-federation.yaml scripts/knowledge-federate.py domain.yaml github/knowledge-sync.yaml github/knowledge-sync-pull-request.md scripts/knowledge-sync.sh github/knowledge-ingest.yaml github/knowledge-ingest-pull-request.md scripts/knowledge-ingest.sh scripts/knowledge-ingest.py "
 while read -r rule template copy _; do
   src="$templates/$template"; dst="$copy"
   case "$rule" in

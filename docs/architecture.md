@@ -102,6 +102,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 | How to install the six skills, which ones to start with, and how to pin them to one release | [install.md](install.md) |
 | The context layer: how one bundle already is one, and how bundles federate into one layer through domains | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
 | A federation of bundles: tiers of domains, the workspace built ahead of time, what exists and what remains a design, and the decisions an adopter must make | [federation.md](federation.md) |
+| Knowledge outside the repository: wiki pages, documents and files in other repositories, mirrored by the ingest so the bundle can cite them | [ingest.md](ingest.md) |
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [for-the-curious.md](for-the-curious.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [obsidian.md](obsidian.md) |

@@ -4,6 +4,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The ingest mirrors knowledge from outside the repository.** `knowledge-ingest.py`, a new ktl-sidecar template with a shell half, reads `.lokf/ingest.yaml`, fetches the sources it names, converts each to Markdown and writes it under `.lokf/mirror/`, with `.lokf/ingest.lock.yaml` recording the version, the digest and the status of each. Four kinds: a Confluence selection, a list of addresses, a path in another repository at a ref, and a command the host committed. The librarian derives concepts from a mirror file as from any tracked file, so nothing in the trust ladder changes.
+- **`knowledge-ingest.yaml` opens one pull request with what changed.** It runs the host's own script with the repository secrets whose names start `KNOWLEDGE_INGEST_` in a read-only job, and a separate job commits the mirror and the lock to the branch `knowledge-ingest`, refreshed until merged; `.github/PULL_REQUEST_TEMPLATE/knowledge-ingest.md` is the reviewer's checklist. `KNOWLEDGE_INGEST_ENABLED` turns it on.
+- **`docs/ingest.md`** is the guide: the manifest, the mirror, the lock, the secrets, what the pull request shows and what the librarian does next. The preflight prints an `ingest` line, and `knowledge-report.sh coverage` counts the mirror's files.
+
 ### Changed
 
 - **A domain concept is named for the domain, never for its position.** The curator's domain-bundle.md says so, its worked example names ktl-federation's `domains/ktl-federation`, and it says a confirmation stays with the concept's `id`.

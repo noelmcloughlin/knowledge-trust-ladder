@@ -14,6 +14,8 @@ Sweep the repository with generic heuristics and map what you find to LOKF class
 | domain terms recurring across code, data and docs | vocabulary | `GlossaryTerm` |
 | ownership files (`CODEOWNERS`, manifest authors), publishers named inside data files | owners, publishers | `Organization` or `Person`, added only when something links to them through `author` on a concept or `publisher` on the bundle, the only slots whose range is an Agent. No relation slot, and no `relations[].target`, may point at one, since their range is Concept |
 
+A host with `.lokf/ingest.yaml` has sources outside the repository too: the manifest is one more file the sweep reads, and each entry's folder under `.lokf/mirror/` yields concepts as a folder of documents does, cited as [ingest.md](ingest.md) says.
+
 Replace the sidecar's two example services: `delete` them through the pen once real concepts stand in their place. A concept you create carries no `human:` actor and starts as `status: draft`, as every concept the pen creates does.
 
 Record the resulting map as a concept, **`playbooks/knowledge-sources.md`** (`type: Playbook`). List each knowledge source, as a repository path or an external URL, the classes it yields, and how to re-check it. Give it each listed path as a `sources` entry: the work list then flags the map as moved when anything inside a listed directory changes, a new file included, and `knowledge-report.sh coverage` counts the tracked files that no listed path and no concept covers. Discovery output lives in the bundle this way, versioned and reviewed like every other concept, and not in this skill.

@@ -100,6 +100,10 @@ The host vault stays clean for two reasons. Obsidian never indexes a dot-folder.
 
 A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* hides it from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions ([Obsidian's settings help](https://obsidian.md/help/settings)), and Obsidian Sync carries no links. Hence the rule: the bundle is never placed as a real folder inside a vault.
 
+### The ingest on another host
+
+`knowledge-ingest.sh` is bash and Python, and runs wherever `uv` or `python3` with PyYAML does. Without git it runs by hand, with the credentials in the environment, and the lock is the record of what was fetched; the `command` kind then takes any file under the root, since no git can say whether it is tracked. On a forge other than GitHub, schedule the script in that CI with the secrets it names, pass `--visibility`, and open the merge request from the branch it leaves, as the sync's recipe above does for its workflow.
+
 ## The forge-free gate
 
 Where the `provenance` job cannot run (another forge, or none), and as a second opinion where it does, `knowledge-provenance.sh` checks each confirmation's signature against a public key the repository carries for that curator under `.lokf/curators/`. It needs plain git and gpg or ssh-keygen, and runs on any CI or by hand. That directory is then the machine-readable list of who may confirm. [gate.md](gate.md) has what it checks, what fails, and how to lay it down. The preflight's `curators` line says whether your own key is on file, and [prerequisites.md](prerequisites.md) has the request to send if it is not.

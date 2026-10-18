@@ -1051,7 +1051,7 @@ coverage() {  # [<dir>...]
   BEGIN { while ((getline p < named) > 0) N[p] = 1; close(named) }
   { sub(/\r$/, "") }
   substr($0, 1, 1) == "\"" { hidden++; next }
-  /^\.lokf\// || $0 == "knowledge_bundle" || /^knowledge_bundle\// { next }
+  (/^\.lokf\// && !/^\.lokf\/mirror\//) || $0 == "knowledge_bundle" || /^knowledge_bundle\// { next }
   {
     total++; f = $0; p = f; acc = (p in N)
     while (!acc && (i = match(p, /\/[^\/]*$/)) > 0) { p = substr(p, 1, i - 1); acc = (p in N) }
