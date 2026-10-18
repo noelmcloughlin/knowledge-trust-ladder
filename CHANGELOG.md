@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **Conventions rule 2 holds every `at:` to one shape: UTC to the second, as `date -u +%Y-%m-%dT%H:%M:%SZ` writes it.** A time with a lower-case `t` or `z`, an offset or a fraction passed the gate. The report script, the federation build and the workspace's stored queries did not all read such a time the same way. A person's event that no script could read counted as confirming every later edit.
-
 ## [0.51.0] - 2026-10-18
 
 ### Added
@@ -17,6 +13,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **`docs/three-lines.md` no longer lists the `lokf-registry` MCP server as a design.** `knowledge-federate.py mcp` serves it, as `docs/federation.md` says.
+- **Conventions rule 2 holds every `at:` to one shape: UTC to the second, as `date -u +%Y-%m-%dT%H:%M:%SZ` writes it.** A time with a lower-case `t` or `z`, an offset or a fraction passed the gate. The report script, the federation build and the workspace's stored queries did not all read such a time the same way. A person's event that no script could read counted as confirming every later edit.
 
 ## [0.50.1] - 2026-10-18
 
