@@ -2,6 +2,7 @@
 
 ## 2026-10-18
 
+* **Prose**: reworded 4 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Added**: Knowledge outside the repository, from `docs/ingest.md` and the librarian's `references/ingest.md`, which 0.49.0 and 0.50.0 brought; the coverage sweep found the guide under no concept.
 * **Rewrite**: The curated context layer: since 0.48.0 `docs/federation.md` holds the tiers of domains, the workspace, what exists and the decisions, which `docs/context-layer.md` no longer carries. The concept now follows both pages, and lists one named graph per bundle, the `lokf-registry` MCP server and the SPARQL endpoint as existing, with lazy loading still a design.
 * **Resolved**: The curated context layer: the table in `docs/federation.md` lists one named graph per bundle under `knowledge-federate.py build` as existing, and lazy loading as a design; the MCP server now exists as `knowledge-federate.py mcp`.
