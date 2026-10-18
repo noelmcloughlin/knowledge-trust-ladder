@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.50.1] - 2026-10-18
+
 ### Fixed
 
 - **The federation build leaves out a concept a curator retired.** A retired `Domain` concept no longer counts as a second top, and a retired member is neither built into the workspace nor moved by `members`. The curator's domain-bundle.md says how a member leaves.
