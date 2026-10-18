@@ -18,7 +18,7 @@ The two fallbacks this skill used to allow are gone, and it matters why:
 - **`git config user.name`** is an ordinary writable config value. Anything with shell access to the checkout can set it to a maintainer's slug before the session starts.
 - **Asking** takes the identity from the conversation, the one channel an attacker fully controls. A name typed at you is a claim, not an identity.
 
-**With no authenticated login**, *Confirm* and *Correct now* are unavailable for the session. Say so, and offer the three verbs that assert nothing about who checked what: *Wrong - send back*, *Retire*, *Later*. Do not fall back, do not guess, and never write a `human:` event whose id you cannot name a source for.
+**With no authenticated login**, *Confirm* and *Correct now* are unavailable for the session. Say so, and offer the three verbs that assert nothing about who checked what: *Wrong - send back*, *Retire*, *Later*. A send-back then releases no text a person wrote, because a release needs the id of the person who wrote it. Do not fall back, do not guess, and never write a `human:` event whose id you cannot name a source for.
 
 **Other forges, and no forge** are covered in [portability.md](portability.md). The principle is the rule, not the tool: the id must be one that something outside the bundle can independently confirm.
 
@@ -41,7 +41,7 @@ What to say, and what not to do:
 - Show the three `git config` lines from ktl-sidecar's [`references/gate.md`](../../ktl-sidecar/references/gate.md), and the part that catches people out: the same key must also be added at `github.com/settings/keys` **as a signing key**, because the job reads GitHub's verdict, not the local one.
 - **Never run them yourself.** This skill records what a person says; it does not reconfigure their machine. A `--global` change would alter how they commit in every unrelated repository, and a wrong `user.signingkey` breaks `git commit` everywhere until they find it.
 - A committed `.gitconfig` is not an option, and it is worth saying so when someone suggests it: git reads only `.git/config`, `~/.gitconfig`, and system config, never a file in the working tree. Git refuses this because a config file arriving with a clone could otherwise run commands. A tracked one sits there doing nothing.
-- Then carry on regardless. It is their call, and *Wrong - send back*, *Retire* and *Later* record no `human:` actor, so they pass the gate untouched.
+- Then carry on regardless. It is their call. *Retire*, *Later* and a send-back without a release record no `human:` actor, so they pass the gate untouched. A release removes the person's `generated` record, so it needs their signature, as a confirmation does.
 
 ## The verbs
 
@@ -102,6 +102,16 @@ With no authenticated login, the actor is the session: `- 2026-09-08, process:kt
 
 The librarian's next run reads this, fixes the fact from the source, and the concept comes back to the queue as a draft for re-confirmation.
 
+**When this person wrote the text.** The librarian never rewrites a concept whose `generated.by` starts with `human:`, so its next run could only add a question. When `generated.by` names this session's id, ask: "You wrote this text. Release it, so the librarian can rewrite it from its sources?" On a yes, change only the actor and keep the time, since the text has not changed:
+
+```yaml
+generated:
+  by: process:ktl-curator
+  at: "2026-09-08T14:05:00Z"
+```
+
+Leave `verified` as it is: the person's earlier confirmation stays on record. The concept stays a draft until they confirm the librarian's new text, and git history keeps who wrote the old one. Offer the release only to the person `generated.by` names, and only with an authenticated id. Text another person wrote is that person's to release, and this person can still *Correct now* instead. The gate reads a release as the removal of a person's record, so it needs the backing a confirmation needs: that person's signed commit, or their approval of the pull request.
+
 ### Wrong - correct now
 
 Use this only when the person states the correct fact themselves. Make the smallest edit that expresses it (the one field, or the one sentence), then mark the content as human-authored and confirmed, and remove `draft`:
@@ -122,7 +132,7 @@ As with *Confirm*, delete the `## Open questions` section when the person says i
 
 This is the widest verb in the skill, and the only one that writes *content*. The librarian will not rewrite what it stamps as human-authored (ktl-librarian, section 1), so a wrong fact recorded here survives every later refresh and is caught only if the repository actively contradicts it. Use it only for a fact the person states themselves, keep the edit as small as that fact, and never reach for it when *Wrong - send back* would do.
 
-`generated` is replaced, not appended: it records who produced the *current* content. From now on the librarian will not rewrite this concept. If the repository later disagrees, it raises an open question instead (ktl-librarian, section 1). Never propose the correction yourself. If you think you know it, say so and let them decide.
+`generated` is replaced, not appended: it records who produced the *current* content. From now on the librarian will not rewrite this concept, unless this person sends it back and releases it (*Wrong - send back*). If the repository later disagrees, it raises an open question instead (ktl-librarian, section 1). Never propose the correction yourself. If you think you know it, say so and let them decide.
 
 ### Retire
 

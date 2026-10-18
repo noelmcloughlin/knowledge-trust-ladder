@@ -8,15 +8,18 @@ unsigned one, one by an id with no key, one by another key, and one whose own
 key is added in the same range each fail, while another curator's key added
 alongside does not. A removed confirmation needs its curator's signature as
 an added one does, whether the event is struck out or its concept deleted. A
-person's generated record may be replaced only by another person's. A
-repository with no .lokf/curators/ is a stated skip. It needs gpg and
+person's generated record may be replaced by another person's, or by the
+curator's process when the person it names releases the text they wrote, and
+by nothing else. Each change needs the signature of the person who backs it.
+A repository with no .lokf/curators/ is a stated skip. It needs gpg and
 ssh-keygen, which CI has.
 
 The unattended form (check 13a) needs no key and no forge. The scheduled
 librarian's change is one nobody stands behind, so it may add, change or
 remove no person's event in any YAML layout, add or remove no person's note,
 and rewrite no text a person wrote. A process's own open question under a
-person's text is none of those.
+person's text is none of those, and nor is a rewrite of text its author
+released.
 
 Parser parity (check 22): the gate reads a concept's `verified` and
 `generated` events with a hand-written awk reader, not a YAML parser, for
@@ -301,6 +304,28 @@ def test_signed_confirmations(tmp_path, checks):
         "removes a confirmation by human:other but is unsigned",
         "report a person's generated record replaced by a process's",
     )
+    # A person may release the text they wrote to the librarian: ktl-curator's
+    # send-back names process:ktl-curator in their generated record and keeps
+    # the time. Only that person can sign the release.
+    git("reset", "-q", "--hard", "HEAD~1")
+    write(
+        k / "gen.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: process:ktl-curator, at: "2026-09-20T00:00:00Z" }\n---\n',
+    )
+    git("commit", "-q", "-S", "-am", "released, signed by another curator")
+    expect(
+        "HEAD~1",
+        1,
+        "removes a confirmation by human:other but is signed by another key",
+        "report a person's text released under another curator's signature",
+    )
+    git("-c", f"user.signingkey={fpr2}", "commit", "-q", "-S", "--amend", "-m", "released by the person who wrote it")
+    expect(
+        "HEAD~1",
+        0,
+        r"^OK - 1 confirmation",
+        "let a person release their own text to the curator's process, signed by them",
+    )
     git("rm", "-rq", ".lokf/curators")
     git("commit", "-q", "-S", "-m", "nokeys")
     expect("HEAD~1", 0, r"^skipped", "say so and pass with no .lokf/curators/")
@@ -308,7 +333,7 @@ def test_signed_confirmations(tmp_path, checks):
 
 @pytest.fixture
 def unattended(tmp_path):
-    """A committed bundle with a confirmed concept, one a person wrote, one with a person's note, and a plain one."""
+    """A committed bundle with a confirmed concept, one a person wrote, one its author released, one with a person's note, and a plain one."""
     uk = tmp_path / ".lokf" / "knowledge" / "x"
     write(
         uk / "confirmed.md",
@@ -321,6 +346,10 @@ def unattended(tmp_path):
     write(
         uk / "noted.md",
         "---\ntype: Service\nid: https://example.invalid/k/x/noted\n---\n\n# Overview\n\n## Open questions\n\n- 2026-09-17, human:ada: send this back\n",
+    )
+    write(
+        uk / "released.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/released\ngenerated:\n  by: process:ktl-curator\n  at: "2026-09-17T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-09-17T00:00:00Z"\nstatus: draft\n---\n\n# Overview\n\nWritten by a person, then released.\n\n## Open questions\n\n- 2026-09-18, human:ada: bring this up to date with its source\n',
     )
     write(uk / "plain.md", "---\ntype: Service\nid: https://example.invalid/k/x/plain\n---\n\n# Overview\n")
     git = Git(tmp_path)
@@ -399,6 +428,19 @@ UNATTENDED = [
         lambda uk: append(
             uk / "authored.md",
             "\n## Open questions\n\n- 2026-09-18, process:ktl-librarian: the source now says otherwise\n",
+        ),
+        0,
+        r"^OK - the change against HEAD",
+    ),
+    (
+        "pass a rewrite of text its author released on a send-back",
+        lambda uk: (
+            replace_in(uk / "released.md", "Written by a person, then released.", "Rewritten by the librarian."),
+            replace_in(
+                uk / "released.md",
+                'by: process:ktl-curator\n  at: "2026-09-17T00:00:00Z"',
+                'by: process:ktl-librarian\n  at: "2026-09-19T00:00:00Z"',
+            ),
         ),
         0,
         r"^OK - the change against HEAD",
