@@ -12,7 +12,7 @@ Each file has a section on one of the two pages. Read the one you are setting up
 | `knowledge-librarian.yaml` | Runs the librarian agent weekly when work waits for it, and opens a review pull request | Repository variables, and a secret for the agent's key | below |
 | `knowledge-librarian.sh` | The wrapper the librarian workflow runs | Nothing, unless the skills live in an unusual directory | below |
 | `knowledge-apply.sh`, `knowledge-apply.py` | The librarian's only pen: applies `.lokf/patch.yaml` to the bundle; the wrapper runs it after the agent | Nothing | ktl-librarian's `references/patch.md`, or `--format` |
-| `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, whether any work waits, what a change does to the record, the retrieval score, and the tracked files no concept names | Nothing, or one variable for the retrieval score | below |
+| `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, whether any work waits, what a change does to the record, the retrieval score, and the files no concept names | Nothing, or one variable for the retrieval score | below |
 | `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to turn it on, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 | `knowledge-federation.yaml` and `knowledge-federate.py` *(a domain host only)* | Build the workspace of a domain host from the released bundles its member concepts name, publish it, and keep the members current | One variable to turn it on, Pages taken from Actions, and `AGENT_CLI` set to the script | below |
@@ -339,7 +339,7 @@ Three more pins decide what a run installs, and no update tool moves them:
 It has no placeholders and writes nothing. A trust label, the health line and the librarian's work list are arithmetic over frontmatter and git history, and this script does that arithmetic so that no model has to:
 
 ```sh
-bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | coverage [<dir>...]]
+bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | coverage [--strict] [<dir>...] | coverage --why <path>...]
 ```
 
 - With no command it prints the whole report ktl-curator's Step 1 starts from: the health line, every concept's label, the open questions, and the confirmed concepts whose source moved after the confirmation.
@@ -348,7 +348,7 @@ bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>..
 - `quiet` exits 0 when nothing waits for the librarian and 1 when work does, with one line of counts. A note counts while its commit comes after the one that recorded the concept's latest stamp, so a note the librarian has read waits for the curator alone. The two kinds the work list names apart do not count, and the line says how many it set aside. A bundle git holds no full history of is never quiet. The wrapper asks it before a scheduled run.
 - `changes` says what the working tree does to the record against `HEAD`. It names each confirmed concept the change touches, and says how that concept reads afterwards: still confirmed, edited since that confirmation, or removed. The librarian workflow's `publish` job fills its pull request from it.
 - `retrieval` measures what the index promises, and the next section covers it.
-- `coverage` counts, per top-level folder, the tracked files under no path a concept names in its `resource` or `sources`, and lists them under a folder you name. It is ktl-librarian's sweep for orphans, and it makes no scheduled run busy.
+- `coverage` counts, per top-level folder, the files git tracks or would add that lie under no path a concept names in its `resource` or `sources`. It lists them under a folder you name, or under `.` for the whole tree. `coverage --why <path>` names each concept that names the path or a folder above it. `--strict` exits 1 while any file in the count is named by nobody, for a host that wants it as a check. It is ktl-librarian's sweep for orphans, and it makes no scheduled run busy.
 
 A source has moved when its last commit comes after the commit that recorded the event it is compared with, or when it carries an edit not yet committed and the concept does not. History orders the two, never a clock, so a source changed in that same commit has not moved. That is the file's history and not its meaning: only reading the source says whether a fact changed. Without git, or with a shallow clone or a gitignored `.lokf/`, the script says the sources were not compared.
 

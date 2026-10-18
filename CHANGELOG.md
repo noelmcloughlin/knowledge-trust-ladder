@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-report.sh coverage --why <path>` names the concept that claims a file**, directly or through a folder above it, so a reviewer can see which row of the source map excludes it. It reads frontmatter only.
+- **`coverage --strict` exits 1 while a file is named by nobody**, for a host that wants the count as a check.
+
+### Changed
+
+- **`coverage` counts a file git would add, not only one it tracks.** A file made in a live session shows before it is committed; one the ignore rules leave out does not.
+
+### Fixed
+
+- **`coverage .` lists every file nobody named.** It printed "none", since no path starts with `./`. A flag `coverage` does not know is refused instead of read as a folder.
+
 ## [0.52.0] - 2026-10-18
 
 ### Added
