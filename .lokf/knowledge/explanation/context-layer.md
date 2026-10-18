@@ -24,7 +24,7 @@ references:
   - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T10:22:18Z"
+  at: "2026-10-18T17:45:03Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -52,7 +52,7 @@ The design adds domains as manifests. A domain is a thin LOKF bundle in a reposi
 - the diamond rule: two domains that name the same bundle at the same release add it once, and at different releases the build stops, because one named graph holds one release;
 - `max_depth` on the top `Domain` concept sets how many tiers the build follows, 3 unless set.
 
-**How the workspace stays current.** The workspace is a materialised view of the top domain, built ahead of time and rebuilt on publish, by a job that runs no agent. The job resolves the manifests into a lock of releases and checksums, and verifies each zip. It registers and exports each release, and loads each `graph.nt` into a named graph whose IRI is the bundle's `base_iri`. A cross-bundle link no member owns fails the build, or is reported, as the domain's `unowned_targets` says. The new graphs replace the old under one snapshot version, in one atomic step.
+**How the workspace stays current.** The workspace is a materialised view of the top domain, built ahead of time and rebuilt on publish, by a job that runs no agent. The job resolves the manifests into a lock of releases and checksums, and verifies each zip. It takes each member, and the domain's own settings, as a person last confirmed them, and lists a member that waits for a confirmation. It registers and exports each release, and loads each `graph.nt` into a named graph whose IRI is the bundle's `base_iri`. A cross-bundle link no member owns fails the build, or is reported, as the domain's `unowned_targets` says. The new graphs replace the old under one snapshot version, in one atomic step.
 
 A reader gets the index first and traverses on demand, over a SPARQL endpoint and a Model Context Protocol (MCP) server. No trust label is stored in the snapshot, because a stored label drifts from what it describes within a day. SPARQL over `generated` and `verified` gives the labels against the clock at the moment of the query.
 
@@ -82,6 +82,6 @@ It lists three parts as designs:
 - admission to a domain on vocabulary fit, and what a member adds;
 - per-query permission in the artifact repository and the store, since OKF says trust tiers are not access control.
 
-The design pins. Each member concept names one release, so a pinned domain releases for every member release. A floating manifest is fresher, but its curator has not seen each release it picks up, and the lock then holds the exact releases. Either way, the report must say at each tier which members have moved since the domain was last confirmed.
+The design pins. Each member concept names one release, and a member's new release changes nothing until a person confirms the member concept that names it and the domain releases, so a pinned domain releases for every member release. Until it is decided whether a domain member may float, a member that waits in a member domain's release is left out above it, because a zip carries no history to find the release confirmed before. A floating manifest is fresher, but its curator has not seen each release it picks up, and the lock then holds the exact releases. Either way, the report must say at each tier which members have moved since the domain was last confirmed.
 
 **What it integrates with.** `docs/context-layer-technology.md` surveys, from each vendor's own documentation, the artifact repositories, RDF stores with SPARQL, property-graph stores, catalogues and agent frameworks such a workspace could use. Stores whose documentation lists TriG or N-Quads keep one named graph per bundle through the load. Managed SPARQL exists on AWS, and natively on neither Azure nor Google Cloud. No retrieval framework it surveyed consumes RDF as its graph, so the agent surface is the store's own. Catalogues that take tables rather than RDF read what `lokf tables` writes.

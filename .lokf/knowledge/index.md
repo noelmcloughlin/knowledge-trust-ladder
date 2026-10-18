@@ -4,7 +4,7 @@ okf_version: "0.2"
 base_iri: https://w3id.org/ktl/knowledge/
 context: https://w3id.org/lokf/context.jsonld
 title: Knowledge Trust Ladder Knowledge Bundle
-description: Four Agent Skills that turn a repository's scattered knowledge into a maintained, trusted LOKF knowledge bundle.
+description: Four Agent Skills that turn a repository's scattered knowledge into a maintained, trusted LOKF knowledge bundle, a fifth that keeps its prose plain, and a sixth that publishes it as a website.
 license: https://creativecommons.org/licenses/by/4.0/
 publisher:
   type: Person

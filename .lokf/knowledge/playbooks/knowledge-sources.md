@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T10:22:18Z"
+  at: "2026-10-18T17:45:03Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -80,6 +80,8 @@ sources:
 | `LICENSE`, `llms.txt`, `.gitignore`, `docs/examples/docent.md`, `curator.md` and `prose.md` | licensing boilerplate, the agent-facing pointer file, the repository's ignore rules, and captured skill transcripts (the docent's, and ktl-prose's runs for younger readers; the curator's page is a placeholder) | consciously excluded as concepts - see note below; re-check that `llms.txt` still matches what the "Agents:" callout in `README.md` tells agents, and that `docs/examples/docent.md`'s trust-label claims still match `glossary/trust-label.md` |
 
 # Notes for the next run
+
+- **Steady-state refresh (2026-10-18, thirty-fourth pass)**, on `lokf/librarian-refresh-2026-10-18` from `main` at `4fd757d`, after 0.50.1. That release made the federation build take each member as a person last confirmed it, left retired concepts out, and fixed the sync's pin-bump label. The map's rows already name every file it changed, so only the context-layer, sidecar and repository validation concepts follow it. The other concepts whose `CHANGELOG.md` moved were checked again, since that release's entry touches none of their subjects. The bundle index's description now carries the whole sentence `llms.txt` gives, which counts the fifth and sixth skills.
 
 - **Steady-state refresh (2026-10-18, thirty-third pass)**, on `main` at `700fc8b`, after 0.45.1 to 0.50.0. Those releases added the federation's MCP server and released domain schemas, the sync that keeps a host's sidecar current, tiers of domains with `docs/federation.md`, the coverage report and the ingest. The map names the sync and the ingest in rows of their own, the templates row names the new templates, and the context-layer row names `docs/federation.md`. The map now lists under `sources` the files its rows account for and no concept cites, so `knowledge-report.sh coverage` counts them. Contributing, releasing and repository validation follow the sync and contract checks 9, 11 and 15. The ingest gets a concept of its own, Knowledge outside the repository.
 
