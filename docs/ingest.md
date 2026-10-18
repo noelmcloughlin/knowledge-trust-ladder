@@ -4,13 +4,24 @@ The librarian reads the repository, and a bundle cites what the librarian can re
 
 Nothing in the trust ladder changes. A concept derived from a wiki page is agent-derived until a person confirms it, as one derived from a README is. Knowledge Trust Ladder (KTL) keeps the same work list, gate and review; the ingest adds reach.
 
-## The three parts
+## What can be mirrored
+
+- **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
+- **Pages and documents at an address**: HTML, Markdown, plain text and PDF. Most PDFs work, meaning any whose text can be selected and copied in a viewer. A scan of paper holds pictures of pages and no text, and is refused.
+- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository.
+- **The output of a command** this repository holds: a client for a service with no fetcher here, a schema dump, an export.
+
+There is no fetcher for Jira, since issues are unsuitable as knowledge sources. Attachments and images are not fetched; a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only through a command that prints it.
+
+## How it works
 
 **The manifest**, `.lokf/ingest.yaml`, lists what to mirror: for each entry a place, a selector, who answers for the source and why this repository mirrors it. It holds no token. An `auth` block names environment variables.
 
 **The mirror**, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, a page id or a path, never its title, so a retitled page is the same file. Links are made absolute, and a PDF carries a comment before each page so a concept can cite the page.
 
 **The lock**, `.lokf/ingest.lock.yaml`, records the same per item with a status: `ok`, `gone` after a 404 or 410, `unlisted` when the selector no longer returns it, `failed` when a request did not complete, `refused` with the reason. The mirror and the lock change only when content changes.
+
+A workflow runs the script on Sundays and keeps one pull request open with the changes, refreshed until a person merges it. The librarian's Monday run then finds each concept whose mirror file moved in its work list.
 
 ## The manifest
 
@@ -79,7 +90,7 @@ entries:
     why: the live database schema
 ```
 
-A `command` is code the repository runs with its secrets near, so commit one a person has read. It receives the variables its own `auth` block names, and its last error line goes into the lock. An entry taken out of the manifest loses its folder on the next run, and the summary names each file a concept still cites.
+A command is code the repository runs with its secrets near, so commit one a person has read. It receives the variables its own `auth` block names, and its last error line goes into the lock. An entry taken out of the manifest loses its folder on the next run, and the summary names each file a concept still cites.
 
 ## Sensitivity
 
@@ -95,7 +106,7 @@ The workflow passes the repository's visibility from the forge. By hand, the scr
 4. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General.
 5. Start one run from the Actions tab and read its summary.
 
-The workflow runs on Sundays and keeps one pull request open on the branch `knowledge-ingest`, refreshed until merged. The sidecar's [automation page](../skills/ktl-sidecar/references/automation.md#knowledge-ingestyaml-knowledge-outside-the-repository) has its jobs and switches.
+The pull request is opened on the branch `knowledge-ingest`. The sidecar's [automation page](../skills/ktl-sidecar/references/automation.md#knowledge-ingestyaml-knowledge-outside-the-repository) has the workflow's jobs and switches.
 
 ## By hand
 
@@ -120,10 +131,6 @@ A pull request closed without merging is a no: a scheduled run proposes the mirr
 The work list names each concept whose mirror file moved, by git history, as it names any moved source. A concept derived from a mirrored page names the mirror file as its `resource` and the origin as a `sources` entry, with the entry's `owner` as `author` and the page's `last_modified`. A `Reference` concept is the other way round: the origin as `resource` and the mirror under `sources`. The source map gains one row per entry, naming the entry's folder, so `knowledge-report.sh coverage` counts the mirror as mapped. The librarian's [ingest reference](../skills/ktl-librarian/references/ingest.md) has the rules.
 
 The curator and the docent need nothing new. A mirror file is a tracked path: the curator quotes it under evidence first, and the docent opens it to check a value and names the origin, version and retrieval date in its footer.
-
-## What stays out
-
-There is no fetcher for Jira: issues are unsuitable as knowledge sources. Most PDFs are supported: any whose text can be selected and copied in a viewer. The exception is a scan of paper, which holds pictures of pages and no text, and is refused. Attachments and images are not fetched; a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only when a `command` can print it.
 
 ## Security
 
