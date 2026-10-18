@@ -39,8 +39,11 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    `MemberDomain` names; a workspace that is another domain's, or whose
    checksum is wrong, stops the build, and a lock that names no member
    concept or no release of that member leaves it out;
-5. `--verify-only` runs the gate and writes nothing, and `members` leaves a
-   non-GitHub member as it is;
+4h. a member names the files of one release: a workspace from another
+   release of the same repository is refused;
+5. `--verify-only` runs the gate as the next release build would, so a link
+   into a member no person has confirmed fails before the merge, and writes
+   nothing; `members` leaves a non-GitHub member as it is;
 5a. a schema released beside a member's zip, named as a second distribution,
    is what the member's fit is checked against, and a wrong digest for it
    stops the build;
@@ -60,7 +63,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    `MemberDomain` when that release is a domain, and refuses a path that
    exists or a namespace that nests with a member's;
 9a. for a member domain, `members` names the workspace its release
-   carries, on a move and on its own when the release attached it later.
+   carries: on a move, on its own when the release attached it later, and
+   again when the workspace was attached again with other bytes.
 10. under the librarian wrapper, `members` hands the job token that arrives
     as KNOWLEDGE_FEDERATE_TOKEN to gh alone, and with no credential at all
     it stops and says which variables give it one.
@@ -375,7 +379,8 @@ def test_a_member_no_person_confirmed_waits_outside_the_workspace(federation):
           frontmatter(**member("a", federation["a_iri"], federation["a_zip"], federation["a_sha"], federation["d_iri"] + "domains/federation", confirmed=False)) + "\n# Overview\n\na.\n")
     r = federate(host, "build", "--verify-only", "--no-attestation")
     assert r.rc == 0 and "a: v1.0.0" in r.out, "--verify-only checks the zip a person is asked to confirm\n" + r.out
-    assert "members/a: checked as it stands; no person has confirmed it yet" in r.out, "the check says what a release built now would leave out\n" + r.out
+    assert "the next release build would take this domain's members as follows:" in r.out and "members/a: left out, because no person has confirmed it" in r.out, \
+        "the check says what the next release build would leave out\n" + r.out
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0 and "members/a: left out, because no person has confirmed it" in r.out, r.out
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
@@ -548,13 +553,20 @@ def test_the_domain_s_settings_count_only_as_a_person_confirmed_them(federation,
 
 
 def test_the_gate_names_a_member_that_waits_when_a_link_lies_in_its_namespace(federation):
-    """a links into b's namespace; b is proposed and not yet confirmed, so the link is unowned, and the error says what admits it."""
+    """a links into b's namespace; b is proposed and not yet confirmed, so the link is unowned, and the error says what admits it.
+
+    The check finds the same before the merge, although it verifies b's zip
+    as it stands, because its gate judges the workspace the next release
+    build would make.
+    """
     host = federation["host"]
     rewrite(host, "b", member("b", federation["b_iri"], federation["b_zip"], federation["b_sha"], federation["d_iri"] + "domains/federation", confirmed=False))
-    r = federate(host, "build", "--no-attestation")
     waiting_b = f"<{federation['d_iri']}members/b>"
-    assert r.rc == 1 and f"in the namespace of {waiting_b}, which waits for a person's confirmation" in r.out, r.out
-    assert f"1 of them lie in the namespace of {waiting_b}, which joins once a person confirms it" in r.out, r.out
+    for args in (("--verify-only",), ()):
+        r = federate(host, "build", *args, "--no-attestation")
+        assert r.rc == 1 and f"in the namespace of {waiting_b}, which waits for a person's confirmation" in r.out, (args, r.out)
+        assert f"1 of them lie in the namespace of {waiting_b}, which joins once a person confirms it" in r.out, (args, r.out)
+    assert not (host / "snapshot").exists() and not (host / "snapshot.new").exists()
 
 
 def test_verify_only_meets_the_gate_before_the_merge(federation, tmp_path):
@@ -571,7 +583,7 @@ def test_verify_only_meets_the_gate_before_the_merge(federation, tmp_path):
     top.write_text(top.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: report"), encoding="utf-8")
     r = federate(host, "build", "--verify-only", "--no-attestation")
     assert r.rc == 0 and "glossary/nowhere, reported under unowned_targets: report" in r.out, r.out
-    assert "gated 3 bundles: 1 typed-relation target(s) in no member's namespace; nothing written" in r.out, r.out
+    assert "gated 3 bundles as the next release build would take them: 1 typed-relation target(s) in no member's namespace; nothing written" in r.out, r.out
     assert not (host / "snapshot").exists()
 
 
@@ -646,7 +658,7 @@ def test_a_member_that_waits_in_a_member_domain_joins_as_that_domain_built_it(fe
 def test_verify_only_writes_nothing_and_members_leaves_a_local_zip_alone(federation):
     host = federation["host"]
     r = federate(host, "build", "--verify-only", "--no-attestation")
-    assert r.rc == 0 and "nothing written" in r.out, r.out
+    assert r.rc == 0 and "nothing written" in r.out and "every member as it stands, since a person confirmed each" in r.out, r.out
     assert not (host / "snapshot").exists() and not (host / "snapshot.new").exists()
     r = federate(host, "members", "--dry-run", "--no-attestation")
     assert r.rc == 0 and "not a GitHub release" in r.out and "no patch written" in r.out, r.out
@@ -1030,13 +1042,38 @@ def test_members_names_the_workspace_a_member_domain_released(released):
     names = [d["name"] for d in ops_for(patch, "f")["patch"]["set"]["distribution"]]
     assert names == ["knowledge-v1.1.0-f.zip", "workspace-v1.1.0.zip"], names
     assert any(line.startswith("f: v1.0.0 -> v1.1.0; checksum matches") and "; workspace workspace-v1.1.0.zip checked, and its lock is that domain's" in line for line in patch["handoff"]), patch["handoff"]
-    current = {**f, "version": NEW[0], "distribution": [{**f["distribution"][0], "name": "knowledge-v1.1.0-f.zip"}]}
+    current = {**f, "version": NEW[0], "distribution": [{**f["distribution"][0], "name": "knowledge-v1.1.0-f.zip",
+                                                         "access_url": f["distribution"][0]["access_url"].replace("v1.0.0", "v1.1.0")}]}
     rewrite(host, "f", current)
     r = members_run(released, "--dry-run", stdout_only=True)
     assert r.rc == 0, r.out
     ops = ops_for(yaml.safe_load(r.out), "f")
     assert [d["name"] for d in ops["patch"]["set"]["distribution"]] == ["knowledge-v1.1.0-f.zip", "workspace-v1.1.0.zip"] and set(ops["patch"]["set"]) == {"distribution"}
     assert ops["question"]["text"].startswith("acme/f attached its workspace, `workspace-v1.1.0.zip`, to v1.1.0 after this member moved to it; does this member name it?"), ops
+    # The workspace attached again with other bytes: the checksum the member
+    # names is stale, and the patch replaces that distribution alone.
+    stale = {**current, "distribution": [*current["distribution"], {**ops["patch"]["set"]["distribution"][1], "checksum": "sha256:" + "1" * 64}]}
+    rewrite(host, "f", stale)
+    r = members_run(released, "--dry-run", stdout_only=True)
+    assert r.rc == 0, r.out
+    ops = ops_for(yaml.safe_load(r.out), "f")
+    dists = ops["patch"]["set"]["distribution"]
+    assert [d["name"] for d in dists] == ["knowledge-v1.1.0-f.zip", "workspace-v1.1.0.zip"] and dists[1]["checksum"] != "sha256:" + "1" * 64, dists
+    assert "to v1.1.0 again, with other bytes, so the checksum this member names no longer matches" in ops["question"]["text"], ops
+    rewrite(host, "f", {**current, "distribution": dists})
+    r = members_run(released, "--dry-run")
+    assert r.rc == 0 and "f: v1.1.0 is current" in r.out, "a member naming the workspace as attached is current\n" + r.out
+
+
+def test_a_member_names_the_files_of_one_release(federation):
+    """A workspace from another release of the same repository is refused before anything is fetched."""
+    host = federation["host"]
+    fm = github_member("g", federation["d_iri"] + "domains/federation", type="MemberDomain", base_iri="https://g.example/federation/")
+    fm["distribution"].append({"name": "workspace-v1.1.0.zip", "access_url": "https://github.com/acme/g/releases/download/v1.1.0/workspace-v1.1.0.zip",
+                               "media_type": "application/zip", "checksum": "sha256:" + "0" * 64})
+    rewrite(host, "g", fm)
+    r = federate(host, "build", "--verify-only", "--no-attestation")
+    assert r.rc == 1 and "the workspace distribution is from release v1.1.0 of acme/g, and the zip from v1.0.0 of acme/g; a member names the files of one release" in r.out, r.out
 
 
 def test_members_hands_the_job_token_to_gh_alone(released):

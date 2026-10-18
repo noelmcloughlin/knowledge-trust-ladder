@@ -254,6 +254,14 @@ class Member:
             owner, repo, tag = self.github
             self.source_base = f"https://raw.githubusercontent.com/{owner}/{repo}/{tag}/.lokf/knowledge"
             self.repo = f"git+https://github.com/{owner}/{repo}.git@{tag}"
+            # A person confirms one release, and the schema and the workspace
+            # are attached to it beside the zip, so a further distribution
+            # from another release, or another repository, is a mistake.
+            for what, url in (("schema", self.schema_url), ("workspace", self.workspace_url)):
+                other = GITHUB_RELEASE.match(url) if url else None
+                if other and (other.group("owner"), other.group("repo"), other.group("tag")) != self.github:
+                    raise Failed(f"{concept_path}: the {what} distribution is from release {other.group('tag')} of {other.group('owner')}/{other.group('repo')}, "
+                                 f"and the zip from {tag} of {owner}/{repo}; a member names the files of one release")
         else:
             self.source_base = ""
             self.repo = None
@@ -912,13 +920,19 @@ def _build(args, note_new) -> int:
     work.mkdir(parents=True, exist_ok=True)
     # A build takes each member as a person last confirmed it. --verify-only
     # checks every member concept as it stands, which is what a pull request
-    # asks a person to confirm, and names each one no person has confirmed yet.
+    # asks a person to confirm. Its gate then judges the workspace the next
+    # release build would make. It reads from the same history which members
+    # that build would take, and a link into the namespace of one it would
+    # leave out fails the check now, with the member named. On a pull
+    # request the checkout is the branch merged into its base, whose
+    # first-parent history is the base's, as the release build's will be.
     waiting: list[dict] = []
     if args.verify_only:
         chosen = [(c.path, c.data, "", bundle.iri(c)) for c in member_concepts]
-        for c in member_concepts:
-            if not confirmed_by_person(c.data):
-                say(f"{bundle.iri(c)}: checked as it stands; no person has confirmed it yet, and until a person does, a release build takes the text a person last confirmed or leaves it out")
+        say("the next release build would take this domain's members as follows:")
+        take_confirmed(bundle, member_concepts, True, waiting)
+        if not waiting:
+            say("every member as it stands, since a person confirmed each")
     else:
         chosen = take_confirmed(bundle, member_concepts, True, waiting)
     queue: list[tuple[Member, int]] = []
@@ -962,6 +976,8 @@ def _build(args, note_new) -> int:
         resolved.append((member, zip_path, kdir, verdict))
         if sub_domains:
             member.is_domain = True
+            if not member.declared_domain:
+                say(f"{member.slug}: its zip is a domain; type the concept MemberDomain, so that `members` names the workspace that domain releases")
             if depth >= max_depth:
                 raise Failed(f"{member.slug}: a domain at tier {depth}, and this domain's max_depth is {max_depth}; set max_depth on the Domain concept to follow it")
             sub_top = top_domain(sub_bundle, sub_domains)
@@ -1065,6 +1081,13 @@ def _build(args, note_new) -> int:
     (new / "graph.nq").write_text("\n".join(sorted(set(lines))) + "\n", encoding="utf-8")
 
     # 4. Gate: every typed-relation target outside its graph's namespace, resolved against the registry.
+    # A target in the namespace of a member left out because it waits is
+    # unowned all the same, as it was before that member was proposed; the
+    # report names the member, so the fix reads as a confirmation. A build
+    # never registers such a member. A check registers it as it stands, so
+    # here its namespace counts as unowned by name.
+    pending = [w for w in waiting if w["built"] is None and w.get("base_iri")]
+    left_out = {w["base_iri"] for w in pending}
     predicates = gate_predicates()
     unowned: list[tuple[str, str, str, str]] = []
     for base_iri, _ in graphs:
@@ -1073,12 +1096,9 @@ def _build(args, note_new) -> int:
                 target = q.object.value
                 if target.startswith(base_iri) or target.startswith(LOKF_NS):
                     continue
-                if registry.owner(target) is None:
+                owner = registry.owner(target)
+                if owner is None or owner.base_iri in left_out:
                     unowned.append((base_iri, q.subject.value, predicates[q.predicate.value], target))
-    # A target in the namespace of a member left out because it waits is
-    # unowned all the same, as it was before that member was proposed; the
-    # report names the member, so the fix reads as a confirmation.
-    pending = [w for w in waiting if w["built"] is None and w.get("base_iri")]
 
     def waits_for(target: str) -> str:
         hits = [w for w in pending if target.startswith(w["base_iri"])]
@@ -1118,7 +1138,10 @@ def _build(args, note_new) -> int:
         for line in fit:
             say(line[2:].replace("`", ""))
         shutil.rmtree(new, ignore_errors=True)
-        say(f"checked {len(resolved)} member zip(s) and gated {len(records)} bundles: {len(unowned)} typed-relation target(s) in no member's namespace; nothing written (--verify-only)")
+        say(f"checked {len(resolved)} member zip(s) and gated {len(records)} bundles as the next release build would take them: "
+            f"{len(unowned)} typed-relation target(s) in no member's namespace"
+            + (f", {in_waiting} of them in the namespace of a member that waits for a person's confirmation" if in_waiting else "")
+            + "; nothing written (--verify-only)")
         return 0
 
     # 6. Swap.
@@ -1454,14 +1477,20 @@ def members(args) -> int:
             # A domain host attaches its workspace after its bundle zip, once
             # its build has run, so a member domain moved in between names
             # none. This proposes the workspace on its own once the release
-            # has it.
-            workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", member.slug) if member.declared_domain and not member.workspace_url else None
-            if workspace is None:
+            # has it. A run of that workflow started by hand attaches the
+            # workspace again, and its index carries the day it was built,
+            # so the bytes change: then this proposes the new checksum, since
+            # the build refuses the old one.
+            workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", member.slug) if member.declared_domain else None
+            if workspace is None or workspace["checksum"] == f"sha256:{member.workspace_sha256}":
                 current.append(f"{member.slug}: {tag} is current")
                 continue
-            named = Member(c.path, {**c.data, "distribution": [*c.data["distribution"], workspace]}, "", 1)
+            kept = [d for d in c.data["distribution"] if not (str(d.get("name") or "").startswith("workspace-") and str(d.get("name") or "").endswith(".zip"))]
+            named = Member(c.path, {**c.data, "distribution": [*kept, workspace]}, "", 1)
             verdict = verify_workspace(named, cache, args.max_bytes, not args.no_attestation)[2:]
-            asked = (f"{owner}/{repo} attached its workspace, `{workspace['name']}`, to {tag} after this member moved to it; does this member name it?"
+            attached = (f"attached its workspace, `{workspace['name']}`, to {tag} again, with other bytes, so the checksum this member names no longer matches"
+                        if member.workspace_url else f"attached its workspace, `{workspace['name']}`, to {tag} after this member moved to it")
+            asked = (f"{owner}/{repo} {attached}; does this member name it?"
                      " Its lock says which release of each member that domain built, and the build takes that release for a member that waits there.")
             if written_by_person(c.data):
                 ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})

@@ -12,9 +12,10 @@ name: Knowledge federation
 #
 #   check     a pull request that changes the domain bundle: fetch and verify
 #             each zip its member concepts name, export and load them, and run
-#             the gate, writing nothing. So a link into a namespace no member
-#             owns fails the pull request, not the release build after the
-#             merge. GitHub starts no workflow for a pull request the
+#             the gate as the next release build would, writing nothing. So a
+#             link into a namespace no member owns, or into a member no
+#             person has confirmed, fails the pull request, not the release
+#             build after the merge. GitHub starts no workflow for a pull request the
 #             librarian's job token opened, so there this job first runs when
 #             a person pushes to it, as the curator's confirmation commit does.
 #
@@ -52,6 +53,7 @@ on:
     paths:
       - ".lokf/knowledge/**"
       - ".lokf/domain.yaml"
+      - ".lokf/pyproject.toml"
       - ".lokf/uv.lock"
       - ".lokf/scripts/knowledge-federate.py"
       - ".github/workflows/knowledge-federation.yaml"
@@ -83,9 +85,13 @@ jobs:
         with:
           egress-policy: audit
 
+      # The whole history: the check reads which members the next release
+      # build would take, from each member concept's first-parent history,
+      # as that build does.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set up uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
@@ -100,7 +106,7 @@ jobs:
       # The token is read-only and reaches one command, gh attestation
       # verify, which reads the attestation store; the zips come from the
       # public release URLs the member concepts name.
-      - name: Fetch and verify every member's zip, and run the gate
+      - name: Fetch and verify every member's zip, and gate as the next release would
         env:
           GH_TOKEN: ${{ github.token }}
         run: uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only
