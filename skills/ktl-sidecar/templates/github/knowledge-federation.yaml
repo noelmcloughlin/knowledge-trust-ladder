@@ -10,12 +10,13 @@ name: Knowledge federation
 #
 # Four jobs, each for one event, each with the least it needs:
 #
-#   check     a pull request that changes a member concept: fetch and verify
-#             the zip it names, write nothing, so a change is checked against
-#             the real release before it merges. GitHub starts no workflow for
-#             a pull request the librarian's job token opened, so there this
-#             job first runs when a person pushes to it, as the curator's
-#             confirmation commit does.
+#   check     a pull request that changes the domain bundle: fetch and verify
+#             each zip its member concepts name, export and load them, and run
+#             the gate, writing nothing. So a link into a namespace no member
+#             owns fails the pull request, not the release build after the
+#             merge. GitHub starts no workflow for a pull request the
+#             librarian's job token opened, so there this job first runs when
+#             a person pushes to it, as the curator's confirmation commit does.
 #
 #   build     a release of this repository, or a dispatch naming one: build
 #             the workspace from the tag, build the website when there is
@@ -45,11 +46,13 @@ on:
     types: [published]
   push:
     branches: [main]
+  # The gate reads every concept of the domain bundle, not only its members,
+  # and the toolkit that uv.lock pins exports what the gate reads.
   pull_request:
     paths:
-      - ".lokf/knowledge/members/**"
-      - ".lokf/knowledge/domains/**"
+      - ".lokf/knowledge/**"
       - ".lokf/domain.yaml"
+      - ".lokf/uv.lock"
       - ".lokf/scripts/knowledge-federate.py"
       - ".github/workflows/knowledge-federation.yaml"
   schedule:
@@ -69,7 +72,7 @@ concurrency:
 
 jobs:
   check:
-    name: Verify the members a pull request names (read-only)
+    name: Verify the members and gate the links a pull request proposes (read-only)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -97,7 +100,7 @@ jobs:
       # The token is read-only and reaches one command, gh attestation
       # verify, which reads the attestation store; the zips come from the
       # public release URLs the member concepts name.
-      - name: Fetch and verify every member's zip
+      - name: Fetch and verify every member's zip, and run the gate
         env:
           GH_TOKEN: ${{ github.token }}
         run: uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only
@@ -178,8 +181,10 @@ jobs:
           npm run build
 
       # The token is read-only and reaches one command, gh attestation
-      # verify. Everything the build downloads is a zip a member concept
-      # names, checked against the checksum a person confirmed.
+      # verify. Everything the build downloads is a file a member concept
+      # names, checked against the checksum a person confirmed, or a zip
+      # that a member domain's released lock names, checked against the
+      # checksum in that lock.
       - name: Build the workspace from the tag
         if: steps.what.outputs.release == 'true'
         env:

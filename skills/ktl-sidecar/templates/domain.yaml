@@ -22,7 +22,10 @@
 #   dcat:Catalog, as DCAT lists a catalogue inside a catalogue. The build
 #   follows its members into the same workspace, and a person's
 #   confirmation of it attests that the domain belongs and who answers for
-#   it, not what its members say.
+#   it, not what its members say. Its distribution may also name the
+#   domain's released `workspace-<tag>.zip` with its checksum. For a member
+#   that waits in that domain, the build takes the release the lock inside
+#   that zip records.
 # ReleaseDistribution: LOKF's Distribution plus the `checksum` of the zip,
 #   where DCAT puts a digest, so a member may later publish a second
 #   distribution with a checksum of its own.

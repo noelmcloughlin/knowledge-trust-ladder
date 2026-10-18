@@ -17,10 +17,17 @@
 # concept's own path, with its own id, while that person's event still
 # stands: a confirmation withdrawn later counts for no earlier text either.
 # One no person confirmed is left out. The lock lists both under `waiting`,
-# and index.md under "Waiting for a person". A member domain's zip has no
-# history, so its members join only when confirmed as they stand. The top
-# Domain concept's `unowned_targets` and `max_depth` are read the same way,
-# and the defaults stand in when no person has confirmed it.
+# and index.md under "Waiting for a person". The top Domain concept's
+# `unowned_targets` and `max_depth` count only as a person confirmed them
+# too, and the defaults stand in when no person has.
+# A member domain's zip has no history. There a member a person confirmed
+# as it stands joins as it stands. One that waits joins at the release that
+# domain's own build took, as the lock in the workspace it released
+# records. That needs the MemberDomain concept to name the
+# `workspace-<tag>.zip` and its checksum as a further distribution. The
+# person who confirms the concept confirms that checksum, as they do the
+# bundle zip's. With no workspace named, or no entry for the member in its
+# lock, the member is left out.
 # A member whose zip is itself a domain is followed, tier by tier, as deep
 # as the top Domain concept's `max_depth` allows (3 unless it says
 # otherwise); its members join the same workspace, and the lock says which
@@ -42,15 +49,21 @@
 #
 # `build` writes snapshot.new/ and renames it to snapshot/ in one step, so a
 # reader never sees half a federation; a failed build leaves the previous
-# snapshot in place. `--verify-only` stops after the zips are checked, which
-# is what a pull request that changes a member runs. `members` is the
+# snapshot in place. `--verify-only` runs every step up to the gate in a
+# temporary folder and writes nothing; a pull request that changes the
+# domain bundle runs it. It takes this domain's member concepts as they
+# stand, since those are what the pull request asks a person to confirm.
+# It takes a member domain's members as the build does, since that
+# domain's own person confirms them. `members` is the
 # domain's librarian: a script, not a model, that lists each member's
 # releases, picks the newest that carries a bundle zip, verifies it, and
 # writes the change as operations in .lokf/patch.yaml for the pen
 # (knowledge-apply.sh) to apply, so the sidecar's librarian workflow can run
 # it as AGENT_CLI. The change moves the old release's tag, zip name and day
 # in the concept's description and body as well as its frontmatter, so the
-# text never contradicts `version`. `members --add owner/repo` drafts a
+# text never contradicts `version`. For a member domain it also names the
+# workspace that release carries, and proposes it on its own when the
+# release attached it after the member moved. `members --add owner/repo` drafts a
 # member concept from a repository's newest bundle release, as a `create`
 # for the pen, so admitting a bundle is the same verified step as moving one.
 # A release that carries the bundle's own schema beside the zip
@@ -79,7 +92,9 @@
 # them; a zip is refused when it holds a symlink, a path outside its root,
 # or more bytes than --max-bytes, before anything in it is read; the
 # unpacked index.md must name the base_iri the member concept declared, a
-# check the toolkit's own registry cannot make; and blank nodes are given
+# check the toolkit's own registry cannot make; the lock in a member
+# domain's workspace must name that domain and its base_iri, so one
+# domain's workspace never stands in for another's; and blank nodes are given
 # canonical labels before the graph is written, because lokf export labels
 # them at random and the same releases must give the same bytes.
 #
@@ -178,15 +193,18 @@ def read_frontmatter(path: pathlib.Path) -> dict:
 class Member:
     """One MemberBundle or MemberDomain concept, resolved: where its zip is and what it must be."""
 
-    def __init__(self, concept_path: pathlib.Path, data: dict, parent_iri: str, tier: int, ancestors: tuple[str, ...] = ()):
+    def __init__(self, concept_path: pathlib.Path, data: dict, parent_iri: str, tier: int, ancestors: tuple[str, ...] = (), concept_iri: str = ""):
         self.concept_path = concept_path
         self.slug = concept_path.stem
         self.data = data
-        # The domain concepts that name this bundle: one, or more when two
-        # domains name it at one release; and the base_iris of the domains
-        # above it, the build's own first, so a domain that names one of
-        # them is told so.
+        # `parents` holds the domain concepts that name this bundle: one, or
+        # more when two domains name it at one release. `concepts` holds the
+        # member concepts that name it, one for each, and the lock records
+        # them so that a domain above can find each by its IRI. `ancestors`
+        # holds the base_iris of the domains above it, the build's own
+        # first, so that a domain that names one of them is told so.
         self.parents = [parent_iri]
+        self.concepts = [concept_iri] if concept_iri else []
         self.ancestors = tuple(ancestors)
         self.tier = tier
         # A MemberDomain says the zip is a domain; a MemberBundle whose zip
@@ -215,18 +233,21 @@ class Member:
             raise Failed(f"{concept_path}: base_iri and distribution.access_url are required")
         # A further distribution ending .yaml is the bundle's own schema, as
         # knowledge-release.yaml attaches it beside the zip. The build
-        # validates the bundle against it instead of LOKF core alone.
+        # validates the bundle against it instead of LOKF core alone. A
+        # further distribution named workspace-*.zip is the workspace a
+        # member domain built for that release, which knowledge-federation.yaml
+        # attaches. Its lock says which release of each member that domain took.
         self.schema_url = self.schema_name = self.schema_sha256 = ""
+        self.workspace_url = self.workspace_name = self.workspace_sha256 = ""
         for extra in dists[1:]:
             url = str(extra.get("access_url") or "")
             name = str(extra.get("name") or pathlib.PurePosixPath(urllib.parse.urlparse(url).path).name)
-            if not name.endswith((".yaml", ".yml")):
-                continue
-            checksum = str(extra.get("checksum") or "")
-            if not checksum.startswith("sha256:") or len(checksum) != 71:
-                raise Failed(f"{concept_path}: the schema distribution {name} needs checksum sha256:<64 hex digits>")
-            self.schema_url, self.schema_name, self.schema_sha256 = url, name, checksum[7:].lower()
-            break
+            if name.endswith((".yaml", ".yml")) and not self.schema_url:
+                self.schema_url, self.schema_name = url, name
+                self.schema_sha256 = self.further_digest(extra, "schema", name)
+            elif name.startswith("workspace-") and name.endswith(".zip") and not self.workspace_url:
+                self.workspace_url, self.workspace_name = url, name
+                self.workspace_sha256 = self.further_digest(extra, "workspace", name)
         m = GITHUB_RELEASE.match(self.zip_url)
         self.github = (m.group("owner"), m.group("repo"), m.group("tag")) if m else None
         if self.github:
@@ -237,6 +258,13 @@ class Member:
             self.source_base = ""
             self.repo = None
 
+    def further_digest(self, dist: dict, what: str, name: str) -> str:
+        """The sha256 digest a further distribution's checksum gives, which must take the zip's form, sha256:<64 hex digits>."""
+        checksum = str(dist.get("checksum") or "")
+        if not checksum.startswith("sha256:") or len(checksum) != 71:
+            raise Failed(f"{self.concept_path}: the {what} distribution {name} needs checksum sha256:<64 hex digits>")
+        return checksum[7:].lower()
+
     def lock_entry(self) -> dict:
         entry = {
             "slug": self.slug,
@@ -245,6 +273,7 @@ class Member:
             "zip": self.zip_url,
             "sha256": self.sha256,
             "member_of": sorted(self.parents),
+            "concepts": sorted(self.concepts),
             "tier": self.tier,
             "kind": "domain" if self.is_domain else "bundle",
         }
@@ -252,6 +281,8 @@ class Member:
             entry["release"] = self.release
         if self.schema_url:
             entry["schema"] = {"url": self.schema_url, "sha256": self.schema_sha256}
+        if self.workspace_url:
+            entry["workspace"] = {"url": self.workspace_url, "sha256": self.workspace_sha256}
         if self.github:
             entry["repository"] = f"{self.github[0]}/{self.github[1]}"
             entry["source_base"] = self.source_base
@@ -373,16 +404,49 @@ def confirmed_text(concept, iri: str, path_iri: str, history: bool) -> tuple[dic
     return None, "no person has confirmed it" + (" in the history this shallow clone holds" if shallow else "")
 
 
-def take_confirmed(bundle, concepts, history: bool, waiting: list[dict]) -> list[tuple[pathlib.Path, dict, str]]:
+def as_built(released: tuple[dict, str] | None, iri: str, concept: dict) -> tuple[dict | None, str]:
+    """A member domain's member as that domain's own build took it, from the lock in the workspace it released, or None.
+
+    `released` is that lock and the workspace's file name. This finds the
+    entry by the member concept's IRI, which the lock records from format 3
+    on. It turns the entry into the frontmatter a member concept at that
+    release would hold, so the build fetches and checks that release as it
+    does any member's.
+    """
+    if released is None:
+        return None, "no person has confirmed it in that domain's release, whose zip holds no history to find an earlier confirmation"
+    lock, name = released
+    if str(lock.get("knowledge_federate_lock") or "") in ("1", "2"):
+        return None, f"no person has confirmed it in that domain's release, and the lock in {name} predates format 3, so it names no member concept"
+    entry = next((m for m in lock.get("members") or [] if iri in (m.get("concepts") or [])), None)
+    if entry is None:
+        return None, f"no person has confirmed it in that domain's release, and the lock in {name} lists no release of it"
+    dists = [{"name": pathlib.PurePosixPath(urllib.parse.urlparse(str(entry.get("zip") or "")).path).name,
+              "access_url": entry.get("zip"), "checksum": f"sha256:{entry.get('sha256')}"}]
+    for extra in (entry.get("schema"), entry.get("workspace")):
+        if isinstance(extra, dict):
+            dists.append({"name": pathlib.PurePosixPath(urllib.parse.urlparse(str(extra.get("url") or "")).path).name,
+                          "access_url": extra.get("url"), "checksum": f"sha256:{extra.get('sha256')}"})
+    data = {"type": "MemberDomain" if entry.get("kind") == "domain" else "MemberBundle", "title": concept.get("title"),
+            "base_iri": entry.get("base_iri"), "version": entry.get("version"), "release": entry.get("release"), "distribution": dists}
+    return data, f"as that domain's own build took it, which the lock in {name} records"
+
+
+def take_confirmed(bundle, concepts, history: bool, waiting: list[dict], released: tuple[dict, str] | None = None) -> list[tuple[pathlib.Path, dict, str, str]]:
     """Each member concept as a person last confirmed it, and a line in `waiting` for each one that is not, or not as it stands.
 
     Each comes with the version its concept names now when it is built at an
-    earlier one, so an error about that earlier release can say what waits.
+    earlier one, so an error about that earlier release can say what waits,
+    and with the concept's IRI. Without `history` (a member domain's zip),
+    one that waits is taken as that domain's released lock says, when
+    `released` holds it.
     """
     taken = []
     for c in concepts:
         iri, proposed = bundle.iri(c), str(c.data.get("version") or "")
         data, how = confirmed_text(c, iri, bundle.resolve(c.concept_id), history)
+        if data is None and not history:
+            data, how = as_built(released, iri, c.data)
         note = {"concept": iri, "base_iri": str(c.data.get("base_iri") or ""), "proposed": proposed}
         if data is None:
             say(f"{iri}: left out, because {how}; it joins once a person confirms it" + ("" if history else " and that domain releases again"))
@@ -393,7 +457,7 @@ def take_confirmed(bundle, concepts, history: bool, waiting: list[dict]) -> list
             moved = proposed or "a newer release"
             say(f"{iri}: {moved} waits for a person's confirmation; built at {data.get('version') or 'the release'}, {how}")
             waiting.append({**note, "built": str(data.get("version") or "")})
-        taken.append((c.path, data, moved))
+        taken.append((c.path, data, moved, iri))
     return taken
 
 
@@ -562,6 +626,40 @@ def member_schema_file(member: Member, cache: pathlib.Path, attest: bool, bundle
     shutil.copyfile(cached, schema)
     shutil.copyfile(toolkit_schema(), schema.parent / "lokf.yaml")
     return schema
+
+
+WORKSPACE_LOCK = "workspace/workspace.lock.yaml"
+
+
+def released_lock(member: Member, domain_iri: str | None, cache: pathlib.Path, max_bytes: int, attest: bool) -> tuple[dict, str] | None:
+    """The lock in the workspace a member domain released, checked, with the workspace's file name; None when its concept names none.
+
+    This checks the zip against the checksum the member concept names and
+    against its attestation, as the build checks a bundle zip. It reads the
+    lock alone and never unpacks the zip. The lock must belong to the
+    member's base_iri and, when `domain_iri` is given, to that Domain
+    concept, the one the member's own zip holds. The members script does
+    not unpack the zip on a move, so it checks the base_iri alone.
+    """
+    if not member.workspace_url:
+        return None
+    cached = obtain_file(member.workspace_url, member.workspace_sha256, cache, member.slug)
+    if member.github and attest:
+        verify_attestation(cached, member.github[0], member.github[1])
+    try:
+        with zipfile.ZipFile(cached) as zf:
+            info = zf.getinfo(WORKSPACE_LOCK)
+            if info.file_size > max_bytes:
+                raise Failed(f"{member.slug}: {WORKSPACE_LOCK} in {member.workspace_name} is more than {max_bytes} bytes")
+            lock = yaml.safe_load(zf.read(info)) or {}
+    except (KeyError, zipfile.BadZipFile, yaml.YAMLError) as e:
+        raise Failed(f"{member.slug}: {member.workspace_name} holds no readable {WORKSPACE_LOCK} ({e})") from e
+    if not isinstance(lock, dict):
+        raise Failed(f"{member.slug}: {WORKSPACE_LOCK} in {member.workspace_name} is not a lock")
+    if lock.get("domain_base_iri") != member.base_iri or (domain_iri is not None and lock.get("domain") != domain_iri):
+        expected = f"<{domain_iri}> under {member.base_iri}" if domain_iri else member.base_iri
+        raise Failed(f"{member.slug}: {member.workspace_name} is the workspace of <{lock.get('domain')}> under {lock.get('domain_base_iri')}, not of {expected}, the domain this member names")
+    return lock, member.workspace_name
 
 
 # ---------------------------------------------------------------------------
@@ -796,26 +894,36 @@ def _build(args, note_new) -> int:
     tag = args.tag or ""
     snapshot_iri = args.snapshot_iri or (f"{args.release_base.rstrip('/')}/{tag}" if tag and args.release_base else f"urn:knowledge-federate:snapshot:{tag or 'untagged'}")
     out = root / args.out
-    new = root / (args.out + ".new")
     cache = pathlib.Path(args.cache).expanduser() if args.cache else root / ".lokf" / ".cache" / "federation"
     say(f"domain {domain_iri} ({len(member_concepts)} members), policy unowned_targets={policy}, max_depth={max_depth}")
 
     # 1. Resolve: follow the members, and a member that is itself a domain, into a lock.
-    work = pathlib.Path(tempfile.mkdtemp(prefix="federate-")) if args.verify_only else new / "bundles"
-    if new.exists():
-        shutil.rmtree(new)
-    if not args.verify_only:
-        note_new(new)
+    # --verify-only builds in a temporary folder it removes, so a check
+    # meets the gate as the build does and leaves the snapshot alone.
+    if args.verify_only:
+        new = pathlib.Path(tempfile.mkdtemp(prefix="federate-check-"))
+    else:
+        new = root / (args.out + ".new")
+        if new.exists():
+            shutil.rmtree(new)
+    note_new(new)
     sys._federate_swapped = False
+    work = new / "bundles"
     work.mkdir(parents=True, exist_ok=True)
-    # A build takes each member as a person last confirmed it; --verify-only
+    # A build takes each member as a person last confirmed it. --verify-only
     # checks every member concept as it stands, which is what a pull request
-    # asks a person to confirm.
+    # asks a person to confirm, and names each one no person has confirmed yet.
     waiting: list[dict] = []
-    chosen = [(c.path, c.data, "") for c in member_concepts] if args.verify_only else take_confirmed(bundle, member_concepts, True, waiting)
+    if args.verify_only:
+        chosen = [(c.path, c.data, "", bundle.iri(c)) for c in member_concepts]
+        for c in member_concepts:
+            if not confirmed_by_person(c.data):
+                say(f"{bundle.iri(c)}: checked as it stands; no person has confirmed it yet, and until a person does, a release build takes the text a person last confirmed or leaves it out")
+    else:
+        chosen = take_confirmed(bundle, member_concepts, True, waiting)
     queue: list[tuple[Member, int]] = []
-    for path, data, moved in chosen:
-        first = Member(path, data, domain_iri, 1, (domain_base,))
+    for path, data, moved, iri in chosen:
+        first = Member(path, data, domain_iri, 1, (domain_base,), iri)
         first.waits = moved
         queue.append((first, 1))
     seen: dict[str, Member] = {}  # base_iri -> the member it joined as
@@ -833,6 +941,7 @@ def _build(args, note_new) -> int:
             if earlier.sha256 != member.sha256:
                 raise Failed(f"{member.slug}: base_iri {member.base_iri} is already in the federation as {earlier.slug} at {earlier.version}, named by <{earlier.parents[0]}>, and this concept names it at {member.version} under <{member.parents[0]}>; a bundle joins once, at one release, so two domains that name it must pin the same zip{waits_note(earlier) or waits_note(member)}")
             earlier.parents.extend(p for p in member.parents if p not in earlier.parents)
+            earlier.concepts.extend(c for c in member.concepts if c not in earlier.concepts)
             say(f"{member.slug}: {member.base_iri} is already in the federation as {earlier.slug} at the same release; named by a second domain, not followed again")
             continue
         seen[member.base_iri] = member
@@ -857,14 +966,24 @@ def _build(args, note_new) -> int:
                 raise Failed(f"{member.slug}: a domain at tier {depth}, and this domain's max_depth is {max_depth}; set max_depth on the Domain concept to follow it")
             sub_top = top_domain(sub_bundle, sub_domains)
             sub_iri = sub_bundle.iri(sub_top)
-            sub_chosen = [(c.path, c.data, "") for c in sub_members] if args.verify_only else take_confirmed(sub_bundle, sub_members, False, waiting)
-            for path, data, _ in sub_chosen:
-                queue.append((Member(path, data, sub_iri, depth + 1, (*member.ancestors, member.base_iri)), depth + 1))
+            # That domain's person confirms its members, so a check here
+            # takes them as the build does: as confirmed in its release, or
+            # as its own build took them, which the lock in its workspace
+            # records.
+            released = released_lock(member, sub_iri, cache, args.max_bytes, not args.no_attestation)
+            if released:
+                say(f"{member.slug}: {member.workspace_name} checksum matches; its lock is that domain's")
+            for path, data, moved, iri in take_confirmed(sub_bundle, sub_members, False, waiting, released):
+                below = Member(path, data, sub_iri, depth + 1, (*member.ancestors, member.base_iri), iri)
+                below.waits = moved
+                queue.append((below, depth + 1))
             say(f"{member.slug}: a domain of {len(sub_members)} members, followed")
         elif member.declared_domain:
             raise Failed(f"{member.slug}: the concept is a MemberDomain, but the zip holds no concept of type Domain")
+        elif member.workspace_url:
+            raise Failed(f"{member.slug}: the concept names a workspace, {member.workspace_name}, but its zip holds no concept of type Domain")
     lock = {
-        "knowledge_federate_lock": "2",
+        "knowledge_federate_lock": "3",
         "domain": domain_iri,
         "domain_base_iri": domain_base,
         "snapshot": snapshot_iri,
@@ -873,11 +992,6 @@ def _build(args, note_new) -> int:
     }
     if waiting:
         lock["waiting"] = sorted(waiting, key=lambda w: w["concept"])
-    if args.verify_only:
-        shutil.rmtree(work, ignore_errors=True)
-        say(f"verified {len(resolved)} member zip(s); nothing written (--verify-only)")
-        return 0
-    new.mkdir(parents=True, exist_ok=True)
     (new / "workspace.lock.yaml").write_text(yaml.safe_dump(lock, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
     # 2. Register and export each bundle, the domain's own first.
@@ -932,7 +1046,7 @@ def _build(args, note_new) -> int:
             "triples": entry.void.get("triples", 0),
             "zip": member.zip_url if member else None, "sha256": member.sha256 if member else None,
             "bytes": zip_path_size(resolved, member), "description": meta.get("description", ""),
-            "health": health_line(root, kdir.parent.parent), "kdir": kdir,
+            "health": "" if args.verify_only else health_line(root, kdir.parent.parent), "kdir": kdir,
         })
         graphs.append((entry.base_iri, out_dir / "graph.nt"))
         say(f"{slug}: registered {entry.base_iri} ({entry.void.get('triples', 0)} triples) and exported")
@@ -980,23 +1094,32 @@ def _build(args, note_new) -> int:
     report += ["", "## Vocabulary fit", ""] + fit
     (new / "gate-report.md").write_text("\n".join(report) + "\n", encoding="utf-8")
 
-    # 5. The index, llms.txt, registry.jsonld and the stored queries.
-    write_index(new, domain_title, domain_iri, snapshot_iri, policy, records, unowned, public, waiting)
-    (new / "registry.jsonld").write_text(json.dumps(registry_jsonld(registry, records), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    (new / "queries").mkdir()
-    for name, text in QUERIES.items():
-        (new / "queries" / name).write_text(text, encoding="utf-8")
-    for r in records:  # the unpacked releases stay read-only, as released
-        for p in r["kdir"].rglob("*"):
-            if p.is_file():
-                p.chmod(0o444)
+    # 5. The index, llms.txt, registry.jsonld and the stored queries, which a check does not write.
+    if not args.verify_only:
+        write_index(new, domain_title, domain_iri, snapshot_iri, policy, records, unowned, public, waiting)
+        (new / "registry.jsonld").write_text(json.dumps(registry_jsonld(registry, records), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        (new / "queries").mkdir()
+        for name, text in QUERIES.items():
+            (new / "queries" / name).write_text(text, encoding="utf-8")
+        for r in records:  # the unpacked releases stay read-only, as released
+            for p in r["kdir"].rglob("*"):
+                if p.is_file():
+                    p.chmod(0o444)
     if unowned and policy == "fail":
         shutil.rmtree(new, ignore_errors=True)
         for g, s, p, o, w in held:
             warn(f"unowned target in {g}: {s} {p} {o}" + (f", in the namespace of <{w}>, which waits for a person's confirmation" if w else ""))
         raise Failed(f"{len(unowned)} typed-relation target(s) lie in no member's namespace and the domain's policy is fail"
                      + (f"; {in_waiting} of them lie in the namespace of {', '.join(f'<{w}>' for w in named)}, which joins once a person confirms it" if in_waiting else "")
-                     + "; the previous snapshot stays")
+                     + ("; nothing written (--verify-only)" if args.verify_only else "; the previous snapshot stays"))
+    if args.verify_only:
+        for g, s, p, o, w in held:
+            say(f"unowned target in {g}: {s} {p} {o}, reported under unowned_targets: report")
+        for line in fit:
+            say(line[2:].replace("`", ""))
+        shutil.rmtree(new, ignore_errors=True)
+        say(f"checked {len(resolved)} member zip(s) and gated {len(records)} bundles: {len(unowned)} typed-relation target(s) in no member's namespace; nothing written (--verify-only)")
+        return 0
 
     # 6. Swap.
     old = root / (args.out + ".old")
@@ -1053,7 +1176,7 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
             kept = f"built at {w['built']}" if w.get("built") else "left out"
             lines.append(f"- <{w['concept']}>: {w['proposed'] or 'a release'} waits; {kept}.")
     lines += ["", "## Files", "",
-              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace, and the schema released with its bundle when there is one; under `waiting`, each member concept that waits for a person's confirmation.",
+              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace and the member concepts that name it. An entry also names the schema released with its bundle when there is one, and for a member domain the workspace it released when its concept names one. Under `waiting`, the lock lists each member concept that waits for a person's confirmation.",
               "- `lokf-registry.yaml` and `registry.jsonld`: the registry the LOKF specification's section 11 describes, which routes any IRI to its owner by the longest `base_iri` prefix.",
               "- `graph.nq`: every bundle's triples in its own named graph, plus the lock graph, as sorted N-Quads.",
               "- `export/<slug>/`: `graph.nt`, `concepts.jsonld`, `graph.json` and `datasets.jsonld` for each bundle, as `lokf export` writes them.",
@@ -1252,25 +1375,35 @@ def digest_of(sum_asset: dict, what: str) -> str:
     return text[0]
 
 
-def schema_assets(release: dict) -> tuple[dict, dict] | None:
-    """The schema-*.yaml a release carries beside its bundle zip, with its .sha256, as knowledge-release.yaml attaches them."""
+def asset_pair(release: dict, prefix: str, suffixes: tuple[str, ...]) -> tuple[dict, dict] | None:
+    """The first asset a release carries whose name has this prefix and suffix, with its .sha256 beside it."""
     assets = {a["name"]: a for a in release.get("assets", [])}
     for name, asset in assets.items():
-        if name.startswith("schema-") and name.endswith((".yaml", ".yml")) and name + ".sha256" in assets:
+        if name.startswith(prefix) and name.endswith(suffixes) and name + ".sha256" in assets:
             return asset, assets[name + ".sha256"]
     return None
 
 
-def release_distributions(release: dict, zip_asset: dict, sum_asset: dict, what: str) -> list[dict]:
-    """A member's distribution list for a release: the zip, then the schema released beside it when there is one."""
+def further_distribution(release: dict, prefix: str, suffixes: tuple[str, ...], media_type: str, what: str) -> dict | None:
+    """The distribution of an asset a release carries beside its bundle zip, as a member concept names it, or None."""
+    pair = asset_pair(release, prefix, suffixes)
+    if pair is None:
+        return None
+    asset, sums = pair
+    return {"name": asset["name"], "access_url": asset["browser_download_url"], "media_type": media_type, "checksum": f"sha256:{digest_of(sums, what)}"}
+
+
+def release_distributions(release: dict, zip_asset: dict, sum_asset: dict, what: str, domain: bool = False) -> list[dict]:
+    """A member's distribution list for a release: the zip, then the schema released beside it, and for a domain its workspace, each when there is one.
+
+    knowledge-release.yaml attaches the schema-<tag>-<name>.yaml, and a
+    domain host's knowledge-federation.yaml attaches the workspace-<tag>.zip.
+    """
     dists = [{"name": zip_asset["name"], "access_url": zip_asset["browser_download_url"], "media_type": "application/zip",
               "checksum": f"sha256:{digest_of(sum_asset, what)}"}]
-    schema = schema_assets(release)
-    if schema:
-        asset, sums = schema
-        dists.append({"name": asset["name"], "access_url": asset["browser_download_url"], "media_type": "application/yaml",
-                      "checksum": f"sha256:{digest_of(sums, what)}"})
-    return dists
+    schema = further_distribution(release, "schema-", (".yaml", ".yml"), "application/yaml", what)
+    workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", what) if domain else None
+    return dists + [d for d in (schema, workspace) if d]
 
 
 def verify_schema(member: Member, cache: pathlib.Path, attest: bool) -> str:
@@ -1281,6 +1414,13 @@ def verify_schema(member: Member, cache: pathlib.Path, attest: bool) -> str:
     if member.github and attest:
         verify_attestation(cached, member.github[0], member.github[1])
     return f"; schema {member.schema_name} checked"
+
+
+def verify_workspace(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool, domain_iri: str | None = None) -> str:
+    """The workspace a member domain released, fetched and checked as the build checks it; the verdict as one clause, or "" when there is none."""
+    if not released_lock(member, domain_iri, cache, max_bytes, attest):
+        return ""
+    return f"; workspace {member.workspace_name} checked, and its lock is that domain's"
 
 
 def members(args) -> int:
@@ -1305,19 +1445,39 @@ def members(args) -> int:
             continue
         release, zip_asset, sum_asset = found
         tag = release["tag_name"]
-        if tag == member.version:
-            current.append(f"{member.slug}: {tag} is current")
-            continue
-        distribution = release_distributions(release, zip_asset, sum_asset, member.slug)
-        moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
-        _, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
-        verdict += verify_schema(moved, cache, not args.no_attestation)
-        release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
         path = c.concept_id + ".md"
         # "Confirmed" only when a person confirmed the concept as it stands; a
         # draft, or a member moved since its confirmation, names the release
         # it holds and claims nothing more.
         confirmed = confirmed_by_person(c.data)
+        if tag == member.version:
+            # A domain host attaches its workspace after its bundle zip, once
+            # its build has run, so a member domain moved in between names
+            # none. This proposes the workspace on its own once the release
+            # has it.
+            workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", member.slug) if member.declared_domain and not member.workspace_url else None
+            if workspace is None:
+                current.append(f"{member.slug}: {tag} is current")
+                continue
+            named = Member(c.path, {**c.data, "distribution": [*c.data["distribution"], workspace]}, "", 1)
+            verdict = verify_workspace(named, cache, args.max_bytes, not args.no_attestation)[2:]
+            asked = (f"{owner}/{repo} attached its workspace, `{workspace['name']}`, to {tag} after this member moved to it; does this member name it?"
+                     " Its lock says which release of each member that domain built, and the build takes that release for a member that waits there.")
+            if written_by_person(c.data):
+                ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
+                handoff.append(f"{member.slug}: {tag} now carries {workspace['name']}; {verdict}; a person wrote the concept, so only a question was added.")
+                continue
+            ops.append({"op": "patch", "path": path, "set": {"distribution": named.data["distribution"]},
+                        "log": f"**Changed**: {member.title} names the workspace {owner}/{repo} attached to {tag}, `{workspace['name']}`."})
+            ops.append({"op": "question", "path": path, "text": asked})
+            handoff.append(f"{member.slug}: {tag} now carries {workspace['name']}; {verdict}; a person confirms the member{' again' if confirmed else ''} to accept it.")
+            continue
+        distribution = release_distributions(release, zip_asset, sum_asset, member.slug, member.declared_domain)
+        moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
+        _, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
+        verdict += verify_schema(moved, cache, not args.no_attestation)
+        verdict += verify_workspace(moved, cache, args.max_bytes, not args.no_attestation)
+        release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
         asked = f"{owner}/{repo} released {tag} after {'the confirmed ' if confirmed else ''}{member.version}; does this member move to it?"
         if written_by_person(c.data):
             # The pen refuses any patch of a concept a person wrote, so the
@@ -1329,7 +1489,8 @@ def members(args) -> int:
         # the new ones in the description and in the body, so the concept no
         # longer says one release in `version` and another in its prose.
         old_day = release_day(next((r for r in releases if r.get("tag_name") == member.version), None))
-        move = mover({member.version: tag, member.zip_name: zip_asset["name"], old_day: release_day(release), member.schema_name: moved.schema_name})
+        move = mover({member.version: tag, member.zip_name: zip_asset["name"], old_day: release_day(release), member.schema_name: moved.schema_name,
+                      member.workspace_name: moved.workspace_name})
         sets: dict = {"version": tag, "release": release_url, "resource": release_url, "distribution": distribution}
         description = str(c.data.get("description") or "")
         if move(description) != description:
@@ -1382,9 +1543,20 @@ def members(args) -> int:
                 raise Failed(f"{owner}/{repo}: its namespace {base_iri} nests with {who}'s {other}; a bundle joins once, under a namespace of its own")
         taken[base_iri] = slug
         # A release that holds a Domain concept is a domain in turn: the
-        # concept says so, and the build follows its members.
-        _, sub_domains, sub_members = read_domain(kdir)
-        in_turn = f" It is itself a domain of {len(sub_members)} member{'s' if len(sub_members) != 1 else ''}, which the build follows." if sub_domains else ""
+        # concept says so, and the build follows its members. The concept
+        # names the workspace the release carries too, once this checks it
+        # as the build does, so a member that waits there is built at the
+        # release that domain's own build took.
+        sub_bundle, sub_domains, sub_members = read_domain(kdir)
+        in_turn = ""
+        if sub_domains:
+            in_turn = f" It is itself a domain of {len(sub_members)} member{'s' if len(sub_members) != 1 else ''}, which the build follows."
+            workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", slug)
+            if workspace:
+                distribution.append(workspace)
+                named = Member(knowledge / path, {"base_iri": base_iri, "version": tag, "distribution": distribution}, domain_iri, 1)
+                verdict += verify_workspace(named, cache, args.max_bytes, not args.no_attestation, sub_bundle.iri(top_domain(sub_bundle, sub_domains)))
+                in_turn += f" The federation workflow attached its workspace as `{workspace['name']}`, whose lock says which release of each member that domain built."
         day = release_day(release)
         title = str(meta.get("title") or f"{repo} knowledge bundle")
         # The member's own description is quoted, word for word, whatever
@@ -1729,7 +1901,7 @@ def main(argv=None) -> int:
     b.add_argument("--cache", default=None, help="where zips are kept by digest (default .lokf/.cache/federation)")
     b.add_argument("--max-bytes", type=int, default=DEFAULT_MAX_BYTES, help="refuse a zip that unpacks to more than this")
     b.add_argument("--no-attestation", action="store_true", help="skip gh attestation verify")
-    b.add_argument("--verify-only", action="store_true", help="fetch and verify every zip, write nothing")
+    b.add_argument("--verify-only", action="store_true", help="fetch and verify every zip, export, load and gate, write nothing")
     b.set_defaults(func=build)
     m = sub.add_parser("members", help="propose moving each member to its newest released zip, as a patch for the pen")
     m.add_argument("--cache", default=None)
