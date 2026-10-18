@@ -8,7 +8,7 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
 
 **The manifest**, `.lokf/ingest.yaml`, lists what to mirror. Each entry names a place, a selector, who answers for the source, and why this repository mirrors it. It holds no token; an `auth` block names environment variables.
 
-**The mirror**, `.lokf/mirror/<entry id>/`, holds the fetched text, one Markdown file per page or document. Each file opens with a header: the origin, the title, the version, the digest of the bytes fetched, when they were fetched, and which converter stood between the bytes and the Markdown. A file is named by the item's stable identity, a page id or a path, never by its title, so a retitled page is the same file.
+**The mirror**, `.lokf/mirror/<entry id>/`, holds the fetched text, one Markdown file per page or document. Each file opens with a header: the origin, the title, the version, the digest of the bytes fetched, when they were fetched, and which converter stood between the bytes and the Markdown. A file is named by the item's stable identity, a page id or a path, never by its title, so a retitled page is the same file. Links in a page are made absolute, and a PDF's text carries a comment before each page, so a concept can cite the page.
 
 **The lock**, `.lokf/ingest.lock.yaml`, records the same per item, with a status: `ok`, `gone` when the source answered 404 or 410, `unlisted` when the selector no longer returns it, `failed` when a request did not complete, or `refused` with the reason. The mirror and the lock change only when content changes, so a run that finds nothing new writes nothing.
 
@@ -16,7 +16,6 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
 
 ```yaml
 ingest_version: "1"
-mirror: .lokf/mirror
 max_total_bytes: 50000000
 
 services:
@@ -60,11 +59,11 @@ Four kinds of source, each with its selector:
 
 - `http`: a list of `urls` serving HTML, Markdown, plain text or a PDF. The server's ETag and Last-Modified are used when it gives them, and the digest of the bytes otherwise. `convert` names the converter when the content type does not: `html-markdown`, `pdf-text` or `text`.
 
-- `git`: a `url`, a `ref` and a `path` in another repository, with `include` and `exclude` patterns (`*.md` by default). The commit is the version. A GitHub or GitLab wiki is a git repository, and this kind mirrors it.
+- `git`: a `url`, a `ref` and a `path` in another repository, with `include` and `exclude` patterns (`*.md` by default). The commit is the version. A GitHub or GitLab wiki is a git repository, and this kind mirrors it. The `url` is an https address, with the token in an `auth` block; `http://` and a local path need `allow_private_addresses`, and ssh is not used. A binary file the patterns match is skipped and named in the summary.
 
-- `command`: the tracked path of a command this repository holds, with `args` and a `timeout`. Its standard output is the text, and the digest of the command's own file is recorded beside the output's, so a changed command is a moved source. A command-line client for a service the script has no fetcher for, a schema dump of a database, an export from a desktop tool.
+- `command`: the tracked path of a command this repository holds, `.lokf/ingest/` being the usual place, with `args` and a `timeout`. Its standard output is the text, and the digest of the command's own file is recorded beside the output's, so a changed command is a moved source. A command-line client for a service the script has no fetcher for, a schema dump of a database, an export from a desktop tool. A command is code the repository runs with its secrets near, so commit one a person has read. It is handed the variables its own `auth` block names and no other, as a courtesy rather than a boundary, since it runs as the same user as the script; its last error line is recorded in the lock.
 
-Three caps bound a run: `max_items` per entry, `max_item_bytes` per item and `max_total_bytes` for the mirror. A selector that returns more than `max_items` is refused whole, never mirrored in part. `disabled: true` pauses an entry and keeps its mirror. `authors: false` leaves account ids out of the headers. `reference: true` asks for a Reference concept per mirrored item, which `--patch` writes for the pen.
+Three caps bound a run: `max_items` per entry, `max_item_bytes` per item and `max_total_bytes` for the mirror. A selector that returns more than `max_items` is refused whole, never mirrored in part. `disabled: true` pauses an entry and keeps its mirror. An entry taken out of the manifest loses its folder on the next run, and the summary names each file a concept still cites. `authors: false` leaves account ids out of the headers. `reference: true` asks for a Reference concept per mirrored item, which `--patch` writes for the pen.
 
 ## Sensitivity
 
@@ -80,7 +79,7 @@ The workflow passes the repository's visibility from the forge. By hand, the scr
 
 ## Secrets
 
-Each `auth` block names its variables, and every name starts `KNOWLEDGE_INGEST_`. The workflow hands the script the repository secrets of those names and no other, and the script prints no value. For Confluence Cloud, store an API token with read scopes and an expiry as the token, and the account's email as the user. For a repository, a fine-grained token with Contents read. By hand, set the same names in the environment.
+Each `auth` block names its variables, and every name starts `KNOWLEDGE_INGEST_`. The workflow hands the script the repository secrets of those names and no other, and the script prints no value. For Confluence Cloud, store an API token with read scopes and an expiry as the token, and the account's email as the user. For a repository, a fine-grained token with Contents read, which git 2.31 or later takes from its environment. By hand, set the same names in the environment.
 
 ## Turn it on
 
@@ -108,6 +107,8 @@ The librarian runs the first command itself at the start of a live session when 
 
 The body is the run's summary: each entry, what moved, what went away, what could not be fetched and why. Then the checklist. Read the diff as you would read the page: is this text something the repository should hold? A page that should not be here comes out of the manifest, not out of the diff. A file marked `gone` or `unlisted` stays until the librarian has asked about the concepts that cite it; `--prune` removes one that no concept cites. A line marked `failed` with a credential's name is a secret not yet set, or expired.
 
+A source the run could not fetch is also a warning on the run itself, so a green run never hides an expired token. A pull request a person closes without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed, and a run started by hand proposes it now.
+
 The pull request starts no checks, since the job's own token opened it, and the mirror is text the registrar's conventions do not read. Merge it, and the librarian's next run reads what changed.
 
 ## What the librarian does next
@@ -122,4 +123,4 @@ The first version has no fetcher for Jira. An issue moves whenever anyone commen
 
 ## Security
 
-The job that holds the secrets has no write token, and the job that writes has no secret. The script fetches only the addresses the manifest names, and caps every body and the mirror as a whole. It refuses a private or link-local address unless the manifest allows them, drops the credential on a redirect to another host, and removes every character a reader cannot see. What it mirrors reaches the scheduled librarian only after a person merges the pull request, so a mirror file holds the same place as any other repository content. The [threat model](threat-model.md#the-ingest-workflow) says the rest.
+The job that holds the secrets has no write token, and the job that writes has no secret. The script fetches only the addresses the manifest names, and caps every body and the mirror as a whole. It refuses a private or link-local address unless the manifest allows them, and drops the credential on a redirect to another host. It removes every character a reader cannot see, apart from the joiners that Persian, Arabic and Indic scripts and emoji spell with. A git credential reaches git through its environment, scoped to the entry's address. What it mirrors reaches the scheduled librarian only after a person merges the pull request, so a mirror file holds the same place as any other repository content. The [threat model](threat-model.md#the-ingest-workflow) says the rest.

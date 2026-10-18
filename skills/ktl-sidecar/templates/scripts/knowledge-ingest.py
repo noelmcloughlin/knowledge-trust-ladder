@@ -18,11 +18,13 @@
 # everywhere, v2 body on Cloud and v1 on Data Center; the version number is
 # the change signal), http (addresses serving HTML, Markdown, text or PDF;
 # ETag and Last-Modified when the server gives them, else the digest), git
-# (a path at a ref; the commit is the version; a file that is not Markdown
-# is fenced), command (a tracked command's output; the command's own digest
-# is recorded too). Listing comes before fetching, so an unchanged source
-# costs a listing and no body. The mirror and the lock change only when
-# content changes.
+# (a path at a ref, over https, or http and a local path where the manifest
+# allows private addresses; the commit is the version and the blob id the
+# change signal; a file that is not Markdown is fenced), command (a tracked
+# command's output; the command's own digest is recorded too). Listing comes
+# before fetching, so an unchanged source costs a listing and no body. The
+# mirror and the lock change only when content changes. An entry that leaves
+# the manifest takes its folder with it.
 #
 # Refused and recorded: a token in the manifest (auth names environment
 # variables starting KNOWLEDGE_INGEST_); an entry the repository's
@@ -31,8 +33,9 @@
 # than max_items; a body over max_item_bytes or a mirror over
 # max_total_bytes; a private address unless the manifest allows it; a path
 # outside the mirror root; an unexpected content type; a PDF with no text
-# layer. Characters no reader sees are removed. One entry's failure never
-# stops the others.
+# layer. Characters no reader sees are removed, apart from the two joiners
+# some scripts spell with. One entry's failure, expected or not, never stops
+# the others.
 #
 # Usage, through knowledge-ingest.sh beside it:
 #   knowledge-ingest.py [--root DIR] [--visibility public|private|internal|unknown]
@@ -54,9 +57,11 @@ from __future__ import annotations
 
 import argparse
 import base64
+import codecs
 import fnmatch
 import hashlib
 import html
+import http.client
 import io
 import ipaddress
 import json
@@ -90,13 +95,14 @@ KINDS = ("confluence", "http", "git", "command")
 ENV_NAME = re.compile(r"^KNOWLEDGE_INGEST_[A-Z0-9_]+$")
 ENTRY_ID = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 SENSITIVITIES = ("public", "internal", "confidential")
-TOP_KEYS = {"ingest_version", "mirror", "max_total_bytes", "allow_private_addresses", "services", "defaults", "entries"}
+MIRROR = ".lokf/mirror"
+TOP_KEYS = {"ingest_version", "max_total_bytes", "allow_private_addresses", "services", "defaults", "entries"}
 SERVICE_KEYS = {"kind", "site", "api", "auth"}
 AUTH_KEYS = {"scheme", "env", "user_env", "header"}
 DEFAULT_KEYS = {"sensitivity", "max_items", "max_item_bytes", "authors"}
 ENTRY_KEYS = {
     "id", "kind", "service", "site", "api", "auth", "select", "urls", "url", "ref", "path", "include", "exclude",
-    "command", "args", "timeout", "convert", "fields", "owner", "why", "license", "sensitivity", "max_items",
+    "command", "args", "timeout", "convert", "owner", "why", "license", "sensitivity", "max_items",
     "max_item_bytes", "authors", "disabled", "reference",
 }
 SELECT_KEYS = {"label", "space", "page", "tree", "cql"}
@@ -107,6 +113,9 @@ TIMEOUT = 30
 ATTEMPTS = 3
 TEXT_TYPES = {"text/markdown": "text", "text/x-markdown": "text", "text/plain": "text", "text/html": "html-markdown",
               "application/xhtml+xml": "html-markdown", "application/pdf": "pdf-text"}
+KEPT = "\u200c\u200d"  # the zero-width non-joiner and joiner, which Persian, Arabic and Indic scripts and emoji sequences spell with
+PASSED_THROUGH = ("http_proxy", "https_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR",
+                  "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "CURL_CA_BUNDLE")  # a proxy and a company's certificate reach git and a command
 
 
 class Stop(Exception):
@@ -158,10 +167,10 @@ def utc(text: str) -> str:
 
 
 def shown(text: str) -> str:
-    """The text without the characters no reader sees, line breaks and tabs kept."""
+    """The text without the characters no reader sees, line breaks, tabs and the two joiners kept."""
     out = []
     for ch in text:
-        if ch in "\n\t":
+        if ch in "\n\t" or ch in KEPT:
             out.append(ch)
         elif ch == "\r":
             continue
@@ -233,7 +242,6 @@ class Entry:
     args: list = field(default_factory=list)
     timeout: int = 120
     convert: str = ""
-    fields: list = field(default_factory=list)
     owner: str = ""
     why: str = ""
     license: str = ""
@@ -315,9 +323,6 @@ def read_manifest(path: Path) -> Manifest:
     only_keys(raw, TOP_KEYS, path.name)
     if str(raw.get("ingest_version", "")) != MANIFEST_VERSION:
         raise Stop(f"{path.name}: ingest_version is \"{MANIFEST_VERSION}\" for this script")
-    mirror = str(raw.get("mirror") or ".lokf/mirror")
-    if mirror.startswith("/") or ".." in PurePosixPath(mirror).parts or mirror.startswith(".lokf/knowledge"):
-        raise Stop(f"{path.name}: mirror is a folder under the repository root, outside the bundle: {mirror}")
     total = positive_int(raw.get("max_total_bytes"), "max_total_bytes", DEFAULT_TOTAL_BYTES)
     allow_private = bool(raw.get("allow_private_addresses", False))
     services = raw.get("services") or {}
@@ -379,7 +384,7 @@ def read_manifest(path: Path) -> Manifest:
             include=[str(g) for g in (e.get("include") or [])], exclude=[str(g) for g in (e.get("exclude") or [])],
             command=str(e.get("command", "")), args=[str(a) for a in (e.get("args") or [])],
             timeout=positive_int(e.get("timeout"), f"{where}.timeout", 120), convert=convert,
-            fields=[str(f) for f in (e.get("fields") or [])], owner=owner, why=str(e.get("why", "")),
+            owner=owner, why=str(e.get("why", "")),
             license=str(e.get("license", "")), sensitivity=sens,
             max_items=positive_int(e.get("max_items", defaults["max_items"]), f"{where}.max_items", 200),
             max_item_bytes=positive_int(e.get("max_item_bytes", defaults["max_item_bytes"]), f"{where}.max_item_bytes", 1_000_000),
@@ -387,11 +392,17 @@ def read_manifest(path: Path) -> Manifest:
             reference=bool(e.get("reference", False)),
         )
         check_entry(entry, where)
-        plain = entry.site if entry.kind == "confluence" else entry.url if entry.kind == "git" else ""
-        if plain.startswith("http://") and not allow_private:
-            raise Stop(f"{where}: {plain} is over http; use https, or allow_private_addresses: true for an intranet site")
+        if entry.kind == "confluence" and entry.site.startswith("http://") and not allow_private:
+            raise Stop(f"{where}: {entry.site} is over http; use https, or allow_private_addresses: true for an intranet site")
+        if entry.kind == "git":
+            how = git_url_kind(entry.url)
+            if how == "other":
+                raise Stop(f"{where}: url is an https address, or http:// or a local path with allow_private_addresses: true; "
+                           "ssh and git protocols are not fetched, since the credential is a token")
+            if how != "https" and not allow_private:
+                raise Stop(f"{where}: {entry.url} is not https; allow_private_addresses: true permits http and local paths")
         entries.append(entry)
-    return Manifest(mirror, total, allow_private, entries)
+    return Manifest(MIRROR, total, allow_private, entries)
 
 
 def check_entry(entry: Entry, where: str) -> None:
@@ -516,16 +527,19 @@ class Response:
 
 
 def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeout: int = TIMEOUT, accept_304: bool = False) -> Response:
-    """GET with retries on 429 and 5xx, a size cap read as it streams, and the address checks. 404 and 410 raise Gone."""
+    """GET with retries on 429, 5xx and a broken connection, a size cap read as it streams, and the address checks. 404 and 410 raise Gone."""
     parts = urllib.parse.urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.netloc or "@" in parts.netloc:
         raise Refused(f"{url} is not a plain http(s) address")
     if not allow_private and address_is_private(parts.hostname or ""):
         raise Refused(f"{parts.hostname} is a private or link-local address; allow_private_addresses: true permits them")
-    opener = urllib.request.build_opener(Redirects(allow_private))
+    redirects = Redirects(allow_private)
+    opener = urllib.request.build_opener(redirects)
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
     last = ""
     for attempt in range(ATTEMPTS):
+        redirects.hops = 0
+        delay = 2 ** attempt
         try:
             with opener.open(req, timeout=timeout) as resp:  # noqa: S310 - an address the manifest names
                 data = resp.read(max_bytes + 1)
@@ -539,21 +553,28 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
                 raise Gone(f"{e.code}") from e
             if e.code in (401, 403):
                 raise FetchFailed(f"{e.code} from {parts.netloc}: the credential was refused or lacks a scope") from e
-            if e.code == 429 or e.code >= 500:
-                last = f"{e.code} from {parts.netloc}"
-                wait = e.headers.get("Retry-After", "")
-                delay = min(int(wait), 60) if wait.isdigit() else 2 ** attempt
-                time.sleep(delay)
-                continue
-            raise FetchFailed(f"{e.code} from {parts.netloc}") from e
-        except (urllib.error.URLError, TimeoutError, socket.timeout, ConnectionError) as e:
+            if e.code != 429 and e.code < 500:
+                raise FetchFailed(f"{e.code} from {parts.netloc}") from e
+            last = f"{e.code} from {parts.netloc}"
+            wait = e.headers.get("Retry-After", "")
+            if wait.isdigit():
+                delay = min(int(wait), 60)
+        except ValueError as e:  # http.client.InvalidURL and its kin
+            raise FetchFailed(f"{url} is not an address this script can fetch ({e})") from e
+        except (OSError, http.client.HTTPException) as e:  # a timeout, TLS, a reset, a broken or truncated response
             last = f"{parts.netloc}: {getattr(e, 'reason', e)}"
-            time.sleep(2 ** attempt)
+        if attempt < ATTEMPTS - 1:
+            time.sleep(delay)
     raise FetchFailed(f"gave up after {ATTEMPTS} attempts: {last}")
 
 
 def content_type_of(headers: dict) -> str:
     return (headers.get("content-type", "") or "").split(";")[0].strip().lower()
+
+
+def charset_of(headers: dict) -> str:
+    m = re.search(r"charset\s*=\s*\"?([A-Za-z0-9._:-]+)", headers.get("content-type", "") or "", re.I)
+    return m.group(1) if m else ""
 
 
 # ---- converters --------------------------------------------------------------
@@ -569,10 +590,13 @@ CDATA = re.compile(r"<!\[CDATA\[(.*?)\]\]>", re.S)
 
 
 class Markdowner(HTMLParser):
-    """HTML, XHTML and Confluence storage format to Markdown, as blocks."""
+    """HTML, XHTML and Confluence storage format to Markdown, as blocks. Links are resolved against the page's address; a Confluence page link becomes the site's display address."""
 
-    def __init__(self):
+    def __init__(self, base: str = ""):
         super().__init__(convert_charrefs=True)
+        self.base = base
+        m = re.match(r"^(.*?)/(?:spaces|display)/([^/?#]+)/", base)
+        self.site, self.space = (m.group(1), m.group(2)) if m else ("", "")
         self.blocks: list[str] = []
         self.buf: list[str] = []
         self.inline: list[tuple[str, int]] = []
@@ -625,22 +649,28 @@ class Markdowner(HTMLParser):
         else:
             self.emit(t)
 
+    def href(self, url: str) -> str:
+        if not url or not self.base or url.startswith(("javascript:", "data:", "#")):
+            return url
+        return urllib.parse.urljoin(self.base, url)
+
     # -- the parser's calls
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
-        if self.skip or tag in SKIPPED:
+        if tag == "title":
+            if self.title_buf is None and not self.title:
+                self.title_buf = []
+            return
+        if tag in SKIPPED:
+            # Only a skipped tag's own end tag closes it, so a void tag inside
+            # one, a <meta> in <head> or a page link in a macro parameter, never
+            # leaves the rest of the page skipped.
             if tag == "ac:parameter" and self.macros:
                 self.plain_target = ("param", a.get("ac:name", ""))
                 self.macros[-1]["params"][a.get("ac:name", "")] = ""
-            elif tag == "title" and self.title_buf is None:
-                self.title_buf = []
-                return
             self.skip += 1
             return
-        if tag == "title":
-            self.title_buf = []
-            return
-        if self.pre:
+        if self.skip or self.pre:
             return
         if tag in HEADINGS:
             self.flush()
@@ -681,10 +711,10 @@ class Markdowner(HTMLParser):
             self.cell = []
             self.buf = []
         elif tag == "a":
-            self.links.append((a.get("href", ""), len(self.buf)))
+            self.links.append((self.href(a.get("href", "")), len(self.buf)))
         elif tag == "img":
             alt = a.get("alt", "") or a.get("title", "") or "image"
-            self.buf.append(f"![{alt}]({a.get('src', '')})" if a.get("src") else f"[image: {alt}]")
+            self.buf.append(f"![{alt}]({self.href(a['src'])})" if a.get("src") else f"[image: {alt}]")
         elif tag in INLINE:
             self.inline.append((INLINE[tag], len(self.buf)))
         elif tag == "time" and a.get("datetime"):
@@ -703,13 +733,14 @@ class Markdowner(HTMLParser):
                     label = m["params"].get("title") or PANELS[m["name"]]
                     self.emit(f"**{label}**")
         elif tag == "ac:link":
-            self.link = {"title": "", "url": "", "text": None, "start": len(self.buf)}
+            self.link = {"title": "", "url": "", "text": None, "start": len(self.buf), "page": "", "space": ""}
         elif tag == "ac:link-body":
             pass
         elif tag == "ac:plain-text-link-body":
             self.plain_target = ("linktext", None)
         elif tag == "ri:page" and self.link is not None:
-            self.link["title"] = a.get("ri:content-title", "")
+            self.link["title"] = self.link["page"] = a.get("ri:content-title", "")
+            self.link["space"] = a.get("ri:space-key", "")
         elif tag == "ri:attachment":
             if self.image is not None:
                 self.image["name"] = a.get("ri:filename", "")
@@ -735,15 +766,17 @@ class Markdowner(HTMLParser):
             self.buf = []
 
     def handle_endtag(self, tag):
-        if self.title_buf is not None and tag == "title":
-            self.title = " ".join("".join(self.title_buf).split())
-            self.title_buf = None
+        if tag == "title":
+            if self.title_buf is not None:
+                self.title = " ".join("".join(self.title_buf).split())
+                self.title_buf = None
+            return
+        if tag in SKIPPED:
+            self.skip = max(0, self.skip - 1)
+            if tag == "ac:parameter":
+                self.plain_target = None
             return
         if self.skip:
-            if tag in SKIPPED:
-                self.skip -= 1
-                if tag == "ac:parameter":
-                    self.plain_target = None
             return
         if self.pre:
             if tag == "pre":
@@ -822,8 +855,12 @@ class Markdowner(HTMLParser):
             body = "".join(self.buf[link["start"]:]).strip()
             del self.buf[link["start"]:]
             text = link["text"] or body or link["title"] or link["url"]
-            if link["url"]:
-                self.buf.append(f"[{text}]({link['url']})")
+            url = link["url"]
+            if not url and link["page"] and self.site:
+                space = link["space"] or self.space
+                url = f"{self.site}/display/{urllib.parse.quote(space)}/{urllib.parse.quote(link['page'])}" if space else ""
+            if url:
+                self.buf.append(f"[{text}]({url})")
             else:
                 self.buf.append(text)
         elif tag == "ac:image" and self.image is not None:
@@ -897,10 +934,10 @@ def fence(text: str, language: str) -> str:
     return f"{ticks}{lang}\n{text}\n{ticks}"
 
 
-def html_to_markdown(text: str) -> tuple[str, str]:
-    """The Markdown and the title, from HTML, XHTML or Confluence storage format."""
+def html_to_markdown(text: str, base: str = "") -> tuple[str, str]:
+    """The Markdown and the title, from HTML, XHTML or Confluence storage format, with links resolved against base."""
     text = CDATA.sub(lambda m: html.escape(m.group(1), quote=False), text)
-    p = Markdowner()
+    p = Markdowner(base)
     p.feed(text)
     p.close()
     return p.result(), p.title
@@ -926,22 +963,37 @@ def pdf_to_text(data: bytes) -> tuple[str, str]:
         raise
     except Exception as e:  # noqa: BLE001 - a broken PDF is a refusal, not a crash
         raise Refused(f"the PDF could not be read ({type(e).__name__})") from e
-    text = "\n\n".join(p for p in pages if p)
+    # A page marker before each page's text, so a concept can cite the page.
+    marked = [f"<!-- page {n} -->\n{t}" if len(pages) > 1 else t for n, t in enumerate(pages, start=1) if t]
+    text = "\n\n".join(marked)
     if not text.strip():
         raise Refused("no text layer in the PDF")
     return text + "\n", title
 
 
-def decode(data: bytes) -> str:
-    for enc in ("utf-8-sig", "utf-8"):
+def decode(data: bytes, charset: str = "", html_page: bool = False) -> str:
+    """The text: by its byte order mark, else as UTF-8 when it is, else by the charset the server declared, then one the page declares, then Latin-1."""
+    if data.startswith(codecs.BOM_UTF8):
+        return data[len(codecs.BOM_UTF8):].decode("utf-8", "replace")
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        pass
+    names = [charset] if charset else []
+    if html_page:
+        m = re.search(rb"<meta[^>]+charset\s*=\s*[\"']?\s*([A-Za-z0-9._:-]+)", data[:4096], re.I)
+        if m:
+            names.append(m.group(1).decode("ascii", "replace"))
+    for name in names:
         try:
-            return data.decode(enc)
-        except UnicodeDecodeError:
+            codecs.lookup(name)
+            return data.decode(name)
+        except (LookupError, UnicodeDecodeError):
             continue
     return data.decode("latin-1")
 
 
-def convert(data: bytes, content_type: str, how: str) -> tuple[str, str, str]:
+def convert(data: bytes, content_type: str, how: str, charset: str = "", base: str = "") -> tuple[str, str, str]:
     """The Markdown, the title it carried and the converter's name, or a Refused."""
     how = how or TEXT_TYPES.get(content_type, "")
     if not how:
@@ -950,9 +1002,9 @@ def convert(data: bytes, content_type: str, how: str) -> tuple[str, str, str]:
         text, title = pdf_to_text(data)
         return shown(text), shown(title), "pdf-text/1"
     if how == "html-markdown":
-        text, title = html_to_markdown(decode(data))
+        text, title = html_to_markdown(decode(data, charset, html_page=True), base)
         return shown(text), shown(title), "html-markdown/1"
-    text = decode(data).replace("\r\n", "\n")
+    text = decode(data, charset).replace("\r\n", "\n")
     if "\x00" in text:
         raise Refused("the content is binary, not text")
     return shown(text).rstrip("\n") + "\n", "", "text/1"
@@ -972,6 +1024,7 @@ class Item:
     last_modified: str = ""
     author: str = ""
     etag: str = ""
+    blob: str = ""
     text: str = ""
     converted_by: str = ""
     sha256: str = ""
@@ -1091,7 +1144,7 @@ class Confluence:
 
 
 def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, list[str]]:
-    """The items to keep or write, by id; the items left untouched because unchanged; and the ids listed."""
+    """The items to keep or write, by id; the items left untouched because unchanged; and the ids listed. One page's failure is that page's."""
     c = Confluence(ctx, entry)
     listed = c.listing()
     if len(listed) > entry.max_items:
@@ -1105,12 +1158,28 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
         if was and was.get("status") == "ok" and was.get("version") == r["version"] and r["version"]:
             unchanged[pid] = was
             continue
-        storage, _page = c.body(pid)
-        text, _title, how = convert(storage.encode("utf-8"), "text/html", "html-markdown")
+        origin = c.origin(r["webui"], pid)
+        try:
+            storage, _page = c.body(pid)
+            text, title, _how = convert(storage.encode("utf-8"), "text/html", "html-markdown", base=origin)
+        except Gone:
+            items.append(Item(item=pid, origin=origin, title=r["title"], version="gone"))
+            continue
+        except Refused as e:
+            it = Item(item=pid, origin=origin, title=r["title"])
+            it.refused = str(e)  # type: ignore[attr-defined]
+            items.append(it)
+            continue
+        except FetchFailed as e:
+            it = Item(item=pid, origin=origin, title=r["title"])
+            it.failed = str(e)  # type: ignore[attr-defined]
+            items.append(it)
+            continue
+        raw = storage.encode("utf-8")
         items.append(Item(
-            item=pid, origin=c.origin(r["webui"], pid), title=r["title"] or _title, version=r["version"],
-            last_modified=r["when"], author=r["author"] if entry.authors else "", text=text, converted_by="confluence-storage-markdown/1",
-            sha256=sha256_hex(storage.encode("utf-8")), size=len(storage.encode("utf-8")),
+            item=pid, origin=origin, title=r["title"] or title, version=r["version"], last_modified=r["when"],
+            author=r["author"] if entry.authors else "", text=text, converted_by="confluence-storage-markdown/1",
+            sha256=sha256_hex(raw), size=len(raw),
         ))
     return items, unchanged, [r["id"] for r in listed]
 
@@ -1136,7 +1205,7 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict,
             if was.get("status") == "ok" and was.get("sha256") == "sha256:" + digest:
                 unchanged[item_id] = was
                 continue
-            text, title, how = convert(resp.data, content_type_of(resp.headers), entry.convert)
+            text, title, how = convert(resp.data, content_type_of(resp.headers), entry.convert, charset_of(resp.headers), base=url)
         except Gone:
             items.append(Item(item=item_id, origin=url, title=was.get("title", ""), version="gone"))
             continue
@@ -1152,7 +1221,7 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict,
             continue
         etag = resp.headers.get("etag", "")
         lm = resp.headers.get("last-modified", "")
-        version = etag.strip('W/"') if etag else (utc(lm) if lm else digest[:12])
+        version = re.sub(r"^W/", "", etag).strip('"') if etag else (utc(lm) if lm else digest[:12])
         it = Item(item=item_id, origin=url, title=title or name, version=version, last_modified=utc(lm) if lm else "",
                   etag=etag, text=text, converted_by=how, sha256=digest, size=len(resp.data))
         it.last_modified_header = lm  # type: ignore[attr-defined]
@@ -1160,16 +1229,42 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict,
     return items, unchanged, listed
 
 
-def git_env(entry: Entry, ctx: Context) -> tuple[list[str], dict]:
-    """The -c options that carry the credential, and a clean environment for git."""
-    env = {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "GIT_TERMINAL_PROMPT": "0",
-           "GIT_CONFIG_GLOBAL": os.environ.get("GIT_CONFIG_GLOBAL", "/dev/null"), "GIT_CONFIG_SYSTEM": "/dev/null",
-           "LC_ALL": "C.UTF-8", "TMPDIR": os.environ.get("TMPDIR", tempfile.gettempdir())}
-    options = ["-c", "credential.helper="]
-    if entry.auth.scheme and entry.url.startswith("https://"):
+def git_url_kind(url: str) -> str:
+    """https, http, local or other."""
+    if url.startswith("https://"):
+        return "https"
+    if url.startswith("http://"):
+        return "http"
+    if url.startswith(("file://", "/", "./", "../")):
+        return "local"
+    return "other"
+
+
+def passed_through(env: dict) -> dict:
+    """The proxy and certificate variables of this process, for a program that fetches."""
+    return {name: os.environ[name] for name in PASSED_THROUGH if os.environ.get(name)} | env
+
+
+def git_env(entry: Entry, ctx: Context) -> dict:
+    """A clean environment for git: the protocols the manifest allows, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
+    # The identity is for the reflog of the fetched ref: without one, git looks
+    # the user up, which on a machine with a slow name service waits seconds.
+    env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "GIT_TERMINAL_PROMPT": "0",
+                          "GIT_CONFIG_GLOBAL": os.environ.get("GIT_CONFIG_GLOBAL", "/dev/null"), "GIT_CONFIG_SYSTEM": "/dev/null",
+                          "GIT_AUTHOR_NAME": "knowledge-ingest", "GIT_AUTHOR_EMAIL": "knowledge-ingest@localhost",
+                          "GIT_COMMITTER_NAME": "knowledge-ingest", "GIT_COMMITTER_EMAIL": "knowledge-ingest@localhost",
+                          "LC_ALL": "C.UTF-8", "TMPDIR": os.environ.get("TMPDIR", tempfile.gettempdir())})
+    config = [("credential.helper", ""), ("protocol.allow", "never"), ("protocol.https.allow", "always")]
+    if ctx.manifest.allow_private:
+        config += [("protocol.http.allow", "always"), ("protocol.file.allow", "always")]
+    if entry.auth.scheme and git_url_kind(entry.url) in ("https", "http"):
         name, value = entry.auth.value(ctx.environ)
-        options += ["-c", f"http.extraHeader={name}: {value}"]
-    return options, env
+        config.append((f"http.{entry.url}.extraHeader", f"{name}: {value}"))
+    env["GIT_CONFIG_COUNT"] = str(len(config))
+    for i, (key, value) in enumerate(config):
+        env[f"GIT_CONFIG_KEY_{i}"] = key
+        env[f"GIT_CONFIG_VALUE_{i}"] = value
+    return env
 
 
 def git_origin(entry: Entry, sha: str, file: str) -> str:
@@ -1182,17 +1277,18 @@ def git_origin(entry: Entry, sha: str, file: str) -> str:
     return f"{entry.url}@{sha}:{file}"
 
 
-def run_git(ctx: Context, entry: Entry, prior: dict, record: dict) -> tuple[list[Item], dict, list[str]]:
+def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, list[str]]:
+    """A shallow fetch of the ref, then each chosen file by its blob id, which the lock records so an unchanged file costs no read."""
     if not shutil.which("git"):
         raise FetchFailed("git is not installed")
-    if entry.url.startswith(("https://", "http://")) and not ctx.manifest.allow_private \
+    if git_url_kind(entry.url) in ("https", "http") and not ctx.manifest.allow_private \
             and address_is_private(urllib.parse.urlsplit(entry.url).hostname or ""):
         raise Refused("the repository is at a private address; allow_private_addresses: true permits it")
-    options, env = git_env(entry, ctx)
+    env = git_env(entry, ctx)
     tmp = Path(tempfile.mkdtemp(prefix="ingest-git-"))
     try:
         def git(*args, data=False):
-            done = subprocess.run(["git", *options, "-C", str(tmp), *args], env=env, capture_output=True, timeout=600)
+            done = subprocess.run(["git", "-C", str(tmp), *args], env=env, capture_output=True, timeout=600)
             if done.returncode != 0:
                 err = done.stderr.decode("utf-8", "replace").strip().splitlines()
                 raise FetchFailed("git " + args[0] + " failed: " + (err[-1] if err else "no message"))
@@ -1203,27 +1299,35 @@ def run_git(ctx: Context, entry: Entry, prior: dict, record: dict) -> tuple[list
         git("fetch", "-q", "--depth", "1", "origin", entry.ref)
         sha = git("rev-parse", "FETCH_HEAD").strip()
         when = utc(git("log", "-1", "--format=%cI", "FETCH_HEAD").strip())
-        if prior and record.get("version") == sha and all(v.get("status") == "ok" for v in prior.values()):
-            return [], dict(prior), list(prior)
-        record["version"] = sha
         spec = ["FETCH_HEAD"] + (["--", entry.path] if entry.path else [])
-        files = [f for f in git("ls-tree", "-r", "--name-only", "-z", *spec, data=True).decode("utf-8", "replace").split("\0") if f]
+        blobs = {}
+        for line in git("ls-tree", "-r", "-z", *spec, data=True).decode("utf-8", "replace").split("\0"):
+            meta, _, name = line.partition("\t")
+            fields = meta.split()
+            if len(fields) == 3 and fields[1] == "blob" and fields[0] != "120000" and name:  # a symbolic link is not content
+                blobs[name] = fields[2]
         include = entry.include or ["*.md"]
         chosen = []
-        for f in files:
+        for f, oid in blobs.items():
             rel = f[len(entry.path) + 1:] if entry.path and f.startswith(entry.path + "/") else f
             if any(fnmatch.fnmatch(rel, g) for g in include) and not any(fnmatch.fnmatch(rel, g) for g in entry.exclude):
-                chosen.append((f, rel))
+                chosen.append((f, rel, oid))
         if len(chosen) > entry.max_items:
             raise Refused(f"the path holds more than max_items ({entry.max_items}) matching files; narrow include or raise the cap")
         items, unchanged = [], {}
-        for f, rel in chosen:
+        for f, rel, oid in chosen:
             if ".." in PurePosixPath(rel).parts or rel.startswith("/"):
                 continue
             item_id = rel if rel.endswith(".md") else rel + ".md"
             was = prior.get(item_id)
-            data = git("show", f"FETCH_HEAD:{f}", data=True)
+            if was and was.get("status") == "ok" and was.get("blob") == oid:
+                unchanged[item_id] = was
+                continue
+            data = git("cat-file", "blob", oid, data=True)
             if b"\x00" in data[:8000]:
+                it = Item(item=item_id, origin=git_origin(entry, sha, f), title=rel)
+                it.skipped = "a binary file"  # type: ignore[attr-defined]
+                items.append(it)
                 continue
             if len(data) > entry.max_item_bytes:
                 items.append(Item(item=item_id, origin=git_origin(entry, sha, f), version=sha, title=rel))
@@ -1231,13 +1335,13 @@ def run_git(ctx: Context, entry: Entry, prior: dict, record: dict) -> tuple[list
                 continue
             digest = sha256_hex(data)
             if was and was.get("status") == "ok" and was.get("sha256") == "sha256:" + digest:
-                unchanged[item_id] = was
+                unchanged[item_id] = dict(was, blob=oid)
                 continue
             text = shown(decode(data).replace("\r\n", "\n")).rstrip("\n") + "\n"
             if not rel.endswith(".md"):
                 text = fence(text, PurePosixPath(rel).suffix.lstrip(".")) + "\n"
             items.append(Item(item=item_id, origin=git_origin(entry, sha, f), title=rel, version=sha, last_modified=when,
-                              text=text, converted_by="git/1", sha256=digest, size=len(data)))
+                              blob=oid, text=text, converted_by="git/1", sha256=digest, size=len(data)))
         return items, unchanged, [c[1] if c[1].endswith(".md") else c[1] + ".md" for c in chosen]
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -1252,8 +1356,8 @@ def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[li
         if tracked.returncode != 0:
             raise Refused(f"{entry.command} is not tracked by git; a command runs only once it is committed")
     command_digest = sha256_hex(path.read_bytes())
-    env = {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
-           "TMPDIR": os.environ.get("TMPDIR", tempfile.gettempdir()), "KNOWLEDGE_INGEST_ENTRY": entry.id}
+    env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
+                          "TMPDIR": os.environ.get("TMPDIR", tempfile.gettempdir()), "KNOWLEDGE_INGEST_ENTRY": entry.id})
     for name in entry.auth.names():
         if name in ctx.environ:
             env[name] = ctx.environ[name]
@@ -1326,6 +1430,24 @@ def mirror_header(entry: Entry, it: Item, lock_item: dict) -> str:
     return "\n".join(lines) + "\n\n"
 
 
+def frontmatter_of(path: Path) -> dict:
+    """The frontmatter of a bundle file as a mapping, or an empty one."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return {}
+    if not text.startswith("---"):
+        return {}
+    end = text.find("\n---", 3)
+    if end < 0:
+        return {}
+    try:
+        fm = yaml.safe_load(text[3:end]) or {}
+    except yaml.YAMLError:
+        return {}
+    return fm if isinstance(fm, dict) else {}
+
+
 def cited_paths(root: Path) -> set:
     """Every path a concept names in resource or sources, relative to the root, with a fragment cut off."""
     out = set()
@@ -1335,19 +1457,7 @@ def cited_paths(root: Path) -> set:
     for md in knowledge.rglob("*.md"):
         if ".obsidian" in md.parts:
             continue
-        try:
-            text = md.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
-            continue
-        if not text.startswith("---"):
-            continue
-        end = text.find("\n---", 3)
-        if end < 0:
-            continue
-        try:
-            fm = yaml.safe_load(text[3:end]) or {}
-        except yaml.YAMLError:
-            continue
+        fm = frontmatter_of(md)
         values = [fm.get("resource")]
         for s in fm.get("sources") or []:
             if isinstance(s, dict):
@@ -1368,7 +1478,7 @@ class Run:
         self.failed = 0
         self.writes: list[tuple[Path, str]] = []
         self.removals: list[Path] = []
-        self.counts = {"fetched": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0}
+        self.counts = {"fetched": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
 
     def mirror_root(self, entry: Entry) -> Path:
         if entry.sensitivity == "confidential":
@@ -1387,7 +1497,7 @@ class Run:
     def run_entry(self, entry: Entry) -> None:
         record = self.lock["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
         prior = record.get("items", {})
-        counts = {"fetched": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0}
+        counts = {"fetched": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
         why = allowed_here(entry.sensitivity, self.visibility)
         if why:
             record.update({"status": "refused", "reason": why})
@@ -1400,7 +1510,7 @@ class Run:
             elif entry.kind == "http":
                 items, unchanged, listed = run_http(self.ctx, entry, prior)
             elif entry.kind == "git":
-                items, unchanged, listed = run_git(self.ctx, entry, prior, record)
+                items, unchanged, listed = run_git(self.ctx, entry, prior)
             else:
                 items, unchanged, listed = run_command(self.ctx, entry, prior, self.root)
         except Refused as e:
@@ -1413,9 +1523,16 @@ class Run:
             self.failed += 1
             self.summary.append(f"- {entry.id} ({entry.describe()}): failed, {e}")
             return
+        except Exception as e:  # noqa: BLE001 - a surprise in one entry is recorded there, and the run goes on
+            reason = f"an error this script did not expect, {type(e).__name__}: {' '.join(str(e).split())[:200]}"
+            record.update({"status": "failed", "reason": reason})
+            self.failed += 1
+            self.summary.append(f"- {entry.id} ({entry.describe()}): failed, {reason}")
+            return
         record["status"] = "ok"
         record.pop("reason", None)
         new_items: dict = {}
+        skipped: list[str] = []
         folder = self.mirror_root(entry) / entry.id
         total = self.total_mirror_size() - self.entry_mirror_size(prior)
         for item_id, was in unchanged.items():
@@ -1424,6 +1541,10 @@ class Run:
             total += int(was.get("bytes", 0) or 0)
         for it in items:
             was = prior.get(it.item) or {}
+            if getattr(it, "skipped", ""):
+                skipped.append(f"  - {it.item}: skipped, {it.skipped}")  # type: ignore[attr-defined]
+                counts["skipped"] += 1
+                continue
             if getattr(it, "refused", ""):
                 new_items[it.item] = dict(was, status="refused", reason=it.refused, origin=it.origin, title=it.title)  # type: ignore[attr-defined]
                 counts["refused"] += 1
@@ -1461,6 +1582,8 @@ class Run:
                 lock_item["author"] = it.author
             if it.etag:
                 lock_item["etag"] = it.etag
+            if it.blob:
+                lock_item["blob"] = it.blob
             if getattr(it, "last_modified_header", ""):
                 lock_item["last_modified_header"] = it.last_modified_header  # type: ignore[attr-defined]
             if getattr(it, "command_sha256", ""):
@@ -1481,6 +1604,7 @@ class Run:
             if it.get("status") in ("refused", "failed", "gone"):
                 reason = f", {it['reason']}" if it.get("reason") else ""
                 self.summary.append(f"  - {item_id}: {it['status']}{reason}")
+        self.summary.extend(skipped)
         if counts["failed"] or counts["refused"]:
             self.failed += 1
 
@@ -1509,6 +1633,19 @@ class Run:
             if not self.args.dry_run:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text, encoding="utf-8", newline="\n")
+        left = [eid for eid in self.lock["entries"] if not any(e.id == eid for e in self.manifest.entries)]
+        cited = cited_paths(self.root) if left else set()
+        for eid in left:
+            record = self.lock["entries"].pop(eid)
+            for _item_id, it in sorted(record.get("items", {}).items()):
+                path = str(it.get("path", ""))
+                if not path:
+                    continue
+                self.removals.append(self.root / path)
+                note = ", and a concept still cites it, so the work list will name its source as gone" if path in cited else ""
+                self.summary.append(f"- {eid}: no longer in the manifest, so {path} is removed{note}")
+            if not record.get("items"):
+                self.summary.append(f"- {eid}: no longer in the manifest, so its record is dropped")
         for path in self.removals:
             if path.is_file():
                 changed = True
@@ -1518,9 +1655,6 @@ class Run:
                     while parent != self.root and parent.is_dir() and not any(parent.iterdir()):
                         parent.rmdir()
                         parent = parent.parent
-        for eid in list(self.lock["entries"]):
-            if not any(e.id == eid for e in self.manifest.entries):
-                del self.lock["entries"][eid]
         text = to_yaml(self.lock)
         if not lock_path.is_file() or lock_path.read_text(encoding="utf-8") != text:
             changed = True
@@ -1563,41 +1697,54 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path) ->
     if patch_path.exists():
         raise Stop(f"{patch_path} exists; apply or remove it first")
     index = root / ".lokf" / "knowledge" / "index.md"
-    base_iri = ""
-    if index.is_file():
-        m = re.search(r"^base_iri:\s*['\"]?(\S+?)['\"]?\s*$", index.read_text(encoding="utf-8"), re.M)
-        base_iri = m.group(1) if m else ""
-    ops = []
+    base_iri = str(frontmatter_of(index).get("base_iri") or "") if index.is_file() else ""
+    ops, used = [], set()
     for entry in manifest.entries:
         if not entry.reference:
             continue
         record = lock["entries"].get(entry.id) or {}
+        committed = entry.sensitivity != "confidential"
         for item_id, it in sorted(record.get("items", {}).items()):
             if it.get("status") != "ok":
                 continue
-            concept = f"references/{entry.id}-{slug(PurePosixPath(item_id).stem)}.md"
+            stem = item_id[:-3] if item_id.endswith(".md") else item_id
+            concept = f"references/{entry.id}-{slug(stem)}.md"
+            if concept in used:  # two items whose names slug alike
+                concept = f"references/{entry.id}-{slug(stem)[:50]}-{sha256_hex(item_id.encode())[:8]}.md"
+            used.add(concept)
             title = str(it.get("title") or item_id)
+            version = str(it.get("version", ""))
             when = str(it.get("last_modified") or it.get("retrieved_at", ""))[:10]
             source = {"resource": it["path"], "title": f"{title}, mirrored by the ingest"}
             if it.get("last_modified"):
                 source["last_modified"] = it["last_modified"]
             if entry.owner:
                 source["author"] = entry.owner
-            description = f"A copy of {title}, kept at {it['path']} by the ingest from {entry.kind}; version {it.get('version', '')} as of {when}."
+            where = f"kept at {it['path']} by the ingest" if committed else "kept outside the repository by the ingest"
+            description = f"A copy of {title}, {where} from {entry.kind}; version {version} as of {when}."
             path = root / ".lokf" / "knowledge" / concept
             if path.is_file():
-                text = path.read_text(encoding="utf-8")
-                if f"version {it.get('version', '')} " in text:
+                fm = frontmatter_of(path)
+                if f"version {version} " in str(fm.get("description", "")):
                     continue
-                ops.append({"op": "patch", "path": concept, "set": {"description": description, "sources": [source]},
-                            "log": f"**Changed**: the ingest mirrored a newer version of {title} ({it.get('version', '')})."})
+                # The ingest's own source entry is replaced; every other one a person or the librarian added stays.
+                sources = [s for s in (fm.get("sources") or []) if not (isinstance(s, dict) and s.get("resource") == it["path"])]
+                sets = {"description": description}
+                if committed:
+                    sets["sources"] = sources + [source]
+                ops.append({"op": "patch", "path": concept, "set": sets,
+                            "log": f"**Changed**: the ingest mirrored a newer version of {title} ({version})."})
                 continue
-            fm = {"type": "Reference", "title": title, "description": description, "resource": it["origin"], "sources": [source],
-                  "tags": ["ingest", entry.id]}
+            fm = {"type": "Reference", "title": title, "description": description, "resource": it["origin"], "tags": ["ingest", entry.id]}
+            if committed:
+                fm["sources"] = [source]
             if base_iri:
                 fm["id"] = base_iri + concept[:-3]
-            body = (f"# {title}\n\nA copy of <{it['origin']}> is kept at `{it['path']}` by the ingest. The copy is what the bundle's "
-                    f"concepts cite, and the source is where it is edited." + (f" {entry.why[0].upper() + entry.why[1:]}." if entry.why else "") + "\n")
+            copy = (f"A copy of <{it['origin']}> is kept at `{it['path']}` by the ingest. The copy is what the bundle's concepts cite, "
+                    "and the source is where it is edited." if committed else
+                    f"A copy of <{it['origin']}> is kept outside the repository by the ingest, under `.lokf/.cache/mirror/`, "
+                    "which is never committed; the source is where it is edited.")
+            body = f"# {title}\n\n{copy}" + (f" {entry.why[0].upper() + entry.why[1:]}." if entry.why else "") + "\n"
             ops.append({"op": "create", "path": concept, "frontmatter": fm, "body": body,
                         "log": f"**Added**: {title}, a reference to a source the ingest mirrors."})
     if not ops:

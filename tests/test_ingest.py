@@ -19,10 +19,22 @@ and pin:
 7. the manifest's refusals: an unknown key, a variable name outside the
    KNOWLEDGE_INGEST_ namespace, an internal entry in a public repository,
    and a confidential entry that goes to the cache;
-8. --patch writes a Reference concept per mirrored item of an entry that asks;
+8. --patch writes a Reference concept per mirrored item of an entry that asks,
+   and a later patch keeps the sources a person added;
 9. --status prints one line with the token names and no value;
-10. the converter turns Confluence storage format into Markdown blocks;
-11. the shell half refuses to run under sh.
+10. the converter turns Confluence storage format into Markdown blocks, keeps
+    the body after head metadata and macro parameters, resolves links,
+    honours a declared charset and keeps the joiners;
+11. the shell half refuses to run under sh;
+12. a redirect to another host drops the credential, a 503 is retried, and a
+    weak ETag is the version without its prefix;
+13. a Confluence listing is paged, one page's missing body is that page's
+    alone, and an answer of the wrong shape fails the entry and nothing else;
+14. a git entry follows a changed include at the same commit, and skips a
+    binary file by name;
+15. an entry that leaves the manifest takes its folder with it;
+16. the mirror cap refuses the item that would pass it;
+17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no other.
 """
 
 from __future__ import annotations
@@ -30,6 +42,9 @@ from __future__ import annotations
 import http.server
 import importlib.util
 import json
+import re
+import shutil
+import subprocess
 import sys
 import threading
 from pathlib import Path
@@ -41,6 +56,7 @@ from conftest import SCRIPTS, Git, has_line, matches, read, run, write
 
 INGEST = SCRIPTS / "knowledge-ingest.sh"
 INGEST_PY = SCRIPTS / "knowledge-ingest.py"
+WORKFLOW = SCRIPTS.parent / "github" / "knowledge-ingest.yaml"
 IDENT = {"GIT_AUTHOR_NAME": "contract", "GIT_AUTHOR_EMAIL": "contract@example.invalid",
          "GIT_COMMITTER_NAME": "contract", "GIT_COMMITTER_EMAIL": "contract@example.invalid"}
 TOKENS = {"KNOWLEDGE_INGEST_ATLASSIAN_USER": "me@example.invalid", "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN": "secret-token-value"}
@@ -55,7 +71,7 @@ def load_module():
 
 
 class Stub(http.server.BaseHTTPRequestHandler):
-    """Serves the routes a test sets: path -> (status, headers, body), recording every request."""
+    """Serves the routes a test sets: path -> (status, headers, body), or a callable that answers itself, recording every request."""
 
     routes: dict = {}
     requests: list = []
@@ -70,6 +86,9 @@ class Stub(http.server.BaseHTTPRequestHandler):
         if route is None:
             self.send_response(404)
             self.end_headers()
+            return
+        if callable(route):
+            route(self)
             return
         status, headers, body = route
         if headers.get("ETag") and self.headers.get("If-None-Match") == headers["ETag"]:
@@ -265,7 +284,8 @@ def test_a_confluence_selection_is_listed_fetched_and_kept_current(tmp_path, ser
     checks.ok(f"origin: {server}{'/wiki' if cloud else ''}/spaces/PLAT/pages/123/Deploy+runbook" in text, "the origin is the page's address", text[:200])
     for piece in ("# Deploy runbook", "Deploy with **care** and [the console](https://acme.example/x).", "> **Info**\n\n> Read the checklist first.",
                   "- Stop the `worker`\n- Run the migration\n  - then the smoke test", "```bash\njust deploy --env prod\necho <done>\n```",
-                  "| Step | Owner |\n| --- | --- |\n| Deploy | team:platform |", "- [x] Tell the channel", "See Rollback and [Confluence macro: toc]."):
+                  "| Step | Owner |\n| --- | --- |\n| Deploy | team:platform |", "- [x] Tell the channel", "See [Rollback](",
+                  "/display/PLAT/Rollback) and [Confluence macro: toc]."):
         checks.ok(piece in text, f"the body holds {piece[:30]!r}", text)
     checks.ok("secret-token-value" not in read(root / ".lokf" / "ingest.lock.yaml") and "secret-token-value" not in result.out, "no secret in the lock or the output")
     Stub.requests = []
@@ -392,6 +412,12 @@ def test_the_manifest_refuses_what_its_header_says(tmp_path, server, checks):
     before = read(root / ".lokf" / "ingest.lock.yaml")
     result = ingest(root, "--visibility", "public", "--dry-run")
     checks.ok(result and read(root / ".lokf" / "ingest.lock.yaml") == before, "a dry run writes nothing", result.out)
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "g", "kind": "git", "url": "git://acme.example/x.git", "ref": "main"}])))
+    result = ingest(root)
+    checks.ok(result.rc == 1 and "ssh and git protocols are not fetched" in result.out, "a git url over the git protocol", result.out)
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "g", "kind": "git", "url": "http://wiki.acme.example/x.git", "ref": "main"}], allow_private_addresses=False)))
+    result = ingest(root)
+    checks.ok(result.rc == 1 and "is not https; allow_private_addresses: true permits http and local paths" in result.out, "a git url over http needs the allowance", result.out)
 
 
 # 8. --patch
@@ -410,6 +436,19 @@ def test_patch_writes_a_reference_concept_per_mirrored_item_of_an_entry_that_ask
     checks.ok(op["frontmatter"]["sources"][0]["author"] == "vendor/v3" and op["frontmatter"]["id"].startswith("https://acme.example/knowledge/references/vendor-"), "owner and id", str(op))
     result = ingest(root, "--patch")
     checks.ok(result.rc == 1 and "exists; apply or remove it first" in result.out, "an existing patch file is never overwritten", result.out)
+    (root / ".lokf" / "patch.yaml").unlink()
+    # As if the pen had applied it, and a person then added a source of their own.
+    fm = dict(op["frontmatter"], sources=[{"resource": "docs/notes.md", "title": "Notes"}, *op["frontmatter"]["sources"]])
+    write(root / ".lokf" / "knowledge" / op["path"], "---\n" + yaml.safe_dump(fm, sort_keys=False) + "---\n" + op["body"])
+    result = ingest(root, "--patch")
+    checks.ok(result and "no entry asks for Reference concepts, or every one has its concept" in result.out, "the concept is current, so nothing is written", result.out)
+    Stub.routes["/spec.md"] = (200, {"Content-Type": "text/markdown", "ETag": '"spec-2"'}, b"# Spec\n\nThe spec, revised.\n")
+    ingest(root)
+    result = ingest(root, "--patch")
+    checks.ok(result and "wrote 1 operation for the pen" in result.out, "a newer version gives one patch", result.out)
+    op2 = yaml.safe_load(read(root / ".lokf" / "patch.yaml"))["ops"][0]
+    checks.ok(op2["op"] == "patch" and op2["path"] == op["path"] and "version spec-2 " in op2["set"]["description"], "a patch of the same concept", str(op2))
+    checks.ok([s["resource"] for s in op2["set"]["sources"]] == ["docs/notes.md", op["frontmatter"]["sources"][0]["resource"]], "the person's source stays, the ingest's is replaced", str(op2))
 
 
 # 9. --status
@@ -432,8 +471,25 @@ def test_the_converter_turns_storage_format_into_markdown_blocks(checks):
     text, title = m.html_to_markdown("<html><head><title>T</title></head><body><h2>Two</h2><p>One <i>two</i>  three<br/>four</p><pre>a\n  b</pre><blockquote><p>q</p></blockquote><hr/><ol><li>x</li><li>y</li></ol></body></html>")
     checks.ok(title == "T", "the title", title)
     checks.ok(text == "## Two\n\nOne *two* three\nfour\n\n```\na\n  b\n```\n\n> q\n\n---\n\n1. x\n2. y\n", "the blocks", text)
-    checks.ok(m.shown("a​b‮c\x07d e") == "abcd e", "invisible characters are removed and a no-break space becomes a space", m.shown("a​b‮c\x07d e"))
+    checks.ok(m.shown("a\u200bb\u202ec\x07d\u00a0e") == "abcd e", "invisible characters are removed and a no-break space becomes a space", m.shown("a\u200bb\u202ec\x07d\u00a0e"))
     checks.ok(m.utc("2026-10-03T09:12:44.123+01:00") == "2026-10-03T08:12:44Z" and m.utc("Sat, 18 Oct 2026 06:00:00 GMT") == "2026-10-18T06:00:00Z", "timestamps in one UTC shape")
+
+
+def test_the_converter_keeps_the_body_after_head_metadata_and_macro_parameters(checks):
+    m = load_module()
+    page = '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="x.css"><title>Spec</title></head>' \
+           '<body><h1>Spec</h1><p>Frames are <a href="/v3/frames.html">length-prefixed</a>.</p><noscript><img src="x.png"></noscript><p>After.</p></body></html>'
+    text, title = m.html_to_markdown(page, "https://vendor.example/spec/v3.html")
+    checks.ok(title == "Spec" and text == "# Spec\n\nFrames are [length-prefixed](https://vendor.example/v3/frames.html).\n\nAfter.\n", "a head with metadata keeps the body, and a link is resolved", text)
+    storage = '<p>Before.</p><ac:structured-macro ac:name="excerpt-include"><ac:parameter ac:name="page"><ac:link><ri:page ri:content-title="Rollback" /></ac:link></ac:parameter>' \
+              '</ac:structured-macro><h2>After</h2><p>See <ac:link><ri:page ri:space-key="OPS" ri:content-title="On call" /></ac:link>.</p>'
+    text, _ = m.html_to_markdown(storage, "https://acme.atlassian.net/wiki/spaces/PLAT/pages/123/Deploy")
+    checks.ok(text == "Before.\n\n[Confluence macro: excerpt-include]\n\n## After\n\nSee [On call](https://acme.atlassian.net/wiki/display/OPS/On%20call).\n", "a macro parameter holding a page link skips the parameter only", text)
+    text, _, _ = m.convert("<html><body><p>caf\xe9</p></body></html>".encode("latin-1"), "text/html", "", "iso-8859-1")
+    checks.ok(text == "café\n", "the declared charset decodes a page that is not UTF-8", text)
+    text, _, _ = m.convert('<html><head><meta charset="windows-1252"></head><body><p>€ 5</p></body></html>'.encode("cp1252"), "text/html", "")
+    checks.ok(text == "€ 5\n", "a charset the page declares is read too", text)
+    checks.ok(m.shown("\u0646\u200c\u0647 \U0001f468\u200d\U0001f469 a\u200bb") == "\u0646\u200c\u0647 \U0001f468\u200d\U0001f469 ab", "the joiners stay and the zero-width space goes", m.shown("\u0646\u200c\u0647"))
 
 
 # 11. the shell half
@@ -444,3 +500,148 @@ def test_the_shell_half_refuses_sh(tmp_path, checks):
     checks.ok(result.rc == 2 and has_line(result.out, "run this with bash: bash knowledge-ingest.sh [--root <dir>] [--visibility <v>] [--only <id>] [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]]"), "refused under sh", result.out)
     result = run(["bash", INGEST, "--root", tmp_path, "--status"])
     checks.ok(result and result.out == "ingest: no .lokf/ingest.yaml, so no source outside the repository is mirrored", "no manifest is one line", result.out)
+
+
+# 12. redirects and retries
+
+
+def test_a_redirect_to_another_host_drops_the_credential_and_a_503_is_retried(tmp_path, server, checks):
+    port = server.rsplit(":", 1)[1]
+    Stub.routes["/a.md"] = (302, {"Location": f"http://localhost:{port}/b.md"}, b"")
+    Stub.routes["/b.md"] = (200, {"Content-Type": "text/markdown", "ETag": 'W/"Wv1"'}, b"# B\n")
+    calls = []
+
+    def flaky(handler):
+        calls.append(1)
+        if len(calls) == 1:
+            handler.send_response(503)
+            handler.send_header("Retry-After", "0")
+            handler.end_headers()
+            return
+        body = b"# C\n"
+        handler.send_response(200)
+        handler.send_header("Content-Type", "text/markdown")
+        handler.send_header("Content-Length", str(len(body)))
+        handler.end_headers()
+        handler.wfile.write(body)
+
+    Stub.routes["/c.md"] = flaky
+    auth = {"scheme": "bearer", "env": "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN"}
+    root = host(tmp_path, manifest_for([
+        {"id": "r", "kind": "http", "urls": [f"{server}/a.md"], "auth": auth, "sensitivity": "public"},
+        {"id": "c", "kind": "http", "urls": [f"{server}/c.md"], "auth": auth, "sensitivity": "public"},
+    ]))
+    result = ingest(root)
+    checks.ok(result and "- r (http, 1 address): 1 fetched" in result.out and "- c (http, 1 address): 1 fetched" in result.out, "both fetched", result.out)
+    first = [h for p, h in Stub.requests if p == "/a.md"]
+    second = [h for p, h in Stub.requests if p == "/b.md"]
+    checks.ok(first and first[0].get("Authorization") == "Bearer secret-token-value", "the first address got the credential", str(first))
+    checks.ok(second and "Authorization" not in second[0], "the other host did not", str(second))
+    checks.ok(len(calls) == 2, "the 503 was retried once", str(calls))
+    item = next(iter(lock_of(root)["entries"]["r"]["items"].values()))
+    checks.ok(item["version"] == "Wv1" and item["etag"] == 'W/"Wv1"' and "# B" in read(root / item["path"]), "the redirect target is the mirror, and a weak ETag is the version", str(item))
+
+
+# 13. a paged Confluence listing, one page gone, an answer of the wrong shape
+
+
+def test_a_confluence_listing_is_paged_and_one_pages_failure_is_its_own(tmp_path, server, checks):
+    pages = {"201": {"title": "One", "version": 1, "storage": "<p>one</p>"}, "202": {"title": "Two", "version": 1, "storage": "<p>two</p>"}}
+    confluence_routes(server, True, pages)
+    first, second = [{"id": "201", "title": "One", "version": {"number": 1}}], [{"id": "202", "title": "Two", "version": {"number": 1}}]
+
+    def search(handler):
+        page = second if "cursor=p2" in handler.path else first
+        body = {"results": page, "size": 1}
+        if page is first:
+            body["_links"] = {"next": "/wiki/rest/api/content/search?cursor=p2&cql=x&limit=50"}
+        data = json.dumps(body).encode()
+        handler.send_response(200)
+        handler.send_header("Content-Type", "application/json")
+        handler.send_header("Content-Length", str(len(data)))
+        handler.end_headers()
+        handler.wfile.write(data)
+
+    Stub.routes["/wiki/rest/api/content/search"] = search
+    Stub.routes.pop("/wiki/api/v2/pages/202")
+    root = host(tmp_path, confluence_manifest(server, True))
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "- runbooks (confluence, label ktl): 1 fetched, 1 gone" in result.out, "the second page of the listing was read, and the page without a body is gone on its own", result.out)
+    checks.ok("202: gone" in result.out and (root / ".lokf" / "mirror" / "runbooks" / "201.md").is_file(), "the other page is mirrored", result.out)
+    Stub.routes["/wiki/rest/api/content/search"] = (200, {"Content-Type": "application/json"}, b"[]")
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "failed, an error this script did not expect, AttributeError" in result.out, "an answer of the wrong shape fails the entry and the run completes", result.out)
+    checks.ok(lock_of(root)["entries"]["runbooks"]["items"]["201"]["status"] == "ok", "the entry's items are kept as they were")
+
+
+# 14. a git entry follows its include, and skips a binary file
+
+
+def test_a_git_entry_follows_a_changed_include_and_skips_a_binary_file(tmp_path, checks):
+    upstream = tmp_path / "upstream"
+    upstream.mkdir()
+    g = Git(upstream)
+    g.init()
+    write(upstream / "deploy.md", "# Deploy\n")
+    write(upstream / "limits.yaml", "cpu: 2\n")
+    (upstream / "logo.png").write_bytes(b"\x89PNG\x00\x00binary")
+    g("add", "-A")
+    g("commit", "-q", "-m", "one", env=IDENT)
+    entry = {"id": "wiki", "kind": "git", "url": str(upstream), "ref": "main", "sensitivity": "public"}
+    root = host(tmp_path, manifest_for([entry]))
+    result = ingest(root)
+    checks.ok(result and "- wiki (git, / at main): 1 fetched" in result.out, "the default include takes the Markdown file", result.out)
+    checks.ok(lock_of(root)["entries"]["wiki"]["items"]["deploy.md"]["blob"], "the blob id is recorded")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(entry, include=["*"])])))
+    result = ingest(root)
+    checks.ok(result and "1 fetched, 1 unchanged, 1 skipped" in result.out and "logo.png.md: skipped, a binary file" in result.out, "a changed include at the same commit is followed, and the binary file is named", result.out)
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(entry, include=["*.yaml"])])))
+    result = ingest(root)
+    checks.ok(result and "1 unchanged, 1 unlisted" in result.out, "a narrowed include unlists the file it drops", result.out)
+
+
+# 15. an entry that leaves the manifest
+
+
+def test_an_entry_that_leaves_the_manifest_takes_its_folder(tmp_path, server, checks):
+    Stub.routes["/a.md"] = (200, {"Content-Type": "text/markdown"}, b"# A\n")
+    Stub.routes["/b.md"] = (200, {"Content-Type": "text/markdown"}, b"# B\n")
+    a = {"id": "a", "kind": "http", "urls": [f"{server}/a.md"], "sensitivity": "public"}
+    b = {"id": "b", "kind": "http", "urls": [f"{server}/b.md"], "sensitivity": "public"}
+    root = host(tmp_path, manifest_for([a, b]))
+    ingest(root)
+    b_file = next((root / ".lokf" / "mirror" / "b").glob("*.md"))
+    write(root / ".lokf" / "knowledge" / "playbooks" / "b.md", f"---\ntype: Playbook\ntitle: B\nresource: .lokf/mirror/b/{b_file.name}\n---\n# B\n")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([a])))
+    result = ingest(root, "--dry-run")
+    checks.ok(result and f"- b: no longer in the manifest, so .lokf/mirror/b/{b_file.name} is removed, and a concept still cites it" in result.out, "a dry run says what goes", result.out)
+    checks.ok(b_file.is_file(), "and removes nothing")
+    result = ingest(root)
+    checks.ok(result and not (root / ".lokf" / "mirror" / "b").exists() and "b" not in lock_of(root)["entries"], "the folder and the record are gone", result.out)
+    checks.ok((root / ".lokf" / "mirror" / "a").is_dir() and "a" in lock_of(root)["entries"], "the other entry is untouched")
+
+
+# 16. the mirror cap
+
+
+def test_the_mirror_cap_refuses_the_item_that_would_pass_it(tmp_path, server, checks):
+    Stub.routes["/one.md"] = (200, {"Content-Type": "text/markdown"}, b"# One\n" + b"x" * 90)
+    Stub.routes["/two.md"] = (200, {"Content-Type": "text/markdown"}, b"# Two\n" + b"y" * 90)
+    root = host(tmp_path, manifest_for([{"id": "s", "kind": "http", "urls": [f"{server}/one.md", f"{server}/two.md"], "sensitivity": "public"}], max_total_bytes=150))
+    result = ingest(root)
+    checks.ok(result and "1 fetched, 1 refused" in result.out and "refused, the mirror would pass max_total_bytes (150)" in result.out, "the second item is refused by name", result.out)
+    checks.ok(len(list((root / ".lokf" / "mirror" / "s").glob("*.md"))) == 1, "one file written")
+
+
+# 17. the workflow's filter
+
+
+def test_the_workflow_hands_over_the_ingest_secrets_and_no_other(checks):
+    if not shutil.which("jq"):
+        pytest.skip("jq is not installed")
+    m = re.search(r"jq -r '([^']+)'", read(WORKFLOW))
+    checks.ok(m is not None, "the workflow filters the secrets with one jq expression")
+    secrets = {"github_token": "ghs_x", "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN": "tok=en", "KNOWLEDGE_INGEST_MULTI": "a\nb",
+               "knowledge_ingest_lower": "no", "OTHER_SECRET": "z", "KNOWLEDGE_INGEST_GITHUB_TOKEN": "ghp_y"}
+    done = subprocess.run(["jq", "-r", m.group(1)], input=json.dumps(secrets), capture_output=True, text=True)
+    checks.ok(done.returncode == 0 and done.stdout == "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN=tok=en\nKNOWLEDGE_INGEST_GITHUB_TOKEN=ghp_y\n", "two names, a value with an equals sign kept whole, a multi-line value left out", done.stdout + done.stderr)

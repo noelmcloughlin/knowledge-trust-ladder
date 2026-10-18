@@ -7,7 +7,9 @@ name: Knowledge ingest
 #
 # One pull request at a time, from this workflow's own branch
 # knowledge-ingest, refreshed until it is merged. A pull request a person
-# committed to is left alone.
+# committed to is left alone. One a person closed without merging is a no:
+# a scheduled run proposes the mirror again only once .lokf/ingest.yaml has
+# changed, and a run a person starts proposes it now.
 #
 # Two jobs. `ingest` holds the repository secrets whose names start
 # KNOWLEDGE_INGEST_ and a read-only token, runs the script, and hands the
@@ -116,6 +118,9 @@ jobs:
           [ "$PRUNE" != "true" ] || args+=(--prune)
           bash "$script" "${args[@]}"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          # A source the run could not fetch is a warning on the run, so a
+          # green run never hides an expired token.
+          grep -E '^(- |  - ).*: (failed|refused)(,|$)' "$RUNNER_TEMP/summary.md" | sed 's/^ *- //; s/^/::warning::/' || true
           if [ -n "$(git status --porcelain -- .lokf/mirror .lokf/ingest.lock.yaml)" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
@@ -204,6 +209,22 @@ jobs:
           if [ "$refresh" = false ]; then
             echo "::notice::Pull request #$open from this workflow carries a commit a person added, so this run leaves it alone. Merge or close it first; the change is attached to this run as ingest.patch."
             exit 0
+          fi
+          # A pull request a person closed without merging is a no. A
+          # scheduled run then proposes the mirror again only once
+          # .lokf/ingest.yaml has changed; a run a person starts proposes it now.
+          if [ -z "$open" ] && [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            newest="$(gh api "repos/${GITHUB_REPOSITORY}/pulls?head=${GITHUB_REPOSITORY_OWNER}:${branch}&state=closed&sort=created&direction=desc&per_page=5" \
+              --jq '.[] | [.number, (.closed_at // "-"), (.merged_at != null), (.head.repo.full_name // "-")] | @tsv' \
+              | awk -F'\t' -v repo="$GITHUB_REPOSITORY" '$1 ~ /^[0-9]+$/ && $4 == repo { print; exit }')"
+            if [ -n "$newest" ] && [ "$(printf '%s' "$newest" | cut -f3)" = false ]; then
+              n="$(printf '%s' "$newest" | cut -f1)"; closed="$(printf '%s' "$newest" | cut -f2)"
+              manifest_at="$(gh api "repos/${GITHUB_REPOSITORY}/commits?path=.lokf/ingest.yaml&per_page=1" --jq '.[0].commit.committer.date // ""')"
+              if [ "$manifest_at" \< "$closed" ]; then
+                echo "::notice::A person closed pull request #$n without merging on ${closed%%T*}, and .lokf/ingest.yaml has not changed since. A scheduled run proposes the mirror again once it does; a run started by hand proposes it now. The change is attached to this run as ingest.patch."
+                exit 0
+              fi
+            fi
           fi
           git apply --index --whitespace=nowarn "$RUNNER_TEMP/ingest.patch"
           body="$RUNNER_TEMP/body.md"

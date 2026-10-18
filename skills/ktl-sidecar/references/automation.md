@@ -275,14 +275,14 @@ It runs weekly (Sundays 04:10 UTC) and on demand, in two jobs:
 - **`ingest`** is read-only. It hands the script the repository secrets whose names start `KNOWLEDGE_INGEST_` and no other, reads the repository's visibility, and runs the host's own `.lokf/scripts/knowledge-ingest.sh`. The script lists each entry, fetches what moved, converts it, writes the mirror and the lock, and refuses what the manifest's caps and the repository's visibility do not allow. The change goes to `publish` as a patch, and the run's summary to the job's page.
 - **`publish`** holds the write token and no secret. It refuses a patch that touches anything but `.lokf/mirror/` and the lock, applies it on a clean checkout, commits it as `knowledge-ingest[bot]`, pushes the branch `knowledge-ingest` and opens the pull request, or refreshes the open one. The body is the run's summary and then `.github/PULL_REQUEST_TEMPLATE/knowledge-ingest.md`, whose checklist is the reviewer's.
 
-**One pull request at a time, refreshed until it is merged.** A later run replaces the branch's one commit with today's mirror and writes the body again. A pull request a person added a commit to is left alone. The librarian's Monday run then finds each concept whose mirror file moved in its work list, as it finds any moved source, and reads only those.
+**One pull request at a time, refreshed until it is merged.** A later run replaces the branch's one commit with today's mirror and writes the body again. A pull request a person added a commit to is left alone. One a person closed without merging is a no: a scheduled run proposes the mirror again only once `.lokf/ingest.yaml` has changed, and a run started by hand proposes it now. The librarian's Monday run then finds each concept whose mirror file moved in its work list, as it finds any moved source, and reads only those.
 
 ### Setting it up
 
 1. Copy `templates/ingest.yaml` to `.lokf/ingest.yaml` and replace its examples with your sources. Each `auth` block names environment variables, never a value.
 2. Store each credential as a repository secret of the name the manifest gives, such as `KNOWLEDGE_INGEST_ATLASSIAN_TOKEN`. For Confluence Cloud that is an API token with read scopes and an expiry, used as HTTP Basic with the account's email in `KNOWLEDGE_INGEST_ATLASSIAN_USER`; for a repository, a fine-grained token with Contents read.
 3. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General, which the `publish` job needs to open the pull request with the job's own token.
-4. Start one run from the Actions tab and read its summary. An entry that says *failed* with a credential's name is a secret not yet set.
+4. Start one run from the Actions tab and read its summary. An entry that says *failed* with a credential's name is a secret not yet set; the run shows each such line as a warning too.
 
 The pull request starts no checks, since the job's own token opened it; the mirror is text, and the registrar's conventions run on the bundle alone. Merge it, and the librarian's next run reads the mirror.
 
