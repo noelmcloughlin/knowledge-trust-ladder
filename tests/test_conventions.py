@@ -15,6 +15,7 @@ the job that runs them installs it.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -58,6 +59,33 @@ def pinned(revision):
 
 def stamped(at):
     return f'---\ntype: Service\ngenerated:\n  by: process:ktl-librarian\n  at: "{at}"\n---\n'
+
+
+# Rule 2: quoted times that one reader takes differently from another. No
+# script reads a lower-case z. The report cannot read a lower-case t or a time
+# with no offset, which the federation build reads. The stored queries,
+# comparing times as written, put an offset, a fraction or a date alone out
+# of order. The report reads 30 February, and the build cannot; some Pythons
+# read 24:00 and others refuse it. The report reads a leap second, which the
+# build refuses, and which time.strptime takes and only datetime refuses. A
+# zero-width space after the Z is invisible, so the finding prints the time
+# as JSON writes it.
+ODD_TIMES = [
+    ("ts-lower-z", "2026-09-14T00:00:00z"),
+    ("ts-lower-t", "2026-09-14t00:00:00Z"),
+    ("ts-no-offset", "2026-09-14T00:00:00"),
+    ("ts-offset", "2026-09-14T01:00:00+01:00"),
+    ("ts-fraction", "2026-09-14T00:00:00.5Z"),
+    ("ts-date", "2026-09-14"),
+    ("ts-no-day", "2026-02-30T00:00:00Z"),
+    ("ts-hour-24", "2026-09-14T24:00:00Z"),
+    ("ts-second-60", "2016-12-31T23:59:60Z"),
+    ("ts-hidden", "2026-09-14T00:00:00Z" + chr(0x200B)),
+]
+# The rule holds a `generated` record too. This one is to the minute, which
+# every script reads, and which the stored queries put after each time in
+# that minute.
+ODD_STAMP = ("ts-stamp-minutes", "2026-09-14T00:00Z")
 
 
 @pytest.fixture(scope="module")
@@ -183,6 +211,12 @@ def findings(tmp_path_factory) -> str:
         x / "co-comment-apart.md",
         '---\ntype: Service\nid: https://example.invalid/k/x/co\nverified:\n  # a comment on a line of its own\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "etag#1"\n---\n',
     )
+    for name, at in ODD_TIMES:
+        write(
+            x / f"{name}.md",
+            f'---\ntype: Service\nid: https://example.invalid/k/x/{name}\nverified:\n  - by: human:contract\n    at: "{at}"\n---\n',
+        )
+    write(x / f"{ODD_STAMP[0]}.md", stamped(ODD_STAMP[1]))
     # What only a parser sees: a multi-line flow item with an unquoted `at`; a
     # number where a timestamp should be; a block that does not parse,
     # reported on one line; a block that is a list rather than a mapping. And
@@ -256,6 +290,8 @@ REPORTED = [
     "r13-edited.md: changed since human:contract confirmed it (2026-09-02, in ",
     "r13-description.md: changed since human:contract confirmed it",
     "r13-moved-edited.md: changed since human:contract confirmed it",
+    *(f"{name}.md: timestamp {json.dumps(at)} at verified.[0].at is not a UTC time to the second" for name, at in ODD_TIMES),
+    f"{ODD_STAMP[0]}.md: timestamp {json.dumps(ODD_STAMP[1])} at generated.at is not a UTC time to the second",
 ]
 
 
@@ -285,6 +321,13 @@ ACCEPTED = [
 @pytest.mark.parametrize(("quiet", "why"), ACCEPTED, ids=[q for q, _ in ACCEPTED])
 def test_accepts_what_a_rule_allows(findings, quiet, why):
     assert quiet not in findings, f"conventions script reported {quiet}, {why}:\n{findings}"
+
+
+def test_rule_2_reports_only_the_times_in_another_shape(findings):
+    shaped = {line.split(": timestamp ", 1)[0].rsplit("/", 1)[-1] for line in findings.splitlines() if ": timestamp " in line}
+    assert shaped == {f"{name}.md" for name, _ in [*ODD_TIMES, ODD_STAMP]}, (
+        f"conventions rule 2 reported a time written as date -u writes it, or missed one in another shape:\n{findings}"
+    )
 
 
 def test_reports_a_parse_error_on_one_line(findings):
