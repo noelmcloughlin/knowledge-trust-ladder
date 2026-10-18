@@ -12,10 +12,15 @@
 # A concept a curator retired (`status: deprecated`) takes no part: a
 # retired Domain concept is no top, and a retired member is not built.
 # A member joins only as a person confirmed it. One moved since, by a merged
-# pull request no person has confirmed, is built at the release git history
-# shows a person confirmed; one no person ever confirmed is left out. The
-# lock and index.md list both under `waiting`. A member domain's zip has no
-# history, so its members join only when confirmed as they stand.
+# pull request no person has confirmed, is built at the newest release its
+# default branch held confirmed, read from the first-parent history of the
+# concept's own path, with its own id, while that person's event still
+# stands: a confirmation withdrawn later counts for no earlier text either.
+# One no person confirmed is left out. The lock lists both under `waiting`,
+# and index.md under "Waiting for a person". A member domain's zip has no
+# history, so its members join only when confirmed as they stand. The top
+# Domain concept's `unowned_targets` and `max_depth` are read the same way,
+# and the defaults stand in when no person has confirmed it.
 # A member whose zip is itself a domain is followed, tier by tier, as deep
 # as the top Domain concept's `max_depth` allows (3 unless it says
 # otherwise); its members join the same workspace, and the lock says which
@@ -193,6 +198,9 @@ class Member:
         self.version = str(data.get("version") or "")
         self.release = str(data.get("release") or "")
         self.title = str(data.get("title") or self.slug)
+        # The version the concept names now, when the build takes an earlier
+        # one a person confirmed; empty when it takes the concept as it stands.
+        self.waits = ""
         dists = data.get("distribution") or []
         if not isinstance(dists, list) or not dists:
             raise Failed(f"{concept_path}: a MemberBundle names its zip under distribution")
@@ -280,62 +288,120 @@ def top_domain(bundle, domains):
     return tops[0]
 
 
-def confirmed_text(concept, history: bool) -> tuple[dict | None, str]:
-    """The member concept as a person last confirmed it, or None, with a line that says which.
+def person_events(data: dict) -> list[tuple[str, str, dt.datetime | None]]:
+    """Each person's `verified` event of a concept: its actor, its time as written, and its time read, None when that does not parse."""
+    events = data.get("verified")
+    events = [events] if isinstance(events, dict) else events if isinstance(events, list) else []
+    return [(str(e.get("by")), str(e.get("at") or "").strip(), when(e.get("at")))
+            for e in events if isinstance(e, dict) and str(e.get("by", "")).startswith("human:")]
 
-    A member joins the workspace only as a person confirmed it, so a merged
-    pull request that moves it changes nothing until a person confirms the
-    move. The text as it stands serves when a person confirmed it. Otherwise,
-    with `history`, the newest committed text a person confirmed serves, which
-    names the release that person checked. A concept read from a member
-    domain's zip has no history, so there only the text as it stands can
-    serve.
+
+def event_key(event: tuple[str, str, dt.datetime | None]) -> tuple[str, str]:
+    """One event as a value to compare, its time in UTC, so a file written again with the same time spelled another way still matches."""
+    by, written, at = event
+    return by, at.astimezone(dt.timezone.utc).isoformat() if at else written
+
+
+def confirming_events(data: dict) -> list[tuple[str, str, dt.datetime | None]]:
+    """The person's events that confirm a concept as it stands, by confirmed_by_person's rule: those no edit came after.
+
+    Times that do not parse count only when no time does, since then the
+    edit cannot be compared, as knowledge-report.sh reads them too.
+    """
+    events = person_events(data)
+    timed = [e for e in events if e[2] is not None]
+    if not timed:
+        return events
+    generated = data.get("generated")
+    edited = when(generated.get("at")) if isinstance(generated, dict) else None
+    return [e for e in timed if edited is None or e[2] >= edited]
+
+
+def confirmed_text(concept, iri: str, path_iri: str, history: bool) -> tuple[dict | None, str]:
+    """The concept as a person last confirmed it, or None, with a line that says how it was found or why not.
+
+    The text as it stands serves when a person confirmed it. Otherwise, with
+    `history`, the newest committed text that serves is the one a person
+    confirmed on the default branch, read from the first-parent history of
+    this path, so a text that only ever stood on a side branch never counts.
+    It must have the concept's own IRI, `id` or else the path's (`path_iri`),
+    because a confirmation belongs to the concept it names. And one of the
+    events that confirmed it must still stand in the text as it is now: a
+    person who removed their event withdrew that confirmation, which then
+    counts for no earlier text either. The walk ends where the path held
+    another concept, held none, or held it retired, since a person's
+    confirmation is what brings back a member that left. A concept read from
+    a member domain's zip has no history, so there only the text as it
+    stands can serve.
     """
     if confirmed_by_person(concept.data):
         return concept.data, ""
-    git = shutil.which("git") if history else None
+    if not history:
+        return None, "no person has confirmed it in that domain's release, whose zip holds no history to find an earlier confirmation"
+    git = shutil.which("git")
     if not git:
-        return None, "no person has confirmed it as it stands" + ("" if not history else ", and git is not here to find an earlier confirmation")
+        return None, "no person has confirmed it as it stands, and git is not here to find an earlier confirmation"
     path = pathlib.Path(concept.path).resolve()
     top = subprocess.run([git, "-C", str(path.parent), "rev-parse", "--show-toplevel"], capture_output=True, text=True)
     if top.returncode != 0:
         return None, "no person has confirmed it as it stands, and its folder has no git history to find an earlier confirmation"
-    toplevel = top.stdout.strip()
-    log = subprocess.run([git, "-C", toplevel, "log", "--follow", "--format=%x00%H", "--name-only", "--", str(path)],
-                         capture_output=True, text=True)
+    toplevel = pathlib.Path(top.stdout.strip()).resolve()
+    rel = path.relative_to(toplevel).as_posix()
+    standing = {event_key(e) for e in person_events(concept.data)}
+    log = subprocess.run([git, "-C", str(toplevel), "log", "--first-parent", "--format=%H", "--", rel], capture_output=True, text=True)
+    here = path.read_bytes()
+    withdrawn = False
     with tempfile.TemporaryDirectory(prefix="federate-history-") as tmp:
         older = pathlib.Path(tmp) / path.name
-        for block in log.stdout.split("\0")[1:] if log.returncode == 0 else []:
-            commit, *names = [line for line in block.splitlines() if line.strip()]
-            if not names:
-                continue
-            shown = subprocess.run([git, "-C", toplevel, "show", f"{commit}:{names[0]}"], capture_output=True)
+        for commit in log.stdout.split() if log.returncode == 0 else []:
+            shown = subprocess.run([git, "-C", str(toplevel), "show", f"{commit}:{rel}"], capture_output=True)
             if shown.returncode != 0:
-                continue
+                break  # the commit that removed the file: what came before is a concept that left
+            if shown.stdout == here:
+                continue  # the text as it stands, already read
             older.write_bytes(shown.stdout)
             data = read_frontmatter(older)
-            if str(data.get("status") or "") != "deprecated" and confirmed_by_person(data):
-                return data, f"as a person confirmed it at commit {commit[:12]}"
-    shallow = subprocess.run([git, "-C", toplevel, "rev-parse", "--is-shallow-repository"], capture_output=True, text=True).stdout.strip() == "true"
+            if (data.get("id") or path_iri) != iri or str(data.get("status") or "") == "deprecated":
+                break
+            if confirmed_by_person(data):
+                if any(event_key(e) in standing for e in confirming_events(data)):
+                    return data, f"as a person confirmed it at commit {commit[:12]}"
+                withdrawn = True
+    if withdrawn:
+        return None, "the person who confirmed an earlier text has removed that confirmation"
+    shallow = subprocess.run([git, "-C", str(toplevel), "rev-parse", "--is-shallow-repository"], capture_output=True, text=True).stdout.strip() == "true"
     return None, "no person has confirmed it" + (" in the history this shallow clone holds" if shallow else "")
 
 
-def take_confirmed(bundle, concepts, history: bool, waiting: list[dict]) -> list[tuple[pathlib.Path, dict]]:
-    """Each member concept as a person last confirmed it, and a line in `waiting` for each one that is not, or not as it stands."""
+def take_confirmed(bundle, concepts, history: bool, waiting: list[dict]) -> list[tuple[pathlib.Path, dict, str]]:
+    """Each member concept as a person last confirmed it, and a line in `waiting` for each one that is not, or not as it stands.
+
+    Each comes with the version its concept names now when it is built at an
+    earlier one, so an error about that earlier release can say what waits.
+    """
     taken = []
     for c in concepts:
-        data, how = confirmed_text(c, history)
         iri, proposed = bundle.iri(c), str(c.data.get("version") or "")
+        data, how = confirmed_text(c, iri, bundle.resolve(c.concept_id), history)
+        note = {"concept": iri, "base_iri": str(c.data.get("base_iri") or ""), "proposed": proposed}
         if data is None:
-            say(f"{iri}: left out, because {how}; it joins once a person confirms it")
-            waiting.append({"concept": iri, "proposed": proposed, "built": None})
+            say(f"{iri}: left out, because {how}; it joins once a person confirms it" + ("" if history else " and that domain releases again"))
+            waiting.append({**note, "built": None})
             continue
+        moved = ""
         if data is not c.data:
-            built = str(data.get("version") or "")
-            say(f"{iri}: {proposed} waits for a person's confirmation; built at {built}, {how}")
-            waiting.append({"concept": iri, "proposed": proposed, "built": built})
-        taken.append((c.path, data))
+            moved = proposed or "a newer release"
+            say(f"{iri}: {moved} waits for a person's confirmation; built at {data.get('version') or 'the release'}, {how}")
+            waiting.append({**note, "built": str(data.get("version") or "")})
+        taken.append((c.path, data, moved))
     return taken
+
+
+def waits_note(member) -> str:
+    """For a member built at the release a person last confirmed: what its concept names now, and what admits it."""
+    if not member.waits:
+        return ""
+    return f"; {member.slug} is built at {member.version}, the release a person last confirmed, and its concept now names {member.waits}, which joins once a person confirms it"
 
 
 # ---------------------------------------------------------------------------
@@ -708,10 +774,20 @@ def _build(args, note_new) -> int:
     bundle, domains, member_concepts = read_domain(knowledge)
     top = top_domain(bundle, domains)
     domain_iri = bundle.iri(top)
-    policy = str(top.data.get("unowned_targets") or "fail")
+    # The gate policy and the depth are the domain's claims too: a build takes
+    # them as a person last confirmed the Domain concept, the defaults when no
+    # person has, and --verify-only as they stand.
+    settings, how = (top.data, "") if args.verify_only else confirmed_text(top, domain_iri, bundle.resolve(top.concept_id), True)
+    if settings is None:
+        settings = {}
+        if top.data.get("unowned_targets") is not None or top.data.get("max_depth") is not None:
+            say(f"{domain_iri}: its unowned_targets and max_depth wait for a person's confirmation, because {how}; the build uses the defaults, fail and {DEFAULT_MAX_DEPTH}")
+    elif settings is not top.data and any(settings.get(k) != top.data.get(k) for k in ("unowned_targets", "max_depth")):
+        say(f"{domain_iri}: its unowned_targets and max_depth as edited wait for a person's confirmation; the build uses them {how}")
+    policy = str(settings.get("unowned_targets") or "fail")
     if policy not in ("fail", "report"):
         raise Failed(f"{top.path}: unowned_targets must be fail or report, not {policy!r}")
-    raw_depth = top.data.get("max_depth")
+    raw_depth = settings.get("max_depth")
     max_depth = DEFAULT_MAX_DEPTH if raw_depth is None else raw_depth
     if isinstance(max_depth, bool) or not isinstance(max_depth, int) or max_depth < 1:
         raise Failed(f"{top.path}: max_depth must be a whole number of tiers, 1 or more, not {raw_depth!r}")
@@ -736,8 +812,12 @@ def _build(args, note_new) -> int:
     # checks every member concept as it stands, which is what a pull request
     # asks a person to confirm.
     waiting: list[dict] = []
-    chosen = [(c.path, c.data) for c in member_concepts] if args.verify_only else take_confirmed(bundle, member_concepts, True, waiting)
-    queue: list[tuple[Member, int]] = [(Member(path, data, domain_iri, 1, (domain_base,)), 1) for path, data in chosen]
+    chosen = [(c.path, c.data, "") for c in member_concepts] if args.verify_only else take_confirmed(bundle, member_concepts, True, waiting)
+    queue: list[tuple[Member, int]] = []
+    for path, data, moved in chosen:
+        first = Member(path, data, domain_iri, 1, (domain_base,))
+        first.waits = moved
+        queue.append((first, 1))
     seen: dict[str, Member] = {}  # base_iri -> the member it joined as
     slugs = {"domain"}  # the folder names under bundles/ and export/; "domain" is this bundle's own
     resolved: list[tuple[Member, pathlib.Path, pathlib.Path, str]] = []  # member, zip, knowledge dir, verdict
@@ -751,7 +831,7 @@ def _build(args, note_new) -> int:
             # two releases the build stops, because a named graph holds one.
             earlier = seen[member.base_iri]
             if earlier.sha256 != member.sha256:
-                raise Failed(f"{member.slug}: base_iri {member.base_iri} is already in the federation as {earlier.slug} at {earlier.version}, named by <{earlier.parents[0]}>, and this concept names it at {member.version} under <{member.parents[0]}>; a bundle joins once, at one release, so two domains that name it must pin the same zip")
+                raise Failed(f"{member.slug}: base_iri {member.base_iri} is already in the federation as {earlier.slug} at {earlier.version}, named by <{earlier.parents[0]}>, and this concept names it at {member.version} under <{member.parents[0]}>; a bundle joins once, at one release, so two domains that name it must pin the same zip{waits_note(earlier) or waits_note(member)}")
             earlier.parents.extend(p for p in member.parents if p not in earlier.parents)
             say(f"{member.slug}: {member.base_iri} is already in the federation as {earlier.slug} at the same release; named by a second domain, not followed again")
             continue
@@ -760,7 +840,10 @@ def _build(args, note_new) -> int:
             # Two tiers may each name a members/<slug>.md; the folders stay apart.
             member.slug = next(f"{member.slug}-{n}" for n in range(2, len(slugs) + 3) if f"{member.slug}-{n}" not in slugs)
         slugs.add(member.slug)
-        zip_path, verdict = obtain(member, cache, args.max_bytes, not args.no_attestation)
+        try:
+            zip_path, verdict = obtain(member, cache, args.max_bytes, not args.no_attestation)
+        except Failed as e:
+            raise Failed(f"{e}{waits_note(member)}") from e
         bundle_dir = work / member.slug
         kdir = unpack(zip_path, bundle_dir)
         sub_bundle, sub_domains, sub_members = read_domain(kdir)
@@ -774,8 +857,8 @@ def _build(args, note_new) -> int:
                 raise Failed(f"{member.slug}: a domain at tier {depth}, and this domain's max_depth is {max_depth}; set max_depth on the Domain concept to follow it")
             sub_top = top_domain(sub_bundle, sub_domains)
             sub_iri = sub_bundle.iri(sub_top)
-            sub_chosen = [(c.path, c.data) for c in sub_members] if args.verify_only else take_confirmed(sub_bundle, sub_members, False, waiting)
-            for path, data in sub_chosen:
+            sub_chosen = [(c.path, c.data, "") for c in sub_members] if args.verify_only else take_confirmed(sub_bundle, sub_members, False, waiting)
+            for path, data, _ in sub_chosen:
                 queue.append((Member(path, data, sub_iri, depth + 1, (*member.ancestors, member.base_iri)), depth + 1))
             say(f"{member.slug}: a domain of {len(sub_members)} members, followed")
         elif member.declared_domain:
@@ -878,9 +961,22 @@ def _build(args, note_new) -> int:
                     continue
                 if registry.owner(target) is None:
                     unowned.append((base_iri, q.subject.value, predicates[q.predicate.value], target))
-    report = ["# Gate report", "", f"Policy: `unowned_targets: {policy}`. {len(unowned)} typed-relation target(s) lie in no member's namespace.", ""]
-    for g, s, p, o in unowned:
-        report.append(f"- in `{g}`: `{s}` `{p}` `{o}`")
+    # A target in the namespace of a member left out because it waits is
+    # unowned all the same, as it was before that member was proposed; the
+    # report names the member, so the fix reads as a confirmation.
+    pending = [w for w in waiting if w["built"] is None and w.get("base_iri")]
+
+    def waits_for(target: str) -> str:
+        hits = [w for w in pending if target.startswith(w["base_iri"])]
+        return max(hits, key=lambda w: len(w["base_iri"]))["concept"] if hits else ""
+
+    held = [(g, s, p, o, waits_for(o)) for g, s, p, o in unowned]
+    named = sorted({w for *_, w in held if w})
+    in_waiting = sum(1 for *_, w in held if w)
+    report = ["# Gate report", "", f"Policy: `unowned_targets: {policy}`. {len(unowned)} typed-relation target(s) lie in no member's namespace"
+              + (f", {in_waiting} of them in the namespace of a member that waits for a person's confirmation" if in_waiting else "") + ".", ""]
+    for g, s, p, o, w in held:
+        report.append(f"- in `{g}`: `{s}` `{p}` `{o}`" + (f", in the namespace of <{w}>, which waits for a person's confirmation" if w else ""))
     report += ["", "## Vocabulary fit", ""] + fit
     (new / "gate-report.md").write_text("\n".join(report) + "\n", encoding="utf-8")
 
@@ -896,9 +992,11 @@ def _build(args, note_new) -> int:
                 p.chmod(0o444)
     if unowned and policy == "fail":
         shutil.rmtree(new, ignore_errors=True)
-        for g, s, p, o in unowned:
-            warn(f"unowned target in {g}: {s} {p} {o}")
-        raise Failed(f"{len(unowned)} typed-relation target(s) lie in no member's namespace and the domain's policy is fail; the previous snapshot stays")
+        for g, s, p, o, w in held:
+            warn(f"unowned target in {g}: {s} {p} {o}" + (f", in the namespace of <{w}>, which waits for a person's confirmation" if w else ""))
+        raise Failed(f"{len(unowned)} typed-relation target(s) lie in no member's namespace and the domain's policy is fail"
+                     + (f"; {in_waiting} of them lie in the namespace of {', '.join(f'<{w}>' for w in named)}, which joins once a person confirms it" if in_waiting else "")
+                     + "; the previous snapshot stays")
 
     # 6. Swap.
     old = root / (args.out + ".old")
@@ -924,7 +1022,7 @@ def zip_path_size(resolved, member) -> int:
 
 
 def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_iri: str, policy: str,
-                records: list[dict], unowned, public: str, waiting: list[dict] = ()) -> None:
+                records: list[dict], unowned, public: str, waiting: list[dict] | None = None) -> None:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     lines = [f"# {domain_title}: the workspace", "",
              f"The graph built from the releases the domain <{domain_iri}> names, one named graph per bundle, named by that bundle's `base_iri`, with the lock as a graph of its own, <{snapshot_iri}>. Built on {today}; the members and their versions below are the lock's, 'Named by' is the bundle whose domain concept names each (two when two domains name one bundle at one release), and each health line is that member's own at the release named, computed when this was built. A trust label is never stored: `queries/labels.rq` computes each from the events at the moment it runs.",
@@ -955,7 +1053,7 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
             kept = f"built at {w['built']}" if w.get("built") else "left out"
             lines.append(f"- <{w['concept']}>: {w['proposed'] or 'a release'} waits; {kept}.")
     lines += ["", "## Files", "",
-              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace, and the schema released with its bundle when there is one.",
+              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace, and the schema released with its bundle when there is one; under `waiting`, each member concept that waits for a person's confirmation.",
               "- `lokf-registry.yaml` and `registry.jsonld`: the registry the LOKF specification's section 11 describes, which routes any IRI to its owner by the longest `base_iri` prefix.",
               "- `graph.nq`: every bundle's triples in its own named graph, plus the lock graph, as sorted N-Quads.",
               "- `export/<slug>/`: `graph.nt`, `concepts.jsonld`, `graph.json` and `datasets.jsonld` for each bundle, as `lokf export` writes them.",

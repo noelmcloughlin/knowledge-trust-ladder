@@ -7,7 +7,9 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **The federation build leaves out a concept a curator retired.** A retired `Domain` concept no longer counts as a second top, and a retired member is neither built into the workspace nor moved by `members`. The curator's domain-bundle.md says how a member leaves.
-- **The federation build takes each member as a person last confirmed it.** It built every member concept on the tag, so a merged move or a new member joined the workspace before anyone confirmed it, against the federation design. A moved member is now built at the release its git history shows a person confirmed, a member no person confirmed is left out, and the lock and the workspace index list both as waiting.
+- **The federation build takes each member as a person last confirmed it.** It built every member concept on the tag, so a merged move or a new member joined the workspace before anyone confirmed it, against the federation design. A moved member is now built at the newest release the default branch held confirmed, while that confirmation stands, and a member no person confirmed is left out. The lock and the workspace index list both as waiting.
+- **The Domain concept's gate policy and depth count only as a person confirmed them.** An edit no person confirmed waits, and the defaults stand in until a first confirmation.
+- **The gate names a member that waits.** A link into the namespace of a member left out for want of a confirmation is reported with that member, and an error about a release a person confirmed earlier says which newer one waits.
 - **`members --add` quotes the description in the new member's own index.** It pasted the description after a colon, with no full stop when the description had none, so the next sentence ran on.
 - **The sync calls a copy a pin bump only when its `uses:` lines are all that differ.** It reported every copy the release changed as "differed only on its action pins", because under `pipefail` its test took `diff`'s exit status.
 

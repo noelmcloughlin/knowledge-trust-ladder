@@ -23,8 +23,17 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 4d. a member joins only as a person confirmed it: one no person confirmed
    is left out and listed as waiting, at the top tier and in a member
    domain's zip, while `--verify-only` still checks its zip; one moved by a
-   commit no person confirmed is built at the release git history shows a
-   person confirmed, until a person confirms the move;
+   commit no person confirmed is built at the release the default branch
+   held confirmed, until a person confirms the move, and an error about
+   that release says what waits; a member a person sent back stays;
+4e. the walk through history takes only the default branch's own line, the
+   concept's own path and IRI, and a confirmation whose event still stands:
+   a removed confirmation, a renamed concept, an `id` changed in place, a
+   retirement undone without a confirmation and a text that only stood on
+   a side branch each leave the member out or at its earlier release;
+4f. the Domain concept's `unowned_targets` and `max_depth` count only as a
+   person confirmed them, and the gate names a member that waits when a
+   link lies in its namespace;
 5. `--verify-only` writes nothing, and `members` leaves a non-GitHub member
    as it is;
 5a. a schema released beside a member's zip, named as a second distribution,
@@ -135,7 +144,7 @@ def member(slug: str, base_iri: str, zip_path: Path, sha: str, domain_iri: str, 
 def make_domain(host: Path, base_iri: str, members: dict[str, dict], policy: str = "fail", title: str = "D") -> Path:
     """A domain host: .lokf/knowledge with a Domain concept and the member concepts, and the report script for health lines."""
     domain_iri = base_iri + "domains/federation"
-    concepts = {"domains/federation.md": {"type": "Domain", "title": "The federation domain", "description": "The domain.", "resource": "https://example.test/d", "unowned_targets": policy}}
+    concepts = {"domains/federation.md": {"type": "Domain", "title": "The federation domain", "description": "The domain.", "resource": "https://example.test/d", "unowned_targets": policy, "verified": CONFIRMED}}
     concepts.update({f"members/{slug}.md": fm for slug, fm in members.items()})
     make_bundle(host / ".lokf", base_iri, title, concepts)
     scripts = host / ".lokf" / "scripts"
@@ -257,7 +266,8 @@ def test_a_member_that_is_a_domain_is_followed(federation, tmp_path):
     assert entries[c_iri]["tier"] == 2 and entries[c_iri]["member_of"] == [s_iri + "domains/s"] and entries[s_iri]["kind"] == "domain"
     assert c_iri in graphs_in(host / "snapshot" / "graph.nq")
     assert "https://e.example/knowledge/" not in entries, "a member domain's member no person confirmed is left out"
-    assert yaml.safe_load(lock)["waiting"] == [{"concept": s_iri + "members/e", "proposed": "v1.0.0", "built": None}]
+    assert yaml.safe_load(lock)["waiting"] == [{"concept": s_iri + "members/e", "base_iri": "https://e.example/knowledge/", "proposed": "v1.0.0", "built": None}]
+    assert "that domain's release, whose zip holds no history" in r.out and "and that domain releases again" in r.out, r.out
 
 
 def test_a_bundle_two_domains_name_at_one_release_joins_once(federation, tmp_path):
@@ -362,7 +372,7 @@ def test_a_member_no_person_confirmed_waits_outside_the_workspace(federation):
     assert r.rc == 0 and "members/a: left out, because no person has confirmed it" in r.out, r.out
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
     assert [m["base_iri"] for m in lock["members"]] == [federation["b_iri"]]
-    assert lock["waiting"] == [{"concept": federation["d_iri"] + "members/a", "proposed": "v1.0.0", "built": None}]
+    assert lock["waiting"] == [{"concept": federation["d_iri"] + "members/a", "base_iri": federation["a_iri"], "proposed": "v1.0.0", "built": None}]
     assert federation["a_iri"] not in graphs_in(host / "snapshot" / "graph.nq")
     index = (host / "snapshot" / "index.md").read_text(encoding="utf-8")
     assert "## Waiting for a person" in index and "members/a>: v1.0.0 waits; left out." in index, index
@@ -388,13 +398,155 @@ def test_a_moved_member_is_built_at_the_release_a_person_confirmed(federation, t
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
     entries = {m["base_iri"]: m for m in lock["members"]}
     assert entries[federation["b_iri"]]["version"] == "v1.0.0" and entries[federation["b_iri"]]["sha256"] == federation["b_sha"]
-    assert lock["waiting"] == [{"concept": federation["d_iri"] + "members/b", "proposed": "v2.0.0", "built": "v1.0.0"}]
+    assert lock["waiting"] == [{"concept": federation["d_iri"] + "members/b", "base_iri": federation["b_iri"], "proposed": "v2.0.0", "built": "v1.0.0"}]
+    assert "members/b>: v2.0.0 waits; built at v1.0.0." in (host / "snapshot" / "index.md").read_text(encoding="utf-8")
+    shutil.rmtree(host / ".lokf" / ".cache")
+    federation["b_zip"].unlink()
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 1 and "no such file" in r.out and "b is built at v1.0.0, the release a person last confirmed, and its concept now names v2.0.0, which joins once a person confirms it" in r.out, \
+        "a release a person confirmed that is gone says what waits\n" + r.out
     moved["verified"] = [*CONFIRMED, {"by": "human:noel", "at": "2026-02-02T00:00:00Z"}]
     write(concept, frontmatter(**moved) + "\n# Overview\n\nb at v2.0.0.\n")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0, r.out
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
     assert {m["base_iri"]: m["sha256"] for m in lock["members"]}[federation["b_iri"]] == b2_sha and "waiting" not in lock, "a person's confirmation admits the move"
+
+
+def rewrite(host: Path, slug: str, fm: dict, body: str = "") -> Path:
+    """A member concept written again with this frontmatter."""
+    return write(host / ".lokf" / "knowledge" / "members" / f"{slug}.md", frontmatter(**fm) + f"\n# Overview\n\n{slug}.\n{body}")
+
+
+def committed(host: Path, env: dict | None = None) -> Git:
+    """The host as a git repository with everything committed, as a person confirmed it."""
+    git = Git(host)
+    git.init()
+    git("add", "-A")
+    git("commit", "-qm", "the members as a person confirmed them", env=env)
+    return git
+
+
+def dated(day: int) -> dict:
+    """A commit's dates, one day apart, so the order by date is the order of the steps, as it is outside a test."""
+    stamp = f"2026-01-{day:02d}T12:00:00Z"
+    return {"GIT_AUTHOR_DATE": stamp, "GIT_COMMITTER_DATE": stamp}
+
+
+def a_moved(federation, version: str, at: str, **extra) -> dict:
+    """Member a's concept moved to `version` by the pen at `at`: its zip label changed, a person's event kept."""
+    moved = member("a", federation["a_iri"], federation["a_zip"], federation["a_sha"], federation["d_iri"] + "domains/federation", version=version)
+    moved["generated"] = {"by": "process:knowledge-federate", "at": at}
+    moved.update(extra)
+    return moved
+
+
+def built_a(host: Path):
+    lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    return {m["base_iri"]: m["version"] for m in lock["members"]}, lock.get("waiting")
+
+
+def test_a_confirmation_its_person_removed_counts_for_no_earlier_release(federation):
+    host = federation["host"]
+    git = committed(host)
+    rewrite(host, "a", a_moved(federation, "v2.0.0", "2026-02-01T00:00:00Z"))
+    git("commit", "-qam", "move a to v2.0.0")
+    withdrawn = a_moved(federation, "v2.0.0", "2026-02-01T00:00:00Z")
+    withdrawn.pop("verified")
+    rewrite(host, "a", withdrawn)
+    git("commit", "-qam", "the person removes their confirmation")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "members/a: left out, because the person who confirmed an earlier text has removed that confirmation" in r.out, r.out
+    versions, waiting = built_a(host)
+    assert federation["a_iri"] not in versions and waiting[0]["built"] is None
+
+
+def test_a_renamed_concept_waits_for_a_confirmation_of_its_own(federation):
+    """A confirmation belongs to the concept it names: a new path is a new concept."""
+    host = federation["host"]
+    git = committed(host)
+    git("mv", ".lokf/knowledge/members/a.md", ".lokf/knowledge/members/a-renamed.md")
+    rewrite(host, "a-renamed", member("a", federation["a_iri"], federation["a_zip"], federation["a_sha"], federation["d_iri"] + "domains/federation", confirmed=False))
+    git("add", "-A")
+    git("commit", "-qm", "rename a; its confirmation stays with the old IRI")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "members/a-renamed: left out, because no person has confirmed it;" in r.out, r.out
+    assert federation["a_iri"] not in built_a(host)[0]
+
+
+def test_an_id_changed_in_place_waits_for_a_confirmation_of_its_own(federation):
+    host = federation["host"]
+    git = committed(host)
+    rewrite(host, "a", a_moved(federation, "v1.0.0", "2026-02-01T00:00:00Z", id=federation["d_iri"] + "members/another"))
+    git("commit", "-qam", "a given another id")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "members/another: left out, because no person has confirmed it;" in r.out, r.out
+    assert federation["a_iri"] not in built_a(host)[0]
+
+
+def test_a_retirement_undone_without_a_confirmation_keeps_the_member_out(federation):
+    host = federation["host"]
+    git = committed(host)
+    rewrite(host, "a", {**member("a", federation["a_iri"], federation["a_zip"], federation["a_sha"], federation["d_iri"] + "domains/federation"), "status": "deprecated"})
+    git("commit", "-qam", "a retired")
+    rewrite(host, "a", a_moved(federation, "v1.0.0", "2026-02-01T00:00:00Z"))
+    git("commit", "-qam", "a brought back by an edit no person confirmed")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "members/a: left out, because no person has confirmed it;" in r.out, r.out
+    assert federation["a_iri"] not in built_a(host)[0]
+
+
+def test_a_text_that_only_stood_on_a_side_branch_is_not_built(federation):
+    """With a merge commit, the walk reads the states the default branch held, not a branch's steps on the way."""
+    host = federation["host"]
+    git = committed(host, dated(1))
+    git("switch", "-q", "-c", "side")
+    rewrite(host, "a", a_moved(federation, "v2.0.0", "2026-02-01T00:00:00Z", verified=[*CONFIRMED, {"by": "human:noel", "at": "2026-02-02T00:00:00Z"}]))
+    git("commit", "-qam", "side: a moved to v2.0.0 and confirmed", env=dated(2))
+    rewrite(host, "a", a_moved(federation, "v3.0.0", "2026-02-03T00:00:00Z", verified=[*CONFIRMED, {"by": "human:noel", "at": "2026-02-02T00:00:00Z"}]))
+    git("commit", "-qam", "side: a moved again, to v3.0.0", env=dated(3))
+    git("switch", "-q", "main")
+    git("merge", "-q", "--no-ff", "side", "-m", "merge side", env=dated(4))
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "members/a: v3.0.0 waits for a person's confirmation; built at v1.0.0" in r.out, r.out
+    assert built_a(host)[0][federation["a_iri"]] == "v1.0.0"
+
+
+def test_a_member_a_person_sent_back_stays_at_the_release_they_confirmed(federation):
+    """A send-back adds a question and keeps the person's event, so the member stays; retiring it is what takes it out."""
+    host = federation["host"]
+    sent_back = {**member("a", federation["a_iri"], federation["a_zip"], federation["a_sha"], federation["d_iri"] + "domains/federation"), "status": "draft"}
+    rewrite(host, "a", sent_back, "\n## Open questions\n\n- 2026-02-01, human:noel: is this the right release?\n")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    versions, waiting = built_a(host)
+    assert versions[federation["a_iri"]] == "v1.0.0" and waiting is None
+
+
+def test_the_domain_s_settings_count_only_as_a_person_confirmed_them(federation, tmp_path):
+    host = federation["host"]
+    a2 = make_bundle(tmp_path / "a2", federation["a_iri"], "A", {"glossary/term.md": {"type": "GlossaryTerm", "title": "Term", "description": "A term.", "resource": "https://example.test/a", "relatedTo": ["https://c.example/knowledge/glossary/nowhere"]}})
+    sha = zip_bundle(a2, federation["a_zip"])
+    concept = host / ".lokf" / "knowledge" / "members" / "a.md"
+    concept.write_text(concept.read_text(encoding="utf-8").replace(federation["a_sha"], sha), encoding="utf-8")
+    top = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+    edited = top.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: report\ngenerated:\n  by: process:ktl-librarian\n  at: '2026-02-01T00:00:00Z'")
+    top.write_text(edited, encoding="utf-8")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 1 and "its unowned_targets and max_depth wait for a person's confirmation" in r.out and "the build uses the defaults, fail and 3" in r.out, r.out
+    top.write_text(edited.replace("verified:\n", "verified:\n- by: human:noel\n  at: '2026-02-02T00:00:00Z'\n"), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "1 typed-relation target(s) lie in no member's namespace." in (host / "snapshot" / "gate-report.md").read_text(encoding="utf-8"), r.out
+
+
+def test_the_gate_names_a_member_that_waits_when_a_link_lies_in_its_namespace(federation):
+    """a links into b's namespace; b is proposed and not yet confirmed, so the link is unowned, and the error says what admits it."""
+    host = federation["host"]
+    rewrite(host, "b", member("b", federation["b_iri"], federation["b_zip"], federation["b_sha"], federation["d_iri"] + "domains/federation", confirmed=False))
+    r = federate(host, "build", "--no-attestation")
+    waiting_b = f"<{federation['d_iri']}members/b>"
+    assert r.rc == 1 and f"in the namespace of {waiting_b}, which waits for a person's confirmation" in r.out, r.out
+    assert f"1 of them lie in the namespace of {waiting_b}, which joins once a person confirms it" in r.out, r.out
 
 
 def test_verify_only_writes_nothing_and_members_leaves_a_local_zip_alone(federation):
