@@ -187,6 +187,10 @@ LOKF_NS = "https://w3id.org/lokf/"
 # target no member owns is correct usage there, not a link the gate judges
 # (the toolkit's --check-refs reads them the same way).
 EXTERNAL_OK = {"definedBy", "source"}
+# A checksum as a member concept or a lock gives it. The digest names the
+# file in the cache, so a checksum of any other form is refused before it
+# is used, or a path in it could reach outside the cache.
+CHECKSUM = re.compile(r"^sha256:[0-9a-fA-F]{64}$")
 GITHUB_RELEASE = re.compile(
     r"^https://github\.com/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/releases/download/(?P<tag>[^/]+)/(?P<asset>[^/]+)$"
 )
@@ -277,8 +281,8 @@ class Member:
         # public unless it says otherwise.
         self.sensitivity = str(data.get("sensitivity") or "public")
         dists = data.get("distribution") or []
-        if not isinstance(dists, list) or not dists:
-            raise Failed(f"{concept_path}: a MemberBundle names its zip under distribution")
+        if not isinstance(dists, list) or not dists or not all(isinstance(d, dict) for d in dists):
+            raise Failed(f"{concept_path}: a MemberBundle names its zip under distribution, a list of mappings")
         dist = dists[0]
         self.zip_url = str(dist.get("access_url") or "")
         self.zip_name = str(dist.get("name") or pathlib.PurePosixPath(urllib.parse.urlparse(self.zip_url).path).name)
@@ -300,8 +304,8 @@ class Member:
         # to confirm.
         self.proposed = False
         checksum = str(dist.get("checksum") or "")
-        if not checksum.startswith("sha256:") or len(checksum) != 71:
-            raise Failed(f"{concept_path}: distribution.checksum must be sha256:<64 hex digits>")
+        if not CHECKSUM.fullmatch(checksum):
+            raise Failed(f"{concept_path}: distribution.checksum must be sha256:<64 hex digits>, not {checksum!r}")
         self.sha256 = checksum[7:].lower()
         if not self.base_iri or not self.zip_url:
             raise Failed(f"{concept_path}: base_iri and distribution.access_url are required")
@@ -346,8 +350,8 @@ class Member:
     def further_digest(self, dist: dict, what: str, name: str) -> str:
         """The sha256 digest a further distribution's checksum gives, which must take the zip's form, sha256:<64 hex digits>."""
         checksum = str(dist.get("checksum") or "")
-        if not checksum.startswith("sha256:") or len(checksum) != 71:
-            raise Failed(f"{self.concept_path}: the {what} distribution {name} needs checksum sha256:<64 hex digits>")
+        if not CHECKSUM.fullmatch(checksum):
+            raise Failed(f"{self.concept_path}: the {what} distribution {name} needs checksum sha256:<64 hex digits>, not {checksum!r}")
         return checksum[7:].lower()
 
     def lock_entry(self) -> dict:
@@ -2089,6 +2093,8 @@ def look_served(url: str, cache: pathlib.Path, max_bytes: int) -> tuple[str, str
     except ValueError:
         every = {}
     seen = every.get(url) or {}
+    if not CHECKSUM.fullmatch(f"sha256:{seen.get('sha256', '')}"):
+        seen = {}  # a record that names no digest is no record
     kept = cache / f"{seen.get('sha256', '')}.jsonld"
     headers = {}
     if seen.get("sha256") and kept.is_file():

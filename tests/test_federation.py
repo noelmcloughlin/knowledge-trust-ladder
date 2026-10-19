@@ -550,6 +550,19 @@ def test_a_member_held_at_an_earlier_release_still_answers_a_second_domain_namin
     assert entry["version"] == "v1.0.0" and entry["member_of"] == [s_iri + "domains/s", t_iri + "domains/t"], entry
 
 
+def test_a_checksum_must_be_64_hex_digits(federation, tmp_path):
+    """A checksum names the file in the cache, so one that climbs out of it is refused before it is used, and the file it names stays."""
+    host, b_iri, d_iri = federation["host"], federation["b_iri"], federation["d_iri"]
+    victim = tmp_path / "victim.zip"
+    victim.write_bytes(b"kept")
+    cache = tmp_path / "cache" / "federation"
+    climb = "../../" + "./" * 26 + "victim"
+    rewrite(host, "b", member("b", b_iri, federation["b_zip"], climb, d_iri + "domains/federation"))
+    r = federate(host, "build", "--verify-only", "--no-attestation", "--cache", str(cache))
+    assert r.rc == 1 and "distribution.checksum must be sha256:<64 hex digits>" in r.out, r.out
+    assert victim.read_bytes() == b"kept"
+
+
 @pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate"])
 def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_path, fault):
     host = federation["host"]

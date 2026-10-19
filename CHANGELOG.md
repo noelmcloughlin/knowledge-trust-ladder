@@ -24,6 +24,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The graph page's details panel sets each label beside its value.** Starlight's spacing for page content put every label a line below it.
 - **A member whose index gives its licence as text, such as `MIT`, no longer stops the domain build.** The lock graph keeps such a value as a literal, and the index writes it as text.
 - **The MCP server reads a concept whose `id` lies outside its bundle's namespace**, which the registry routes through its `id_index`. It cut the IRI by the wrong prefix.
+- **A checksum must be `sha256:` and 64 hex digits.** Only its length was checked, so a path in it could reach outside the download cache and have the build delete a file there.
 - **A member's download stops at `--max-bytes`**, where it was read whole before its checksum was compared.
 - **A domain host's site serves each member's release inside the workspace.** The Pages upload left out the hidden `bundles/<slug>/.lokf/` folders, so every member link in the served workspace index answered 404.
 
