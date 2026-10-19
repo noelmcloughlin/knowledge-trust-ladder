@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T10:22:18Z"
+  at: "2026-10-19T10:51:59Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -55,7 +55,7 @@ The mirror is tracked, so the work list, the gate and coverage read it as reposi
 
 # Sensitivity
 
-The script refuses what the repository's visibility does not allow. `public` may be committed anywhere, and `internal`, the default, only to a private repository. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, and the concept names the origin as its `resource`.
+The script refuses what the repository's visibility does not allow. `public` may be committed anywhere, and `internal`, the default, only to a private repository. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, and the concept names the origin as its `resource`. Since 0.52.1 the script also refuses a `confidential` entry when git does not ignore that folder or tracks a file in it.
 
 # Turn it on
 

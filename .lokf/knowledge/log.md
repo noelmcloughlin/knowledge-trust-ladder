@@ -1,5 +1,21 @@
 # Change Log
 
+## 2026-10-19
+
+* **Changed**: Three lines of defence now cites `docs/architecture.md`, where the fifth-role section that points at this page moved on 2026-10-13, instead of `README.md`, and names the diagram's dark variant correctly instead of a dropped `-dimmed` set. The auditor's-questions list now carries the `revision` field's URL case and the dropped row on a removed person's record, and says the bundle answers SPARQL. The remaining-design list follows `docs/three-lines.md`'s fix of 2026-10-18, which already settled the MCP-server disagreement an earlier pass had flagged. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Resolved**: the concept now cites `docs/architecture.md` for the fifth-role section, since the README's content moved there on 2026-10-13.
+* **Resolved**: the diagram is `.assets/ktl-three-lines-dark.svg` for GitHub's dark theme; the `-dimmed` set stays unreferenced, as `CHANGELOG.md` says.
+* **Resolved**: `docs/three-lines.md` dropped the `lokf-registry` MCP server from its remaining-design list in 0.51.0 (2026-10-18), so it no longer disagrees with `docs/federation.md`; the concept's remaining-design list now follows both pages.
+* **Changed**: Knowledge outside the repository: since 0.52.1 the ingest refuses a `confidential` entry where git could still commit its copy, checking that `.lokf/.cache/mirror/` is ignored and holds no tracked file first, as `docs/ingest.md` and `CHANGELOG.md` now say.
+* **Changed**: ktl-sidecar skill: since 0.52.1 Step 1 and the sync also keep a host's `.lokf/.gitignore` current, as they already kept `.gitattributes`, and the librarian workflow's install step stops before any agent runs when git does not ignore `.agents/`, as `CHANGELOG.md` and the workflow template now say.
+* **Changed**: Knowledge sources: the dogfooded-copies row now names `.lokf/.gitignore` among the sixteen files kept byte-identical, and the thirty-fifth pass is recorded. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Rewrite**: ktl-curator skill now cites `docs/architecture.md` for the Runs column, names the *Reopened* label and how confirming a domain-bundle member works, and says how the curator quotes a mirrored page under `.lokf/mirror/` and pins its `revision`, closing three gaps an earlier pass had only partly answered; the maintainer's broader ask to review every commit since the last confirmation still needs a dedicated pass beyond these three. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Resolved**: `sources` now names `docs/architecture.md` instead of `README.md` for the Runs column.
+* **Resolved**: the concept now names the *Reopened* label and how a domain-bundle member is confirmed.
+* **Resolved**: the maintainer released this text for rewriting on 2026-10-18, and the concept now carries the ingest-mirror paragraph `references/review-session.md` describes.
+* **Changed**: Trust label now names *still a draft* and *reopened*, and that a question never drops a confirmed concept a rung, as `skills/ktl-curator/references/trust-fields.md` has said since 0.45.0. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Resolved**: the concept now names the *Reopened* label.
+
 ## 2026-10-18
 
 * **Changed**: Curating a domain bundle says the diamond rule's stop lasts until both owners pin one release, as the curator's domain-bundle.md now does.
