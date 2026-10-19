@@ -9,7 +9,10 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    bundle plus the lock graph, gates clean, and writes the same bytes twice;
 2. a tampered checksum, a zip whose index.md names another base_iri, a zip
    holding a symbolic link, and a domain that names a bundle already in the
-   federation each stop the build and leave the previous snapshot in place;
+   federation each stop the build and leave the previous snapshot in place,
+   as do a checksum that is not 64 hex digits, a namespace that nests with
+   another's, a redirect out of http, and a zip that cannot be read; a
+   download that meets a server error is tried again;
 2a. a bundle that releases no zip joins by the concepts.jsonld its site
    serves, written out as the bundle, with the graph its own export gave;
    a file that names another base_iri, a concept outside its namespace or a
@@ -17,12 +20,15 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 2b. a member whose file cannot be fetched is held at its last good state,
    as the previous workspace holds it, as a folder or a zip, at the same
    release or an earlier one; a check does the same, and a workspace of
-   another domain is not taken;
+   another domain is not taken; a release zip that serves other bytes is
+   held only at the release a build fetched, a check holds nothing its pull
+   request proposes, and a member no previous workspace held is left out;
 3. a typed relation whose target no member owns stops the build under
    `unowned_targets: fail` and is reported under `report`, and so does one
    whose target lies in a member's namespace and names no concept of it;
 3a. the links between members are counted in the lock, the index and
-   `links.rq`, and `graph.json` draws every bundle with those links;
+   `links.rq`, and `graph.json` draws every bundle with those links; a
+   reified `relations` entry is gated and counted as the slot it names;
 4. a member that is itself a domain is followed one tier down;
 4a. the diamond rule: a bundle two domains name at one release joins once,
    named by both, and named at two releases it stops the build, as a
@@ -56,7 +62,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 4i. a member joins only at the `sensitivity` its domain cleared: an
    internal one once a person confirms `internal` on the Domain concept,
    and only in a private or internal repository, and a confidential one
-   never;
+   never; a raised sensitivity counts before a person confirms it, and
+   domain.yaml lets a Domain clear public or internal alone;
 5. `--verify-only` runs the gate as the next release build would, so a link
    into a member no person has confirmed fails before the merge, and writes
    nothing; `members` leaves a non-GitHub member as it is;
@@ -64,16 +71,19 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    is what the member's fit is checked against, and a wrong digest for it
    stops the build;
 5b. `mcp` serves the workspace index as its instructions and answers the
-   five tools of the specification's section 11.4, each bounded;
+   five tools of the specification's section 11.4, each bounded, a
+   SPARQL CONSTRUCT and SELECT too, and `read_document` falls back to a
+   bundle's concepts.jsonld;
 5c. it loads a graph when a walk first reaches a namespace that graph
    names, and each answer is the one a workspace loaded whole gives;
-5d. `diff` says which members joined, moved or left between two
-   workspaces, and the links that went with them;
+5d. `diff` says which members joined, moved, left, were released again or
+   grew sensitive between two workspaces, and the links that went with them;
 5e. a walk that steps to an IRI no bundle owns loads the graphs that share
    it and no more;
 5f. the readers read a workspace from its zip, or from the site that serves
    it, a graph at a time by range request, with the answers a folder gives;
-5g. a reader given members reads those bundles alone;
+5g. a reader given members reads those bundles alone, and refuses the
+   stored queries that read the lock graph;
 5h. a licence given as text, and a concept whose id lies outside its
    bundle's namespace, read as released;
 6. `members` moves a member's old tag, zip name and day in its description
@@ -97,7 +107,9 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
     it stops and says which variables give it one;
 11. `members` moves a member its site serves to the file the site serves
     now, asking with the validators it kept, and `members --add <address>`
-    drafts one from a site's concepts.jsonld.
+    drafts one from a site's concepts.jsonld;
+12. `members` moves the others when it cannot check one, and asks gh for a
+    release list the API refuses as rate limited.
 
 The `members` tests run the script through a small runner that serves the
 GitHub API and the release files from fixture files, and put a stand-in
@@ -375,6 +387,33 @@ def test_diff_says_what_changed_between_two_workspaces(federation, tmp_path):
     assert r.rc == 0 and r.out.splitlines()[-1] == "- The gate's policy is `report` now, and was `fail`.", r.out
 
 
+def test_diff_says_who_joined_who_was_released_again_and_what_grew_sensitive(federation, tmp_path):
+    """c joins, b's v1.0.0 is released again with other bytes, and a turns internal in a private repository: diff says each."""
+    host, a_iri, b_iri, d_iri = federation["host"], federation["a_iri"], federation["b_iri"], federation["d_iri"]
+    top = d_iri + "domains/federation"
+    assert federate(host, "build", "--tag", "v0.2.0", "--release-base", "https://github.com/acme/d/releases/tag", "--no-attestation").rc == 0
+    old = tmp_path / "old"
+    shutil.copytree(host / "snapshot", old)
+    c_iri = "https://c.example/knowledge/"
+    c = make_bundle(tmp_path / "c", c_iri, "C", {"glossary/third.md": {"type": "GlossaryTerm", "title": "Third", "description": "A third term.", "resource": "https://example.test/c"}})
+    c_zip = tmp_path / "c.zip"
+    rewrite(host, "c", member("c", c_iri, c_zip, zip_bundle(c, c_zip), top))
+    b2 = make_bundle(tmp_path / "b2", b_iri, "B", {"glossary/other.md": {"type": "GlossaryTerm", "title": "Other", "description": "Another term, rebuilt.", "resource": "https://example.test/b"}})
+    b2_zip = tmp_path / "b2.zip"
+    rewrite(host, "b", member("b", b_iri, b2_zip, zip_bundle(b2, b2_zip), top))
+    rewrite(host, "a", {**member("a", a_iri, federation["a_zip"], federation["a_sha"], top), "sensitivity": "internal"})
+    domain = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+    domain.write_text(domain.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: fail\nsensitivity: internal"), encoding="utf-8")
+    assert federate(host, "build", "--tag", "v0.3.0", "--no-attestation", "--visibility", "private").rc == 0
+    r = federate(host, "diff", str(old), "snapshot", stdout_only=True)
+    assert r.rc == 0 and r.out.splitlines() == [
+        "## The workspace", "", "Compared with the workspace of v0.2.0:", "",
+        f"- **c bundle** joined at v1.0.0, in `{c_iri}`.",
+        "- **a bundle** is internal now, and was public.",
+        "- **b bundle** was released again at v1.0.0, with other bytes.",
+        "- The workspace's sensitivity is `internal` now, and was `public`."], r.out
+
+
 def export_bundle(knowledge: Path, out: Path) -> Path:
     """The four files lokf export writes for a bundle, in a folder, as the bundle's site serves them."""
     r = run(["uv", "run", "--project", REPO / ".lokf", "lokf", "export", knowledge, "--out-dir", out])
@@ -431,14 +470,24 @@ def test_a_bundle_that_releases_no_zip_joins_by_the_file_its_site_serves(federat
     assert r.rc == 0 and "c: held at its last good state" in r.out, r.out
     assert (snap / "bundles" / "c" / ".lokf" / "concepts.jsonld").read_bytes() == original
     assert "has sha256" in next(m for m in yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))["members"] if m["slug"] == "c")["held"]
+    rewrite(host, "c", served_member("c", c_iri, served, top, version="2026-10-02"))
+    served.write_text(served.read_text(encoding="utf-8").replace("revised.", "revised again."), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation", *empty, "--previous", str(previous))
+    assert r.rc == 0, "a served file changes as its site does, so it may be held at an earlier file: " + r.out
+    entry = next(m for m in yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))["members"] if m["slug"] == "c")
+    assert entry["version"] == "2026-10-01" and entry["held"].startswith("its concept names 2026-10-02"), entry
     doc = json.loads(original)
     for fault, change, said in (
         ("base", lambda d: {**d, "@context": [d["@context"][0], {"@base": "https://elsewhere.example/knowledge/"}]},
          "says base_iri 'https://elsewhere.example/knowledge/' in its @context"),
         ("outside", lambda d: {**d, "@graph": [{**d["@graph"][0], "id": "https://elsewhere.example/x"}]}, "lies outside the base_iri"),
         ("climbs", lambda d: {**d, "@graph": [{**d["@graph"][0], "id": c_iri + "../../etc/passwd"}]}, "is no file a bundle can hold"),
+        ("twice", lambda d: {**d, "@graph": [d["@graph"][0], d["@graph"][0]]}, "is no file a bundle can hold"),
+        ("index", lambda d: {**d, "@graph": [{**d["@graph"][0], "id": c_iri + "index"}]}, "is no file a bundle can hold"),
+        ("graph", lambda d: {k: v for k, v in d.items() if k != "@graph"}, "holds no @graph of concepts"),
+        ("json", None, "is not JSON"),
     ):
-        bad = write(tmp_path / f"bad-{fault}" / "concepts.jsonld", json.dumps(change(doc)))
+        bad = write(tmp_path / f"bad-{fault}" / "concepts.jsonld", json.dumps(change(doc)) if change else "{ not json")
         rewrite(host, "c", served_member("c", c_iri, bad, top))
         r = federate(host, "build", "--no-attestation")
         assert r.rc == 1 and said in r.out, (fault, r.out)
@@ -673,8 +722,6 @@ def test_a_bundle_two_domains_name_at_one_release_joins_once(federation, tmp_pat
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 1 and "c: sensitivity must be public, internal or confidential, not 'secret'" in r.out, "the second domain's word is checked too: " + r.out
     assert (host / "snapshot" / "graph.nq").read_bytes() == snapshot_before
-    t_zip, t_sha = domain_zip(tmp_path, "t", t_iri, {"c": member("c", c_iri, c_zip, c_sha, t_iri + "domains/t")})
-    write(host / ".lokf" / "knowledge" / "members" / "t.md", frontmatter(**member("t", t_iri, t_zip, t_sha, top)) + "\n# Overview\n\nT.\n")
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
     entries = [m for m in lock["members"] if m["base_iri"] == c_iri]
     assert len(entries) == 1 and entries[0]["member_of"] == [s_iri + "domains/s", t_iri + "domains/t"] and entries[0]["kind"] == "bundle"
@@ -1271,6 +1318,22 @@ def test_mcp_loads_a_graph_when_a_walk_first_reaches_it(federation, tmp_path):
         return {**answer, "triples": sorted(answer.get("triples", []), key=json.dumps)} if "triples" in answer else answer
     assert [same(a) for a in lazy["calls"]] == [same(a) for a in eager["calls"]]
     assert int(lazy["calls"][3]["rows"][0]["n"]) == len(nq.decode("utf-8").splitlines())
+
+
+def test_read_document_falls_back_to_the_bundle_s_concepts_jsonld(federation, tmp_path):
+    """A workspace that lacks b's copy of a concept reads it from b's concepts.jsonld, as section 11.4 chains them, and says so; with neither, and no public source, it says there is none."""
+    host, b_iri = federation["host"], federation["b_iri"]
+    assert federate(host, "build", "--no-attestation").rc == 0
+    snap = tmp_path / "snap"
+    shutil.copytree(host / "snapshot", snap)
+    (snap / "bundles" / "b" / ".lokf" / "knowledge" / "glossary" / "other.md").unlink()
+    b_other = b_iri + "glossary/other"
+    out = mcp_answers(tmp_path, snap, [("read_document", {"iri": b_other})], "fallback")
+    doc = out["calls"][0]
+    assert doc["read_from"] == "concepts.jsonld" and "Another term." in doc["markdown"] and doc["trust"], doc
+    (snap / "export" / "b" / "concepts.jsonld").unlink()
+    out = mcp_answers(tmp_path, snap, [("read_document", {"iri": b_other})], "none")
+    assert out["calls"][0]["error"] == "b has no document at bundles/b/.lokf/knowledge/glossary/other.md", out["calls"][0]
 
 
 def mcp_answers(tmp_path: Path, snapshot, calls: list, name: str, *server_args: str) -> dict:
