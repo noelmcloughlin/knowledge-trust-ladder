@@ -7,14 +7,14 @@ definition: The plain-language phrase a skill uses for how far a concept has bee
 genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
-  by: process:ktl-curator
-  at: "2026-10-13T01:06:43Z"
+  by: process:ktl-librarian
+  at: "2026-10-19T13:18:24Z"
 definedBy: []
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-18T10:22:18Z"
+    at: "2026-10-19T13:18:24Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:06:43Z"
 references:
@@ -29,6 +29,8 @@ The labels restate OKF v0.2 section 5's trust fields in words a non-specialist c
 - Any `verified` actor prefixed `human:` means confirmed by a person.
 - Events by non-human actors alone mean checked by automation.
 - No `verified` key, or one with no events, means nobody has checked it.
+- `status: draft` with no `human:` `verified` event means still a draft.
+- `status: draft` with a `human:` `verified` event means reopened: the pen's `question` and the curator's send-back set it. The label gives the earliest open question asked on or after the confirmation's day, its asker, and how many wait. The confirmation still counts as one, so the rung stays.
 
 `knowledge-report.sh` reads `resource`, `sources[].resource` and git history for the label *a source moved since the confirmation*.
 
@@ -38,7 +40,8 @@ A `revision` on an event (proposed for lokf 0.9.0, not yet released) is shown be
 
 The labels overlap. A concept can be confirmed *and* past its review date, so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.
 
+A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung: only an edit after the confirmation does that. The health line counts the two apart since 0.45.0: *Drafts* for a concept no person has confirmed, and *Reopened* for one a person confirmed and a question has since put back to `status: draft`.
+
 ## Open questions
 
-- 2026-10-16, process:ktl-librarian: Since 0.45.0 `skills/ktl-curator/references/trust-fields.md` has a label *Reopened*: `status: draft` on a concept with a `human:` `verified` event, naming the earliest question asked on or after the confirmation's day, its asker and how many wait. A reopened concept still counts as confirmed, and *Still a draft* now needs no `human:` event. This concept does not name the label.
 - 2026-10-18, human:noelmcloughlin: update the concept to capture the gaps from `skills/ktl-curator/references/trust-fields.md`: the change to *Still a draft*, the new label and rule *Reopened*, the health line's new field, and the rung impacts of a question and of an edit after a confirmation.

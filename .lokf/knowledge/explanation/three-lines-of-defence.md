@@ -6,8 +6,8 @@ description: "The librarian, curator, registrar, sidecar and docent placed in th
 genre: explanation
 resource: docs/three-lines.md
 generated:
-  by: process:ktl-curator
-  at: "2026-10-13T01:11:23Z"
+  by: process:ktl-librarian
+  at: "2026-10-19T13:18:24Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -17,19 +17,19 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-18T17:45:03Z"
+    at: "2026-10-19T13:18:24Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:11:23Z"
 sources:
   - resource: docs/three-lines.md
   - resource: docs/three-lines-critics.md
   - resource: CHANGELOG.md
-  - resource: README.md
+  - resource: docs/architecture.md
 status: draft
 ---
 # Overview
 
-The README's section on the fifth role, the registrar, points at this page. The reference model is the Three Lines Model of The Institute of Internal Auditors (IIA), updated in [2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) and reissued as a [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf) in 2026. KTL was not built to it, but each of its roles fits. The page shows where, in a table and a diagram (`.assets/ktl-three-lines.svg`, with a dimmed counterpart for dark mode), for any organisation that adopts KTL.
+The architecture page's section on the fifth role, the registrar, points at this page. The reference model is the Three Lines Model of The Institute of Internal Auditors (IIA), updated in [2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) and reissued as a [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf) in 2026. KTL was not built to it, but each of its roles fits. The page shows where, in a table and a diagram (`.assets/ktl-three-lines.svg`, with a dark counterpart for dark mode), for any organisation that adopts KTL.
 
 - **First line**: the **librarian** and the **curator**. The librarian derives every record from a named source and marks what it cannot settle `status: draft`. The curator is a named person who decides what the team accepts as true. They are maker and checker, since the agent cannot vouch and the person does not derive.
 - **Second line**: the **registrar**, which keeps records well-formed: `lokf validate` on every change and in CI, `knowledge-apply.sh` as the librarian's only pen, `knowledge-report.sh` computing every trust label, and the KTL Registrar Obsidian plugin. The gate ties a `human:` verdict that is added or removed to that person's approval or signature, and the pen refuses to write a `human:` actor at all. Neither judges truth.
@@ -83,12 +83,9 @@ Three are not KTL's role, and each is the job of the adopting organisation or of
 The main page closes with what remains and who owns it, in three lines:
 
 - upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
-- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names the domain tiers and the workspace of [the context layer](context-layer.md), which federate bundles under a person's confirmation of membership.
+- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names fetching a federation member from a private repository, which `docs/federation.md` says remains a design.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
 
 ## Open questions
 
-- 2026-10-13, process:ktl-librarian: Since 2026-10-13 the fifth-role section that points at `docs/three-lines.md` is on `docs/architecture.md`, not in `README.md`. The sentence "The README's section on the fifth role" and the `README.md` source should name `docs/architecture.md`.
-- 2026-10-16, process:ktl-librarian: Since 0.43.0 `docs/three-lines.md` shows `.assets/ktl-three-lines-dark.svg` in GitHub's dark theme, and `CHANGELOG.md` says the `-dimmed` set stays in `.assets/` unreferenced. This concept says the diagram has a dimmed counterpart for dark mode.
-- 2026-10-18, process:ktl-librarian: `docs/three-lines.md` under What remains to do now lists, for this project, the parts of the context layer that remain a design: lazy loading, a `lokf-registry` MCP server, and harvesting remote artifacts behind the `sensitivity` gate. This concept says the list names the domain tiers and the workspace. `docs/federation.md` and `CHANGELOG.md` list the `lokf-registry` MCP server, `knowledge-federate.py mcp`, as existing, so the two pages also disagree on the MCP server.
 - 2026-10-18, human:noelmcloughlin: review the three lines sources (`docs/three-lines.md`, `docs/three-lines-critics.md` and `docs/architecture.md`), which recent commits changed since this concept was last confirmed (0c3ea0a, 2026-10-13); the concept is not fully aligned with them.

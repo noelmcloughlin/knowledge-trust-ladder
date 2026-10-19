@@ -2,6 +2,12 @@
 
 ## 2026-10-19
 
+* **Changed**: the Reopened label and the Still-a-draft rule now name themselves, from `skills/ktl-curator/references/trust-fields.md`, answering the open question a person left on 2026-10-18. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Resolved**: the Reopened label is now named, from `skills/ktl-curator/references/trust-fields.md`.
+* **Changed**: the fifth-role sentence now names `docs/architecture.md`, the diagram note says dark rather than dimmed, and what remains to do now names fetching a federation member from a private repository, matching `docs/three-lines.md` since its latest commit. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Resolved**: the sentence and the sources now name `docs/architecture.md`.
+* **Resolved**: the concept now says dark, matching `docs/three-lines.md`'s `-dark` source; `CHANGELOG.md` confirms the `-dimmed` set stays unreferenced.
+* **Resolved**: `docs/three-lines.md` no longer lists the MCP server there; it now names fetching a federation member from a private repository, which the concept follows.
 * **Changed**: What KTL took from WikiSkill now cites the paper, `CHANGELOG.md` and the skill files where each change lives, instead of `docs/wikiskill.md`, so the concept no longer rests on that page.
 * **Rewrite**: The curated context layer now summarises the three pages instead of mirroring each section, since 0.53.0 moved the whole federation design to `docs/federation.md` and kept the technology survey to what KTL needs.
 * **Changed**: Context layer says a domain's owner confirms each bundle the domain admits, as `docs/context-layer.md` puts it since 0.53.0.
