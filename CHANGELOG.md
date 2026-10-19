@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **The federation build runs lokf in its own process.** It exported and validated each bundle through a new lokf process, which imported lokf and LinkML again every time. A build of ktl-federation's five members takes 4.5 seconds instead of 12, with the same output, and the federation tests run in half the time.
-
 ## [0.53.0] - 2026-10-19
 
 ### Added
@@ -29,6 +25,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The docs say the pen, its figure and the ingest's guards once.** The figure of who writes the bundle stays on `docs/architecture.md`, and `docs/for-the-curious.md`, `docs/ingest.md` and `docs/three-lines.md` link to the page that holds each detail instead of repeating it.
 - **`docs/context-layer-technology.md` keeps to what KTL needs from a product.** The vendor tables of limits, plans and quotes are gone, and the page names the sidecar's own workspace server and MCP server beside the stores'.
 - **`docs/for-the-curious.md` says how readers and verdicts steer the next run.** It now holds what KTL took from the WikiSkill and SkillWiki papers, so `docs/wikiskill.md` and `docs/skillwiki.md` are gone. The bundle's two concepts stay the record of each paper.
+- **The federation build runs lokf in its own process.** It exported and validated each bundle through a new lokf process, which imported lokf and LinkML again every time. A build of ktl-federation's five members takes 4.5 seconds instead of 12, with the same output, and the federation tests run in half the time.
 
 ### Fixed
 
