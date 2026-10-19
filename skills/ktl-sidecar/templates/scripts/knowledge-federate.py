@@ -835,20 +835,45 @@ def gh_has_credential(gh: str) -> bool:
     return subprocess.run([gh, "auth", "status"], capture_output=True, text=True).returncode == 0
 
 
-def verify_attestation(path: pathlib.Path, owner: str, repo: str) -> str:
-    """gh attestation verify, when gh is present; the verdict as one line."""
+# The workflows that sign what a build fetches: a bundle's zip and schema
+# are attested by its release workflow, a domain's workspace by its
+# federation workflow. gh checks the signer by these paths, so an
+# attestation made by any other workflow in the repository does not count.
+RELEASE_WORKFLOW = ".github/workflows/knowledge-release.yaml"
+FEDERATION_WORKFLOW = ".github/workflows/knowledge-federation.yaml"
+# gh matches --signer-workflow exactly from 2.102.0; before it, as a prefix
+# and with its dots as any character. The flag itself came in 2.51.0.
+GH_EXACT_SIGNER = (2, 102, 0)
+
+
+@functools.cache
+def gh_version(gh: str) -> tuple[int, ...]:
+    done = subprocess.run([gh, "--version"], capture_output=True, text=True)
+    m = re.search(r"gh version (\d+)\.(\d+)\.(\d+)", done.stdout or "")
+    return tuple(int(x) for x in m.groups()) if m else (0, 0, 0)
+
+
+def verify_attestation(path: pathlib.Path, owner: str, repo: str, workflow: str = RELEASE_WORKFLOW) -> str:
+    """gh attestation verify, pinned to the workflow that signs the file; the verdict as one line."""
     gh = shutil.which("gh")
     if not gh:
-        return "not checked: gh is not installed"
+        raise Failed(f"{path.name}: gh is not installed, so the attestation of {owner}/{repo} cannot be checked; "
+                     "install gh, or pass --no-attestation to build without it")
+    version = gh_version(gh)
+    if version < (2, 51, 0):
+        raise Failed(f"{path.name}: gh {'.'.join(map(str, version))} cannot pin the workflow that signed an attestation; "
+                     "install gh 2.102.0 or later, or pass --no-attestation")
     if not gh_has_credential(gh):
         raise Failed(f"{path.name}: gh has no credential to verify the attestation of {owner}/{repo}. "
                      "In the librarian workflow, set the repository variables AGENT_USE_JOB_TOKEN to true and "
                      "AGENT_API_KEY_ENV to KNOWLEDGE_FEDERATE_TOKEN; elsewhere, run gh auth login, or pass --no-attestation")
-    done = subprocess.run([gh, "attestation", "verify", str(path), "--repo", f"{owner}/{repo}"],
+    signer = f"{owner}/{repo}/{workflow}"
+    done = subprocess.run([gh, "attestation", "verify", str(path), "--repo", f"{owner}/{repo}", "--signer-workflow", signer],
                           capture_output=True, text=True, env=gh_env())
     if done.returncode != 0:
-        raise Failed(f"{path.name}: gh attestation verify failed for {owner}/{repo}: {(done.stderr or done.stdout).strip()[:300]}")
-    return f"attested by {owner}/{repo}"
+        raise Failed(f"{path.name}: gh attestation verify failed for {signer}: {(done.stderr or done.stdout).strip()[:300]}")
+    loose = "" if version >= GH_EXACT_SIGNER else f", matched loosely by gh {'.'.join(map(str, version))}; 2.102.0 matches it exactly"
+    return f"attested by {workflow.rsplit('/', 1)[-1]} of {owner}/{repo}{loose}"
 
 
 def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) -> tuple[pathlib.Path, str]:
@@ -982,7 +1007,7 @@ def open_previous(where: str, domain_base: str, release_base: str, attest: bool,
     page = GITHUB_RELEASE_PAGE.match(release_base or "")
     if source.zip_path and attest and page and visibility() not in ("private", "internal"):
         try:
-            verify_attestation(source.zip_path, page.group(1), page.group(2))
+            verify_attestation(source.zip_path, page.group(1), page.group(2), FEDERATION_WORKFLOW)
         except Failed as e:
             warn(f"--previous {where}: {e}; a member whose release cannot be fetched stops the build")
             return None
@@ -1106,7 +1131,7 @@ def released_lock(member: Member, domain_iri: str | None, cache: pathlib.Path, m
         return None
     cached = obtain_file(member.workspace_url, member.workspace_sha256, cache, member.slug, max_bytes)
     if member.github and attest:
-        verify_attestation(cached, member.github[0], member.github[1])
+        verify_attestation(cached, member.github[0], member.github[1], FEDERATION_WORKFLOW)
     try:
         with zipfile.ZipFile(cached) as zf:
             info = zf.getinfo(WORKSPACE_LOCK)

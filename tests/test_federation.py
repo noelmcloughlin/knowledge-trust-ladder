@@ -107,7 +107,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    again when the workspace was attached again with other bytes.
 10. under the librarian wrapper, `members` hands the job token that arrives
     as KNOWLEDGE_FEDERATE_TOKEN to gh alone, and with no credential at all
-    it stops and says which variables give it one;
+    it stops and says which variables give it one; the attestation must come
+    from the member's release workflow, and a gh too old to pin it is named;
 11. `members` moves a member its site serves to the file the site serves
     now, asking with the validators it kept, and `members --add <address>`
     drafts one from a site's concepts.jsonld;
@@ -1703,12 +1704,17 @@ finally:
 # a real repository.
 FAKE_GH = """\
 #!/bin/sh
+[ "$1" = --version ] && { echo "gh version ${FAKE_GH_VERSION:-2.102.0} (2026-09-30)"; exit 0; }
 [ "$1 $2" = "pr list" ] && { printf '%s\\n' "${FAKE_GH_PRS:-[]}"; exit 0; }
 if [ "$1" = api ] && [ -n "${FAKE_GH_API:-}" ]; then
   repo=$(printf '%s' "$2" | cut -d/ -f3)
   cat "$FAKE_GH_API/$repo.json" && exit 0
 fi
 if [ "$1 $2" = "attestation verify" ]; then
+  case "$*" in
+    *" --signer-workflow acme/"*"/.github/workflows/knowledge-release.yaml"*) ;;
+    *) echo "gh: the attestation was not signed by the workflow named" >&2; exit 1 ;;
+  esac
   [ "${GH_TOKEN:-}" = job-token ] && [ -z "${KNOWLEDGE_FEDERATE_TOKEN:-}" ] && exit 0
   echo "gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable." >&2
 fi
@@ -2022,7 +2028,12 @@ def test_members_hands_the_job_token_to_gh_alone(released):
     r = members_run(released, "--dry-run", attest=True)
     assert r.rc != 0 and "gh has no credential" in r.out and "AGENT_API_KEY_ENV to KNOWLEDGE_FEDERATE_TOKEN" in r.out, r.out
     r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token"})
-    assert r.rc == 0 and "attested by acme/a" in r.out, r.out
+    assert r.rc == 0 and "attested by knowledge-release.yaml of acme/a" in r.out and "loosely" not in r.out, r.out
+    # gh before 2.102.0 matches the signer workflow as a prefix, and says so.
+    r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token", "FAKE_GH_VERSION": "2.90.0"})
+    assert r.rc == 0 and "matched loosely by gh 2.90.0" in r.out, r.out
+    r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token", "FAKE_GH_VERSION": "2.40.0"})
+    assert "cannot pin the workflow that signed an attestation" in r.out, r.out
 
 
 def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path):
