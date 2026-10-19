@@ -18,7 +18,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T12:30:15Z"
+  at: "2026-10-19T23:21:13Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -33,7 +33,7 @@ A **domain host** is a repository whose bundle names other repositories' knowled
 
 ktl-sidecar's `templates/domain.yaml` is laid down as `.lokf/domain.yaml`, with `schema := "domain.yaml"` in the justfile. It adds four classes over LOKF core, and `lokf validate` checks them like any other. Neither Obsidian plugin can read that file, so list `Domain`, `MemberBundle` and `MemberDomain` under *Known LOKF types* in both.
 
-- **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner, one concept under `domains/` named for the domain and never for its position. The build reads three settings as a person last confirmed them. Under `unowned_targets`, `fail` stops the build on a link into no member's namespace, or to no concept of the member whose namespace holds it, and `report` lists it. `max_depth` is how many tiers the build follows, 3 unless set. `sensitivity` is `public` unless set, and `internal` admits internal members, only in a private or internal repository.
+- **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner, one concept under `domains/` named for the domain and never for its position. The build reads four settings as a person last confirmed them. Under `unowned_targets`, `fail` stops the build on a link into no member's namespace, or to no concept of the member whose namespace holds it, and `report` lists it. `max_depth` is how many tiers the build follows, 3 unless set. `sensitivity` is `public` unless set, and `internal` admits internal members, only in a private or internal repository. `private_addresses` is `refuse` unless set, and a person confirms `allow` to let the build fetch a member from a private, loopback or link-local address, for a forge on the host's own network.
 - **`MemberBundle`** (a `Dataset`): one admitted bundle, under `members/`. It names the bundle's `base_iri`, the release `version` it pins, the `release` page, and a `distribution` whose `access_url` is the release's zip and whose `checksum` is its digest. A bundle that releases no zip is named by the `concepts.jsonld` its site serves, with that file's checksum. A second distribution names a schema released beside the zip, and the build validates against it. `isPartOf` names the domain. Its `sensitivity` is `public` unless set, `internal`, or `confidential`, which joins no workspace.
 - **`MemberDomain`** (a `MemberBundle`, `dcat:Catalog`): a member whose bundle is a domain in turn. The build follows its members into the same workspace, as deep as `max_depth` allows, and follows a `MemberBundle` whose zip holds a `Domain` concept too.
 - **`ReleaseDistribution`** (a `Distribution`): the file with its `checksum`, `sha256:` and 64 hexadecimal digits.

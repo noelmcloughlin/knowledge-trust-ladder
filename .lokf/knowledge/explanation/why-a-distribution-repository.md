@@ -23,7 +23,7 @@ references:
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-19T20:01:11Z"
+    at: "2026-10-19T23:21:13Z"
 ---
 
 # Overview

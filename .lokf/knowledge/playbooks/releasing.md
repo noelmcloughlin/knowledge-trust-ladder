@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T10:22:18Z"
+  at: "2026-10-19T23:21:13Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -72,7 +72,7 @@ Since 0.47.0 `publish.yml` then asks the hosts named in the `KNOWLEDGE_SYNC_HOST
 
 This release-process detail moved out of `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for the three KTL repositories in one place. All six skills are released together under one tag, so a consumer can pin them to a single release. The `release` Environment's required reviewers are configured once, by hand, in each repository's settings, or a qualifying merge is released unattended. Changes reach `main` by pull request, but no ruleset enforces it, and "Require signed commits" as a branch rule is off and must stay off.
 
-The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates and their own skills pin. Only the first line of `.lokf/justfile`, which names the host, and its `schema :=` line are a sibling's own. Since 0.47.0 each sibling keeps itself current. Its `knowledge-sync.yaml` reads the pin and this repository's newest release each week. When the pin is behind, it runs the sibling's own `.lokf/scripts/knowledge-sync.sh`, which reads what to copy from the release's `templates/knowledge-sync.manifest`, and opens one pull request with the diff: the copies, the pin, and the changelog entry under `## [Unreleased]` and `### Security`. A later week's run refreshes that one pull request to the newest release until it is merged. The header of `knowledge-sync.sh` says what a sync copies, adds and refuses.
+The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates and their own skills pin. Only the first line of `.lokf/justfile`, which names the host, and its `schema :=` line are a sibling's own. Since 0.47.0 each sibling keeps itself current. Its `knowledge-sync.yaml` reads the pin and this repository's newest release each week. When the pin is behind, it runs the sibling's own `.lokf/scripts/knowledge-sync.sh`, which reads what to copy from the release's `templates/knowledge-sync.manifest`, and opens one pull request with the diff: the copies, the pin, and the changelog entry under `## [Unreleased]` and `### Security`. A later week's run refreshes that one pull request to the newest release until it is merged. Since 0.53.0 the branch the sync pushes carries no workflow a release wrote: `publish` keeps every workflow but for the pin, and holds the release's workflow changes for a person, or for a reviewer of the Environment that `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` names (`CHANGELOG.md`). The header of `knowledge-sync.sh` says what a sync copies, adds and refuses.
 
 A new template goes in the manifest and in ktl-sidecar's Step 5 table, and nowhere else, because the preflight and contract check 11 read the manifest.
 

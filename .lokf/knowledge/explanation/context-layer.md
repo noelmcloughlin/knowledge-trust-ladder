@@ -23,11 +23,11 @@ references:
   - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T12:30:15Z"
+  at: "2026-10-19T23:21:13Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-19T20:01:11Z"
+    at: "2026-10-19T23:21:13Z"
 ---
 
 # Overview
@@ -46,9 +46,9 @@ OKF says nothing about one bundle naming another, a catalogue of bundles, or wha
 
 - **A domain** is a thin LOKF bundle in a repository of its own, whose concepts are its member bundles. Each member names one release by its zip and checksum, or by the `concepts.jsonld` its site serves. A one-file domain schema defines `Domain`, `MemberBundle` and `MemberDomain`. Nothing is copied upward, and a person's confirmation of a member attests that it belongs and that the domain's claims across bundles hold.
 - **Tiers.** A member that is itself a domain is followed into the same workspace. Every domain bounds a workspace of its own, and confirming a domain member attests the delegation, not what its members say. Under the diamond rule, a bundle that two domains name at one release joins once, and at different releases the build stops. `max_depth` on the top domain sets how many tiers the build follows, 3 unless set.
-- **The workspace** is a materialised view of the top domain, rebuilt on each release by `knowledge-federate.py build`, and no agent runs. The build locks and verifies each release, loads one named graph per bundle, gates every link between bundles against the registry, and swaps the graphs in one atomic step. A member whose file cannot be fetched is held at its last good state. A reader takes the index first and traverses on demand over the `lokf-registry` MCP server or a SPARQL endpoint, and trust labels are computed when the query runs.
+- **The workspace** is a materialised view of the top domain, rebuilt on each release by `knowledge-federate.py build`, and no agent runs. The build locks each release and fetches it over http or https from a public address. It checks each zip against its checksum and, on GitHub, against an attestation signed by the member's own release workflow, and refuses a zip holding a link, a hidden file or a file a browser runs. It then loads one named graph per bundle, gates every link between bundles against the registry, and swaps the graphs in one atomic step. A member whose file cannot be fetched is held at its last good state. A reader takes the index first and traverses on demand over the `lokf-registry` MCP server or a SPARQL endpoint, and trust labels are computed when the query runs.
 
-The federation page sorts what exists from what remains a design. Of section 11, only fetching a member from a private repository remains a design, and per-query permission stays with the store and the artifact repository. An adopter decides whether to pin or float, how pinning compounds across tiers, how to keep IRIs stable, who arbitrates, what vocabulary fits, what a member adds, and who may see what. The `sensitivity` gate of section 11.5 admits an internal member only to a workspace built in a private or internal repository, and a confidential one to none.
+The federation page sorts what exists from what remains a design. Of section 11, only fetching a member from a private repository remains a design. Such a bundle joins from a local path, in a build a person runs with `--allow-local`. Per-query permission stays with the store and the artifact repository. An adopter decides whether to pin or float, how pinning compounds across tiers, how to keep IRIs stable, who arbitrates, what vocabulary fits, what a member adds, and who may see what. The `sensitivity` gate of section 11.5 admits an internal member only to a workspace built in a private or internal repository, and a confidential one to none.
 
 # What a workspace can use
 

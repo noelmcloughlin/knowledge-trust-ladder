@@ -19,12 +19,12 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T21:26:04Z"
+  at: "2026-10-19T23:21:13Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T00:59:27Z"
   - by: process:ktl-librarian
-    at: "2026-10-19T20:01:11Z"
+    at: "2026-10-19T23:21:13Z"
   - by: human:noelmcloughlin
     at: "2026-10-19T12:28:10Z"
 stale_after: 2027-04-19
@@ -47,6 +47,8 @@ Reading the paper in October 2026 changed the skills in four places, which `CHAN
 - **A confirming commit records the verdict.** SkillWiki's structured diff sorts a change by what it touches before review. Conventions rule 14 reads each commit of a pull request. A commit that records a person's confirmation may change what the concept says only when `generated.by` names that person.
 
 One more change waits for LOKF 0.9.0. SkillWiki's verifier specs check an output by program, and LOKF 0.9.0's `sources[].excerpt` lets a program check the exact passage a concept relies on against its source.
+
+Since 0.53.0, `docs/for-the-curious.md` holds what KTL took from the paper, under *How readers and verdicts steer the next run*, and `docs/skillwiki.md` is gone. `CHANGELOG.md` says this concept stays the record of the paper.
 
 # Where the designs part
 
