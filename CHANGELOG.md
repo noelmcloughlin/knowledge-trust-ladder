@@ -4,14 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **`docs/for-the-curious.md` says how readers and verdicts steer the next run.** It now holds what KTL took from the WikiSkill and SkillWiki papers, so `docs/wikiskill.md` and `docs/skillwiki.md` are gone. The bundle's two concepts stay the record of each paper.
-
-### Fixed
-
-- **The librarian keeps run accounts out of the source map.** No rule asked for one, yet each refresh had added its account to `playbooks/knowledge-sources.md`, 41 of them by 2026-10-19. The skill now says the map holds none.
-
 ## [0.53.0] - 2026-10-19
 
 ### Added
@@ -32,6 +24,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`docs/federation.md` holds the whole federation design, and states each rule once.** Domains as manifests, LOKF section 11 and the release moved there from `docs/context-layer.md`, which keeps what a context layer is, the one-bundle table and what OKF leaves open.
 - **The docs say the pen, its figure and the ingest's guards once.** The figure of who writes the bundle stays on `docs/architecture.md`, and `docs/for-the-curious.md`, `docs/ingest.md` and `docs/three-lines.md` link to the page that holds each detail instead of repeating it.
 - **`docs/context-layer-technology.md` keeps to what KTL needs from a product.** The vendor tables of limits, plans and quotes are gone, and the page names the sidecar's own workspace server and MCP server beside the stores'.
+- **`docs/for-the-curious.md` says how readers and verdicts steer the next run.** It now holds what KTL took from the WikiSkill and SkillWiki papers, so `docs/wikiskill.md` and `docs/skillwiki.md` are gone. The bundle's two concepts stay the record of each paper.
 
 ### Fixed
 
@@ -56,6 +49,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The federation workflow's weekly schedule no longer takes the place of a release build that waits for its turn**, and each job has a time limit.
 - **A domain host's site serves each member's release inside the workspace.** The Pages upload left out the hidden `bundles/<slug>/.lokf/` folders, so every member link in the served workspace index answered 404.
 - **The contract records every sibling host's links into this repository**, among them ktl-federation's into the federation page and the domain-bundle playbook. Its local cross-check reads all five hosts, and skips a domain host's ignored `snapshot/`, which holds a copy of this bundle.
+- **The librarian keeps run accounts out of the source map.** No rule asked for one, yet each refresh had added its account to `playbooks/knowledge-sources.md`, 41 of them by 2026-10-19. The skill now says the map holds none.
 
 ## [0.52.0] - 2026-10-18
 
