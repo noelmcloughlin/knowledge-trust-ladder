@@ -19,7 +19,8 @@ first tag, and pin what the script's header says:
    source lacks are each refused;
 6. without --source the host's copy clones the tag and reads its manifest,
    and a manifest rule the copy does not know is reported, not guessed at;
-7. a manifest that names a copy path outside the host is refused;
+7. a manifest that names a copy path outside the host, or inside a .git
+   folder, is refused;
 8. scripts/sync-sidecar.sh runs each sibling's own copy, or the tag's in a
    sibling that has none, and its --finish keeps a branch that was never
    pushed, or whose remote branch still exists, and removes one whose pull
@@ -180,6 +181,7 @@ def test_a_sync_copies_adds_reports_pins_and_writes_the_entry(tmp_path, skills, 
     body = read(report)
     checks.ok(body.startswith("Brings the sidecar copies and the skills pin of this repository to Knowledge Trust Ladder [v1.1.0]("), "the report opens with the release", body)
     checks.ok("- `.lokf/scripts/knowledge-report.sh`" in body and "skipped (--no-checks)" in body, "the report lists the copies and the checks", body)
+    checks.ok("does not know their rule:\n\n- `mirror docs/example.md`" in body, "the report names the rule the script does not know, so the pull request shows it", body)
     checks.ok(matches(out, r"^   git commit -m \"security\(sidecar\): sync copies and skills pin from v1\.1\.0\"$"), "the commit command is printed", out)
     checks.ok((host / ".lokf" / "scripts" / "knowledge-sync.sh").stat().st_mode & 0o111, "an added script is executable")
 
@@ -302,6 +304,23 @@ def test_a_manifest_that_names_a_path_outside_the_host_is_refused(tmp_path, skil
     result = run(["bash", SYNC, "--source", skills, "--host", host, "--no-checks", "v1.2.0"], cwd=host, env=IDENT)
     checks.ok(result.rc == 2 and "outside the host" in result.out, "the manifest is refused before anything is written", result.out)
     checks.ok(not Git(host)("status", "--porcelain"), "the host is untouched")
+
+
+@pytest.mark.parametrize("copy", [".git/config", ".GIT/hooks/pre-commit", ".lokf/.git/config"])
+def test_a_manifest_that_names_a_path_in_a_git_folder_is_refused(tmp_path, skills, checks, copy):
+    """A copy under .git is git's own configuration, which can name a command the next git command runs."""
+    host = make_host(tmp_path, skills)
+    config = read(host / ".git" / "config")
+    git = Git(skills)
+    with (skills / "skills" / "ktl-sidecar" / "templates" / "knowledge-sync.manifest").open("a") as f:
+        f.write(f"copy scripts/knowledge-report.sh {copy}\n")
+    git("add", "-A")
+    git("commit", "-qm", "v1.2.0")
+    git("tag", "v1.2.0")
+    result = run(["bash", SYNC, "--source", skills, "--host", host, "--no-checks", "v1.2.0"], cwd=host, env=IDENT)
+    checks.ok(result.rc == 2 and "inside a .git folder" in result.out, "the manifest is refused before anything is written", result.out)
+    checks.ok(not Git(host)("status", "--porcelain"), "the host is untouched")
+    checks.ok(read(host / ".git" / "config") == config, "and so is its git configuration")
 
 
 def test_the_fan_out_runs_each_siblings_own_copy_and_finishes_merged_branches(tmp_path, skills, checks):

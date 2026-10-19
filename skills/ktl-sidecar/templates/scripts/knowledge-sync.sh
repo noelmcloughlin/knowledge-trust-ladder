@@ -217,7 +217,7 @@ main() {
     fi
     tmp_clone="$(mktemp -d)"
     echo "   cloning $tag from $repo"
-    git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$tag" -- "$repo" "$tmp_clone"
+    git -c advice.detachedHead=false clone --quiet --no-checkout --depth 1 --branch "$tag" -- "$repo" "$tmp_clone"
     source="$tmp_clone"
     repo_url="$(web_url "$repo")"
   fi
@@ -252,6 +252,11 @@ main() {
       copy|titled)
         if [[ ! "$b" =~ ^[A-Za-z0-9._/@+-]+$ || "$b" == /* || "$b" == *..* || "$a" == /* || "$a" == *..* ]]; then
           die "$tag's $manifest names a path outside the host, or with a character no template uses: $line"
+        fi
+        # A copy under .git would be git's own configuration, which can name
+        # a command git runs: a release could run code in the job that reads it.
+        if [[ "/$b/" =~ /\.[Gg][Ii][Tt]/ ]]; then
+          die "$tag's $manifest names a path inside a .git folder: $line"
         fi
         pairs+=("$a:$b")
         [[ "$rule" != titled ]] || titled+=("$a") ;;
@@ -392,6 +397,9 @@ main() {
     website=1
     while IFS= read -r tpath; do
       rel="${tpath#"$website_templates/website/"}"
+      if [[ ! "$rel" =~ ^[A-Za-z0-9._/@+-]+$ || "/$rel/" =~ /\.[Gg][Ii][Tt]/ || "/$rel/" == */../* ]]; then
+        die "$tag's website templates hold a path a host may not carry: $rel"
+      fi
       skip=0; for o in "${website_owned[@]}"; do [[ "$rel" == "$o" ]] && skip=1; done
       [[ "$skip" -eq 1 ]] && continue
       dst="website/$rel"; [[ "$rel" == gitignore ]] && dst="website/.gitignore"
@@ -582,6 +590,10 @@ main() {
     if [[ ${#absent[@]} -gt 0 ]]; then
       echo; echo "Not added, for ktl-sidecar's Step 5 to decide:"; echo
       for f in "${absent[@]}"; do echo "- \`$f\`"; done
+    fi
+    if [[ ${#unknown[@]} -gt 0 ]]; then
+      echo; echo "Left for the next sync, since this copy of knowledge-sync.sh does not know their rule:"; echo
+      for f in "${unknown[@]}"; do echo "- \`${f//\`/}\`"; done
     fi
     echo
     if [[ "$pin_moved" -eq 1 ]]; then
