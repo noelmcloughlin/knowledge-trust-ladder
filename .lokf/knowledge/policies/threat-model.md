@@ -6,8 +6,8 @@ description: "The security design the three KTL repositories share, kept in one 
 genre: reference
 resource: docs/threat-model.md
 generated:
-  by: process:ktl-curator
-  at: "2026-10-13T01:15:05Z"
+  by: process:ktl-librarian
+  at: "2026-10-19T23:04:14Z"
 verified:
   - by: process:ktl-librarian
     at: "2026-10-19T20:01:11Z"
@@ -23,24 +23,28 @@ sources:
   - resource: skills/ktl-sidecar/templates/scripts/knowledge-conventions.sh
 status: draft
 ---
+
 # Overview
 
 The page was added on 2026-09-14, when the design moved out of `SECURITY.md` and into it across the three KTL repositories (`knowledge-trust-ladder`, KTL Registrar, KTL Curator). Each repository's `SECURITY.md` says how to report, what that repository owns, and what it inherits from here. `scripts/validate-repository.sh` check 9 records this path among the ones a sibling depends on.
 
 **Interactive use is advisory, not enforced.** A skill's `Scope:` line is prose, not a checked permission. An agent run interactively has whatever access its harness grants, and only the scheduled `knowledge-librarian.yaml` enforces its scope, because nothing is watching it run.
 
-The skills ktl-curator, ktl-librarian, ktl-prose and ktl-sidecar also run the repository's scripts from `.lokf/scripts/`. Anyone who can commit to the repository can change those scripts, so a skill runs them as the repository's code. The preflight's `copies` line cannot check them, because the preflight is one of them.
+The skills ktl-curator, ktl-librarian, ktl-prose, ktl-sidecar and ktl-website also run the repository's scripts from `.lokf/scripts/`. Anyone who can commit to the repository can change those scripts, so a skill runs them as the repository's code. ktl-website's build also runs `site.config.mjs`, the site's files under `website/`, and the commands `site.config.mjs` names, or a `gen-doc` recipe it finds, to build the schema's pages and the data, and they are the repository's code too. The preflight's `copies` line cannot check them, because the preflight is one of them.
 
 Since 2026-10-05, ktl-docent runs none of them. It runs its own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which a check in `knowledge-trust-ladder` holds byte-identical to their templates, so a question runs no code the repository supplies. That holds only where the skill comes from a source the reader trusts, since a repository that holds its own copy of a skill supplies the instructions and the scripts.
 
 **Repository hardening**:
 
-- Actions are pinned to commit SHAs everywhere, the copied templates included. Dependabot bumps the workflow pins, and the templates are bumped by hand, since Dependabot scans only `.github/workflows/`.
+- Actions are pinned to commit SHAs everywhere, including the six templates under `skills/ktl-sidecar/templates/github/` and `skills/ktl-website/templates/github/`. Dependabot bumps the workflow pins, and the templates are bumped by hand, since Dependabot scans only `.github/workflows/`.
 - `permissions: {}` is at the top of every workflow.
-- The agent step runs the reviewed, in-repo wrapper, never a repository variable's content as a command. `AGENT_CLI` chooses the agent, `KNOWLEDGE_LIBRARIAN_ENABLED` turns it on, and the workflow triggers only on `schedule` and `workflow_dispatch`.
+- The agent step runs the reviewed, in-repo wrapper, never a repository variable's content as a command. `AGENT_CLI` chooses the agent, `KNOWLEDGE_LIBRARIAN_ENABLED` turns it on, and the workflow triggers only on `schedule` and `workflow_dispatch`. A domain host's members script takes the job token as `KNOWLEDGE_FEDERATE_TOKEN`, removes it from its own environment, and hands it to `gh` alone, to verify attestations.
 - harden-runner runs in audit mode on any job that installs packages or runs third-party code.
 - The librarian is split into an `earlier` job whose token can read pull requests and nothing else, a read-only `refresh` job and an agent-free `publish` job. So the write token and the agent never meet. The agent's one credential is the `AGENT_API_KEY` secret or, with `AGENT_USE_JOB_TOKEN`, the job's own token, holding `contents: read` and `copilot-requests: write`. It is exported into the agent's environment only, under a credential-shaped name the wrapper checks (2026-09-24).
-- The release workflow is split the same way (2026-09-24). A `pack` job installs the toolkit and validates under `contents: read`. An `attach` job runs no third-party packages, holds `contents: write`, and checks each zip, the bundle's and any Copilot skill's, against the checksum `pack` made before uploading it.
+- Every secret lives in an Environment limited to the default branch. The librarian's agent key, the sync token and the ingest credentials each belong in the Environment of the one workflow that reads them, `knowledge-librarian`, `knowledge-sync` or `knowledge-ingest`, since a repository secret can otherwise be read by a workflow on any branch. The templates still read a same-named repository secret too, so a host works while it moves them, but a private repository on GitHub Free has no Environments, and its secrets stay readable from any branch there.
+- A host's sync runs no code from the release. `knowledge-sync.yaml`'s `sync` job runs the host's own copy of `knowledge-sync.sh` under `contents: read`, with no git credential on disk, reading the release's `knowledge-sync.manifest` as data. Its `publish` job applies the patch with the default branch's copy of the script, which refuses anything but the sidecar's copies, the site's copies, the pin and the changelog, and holds the release's own workflow changes for a person to review before the pin moves.
+- The release workflow is split the same way (2026-09-24). A `pack` job installs the toolkit and validates under `contents: read`. An `attach` job runs no third-party packages, holds `contents: write`, and checks each zip, the bundle's and any Copilot skill's, against the checksum `pack` made before uploading it. The release step, the sidecar's `knowledge-sync.sh` and its `knowledge-sync.yaml` workflow move the skill pin together.
+- A domain host's federation build reads the members' releases and never runs them. It fetches only the files the member concepts name, checks each against the checksum a person confirmed, and checks a GitHub release's attestation too, signed by the member's own release workflow. It refuses a zip holding a symbolic link, a path outside its root, a hidden file, a file a browser runs, or more than a size limit unpacked. Its `check` and `build` jobs hold a read token; only `publish` can write, and it checks the workspace zip against the checksum `build` wrote.
 - Every write to `main` waits behind the `release` Environment's required reviewers. Those reviewers are configured by hand, or the Environment exists in name only. Release tooling is installed with `npm install --ignore-scripts`.
 - `main` blocks deletion, force-pushes and non-linear history, and nothing more, since a stricter ruleset would also reject the release job's commit.
 - Secret scanning and push protection still hold, as GitHub settings nothing in CI can assert.
@@ -50,6 +54,12 @@ Since 2026-10-05, ktl-docent runs none of them. It runs its own copies of `knowl
 - Every workflow that installs the lokf toolkit does so with `uv sync --locked`. So each file is checked against the hash `.lokf/uv.lock` records, and a lock that is missing or out of date fails the job.
 - The Python halves of the conventions script and the pen name one PyYAML release, and take no file uploaded after a set date.
 - Where there is no Python, ktl-librarian and ktl-sidecar read LOKF's schema from GitHub by commit, never by tag, so the file cannot change under them (2026-10-05). The contract in `knowledge-trust-ladder` fails a tag or a branch in that URL, and two pages that pin different commits.
+
+**The sync workflow** keeps a host's sidecar and site copies, and its skill pin, at the newest release, and runs no agent. Its `sync` job clones the release and copies only what `knowledge-sync.manifest` names, refusing a copy path outside the host's tree or inside a `.git` folder. Its `publish` job applies what it found, refusing a path the manifest does not allow and keeping every workflow as the default branch has it but for the pin. `KNOWLEDGE_SYNC_TOKEN`, scoped to Contents, Pull requests and Workflows for that repository alone, lets it push one branch, `knowledge-sync`, and open or edit one pull request, which a person reviews before the pin moves. Its force-push touches only that branch, leased to the commit the `earlier` job read, so a commit a person added since is never lost.
+
+**The website** is built by `knowledge-website.yaml`'s `build` job, which runs npm's packages, the lokf toolkit, `just` and the repository's own code, under a read-only token and no secret. `npm ci --ignore-scripts` runs no package's install script. Its `deploy` job runs on the default branch alone, in the `github-pages` Environment. A link into the site is followed only when it ends there, and an SVG holding a script, an event handler or a `javascript:` address is left out.
+
+**The ingest workflow**, `knowledge-ingest.yaml`, mirrors the sources `.lokf/ingest.yaml` names into `.lokf/mirror/`, and runs no agent. It fetches each address under `contents: read` with no git credential on disk, caps each body and the mirror as a whole, refuses a private or link-local address the manifest does not allow, and removes every character a reader cannot see. A `command` entry runs only a tracked, committed script, with no shell and a clean environment. The job holds only the `KNOWLEDGE_INGEST_` secrets the manifest names, and its `publish` job refuses a patch touching anything but `.lokf/mirror/` and the lock. What it fetches reaches the scheduled librarian only after a person merges the pull request, so the mirror holds the same place as any other repository content, reviewed before the librarian reads it.
 
 **The librarian's pen (added 2026-10-03)**: the librarian writes the bundle only through `knowledge-apply.sh`. ktl-librarian describes each change as an operation in `.lokf/patch.yaml`, and the script stamps `generated`. It refuses an operation that would name a person as its actor. It refuses to rewrite text a person wrote, or to delete a concept a person confirmed or left a note on. It writes nothing unless every operation passes. The pen also compares each concept it is about to write with the file it read. It refuses the patch when a person's event or note would differ, however the operations spelt it.
 
@@ -65,7 +75,7 @@ ktl-curator writes `human:` only for an authenticated identity: `gh api user`, `
 
 Where `.lokf/` is gitignored, no pull request ever carries the bundle, so the CI half never runs and the curator's in-session rules are the whole of it. A host with no git at all has only its platform's version history. None of this proves anyone read the source: it raises the cost of forgery, not the truth of a confirmation.
 
-**Prompt-injection guards**, one per input path:
+**Prompt-injection guards**, one per input path, across the six skills that read content they did not author:
 
 - ktl-librarian resolves a `.lokf/feedback.md` entry only from the source it names, never from the entry's own wording, and ktl-curator only counts the waiting entries, with `grep -c`.
 - ktl-curator quotes a fetched source to a person rather than acting on it.
@@ -73,6 +83,7 @@ Where `.lokf/` is gitignored, no pull request ever carries the bundle, so the CI
 - ktl-prose never opens `.lokf/feedback.md`, and rewords only in a live session, on a request addressed to it. Its check script refuses a rewording that touches a concept a person wrote or confirmed, or a byte of frontmatter, or that adds a character no reader sees.
 - The registrar's `provenance` job, which reads pull-request metadata, runs no agent. Event fields enter through `env:`, API reads are narrowed to logins, SHAs and a verification flag, and the `human:<id>` is held to a login's characters. The token is read-only, and a path git still has to quote is refused (2026-09-19).
 - The librarian's `earlier` job, which lists the pull requests the workflow opened, runs no agent either and reads no title, body or comment. It counts a pull request only when its branch is `knowledge-librarian/...` in this repository, and matches each value it takes against a pattern. Only the hashes of the feedback entries those pull requests handled leave the job, since the entries are readers' words.
+- A file under `.lokf/mirror/` is a copy of a page or document from outside the repository, written by the ingest and merged by a person before the librarian reads it. The librarian derives from it as from any source: text to derive from, never instructions. So a reviewer of the ingest pull request reads the diff as the source page, and the manifest decides what comes in.
 
 If a guard fails, the only unattended write path is `knowledge-librarian.yaml`'s `publish` job. It re-derives the touched paths from the patch's own `git apply --numstat`, on a clean checkout the agent never shared. It confines them to `.lokf/knowledge`, `knowledge_bundle`, `.lokf/feedback.md` and `.lokf/questions.md`, the only pathspecs the patch is built from. It separately refuses a patch that adds a `by: human:` line. It refuses a patch that touches a person's record: an event added, changed or removed in any YAML layout, a person's note added or removed, or text a person wrote changed.
 
@@ -94,9 +105,5 @@ Once the agent returns, the wrapper removes whatever is at the paths the workflo
 
 ## Open questions
 
-- 2026-10-14, process:ktl-librarian: Since 2026-10-14 `docs/threat-model.md` names ktl-website among the skills that run the repository's scripts from `.lokf/scripts/`, counts four workflow templates under the two skills' `templates/github/` as pinned, and says six skills read content they did not author. This concept still names four skills that run those scripts.
-- 2026-10-15, process:ktl-librarian: Since 0.41.0 `docs/threat-model.md` says that ktl-website's build also runs the commands its `site.config.mjs` names, or a `gen-doc` recipe it finds, to build the schema's pages and the data, and that they are the repository's code too. This concept does not say so.
-- 2026-10-18, process:ktl-librarian: Since 2026-10-17 `docs/threat-model.md` counts six templates under the two skills' `templates/github/` as pinned, and says the release step, the sidecar's `knowledge-sync.sh` and its `knowledge-sync.yaml` workflow move the skills pin. It adds a measure for a domain host's federation build and a section on the sync workflow. Since 2026-10-18 it also has a section on the ingest workflow, and lists the mirror under `.lokf/mirror/` as an input path the librarian reads. This concept carries none of these.
 - 2026-10-19, human:noelmcloughlin: do a fresh check with sources and ask curator questions on deviations if any exist.
-- 2026-10-19, process:ktl-librarian: Since 2026-10-17 (b13bcae) the agent-step bullet under Repository hardening in `docs/threat-model.md` adds that a domain host's members script takes the job token as `KNOWLEDGE_FEDERATE_TOKEN`, removes it from its own environment, and hands it to `gh` alone, to verify attestations. This concept's hardening list does not carry that control.
 - 2026-10-19, human:noelmcloughlin: needs refresh from sources
