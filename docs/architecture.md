@@ -84,7 +84,7 @@ The **curator** reports each concept's trust record in plain words:
 - **Confirmed by a person**: a named person checked it against its source.
 - **Checked by automation only**: automation re-checked that the source still matches, and no person has.
 - **Nobody has checked this yet**: no check of any kind is recorded.
-- **Still a draft**, **reopened**, **edited since a person last confirmed it**, **past its review date**, **retired**; and, for prioritising, how many other concepts rely on each one. A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung. Only an edit after the confirmation does that.
+- **Still a draft**, **reopened**, **edited since a person last confirmed it**, **past its review date**, **a reader disputed this**, **retired** or **retired, replaced by** its successor; and, for prioritising, how many other concepts rely on each one. A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung. Only an edit after the confirmation does that.
 
 <p align="center">
   <picture>
@@ -93,7 +93,7 @@ The **curator** reports each concept's trust record in plain words:
   </picture>
 </p>
 
-The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
+The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. Each is a signal for the reader to weigh, never a score. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
 
 ## Read on
 
@@ -103,11 +103,10 @@ The labels are computed from the frontmatter on every read, never stored, so the
 | The context layer: what it is, how one bundle already is one, and why bundles federate through domains | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
 | A federation of bundles: domains as manifests, tiers of domains, the workspace built ahead of time, what exists and what remains a design, and the decisions an adopter must make | [federation.md](federation.md) |
 | Knowledge outside the repository: wiki pages, documents and files in other repositories, mirrored by the ingest so the bundle can cite them | [ingest.md](ingest.md) |
-| The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [for-the-curious.md](for-the-curious.md) |
+| The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, how readers and verdicts steer the next run, and what to do when a bundle outgrows LOKF's vocabulary | [for-the-curious.md](for-the-curious.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [obsidian.md](obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](three-lines-critics.md) | [three-lines.md](three-lines.md) |
-| What KTL took from two 2026 papers, WikiSkill on agent-maintained wikis and SkillWiki on governing agent skills | [wikiskill.md](wikiskill.md), [skillwiki.md](skillwiki.md) |
 | Whether KTL helps a repository whose content is Agent Skills, and what remains to do there | [skills-repositories.md](skills-repositories.md) |
 | Versioning: all six skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [releasing.md](releasing.md), [CHANGELOG.md](../CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](../CONTRIBUTING.md), [repository-layout.md](repository-layout.md), [SECURITY.md](../SECURITY.md) |
@@ -118,7 +117,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 - The [LinkML Community](https://linkml.io/), creators of [LinkML](https://linkml.io/linkml/), the schema language LOKF is written in.
 - [Google Cloud](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing), creator of the Open Knowledge Format (OKF) specification that LOKF profiles.
 - [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), a pattern for building personal knowledge bases with LLMs.
-- [WikiSkill](https://arxiv.org/abs/2608.27454) by Tang et al. (Google Research, 2026) and [SkillWiki](https://arxiv.org/abs/2606.16523) by Huang et al. (2026), the two papers that [wikiskill.md](wikiskill.md) and [skillwiki.md](skillwiki.md) took from.
+- [WikiSkill](https://arxiv.org/abs/2608.27454) by Tang et al. (Google Research, 2026) and [SkillWiki](https://arxiv.org/abs/2606.16523) by Huang et al. (2026), two papers whose reading changed how the skills learn from readers and verdicts.
 
 This is an independent project. It is not affiliated with, endorsed by, or an
 official distribution of LOKF or of the Open Knowledge Format. "LOKF" and

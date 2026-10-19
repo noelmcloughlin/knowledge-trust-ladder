@@ -20,7 +20,7 @@ The table sets Unblocked's four properties, and the two the others add, against 
 | In the discourse | In a KTL bundle | Where it stops |
 | --- | --- | --- |
 | Heterogeneous source ingestion | The **librarian** derives each concept from a source it names in `resource` and `sources` ([who writes the bundle](for-the-curious.md#who-writes-the-bundle-and-what-checks-it)) | One repository's sources. A second repository is a second bundle |
-| On-demand surfacing | A reader opens `index.md` first. The **docent** answers from the bundle and labels each concept it used ([the index as the retrieval interface](wikiskill.md)) | Files, and one in-process graph, until something serves them |
+| On-demand surfacing | A reader opens `index.md` first. The **docent** answers from the bundle and labels each concept it used ([the index as the retrieval interface](for-the-curious.md#how-readers-and-verdicts-steer-the-next-run)) | Files, and one in-process graph, until something serves them |
 | Cross-source conflict resolution | The **curator**, a named person, records the verdict: confirm, correct, retire or send back. A reader's disagreement goes to `feedback.md` | One bundle. Between bundles, a domain's owner arbitrates ([who arbitrates](federation.md#decisions-an-adopter-must-make)) |
 | Per-query permission enforcement | None of its own. The repository's access control is the bundle's | Nothing finer than the repository |
 | Provenance and trust | `generated` and `verified` events on every concept, and each label computed on read, never stored ([Trust stays visible](architecture.md#trust-stays-visible), [four levels of checking](for-the-curious.md#four-levels-of-checking)) | Who checked and when, not that the source is right |
