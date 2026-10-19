@@ -143,4 +143,4 @@ The curator and the docent need nothing new. A mirror file is a tracked path: th
 
 ## Security
 
-The job that holds the secrets has no write token, and the job that writes has no secret. The script fetches only the addresses the manifest names and caps every body and the mirror as a whole. It refuses private and link-local addresses unless the manifest allows them, drops the credential on a redirect to another host, and removes every character a reader cannot see apart from the joiners some scripts spell with. A git credential reaches git through its environment, scoped to the entry's address. The [threat model](threat-model.md#the-ingest-workflow) says the rest.
+The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. The [threat model](threat-model.md#the-ingest-workflow) says what else guards it.
