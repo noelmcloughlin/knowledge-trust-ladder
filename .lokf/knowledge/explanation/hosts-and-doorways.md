@@ -1,13 +1,13 @@
 ---
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
-title: Hosts and doorways - where the bundle's real folder lives
-description: Why the bundle is `.lokf/knowledge`, one real folder on every host, with `knowledge_bundle` beside it as a link for people and folder pickers; what the visible layout tried and why it was retired; and what a shared folder that is not a vault may still do by hand.
+title: "Hosts and doorways: where the bundle's real folder lives"
+description: Why the bundle is `.lokf/knowledge`, one real folder on every host, with `knowledge_bundle` beside it as a link for people and folder pickers; what each host can do, from GitLab, Codeberg, Forgejo and Gitea to Microsoft 365 Copilot; what the visible layout tried and why it was retired; what a shared folder that is not a vault may still do by hand; and how one vault can link many hosts' bundles.
 genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
-  by: process:ktl-curator
-  at: "2026-10-13T01:20:21Z"
+  by: process:ktl-librarian
+  at: "2026-10-19T21:26:04Z"
 about:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
@@ -48,6 +48,7 @@ The doorway is committed alongside a tracked `.lokf/`, or added to the root `.gi
 - **Code repository.** Readers are developers, agents, and CI. The hidden real folder keeps the bundle out of the way. The doorway is how a person browses to it, and how Obsidian opens it as a vault of its own.
 - **Notes vault.** The sidecar is installed beside the notes. The vault never indexes `.lokf/`, and skips the doorway too, because its target resolves inside the vault being indexed (see [Open the knowledge bundle in Obsidian](../playbooks/open-bundle-in-obsidian.md)). So the **workshop** and the **exhibition** never index the same file: the person curates in a second vault opened through the doorway. The vault does *not* get the bundle in its own graph, search or Sync, and that keeps the workshop clean.
 - **Shared drive or SharePoint library.** Readers are whoever the service shows the folder to. `.lokf/` syncs (Microsoft's restricted-name list has nothing against a leading dot), so the real folder is the same on every machine. OneDrive syncs neither symbolic links nor junctions, so the doorway is per machine (`just lokf-link`) or the bundle is opened by path. A library nobody reaches through git may be rearranged by hand for a synced visible name, and the sidecar's `references/portability.md` says how. A shared folder that is also a vault must not be.
+- **Many hosts, one vault.** A person links each repository's `.lokf/knowledge` into a folder of their own vault and lists those folders under the plugins' *Bundle root folders* setting. Every bundle they curate is then in one vault, beside the notes they keep about them. This is the one arrangement that puts exhibits in the vault's index, and Obsidian Sync does not carry such links.
 
 # What each host can do
 
@@ -56,11 +57,11 @@ Since 2026-09-17 the sidecar's `references/portability.md` is a matrix, host by 
 - Linux;
 - macOS on its stock bash 3.2, with `shasum -a 256` where `sha256sum` is named;
 - Windows from Git for Windows' bash, or from PowerShell through a one-line launch of that bash;
-- GitLab, Forgejo and Gitea, where the three GitHub Actions workflows are the only loss and the recipe names the three calls to rewrite;
+- GitLab, Codeberg, Forgejo and Gitea, where the GitHub Actions workflows are lost, ktl-website's deploy included, and the recipe names the three calls to rewrite;
 - git with no forge;
 - no git at all, where the platform's version history is the record of who changed what;
 - an Obsidian vault;
-- since 2026-09-24, a Microsoft 365 Copilot declarative agent, which can hold only the read-only roles, as a snapshot of the bundle packed inside the skill (see [The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
+- since 2026-09-24, a Microsoft 365 Copilot declarative agent, which holds the docent, from a snapshot of the bundle packed inside the skill, and the auditor once it exists (see [The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
 
 A SharePoint or OneDrive workspace with no git whose curators sign in to Microsoft 365 would need an identity of its own. The curator's domain-schema guidance records it as a shape held in reserve.
 
@@ -90,6 +91,4 @@ The reversal keeps these, because they cost nothing and still cover a shared fol
 
 ## Open questions
 
-- 2026-10-14, process:ktl-librarian: Since 2026-10-14 the portability matrix in `skills/ktl-sidecar/references/portability.md` says that on GitLab, Forgejo and Gitea the GitHub Actions workflows are lost, ktl-website's deploy included. This concept says the three GitHub Actions workflows are the only loss there.
-- 2026-10-18, process:ktl-librarian: Step 5 of `skills/ktl-sidecar/SKILL.md` now installs the federation, sync and ingest templates and asks for lint coverage of six `.github/workflows/*.yaml`, and `CHANGELOG.md` (0.48.0) says the sidecar's pages name Codeberg beside GitLab, Forgejo and Gitea. This concept speaks of three GitHub Actions workflows and names only GitLab, Forgejo and Gitea.
 - 2026-10-19, human:noelmcloughlin: refresh against sources.

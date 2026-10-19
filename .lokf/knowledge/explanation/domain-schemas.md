@@ -1,18 +1,18 @@
 ---
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/domain-schemas
-title: When the built-in vocabulary stops fitting - domain schemas
-description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's, named by one `schema` variable in the sidecar's justfile and checked with `lokf validate --schema`, reusing a domain's own vocabulary such as the AI Risk Ontology, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
+title: "When the built-in vocabulary stops fitting: domain schemas"
+description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's, named by one `schema` variable in the sidecar's justfile and checked with `lokf validate --schema`, the `domain.yaml` the sidecar ships for a bundle that federates other bundles, reusing a domain's own vocabulary such as the AI Risk Ontology, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
 genre: explanation
 resource: skills/ktl-curator/references/domain-schemas.md
 sources:
   - resource: skills/ktl-curator/references/domain-schemas.md
   - resource: skills/ktl-librarian/references/domain-schema.md
   - resource: skills/ktl-sidecar/templates/justfile
-  - resource: README.md
+  - resource: docs/architecture.md
 generated:
-  by: process:ktl-curator
-  at: "2026-10-13T01:19:37Z"
+  by: process:ktl-librarian
+  at: "2026-10-19T21:26:04Z"
 about: []
 references:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
@@ -32,7 +32,7 @@ status: draft
 
 # Overview
 
-LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. The README says that LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. It also says that a domain whose concepts stop fitting it extends the schema, so its own types are checked rather than tolerated.
+LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. `docs/architecture.md` says that LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. It also says that a domain whose concepts stop fitting it extends the schema, so its own types are checked rather than tolerated.
 
 **The signs.** A domain schema is due when any of these holds:
 
@@ -45,6 +45,8 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle: the linkml-sidecar skill creates it under `.linkml/` and sets the variable itself. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting. Neither plugin can read the schema itself, so the same list of classes goes into both. When the `lokf` floor moves, the pinned `lokf.yaml` is refreshed to the new version in the same change and `just lokf-validate` is run again.
 
 The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, with nothing new to install. It leaves the graph as it is: `convert`, `serve` and `query` take no `--schema`, so domain keys project in LOKF's namespace. Up to lokf 0.8.0 an undeclared type projects there the same way, and from 0.9.0 it projects as `lokf:Concept` with the name kept in `schema:additionalType`.
+
+One domain schema ships with the sidecar: `domain.yaml`, in ktl-sidecar's templates, for a bundle whose concepts are other bundles. The curator's `domain-bundle.md` is its page, and ktl-librarian's `references/domain-schema.md` points a domain bundle at both.
 
 **When the domain already has a vocabulary**, reuse it rather than re-describe it. For AI governance, the curator's guidance names IBM AI Atlas Nexus's [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/), a LinkML vocabulary covering risks, controls, obligations, taxonomies, incidents and evaluations. It also names [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) as a reference implementation over it, with a LOKF sidecar beside it.
 
@@ -65,6 +67,4 @@ Where a domain schema binds a slot to an external code list (SNOMED CT, for exam
 
 ## Open questions
 
-- 2026-10-13, process:ktl-librarian: Since 2026-10-13 the section "Prose, Structure, Meaning, Context" is on `docs/architecture.md`, not in `README.md`. This concept says "The README says" for its quotation and lists `README.md` in `sources`; both should name `docs/architecture.md`.
-- 2026-10-16, process:ktl-librarian: Since 0.44.0 `skills/ktl-curator/references/domain-schemas.md` says one domain schema ships with the sidecar, `domain.yaml`, for a bundle that federates other bundles, and ktl-librarian's `references/domain-schema.md` points a domain bundle at that template and at the curator's `domain-bundle.md`. This concept does not say so.
 - 2026-10-19, human:noelmcloughlin: refresh against sources.
