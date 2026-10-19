@@ -98,8 +98,10 @@ jobs:
         with:
           node-version: 22
 
+      # One worker per CPU: the federation builds, a tenth of the tests and
+      # most of the time, run side by side. Each test keeps to its own tmp_path.
       - name: Run the tests
-        run: uv run --no-project --with-requirements tests/requirements.txt pytest
+        run: uv run --no-project --with-requirements tests/requirements.txt pytest -n auto
 
   lint-scripts:
     name: Lint shell scripts

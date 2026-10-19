@@ -52,7 +52,7 @@ scripts/
   smoke-test-website.sh    lays the website templates down on a dummy bundle and builds the site twice
   sync-sidecar.sh          runs one release's knowledge-sync.sh in each sibling repository, and finishes the branches
   companion-diagrams.mjs   draws the Archify companions in .assets/companions/ again; a maintainer runs it by hand
-tests/                     the behavioural tests of the sidecar scripts and the prose checker, run with pytest
+tests/                     the behavioural tests of the sidecar scripts and the prose checker, run with pytest; -n auto runs them in parallel
   conftest.py              the shared helpers, and how to run the tests
   test_*.py                one module per script: the pen, the gate, the report, the conventions checker,
                            the feedback recorder, the preflight, the prose checker, the layouts the
