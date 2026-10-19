@@ -1447,6 +1447,15 @@ def _build(args, note_new) -> int:
                 earlier.sensitivity = member.sensitivity
             say(f"{member.slug}: {member.base_iri} is already in the federation as {earlier.slug} at the same release; named by a second domain, not followed again")
             continue
+        # The registry routes an IRI to the bundle whose base_iri starts it,
+        # so a base_iri must end a path segment and no two may nest. This is
+        # checked here, before anything is fetched, so the finding names the
+        # member concepts.
+        if not member.base_iri.endswith(("/", "#")):
+            raise Failed(f"{member.slug}: base_iri {member.base_iri} must end in / or #, so that it holds whole path segments")
+        for other, who in [(domain_base, "the domain"), *((b, m.slug) for b, m in seen.items())]:
+            if other != member.base_iri and (member.base_iri.startswith(other) or other.startswith(member.base_iri)):
+                raise Failed(f"{member.slug}: base_iri {member.base_iri} nests with {other}, the namespace of {who}; each bundle needs one of its own{waits_note(member)}")
         seen[member.base_iri] = member
         refusal = sensitivity_refusal(member, clearance, visibility)
         if refusal:
@@ -1586,7 +1595,10 @@ def _build(args, note_new) -> int:
             entry.sensitivity = member.sensitivity
         if public:
             entry.distribution = {"rdf": f"{public}/export/{slug}/graph.nt", "concepts": f"{public}/export/{slug}/concepts.jsonld"}
-        registry.add(entry)
+        try:
+            registry.add(entry)
+        except ValueError as e:
+            raise Failed(f"{slug}: the registry refuses its base_iri: {e}") from e
         out_dir = export_root / slug
         done = run_lokf(["export", str(kdir), "--out-dir", str(out_dir), *(["--source-base", source_base] if source_base else [])])
         if done.returncode != 0:

@@ -550,6 +550,18 @@ def test_a_member_held_at_an_earlier_release_still_answers_a_second_domain_namin
     assert entry["version"] == "v1.0.0" and entry["member_of"] == [s_iri + "domains/s", t_iri + "domains/t"], entry
 
 
+def test_a_member_whose_namespace_nests_with_another_is_refused_before_anything_is_fetched(federation, tmp_path):
+    """c's namespace lies inside a's: the registry could route no IRI between them, so the build stops and names both, before it downloads c."""
+    host, a_iri, d_iri = federation["host"], federation["a_iri"], federation["d_iri"]
+    nested = a_iri + "sub/"
+    c = make_bundle(tmp_path / "c", nested, "C", {"glossary/x.md": {"type": "GlossaryTerm", "title": "X", "description": "X.", "resource": "https://example.test/c"}})
+    c_zip = tmp_path / "c.zip"
+    rewrite(host, "c", member("c", nested, c_zip, zip_bundle(c, c_zip), d_iri + "domains/federation"))
+    r = federate(host, "build", "--verify-only", "--no-attestation")
+    assert r.rc == 1 and f"c: base_iri {nested} nests with {a_iri}, the namespace of a" in r.out, r.out
+    assert "Traceback" not in r.out and "c: v1.0.0 checksum matches" not in r.out, r.out
+
+
 def test_a_checksum_must_be_64_hex_digits(federation, tmp_path):
     """A checksum names the file in the cache, so one that climbs out of it is refused before it is used, and the file it names stays."""
     host, b_iri, d_iri = federation["host"], federation["b_iri"], federation["d_iri"]
