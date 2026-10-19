@@ -30,10 +30,10 @@ A host with `.lokf/ingest.yaml` also runs the ingest workflow, on Sundays, which
 
 The workflow invokes `.lokf/scripts/knowledge-librarian.sh` directly, a fixed, reviewed path. To turn it on:
 
-1. Set the `KNOWLEDGE_LIBRARIAN_ENABLED` repository variable to `true`. These settings go under Repository variables and secrets, never on an environment, which the workflow does not read.
+1. Set the `KNOWLEDGE_LIBRARIAN_ENABLED` repository variable to `true`. The variables go under Repository variables, never on an Environment, which a job's `if:` does not read. The secrets go in the `knowledge-librarian` Environment, limited to the default branch, as ktl-sidecar's [automation.md](../../ktl-sidecar/references/automation.md#keep-each-secret-in-its-environment) says.
 2. Set `AGENT_CLI` to your non-interactive agent command. The prompt follows `-p`, or the flag `AGENT_PROMPT_FLAG` names, or comes last when that variable is `arg`.
 3. Name the variable the agent reads its credential from in `AGENT_API_KEY_ENV`.
-4. Either set `AGENT_USE_JOB_TOKEN` to `true` (Copilot CLI, billed to the repository owner's seat, or a domain host's members script, which reads it as `KNOWLEDGE_FEDERATE_TOKEN`) or put a key in the `AGENT_API_KEY` secret. The wrapper hands it to the agent under that name only.
+4. Either set `AGENT_USE_JOB_TOKEN` to `true` (Copilot CLI, billed to the repository owner's seat, or a domain host's members script, which reads it as `KNOWLEDGE_FEDERATE_TOKEN`) or put a key in the `AGENT_API_KEY` secret, in that Environment. The wrapper hands it to the agent under that name only.
 5. Turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General. The `publish` job opens its pull request with the job's own token, which GitHub refuses while that setting is off.
 6. Optionally set `KNOWLEDGE_RETRIEVAL` to `true`. Each run that changes the bundle then makes one more agent call, which scores whether the index leads to the concept behind each question readers asked, and the pull request carries the score.
 

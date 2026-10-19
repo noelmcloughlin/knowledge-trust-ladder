@@ -47,6 +47,8 @@ Every page comes from a file the repository already holds, so a change to the si
 
 ## Links
 
+- Raw HTML in any Markdown the site renders, the feed included, passes as GitHub renders a README: a tag GitHub allows keeps the attributes it allows, an address that is not http, https, mailto, a path or a fragment is dropped, and any other markup is shown as text. The build's log names each one (`scripts/raw-html.mjs`).
+- A file the sync copies, under `.assets/`, the bundle, the logo or the databases, is copied as a file. A link is followed only when it ends inside the repository, and an SVG that holds a script, an event handler or a `javascript:` address is left out. The build's log names each file left out.
 - A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a schema page to `/schema/<name>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
 - An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does; otherwise the text stays as written.
 - A link to a concept page, in a page's content, shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, and Escape dismisses it. The script reads `/knowledge/previews.json`, which the sync writes, once per page. The sidebars' links are left out, since each sidebar entry carries its label as a tooltip.

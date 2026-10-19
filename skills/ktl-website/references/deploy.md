@@ -4,9 +4,9 @@
 
 ## The two jobs
 
-`build` checks the repository out with its full history, since the health page's "a source moved" lines come from git. It installs the lokf toolkit with `uv sync --locked` in `.lokf/`, installs the site's packages with `npm ci`, runs `npm run build` (the sync, the build, the link check) and uploads `website/dist` as the Pages artifact. It holds `contents: read` and nothing else, and third-party code runs there only.
+`build` checks the repository out with its full history, since the health page's "a source moved" lines come from git. It installs the lokf toolkit with `uv sync --locked` in `.lokf/`, installs the site's packages with `npm ci --ignore-scripts`, so no package runs an install script, runs `npm run build` (the sync, the build, the link check) with Astro's telemetry off, and uploads `website/dist` as the Pages artifact. It holds `contents: read` and no secret, and third-party code runs there only, beside the repository's own: `site.config.mjs`, the files under `website/`, and the commands that build the schema's pages and the data. A private repository should turn harden-runner's egress policy to `block`, with the package registries allowed.
 
-`deploy` runs GitHub's own `deploy-pages` action and nothing else, with the `pages: write` and `id-token: write` scopes, in the `github-pages` environment. It runs only on the default branch, and only once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Until then the workflow builds on every pull request and deploys nothing, which is the state to leave it in where another publisher exists.
+`deploy` runs harden-runner and GitHub's own `deploy-pages` action and nothing else, with the `pages: write` and `id-token: write` scopes, in the `github-pages` environment, which GitHub limits to the default branch when it creates it. It runs only on the default branch, and only once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Until then the workflow builds on every pull request and deploys nothing, which is the state to leave it in where another publisher exists.
 
 The workflow has no placeholders and names no branch: it reads the repository's default branch from the event.
 
@@ -42,7 +42,7 @@ The workflow builds from the checkout, which lacks a gitignored bundle. Build th
 
 ## Another forge
 
-The workflow is GitHub Actions. On GitLab, Codeberg, Forgejo, Gitea or another forge, run the same commands in that forge's CI (`uv sync --locked` in `.lokf/`, then `npm ci` and `npm run build` in `website/`) and publish `website/dist` as its pages artifact. GitLab, for example, takes a `public/` folder from a job named `pages`. Links to repository files still name `github.com`, since `REPO_URL` does; a forge-neutral link is a change to `scripts/routes.mjs`.
+The workflow is GitHub Actions. On GitLab, Codeberg, Forgejo, Gitea or another forge, run the same commands in that forge's CI (`uv sync --locked` in `.lokf/`, then `npm ci --ignore-scripts` and `npm run build` in `website/`) and publish `website/dist` as its pages artifact. GitLab, for example, takes a `public/` folder from a job named `pages`. Links to repository files still name `github.com`, since `REPO_URL` does; a forge-neutral link is a change to `scripts/routes.mjs`.
 
 ## Keeping the site's packages current
 

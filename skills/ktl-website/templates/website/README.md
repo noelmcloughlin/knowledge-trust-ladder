@@ -14,7 +14,7 @@ You need Node.js 22.12 or later and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 cd website
-npm ci
+npm ci --ignore-scripts
 npm run dev        # http://localhost:4321/<REPO_NAME>/
 npm run build      # dist/, then checks every link between its pages
 ```
