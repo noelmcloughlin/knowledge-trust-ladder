@@ -58,6 +58,14 @@
 #   --changed <file>  write the paths the sync changed or added, one a line
 #   --report <file>   write the report as Markdown, for a pull request body
 #   --no-checks       skip the sidecar's checks on the synced copies
+#   --apply <patch>   instead of a sync, put a patch a sync made onto this
+#                     clean checkout, for the workflow's privileged job:
+#                     refuse a path or a change a sync may not make, keep
+#                     every workflow as it is but for the pin, set the pin
+#                     to <tag> and --pin-sha, and write the workflow changes
+#                     the patch carried to --held, for a person to apply
+#   --held <file>     where --apply writes the workflow changes it held
+#   --pin-sha <sha>   the commit <tag> names, checked by the caller
 #
 # Exit 0 when the host is synced, or had nothing to sync. Exit 1 when the
 # host was skipped (no .lokf/, no git, uncommitted changes, the branch
@@ -150,8 +158,83 @@ add_entry() {
   return 3
 }
 
+# The paths a sync may touch: the sidecar's copies, the site's copies, the
+# pin and the changelog. The three site files the host owns are refused by
+# name, and so is a path with a character outside the plain set the
+# templates use, or a .git segment.
+sync_paths='^(\.github/workflows/knowledge-[a-z]+\.yaml|\.github/PULL_REQUEST_TEMPLATE/knowledge-[a-z]+\.md|\.lokf/scripts/knowledge-[a-z]+\.(sh|py)|\.lokf/m365/[A-Za-z0-9._-]+|\.lokf/domain\.yaml|\.lokf/\.gitattributes|\.lokf/\.gitignore|\.lokf/justfile|website/.+|CHANGELOG\.md)$'
+owned_paths='^website/(site\.config\.mjs|README\.md|src/styles/custom\.css)$'
+plain_path='^[]A-Za-z0-9._/@+[-]+$'
+
+# --apply: put a patch another run of this script made onto this checkout,
+# for knowledge-sync.yaml's privileged job. That run read a release nobody
+# here has reviewed, so nothing it decided is trusted. The patch may only
+# edit and add plain files on the paths above. Then every workflow goes
+# back to what the checkout has, but for the pin, which is set here from
+# the tag and the commit the caller checked at the skills repository. A
+# workflow on a branch pushed with a token runs on that push, with the
+# repository's secrets and a token its own permissions: key can raise, so
+# no workflow the release wrote may reach the branch before a person reads
+# it. Those changes go to <held>, a patch that applies on top of the result.
+apply_patch() {
+  local patch="$1" held="$2" tag="$3" sha="$4" paths wrong f full lane
+  [[ -f "$patch" ]] || die "no such patch: $patch"
+  [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || die "--pin-sha takes the 40-hex commit the tag names, not '$sha'"
+  [[ -z "$(git status --porcelain)" ]] || die "the checkout has changes of its own; --apply takes a clean one"
+  paths="$(git -c core.quotePath=false apply --numstat -- "$patch" | cut -f3-)" || die "$patch is not a patch git can read"
+  wrong="$(printf '%s\n' "$paths" | grep -Ev "$sync_paths" || true)"
+  wrong+=$'\n'"$(printf '%s\n' "$paths" | grep -E "$owned_paths" || true)"
+  wrong+=$'\n'"$(printf '%s\n' "$paths" | grep -Ev "$plain_path" || true)"
+  wrong+=$'\n'"$(printf '%s\n' "$paths" | grep -iE '(^|/)\.git(/|$)' || true)"
+  if [[ -n "${wrong//[$'\n\t ']/}" ]]; then
+    printf '%s\n' "$wrong" | sed '/^$/d; s/^/   refused  /' >&2
+    die "the patch touches paths a sync may not"
+  fi
+  # A sync edits and adds plain files. It never deletes, renames or links,
+  # and a file's mode is 644 or 755.
+  local summary; summary="$(git apply --summary -- "$patch")"
+  wrong="$(printf '%s\n' "$summary" | grep -E '^ (delete mode|rename|copy) ' || true)"
+  wrong+=$'\n'"$(printf '%s\n' "$summary" | grep -E '^ create mode ' | grep -vE '^ create mode 100(644|755) ' || true)"
+  wrong+=$'\n'"$(printf '%s\n' "$summary" | grep -E '^ mode change ' | grep -vE '^ mode change 100(644|755) => 100(644|755) ' || true)"
+  if [[ -n "${wrong//[$'\n\t ']/}" ]]; then
+    printf '%s\n' "$wrong" | sed '/^$/d; s/^ */   refused  /' >&2
+    die "the patch does more than edit and add plain files"
+  fi
+  if printf '%s\n' "$paths" | grep -qxF "$librarian_copy" && [[ ! -f "$librarian_copy" ]]; then
+    die "the patch adds $librarian_copy, which this host does not carry, so it would set a pin nobody checked"
+  fi
+  git apply --index --whitespace=nowarn -- "$patch"
+  full="$(git write-tree)"
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    if git cat-file -e "HEAD:$f" 2>/dev/null; then
+      cmp -s <(git show "HEAD:$f" | unpin) <(git show ":$f" | unpin) && continue
+      git show "HEAD:$f" > "$f"
+    else
+      git rm --cached --quiet -- "$f"
+      rm -f -- "$f"
+    fi
+  done < <(git -c core.quotePath=false diff --cached --name-only -- .github/workflows/)
+  if [[ -f "$librarian_copy" ]]; then
+    sed -i.sync-bak -E -e "s/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1$tag/" \
+                       -e "s/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1$sha/" "$librarian_copy"
+    rm -f "$librarian_copy.sync-bak"
+  fi
+  if [[ -d .github/workflows ]]; then git add -- .github/workflows/; fi
+  lane="$(git write-tree)"
+  git diff --binary "$lane" "$full" -- .github/workflows/ > "$held"
+  # What the branch carries under .github/workflows/ differs from the
+  # checkout by the two pin lines alone.
+  if git diff --cached -U0 -- .github/workflows/ | grep -E '^[-+][^-+]' | grep -qvE '^[-+] *TRUST_LADDER_SKILLS_(REF|SHA): '; then
+    die "a workflow change other than the pin is still staged; nothing is pushed"
+  fi
+  for f in $(git -c core.quotePath=false diff --cached --name-only); do echo "   staged   $f"; done
+  for f in $(git -c core.quotePath=false diff --name-only "$lane" "$full"); do echo "   held     $f (a workflow change, for a person to apply)"; done
+}
+
 main() {
   local host="" source="" repo="" tag="" changed_out="" report_out="" out
+  local apply="" held="" pin_sha=""
   local branch_mode=0 commit=0 push=0 pr=0 checks=1
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -165,6 +248,9 @@ main() {
       --changed) [[ $# -ge 2 ]] || usage; changed_out="$2"; shift 2 ;;
       --report) [[ $# -ge 2 ]] || usage; report_out="$2"; shift 2 ;;
       --no-checks) checks=0; shift ;;
+      --apply) [[ $# -ge 2 ]] || usage; apply="$2"; shift 2 ;;
+      --held) [[ $# -ge 2 ]] || usage; held="$2"; shift 2 ;;
+      --pin-sha) [[ $# -ge 2 ]] || usage; pin_sha="$2"; shift 2 ;;
       -h|--help) usage ;;
       -*) echo "knowledge-sync: unknown option $1" >&2; usage ;;
       *) [[ -z "$tag" ]] || usage; tag="$1"; shift ;;
@@ -192,6 +278,13 @@ main() {
   if ! git -C "$host" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "   $host is not a git work tree: the sync leaves a diff for review, and there is no diff to leave here; skipped" >&2
     return 1
+  fi
+  if [[ -n "$apply" ]]; then
+    [[ -n "$held" && -n "$pin_sha" ]] || die "--apply needs --held <file> and --pin-sha <commit>"
+    apply="$(cd "$(dirname "$apply")" && pwd -P)/$(basename "$apply")"
+    held="$(cd "$(dirname "$held")" && pwd -P)/$(basename "$held")"
+    ( cd "$host" && apply_patch "$apply" "$held" "$tag" "$pin_sha" )
+    return
   fi
   for out in "$changed_out" "$report_out"; do
     [[ -z "$out" ]] || : > "$out"
