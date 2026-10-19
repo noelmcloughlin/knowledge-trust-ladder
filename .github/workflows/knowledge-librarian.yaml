@@ -177,9 +177,10 @@ jobs:
       # note: .agents/ and .claude/ are gitignored), so a scheduled run cannot
       # rely on it already being present in the checkout. Install it fresh,
       # pinned to one release, on every run. A plain clone of the tagged
-      # public repo needs no `gh` flags and no token. The install target is
-      # gitignored, so it is invisible both to "Enforce the agent's write
-      # scope" below and to "Detect changes".
+      # public repo needs no `gh` flags and no token. The install target must
+      # be gitignored, so that it is invisible both to "Enforce the agent's
+      # write scope" below and to "Detect changes", and the step stops before
+      # any agent runs when it is not.
       #
       # The pin is a tag and the commit that tag named when the pin was set. A
       # tag can be moved, and what it names here is the instructions an agent
@@ -213,6 +214,10 @@ jobs:
           rm -rf .agents/skills/ktl-librarian
           cp -R "$tmp/skills/ktl-librarian" .agents/skills/
           test -f .agents/skills/ktl-librarian/SKILL.md
+          if ! git check-ignore -q .agents/skills/ktl-librarian/SKILL.md; then
+            echo "::error::git does not ignore .agents/, where the skill was installed, so the write-scope check would fail the run. Add .agents/, .claude/ and skills-lock.json to the root .gitignore, as ktl-sidecar's repo hygiene note says."
+            exit 1
+          fi
           echo "Installed ktl-librarian@$TRUST_LADDER_SKILLS_REF ($TRUST_LADDER_SKILLS_SHA)"
 
       # Both agent commands the sidecar documents run through npx, and Copilot

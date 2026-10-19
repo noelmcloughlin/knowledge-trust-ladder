@@ -33,7 +33,8 @@ These tests pin that for the template files that do so, and for the
    - a scheduled run waits while an earlier pull request is open, and the step
      that reads those pull requests hands on what a person declined;
    - the install step installs the skill from the pinned tag only while that
-     tag names the pinned commit;
+     tag names the pinned commit, and stops when git does not ignore the
+     folder it installs into;
 3. the registrar workflow triggers on, and diffs, both names, and installs
    the sidecar from its lock. Its provenance step asks the person behind a
    confirmation that is added, changed or removed, and nobody when only a
@@ -901,8 +902,12 @@ def install_step(tmp_path):
     return step, skills_repo, git(skills_repo, "rev-parse", "HEAD"), tmp_path
 
 
-def install_run(step, skills_repo, pinned, into):
+def install_run(step, skills_repo, pinned, into, ignored=True):
+    """Run the step as Actions does, in a checkout whose root .gitignore leaves .agents/ out unless ignored is False."""
     into.mkdir(parents=True, exist_ok=True)
+    run(["git", "init", "-q", "-b", "main", "."], cwd=into)
+    if ignored:
+        write(into / ".gitignore", ".agents/\n")
     return run(
         ["bash", step],
         cwd=into,
@@ -920,6 +925,14 @@ def test_the_skill_is_installed_from_the_pinned_tag_while_it_names_the_pinned_co
     installed = work / "install-ok" / ".agents" / "skills" / "ktl-librarian" / "SKILL.md"
     assert result.rc == 0 and installed.is_file() and "as it was reviewed" in read(installed), (
         f"install: exit {result.rc} with the tag and the commit in agreement: {result.out}"
+    )
+
+
+def test_an_install_git_would_see_stops_before_any_agent_runs(install_step):
+    step, skills_repo, pinned, work = install_step
+    result = install_run(step, skills_repo, pinned, work / "install-seen", ignored=False)
+    assert result.rc == 1 and "git does not ignore .agents/" in result.out, (
+        f"install: exit {result.rc} where git does not ignore .agents/: {result.out}"
     )
 
 

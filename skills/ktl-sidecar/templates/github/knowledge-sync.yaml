@@ -336,7 +336,7 @@ jobs:
         run: |
           set -euo pipefail
           paths="$(git -c core.quotePath=false apply --numstat "$RUNNER_TEMP/sync.patch" | cut -f3-)"
-          bad="$(printf '%s\n' "$paths" | grep -Ev '^(\.github/workflows/knowledge-[a-z]+\.yaml|\.github/PULL_REQUEST_TEMPLATE/knowledge-[a-z]+\.md|\.lokf/scripts/knowledge-[a-z]+\.(sh|py)|\.lokf/m365/[A-Za-z0-9._-]+|\.lokf/domain\.yaml|\.lokf/\.gitattributes|\.lokf/justfile|website/.+|CHANGELOG\.md)$' || true)"
+          bad="$(printf '%s\n' "$paths" | grep -Ev '^(\.github/workflows/knowledge-[a-z]+\.yaml|\.github/PULL_REQUEST_TEMPLATE/knowledge-[a-z]+\.md|\.lokf/scripts/knowledge-[a-z]+\.(sh|py)|\.lokf/m365/[A-Za-z0-9._-]+|\.lokf/domain\.yaml|\.lokf/\.gitattributes|\.lokf/\.gitignore|\.lokf/justfile|website/.+|CHANGELOG\.md)$' || true)"
           owned="$(printf '%s\n' "$paths" | grep -E '^website/(site\.config\.mjs|README\.md|src/styles/custom\.css)$' || true)"
           odd="$(printf '%s\n' "$paths" | grep -Ev '^[]A-Za-z0-9._/@+[-]+$' || true)"
           if [ -n "${bad//[$'\n\t ']/}" ] || [ -n "${owned//[$'\n\t ']/}" ] || [ -n "${odd//[$'\n\t ']/}" ]; then

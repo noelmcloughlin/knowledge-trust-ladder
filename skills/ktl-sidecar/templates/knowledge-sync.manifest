@@ -54,9 +54,11 @@ copy   domain.yaml                             .lokf/domain.yaml
 copy   m365/knowledge-m365.sh                  .lokf/m365/knowledge-m365.sh
 copy   m365/ktl-docent-m365.md                 .lokf/m365/ktl-docent-m365.md
 copy   gitattributes                           .lokf/.gitattributes
+copy   gitignore                               .lokf/.gitignore
 titled justfile                                .lokf/justfile
 
 always gitattributes                   Step 1
+always gitignore                       Step 1
 always scripts/knowledge-preflight.sh  Step 5
 always scripts/knowledge-feedback.sh   Step 5
 always scripts/knowledge-report.sh     Step 5

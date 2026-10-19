@@ -58,6 +58,7 @@ COPIES = {
     "m365/knowledge-m365.sh": ".lokf/m365/knowledge-m365.sh",
     "m365/ktl-docent-m365.md": ".lokf/m365/ktl-docent-m365.md",
     "gitattributes": ".lokf/.gitattributes",
+    "gitignore": ".lokf/.gitignore",
     "github/knowledge-registrar.yaml": ".github/workflows/knowledge-registrar.yaml",
     "github/knowledge-librarian.yaml": LIBRARIAN,
     "github/knowledge-release.yaml": ".github/workflows/knowledge-release.yaml",
