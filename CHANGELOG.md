@@ -4,17 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **A confidential ingest entry is refused where git could commit its copy.** The script checks that git ignores `.lokf/.cache/mirror/` and tracks nothing there before it fetches the entry.
-- **The sync keeps a host's `.lokf/.gitignore` current.** A host kept the copy ktl-sidecar Step 1 first wrote, so it could lack the template's later lines, such as `.cache/`, where a confidential copy goes.
-- **The scheduled librarian stops before any agent runs when git does not ignore `.agents/`.** It stopped only after the agent had run, at the write-scope check, with `?? .agents/`.
-
 ## [0.52.1] - 2026-10-19
 
 ### Fixed
 
 - **The sync script no longer fails after a complete sync that replaces it with a longer copy.** Bash read on into the new copy and ran a line from its middle, so the run exited with an error and the sync workflow opened no pull request. The script now exits on the line that calls `main`, a v0.52.0 copy also stops when it syncs to this release, and `scripts/sync-sidecar.sh` runs each sibling's script from a copy.
+- **A confidential ingest entry is refused where git could commit its copy.** The script checks that git ignores `.lokf/.cache/mirror/` and tracks nothing there before it fetches the entry.
+- **The sync keeps a host's `.lokf/.gitignore` current.** A host kept the copy ktl-sidecar Step 1 first wrote, so it could lack the template's later lines, such as `.cache/`, where a confidential copy goes.
+- **The scheduled librarian stops before any agent runs when git does not ignore `.agents/`.** It stopped only after the agent had run, at the write-scope check, with `?? .agents/`.
 
 ## [0.52.0] - 2026-10-18
 
