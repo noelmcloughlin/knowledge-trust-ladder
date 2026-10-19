@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T12:30:15Z"
+  at: "2026-10-19T18:47:10Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -21,6 +21,7 @@ sources:
   - resource: https://github.com/nicholsn/lokf/blob/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/src/lokf/cli.py
   - resource: skills/ktl-librarian/SKILL.md
   - resource: CHANGELOG.md
+  - resource: docs/context-layer.md
   - resource: docs/federation.md
   - resource: docs/context-layer-technology.md
   - resource: skills/ktl-curator/references/domain-schemas.md

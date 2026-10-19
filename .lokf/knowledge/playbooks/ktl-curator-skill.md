@@ -6,8 +6,8 @@ description: "A human curator's assistant: it reports what needs a person's atte
 genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
-  by: process:ktl-curator
-  at: "2026-10-13T01:13:17Z"
+  by: process:ktl-librarian
+  at: "2026-10-19T18:47:10Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -19,7 +19,8 @@ sources:
   - resource: skills/ktl-curator/references/review-session.md
   - resource: skills/ktl-curator/references/trust-fields.md
   - resource: skills/ktl-curator/references/portability.md
-  - resource: README.md
+  - resource: skills/ktl-curator/references/domain-bundle.md
+  - resource: docs/architecture.md
   - resource: CHANGELOG.md
 verified:
   - by: process:ktl-librarian
@@ -55,6 +56,8 @@ The skill deals in **judgments a person made, never facts it derived**. It write
 
 Where the toolkit accepts it, a confirmation event also carries `revision`, the state of the source the person was shown (`references/review-session.md`, added 2026-09-17). A later reader can then tell whether the page they see is the one the confirmation rested on. For a file in the repository, the state is the full commit hash. For a URL it is the ETag, else a `sha256:` digest. The field is proposed for lokf 0.9.0 and not yet released, and the 0.8.0 validator rejects it. So the skill leaves it out on every released toolkit, when the file has uncommitted changes, and where the host has no version control.
 
+A `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or document outside the repository, added in 0.49.0. The skill quotes it as it quotes any source, and shows the header above it: the origin, the version and the retrieval date. It offers the origin link to a person who can reach it. The confirmation attests the concept against the copy as retrieved, and `revision` pins that state (`references/review-session.md`).
+
 **Where the id comes from (added 2026-09-17).** The id comes from three routes, in order:
 
 1. `gh api user` on GitHub;
@@ -65,13 +68,12 @@ On a host with no forge, the account the platform's version history shows is the
 
 The health line counts a concept edited since its confirmation once, under *Edited since confirmed*, because the person confirmed an earlier text (`references/trust-fields.md`). *Correct now* clears the open questions the person says are answered, as *Confirm* does (`references/review-session.md`).
 
+The label table reads *Still a draft* for a concept no person has confirmed, and *Reopened* for one a person confirmed where a question has since put it back to `status: draft`. A reopened concept still counts as confirmed, so the rung stays, added in 0.45.0 (`SKILL.md`, `references/trust-fields.md`). Confirming a member of a domain bundle is the ordinary confirm: it attests that the member's bundle belongs under the domain's admission rule and that any claim the domain makes across bundles holds, never that the member's own concepts are true. The same confirm on a `MemberDomain` attests the domain itself, never the members below it, added in 0.44.0 (`references/domain-bundle.md`).
+
 The curation policy carries three optional switches: `Independent re-check:`, `Evidence first:` and `Younger readers:` (`references/review-session.md`). The last names a band of age, 8-12 or 13-18, or both, and ktl-librarian may then write retellings of confirmed concepts for those readers on its scheduled runs. Each one is a new concept, which a person confirms against the concept it retells.
 
 *Retire* asks what replaced the concept. When the person names another concept, the `**Deprecation**` line in `log.md` links it after "replaced by", and `knowledge-report.sh` labels the retired concept *retired, replaced by* that path. The label *a reader disputed this* means a reader's Disagreement naming the concept waits for the librarian.
 
 ## Open questions
 
-- 2026-10-13, process:ktl-librarian: Since 2026-10-13 the Runs column ("a little, regularly") is in the table of roles on `docs/architecture.md`, not in `README.md`. `sources` should list `docs/architecture.md` instead of `README.md`.
-- 2026-10-16, process:ktl-librarian: Since 0.45.0 the curator's label table reads *Still a draft / Reopened*, and the health line counts *Reopened*, a confirmed concept a question put back to draft, apart from *Drafts* (`SKILL.md`, `references/trust-fields.md`). Since 0.44.0 `references/domain-bundle.md` says how a person confirms a member of a domain bundle. This concept carries neither.
-- 2026-10-18, process:ktl-librarian: Since 0.49.0 `skills/ktl-curator/references/review-session.md` says a `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or document outside the repository. The curator quotes it as any source, shows the header above it (the origin, the version and the retrieval date), and offers the origin link to a person with access to it. The confirmation attests the concept against the copy as retrieved, and `revision` pins that state. This concept carries none of it, and a person wrote its text, so the librarian cannot add it.
 - 2026-10-18, human:noelmcloughlin: review the changes to the ktl-curator skill and its sources over the 16 to 20 commits since this concept was last confirmed (0c3ea0a, 2026-10-13), and bring the concept up to date with them.

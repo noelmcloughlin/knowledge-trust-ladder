@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T15:59:38Z"
+  at: "2026-10-19T18:47:10Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -48,7 +48,7 @@ An auditor's questions each have a fixed place to look:
 - Who confirmed it, and when: `verified[]`.
 - Which state of the source the check was made against: `revision`, a field proposed for lokf 0.9.0 and not yet released. The gate resolves it against the tree for a file, and nothing checks it for a URL. Until it is released, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
 - Whether the confirmed text is still the one the person saw: the `validate` job's log, where conventions rule 13 fails an edit that leaves `generated` older than the confirmation.
-- Whether that confirmation is really tied to the named person: the `provenance` job's log, where a confirmation struck out or gone with its concept needs that person as an added one does. Locally, the curator's *Not tied to a signed commit* count.
+- Whether that confirmation is really tied to the named person: the `provenance` job's log carries the forge's verdict on the approval or the signature. Locally, the curator's *Not tied to a signed commit* count does the same. Whether a person's record has been removed without them: the same job's log, since a confirmation struck out or gone with its concept needs that person's approval or signature, as an added one does. On the scheduled librarian's pull request, `knowledge-provenance.sh --unattended` checks it in the job that holds the write token.
 - When it must be looked at again: `stale_after`.
 - What changed, and why: `log.md` and git.
 - Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which nothing here runs yet.

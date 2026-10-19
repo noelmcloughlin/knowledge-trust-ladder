@@ -34,7 +34,7 @@ sources:
   - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/8fcdd867e45528a21f20f177fb63306afe8d278d
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-16T00:41:23Z"
+    at: "2026-10-19T18:47:10Z"
 ---
 # Overview
 

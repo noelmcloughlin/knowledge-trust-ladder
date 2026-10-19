@@ -2,6 +2,13 @@
 
 ## 2026-10-19
 
+* **Changed**: the auditor's list now says apart whether a confirmation is tied to the named person and whether a person's record has been removed, as `docs/three-lines.md`'s table does. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-curator skill now cites `docs/architecture.md` for the Runs column, names the *Reopened* label and how a person confirms a domain bundle's member, and the mirror sourcing the curator quotes since 0.49.0, following the human release of 2026-10-18 that allows this concept to be rewritten from its sources. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Resolved**: `sources` now names `docs/architecture.md` instead of `README.md`.
+* **Resolved**: the concept now names the *Reopened* label and how a person confirms a domain bundle's member.
+* **Resolved**: the concept now covers how the curator quotes a `.lokf/mirror/` source, now that the human release of 2026-10-18 lets this concept be rewritten.
+* **Changed**: the job-token sentence now says the job's own token is billed to the repository owner's seat, as `scheduled-task.md` step 4 does. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: `sources` now names `docs/context-layer.md`, where the context layer the toolkit serves is described, beside the technology page already cited.
 * **Changed**: the three lines figure is named with its dark counterpart once; `.assets/` holds `ktl-three-lines.svg` and `ktl-three-lines-dark.svg`. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the Reopened label and the Still-a-draft rule now name themselves, from `skills/ktl-curator/references/trust-fields.md`, answering the open question a person left on 2026-10-18. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Resolved**: the Reopened label is now named, from `skills/ktl-curator/references/trust-fields.md`.
