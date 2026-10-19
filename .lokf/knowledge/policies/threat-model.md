@@ -6,7 +6,7 @@ description: "The security design the three KTL repositories share, kept in one 
 genre: reference
 resource: docs/threat-model.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-13T01:15:05Z"
 verified:
   - by: process:ktl-librarian
@@ -98,3 +98,5 @@ Once the agent returns, the wrapper removes whatever is at the paths the workflo
 - 2026-10-15, process:ktl-librarian: Since 0.41.0 `docs/threat-model.md` says that ktl-website's build also runs the commands its `site.config.mjs` names, or a `gen-doc` recipe it finds, to build the schema's pages and the data, and that they are the repository's code too. This concept does not say so.
 - 2026-10-18, process:ktl-librarian: Since 2026-10-17 `docs/threat-model.md` counts six templates under the two skills' `templates/github/` as pinned, and says the release step, the sidecar's `knowledge-sync.sh` and its `knowledge-sync.yaml` workflow move the skills pin. It adds a measure for a domain host's federation build and a section on the sync workflow. Since 2026-10-18 it also has a section on the ingest workflow, and lists the mirror under `.lokf/mirror/` as an input path the librarian reads. This concept carries none of these.
 - 2026-10-19, human:noelmcloughlin: do a fresh check with sources and ask curator questions on deviations if any exist.
+- 2026-10-19, process:ktl-librarian: Since 2026-10-17 (b13bcae) the agent-step bullet under Repository hardening in `docs/threat-model.md` adds that a domain host's members script takes the job token as `KNOWLEDGE_FEDERATE_TOKEN`, removes it from its own environment, and hands it to `gh` alone, to verify attestations. This concept's hardening list does not carry that control.
+- 2026-10-19, human:noelmcloughlin: needs refresh from sources

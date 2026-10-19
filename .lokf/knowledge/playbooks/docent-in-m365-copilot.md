@@ -12,7 +12,7 @@ sources:
   - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  at: "2026-10-19T21:26:04Z"
 status: draft
 isPartOf:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
@@ -77,7 +77,7 @@ The page says to skip `atk validate` for now, because it rejects the `agent_skil
 
 Ask the agent a question the bundle answers, such as what a service does or who owns it. The answer names the snapshot, its version and build date, and each concept it rests on with a [trust label](../glossary/trust-label.md). An answer with no snapshot in it did not come from the skill.
 
-When the docent cannot answer, or two concepts disagree, it ends with one line to paste into the repository's `.lokf/feedback.md`, and `SNAPSHOT.md` says where to send it. The docent never records the gap itself. A Miss line starts with the reader's question in quotes. It says whether a concept looked relevant from `index.md` and did not answer, or nothing relevant was listed. A Disagreement line says which version the answer gave. Filed in the repository, the line reaches [ktl-librarian](ktl-librarian-skill.md), which turns it into a concept or a question for the curator.
+When the docent cannot answer, or two concepts disagree, it ends with one line to paste into the repository's `.lokf/feedback.md`, and `SNAPSHOT.md` says where to send it. The docent never records the gap itself. A Miss line starts with the reader's question in quotes. It says whether a concept looked relevant from `index.md` and did not answer, or nothing relevant was listed. A Disagreement line says which version the answer gave, or that it gave both. Filed in the repository, the line reaches [ktl-librarian](ktl-librarian-skill.md), which turns it into a concept or a question for the curator.
 
 # Keep it current
 
