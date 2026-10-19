@@ -4,16 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **`docs/federation.md` holds the whole federation design, and states each rule once.** Domains as manifests, LOKF section 11 and the release moved there from `docs/context-layer.md`, which keeps what a context layer is, the one-bundle table and what OKF leaves open.
-- **The docs say the pen, its figure and the ingest's guards once.** The figure of who writes the bundle stays on `docs/architecture.md`, and `docs/for-the-curious.md`, `docs/ingest.md` and `docs/three-lines.md` link to the page that holds each detail instead of repeating it.
-- **`docs/context-layer-technology.md` keeps to what KTL needs from a product.** The vendor tables of limits, plans and quotes are gone, and the page names the sidecar's own workspace server and MCP server beside the stores'.
-
-### Fixed
-
-- **The contract records every sibling host's links into this repository**, among them ktl-federation's into the federation page and the domain-bundle playbook. Its local cross-check reads all five hosts, and skips a domain host's ignored `snapshot/`, which holds a copy of this bundle.
-
 ## [0.53.0] - 2026-10-19
 
 ### Added
@@ -28,6 +18,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A reader can be given some members alone.** `--member <slug>` on `mcp`, `serve` and `query` loads those bundles' graphs and no other, and refuses the stored queries that read the lock graph.
 - **A domain host's release notes say what changed in its workspace.** `knowledge-federate.py diff` compares two workspaces, and the federation workflow adds the members that joined, moved or left, and the links between them, to each release's notes.
 - **A domain host's graph page draws the workspace.** Its *The workspace* view draws every bundle the domain names, each in a colour and shape of its own, with the links between bundles dashed, from the `graph.json` the federation workflow serves. `WORKSPACE` in `site.config.mjs` turns the view on or off, and it is on when the repository has the workflow.
+
+### Changed
+
+- **`docs/federation.md` holds the whole federation design, and states each rule once.** Domains as manifests, LOKF section 11 and the release moved there from `docs/context-layer.md`, which keeps what a context layer is, the one-bundle table and what OKF leaves open.
+- **The docs say the pen, its figure and the ingest's guards once.** The figure of who writes the bundle stays on `docs/architecture.md`, and `docs/for-the-curious.md`, `docs/ingest.md` and `docs/three-lines.md` link to the page that holds each detail instead of repeating it.
+- **`docs/context-layer-technology.md` keeps to what KTL needs from a product.** The vendor tables of limits, plans and quotes are gone, and the page names the sidecar's own workspace server and MCP server beside the stores'.
 
 ### Fixed
 
@@ -51,6 +47,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A reader keeps no partial answer to a range request as the whole file**, and `--previous` refuses a site address, from which no zip member could be held.
 - **The federation workflow's weekly schedule no longer takes the place of a release build that waits for its turn**, and each job has a time limit.
 - **A domain host's site serves each member's release inside the workspace.** The Pages upload left out the hidden `bundles/<slug>/.lokf/` folders, so every member link in the served workspace index answered 404.
+- **The contract records every sibling host's links into this repository**, among them ktl-federation's into the federation page and the domain-bundle playbook. Its local cross-check reads all five hosts, and skips a domain host's ignored `snapshot/`, which holds a copy of this bundle.
 
 ## [0.52.0] - 2026-10-18
 
