@@ -233,6 +233,20 @@ export const BROWSE = (() => {
   return recipeIn([linkmoDir()], "build-browse", "browse");
 })();
 
+// The workspace of a domain host: the folder under the site where the
+// knowledge-federation workflow serves it, whose graph.json the graph page
+// draws beside the bundle's own. The workflow adds the folder after the
+// site is built, so the page reads it when a reader opens the view.
+export const WORKSPACE = (() => {
+  const value = given.WORKSPACE === undefined ? "auto" : given.WORKSPACE;
+  if (value === null) return null;
+  if (value === "auto") return isFile(".github/workflows/knowledge-federation.yaml") ? "workspace" : null;
+  if (typeof value !== "string" || !/^[a-z0-9][a-z0-9_-]*(?:\/[a-z0-9_-]+)*$/.test(value)) {
+    fail(`WORKSPACE must be the folder under the site that serves the workspace, such as "workspace", or "auto" or null, not ${JSON.stringify(value)}`);
+  }
+  return value;
+})();
+
 /** The first `# ` line of a file outside fenced code, or null. */
 function firstTitle(rel) {
   let fence = null;
@@ -420,6 +434,6 @@ export function browseFiles() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const settled = { REPO, SITE, BASE, TITLE, DESCRIPTION, BRANCH, CUSTOM_DOMAIN, REF, LOGO, ASSETS, DOCS, CHANGELOG, RELEASE_TAG, PAGES, HOME, SCHEMA, BROWSE };
+  const settled = { REPO, SITE, BASE, TITLE, DESCRIPTION, BRANCH, CUSTOM_DOMAIN, REF, LOGO, ASSETS, DOCS, CHANGELOG, RELEASE_TAG, PAGES, HOME, SCHEMA, BROWSE, WORKSPACE };
   console.log(JSON.stringify({ ...settled, docsPages: docsPages(), bundleGroups: bundleGroups() }, null, 2));
 }

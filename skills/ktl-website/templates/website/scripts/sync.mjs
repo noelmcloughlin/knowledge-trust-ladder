@@ -49,6 +49,7 @@ import {
   SITE_URL,
   SITE_DIR,
   TITLE,
+  WORKSPACE,
   browseFiles,
   bundleGroups,
   conceptIds,
@@ -1275,6 +1276,11 @@ function copyAssets() {
   if (LOGO?.favicon) cpSync(resolve(REPO_ROOT, LOGO.favicon), resolve(PUBLIC, `favicon${extname(LOGO.favicon)}`));
   else cpSync(resolve(SITE_DIR, "src", "assets", "favicon.svg"), resolve(PUBLIC, "favicon.svg"));
   if (CUSTOM_DOMAIN) write(resolve(PUBLIC, "CNAME"), `${CUSTOM_DOMAIN}\n`);
+  // Where a domain host's workspace is served, for the graph page, or null.
+  // The workspace itself arrives after the build, from the federation
+  // workflow, so the page names it and fetches it when a reader asks.
+  const workspace = WORKSPACE ? { folder: WORKSPACE, graph: `${BASE}/${WORKSPACE}/graph.json`, index: `${SITE_URL}/${WORKSPACE}/index.md` } : null;
+  write(resolve(GENERATED, "workspace.json"), JSON.stringify(workspace) + "\n");
 }
 
 // ---------------------------------------------------------------------------

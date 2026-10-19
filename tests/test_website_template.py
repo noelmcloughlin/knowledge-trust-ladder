@@ -302,3 +302,21 @@ def test_config_refuses_a_placeholder_left_behind(tmp_path):
     shutil.copytree(SITE_TEMPLATES, site)
     result = run(["node", "scripts/config.mjs"], cwd=site)
     assert not result and "placeholder" in result.out, f"config.mjs accepted a placeholder: {result.out}"
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_offers_the_workspace_on_a_domain_host_alone(tmp_path):
+    """A host with the knowledge-federation workflow is a domain host, whose graph page offers the workspace the workflow serves."""
+    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    site = lay_down(tmp_path)
+    settled = json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)
+    assert settled["WORKSPACE"] is None, "a bundle that is no domain has no workspace"
+    write(tmp_path / ".github" / "workflows" / "knowledge-federation.yaml", "name: Knowledge federation\n")
+    settled = json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)
+    assert settled["WORKSPACE"] == "workspace"
+    config = site / "site.config.mjs"
+    config.write_text(config.read_text(encoding="utf-8").replace('export const WORKSPACE = "auto";', "export const WORKSPACE = null;"), encoding="utf-8")
+    assert json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)["WORKSPACE"] is None
+    config.write_text(config.read_text(encoding="utf-8").replace("export const WORKSPACE = null;", 'export const WORKSPACE = "../outside";'), encoding="utf-8")
+    result = run(["node", "scripts/config.mjs"], cwd=site)
+    assert not result and "WORKSPACE must be the folder under the site" in result.out, result.out
