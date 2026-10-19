@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.52.1] - 2026-10-19
+
 ### Fixed
 
 - **The sync script no longer fails after a complete sync that replaces it with a longer copy.** Bash read on into the new copy and ran a line from its middle, so the run exited with an error and the sync workflow opened no pull request. The script now exits on the line that calls `main`, a v0.52.0 copy also stops when it syncs to this release, and `scripts/sync-sidecar.sh` runs each sibling's script from a copy.
