@@ -26,7 +26,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/domain-schemas
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-18T10:22:18Z"
+    at: "2026-10-19T18:47:10Z"
 ---
 
 # Overview
