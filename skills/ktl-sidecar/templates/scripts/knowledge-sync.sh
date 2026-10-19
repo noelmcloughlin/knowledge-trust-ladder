@@ -649,4 +649,10 @@ main() {
   return "$status"
 }
 
-main "$@"
+main "$@"; exit
+# The sync copies the release's version of this script over this file while
+# it runs. Bash reads a script as it runs it, so when main returns it would
+# read on into the new file from where the old one ended. The exit on the
+# line above stops it. This comment sits below that line for a copy that
+# ends with a bare `main "$@"`: where this file differs from that copy only
+# in its last line, the copy reads " exit" next, and stops too.

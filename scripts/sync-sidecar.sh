@@ -143,6 +143,11 @@ for sibling in "${siblings[@]}"; do
   # sibling's own down.
   script="$sibling/.lokf/scripts/knowledge-sync.sh"
   if [[ -f "$script" ]]; then
+    # The sync copies the tag's script over the sibling's own, and bash
+    # reads a script as it runs it, so the sibling's runs from a copy that
+    # nothing overwrites.
+    cp "$script" "$tmp/sibling-sync.sh"
+    script="$tmp/sibling-sync.sh"
     echo "   running  the sibling's own .lokf/scripts/knowledge-sync.sh"
   else
     script="$tmp/knowledge-sync.sh"

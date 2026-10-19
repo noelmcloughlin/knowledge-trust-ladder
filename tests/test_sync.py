@@ -23,7 +23,10 @@ first tag, and pin what the script's header says:
 8. scripts/sync-sidecar.sh runs each sibling's own copy, or the tag's in a
    sibling that has none, and its --finish keeps a branch that was never
    pushed, or whose remote branch still exists, and removes one whose pull
-   request was merged.
+   request was merged;
+9. a run that copies a longer script over its own file stops when main
+   returns, and so does a copy that ends with a bare `main "$@"` when the
+   new file differs from it only in its last line.
 
 Every run skips the sidecar's checks (--no-checks): the preflight, the
 toolkit and the conventions script have modules of their own.
@@ -71,6 +74,11 @@ IDENT = {
 }
 
 
+def bare_main(text):
+    """The sync script as copies ended before the exit after main: a bare `main "$@"` and nothing below it."""
+    return text[: text.rindex("\n}\n") + 3] + '\nmain "$@"\n'
+
+
 def bare(path):
     run(["git", "init", "-q", "--bare", path], env=IDENT)
     return path
@@ -92,8 +100,11 @@ def skills(tmp_path):
     templates = repo / "skills" / "ktl-sidecar" / "templates"
     with (templates / "scripts" / "knowledge-report.sh").open("a") as f:
         f.write("\n# a line the next release adds\n")
-    with (templates / "scripts" / "knowledge-sync.sh").open("a") as f:
-        f.write("\n# a line the next release adds to the sync script\n")
+    # The new line goes under the first, not at the end, so the old copy's
+    # end falls in the middle of the new one's code, as it does in a release.
+    sync_script = templates / "scripts" / "knowledge-sync.sh"
+    first, rest = sync_script.read_text().split("\n", 1)
+    sync_script.write_text(f"{first}\n# a line the next release adds to the sync script\n{rest}")
     with (templates / "justfile").open("a") as f:
         f.write("\n# a recipe comment the next release adds\n")
     with (templates / "knowledge-sync.manifest").open("a") as f:
@@ -266,6 +277,19 @@ def test_without_a_source_the_hosts_copy_clones_the_tag_and_reads_its_manifest(t
     checks.ok("TRUST_LADDER_SKILLS_REF: v1.1.0" in read(host / LIBRARIAN), "the pin moved")
 
 
+def test_a_copy_that_ends_with_a_bare_main_stops_when_it_syncs_the_exit_in(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    script = host / ".lokf" / "scripts" / "knowledge-sync.sh"
+    write(script, bare_main(read(script)))
+    Git(host)("commit", "-qam", "a copy from before the exit")
+    # v1.0.0's script differs from this copy only in its last line, so the
+    # copy reads " exit" next when main returns.
+    result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--source", skills, "--no-checks", "v1.0.0"], cwd=host, env=IDENT)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(has_line(result.out, "   copied   .lokf/scripts/knowledge-sync.sh"), "the script's own copy is synced", result.out)
+    checks.ok(has_line(read(script), 'main "$@"; exit'), "the copy ends with the exit afterwards")
+
+
 def test_a_manifest_that_names_a_path_outside_the_host_is_refused(tmp_path, skills, checks):
     host = make_host(tmp_path, skills)
     git = Git(skills)
@@ -282,6 +306,12 @@ def test_a_manifest_that_names_a_path_outside_the_host_is_refused(tmp_path, skil
 def test_the_fan_out_runs_each_siblings_own_copy_and_finishes_merged_branches(tmp_path, skills, checks):
     one = make_host(tmp_path, skills, "one")
     two = make_host(tmp_path, skills, "two")
+    # The first sibling's copy ends with a bare `main "$@"`, so run in place
+    # it would read on into v1.1.0's longer script when main returns.
+    script = one / ".lokf" / "scripts" / "knowledge-sync.sh"
+    write(script, bare_main(read(script)))
+    Git(one)("commit", "-qam", "a copy from before the exit")
+    Git(one)("push", "-q", "origin", "main")
     # The second sibling predates the sync script, so the tag's copy runs
     # there and lays the sibling's own down.
     (two / ".lokf" / "scripts" / "knowledge-sync.sh").unlink()
