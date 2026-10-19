@@ -8,6 +8,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **A confidential ingest entry is refused where git could commit its copy.** The script checks that git ignores `.lokf/.cache/mirror/` and tracks nothing there before it fetches the entry.
 - **The sync keeps a host's `.lokf/.gitignore` current.** A host kept the copy ktl-sidecar Step 1 first wrote, so it could lack the template's later lines, such as `.cache/`, where a confidential copy goes.
+- **The scheduled librarian stops before any agent runs when git does not ignore `.agents/`.** It stopped only after the agent had run, at the write-scope check, with `?? .agents/`.
 
 ## [0.52.1] - 2026-10-19
 
