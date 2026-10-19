@@ -1523,6 +1523,9 @@ def http_fetch(url, accept=None, headers=None, max_bytes=None, timeout=60):
     if url not in urls:
         raise urllib.error.URLError(url + " is not served by this test")
     entry = urls[url]
+    if isinstance(entry, dict) and entry.get("status"):
+        log.append(url + " " + str(entry["status"]))
+        raise urllib.error.HTTPError(url, entry["status"], "refused by this test", {}, None)
     path, sent = (entry, {}) if isinstance(entry, str) else (entry["path"], entry.get("headers") or {})
     if sent.get("etag") and (headers or {}).get("If-None-Match") == sent["etag"]:
         log.append(url + " 304")
@@ -1538,11 +1541,17 @@ finally:
         pathlib.Path(os.environ["RUNNER_LOG"]).write_text("\\n".join(log) + "\\n", encoding="utf-8")
 """
 
-# Answers `gh pr list` with the pull requests FAKE_GH_PRS names, and fails
-# every other command, so the script never asks a real repository.
+# Answers `gh pr list` with the pull requests FAKE_GH_PRS names, and
+# `gh api repos/<owner>/<repo>/releases...` from <repo>.json in FAKE_GH_API
+# when that is set, and fails every other command, so the script never asks
+# a real repository.
 FAKE_GH = """\
 #!/bin/sh
 [ "$1 $2" = "pr list" ] && { printf '%s\\n' "${FAKE_GH_PRS:-[]}"; exit 0; }
+if [ "$1" = api ] && [ -n "${FAKE_GH_API:-}" ]; then
+  repo=$(printf '%s' "$2" | cut -d/ -f3)
+  cat "$FAKE_GH_API/$repo.json" && exit 0
+fi
 if [ "$1 $2" = "attestation verify" ]; then
   [ "${GH_TOKEN:-}" = job-token ] && [ -z "${KNOWLEDGE_FEDERATE_TOKEN:-}" ] && exit 0
   echo "gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable." >&2
@@ -1827,6 +1836,30 @@ def test_a_member_names_the_files_of_one_release(federation):
     rewrite(host, "g", fm)
     r = federate(host, "build", "--verify-only", "--no-attestation")
     assert r.rc == 1 and "the workspace distribution is from release v1.1.0 of acme/g, and the zip from v1.0.0 of acme/g; a member names the files of one release" in r.out, r.out
+
+
+def test_members_moves_the_others_when_one_cannot_be_checked_and_asks_gh_when_rate_limited(released):
+    """The API refuses c's release list as rate limited, and a's cannot be reached.
+
+    gh, holding the job's token, lists c's releases in its place, so c
+    moves. a stays as it is, the others move, and the hand-off names a.
+    """
+    tmp = released["tmp"]
+    served = json.loads(read(tmp / "served.json"))
+    del served["https://api.github.com/repos/acme/a/releases?per_page=100"]
+    served["https://api.github.com/repos/acme/c/releases?per_page=100"] = {"status": 403}
+    write(tmp / "served.json", json.dumps(served))
+    r = members_run(released, "--dry-run", stdout_only=True, env={"GH_TOKEN": "job-token", "FAKE_GH_API": tmp / "api"})
+    assert r.rc == 0, r.out
+    patch = yaml.safe_load(r.out)
+    assert {op["path"] for op in patch["ops"]} == {"members/b.md", "members/c.md", "members/d.md"}, patch["ops"]
+    assert patch["handoff"][0].startswith("members/a: could not be checked, so it stays as it is: acme/a: the release list could not be read"), patch["handoff"]
+    del served["https://api.github.com/repos/acme/c/releases?per_page=100"]
+    for slug in "bd":
+        del served[f"https://api.github.com/repos/acme/{slug}/releases?per_page=100"]
+    write(tmp / "served.json", json.dumps(served))
+    r = members_run(released)
+    assert r.rc == 1 and "members/d: could not be checked" in r.out and "no patch written" not in r.out, r.out
 
 
 def test_members_hands_the_job_token_to_gh_alone(released):

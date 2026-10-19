@@ -21,6 +21,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The federation gate refuses a link into a member's namespace that names no concept of that member**, as `--check-refs` refuses one inside a bundle, under the same `unowned_targets` policy. It checked only that some member owned the namespace.
 - **The federation gate reads a reified `relations` entry as it reads the slot that entry names**, so a target no member owns there stops the build too. `links.rq` and `unowned.rq` count such entries as well.
+- **The members script moves the other members when it cannot check one**, which the hand-off names. When the GitHub API refuses a release list as rate limited, gh asks again with the job's token.
 - **The MCP server's `federated_sparql` stops reading at its limit**, 1000 rows or 2000 triples, and says when it cut an answer. It read a SELECT whole before cutting it, and returned a CONSTRUCT whole.
 - **The workspace's stored queries take their predicates from the toolkit.** `unowned.rq` named `owl:sameAs` where lokf writes `schema:sameAs`, and left out `memberOf` and `holder`.
 - **The graph page's details panel sets each label beside its value.** Starlight's spacing for page content put every label a line below it.

@@ -2022,8 +2022,23 @@ def registry_jsonld(registry, records: list[dict]) -> dict:
 # members: the domain's librarian
 # ---------------------------------------------------------------------------
 def github_releases(owner: str, repo: str) -> list[dict]:
+    """A repository's releases, newest first, as the GitHub API lists them.
+
+    The API answers sixty requests an hour without a credential, a limit the
+    runners of a hosted CI service share. When it refuses one for that, gh
+    asks again with the job's token, which reaches gh alone.
+    """
+    path = f"repos/{owner}/{repo}/releases?per_page=100"
     try:
-        raw = http_get(f"https://api.github.com/repos/{owner}/{repo}/releases?per_page=100", accept="application/vnd.github+json")
+        raw = http_get(f"https://api.github.com/{path}", accept="application/vnd.github+json")
+    except urllib.error.HTTPError as e:
+        gh = shutil.which("gh")
+        if e.code not in (403, 429) or not gh or not gh_has_credential(gh):
+            raise Failed(f"{owner}/{repo}: the release list could not be read ({e})") from e
+        done = subprocess.run([gh, "api", path], capture_output=True, text=True, env=gh_env())
+        if done.returncode != 0:
+            raise Failed(f"{owner}/{repo}: the release list could not be read ({e}), nor with gh ({(done.stderr or done.stdout).strip()[:200]})") from e
+        raw = done.stdout.encode("utf-8")
     except (urllib.error.URLError, TimeoutError) as e:
         raise Failed(f"{owner}/{repo}: the release list could not be read ({e})") from e
     return json.loads(raw)
@@ -2377,6 +2392,95 @@ def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathl
                    "a person confirms the member to admit it.")
 
 
+def move_member(c, cache: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str]) -> None:
+    """Propose moving one member concept to the newest release or file its source carries, as operations for the pen."""
+    member = Member(c.path, c.data, "", 1)
+    if member.served:
+        served_move(c, member, cache, args, ops, handoff, current)
+        return
+    if not member.github:
+        current.append(f"{member.slug}: not a GitHub release, left as it is")
+        return
+    owner, repo, _ = member.github
+    releases = github_releases(owner, repo)
+    found = newest_bundle_release(releases)
+    if not found:
+        current.append(f"{member.slug}: no release of {owner}/{repo} carries a bundle zip")
+        return
+    release, zip_asset, sum_asset = found
+    tag = release["tag_name"]
+    path = c.concept_id + ".md"
+    # "Confirmed" only when a person confirmed the concept as it stands; a
+    # draft, or a member moved since its confirmation, names the release
+    # it holds and claims nothing more.
+    confirmed = confirmed_by_person(c.data)
+    if tag == member.version:
+        # A domain host attaches its workspace after its bundle zip, once
+        # its build has run, so a member domain moved in between names
+        # none. This proposes the workspace on its own once the release
+        # has it. A run of that workflow started by hand attaches the
+        # workspace again, and its index carries the day it was built,
+        # so the bytes change: then this proposes the new checksum, since
+        # the build refuses the old one.
+        workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", member.slug) if member.declared_domain else None
+        if workspace is None or workspace["checksum"] == f"sha256:{member.workspace_sha256}":
+            current.append(f"{member.slug}: {tag} is current")
+            return
+        kept = [d for d in c.data["distribution"] if not (str(d.get("name") or "").startswith("workspace-") and str(d.get("name") or "").endswith(".zip"))]
+        named = Member(c.path, {**c.data, "distribution": [*kept, workspace]}, "", 1)
+        verdict = verify_workspace(named, cache, args.max_bytes, not args.no_attestation)[2:]
+        attached = (f"attached its workspace, `{workspace['name']}`, to {tag} again, with other bytes, so the checksum this member names no longer matches"
+                    if member.workspace_url else f"attached its workspace, `{workspace['name']}`, to {tag} after this member moved to it")
+        asked = (f"{owner}/{repo} {attached}; does this member name it?"
+                 " Its lock says which release of each member that domain built, and the build takes that release for a member that waits there.")
+        if written_by_person(c.data):
+            ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
+            handoff.append(f"{member.slug}: {tag} now carries {workspace['name']}; {verdict}; a person wrote the concept, so only a question was added.")
+            return
+        ops.append({"op": "patch", "path": path, "set": {"distribution": named.data["distribution"]},
+                    "log": f"**Changed**: {member.title} names the workspace {owner}/{repo} attached to {tag}, `{workspace['name']}`."})
+        ops.append({"op": "question", "path": path, "text": asked})
+        handoff.append(f"{member.slug}: {tag} now carries {workspace['name']}; {verdict}; a person confirms the member{' again' if confirmed else ''} to accept it.")
+        return
+    distribution = release_distributions(release, zip_asset, sum_asset, member.slug, member.declared_domain)
+    moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
+    _, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
+    verdict += verify_schema(moved, cache, not args.no_attestation, args.max_bytes)
+    verdict += verify_workspace(moved, cache, args.max_bytes, not args.no_attestation)
+    release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
+    asked = f"{owner}/{repo} released {tag} after {'the confirmed ' if confirmed else ''}{member.version}; does this member move to it?"
+    if written_by_person(c.data):
+        # The pen refuses any patch of a concept a person wrote, so the
+        # move goes to the curator as a question alone.
+        ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
+        handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}; a person wrote the concept, so only a question was added.")
+        return
+    # The move reaches the text too: the old tag, zip name and day become
+    # the new ones in the description and in the body, so the concept no
+    # longer says one release in `version` and another in its prose.
+    old_day = release_day(next((r for r in releases if r.get("tag_name") == member.version), None))
+    move = mover({member.version: tag, member.zip_name: zip_asset["name"], old_day: release_day(release), member.schema_name: moved.schema_name,
+                  member.workspace_name: moved.workspace_name})
+    sets: dict = {"version": tag, "release": release_url, "resource": release_url, "distribution": distribution}
+    description = str(c.data.get("description") or "")
+    if move(description) != description:
+        sets["description"] = move(description)
+    body = concept_body(c.path)
+    edits, left = body_edits(body, move) if body is not None else ([], 0)
+    op: dict = {"op": "patch", "path": path}
+    if edits:
+        op["edits"] = edits
+    op["set"] = sets
+    op["log"] = f"**Changed**: {member.title} moved from {member.version} to {tag}; the release carries `{zip_asset['name']}`."
+    ops.append(op)
+    if left:
+        asked += (f" {left} line(s) of the body still name {member.version}, its zip or its day; this patch left them as they were,"
+                  " because each occurs more than once in the body or reads as a person's record.")
+    ops.append({"op": "question", "path": path, "text": asked})
+    note = "" if old_day else f"; {member.version} is not in the release list, so its day was not moved"
+    handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}{note}; a person confirms the member{' again' if confirmed else ''} to accept it.")
+
+
 def members(args) -> int:
     root = find_root(args.root)
     knowledge = root / ".lokf" / "knowledge"
@@ -2386,92 +2490,15 @@ def members(args) -> int:
     ops: list[dict] = []
     handoff: list[str] = []
     current: list[str] = []
+    failed: list[str] = []
     for c in member_concepts:
-        member = Member(c.path, c.data, "", 1)
-        if member.served:
-            served_move(c, member, cache, args, ops, handoff, current)
-            continue
-        if not member.github:
-            current.append(f"{member.slug}: not a GitHub release, left as it is")
-            continue
-        owner, repo, _ = member.github
-        releases = github_releases(owner, repo)
-        found = newest_bundle_release(releases)
-        if not found:
-            current.append(f"{member.slug}: no release of {owner}/{repo} carries a bundle zip")
-            continue
-        release, zip_asset, sum_asset = found
-        tag = release["tag_name"]
-        path = c.concept_id + ".md"
-        # "Confirmed" only when a person confirmed the concept as it stands; a
-        # draft, or a member moved since its confirmation, names the release
-        # it holds and claims nothing more.
-        confirmed = confirmed_by_person(c.data)
-        if tag == member.version:
-            # A domain host attaches its workspace after its bundle zip, once
-            # its build has run, so a member domain moved in between names
-            # none. This proposes the workspace on its own once the release
-            # has it. A run of that workflow started by hand attaches the
-            # workspace again, and its index carries the day it was built,
-            # so the bytes change: then this proposes the new checksum, since
-            # the build refuses the old one.
-            workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", member.slug) if member.declared_domain else None
-            if workspace is None or workspace["checksum"] == f"sha256:{member.workspace_sha256}":
-                current.append(f"{member.slug}: {tag} is current")
-                continue
-            kept = [d for d in c.data["distribution"] if not (str(d.get("name") or "").startswith("workspace-") and str(d.get("name") or "").endswith(".zip"))]
-            named = Member(c.path, {**c.data, "distribution": [*kept, workspace]}, "", 1)
-            verdict = verify_workspace(named, cache, args.max_bytes, not args.no_attestation)[2:]
-            attached = (f"attached its workspace, `{workspace['name']}`, to {tag} again, with other bytes, so the checksum this member names no longer matches"
-                        if member.workspace_url else f"attached its workspace, `{workspace['name']}`, to {tag} after this member moved to it")
-            asked = (f"{owner}/{repo} {attached}; does this member name it?"
-                     " Its lock says which release of each member that domain built, and the build takes that release for a member that waits there.")
-            if written_by_person(c.data):
-                ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
-                handoff.append(f"{member.slug}: {tag} now carries {workspace['name']}; {verdict}; a person wrote the concept, so only a question was added.")
-                continue
-            ops.append({"op": "patch", "path": path, "set": {"distribution": named.data["distribution"]},
-                        "log": f"**Changed**: {member.title} names the workspace {owner}/{repo} attached to {tag}, `{workspace['name']}`."})
-            ops.append({"op": "question", "path": path, "text": asked})
-            handoff.append(f"{member.slug}: {tag} now carries {workspace['name']}; {verdict}; a person confirms the member{' again' if confirmed else ''} to accept it.")
-            continue
-        distribution = release_distributions(release, zip_asset, sum_asset, member.slug, member.declared_domain)
-        moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
-        _, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
-        verdict += verify_schema(moved, cache, not args.no_attestation, args.max_bytes)
-        verdict += verify_workspace(moved, cache, args.max_bytes, not args.no_attestation)
-        release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
-        asked = f"{owner}/{repo} released {tag} after {'the confirmed ' if confirmed else ''}{member.version}; does this member move to it?"
-        if written_by_person(c.data):
-            # The pen refuses any patch of a concept a person wrote, so the
-            # move goes to the curator as a question alone.
-            ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
-            handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}; a person wrote the concept, so only a question was added.")
-            continue
-        # The move reaches the text too: the old tag, zip name and day become
-        # the new ones in the description and in the body, so the concept no
-        # longer says one release in `version` and another in its prose.
-        old_day = release_day(next((r for r in releases if r.get("tag_name") == member.version), None))
-        move = mover({member.version: tag, member.zip_name: zip_asset["name"], old_day: release_day(release), member.schema_name: moved.schema_name,
-                      member.workspace_name: moved.workspace_name})
-        sets: dict = {"version": tag, "release": release_url, "resource": release_url, "distribution": distribution}
-        description = str(c.data.get("description") or "")
-        if move(description) != description:
-            sets["description"] = move(description)
-        body = concept_body(c.path)
-        edits, left = body_edits(body, move) if body is not None else ([], 0)
-        op: dict = {"op": "patch", "path": path}
-        if edits:
-            op["edits"] = edits
-        op["set"] = sets
-        op["log"] = f"**Changed**: {member.title} moved from {member.version} to {tag}; the release carries `{zip_asset['name']}`."
-        ops.append(op)
-        if left:
-            asked += (f" {left} line(s) of the body still name {member.version}, its zip or its day; this patch left them as they were,"
-                      " because each occurs more than once in the body or reads as a person's record.")
-        ops.append({"op": "question", "path": path, "text": asked})
-        note = "" if old_day else f"; {member.version} is not in the release list, so its day was not moved"
-        handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}{note}; a person confirms the member{' again' if confirmed else ''} to accept it.")
+        # A member that cannot be checked, its address down or its release
+        # list refused, leaves the others to be moved, and the hand-off
+        # names it.
+        try:
+            move_member(c, cache, args, ops, handoff, current)
+        except Failed as e:
+            failed.append(f"{c.concept_id}: could not be checked, so it stays as it is: {e}")
     # A repository named with --add joins the same way a member moves: its
     # newest bundle release is verified first, then its own index.md says what
     # it is and where its namespace lies, and the pen creates the concept as
@@ -2551,11 +2578,15 @@ def members(args) -> int:
         added += 1
     for line in current:
         say(line)
+    for line in failed:
+        warn(line)
     if not ops:
+        if failed:
+            return 1
         say("every member is current; no patch written")
         return 0
     what = "moved" if not added else "moved or proposed"
-    patch = {"by": ACTOR, "ops": ops, "handoff": handoff[:10]}
+    patch = {"by": ACTOR, "ops": ops, "handoff": (failed + handoff)[:10]}
     # One line per value, so a replace target reaches the pen exactly as the
     # body holds it and no folded line can start like a person's event.
     text = yaml.safe_dump(patch, sort_keys=False, allow_unicode=True, width=1_000_000)
