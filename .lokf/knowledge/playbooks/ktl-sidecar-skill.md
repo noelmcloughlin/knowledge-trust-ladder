@@ -115,3 +115,4 @@ The librarian workflow template installs a pinned `ktl-librarian` into `.agents/
 ## Open questions
 
 - 2026-10-13, human:noelmcloughlin: the wrapper does not search `.agents/skills/` first; `skills/ktl-sidecar/SKILL.md` gives the order `.claude/skills/`, `.github/skills/`, `.agents/skills/`, then bare `skills/`. "Added the same day" for `references/m365.md` reads as 2026-10-07, but git adds it on 2026-09-24. Also carry "Never overwrite concept files", that `<BASE_IRI>` is never the code-host repository URL, that tracked or gitignored changes four things, and that placeholders are substituted via Python, not sed.
+- 2026-10-19, human:noelmcloughlin: refresh against sources.

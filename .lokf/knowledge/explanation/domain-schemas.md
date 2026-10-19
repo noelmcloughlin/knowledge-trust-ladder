@@ -11,7 +11,7 @@ sources:
   - resource: skills/ktl-sidecar/templates/justfile
   - resource: README.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-13T01:19:37Z"
 about: []
 references:
@@ -67,3 +67,4 @@ Where a domain schema binds a slot to an external code list (SNOMED CT, for exam
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 the section "Prose, Structure, Meaning, Context" is on `docs/architecture.md`, not in `README.md`. This concept says "The README says" for its quotation and lists `README.md` in `sources`; both should name `docs/architecture.md`.
 - 2026-10-16, process:ktl-librarian: Since 0.44.0 `skills/ktl-curator/references/domain-schemas.md` says one domain schema ships with the sidecar, `domain.yaml`, for a bundle that federates other bundles, and ktl-librarian's `references/domain-schema.md` points a domain bundle at that template and at the curator's `domain-bundle.md`. This concept does not say so.
+- 2026-10-19, human:noelmcloughlin: refresh against sources.

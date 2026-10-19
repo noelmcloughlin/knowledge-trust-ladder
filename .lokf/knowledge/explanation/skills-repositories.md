@@ -16,7 +16,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-13T01:02:36Z"
 verified:
   - by: human:noelmcloughlin
@@ -70,3 +70,4 @@ That is a condition check, the work a museum gives its conservator, who examines
 ## Open questions
 
 - 2026-10-15, process:ktl-librarian: Since 2026-10-14 `docs/skills-repositories.md` says each of this repository's six skills has a `Playbook` concept. This concept still says five.
+- 2026-10-19, human:noelmcloughlin: refresh against sources.

@@ -42,4 +42,4 @@ ktl-librarian checks the toolkit's version in a live session. It compares the la
 
 ## Open questions
 
-- 2026-10-13, human:noelmcloughlin: the SHACL sentence says the shapes catch violations, but `CHANGELOG.md` withdrew that claim ("The toolkit generates the shapes and neither ships nor runs them"). The template sets `lokf[build]>=0.8.0`, a floor, not a pin. The commands beyond `validate`, `convert`, `serve`, `tables` and `new`, and what `[build]` installs, come from sources this concept does not list (`docs/context-layer.md`, `docs/context-layer-technology.md`, `skills/ktl-curator/references/domain-schemas.md`, `skills/ktl-sidecar/templates/pyproject.toml`). Also carry the librarian's version check (raise the floor for a minor or patch, ask a person for a major, never bump `linkml` on its own) and that the no-Python schema is byte-identical to the 0.8.0 wheel's.
+- 2026-10-19, human:noelmcloughlin: refresh against sources.
