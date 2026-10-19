@@ -201,6 +201,12 @@ def _isolated_environment(tmp_path_factory):
     patch = pytest.MonkeyPatch()
     patch.setenv("GIT_CONFIG_GLOBAL", "/dev/null")
     patch.setenv("GIT_CONFIG_SYSTEM", "/dev/null")
+    # With no config git has no identity, and a clone or a commit that needs
+    # one asks the resolver for the host's full name. Where that name does not
+    # resolve, every such call waits out the lookup, 15 seconds on some hosts.
+    for role in ("AUTHOR", "COMMITTER"):
+        patch.setenv(f"GIT_{role}_NAME", "contract")
+        patch.setenv(f"GIT_{role}_EMAIL", "contract@example.invalid")
     patch.setenv("TMPDIR", str(tmp_path_factory.getbasetemp()))
     yield
     patch.undo()
