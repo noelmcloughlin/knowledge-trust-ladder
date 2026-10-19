@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The federation build runs lokf in its own process.** It exported and validated each bundle through a new lokf process, which imported lokf and LinkML again every time. A build of ktl-federation's five members takes 4.5 seconds instead of 12, with the same output, and the federation tests run in half the time.
+
 ## [0.53.0] - 2026-10-19
 
 ### Added

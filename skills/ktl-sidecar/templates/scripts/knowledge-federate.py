@@ -1071,15 +1071,48 @@ def released_lock(member: Member, domain_iri: str | None, cache: pathlib.Path, m
 # ---------------------------------------------------------------------------
 # the build
 # ---------------------------------------------------------------------------
-def lokf_cli() -> list[str]:
-    exe = shutil.which("lokf") or str(pathlib.Path(sys.executable).parent / "lokf")
-    if not pathlib.Path(exe).exists():
-        raise Failed("the lokf command is not on PATH; run this script with `uv run --project .lokf`")
-    return [exe]
+def run_lokf(args: list[str], cwd: pathlib.Path | None = None) -> subprocess.CompletedProcess:
+    """One lokf command, run in this process through lokf's own command line.
 
+    The build exports and validates every bundle. As a new process each time,
+    lokf and LinkML were imported again for every bundle, which took most of
+    a build's time. Run here, they are imported once, and each command keeps
+    its own arguments, output and exit status. This script imports lokf's
+    modules for its other steps already, so nothing new runs in it. A command
+    that fails in an unexpected way reads as a failed command, as a process
+    that died would. `cwd` stands in for the directory a process would start
+    in, which `--schema` resolves a schema's imports against.
+    """
+    import contextlib
+    import io
+    import traceback
 
-def run_lokf(args: list[str]) -> subprocess.CompletedProcess:
-    return subprocess.run([*lokf_cli(), *args], capture_output=True, text=True)
+    try:
+        import click
+        from lokf.cli import app
+        from typer.main import get_command
+    except ModuleNotFoundError as e:
+        raise Failed(f"lokf is not installed here ({e.name}); run this script with `uv run --project .lokf`") from e
+    out, err = io.StringIO(), io.StringIO()
+    here = os.getcwd()
+    try:
+        if cwd is not None:
+            os.chdir(cwd)
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            try:
+                rv = get_command(app).main(args=list(args), prog_name="lokf", standalone_mode=False)
+                code = rv if isinstance(rv, int) else 0
+            except click.ClickException as e:
+                e.show(file=err)
+                code = e.exit_code
+            except SystemExit as e:
+                code = e.code if isinstance(e.code, int) else (0 if e.code is None else 1)
+            except Exception:
+                err.write(traceback.format_exc())
+                code = 1
+    finally:
+        os.chdir(here)
+    return subprocess.CompletedProcess(["lokf", *args], code, out.getvalue(), err.getvalue())
 
 
 def public_url(root: pathlib.Path, given: str | None) -> str:
@@ -1747,7 +1780,7 @@ def _build(args, note_new) -> int:
             raise Failed(f"{slug}: lokf export failed: {(done.stderr or done.stdout).strip()[:400]}")
         schema = host_schema(root) if member is None else member_schema_file(member, cache, not args.no_attestation, kdir.parent.parent, args.max_bytes)
         if schema:
-            check = subprocess.run([*lokf_cli(), "validate", "--schema", schema.name, str(kdir)], capture_output=True, text=True, cwd=str(schema.parent))
+            check = run_lokf(["validate", "--schema", schema.name, str(kdir)], cwd=schema.parent)
             whose = "its domain schema" if member is None else "the schema released with it,"
             fit.append(f"- `{slug}`: " + (f"validates against {whose} `{schema.name}`" if check.returncode == 0 else f"does not validate against `{schema.name}`: " + (check.stderr or check.stdout).strip().splitlines()[-1][:200]))
         else:
