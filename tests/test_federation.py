@@ -121,7 +121,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import REPO, SCRIPTS, Git, have, read, run, today_utc, write
+from conftest import REPO, SCRIPTS, TEMPLATES, Git, have, read, run, today_utc, write
 
 SCRIPT = SCRIPTS / "knowledge-federate.py"
 APPLY = SCRIPTS / "knowledge-apply.sh"
@@ -966,6 +966,40 @@ def test_a_member_joins_only_at_the_sensitivity_its_domain_cleared(federation):
     top.write_text(top.read_text(encoding="utf-8").replace("sensitivity: internal", "sensitivity: confidential"), encoding="utf-8")
     r = federate(host, "build", "--no-attestation", "--visibility", "private")
     assert r.rc == 1 and "sensitivity on the Domain concept is the most sensitive member its workspace may hold, public or internal" in r.out, r.out
+
+
+def test_a_sensitivity_raised_as_it_stands_counts_before_a_person_confirms_it(federation):
+    """b's concept, edited since a person confirmed it, now says internal: b is built at the text confirmed, but as internal at once. A clearance lowered on the Domain concept counts at once too."""
+    host = federation["host"]
+    knowledge = host / ".lokf" / "knowledge"
+    edited = "generated:\n  by: process:knowledge-federate\n  at: '2026-02-01T00:00:00Z'\n"
+    git = committed(host)
+    b = knowledge / "members" / "b.md"
+    b.write_text(b.read_text(encoding="utf-8").replace("version: v1.0.0\n", "version: v1.0.0\nsensitivity: internal\n" + edited), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation", "--visibility", "private")
+    assert r.rc == 1 and "b: its concept as it stands says sensitivity internal, which counts at once" in r.out, r.out
+    assert "b: its sensitivity is internal, and the domain has cleared public only" in r.out, r.out
+    b.write_text(b.read_text(encoding="utf-8").replace(edited, ""), encoding="utf-8")
+    top = knowledge / "domains" / "federation.md"
+    top.write_text(top.read_text(encoding="utf-8").replace("unowned_targets: fail\n", "unowned_targets: fail\nsensitivity: internal\n"), encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-qm", "b is internal, and the domain clears internal")
+    assert federate(host, "build", "--no-attestation", "--visibility", "private").rc == 0
+    top.write_text(top.read_text(encoding="utf-8").replace("sensitivity: internal\n", "sensitivity: public\n" + edited), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation", "--visibility", "private")
+    assert r.rc == 1 and "its sensitivity as it stands, public, clears less than the internal a person confirmed" in r.out, r.out
+
+
+def test_the_domain_schema_clears_public_or_internal_alone(tmp_path):
+    """domain.yaml lets a member say confidential, and a Domain concept clear public or internal alone, as the build reads them."""
+    found = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", "import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob('lokf.yaml')))"],
+                stdout_only=True)
+    shutil.copy(found.out.strip(), tmp_path / "lokf.yaml")
+    shutil.copy(TEMPLATES / "domain.yaml", tmp_path / "domain.yaml")
+    for word, rc in (("public", 0), ("internal", 0), ("confidential", 1)):
+        k = make_bundle(tmp_path / word, "https://d.example/federation/", "D", {"domains/top.md": {"type": "Domain", "title": "Top", "description": "The domain.", "resource": "https://example.test/d", "sensitivity": word}})
+        r = run(["uv", "run", "--project", REPO / ".lokf", "lokf", "validate", "--schema", "domain.yaml", str(k)], cwd=tmp_path)
+        assert r.rc == rc, (word, r.out)
 
 
 def test_the_gate_names_a_member_that_waits_when_a_link_lies_in_its_namespace(federation):

@@ -613,6 +613,19 @@ def sensitivity_refusal(member, clearance: str, visibility) -> str:
     return ""
 
 
+def stricter(member: Member, standing: dict) -> None:
+    """Take the sensitivity a member concept says as it stands when it is higher than the one a person confirmed.
+
+    A person's confirmation is asked before a bundle may join more widely,
+    never before it may join less widely, so a raised sensitivity counts at
+    once.
+    """
+    said = str(standing.get("sensitivity") or "public")
+    if member.sensitivity in SENSITIVITY and said in SENSITIVITY and SENSITIVITY.index(said) > SENSITIVITY.index(member.sensitivity):
+        say(f"{member.slug}: its concept as it stands says sensitivity {said}, which counts at once, before a person confirms it")
+        member.sensitivity = said
+
+
 def waits_note(member) -> str:
     """For a member built at the release a person last confirmed: what its concept names now, and what admits it."""
     if not member.waits:
@@ -1479,6 +1492,12 @@ def _build(args, note_new) -> int:
     clearance = str(settings.get("sensitivity") or "public")
     if clearance not in SENSITIVITY[:2]:
         raise Failed(f"{top.path}: sensitivity on the Domain concept is the most sensitive member its workspace may hold, public or internal, not {clearance!r}")
+    # A clearance lowered in the text as it stands counts at once, as a
+    # member's raised sensitivity does: a person confirms what clears more.
+    standing = str(top.data.get("sensitivity") or "public")
+    if standing in SENSITIVITY[:2] and SENSITIVITY.index(standing) < SENSITIVITY.index(clearance):
+        say(f"{domain_iri}: its sensitivity as it stands, {standing}, clears less than the {clearance} a person confirmed, and counts at once")
+        clearance = standing
     visibility = functools.cache(lambda: repository_visibility(root, args.visibility))
     raw_depth = settings.get("max_depth")
     max_depth = DEFAULT_MAX_DEPTH if raw_depth is None else raw_depth
@@ -1529,10 +1548,12 @@ def _build(args, note_new) -> int:
     else:
         chosen = take_confirmed(bundle, member_concepts, True, waiting)
     queue: list[tuple[Member, int]] = []
+    standing = {bundle.iri(c): c.data for c in member_concepts}
     for path, data, moved, iri in chosen:
         first = Member(path, data, domain_iri, 1, (domain_base,), iri)
         first.waits = moved
         first.proposed = args.verify_only and not confirmed_by_person(data)
+        stricter(first, standing.get(iri, data))
         queue.append((first, 1))
     seen: dict[str, Member] = {}  # base_iri -> the member it joined as
     slugs = {"domain"}  # the folder names under bundles/ and export/; "domain" is this bundle's own
@@ -1651,9 +1672,11 @@ def _build(args, note_new) -> int:
                 say(f"{member.slug}: {e}; a member that waits in that domain is left out")
             if released:
                 say(f"{member.slug}: {member.workspace_name} checksum matches; its lock is that domain's")
+            sub_standing = {sub_bundle.iri(c): c.data for c in sub_members}
             for path, data, moved, iri in take_confirmed(sub_bundle, sub_members, False, waiting, released):
                 below = Member(path, data, sub_iri, depth + 1, (*member.ancestors, member.base_iri), iri)
                 below.waits = moved
+                stricter(below, sub_standing.get(iri, data))
                 queue.append((below, depth + 1))
             say(f"{member.slug}: a domain of {len(sub_members)} members, followed")
         elif member.declared_domain:
