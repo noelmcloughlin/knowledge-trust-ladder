@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **An agent that applies its own patch no longer loses a scheduled run's work.** The wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY` for the agent, so the pen only checks the patch file there and leaves it for the wrapper to apply. The skill and the pen's dry-run line no longer tell a scheduled agent to apply and validate.
-
 ## [0.53.0] - 2026-10-19
 
 ### Added
@@ -54,6 +50,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A domain host's site serves each member's release inside the workspace.** The Pages upload left out the hidden `bundles/<slug>/.lokf/` folders, so every member link in the served workspace index answered 404.
 - **The contract records every sibling host's links into this repository**, among them ktl-federation's into the federation page and the domain-bundle playbook. Its local cross-check reads all five hosts, and skips a domain host's ignored `snapshot/`, which holds a copy of this bundle.
 - **The librarian keeps run accounts out of the source map.** No rule asked for one, yet each refresh had added its account to `playbooks/knowledge-sources.md`, 41 of them by 2026-10-19. The skill now says the map holds none.
+- **An agent that applies its own patch no longer loses a scheduled run's work.** The wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY` for the agent, so the pen only checks the patch file there and leaves it for the wrapper to apply. The skill and the pen's dry-run line no longer tell a scheduled agent to apply and validate.
 
 ## [0.52.0] - 2026-10-18
 
