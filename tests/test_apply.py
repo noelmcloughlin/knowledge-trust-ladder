@@ -532,6 +532,28 @@ def test_a_dry_run_reports_writes_nothing_and_keeps_the_patch_file(applied):
     ), f"the dry run wrote something or lost the patch file: {result.out}"
 
 
+
+def test_in_the_agents_step_of_a_scheduled_run_the_pen_only_checks(applied):
+    """The wrapper sets KNOWLEDGE_PEN_DRY_RUN_ONLY for the agent: a write is refused and the patch file stays for the wrapper, while a dry run still checks it."""
+    write(
+        patch_file(applied),
+        lines(
+            "ops:",
+            "  - {op: create, path: playbooks/held.md, frontmatter: {type: Playbook, title: Held, description: d.}, body: b}",
+        ),
+    )
+    before = tree_digest(applied)
+    only = {"KNOWLEDGE_PEN_DRY_RUN_ONLY": "1"}
+    refused = bash(APPLY, "--root", applied, patch_file(applied), env=only)
+    checked = bash(APPLY, "--root", applied, "--dry-run", patch_file(applied), env=only)
+    assert (
+        refused.rc == 2
+        and "Nothing was written" in refused.out
+        and tree_digest(applied) == before
+        and patch_file(applied).exists()
+    ), f"the pen wrote in the agent's step, or lost the patch file (exit {refused.rc}): {refused.out}"
+    assert checked and "leave the patch file in place" in checked.out, f"the dry run did not tell the agent to leave the file: {checked.out}"
+
 # The hand-off: lines for the reviewer, which never reach the bundle. The pen
 # accepts each only as one line of printable text with no backtick. It writes
 # them to the file --handoff names, empties that file when a patch has none,
