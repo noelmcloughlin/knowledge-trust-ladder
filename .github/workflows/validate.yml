@@ -60,11 +60,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh skill publish --dry-run
 
+  # Two runners side by side. The federation builds are CPU-bound, each one
+  # running the lokf toolkit once per member, so one runner's workers only
+  # share its CPUs; a second runner adds its own.
   test-scripts:
-    name: Test the sidecar scripts
+    name: Test the sidecar scripts (${{ matrix.part }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - part: federation
+            tests: tests/test_federation.py
+          - part: the rest
+            tests: tests --ignore=tests/test_federation.py
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -98,8 +109,13 @@ jobs:
         with:
           node-version: 22
 
+      # One worker per CPU on each runner. Each test keeps to its own tmp_path.
       - name: Run the tests
-        run: uv run --no-project --with-requirements tests/requirements.txt pytest
+        env:
+          TESTS: ${{ matrix.tests }}
+        run: |
+          read -r -a paths <<< "$TESTS"
+          uv run --no-project --with-requirements tests/requirements.txt pytest -n auto "${paths[@]}"
 
   lint-scripts:
     name: Lint shell scripts
