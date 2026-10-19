@@ -48,7 +48,7 @@ The workspace is a materialised view of the top domain, built ahead of time and 
   </picture>
 </p>
 
-As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-context-workspace.svg), [dark](../.assets/companions/ktl-context-workspace-dark.svg).
+***As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-context-workspace.svg), [dark](../.assets/companions/ktl-context-workspace-dark.svg).***
 
 1. **A publish event starts it.** On GitHub, the host's release starts the job. An artifact repository's webhook can start it too, through `workflow_dispatch` ([which repositories send one](context-layer-technology.md#find-your-case)).
 2. **Resolve.** The job reads the top domain's manifest, follows each domain to its members, and writes a lock: one entry per release with its URL, its checksum, its tier and the domains that named it. It takes each member, and the domain's own settings, as a person last confirmed them, and lists a member that waits for a confirmation.
