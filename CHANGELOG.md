@@ -8,6 +8,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **`docs/for-the-curious.md` says how readers and verdicts steer the next run.** It now holds what KTL took from the WikiSkill and SkillWiki papers, so `docs/wikiskill.md` and `docs/skillwiki.md` are gone. The bundle's two concepts stay the record of each paper.
 
+### Fixed
+
+- **The librarian keeps run accounts out of the source map.** No rule asked for one, yet each refresh had added its account to `playbooks/knowledge-sources.md`, 41 of them by 2026-10-19. The skill now says the map holds none.
+
 ## [0.53.0] - 2026-10-19
 
 ### Added
