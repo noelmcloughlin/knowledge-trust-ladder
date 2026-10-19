@@ -113,7 +113,9 @@ jobs:
       - name: Run the tests
         env:
           TESTS: ${{ matrix.tests }}
-        run: uv run --no-project --with-requirements tests/requirements.txt pytest -n auto $TESTS
+        run: |
+          read -r -a paths <<< "$TESTS"
+          uv run --no-project --with-requirements tests/requirements.txt pytest -n auto "${paths[@]}"
 
   lint-scripts:
     name: Lint shell scripts
