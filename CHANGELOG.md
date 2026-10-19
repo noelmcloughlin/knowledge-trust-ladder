@@ -15,7 +15,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The readers read a workspace where it lies:** a folder, a `workspace-<tag>.zip` in place, or the site that serves it, a graph at a time by range request. `read_document` reads the workspace's copy of a release, else its `concepts.jsonld`, else its source, as section 11.4 chains them.
 - **A reader can be given some members alone.** `--member <slug>` on `mcp`, `serve` and `query` loads those bundles' graphs and no other, and refuses the stored queries that read the lock graph.
 - **A domain host's release notes say what changed in its workspace.** `knowledge-federate.py diff` compares two workspaces, and the federation workflow adds the members that joined, moved or left, and the links between them, to each release's notes.
-- **A domain host's graph page draws the workspace.** Its *The workspace* view draws every bundle the domain names, each in a colour of its own, with the links between bundles dashed, from the `graph.json` the federation workflow serves. `WORKSPACE` in `site.config.mjs` names that folder, and is on when the repository has the workflow.
+- **A domain host's graph page draws the workspace.** Its *The workspace* view draws every bundle the domain names, each in a colour and shape of its own, with the links between bundles dashed, from the `graph.json` the federation workflow serves. `WORKSPACE` in `site.config.mjs` turns the view on or off, and it is on when the repository has the workflow.
 
 ### Fixed
 

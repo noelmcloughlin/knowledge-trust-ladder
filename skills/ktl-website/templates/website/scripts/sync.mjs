@@ -49,13 +49,13 @@ import {
   SITE_URL,
   SITE_DIR,
   TITLE,
-  WORKSPACE,
   browseFiles,
   bundleGroups,
   conceptIds,
   docsPages,
   groupLabel,
   schemaPages,
+  workspaceLinks,
 } from "./config.mjs";
 import { WIKILINK, resolveWikilink } from "./markdown-ktl.mjs";
 import { rewriteUrl, route } from "./routes.mjs";
@@ -1279,8 +1279,7 @@ function copyAssets() {
   // Where a domain host's workspace is served, for the graph page, or null.
   // The workspace itself arrives after the build, from the federation
   // workflow, so the page names it and fetches it when a reader asks.
-  const workspace = WORKSPACE ? { folder: WORKSPACE, graph: `${BASE}/${WORKSPACE}/graph.json`, index: `${SITE_URL}/${WORKSPACE}/index.md` } : null;
-  write(resolve(GENERATED, "workspace.json"), JSON.stringify(workspace) + "\n");
+  write(resolve(GENERATED, "workspace.json"), JSON.stringify(workspaceLinks()) + "\n");
 }
 
 // ---------------------------------------------------------------------------

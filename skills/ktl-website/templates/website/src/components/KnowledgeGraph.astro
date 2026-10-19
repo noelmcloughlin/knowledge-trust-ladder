@@ -13,11 +13,16 @@
 // On a domain host, `workspace` names the workspace's graph.json, and
 // `?graph=workspace` draws it instead: each bundle in a colour of its own,
 // the links between bundles dashed, a node named by its IRI, as
-// `&iri=<iri>`, since two bundles may each hold a concept of one id.
+// `&iri=<iri>`, since two bundles may each hold a concept of one id. Each
+// bundle has a shape of its own as well as a colour, so no reader depends on
+// colour alone.
 interface Props {
   workspace?: string;
 }
 const { workspace } = Astro.props;
+// The view links name the graph page itself, so they hold under `astro dev`,
+// whose address may lack the trailing slash.
+const graphPage = import.meta.env.BASE_URL.replace(/\/$/, "") + "/graph/";
 ---
 
 <div
@@ -29,8 +34,8 @@ const { workspace } = Astro.props;
   {
     workspace && (
       <nav class="lokf-graph__views not-content" aria-label="Which graph to draw">
-        <a href="./" data-view="bundle">This bundle</a>
-        <a href="./?graph=workspace" data-view="workspace">The workspace</a>
+        <a href={graphPage} data-view="bundle">This bundle</a>
+        <a href={graphPage + "?graph=workspace"} data-view="workspace">The workspace</a>
       </nav>
     )
   }
@@ -94,6 +99,24 @@ const { workspace } = Astro.props;
     "#5b8def", "#e8833a", "#2ea77d", "#c1558b",
     "#9b6dd6", "#d2b13a", "#4bacc6", "#d05b5b",
   ];
+  // A node of no listed bundle, in a colour and shape no bundle takes.
+  const UNLISTED = { color: "#8a8a8a", shape: "rectangle" };
+  // The workspace gives each bundle a shape as well as a colour. The legend
+  // draws the same shape with these clip paths.
+  const SHAPES: [string, string][] = [
+    ["ellipse", "circle(50%)"],
+    ["round-rectangle", "inset(0 round 25%)"],
+    ["diamond", "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)"],
+    ["triangle", "polygon(50% 0, 100% 100%, 0 100%)"],
+    ["hexagon", "polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)"],
+    ["star", "polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)"],
+    ["vee", "polygon(0 0, 50% 40%, 100% 0, 50% 100%)"],
+    ["octagon", "polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%)"],
+  ];
+  // Above this many nodes the layout runs at draft quality, which is some
+  // ten times faster, so a workspace of a few thousand concepts draws in
+  // seconds rather than freezing the page.
+  const LARGE = 400;
 
   type Bundle = { slug: string; title: string; base_iri: string; version?: string; source_base?: string };
   type Elements = {
@@ -135,18 +158,40 @@ const { workspace } = Astro.props;
       });
   }
 
-  function render(root: HTMLElement, graph: Elements, workspace: boolean) {
+  async function render(root: HTMLElement, graph: Elements, workspace: boolean) {
     const mount = root.querySelector(".lokf-graph__canvas") as HTMLElement;
     const sourceBase = graph.meta?.source_base ?? "";
-    // The workspace's nodes are coloured by bundle, a bundle's own by type.
+    // The workspace's nodes are coloured and shaped by bundle, a bundle's own coloured by type.
     const bundles = new Map((workspace ? graph.meta?.bundles ?? [] : []).map((b): [string, Bundle] => [b.slug, b]));
 
     const types = [...new Set(graph.nodes.map((n) => n.data.type))].sort();
     const colorOf: Record<string, string> = {};
-    const coloured = workspace ? [...bundles.keys()] : types;
-    coloured.forEach((t, i) => (colorOf[t] = PALETTE[i % PALETTE.length]));
-    graph.nodes.forEach((n) => (n.data.color = colorOf[workspace ? n.data.bundle : n.data.type] ?? PALETTE[0]));
+    const shapeOf: Record<string, [string, string]> = {};
+    if (workspace) {
+      // Colour and shape cycle at the same length, so the colour steps on
+      // each time the shapes come round again and no two bundles of the
+      // first 64 look alike.
+      [...bundles.keys()].forEach((slug, i) => {
+        colorOf[slug] = PALETTE[(i + Math.floor(i / SHAPES.length)) % PALETTE.length];
+        shapeOf[slug] = SHAPES[i % SHAPES.length];
+      });
+    } else {
+      types.forEach((t, i) => (colorOf[t] = PALETTE[i % PALETTE.length]));
+    }
+    graph.nodes.forEach((n) => {
+      const by = workspace ? n.data.bundle : n.data.type;
+      n.data.color = colorOf[by] ?? UNLISTED.color;
+      n.data.shape = workspace ? shapeOf[by]?.[0] ?? UNLISTED.shape : "ellipse";
+    });
     const predicates = [...new Set(graph.edges.map((e) => e.data.predicate))].sort();
+    const large = graph.nodes.length > LARGE;
+    if (large) {
+      // The layout runs before the page can paint again, so the reader is
+      // told first.
+      mount.textContent = `Laying out ${graph.nodes.length} concepts…`;
+      await new Promise((done) => requestAnimationFrame(() => setTimeout(done, 0)));
+      mount.textContent = "";
+    }
 
     const fg = themeColor("--sl-color-text", "#333");
     const line = themeColor("--sl-color-gray-3", "#888");
@@ -155,12 +200,13 @@ const { workspace } = Astro.props;
     const cy = cytoscape({
       container: mount,
       elements: graph,
-      minZoom: 0.2,
+      // A large graph needs to zoom further out to fit the view.
+      minZoom: large ? 0.02 : 0.2,
       maxZoom: 2.5,
       wheelSensitivity: 0.3,
       layout: {
         name: "fcose",
-        quality: "proof",
+        quality: large ? "draft" : "proof",
         animate: false,
         padding: 50,
         nodeSeparation: 160,
@@ -174,7 +220,9 @@ const { workspace } = Astro.props;
           selector: "node",
           style: {
             "background-color": "data(color)",
+            shape: (n: cytoscape.NodeSingular) => n.data("shape"),
             label: "data(label)",
+            "min-zoomed-font-size": 7,
             color: fg,
             "font-size": "11px",
             "text-wrap": "wrap",
@@ -190,6 +238,7 @@ const { workspace } = Astro.props;
           style: {
             label: "data(predicate)",
             "font-size": "9px",
+            "min-zoomed-font-size": 7,
             color: line,
             "line-color": line,
             "target-arrow-color": line,
@@ -214,7 +263,7 @@ const { workspace } = Astro.props;
     const typeBox = root.querySelector('[data-filter="type"]') as HTMLElement;
     const predBox = root.querySelector('[data-filter="predicate"]') as HTMLElement;
     const bundleBox = root.querySelector('[data-filter="bundle"]') as HTMLElement;
-    const checkbox = (value: string, swatch?: string, text?: string) => {
+    const checkbox = (value: string, swatch?: string, text?: string, clip?: string) => {
       const label = document.createElement("label");
       const input = document.createElement("input");
       input.type = "checkbox";
@@ -225,6 +274,7 @@ const { workspace } = Astro.props;
         const dot = document.createElement("span");
         dot.className = "lokf-graph__swatch";
         dot.style.background = swatch;
+        if (clip) dot.style.clipPath = clip;
         label.append(dot);
       }
       label.append(document.createTextNode(" " + (text ?? value)));
@@ -233,9 +283,9 @@ const { workspace } = Astro.props;
     };
     types.forEach((t) => typeBox.append(checkbox(t, workspace ? undefined : colorOf[t])));
     predicates.forEach((p) => predBox.append(checkbox(p)));
-    if (workspace) {
+    if (workspace && bundles.size) {
       bundleBox.hidden = false;
-      bundles.forEach((b, slug) => bundleBox.append(checkbox(slug, colorOf[slug], b.title)));
+      bundles.forEach((b, slug) => bundleBox.append(checkbox(slug, colorOf[slug], b.title, shapeOf[slug][1])));
     }
 
     function checkedValues(box: HTMLElement) {
@@ -247,8 +297,12 @@ const { workspace } = Astro.props;
       const okTypes = checkedValues(typeBox);
       const okPreds = checkedValues(predBox);
       const okBundles = workspace ? checkedValues(bundleBox) : null;
+      // A node of no listed bundle has no box to tick, so no box hides it.
       cy.nodes().forEach((n) =>
-        n.toggleClass("hidden", !okTypes.has(n.data("type")) || (okBundles !== null && !okBundles.has(n.data("bundle")))),
+        n.toggleClass(
+          "hidden",
+          !okTypes.has(n.data("type")) || (okBundles !== null && bundles.has(n.data("bundle")) && !okBundles.has(n.data("bundle"))),
+        ),
       );
       cy.edges().forEach((e) =>
         e.toggleClass("hidden", !okPreds.has(e.data("predicate"))),
@@ -260,7 +314,7 @@ const { workspace } = Astro.props;
     search.addEventListener("input", () => {
       const q = search.value.trim().toLowerCase();
       cy.nodes().forEach((n) =>
-        n.toggleClass("dim", q !== "" && !n.data("label").toLowerCase().includes(q)),
+        n.toggleClass("dim", q !== "" && !String(n.data("label") ?? "").toLowerCase().includes(q)),
       );
     });
 
@@ -281,16 +335,17 @@ const { workspace } = Astro.props;
       history.replaceState(history.state, "", url);
     };
     // A workspace node carries its review date, so staleness is judged on
-    // the day the page draws it.
-    const today = new Date().toISOString().slice(0, 10);
+    // the reader's own day, from that date on, as lokf judges it.
+    const now = new Date();
+    const today = [now.getFullYear(), now.getMonth() + 1, now.getDate()].map((n, i) => String(n).padStart(i ? 2 : 4, "0")).join("-");
     function show(node: cytoscape.NodeSingular) {
       const d = node.data();
-      set(".lokf-graph__detail-title", d.label);
+      set(".lokf-graph__detail-title", String(d.label ?? ""));
       set(".lokf-graph__detail-type", d.type);
       const bundle = bundles.get(d.bundle);
       root.querySelectorAll<HTMLElement>(".lokf-graph__bundle-row").forEach((el) => (el.hidden = !bundle));
       if (bundle) set(".lokf-graph__detail-bundle", bundle.version ? `${bundle.title}, ${bundle.version}` : bundle.title);
-      const stale = d.stale_after ? String(d.stale_after).slice(0, 10) < today : d.stale;
+      const stale = d.stale_after ? String(d.stale_after).slice(0, 10) <= today : d.stale;
       // OKF v0.2 trust signals: "human-reviewed · stable" (+ " · stale").
       const trust = [d.trust_tier, d.status, stale ? "stale" : ""]
         .filter(Boolean)
@@ -299,9 +354,11 @@ const { workspace } = Astro.props;
       set(".lokf-graph__detail-iri", d.id);
       set(".lokf-graph__detail-cid", d.concept_id);
       // A workspace node links to its IRI, which a bundle with a site of
-      // its own serves as the concept's page.
+      // its own serves as the concept's page. Only an http or https IRI is
+      // linked: a member writes its concepts' ids, and an id such as
+      // javascript: would run on this site when followed.
       const page = root.querySelector(".lokf-graph__detail-page") as HTMLAnchorElement;
-      if (workspace || d.concept_id) {
+      if (workspace ? /^https?:\/\//i.test(String(d.id)) : !!d.concept_id) {
         page.href = workspace ? d.id : root.dataset.pageBase + d.concept_id + "/";
         page.textContent = workspace ? "Follow its IRI →" : "Open the concept page →";
         page.hidden = false;

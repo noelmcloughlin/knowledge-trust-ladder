@@ -233,19 +233,24 @@ export const BROWSE = (() => {
   return recipeIn([linkmoDir()], "build-browse", "browse");
 })();
 
-// The workspace of a domain host: the folder under the site where the
-// knowledge-federation workflow serves it, whose graph.json the graph page
-// draws beside the bundle's own. The workflow adds the folder after the
-// site is built, so the page reads it when a reader opens the view.
+// The workspace of a domain host, whose graph.json the graph page draws
+// beside the bundle's own: the folder under the site where the
+// knowledge-federation workflow serves it, or null. The workflow always
+// serves it at workspace/, so the setting says only whether the page offers
+// it. The workflow adds the folder after the site is built, so the page
+// reads it when a reader opens the view.
 export const WORKSPACE = (() => {
   const value = given.WORKSPACE === undefined ? "auto" : given.WORKSPACE;
-  if (value === null) return null;
+  if (value === null || value === false) return null;
+  if (value === true) return "workspace";
   if (value === "auto") return isFile(".github/workflows/knowledge-federation.yaml") ? "workspace" : null;
-  if (typeof value !== "string" || !/^[a-z0-9][a-z0-9_-]*(?:\/[a-z0-9_-]+)*$/.test(value)) {
-    fail(`WORKSPACE must be the folder under the site that serves the workspace, such as "workspace", or "auto" or null, not ${JSON.stringify(value)}`);
-  }
-  return value;
+  fail(`WORKSPACE must be "auto", true or null, since the federation workflow serves the workspace at workspace/ under the site, not ${JSON.stringify(value)}`);
 })();
+
+/** Where the graph page finds the workspace: its folder, its graph.json under the site's base, and its index as a full address; null with no workspace. */
+export function workspaceLinks() {
+  return WORKSPACE ? { folder: WORKSPACE, graph: `${BASE}/${WORKSPACE}/graph.json`, index: `${SITE_URL}/${WORKSPACE}/index.md` } : null;
+}
 
 /** The first `# ` line of a file outside fenced code, or null. */
 function firstTitle(rel) {
@@ -435,5 +440,5 @@ export function browseFiles() {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const settled = { REPO, SITE, BASE, TITLE, DESCRIPTION, BRANCH, CUSTOM_DOMAIN, REF, LOGO, ASSETS, DOCS, CHANGELOG, RELEASE_TAG, PAGES, HOME, SCHEMA, BROWSE, WORKSPACE };
-  console.log(JSON.stringify({ ...settled, docsPages: docsPages(), bundleGroups: bundleGroups() }, null, 2));
+  console.log(JSON.stringify({ ...settled, docsPages: docsPages(), bundleGroups: bundleGroups(), workspace: workspaceLinks() }, null, 2));
 }
