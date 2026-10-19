@@ -1,0 +1,143 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "How the context workspace stays current",
+    "output": ".assets/companions/ktl-context-workspace.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "translations": {
+      "diagram.description.workflow": "A published release starts the refresh job, which runs no agent. It resolves the members into a lock, verifies each file, builds one named graph per bundle, gates the links between bundles and swaps the snapshot in whole. A failed check or gate stops the job; the old snapshot stays. A member whose file cannot be fetched is held at its last good state. Readers query it over SPARQL or MCP."
+    },
+    "repository": {
+      "url": "https://github.com/noelmcloughlin/knowledge-trust-ladder.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "2ff9f0d2850a922e5861b0f841a9e6399db9cbc7"
+    },
+    "legend": {
+      "entries": {
+        "cloud": { "label": "where releases are published" },
+        "security": { "label": "built and gated by a script, no agent" },
+        "database": { "label": "what the build writes" },
+        "frontend": { "label": "who reads it" }
+      }
+    }
+  },
+  "lanes": [
+    { "id": "repository", "label": "Releases" },
+    { "id": "unreachable", "label": "Unreachable", "variant": "exception" },
+    { "id": "job", "label": "Refresh job" },
+    { "id": "failed", "label": "Check fails", "variant": "exception" },
+    { "id": "workspace", "label": "Workspace" },
+    { "id": "audience", "label": "Readers" }
+  ],
+  "mainPath": ["resolve", "verify", "build", "gate", "swap"],
+  "nodes": [
+    {
+      "id": "release", "lane": "repository", "col": 0, "type": "cloud",
+      "label": "Release published", "sublabel": "the domain's, or a webhook",
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/github/knowledge-federation.yaml", "line": 53, "end_line": 55, "label": "runs on each published release" },
+        { "path": "docs/federation.md", "line": 51, "label": "a publish event starts it" }
+      ]
+    },
+    {
+      "id": "resolve", "lane": "job", "col": 0, "type": "security",
+      "label": "Resolve", "sublabel": "members into a lock",
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 1524, "label": "1. Resolve: the members into a lock" },
+        { "path": "docs/federation.md", "line": 52, "label": "one lock entry per release" }
+      ]
+    },
+    {
+      "id": "verify", "lane": "job", "col": 1, "type": "security",
+      "label": "Verify", "sublabel": "checksum, attestation",
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 799, "end_line": 830, "label": "checksum, zip rules and attestation" },
+        { "path": "docs/federation.md", "line": 53, "label": "a failed check stops the job" }
+      ]
+    },
+    {
+      "id": "held", "lane": "unreachable", "col": 1, "type": "security", "icon": "waiting",
+      "label": "Held at last good state", "sublabel": "as the last workspace has it",
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 1610, "end_line": 1645, "label": "held, or left out if never held" },
+        { "path": "docs/federation.md", "line": 53, "label": "held at its last good state" }
+      ]
+    },
+    {
+      "id": "build", "lane": "job", "col": 2, "type": "security",
+      "label": "Build", "sublabel": "register, export, load",
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 1706, "label": "2. Register and export each bundle" },
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 1773, "label": "3. Load: one named graph per bundle" },
+        { "path": "docs/federation.md", "line": 54, "end_line": 55, "label": "register and export, then load" }
+      ]
+    },
+    {
+      "id": "gate", "lane": "job", "col": 3, "type": "security",
+      "label": "Gate", "sublabel": "links between bundles",
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 1807, "label": "4. Gate: targets outside a namespace" },
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 1885, "end_line": 1893, "label": "fails when the policy is fail" },
+        { "path": "docs/federation.md", "line": 56, "label": "an IRI no member owns fails the build" }
+      ]
+    },
+    {
+      "id": "swap", "lane": "job", "col": 4, "type": "security",
+      "label": "Swap", "sublabel": "in one atomic step",
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 1909, "end_line": 1915, "label": "6. Swap: snapshot.new becomes snapshot" },
+        { "path": "docs/federation.md", "line": 57, "label": "never half a federation" }
+      ]
+    },
+    {
+      "id": "stopped", "lane": "failed", "col": 2, "type": "security", "icon": "stop",
+      "label": "The job stops", "sublabel": "the old snapshot stays",
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 1461, "end_line": 1469, "label": "snapshot.new removed short of the swap" },
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 55, "end_line": 57, "label": "a failed build keeps the old snapshot" }
+      ]
+    },
+    {
+      "id": "snapshot", "lane": "workspace", "col": 4, "type": "database",
+      "label": "New snapshot", "sublabel": "one named graph per bundle",
+      "sources": [
+        { "path": "docs/federation.md", "line": 59, "label": "index first, then traverse on demand" },
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-federate.py", "line": 93, "end_line": 109, "label": "serve, query and mcp read the snapshot" }
+      ]
+    },
+    {
+      "id": "readers", "lane": "audience", "col": 4, "type": "frontend", "icon": "person",
+      "label": "Agents, copilots", "sublabel": "and the people who ask them",
+      "sources": [
+        { "path": "docs/federation.md", "line": 59, "label": "a SPARQL endpoint and an MCP server" }
+      ]
+    }
+  ],
+  "edges": [
+    { "id": "starts", "from": "release", "to": "resolve", "label": "publish event", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "lock", "from": "resolve", "to": "verify", "label": "the lock", "variant": "emphasis" },
+    { "id": "checked", "from": "verify", "to": "build", "variant": "emphasis" },
+    { "id": "graphs", "from": "build", "to": "gate", "label": "named graphs", "variant": "emphasis" },
+    { "id": "passes", "from": "gate", "to": "swap", "variant": "emphasis" },
+    { "id": "swapped", "from": "swap", "to": "snapshot", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "read", "from": "snapshot", "to": "readers", "label": "SPARQL or MCP", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "cannot-fetch", "from": "verify", "to": "held", "label": "cannot fetch it", "variant": "dashed", "role": "branch", "fromSide": "top", "toSide": "bottom" },
+    { "id": "last-good", "from": "held", "to": "build", "label": "last good copy", "variant": "dashed", "role": "branch", "fromSide": "right", "toSide": "top" },
+    { "id": "check-fails", "from": "verify", "to": "stopped", "label": "a check fails", "variant": "security", "role": "error", "fromSide": "bottom", "toSide": "left" },
+    { "id": "gate-fails", "from": "gate", "to": "stopped", "label": "a link fails", "variant": "security", "role": "error", "fromSide": "bottom", "toSide": "right" }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "No agent runs",
+      "items": [
+        "A published release of the domain starts the job; a webhook can dispatch it too",
+        "A member the last workspace never held is left out until its file can be fetched",
+        "Readers keep the old snapshot until a swap replaces it whole"
+      ]
+    }
+  ]
+}

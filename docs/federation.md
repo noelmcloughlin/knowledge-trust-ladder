@@ -48,6 +48,8 @@ The workspace is a materialised view of the top domain, built ahead of time and 
   </picture>
 </p>
 
+As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-context-workspace.svg), [dark](../.assets/companions/ktl-context-workspace-dark.svg).
+
 1. **A publish event starts it.** On GitHub, the host's release starts the job. An artifact repository's webhook can start it too, through `workflow_dispatch` ([which repositories send one](context-layer-technology.md#find-your-case)).
 2. **Resolve.** The job reads the top domain's manifest, follows each domain to its members, and writes a lock: one entry per release with its URL, its checksum, its tier and the domains that named it. It takes each member, and the domain's own settings, as a person last confirmed them, and lists a member that waits for a confirmation.
 3. **Verify.** Each zip is checked against its `.sha256`, and on GitHub against its attestation with `gh attestation verify`. A bundle that releases no zip is checked by the checksum of the `concepts.jsonld` its site serves. A file that fails a check stops the job, and the old snapshot stays. A member whose file cannot be fetched is held at its last good state, as section 11.5 has it: the job takes the member as the previous release's workspace holds it. A release zip that serves other bytes is held only at the release a build fetched before, since its checksum is then wrong. A member that workspace never held is left out until its file can be fetched, and a pull request's check holds nothing it proposes.

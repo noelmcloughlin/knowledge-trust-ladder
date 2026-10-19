@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Context layer",
+    "output": ".assets/companions/ktl-federated-context-layer.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "translations": {
+      "diagram.description.architecture": "Bottom to top. Four bundles, A to D, each in its own repository and on its own trust ladder, release into an artifact repository. Domains are manifests a person confirms: domains/domain1 selects A and B, domains/domain2 selects C and D, and domains/federation, where the build starts, selects both. Each release of the domain builds the context layer, and readers traverse it on demand."
+    },
+    "repository": {
+      "url": "https://github.com/noelmcloughlin/knowledge-trust-ladder.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "2ff9f0d2850a922e5861b0f841a9e6399db9cbc7"
+    },
+    "legend": {
+      "entries": {
+        "frontend": { "label": "who reads it" },
+        "security": { "label": "built and gated by a script, no agent" },
+        "external": { "label": "a manifest a person confirms" },
+        "cloud": { "label": "where each bundle releases" },
+        "backend": { "label": "a bundle, on its own trust ladder" }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "readers", "type": "frontend", "label": "Readers",
+      "sublabel": "agents, copilots and the people who ask them",
+      "pos": [40, 40], "size": [630, 60],
+      "sources": [
+        { "path": "docs/federation.md", "line": 59, "label": "a SPARQL endpoint and an MCP server" },
+        { "path": "docs/context-layer.md", "line": 6, "label": "a person or an agent consumes it" }
+      ]
+    },
+    {
+      "id": "layer", "type": "security", "label": "The context layer",
+      "sublabel": "one knowledge graph, one named graph per bundle", "tag": "no agent",
+      "pos": [40, 180], "size": [630, 64],
+      "sources": [
+        { "path": "docs/context-layer.md", "line": 43, "label": "a build turns a domain into a workspace" },
+        { "path": "docs/federation.md", "line": 6, "label": "one named graph per bundle" }
+      ]
+    },
+    {
+      "id": "domain1", "type": "external", "label": "domains/domain1",
+      "sublabel": "selects bundles A and B",
+      "pos": [40, 360], "size": [150, 64],
+      "sources": [
+        { "path": "docs/federation.md", "line": 22, "label": "a domain may name domains in turn" },
+        { "path": "skills/ktl-sidecar/templates/domain.yaml", "line": 63, "end_line": 71, "label": "MemberBundle and MemberDomain" }
+      ]
+    },
+    {
+      "id": "federation", "type": "external", "label": "domains/federation",
+      "sublabel": "selects both domains", "tag": "the build starts here",
+      "pos": [280, 360], "size": [150, 64],
+      "sources": [
+        { "path": "docs/federation.md", "line": 6, "label": "the domain a build starts from" },
+        { "path": "skills/ktl-sidecar/templates/domain.yaml", "line": 57, "end_line": 62, "label": "Domain, a dcat:Catalog" },
+        { "path": "docs/federation.md", "line": 33, "label": "every domain bounds a workspace" }
+      ]
+    },
+    {
+      "id": "domain2", "type": "external", "label": "domains/domain2",
+      "sublabel": "selects bundles C and D",
+      "pos": [520, 360], "size": [150, 64],
+      "sources": [
+        { "path": "docs/federation.md", "line": 22, "label": "a domain may name domains in turn" },
+        { "path": "docs/federation.md", "line": 18, "label": "a domain selects releases" }
+      ]
+    },
+    {
+      "id": "artifacts", "type": "cloud", "label": "Artifact repository",
+      "sublabel": "versioned releases, each a zip with its checksum",
+      "pos": [40, 520], "size": [630, 64],
+      "sources": [
+        { "path": "docs/federation.md", "line": 10, "label": "a reproducible zip, never edited" },
+        { "path": "skills/ktl-sidecar/templates/github/knowledge-release.yaml", "line": 300, "end_line": 301, "label": "a build-provenance attestation" }
+      ]
+    },
+    {
+      "id": "bundle_a", "type": "backend", "label": "Bundle A", "sublabel": "repository A", "tag": "LOKF schema",
+      "pos": [40, 680], "size": [140, 64],
+      "sources": [
+        { "path": "docs/context-layer.md", "line": 16, "end_line": 29, "label": "one bundle, one repository" }
+      ]
+    },
+    {
+      "id": "bundle_b", "type": "backend", "label": "Bundle B", "sublabel": "repository B", "tag": "domain schema",
+      "pos": [203, 680], "size": [140, 64],
+      "sources": [
+        { "path": "docs/context-layer.md", "line": 27, "label": "a domain schema beside LOKF's" }
+      ]
+    },
+    {
+      "id": "bundle_c", "type": "backend", "label": "Bundle C", "sublabel": "repository C", "tag": "LOKF schema",
+      "pos": [366, 680], "size": [140, 64],
+      "sources": [
+        { "path": "docs/context-layer.md", "line": 16, "end_line": 29, "label": "one bundle, one repository" }
+      ]
+    },
+    {
+      "id": "bundle_d", "type": "backend", "label": "Bundle D", "sublabel": "repository D", "tag": "domain schema",
+      "pos": [529, 680], "size": [140, 64],
+      "sources": [
+        { "path": "docs/context-layer.md", "line": 27, "label": "a domain schema beside LOKF's" }
+      ]
+    }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Domains: manifests, bound when the workspace is built", "wraps": ["domain1", "federation", "domain2"] },
+    { "kind": "region", "label": "Sub-domains: one bundle per repository", "wraps": ["bundle_a", "bundle_b", "bundle_c", "bundle_d"] }
+  ],
+  "connections": [
+    { "id": "a-release", "from": "bundle_a", "to": "artifacts", "label": "released, checksummed" },
+    { "id": "b-release", "from": "bundle_b", "to": "artifacts" },
+    { "id": "c-release", "from": "bundle_c", "to": "artifacts" },
+    { "id": "d-release", "from": "bundle_d", "to": "artifacts" },
+    { "id": "selects-1", "from": "artifacts", "to": "domain1", "label": "named by checksum" },
+    { "id": "selects-2", "from": "artifacts", "to": "domain2", "label": "named by checksum" },
+    { "id": "member-1", "from": "domain1", "to": "federation" },
+    { "id": "member-2", "from": "domain2", "to": "federation" },
+    { "id": "builds", "from": "federation", "to": "layer", "label": "built on each release", "variant": "emphasis", "width": 2 },
+    { "id": "reads", "from": "layer", "to": "readers", "label": "index first, then on demand", "variant": "emphasis", "width": 2 }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Read from the bottom up",
+      "items": [
+        "Each bundle releases from its own repository, on its own trust ladder",
+        "A person confirms each domain's members; nothing is copied upward",
+        "Each release of the domain the build starts from rebuilds the context layer"
+      ]
+    }
+  ]
+}
