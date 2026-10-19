@@ -38,10 +38,6 @@ exclude = [
   # The whole host is excluded, since any of its pages can be next. Drop
   # this line if CI reaches it again.
   '^https://docs\.snowflake\.com/',
-  # docs.progress.com (MarkLogic, cited in docs/context-layer-technology.md)
-  # answered a CI runner with 502 past every retry, and serves the page with
-  # 200 elsewhere (checked 2026-10-14). Drop this line if CI reaches it again.
-  '^https://docs\.progress\.com/',
   # A GitHub issue or pull request page answered a CI runner with 500 past
   # every retry, while the issue was open and the page served 200 elsewhere
   # (checked 2026-10-14). validate.yml's next step checks each such link
