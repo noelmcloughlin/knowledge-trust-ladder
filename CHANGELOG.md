@@ -4,22 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Security
-
-- **A release can no longer write a host's git configuration through the sync.** `knowledge-sync.sh` refuses a copy path inside a `.git` folder and clones the release without a checkout.
-- **The branch the sync pushes carries no workflow a release wrote.** A workflow on a pushed branch runs with the repository's secrets, so `publish` applies the patch with `knowledge-sync.sh --apply`, keeps every workflow but for the pin, and holds the release's workflow changes for a person, or for a reviewer of the Environment `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` names.
-- **The sync's `publish` refuses a deletion, a link or an unusual mode, and leases its push** to the commit it read. A branch holding a person's commit is left alone with or without a pull request, and the report names a manifest rule the script does not know.
-- **Each workflow reads its secrets from an Environment limited to the default branch:** `knowledge-librarian`, `knowledge-sync` and `knowledge-ingest`. Move every repository secret there on every host, as the sidecar's `references/automation.md` says.
-- **A federation build refuses a member zip holding a hidden file or a file a browser runs, and a distribution name that is not one plain file name.** A `.git` folder in a zip, or a name that climbs out of the workspace, could run code in the build; the health line now runs git on no member's folder.
-- **A federation build fetches members over http or https from public addresses only.** `--allow-local` allows local paths and private addresses, and a person's `private_addresses: allow` on the Domain concept allows a forge on the host's own network.
-- **A member's attestation must come from its own release workflow**, or its federation workflow for a workspace, and a build without `gh` stops unless given `--no-attestation`.
-- **The federation workflow hands its token to `gh` alone, and the website and federation builds run no npm install script.**
-- **The website copies only files inside the repository, and passes raw HTML as GitHub renders a README.** A link out of the repository and an SVG holding a script are left out, other markup is shown as text, and Astro's telemetry is off.
-
-### Changed
-
-- **`SECURITY.md` and `docs/threat-model.md` say what holds after these fixes**, with a section on the website, and no longer claim the most a hostile release could do before review was propose a change.
-
 ## [0.53.0] - 2026-10-19
 
 ### Added
@@ -42,6 +26,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`docs/context-layer-technology.md` keeps to what KTL needs from a product.** The vendor tables of limits, plans and quotes are gone, and the page names the sidecar's own workspace server and MCP server beside the stores'.
 - **`docs/for-the-curious.md` says how readers and verdicts steer the next run.** It now holds what KTL took from the WikiSkill and SkillWiki papers, so `docs/wikiskill.md` and `docs/skillwiki.md` are gone. The bundle's two concepts stay the record of each paper.
 - **The federation build runs lokf in its own process.** It exported and validated each bundle through a new lokf process, which imported lokf and LinkML again every time. A build of ktl-federation's five members takes 4.5 seconds instead of 12, with the same output, and the federation tests run in half the time.
+- **`SECURITY.md` and `docs/threat-model.md` say what holds after these fixes**, with a section on the website, and no longer claim the most a hostile release could do before review was propose a change.
 
 ### Fixed
 
@@ -68,6 +53,18 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The contract records every sibling host's links into this repository**, among them ktl-federation's into the federation page and the domain-bundle playbook. Its local cross-check reads all five hosts, and skips a domain host's ignored `snapshot/`, which holds a copy of this bundle.
 - **The librarian keeps run accounts out of the source map.** No rule asked for one, yet each refresh had added its account to `playbooks/knowledge-sources.md`, 41 of them by 2026-10-19. The skill now says the map holds none.
 - **An agent that applies its own patch no longer loses a scheduled run's work.** The wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY` for the agent, so the pen only checks the patch file there and leaves it for the wrapper to apply. The skill and the pen's dry-run line no longer tell a scheduled agent to apply and validate.
+
+### Security
+
+- **A release can no longer write a host's git configuration through the sync.** `knowledge-sync.sh` refuses a copy path inside a `.git` folder and clones the release without a checkout.
+- **The branch the sync pushes carries no workflow a release wrote.** A workflow on a pushed branch runs with the repository's secrets, so `publish` applies the patch with `knowledge-sync.sh --apply`, keeps every workflow but for the pin, and holds the release's workflow changes for a person, or for a reviewer of the Environment `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` names.
+- **The sync's `publish` refuses a deletion, a link or an unusual mode, and leases its push** to the commit it read. A branch holding a person's commit is left alone with or without a pull request, and the report names a manifest rule the script does not know.
+- **Each workflow reads its secrets from an Environment limited to the default branch:** `knowledge-librarian`, `knowledge-sync` and `knowledge-ingest`. Move every repository secret there on every host, as the sidecar's `references/automation.md` says.
+- **A federation build refuses a member zip holding a hidden file or a file a browser runs, and a distribution name that is not one plain file name.** A `.git` folder in a zip, or a name that climbs out of the workspace, could run code in the build; the health line now runs git on no member's folder.
+- **A federation build fetches members over http or https from public addresses only.** `--allow-local` allows local paths and private addresses, and a person's `private_addresses: allow` on the Domain concept allows a forge on the host's own network.
+- **A member's attestation must come from its own release workflow**, or its federation workflow for a workspace, and a build without `gh` stops unless given `--no-attestation`.
+- **The federation workflow hands its token to `gh` alone, and the website and federation builds run no npm install script.**
+- **The website copies only files inside the repository, and passes raw HTML as GitHub renders a README.** A link out of the repository and an SVG holding a script are left out, other markup is shown as text, and Astro's telemetry is off.
 
 ## [0.52.0] - 2026-10-18
 
