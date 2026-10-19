@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **`docs/federation.md` holds the whole federation design, and states each rule once.** Domains as manifests, LOKF section 11 and the release moved there from `docs/context-layer.md`, which keeps what a context layer is, the one-bundle table and what OKF leaves open.
+
 ## [0.53.0] - 2026-10-19
 
 ### Added

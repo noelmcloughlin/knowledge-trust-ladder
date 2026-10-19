@@ -1,6 +1,6 @@
 # A domain bundle: confirming that a bundle belongs
 
-This page is for the **curator** of a domain host: a repository whose bundle names other repositories' knowledge bundles and whose releases build the workspace a reader queries across all of them. The design is the skills repository's [context layer page](https://w3id.org/ktl/docs/context-layer/), and the federation page it links to says how the workspace is built; the first such host is [ktl-federation](https://github.com/noelmcloughlin/ktl-federation). What follows is what its concepts are, what a confirmation of one attests, and what moves them.
+This page is for the **curator** of a domain host: a repository whose bundle names other repositories' knowledge bundles and whose releases build the workspace a reader queries across all of them. The design is the skills repository's [federation page](https://w3id.org/ktl/docs/federation/); the first such host is [ktl-federation](https://github.com/noelmcloughlin/ktl-federation). What follows is what its concepts are, what a confirmation of one attests, and what moves them.
 
 ## The four concept types
 
@@ -62,7 +62,7 @@ The diamond rule: two domains may name the same bundle. When both name the same 
 
 ## Cross-bundle claims
 
-A claim the domain makes across bundles is a concept with typed relations whose targets are full IRIs in the members' namespaces, such as a glossary term `definedBy` one member's concept and `relatedTo` another's. It is the domain owner's arbitration, as the context layer page's "who arbitrates" decision describes, so the librarian proposes it as a question and the curator confirms it. The build resolves every such target against the registry: one no member owns, or one that names no concept of the member whose namespace holds it, fails the build under `fail`.
+A claim the domain makes across bundles is a concept with typed relations whose targets are full IRIs in the members' namespaces, such as a glossary term `definedBy` one member's concept and `relatedTo` another's. It is the domain owner's arbitration, as the federation page's "who arbitrates" decision describes, so the librarian proposes it as a question and the curator confirms it. The build resolves every such target against the registry: one no member owns, or one that names no concept of the member whose namespace holds it, fails the build under `fail`.
 
 ## What moves a member
 
