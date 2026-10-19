@@ -1263,6 +1263,50 @@ def test_the_release_compares_and_packs_a_bundle_the_same_in_each_shape(tmp_path
     )
 
 
+def test_the_federation_site_leaves_out_a_workspace_that_holds_internal_metadata(tmp_path):
+    """The step's own lines: a workspace whose lock says internal stays off the Pages artifact, and a public one is copied under workspace/."""
+    body = step_body(FEDERATION_YAML, "Assemble the Pages artifact", r"^      [#-]")
+    script = write(tmp_path / "assemble.sh", "#!/usr/bin/env bash\n" + body)
+    for sensitivity, kept in (("public", True), ("internal", False)):
+        host = tmp_path / sensitivity
+        write(host / "snapshot" / "workspace.lock.yaml", f"knowledge_federate_lock: '4'\nsensitivity: {sensitivity}\nmembers:\n- slug: a\n  sensitivity: {sensitivity}\n")
+        write(host / "snapshot" / "bundles" / "a" / ".lokf" / "knowledge" / "index.md", "# A\n")
+        (host / "website" / "dist").mkdir(parents=True)
+        r = run(["bash", script], cwd=host, env={"GITHUB_ENV": host / "github.env"})
+        assert r.rc == 0, r.out
+        assert (host / "website" / "dist" / "workspace" / "bundles" / "a" / ".lokf" / "knowledge" / "index.md").is_file() == kept, (sensitivity, r.out)
+        assert read(host / "github.env") == "dist=website/dist\n"
+
+
+def test_the_federation_notes_replace_the_workspace_changes_an_earlier_run_added(tmp_path):
+    """The step's own lines, run twice against a stand-in gh: the notes keep what came before the marker, and the second run replaces the first one's changes."""
+    body = step_body(FEDERATION_YAML, "Add the workspace's changes to the release notes", r"^(      [#-]|        [a-z])")
+    script = write(tmp_path / "notes.sh", "#!/usr/bin/env bash\n" + body)
+    gh = write(tmp_path / "bin" / "gh", "#!/bin/sh\n"
+               '[ "$1 $2" = "release view" ] && { cat "$NOTES"; exit 0; }\n'
+               '[ "$1 $2" = "release edit" ] && { cp "$5" "$NOTES"; exit 0; }\n'
+               "exit 1\n")
+    gh.chmod(0o755)
+    notes = write(tmp_path / "notes.md", "## What changed\n\n- A fix.\n")
+    env = {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "NOTES": notes, "TAG": "v0.3.0"}
+    work = tmp_path / "release"
+    work.mkdir()
+    r = run(["bash", script], cwd=work, env=env)
+    assert r.rc == 0 and "No comparison was made" in r.out and read(notes) == "## What changed\n\n- A fix.\n", r.out
+    for changes in ("- **b** moved from v1 to v2.\n", "- **b** moved from v1 to v3.\n"):
+        write(work / "workspace-changes.md", "## The workspace\n\n" + changes)
+        r = run(["bash", script], cwd=work, env=env)
+        assert r.rc == 0, r.out
+    assert read(notes) == ("## What changed\n\n- A fix.\n\n<!-- knowledge-federation: workspace changes -->\n\n"
+                           "## The workspace\n\n- **b** moved from v1 to v3.\n"), read(notes)
+
+
+def test_the_federation_check_holds_a_member_as_the_release_build_would():
+    """The check passes the newest released workspace and the release page, so it holds a member and checks that workspace's attestation as the release build does."""
+    body = step_body(FEDERATION_YAML, "Fetch and verify every member's zip, and gate as the next release would", r"^  [a-z]")
+    assert '--release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag"' in body and '${PREVIOUS:+--previous "$PREVIOUS"}' in body, body
+
+
 def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
     """The step's own lines, run against a justfile that names a schema, names none, names a path, and names a missing file."""
     body = step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]")

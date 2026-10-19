@@ -33,6 +33,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A download is tried again after a server error or a dropped connection, and follows a redirect only within http and https**, never from https to http and never from a public address to a private one.
 - **A zip of more than 100,000 entries, or one that matches its checksum but cannot be read, stops the build with a finding**, where it filled the disk or ended in a traceback.
 - **A reader keeps no partial answer to a range request as the whole file**, and `--previous` refuses a site address, from which no zip member could be held.
+- **The federation workflow's weekly schedule no longer takes the place of a release build that waits for its turn**, and each job has a time limit.
 - **A domain host's site serves each member's release inside the workspace.** The Pages upload left out the hidden `bundles/<slug>/.lokf/` folders, so every member link in the served workspace index answered 404.
 
 ## [0.52.1] - 2026-10-19
