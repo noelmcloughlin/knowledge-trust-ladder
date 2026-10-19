@@ -161,8 +161,9 @@ def _sidecar_environment(tmp_path_factory):
         run(["uv", "run", "--quiet", "--project", REPO / ".lokf", "python", "-c", "pass"])
 
 
-def federate(host: Path, *args: str, **kw):
-    return run(["uv", "run", "--project", REPO / ".lokf", SCRIPT, "--root", host, *args], cwd=host, **kw)
+def federate(host: Path, *args: str, local: bool = True, **kw):
+    """The script on a host. The fixtures serve members from local files, which a build reads only with --allow-local."""
+    return run(["uv", "run", "--project", REPO / ".lokf", SCRIPT, "--root", host, *(["--allow-local"] if local else []), *args], cwd=host, **kw)
 
 
 def frontmatter(**fields) -> str:
@@ -1548,6 +1549,33 @@ def test_a_download_is_tried_again_after_a_server_error_and_follows_no_redirect_
         assert r.rc == 1 and "takes a workspace folder or a workspace-<tag>.zip, not a site" in r.out, r.out
 
 
+def test_a_member_at_a_local_path_or_a_private_address_needs_an_opt_in(federation, tmp_path):
+    """A check fetches a member a pull request proposes before any person has read it, so a build reaches local files only with --allow-local, and the host's own network only as a person confirmed on the Domain concept."""
+    host, a_iri, b_iri, d_iri = federation["host"], federation["a_iri"], federation["b_iri"], federation["d_iri"]
+    r = federate(host, "build", "--no-attestation", local=False)
+    assert r.rc == 1 and "needs --allow-local" in r.out, r.out
+    files = tmp_path / "files"
+    files.mkdir()
+    shutil.copy(federation["a_zip"], files / "a.zip")
+    shutil.copy(federation["b_zip"], files / "b.zip")
+    with serving(files, tmp_path / "server") as (url, _):
+        for slug, iri in (("a", a_iri), ("b", b_iri)):
+            fm = member(slug, iri, federation[f"{slug}_zip"], federation[f"{slug}_sha"], d_iri + "domains/federation")
+            fm["distribution"][0]["access_url"] = url + f"{slug}.zip"
+            rewrite(host, slug, fm)
+        r = federate(host, "build", "--no-attestation", local=False)
+        assert r.rc == 1 and "is a private address" in r.out, r.out
+        domain = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+        text = read(domain)
+        # Set as it stands but not confirmed, it opens nothing, even to a check.
+        write(domain, text.replace("unowned_targets: fail\n", "unowned_targets: fail\nprivate_addresses: allow\n").replace("verified:", "unverified:"))
+        r = federate(host, "build", "--no-attestation", "--verify-only", local=False)
+        assert r.rc == 1 and "is a private address" in r.out and "waits for a person's confirmation" in r.out, r.out
+        write(domain, text.replace("unowned_targets: fail\n", "unowned_targets: fail\nprivate_addresses: allow\n"))
+        r = federate(host, "build", "--no-attestation", local=False)
+        assert r.rc == 0 and "a person confirmed private_addresses: allow" in r.out, r.out
+
+
 def test_the_readers_read_a_workspace_from_its_zip_or_the_site_that_serves_it(federation, served_workspace, tmp_path):
     """The MCP server reads the workspace as a site serves it, and as a workspace-<tag>.zip, as it reads the folder.
 
@@ -1820,7 +1848,7 @@ def released(tmp_path):
 def members_run(released, *args: str, prs: str = "[]", stdout_only: bool = False, attest: bool = False, env: dict | None = None):
     tmp = released["tmp"]
     return run(["uv", "run", "--project", REPO / ".lokf", tmp / "runner.py", SCRIPT, tmp / "served.json",
-                "--root", released["host"], "members", *([] if attest else ["--no-attestation"]), *args],
+                "--root", released["host"], "--allow-local", "members", *([] if attest else ["--no-attestation"]), *args],
                cwd=released["host"], env={"PATH": f"{tmp / 'bin'}:{os.environ['PATH']}", "FAKE_GH_PRS": prs, **(env or {})},
                stdout_only=stdout_only, unset=("GH_TOKEN", "GITHUB_TOKEN", "KNOWLEDGE_FEDERATE_TOKEN"))
 

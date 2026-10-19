@@ -187,6 +187,14 @@ ACTIVE_SUFFIXES = {".html", ".htm", ".xhtml", ".shtml", ".svg", ".svgz", ".js", 
 # so the job's token arrives under this one. It leaves this process's
 # environment here and reaches gh alone, never lokf or anything else run.
 JOB_TOKEN = os.environ.pop("KNOWLEDGE_FEDERATE_TOKEN", "")
+# Where a member may be fetched from. A member concept names its address, and
+# a check fetches one a pull request proposes before any person has read it,
+# so by default only http and https to a public address. --allow-local lets
+# a person build from local files and a local server; a confirmed
+# `private_addresses: allow` on the top Domain concept lets the build reach
+# a forge on the host's own network.
+ALLOW_LOCAL = False
+ALLOW_PRIVATE = False
 # How many tiers of members a build follows unless the top Domain concept's
 # `max_depth` says otherwise; the domain's own members are tier 1.
 DEFAULT_MAX_DEPTH = 3
@@ -666,6 +674,36 @@ def private_host(host: str | None) -> bool:
     return False
 
 
+def allow_private_from(top, domain_iri: str, bundle, confirmed: dict | None) -> None:
+    """Let the build reach private addresses when a person confirmed `private_addresses: allow` on the top Domain concept.
+
+    Unlike the other settings, a check (--verify-only) does not take it as
+    it stands: a pull request that sets it would open the runner's network
+    to a member the same pull request proposes.
+    """
+    global ALLOW_PRIVATE
+    if confirmed is None:
+        confirmed, _ = confirmed_text(top, domain_iri, bundle.resolve(top.concept_id), True)
+    policy = str((confirmed or {}).get("private_addresses") or "refuse")
+    if policy not in ("refuse", "allow"):
+        raise Failed(f"{top.path}: private_addresses must be refuse or allow, not {policy!r}")
+    if policy == "allow":
+        ALLOW_PRIVATE = True
+        say(f"{domain_iri}: a person confirmed private_addresses: allow, so members may be fetched from the host's own network")
+    elif str(top.data.get("private_addresses") or "refuse") == "allow":
+        say(f"{domain_iri}: its private_addresses: allow waits for a person's confirmation; members at private addresses are not fetched")
+
+
+def refuse_private(url: str) -> None:
+    """Refuse a member's address that is, or resolves to, a private one, unless the build may reach the host's own network."""
+    if ALLOW_PRIVATE:
+        return
+    host = urllib.parse.urlparse(url).hostname
+    if private_host(host):
+        raise Failed(f"{url}: {host} is a private address, which a member is not fetched from unless a person confirms "
+                     "private_addresses: allow on the Domain concept, or the build runs with --allow-local")
+
+
 class Redirects(urllib.request.HTTPRedirectHandler):
     """The redirects a download follows: five at most, each to http or https, never from https to http, and never from a public address to a private one.
 
@@ -722,6 +760,8 @@ def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> N
     """Copy a local path or file:// URL, or download an http(s) URL, to dest, refusing one of more than max_bytes before it is all read."""
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme in ("", "file"):
+        if not ALLOW_LOCAL:
+            raise Failed(f"{url}: a member is fetched over http or https; a local path or file:// address needs --allow-local")
         src = pathlib.Path(urllib.request.url2pathname(parsed.path) if parsed.scheme == "file" else url)
         if not src.is_file():
             raise Unobtainable(f"{url}: no such file")
@@ -731,6 +771,7 @@ def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> N
         return
     if parsed.scheme not in ("http", "https"):
         raise Failed(f"{url}: only http(s), file:// and local paths are fetched")
+    refuse_private(url)
     # A server error, a rate limit, a timeout or a dropped connection is
     # tried again twice, a second and then two seconds later, so a moment's
     # outage neither holds a member nor stops a release. Any other answer
@@ -1554,6 +1595,7 @@ def _build(args, note_new) -> int:
         say(f"{domain_iri}: its sensitivity as it stands, {standing}, clears less than the {clearance} a person confirmed, and counts at once")
         clearance = standing
     visibility = functools.cache(lambda: repository_visibility(root, args.visibility))
+    allow_private_from(top, domain_iri, bundle, settings if not args.verify_only else None)
     raw_depth = settings.get("max_depth")
     max_depth = DEFAULT_MAX_DEPTH if raw_depth is None else raw_depth
     if isinstance(max_depth, bool) or not isinstance(max_depth, int) or max_depth < 1:
@@ -2326,6 +2368,9 @@ def look_served(url: str, cache: pathlib.Path, max_bytes: int) -> tuple[str, str
     if seen.get("sha256") and kept.is_file():
         headers.update({"If-None-Match": seen["etag"]} if seen.get("etag") else {})
         headers.update({"If-Modified-Since": seen["last_modified"]} if seen.get("last_modified") else {})
+    if urllib.parse.urlparse(url).scheme not in ("http", "https"):
+        raise Failed(f"{url}: a site is read over http or https")
+    refuse_private(url)
     try:
         status, got, body = http_fetch(url, headers=headers, max_bytes=max_bytes)
     except (OSError, http.client.HTTPException) as e:
@@ -2540,7 +2585,9 @@ def members(args) -> int:
     root = find_root(args.root)
     knowledge = root / ".lokf" / "knowledge"
     bundle, domains, member_concepts = read_domain(knowledge)
-    domain_iri = bundle.iri(top_domain(bundle, domains))
+    top = top_domain(bundle, domains)
+    domain_iri = bundle.iri(top)
+    allow_private_from(top, domain_iri, bundle, None)
     cache = pathlib.Path(args.cache).expanduser() if args.cache else root / ".lokf" / ".cache" / "federation"
     ops: list[dict] = []
     handoff: list[str] = []
@@ -3343,6 +3390,8 @@ def mcp_server(args) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog=NAME, description=__doc__)
     ap.add_argument("--root", help="the repository root (default: found above the current directory)")
+    ap.add_argument("--allow-local", action="store_true",
+                    help="fetch members from local paths, file:// addresses and private addresses too, for a test or a local mirror")
     sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build", help="build the workspace from the domain bundle")
     b.add_argument("--out", default="snapshot", help="the snapshot folder under the root (default: snapshot)")
@@ -3389,6 +3438,8 @@ def main(argv=None) -> int:
     x.add_argument("--member", action="append", metavar="SLUG|BASE_IRI", help="read this bundle alone, by slug or base_iri, and no other; repeat it for more")
     x.set_defaults(func=mcp_server)
     args = ap.parse_args(argv)
+    global ALLOW_LOCAL, ALLOW_PRIVATE
+    ALLOW_LOCAL = ALLOW_PRIVATE = bool(args.allow_local)
     # The librarian wrapper hands its prompt to AGENT_CLI as `-p "<prompt>"`;
     # argparse rejects it, so it is stripped before parsing above.
     try:

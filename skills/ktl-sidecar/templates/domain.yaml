@@ -17,9 +17,12 @@
 #   tier 1. `sensitivity` is the most sensitive member its workspace may
 #   hold, public or internal, public unless set: a person who confirms
 #   `internal` clears the workspace to aggregate internal bundles, as
-#   section 11.5 of the LOKF specification asks of a registry's owner. The
-#   domain a build starts from is that build's top, and may be a member of
-#   another domain in turn.
+#   section 11.5 of the LOKF specification asks of a registry's owner.
+#   `private_addresses` says whether the build may fetch a member from a
+#   private, loopback or link-local address, `refuse` unless set: a person
+#   confirms `allow` for a forge on the host's own network. The domain a
+#   build starts from is that build's top, and may be a member of another
+#   domain in turn.
 # MemberBundle: a Dataset naming one released bundle: its `base_iri`
 #   (LOKF's own slot, which the registry routes by), the release `version`
 #   it pins, the `release` page, and its distribution. The first
@@ -57,7 +60,7 @@ classes:
   Domain:
     is_a: Dataset
     class_uri: dcat:Catalog
-    slots: [unowned_targets, max_depth, sensitivity]
+    slots: [unowned_targets, max_depth, sensitivity, private_addresses]
     slot_usage:
       sensitivity: {range: Clearance}
   MemberBundle:
@@ -89,6 +92,8 @@ slots:
     minimum_value: 1
   sensitivity:
     range: Sensitivity
+  private_addresses:
+    range: PrivateAddressPolicy
 enums:
   Clearance:
     description: the most sensitive member a domain's workspace may hold; a confidential bundle joins none
@@ -100,6 +105,10 @@ enums:
       public: {description: anyone may read it; the default}
       internal: {description: the organisation may read it; it joins a workspace the domain clears for internal and builds in a private or internal repository}
       confidential: {description: it joins no workspace}
+  PrivateAddressPolicy:
+    permissible_values:
+      refuse: {description: "a member at a private, loopback or link-local address is not fetched; the default"}
+      allow: {description: "a member may be fetched from the host's own network, as a person confirmed"}
   UnownedTargetPolicy:
     permissible_values:
       fail: {description: an unowned or dangling cross-bundle target fails the build}
