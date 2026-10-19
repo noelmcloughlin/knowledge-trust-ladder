@@ -232,6 +232,58 @@ def test_a_cross_bundle_target_no_member_owns_fails_or_is_reported(federation, t
     assert "1 typed-relation target(s) lie in no member's namespace" in (host / "snapshot" / "gate-report.md").read_text(encoding="utf-8")
 
 
+def test_a_link_into_a_member_must_name_one_of_its_concepts(federation, tmp_path):
+    """a's term relates to b's: the build counts that link, in the lock, the index and links.rq.
+
+    A target in b's namespace that names no concept of b is held to the rule
+    --check-refs applies inside one bundle: it stops the build under
+    `unowned_targets: fail`, as a target no member owns does, and is
+    reported under `report`.
+    """
+    host, a_iri, b_iri = federation["host"], federation["a_iri"], federation["b_iri"]
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "1 link(s) between members" in r.out, r.out
+    snap = host / "snapshot"
+    lock = yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert lock["links"] == [{"from": a_iri, "to": b_iri, "slot": "relatedTo", "count": 1}]
+    assert "| A | B | `relatedTo` | 1 |" in (snap / "index.md").read_text(encoding="utf-8")
+    r = federate(host, "query", "snapshot/queries/links.rq")
+    assert r.rc == 0 and f"{a_iri}\t{b_iri}\thttp://purl.org/dc/terms/relation\t1" in r.out, r.out
+    a2 = make_bundle(tmp_path / "a2", a_iri, "A", {"glossary/term.md": {"type": "GlossaryTerm", "title": "Term", "description": "A term.", "resource": "https://example.test/a", "relatedTo": [b_iri + "glossary/missing"]}})
+    sha = zip_bundle(a2, federation["a_zip"])
+    concept = host / ".lokf" / "knowledge" / "members" / "a.md"
+    concept.write_text(concept.read_text(encoding="utf-8").replace(federation["a_sha"], sha), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 1 and "1 typed-relation target(s) name no concept of the member whose namespace holds them and the domain's policy is fail" in r.out, r.out
+    assert f"no such concept in {b_iri}: {a_iri}glossary/term relatedTo {b_iri}glossary/missing" in r.out, r.out
+    top = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+    top.write_text(top.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: report"), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    gate = (snap / "gate-report.md").read_text(encoding="utf-8")
+    assert "1 typed-relation target(s) lie in a member's namespace and name no concept of that member" in gate and "glossary/missing" in gate, gate
+    assert yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))["links"] == []
+    assert "No typed relation in one bundle names a concept of another yet." in (snap / "index.md").read_text(encoding="utf-8")
+
+
+def test_the_workspace_graph_json_draws_every_bundle_and_the_links_between_them(federation):
+    """graph.json holds each bundle's concepts as lokf export draws them, each naming its bundle, and a's link into b as an edge marked cross."""
+    host, a_iri, b_iri = federation["host"], federation["a_iri"], federation["b_iri"]
+    review = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+    review.write_text(review.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: fail\nstale_after: '2027-04-18'"), encoding="utf-8")
+    assert federate(host, "build", "--no-attestation").rc == 0
+    graph = json.loads((host / "snapshot" / "graph.json").read_text(encoding="utf-8"))
+    nodes = {n["data"]["id"]: n["data"] for n in graph["nodes"]}
+    assert nodes[a_iri + "glossary/term"]["bundle"] == "a" and nodes[b_iri + "glossary/other"]["bundle"] == "b"
+    assert nodes[federation["d_iri"] + "members/a"]["bundle"] == "domain" and nodes[federation["d_iri"] + "domains/federation"]["stale_after"] == "2027-04-18"
+    assert not any("stale" in n for n in nodes.values()), "staleness is judged where the graph is drawn, from stale_after"
+    cross = [e["data"] for e in graph["edges"] if e["data"].get("cross")]
+    assert cross == [{"id": f"{a_iri}glossary/term dcterms:relation {b_iri}glossary/other", "source": f"{a_iri}glossary/term", "target": f"{b_iri}glossary/other",
+                      "predicate": "dcterms:relation", "slot": "relatedTo", "reified": False, "cross": True}]
+    assert all(e["data"]["source"] in nodes and e["data"]["target"] in nodes for e in graph["edges"]), "every edge joins two nodes, as cytoscape.js needs"
+    assert [b["slug"] for b in graph["meta"]["bundles"]] == ["a", "b", "domain"] and graph["meta"]["bundles"][0]["title"] == "A"
+
+
 @pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate"])
 def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_path, fault):
     host = federation["host"]

@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The workspace counts the links between its members.** The lock and the workspace index list each typed relation in one bundle whose target is a concept of another, by slot, and `queries/links.rq` counts them over the graph. So a domain sees which members other members link into.
+- **The workspace carries `graph.json`**, every bundle's concepts and typed relations as cytoscape.js elements. Each node names its bundle, and the links between bundles are marked.
+
+### Fixed
+
+- **The federation gate refuses a link into a member's namespace that names no concept of that member**, as `--check-refs` refuses one inside a bundle, under the same `unowned_targets` policy. It checked only that some member owned the namespace.
+- **The workspace's stored queries take their predicates from the toolkit.** `unowned.rq` named `owl:sameAs` where lokf writes `schema:sameAs`, and left out `memberOf` and `holder`.
+
 ## [0.52.1] - 2026-10-19
 
 ### Fixed

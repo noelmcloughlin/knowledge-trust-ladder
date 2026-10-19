@@ -799,6 +799,103 @@ def gate_predicates() -> dict[str, str]:
     return {rel.uri: name for name, rel in vocab.relation_slots.items() if name not in EXTERNAL_OK}
 
 
+def relation_targets(concept, vocab):
+    """Each typed-relation target a concept names, as (slot, target, reified), read where lokf's export and --check-refs read them.
+
+    Those are the named relation slots and the target of each reified
+    `relations` entry. A target holding whitespace is a description, not an
+    IRI, and is skipped, as the toolkit skips it.
+    """
+    def usable(target) -> bool:
+        return isinstance(target, str) and bool(target.strip()) and not any(ch.isspace() for ch in target)
+
+    for name in vocab.relation_slots:
+        value = concept.data.get(name)
+        for target in value if isinstance(value, list) else [] if value is None else [value]:
+            if usable(target):
+                yield name, target, False
+    entries = concept.data.get("relations")
+    for entry in entries if isinstance(entries, list) else []:
+        if isinstance(entry, dict) and entry.get("predicate") in vocab.relation_types and usable(entry.get("target")):
+            yield entry["predicate"], entry["target"], True
+
+
+def cross_links(bundles: dict, registry, vocab) -> tuple[list[dict], list[dict]]:
+    """The typed relations each bundle names into another's namespace: links, whose target is a concept there, and dangling targets, which name none.
+
+    `bundles` maps each base_iri to its loaded bundle. A target in a
+    bundle's own namespace is for that bundle's own --check-refs to judge,
+    and one no bundle owns is for the gate's pass over the graph. Between
+    the two lies the rule --check-refs applies inside one bundle, here
+    applied across bundles: a target in a namespace must be a concept there.
+    """
+    links, dangling = [], []
+    for base, b in bundles.items():
+        for c in b.concepts:
+            source = b.iri(c)
+            for name, target, reified in relation_targets(c, vocab):
+                iri = b.resolve(target)
+                if b.in_namespace(iri):
+                    continue
+                owner = registry.owner(iri)
+                if owner is None or owner.base_iri == base:
+                    continue
+                there = bundles.get(owner.base_iri)
+                hit = there.get(iri) if there is not None else None
+                found = {"from": base, "to": owner.base_iri, "source": source, "slot": name, "target": iri}
+                if hit is None:
+                    dangling.append(found)
+                else:
+                    rel = (vocab.relation_types if reified else vocab.relation_slots)[name]
+                    links.append({**found, "target": there.iri(hit), "predicate": vocab.compact(rel.uri), "reified": reified})
+    return links, dangling
+
+
+def union_elements(loaded: dict, records: list[dict], links: list[dict], vocab) -> dict:
+    """The workspace as cytoscape.js elements: each bundle's concepts and edges as lokf export draws them, and the links between bundles as edges marked `cross`.
+
+    A node also names its bundle by slug, and `meta.bundles` gives each
+    bundle's title, namespace, version and source. A node carries a
+    concept's review date, `stale_after`, instead of the export's `stale`,
+    so a page that draws the graph judges staleness on the day it draws it.
+    """
+    from lokf.export import to_cytoscape
+
+    slug_of = {r["base_iri"]: r["slug"] for r in records}
+    nodes: dict[str, dict] = {}
+    edges: dict[str, dict] = {}
+    for base, b in loaded.items():
+        drawn = to_cytoscape(b, vocab)
+        concepts = b.by_iri()
+        for node in drawn["nodes"]:
+            data = node["data"]
+            data["bundle"] = slug_of.get(base, "")
+            data.pop("stale", None)
+            review = concepts[data["id"]].data.get("stale_after") if data["id"] in concepts else None
+            if review:
+                data["stale_after"] = str(review)
+            nodes[data["id"]] = node
+        for edge in drawn["edges"]:
+            edges[edge["data"]["id"]] = edge
+    for link in links:
+        key = f"{link['source']} {link['predicate']} {link['target']}"
+        if link["source"] in nodes and link["target"] in nodes:
+            edges.setdefault(key, {"data": {"id": key, "source": link["source"], "target": link["target"], "predicate": link["predicate"],
+                                            "slot": link["slot"], "reified": link["reified"], "cross": True}})
+    bundles = [{"slug": r["slug"], "title": r["title"], "base_iri": r["base_iri"], "version": r["version"], "source_base": r.get("source_base") or ""}
+               for r in records]
+    return {"nodes": [nodes[k] for k in sorted(nodes)], "edges": [edges[k] for k in sorted(edges)], "meta": {"bundles": bundles}}
+
+
+def link_counts(links: list[dict]) -> list[dict]:
+    """The links between bundles, counted by the bundle that names each, the bundle it names, and the slot, in that order."""
+    counts: dict[tuple[str, str, str], int] = {}
+    for link in links:
+        key = (link["from"], link["to"], link["slot"])
+        counts[key] = counts.get(key, 0) + 1
+    return [{"from": f, "to": t, "slot": s, "count": n} for (f, t, s), n in sorted(counts.items())]
+
+
 QUERIES = {
     "labels.rq": """# Each concept's trust label, with the bundle that asserted it (GRAPH ?g binds its base_iri).
 # The same rules as knowledge-report.sh, against the clock at the moment of the query.
@@ -838,13 +935,24 @@ PREFIX void: <http://rdfs.org/ns/void#>
 SELECT DISTINCT ?g ?s ?p ?o WHERE {
   GRAPH ?g { ?s ?p ?o . }
   FILTER(isIRI(?o) && STRSTARTS(STR(?o), "http") && !STRSTARTS(STR(?o), STR(?g)))
-  FILTER(?p IN (<http://purl.org/dc/terms/isPartOf>, <http://schema.org/hasPart>, <http://purl.org/dc/terms/requires>,
-                <http://www.w3.org/ns/prov#wasDerivedFrom>, <http://schema.org/about>, <http://purl.org/dc/terms/references>,
-                <http://purl.org/dc/terms/relation>, <http://www.w3.org/2002/07/owl#sameAs>,
-                <https://w3id.org/lokf/measures>, <https://w3id.org/lokf/joinsWith>))
+  FILTER(?p IN (GATE_PREDICATES))
   FILTER NOT EXISTS { ?ds void:uriSpace ?ns . FILTER(STRSTARTS(STR(?o), ?ns)) }
 }
 ORDER BY ?g ?s
+""",
+    "links.rq": """# Typed relations in one bundle whose target is a concept of another: the links between members.
+# GRAPH ?from binds the bundle that names the link, and ?to the bundle whose namespace holds its target.
+PREFIX void: <http://rdfs.org/ns/void#>
+SELECT ?from ?to ?p (COUNT(*) AS ?links) WHERE {
+  ?from a void:Dataset .
+  GRAPH ?from { ?s ?p ?o . }
+  FILTER(?p IN (RELATION_PREDICATES))
+  ?to void:uriSpace ?ns .
+  FILTER(?to != ?from && isIRI(?o) && STRSTARTS(STR(?o), ?ns))
+  FILTER EXISTS { GRAPH ?to { ?o a ?type } }
+}
+GROUP BY ?from ?to ?p
+ORDER BY ?from ?to ?p
 """,
     "members.rq": """# The lock graph: every bundle in the workspace with its version, triples and distribution.
 PREFIX void: <http://rdfs.org/ns/void#>
@@ -860,6 +968,16 @@ ORDER BY ?bundle
 }
 
 
+def stored_queries() -> dict[str, str]:
+    """The stored queries, their predicate lists filled from the installed toolkit's relation slots, so a query never names a slot the toolkit renamed."""
+    from lokf.schema import vocabulary
+
+    vocab = vocabulary()
+    every = ", ".join(f"<{rel.uri}>" for rel in vocab.relation_slots.values())
+    gated = ", ".join(f"<{uri}>" for uri in gate_predicates())
+    return {name: text.replace("RELATION_PREDICATES", every).replace("GATE_PREDICATES", gated) for name, text in QUERIES.items()}
+
+
 def build(args) -> int:
     """The build, with snapshot.new removed whenever it stops short of the swap."""
     new = None
@@ -873,7 +991,9 @@ def build(args) -> int:
 
 def _build(args, note_new) -> int:
     import pyoxigraph as ox
+    from lokf.model import load_bundle
     from lokf.registry import REGISTRY_VERSION, Registry, entry_for_bundle
+    from lokf.schema import vocabulary
 
     root = find_root(args.root)
     knowledge = root / ".lokf" / "knowledge"
@@ -1008,7 +1128,7 @@ def _build(args, note_new) -> int:
     }
     if waiting:
         lock["waiting"] = sorted(waiting, key=lambda w: w["concept"])
-    (new / "workspace.lock.yaml").write_text(yaml.safe_dump(lock, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    # The lock is written after the gate, which adds the links between members.
 
     # 2. Register and export each bundle, the domain's own first.
     export_root = new / "export"
@@ -1022,6 +1142,7 @@ def _build(args, note_new) -> int:
                         publisher={}, version=REGISTRY_VERSION, repos=[])
     records: list[dict] = []
     graphs: list[tuple[str, pathlib.Path]] = []
+    loaded: dict = {}  # base_iri -> the bundle as lokf loads it, for the links between bundles
     fit: list[str] = []
     domain_copy = work / "domain" / ".lokf" / "knowledge"
     shutil.copytree(knowledge, domain_copy, ignore=shutil.ignore_patterns(".obsidian"))
@@ -1061,10 +1182,11 @@ def _build(args, note_new) -> int:
             "member_of": sorted(member.parents) if member else [], "kind": "domain" if member is None or member.is_domain else "bundle",
             "triples": entry.void.get("triples", 0),
             "zip": member.zip_url if member else None, "sha256": member.sha256 if member else None,
-            "bytes": zip_path_size(resolved, member), "description": meta.get("description", ""),
+            "bytes": zip_path_size(resolved, member), "description": meta.get("description", ""), "source_base": entry.source_base,
             "health": "" if args.verify_only else health_line(root, kdir.parent.parent), "kdir": kdir,
         })
         graphs.append((entry.base_iri, out_dir / "graph.nt"))
+        loaded[entry.base_iri] = load_bundle(kdir)
         say(f"{slug}: registered {entry.base_iri} ({entry.void.get('triples', 0)} triples) and exported")
     registry.save()
 
@@ -1107,41 +1229,62 @@ def _build(args, note_new) -> int:
     held = [(g, s, p, o, waits_for(o)) for g, s, p, o in unowned]
     named = sorted({w for *_, w in held if w})
     in_waiting = sum(1 for *_, w in held if w)
+    # A target in a member's namespace must name a concept of that member:
+    # the rule --check-refs applies inside one bundle, here across bundles.
+    # A link between two bundles is a target that does. Neither counts a
+    # member a build would leave out, whose namespace is unowned above.
+    links, dangling = cross_links(loaded, registry, vocabulary())
+    links = [x for x in links if x["from"] not in left_out and x["to"] not in left_out]
+    dangling = [x for x in dangling if x["from"] not in left_out and x["to"] not in left_out]
+    lock["links"] = link_counts(links)
     report = ["# Gate report", "", f"Policy: `unowned_targets: {policy}`. {len(unowned)} typed-relation target(s) lie in no member's namespace"
               + (f", {in_waiting} of them in the namespace of a member that waits for a person's confirmation" if in_waiting else "") + ".", ""]
     for g, s, p, o, w in held:
         report.append(f"- in `{g}`: `{s}` `{p}` `{o}`" + (f", in the namespace of <{w}>, which waits for a person's confirmation" if w else ""))
+    if dangling:
+        report += ["", f"{len(dangling)} typed-relation target(s) lie in a member's namespace and name no concept of that member, which the same policy governs.", ""]
+        report += [f"- in `{d['from']}`: `{d['source']}` `{d['slot']}` `{d['target']}`, in the namespace of `{d['to']}`, which holds no such concept" for d in dangling]
     report += ["", "## Vocabulary fit", ""] + fit
     (new / "gate-report.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+    (new / "workspace.lock.yaml").write_text(yaml.safe_dump(lock, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
     # 5. The index, llms.txt, registry.jsonld and the stored queries, which a check does not write.
     if not args.verify_only:
-        write_index(new, domain_title, domain_iri, snapshot_iri, policy, records, unowned, public, waiting)
+        write_index(new, domain_title, domain_iri, snapshot_iri, policy, records, unowned, public, waiting, lock["links"], len(dangling))
         (new / "registry.jsonld").write_text(json.dumps(registry_jsonld(registry, records), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        (new / "graph.json").write_text(json.dumps(union_elements(loaded, records, links, vocabulary()), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         (new / "queries").mkdir()
-        for name, text in QUERIES.items():
+        for name, text in stored_queries().items():
             (new / "queries" / name).write_text(text, encoding="utf-8")
         for r in records:  # the unpacked releases stay read-only, as released
             for p in r["kdir"].rglob("*"):
                 if p.is_file():
                     p.chmod(0o444)
-    if unowned and policy == "fail":
+    if (unowned or dangling) and policy == "fail":
         shutil.rmtree(new, ignore_errors=True)
         for g, s, p, o, w in held:
             warn(f"unowned target in {g}: {s} {p} {o}" + (f", in the namespace of <{w}>, which waits for a person's confirmation" if w else ""))
-        raise Failed(f"{len(unowned)} typed-relation target(s) lie in no member's namespace and the domain's policy is fail"
+        for d in dangling:
+            warn(f"no such concept in {d['to']}: {d['source']} {d['slot']} {d['target']}")
+        found = [f"{len(unowned)} typed-relation target(s) lie in no member's namespace"] if unowned else []
+        if dangling:
+            found.append(f"{len(dangling)}" + ("" if unowned else " typed-relation target(s)") + " name no concept of the member whose namespace holds them")
+        raise Failed((f"{found[0]}, {found[1]}, and" if len(found) == 2 else f"{found[0]} and") + " the domain's policy is fail"
                      + (f"; {in_waiting} of them lie in the namespace of {', '.join(f'<{w}>' for w in named)}, which joins once a person confirms it" if in_waiting else "")
                      + ("; nothing written (--verify-only)" if args.verify_only else "; the previous snapshot stays"))
     if args.verify_only:
         for g, s, p, o, w in held:
             say(f"unowned target in {g}: {s} {p} {o}, reported under unowned_targets: report")
+        for d in dangling:
+            say(f"no such concept in {d['to']}: {d['source']} {d['slot']} {d['target']}, reported under unowned_targets: report")
         for line in fit:
             say(line[2:].replace("`", ""))
         shutil.rmtree(new, ignore_errors=True)
         say(f"checked {len(resolved)} member zip(s) and gated {len(records)} bundles as the next release build would take them: "
             f"{len(unowned)} typed-relation target(s) in no member's namespace"
             + (f", {in_waiting} of them in the namespace of a member that waits for a person's confirmation" if in_waiting else "")
-            + "; nothing written (--verify-only)")
+            + (f", {len(dangling)} naming no concept of the member whose namespace holds them" if dangling else "")
+            + (f", {len(links)} link(s) between members" if links else "") + "; nothing written (--verify-only)")
         return 0
 
     # 6. Swap.
@@ -1154,7 +1297,8 @@ def _build(args, note_new) -> int:
     sys._federate_swapped = True
     if old.exists():
         shutil.rmtree(old)
-    say(f"workspace built: {len(records)} bundles, {len(lines)} quads, {len(unowned)} unowned target(s) reported -> {out}")
+    say(f"workspace built: {len(records)} bundles, {len(lines)} quads, {len(links)} link(s) between members, "
+        f"{len(unowned) + len(dangling)} unowned or dangling target(s) reported -> {out}")
     return 0
 
 
@@ -1168,7 +1312,8 @@ def zip_path_size(resolved, member) -> int:
 
 
 def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_iri: str, policy: str,
-                records: list[dict], unowned, public: str, waiting: list[dict] | None = None) -> None:
+                records: list[dict], unowned, public: str, waiting: list[dict] | None = None,
+                links: list[dict] | None = None, dangling: int = 0) -> None:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     lines = [f"# {domain_title}: the workspace", "",
              f"The graph built from the releases the domain <{domain_iri}> names, one named graph per bundle, named by that bundle's `base_iri`, with the lock as a graph of its own, <{snapshot_iri}>. Built on {today}; the members and their versions below are the lock's, 'Named by' is the bundle whose domain concept names each (two when two domains name one bundle at one release), and each health line is that member's own at the release named, computed when this was built. A trust label is never stored: `queries/labels.rq` computes each from the events at the moment it runs.",
@@ -1192,6 +1337,14 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
     dom = next((r for r in records if r["slug"] == "domain"), None)
     if dom:
         lines += ["", f"The domain bundle itself: [{dom['title']}](bundles/domain/.lokf/knowledge/index.md) at `{dom['base_iri']}`, {dom['triples']} triples; its health line: {dom['health']}."]
+    titles = {r["base_iri"]: r["title"] for r in records}
+    lines += ["", "## Links between members", ""]
+    if links:
+        lines += ["Typed relations in one bundle whose target is a concept of another, counted by slot. `queries/links.rq` counts them over the graph.", "",
+                  "| From | To | Slot | Links |", "| --- | --- | --- | --- |"]
+        lines += [f"| {titles.get(x['from'], x['from'])} | {titles.get(x['to'], x['to'])} | `{x['slot']}` | {x['count']} |" for x in links]
+    else:
+        lines.append("No typed relation in one bundle names a concept of another yet.")
     if waiting:
         lines += ["", "## Waiting for a person", "",
                   "A member joins at a release only once a person confirms the member concept that names it. Until then the workspace keeps the release a person last confirmed, or leaves the member out when there is none.", ""]
@@ -1199,13 +1352,15 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
             kept = f"built at {w['built']}" if w.get("built") else "left out"
             lines.append(f"- <{w['concept']}>: {w['proposed'] or 'a release'} waits; {kept}.")
     lines += ["", "## Files", "",
-              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace and the member concepts that name it. An entry also names the schema released with its bundle when there is one, and for a member domain the workspace it released when its concept names one. Under `waiting`, the lock lists each member concept that waits for a person's confirmation.",
+              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace and the member concepts that name it. An entry also names the schema released with its bundle when there is one, and for a member domain the workspace it released when its concept names one. Under `links`, the lock counts the links between members; under `waiting`, it lists each member concept that waits for a person's confirmation.",
               "- `lokf-registry.yaml` and `registry.jsonld`: the registry the LOKF specification's section 11 describes, which routes any IRI to its owner by the longest `base_iri` prefix.",
               "- `graph.nq`: every bundle's triples in its own named graph, plus the lock graph, as sorted N-Quads.",
+              "- `graph.json`: every bundle's concepts and typed relations as cytoscape.js elements, each node naming its bundle, with the links between bundles marked `cross`.",
               "- `export/<slug>/`: `graph.nt`, `concepts.jsonld`, `graph.json` and `datasets.jsonld` for each bundle, as `lokf export` writes them.",
               "- `bundles/<slug>/.lokf/knowledge/`: each release, unpacked and read-only.",
-              "- `queries/`: `labels.rq` (each concept's trust label, with its bundle), `moved.rq` (members edited since the domain's last confirmation), `unowned.rq` (the gate) and `members.rq` (the lock graph).",
-              f"- `gate-report.md`: the gate's verdict under `unowned_targets: {policy}`, {len(unowned)} unowned target(s), and each bundle's fit to LOKF core.",
+              "- `queries/`: `labels.rq` (each concept's trust label, with its bundle), `moved.rq` (members edited since the domain's last confirmation), `unowned.rq` (the gate), `links.rq` (the links between members) and `members.rq` (the lock graph).",
+              f"- `gate-report.md`: the gate's verdict under `unowned_targets: {policy}`, {len(unowned)} unowned target(s)"
+              + (f" and {dangling} that name no concept of the member whose namespace holds them" if dangling else "") + ", and each bundle's fit to LOKF core.",
               ""]
     lines += ["Read it with `knowledge-federate.py mcp`, the `lokf-registry` server of the LOKF specification's section 11.4 (resolve an IRI to its bundle, a bounded neighbourhood or subgraph, SPARQL over the union, a document by IRI), or with `knowledge-federate.py serve`, the toolkit's SPARQL endpoint and graph page.", ""]
     if public:
@@ -1876,7 +2031,7 @@ def mcp_server(args) -> int:
 
     @server.tool()
     def federated_sparql(query: str, limit: int = ROWS_MAX) -> dict:
-        """SPARQL over the union of every bundle's graph, the schema prefixes preset; GRAPH ?g binds the asserting bundle's base_iri. query may name a stored query (labels.rq, moved.rq, unowned.rq, members.rq). SELECT gives {columns, rows, truncated} with at most limit rows (1000 at most); ASK {boolean}; CONSTRUCT or DESCRIBE {turtle}. SERVICE is refused, as the toolkit refuses it."""
+        """SPARQL over the union of every bundle's graph, the schema prefixes preset; GRAPH ?g binds the asserting bundle's base_iri. query may name a stored query (labels.rq, moved.rq, unowned.rq, links.rq, members.rq). SELECT gives {columns, rows, truncated} with at most limit rows (1000 at most); ASK {boolean}; CONSTRUCT or DESCRIBE {turtle}. SERVICE is refused, as the toolkit refuses it."""
         text = query.strip()
         if STORED_QUERY.match(text):
             stored = ws.snapshot / "queries" / text

@@ -10,7 +10,8 @@
 #
 # Domain: a Dataset that is a dcat:Catalog of bundles. `unowned_targets`
 #   is the gate policy the federation build reads: `fail` stops the build
-#   on a typed relation whose target no member owns; `report` lists it.
+#   on a typed relation whose target no member owns, or whose target lies in
+#   a member's namespace and names no concept of it; `report` lists it.
 #   `max_depth` is how many tiers of members the build follows when a
 #   member is itself a domain, 3 unless set; the domain's own members are
 #   tier 1. The domain a build starts from is that build's top, and may be
@@ -77,5 +78,5 @@ slots:
 enums:
   UnownedTargetPolicy:
     permissible_values:
-      fail: {description: an unowned cross-bundle target fails the build}
-      report: {description: an unowned cross-bundle target is listed and the build goes on}
+      fail: {description: an unowned or dangling cross-bundle target fails the build}
+      report: {description: an unowned or dangling cross-bundle target is listed and the build goes on}
