@@ -65,6 +65,8 @@ At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is 
   </picture>
 </p>
 
+As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-architecture.svg), [dark](../.assets/companions/ktl-architecture-dark.svg).
+
 In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins work inside the editor. [KTL Registrar](https://w3id.org/ktl/registrar/) does the registrar's work, checking each record as it is typed. [KTL Curator](https://w3id.org/ktl/curator/) is the curator's assistant, and runs this repository's `ktl-curator` review session with no agent in the loop ([The bundle in Obsidian](obsidian.md)).
 
 In the **three lines of defence** that regulated industries use, the librarian and the curator are the first line, the registrar the second, and the bundle holds the evidence a third line would need ([three-lines.md](three-lines.md)).
@@ -93,6 +95,8 @@ The **curator** reports each concept's trust record in plain words:
   </picture>
 </p>
 
+As a flow diagram, drawn with Archify: [light](../.assets/companions/trust-ladder.svg), [dark](../.assets/companions/trust-ladder-dark.svg).
+
 The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. Each is a signal for the reader to weigh, never a score. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
 
 ## Read on
@@ -118,6 +122,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 - [Google Cloud](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing), creator of the Open Knowledge Format (OKF) specification that LOKF profiles.
 - [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), a pattern for building personal knowledge bases with LLMs.
 - [WikiSkill](https://arxiv.org/abs/2608.27454) by Tang et al. (Google Research, 2026) and [SkillWiki](https://arxiv.org/abs/2606.16523) by Huang et al. (2026), two papers whose reading changed how the skills learn from readers and verdicts.
+- [Archify](https://github.com/tt-a1i/archify) by tt-a1i, under the MIT License, which draws the flow diagrams in `.assets/companions/`. They embed the JetBrains Mono font, under the SIL Open Font License.
 
 This is an independent project. It is not affiliated with, endorsed by, or an
 official distribution of LOKF or of the Open Knowledge Format. "LOKF" and

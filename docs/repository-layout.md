@@ -10,6 +10,9 @@ skills/
   ktl-docent/          SKILL.md + references/ + scripts/
   ktl-prose/           SKILL.md + references/ + scripts/
   ktl-website/         SKILL.md + references/ + scripts/ + templates/
+.assets/
+  *.svg, *-dark.svg     the logo, the social card and each figure the docs show, light and dark
+  companions/           Archify flow diagrams beside three figures: each candidate and its two SVGs
 .claude-plugin/
   plugin.json           the six skills as one Claude Code plugin, with catalogue keywords
   marketplace.json      lets `/plugin marketplace add` find that plugin
@@ -48,6 +51,7 @@ scripts/
   smoke-test-install.sh    installs the six skills into a throwaway repo and checks them
   smoke-test-website.sh    lays the website templates down on a dummy bundle and builds the site twice
   sync-sidecar.sh          runs one release's knowledge-sync.sh in each sibling repository, and finishes the branches
+  companion-diagrams.mjs   draws the Archify companions in .assets/companions/ again; a maintainer runs it by hand
 tests/                     the behavioural tests of the sidecar scripts and the prose checker, run with pytest
   conftest.py              the shared helpers, and how to run the tests
   test_*.py                one module per script: the pen, the gate, the report, the conventions checker,

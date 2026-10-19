@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Knowledge outside the repository",
+    "output": ".assets/companions/ktl-ingest.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "translations": {
+      "diagram.description.dataflow": "Four kinds of source outside the repository feed the ingest. The manifest names each one; knowledge-ingest.sh fetches and converts them in a read-only job with no agent, writing one Markdown file per page under .lokf/mirror/ and a status per item in the lock. A Sunday pull request is the review; once a person merges it, the Monday librarian derives concepts citing the mirror file and its origin."
+    },
+    "repository": {
+      "url": "https://github.com/noelmcloughlin/knowledge-trust-ladder.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "f488b192183e2261cac6a92c2c36edd228ce2d3a"
+    }
+  },
+  "stages": [
+    { "label": "Outside the repository" },
+    { "label": "The ingest" },
+    { "label": "The review" }
+  ],
+  "nodes": [
+    { "id": "confluence", "type": "external", "label": "Confluence pages", "sublabel": "label, space, tree", "stage": 0, "row": 0,
+      "sources": [ { "path": "skills/ktl-sidecar/templates/scripts/knowledge-ingest.py", "line": 17, "end_line": 19, "label": "confluence: label, space, page, tree, CQL" } ] },
+    { "id": "pages", "type": "external", "label": "Pages and documents", "sublabel": "HTML, text, PDF", "stage": 0, "row": 1,
+      "sources": [ { "path": "skills/ktl-sidecar/templates/scripts/knowledge-ingest.py", "line": 19, "end_line": 20, "label": "http: HTML, Markdown, text or PDF" } ] },
+    { "id": "repository", "type": "external", "label": "Another repository", "sublabel": "a folder at a ref", "stage": 0, "row": 2,
+      "sources": [ { "path": "skills/ktl-sidecar/templates/scripts/knowledge-ingest.py", "line": 20, "end_line": 23, "label": "git: a path at a ref" } ] },
+    { "id": "command", "type": "external", "label": "A command's output", "sublabel": "a dump, an export", "stage": 0, "row": 3,
+      "sources": [ { "path": "skills/ktl-sidecar/templates/scripts/knowledge-ingest.py", "line": 23, "end_line": 24, "label": "command: a tracked command's output" } ] },
+    { "id": "manifest", "type": "database", "label": ".lokf/ingest.yaml", "sublabel": "names each source", "tag": "no token", "stage": 1, "row": 0,
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/ingest.yaml", "line": 1, "end_line": 7, "label": "what the ingest mirrors; no token here" },
+        { "path": "docs/ingest.md", "line": 25, "label": "place, selector, owner and why" }
+      ] },
+    { "id": "script", "type": "backend", "label": "knowledge-ingest.sh", "sublabel": "a read-only job", "tag": "no agent", "stage": 1, "row": 1,
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-ingest.sh", "line": 2, "end_line": 7, "label": "runs with the secrets and no agent" },
+        { "path": "skills/ktl-sidecar/templates/github/knowledge-ingest.yaml", "line": 18, "end_line": 25, "label": "read-only ingest job, publish job" }
+      ] },
+    { "id": "mirror", "type": "database", "label": "The mirror and lock", "sublabel": ".lokf/mirror/, ingest.lock.yaml", "stage": 1, "row": 2,
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-ingest.py", "line": 10, "end_line": 15, "label": "one Markdown file per page; the lock" },
+        { "path": "docs/ingest.md", "line": 27, "label": "origin, version, digest" },
+        { "path": "docs/ingest.md", "line": 29, "label": "ok, gone, unlisted, failed, refused" }
+      ] },
+    { "id": "review", "type": "security", "label": "Pull request", "sublabel": "a person merges", "tag": "Sundays", "stage": 2, "row": 2,
+      "sources": [
+        { "path": "skills/ktl-sidecar/templates/github/knowledge-ingest.yaml", "line": 3, "end_line": 6, "label": "one pull request, no agent" },
+        { "path": "skills/ktl-sidecar/templates/github/knowledge-ingest.yaml", "line": 12, "end_line": 16, "label": "refreshed until it is merged" },
+        { "path": "skills/ktl-sidecar/templates/github/knowledge-ingest.yaml", "line": 35, "end_line": 36, "label": "Sundays at 04:10 UTC" }
+      ] },
+    { "id": "librarian", "type": "backend", "label": "The librarian", "sublabel": "its work list names it", "tag": "Mondays", "stage": 2, "row": 3,
+      "sources": [
+        { "path": "skills/ktl-librarian/SKILL.md", "line": 59, "label": "a mirror first, then the work list" },
+        { "path": "docs/ingest.md", "line": 33, "label": "the Monday run finds what moved" }
+      ] },
+    { "id": "concept", "type": "database", "label": "Concept", "sublabel": "cites mirror and origin", "tag": "agent-derived", "stage": 2, "row": 4,
+      "sources": [
+        { "path": "docs/ingest.md", "line": 3, "label": "cites the copy and its origin" },
+        { "path": "docs/ingest.md", "line": 5, "label": "agent-derived until a person confirms" }
+      ] }
+  ],
+  "flows": [
+    { "id": "confluence-script", "from": "confluence", "to": "script", "label": "pages by label" },
+    { "id": "pages-script", "from": "pages", "to": "script", "label": "HTML, text, PDF" },
+    { "id": "repository-script", "from": "repository", "to": "script", "label": "files at a ref" },
+    { "id": "command-script", "from": "command", "to": "script", "label": "its output" },
+    { "id": "manifest-script", "from": "manifest", "to": "script", "label": "what to fetch" },
+    { "id": "script-mirror", "from": "script", "to": "mirror", "label": "one file a page", "variant": "emphasis" },
+    { "id": "mirror-review", "from": "mirror", "to": "review", "label": "the diff", "variant": "emphasis" },
+    { "id": "review-librarian", "from": "review", "to": "librarian", "label": "merged mirror", "variant": "dashed" },
+    { "id": "librarian-concept", "from": "librarian", "to": "concept", "label": "derives it", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Nothing fetched is knowledge yet", "items": ["The secrets stay in the read-only job; the write token sits in a job with no secret", "A mirror file is reviewed in a pull request before an agent reads it", "A concept derived from it is agent-derived until a person confirms it"] }
+  ]
+}
