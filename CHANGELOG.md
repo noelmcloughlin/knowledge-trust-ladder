@@ -20,6 +20,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **The federation gate refuses a link into a member's namespace that names no concept of that member**, as `--check-refs` refuses one inside a bundle, under the same `unowned_targets` policy. It checked only that some member owned the namespace.
+- **The federation gate reads a reified `relations` entry as it reads the slot that entry names**, so a target no member owns there stops the build too. `links.rq` and `unowned.rq` count such entries as well.
 - **The workspace's stored queries take their predicates from the toolkit.** `unowned.rq` named `owl:sameAs` where lokf writes `schema:sameAs`, and left out `memberOf` and `holder`.
 - **The graph page's details panel sets each label beside its value.** Starlight's spacing for page content put every label a line below it.
 - **A member whose index gives its licence as text, such as `MIT`, no longer stops the domain build.** The lock graph keeps such a value as a literal, and the index writes it as text.

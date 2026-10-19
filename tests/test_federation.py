@@ -297,6 +297,35 @@ def test_a_link_into_a_member_must_name_one_of_its_concepts(federation, tmp_path
     assert "No typed relation in one bundle names a concept of another yet." in (snap / "index.md").read_text(encoding="utf-8")
 
 
+def test_a_reified_relation_is_gated_and_counted_as_a_named_one_is(federation, tmp_path):
+    """a names b's concept in a reified `relations` entry: the lock and links.rq count the link. Named to an outside resource instead, it meets the gate."""
+    host, a_iri, b_iri = federation["host"], federation["a_iri"], federation["b_iri"]
+
+    def a_relates(target: str) -> None:
+        a2 = make_bundle(tmp_path / "a2", a_iri, "A", {"glossary/term.md": {"type": "GlossaryTerm", "title": "Term", "description": "A term.", "resource": "https://example.test/a",
+                                                                         "relations": [{"predicate": "dependsOn", "target": target}]}})
+        sha = zip_bundle(a2, federation["a_zip"])
+        concept = host / ".lokf" / "knowledge" / "members" / "a.md"
+        text = concept.read_text(encoding="utf-8")
+        concept.write_text(re.sub(r"sha256:[0-9a-f]{64}", f"sha256:{sha}", text, count=1), encoding="utf-8")
+
+    a_relates(b_iri + "glossary/other")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert lock["links"] == [{"from": a_iri, "to": b_iri, "slot": "dependsOn", "count": 1}], lock["links"]
+    r = federate(host, "query", "snapshot/queries/links.rq")
+    assert r.rc == 0 and f"{a_iri}\t{b_iri}\t" in r.out and r.out.rstrip().endswith("\t1"), r.out
+    a_relates("https://nobody.example/thing")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 1 and "1 typed-relation target(s) lie in no member's namespace" in r.out and "dependsOn https://nobody.example/thing" in r.out, r.out
+    top = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+    top.write_text(top.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: report"), encoding="utf-8")
+    assert federate(host, "build", "--no-attestation").rc == 0
+    r = federate(host, "query", "snapshot/queries/unowned.rq")
+    assert r.rc == 0 and "https://nobody.example/thing" in r.out, r.out
+
+
 def test_the_workspace_graph_json_draws_every_bundle_and_the_links_between_them(federation):
     """graph.json holds each bundle's concepts as lokf export draws them, each naming its bundle, and a's link into b as an edge marked cross."""
     host, a_iri, b_iri = federation["host"], federation["a_iri"], federation["b_iri"]

@@ -180,7 +180,8 @@ DCAT = "http://www.w3.org/ns/dcat#"
 VOID = "http://rdfs.org/ns/void#"
 DCTERMS = "http://purl.org/dc/terms/"
 SPDX = "http://spdx.org/rdf/terms#"
-RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+RDF_TYPE = RDF + "type"
 XSD = "http://www.w3.org/2001/XMLSchema#"
 LOKF_NS = "https://w3id.org/lokf/"
 # Relation slots whose target is documented as an outside resource, so a
@@ -1147,6 +1148,31 @@ def gate_predicates() -> dict[str, str]:
     return {rel.uri: name for name, rel in vocab.relation_slots.items() if name not in EXTERNAL_OK}
 
 
+def gate_types() -> dict[str, str]:
+    """Name -> IRI for every relation a reified `relations` entry may name, less those documented as naming an outside resource."""
+    from lokf.schema import vocabulary
+
+    return {name: rel.uri for name, rel in vocabulary().relation_types.items() if name not in EXTERNAL_OK}
+
+
+def reified_targets(store, graph_iri: str):
+    """Each reified relation in one graph, as (subject, relation name, target IRI).
+
+    lokf export writes a `relations` entry as a statement the concept names
+    under lokf:relations, with the relation's name as its rdf:predicate and
+    its target as its rdf:object.
+    """
+    import pyoxigraph as ox
+
+    g = ox.NamedNode(graph_iri)
+    predicate, obj = ox.NamedNode(RDF + "predicate"), ox.NamedNode(RDF + "object")
+    for q in store.quads_for_pattern(None, ox.NamedNode(LOKF_NS + "relations"), None, g):
+        names = [n.object.value for n in store.quads_for_pattern(q.object, predicate, None, g)]
+        for t in store.quads_for_pattern(q.object, obj, None, g):
+            if names and isinstance(t.object, ox.NamedNode):
+                yield q.subject.value, names[0], t.object.value
+
+
 def relation_targets(concept, vocab):
     """Each typed-relation target a concept names, as (slot, target, reified), read where lokf's export and --check-refs read them.
 
@@ -1278,23 +1304,31 @@ GROUP BY ?member ?title ?edited
 HAVING (!BOUND(?lastConfirmed) || STR(?edited) > STR(MAX(?at)))
 ORDER BY ?member
 """,
-    "unowned.rq": """# Typed-relation targets that lie in no member's namespace: the gate, as SPARQL over the lock graph's void:uriSpace list.
+    "unowned.rq": """# Typed-relation targets that lie in no member's namespace: the first half of the gate, as SPARQL over the lock graph's void:uriSpace list.
+# A reified relation counts by the predicate its name stands for. gate-report.md also lists the targets that name no concept of a member.
 PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX lokf: <https://w3id.org/lokf/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT DISTINCT ?g ?s ?p ?o WHERE {
-  GRAPH ?g { ?s ?p ?o . }
-  FILTER(isIRI(?o) && STRSTARTS(STR(?o), "http") && !STRSTARTS(STR(?o), STR(?g)))
-  FILTER(?p IN (GATE_PREDICATES))
+  { GRAPH ?g { ?s ?p ?o . } FILTER(?p IN (GATE_PREDICATES)) }
+  UNION
+  { GRAPH ?g { ?s lokf:relations ?r . ?r rdf:predicate ?name ; rdf:object ?o . } VALUES (?name ?p) { GATE_TYPES } }
+  FILTER(isIRI(?o) && STRSTARTS(STR(?o), "http") && !STRSTARTS(STR(?o), STR(?g)) && !STRSTARTS(STR(?o), "https://w3id.org/lokf/"))
   FILTER NOT EXISTS { ?ds void:uriSpace ?ns . FILTER(STRSTARTS(STR(?o), ?ns)) }
 }
 ORDER BY ?g ?s
 """,
     "links.rq": """# Typed relations in one bundle whose target is a concept of another: the links between members.
 # GRAPH ?from binds the bundle that names the link, and ?to the bundle whose namespace holds its target.
+# A reified relation counts by the predicate its name stands for.
 PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX lokf: <https://w3id.org/lokf/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT ?from ?to ?p (COUNT(*) AS ?links) WHERE {
   ?from a void:Dataset .
-  GRAPH ?from { ?s ?p ?o . }
-  FILTER(?p IN (RELATION_PREDICATES))
+  { GRAPH ?from { ?s ?p ?o . } FILTER(?p IN (RELATION_PREDICATES)) }
+  UNION
+  { GRAPH ?from { ?s lokf:relations ?r . ?r rdf:predicate ?name ; rdf:object ?o . } VALUES (?name ?p) { RELATION_TYPES } }
   ?to void:uriSpace ?ns .
   FILTER(?to != ?from && isIRI(?o) && STRSTARTS(STR(?o), ?ns))
   FILTER EXISTS { GRAPH ?to { ?o a ?type } }
@@ -1317,13 +1351,21 @@ ORDER BY ?bundle
 
 
 def stored_queries() -> dict[str, str]:
-    """The stored queries, their predicate lists filled from the installed toolkit's relation slots, so a query never names a slot the toolkit renamed."""
+    """The stored queries, their predicate lists filled from the installed toolkit's relation slots and types, so a query never names a slot the toolkit renamed."""
     from lokf.schema import vocabulary
 
     vocab = vocabulary()
     every = ", ".join(f"<{rel.uri}>" for rel in vocab.relation_slots.values())
     gated = ", ".join(f"<{uri}>" for uri in gate_predicates())
-    return {name: text.replace("RELATION_PREDICATES", every).replace("GATE_PREDICATES", gated) for name, text in QUERIES.items()}
+    types = " ".join(f"({json.dumps(name)} <{rel.uri}>)" for name, rel in vocab.relation_types.items())
+    gated_types = " ".join(f"({json.dumps(name)} <{uri}>)" for name, uri in gate_types().items())
+    fill = {"RELATION_PREDICATES": every, "GATE_PREDICATES": gated, "RELATION_TYPES": types, "GATE_TYPES": gated_types}
+    out = {}
+    for name, text in QUERIES.items():
+        for key in sorted(fill, key=len, reverse=True):  # GATE_TYPES before a shorter key it contains, were there one
+            text = text.replace(key, fill[key])
+        out[name] = text
+    return out
 
 
 def build(args) -> int:
@@ -1672,17 +1714,24 @@ def _build(args, note_new) -> int:
     pending = [{**w, "kind": "waits", "why": "waits for a person's confirmation"} for w in waiting if w["built"] is None and w.get("base_iri")]
     pending += [{**u, "concept": u["concept"] or u["base_iri"], "kind": "unfetched", "why": "could not be fetched"} for u in unfetched]
     left_out = {w["base_iri"] for w in pending}
-    predicates = gate_predicates()
+    predicates, types = gate_predicates(), gate_types()
     unowned: list[tuple[str, str, str, str]] = []
+
+    def judge(base_iri: str, subject: str, slot: str, target: str) -> None:
+        if target.startswith(base_iri) or target.startswith(LOKF_NS):
+            return
+        owner = registry.owner(target)
+        if owner is None or owner.base_iri in left_out:
+            unowned.append((base_iri, subject, slot, target))
+
     for base_iri, _ in graphs:
         for q in store.quads_for_pattern(None, None, None, ox.NamedNode(base_iri)):
             if q.predicate.value in predicates and isinstance(q.object, ox.NamedNode):
-                target = q.object.value
-                if target.startswith(base_iri) or target.startswith(LOKF_NS):
-                    continue
-                owner = registry.owner(target)
-                if owner is None or owner.base_iri in left_out:
-                    unowned.append((base_iri, q.subject.value, predicates[q.predicate.value], target))
+                judge(base_iri, q.subject.value, predicates[q.predicate.value], q.object.value)
+        # A reified relation is gated as the named slot it stands for is.
+        for subject, name, target in reified_targets(store, base_iri):
+            if name in types:
+                judge(base_iri, subject, name, target)
 
     def left_out_for(target: str) -> dict | None:
         hits = [w for w in pending if target.startswith(w["base_iri"])]

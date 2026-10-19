@@ -76,7 +76,7 @@ A member leaves when you *Retire* its concept. The concept stays for links and h
 
 ## Reading the workspace
 
-The workspace is served under `/workspace/` of the host's site, its `index.md` first, and attached to each release as `workspace-<tag>.zip`. The index lists the members, their versions, which domain named each and their health lines at the release, and counts the links between members, the value test's second half. `queries/labels.rq` computes every concept's trust label with the bundle that asserted it, `queries/moved.rq` lists the members that moved since the domain's last confirmation, `queries/unowned.rq` is the gate, and `queries/links.rq` counts the links between members.
+The workspace is served under `/workspace/` of the host's site, its `index.md` first, and attached to each release as `workspace-<tag>.zip`. The index lists the members, their versions, which domain named each and their health lines at the release, and counts the links between members, the value test's second half. `queries/labels.rq` computes every concept's trust label with the bundle that asserted it, `queries/moved.rq` lists the members that moved since the domain's last confirmation, `queries/unowned.rq` lists the targets the gate finds in no member's namespace, and `queries/links.rq` counts the links between members, a reified `relations` entry as the slot it names.
 
 Three ways to read it, each from the host's sidecar environment, with `--snapshot` naming an unpacked workspace, a `workspace-<tag>.zip`, or the site that serves it, such as `https://w3id.org/ktl/federation/workspace/`:
 
