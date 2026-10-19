@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T18:47:10Z"
+  at: "2026-10-19T20:01:11Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -29,9 +29,9 @@ status: draft
 ---
 # Overview
 
-The architecture page's section on the fifth role, the registrar, points at this page. The reference model is the Three Lines Model of The Institute of Internal Auditors (IIA), updated in [2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) and reissued as a [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf) in 2026. KTL was not built to it, but each of its roles fits. The page shows where, in a table and a diagram (`.assets/ktl-three-lines.svg`, with a dark counterpart), for any organisation that adopts KTL.
+The architecture page's section on the fifth role, the registrar, points at this page. The reference model is the Three Lines Model of The Institute of Internal Auditors (IIA), updated in [2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) and reissued as a [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf) in 2026. KTL was not built to it, but each of its roles fits. The page shows where, in a table and a diagram (`.assets/ktl-three-lines.svg`, with a dark counterpart), for any organisation that adopts KTL. Every control it names already exists in KTL.
 
-- **First line**: the **librarian** and the **curator**. The librarian derives every record from a named source and marks what it cannot settle `status: draft`. The curator is a named person who decides what the team accepts as true. They are maker and checker, since the agent cannot vouch and the person does not derive.
+- **First line**: the **librarian** and the **curator**. The librarian derives every record from a named source, records its own re-checks as `process:` and never as a person, and marks what it cannot settle `status: draft` with an open question. The curator is a named person who decides what the team accepts as true: confirm, correct, send back, retire, or leave for later. They are maker and checker, since the agent cannot vouch and the person does not derive.
 - **Second line**: the **registrar**, which keeps records well-formed: `lokf validate` on every change and in CI, `knowledge-apply.sh` as the librarian's only pen, `knowledge-report.sh` computing every trust label, and the KTL Registrar Obsidian plugin. The gate ties a `human:` verdict that is added or removed to that person's approval or signature, and the pen refuses to write a `human:` actor at all. Neither judges truth.
 - **Third line**: the bundle holds the evidence an independent reviewer needs, not the review.
 
@@ -46,12 +46,12 @@ An auditor's questions each have a fixed place to look:
 - Provenance: `resource`, `sources[].resource` and `derivedFrom`.
 - Who produced the current text, and when: `generated`.
 - Who confirmed it, and when: `verified[]`.
-- Which state of the source the check was made against: `revision`, a field proposed for lokf 0.9.0 and not yet released. The gate resolves it against the tree for a file, and nothing checks it for a URL. Until it is released, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
+- Which state of the source the check was made against: `revision`, a field proposed for lokf 0.9.0 and not yet released. For a file it is the commit hash, which the gate resolves against the tree. For a URL it is an ETag or a digest, which nothing checks. An absent `revision` means unrecorded, never unchanged. Until it is released, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
 - Whether the confirmed text is still the one the person saw: the `validate` job's log, where conventions rule 13 fails an edit that leaves `generated` older than the confirmation.
 - Whether that confirmation is really tied to the named person: the `provenance` job's log carries the forge's verdict on the approval or the signature. Locally, the curator's *Not tied to a signed commit* count does the same. Whether a person's record has been removed without them: the same job's log, since a confirmation struck out or gone with its concept needs that person's approval or signature, as an added one does. On the scheduled librarian's pull request, `knowledge-provenance.sh --unattended` checks it in the job that holds the write token.
-- When it must be looked at again: `stale_after`.
+- When it must be looked at again, and by what rule: `stale_after`, proposed from `policies/knowledge-curation.md`.
 - What changed, and why: `log.md` and git.
-- Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which nothing here runs yet.
+- Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which nothing here runs yet. The bundle projects to RDF and answers SPARQL.
 
 Four limits bound what that evidence proves:
 

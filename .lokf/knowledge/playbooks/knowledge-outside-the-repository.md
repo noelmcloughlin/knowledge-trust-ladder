@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T10:22:18Z"
+  at: "2026-10-19T20:01:11Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -55,7 +55,7 @@ The mirror is tracked, so the work list, the gate and coverage read it as reposi
 
 # Sensitivity
 
-The script refuses what the repository's visibility does not allow. `public` may be committed anywhere, and `internal`, the default, only to a private repository. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, and the concept names the origin as its `resource`.
+The script refuses what the repository's visibility does not allow. `public` may be committed anywhere, and `internal`, the default, only to a private repository. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, the concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text no person reviewed. The script refuses a `confidential` entry when git does not ignore that folder or tracks a file in it.
 
 # Turn it on
 
@@ -73,4 +73,4 @@ The workflow runs on Sundays and keeps one pull request open on the branch `know
 
 # Security
 
-The job that holds the secrets has no write token, and the job that writes has no secret. `docs/threat-model.md` covers the ingest workflow.
+The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. `docs/threat-model.md` covers the ingest workflow.

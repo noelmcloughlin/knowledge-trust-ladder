@@ -21,7 +21,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/linkml
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-16T23:58:13Z"
+    at: "2026-10-19T20:01:11Z"
 ---
 
 # Overview

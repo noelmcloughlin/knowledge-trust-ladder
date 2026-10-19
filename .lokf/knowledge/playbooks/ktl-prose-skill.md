@@ -13,6 +13,7 @@ sources:
   - resource: skills/ktl-prose/scripts/prose-check.py
   - resource: docs/architecture.md
   - resource: CHANGELOG.md
+  - resource: skills/ktl-prose/assets/voa-word-book.txt
 references:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
   - https://w3id.org/ktl/knowledge/policies/threat-model
@@ -24,11 +25,11 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-19T20:01:11Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-18T17:45:03Z"
+    at: "2026-10-19T20:01:11Z"
 ---
 # Overview
 
