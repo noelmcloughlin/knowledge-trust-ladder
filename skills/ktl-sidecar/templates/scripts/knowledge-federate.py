@@ -146,6 +146,7 @@ import hashlib
 import functools
 import http.client
 import ipaddress
+import itertools
 import json
 import os
 import pathlib
@@ -2837,6 +2838,8 @@ def serve(args) -> int:
 def query(args) -> int:
     ws = Workspace(open_snapshot(args), scope=args.member)
     given = pathlib.Path(args.query)
+    if refusal := lock_query_refusal(ws, given.name):
+        raise Failed(refusal)
     stored = ws.source.text(f"queries/{args.query}") if STORED_QUERY.match(args.query) and not given.is_file() else None
     text = given.read_text(encoding="utf-8") if given.is_file() else stored or args.query
     if args.format == "json":
@@ -2863,6 +2866,17 @@ def query(args) -> int:
 # no state between calls but the graphs it has loaded.
 DEPTH_MAX, LIMIT_DEFAULT, LIMIT_MAX, ROWS_MAX = 3, 200, 2000, 1000
 STORED_QUERY = re.compile(r"^[A-Za-z0-9_-]+\.rq$")
+# The stored queries that read the lock graph, which a reader given
+# --member leaves out, so they would answer nothing or count every link as
+# unowned there.
+LOCK_QUERIES = {"links.rq", "unowned.rq", "members.rq"}
+
+
+def lock_query_refusal(ws, name: str) -> str:
+    """Why a reader given --member does not run this stored query, or nothing when it may."""
+    if ws.scope is not None and name in LOCK_QUERIES:
+        return f"{name} reads the lock graph, which a reader given --member leaves out; run it over the whole workspace"
+    return ""
 
 
 class Workspace:
@@ -3164,9 +3178,11 @@ def mcp_server(args) -> int:
 
     @server.tool()
     def federated_sparql(query: str, limit: int = ROWS_MAX) -> dict:
-        """SPARQL over the union of every bundle's graph, the schema prefixes preset, which loads every graph on the first call; GRAPH ?g binds the asserting bundle's base_iri. query may name a stored query (labels.rq, moved.rq, unowned.rq, links.rq, members.rq). SELECT gives {columns, rows, truncated} with at most limit rows (1000 at most); ASK {boolean}; CONSTRUCT or DESCRIBE {turtle}. SERVICE is refused, as the toolkit refuses it."""
+        """SPARQL over the union of every bundle's graph, the schema prefixes preset, which loads every graph on the first call; GRAPH ?g binds the asserting bundle's base_iri. query may name a stored query (labels.rq, moved.rq, unowned.rq, links.rq, members.rq). SELECT gives {columns, rows, truncated} with at most limit rows (1000 at most); ASK {boolean}; CONSTRUCT or DESCRIBE {turtle, count, truncated} with at most 2000 triples. SERVICE is refused, as the toolkit refuses it."""
         text = query.strip()
         if STORED_QUERY.match(text):
+            if refusal := lock_query_refusal(ws, text):
+                return {"error": refusal}
             stored = ws.source.text(f"queries/{text}")
             if stored is None:
                 return {"error": f"no stored query {text}; those here are {', '.join(sorted(QUERIES))}"}
@@ -3174,13 +3190,19 @@ def mcp_server(args) -> int:
         limit = max(1, min(int(limit), ROWS_MAX))
         ws.load()  # a query may reach any graph
         try:
+            # Answers are read one at a time and no further than the limit,
+            # so a query that matches the whole workspace hands back a part
+            # of it and says so.
             form = query_form(query)
             if form in ("construct", "describe"):
-                return {"turtle": ws.store.construct(query, fmt="ttl")}
+                triples = list(itertools.islice(ws.store.query(query), LIMIT_MAX + 1))
+                data = ox.serialize(triples[:LIMIT_MAX], format=ox.RdfFormat.TURTLE, prefixes=ws.store.prefixes)
+                return {"turtle": data.decode("utf-8"), "count": min(len(triples), LIMIT_MAX), "truncated": len(triples) > LIMIT_MAX}
             if form == "ask":
                 return {"boolean": ws.store.ask(query)}
-            rows = ws.store.select(query)
-            columns = list(dict.fromkeys(k for row in rows for k in row))
+            result = ws.store.query(query)
+            columns = [v.value for v in result.variables]
+            rows = [{c: (s[c].value if s[c] is not None else None) for c in columns} for s in itertools.islice(result, limit + 1)]
             return {"columns": columns, "rows": rows[:limit], "truncated": len(rows) > limit}
         except Exception as exc:  # noqa: BLE001 - the engine's message is the answer
             return {"error": f"query failed: {exc}"}

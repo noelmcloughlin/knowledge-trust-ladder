@@ -1170,14 +1170,15 @@ def test_mcp_serves_the_index_first_and_each_tool_bounded(federation, tmp_path):
              ("subgraph", {"iris": [a_term], "depth": 1, "format": "trig"}), ("federated_sparql", {"query": "labels.rq"}),
              ("federated_sparql", {"query": "SELECT * WHERE { SERVICE <https://x.example/sparql> { ?s ?p ?o } }"}),
              ("read_document", {"iri": b_other}), ("read_document", {"iri": federation["a_iri"] + "../../etc/passwd"}),
-             ("resolve_iri", {"iri": "https://nobody.example/knowledge/x"}), ("neighbors", {"iri": a_term, "depth": 9, "limit": 1})]
+             ("resolve_iri", {"iri": "https://nobody.example/knowledge/x"}), ("neighbors", {"iri": a_term, "depth": 9, "limit": 1}),
+             ("federated_sparql", {"query": 'CONSTRUCT { ?s ?p ?x } WHERE { GRAPH ?g { ?s ?p ?o } GRAPH ?h { ?a ?b ?c } BIND(IRI(CONCAT("urn:x:", MD5(CONCAT(STR(?o), STR(?a), STR(?b), STR(?c))))) AS ?x) }'}), ("federated_sparql", {"query": "SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", "limit": 3})]
     client = write(tmp_path / "client.py", MCP_CLIENT)
     r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-I", client, REPO / ".lokf", SCRIPT, host / "snapshot", json.dumps(calls)], cwd=tmp_path, stdout_only=True)
     assert r.rc == 0, r.out
     out = json.loads(r.out)
     assert out["server"] == "lokf-registry" and out["tools"] == ["resolve_iri", "neighbors", "subgraph", "federated_sparql", "read_document"]
     assert out["instructions"].startswith("The workspace of a LOKF federation") and "# D: the workspace" in out["instructions"], "the index is the server's instructions"
-    index, resolved, near, sub, labels, service, doc, traversal, outside, cut = out["calls"]
+    index, resolved, near, sub, labels, service, doc, traversal, outside, cut, constructed, selected = out["calls"]
     assert index["path"] == "index.md" and index["markdown"].startswith("# D: the workspace")
     assert resolved["owner"]["slug"] == "b" and resolved["concept"]["type"] == "GlossaryTerm" and resolved["concept"]["trust"]["trust_tier"]
     assert any(t["graph"] == federation["a_iri"] and t["object"]["value"] == b_other for t in near["triples"]), "the cross-bundle edge is asserted by a's graph"
@@ -1187,6 +1188,8 @@ def test_mcp_serves_the_index_first_and_each_tool_bounded(federation, tmp_path):
     assert doc["bundle"]["slug"] == "b" and doc["markdown"].startswith("---") and doc["trust"]["status"]
     assert "error" in traversal and outside["owner"] is None
     assert cut["truncated"] and cut["count"] == 1
+    assert constructed["truncated"] and constructed["count"] == 2000 and constructed["turtle"], "a CONSTRUCT is bounded as a walk is"
+    assert selected["truncated"] and len(selected["rows"]) == 3 and sorted(selected["columns"]) == ["g", "o", "p", "s"]
 
 
 def test_mcp_loads_a_graph_when_a_walk_first_reaches_it(federation, tmp_path):
@@ -1429,15 +1432,18 @@ def test_a_reader_given_members_reads_those_bundles_alone(federation, tmp_path):
     a_term, b_other = a_iri + "glossary/term", b_iri + "glossary/other"
     count = "SELECT (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }"
     calls = [("resolve_iri", {"iri": b_other}), ("read_document", {"iri": b_other}), ("neighbors", {"iri": a_term, "depth": 2}),
-             ("federated_sparql", {"query": count}), ("read_document", {})]
+             ("federated_sparql", {"query": count}), ("read_document", {}), ("federated_sparql", {"query": "links.rq"})]
     out = mcp_answers(tmp_path, snap, calls, "scoped", "--member", "a")
     assert "as this reader reads it" in out["instructions"] and "a bundle" in out["instructions"] and "b bundle" not in out["instructions"]
-    resolved, doc, near, counted, index = out["calls"]
+    resolved, doc, near, counted, index, links = out["calls"]
+    assert links["error"].startswith("links.rq reads the lock graph"), links
     assert resolved["owner"] is None and doc["error"] == f"no bundle this reader reads owns {b_other}"
     assert {t["graph"] for t in near["triples"]} == {a_iri} and not any(f"loaded <{b_iri}>" in log for log in out["logs"])
     assert int(counted["rows"][0]["n"]) == a_quads and "b bundle" not in index["markdown"]
     r = federate(host, "query", count, "--member", "a")
     assert r.rc == 0 and r.out.splitlines()[-1] == str(a_quads), r.out
+    r = federate(host, "query", "unowned.rq", "--member", "a")
+    assert r.rc == 1 and "unowned.rq reads the lock graph, which a reader given --member leaves out" in r.out, r.out
     r = federate(host, "query", count, "--member", "nobody")
     assert r.rc == 1 and "--member nobody: no bundle of this workspace has that slug or base_iri; those here are a, b, domain" in r.out, r.out
 

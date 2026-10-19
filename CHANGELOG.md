@@ -13,7 +13,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A bundle that releases no zip joins by the `concepts.jsonld` its site serves**, pinned by that file's checksum; the build writes the file out as the bundle. The members script asks for it with a conditional request and proposes a changed file, and `members --add <address>` drafts such a member.
 - **A member whose file cannot be fetched is held at its last good state**, as section 11.5 of the LOKF specification has it, from the previous release's workspace that `--previous` names. A release zip with other bytes is held only at the release a build fetched before, a member never built is left out until it can be fetched, and a check holds nothing its pull request proposes.
 - **The readers read a workspace where it lies:** a folder, a `workspace-<tag>.zip` in place, or the site that serves it, a graph at a time by range request. `read_document` reads the workspace's copy of a release, else its `concepts.jsonld`, else its source, as section 11.4 chains them.
-- **A reader can be given some members alone.** `--member <slug>` on `mcp`, `serve` and `query` loads those bundles' graphs and no other.
+- **A reader can be given some members alone.** `--member <slug>` on `mcp`, `serve` and `query` loads those bundles' graphs and no other, and refuses the stored queries that read the lock graph.
 - **A domain host's release notes say what changed in its workspace.** `knowledge-federate.py diff` compares two workspaces, and the federation workflow adds the members that joined, moved or left, and the links between them, to each release's notes.
 - **A domain host's graph page draws the workspace.** Its *The workspace* view draws every bundle the domain names, each in a colour of its own, with the links between bundles dashed, from the `graph.json` the federation workflow serves. `WORKSPACE` in `site.config.mjs` names that folder, and is on when the repository has the workflow.
 
@@ -21,6 +21,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The federation gate refuses a link into a member's namespace that names no concept of that member**, as `--check-refs` refuses one inside a bundle, under the same `unowned_targets` policy. It checked only that some member owned the namespace.
 - **The federation gate reads a reified `relations` entry as it reads the slot that entry names**, so a target no member owns there stops the build too. `links.rq` and `unowned.rq` count such entries as well.
+- **The MCP server's `federated_sparql` stops reading at its limit**, 1000 rows or 2000 triples, and says when it cut an answer. It read a SELECT whole before cutting it, and returned a CONSTRUCT whole.
 - **The workspace's stored queries take their predicates from the toolkit.** `unowned.rq` named `owl:sameAs` where lokf writes `schema:sameAs`, and left out `memberOf` and `holder`.
 - **The graph page's details panel sets each label beside its value.** Starlight's spacing for page content put every label a line below it.
 - **A member whose index gives its licence as text, such as `MIT`, no longer stops the domain build.** The lock graph keeps such a value as a literal, and the index writes it as text.
