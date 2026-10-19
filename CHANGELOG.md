@@ -27,7 +27,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The MCP server reads a concept whose `id` lies outside its bundle's namespace**, which the registry routes through its `id_index`. It cut the IRI by the wrong prefix.
 - **A member whose namespace nests with another's stops the build with a finding that names both**, before anything is fetched. The registry refused it only after every download, with a Python traceback.
 - **A checksum must be `sha256:` and 64 hex digits.** Only its length was checked, so a path in it could reach outside the download cache and have the build delete a file there.
-- **A member's download stops at `--max-bytes`**, where it was read whole before its checksum was compared.
+- **Every download stops at `--max-bytes`**, a member's schema and workspace as well as its zip, where each was read whole before its checksum was compared.
+- **A download is tried again after a server error or a dropped connection, and follows a redirect only within http and https**, never from https to http and never from a public address to a private one.
+- **A zip of more than 100,000 entries, or one that matches its checksum but cannot be read, stops the build with a finding**, where it filled the disk or ended in a traceback.
+- **A reader keeps no partial answer to a range request as the whole file**, and `--previous` refuses a site address, from which no zip member could be held.
 - **A domain host's site serves each member's release inside the workspace.** The Pages upload left out the hidden `bundles/<slug>/.lokf/` folders, so every member link in the served workspace index answered 404.
 
 ## [0.52.1] - 2026-10-19

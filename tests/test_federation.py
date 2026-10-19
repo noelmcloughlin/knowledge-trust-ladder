@@ -108,6 +108,7 @@ GitHub API and the release files from fixture files, and put a stand-in
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
@@ -1289,6 +1290,7 @@ def test_mcp_loads_the_graphs_that_share_an_iri_no_bundle_owns_and_no_more(feder
 RANGE_SERVER = """\
 import http.server, pathlib, re, sys
 root, portfile, logfile = sys.argv[1:4]
+FAILED = set()  # the /fail-once/ paths already answered 503
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kw):
         super().__init__(*args, directory=root, **kw)
@@ -1296,6 +1298,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         with open(logfile, "a", encoding="utf-8") as log:
             log.write(f"{self.command} {self.path} {self.headers.get('Range') or '-'}\\n")
     def do_GET(self):
+        if self.path.startswith("/redirect-to/"):
+            self.send_response(302)
+            self.send_header("Location", self.path[len("/redirect-to/"):])
+            self.end_headers()
+            return
+        if self.path.startswith("/fail-once/"):
+            if self.path not in FAILED:
+                FAILED.add(self.path)
+                self.send_error(503)
+                return
+            self.path = self.path[len("/fail-once"):]
         wanted = re.fullmatch(r"bytes=(\\d+)-(\\d+)", self.headers.get("Range") or "")
         path = pathlib.Path(self.translate_path(self.path))
         if wanted and path.is_file():
@@ -1314,25 +1327,60 @@ server.serve_forever()
 """
 
 
-@pytest.fixture
-def served_workspace(federation, tmp_path):
-    """The federation's workspace, built, and served over HTTP from its folder by RANGE_SERVER: its address and its request log."""
+@contextlib.contextmanager
+def serving(root: Path, work: Path):
+    """RANGE_SERVER serving a folder over HTTP: its address and its request log."""
     import subprocess
     import time
 
-    host = federation["host"]
-    assert federate(host, "build", "--snapshot-iri", "https://d.example/snapshots/v0.2.0", "--no-attestation").rc == 0
-    script, port, log = write(tmp_path / "server.py", RANGE_SERVER), tmp_path / "port", tmp_path / "requests.log"
-    proc = subprocess.Popen(["python3", "-I", str(script), str(host / "snapshot"), str(port), str(log)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    work.mkdir(parents=True, exist_ok=True)
+    script, port, log = write(work / "server.py", RANGE_SERVER), work / "port", work / "requests.log"
+    proc = subprocess.Popen(["python3", "-I", str(script), str(root), str(port), str(log)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(100):
             if port.is_file() and port.read_text(encoding="utf-8"):
                 break
             time.sleep(0.1)
-        yield {"url": f"http://127.0.0.1:{port.read_text(encoding='utf-8')}/", "log": log, "snapshot": host / "snapshot"}
+        yield f"http://127.0.0.1:{port.read_text(encoding='utf-8')}/", log
     finally:
         proc.terminate()
         proc.wait(timeout=10)
+
+
+@pytest.fixture
+def served_workspace(federation, tmp_path):
+    """The federation's workspace, built, and served over HTTP from its folder by RANGE_SERVER: its address and its request log."""
+    host = federation["host"]
+    assert federate(host, "build", "--snapshot-iri", "https://d.example/snapshots/v0.2.0", "--no-attestation").rc == 0
+    with serving(host / "snapshot", tmp_path / "server") as (url, log):
+        yield {"url": url, "log": log, "snapshot": host / "snapshot"}
+
+
+def test_a_download_is_tried_again_after_a_server_error_and_follows_no_redirect_out_of_http(federation, tmp_path):
+    """b's zip answers 503 once and then the file: the build tries again and gets it. A redirect to another scheme, or a file that is no zip, stops the build with a finding."""
+    host, b_iri, d_iri = federation["host"], federation["b_iri"], federation["d_iri"]
+    files = tmp_path / "files"
+    files.mkdir()
+    shutil.copy(federation["b_zip"], files / "b.zip")
+    (files / "junk.zip").write_bytes(b"no zip at all")
+    with serving(files, tmp_path / "server") as (url, log):
+        def b_at(address: str, sha: str = federation["b_sha"]) -> None:
+            fm = member("b", b_iri, federation["b_zip"], sha, d_iri + "domains/federation")
+            fm["distribution"][0]["access_url"] = address
+            rewrite(host, "b", fm)
+
+        b_at(url + "fail-once/b.zip")
+        r = federate(host, "build", "--no-attestation", "--cache", str(tmp_path / "c1"))
+        assert r.rc == 0, r.out
+        assert read(log).count("GET /fail-once/b.zip") == 2, read(log)
+        b_at(url + "redirect-to/ftp://example.test/b.zip")
+        r = federate(host, "build", "--no-attestation", "--cache", str(tmp_path / "c2"))
+        assert r.rc == 1 and "a redirect from http to ftp is refused" in r.out, r.out
+        b_at(url + "junk.zip", hashlib.sha256(b"no zip at all").hexdigest())
+        r = federate(host, "build", "--no-attestation", "--cache", str(tmp_path / "c3"))
+        assert r.rc == 1 and "matches its checksum but is no readable zip" in r.out and "Traceback" not in r.out, r.out
+        r = federate(host, "build", "--no-attestation", "--cache", str(tmp_path / "c3"), "--previous", url)
+        assert r.rc == 1 and "takes a workspace folder or a workspace-<tag>.zip, not a site" in r.out, r.out
 
 
 def test_the_readers_read_a_workspace_from_its_zip_or_the_site_that_serves_it(federation, served_workspace, tmp_path):

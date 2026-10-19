@@ -145,14 +145,17 @@ import email.utils
 import hashlib
 import functools
 import http.client
+import ipaddress
 import json
 import os
 import pathlib
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -164,6 +167,10 @@ NAME = "knowledge-federate"
 ACTOR = "process:knowledge-federate"
 USER_AGENT = "knowledge-federate (https://github.com/noelmcloughlin/knowledge-trust-ladder)"
 DEFAULT_MAX_BYTES = 200 * 1024 * 1024
+# The most files a bundle zip may hold. A bundle holds a file a concept, so
+# this is far above any real one, and it keeps a zip of many tiny entries
+# from filling the disk's inodes within --max-bytes.
+MAX_ENTRIES = 100_000
 # The librarian wrapper refuses to pass a credential under a name gh reads,
 # so the job's token arrives under this one. It leaves this process's
 # environment here and reaches gh alone, never lokf or anything else run.
@@ -615,6 +622,44 @@ def waits_note(member) -> str:
 # ---------------------------------------------------------------------------
 # fetching and verifying a release zip
 # ---------------------------------------------------------------------------
+def private_host(host: str | None) -> bool:
+    """Whether a host name is, or resolves to, a loopback, private, link-local or otherwise reserved address."""
+    if not host:
+        return False
+    try:
+        addresses = {info[4][0] for info in socket.getaddrinfo(host, None)}
+    except (socket.gaierror, UnicodeError):
+        return False  # a name that does not resolve is no address; the request fails on its own
+    for address in addresses:
+        ip = ipaddress.ip_address(address.split("%", 1)[0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            return True
+    return False
+
+
+class Redirects(urllib.request.HTTPRedirectHandler):
+    """The redirects a download follows: five at most, each to http or https, never from https to http, and never from a public address to a private one.
+
+    A release URL redirects to the host that stores its asset, so redirects
+    are followed. A member concept a pull request proposes is fetched by its
+    check before any person has confirmed it, so a redirect may not take
+    that request into the runner's own network.
+    """
+
+    max_redirections = 5
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        old, new = urllib.parse.urlparse(req.full_url), urllib.parse.urlparse(newurl)
+        if new.scheme not in ("http", "https") or (old.scheme == "https" and new.scheme != "https"):
+            raise urllib.error.HTTPError(newurl, code, f"a redirect from {old.scheme} to {new.scheme or 'no scheme'} is refused", headers, None)
+        if private_host(new.hostname) and not private_host(old.hostname):
+            raise urllib.error.HTTPError(newurl, code, f"a redirect from {old.hostname} to {new.hostname}, a private address, is refused", headers, None)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+OPENER = urllib.request.build_opener(Redirects())
+
+
 def http_fetch(url: str, accept: str | None = None, headers: dict | None = None, max_bytes: int | None = None,
                timeout: int = 60) -> tuple[int, dict, bytes]:
     """GET an http(s) URL: its status, its headers named in lower case, and its body, read no further than max_bytes.
@@ -624,7 +669,7 @@ def http_fetch(url: str, accept: str | None = None, headers: dict | None = None,
     """
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **({"Accept": accept} if accept else {}), **(headers or {})})
     try:
-        resp = urllib.request.urlopen(req, timeout=timeout)  # noqa: S310 - a URL a person confirmed, or the workspace a reader names
+        resp = OPENER.open(req, timeout=timeout)  # noqa: S310 - a URL a person confirmed, or the workspace a reader names
     except urllib.error.HTTPError as e:
         if e.code == 304:
             return 304, {k.lower(): v for k, v in e.headers.items()}, b""
@@ -657,10 +702,24 @@ def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> N
         return
     if parsed.scheme not in ("http", "https"):
         raise Failed(f"{url}: only http(s), file:// and local paths are fetched")
-    try:
-        dest.write_bytes(http_get(url, max_bytes=max_bytes))
-    except (OSError, http.client.HTTPException) as e:  # URLError, a timeout and a dropped connection are each an OSError
-        raise Unobtainable(f"{url}: could not be fetched ({e})") from e
+    # A server error, a rate limit, a timeout or a dropped connection is
+    # tried again twice, a second and then two seconds later, so a moment's
+    # outage neither holds a member nor stops a release. Any other answer
+    # counts the first time.
+    last: Exception | None = None
+    for attempt in range(3):
+        try:
+            dest.write_bytes(http_get(url, max_bytes=max_bytes))
+            return
+        except urllib.error.HTTPError as e:
+            if e.code < 500 and e.code != 429:
+                raise Unobtainable(f"{url}: could not be fetched ({e})") from e
+            last = e
+        except (OSError, http.client.HTTPException) as e:  # URLError, a timeout and a dropped connection are each an OSError
+            last = e
+        if attempt < 2:
+            time.sleep(1 << attempt)
+    raise Unobtainable(f"{url}: could not be fetched ({last})") from last
 
 
 def digest(path: pathlib.Path) -> str:
@@ -674,6 +733,8 @@ def digest(path: pathlib.Path) -> str:
 def check_zip(path: pathlib.Path, max_bytes: int) -> None:
     """Refuse a zip that could reach outside the bundle or exhaust the disk, before anything in it is read."""
     with zipfile.ZipFile(path) as zf:
+        if len(zf.infolist()) > MAX_ENTRIES:
+            raise Failed(f"{path.name}: holds {len(zf.infolist())} entries, more than the {MAX_ENTRIES} a bundle zip may")
         total = 0
         for info in zf.infolist():
             name = info.filename
@@ -737,7 +798,10 @@ def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) ->
         raise Failed(f"{member.slug}: the cached copy no longer matches its digest; removed, run again")
     if member.served:
         return cached, "checksum matches; a served file, which carries no release attestation"
-    check_zip(cached, max_bytes)
+    try:
+        check_zip(cached, max_bytes)
+    except zipfile.BadZipFile as e:
+        raise Failed(f"{member.slug}: {member.zip_name} matches its checksum but is no readable zip ({e})") from e
     verdict = "checksum matches"
     if member.github and attest:
         verdict += "; " + verify_attestation(cached, member.github[0], member.github[1])
@@ -750,8 +814,11 @@ def unpack(zip_path: pathlib.Path, into: pathlib.Path) -> pathlib.Path:
     """Unpack knowledge/ to into/.lokf/knowledge, the layout the sidecar's scripts read, and return that folder."""
     target = into / ".lokf"
     target.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(zip_path) as zf:
-        zf.extractall(target)
+    try:
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(target)
+    except zipfile.BadZipFile as e:
+        raise Failed(f"{zip_path.name}: could not be unpacked ({e})") from e
     knowledge = target / "knowledge"
     if not (knowledge / "index.md").is_file():
         raise Failed(f"{zip_path.name}: no knowledge/index.md inside")
@@ -825,6 +892,10 @@ def open_previous(where: str, domain_base: str, release_base: str, attest: bool,
     own checksum. When it cannot be read or checked, the build goes on
     without it, and a member that cannot be fetched stops it, as before.
     """
+    if where.startswith(("http://", "https://")):
+        # A site lists no files, so a zip member could not be taken from it.
+        warn(f"--previous {where}: takes a workspace folder or a workspace-<tag>.zip, not a site; a member whose release cannot be fetched stops the build")
+        return None
     try:
         source = Snapshot(where, need="workspace.lock.yaml")
         lock = yaml.safe_load(source.text("workspace.lock.yaml") or "")
@@ -892,7 +963,7 @@ def hold(member: Member, source, entry: dict, into: pathlib.Path, why: str, wait
     return held
 
 
-def obtain_file(url: str, sha256: str, cache: pathlib.Path, what: str) -> pathlib.Path:
+def obtain_file(url: str, sha256: str, cache: pathlib.Path, what: str, max_bytes: int = DEFAULT_MAX_BYTES) -> pathlib.Path:
     """A released file other than the zip, in the cache under its digest, checked against the checksum the member names."""
     cache.mkdir(parents=True, exist_ok=True)
     suffix = pathlib.PurePosixPath(urllib.parse.urlparse(url).path).suffix or ".bin"
@@ -901,7 +972,7 @@ def obtain_file(url: str, sha256: str, cache: pathlib.Path, what: str) -> pathli
         return cached
     tmp = cache / f"{sha256}.part"
     try:
-        fetch(url, tmp)
+        fetch(url, tmp, max_bytes)
     except Failed:
         tmp.unlink(missing_ok=True)
         raise
@@ -923,7 +994,7 @@ def toolkit_schema() -> pathlib.Path:
     return found
 
 
-def member_schema_file(member: Member, cache: pathlib.Path, attest: bool, bundle_dir: pathlib.Path) -> pathlib.Path | None:
+def member_schema_file(member: Member, cache: pathlib.Path, attest: bool, bundle_dir: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> pathlib.Path | None:
     """The schema released with a member's bundle, verified and placed beside the unpacked bundle with the toolkit's lokf.yaml, or None.
 
     A host's schema imports `lokf` by that name and keeps a pinned copy
@@ -936,7 +1007,7 @@ def member_schema_file(member: Member, cache: pathlib.Path, attest: bool, bundle
     # A member held at its last good state brings the copy the previous
     # build placed here, checked against the same digest.
     if not (member.held and schema.is_file() and digest(schema) == member.schema_sha256):
-        cached = obtain_file(member.schema_url, member.schema_sha256, cache, member.slug)
+        cached = obtain_file(member.schema_url, member.schema_sha256, cache, member.slug, max_bytes)
         if member.github and attest:
             verify_attestation(cached, member.github[0], member.github[1])
         shutil.copyfile(cached, schema)
@@ -959,7 +1030,7 @@ def released_lock(member: Member, domain_iri: str | None, cache: pathlib.Path, m
     """
     if not member.workspace_url:
         return None
-    cached = obtain_file(member.workspace_url, member.workspace_sha256, cache, member.slug)
+    cached = obtain_file(member.workspace_url, member.workspace_sha256, cache, member.slug, max_bytes)
     if member.github and attest:
         verify_attestation(cached, member.github[0], member.github[1])
     try:
@@ -1645,7 +1716,7 @@ def _build(args, note_new) -> int:
         done = run_lokf(["export", str(kdir), "--out-dir", str(out_dir), *(["--source-base", source_base] if source_base else [])])
         if done.returncode != 0:
             raise Failed(f"{slug}: lokf export failed: {(done.stderr or done.stdout).strip()[:400]}")
-        schema = host_schema(root) if member is None else member_schema_file(member, cache, not args.no_attestation, kdir.parent.parent)
+        schema = host_schema(root) if member is None else member_schema_file(member, cache, not args.no_attestation, kdir.parent.parent, args.max_bytes)
         if schema:
             check = subprocess.run([*lokf_cli(), "validate", "--schema", schema.name, str(kdir)], capture_output=True, text=True, cwd=str(schema.parent))
             whose = "its domain schema" if member is None else "the schema released with it,"
@@ -2117,11 +2188,11 @@ def release_distributions(release: dict, zip_asset: dict, sum_asset: dict, what:
     return dists + [d for d in (schema, workspace) if d]
 
 
-def verify_schema(member: Member, cache: pathlib.Path, attest: bool) -> str:
+def verify_schema(member: Member, cache: pathlib.Path, attest: bool, max_bytes: int = DEFAULT_MAX_BYTES) -> str:
     """The schema a release carries, fetched, checked and attested as the zip is; the verdict as one clause, or "" when there is none."""
     if not member.schema_url:
         return ""
-    cached = obtain_file(member.schema_url, member.schema_sha256, cache, member.slug)
+    cached = obtain_file(member.schema_url, member.schema_sha256, cache, member.slug, max_bytes)
     if member.github and attest:
         verify_attestation(cached, member.github[0], member.github[1])
     return f"; schema {member.schema_name} checked"
@@ -2343,7 +2414,7 @@ def members(args) -> int:
         distribution = release_distributions(release, zip_asset, sum_asset, member.slug, member.declared_domain)
         moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
         _, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
-        verdict += verify_schema(moved, cache, not args.no_attestation)
+        verdict += verify_schema(moved, cache, not args.no_attestation, args.max_bytes)
         verdict += verify_workspace(moved, cache, args.max_bytes, not args.no_attestation)
         release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
         asked = f"{owner}/{repo} released {tag} after {'the confirmed ' if confirmed else ''}{member.version}; does this member move to it?"
@@ -2404,7 +2475,7 @@ def members(args) -> int:
         distribution = release_distributions(release, zip_asset, sum_asset, slug)
         probe = Member(knowledge / path, {"base_iri": "https://pending.invalid/", "version": tag, "distribution": distribution}, domain_iri, 1)
         zip_path, verdict = obtain(probe, cache, args.max_bytes, not args.no_attestation)
-        verdict += verify_schema(probe, cache, not args.no_attestation)
+        verdict += verify_schema(probe, cache, not args.no_attestation, args.max_bytes)
         kdir = unpack(zip_path, pathlib.Path(tempfile.mkdtemp(prefix="federate-add-")) / slug)
         meta = read_frontmatter(kdir / "index.md")
         base_iri = str(meta.get("base_iri") or "")
@@ -2666,7 +2737,10 @@ class Snapshot:
                 raise Failed(f"{self.url}{rel}: could not be fetched ({e})") from e
             if status == 206 and headers.get("content-range", "").startswith(f"bytes {offset}-"):
                 return body
-            self.whole[rel] = body
+            if status == 206:
+                # Another range than the one asked is no whole file, and is not kept as one.
+                raise Failed(f"{self.url}{rel}: asked for bytes {offset}-{offset + length - 1}, answered {headers.get('content-range') or 'with no range'}")
+            self.whole[rel] = body  # a server that ignores Range sends the whole file, read once
         return self.whole.get(rel, b"")[offset:offset + length]
 
     def files(self, folder: str) -> list[str]:
