@@ -21,9 +21,13 @@
 #   from is that build's top, and may be a member of another domain in turn.
 # MemberBundle: a Dataset naming one released bundle: its `base_iri`
 #   (LOKF's own slot, which the registry routes by), the release `version`
-#   it pins, the `release` page, and its distribution. `sensitivity` says
-#   how sensitive the bundle's subject is, public unless set; the build
-#   writes it into the registry entry, the field section 11.5 names.
+#   it pins, the `release` page, and its distribution. The first
+#   distribution is the release's zip, or, for a bundle that releases none,
+#   the concepts.jsonld its site serves (media type application/ld+json),
+#   which the build writes out as the bundle; either is pinned by its
+#   checksum. `sensitivity` says how sensitive the bundle's subject is,
+#   public unless set; the build writes it into the registry entry, the
+#   field section 11.5 names.
 # MemberDomain: a MemberBundle whose bundle is itself a domain, so a
 #   dcat:Catalog, as DCAT lists a catalogue inside a catalogue. The build
 #   follows its members into the same workspace, and a person's
@@ -32,9 +36,9 @@
 #   domain's released `workspace-<tag>.zip` with its checksum. For a member
 #   that waits in that domain, the build takes the release the lock inside
 #   that zip records.
-# ReleaseDistribution: LOKF's Distribution plus the `checksum` of the zip,
-#   where DCAT puts a digest, so a member may later publish a second
-#   distribution with a checksum of its own.
+# ReleaseDistribution: LOKF's Distribution plus the `checksum` of the file
+#   it names, where DCAT puts a digest, so each further distribution, a
+#   schema or a workspace, carries a checksum of its own.
 id: https://w3id.org/ktl/schema/domain
 name: domain
 imports:

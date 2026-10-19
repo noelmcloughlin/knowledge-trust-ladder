@@ -10,6 +10,14 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 2. a tampered checksum, a zip whose index.md names another base_iri, a zip
    holding a symbolic link, and a domain that names a bundle already in the
    federation each stop the build and leave the previous snapshot in place;
+2a. a bundle that releases no zip joins by the concepts.jsonld its site
+   serves, written out as the bundle, with the graph its own export gave;
+   a file that names another base_iri, a concept outside its namespace or a
+   path that climbs out of the bundle is refused;
+2b. a member whose file cannot be fetched is held at its last good state,
+   as the previous workspace holds it, as a folder or a zip, at the same
+   release or an earlier one; a check does the same, and a workspace of
+   another domain is not taken;
 3. a typed relation whose target no member owns stops the build under
    `unowned_targets: fail` and is reported under `report`, and so does one
    whose target lies in a member's namespace and names no concept of it;
@@ -17,7 +25,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    `links.rq`, and `graph.json` draws every bundle with those links;
 4. a member that is itself a domain is followed one tier down;
 4a. the diamond rule: a bundle two domains name at one release joins once,
-   named by both, and named at two releases it stops the build;
+   named by both, and named at two releases it stops the build, as a
+   second naming with an unknown sensitivity does;
 4b. the depth a build follows is the top Domain concept's `max_depth`, 3
    unless set, and a `MemberDomain` whose zip holds no Domain stops it;
 4c. a concept a curator retired (`status: deprecated`) takes no part: a
@@ -60,6 +69,13 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    names, and each answer is the one a workspace loaded whole gives;
 5d. `diff` says which members joined, moved or left between two
    workspaces, and the links that went with them;
+5e. a walk that steps to an IRI no bundle owns loads the graphs that share
+   it and no more;
+5f. the readers read a workspace from its zip, or from the site that serves
+   it, a graph at a time by range request, with the answers a folder gives;
+5g. a reader given members reads those bundles alone;
+5h. a licence given as text, and a concept whose id lies outside its
+   bundle's namespace, read as released;
 6. `members` moves a member's old tag, zip name and day in its description
    and body as well as its frontmatter, in a patch the pen applies, and
    names the lines it had to leave in its question;
@@ -78,7 +94,10 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    again when the workspace was attached again with other bytes.
 10. under the librarian wrapper, `members` hands the job token that arrives
     as KNOWLEDGE_FEDERATE_TOKEN to gh alone, and with no credential at all
-    it stops and says which variables give it one.
+    it stops and says which variables give it one;
+11. `members` moves a member its site serves to the file the site serves
+    now, asking with the validators it kept, and `members --add <address>`
+    drafts one from a site's concepts.jsonld.
 
 The `members` tests run the script through a small runner that serves the
 GitHub API and the release files from fixture files, and put a stand-in
@@ -101,7 +120,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import REPO, SCRIPTS, Git, have, read, run, write
+from conftest import REPO, SCRIPTS, Git, have, read, run, today_utc, write
 
 SCRIPT = SCRIPTS / "knowledge-federate.py"
 APPLY = SCRIPTS / "knowledge-apply.sh"
@@ -318,6 +337,133 @@ def test_diff_says_what_changed_between_two_workspaces(federation, tmp_path):
         assert r.rc == 0 and r.out.splitlines() == expected, (before, r.out)
     r = federate(host, "diff", "snapshot", "snapshot", "--out", str(tmp_path / "same.md"))
     assert r.rc == 0 and (tmp_path / "same.md").read_text(encoding="utf-8") == "## The workspace\n\nNo member joined, moved or left since the workspace of urn:knowledge-federate:snapshot:v0.3.0.\n"
+    shutil.copytree(host / "snapshot", tmp_path / "v0.3.0")
+    top = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+    top.write_text(top.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: report"), encoding="utf-8")
+    assert federate(host, "build", "--tag", "v0.4.0", "--no-attestation").rc == 0
+    r = federate(host, "diff", str(tmp_path / "v0.3.0"), "snapshot", stdout_only=True)
+    assert r.rc == 0 and r.out.splitlines()[-1] == "- The gate's policy is `report` now, and was `fail`.", r.out
+
+
+def export_bundle(knowledge: Path, out: Path) -> Path:
+    """The four files lokf export writes for a bundle, in a folder, as the bundle's site serves them."""
+    r = run(["uv", "run", "--project", REPO / ".lokf", "lokf", "export", knowledge, "--out-dir", out])
+    assert r.rc == 0, r.out
+    return out
+
+
+def served_member(slug: str, base_iri: str, served: Path, domain_iri: str, version: str = "2026-10-01") -> dict:
+    """A member concept naming the concepts.jsonld a bundle's site serves, with its checksum, as a person confirmed it."""
+    return {"type": "MemberBundle", "title": f"{slug} bundle", "description": f"The {slug} bundle its site served on {version}.",
+            "resource": served.parent.as_uri() + "/", "base_iri": base_iri, "version": version,
+            "distribution": [{"name": served.name, "access_url": served.as_uri(), "media_type": "application/ld+json",
+                              "checksum": "sha256:" + hashlib.sha256(served.read_bytes()).hexdigest()}],
+            "isPartOf": [domain_iri], "verified": CONFIRMED}
+
+
+def test_a_bundle_that_releases_no_zip_joins_by_the_file_its_site_serves(federation, tmp_path):
+    """c releases no zip: its site serves the concepts.jsonld lokf export writes, which a person confirmed by its checksum.
+
+    The build writes that file out as the bundle it was exported from and
+    builds it as any member: c's link into a is counted, its graph is the
+    one its own export gave, and the file is kept beside it. When the site
+    serves another file since, the build stops, or, given the previous
+    workspace, holds c as that file. A file that names another base_iri, a
+    concept outside its namespace or a path that climbs out is refused.
+    """
+    host, a_iri, d_iri = federation["host"], federation["a_iri"], federation["d_iri"]
+    c_iri, top = "https://c.example/knowledge/", d_iri + "domains/federation"
+    c = make_bundle(tmp_path / "c", c_iri, "C", {"glossary/third.md": {"type": "GlossaryTerm", "title": "Third", "description": "A third term.",
+                                                                        "resource": "https://example.test/c", "relatedTo": [a_iri + "glossary/term"]}})
+    site = export_bundle(c, tmp_path / "site" / "knowledge")
+    served = site / "concepts.jsonld"
+    original = served.read_bytes()
+    rewrite(host, "c", served_member("c", c_iri, served, top))
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0 and "c: 2026-10-01 checksum matches; a served file" in r.out, r.out
+    snap = host / "snapshot"
+    lock = yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    entry = next(m for m in lock["members"] if m["slug"] == "c")
+    assert entry["served"] == served.as_uri() and "zip" not in entry, entry
+    assert (snap / "bundles" / "c" / ".lokf" / "concepts.jsonld").read_bytes() == original, "the file is kept beside the bundle it was written out as"
+    third = (snap / "bundles" / "c" / ".lokf" / "knowledge" / "glossary" / "third.md").read_text(encoding="utf-8")
+    assert yaml.safe_load(third.split("---", 2)[1])["relatedTo"] == [a_iri + "glossary/term"] and "A third term." in third
+    assert {"from": c_iri, "to": a_iri, "slot": "relatedTo", "count": 1} in lock["links"], lock["links"]
+    quads = next(g["quads"] for g in lock["graphs"] if g["graph"] == c_iri)
+    assert quads == len((site / "graph.nt").read_text(encoding="utf-8").splitlines()), "the bundle written out gives the graph its own export gave"
+    previous = tmp_path / "previous"
+    shutil.copytree(snap, previous)
+    served.write_text(served.read_text(encoding="utf-8").replace("A third term.", "A third term, revised."), encoding="utf-8")
+    empty = ["--cache", str(tmp_path / "empty-cache")]
+    r = federate(host, "build", "--no-attestation", *empty)
+    assert r.rc == 1 and "c: " + served.as_uri() + " has sha256" in r.out, r.out
+    r = federate(host, "build", "--no-attestation", *empty, "--previous", str(previous))
+    assert r.rc == 0 and "c: held at its last good state" in r.out, r.out
+    assert (snap / "bundles" / "c" / ".lokf" / "concepts.jsonld").read_bytes() == original
+    assert "has sha256" in next(m for m in yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))["members"] if m["slug"] == "c")["held"]
+    doc = json.loads(original)
+    for fault, change, said in (
+        ("base", lambda d: {**d, "@context": [d["@context"][0], {"@base": "https://elsewhere.example/knowledge/"}]},
+         "says base_iri 'https://elsewhere.example/knowledge/' in its @context"),
+        ("outside", lambda d: {**d, "@graph": [{**d["@graph"][0], "id": "https://elsewhere.example/x"}]}, "lies outside the base_iri"),
+        ("climbs", lambda d: {**d, "@graph": [{**d["@graph"][0], "id": c_iri + "../../etc/passwd"}]}, "is no file a bundle can hold"),
+    ):
+        bad = write(tmp_path / f"bad-{fault}" / "concepts.jsonld", json.dumps(change(doc)))
+        rewrite(host, "c", served_member("c", c_iri, bad, top))
+        r = federate(host, "build", "--no-attestation")
+        assert r.rc == 1 and said in r.out, (fault, r.out)
+
+
+def test_a_member_whose_release_cannot_be_fetched_is_held_at_its_last_good_state(federation, tmp_path):
+    """b's zip is gone from where its concept names it: section 11.5 has an unreachable member degrade to its last good state.
+
+    Without the previous workspace the build stops, as before. Given it, as
+    a folder or as its zip, the build takes b as that workspace holds it,
+    and the lock, the registry, the index and diff say so. When b's concept
+    has since moved to a release that cannot be fetched either, b is held at
+    the earlier release. A check reads the previous workspace as the build
+    does, and a workspace of another domain is not taken.
+    """
+    host, a_iri, b_iri, d_iri = federation["host"], federation["a_iri"], federation["b_iri"], federation["d_iri"]
+    assert federate(host, "build", "--tag", "v0.2.0", "--release-base", "https://github.com/acme/d/releases/tag", "--no-attestation").rc == 0
+    previous = tmp_path / "previous"
+    shutil.copytree(host / "snapshot", previous)
+    zipped = tmp_path / "workspace-v0.2.0.zip"
+    workspace_zip(previous, zipped)
+    federation["b_zip"].unlink()
+    empty = ["--cache", str(tmp_path / "empty-cache")]
+    r = federate(host, "build", "--no-attestation", *empty)
+    assert r.rc == 1 and "b.zip: no such file" in r.out and "keeps" not in r.out, r.out
+    snap = host / "snapshot"
+    for given in (previous, zipped):
+        r = federate(host, "build", "--tag", "v0.3.0", "--no-attestation", *empty, "--previous", str(given))
+        assert r.rc == 0 and "b: held at its last good state" in r.out, (given, r.out)
+        lock = yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))
+        entry = next(m for m in lock["members"] if m["slug"] == "b")
+        assert entry["version"] == "v1.0.0" and "b.zip: no such file" in entry["held"], entry
+        assert {"from": a_iri, "to": b_iri, "slot": "relatedTo", "count": 1} in lock["links"]
+        registry = {e["base_iri"]: e for e in yaml.safe_load((snap / "lokf-registry.yaml").read_text(encoding="utf-8"))["repos"]}
+        assert registry[b_iri]["status"] == "last-good" and registry[a_iri].get("status", "ok") == "ok"
+        index = (snap / "index.md").read_text(encoding="utf-8")
+        assert "## Held at its last good state" in index and "- b bundle at v1.0.0: " in index, index
+    r = federate(host, "diff", str(previous), "snapshot", stdout_only=True)
+    assert r.rc == 0 and "- **b bundle** is held at its last good state, v1.0.0: " in r.out, r.out
+    b2 = make_bundle(tmp_path / "b2", b_iri, "B", {"glossary/other.md": {"type": "GlossaryTerm", "title": "Other", "description": "Another term, revised.", "resource": "https://example.test/b"}})
+    b2_zip = tmp_path / "b2.zip"
+    rewrite(host, "b", member("b", b_iri, b2_zip, zip_bundle(b2, b2_zip), d_iri + "domains/federation", version="v2.0.0"))
+    b2_zip.unlink()
+    r = federate(host, "build", "--no-attestation", *empty, "--previous", str(previous))
+    assert r.rc == 0, r.out
+    entry = next(m for m in yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))["members"] if m["slug"] == "b")
+    assert entry["version"] == "v1.0.0" and entry["held"].startswith("its concept names v2.0.0, which could not be fetched: "), entry
+    r = federate(host, "build", "--verify-only", "--no-attestation", *empty, "--previous", str(previous))
+    assert r.rc == 0 and "b: held at its last good state" in r.out and "nothing written (--verify-only)" in r.out, r.out
+    other = tmp_path / "other"
+    shutil.copytree(previous, other)
+    lock_file = other / "workspace.lock.yaml"
+    lock_file.write_text(lock_file.read_text(encoding="utf-8").replace(f"domain_base_iri: {d_iri}", "domain_base_iri: https://other.example/federation/"), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation", *empty, "--previous", str(other))
+    assert r.rc == 1 and "not a workspace of the domain under" in r.out and "b2.zip: no such file" in r.out, r.out
 
 
 @pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate"])
@@ -382,6 +528,14 @@ def test_a_bundle_two_domains_name_at_one_release_joins_once(federation, tmp_pat
     write(host / ".lokf" / "knowledge" / "members" / "t.md", frontmatter(**member("t", t_iri, t_zip, t_sha, top)) + "\n# Overview\n\nT.\n")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0 and "named by a second domain, not followed again" in r.out, r.out
+    snapshot_before = (host / "snapshot" / "graph.nq").read_bytes()
+    t_bad, t_bad_sha = domain_zip(tmp_path, "t", t_iri, {"c": {**member("c", c_iri, c_zip, c_sha, t_iri + "domains/t"), "sensitivity": "secret"}})
+    write(host / ".lokf" / "knowledge" / "members" / "t.md", frontmatter(**member("t", t_iri, t_bad, t_bad_sha, top)) + "\n# Overview\n\nT.\n")
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 1 and "c: sensitivity must be public, internal or confidential, not 'secret'" in r.out, "the second domain's word is checked too: " + r.out
+    assert (host / "snapshot" / "graph.nq").read_bytes() == snapshot_before
+    t_zip, t_sha = domain_zip(tmp_path, "t", t_iri, {"c": member("c", c_iri, c_zip, c_sha, t_iri + "domains/t")})
+    write(host / ".lokf" / "knowledge" / "members" / "t.md", frontmatter(**member("t", t_iri, t_zip, t_sha, top)) + "\n# Overview\n\nT.\n")
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
     entries = [m for m in lock["members"] if m["base_iri"] == c_iri]
     assert len(entries) == 1 and entries[0]["member_of"] == [s_iri + "domains/s", t_iri + "domains/t"] and entries[0]["kind"] == "bundle"
@@ -744,7 +898,7 @@ def test_a_member_that_waits_in_a_member_domain_joins_as_that_domain_built_it(fe
     r = federate(sub, "build", "--no-attestation")
     assert r.rc == 0 and "members/c: v2.0.0 waits for a person's confirmation; built at v1.0.0" in r.out, r.out
     s_lock = yaml.safe_load((sub / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
-    assert s_lock["knowledge_federate_lock"] == "3" and s_lock["members"][0]["concepts"] == [s_iri + "members/c"], "the lock names the member concept"
+    assert s_lock["knowledge_federate_lock"] == "4" and s_lock["members"][0]["concepts"] == [s_iri + "members/c"], "the lock names the member concept"
     s_zip = tmp_path / "s.zip"
     s_sha = zip_bundle(sub / ".lokf" / "knowledge", s_zip)
 
@@ -841,14 +995,15 @@ import asyncio, json, sys
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 project, script, snapshot, calls = sys.argv[1:5]
-errpath = sys.argv[5] if len(sys.argv) > 5 else None
+errpath = sys.argv[5] if len(sys.argv) > 5 and sys.argv[5] else None
+extra = json.loads(sys.argv[6]) if len(sys.argv) > 6 else []
 
 def text(result):
     return "\\n".join(c.text for c in result.content if getattr(c, "type", "") == "text")
 
 async def main():
     out = {"calls": [], "logs": []}
-    params = StdioServerParameters(command="uv", args=["run", "--project", project, script, "mcp", "--snapshot", snapshot])
+    params = StdioServerParameters(command="uv", args=["run", "--project", project, script, "mcp", "--snapshot", snapshot, *extra])
     errlog = open(errpath, "w") if errpath else sys.stderr
     read = 0
     async with stdio_client(params, errlog=errlog) as (r, w):
@@ -942,6 +1097,188 @@ def test_mcp_loads_a_graph_when_a_walk_first_reaches_it(federation, tmp_path):
     assert int(lazy["calls"][3]["rows"][0]["n"]) == len(nq.decode("utf-8").splitlines())
 
 
+def mcp_answers(tmp_path: Path, snapshot, calls: list, name: str, *server_args: str) -> dict:
+    """The MCP client's answers to these calls, with the server's log of each, the server run with any further arguments."""
+    client = write(tmp_path / "client.py", MCP_CLIENT)
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-I", client, REPO / ".lokf", SCRIPT, snapshot, json.dumps(calls),
+             tmp_path / f"{name}.log", json.dumps(list(server_args))], cwd=tmp_path, stdout_only=True)
+    assert r.rc == 0, r.out
+    return json.loads(r.out)
+
+
+def same_answers(answers: list[dict]) -> list[dict]:
+    """Answers with their triples in one order, since a store gives them in the order it loaded them."""
+    return [{**a, "triples": sorted(a["triples"], key=json.dumps)} if "triples" in a else a for a in answers]
+
+
+def test_mcp_loads_the_graphs_that_share_an_iri_no_bundle_owns_and_no_more(federation, tmp_path):
+    """a's and b's terms are each defined by one outside resource, which no bundle owns.
+
+    The lock lists it under `shares` in a's graph and in b's. A walk from
+    a's term that steps to it loads the graphs that share it, and not the
+    domain's, which holds no such IRI; a walk that starts at it loads every
+    graph, since only a graph that shares an IRI lists it. Each answer is
+    the one a workspace loaded whole gives.
+    """
+    host, a_iri, b_iri, d_iri = federation["host"], federation["a_iri"], federation["b_iri"], federation["d_iri"]
+    spec, top = "https://standards.example/spec", d_iri + "domains/federation"
+    a2 = make_bundle(tmp_path / "a2", a_iri, "A", {"glossary/term.md": {"type": "GlossaryTerm", "title": "Term", "description": "A term.", "resource": "https://example.test/a",
+                                                                         "relatedTo": [b_iri + "glossary/other"], "definedBy": [spec]}})
+    b2 = make_bundle(tmp_path / "b2", b_iri, "B", {"glossary/other.md": {"type": "GlossaryTerm", "title": "Other", "description": "Another term.", "resource": "https://example.test/b", "definedBy": [spec]}})
+    for slug, k, iri in (("a", a2, a_iri), ("b", b2, b_iri)):
+        zipped = tmp_path / f"{slug}2.zip"
+        rewrite(host, slug, member(slug, iri, zipped, zip_bundle(k, zipped), top))
+    snap_iri = "https://d.example/snapshots/v0.2.0"
+    assert federate(host, "build", "--snapshot-iri", snap_iri, "--no-attestation").rc == 0
+    snap = host / "snapshot"
+    lock = yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    shares = {g["graph"]: g["shares"] for g in lock["graphs"]}
+    assert shares == {a_iri: [spec], b_iri: [spec], d_iri: [], snap_iri: []}, shares
+    a_term = a_iri + "glossary/term"
+    calls = [("neighbors", {"iri": a_term, "depth": 2}), ("neighbors", {"iri": spec, "depth": 1})]
+    lazy = mcp_answers(tmp_path, snap, calls, "lazy")
+    loaded = [sorted(re.findall(r"loaded <([^>]+)>", log)) for log in lazy["logs"]]
+    assert loaded == [sorted([a_iri, b_iri, snap_iri]), [d_iri]], loaded
+    assert any(t["graph"] == b_iri and t["subject"] == b_iri + "glossary/other" for t in lazy["calls"][0]["triples"]), "b's term, which shares the IRI, is in the walk"
+    whole = tmp_path / "whole"
+    shutil.copytree(snap, whole)
+    (whole / "workspace.lock.yaml").write_text(yaml.safe_dump({k: v for k, v in lock.items() if k != "graphs"}, sort_keys=False), encoding="utf-8")
+    assert same_answers(lazy["calls"]) == same_answers(mcp_answers(tmp_path, whole, calls, "whole")["calls"])
+
+
+# A static server for a workspace folder that answers a range request with
+# 206 and the bytes asked for, as GitHub Pages does, and logs each request.
+RANGE_SERVER = """\
+import http.server, pathlib, re, sys
+root, portfile, logfile = sys.argv[1:4]
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, directory=root, **kw)
+    def log_message(self, fmt, *args):
+        with open(logfile, "a", encoding="utf-8") as log:
+            log.write(f"{self.command} {self.path} {self.headers.get('Range') or '-'}\\n")
+    def do_GET(self):
+        wanted = re.fullmatch(r"bytes=(\\d+)-(\\d+)", self.headers.get("Range") or "")
+        path = pathlib.Path(self.translate_path(self.path))
+        if wanted and path.is_file():
+            data = path.read_bytes()
+            start, end = int(wanted.group(1)), min(int(wanted.group(2)), len(data) - 1)
+            self.send_response(206)
+            self.send_header("Content-Range", f"bytes {start}-{end}/{len(data)}")
+            self.send_header("Content-Length", str(end - start + 1))
+            self.end_headers()
+            self.wfile.write(data[start:end + 1])
+            return
+        super().do_GET()
+server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+pathlib.Path(portfile).write_text(str(server.server_address[1]), encoding="utf-8")
+server.serve_forever()
+"""
+
+
+@pytest.fixture
+def served_workspace(federation, tmp_path):
+    """The federation's workspace, built, and served over HTTP from its folder by RANGE_SERVER: its address and its request log."""
+    import subprocess
+    import time
+
+    host = federation["host"]
+    assert federate(host, "build", "--snapshot-iri", "https://d.example/snapshots/v0.2.0", "--no-attestation").rc == 0
+    script, port, log = write(tmp_path / "server.py", RANGE_SERVER), tmp_path / "port", tmp_path / "requests.log"
+    proc = subprocess.Popen(["python3", "-I", str(script), str(host / "snapshot"), str(port), str(log)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        for _ in range(100):
+            if port.is_file() and port.read_text(encoding="utf-8"):
+                break
+            time.sleep(0.1)
+        yield {"url": f"http://127.0.0.1:{port.read_text(encoding='utf-8')}/", "log": log, "snapshot": host / "snapshot"}
+    finally:
+        proc.terminate()
+        proc.wait(timeout=10)
+
+
+def test_the_readers_read_a_workspace_from_its_zip_or_the_site_that_serves_it(federation, served_workspace, tmp_path):
+    """The MCP server reads the workspace as a site serves it, and as a workspace-<tag>.zip, as it reads the folder.
+
+    Over HTTP it reads the lock, the registry and the index first, then each
+    graph by a range request when a walk reaches it, and a document when one
+    is asked for; it fetches graph.nq whole for no walk. `query` takes a
+    stored query by name from the served workspace, and `diff` reads the
+    served lock.
+    """
+    host, a_iri, b_iri = federation["host"], federation["a_iri"], federation["b_iri"]
+    url, snap = served_workspace["url"], served_workspace["snapshot"]
+    b_other = b_iri + "glossary/other"
+    calls = [("resolve_iri", {"iri": b_other}), ("neighbors", {"iri": b_other, "depth": 1}), ("read_document", {"iri": b_other}),
+             ("federated_sparql", {"query": "links.rq"})]
+    local = mcp_answers(tmp_path, snap, calls, "local")
+    served = mcp_answers(tmp_path, url, calls, "served")
+    zipped = tmp_path / "workspace-v0.2.0.zip"
+    workspace_zip(snap, zipped)
+    in_zip = mcp_answers(tmp_path, zipped, calls, "zip")
+    assert same_answers(served["calls"]) == same_answers(local["calls"]) == same_answers(in_zip["calls"])
+    assert served["calls"][2]["read_from"] == "workspace" and served["calls"][2]["markdown"].startswith("---")
+    requests = served_workspace["log"].read_text(encoding="utf-8").splitlines()
+    walk = requests[:next(i for i, line in enumerate(requests) if "/queries/links.rq" in line)]
+    assert any(line.startswith("GET /graph.nq bytes=") for line in walk), requests
+    assert not any(line == "GET /graph.nq -" for line in walk), "a walk reads the graphs it reaches by range, never graph.nq whole"
+    r = federate(host, "query", "links.rq", "--snapshot", url)
+    assert r.rc == 0 and f"{a_iri}\t{b_iri}\thttp://purl.org/dc/terms/relation\t1" in r.out, r.out
+    r = federate(host, "diff", url, "snapshot", stdout_only=True)
+    assert r.rc == 0 and "No member joined, moved or left since the workspace of https://d.example/snapshots/v0.2.0." in r.out, r.out
+
+
+def test_a_reader_given_members_reads_those_bundles_alone(federation, tmp_path):
+    """`--member a` is a reader of a's graph alone: per-query permission as a store grants it, graph by graph.
+
+    Its instructions name a alone, b's IRIs read as ones no member owns, a
+    walk never loads b's graph, and SPARQL counts a's quads; `query` takes
+    the same scope, and a slug the workspace lacks stops the reader.
+    """
+    host, a_iri, b_iri = federation["host"], federation["a_iri"], federation["b_iri"]
+    assert federate(host, "build", "--no-attestation").rc == 0
+    snap = host / "snapshot"
+    lock = yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    a_quads = next(g["quads"] for g in lock["graphs"] if g["graph"] == a_iri)
+    a_term, b_other = a_iri + "glossary/term", b_iri + "glossary/other"
+    count = "SELECT (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }"
+    calls = [("resolve_iri", {"iri": b_other}), ("read_document", {"iri": b_other}), ("neighbors", {"iri": a_term, "depth": 2}),
+             ("federated_sparql", {"query": count}), ("read_document", {})]
+    out = mcp_answers(tmp_path, snap, calls, "scoped", "--member", "a")
+    assert "as this reader reads it" in out["instructions"] and "a bundle" in out["instructions"] and "b bundle" not in out["instructions"]
+    resolved, doc, near, counted, index = out["calls"]
+    assert resolved["owner"] is None and doc["error"] == f"no bundle this reader reads owns {b_other}"
+    assert {t["graph"] for t in near["triples"]} == {a_iri} and not any(f"loaded <{b_iri}>" in log for log in out["logs"])
+    assert int(counted["rows"][0]["n"]) == a_quads and "b bundle" not in index["markdown"]
+    r = federate(host, "query", count, "--member", "a")
+    assert r.rc == 0 and r.out.splitlines()[-1] == str(a_quads), r.out
+    r = federate(host, "query", count, "--member", "nobody")
+    assert r.rc == 1 and "--member nobody: no bundle of this workspace has that slug or base_iri; those here are a, b, domain" in r.out, r.out
+
+
+def test_a_member_s_text_licence_and_an_explicit_id_outside_its_namespace_read_as_released(federation, tmp_path):
+    """b's index gives its licence as `MIT`, and one of its concepts has an `id` outside b's namespace.
+
+    The lock graph keeps the licence as text, since no store takes it as an
+    IRI, and the MCP server reads the concept by that id, which the
+    registry routes to b through its id_index.
+    """
+    host, b_iri = federation["host"], federation["b_iri"]
+    legacy = "https://legacy.example/b/old-term"
+    b2 = make_bundle(tmp_path / "b2", b_iri, "B", {"glossary/other.md": {"type": "GlossaryTerm", "title": "Other", "description": "Another term.", "resource": "https://example.test/b"},
+                                                   "glossary/legacy.md": {"type": "GlossaryTerm", "id": legacy, "title": "Legacy", "description": "An older term.", "resource": "https://example.test/b"}})
+    index = b2 / "index.md"
+    index.write_text(index.read_text(encoding="utf-8").replace("license: https://creativecommons.org/licenses/by/4.0/", "license: MIT"), encoding="utf-8")
+    zipped = tmp_path / "b2.zip"
+    rewrite(host, "b", member("b", b_iri, zipped, zip_bundle(b2, zipped), federation["d_iri"] + "domains/federation"))
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    assert f'<{b_iri}> <http://purl.org/dc/terms/license> "MIT"' in (host / "snapshot" / "graph.nq").read_text(encoding="utf-8")
+    resolved, doc = mcp_answers(tmp_path, host / "snapshot", [("resolve_iri", {"iri": legacy}), ("read_document", {"iri": legacy})], "legacy")["calls"]
+    assert resolved["owner"]["slug"] == "b" and resolved["concept"]["title"] == "Legacy", resolved
+    assert doc["path"] == "bundles/b/.lokf/knowledge/glossary/legacy.md" and "title: Legacy" in doc["markdown"], doc
+
+
 # ---------------------------------------------------------------------------
 # members against GitHub releases, served from fixture files
 # ---------------------------------------------------------------------------
@@ -949,18 +1286,29 @@ def test_mcp_loads_a_graph_when_a_walk_first_reaches_it(federation, tmp_path):
 # JSON map names, and runs its main(); any other address fails as an
 # unreachable one would.
 RUNNER = """\
-import importlib.util, json, pathlib, sys, urllib.error
+import importlib.util, json, os, pathlib, sys, urllib.error
 script, served, *argv = sys.argv[1:]
 spec = importlib.util.spec_from_file_location("knowledge_federate", script)
 federate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(federate)
 urls = json.loads(pathlib.Path(served).read_text(encoding="utf-8"))
-def http_get(url, accept=None, timeout=60):
+def http_fetch(url, accept=None, headers=None, max_bytes=None, timeout=60):
     if url not in urls:
         raise urllib.error.URLError(url + " is not served by this test")
-    return pathlib.Path(urls[url]).read_bytes()
-federate.http_get = http_get
-sys.exit(federate.main(argv))
+    entry = urls[url]
+    path, sent = (entry, {}) if isinstance(entry, str) else (entry["path"], entry.get("headers") or {})
+    if sent.get("etag") and (headers or {}).get("If-None-Match") == sent["etag"]:
+        log.append(url + " 304")
+        return 304, dict(sent), b""
+    log.append(url + " 200")
+    return 200, dict(sent), pathlib.Path(path).read_bytes()
+log = []
+federate.http_fetch = http_fetch
+try:
+    sys.exit(federate.main(argv))
+finally:
+    if os.environ.get("RUNNER_LOG"):
+        pathlib.Path(os.environ["RUNNER_LOG"]).write_text("\\n".join(log) + "\\n", encoding="utf-8")
 """
 
 # Answers `gh pr list` with the pull requests FAKE_GH_PRS names, and fails
@@ -1259,3 +1607,52 @@ def test_members_hands_the_job_token_to_gh_alone(released):
     assert r.rc != 0 and "gh has no credential" in r.out and "AGENT_API_KEY_ENV to KNOWLEDGE_FEDERATE_TOKEN" in r.out, r.out
     r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token"})
     assert r.rc == 0 and "attested by acme/a" in r.out, r.out
+
+
+def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path):
+    """s releases no zip, and its site now serves another concepts.jsonld than the one its concept names.
+
+    The patch sets the new checksum and, as the version, the day the file
+    last changed, and moves that day in the text. The script keeps the
+    validators it was sent, so a run that finds the file unchanged costs a
+    304 and no download. `members --add <address>` drafts a member concept
+    from a site's concepts.jsonld, with its title and description from the
+    index.md the site serves beside it.
+    """
+    d_iri, s_iri, t_iri = "https://d.example/federation/", "https://s.example/knowledge/", "https://t.example/ktl/knowledge/"
+    top, url = d_iri + "domains/federation", s_iri + "concepts.jsonld"
+    s = make_bundle(tmp_path / "s", s_iri, "S", {"glossary/s.md": {"type": "GlossaryTerm", "title": "S term", "description": "S's term.", "resource": "https://example.test/s"}})
+    s_site = export_bundle(s, tmp_path / "s-site")
+    concept = {"type": "MemberBundle", "title": "s bundle", "description": "The s bundle its site served on 2026-10-01.", "resource": s_iri, "base_iri": s_iri,
+               "version": "2026-10-01", "distribution": [{"name": "concepts.jsonld", "access_url": url, "media_type": "application/ld+json", "checksum": "sha256:" + "0" * 64}],
+               "isPartOf": [top], "generated": {"by": "process:knowledge-federate", "at": "2026-10-16T10:00:00Z"}, "verified": [{"by": "human:noel", "at": "2026-10-16T12:00:00Z"}]}
+    host = make_domain(tmp_path / "host", d_iri, {"s": concept})
+    t = make_bundle(tmp_path / "t", t_iri, "T", {"glossary/t.md": {"type": "GlossaryTerm", "title": "T term", "description": "T's term.", "resource": "https://example.test/t"}},
+                    description="The T bundle")
+    t_site = export_bundle(t, tmp_path / "t-site")
+    served = {url: {"path": str(s_site / "concepts.jsonld"), "headers": {"etag": '"s-1"', "last-modified": "Tue, 20 Oct 2026 09:00:00 GMT"}},
+              t_iri + "concepts.jsonld": str(t_site / "concepts.jsonld"), t_iri + "index.md": str(t / "index.md")}
+    write(tmp_path / "served.json", json.dumps(served))
+    write(tmp_path / "runner.py", RUNNER)
+    write(tmp_path / "bin" / "gh", FAKE_GH).chmod(0o755)
+    released = {"host": host, "tmp": tmp_path}
+    r = members_run(released, "--dry-run", stdout_only=True)
+    assert r.rc == 0, r.out
+    patch = yaml.safe_load(r.out)
+    ops = ops_for(patch, "s")
+    sha = hashlib.sha256((s_site / "concepts.jsonld").read_bytes()).hexdigest()
+    assert ops["patch"]["set"]["version"] == "2026-10-20" and ops["patch"]["set"]["distribution"][0]["checksum"] == f"sha256:{sha}", ops
+    assert ops["patch"]["set"]["description"] == "The s bundle its site served on 2026-10-20."
+    assert f"{url} serves another file since the confirmed 2026-10-01, last changed on 2026-10-20; does this member move to it?" in ops["question"]["text"]
+    assert any("served file read and written out, 1 concept(s)" in line for line in patch["handoff"]), patch["handoff"]
+    log = tmp_path / "requests.log"
+    r = members_run(released, "--dry-run", stdout_only=True, env={"RUNNER_LOG": str(log)})
+    assert r.rc == 0 and yaml.safe_load(r.out) == patch and f"{url} 304" in log.read_text(encoding="utf-8"), "an unchanged file costs a 304"
+    r = members_run(released, "--dry-run", "--add", t_iri, stdout_only=True)
+    assert r.rc == 0, r.out
+    created = ops_for(yaml.safe_load(r.out), "ktl")["create"]
+    fm = created["frontmatter"]
+    assert fm["type"] == "MemberBundle" and fm["base_iri"] == t_iri and fm["title"] == "T" and fm["version"] == today_utc(), fm
+    assert fm["distribution"] == [{"name": "concepts.jsonld", "access_url": t_iri + "concepts.jsonld", "media_type": "application/ld+json",
+                                   "checksum": "sha256:" + hashlib.sha256((t_site / "concepts.jsonld").read_bytes()).hexdigest()}]
+    assert 'The description in its own index reads "The T bundle". Its site served `concepts.jsonld`' in created["body"] and "which releases no zip" in created["body"]

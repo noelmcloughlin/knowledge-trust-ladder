@@ -116,14 +116,21 @@ const { workspace } = Astro.props;
       if ((a.dataset.view === "workspace") === workspace) a.setAttribute("aria-current", "page");
     });
     const src = workspace ? workspaceSrc! : root.dataset.graphSrc!;
+    const stage = root.querySelector(".lokf-graph__canvas") as HTMLElement;
     fetch(src)
       .then((r) => {
+        // The federation workflow adds the workspace after the site is
+        // built, and leaves out one that holds internal metadata.
+        if (workspace && r.status === 404) {
+          stage.textContent =
+            "This site serves no workspace yet. The federation workflow adds it when the domain releases, unless it holds internal metadata, which stays on the release.";
+          return null;
+        }
         if (!r.ok) throw new Error(`${src} answered ${r.status} ${r.statusText}`);
         return r.json();
       })
-      .then((graph: Elements) => render(root, graph, workspace))
+      .then((graph: Elements | null) => graph && render(root, graph, workspace))
       .catch((e) => {
-        const stage = root.querySelector(".lokf-graph__canvas") as HTMLElement;
         stage.textContent = "Could not load graph: " + e;
       });
   }

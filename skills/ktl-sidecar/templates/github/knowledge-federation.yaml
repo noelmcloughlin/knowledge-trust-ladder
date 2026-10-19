@@ -103,6 +103,30 @@ jobs:
         run: uv sync --locked
         working-directory: .lokf
 
+      # The workspace the next release build will hold a member at, when
+      # that member's confirmed release cannot be fetched: the newest one
+      # released. Without it, such a member fails the check.
+      - name: Take the newest released workspace
+        id: previous
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          tag="$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | select(.draft | not) | select(any(.assets[]; .name | startswith("workspace-") and endswith(".zip"))) | .tag_name' | sed -n 1p)"
+          if [ -z "$tag" ]; then
+            echo "No release carries a workspace yet."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/previous"
+          if gh release download "$tag" --pattern 'workspace-*.zip' --pattern 'workspace-*.zip.sha256' --dir "$RUNNER_TEMP/previous" \
+            && (cd "$RUNNER_TEMP/previous" && sha256sum -c -- *.sha256); then
+            echo "zip=$(ls "$RUNNER_TEMP"/previous/workspace-*.zip)" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Could not take the workspace of $tag, so a member whose release cannot be fetched fails the check."
+          fi
+
       # The token is read-only and reaches gh alone: the attestation store,
       # and the repository's visibility, which decides whether an internal
       # member may join. The zips come from the public release URLs the
@@ -110,9 +134,10 @@ jobs:
       - name: Fetch and verify every member's zip, and gate as the next release would
         env:
           GH_TOKEN: ${{ github.token }}
+          PREVIOUS: ${{ steps.previous.outputs.zip }}
         run: |
           visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
-          uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "$visibility"
+          uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "$visibility" ${PREVIOUS:+--previous "$PREVIOUS"}
 
   build:
     name: Build the workspace and the site (read-only)
@@ -189,19 +214,54 @@ jobs:
           npm ci
           npm run build
 
-      # The token is read-only and reaches one command, gh attestation
-      # verify. Everything the build downloads is a file a member concept
-      # names, checked against the checksum a person confirmed, or a zip
-      # that a member domain's released lock names, checked against the
-      # checksum in that lock.
+      # The workspace the release before this one carries: the build holds
+      # a member at its last good state from it when that member's
+      # confirmed release cannot be fetched, and the notes compare with it.
+      # A workspace that cannot be taken leaves both out and never stops
+      # the release.
+      - name: Take the previous release's workspace
+        id: previous
+        if: steps.what.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          CREATED="$(gh release view "$TAG" --json createdAt --jq .createdAt)" || { echo "::warning::Could not read when $TAG was released, so no previous workspace is taken."; exit 0; }
+          export CREATED
+          earlier="$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | select(.draft | not) | select(.tag_name != env.TAG) | select(.created_at < env.CREATED) | select(any(.assets[]; .name | startswith("workspace-") and endswith(".zip"))) | .tag_name')" \
+            || { echo "::warning::Could not list the releases before $TAG, so no previous workspace is taken."; exit 0; }
+          prev="$(printf '%s\n' "$earlier" | sed -n 1p)"
+          if [ -z "$prev" ]; then
+            echo "No release before $TAG carries a workspace."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/previous"
+          if gh release download "$prev" --pattern 'workspace-*.zip' --pattern 'workspace-*.zip.sha256' --dir "$RUNNER_TEMP/previous" \
+            && (cd "$RUNNER_TEMP/previous" && sha256sum -c -- *.sha256); then
+            echo "zip=$(ls "$RUNNER_TEMP"/previous/workspace-*.zip)" >> "$GITHUB_OUTPUT"
+            echo "tag=$prev" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Could not take the workspace of $prev, so its notes say nothing of the workspace and no member is held at its last good state."
+          fi
+
+      # The token is read-only and reaches gh alone: the attestation store,
+      # and the repository's visibility. Everything the build downloads is a
+      # file a member concept names, checked against the checksum a person
+      # confirmed, or a zip that a member domain's released lock names,
+      # checked against the checksum in that lock. The build checks the
+      # previous workspace's attestation before it holds a member from it.
       - name: Build the workspace from the tag
         if: steps.what.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          PREVIOUS: ${{ steps.previous.outputs.zip }}
         run: |
           visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
           uv run --project .lokf .lokf/scripts/knowledge-federate.py build \
-            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "$visibility"
+            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "$visibility" \
+            ${PREVIOUS:+--previous "$PREVIOUS"}
 
       # The same bundle of files always gives the same bytes: names sorted,
       # modes fixed, every file at the time of the tag's commit, no uid, gid
@@ -222,33 +282,20 @@ jobs:
           echo "Packed $(unzip -Z1 "$RUNNER_TEMP/release/$asset" | wc -l) files into $asset"
 
       # What changed since the workspace the release before this one carries,
-      # for its notes: members that joined, moved or left, and the links
-      # between them. A comparison that cannot be made leaves the notes as
-      # they are and never stops the release.
+      # for its notes: members that joined, moved, left or are held, and the
+      # links between them. A comparison that cannot be made leaves the
+      # notes as they are and never stops the release.
       - name: Compare with the previous release's workspace
-        if: steps.what.outputs.release == 'true'
+        if: steps.what.outputs.release == 'true' && steps.previous.outputs.zip != ''
         env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
+          PREVIOUS: ${{ steps.previous.outputs.zip }}
+          PREV_TAG: ${{ steps.previous.outputs.tag }}
         run: |
           set -uo pipefail
-          CREATED="$(gh release view "$TAG" --json createdAt --jq .createdAt)" || { echo "::warning::Could not read when $TAG was released, so its notes say nothing of the workspace."; exit 0; }
-          export CREATED
-          earlier="$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
-            --jq '.[] | select(.draft | not) | select(.tag_name != env.TAG) | select(.created_at < env.CREATED) | select(any(.assets[]; .name | startswith("workspace-") and endswith(".zip"))) | .tag_name')" \
-            || { echo "::warning::Could not list the releases before $TAG, so its notes say nothing of the workspace."; exit 0; }
-          prev="$(printf '%s\n' "$earlier" | sed -n 1p)"
-          if [ -z "$prev" ]; then
-            echo "No release before $TAG carries a workspace, so its notes say nothing of one."
-            exit 0
-          fi
-          mkdir -p "$RUNNER_TEMP/previous"
-          if gh release download "$prev" --pattern 'workspace-*.zip' --pattern 'workspace-*.zip.sha256' --dir "$RUNNER_TEMP/previous" \
-            && (cd "$RUNNER_TEMP/previous" && sha256sum -c -- *.sha256) \
-            && uv run --project .lokf .lokf/scripts/knowledge-federate.py diff "$RUNNER_TEMP"/previous/workspace-*.zip snapshot --out "$RUNNER_TEMP/release/workspace-changes.md"; then
+          if uv run --project .lokf .lokf/scripts/knowledge-federate.py diff "$PREVIOUS" snapshot --out "$RUNNER_TEMP/release/workspace-changes.md"; then
             cat "$RUNNER_TEMP/release/workspace-changes.md"
           else
-            echo "::warning::Could not compare with the workspace of $prev, so the notes of $TAG say nothing of the workspace."
+            echo "::warning::Could not compare with the workspace of $PREV_TAG, so the notes of $TAG say nothing of the workspace."
             rm -f "$RUNNER_TEMP/release/workspace-changes.md"
           fi
 
@@ -290,9 +337,12 @@ jobs:
           fi
           echo "dist=$dist" >> "$GITHUB_ENV"
 
+      # The workspace keeps each release under bundles/<slug>/.lokf/, the
+      # folder its index links to, which the action leaves out unless told.
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: ${{ env.dist }}
+          include-hidden-files: true
 
       - name: Upload the workspace zip
         if: steps.what.outputs.release == 'true'
