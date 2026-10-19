@@ -22,7 +22,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:02:36Z"
   - by: process:ktl-librarian
-    at: "2026-10-18T10:22:18Z"
+    at: "2026-10-19T20:01:11Z"
 status: draft
 ---
 

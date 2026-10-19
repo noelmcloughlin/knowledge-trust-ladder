@@ -14,7 +14,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/librarian
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T10:22:18Z"
+  at: "2026-10-19T20:01:11Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -25,4 +25,4 @@ verified:
 
 ktl-librarian starts every refresh from the **work list**, which `bash .lokf/scripts/knowledge-report.sh worklist` prints. A program has already found which concepts' sources moved since they were derived or last checked, which notes a person left, and which of those a later confirmation answered. It counts the reader entries that wait and names the concepts readers keep asking about, in paths and dates and nobody's words.
 
-A source moved when its last commit comes after the commit that recorded the [librarian](librarian.md)'s stamp or the latest check, so history orders the two. The same script computes each trust label from the frontmatter on every read, for the docent's answers, the curator's report and the librarian's work list (`docs/for-the-curious.md`).
+A source moved when its last commit comes after the commit that recorded the [librarian](librarian.md)'s stamp or the latest check, so history orders the two. `docs/for-the-curious.md` says a run is bounded: the librarian starts from the work list, which lists the concepts whose sources moved since their last stamp, ordered by history and never by a clock. The same script computes each trust label from the frontmatter on every read, for the docent's answers, the curator's report and the librarian's work list (`docs/for-the-curious.md`).

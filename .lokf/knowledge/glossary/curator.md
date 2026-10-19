@@ -20,7 +20,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/health-line
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-19T20:01:11Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -33,4 +33,4 @@ The architecture page names a role after the museum profession: the **curator** 
 
 The curator is always a person. The `ktl-curator` skill is that person's assistant: it shows what needs a look, puts the source next to the claim, and records the verdict (confirm, correct, retire, send back) in the bundle's own frontmatter. It records judgments a person made, never facts it derived, and it runs a little, regularly ([ktl-curator skill](../playbooks/ktl-curator-skill.md)). In Obsidian, the KTL Curator plugin is the same assistant. The skill and the plugin that carry the name reach no verdict of their own.
 
-A verdict is a `verified` event in that person's name, or a change of `status` or review date, with one line in `log.md`. A concept a person checked against its source reads *confirmed by a person*, the top [trust label](trust-label.md), and the [health line](health-line.md) counts how many do.
+A verdict is a `verified` event in that person's name, or a change of `status` or review date, with one line in `log.md`. On a send-back of text that person wrote, `ktl-curator` asks whether to release it to the librarian. On a yes it sets `generated.by` to `process:ktl-curator`, which needs an authenticated id. A concept a person checked against its source reads *confirmed by a person*, the top [trust label](trust-label.md), and the [health line](health-line.md) counts how many do.

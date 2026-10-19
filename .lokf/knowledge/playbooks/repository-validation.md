@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T12:30:15Z"
+  at: "2026-10-19T20:01:11Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -83,13 +83,13 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 
 # The behavioural tests
 
-The `test-scripts` job sets up `uv`, installs `just` (`rust-just==1.47.0`) and Node.js 22, and runs `uv run --no-project --with-requirements tests/requirements.txt pytest`. `tests/requirements.txt` pins `pytest==9.1.1`, `pyyaml==6.0.3` and `pypdf==6.19.0`, and `pytest.ini` points pytest at `tests/`. `publish.yml` runs the same command before a release.
+The `test-scripts` job runs on two runners side by side, one per part of a matrix: `tests/test_federation.py` alone, and the rest of `tests/`. The federation builds are CPU-bound, so the second runner adds CPUs of its own. Each part sets up `uv`, installs `just` (`rust-just==1.47.0`) and Node.js 22, and runs `uv run --no-project --with-requirements tests/requirements.txt pytest -n auto` on its own paths, with one worker per CPU. `tests/requirements.txt` pins `pytest==9.1.1`, `pytest-xdist==3.8.0`, `pyyaml==6.0.3` and `pypdf==6.19.0`, and `pytest.ini` points pytest at `tests/`. `publish.yml` runs `uv run --no-project --with-requirements tests/requirements.txt pytest` before a release, in one process over all of `tests/`.
 
 The tests run the scripts under `skills/ktl-sidecar/templates/`, `skills/ktl-prose/scripts/` and `skills/ktl-website/` on throwaway bundles and repositories. Each module says which contract check it carries:
 
 - `test_apply.py`: the pen, `knowledge-apply.sh` (check 19).
 - `test_conventions.py`: `knowledge-conventions.sh` on a bundle that breaks each rule, and on a bundle that keeps every rule with CRLF line endings, through a link and without uv (check 11's synthetic bundle, and check 11c).
-- `test_federation.py`: `knowledge-federate.py` on two fixture bundles and a domain that names them (0.44.0). It checks the lock, one named graph per bundle, and the same bytes from two builds. It also covers the checks that stop a build and keep the previous snapshot, and the gate on a target no member owns. It covers a member that is itself a domain, the diamond rule, the depth a build follows, a schema released beside a member's zip, the `mcp` server, `--verify-only` and `members`. Since 0.50.1 it also covers which members join: a member is built as a person last confirmed it, a member no person confirmed waits outside the workspace, and a retired member or `Domain` concept is left out. Without uv every test in it skips.
+- `test_federation.py`: `knowledge-federate.py` on two fixture bundles and a domain that names them (0.44.0). It checks the lock, one named graph per bundle, and the same bytes from two builds. It also covers the checks that stop a build and keep the previous snapshot, and the gate on a target no member owns. It covers a member that is itself a domain, the diamond rule, the depth a build follows, a schema released beside a member's zip, the `mcp` server, `--verify-only` and `members`. Since 0.50.1 it also covers which members join: a member is built as a person last confirmed it, a member no person confirmed waits outside the workspace, and a retired member or `Domain` concept is left out. Since 0.53.0 the build runs lokf in its own process, and a test checks that a failing lokf command fails there as a separate process would and that the build's working directory is put back. The module makes the sidecar's environment once, under a lock all parallel workers share, before any test runs uv in it. Without uv every test in it skips.
 - `test_feedback.py`: `knowledge-feedback.sh` (check 12a).
 - `test_ingest.py`: `knowledge-ingest.py` on throwaway repositories against servers of its own: each kind of source, the manifest's refusals, `--patch`, `--status`, and the shell half's refusal to run under `sh`.
 - `test_layouts.py`: the librarian wrapper, the librarian, registrar and release workflows, and the `just lokf-link` recipe, with and without the doorway link (formerly `scripts/test-sidecar-layouts.sh`).

@@ -6,26 +6,26 @@ description: "What Knowledge Trust Ladder (KTL) took from the SkillWiki paper (H
 genre: explanation
 resource: https://arxiv.org/abs/2606.16523
 sources:
-- resource: https://arxiv.org/abs/2606.16523
-- resource: https://github.com/Huangdingcheng/SkillWiki/tree/050d540215374f73cf295c410a8beb4415f7c128
-- resource: CHANGELOG.md
+  - resource: https://arxiv.org/abs/2606.16523
+  - resource: https://github.com/Huangdingcheng/SkillWiki/tree/050d540215374f73cf295c410a8beb4415f7c128
+  - resource: CHANGELOG.md
 about:
-- https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
+  - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
-- https://w3id.org/ktl/knowledge/explanation/wikiskill
-- https://w3id.org/ktl/knowledge/explanation/skills-repositories
-- https://w3id.org/ktl/knowledge/glossary/trust-label
-- https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+  - https://w3id.org/ktl/knowledge/explanation/wikiskill
+  - https://w3id.org/ktl/knowledge/explanation/skills-repositories
+  - https://w3id.org/ktl/knowledge/glossary/trust-label
+  - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: human:noelmcloughlin
   at: "2026-10-19T12:28:10Z"
 verified:
-- by: human:noelmcloughlin
-  at: "2026-10-13T00:59:27Z"
-- by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
-- by: human:noelmcloughlin
-  at: "2026-10-19T12:28:10Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-13T00:59:27Z"
+  - by: process:ktl-librarian
+    at: "2026-10-19T20:01:11Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-19T12:28:10Z"
 stale_after: 2027-04-19
 ---
 

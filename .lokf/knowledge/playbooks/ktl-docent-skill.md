@@ -19,7 +19,7 @@ references:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-18T17:45:03Z"
+    at: "2026-10-19T20:01:11Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:17:30Z"
 sources:

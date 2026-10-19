@@ -16,6 +16,8 @@ sources:
   - resource: .github/workflows/validate.yml
   - resource: docs/architecture.md
   - resource: CHANGELOG.md
+  - resource: skills/ktl-website/scripts/website-preflight.sh
+  - resource: skills/ktl-website/templates/website/site.config.mjs
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
   - https://w3id.org/ktl/knowledge/references/lokf-toolkit
@@ -27,7 +29,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T10:22:18Z"
+  at: "2026-10-19T20:01:11Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -59,6 +61,8 @@ Since 0.43.0 (2026-10-15, `CHANGELOG.md`) the site also serves the whole bundle 
 Since 0.45.0 (2026-10-16, `CHANGELOG.md`) a concept's card shows its open questions beside its trust label. The label of a confirmed concept that a question put back to draft reads *reopened*, not *still a draft*.
 
 Since 0.48.0 (2026-10-17, `CHANGELOG.md`) a figure on a wide screen stays in the text column, and a click opens it at full size. The change is in the template's `theme.css` and `Mermaid.astro`, so a host gets it with its next website repair.
+
+Since 0.53.0 (2026-10-19, `CHANGELOG.md`) a domain host's graph page draws the workspace. Its *The workspace* view draws every bundle the domain names, each in a colour and shape of its own, with the links between bundles dashed, from the `graph.json` the federation workflow serves. `WORKSPACE` in `site.config.mjs` turns the view on or off, and `"auto"` turns it on when the repository has `.github/workflows/knowledge-federation.yaml` (`references/customising.md`).
 
 A release page links the repository, the docs and the bundle at the release's tag, which the `RELEASE_TAG` option names. A page and its retelling offer each other as reading levels: a `PAGES` entry's `retells` names the page it retells, and a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names.
 
