@@ -2,6 +2,14 @@
 
 ## 2026-10-19
 
+* **Changed**: What KTL took from WikiSkill now cites the paper, `CHANGELOG.md` and the skill files where each change lives, instead of `docs/wikiskill.md`, so the concept no longer rests on that page.
+* **Rewrite**: The curated context layer now summarises the three pages instead of mirroring each section, since 0.53.0 moved the whole federation design to `docs/federation.md` and kept the technology survey to what KTL needs.
+* **Changed**: Context layer says a domain's owner confirms each bundle the domain admits, as `docs/context-layer.md` puts it since 0.53.0.
+* **Changed**: LOKF toolkit says what `convert`, `export`, `serve`, `mcp`, `tables` and `registry` write or serve, as `docs/context-layer-technology.md` and `docs/federation.md` list them, and cites the federation page, where the registry commands moved in 0.53.0.
+* **Changed**: Curating a domain bundle follows the curator's page after 0.53.0: the `sensitivity` settings, a member a site serves by its `concepts.jsonld`, and a gate that also refuses a link to no concept of a member. It now says when the build holds a member at its last good state, and how a reader loads the workspace lazily or for some members alone. A member that waits in a member domain joins at the release that domain's own build took.
+* **Changed**: Knowledge sources keeps its rows and standing notes, and drops the account of each past run, which git keeps. The rows follow 0.53.0's federation page, the two paper concepts and `.lokf/.gitignore`, the sixteenth template this repository keeps a copy of, and each exclusion now gives its reason in its own row. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Repository validation names the five repositories whose links check 9 records, and says check 9a skips a domain host's ignored `snapshot/` since 0.53.0.
+* **Changed**: Contributing no longer names only the two Obsidian plugins among the repositories that link into this one, since `CONTRIBUTING.md` names none and check 9 now records five.
 * **Curation**: human:noelmcloughlin corrected 1: What KTL took from SkillWiki now cites the paper, arXiv:2606.16523, its code at `050d540` and `CHANGELOG.md` instead of `docs/skillwiki.md`, and is due for review on 2027-04-19.
 
 ## 2026-10-18
