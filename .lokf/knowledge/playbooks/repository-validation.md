@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T17:45:03Z"
+  at: "2026-10-19T12:30:15Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -51,7 +51,7 @@ The `validate-skills` job sets up `uv`, runs `scripts/validate-repository.sh`, c
 - Check 7c: Rule 3's list equals the classes `lokf vocab --all --json` declares as types, at the lokf floor the templates pin, with the toolkit run through `uvx`. Without uv the check fails.
 - Check 7d: the relation fields `knowledge-report.sh` counts reliance from equal the slots the schema ranges over `Concept`, apart from the structural `concepts` and `target`.
 - Check 8: the layout tests are in `tests/test_layouts.py`.
-- Check 9: the paths the sibling repositories deep-link into still exist, and so does each heading such a link names. A link counts whether it names a file on GitHub or the site's persistent address: `w3id.org/ktl/docs/<page>/` names `docs/<page>.md`, and `w3id.org/ktl/knowledge/<id>` names `.lokf/knowledge/<id>.md`. Check 9a runs only when the siblings are cloned beside this repository, and confirms that the recorded list of those paths and headings is complete. Since 0.45.0 it skips the copies a sibling's website build writes under `website/`, which git ignores there.
+- Check 9: the paths the sibling repositories deep-link into still exist, and so does each heading such a link names. A link counts whether it names a file on GitHub or the site's persistent address: `w3id.org/ktl/docs/<page>/` names `docs/<page>.md`, and `w3id.org/ktl/knowledge/<id>` names `.lokf/knowledge/<id>.md`. The siblings are the two Obsidian plugins, ktl-federation, ai-linkmo and gist. Check 9a runs only when they are cloned beside this repository, and confirms that the recorded list of those paths and headings is complete. It skips what git ignores in a sibling: since 0.45.0 the copies its website build writes under `website/`, and since 0.53.0 a domain host's `snapshot/`, which holds a copy of this bundle.
 - Check 10: `CONTRIBUTING.md` stays within 1000 words and `SECURITY.md` within 900.
 - Check 10a: each `SKILL.md` stays within its own word budget: 2700 words for ktl-curator, 2200 for ktl-docent, 4000 for ktl-librarian, 2350 for ktl-prose, 3600 for ktl-sidecar and 2000 for ktl-website. A skill with no budget fails. Since 0.45.0 a table's pipes and its separator row are not counted as words.
 - Check 11: the sidecar's `knowledge-sync.manifest`, which since 0.47.0 lists the copies, is checked first. Every template it names must exist, and every `always` and `needs` line must name a template it lists. Every file under the templates' `github/`, `scripts/` and `m365/` folders must be in it, so a new workflow or script cannot be released without a sync for it. Then each copy the manifest names must be byte-identical to its template, and `.lokf/justfile` to its template below the first line, which names the host.

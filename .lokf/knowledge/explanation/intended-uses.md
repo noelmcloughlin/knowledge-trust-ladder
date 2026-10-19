@@ -21,7 +21,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/context-layer
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-18T10:22:18Z"
+    at: "2026-10-19T12:30:15Z"
 ---
 
 # Overview
