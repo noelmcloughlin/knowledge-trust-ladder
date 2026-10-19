@@ -2,6 +2,7 @@
 
 ## 2026-10-19
 
+* **Changed**: the three lines figure is named with its dark counterpart once; `.assets/` holds `ktl-three-lines.svg` and `ktl-three-lines-dark.svg`. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the Reopened label and the Still-a-draft rule now name themselves, from `skills/ktl-curator/references/trust-fields.md`, answering the open question a person left on 2026-10-18. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Resolved**: the Reopened label is now named, from `skills/ktl-curator/references/trust-fields.md`.
 * **Changed**: the fifth-role sentence now names `docs/architecture.md`, the diagram note says dark rather than dimmed, and what remains to do now names fetching a federation member from a private repository, matching `docs/three-lines.md` since its latest commit. Edited since a person confirmed it; the label says so until the curator looks again.
