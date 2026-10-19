@@ -141,6 +141,23 @@ needs_uv = pytest.mark.skipif(not have("uv"), reason="uv is not installed - the 
 pytestmark = needs_uv
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _sidecar_environment(tmp_path_factory):
+    """The sidecar's environment, made once before any test runs uv in it.
+
+    Parallel workers each start with `uv run --project .lokf`. In a fresh
+    checkout the first ones would all create .lokf/.venv at once, and one finds
+    it half made. So each worker takes a lock in the temporary folder all of
+    them share, and the first to hold it makes the environment.
+    """
+    import fcntl
+
+    lock = tmp_path_factory.getbasetemp().parent / "sidecar-environment.lock"
+    with open(lock, "w") as held:
+        fcntl.flock(held, fcntl.LOCK_EX)
+        run(["uv", "run", "--quiet", "--project", REPO / ".lokf", "python", "-c", "pass"])
+
+
 def federate(host: Path, *args: str, **kw):
     return run(["uv", "run", "--project", REPO / ".lokf", SCRIPT, "--root", host, *args], cwd=host, **kw)
 
