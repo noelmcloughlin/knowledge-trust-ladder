@@ -57,14 +57,20 @@
 # built, a member whose confirmed bytes cannot be fetched (its address does
 # not answer, or serves other bytes now) is held as that workspace holds it,
 # as section 11.5 has an unreachable member degrade to its last good state;
-# the lock, the registry's status and the index say so. A file that fails a
-# check once fetched still stops the build. `--verify-only` runs every step
-# up to the gate in a temporary folder and writes nothing; a pull request
-# that changes the domain bundle runs it, with `--previous` too, so it holds
-# a member as the next release build would. It takes this domain's member
-# concepts as they stand, since those are what the pull request asks a
-# person to confirm. It takes a member domain's members as the build does,
-# since that domain's own person confirms them. `members` is the domain's
+# the lock, the registry's status and the index say so. A release zip that
+# serves other bytes is held only at the release a build fetched before,
+# since its checksum is then wrong or its asset replaced. A member that
+# workspace did not hold has no last good state, so it is left out and
+# named until a build can fetch it. A file that fails a check once fetched
+# still stops the build. `--verify-only` runs every step up to the gate in
+# a temporary folder and writes nothing; a pull request that changes the
+# domain bundle runs it, with `--previous` too, so it holds a member as the
+# next release build would. It takes this domain's member concepts as they
+# stand, since those are what the pull request asks a person to confirm,
+# and it never holds or leaves out a member the pull request proposes, one
+# no person has confirmed as it stands. It takes a member domain's members
+# as the build does, since that domain's own person confirms them.
+# `members` is the domain's
 # librarian: a script, not a model, that lists each member's releases, picks
 # the newest that carries a bundle zip, verifies it, and writes the change
 # as operations in .lokf/patch.yaml for the pen (knowledge-apply.sh) to
@@ -196,8 +202,14 @@ class Unobtainable(Failed):
     Only this failure lets the build hold a member at its last good state.
     A file that breaks a rule once fetched (a cached copy that no longer
     matches, a zip that reaches outside its root, a failed attestation)
-    stops the build as any other finding does.
+    stops the build as any other finding does. `other_bytes` is true when
+    the address answered with bytes other than the ones a person confirmed,
+    and false when it did not answer at all.
     """
+
+    def __init__(self, msg: str, other_bytes: bool = False):
+        super().__init__(msg)
+        self.other_bytes = other_bytes
 
 
 def say(msg: str) -> None:
@@ -278,8 +290,15 @@ class Member:
         self.served = self.zip_name.endswith(".jsonld") or str(dist.get("media_type") or "") == SERVED_TYPE
         # Why the build holds the member as the previous workspace held it,
         # when the bytes a person confirmed could not be fetched; empty
-        # otherwise.
+        # otherwise. `named_sha256` keeps the digest the concept names when
+        # the member is held at an earlier release.
         self.held = ""
+        self.named_sha256 = ""
+        # True when a check takes the member as a pull request proposes it,
+        # which no person has confirmed yet. Such a member is never held or
+        # left out, since the check is there to fetch what a person is asked
+        # to confirm.
+        self.proposed = False
         checksum = str(dist.get("checksum") or "")
         if not checksum.startswith("sha256:") or len(checksum) != 71:
             raise Failed(f"{concept_path}: distribution.checksum must be sha256:<64 hex digits>")
@@ -706,7 +725,7 @@ def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) ->
         got = digest(tmp)
         if got != member.sha256:
             tmp.unlink(missing_ok=True)
-            raise Unobtainable(f"{member.slug}: {member.zip_url} has sha256 {got}, not the {member.sha256} the member concept names")
+            raise Unobtainable(f"{member.slug}: {member.zip_url} has sha256 {got}, not the {member.sha256} the member concept names", other_bytes=True)
         tmp.replace(cached)
     elif digest(cached) != member.sha256:
         cached.unlink()
@@ -821,8 +840,13 @@ def open_previous(where: str, domain_base: str, release_base: str, attest: bool,
     return source, lock
 
 
-def hold(member: Member, previous, into: pathlib.Path, why: str, waiting: list[dict]) -> Member | None:
-    """The member as the previous workspace held it, when the bytes a person confirmed cannot be fetched; None when that workspace holds no release of it.
+def previous_entry(lock: dict, base_iri: str) -> dict | None:
+    """The previous workspace's lock entry for a member, by its base_iri, or None when that workspace did not hold it."""
+    return next((m for m in lock.get("members") or [] if isinstance(m, dict) and m.get("base_iri") == base_iri and m.get("slug")), None)
+
+
+def hold(member: Member, source, entry: dict, into: pathlib.Path, why: str, waiting: list[dict]) -> Member | None:
+    """The member as the previous workspace held it, from that workspace's lock entry, when the bytes a person confirmed cannot be fetched; None when that workspace lacks its files.
 
     The previous workspace holds only releases a person confirmed, each as
     its build fetched and checked them. When it holds this release, the
@@ -832,20 +856,14 @@ def hold(member: Member, previous, into: pathlib.Path, why: str, waiting: list[d
     its folder, so its digest is checked again here; a zip member's unpacked
     folder is taken whole, as the attested workspace carries it.
     """
-    source, lock = previous
-    entry = next((m for m in lock.get("members") or [] if isinstance(m, dict) and m.get("base_iri") == member.base_iri), None)
-    slug = str((entry or {}).get("slug") or "")
-    if entry is None or not slug:
-        return None
     if entry.get("sha256") == member.sha256:
         held = member
     else:
         held = Member(member.concept_path, entry_data(entry, member.title), member.parents[0], member.tier, member.ancestors)
         held.parents, held.concepts, held.slug, held.sensitivity = member.parents, member.concepts, member.slug, member.sensitivity
-        held.waits = member.waits
+        held.waits, held.named_sha256 = member.waits, member.sha256
     reason = why[len(member.slug) + 2:] if why.startswith(member.slug + ": ") else why
-    held.held = reason if held is member else f"its concept names {member.version}, which could not be fetched: {reason}"
-    folder = f"bundles/{slug}/.lokf/"
+    folder = f"bundles/{entry['slug']}/.lokf/"
     if held.served:
         kept = source.read(folder + held.zip_name)
         if kept is None or hashlib.sha256(kept).hexdigest() != held.sha256:
@@ -859,9 +877,10 @@ def hold(member: Member, previous, into: pathlib.Path, why: str, waiting: list[d
         if folder + "knowledge/index.md" not in files:
             return None
         for rel in files:
-            target = into / ".lokf" / rel[len(folder):]
+            target = into / ".lokf" / Snapshot.inside(rel[len(folder):])
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(source.read(rel) or b"")
+    held.held = reason if held is member else f"its concept names {member.version}, which could not be fetched: {reason}"
     for w in waiting:  # a member that waits for a person is built at the held release now
         if w.get("base_iri") == held.base_iri and w.get("built"):
             w["built"] = held.version
@@ -884,7 +903,7 @@ def obtain_file(url: str, sha256: str, cache: pathlib.Path, what: str) -> pathli
     got = digest(tmp)
     if got != sha256:
         tmp.unlink(missing_ok=True)
-        raise Unobtainable(f"{what}: {url} has sha256 {got}, not the {sha256} the member concept names")
+        raise Unobtainable(f"{what}: {url} has sha256 {got}, not the {sha256} the member concept names", other_bytes=True)
     tmp.replace(cached)
     return cached
 
@@ -1382,6 +1401,7 @@ def _build(args, note_new) -> int:
     # request the checkout is the branch merged into its base, whose
     # first-parent history is the base's, as the release build's will be.
     waiting: list[dict] = []
+    unfetched: list[dict] = []  # members no previous workspace held, whose file cannot be fetched
     if args.verify_only:
         chosen = [(c.path, c.data, "", bundle.iri(c)) for c in member_concepts]
         say("the next release build would take this domain's members as follows:")
@@ -1394,6 +1414,7 @@ def _build(args, note_new) -> int:
     for path, data, moved, iri in chosen:
         first = Member(path, data, domain_iri, 1, (domain_base,), iri)
         first.waits = moved
+        first.proposed = args.verify_only and not confirmed_by_person(data)
         queue.append((first, 1))
     seen: dict[str, Member] = {}  # base_iri -> the member it joined as
     slugs = {"domain"}  # the folder names under bundles/ and export/; "domain" is this bundle's own
@@ -1406,8 +1427,10 @@ def _build(args, note_new) -> int:
             # The diamond rule: two domains that name one bundle at one
             # release name the same bytes, so it joins once, under both; at
             # two releases the build stops, because a named graph holds one.
+            # A member held at an earlier release still stands for the
+            # release its concept names, which this naming may name too.
             earlier = seen[member.base_iri]
-            if earlier.sha256 != member.sha256:
+            if member.sha256 not in (earlier.sha256, earlier.named_sha256):
                 raise Failed(f"{member.slug}: base_iri {member.base_iri} is already in the federation as {earlier.slug} at {earlier.version}, named by <{earlier.parents[0]}>, and this concept names it at {member.version} under <{member.parents[0]}>; a bundle joins once, at one release, so two domains that name it must pin the same zip{waits_note(earlier) or waits_note(member)}")
             earlier.parents.extend(p for p in member.parents if p not in earlier.parents)
             earlier.concepts.extend(c for c in member.concepts if c not in earlier.concepts)
@@ -1433,10 +1456,40 @@ def _build(args, note_new) -> int:
             zip_path, verdict = obtain(member, cache, args.max_bytes, not args.no_attestation)
         except Unobtainable as e:
             # Section 11.5 of the LOKF specification has an unreachable
-            # member degrade to its last good state rather than fail.
-            held = hold(member, previous, bundle_dir, str(e), waiting) if previous else None
+            # member degrade to its last good state rather than fail. A check
+            # holds no member the pull request proposes, since it is there to
+            # fetch what a person is asked to confirm. A release zip that
+            # answers with other bytes means a wrong checksum or a replaced
+            # asset, so it is held only at the release a build fetched
+            # before. A served file changes whenever its site does, so it may
+            # be held at an earlier file too.
+            if member.proposed:
+                raise Failed(f"{e}; a check holds no member the pull request proposes{waits_note(member)}") from e
+            if previous is None:
+                raise Failed(f"{e}{waits_note(member)}") from e
+            entry = previous_entry(previous[1], member.base_iri)
+            earlier_ok = member.served or not e.other_bytes
+            if entry is None and earlier_ok:
+                # A member the previous workspace did not hold has no last
+                # good state. It is left out, and named, until a build can
+                # fetch it.
+                why = str(e)[len(member.slug) + 2:] if str(e).startswith(member.slug + ": ") else str(e)
+                unfetched.append({"concept": member.concepts[0] if member.concepts else "", "base_iri": member.base_iri,
+                                  "version": member.version, "reason": why})
+                for w in waiting:
+                    if w.get("base_iri") == member.base_iri:
+                        w["built"] = None
+                del seen[member.base_iri]
+                warn(f"{member.slug}: left out, because {why}, and the previous workspace holds no release of it")
+                continue
+            if entry is None:
+                raise Failed(f"{e}{waits_note(member)}; the previous workspace holds no release of it") from e
+            if not earlier_ok and entry.get("sha256") != member.sha256:
+                raise Failed(f"{e}{waits_note(member)}; the previous workspace holds it only at {entry.get('version')}, "
+                             "and a release zip that answers with other bytes is held only at the release a build fetched before") from e
+            held = hold(member, previous[0], entry, bundle_dir, str(e), waiting)
             if held is None:
-                raise Failed(f"{e}{waits_note(member)}" + ("; the previous workspace holds no release of it" if previous else "")) from e
+                raise Failed(f"{e}{waits_note(member)}; the previous workspace lacks the files of {entry.get('version')}") from e
             member, zip_path, verdict = held, None, f"held at its last good state, as the previous workspace holds it ({held.held})"
             seen[member.base_iri] = member
             warn(f"{member.slug}: {verdict}")
@@ -1491,6 +1544,8 @@ def _build(args, note_new) -> int:
     }
     if waiting:
         lock["waiting"] = sorted(waiting, key=lambda w: w["concept"])
+    if unfetched:
+        lock["unfetched"] = sorted(unfetched, key=lambda u: u["base_iri"])
     # The lock is written after the gate, which adds the links between members.
 
     # 2. Register and export each bundle, the domain's own first.
@@ -1596,8 +1651,10 @@ def _build(args, note_new) -> int:
     # unowned all the same, as it was before that member was proposed; the
     # report names the member, so the fix reads as a confirmation. A build
     # never registers such a member. A check registers it as it stands, so
-    # here its namespace counts as unowned by name.
-    pending = [w for w in waiting if w["built"] is None and w.get("base_iri")]
+    # here its namespace counts as unowned by name. So does the namespace of
+    # a member left out because its file could not be fetched.
+    pending = [{**w, "kind": "waits", "why": "waits for a person's confirmation"} for w in waiting if w["built"] is None and w.get("base_iri")]
+    pending += [{**u, "concept": u["concept"] or u["base_iri"], "kind": "unfetched", "why": "could not be fetched"} for u in unfetched]
     left_out = {w["base_iri"] for w in pending}
     predicates = gate_predicates()
     unowned: list[tuple[str, str, str, str]] = []
@@ -1611,13 +1668,20 @@ def _build(args, note_new) -> int:
                 if owner is None or owner.base_iri in left_out:
                     unowned.append((base_iri, q.subject.value, predicates[q.predicate.value], target))
 
-    def waits_for(target: str) -> str:
+    def left_out_for(target: str) -> dict | None:
         hits = [w for w in pending if target.startswith(w["base_iri"])]
-        return max(hits, key=lambda w: len(w["base_iri"]))["concept"] if hits else ""
+        return max(hits, key=lambda w: len(w["base_iri"])) if hits else None
 
-    held = [(g, s, p, o, waits_for(o)) for g, s, p, o in unowned]
-    named = sorted({w for *_, w in held if w})
-    in_waiting = sum(1 for *_, w in held if w)
+    held = [(g, s, p, o, left_out_for(o)) for g, s, p, o in unowned]
+    # For each reason a member is left out, how many targets lie in its namespace, and the clause that says when it joins.
+    outside = []
+    for kind, joins in (("waits", "which joins once a person confirms it"), ("unfetched", "which joins once a build can fetch it")):
+        hits = [w for *_, w in held if w and w["kind"] == kind]
+        if hits:
+            outside.append((len(hits), hits[0]["why"], sorted({w["concept"] for w in hits}), joins))
+
+    def beside(w: dict | None) -> str:
+        return f", in the namespace of <{w['concept']}>, which {w['why']}" if w else ""
     # A target in a member's namespace must name a concept of that member:
     # the rule --check-refs applies inside one bundle, here across bundles.
     # A link between two bundles is a target that does. Neither counts a
@@ -1627,9 +1691,9 @@ def _build(args, note_new) -> int:
     dangling = [x for x in dangling if x["from"] not in left_out and x["to"] not in left_out]
     lock["links"] = link_counts(links)
     report = ["# Gate report", "", f"Policy: `unowned_targets: {policy}`. {len(unowned)} typed-relation target(s) lie in no member's namespace"
-              + (f", {in_waiting} of them in the namespace of a member that waits for a person's confirmation" if in_waiting else "") + ".", ""]
+              + "".join(f", {n} of them in the namespace of a member that {why}" for n, why, _, _ in outside) + ".", ""]
     for g, s, p, o, w in held:
-        report.append(f"- in `{g}`: `{s}` `{p}` `{o}`" + (f", in the namespace of <{w}>, which waits for a person's confirmation" if w else ""))
+        report.append(f"- in `{g}`: `{s}` `{p}` `{o}`" + beside(w))
     if dangling:
         report += ["", f"{len(dangling)} typed-relation target(s) lie in a member's namespace and name no concept of that member, which the same policy governs.", ""]
         report += [f"- in `{d['from']}`: `{d['source']}` `{d['slot']}` `{d['target']}`, in the namespace of `{d['to']}`, which holds no such concept" for d in dangling]
@@ -1640,7 +1704,7 @@ def _build(args, note_new) -> int:
     # 5. The index, llms.txt, registry.jsonld and the stored queries, which a check does not write.
     if not args.verify_only:
         write_index(new, domain_title, domain_iri, snapshot_iri, policy, records, unowned, public, waiting, lock["links"], len(dangling), lock["sensitivity"],
-                    [m for m, *_ in resolved if m.held])
+                    [m for m, *_ in resolved if m.held], unfetched)
         (new / "registry.jsonld").write_text(json.dumps(registry_jsonld(registry, records), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         (new / "graph.json").write_text(json.dumps(union_elements(loaded, records, links, vocabulary()), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         (new / "queries").mkdir()
@@ -1653,14 +1717,14 @@ def _build(args, note_new) -> int:
     if (unowned or dangling) and policy == "fail":
         shutil.rmtree(new, ignore_errors=True)
         for g, s, p, o, w in held:
-            warn(f"unowned target in {g}: {s} {p} {o}" + (f", in the namespace of <{w}>, which waits for a person's confirmation" if w else ""))
+            warn(f"unowned target in {g}: {s} {p} {o}" + beside(w))
         for d in dangling:
             warn(f"no such concept in {d['to']}: {d['source']} {d['slot']} {d['target']}")
         found = [f"{len(unowned)} typed-relation target(s) lie in no member's namespace"] if unowned else []
         if dangling:
             found.append(f"{len(dangling)}" + ("" if unowned else " typed-relation target(s)") + " name no concept of the member whose namespace holds them")
         raise Failed((f"{found[0]}, {found[1]}, and" if len(found) == 2 else f"{found[0]} and") + " the domain's policy is fail"
-                     + (f"; {in_waiting} of them lie in the namespace of {', '.join(f'<{w}>' for w in named)}, which joins once a person confirms it" if in_waiting else "")
+                     + "".join(f"; {n} of them lie in the namespace of {', '.join(f'<{c}>' for c in concepts)}, {joins}" for n, _, concepts, joins in outside)
                      + ("; nothing written (--verify-only)" if args.verify_only else "; the previous snapshot stays"))
     if args.verify_only:
         for g, s, p, o, w in held:
@@ -1672,7 +1736,7 @@ def _build(args, note_new) -> int:
         shutil.rmtree(new, ignore_errors=True)
         say(f"checked {len(resolved)} member zip(s) and gated {len(records)} bundles as the next release build would take them: "
             f"{len(unowned)} typed-relation target(s) in no member's namespace"
-            + (f", {in_waiting} of them in the namespace of a member that waits for a person's confirmation" if in_waiting else "")
+            + "".join(f", {n} of them in the namespace of a member that {why}" for n, why, _, _ in outside)
             + (f", {len(dangling)} naming no concept of the member whose namespace holds them" if dangling else "")
             + (f", {len(links)} link(s) between members" if links else "") + "; nothing written (--verify-only)")
         return 0
@@ -1704,7 +1768,8 @@ def zip_path_size(resolved, member) -> int | None:
 
 def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_iri: str, policy: str,
                 records: list[dict], unowned, public: str, waiting: list[dict] | None = None,
-                links: list[dict] | None = None, dangling: int = 0, sensitivity: str = "public", held: list | None = None) -> None:
+                links: list[dict] | None = None, dangling: int = 0, sensitivity: str = "public", held: list | None = None,
+                unfetched: list[dict] | None = None) -> None:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     lines = [f"# {domain_title}: the workspace", "",
              f"The graph built from the releases the domain <{domain_iri}> names, one named graph per bundle, named by that bundle's `base_iri`, with the lock as a graph of its own, <{snapshot_iri}>. Built on {today}; the members and their versions below are the lock's, 'Named by' is the bundle whose domain concept names each (two when two domains name one bundle at one release), and each health line is that member's own at the release named, computed when this was built. A trust label is never stored: `queries/labels.rq` computes each from the events at the moment it runs.",
@@ -1724,7 +1789,9 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
     for r in records:
         if r["slug"] == "domain":
             continue
-        licence = f"<{r['license']}>" if r.get("license") else ""
+        # A licence given as an address is linked; one given as text, such as MIT, is written as it is.
+        licence = str(r.get("license") or "")
+        licence = f"<{licence}>" if licence.startswith(("http://", "https://")) else licence
         title = r["title"] + (" (a domain)" if r.get("kind") == "domain" else "")
         lines.append(f"| [{title}](bundles/{r['slug']}/.lokf/knowledge/index.md) | {r['version']} | `{r['base_iri']}` | {named_by(r)} | {licence} | {r['health']} |")
     dom = next((r for r in records if r["slug"] == "domain"), None)
@@ -1742,6 +1809,10 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
         lines += ["", "## Held at its last good state", "",
                   "A member whose confirmed release could not be fetched is built as the previous workspace held it, as section 11.5 of the LOKF specification has an unreachable member degrade to its last good state.", ""]
         lines += [f"- {m.title} at {m.version}: {m.held}." for m in sorted(held, key=lambda m: m.base_iri)]
+    if unfetched:
+        lines += ["", "## Left out until its file can be fetched", "",
+                  "A member the previous workspace did not hold has no last good state, so a release builds without it while its file cannot be fetched.", ""]
+        lines += [f"- <{u['concept'] or u['base_iri']}> at {u['version']}: {u['reason']}." for u in sorted(unfetched, key=lambda u: u["base_iri"])]
     if waiting:
         lines += ["", "## Waiting for a person", "",
                   "A member joins at a release only once a person confirms the member concept that names it. Until then the workspace keeps the release a person last confirmed, or leaves the member out when there is none.", ""]
@@ -1749,7 +1820,7 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
             kept = f"built at {w['built']}" if w.get("built") else "left out"
             lines.append(f"- <{w['concept']}>: {w['proposed'] or 'a release'} waits; {kept}.")
     lines += ["", "## Files", "",
-              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace and the member concepts that name it. An entry also names the schema released with its bundle when there is one, and for a member domain the workspace it released when its concept names one. Under `links`, the lock counts the links between members; under `graphs`, it says where each graph lies in `graph.nq`, with its digest, and which other bundles' namespaces it names, so the MCP server loads a graph only when a walk reaches it; under `waiting`, it lists each member concept that waits for a person's confirmation, and under a member's `held`, why it is held at its last good state.",
+              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace and the member concepts that name it. An entry also names the schema released with its bundle when there is one, and for a member domain the workspace it released when its concept names one. Under `links`, the lock counts the links between members; under `graphs`, it says where each graph lies in `graph.nq`, with its digest, and which other bundles' namespaces it names, so the MCP server loads a graph only when a walk reaches it; under `waiting`, it lists each member concept that waits for a person's confirmation; under a member's `held`, why it is held at its last good state; and under `unfetched`, each member left out because its file could not be fetched.",
               "- `lokf-registry.yaml` and `registry.jsonld`: the registry the LOKF specification's section 11 describes, which routes any IRI to its owner by the longest `base_iri` prefix.",
               "- `graph.nq`: every bundle's triples in its own named graph, plus the lock graph, as N-Quads, graph by graph in IRI order and each graph's lines sorted.",
               "- `graph.json`: every bundle's concepts and typed relations as cytoscape.js elements, each node naming its bundle, with the links between bundles marked `cross`.",
@@ -2398,6 +2469,9 @@ def lock_changes(old: dict, new: dict) -> list[str]:
     for iri in sorted(after, key=lambda i: name(after[i])):
         if after[iri].get("held"):
             out.append(f"- **{name(after[iri])}** is held at its last good state, {after[iri].get('version')}: {after[iri]['held']}.")
+    for u in new.get("unfetched") or []:
+        if isinstance(u, dict):
+            out.append(f"- <{u.get('concept') or u.get('base_iri')}> is left out at {u.get('version')}, because its file could not be fetched: {u.get('reason')}.")
     if "links" in new:
         titles = {**{i: name(m) for i, m in before.items()}, **{i: name(m) for i, m in after.items()}}
         counted = {}

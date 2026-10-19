@@ -466,6 +466,90 @@ def test_a_member_whose_release_cannot_be_fetched_is_held_at_its_last_good_state
     assert r.rc == 1 and "not a workspace of the domain under" in r.out and "b2.zip: no such file" in r.out, r.out
 
 
+def test_a_release_zip_with_other_bytes_is_held_only_at_the_release_a_build_fetched(federation, tmp_path):
+    """b's zip answers with other bytes: held when the previous workspace holds that very release, refused when it holds only an earlier one.
+
+    The second case is a wrong checksum or a replaced asset, so the check
+    and the build stop instead of building the earlier release unasked.
+    """
+    host, b_iri, d_iri = federation["host"], federation["b_iri"], federation["d_iri"]
+    assert federate(host, "build", "--tag", "v0.2.0", "--no-attestation").rc == 0
+    previous = tmp_path / "previous"
+    shutil.copytree(host / "snapshot", previous)
+    empty = ["--cache", str(tmp_path / "empty-cache")]
+    federation["b_zip"].write_bytes(b"other bytes at the same address")
+    r = federate(host, "build", "--no-attestation", *empty, "--previous", str(previous))
+    assert r.rc == 0 and "b: held at its last good state" in r.out, r.out
+    b2 = make_bundle(tmp_path / "b2", b_iri, "B", {"glossary/other.md": {"type": "GlossaryTerm", "title": "Other", "description": "Revised.", "resource": "https://example.test/b"}})
+    b2_zip = tmp_path / "b2.zip"
+    real = zip_bundle(b2, b2_zip)
+    typo = ("0" if real[0] != "0" else "1") + real[1:]
+    rewrite(host, "b", member("b", b_iri, b2_zip, typo, d_iri + "domains/federation", version="v2.0.0"))
+    for check in ([], ["--verify-only"]):
+        r = federate(host, "build", *check, "--no-attestation", *empty, "--previous", str(previous))
+        assert r.rc == 1 and "the previous workspace holds it only at v1.0.0" in r.out and "held at its last good state" not in r.out, (check, r.out)
+
+
+def test_a_check_holds_no_member_the_pull_request_proposes(federation, tmp_path):
+    """A pull request moves b to a release that cannot be fetched: the check fails, though the previous workspace holds b, since a person is asked to confirm that release."""
+    host, b_iri, d_iri = federation["host"], federation["b_iri"], federation["d_iri"]
+    assert federate(host, "build", "--tag", "v0.2.0", "--no-attestation").rc == 0
+    previous = tmp_path / "previous"
+    shutil.copytree(host / "snapshot", previous)
+    proposed = member("b", b_iri, tmp_path / "gone.zip", "a" * 64, d_iri + "domains/federation", version="v2.0.0")
+    proposed["generated"] = {"by": "process:knowledge-federate", "at": "2026-02-01T00:00:00Z"}
+    rewrite(host, "b", proposed)
+    r = federate(host, "build", "--verify-only", "--no-attestation", "--previous", str(previous))
+    assert r.rc == 1 and "gone.zip: no such file; a check holds no member the pull request proposes" in r.out, r.out
+
+
+def test_a_member_no_previous_workspace_held_is_left_out_until_it_can_be_fetched(federation, tmp_path):
+    """b joins after the release before, and its file cannot be fetched: there is no last good state, so the release builds without it and names it."""
+    a_iri, b_iri, d_iri = federation["a_iri"], federation["b_iri"], federation["d_iri"]
+    top = d_iri + "domains/federation"
+    host = make_domain(tmp_path / "h2", d_iri, {"a": member("a", a_iri, federation["a_zip"], federation["a_sha"], top)}, policy="report")
+    assert federate(host, "build", "--tag", "v0.2.0", "--no-attestation").rc == 0
+    previous = tmp_path / "previous"
+    shutil.copytree(host / "snapshot", previous)
+    rewrite(host, "b", member("b", b_iri, federation["b_zip"], federation["b_sha"], top))
+    federation["b_zip"].unlink()
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 1 and "b.zip: no such file" in r.out, "without a previous workspace nothing says b is new: " + r.out
+    r = federate(host, "build", "--no-attestation", "--previous", str(previous))
+    assert r.rc == 0 and "b: left out, because" in r.out, r.out
+    snap = host / "snapshot"
+    lock = yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert [u["base_iri"] for u in lock["unfetched"]] == [b_iri] and b_iri not in {m["base_iri"] for m in lock["members"]}, lock
+    assert "## Left out until its file can be fetched" in (snap / "index.md").read_text(encoding="utf-8")
+    assert f"in the namespace of <{d_iri}members/b>, which could not be fetched" in (snap / "gate-report.md").read_text(encoding="utf-8")
+    r = federate(host, "diff", str(previous), "snapshot", stdout_only=True)
+    assert r.rc == 0 and f"- <{d_iri}members/b> is left out at v1.0.0, because its file could not be fetched" in r.out, r.out
+
+
+def test_a_member_held_at_an_earlier_release_still_answers_a_second_domain_naming_its_new_one(federation, tmp_path):
+    """Sub-domains s and t both move c to a release that cannot be fetched: c is held once at the release before, named by both, as the diamond rule has it."""
+    host, top = federation["host"], federation["d_iri"] + "domains/federation"
+    c_iri, s_iri, t_iri = "https://c.example/knowledge/", "https://s.example/federation/", "https://t.example/federation/"
+    c = make_bundle(tmp_path / "c", c_iri, "C", {"glossary/third.md": {"type": "GlossaryTerm", "title": "Third", "description": "A third term.", "resource": "https://example.test/c"}})
+    c_zip = tmp_path / "c.zip"
+    c_sha = zip_bundle(c, c_zip)
+
+    def name_c(zip_path: Path, sha: str, version: str = "v1.0.0") -> None:
+        for slug, iri in (("s", s_iri), ("t", t_iri)):
+            d_zip, d_sha = domain_zip(tmp_path, slug, iri, {"c": member("c", c_iri, zip_path, sha, iri + f"domains/{slug}", version=version)})
+            write(host / ".lokf" / "knowledge" / "members" / f"{slug}.md", frontmatter(**member(slug, iri, d_zip, d_sha, top, kind="MemberDomain")) + f"\n# Overview\n\n{slug}.\n")
+
+    name_c(c_zip, c_sha)
+    assert federate(host, "build", "--no-attestation").rc == 0
+    previous = tmp_path / "previous"
+    shutil.copytree(host / "snapshot", previous)
+    name_c(tmp_path / "c2.zip", "b" * 64, version="v2.0.0")
+    r = federate(host, "build", "--no-attestation", "--previous", str(previous))
+    assert r.rc == 0 and "c: held at its last good state" in r.out and "named by a second domain, not followed again" in r.out, r.out
+    entry = next(m for m in yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))["members"] if m["base_iri"] == c_iri)
+    assert entry["version"] == "v1.0.0" and entry["member_of"] == [s_iri + "domains/s", t_iri + "domains/t"], entry
+
+
 @pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate"])
 def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_path, fault):
     host = federation["host"]
@@ -1274,6 +1358,7 @@ def test_a_member_s_text_licence_and_an_explicit_id_outside_its_namespace_read_a
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0, r.out
     assert f'<{b_iri}> <http://purl.org/dc/terms/license> "MIT"' in (host / "snapshot" / "graph.nq").read_text(encoding="utf-8")
+    assert f"| `{b_iri}` | D | MIT |" in (host / "snapshot" / "index.md").read_text(encoding="utf-8"), "a text licence is written as text, not as an address"
     resolved, doc = mcp_answers(tmp_path, host / "snapshot", [("resolve_iri", {"iri": legacy}), ("read_document", {"iri": legacy})], "legacy")["calls"]
     assert resolved["owner"]["slug"] == "b" and resolved["concept"]["title"] == "Legacy", resolved
     assert doc["path"] == "bundles/b/.lokf/knowledge/glossary/legacy.md" and "title: Legacy" in doc["markdown"], doc
