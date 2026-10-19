@@ -10,14 +10,25 @@
 #
 # Domain: a Dataset that is a dcat:Catalog of bundles. `unowned_targets`
 #   is the gate policy the federation build reads: `fail` stops the build
-#   on a typed relation whose target no member owns; `report` lists it.
+#   on a typed relation whose target no member owns, or whose target lies in
+#   a member's namespace and names no concept of it; `report` lists it.
 #   `max_depth` is how many tiers of members the build follows when a
 #   member is itself a domain, 3 unless set; the domain's own members are
-#   tier 1. The domain a build starts from is that build's top, and may be
-#   a member of another domain in turn.
+#   tier 1. `sensitivity` is the most sensitive member its workspace may
+#   hold, public or internal, public unless set: a person who confirms
+#   `internal` clears the workspace to aggregate internal bundles, as
+#   section 11.5 of the LOKF specification asks of a registry's owner. The
+#   domain a build starts from is that build's top, and may be a member of
+#   another domain in turn.
 # MemberBundle: a Dataset naming one released bundle: its `base_iri`
 #   (LOKF's own slot, which the registry routes by), the release `version`
-#   it pins, the `release` page, and its distribution.
+#   it pins, the `release` page, and its distribution. The first
+#   distribution is the release's zip, or, for a bundle that releases none,
+#   the concepts.jsonld its site serves (media type application/ld+json),
+#   which the build writes out as the bundle; either is pinned by its
+#   checksum. `sensitivity` says how sensitive the bundle's subject is,
+#   public unless set; the build writes it into the registry entry, the
+#   field section 11.5 names.
 # MemberDomain: a MemberBundle whose bundle is itself a domain, so a
 #   dcat:Catalog, as DCAT lists a catalogue inside a catalogue. The build
 #   follows its members into the same workspace, and a person's
@@ -26,9 +37,9 @@
 #   domain's released `workspace-<tag>.zip` with its checksum. For a member
 #   that waits in that domain, the build takes the release the lock inside
 #   that zip records.
-# ReleaseDistribution: LOKF's Distribution plus the `checksum` of the zip,
-#   where DCAT puts a digest, so a member may later publish a second
-#   distribution with a checksum of its own.
+# ReleaseDistribution: LOKF's Distribution plus the `checksum` of the file
+#   it names, where DCAT puts a digest, so each further distribution, a
+#   schema or a workspace, carries a checksum of its own.
 id: https://w3id.org/ktl/schema/domain
 name: domain
 imports:
@@ -46,10 +57,12 @@ classes:
   Domain:
     is_a: Dataset
     class_uri: dcat:Catalog
-    slots: [unowned_targets, max_depth]
+    slots: [unowned_targets, max_depth, sensitivity]
+    slot_usage:
+      sensitivity: {range: Clearance}
   MemberBundle:
     is_a: Dataset
-    slots: [base_iri, release]
+    slots: [base_iri, release, sensitivity]
     slot_usage:
       base_iri: {required: true}
       distribution: {range: ReleaseDistribution, required: true}
@@ -74,8 +87,20 @@ slots:
   max_depth:
     range: integer
     minimum_value: 1
+  sensitivity:
+    range: Sensitivity
 enums:
+  Clearance:
+    description: the most sensitive member a domain's workspace may hold; a confidential bundle joins none
+    permissible_values:
+      public: {description: the workspace holds public bundles alone; the default}
+      internal: {description: the workspace may hold internal bundles and is built in a private or internal repository}
+  Sensitivity:
+    permissible_values:
+      public: {description: anyone may read it; the default}
+      internal: {description: the organisation may read it; it joins a workspace the domain clears for internal and builds in a private or internal repository}
+      confidential: {description: it joins no workspace}
   UnownedTargetPolicy:
     permissible_values:
-      fail: {description: an unowned cross-bundle target fails the build}
-      report: {description: an unowned cross-bundle target is listed and the build goes on}
+      fail: {description: an unowned or dangling cross-bundle target fails the build}
+      report: {description: an unowned or dangling cross-bundle target is listed and the build goes on}

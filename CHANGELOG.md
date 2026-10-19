@@ -4,6 +4,38 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The workspace counts the links between its members.** The lock, the workspace index and `queries/links.rq` count the typed relations in one bundle whose target is a concept of another, by slot.
+- **The workspace carries `graph.json`**, every bundle's concepts and typed relations as cytoscape.js elements. Each node names its bundle, and the links between bundles are marked.
+- **The MCP server loads a member's graph when a walk first reaches it**, as section 11.4 of the LOKF specification has members load, and a SPARQL query loads them all. The lock's `graphs` (format 4) says where each graph lies in `graph.nq`, with its digest, the namespaces it names and the IRIs it shares with another graph.
+- **The federation build has the `sensitivity` gate of LOKF section 11.5.** A member concept says `public`, `internal` or `confidential`: an internal member joins once a person confirms `sensitivity: internal` on the Domain concept, and only in a private or internal repository, a confidential one never, and the workflow keeps an internal workspace off the site.
+- **A bundle that releases no zip joins by the `concepts.jsonld` its site serves**, pinned by that file's checksum; the build writes the file out as the bundle. The members script asks for it with a conditional request and proposes a changed file, and `members --add <address>` drafts such a member.
+- **A member whose file cannot be fetched is held at its last good state**, as section 11.5 of the LOKF specification has it, from the previous release's workspace that `--previous` names. A release zip with other bytes is held only at the release a build fetched before, a member never built is left out until it can be fetched, and a check holds nothing its pull request proposes.
+- **The readers read a workspace where it lies:** a folder, a `workspace-<tag>.zip` in place, or the site that serves it, a graph at a time by range request. `read_document` reads the workspace's copy of a release, else its `concepts.jsonld`, else its source, as section 11.4 chains them.
+- **A reader can be given some members alone.** `--member <slug>` on `mcp`, `serve` and `query` loads those bundles' graphs and no other, and refuses the stored queries that read the lock graph.
+- **A domain host's release notes say what changed in its workspace.** `knowledge-federate.py diff` compares two workspaces, and the federation workflow adds the members that joined, moved or left, and the links between them, to each release's notes.
+- **A domain host's graph page draws the workspace.** Its *The workspace* view draws every bundle the domain names, each in a colour and shape of its own, with the links between bundles dashed, from the `graph.json` the federation workflow serves. `WORKSPACE` in `site.config.mjs` turns the view on or off, and it is on when the repository has the workflow.
+
+### Fixed
+
+- **The federation gate refuses a link into a member's namespace that names no concept of that member**, as `--check-refs` refuses one inside a bundle, under the same `unowned_targets` policy. It checked only that some member owned the namespace.
+- **The federation gate reads a reified `relations` entry as it reads the slot that entry names**, so a target no member owns there stops the build too. `links.rq` and `unowned.rq` count such entries as well.
+- **The members script moves the other members when it cannot check one**, which the hand-off names. When the GitHub API refuses a release list as rate limited, gh asks again with the job's token.
+- **The MCP server's `federated_sparql` stops reading at its limit**, 1000 rows or 2000 triples, and says when it cut an answer. It read a SELECT whole before cutting it, and returned a CONSTRUCT whole.
+- **The workspace's stored queries take their predicates from the toolkit.** `unowned.rq` named `owl:sameAs` where lokf writes `schema:sameAs`, and left out `memberOf` and `holder`.
+- **The graph page's details panel sets each label beside its value.** Starlight's spacing for page content put every label a line below it.
+- **A member whose index gives its licence as text, such as `MIT`, no longer stops the domain build.** The lock graph keeps such a value as a literal, and the index writes it as text.
+- **The MCP server reads a concept whose `id` lies outside its bundle's namespace**, which the registry routes through its `id_index`. It cut the IRI by the wrong prefix.
+- **A member whose namespace nests with another's stops the build with a finding that names both**, before anything is fetched. The registry refused it only after every download, with a Python traceback.
+- **A checksum must be `sha256:` and 64 hex digits.** Only its length was checked, so a path in it could reach outside the download cache and have the build delete a file there.
+- **Every download stops at `--max-bytes`**, a member's schema and workspace as well as its zip, where each was read whole before its checksum was compared.
+- **A download is tried again after a server error or a dropped connection, and follows a redirect only within http and https**, never from https to http and never from a public address to a private one.
+- **A zip of more than 100,000 entries, or one that matches its checksum but cannot be read, stops the build with a finding**, where it filled the disk or ended in a traceback.
+- **A reader keeps no partial answer to a range request as the whole file**, and `--previous` refuses a site address, from which no zip member could be held.
+- **The federation workflow's weekly schedule no longer takes the place of a release build that waits for its turn**, and each job has a time limit.
+- **A domain host's site serves each member's release inside the workspace.** The Pages upload left out the hidden `bundles/<slug>/.lokf/` folders, so every member link in the served workspace index answered 404.
+
 ## [0.52.1] - 2026-10-19
 
 ### Fixed
@@ -792,7 +824,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A Windows checkout no longer blinds the conventions script.** It reads files with CRLF and a byte order mark stripped, and check 11 holds a CRLF bundle to the same verdict as LF.
 - **A bundle reached through a link is read, not passed unread.** `find` never entered a linked `.lokf/knowledge`, so the conventions script and the preflight saw zero files; checks 11 and 12 plant one.
 - **The preflight reads `commit.gpgsign` as git does**, taking `yes` and `1` as on and no `user.signingkey` as git's default key; all three scripts stop on one line under `sh`.
-- **The gate refuses a `human:` id it cannot look up.** The schema accepts `human:-x`, and both the GitHub job and the forge-free script skipped such ids as unparseable, so an unsigned confirmation under one passed unseen.
+- **The gate refuses a `human:` id it cannot look up.** The schema accepts `human:-x`, and both the GitHub job and the forge-free script skipped such ids as unparsable, so an unsigned confirmation under one passed unseen.
 - **The gate reads a confirmation whole, not its `by:` line.** Re-dating an existing event, moving its `revision`, or writing it in flow style left no added `by: human:` line and passed both gates; events are now compared whole between base and head, keyed by the concept's `id`, so a renamed concept keeps its confirmations and a copied one does not. Check 13 proves each.
 - **The conventions script no longer aborts on a runner that ignores SIGPIPE.** GitHub Actions starts every step that way, so an awk that closed the frontmatter pipe early turned into a `tr: write error` that `pipefail` made fatal on the first long concept; the script now reads each file whole, and the contract's own job installs `uv` so the parser's half runs there too.
 - **A confirmation spelt with a YAML tag, anchor, alias or quoted key was invisible to both gates** while `lokf validate` accepted it. Conventions rule 10 now holds `id`, `by`, `at` and `revision` to spellings a line reader and a parser agree on, so the `validate` check fails such a concept before the `provenance` check could miss it; check 11 proves it.

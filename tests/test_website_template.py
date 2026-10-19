@@ -21,7 +21,7 @@ import shutil
 
 import pytest
 
-from conftest import REPO, WEBSITE, WEBSITE_TEMPLATES, have, run, write
+from conftest import REPO, TEMPLATES, WEBSITE, WEBSITE_TEMPLATES, have, read, run, write
 
 SITE_TEMPLATES = WEBSITE_TEMPLATES / "website"
 PLACEHOLDERS = {
@@ -302,3 +302,39 @@ def test_config_refuses_a_placeholder_left_behind(tmp_path):
     shutil.copytree(SITE_TEMPLATES, site)
     result = run(["node", "scripts/config.mjs"], cwd=site)
     assert not result and "placeholder" in result.out, f"config.mjs accepted a placeholder: {result.out}"
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_offers_the_workspace_on_a_domain_host_alone(tmp_path):
+    """A host with the knowledge-federation workflow is a domain host, whose graph page offers the workspace the workflow serves."""
+    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    site = lay_down(tmp_path)
+    settled = json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)
+    assert settled["WORKSPACE"] is None, "a bundle that is no domain has no workspace"
+    write(tmp_path / ".github" / "workflows" / "knowledge-federation.yaml", "name: Knowledge federation\n")
+    settled = json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)
+    assert settled["WORKSPACE"] == "workspace"
+    base = settled["BASE"]
+    assert settled["workspace"] == {"folder": "workspace", "graph": f"{base}/workspace/graph.json", "index": f"{settled['SITE']}{base}/workspace/index.md"}, \
+        "the graph page fetches graph.json under the site's base, where the workflow serves it"
+    config = site / "site.config.mjs"
+    config.write_text(config.read_text(encoding="utf-8").replace('export const WORKSPACE = "auto";', "export const WORKSPACE = null;"), encoding="utf-8")
+    settled = json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)
+    assert settled["WORKSPACE"] is None and settled["workspace"] is None
+    config.write_text(config.read_text(encoding="utf-8").replace("export const WORKSPACE = null;", 'export const WORKSPACE = "ws";'), encoding="utf-8")
+    result = run(["node", "scripts/config.mjs"], cwd=site)
+    assert not result and 'WORKSPACE must be "auto", true or null, since the federation workflow serves the workspace at workspace/' in result.out, result.out
+
+
+def test_the_workspace_folder_is_the_one_the_federation_workflow_serves():
+    """The graph page fetches workspace/graph.json, so the workflow copies the snapshot to workspace/ under the site, and the build names that address."""
+    workflow = read(TEMPLATES / "github" / "knowledge-federation.yaml")
+    assert 'cp -R snapshot "$dist/workspace"' in workflow
+    assert '/workspace"' in read(TEMPLATES / "scripts" / "knowledge-federate.py")
+
+
+def test_the_workspace_view_links_a_node_only_to_an_http_iri():
+    """A member writes its concepts' ids, so the graph page links an id only when it is an http or https address, never javascript: or another scheme."""
+    component = read(SITE_TEMPLATES / "src" / "components" / "KnowledgeGraph.astro")
+    assert "if (workspace ? /^https?:\\/\\//i.test(String(d.id)) : !!d.concept_id) {" in component
+    assert "page.href = workspace ? d.id" in component

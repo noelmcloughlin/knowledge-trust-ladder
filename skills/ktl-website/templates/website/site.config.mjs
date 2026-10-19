@@ -82,6 +82,12 @@ export const SCHEMA = "auto";
 //   export const BROWSE = { dir: "browse", build: "just build-browse" };
 export const BROWSE = null;
 
+// The workspace of a domain host, which the knowledge-federation workflow
+// serves at workspace/ under the site, and which the graph page offers to
+// draw beside the bundle's own graph. "auto" offers it when the repository
+// has that workflow; true offers it always, and null never.
+export const WORKSPACE = "auto";
+
 // The home page: its source, from the file's `# ` title down ("auto" takes
 // the README when it has one, else the bundle's own introduction); the
 // tagline under the title (a string, { boldLineOf: <file> } for the first

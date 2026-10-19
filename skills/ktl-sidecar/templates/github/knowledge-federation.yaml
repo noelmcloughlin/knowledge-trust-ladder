@@ -15,21 +15,29 @@ name: Knowledge federation
 #             the gate as the next release build would, writing nothing. So a
 #             link into a namespace no member owns, or into a member no
 #             person has confirmed, fails the pull request, not the release
-#             build after the merge. GitHub starts no workflow for a pull request the
-#             librarian's job token opened, so there this job first runs when
-#             a person pushes to it, as the curator's confirmation commit does.
+#             build after the merge. It reads the newest released workspace,
+#             so a member whose release cannot be fetched is held there as
+#             the release build would hold it. GitHub starts no workflow for
+#             a pull request the librarian's job token opened, so there this
+#             job first runs when a person pushes to it, as the curator's
+#             confirmation commit does.
 #
 #   build     a release of this repository, or a dispatch naming one: build
-#             the workspace from the tag, build the website when there is
-#             one, and hand both to `publish` as artifacts. A push to the
-#             default branch rebuilds the website alone and reuses the newest
-#             released workspace, so the site is current and the workspace
-#             still reflects a confirmed domain.
+#             the workspace from the tag, holding a member whose release
+#             cannot be fetched as the previous release's workspace holds it,
+#             write what changed since that workspace for the release notes,
+#             build the website when there is one, and hand both to
+#             `publish` as artifacts. A push to the default branch rebuilds
+#             the website alone and reuses the newest released workspace, so
+#             the site is current and the workspace still reflects a
+#             confirmed domain. A workspace that holds internal metadata
+#             goes to the release alone, never to the site.
 #
 #   publish   the privileged half: checks each zip against its checksum,
-#             attests it, uploads it to the release, and deploys the Pages
-#             artifact. This workflow is the host's one Pages deployer, so a
-#             domain host leaves KNOWLEDGE_WEBSITE_ENABLED unset.
+#             attests it, uploads it to the release, adds the workspace's
+#             changes to the release notes, and deploys the Pages artifact.
+#             This workflow is the host's one Pages deployer, so a domain
+#             host leaves KNOWLEDGE_WEBSITE_ENABLED unset.
 #
 #   nudge     weekly: dispatches the librarian workflow, because a bundle
 #             whose sources are release URLs is always quiet to the schedule,
@@ -68,8 +76,11 @@ on:
 
 permissions: {} # deny by default; each job requests only the scopes it needs
 
+# A run that waits in a group gives way to the next run of that group, so
+# the weekly schedule, which only starts the librarian, waits in a group of
+# its own and never takes the place of a release build.
 concurrency:
-  group: knowledge-federation-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  group: knowledge-federation-${{ github.event_name == 'pull_request' && github.ref || github.event_name == 'schedule' && 'schedule' || 'main' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -77,6 +88,7 @@ jobs:
     name: Verify the members and gate the links a pull request proposes (read-only)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -103,13 +115,45 @@ jobs:
         run: uv sync --locked
         working-directory: .lokf
 
-      # The token is read-only and reaches one command, gh attestation
-      # verify, which reads the attestation store; the zips come from the
-      # public release URLs the member concepts name.
+      # The workspace the next release build will hold a member at, when
+      # that member's confirmed release cannot be fetched: the newest one
+      # released. Without it, such a member fails the check.
+      - name: Take the newest released workspace
+        id: previous
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          tag="$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | select(.draft | not) | select(any(.assets[]; .name | startswith("workspace-") and endswith(".zip"))) | .tag_name' | sed -n 1p)"
+          if [ -z "$tag" ]; then
+            echo "No release carries a workspace yet."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/previous"
+          if gh release download "$tag" --pattern 'workspace-*.zip' --pattern 'workspace-*.zip.sha256' --dir "$RUNNER_TEMP/previous" \
+            && (cd "$RUNNER_TEMP/previous" && sha256sum -c -- *.sha256); then
+            zips=("$RUNNER_TEMP"/previous/workspace-*.zip)
+            echo "zip=${zips[0]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Could not take the workspace of $tag, so a member whose release cannot be fetched fails the check."
+          fi
+
+      # The token is read-only: gh reads the attestation store, and the
+      # repository's visibility, which decides whether an internal member
+      # may join. The zips come from the public release URLs the member
+      # concepts name. The release page lets the build check the previous
+      # workspace's attestation before it holds a member from it, as the
+      # release build does.
       - name: Fetch and verify every member's zip, and gate as the next release would
         env:
           GH_TOKEN: ${{ github.token }}
-        run: uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only
+          PREVIOUS: ${{ steps.previous.outputs.zip }}
+        run: |
+          visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
+          uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "$visibility" \
+            --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" ${PREVIOUS:+--previous "$PREVIOUS"}
 
   build:
     name: Build the workspace and the site (read-only)
@@ -119,6 +163,7 @@ jobs:
           && (github.event_name == 'release'
               || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch))))
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: read
     outputs:
@@ -186,18 +231,55 @@ jobs:
           npm ci
           npm run build
 
-      # The token is read-only and reaches one command, gh attestation
-      # verify. Everything the build downloads is a file a member concept
-      # names, checked against the checksum a person confirmed, or a zip
-      # that a member domain's released lock names, checked against the
-      # checksum in that lock.
+      # The workspace the release before this one carries: the build holds
+      # a member at its last good state from it when that member's
+      # confirmed release cannot be fetched, and the notes compare with it.
+      # A workspace that cannot be taken leaves both out and never stops
+      # the release.
+      - name: Take the previous release's workspace
+        id: previous
+        if: steps.what.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          CREATED="$(gh release view "$TAG" --json createdAt --jq .createdAt)" || { echo "::warning::Could not read when $TAG was released, so no previous workspace is taken."; exit 0; }
+          export CREATED
+          earlier="$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | select(.draft | not) | select(.tag_name != env.TAG) | select(.created_at < env.CREATED) | select(any(.assets[]; .name | startswith("workspace-") and endswith(".zip"))) | .tag_name')" \
+            || { echo "::warning::Could not list the releases before $TAG, so no previous workspace is taken."; exit 0; }
+          prev="$(printf '%s\n' "$earlier" | sed -n 1p)"
+          if [ -z "$prev" ]; then
+            echo "No release before $TAG carries a workspace."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/previous"
+          if gh release download "$prev" --pattern 'workspace-*.zip' --pattern 'workspace-*.zip.sha256' --dir "$RUNNER_TEMP/previous" \
+            && (cd "$RUNNER_TEMP/previous" && sha256sum -c -- *.sha256); then
+            zips=("$RUNNER_TEMP"/previous/workspace-*.zip)
+            echo "zip=${zips[0]}" >> "$GITHUB_OUTPUT"
+            echo "tag=$prev" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Could not take the workspace of $prev, so its notes say nothing of the workspace and no member is held at its last good state."
+          fi
+
+      # The token is read-only: gh reads the attestation store, and the
+      # repository's visibility. Everything the build downloads is a
+      # file a member concept names, checked against the checksum a person
+      # confirmed, or a zip that a member domain's released lock names,
+      # checked against the checksum in that lock. The build checks the
+      # previous workspace's attestation before it holds a member from it.
       - name: Build the workspace from the tag
         if: steps.what.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          PREVIOUS: ${{ steps.previous.outputs.zip }}
         run: |
+          visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
           uv run --project .lokf .lokf/scripts/knowledge-federate.py build \
-            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag"
+            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "$visibility" \
+            ${PREVIOUS:+--previous "$PREVIOUS"}
 
       # The same bundle of files always gives the same bytes: names sorted,
       # modes fixed, every file at the time of the tag's commit, no uid, gid
@@ -216,6 +298,24 @@ jobs:
           (cd "$stage" && find workspace \( -type f -o -type l \) -print | LC_ALL=C sort | TZ=UTC zip -q -X -y -@ "$RUNNER_TEMP/release/$asset")
           (cd "$RUNNER_TEMP/release" && sha256sum "$asset" > "$asset.sha256")
           echo "Packed $(unzip -Z1 "$RUNNER_TEMP/release/$asset" | wc -l) files into $asset"
+
+      # What changed since the workspace the release before this one carries,
+      # for its notes: members that joined, moved, left or are held, and the
+      # links between them. A comparison that cannot be made leaves the
+      # notes as they are and never stops the release.
+      - name: Compare with the previous release's workspace
+        if: steps.what.outputs.release == 'true' && steps.previous.outputs.zip != ''
+        env:
+          PREVIOUS: ${{ steps.previous.outputs.zip }}
+          PREV_TAG: ${{ steps.previous.outputs.tag }}
+        run: |
+          set -uo pipefail
+          if uv run --project .lokf .lokf/scripts/knowledge-federate.py diff "$PREVIOUS" snapshot --out "$RUNNER_TEMP/release/workspace-changes.md"; then
+            cat "$RUNNER_TEMP/release/workspace-changes.md"
+          else
+            echo "::warning::Could not compare with the workspace of $PREV_TAG, so the notes of $TAG say nothing of the workspace."
+            rm -f "$RUNNER_TEMP/release/workspace-changes.md"
+          fi
 
       # A push carries no new workspace: the newest released one is served
       # again, so the site never shows a workspace no person confirmed.
@@ -239,21 +339,28 @@ jobs:
           echo "Reusing the workspace released with $tag."
 
       # The Pages artifact: the site with the workspace under /workspace/, or
-      # the workspace alone on a host with no site.
+      # the workspace alone on a host with no site. A workspace that holds
+      # internal metadata goes to the release alone: a Pages site can be
+      # public while its repository is private.
       - name: Assemble the Pages artifact
         run: |
           set -euo pipefail
           if [ -d website/dist ]; then dist=website/dist; else mkdir -p dist; dist=dist; fi
-          if [ -d snapshot ]; then
+          if [ -d snapshot ] && grep -qx 'sensitivity: internal' snapshot/workspace.lock.yaml; then
+            echo "::notice::The workspace holds internal metadata, so the site is deployed without it; it is attached to the release alone."
+          elif [ -d snapshot ]; then
             rm -rf "$dist/workspace"
             cp -R snapshot "$dist/workspace"
             chmod -R u+rwX "$dist/workspace"
           fi
           echo "dist=$dist" >> "$GITHUB_ENV"
 
+      # The workspace keeps each release under bundles/<slug>/.lokf/, the
+      # folder its index links to, which the action leaves out unless told.
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: ${{ env.dist }}
+          include-hidden-files: true
 
       - name: Upload the workspace zip
         if: steps.what.outputs.release == 'true'
@@ -268,6 +375,7 @@ jobs:
     name: Attach the workspace to the release and deploy the site (privileged)
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write # upload release assets
       id-token: write # sign the attestation and deploy Pages
@@ -312,6 +420,30 @@ jobs:
         run: gh release upload "$TAG" ./*.zip ./*.sha256 --clobber
         working-directory: ${{ runner.temp }}/release
 
+      # The notes gain what changed in the workspace once: a run started
+      # again replaces the part an earlier run added, from its marker on.
+      - name: Add the workspace's changes to the release notes
+        if: needs.build.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ ! -s workspace-changes.md ]; then
+            echo "No comparison was made, so the notes stay as they are."
+            exit 0
+          fi
+          gh release view "$TAG" --json body --jq .body > notes.md
+          python3 - <<'PY'
+          import pathlib
+          marker = "<!-- knowledge-federation: workspace changes -->"
+          kept = pathlib.Path("notes.md").read_text(encoding="utf-8").split(marker)[0].rstrip()
+          changes = pathlib.Path("workspace-changes.md").read_text(encoding="utf-8").strip()
+          pathlib.Path("body.md").write_text((kept + "\n\n" if kept else "") + marker + "\n\n" + changes + "\n", encoding="utf-8")
+          PY
+          gh release edit "$TAG" --notes-file body.md
+        working-directory: ${{ runner.temp }}/release
+
       - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         id: deployment
 
@@ -319,6 +451,7 @@ jobs:
     name: Dispatch the librarian, whose schedule finds this bundle quiet
     if: github.event_name == 'schedule' && vars.KNOWLEDGE_FEDERATION_ENABLED == 'true' && vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       actions: write # start knowledge-librarian.yaml
     steps:

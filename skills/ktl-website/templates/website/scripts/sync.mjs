@@ -55,6 +55,7 @@ import {
   docsPages,
   groupLabel,
   schemaPages,
+  workspaceLinks,
 } from "./config.mjs";
 import { WIKILINK, resolveWikilink } from "./markdown-ktl.mjs";
 import { rewriteUrl, route } from "./routes.mjs";
@@ -1275,6 +1276,10 @@ function copyAssets() {
   if (LOGO?.favicon) cpSync(resolve(REPO_ROOT, LOGO.favicon), resolve(PUBLIC, `favicon${extname(LOGO.favicon)}`));
   else cpSync(resolve(SITE_DIR, "src", "assets", "favicon.svg"), resolve(PUBLIC, "favicon.svg"));
   if (CUSTOM_DOMAIN) write(resolve(PUBLIC, "CNAME"), `${CUSTOM_DOMAIN}\n`);
+  // Where a domain host's workspace is served, for the graph page, or null.
+  // The workspace itself arrives after the build, from the federation
+  // workflow, so the page names it and fetches it when a reader asks.
+  write(resolve(GENERATED, "workspace.json"), JSON.stringify(workspaceLinks()) + "\n");
 }
 
 // ---------------------------------------------------------------------------
