@@ -10,6 +10,9 @@ skills/
   ktl-docent/          SKILL.md + references/ + scripts/
   ktl-prose/           SKILL.md + references/ + scripts/
   ktl-website/         SKILL.md + references/ + scripts/ + templates/
+.assets/
+  *.svg, *-dark.svg     the logo, the social card and each figure the docs show, light and dark
+  companions/           Archify flow diagrams beside three figures: each candidate and its two SVGs
 .claude-plugin/
   plugin.json           the six skills as one Claude Code plugin, with catalogue keywords
   marketplace.json      lets `/plugin marketplace add` find that plugin

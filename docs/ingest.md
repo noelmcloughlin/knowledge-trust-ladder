@@ -11,6 +11,8 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
   </picture>
 </p>
 
+As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-ingest.svg), [dark](../.assets/companions/ktl-ingest-dark.svg).
+
 ## What can be mirrored
 
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
