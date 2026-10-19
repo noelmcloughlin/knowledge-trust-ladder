@@ -49,7 +49,7 @@ Section 11 of the LOKF specification answers in linked-data terms: a registry of
   </picture>
 </p>
 
-As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-federated-context-layer.svg), [dark](../.assets/companions/ktl-federated-context-layer-dark.svg).
+***As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-federated-context-layer.svg), [dark](../.assets/companions/ktl-federated-context-layer-dark.svg).***
 
 ## Sources
 

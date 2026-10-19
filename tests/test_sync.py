@@ -19,7 +19,8 @@ first tag, and pin what the script's header says:
    source lacks are each refused;
 6. without --source the host's copy clones the tag and reads its manifest,
    and a manifest rule the copy does not know is reported, not guessed at;
-7. a manifest that names a copy path outside the host is refused;
+7. a manifest that names a copy path outside the host, or inside a .git
+   folder, is refused;
 8. scripts/sync-sidecar.sh runs each sibling's own copy, or the tag's in a
    sibling that has none, and its --finish keeps a branch that was never
    pushed, or whose remote branch still exists, and removes one whose pull
@@ -180,6 +181,7 @@ def test_a_sync_copies_adds_reports_pins_and_writes_the_entry(tmp_path, skills, 
     body = read(report)
     checks.ok(body.startswith("Brings the sidecar copies and the skills pin of this repository to Knowledge Trust Ladder [v1.1.0]("), "the report opens with the release", body)
     checks.ok("- `.lokf/scripts/knowledge-report.sh`" in body and "skipped (--no-checks)" in body, "the report lists the copies and the checks", body)
+    checks.ok("does not know their rule:\n\n- `mirror docs/example.md`" in body, "the report names the rule the script does not know, so the pull request shows it", body)
     checks.ok(matches(out, r"^   git commit -m \"security\(sidecar\): sync copies and skills pin from v1\.1\.0\"$"), "the commit command is printed", out)
     checks.ok((host / ".lokf" / "scripts" / "knowledge-sync.sh").stat().st_mode & 0o111, "an added script is executable")
 
@@ -302,6 +304,23 @@ def test_a_manifest_that_names_a_path_outside_the_host_is_refused(tmp_path, skil
     result = run(["bash", SYNC, "--source", skills, "--host", host, "--no-checks", "v1.2.0"], cwd=host, env=IDENT)
     checks.ok(result.rc == 2 and "outside the host" in result.out, "the manifest is refused before anything is written", result.out)
     checks.ok(not Git(host)("status", "--porcelain"), "the host is untouched")
+
+
+@pytest.mark.parametrize("copy", [".git/config", ".GIT/hooks/pre-commit", ".lokf/.git/config"])
+def test_a_manifest_that_names_a_path_in_a_git_folder_is_refused(tmp_path, skills, checks, copy):
+    """A copy under .git is git's own configuration, which can name a command the next git command runs."""
+    host = make_host(tmp_path, skills)
+    config = read(host / ".git" / "config")
+    git = Git(skills)
+    with (skills / "skills" / "ktl-sidecar" / "templates" / "knowledge-sync.manifest").open("a") as f:
+        f.write(f"copy scripts/knowledge-report.sh {copy}\n")
+    git("add", "-A")
+    git("commit", "-qm", "v1.2.0")
+    git("tag", "v1.2.0")
+    result = run(["bash", SYNC, "--source", skills, "--host", host, "--no-checks", "v1.2.0"], cwd=host, env=IDENT)
+    checks.ok(result.rc == 2 and "inside a .git folder" in result.out, "the manifest is refused before anything is written", result.out)
+    checks.ok(not Git(host)("status", "--porcelain"), "the host is untouched")
+    checks.ok(read(host / ".git" / "config") == config, "and so is its git configuration")
 
 
 def test_the_fan_out_runs_each_siblings_own_copy_and_finishes_merged_branches(tmp_path, skills, checks):
@@ -436,14 +455,153 @@ def synced_pairs():
 
 def test_every_synced_copy_passes_the_publish_jobs_path_check():
     """A template the script lays down that the privileged job would refuse is a sync that can never open its pull request."""
-    text = read(WORKFLOW)
-    allow = re.search(r"grep -Ev '(\^\(.*?\)\$)' \|\| true", text).group(1)
-    odd = re.search(r"grep -Ev '(\^\[[^']+\]\+\$)' \|\| true", text).group(1)
+    text = read(SYNC)
+    allow = re.search(r"^sync_paths='([^']+)'$", text, re.M).group(1)
+    odd = re.search(r"^plain_path='([^']+)'$", text, re.M).group(1)
+    owned = re.search(r"^owned_paths='([^']+)'$", text, re.M).group(1)
     for _, copy in synced_pairs() + [("", "CHANGELOG.md"), ("", "website/src/pages/og/[...route].ts")]:
         assert re.search(allow, copy), f"{copy} is outside the paths the publish job allows"
         assert re.search(odd, copy), f"{copy} has a character the publish job refuses"
-    for owned in ("website/site.config.mjs", "website/README.md", "website/src/styles/custom.css"):
-        assert re.search(r"\^website/\(site\\\.config\\\.mjs\|README\\\.md\|src/styles/custom\\\.css\)\$", text), owned
+        assert not re.search(owned, copy), f"{copy} is a site file the host owns"
+    for path in ("website/site.config.mjs", "website/README.md", "website/src/styles/custom.css"):
+        assert re.search(owned, path), path
+    assert "knowledge-sync.sh --apply" in read(WORKFLOW), "the publish job puts the patch on with the host's own script"
+
+
+def sync_patch(tmp_path, host, skills, tag):
+    """The patch the workflow's sync job hands on, for one run of the script on the host; the host is left clean."""
+    changed = tmp_path / f"changed-{tag}.txt"
+    result = run(["bash", SYNC, "--source", skills, "--host", host, "--no-checks", "--changed", changed, tag], cwd=host, env=IDENT)
+    assert result.rc == 0, result.out
+    git = Git(host)
+    for path in read(changed).split("\n"):
+        if path:
+            git("add", "--", path)
+    patch = tmp_path / f"sync-{tag}.patch"
+    patch.write_text(git("diff", "--cached", "--binary") + "\n")
+    full = git("write-tree")
+    git("reset", "-q", "--hard")
+    return patch, full
+
+
+def apply(host, patch, held, tag, sha):
+    return run(["bash", SYNC, "--host", host, "--apply", patch, "--held", held, "--pin-sha", sha, tag], cwd=host, env=IDENT)
+
+
+def test_apply_puts_the_sync_on_and_holds_every_workflow_change_but_the_pin(tmp_path, skills, checks):
+    """A workflow on a branch pushed with a token runs on that push, with the repository's secrets, so the branch carries only the pin."""
+    host = make_host(tmp_path, skills)
+    git = Git(skills)
+    with (skills / "skills" / "ktl-sidecar" / "templates" / "github" / "knowledge-registrar.yaml").open("a") as f:
+        f.write("# a step the next release adds\n")
+    git("add", "-A")
+    git("commit", "-qm", "v1.2.0")
+    git("tag", "v1.2.0")
+    patch, full = sync_patch(tmp_path, host, skills, "v1.2.0")
+    sha = git("rev-parse", "v1.2.0^{commit}")
+    held = tmp_path / "workflows.patch"
+    result = apply(host, patch, held, "v1.2.0", sha)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(has_line(result.out, "   staged   .lokf/scripts/knowledge-report.sh"), "a script the release changed is staged", result.out)
+    checks.ok(has_line(result.out, "   held     .github/workflows/knowledge-registrar.yaml (a workflow change, for a person to apply)"), "a workflow the release changed is held", result.out)
+    checks.ok(has_line(result.out, "   held     .github/workflows/knowledge-sync.yaml (a workflow change, for a person to apply)"), "and so is one it adds", result.out)
+    h = Git(host)
+    staged = [line for line in h("diff", "--cached", "-U0", "HEAD", "--", ".github/workflows/").split("\n") if re.match(r"^[-+][^-+]", line)]
+    checks.ok(staged and all("TRUST_LADDER_SKILLS_" in line for line in staged), "the workflows differ from the checkout by the pin alone", str(staged))
+    librarian = read(host / LIBRARIAN)
+    checks.ok("TRUST_LADDER_SKILLS_REF: v1.2.0" in librarian and f"TRUST_LADDER_SKILLS_SHA: {sha}" in librarian, "the pin is the tag and the commit the caller checked")
+    h("commit", "-qm", "the sync")
+    h("apply", "--index", held)
+    checks.ok(h("write-tree") == full, "the held patch on top of the branch gives the whole sync")
+
+
+def test_apply_takes_the_pin_from_the_caller_not_the_patch(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    patch, _ = sync_patch(tmp_path, host, skills, "v1.1.0")
+    checked = "0123456789abcdef0123456789abcdef01234567"
+    result = apply(host, patch, tmp_path / "workflows.patch", "v1.1.0", checked)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(f"TRUST_LADDER_SKILLS_SHA: {checked}" in read(host / LIBRARIAN), "the commit is the one the caller read at the skills repository")
+
+
+def hand_patch(host, change):
+    """A patch of one change made in the host's tree, as a compromised sync job could build it; the host is left clean."""
+    git = Git(host)
+    change(host, git)
+    git("add", "-A")
+    text = git("diff", "--cached", "--binary") + "\n"
+    git("reset", "-q", "--hard")
+    git("clean", "-qfd")
+    return text
+
+
+def _delete(host, git):
+    git("rm", "-q", ".lokf/scripts/knowledge-report.sh")
+
+
+def _link(host, git):
+    (host / ".lokf" / "scripts" / "knowledge-extra.sh").symlink_to("/etc/passwd")
+
+
+def _mode(host, git):
+    path = host / ".lokf" / "scripts" / "knowledge-report.sh"
+    path.chmod(0o777)
+    git("update-index", "--chmod=+x", ".lokf/scripts/knowledge-report.sh")
+
+
+def _outside(host, git):
+    write(host / "README.md", "# changed\n")
+
+
+def _owned(host, git):
+    write(host / "website" / "site.config.mjs", "export const TITLE = 'x';\n")
+
+
+@pytest.mark.parametrize(
+    "change, says",
+    [
+        (_delete, "more than edit and add plain files"),
+        (_link, "more than edit and add plain files"),
+        (_outside, "paths a sync may not"),
+        (_owned, "paths a sync may not"),
+    ],
+)
+def test_apply_refuses_what_a_sync_never_does(tmp_path, skills, checks, change, says):
+    host = make_host(tmp_path, skills)
+    patch = tmp_path / "bad.patch"
+    patch.write_text(hand_patch(host, change))
+    result = apply(host, patch, tmp_path / "workflows.patch", "v1.1.0", "0" * 40)
+    checks.ok(result.rc == 2 and says in result.out, f"refused: {says}", result.out)
+    checks.ok(not Git(host)("status", "--porcelain"), "the checkout is untouched")
+
+
+def test_apply_refuses_a_git_folder_and_a_librarian_the_host_lacks(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    patch = tmp_path / "git.patch"
+    patch.write_text("diff --git a/website/.git/config b/website/.git/config\nnew file mode 100644\n--- /dev/null\n+++ b/website/.git/config\n@@ -0,0 +1 @@\n+[core]\n")
+    result = apply(host, patch, tmp_path / "workflows.patch", "v1.1.0", "0" * 40)
+    checks.ok(result.rc == 2 and "paths a sync may not" in result.out, "a path in a .git folder is refused", result.out)
+    text = read(host / LIBRARIAN)
+    Git(host)("rm", "-q", LIBRARIAN)
+    Git(host)("commit", "-qm", "no librarian")
+    patch = tmp_path / "librarian.patch"
+    patch.write_text(hand_patch(host, lambda h, g: write(h / LIBRARIAN, text)))
+    result = apply(host, patch, tmp_path / "workflows.patch", "v1.1.0", "0" * 40)
+    checks.ok(result.rc == 2 and "does not carry" in result.out, "a librarian workflow the host lacks is refused", result.out)
+    checks.ok(not Git(host)("status", "--porcelain"), "the checkout is untouched")
+
+
+def test_apply_allows_a_script_made_executable_and_refuses_a_dirty_checkout(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    (host / ".lokf" / "scripts" / "knowledge-report.sh").chmod(0o644)
+    Git(host)("update-index", "--chmod=-x", ".lokf/scripts/knowledge-report.sh")
+    Git(host)("commit", "-qam", "not executable")
+    patch = tmp_path / "mode.patch"
+    patch.write_text(hand_patch(host, _mode))
+    result = apply(host, patch, tmp_path / "workflows.patch", "v1.1.0", "0" * 40)
+    checks.ok(result.rc == 0, "644 to 755 is a mode a sync sets", result.out)
+    result = apply(host, patch, tmp_path / "workflows.patch", "v1.1.0", "0" * 40)
+    checks.ok(result.rc == 2 and "changes of its own" in result.out, "a checkout with changes is refused", result.out)
 
 
 def test_every_synced_template_is_in_step_5_and_the_manifest_is_the_one_list():

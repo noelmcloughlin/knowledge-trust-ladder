@@ -9,38 +9,70 @@ Each file has a section on one of the two pages. Read the one you are setting up
 | `knowledge-registrar.yaml` | Validates the bundle, and checks that each new human confirmation is backed by its person | Nothing to set up. Curators sign their commits; the attestation environment is optional | [gate.md](gate.md) |
 | `knowledge-conventions.sh` and `.py` | The checks the gate runs that `lokf validate` cannot | Nothing | [gate.md](gate.md) |
 | `knowledge-provenance.sh` | The signature check, with no forge needed, and the check that an unattended change touches no person's record | A public key per curator under `.lokf/curators/`; nothing for the unattended form | [gate.md](gate.md) |
-| `knowledge-librarian.yaml` | Runs the librarian agent weekly when work waits for it, and opens a review pull request | Repository variables, and a secret for the agent's key | below |
+| `knowledge-librarian.yaml` | Runs the librarian agent weekly when work waits for it, and opens a review pull request | Repository variables, and a secret for the agent's key in the `knowledge-librarian` Environment | below |
 | `knowledge-librarian.sh` | The wrapper the librarian workflow runs | Nothing, unless the skills live in an unusual directory | below |
 | `knowledge-apply.sh`, `knowledge-apply.py` | The librarian's only pen: applies `.lokf/patch.yaml` to the bundle; the wrapper runs it after the agent | Nothing | ktl-librarian's `references/patch.md`, or `--format` |
 | `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, whether any work waits, what a change does to the record, the retrieval score, and the tracked files no concept names | Nothing, or one variable for the retrieval score | below |
 | `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to turn it on, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 | `knowledge-federation.yaml` and `knowledge-federate.py` *(a domain host only)* | Build the workspace of a domain host from the released bundles its member concepts name, publish it, and keep the members current | One variable to turn it on, Pages taken from Actions, and `AGENT_CLI` set to the script | below |
-| `knowledge-sync.yaml`, `knowledge-sync.sh` and `PULL_REQUEST_TEMPLATE/knowledge-sync.md` | Keep the sidecar copies and the skills pin at the newest release of the skills repository, and open the pull request that moves them | One secret, so the workflow can open the pull request; without it the run attaches the change | below |
-| `knowledge-ingest.yaml`, `knowledge-ingest.sh` and `PULL_REQUEST_TEMPLATE/knowledge-ingest.md` *(a host with `.lokf/ingest.yaml`)* | Mirror the sources outside the repository that the manifest names into `.lokf/mirror/`, and open one pull request with what changed | One variable to turn it on, and the secrets the manifest names | [below](#knowledge-ingestyaml-knowledge-outside-the-repository) |
+| `knowledge-sync.yaml`, `knowledge-sync.sh` and `PULL_REQUEST_TEMPLATE/knowledge-sync.md` | Keep the sidecar copies and the skills pin at the newest release of the skills repository, and open the pull request that moves them | One secret in the `knowledge-sync` Environment, so the workflow can open the pull request; without it the run attaches the change | below |
+| `knowledge-ingest.yaml`, `knowledge-ingest.sh` and `PULL_REQUEST_TEMPLATE/knowledge-ingest.md` *(a host with `.lokf/ingest.yaml`)* | Mirror the sources outside the repository that the manifest names into `.lokf/mirror/`, and open one pull request with what changed | One variable to turn it on, and the secrets the manifest names in the `knowledge-ingest` Environment | [below](#knowledge-ingestyaml-knowledge-outside-the-repository) |
 
 ## Switches and where they go
 
-Every switch below is a **repository variable** or a **repository secret**: Settings, Secrets and variables, Actions, then Variables or Secrets, under the Repository heading. Never set one on an environment such as `release`, or under the Agents tab, which is the Copilot cloud agent's store. A job's `if:` reads only repository and organization variables, so a switch set anywhere else stays off without a word.
+Every variable below is a **repository variable**: Settings, Secrets and variables, Actions, Variables, under the Repository heading. Never set one on an Environment, or under the Agents tab, which is the Copilot cloud agent's store. A job's `if:` reads only repository and organization variables, so a switch set anywhere else stays off without a word. Every secret goes in the Environment of the workflow that reads it, as [the next section](#keep-each-secret-in-its-environment) says.
 
 | Name | Kind | Workflow | What it does |
 | --- | --- | --- | --- |
 | `KNOWLEDGE_LIBRARIAN_ENABLED` | variable | `knowledge-librarian.yaml` | `true` runs the agent; anything else skips it |
-| `AGENT_CLI` | variable, or a secret when it must embed a credential | `knowledge-librarian.yaml` | the agent command ([below](#setting-it-up)) |
+| `AGENT_CLI` | variable, or a secret in `knowledge-librarian` when it must embed a credential | `knowledge-librarian.yaml` | the agent command ([below](#setting-it-up)) |
 | `AGENT_PROMPT_FLAG` | variable | `knowledge-librarian.yaml` | optional: where the prompt goes, `-p` by default ([below](#any-other-agent)) |
 | `AGENT_API_KEY_ENV` | variable | `knowledge-librarian.yaml` | the name the agent reads its credential from |
-| `AGENT_API_KEY` | secret | `knowledge-librarian.yaml` | the agent's key or token; never a variable, which anyone with access can read |
+| `AGENT_API_KEY` | secret, in `knowledge-librarian` | `knowledge-librarian.yaml` | the agent's key or token; never a variable, which anyone with access can read |
 | `AGENT_USE_JOB_TOKEN` | variable | `knowledge-librarian.yaml` | `true` for Copilot CLI, which pays with the job's token, and for a domain host's members script, which verifies attestations with it |
 | `KNOWLEDGE_RETRIEVAL` | variable | `knowledge-librarian.yaml` | optional: `true` scores retrieval on each run that changes the bundle |
 | `KNOWLEDGE_RELEASE_ENABLED` | variable | `knowledge-release.yaml` | `true` attaches the bundle to each published release |
 | `KNOWLEDGE_RELEASE_NAME` | variable | `knowledge-release.yaml` | optional: the name in the zip file when the repository's own name is not the one it publishes under |
 | `KNOWLEDGE_WEBSITE_ENABLED` | variable | `knowledge-website.yaml` | `true` publishes the site to GitHub Pages, as ktl-website's [deploy.md](../../ktl-website/references/deploy.md) says |
 | `KNOWLEDGE_FEDERATION_ENABLED` | variable | `knowledge-federation.yaml` | `true` builds the workspace on each release and deploys the site with it; a domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer |
-| `KNOWLEDGE_SYNC_TOKEN` | secret | `knowledge-sync.yaml` | a fine-grained personal access token for this repository, with Contents, Pull requests and Workflows set to read and write ([below](#knowledge-syncyaml-keeping-the-sidecar-current)). The workflow pushes under `.github/workflows/` and opens the pull request with it. Unset, each run attaches its change and opens nothing |
+| `KNOWLEDGE_SYNC_TOKEN` | secret, in `knowledge-sync` | `knowledge-sync.yaml` | a fine-grained personal access token for this repository, with Contents, Pull requests and Workflows set to read and write ([below](#knowledge-syncyaml-keeping-the-sidecar-current)). The workflow pushes under `.github/workflows/` and opens the pull request with it. Unset, each run attaches its change and opens nothing |
 | `KNOWLEDGE_INGEST_ENABLED` | variable | `knowledge-ingest.yaml` | `true` turns the ingest on; unset or anything else, the workflow does nothing ([below](#knowledge-ingestyaml-knowledge-outside-the-repository)) |
-| `KNOWLEDGE_INGEST_*` | secrets | `knowledge-ingest.yaml` | the credentials `.lokf/ingest.yaml` names, one secret per name; the workflow hands these names over and no other secret |
+| `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` | variable | `knowledge-sync.yaml` | optional: the Environment whose reviewers approve the workflow changes a release brings, so the workflow pushes them ([below](#workflow-changes-wait-for-a-person)) |
+| `KNOWLEDGE_INGEST_*` | secrets, in `knowledge-ingest` | `knowledge-ingest.yaml` | the credentials `.lokf/ingest.yaml` names, one secret per name; the workflow hands these names over and no other secret |
 
 The librarian also needs one repository setting: Settings, Actions, General, Workflow permissions, *Allow GitHub Actions to create and approve pull requests* ([below](#before-turning-on-the-schedule)).
+
+## Keep each secret in its Environment
+
+Do this on every host, for every secret above. A repository secret can be read by a workflow on any branch, and a workflow file runs on a push to the branch that carries it. So anyone who can push a branch can read every repository secret, and so can a change that reaches a branch before review. A secret in an Environment limited to the default branch reaches only jobs that run there and name that Environment. Each workflow names its own.
+
+| Environment | Its secrets | Read by |
+| --- | --- | --- |
+| `knowledge-librarian` | `AGENT_API_KEY`, and `AGENT_CLI` when it is a secret | `knowledge-librarian.yaml`'s `refresh` job |
+| `knowledge-sync` | `KNOWLEDGE_SYNC_TOKEN` | `knowledge-sync.yaml`'s `publish` and `push-workflows` jobs |
+| `knowledge-ingest` | every `KNOWLEDGE_INGEST_` secret | `knowledge-ingest.yaml`'s `ingest` job |
+
+For each one, under Settings, Environments:
+
+1. Open the Environment, or create it under that name. A workflow run that names it creates it with no rules.
+2. Under *Deployment branches and tags*, choose *Selected branches and tags* and add the default branch. Not *Protected branches only*: GitHub does not count a ruleset there, and with no classic protection rule every branch passes.
+3. Add the secret under *Environment secrets*.
+4. Delete the repository secret of the same name. While it stays, a workflow on any branch can still read it.
+
+With gh, for `knowledge-sync` on a default branch named `main`:
+
+```sh
+gh api -X PUT repos/{owner}/{repo}/environments/knowledge-sync \
+  -F 'deployment_branch_policy[protected_branches]=false' -F 'deployment_branch_policy[custom_branch_policies]=true'
+gh api -X POST repos/{owner}/{repo}/environments/knowledge-sync/deployment-branch-policies -f name=main -f type=branch
+gh secret set KNOWLEDGE_SYNC_TOKEN --env knowledge-sync
+gh secret delete KNOWLEDGE_SYNC_TOKEN
+```
+
+Add no required reviewers to these three: the librarian and the sync run on a schedule, and each run would wait for a click. The jobs record no deployment, so the repository's Deployments list stays as it was.
+
+The workflows still read a repository secret of the same name, so a host keeps working while it moves. That is a step on the way, not a place to stay. A private repository on GitHub Free has no Environments: GitHub ignores their rules and secrets there, so the secrets stay repository secrets, and any branch's workflow can read them. Environments are a GitHub feature; on another forge, keep each secret to the protected branch the way that forge allows, as [portability.md](portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says.
 
 ## `knowledge-librarian.yaml`: the scheduled refresh loop
 
@@ -85,9 +117,9 @@ The workflow is **inert until set up**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset
 | `AGENT_USE_JOB_TOKEN` | `true`: the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it, and so does a [domain host's](#knowledge-federationyaml-the-workspace-of-a-domain-host) members script; leave it unset for any other agent |
 | `KNOWLEDGE_RETRIEVAL` | optional. `true`: each run that changes the bundle makes one more agent call and the pull request carries a retrieval score ([below](#knowledge-reportsh-what-a-program-can-say-about-the-bundle)). Unset, nothing is scored |
 
-Set each one under **Repository variables** (Settings, Secrets and variables, Actions, Variables), or with `gh variable set <name> --body <value>`. A variable set on an environment, such as `release`, is never seen: no job in the sidecar's workflows names an environment, and a job's `if:` reads only repository and organization variables.
+Set each one under **Repository variables** (Settings, Secrets and variables, Actions, Variables), or with `gh variable set <name> --body <value>`. A variable set on an Environment is never seen: a job's `if:` reads only repository and organization variables.
 
-| Repository secret | Value |
+| Secret, in the `knowledge-librarian` Environment ([above](#keep-each-secret-in-its-environment)) | Value |
 | --- | --- |
 | `AGENT_API_KEY` | the agent's API key or token, when `AGENT_USE_JOB_TOKEN` is not set. The wrapper hands it to the agent under the `AGENT_API_KEY_ENV` name and to nothing else |
 
@@ -220,7 +252,7 @@ The `attach` job holds `contents: write`, runs no third-party packages, checks t
 
 A domain host is one whose bundle names other bundles: each `MemberBundle` concept (or `MemberDomain`, when that bundle is a domain in turn) names one released zip and its checksum, a person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. The design is the skills repository's `docs/federation.md`, and `templates/domain.yaml` is the schema. Three files make it run, and nothing in them runs a model.
 
-- **The build.** `uv run --project .lokf .lokf/scripts/knowledge-federate.py build --tag <tag>` resolves the members into `snapshot/workspace.lock.yaml` and fetches each zip into `.lokf/.cache/federation/` by digest. It checks each zip against the checksum the member concept names, and refuses one holding a symbolic link or a path outside its root. It verifies the attestation with `gh attestation verify` when `gh` is present, and checks that the zip's `index.md` names the `base_iri` the concept declares. A member that releases no zip names the `concepts.jsonld` its site serves instead; the build checks that file against its checksum, writes it out as the bundle and keeps it beside the folder. It then registers and exports each bundle with the toolkit and loads one named graph per bundle, with blank nodes relabelled so the same releases give the same bytes. It writes the lock as a graph of its own, and once the gate passes, renames `snapshot.new/` to `snapshot/` in one step.
+- **The build.** `uv run --project .lokf .lokf/scripts/knowledge-federate.py build --tag <tag>` resolves the members into `snapshot/workspace.lock.yaml` and fetches each zip into `.lokf/.cache/federation/` by digest. It fetches over http or https from a public address only: a local path or `file://` address needs `--allow-local`, and a private address a person's `private_addresses: allow` on the top Domain concept, for a forge on the host's own network. It checks each zip against the checksum the member concept names, and refuses one holding a symbolic link, a path outside its root, a hidden file such as a `.git` folder, or a file a browser runs, and a distribution name that is not one plain file name. For a GitHub release it verifies the attestation with `gh attestation verify`, pinned to the member's `knowledge-release.yaml`, or to its `knowledge-federation.yaml` for a workspace; without `gh` it stops, unless run with `--no-attestation`. It checks that the zip's `index.md` names the `base_iri` the concept declares. A member that releases no zip names the `concepts.jsonld` its site serves instead; the build checks that file against its checksum, writes it out as the bundle and keeps it beside the folder. It then registers and exports each bundle with the toolkit and loads one named graph per bundle, with blank nodes relabelled so the same releases give the same bytes. It writes the lock as a graph of its own, and once the gate passes, renames `snapshot.new/` to `snapshot/` in one step.
 - **The gate.** A typed relation whose target lies in no member's namespace, or names no concept of the member whose namespace holds it, stops the build or is reported, as the domain's `unowned_targets` says. The links that pass are counted between members in the lock and the workspace index, and `graph.json` holds every bundle's concepts with those links, for a site's graph page.
 - **The last good state.** Given `--previous`, the workspace the release before built, a member whose file cannot be fetched, because its address does not answer or serves other bytes now, is held as that workspace holds it. The lock entry says why under `held`, the registry's `status` is `last-good`, and the index lists the member. When that workspace holds an earlier release, the member is held at it, except a release zip that serves other bytes, which is held only at the release a build fetched before. A member that workspace did not hold is left out and listed under `unfetched`. A check never holds or leaves out a member its pull request proposes. A file that fails a check still stops the build. The build checks a `workspace-<tag>.zip` against its repository's attestation first, and goes on without it when that fails.
 - **Sensitivity.** A member concept's `sensitivity` is `public` unless it says `internal` or `confidential`, and the top `Domain` concept's is the most sensitive member a person has cleared the workspace to hold. A member above that stops the build, a confidential one always, and an internal one when the repository is neither private nor internal. A sensitivity raised, or a clearance lowered, in a text no person has confirmed counts at once. The workflow passes the repository's visibility; by hand, the script asks `gh`, and `--visibility` says it where `gh` cannot. The workflow attaches a workspace that holds internal metadata to the release alone, and deploys the site without it.
@@ -243,21 +275,37 @@ To set it up: tell Pages once to take its site from Actions (`gh api -X POST rep
 
 A release of the skills repository changes the templates, and a host carries copies of them. The copies and the skills pin in `knowledge-librarian.yaml` move together from one release, because the skill a release installs is written against the wrapper, gate and preflight that release includes. The pin also decides which instructions the scheduled librarian follows unattended. This workflow moves them.
 
-It runs weekly (Mondays 04:10 UTC) and on demand, in three jobs:
+It runs weekly (Mondays 04:10 UTC) and on demand, in three jobs, and two more a host may turn on:
 
-- **`earlier`** reads the pin and the address of the skills repository out of `knowledge-librarian.yaml`, asks that repository for its newest release, and reads what became of this workflow's last pull request. Its token can read the repository and its pull requests, and nothing else, and it reads no pull request's title, body or comment. When the pin is at the newest release, the run stops after one read. The skills repository must be public, or at least readable with the job's token.
+- **`earlier`** reads the pin and the address of the skills repository out of `knowledge-librarian.yaml`, asks that repository for its newest release, and reads what became of this workflow's last pull request and of its branch. Its token can read the repository and its pull requests, and nothing else, and it reads no pull request's title, body or comment. When the pin is at the newest release, the run stops after one read. The skills repository must be public, or at least readable with the job's token.
 - **`sync`** is read-only, and runs no code from the release. It runs the host's own `.lokf/scripts/knowledge-sync.sh`, which clones the release and reads its `knowledge-sync.manifest`: each template a host may carry, its copy, and the rule for it. The script writes the release's templates over the host's copies, adds a template a file here needs, moves the pin to the tag and the commit it names, and writes the changelog entry under `## [Unreleased]` and `### Security`. The change goes to `publish` as a patch, and to the run as an artifact.
-- **`publish`** refuses a patch that touches anything but the sidecar's copies, the site's copies, the pin and `CHANGELOG.md`, and checks that the tag names the pinned commit at the skills repository. Then it applies the patch on a clean checkout, commits it as `knowledge-sync[bot]`, pushes the branch `knowledge-sync` and opens the pull request, or refreshes the open one. It writes the body from the patch it applied, not from anything `sync` wrote: the files and the pin. Then comes `.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md`, whose checklist is the reviewer's. The pull request's own checks run the synced copies, as they run on any change.
+- **`publish`** reads the commit the tag names at the skills repository, then runs the default branch's own copy of the script with `--apply`. That refuses a patch that touches anything but the sidecar's copies, the site's copies, the pin and `CHANGELOG.md`, or that deletes, renames or links a file. It keeps every workflow as the default branch has it but for the pin, which it sets from the tag and that commit, and holds the workflow changes the release brought ([below](#workflow-changes-wait-for-a-person)). Then `publish` commits as `knowledge-sync[bot]`, pushes the branch `knowledge-sync`, leased to the commit `earlier` read, and opens the pull request, or refreshes the open one. It writes the body from the patch it applied, not from anything `sync` wrote. Then comes the default branch's `.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md`, whose checklist is the reviewer's. The pull request's own checks run the synced scripts and site files with a read-only token, as they run on any change.
+- **`review`** and **`push-workflows`** run only when `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` is set, as [below](#workflow-changes-wait-for-a-person).
 
-**One pull request at a time, refreshed until it is merged.** While this workflow's pull request is open, a later run that finds a newer release replaces the branch's one commit with a sync to that release, and sets the title and body to say so. The week's releases fold into one pull request, and a reviewer reads the diff as it is when they merge. A pull request a person added a commit to is left alone: merge or close it first.
+**One pull request at a time, refreshed until it is merged.** While this workflow's pull request is open, a later run that finds a newer release replaces the branch's commits with a sync to that release, and sets the title and body to say so. The week's releases fold into one pull request, and a reviewer reads the diff as it is when they merge. A pull request a person added a commit to is left alone: merge or close it first. So is the branch, when it holds a commit of a person's and no pull request.
+
+### Workflow changes wait for a person
+
+A workflow file runs on a push to the branch that carries it, can read the repository's secrets, and can raise its own token with a `permissions:` key. So the branch this workflow pushes carries no workflow the release wrote: only the pin moves under `.github/workflows/`. The workflow changes a release brings are held. The pull request lists them and shows their diff, and the run carries them as the artifact `knowledge-sync-workflows`. Read them, then apply them on the branch:
+
+```sh
+gh run download <run id> --name knowledge-sync-workflows
+git switch knowledge-sync && git pull
+git apply workflows.patch && git add .github/workflows
+git commit -m "security(sidecar): sync workflows from <tag>" && git push
+```
+
+Your push starts them, after you have read them. Without gh, the artifact is on the run's page. Merging without them leaves the workflows at the earlier release until the next sync holds them again.
+
+Or let the workflow push them once a person approves. Create an Environment, `knowledge-sync-review` say, with required reviewers and limited to the default branch, holding no secret, and set the repository variable `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` to its name. Each run that holds workflow changes then waits at `review`. The run's summary shows the held diff. Once a reviewer approves, `push-workflows` pushes the changes as a second commit on the branch. It checks first that the Environment has required reviewers, since one with none would approve itself, and pushes nothing otherwise. *Prevent self-review* helps where a second person can approve; on a repository with one maintainer it would stop every approval.
 
 **What a person decided holds.** A tag whose pull request a person closed without merging is not proposed again by the schedule. A run you start from the Actions tab may name a tag, and goes ahead in every case but one. A pull request that proposes that tag and is still open stops it, whether this workflow opened it or you did from a `sync-<tag>` branch. A pull request opened by hand for an older release is not seen, so merge or close it yourself.
 
 ### Setting it up
 
-The pull request changes files under `.github/workflows/`, which the job's own `GITHUB_TOKEN` may not push. So `publish` pushes and opens the pull request with one repository secret:
+The pin is under `.github/workflows/`, which the job's own `GITHUB_TOKEN` may not push. So `publish` pushes and opens the pull request with one secret, kept in the `knowledge-sync` Environment ([above](#keep-each-secret-in-its-environment)):
 
-| Repository secret | Value |
+| Secret, in the `knowledge-sync` Environment | Value |
 | --- | --- |
 | `KNOWLEDGE_SYNC_TOKEN` | a fine-grained personal access token (Settings, Developer settings, Personal access tokens, Fine-grained tokens) for this repository alone, with the repository permissions Contents, Pull requests and Workflows set to read and write, and an expiry you will renew. A GitHub App's installation token, made in a step of your own before `publish` pushes, serves the same |
 
@@ -274,11 +322,11 @@ The script the workflow runs is yours too. From the host, once the tag exists:
 .lokf/scripts/knowledge-sync.sh --branch v0.47.0   # the sync alone, on sync-v0.47.0, with the commit command printed
 ```
 
-Without `--source` it clones the tag from the address `knowledge-librarian.yaml` names; `--source <dir>` reads it from a clone you have. It refuses a tree with uncommitted changes, a branch that exists, and a tag that is not a published release. `--no-checks` skips the sidecar's checks, which the pull request's checks run again. The script reads the release's `knowledge-sync.manifest` and copies what it lists. A rule in it that your copy of the script does not know is reported and left for the next sync, once the copy the release brings is merged.
+Without `--source` it clones the tag from the address `knowledge-librarian.yaml` names; `--source <dir>` reads it from a clone you have. It refuses a tree with uncommitted changes, a branch that exists, and a tag that is not a published release. Run by hand, it copies the workflows too, since you read the diff before you push. Then it runs the sidecar's checks on the synced copies, which are the release's code running on your machine; `--no-checks` skips them, and the pull request's checks run them again. The script reads the release's `knowledge-sync.manifest` and copies what it lists. A rule in it that your copy of the script does not know is reported and left for the next sync, once the copy the release brings is merged.
 
 **Reviewing the pull request.** Read the diff as you would any change to a workflow or a script: the copies are what the host runs. The report at the top names the release, the files that moved and the pin, and says when the run refreshed an earlier diff. The release's own changelog, linked from the entry, says why each file changed. A sync that moves only the pin releases nothing new in the host apart from the pin, and still deserves the read: it decides what the librarian runs next. The `sync` job's summary holds the script's own lines, among them a copy that differed only on its action pins, which Dependabot bumped in the host first; the template's pins are back until the skills repository bumps them.
 
-A private host should turn harden-runner's egress policy from `audit` to `block` in the `sync` job, with the skills repository and GitHub allowed: that job clones the release with the host's checkout readable.
+A private host should turn harden-runner's egress policy from `audit` to `block` in the `sync` job, with the skills repository and GitHub allowed: that job clones the release with the host's checkout readable. The pull request's own checks run the release's scripts and site files with a read-only token, so the same holds for the jobs of `knowledge-registrar.yaml` and `knowledge-website.yaml`.
 
 ## `knowledge-ingest.yaml`: knowledge outside the repository
 
@@ -286,7 +334,7 @@ A bundle cites what the librarian can read, and the librarian reads the reposito
 
 It runs weekly (Sundays 04:10 UTC) and on demand, in two jobs:
 
-- **`ingest`** is read-only. It hands the script the repository secrets whose names start `KNOWLEDGE_INGEST_` and no other, reads the repository's visibility, and runs the host's own `.lokf/scripts/knowledge-ingest.sh`. The script lists each entry, fetches what moved, converts it, writes the mirror and the lock, and refuses what the manifest's caps and the repository's visibility do not allow. The change goes to `publish` as a patch, and the run's summary to the job's page.
+- **`ingest`** is read-only. It hands the script the secrets whose names start `KNOWLEDGE_INGEST_`, from the `knowledge-ingest` Environment, and no other, reads the repository's visibility, and runs the host's own `.lokf/scripts/knowledge-ingest.sh`. The script lists each entry, fetches what moved, converts it, writes the mirror and the lock, and refuses what the manifest's caps and the repository's visibility do not allow. The change goes to `publish` as a patch, and the run's summary to the job's page.
 - **`publish`** holds the write token and no secret. It refuses a patch that touches anything but `.lokf/mirror/` and the lock, applies it on a clean checkout, commits it as `knowledge-ingest[bot]`, pushes the branch `knowledge-ingest` and opens the pull request, or refreshes the open one. The body is the run's summary and then `.github/PULL_REQUEST_TEMPLATE/knowledge-ingest.md`, whose checklist is the reviewer's.
 
 **One pull request at a time, refreshed until it is merged.** A later run replaces the branch's one commit with today's mirror and writes the body again. A scheduled run also prunes: a mirror file whose source is gone or has left the selection, that no concept cites, and that an earlier run recorded so, is removed, and the diff shows it. A pull request a person added a commit to is left alone. One a person closed without merging is a no: a scheduled run proposes the mirror again only once `.lokf/ingest.yaml` has changed, and a run started by hand proposes it now. The librarian's Monday run then finds each concept whose mirror file moved in its work list, as it finds any moved source, and reads only those.
@@ -294,7 +342,7 @@ It runs weekly (Sundays 04:10 UTC) and on demand, in two jobs:
 ### Setting it up
 
 1. Copy `templates/ingest.yaml` to `.lokf/ingest.yaml` and replace its examples with your sources. Each `auth` block names environment variables, never a value.
-2. Store each credential as a repository secret of the name the manifest gives, such as `KNOWLEDGE_INGEST_ATLASSIAN_TOKEN`. For Confluence Cloud that is an API token with read scopes and an expiry, used as HTTP Basic with the account's email in `KNOWLEDGE_INGEST_ATLASSIAN_USER`; for a repository, a fine-grained token with Contents read.
+2. Store each credential as a secret in the `knowledge-ingest` Environment ([above](#keep-each-secret-in-its-environment)), under the name the manifest gives, such as `KNOWLEDGE_INGEST_ATLASSIAN_TOKEN`. For Confluence Cloud that is an API token with read scopes and an expiry, used as HTTP Basic with the account's email in `KNOWLEDGE_INGEST_ATLASSIAN_USER`; for a repository, a fine-grained token with Contents read.
 3. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General, which the `publish` job needs to open the pull request with the job's own token.
 4. Start one run from the Actions tab and read its summary. An entry that says *failed* with a credential's name is a secret not yet set; the run shows each such line as a warning too.
 

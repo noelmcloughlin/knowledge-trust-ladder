@@ -8,8 +8,11 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 1. a build resolves the members into a lock, loads one named graph per
    bundle plus the lock graph, gates clean, and writes the same bytes twice;
 2. a tampered checksum, a zip whose index.md names another base_iri, a zip
-   holding a symbolic link, and a domain that names a bundle already in the
-   federation each stop the build and leave the previous snapshot in place,
+   holding a symbolic link, a hidden file such as a .git folder or a file a
+   browser runs, a distribution name that is not one plain file name, and a
+   domain that names a bundle already in the federation each stop the build
+   and leave the previous snapshot in place, and the health line runs git on
+   no repository a member's zip could carry,
    as do a checksum that is not 64 hex digits, a namespace that nests with
    another's, a redirect out of http, and a zip that cannot be read; a
    download that meets a server error is tried again;
@@ -104,7 +107,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    again when the workspace was attached again with other bytes.
 10. under the librarian wrapper, `members` hands the job token that arrives
     as KNOWLEDGE_FEDERATE_TOKEN to gh alone, and with no credential at all
-    it stops and says which variables give it one;
+    it stops and says which variables give it one; the attestation must come
+    from the member's release workflow, and a gh too old to pin it is named;
 11. `members` moves a member its site serves to the file the site serves
     now, asking with the validators it kept, and `members --add <address>`
     drafts one from a site's concepts.jsonld;
@@ -158,8 +162,9 @@ def _sidecar_environment(tmp_path_factory):
         run(["uv", "run", "--quiet", "--project", REPO / ".lokf", "python", "-c", "pass"])
 
 
-def federate(host: Path, *args: str, **kw):
-    return run(["uv", "run", "--project", REPO / ".lokf", SCRIPT, "--root", host, *args], cwd=host, **kw)
+def federate(host: Path, *args: str, local: bool = True, **kw):
+    """The script on a host. The fixtures serve members from local files, which a build reads only with --allow-local."""
+    return run(["uv", "run", "--project", REPO / ".lokf", SCRIPT, "--root", host, *(["--allow-local"] if local else []), *args], cwd=host, **kw)
 
 
 def frontmatter(**fields) -> str:
@@ -181,12 +186,14 @@ def make_bundle(root: Path, base_iri: str, title: str, concepts: dict[str, dict]
     return k
 
 
-def zip_bundle(knowledge: Path, zip_path: Path, symlink: bool = False) -> str:
-    """The bundle as the release workflow packs it: root knowledge/, names sorted. Returns the sha256."""
+def zip_bundle(knowledge: Path, zip_path: Path, symlink: bool = False, extra: dict[str, str] | None = None) -> str:
+    """The bundle as the release workflow packs it: root knowledge/, names sorted, and any extra entries. Returns the sha256."""
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for p in sorted(knowledge.rglob("*")):
             if p.is_file():
                 zf.write(p, "knowledge/" + p.relative_to(knowledge).as_posix())
+        for name, content in (extra or {}).items():
+            zf.writestr(name, content)
         if symlink:
             info = zipfile.ZipInfo("knowledge/link.md")
             info.create_system = 3
@@ -671,7 +678,7 @@ def test_a_checksum_must_be_64_hex_digits(federation, tmp_path):
     assert victim.read_bytes() == b"kept"
 
 
-@pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate"])
+@pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate", "gitdir", "page", "name"])
 def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_path, fault):
     host = federation["host"]
     assert federate(host, "build", "--no-attestation").rc == 0
@@ -688,6 +695,23 @@ def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_pat
         sha = zip_bundle(federation["b"], federation["b_zip"], symlink=True)
         concept.write_text(text.replace(federation["b_sha"], sha), encoding="utf-8")
         expect = "symbolic link"
+    elif fault == "gitdir":
+        # git reads a .git folder in the unpacked member as a repository,
+        # and its configuration can name a command git runs.
+        marker = tmp_path / "ran"
+        sha = zip_bundle(federation["b"], federation["b_zip"], extra={
+            "knowledge/.git/HEAD": "ref: refs/heads/main\n",
+            "knowledge/.git/config": f"[core]\n\trepositoryformatversion = 0\n\tfsmonitor = \"touch {marker}; false\"\n",
+        })
+        concept.write_text(text.replace(federation["b_sha"], sha), encoding="utf-8")
+        expect = "is hidden"
+    elif fault == "page":
+        sha = zip_bundle(federation["b"], federation["b_zip"], extra={"knowledge/glossary/other.svg": "<svg onload='alert(1)'/>"})
+        concept.write_text(text.replace(federation["b_sha"], sha), encoding="utf-8")
+        expect = "a file a browser runs"
+    elif fault == "name":
+        concept.write_text(text.replace("name: b.zip", "name: ../../../.lokf/scripts/knowledge-report.sh"), encoding="utf-8")
+        expect = "must be one plain file name"
     else:
         concept.write_text(text.replace("base_iri: https://b.example/knowledge/", "base_iri: https://a.example/knowledge/"), encoding="utf-8")
         expect = "already in the federation"
@@ -695,6 +719,32 @@ def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_pat
     assert r.rc == 1 and expect in r.out, r.out
     assert (host / "snapshot" / "graph.nq").read_bytes() == before, "the previous snapshot stays"
     assert not (host / "snapshot.new").exists()
+    assert not (tmp_path / "ran").exists(), "nothing in the member's zip ran"
+    assert read(host / ".lokf" / "scripts" / "knowledge-report.sh") == read(SCRIPTS / "knowledge-report.sh"), "the host's report script is its own"
+
+
+@needs_uv
+def test_the_report_on_a_member_reads_no_git_configuration_from_it(tmp_path):
+    """The member's folder holds what its zip held, so the health line runs git on no repository there."""
+    member_root = tmp_path / "workspace" / "bundles" / "b"
+    k = make_bundle(member_root / ".lokf", "https://b.example/knowledge/", "B", {})
+    marker = tmp_path / "ran"
+    write(k / ".git" / "HEAD", "ref: refs/heads/main\n")
+    write(k / ".git" / "config", f"[core]\n\trepositoryformatversion = 0\n\tfsmonitor = \"touch {marker}; false\"\n")
+    (k / ".git" / "objects").mkdir()
+    (k / ".git" / "refs").mkdir()
+    host = tmp_path / "host"
+    write(host / ".lokf" / "scripts" / "knowledge-report.sh", read(SCRIPTS / "knowledge-report.sh"))
+    Git(tmp_path).init()
+    code = (
+        "import importlib.util, pathlib, sys\n"
+        f"spec = importlib.util.spec_from_file_location('kf', {str(SCRIPT)!r})\n"
+        "kf = importlib.util.module_from_spec(spec); spec.loader.exec_module(kf)\n"
+        f"print(kf.health_line(pathlib.Path({str(host)!r}), pathlib.Path({str(member_root)!r})))\n"
+    )
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", code], cwd=tmp_path)
+    assert r.rc == 0 and "Confirmed by a person" in r.out, r.out
+    assert not marker.exists(), "git ran the member's fsmonitor command"
 
 
 def test_a_member_that_is_a_domain_is_followed(federation, tmp_path):
@@ -1500,6 +1550,33 @@ def test_a_download_is_tried_again_after_a_server_error_and_follows_no_redirect_
         assert r.rc == 1 and "takes a workspace folder or a workspace-<tag>.zip, not a site" in r.out, r.out
 
 
+def test_a_member_at_a_local_path_or_a_private_address_needs_an_opt_in(federation, tmp_path):
+    """A check fetches a member a pull request proposes before any person has read it, so a build reaches local files only with --allow-local, and the host's own network only as a person confirmed on the Domain concept."""
+    host, a_iri, b_iri, d_iri = federation["host"], federation["a_iri"], federation["b_iri"], federation["d_iri"]
+    r = federate(host, "build", "--no-attestation", local=False)
+    assert r.rc == 1 and "needs --allow-local" in r.out, r.out
+    files = tmp_path / "files"
+    files.mkdir()
+    shutil.copy(federation["a_zip"], files / "a.zip")
+    shutil.copy(federation["b_zip"], files / "b.zip")
+    with serving(files, tmp_path / "server") as (url, _):
+        for slug, iri in (("a", a_iri), ("b", b_iri)):
+            fm = member(slug, iri, federation[f"{slug}_zip"], federation[f"{slug}_sha"], d_iri + "domains/federation")
+            fm["distribution"][0]["access_url"] = url + f"{slug}.zip"
+            rewrite(host, slug, fm)
+        r = federate(host, "build", "--no-attestation", local=False)
+        assert r.rc == 1 and "is a private address" in r.out, r.out
+        domain = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+        text = read(domain)
+        # Set as it stands but not confirmed, it opens nothing, even to a check.
+        write(domain, text.replace("unowned_targets: fail\n", "unowned_targets: fail\nprivate_addresses: allow\n").replace("verified:", "unverified:"))
+        r = federate(host, "build", "--no-attestation", "--verify-only", local=False)
+        assert r.rc == 1 and "is a private address" in r.out and "waits for a person's confirmation" in r.out, r.out
+        write(domain, text.replace("unowned_targets: fail\n", "unowned_targets: fail\nprivate_addresses: allow\n"))
+        r = federate(host, "build", "--no-attestation", local=False)
+        assert r.rc == 0 and "a person confirmed private_addresses: allow" in r.out, r.out
+
+
 def test_the_readers_read_a_workspace_from_its_zip_or_the_site_that_serves_it(federation, served_workspace, tmp_path):
     """The MCP server reads the workspace as a site serves it, and as a workspace-<tag>.zip, as it reads the folder.
 
@@ -1627,12 +1704,17 @@ finally:
 # a real repository.
 FAKE_GH = """\
 #!/bin/sh
+[ "$1" = --version ] && { echo "gh version ${FAKE_GH_VERSION:-2.102.0} (2026-09-30)"; exit 0; }
 [ "$1 $2" = "pr list" ] && { printf '%s\\n' "${FAKE_GH_PRS:-[]}"; exit 0; }
 if [ "$1" = api ] && [ -n "${FAKE_GH_API:-}" ]; then
   repo=$(printf '%s' "$2" | cut -d/ -f3)
   cat "$FAKE_GH_API/$repo.json" && exit 0
 fi
 if [ "$1 $2" = "attestation verify" ]; then
+  case "$*" in
+    *" --signer-workflow acme/"*"/.github/workflows/knowledge-release.yaml"*) ;;
+    *) echo "gh: the attestation was not signed by the workflow named" >&2; exit 1 ;;
+  esac
   [ "${GH_TOKEN:-}" = job-token ] && [ -z "${KNOWLEDGE_FEDERATE_TOKEN:-}" ] && exit 0
   echo "gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable." >&2
 fi
@@ -1772,7 +1854,7 @@ def released(tmp_path):
 def members_run(released, *args: str, prs: str = "[]", stdout_only: bool = False, attest: bool = False, env: dict | None = None):
     tmp = released["tmp"]
     return run(["uv", "run", "--project", REPO / ".lokf", tmp / "runner.py", SCRIPT, tmp / "served.json",
-                "--root", released["host"], "members", *([] if attest else ["--no-attestation"]), *args],
+                "--root", released["host"], "--allow-local", "members", *([] if attest else ["--no-attestation"]), *args],
                cwd=released["host"], env={"PATH": f"{tmp / 'bin'}:{os.environ['PATH']}", "FAKE_GH_PRS": prs, **(env or {})},
                stdout_only=stdout_only, unset=("GH_TOKEN", "GITHUB_TOKEN", "KNOWLEDGE_FEDERATE_TOKEN"))
 
@@ -1946,7 +2028,12 @@ def test_members_hands_the_job_token_to_gh_alone(released):
     r = members_run(released, "--dry-run", attest=True)
     assert r.rc != 0 and "gh has no credential" in r.out and "AGENT_API_KEY_ENV to KNOWLEDGE_FEDERATE_TOKEN" in r.out, r.out
     r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token"})
-    assert r.rc == 0 and "attested by acme/a" in r.out, r.out
+    assert r.rc == 0 and "attested by knowledge-release.yaml of acme/a" in r.out and "loosely" not in r.out, r.out
+    # gh before 2.102.0 matches the signer workflow as a prefix, and says so.
+    r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token", "FAKE_GH_VERSION": "2.90.0"})
+    assert r.rc == 0 and "matched loosely by gh 2.90.0" in r.out, r.out
+    r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token", "FAKE_GH_VERSION": "2.40.0"})
+    assert "cannot pin the workflow that signed an attestation" in r.out, r.out
 
 
 def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path):

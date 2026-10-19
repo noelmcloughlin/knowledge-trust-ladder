@@ -148,10 +148,12 @@ jobs:
       # release build does.
       - name: Fetch and verify every member's zip, and gate as the next release would
         env:
-          GH_TOKEN: ${{ github.token }}
+          # Under the name the script takes it by and removes from its own
+          # environment, so it reaches gh alone, never lokf or git.
+          KNOWLEDGE_FEDERATE_TOKEN: ${{ github.token }}
           PREVIOUS: ${{ steps.previous.outputs.zip }}
         run: |
-          visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
+          visibility="$(GH_TOKEN="$KNOWLEDGE_FEDERATE_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
           uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "$visibility" \
             --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" ${PREVIOUS:+--previous "$PREVIOUS"}
 
@@ -228,7 +230,7 @@ jobs:
         if: hashFiles('website/package-lock.json') != ''
         working-directory: website
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run build
 
       # The workspace the release before this one carries: the build holds
@@ -273,10 +275,12 @@ jobs:
       - name: Build the workspace from the tag
         if: steps.what.outputs.release == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          # Under the name the script takes it by and removes from its own
+          # environment, so it reaches gh alone, never lokf or git.
+          KNOWLEDGE_FEDERATE_TOKEN: ${{ github.token }}
           PREVIOUS: ${{ steps.previous.outputs.zip }}
         run: |
-          visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
+          visibility="$(GH_TOKEN="$KNOWLEDGE_FEDERATE_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
           uv run --project .lokf .lokf/scripts/knowledge-federate.py build \
             --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "$visibility" \
             ${PREVIOUS:+--previous "$PREVIOUS"}

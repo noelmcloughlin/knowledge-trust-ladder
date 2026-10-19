@@ -338,3 +338,47 @@ def test_the_workspace_view_links_a_node_only_to_an_http_iri():
     component = read(SITE_TEMPLATES / "src" / "components" / "KnowledgeGraph.astro")
     assert "if (workspace ? /^https?:\\/\\//i.test(String(d.id)) : !!d.concept_id) {" in component
     assert "page.href = workspace ? d.id" in component
+
+
+RAW_HTML_CASES = {
+    # Passed as they are: what the repositories' own pages use.
+    '<picture><source media="(prefers-color-scheme: dark)" srcset="a-dark.svg"><img src="a.svg" alt="A" width="600"></picture>':
+        '<picture><source media="(prefers-color-scheme: dark)" srcset="a-dark.svg"><img src="a.svg" alt="A" width="600"></picture>',
+    '<p align="center"><a href="https://w3id.org/ktl/">KTL</a></p>': '<p align="center"><a href="https://w3id.org/ktl/">KTL</a></p>',
+    "<details>": "<details>",
+    "</details>": "</details>",
+    "<!-- a note -->": "<!-- a note -->",
+    # Kept, with what GitHub drops dropped.
+    '<img src="badge.svg" style="height:20px" onerror="alert(1)">': '<img src="badge.svg">',
+    '<a href="javascript:alert(1)">x</a>': "<a>x</a>",
+    '<a href="jav&#x09;ascript:alert(1)">x</a>': "<a>x</a>",
+    '<img srcset="ok.png 1x, data:image/svg+xml,x 2x">': "<img>",
+    # Shown as text.
+    "<script>alert(1)</script>": None,
+    "<iframe src=https://example.test></iframe>": None,
+    '<img src=x onerror=alert(1)>': None,
+    "<svg onload=alert(1)>": None,
+    "<id>": None,
+    "<!-- open": None,
+}
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_raw_html_passes_only_as_github_renders_it(tmp_path):
+    """A tag GitHub allows keeps the attributes it allows, an unsafe address is dropped, and anything else is shown as text."""
+    cases = write(tmp_path / "cases.json", json.dumps(list(RAW_HTML_CASES)))
+    script = write(tmp_path / "check.mjs",
+                   f"import {{ readFileSync }} from 'node:fs';\n"
+                   f"import {{ cleanRawHtml }} from {json.dumps(str(SITE_TEMPLATES / 'scripts' / 'raw-html.mjs'))};\n"
+                   f"console.log(JSON.stringify(JSON.parse(readFileSync({json.dumps(str(cases))}, 'utf8')).map((f) => cleanRawHtml(f).html)));\n")
+    result = run(["node", script], stdout_only=True)
+    got = dict(zip(RAW_HTML_CASES, json.loads(result.out)))
+    for fragment, want in RAW_HTML_CASES.items():
+        assert got[fragment] == want, (fragment, got[fragment])
+
+
+def test_the_markdown_plugin_checks_raw_html_on_every_page():
+    plugin = read(SITE_TEMPLATES / "scripts" / "markdown-ktl.mjs")
+    assert 'if (!source) return { name: "ktl-raw-html", html:' in plugin, "a page the sync did not write still gets the raw HTML check"
+    assert "cleanHtmlNode(node, ctx, source, rewriteHtml(source, node.value))" in plugin
+    assert "cleanHtmlNode" in read(SITE_TEMPLATES / "scripts" / "sync.mjs"), "the feed's HTML gets the same check"

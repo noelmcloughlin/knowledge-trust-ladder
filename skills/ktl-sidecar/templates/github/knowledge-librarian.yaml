@@ -135,6 +135,12 @@ jobs:
     # propose that change again. A run a person starts goes ahead.
     if: github.event_name != 'schedule' || needs.earlier.outputs.open == ''
     runs-on: ubuntu-latest
+    # AGENT_API_KEY and AGENT_CLI, when it is a secret, belong in this
+    # Environment, limited to the default branch, so a workflow on any other
+    # branch cannot read them. It records no deployment.
+    environment:
+      name: knowledge-librarian
+      deployment: false
     permissions:
       contents: read # read the repo only; no write token near the agent
       # Lets the job token pay for Copilot CLI requests. The token reaches the
@@ -230,11 +236,12 @@ jobs:
         with:
           node-version: "22"
 
-      # Set this up under Settings -> Secrets and variables -> Actions, as
-      # repository variables and secrets: this job names no environment, so it
-      # never sees an environment's. The
-      # sidecar's references/automation.md gives the full commands for Copilot
-      # CLI and for Claude Code.
+      # Set this up under Settings -> Secrets and variables -> Actions: the
+      # variables on the repository, and the secrets on the
+      # knowledge-librarian Environment, limited to the default branch (a
+      # repository secret still works, but any branch's workflow can read
+      # it). The sidecar's references/automation.md gives the full commands
+      # for Copilot CLI and for Claude Code.
       #   1. Set KNOWLEDGE_LIBRARIAN_ENABLED to "true" to turn on the run.
       #      Anything else (or unset) leaves this step skipped, a safe no-op.
       #   2. Set AGENT_CLI to your non-interactive agent command; the wrapper

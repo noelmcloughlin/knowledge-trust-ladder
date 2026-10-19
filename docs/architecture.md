@@ -65,7 +65,7 @@ At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is 
   </picture>
 </p>
 
-As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-architecture.svg), [dark](../.assets/companions/ktl-architecture-dark.svg).
+***As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-architecture.svg), [dark](../.assets/companions/ktl-architecture-dark.svg).***
 
 In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins work inside the editor. [KTL Registrar](https://w3id.org/ktl/registrar/) does the registrar's work, checking each record as it is typed. [KTL Curator](https://w3id.org/ktl/curator/) is the curator's assistant, and runs this repository's `ktl-curator` review session with no agent in the loop ([The bundle in Obsidian](obsidian.md)).
 
@@ -95,7 +95,7 @@ The **curator** reports each concept's trust record in plain words:
   </picture>
 </p>
 
-As a flow diagram, drawn with Archify: [light](../.assets/companions/trust-ladder.svg), [dark](../.assets/companions/trust-ladder-dark.svg).
+***As a flow diagram, drawn with Archify: [light](../.assets/companions/trust-ladder.svg), [dark](../.assets/companions/trust-ladder-dark.svg).***
 
 The labels are computed from the frontmatter on every read, never stored, so they cannot drift from what they describe. Each is a signal for the reader to weigh, never a score. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
 

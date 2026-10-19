@@ -75,10 +75,10 @@ Zero hits means fully resolved. Then `node website/scripts/config.mjs` prints wh
 ## Step 4 - Build
 
 ```bash
-cd website && npm ci && npm run build
+cd website && npm ci --ignore-scripts && npm run build
 ```
 
-`npm ci` installs the pinned packages, and `npm run build` runs the sync (`lokf export` from `.lokf/`'s own environment, the report script, the pages), the build, and a check of every link between the pages. A schema or data folder not built yet is built first, with its command. The three errors a first build meets: a docs page with no group (`DOCS.groups` is out of step), a home source with no `#` title (`HOME.source`), and a missing `knowledge-report.sh` (the sidecar repair). `npm run dev` serves the site at `http://localhost:4321<BASE>/`. Commit `website/`; the generated folders are ignored. With no Node.js or uv, report the build as skipped: the workflow builds in CI. [references/inputs.md](references/inputs.md) says what each page is built from.
+`npm ci --ignore-scripts` installs the pinned packages and runs none of their install scripts, and `npm run build` runs the sync (`lokf export` from `.lokf/`'s own environment, the report script, the pages), the build, and a check of every link between the pages. A schema or data folder not built yet is built first, with its command. The three errors a first build meets: a docs page with no group (`DOCS.groups` is out of step), a home source with no `#` title (`HOME.source`), and a missing `knowledge-report.sh` (the sidecar repair). `npm run dev` serves the site at `http://localhost:4321<BASE>/`. Commit `website/`; the generated folders are ignored. With no Node.js or uv, report the build as skipped: the workflow builds in CI. [references/inputs.md](references/inputs.md) says what each page is built from.
 
 ## Step 5 - Install the deploy workflow (optional)
 

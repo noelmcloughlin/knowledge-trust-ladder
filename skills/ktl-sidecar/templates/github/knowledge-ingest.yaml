@@ -15,8 +15,8 @@ name: Knowledge ingest
 # a scheduled run proposes the mirror again only once .lokf/ingest.yaml has
 # changed, and a run a person starts proposes it now.
 #
-# Two jobs. `ingest` holds the repository secrets whose names start
-# KNOWLEDGE_INGEST_ and a read-only token, runs the script, and hands the
+# Two jobs. `ingest` holds the secrets whose names start KNOWLEDGE_INGEST_,
+# kept in the knowledge-ingest Environment, and a read-only token, runs the script, and hands the
 # change on as a patch. `publish` holds the write token and no secret,
 # refuses a patch outside the mirror and the lock, and opens or refreshes
 # the pull request with GITHUB_TOKEN, which needs "Allow GitHub Actions to
@@ -58,6 +58,12 @@ jobs:
     if: vars.KNOWLEDGE_INGEST_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The KNOWLEDGE_INGEST_ secrets belong in this Environment, limited to
+    # the default branch, so a workflow on any other branch cannot read
+    # them. It records no deployment.
+    environment:
+      name: knowledge-ingest
+      deployment: false
     permissions:
       contents: read # read the repository and its visibility; no write token near the fetched content
     outputs:
@@ -78,8 +84,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      # The repository secrets whose names start KNOWLEDGE_INGEST_, and no
-      # other, reach the job's environment. A value that spans lines is left
+      # The secrets whose names start KNOWLEDGE_INGEST_, from the
+      # knowledge-ingest Environment or the repository, and no other, reach
+      # the job's environment. A value that spans lines is left
       # out, since a token is one line.
       - name: Hand over the ingest secrets
         env:

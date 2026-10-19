@@ -47,7 +47,7 @@ The commands above install for your user. The scheduled librarian run installs `
 
 ## Turn on the workflows
 
-Each workflow the skills install does nothing until a repository variable turns it on. Set these under Repository variables (Settings, Secrets and variables, Actions, Variables), never on an environment such as `release`, which the workflows cannot read. [The sidecar's automation page](../skills/ktl-sidecar/references/automation.md#switches-and-where-they-go) lists every switch and secret, and where each goes. The workflows are GitHub Actions. On GitLab, Codeberg, Forgejo or Gitea, [the sidecar's portability page](../skills/ktl-sidecar/references/portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says what their CI runs instead, and what the forge-free gate replaces.
+Each workflow the skills install does nothing until a repository variable turns it on. Set these under Repository variables (Settings, Secrets and variables, Actions, Variables), never on an Environment, which a job's `if:` cannot read. Put each secret in the Environment of the workflow that reads it, limited to the default branch, never as a repository secret that any branch's workflow can read. [The sidecar's automation page](../skills/ktl-sidecar/references/automation.md#switches-and-where-they-go) lists every switch and secret, and where each goes. The workflows are GitHub Actions. On GitLab, Codeberg, Forgejo or Gitea, [the sidecar's portability page](../skills/ktl-sidecar/references/portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says what their CI runs instead, and what the forge-free gate replaces.
 
 ## Pin to one tag
 
