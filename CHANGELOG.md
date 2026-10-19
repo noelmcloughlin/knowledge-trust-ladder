@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **An agent that applies its own patch no longer loses a scheduled run's work.** The wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY` for the agent, so the pen only checks the patch file there and leaves it for the wrapper to apply. The skill and the pen's dry-run line no longer tell a scheduled agent to apply and validate.
+
 ## [0.53.0] - 2026-10-19
 
 ### Added

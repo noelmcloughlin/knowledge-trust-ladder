@@ -122,6 +122,23 @@ printf '\nedited by the fake agent\n' >> "$EDIT_PATH"
 printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
 """,
         ),
+        # Writes the patch, checks it, then applies it itself through the pen's
+        # shell entry or its Python, as run 39289704507's agent did.
+        "self-apply-sh": executable(
+            d / "self-apply-sh-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+bash .lokf/scripts/knowledge-apply.sh --dry-run >/dev/null 2>&1 || exit 9
+bash .lokf/scripts/knowledge-apply.sh >/dev/null 2>&1 || true
+""",
+        ),
+        "self-apply-py": executable(
+            d / "self-apply-py-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+uv run --quiet .lokf/scripts/knowledge-apply.py --root . >/dev/null 2>&1 || true
+""",
+        ),
         # Rewrites .git/config and .git/hooks/, then fails or gets the job cancelled.
         "poison": executable(
             d / "poison-agent.sh",
@@ -270,6 +287,16 @@ def test_a_patch_file_is_applied_by_the_pen_and_a_refused_one_writes_nothing(tmp
         f"{shape}: a refused patch did not fail the run cleanly (exit {status}, wrote {wrote})"
     )
 
+
+
+@pytest.mark.parametrize("agent", ["self-apply-sh", "self-apply-py"])
+def test_an_agent_that_applies_its_own_patch_leaves_it_for_the_wrapper(host, agents, agent):
+    status = wrapper(host, {"AGENT_CLI": agents[agent], "PATCH_TEXT": CREATE_OP, "KNOWLEDGE_PEN_DRY_RUN_ONLY": "1"})
+    wrote = (host / ".lokf" / "knowledge" / "playbooks" / "b.md").is_file()
+    patch_left = (host / ".lokf" / "patch.yaml").exists()
+    assert (status, wrote, patch_left) == (0, True, False), (
+        f"{agent}: the patch was not left for the wrapper to apply (exit {status}, wrote {wrote}, patch left {patch_left})"
+    )
 
 @pytest.mark.parametrize(("way", "want"), [("fail", 7), ("term", 143)])
 def test_the_wrapper_restores_git_config_and_hooks_on_every_way_out(host, agents, way, want):
