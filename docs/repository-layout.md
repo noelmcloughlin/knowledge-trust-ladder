@@ -26,8 +26,9 @@ docs/
   architecture.en-simple.md  the architecture page retold for readers aged 13 to 18
   install.md            the quick start, every way to install the six skills, and pinning to one release
   for-the-curious.md    the architecture's mechanics: four levels of checking, domain schemas
-  context-layer.md      the context layer: one bundle, and a federation of bundles
-  context-layer-technology.md  the stores, catalogues, agent surfaces and artifact repositories it integrates with
+  context-layer.md      the context layer: what it is, one bundle as one, and why bundles federate
+  federation.md         a federation of bundles: domains, tiers, the workspace and the decisions
+  context-layer-technology.md  the products a workspace can use: artifact repositories, stores, catalogues, agents
   obsidian.md           the bundle as a vault of its own, and the two plugins
   m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first
   ingest.md             knowledge outside the repository: the manifest, the mirror and the ingest pull request
@@ -43,6 +44,7 @@ docs/
   examples/
     docent.md           eight captured docent answers against this repository's own bundle
     curator.md          placeholder: the curator sessions still to capture
+    prose.md            captured ktl-prose runs that write for younger readers
 scripts/
   validate-repository.sh   the contract: the checks validate.yml runs on this repository's own files
   smoke-test-install.sh    installs the six skills into a throwaway repo and checks them

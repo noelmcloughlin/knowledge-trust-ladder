@@ -9,53 +9,25 @@ Below, *the toolkit* is `lokf` at 0.8.0, the floor the sidecar pins. A bundle le
 - RDF, as Turtle, N-Triples, JSON-LD or TriG from `lokf convert`, and as the four files `lokf export` writes;
 - tables, as CSV, Parquet or SQLite from `lokf tables`.
 
-The workspace adds one named graph per bundle and a registry keyed by `base_iri`.
+A domain's workspace adds `graph.nq`, one named graph per bundle, and a registry keyed by `base_iri`.
 
 ## Find your case
 
-| Role in the workspace | What the toolkit does today | Where a product fits |
+| Role in the workspace | What KTL does today | Where a product fits |
 | --- | --- | --- |
-| Artifact repository | The sidecar's release workflow attaches the bundle zip, its checksum and an attestation to a GitHub release | Any repository that stores a file and sends a webhook on arrival |
-| Store | `lokf serve` and `lokf query` run SPARQL over one bundle in an in-process Oxigraph store | A store that loads N-Quads or TriG and answers SPARQL 1.1 |
-| Agent surface | `lokf mcp` exposes seven tools over one bundle; the **docent** runs in any agent that installs it | A store's own Model Context Protocol (MCP) server or natural-language layer |
-| Catalogue or semantic layer | `lokf tables` writes one table per concept type and a relations table, with BigQuery or Athena definitions | A catalogue that takes tables or YAML and not RDF |
-| Stable identifiers | `base_iri` in each bundle's `index.md` | A persistent-identifier service, and a static host for exported files |
-
-## Artifact repositories
-
-| Product | What it takes | How it notifies |
-| --- | --- | --- |
-| GitHub Releases | "Each file included in a release must be under 2 GiB", and "Up to 1000 release assets may be associated with a single release." The template workflow uploads the zip and its `.sha256` here and records an attestation that `gh attestation verify` checks | The `release` event. GitHub Packages has no generic format, so a zip reaches `ghcr.io` only as an Open Container Initiative (OCI) artifact |
-| JFrog Artifactory | "You can define a repository as Generic, where you can upload packages of any type." | A webhook on the `deployed` artifact event, filtered by repository and path; JFrog's own example starts a GitHub Actions workflow through `workflow_dispatch` |
-| Sonatype Nexus Repository | The raw format: "A simple `HTTP PUT` can upload files." | Webhooks "defined as an HTTP callback", signed with "a sha1 hash of the JSON body using a shared secret key" |
-| GitLab generic package registry | "Use the generic packages repository to publish and manage generic files"; one `PUT` per file, up to 5 GB on object storage | Project webhooks and pipelines |
-| Cloudsmith raw | "Any file, any extension, suitable for datasets, images or whatever you want to throw at it"; not on the Core plan | Webhooks such as `package.synced`, with a hash-based message authentication code (HMAC) in `X-Cloudsmith-Signature` |
-| An OCI registry with ORAS | "the ORAS project provides a way to push and pull OCI Artifacts to and from OCI Registries"; the compatibility list names GitHub's, Amazon's, Azure's and Google's registries, Artifactory and Harbor | The registry's own events; cosign signs the blob keyless through OpenID Connect, or `actions/attest` records provenance |
-
-Two services sit beside the repository. w3id.org, "a secure, permanent URL redirection service run by the W3C Permanent Identifier Community Group", gives a bundle a `base_iri` that outlives its host. A namespace is registered by pull request. GitHub Pages, "a static site hosting service" with sites "no larger than 1 GB" and "a soft bandwidth limit of 100 GB per month", is enough to serve `lokf export`'s files as the LOKF specification's producer contract asks.
+| Artifact repository | The sidecar's release workflow attaches the bundle zip, its checksum and an attestation to a GitHub release | Any repository that stores a file and sends a webhook on arrival: a generic repository in JFrog Artifactory, Sonatype Nexus or GitLab, or an OCI registry through ORAS. JFrog documents Artifactory's webhook starting a GitHub Actions workflow through `workflow_dispatch` |
+| Store | `knowledge-federate.py serve` answers SPARQL over the workspace, and `lokf serve` over one bundle, in an in-process Oxigraph store | A store that loads N-Quads and answers SPARQL 1.1 ([below](#rdf-stores-with-sparql)) |
+| Agent surface | `knowledge-federate.py mcp` is the `lokf-registry` MCP server over the workspace, `lokf mcp` serves one bundle, and the **docent** runs in any agent that installs it | A store's own MCP server or natural-language layer ([below](#agent-facing-retrieval)) |
+| Catalogue or semantic layer | `lokf tables` writes the concepts and their relations as tables | A catalogue that takes tables or YAML rather than RDF ([below](#catalogues-and-semantic-layers)) |
+| Stable identifiers | `base_iri` in each bundle's `index.md` | w3id.org, a permanent redirection service, for a `base_iri` that outlives its host, and a static host such as GitHub Pages for the files `lokf export` writes |
 
 ## RDF stores with SPARQL
 
-Each store below answers SPARQL 1.1. The third column says whether its documentation lists TriG or N-Quads as a load format, which keeps one named graph per bundle through the load.
-
-| Store | Hosting | TriG or N-Quads | How a graph gets in | Agent features |
-| --- | --- | --- | --- | --- |
-| Oxigraph | self-hosted or embedded; the toolkit's own engine | both; the server implements "the SPARQL 1.1 Protocol and the SPARQL 1.1 Graph Store Protocol" | `oxigraph load --file x.nq`, a `POST` to `/store`, SPARQL Update | none |
-| Apache Jena Fuseki | self-hosted | both | the Graph Store protocol, SPARQL Update, `tdb2.tdbloader --graph` | none |
-| GraphDB (Graphwise) | self-hosted; AWS and Azure images; an AWS Marketplace managed evaluation "limited to a 6-month term" | "Support for all RDF serialization formats"; import into a context | Workbench, server files, the SPARQL endpoint, ImportRDF preload | Talk to Your Graph, "a chatbot that lets you converse with your data", and an MCP gateway with `sparql_query` |
-| Stardog | self-managed, or Stardog Cloud, "a fully-managed Stardog platform on AWS" | both | `stardog data add --named-graph`, the Graph Store protocol, SPARQL `LOAD` from S3 | Voicebox "translates natural language queries into SPARQL queries", with an MCP server |
-| OpenLink Virtuoso | self-hosted; AWS and Azure images | both; "the graph name specified in such dataset files in quad format will always be used" | the bulk loader, SPARQL Update, the Graph Store protocol | OPAL, with "AI Agent Deployment with Skills from Stored Procedures, OpenAPI, MCP Servers" |
-| QLever | self-hosted | N-Quads only | an index built from N-Triples, Turtle or N-Quads, then SPARQL Update | none |
-| Eclipse RDF4J | self-hosted | both | the Workbench, a REST API, SPARQL Update | none |
-| AllegroGraph (Franz) | on-premises, or AllegroGraph Cloud | both | `agload`, data import | "integration with Large Language Models", natural language to SPARQL |
-| MarkLogic 12 (Progress) | self-hosted | both: "A document with a file extension of `.nq` or `.trig` is identified as quad data" | `/v1/graphs`, "an implementation of the W3C Graph Store HTTP Protocol", and the content pump | none stated |
-| Amazon Neptune | managed, AWS only | N-Quads only; "Amazon Neptune associates every triple with a named graph" | the bulk loader from S3, with `namedGraphUri` for triple files; SPARQL Update | its MCP server speaks openCypher and Gremlin, not SPARQL |
-
-Azure and Google Cloud offer no SPARQL service: Cosmos DB for Apache Gremlin, Graph in Microsoft Fabric and Spanner Graph speak Gremlin or GQL. A workspace on either cloud runs one of the stores above on a virtual machine or a marketplace image, or takes the tables route below.
-
-**Property-graph stores.** The bridge from RDF is narrow. Neo4j's neosemantics (n10s) imports "Turtle, N-Triples, JSON-LD, RDF/XML, TriG and N-Quads" and keeps named graphs, but "is only available for Neo4j self-hosted (CE and EE) and is not available in Aura". Amazon Neptune Analytics loads N-Triples from S3 and drops the graph names. Memgraph, TigerGraph and FalkorDB document no RDF import and take tables.
+The workspace's graph is `graph.nq`, in N-Quads, and every SPARQL 1.1 store surveyed loads N-Quads with its named graphs: among them Oxigraph, the toolkit's own engine, Apache Jena Fuseki, GraphDB, Stardog, OpenLink Virtuoso and Amazon Neptune. What separates them is hosting, scale and price, which their own documentation covers. Managed SPARQL exists on AWS, through Amazon Neptune and marketplace offerings such as GraphDB's, and natively on neither Azure nor Google Cloud, whose graph services speak Gremlin or GQL. There, a store runs on a virtual machine or a marketplace image, or the bundle takes the tables route. Among the property-graph stores surveyed, only Neo4j's neosemantics imports N-Quads with their named graphs, and only on self-hosted Neo4j, not on Aura; the others take the tables.
 
 ## Catalogues and semantic layers
+
+`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalogue below that takes tables can read that output. The tables carry the structure and the frontmatter; the bound predicates, the meaning a graph carries, stay in the RDF.
 
 | Product | What a bundle can feed it | What comes out |
 | --- | --- | --- |
@@ -71,39 +43,18 @@ The OKF repository's README names the places an OKF bundle can be consumed by re
 
 ## Agent-facing retrieval
 
-The Model Context Protocol (MCP) is "an open protocol that enables seamless integration between LLM applications and external data sources and tools". The toolkit's `lokf mcp` serves one bundle today, the stores above bring servers of their own, and Microsoft 365 Copilot takes the **docent** as a skill ([m365.md](m365.md)).
-
-The retrieval frameworks that build graphs, among them Amazon Bedrock Knowledge Bases GraphRAG, Microsoft GraphRAG, LightRAG, Cognee and Graphiti, each extract a graph of their own from text. None consumes a bundle's graph, and only Cognee reads an RDF file, as an optional ontology that validates the nodes it extracts. So the workspace's agent surface is the store's: SPARQL behind an MCP server, with the index served first. The frameworks can still read the bundle's Markdown as documents, as OKF expects.
-
-## The tables route
-
-`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalogue above that takes tables can read that output. The tables carry the structure and the frontmatter; the bound predicates, the meaning a graph carries, stay in the RDF.
-
-## What fits a Markdown-plus-RDF bundle
-
-- Stores whose documentation lists TriG or N-Quads keep one named graph per bundle through the load: Oxigraph, Jena, GraphDB, Stardog, Virtuoso, RDF4J, AllegroGraph and MarkLogic. QLever and Neptune take N-Quads and not TriG.
-- Managed SPARQL exists on AWS, through Neptune, Stardog Cloud, GraphDB's marketplace offerings and AllegroGraph Cloud, and natively on neither Azure nor Google Cloud.
-- Among catalogues, only data.world is SPARQL-native, and it takes Turtle per dataset rather than TriG. Fabric IQ takes the schema, with loss; the lakehouse catalogues take the tables; Knowledge Catalog takes the OKF bundle itself.
-- The property-graph bridge is n10s on self-hosted Neo4j, and nothing on Aura.
-- No retrieval framework surveyed consumes RDF as its graph. The RDF-native agent surfaces are the stores' MCP servers and the toolkit's.
-- Every artifact repository surveyed stores a zip and its checksum. Artifactory, Nexus and Cloudsmith send a filtered or signed webhook on arrival, and an OCI registry adds a signature through ORAS and cosign.
-- w3id.org gives a bundle a `base_iri` that outlives its host, and GitHub Pages serves `lokf export`'s files within its limits.
+A workspace's agent surface is the sidecar's `lokf-registry` MCP server, or a store's own. GraphDB and Stardog, among others, bring an MCP server and a natural-language layer of their own, while Amazon Neptune's MCP server speaks openCypher and Gremlin, not SPARQL. Microsoft 365 Copilot takes the **docent** as a skill ([m365.md](m365.md)). Graph-building retrieval frameworks, such as Microsoft GraphRAG and Amazon Bedrock Knowledge Bases GraphRAG, extract a graph of their own from text and consume no bundle's graph. They can still read the bundle's Markdown as documents, as OKF expects.
 
 ## Sources
 
 - Oxigraph: <https://github.com/oxigraph/oxigraph>
-- Apache Jena Fuseki: <https://jena.apache.org/documentation/fuseki2/>; TDB2 commands: <https://jena.apache.org/documentation/tdb2/tdb2_cmds.html>
+- Apache Jena Fuseki: <https://jena.apache.org/documentation/fuseki2/>
 - GraphDB: <https://graphdb.ontotext.com/documentation/11.5/talk-to-graph.html>, <https://graphdb.ontotext.com/documentation/11.5/loading-data.html>; AWS Marketplace: <https://aws.amazon.com/marketplace/pp/prodview-es5xupioynhd4>
 - Stardog: <https://docs.stardog.com/operating-stardog/database-administration/adding-data>, <https://docs.stardog.com/voicebox/>
 - OpenLink Virtuoso: <https://vos.openlinksw.com/owiki/wiki/VOS/VirtBulkRDFLoader>
-- QLever: <https://github.com/ad-freiburg/qlever>
-- Eclipse RDF4J: <https://rdf4j.org/about/>
-- AllegroGraph: <https://franz.com/agraph/support/documentation/agraph-introduction.html>, <https://franz.com/agraph/support/documentation/llm.html>
-- MarkLogic: <https://docs.progress.com/bundle/marklogic-server-develop-with-semantic-graphs-12/page/topics/intro.html>
-- Amazon Neptune: <https://docs.aws.amazon.com/neptune/latest/userguide/access-graph-sparql.html>, <https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-rdf.html>; Neptune Analytics: <https://docs.aws.amazon.com/neptune-analytics/latest/userguide/neptune-analytics-features.html>; MCP server: <https://awslabs.github.io/mcp/servers/amazon-neptune-mcp-server>
+- Amazon Neptune: <https://docs.aws.amazon.com/neptune/latest/userguide/access-graph-sparql.html>, <https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-rdf.html>; MCP server: <https://awslabs.github.io/mcp/servers/amazon-neptune-mcp-server>
 - Azure Cosmos DB for Apache Gremlin: <https://learn.microsoft.com/en-us/azure/cosmos-db/gremlin/overview>; Graph in Microsoft Fabric: <https://learn.microsoft.com/en-us/fabric/graph/overview>; Spanner Graph: <https://docs.cloud.google.com/spanner/docs/graph/overview>
 - Neo4j Aura: <https://neo4j.com/docs/aura/>; neosemantics: <https://neo4j.com/labs/neosemantics/4.3/import/>
-- Memgraph: <https://memgraph.com/docs/data-migration>; TigerGraph: <https://www.tigergraph.com/docs/gsql-ref/4.3/opencypher-in-gsql/>; FalkorDB: <https://docs.falkordb.com/>
 - data.world: <https://docs.data.world/en/114339-rdf.html>, <https://docs.data.world/en/114345-named-graphs.html>, <https://docs.data.world/en/413220-data-world-mcp-server-for-ai-assistants.html>
 - Microsoft Fabric IQ ontology: <https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-import-export>; Purview: <https://learn.microsoft.com/en-us/purview/data-gov-api-atlas-2-2>; Work IQ: <https://learn.microsoft.com/en-us/microsoft-copilot-studio/agents-experience/add-work-iq>; Foundry IQ: <https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-foundry-iq>
 - Databricks: <https://docs.databricks.com/aws/en/uc-semantics/metric-views>, <https://docs.databricks.com/aws/en/agents/mcp-tools/built-in-mcp-services>
@@ -111,14 +62,10 @@ The retrieval frameworks that build graphs, among them Amazon Bedrock Knowledge 
 - dbt: <https://docs.getdbt.com/docs/use-dbt-semantic-layer/dbt-sl>, <https://docs.getdbt.com/docs/dbt-ai/about-mcp>
 - Google Cloud Knowledge Catalog: <https://docs.cloud.google.com/knowledge-catalog/docs/metadata-overview>; OKF and its connector: <https://github.com/GoogleCloudPlatform/open-knowledge-format>, <https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/connectors/gcp-knowledge-catalog.md>
 - TopQuadrant: <https://www.topquadrant.com/tq-data-foundation>, <https://docs.topquadrant.com/latest/>
-- Model Context Protocol: <https://modelcontextprotocol.io/specification/latest>
-- Amazon Bedrock Knowledge Bases GraphRAG: <https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-build-graphs.html>; Microsoft GraphRAG: <https://microsoft.github.io/graphrag/>; LightRAG: <https://github.com/HKUDS/LightRAG>; Cognee: <https://docs.cognee.ai/core-concepts/further-concepts/ontologies>; Graphiti: <https://github.com/getzep/graphiti>
+- Microsoft GraphRAG: <https://microsoft.github.io/graphrag/>; Amazon Bedrock Knowledge Bases GraphRAG: <https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-build-graphs.html>
 - JFrog Artifactory: <https://docs.jfrog.com/artifactory/docs/repository-management-overview>, <https://docs.jfrog.com/integrations/docs/webhooks>, <https://docs.jfrog.com/integrations/docs/trigger-a-github-action-using-a-custom-webhook>
 - Sonatype Nexus Repository: <https://help.sonatype.com/en/raw-repositories.html>, <https://help.sonatype.com/en/webhooks.html>
-- GitHub Releases, Packages and attestations: <https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases>, <https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages>, <https://docs.github.com/en/actions/concepts/security/artifact-attestations>
 - GitLab generic package registry: <https://docs.gitlab.com/user/packages/generic_packages/>
-- Cloudsmith: <https://docs.cloudsmith.com/formats/raw-repository>, <https://docs.cloudsmith.com/developer-tools/webhooks>
-- ORAS and cosign: <https://oras.land/docs/>, <https://oras.land/docs/compatible_oci_registries>, <https://docs.sigstore.dev/cosign/signing/signing_with_blobs/>
+- ORAS: <https://oras.land/docs/>
 - w3id.org: <https://github.com/perma-id/w3id.org>
-- GitHub Pages: <https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages>, <https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits>
 - The toolkit's tables and MCP pages: <https://lokf.nolan-nichols.com/toolkit/tables/>, <https://lokf.nolan-nichols.com/toolkit/mcp/>

@@ -56,7 +56,7 @@ On a fresh repository they run in order: **sidecar**, then **librarian** filling
 
 The **registrar** keeps the records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or their signed commit.
 
-At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is `knowledge-apply.sh`, called *the pen* because the librarian writes the bundle only through it. The librarian describes each change as an operation, and the pen writes the record, stamps its provenance, keeps the index in step, and refuses one that would forge or remove a confirmation. At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the summary at the top of this page: a check gives the same answer every time, which neither the librarian nor the curator can promise.
+At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is `knowledge-apply.sh`, *the pen*, the only way the librarian writes the bundle, and it refuses a change that would forge or remove a confirmation ([who writes the bundle](for-the-curious.md#who-writes-the-bundle-and-what-checks-it)). At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the summary at the top of this page: a check gives the same answer every time, which neither the librarian nor the curator can promise.
 
 <p align="center">
   <picture>
@@ -100,8 +100,8 @@ The labels are computed from the frontmatter on every read, never stored, so the
 | | |
 | --- | --- |
 | How to install the six skills, which ones to start with, and how to pin them to one release | [install.md](install.md) |
-| The context layer: how one bundle already is one, and how bundles federate into one layer through domains | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
-| A federation of bundles: tiers of domains, the workspace built ahead of time, what exists and what remains a design, and the decisions an adopter must make | [federation.md](federation.md) |
+| The context layer: what it is, how one bundle already is one, and why bundles federate through domains | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
+| A federation of bundles: domains as manifests, tiers of domains, the workspace built ahead of time, what exists and what remains a design, and the decisions an adopter must make | [federation.md](federation.md) |
 | Knowledge outside the repository: wiki pages, documents and files in other repositories, mirrored by the ingest so the bundle can cite them | [ingest.md](ingest.md) |
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, and what to do when a bundle outgrows LOKF's vocabulary | [for-the-curious.md](for-the-curious.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
