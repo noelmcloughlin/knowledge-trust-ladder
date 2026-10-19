@@ -265,13 +265,13 @@ fi
 #    recipe, with and without the doorway link. validate.yml runs them in a
 #    job of their own.
 
-# 9. Three sibling repositories deep-link into files here by URL, as
+# 9. The sibling repositories deep-link into files here by URL, as
 #    github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path> or as the
 #    site's persistent address, w3id.org/ktl/docs/<page>/ and
 #    w3id.org/ktl/knowledge/<id>, and their link checks follow those for real.
 #    Moving or renaming one of these paths passes every check in this repo,
-#    and breaks the build in
-#    obsidian-ktl-curator and obsidian-ktl-registrar. (The mirror image
+#    and breaks the build in the sibling that links to it: the two Obsidian
+#    plugins, ktl-federation, ai-linkmo or gist. (The mirror image
 #    happened on 2026-09-14: the curator referenced domain-schema.md while it
 #    was still on a branch here, and its build failed with a 404 until this
 #    side merged. CONTRIBUTING.md carries the ordering rule; this check carries
@@ -284,6 +284,10 @@ sibling_paths=(
   "AI_COVENANT.md"
   "SECURITY.md"
   ".lokf/knowledge/glossary/registrar.md"
+  ".lokf/knowledge/playbooks/domain-bundle.md"
+  ".lokf/knowledge/playbooks/domain-bundle.md#reading-the-workspace"
+  ".lokf/knowledge/playbooks/domain-bundle.md#the-four-concept-types"
+  ".lokf/knowledge/playbooks/domain-bundle.md#the-worked-example"
   ".lokf/knowledge/playbooks/ktl-curator-skill.md"
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md"
   ".lokf/knowledge/playbooks/open-bundle-in-obsidian.md#why-the-bundle-is-never-a-real-folder-inside-a-vault"
@@ -291,6 +295,11 @@ sibling_paths=(
   "docs/architecture.md#four-skills-three-lines-of-the-poem"
   "docs/architecture.md#the-fifth-role-which-is-not-a-skill"
   "docs/architecture.md#trust-stays-visible"
+  "docs/context-layer.md"
+  "docs/federation.md"
+  "docs/federation.md#decisions-an-adopter-must-make"
+  "docs/federation.md#how-the-workspace-stays-current"
+  "docs/federation.md#what-exists-and-what-remains-a-design"
   "docs/for-the-curious.md#four-levels-of-checking"
   "docs/install.md"
   "docs/obsidian.md"
@@ -299,6 +308,7 @@ sibling_paths=(
   "docs/signing-commits.md"
   "docs/threat-model.md"
   "docs/threat-model.md#human-attribution-human-is-a-claim-not-a-credential"
+  "docs/threat-model.md#interactive-use-scope-is-advisory-not-enforced"
   "docs/threat-model.md#prompt-injection-guards"
   "docs/threat-model.md#repository-hardening"
   "docs/three-lines.md"
@@ -316,9 +326,9 @@ heading_anchors() {
 for entry in "${sibling_paths[@]}"; do
   p="${entry%%#*}"
   if [[ ! -e "$p" ]]; then
-    err "sibling-linked path is gone: $p - obsidian-ktl-curator, and obsidian-ktl-registrar link to it by URL; restore it, or update their links in the same change"
+    err "sibling-linked path is gone: $p - a sibling repository links to it by URL; restore it, or update that sibling's links in the same change"
   elif [[ "$entry" == *#* ]] && ! heading_anchors "$p" | grep -qxF "${entry#*#}"; then
-    err "sibling-linked heading is gone: $entry - obsidian-ktl-curator, and obsidian-ktl-registrar link to it by URL; restore the heading, or update their links in the same change"
+    err "sibling-linked heading is gone: $entry - a sibling repository links to it by URL; restore the heading, or update that sibling's links in the same change"
   else
     ok "sibling-linked path exists: $entry"
   fi
@@ -329,7 +339,7 @@ done
 #     here in the same breath, or the check silently stops covering it. CI has
 #     no siblings checked out, so this half only runs locally. The recorded
 #     list is the contract either way.
-mapfile -t cloned < <(for s in obsidian-ktl-curator obsidian-ktl-registrar; do
+mapfile -t cloned < <(for s in obsidian-ktl-curator obsidian-ktl-registrar ktl-federation ai-linkmo gist; do
   [[ -d "../$s/.git" ]] && printf '%s\n' "../$s"
 done || true)
 if [[ ${#cloned[@]} -eq 0 ]]; then
@@ -348,12 +358,15 @@ else
   # a link into this repository and is dropped.
   # A sibling's website build writes copies of its pages under website/, which
   # git ignores; one quotes a link inside a folded YAML string, and read as a
-  # link it ends in a backslash. Only what the sibling keeps counts.
+  # link it ends in a backslash. A domain host's build writes its workspace
+  # under snapshot/, which git ignores too, and that holds a copy of each
+  # member's bundle, this repository's among them, whose own IRIs would read
+  # as links. Only what the sibling keeps counts.
   mapfile -t linked < <(grep -rHoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder(/blob/main/[^)"#[:space:]]+)?(#[A-Za-z0-9_-]+)?|https://w3id\.org/ktl/(docs/[a-z0-9.-]+/|knowledge/[a-z0-9-]+(/[a-z0-9-]+)*/?)?(#[A-Za-z0-9_-]+)?' \
     "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
     --exclude-dir=.claude --exclude-dir=.venv 2>/dev/null \
-    | grep -vE '/website/(dist|public|src/content|src/generated)/' | sed -E 's|^[^:]*:||' \
+    | grep -vE '/website/(dist|public|src/content|src/generated)/|^\.\./[^/]+/snapshot(\.new)?/' | sed -E 's|^[^:]*:||' \
     | sed -E 's|^https://w3id\.org/ktl/docs/([a-z0-9.-]+)/|docs/\1.md|; s|^https://w3id\.org/ktl/knowledge/([a-z0-9-]+(/[a-z0-9-]+)*)/?|.lokf/knowledge/\1.md|; s|^https://w3id\.org/ktl/#|README.md#|; /^https:\/\/w3id\.org\/ktl\//d; s|^https://github\.com/noelmcloughlin/knowledge-trust-ladder||; s|^/blob/main/||; s|^#|README.md#|; s/[.,]$//; /^$/d; /^README\.md#readme$/d' \
     | sort -u || true)
   unrecorded=0
