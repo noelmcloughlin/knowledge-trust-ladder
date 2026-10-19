@@ -1996,3 +1996,26 @@ def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path)
     assert fm["distribution"] == [{"name": "concepts.jsonld", "access_url": t_iri + "concepts.jsonld", "media_type": "application/ld+json",
                                    "checksum": "sha256:" + hashlib.sha256((t_site / "concepts.jsonld").read_bytes()).hexdigest()}]
     assert 'The description in its own index reads "The T bundle". Its site served `concepts.jsonld`' in created["body"] and "which releases no zip" in created["body"]
+
+
+IN_PROCESS = r"""
+import importlib.util, json, os, sys
+spec = importlib.util.spec_from_file_location("federate", sys.argv[1])
+federate = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(federate)
+here = os.getcwd()
+missing = federate.run_lokf(["validate", sys.argv[2]])
+broken = federate.run_lokf(["validate", "--schema", "absent.yaml", sys.argv[3]], cwd=sys.argv[3])
+print(json.dumps({"missing": [missing.returncode, missing.stderr], "broken": [broken.returncode, broken.stderr], "cwd_kept": os.getcwd() == here}))
+"""
+
+
+def test_a_lokf_command_run_in_the_build_s_process_fails_as_a_process_would(tmp_path):
+    """The build runs lokf's export and validate in its own process: a failing command reads as a failed command, and the working directory is put back."""
+    k = make_bundle(tmp_path / "b", "https://b.example/knowledge/", "B", {})
+    runner = write(tmp_path / "in-process.py", IN_PROCESS)
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-I", runner, SCRIPT, tmp_path / "missing", k], cwd=tmp_path, stdout_only=True)
+    got = json.loads(r.out.splitlines()[-1])
+    assert got["missing"][0] != 0 and "missing" in got["missing"][1], f"validating a missing folder did not fail with its name: {got['missing']}"
+    assert got["broken"][0] != 0 and got["broken"][1].strip(), f"validating against a missing schema did not fail with a message: {got['broken']}"
+    assert got["cwd_kept"], "the build's working directory was not put back after a command run in another"
