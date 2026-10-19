@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T21:26:04Z"
+  at: "2026-10-19T23:21:13Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -15,7 +15,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/linkml
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-19T20:01:11Z"
+    at: "2026-10-19T23:21:13Z"
 sources:
   - resource: https://pypi.org/project/lokf/
   - resource: https://github.com/nicholsn/lokf/blob/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/src/lokf/cli.py
@@ -30,7 +30,7 @@ sources:
 
 # Overview
 
-The toolkit is the implementation, not the specification. `lokf validate` checks frontmatter and bundle shape against the generated JSON Schema. It takes the schema from `--schema`, else from a `lokf.yaml` in the current folder or an ancestor, else from the copy inside the installed package. With `--schema <file>.yaml` it checks against a domain schema that imports LOKF's instead, and the extension recipe depends on that flag. The toolkit generates SHACL shapes but neither includes them in its package nor runs them, so the checks that run are `lokf validate` (JSON Schema) and `--check-refs`. `lokf convert` projects to RDF as Turtle, N-Triples, JSON-LD, RDF/XML, N3 or TriG, and `lokf export` writes the four files a bundle publishes, `graph.nt` among them. `lokf serve` exposes a SPARQL endpoint, `lokf query` runs a SPARQL query against the bundle, and `lokf mcp` serves it over the Model Context Protocol (MCP). `lokf tables` writes CSV, Parquet or SQLite: one table per concept type plus a `relations` table. For BigQuery or Athena it writes the Parquet and prints the external-table statements that register it. `lokf registry init`, `add`, `list` and `resolve` keep a registry of bundles offline. The command line also carries `new`, `propose`, `vocab` and `skills`, and the package has a `[tables]` extra, which adds pandas and pyarrow, beside `[build]`. PyPI lists 0.8.0 as the latest release.
+The toolkit is the implementation, not the specification. `lokf validate` checks frontmatter and bundle shape against the generated JSON Schema. It takes the schema from `--schema`, else from a `lokf.yaml` in the current folder or an ancestor, else from the copy inside the installed package. With `--schema <file>.yaml` it checks against a domain schema that imports LOKF's instead, and the extension recipe depends on that flag. The toolkit generates SHACL shapes but neither includes them in its package nor runs them, so the checks that run are `lokf validate` (JSON Schema) and `--check-refs`. `lokf convert` projects to RDF as Turtle, N-Triples, JSON-LD, RDF/XML, N3 or TriG, and `lokf export` writes the four files a bundle publishes, `graph.nt` among them. `lokf serve` exposes a SPARQL endpoint, `lokf query` runs a SPARQL query against the bundle, and `lokf mcp` serves it over the Model Context Protocol (MCP). `lokf tables` writes CSV, Parquet or SQLite: one table per concept type plus a `relations` table. For BigQuery or Athena it writes the Parquet and prints the external-table statements that register it. `lokf registry init`, `add`, `list` and `resolve` keep a registry of bundles offline. A domain's federation build registers each member release with `lokf registry add` and exports it with `lokf export` (`docs/federation.md`). The command line also carries `new`, `propose`, `vocab` and `skills`, and the package has a `[tables]` extra, which adds pandas and pyarrow, beside `[build]`. PyPI lists 0.8.0 as the latest release.
 
 `lokf validate --check-refs` finds typed-relation targets in the bundle's own namespace with no matching concept, and leaves targets outside its `base_iri` alone. This repository's own `just lokf-check-refs` recipe now calls it. It takes the relation slots from the schema, so a domain schema's own slots are covered without the recipe restating a predicate list.
 

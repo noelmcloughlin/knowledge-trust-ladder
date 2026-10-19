@@ -10,13 +10,14 @@ sources:
   - resource: docs/for-the-curious.md
   - resource: docs/architecture.md
   - resource: skills/ktl-curator/references/domain-schemas.md
+  - resource: CHANGELOG.md
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/domain-schemas
   - https://w3id.org/ktl/knowledge/glossary/linkml
   - https://w3id.org/ktl/knowledge/glossary/lokf
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  at: "2026-10-19T23:21:13Z"
 status: draft
 verified:
   - by: process:ktl-librarian

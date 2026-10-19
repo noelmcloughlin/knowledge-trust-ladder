@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T20:01:11Z"
+  at: "2026-10-19T23:21:13Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -61,7 +61,7 @@ The script refuses what the repository's visibility does not allow. `public` may
 
 1. Install the ingest files with ktl-sidecar's Step 5, or its repair.
 2. Copy the sidecar's `templates/ingest.yaml` to `.lokf/ingest.yaml` and replace its examples.
-3. Store each credential as a repository secret under the name the manifest gives. Every name starts `KNOWLEDGE_INGEST_`.
+3. Store each credential as a secret in the `knowledge-ingest` Environment, limited to the default branch, under the name the manifest gives. Every name starts `KNOWLEDGE_INGEST_`.
 4. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and allow GitHub Actions to create and approve pull requests.
 5. Start one run from the Actions tab and read its summary.
 

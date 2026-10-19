@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T21:26:04Z"
+  at: "2026-10-19T23:21:13Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -32,7 +32,7 @@ status: draft
 
 # Overview
 
-The folder `website/` builds the project's site with Astro Starlight. The Knowledge website workflow, `.github/workflows/knowledge-website.yaml`, publishes the default branch's build to GitHub Pages at <https://noelmcloughlin.github.io/knowledge-trust-ladder/>. Since 0.42.0 (`CHANGELOG.md`) the README and the architecture page link the site at its persistent address, <https://w3id.org/ktl/>, which redirects to the GitHub Pages site. Every page comes from a file the repository already holds, so a change to the site is a change to that file. `CHANGELOG.md` records the site under the 0.38.1 release.
+The folder `website/` builds the project's site with Astro Starlight. The Knowledge website workflow, `.github/workflows/knowledge-website.yaml`, publishes the default branch's build to GitHub Pages at <https://noelmcloughlin.github.io/knowledge-trust-ladder/>. Since 0.42.0 (`CHANGELOG.md`) the README and the architecture page link the site at its persistent address, <https://w3id.org/ktl/>, which redirects to the GitHub Pages site. Every page comes from a file the repository already holds, so a change to the site is a change to that file. `CHANGELOG.md` records the site under the 0.38.1 release. Since 0.53.0 (`CHANGELOG.md`) the site copies only files inside the repository, and passes raw HTML as GitHub renders a README. A link out of the repository and an SVG holding a script are left out, and other markup is shown as text.
 
 # What each page comes from
 
@@ -55,7 +55,7 @@ The folder `website/` builds the project's site with Astro Starlight. The Knowle
 Install Node.js 22.12 or later and uv. Then run these from `website/`:
 
 ```bash
-npm ci
+npm ci --ignore-scripts
 npm run dev        # http://localhost:4321/knowledge-trust-ladder/
 npm run build      # dist/, then checks every link between its pages
 ```
@@ -81,7 +81,7 @@ Both commands run `npm run sync` first. The sync runs `lokf export` from the sid
 
 `knowledge-website.yaml` runs on a push and on a pull request that touch `website/`, `.lokf/`, `knowledge_bundle/`, `README.md`, `docs/`, `.assets/`, `CHANGELOG.md`, `llms.txt`, `.linkml/`, a justfile, a `pyproject.toml`, a `uv.lock` or the workflow itself. It also runs every Monday at 05:23 UTC, and it can be run by hand. A push builds on the default branch only. A pull request gets the same build, link check included, and no deployment.
 
-The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, and runs npm's and the toolkit's packages under a read-only token. `deploy` runs nothing but GitHub's own deploy-pages action and holds the Pages scopes. It runs for the default branch only, and the scheduled run deploys too, once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Before setting the variable, a maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
+The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, and runs npm's and the toolkit's packages, and the repository's own site code, under a read-only token. It installs the site's packages with `npm ci --ignore-scripts` and builds with Astro's telemetry off. `deploy` runs harden-runner and GitHub's own deploy-pages action and nothing else, and holds the Pages scopes. It runs for the default branch only, and the scheduled run deploys too, once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Before setting the variable, a maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
 
 The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records. The two typefaces, Source Serif 4 for headings and Atkinson Hyperlegible Next for text, are self-hosted from Fontsource under the SIL Open Font License 1.1.
 

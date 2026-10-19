@@ -27,6 +27,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-19T22:35:12Z"
 stale_after: 2027-03-26
+status: draft
 ---
 
 # Overview
@@ -71,3 +72,4 @@ Check 10 of `scripts/validate-repository.sh` fails when `SECURITY.md` outgrows a
 - 2026-10-14, process:ktl-librarian: Since 2026-10-14 `SECURITY.md` lists ktl-website's templates and its preflight as a surface of their own. It names `knowledge-website.yaml` among this repository's copies of the templates, counts the six skills' prose, and names five skills that run `.lokf/scripts/`, ktl-website among them. This concept carries the earlier table and four skills. `SECURITY.md` itself still says four surfaces above a table of five rows.
 - 2026-10-15, process:ktl-librarian: Since 0.41.0 the ktl-website row of `SECURITY.md` says the build job also runs `just` when the site builds a folder through a recipe, and that the sync runs the commands `site.config.mjs` names to build the schema's pages and the data. Since 2026-10-14 `SECURITY.md` also counts five surfaces, matching its table. This concept carries neither.
 - 2026-10-18, process:ktl-librarian: Since 2026-10-17 the template row of `SECURITY.md` counts nine scripts and five workflows under `skills/ktl-sidecar/templates/`, where this concept counts seven scripts and three workflows. The row also says that a domain host's federation build reads members' release zips and never runs them, and that a host's sync runs no code from the release, while a separate job applies only the copies, the pin and the changelog. This concept carries none of this.
+- 2026-10-19, process:ktl-librarian: Since 0b2911a (#253) `SECURITY.md` names five things that run, where this concept names four groups, and its table has a fifth row for `skills/ktl-website/templates/` and `scripts/website-preflight.sh`. The template row now counts fourteen scripts and six workflows, where this concept counts nine and five. It adds that each workflow reads its secrets from an Environment limited to the default branch, that the federation build refuses a hidden file or a path-like name in a member's zip, and that the branch the sync pushes carries no workflow the release wrote. The workflows row names `knowledge-website.yaml`, and the paragraph under the table says ktl-website also runs the site's code under `website/`. A person wrote this concept, so it is not rewritten here. Which text should it carry?
