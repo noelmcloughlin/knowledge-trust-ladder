@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **A confidential ingest entry is refused where git could commit its copy.** The script checks that git ignores `.lokf/.cache/mirror/` and tracks nothing there before it fetches the entry.
+
 ## [0.52.1] - 2026-10-19
 
 ### Fixed

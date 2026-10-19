@@ -30,7 +30,8 @@
 # Refused and recorded: a token in the manifest (auth names environment
 # variables starting KNOWLEDGE_INGEST_); an entry the repository's
 # visibility does not allow (internal: a private repository only;
-# confidential: never committed, kept under .lokf/.cache/mirror/); more
+# confidential: never committed, kept under .lokf/.cache/mirror/, and refused
+# where git does not ignore that folder or tracks a file in it); more
 # than max_items; a body over max_item_bytes or a mirror over
 # max_total_bytes; a private address unless the manifest allows it; a path
 # outside the mirror root; an unexpected content type; a PDF with no text
@@ -1413,6 +1414,21 @@ def allowed_here(sensitivity: str, visibility: str) -> str:
     return "the repository's visibility is unknown, so internal content is not committed; pass --visibility private or public"
 
 
+def cache_exposed(root: Path) -> str:
+    """Empty when git would commit nothing a confidential entry writes, else the reason the entry is refused. A root outside git commits nothing."""
+    cache = ".lokf/.cache/mirror/"
+    if not shutil.which("git") or subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True).returncode != 0:
+        return ""
+    # check-ignore reads the ignore rules for a path that need not exist. It
+    # exits 1 when no rule ignores the path, and 128 when it cannot tell, and
+    # either refuses the entry.
+    if subprocess.run(["git", "-C", str(root), "check-ignore", "-q", "--no-index", cache + "probe"], capture_output=True).returncode != 0:
+        return f"git does not ignore {cache}, where a confidential copy goes; add .cache/ to .lokf/.gitignore, as the sidecar's template does"
+    if subprocess.run(["git", "-C", str(root), "ls-files", "--", cache], capture_output=True, text=True).stdout.strip():
+        return f"git tracks files under {cache}; remove them with git rm --cached before a confidential entry runs"
+    return ""
+
+
 def mirror_header(entry: Entry, it: Item, lock_item: dict) -> str:
     fm = {"origin": it.origin, "title": it.title, "ingest": entry.id, "kind": entry.kind, "version": str(it.version),
           "sha256": "sha256:" + it.sha256, "retrieved_at": lock_item["retrieved_at"], "converted_by": it.converted_by}
@@ -1505,6 +1521,8 @@ class Run:
         missing = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not (self.root / was["path"]).is_file()}
         present = {i: was for i, was in prior.items() if i not in missing}
         why = allowed_here(entry.sensitivity, self.visibility)
+        if not why and entry.sensitivity == "confidential":
+            why = cache_exposed(self.root)
         if why:
             record.update({"status": "refused", "reason": why})
             self.failed += 1

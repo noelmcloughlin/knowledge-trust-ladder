@@ -18,7 +18,8 @@ and pin:
    command past its timeout fails the entry and nothing else;
 7. the manifest's refusals: an unknown key, a variable name outside the
    KNOWLEDGE_INGEST_ namespace, an internal entry in a public repository,
-   and a confidential entry that goes to the cache;
+   and a confidential entry where git would see its copy, which goes to the
+   cache once git ignores it and tracks nothing there;
 8. --patch writes a Reference concept per mirrored item of an entry that asks,
    and a later patch keeps the sources a person added;
 9. --status prints one line with the token names and no value;
@@ -52,7 +53,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import SCRIPTS, Git, has_line, matches, read, run, write
+from conftest import SCRIPTS, TEMPLATES, Git, has_line, matches, read, run, write
 
 INGEST = SCRIPTS / "knowledge-ingest.sh"
 INGEST_PY = SCRIPTS / "knowledge-ingest.py"
@@ -408,13 +409,24 @@ def test_the_manifest_refuses_what_its_header_says(tmp_path, server, checks):
     checks.ok(result and "1 fetched" in result.out and (root / ".lokf" / "mirror" / "a").is_dir(), "internal in a private repository", result.out)
     write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "c", "kind": "http", "urls": [url], "sensitivity": "confidential"}])))
     result = ingest(root, "--visibility", "public")
-    checks.ok(result and "1 fetched" in result.out, "confidential is fetched anywhere", result.out)
+    checks.ok(result and "refused, git does not ignore .lokf/.cache/mirror/" in result.out, "confidential is refused where git would see its copy", result.out)
+    checks.ok(not (root / ".lokf" / ".cache").exists(), "and nothing is fetched")
+    write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    result = ingest(root, "--visibility", "public")
+    checks.ok(result and "1 fetched" in result.out, "confidential is fetched anywhere, once git ignores the cache", result.out)
     checks.ok(list((root / ".lokf" / ".cache" / "mirror" / "c").glob("*.md")), "and goes to the cache")
     checks.ok(not (root / ".lokf" / "mirror" / "c").exists(), "never to the mirror")
     checks.ok(lock_of(root)["entries"]["c"]["items"] and "a" not in lock_of(root)["entries"], "the lock follows the manifest")
     before = read(root / ".lokf" / "ingest.lock.yaml")
     result = ingest(root, "--visibility", "public", "--dry-run")
     checks.ok(result and read(root / ".lokf" / "ingest.lock.yaml") == before, "a dry run writes nothing", result.out)
+    Git(root)("add", "-f", ".lokf/.cache")
+    result = ingest(root, "--visibility", "public")
+    checks.ok(result and "refused, git tracks files under .lokf/.cache/mirror/" in result.out, "and refused where git tracks a copy", result.out)
+    Git(root)("rm", "-r", "-q", "--cached", ".lokf/.cache")
+    plain = host(tmp_path / "plain", manifest_for([{"id": "c", "kind": "http", "urls": [url], "sensitivity": "confidential"}]), git=False)
+    result = ingest(plain, "--visibility", "public")
+    checks.ok(result and "1 fetched" in result.out, "a host without git keeps the copy unchecked, since nothing there commits", result.out)
     write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "g", "kind": "git", "url": "git://acme.example/x.git", "ref": "main"}])))
     result = ingest(root)
     checks.ok(result.rc == 1 and "ssh and git protocols are not fetched" in result.out, "a git url over the git protocol", result.out)
