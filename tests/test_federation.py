@@ -11,7 +11,10 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    holding a symbolic link, and a domain that names a bundle already in the
    federation each stop the build and leave the previous snapshot in place;
 3. a typed relation whose target no member owns stops the build under
-   `unowned_targets: fail` and is reported under `report`;
+   `unowned_targets: fail` and is reported under `report`, and so does one
+   whose target lies in a member's namespace and names no concept of it;
+3a. the links between members are counted in the lock, the index and
+   `links.rq`, and `graph.json` draws every bundle with those links;
 4. a member that is itself a domain is followed one tier down;
 4a. the diamond rule: a bundle two domains name at one release joins once,
    named by both, and named at two releases it stops the build;
@@ -41,6 +44,10 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    concept or no release of that member leaves it out;
 4h. a member names the files of one release: a workspace from another
    release of the same repository is refused;
+4i. a member joins only at the `sensitivity` its domain cleared: an
+   internal one once a person confirms `internal` on the Domain concept,
+   and only in a private or internal repository, and a confidential one
+   never;
 5. `--verify-only` runs the gate as the next release build would, so a link
    into a member no person has confirmed fails before the merge, and writes
    nothing; `members` leaves a non-GitHub member as it is;
@@ -49,6 +56,10 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    stops the build;
 5b. `mcp` serves the workspace index as its instructions and answers the
    five tools of the specification's section 11.4, each bounded;
+5c. it loads a graph when a walk first reaches a namespace that graph
+   names, and each answer is the one a workspace loaded whole gives;
+5d. `diff` says which members joined, moved or left between two
+   workspaces, and the links that went with them;
 6. `members` moves a member's old tag, zip name and day in its description
    and body as well as its frontmatter, in a patch the pen applies, and
    names the lines it had to leave in its question;
@@ -81,6 +92,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import stat
 import zipfile
@@ -97,8 +109,8 @@ needs_uv = pytest.mark.skipif(not have("uv"), reason="uv is not installed - the 
 pytestmark = needs_uv
 
 
-def federate(host: Path, *args: str):
-    return run(["uv", "run", "--project", REPO / ".lokf", SCRIPT, "--root", host, *args], cwd=host)
+def federate(host: Path, *args: str, **kw):
+    return run(["uv", "run", "--project", REPO / ".lokf", SCRIPT, "--root", host, *args], cwd=host, **kw)
 
 
 def frontmatter(**fields) -> str:
@@ -282,6 +294,30 @@ def test_the_workspace_graph_json_draws_every_bundle_and_the_links_between_them(
                       "predicate": "dcterms:relation", "slot": "relatedTo", "reified": False, "cross": True}]
     assert all(e["data"]["source"] in nodes and e["data"]["target"] in nodes for e in graph["edges"]), "every edge joins two nodes, as cytoscape.js needs"
     assert [b["slug"] for b in graph["meta"]["bundles"]] == ["a", "b", "domain"] and graph["meta"]["bundles"][0]["title"] == "A"
+
+
+def test_diff_says_what_changed_between_two_workspaces(federation, tmp_path):
+    """b moves to v2.0.0 and a leaves: diff names both, and the link from a into b that left with it, from a lock, a folder or a zip."""
+    host, b_iri = federation["host"], federation["b_iri"]
+    assert federate(host, "build", "--tag", "v0.2.0", "--release-base", "https://github.com/acme/d/releases/tag", "--no-attestation").rc == 0
+    old = tmp_path / "old"
+    shutil.copytree(host / "snapshot", old)
+    b2 = make_bundle(tmp_path / "b2", b_iri, "B", {"glossary/other.md": {"type": "GlossaryTerm", "title": "Other", "description": "Another term, revised.", "resource": "https://example.test/b"}})
+    b2_zip = tmp_path / "b2.zip"
+    rewrite(host, "b", member("b", b_iri, b2_zip, zip_bundle(b2, b2_zip), federation["d_iri"] + "domains/federation", version="v2.0.0"))
+    (host / ".lokf" / "knowledge" / "members" / "a.md").unlink()
+    assert federate(host, "build", "--tag", "v0.3.0", "--no-attestation").rc == 0
+    expected = ["## The workspace", "", "Compared with the workspace of v0.2.0:", "",
+                "- **b bundle** moved from v1.0.0 to v2.0.0.",
+                "- **a bundle** left; the workspace held it at v1.0.0.",
+                "- Links from **a bundle** to **b bundle**: 0, and 1 before."]
+    zipped = tmp_path / "workspace-v0.2.0.zip"
+    workspace_zip(old, zipped)
+    for before in (old / "workspace.lock.yaml", old, zipped):
+        r = federate(host, "diff", str(before), "snapshot", stdout_only=True)
+        assert r.rc == 0 and r.out.splitlines() == expected, (before, r.out)
+    r = federate(host, "diff", "snapshot", "snapshot", "--out", str(tmp_path / "same.md"))
+    assert r.rc == 0 and (tmp_path / "same.md").read_text(encoding="utf-8") == "## The workspace\n\nNo member joined, moved or left since the workspace of urn:knowledge-federate:snapshot:v0.3.0.\n"
 
 
 @pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate"])
@@ -598,10 +634,45 @@ def test_the_domain_s_settings_count_only_as_a_person_confirmed_them(federation,
     edited = top.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: report\ngenerated:\n  by: process:ktl-librarian\n  at: '2026-02-01T00:00:00Z'")
     top.write_text(edited, encoding="utf-8")
     r = federate(host, "build", "--no-attestation")
-    assert r.rc == 1 and "its unowned_targets and max_depth wait for a person's confirmation" in r.out and "the build uses the defaults, fail and 3" in r.out, r.out
+    assert r.rc == 1 and "its unowned_targets, max_depth and sensitivity wait for a person's confirmation" in r.out and "the build uses the defaults, fail, 3 and public" in r.out, r.out
     top.write_text(edited.replace("verified:\n", "verified:\n- by: human:noel\n  at: '2026-02-02T00:00:00Z'\n"), encoding="utf-8")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0 and "1 typed-relation target(s) lie in no member's namespace." in (host / "snapshot" / "gate-report.md").read_text(encoding="utf-8"), r.out
+
+
+def test_a_member_joins_only_at_the_sensitivity_its_domain_cleared(federation):
+    """Section 11.5's gate: b says it is internal.
+
+    It joins only once a person has confirmed `sensitivity: internal` on the
+    Domain concept, and only in a private or internal repository, since the
+    release that carries the workspace is as public as the repository; an
+    unknown visibility counts as public. A confidential bundle joins no
+    workspace, and a Domain concept clears public or internal alone.
+    """
+    host, b_iri = federation["host"], federation["b_iri"]
+    concept = host / ".lokf" / "knowledge" / "members" / "b.md"
+    concept.write_text(concept.read_text(encoding="utf-8").replace("version: v1.0.0", "version: v1.0.0\nsensitivity: internal"), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation", "--visibility", "private")
+    assert r.rc == 1 and "b: its sensitivity is internal, and the domain has cleared public only" in r.out, r.out
+    top = host / ".lokf" / "knowledge" / "domains" / "federation.md"
+    top.write_text(top.read_text(encoding="utf-8").replace("unowned_targets: fail", "unowned_targets: fail\nsensitivity: internal"), encoding="utf-8")
+    for visibility, said in (("public", "this repository is public"), ("unknown", "this repository has an unknown visibility, which counts as public")):
+        r = federate(host, "build", "--no-attestation", "--visibility", visibility)
+        assert r.rc == 1 and f"b: its sensitivity is internal, and {said}" in r.out, r.out
+    r = federate(host, "build", "--no-attestation", "--visibility", "private")
+    assert r.rc == 0 and "sensitivity=internal" in r.out, r.out
+    snap = host / "snapshot"
+    lock = yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    assert lock["sensitivity"] == "internal" and {m["slug"]: m["sensitivity"] for m in lock["members"]} == {"a": "public", "b": "internal"}
+    registry = {e["base_iri"]: e.get("sensitivity") for e in yaml.safe_load((snap / "lokf-registry.yaml").read_text(encoding="utf-8"))["repos"]}
+    assert registry[b_iri] == "internal" and registry[federation["a_iri"]] == "public", registry
+    assert "It holds internal metadata, which a person cleared on the Domain concept" in (snap / "index.md").read_text(encoding="utf-8")
+    concept.write_text(concept.read_text(encoding="utf-8").replace("sensitivity: internal", "sensitivity: confidential"), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation", "--visibility", "private")
+    assert r.rc == 1 and "b: its sensitivity is confidential, and a confidential bundle joins no workspace" in r.out, r.out
+    top.write_text(top.read_text(encoding="utf-8").replace("sensitivity: internal", "sensitivity: confidential"), encoding="utf-8")
+    r = federate(host, "build", "--no-attestation", "--visibility", "private")
+    assert r.rc == 1 and "sensitivity on the Domain concept is the most sensitive member its workspace may hold, public or internal" in r.out, r.out
 
 
 def test_the_gate_names_a_member_that_waits_when_a_link_lies_in_its_namespace(federation):
@@ -763,26 +834,34 @@ def test_a_schema_released_with_a_bundle_is_what_its_fit_is_checked_against(fede
 
 # Drives the server over stdio with the SDK's own client: initialize, list
 # the tools, then the calls named on the command line, and prints one JSON
-# document with every answer.
+# document with every answer. With a fifth argument, the server's log goes
+# to that file, and each call's answer comes with the lines it logged.
 MCP_CLIENT = """\
 import asyncio, json, sys
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 project, script, snapshot, calls = sys.argv[1:5]
+errpath = sys.argv[5] if len(sys.argv) > 5 else None
 
 def text(result):
     return "\\n".join(c.text for c in result.content if getattr(c, "type", "") == "text")
 
 async def main():
-    out = {"calls": []}
+    out = {"calls": [], "logs": []}
     params = StdioServerParameters(command="uv", args=["run", "--project", project, script, "mcp", "--snapshot", snapshot])
-    async with stdio_client(params) as (r, w):
+    errlog = open(errpath, "w") if errpath else sys.stderr
+    read = 0
+    async with stdio_client(params, errlog=errlog) as (r, w):
         async with ClientSession(r, w) as s:
             init = await s.initialize()
             out["server"], out["instructions"] = init.server_info.name, init.instructions
             out["tools"] = [t.name for t in (await s.list_tools()).tools]
             for name, args in json.loads(calls):
                 out["calls"].append(json.loads(text(await s.call_tool(name, args))))
+                if errpath:
+                    log = open(errpath, encoding="utf-8").read()
+                    out["logs"].append(log[read:])
+                    read = len(log)
     print(json.dumps(out))
 
 asyncio.run(main())
@@ -814,6 +893,53 @@ def test_mcp_serves_the_index_first_and_each_tool_bounded(federation, tmp_path):
     assert doc["bundle"]["slug"] == "b" and doc["markdown"].startswith("---") and doc["trust"]["status"]
     assert "error" in traversal and outside["owner"] is None
     assert cut["truncated"] and cut["count"] == 1
+
+
+def test_mcp_loads_a_graph_when_a_walk_first_reaches_it(federation, tmp_path):
+    """The server starts with no graph loaded, and every answer is the one a workspace loaded whole gives.
+
+    A neighbourhood of b's term loads b's graph, a's, which links into b, and
+    the lock graph, which names every bundle, and not the domain's. One of
+    a's term then loads nothing more, and a SPARQL query loads the rest. The
+    lock says where each graph lies in graph.nq and which namespaces it names.
+    """
+    host, a_iri, b_iri, d_iri = federation["host"], federation["a_iri"], federation["b_iri"], federation["d_iri"]
+    snap_iri = "https://d.example/snapshots/v0.2.0"
+    assert federate(host, "build", "--snapshot-iri", snap_iri, "--no-attestation").rc == 0
+    snap = host / "snapshot"
+    lock = yaml.safe_load((snap / "workspace.lock.yaml").read_text(encoding="utf-8"))
+    graphs = {g["graph"]: g for g in lock["graphs"]}
+    assert set(graphs) == {a_iri, b_iri, d_iri, snap_iri}
+    assert graphs[a_iri]["names"] == [b_iri] and graphs[b_iri]["names"] == [] and graphs[snap_iri]["names"] == sorted([a_iri, b_iri, d_iri])
+    nq = (snap / "graph.nq").read_bytes()
+    for g, entry in graphs.items():
+        lines = nq[entry["offset"]:entry["offset"] + entry["bytes"]].decode("utf-8").splitlines()
+        assert len(lines) == entry["quads"] and all(line.endswith(f" <{g}> .") for line in lines), g
+    a_term, b_other = a_iri + "glossary/term", b_iri + "glossary/other"
+    calls = [("resolve_iri", {"iri": b_other}), ("neighbors", {"iri": b_other, "depth": 1}), ("neighbors", {"iri": a_term, "depth": 2}),
+             ("federated_sparql", {"query": "SELECT (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }"})]
+    client = write(tmp_path / "client.py", MCP_CLIENT)
+
+    def answers(snapshot: Path) -> dict:
+        r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-I", client, REPO / ".lokf", SCRIPT, snapshot, json.dumps(calls), tmp_path / f"{snapshot.name}.log"],
+                cwd=tmp_path, stdout_only=True)
+        assert r.rc == 0, r.out
+        return json.loads(r.out)
+
+    lazy = answers(snap)
+    loaded = [sorted(re.findall(r"loaded <([^>]+)>", log)) for log in lazy["logs"]]
+    assert loaded == [[], sorted([a_iri, b_iri, snap_iri]), [], [d_iri]], loaded
+    assert any(t["graph"] == a_iri and t["object"]["value"] == b_other for t in lazy["calls"][1]["triples"]), "a's link into b is there when the walk starts in b"
+    whole = tmp_path / "whole"
+    shutil.copytree(snap, whole)
+    (whole / "workspace.lock.yaml").write_text(yaml.safe_dump({k: v for k, v in lock.items() if k != "graphs"}, sort_keys=False), encoding="utf-8")
+    eager = answers(whole)
+    assert not any("loaded <" in log for log in eager["logs"]), "a lock with no graphs index loads graph.nq whole"
+
+    def same(answer: dict) -> dict:
+        return {**answer, "triples": sorted(answer.get("triples", []), key=json.dumps)} if "triples" in answer else answer
+    assert [same(a) for a in lazy["calls"]] == [same(a) for a in eager["calls"]]
+    assert int(lazy["calls"][3]["rows"][0]["n"]) == len(nq.decode("utf-8").splitlines())
 
 
 # ---------------------------------------------------------------------------

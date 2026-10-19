@@ -103,13 +103,16 @@ jobs:
         run: uv sync --locked
         working-directory: .lokf
 
-      # The token is read-only and reaches one command, gh attestation
-      # verify, which reads the attestation store; the zips come from the
-      # public release URLs the member concepts name.
+      # The token is read-only and reaches gh alone: the attestation store,
+      # and the repository's visibility, which decides whether an internal
+      # member may join. The zips come from the public release URLs the
+      # member concepts name.
       - name: Fetch and verify every member's zip, and gate as the next release would
         env:
           GH_TOKEN: ${{ github.token }}
-        run: uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only
+        run: |
+          visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
+          uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "$visibility"
 
   build:
     name: Build the workspace and the site (read-only)
@@ -196,8 +199,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
           uv run --project .lokf .lokf/scripts/knowledge-federate.py build \
-            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag"
+            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "$visibility"
 
       # The same bundle of files always gives the same bytes: names sorted,
       # modes fixed, every file at the time of the tag's commit, no uid, gid
@@ -216,6 +220,37 @@ jobs:
           (cd "$stage" && find workspace \( -type f -o -type l \) -print | LC_ALL=C sort | TZ=UTC zip -q -X -y -@ "$RUNNER_TEMP/release/$asset")
           (cd "$RUNNER_TEMP/release" && sha256sum "$asset" > "$asset.sha256")
           echo "Packed $(unzip -Z1 "$RUNNER_TEMP/release/$asset" | wc -l) files into $asset"
+
+      # What changed since the workspace the release before this one carries,
+      # for its notes: members that joined, moved or left, and the links
+      # between them. A comparison that cannot be made leaves the notes as
+      # they are and never stops the release.
+      - name: Compare with the previous release's workspace
+        if: steps.what.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          CREATED="$(gh release view "$TAG" --json createdAt --jq .createdAt)" || { echo "::warning::Could not read when $TAG was released, so its notes say nothing of the workspace."; exit 0; }
+          export CREATED
+          earlier="$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | select(.draft | not) | select(.tag_name != env.TAG) | select(.created_at < env.CREATED) | select(any(.assets[]; .name | startswith("workspace-") and endswith(".zip"))) | .tag_name')" \
+            || { echo "::warning::Could not list the releases before $TAG, so its notes say nothing of the workspace."; exit 0; }
+          prev="$(printf '%s\n' "$earlier" | sed -n 1p)"
+          if [ -z "$prev" ]; then
+            echo "No release before $TAG carries a workspace, so its notes say nothing of one."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/previous"
+          if gh release download "$prev" --pattern 'workspace-*.zip' --pattern 'workspace-*.zip.sha256' --dir "$RUNNER_TEMP/previous" \
+            && (cd "$RUNNER_TEMP/previous" && sha256sum -c -- *.sha256) \
+            && uv run --project .lokf .lokf/scripts/knowledge-federate.py diff "$RUNNER_TEMP"/previous/workspace-*.zip snapshot --out "$RUNNER_TEMP/release/workspace-changes.md"; then
+            cat "$RUNNER_TEMP/release/workspace-changes.md"
+          else
+            echo "::warning::Could not compare with the workspace of $prev, so the notes of $TAG say nothing of the workspace."
+            rm -f "$RUNNER_TEMP/release/workspace-changes.md"
+          fi
 
       # A push carries no new workspace: the newest released one is served
       # again, so the site never shows a workspace no person confirmed.
@@ -239,12 +274,16 @@ jobs:
           echo "Reusing the workspace released with $tag."
 
       # The Pages artifact: the site with the workspace under /workspace/, or
-      # the workspace alone on a host with no site.
+      # the workspace alone on a host with no site. A workspace that holds
+      # internal metadata goes to the release alone: a Pages site can be
+      # public while its repository is private.
       - name: Assemble the Pages artifact
         run: |
           set -euo pipefail
           if [ -d website/dist ]; then dist=website/dist; else mkdir -p dist; dist=dist; fi
-          if [ -d snapshot ]; then
+          if [ -d snapshot ] && grep -qx 'sensitivity: internal' snapshot/workspace.lock.yaml; then
+            echo "::notice::The workspace holds internal metadata, so the site is deployed without it; it is attached to the release alone."
+          elif [ -d snapshot ]; then
             rm -rf "$dist/workspace"
             cp -R snapshot "$dist/workspace"
             chmod -R u+rwX "$dist/workspace"
@@ -310,6 +349,30 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh release upload "$TAG" ./*.zip ./*.sha256 --clobber
+        working-directory: ${{ runner.temp }}/release
+
+      # The notes gain what changed in the workspace once: a run started
+      # again replaces the part an earlier run added, from its marker on.
+      - name: Add the workspace's changes to the release notes
+        if: needs.build.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ ! -s workspace-changes.md ]; then
+            echo "No comparison was made, so the notes stay as they are."
+            exit 0
+          fi
+          gh release view "$TAG" --json body --jq .body > notes.md
+          python3 - <<'PY'
+          import pathlib
+          marker = "<!-- knowledge-federation: workspace changes -->"
+          kept = pathlib.Path("notes.md").read_text(encoding="utf-8").split(marker)[0].rstrip()
+          changes = pathlib.Path("workspace-changes.md").read_text(encoding="utf-8").strip()
+          pathlib.Path("body.md").write_text((kept + "\n\n" if kept else "") + marker + "\n\n" + changes + "\n", encoding="utf-8")
+          PY
+          gh release edit "$TAG" --notes-file body.md
         working-directory: ${{ runner.temp }}/release
 
       - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

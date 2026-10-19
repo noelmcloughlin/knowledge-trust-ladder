@@ -14,11 +14,16 @@
 #   a member's namespace and names no concept of it; `report` lists it.
 #   `max_depth` is how many tiers of members the build follows when a
 #   member is itself a domain, 3 unless set; the domain's own members are
-#   tier 1. The domain a build starts from is that build's top, and may be
-#   a member of another domain in turn.
+#   tier 1. `sensitivity` is the most sensitive member its workspace may
+#   hold, public unless set: a person who confirms `internal` clears the
+#   workspace to aggregate internal bundles, as section 11.5 of the LOKF
+#   specification asks of a registry's owner. The domain a build starts
+#   from is that build's top, and may be a member of another domain in turn.
 # MemberBundle: a Dataset naming one released bundle: its `base_iri`
 #   (LOKF's own slot, which the registry routes by), the release `version`
-#   it pins, the `release` page, and its distribution.
+#   it pins, the `release` page, and its distribution. `sensitivity` says
+#   how sensitive the bundle's subject is, public unless set; the build
+#   writes it into the registry entry, the field section 11.5 names.
 # MemberDomain: a MemberBundle whose bundle is itself a domain, so a
 #   dcat:Catalog, as DCAT lists a catalogue inside a catalogue. The build
 #   follows its members into the same workspace, and a person's
@@ -47,10 +52,10 @@ classes:
   Domain:
     is_a: Dataset
     class_uri: dcat:Catalog
-    slots: [unowned_targets, max_depth]
+    slots: [unowned_targets, max_depth, sensitivity]
   MemberBundle:
     is_a: Dataset
-    slots: [base_iri, release]
+    slots: [base_iri, release, sensitivity]
     slot_usage:
       base_iri: {required: true}
       distribution: {range: ReleaseDistribution, required: true}
@@ -75,7 +80,14 @@ slots:
   max_depth:
     range: integer
     minimum_value: 1
+  sensitivity:
+    range: Sensitivity
 enums:
+  Sensitivity:
+    permissible_values:
+      public: {description: anyone may read it; the default}
+      internal: {description: the organisation may read it; it joins a workspace the domain clears for internal and builds in a private or internal repository}
+      confidential: {description: it joins no workspace}
   UnownedTargetPolicy:
     permissible_values:
       fail: {description: an unowned or dangling cross-bundle target fails the build}

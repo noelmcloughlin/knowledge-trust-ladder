@@ -76,13 +76,18 @@
 # over the same snapshot: resolve_iri, neighbors, subgraph, federated_sparql
 # and read_document, each bounded in depth and size, with the workspace index
 # as the server's instructions so an agent reads it before anything else.
+# It loads a member's graph when a walk first reaches its namespace, from
+# where the lock says that graph lies in graph.nq, together with every graph
+# that names that namespace, so a link into the member is there too.
 # `--snapshot` may be an absolute path, so a downloaded workspace-<tag>.zip
 # is read anywhere a sidecar environment exists.
 #
 # What the snapshot holds: index.md (the members, their versions, licences
 # and health lines, each member's own index first), llms.txt,
 # workspace.lock.yaml, lokf-registry.yaml, registry.jsonld, graph.nq,
-# bundles/<slug>/.lokf/knowledge/ (each release, unpacked and read-only),
+# graph.json (every bundle's concepts and the links between bundles, for a
+# site's graph page), bundles/<slug>/.lokf/knowledge/ (each release,
+# unpacked and read-only),
 # export/<slug>/ (the four files lokf export writes), queries/*.rq and
 # gate-report.md.
 #
@@ -138,6 +143,9 @@ JOB_TOKEN = os.environ.pop("KNOWLEDGE_FEDERATE_TOKEN", "")
 # How many tiers of members a build follows unless the top Domain concept's
 # `max_depth` says otherwise; the domain's own members are tier 1.
 DEFAULT_MAX_DEPTH = 3
+# A bundle's sensitivity, lowest first: the words knowledge-ingest.py uses
+# for what a repository may hold, here for what a workspace may.
+SENSITIVITY = ("public", "internal", "confidential")
 DCAT = "http://www.w3.org/ns/dcat#"
 VOID = "http://rdfs.org/ns/void#"
 DCTERMS = "http://purl.org/dc/terms/"
@@ -219,6 +227,9 @@ class Member:
         # The version the concept names now, when the build takes an earlier
         # one a person confirmed; empty when it takes the concept as it stands.
         self.waits = ""
+        # How sensitive the bundle's subject is, as the member concept says,
+        # public unless it says otherwise.
+        self.sensitivity = str(data.get("sensitivity") or "public")
         dists = data.get("distribution") or []
         if not isinstance(dists, list) or not dists:
             raise Failed(f"{concept_path}: a MemberBundle names its zip under distribution")
@@ -276,6 +287,7 @@ class Member:
     def lock_entry(self) -> dict:
         entry = {
             "slug": self.slug,
+            "title": self.title,
             "base_iri": self.base_iri,
             "version": self.version,
             "zip": self.zip_url,
@@ -284,6 +296,7 @@ class Member:
             "concepts": sorted(self.concepts),
             "tier": self.tier,
             "kind": "domain" if self.is_domain else "bundle",
+            "sensitivity": self.sensitivity,
         }
         if self.release:
             entry["release"] = self.release
@@ -437,6 +450,8 @@ def as_built(released: tuple[dict, str] | None, iri: str, concept: dict) -> tupl
                           "access_url": extra.get("url"), "checksum": f"sha256:{extra.get('sha256')}"})
     data = {"type": "MemberDomain" if entry.get("kind") == "domain" else "MemberBundle", "title": concept.get("title"),
             "base_iri": entry.get("base_iri"), "version": entry.get("version"), "release": entry.get("release"), "distribution": dists}
+    if entry.get("sensitivity"):
+        data["sensitivity"] = entry["sensitivity"]
     return data, f"as that domain's own build took it, which the lock in {name} records"
 
 
@@ -467,6 +482,46 @@ def take_confirmed(bundle, concepts, history: bool, waiting: list[dict], release
             waiting.append({**note, "built": str(data.get("version") or "")})
         taken.append((c.path, data, moved, iri))
     return taken
+
+
+def repository_visibility(root: pathlib.Path, given: str) -> str:
+    """The host repository's visibility: --visibility, else what gh says when it can, else unknown, which counts as public."""
+    if given:
+        return given
+    gh = shutil.which("gh")
+    if gh:
+        done = subprocess.run([gh, "repo", "view", "--json", "visibility", "--jq", ".visibility"], cwd=str(root), capture_output=True, text=True, env=gh_env())
+        if done.returncode == 0 and done.stdout.strip().lower() in ("public", "private", "internal"):
+            return done.stdout.strip().lower()
+    return "unknown"
+
+
+def sensitivity_refusal(member, clearance: str, visibility) -> str:
+    """Why a member may not join this workspace for its sensitivity, or nothing when it may.
+
+    Section 11.5 of the LOKF specification has a registry refuse a member its
+    owner has not cleared, because metadata each cleared on its own can
+    identify someone when aggregated. Here the clearance is the top Domain
+    concept's `sensitivity`, as a person confirmed it. A confidential bundle
+    joins no workspace, and an internal one joins only a workspace built in a
+    private or internal repository, since the release it is attached to is
+    then no more public than the bundle. `visibility` is asked only then.
+    """
+    s = member.sensitivity
+    if s not in SENSITIVITY:
+        return f"{member.slug}: sensitivity must be public, internal or confidential, not {s!r}"
+    if s == "confidential":
+        return f"{member.slug}: its sensitivity is confidential, and a confidential bundle joins no workspace"
+    if SENSITIVITY.index(s) > SENSITIVITY.index(clearance):
+        return (f"{member.slug}: its sensitivity is {s}, and the domain has cleared {clearance} only; a person clears {s} "
+                f"by confirming `sensitivity: {s}` on the Domain concept, or the member leaves")
+    if s == "internal":
+        seen = visibility()
+        if seen not in ("private", "internal"):
+            said = "has an unknown visibility, which counts as public" if seen == "unknown" else f"is {seen}"
+            return (f"{member.slug}: its sensitivity is internal, and this repository {said}, so the release that carries the workspace would be too; "
+                    "build it in a private or internal repository, and pass --visibility where gh cannot say")
+    return ""
 
 
 def waits_note(member) -> str:
@@ -741,6 +796,24 @@ def canonical_quads(nt_path: pathlib.Path, graph_iri: str):
     return out
 
 
+def names_in(ds, graph_iri: str, registry) -> list[str]:
+    """The namespaces of the other bundles whose IRIs one graph's quads hold, as subject or object, each routed by the registry."""
+    import pyoxigraph as ox
+
+    owners: dict[str, str | None] = {}
+    out: set[str] = set()
+    for q in ds:
+        for term in (q.subject, q.object):
+            if isinstance(term, ox.NamedNode):
+                if term.value not in owners:
+                    entry = registry.owner(term.value)
+                    owners[term.value] = entry.base_iri if entry is not None else None
+                owner = owners[term.value]
+                if owner is not None and owner != graph_iri:
+                    out.add(owner)
+    return sorted(out)
+
+
 def lock_graph(snapshot_iri: str, domain_iri: str, domain_title: str, records: list[dict]):
     """The lock as RDF, in its own graph: a DCAT catalogue of VoID datasets, each with its distribution and checksum, no blank nodes."""
     import pyoxigraph as ox
@@ -1000,19 +1073,24 @@ def _build(args, note_new) -> int:
     bundle, domains, member_concepts = read_domain(knowledge)
     top = top_domain(bundle, domains)
     domain_iri = bundle.iri(top)
-    # The gate policy and the depth are the domain's claims too: a build takes
-    # them as a person last confirmed the Domain concept, the defaults when no
-    # person has, and --verify-only as they stand.
+    # The gate policy, the depth and the clearance are the domain's claims too:
+    # a build takes them as a person last confirmed the Domain concept, the
+    # defaults when no person has, and --verify-only as they stand.
     settings, how = (top.data, "") if args.verify_only else confirmed_text(top, domain_iri, bundle.resolve(top.concept_id), True)
     if settings is None:
         settings = {}
-        if top.data.get("unowned_targets") is not None or top.data.get("max_depth") is not None:
-            say(f"{domain_iri}: its unowned_targets and max_depth wait for a person's confirmation, because {how}; the build uses the defaults, fail and {DEFAULT_MAX_DEPTH}")
-    elif settings is not top.data and any(settings.get(k) != top.data.get(k) for k in ("unowned_targets", "max_depth")):
-        say(f"{domain_iri}: its unowned_targets and max_depth as edited wait for a person's confirmation; the build uses them {how}")
+        if any(top.data.get(k) is not None for k in ("unowned_targets", "max_depth", "sensitivity")):
+            say(f"{domain_iri}: its unowned_targets, max_depth and sensitivity wait for a person's confirmation, because {how}; "
+                f"the build uses the defaults, fail, {DEFAULT_MAX_DEPTH} and public")
+    elif settings is not top.data and any(settings.get(k) != top.data.get(k) for k in ("unowned_targets", "max_depth", "sensitivity")):
+        say(f"{domain_iri}: its unowned_targets, max_depth and sensitivity as edited wait for a person's confirmation; the build uses them {how}")
     policy = str(settings.get("unowned_targets") or "fail")
     if policy not in ("fail", "report"):
         raise Failed(f"{top.path}: unowned_targets must be fail or report, not {policy!r}")
+    clearance = str(settings.get("sensitivity") or "public")
+    if clearance not in SENSITIVITY[:2]:
+        raise Failed(f"{top.path}: sensitivity on the Domain concept is the most sensitive member its workspace may hold, public or internal, not {clearance!r}")
+    visibility = functools.cache(lambda: repository_visibility(root, args.visibility))
     raw_depth = settings.get("max_depth")
     max_depth = DEFAULT_MAX_DEPTH if raw_depth is None else raw_depth
     if isinstance(max_depth, bool) or not isinstance(max_depth, int) or max_depth < 1:
@@ -1023,7 +1101,8 @@ def _build(args, note_new) -> int:
     snapshot_iri = args.snapshot_iri or (f"{args.release_base.rstrip('/')}/{tag}" if tag and args.release_base else f"urn:knowledge-federate:snapshot:{tag or 'untagged'}")
     out = root / args.out
     cache = pathlib.Path(args.cache).expanduser() if args.cache else root / ".lokf" / ".cache" / "federation"
-    say(f"domain {domain_iri} ({len(member_concepts)} members), policy unowned_targets={policy}, max_depth={max_depth}")
+    say(f"domain {domain_iri} ({len(member_concepts)} members), policy unowned_targets={policy}, max_depth={max_depth}"
+        + (f", sensitivity={clearance}" if clearance != "public" else ""))
 
     # 1. Resolve: follow the members, and a member that is itself a domain, into a lock.
     # --verify-only builds in a temporary folder it removes, so a check
@@ -1076,9 +1155,18 @@ def _build(args, note_new) -> int:
                 raise Failed(f"{member.slug}: base_iri {member.base_iri} is already in the federation as {earlier.slug} at {earlier.version}, named by <{earlier.parents[0]}>, and this concept names it at {member.version} under <{member.parents[0]}>; a bundle joins once, at one release, so two domains that name it must pin the same zip{waits_note(earlier) or waits_note(member)}")
             earlier.parents.extend(p for p in member.parents if p not in earlier.parents)
             earlier.concepts.extend(c for c in member.concepts if c not in earlier.concepts)
+            # Each domain states the bundle's sensitivity, and the higher one counts.
+            if member.sensitivity in SENSITIVITY and SENSITIVITY.index(member.sensitivity) > SENSITIVITY.index(earlier.sensitivity if earlier.sensitivity in SENSITIVITY else "public"):
+                refusal = sensitivity_refusal(member, clearance, visibility)
+                if refusal:
+                    raise Failed(refusal)
+                earlier.sensitivity = member.sensitivity
             say(f"{member.slug}: {member.base_iri} is already in the federation as {earlier.slug} at the same release; named by a second domain, not followed again")
             continue
         seen[member.base_iri] = member
+        refusal = sensitivity_refusal(member, clearance, visibility)
+        if refusal:
+            raise Failed(refusal + waits_note(member))
         if member.slug in slugs:
             # Two tiers may each name a members/<slug>.md; the folders stay apart.
             member.slug = next(f"{member.slug}-{n}" for n in range(2, len(slugs) + 3) if f"{member.slug}-{n}" not in slugs)
@@ -1124,6 +1212,7 @@ def _build(args, note_new) -> int:
         "domain_base_iri": domain_base,
         "snapshot": snapshot_iri,
         "unowned_targets": policy,
+        "sensitivity": max((m.sensitivity for m, *_ in resolved), key=SENSITIVITY.index, default="public"),
         "members": sorted((m.lock_entry() for m, *_ in resolved), key=lambda e: e["base_iri"]),
     }
     if waiting:
@@ -1159,6 +1248,8 @@ def _build(args, note_new) -> int:
             entry.source_base = (domain_source if member is None else "") or (f"{public}/bundles/{slug}/.lokf/knowledge" if public else "")
         if member and member.repo:
             entry.repo = member.repo
+        if member:
+            entry.sensitivity = member.sensitivity
         if public:
             entry.distribution = {"rdf": f"{public}/export/{slug}/graph.nt", "concepts": f"{public}/export/{slug}/concepts.jsonld"}
         registry.add(entry)
@@ -1190,17 +1281,28 @@ def _build(args, note_new) -> int:
         say(f"{slug}: registered {entry.base_iri} ({entry.void.get('triples', 0)} triples) and exported")
     registry.save()
 
-    # 3. Load: one named graph per bundle, blank nodes canonical, plus the lock graph; then the quads, sorted.
+    # 3. Load: one named graph per bundle, blank nodes canonical, plus the lock graph; then the quads,
+    # graph by graph in IRI order, each graph's lines sorted, so that each graph's quads lie together.
     store = ox.Store()
-    lines: list[str] = []
-    for base_iri, nt in graphs:
-        ds = canonical_quads(nt, base_iri)
+    per_graph: dict[str, list[str]] = {}
+    names_of: dict[str, list[str]] = {}
+    for graph_iri, ds in [*((b, canonical_quads(nt, b)) for b, nt in graphs), (snapshot_iri, lock_graph(snapshot_iri, domain_iri, domain_title, records))]:
         store.extend(ds)
-        lines.extend(ox.serialize(ds, format=ox.RdfFormat.N_QUADS).decode("utf-8").splitlines())
-    lg = lock_graph(snapshot_iri, domain_iri, domain_title, records)
-    store.extend(lg)
-    lines.extend(ox.serialize(lg, format=ox.RdfFormat.N_QUADS).decode("utf-8").splitlines())
-    (new / "graph.nq").write_text("\n".join(sorted(set(lines))) + "\n", encoding="utf-8")
+        per_graph[graph_iri] = sorted(set(ox.serialize(ds, format=ox.RdfFormat.N_QUADS).decode("utf-8").splitlines()))
+        names_of[graph_iri] = names_in(ds, graph_iri, registry)
+    # The lock's `graphs` says where each graph's quads lie in graph.nq and
+    # which other bundles' namespaces they name, so a reader loads a graph
+    # only when a walk reaches a namespace it names.
+    chunks: list[bytes] = []
+    lock["graphs"] = []
+    offset = 0
+    for graph_iri in sorted(per_graph):
+        chunk = "".join(line + "\n" for line in per_graph[graph_iri]).encode("utf-8")
+        lock["graphs"].append({"graph": graph_iri, "offset": offset, "bytes": len(chunk), "quads": len(per_graph[graph_iri]), "names": names_of[graph_iri]})
+        chunks.append(chunk)
+        offset += len(chunk)
+    lines = [line for graph_iri in sorted(per_graph) for line in per_graph[graph_iri]]
+    (new / "graph.nq").write_bytes(b"".join(chunks))
 
     # 4. Gate: every typed-relation target outside its graph's namespace, resolved against the registry.
     # A target in the namespace of a member left out because it waits is
@@ -1250,7 +1352,7 @@ def _build(args, note_new) -> int:
 
     # 5. The index, llms.txt, registry.jsonld and the stored queries, which a check does not write.
     if not args.verify_only:
-        write_index(new, domain_title, domain_iri, snapshot_iri, policy, records, unowned, public, waiting, lock["links"], len(dangling))
+        write_index(new, domain_title, domain_iri, snapshot_iri, policy, records, unowned, public, waiting, lock["links"], len(dangling), lock["sensitivity"])
         (new / "registry.jsonld").write_text(json.dumps(registry_jsonld(registry, records), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         (new / "graph.json").write_text(json.dumps(union_elements(loaded, records, links, vocabulary()), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         (new / "queries").mkdir()
@@ -1313,11 +1415,13 @@ def zip_path_size(resolved, member) -> int:
 
 def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_iri: str, policy: str,
                 records: list[dict], unowned, public: str, waiting: list[dict] | None = None,
-                links: list[dict] | None = None, dangling: int = 0) -> None:
+                links: list[dict] | None = None, dangling: int = 0, sensitivity: str = "public") -> None:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     lines = [f"# {domain_title}: the workspace", "",
              f"The graph built from the releases the domain <{domain_iri}> names, one named graph per bundle, named by that bundle's `base_iri`, with the lock as a graph of its own, <{snapshot_iri}>. Built on {today}; the members and their versions below are the lock's, 'Named by' is the bundle whose domain concept names each (two when two domains name one bundle at one release), and each health line is that member's own at the release named, computed when this was built. A trust label is never stored: `queries/labels.rq` computes each from the events at the moment it runs.",
              "", "Read a member's own `index.md` first, then its concepts; `export/<slug>/concepts.jsonld` holds every concept of a bundle with its body.", "",
+             *(["It holds internal metadata, which a person cleared on the Domain concept: keep it inside the organisation. The federation workflow attaches it to the release and leaves it off the site.", ""]
+               if sensitivity != "public" else []),
              "## Members", "", "| Bundle | Version | Namespace | Named by | Licence | Health at this release |", "| --- | --- | --- | --- | --- | --- |"]
 
     def named_by(r: dict) -> str:
@@ -1352,9 +1456,9 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
             kept = f"built at {w['built']}" if w.get("built") else "left out"
             lines.append(f"- <{w['concept']}>: {w['proposed'] or 'a release'} waits; {kept}.")
     lines += ["", "## Files", "",
-              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace and the member concepts that name it. An entry also names the schema released with its bundle when there is one, and for a member domain the workspace it released when its concept names one. Under `links`, the lock counts the links between members; under `waiting`, it lists each member concept that waits for a person's confirmation.",
+              "- `workspace.lock.yaml`: one entry per member, with its zip, checksum and namespace and the member concepts that name it. An entry also names the schema released with its bundle when there is one, and for a member domain the workspace it released when its concept names one. Under `links`, the lock counts the links between members; under `graphs`, it says where each graph lies in `graph.nq` and which other bundles' namespaces it names, so the MCP server loads a graph only when a walk reaches it; under `waiting`, it lists each member concept that waits for a person's confirmation.",
               "- `lokf-registry.yaml` and `registry.jsonld`: the registry the LOKF specification's section 11 describes, which routes any IRI to its owner by the longest `base_iri` prefix.",
-              "- `graph.nq`: every bundle's triples in its own named graph, plus the lock graph, as sorted N-Quads.",
+              "- `graph.nq`: every bundle's triples in its own named graph, plus the lock graph, as N-Quads, graph by graph in IRI order and each graph's lines sorted.",
               "- `graph.json`: every bundle's concepts and typed relations as cytoscape.js elements, each node naming its bundle, with the links between bundles marked `cross`.",
               "- `export/<slug>/`: `graph.nt`, `concepts.jsonld`, `graph.json` and `datasets.jsonld` for each bundle, as `lokf export` writes them.",
               "- `bundles/<slug>/.lokf/knowledge/`: each release, unpacked and read-only.",
@@ -1794,9 +1898,95 @@ def members(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# diff: what changed between two workspaces, for a release's notes
+# ---------------------------------------------------------------------------
+def read_lock(path: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> dict:
+    """A workspace's lock, from the lock file, an unpacked workspace, or a workspace-<tag>.zip, whose lock alone is read."""
+    if path.is_dir():
+        inside = [path / "workspace.lock.yaml", path / "workspace" / "workspace.lock.yaml"]
+        path = next((p for p in inside if p.is_file()), inside[0])
+    try:
+        if zipfile.is_zipfile(path):
+            with zipfile.ZipFile(path) as zf:
+                info = zf.getinfo(WORKSPACE_LOCK)
+                if info.file_size > max_bytes:
+                    raise Failed(f"{path}: {WORKSPACE_LOCK} is more than {max_bytes} bytes")
+                lock = yaml.safe_load(zf.read(info))
+        else:
+            lock = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, KeyError, zipfile.BadZipFile, yaml.YAMLError) as e:
+        raise Failed(f"{path}: no readable workspace lock ({e})") from e
+    if not isinstance(lock, dict) or not isinstance(lock.get("members"), list):
+        raise Failed(f"{path}: not a workspace lock")
+    return lock
+
+
+def release_name(lock: dict) -> str:
+    """The release a lock was built for: the tag its snapshot IRI ends in, or the IRI itself."""
+    snapshot = str(lock.get("snapshot") or "")
+    tag = re.search(r"/releases/tag/([^/]+)$", snapshot)
+    return tag.group(1) if tag else snapshot
+
+
+def lock_changes(old: dict, new: dict) -> list[str]:
+    """What changed from one workspace's lock to the next, a Markdown bullet a change: members that joined, moved or left, and the links between them."""
+    before = {str(m.get("base_iri")): m for m in old.get("members") or [] if isinstance(m, dict)}
+    after = {str(m.get("base_iri")): m for m in new.get("members") or [] if isinstance(m, dict)}
+
+    def name(m: dict) -> str:
+        return str(m.get("title") or m.get("slug") or m.get("base_iri"))
+
+    out = []
+    for iri in sorted(after.keys() - before.keys(), key=lambda i: name(after[i])):
+        m = after[iri]
+        out.append(f"- **{name(m)}** joined at {m.get('version')}" + (f", at tier {m['tier']}" if int(m.get("tier") or 1) > 1 else "") + f", in `{iri}`.")
+    for iri in sorted(before.keys() & after.keys(), key=lambda i: name(after[i])):
+        b, a = before[iri], after[iri]
+        if b.get("version") != a.get("version"):
+            out.append(f"- **{name(a)}** moved from {b.get('version')} to {a.get('version')}.")
+        elif b.get("sha256") != a.get("sha256"):
+            out.append(f"- **{name(a)}** was released again at {a.get('version')}, with other bytes.")
+        if b.get("sensitivity", "public") != a.get("sensitivity", "public"):
+            out.append(f"- **{name(a)}** is {a.get('sensitivity', 'public')} now, and was {b.get('sensitivity', 'public')}.")
+    for iri in sorted(before.keys() - after.keys(), key=lambda i: name(before[i])):
+        out.append(f"- **{name(before[iri])}** left; the workspace held it at {before[iri].get('version')}.")
+    if "links" in new:
+        titles = {**{i: name(m) for i, m in before.items()}, **{i: name(m) for i, m in after.items()}}
+        counted = {}
+        for which, lock in (("was", old), ("is", new)):
+            for link in lock.get("links") or []:
+                key = (str(link.get("from")), str(link.get("to")))
+                counted.setdefault(key, {"was": 0, "is": 0})[which] += int(link.get("count") or 0)
+        for (f, to), n in sorted(counted.items()):
+            if n["was"] != n["is"] and ("links" in old or n["is"]):
+                out.append(f"- Links from **{titles.get(f, f)}** to **{titles.get(to, to)}**: {n['is']}" + (f", and {n['was']} before." if "links" in old else "."))
+    waiting_before = {str(w.get("concept")): w for w in old.get("waiting") or [] if isinstance(w, dict)}
+    for w in new.get("waiting") or []:
+        if isinstance(w, dict) and waiting_before.get(str(w.get("concept"))) != w:
+            kept = f"built at {w['built']}" if w.get("built") else "left out"
+            out.append(f"- <{w.get('concept')}> proposes {w.get('proposed') or 'a release'}, which waits for a person's confirmation; {kept}.")
+    return out
+
+
+def diff(args) -> int:
+    old, new = read_lock(pathlib.Path(args.old).expanduser()), read_lock(pathlib.Path(args.new).expanduser())
+    changes = lock_changes(old, new)
+    since = release_name(old)
+    text = "\n".join(["## The workspace", "",
+                      (f"Compared with the workspace of {since}:" if changes else f"No member joined, moved or left since the workspace of {since}."), "",
+                      *changes]).rstrip() + "\n"
+    if args.out:
+        pathlib.Path(args.out).write_text(text, encoding="utf-8")
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # serve and query: the toolkit's store and server over the union of the graphs
 # ---------------------------------------------------------------------------
-def union_store(snapshot: pathlib.Path):
+def union_store(snapshot: pathlib.Path, load: bool = True):
+    """The toolkit's store over the snapshot, with the union of the named graphs as the default graph: graph.nq whole, or, without `load`, empty for a reader that loads graph by graph."""
     import pyoxigraph as ox
     from lokf.schema import vocabulary
     from lokf.store import GraphStore
@@ -1825,7 +2015,8 @@ def union_store(snapshot: pathlib.Path):
             return g
 
     store = ox.Store()
-    store.load(path=str(nq), format=ox.RdfFormat.N_QUADS)
+    if load:
+        store.load(path=str(nq), format=ox.RdfFormat.N_QUADS)
     prefixes = {**vocabulary().prefixes, "void": VOID, "dcat": DCAT, "spdx": SPDX, "dcterms": DCTERMS}
     return UnionStore(store, prefixes)
 
@@ -1884,19 +2075,67 @@ STORED_QUERY = re.compile(r"^[A-Za-z0-9_-]+\.rq$")
 
 
 class Workspace:
-    """A snapshot opened for reading: the union store, the registry, the lock, the index, and each bundle's unpacked release."""
+    """A snapshot opened for reading: the union store, the registry, the lock, the index, and each bundle's unpacked release.
 
-    def __init__(self, snapshot: pathlib.Path):
+    The store starts empty when the lock says where each graph lies in
+    graph.nq, and a graph loads when a walk first reaches a namespace it
+    names, as the LOKF specification's section 11.4 has members load: the
+    graph of the bundle that owns the IRI, and every graph that names that
+    bundle's namespace, so a link into it from another bundle is there too.
+    A walk from an IRI no bundle owns, and a SPARQL query, load every graph.
+    A workspace built before the lock held that index loads whole.
+    """
+
+    def __init__(self, snapshot: pathlib.Path, lazy: bool = False):
+        import threading
+
         from lokf.registry import load_registry
 
         self.snapshot = snapshot
-        self.store = union_store(snapshot)
         self.registry = load_registry(snapshot / "lokf-registry.yaml")
         self.lock = yaml.safe_load((snapshot / "workspace.lock.yaml").read_text(encoding="utf-8")) or {}
         self.index = (snapshot / "index.md").read_text(encoding="utf-8")
         self.members = {m["base_iri"]: m for m in self.lock.get("members", [])}
         domain_base = str(self.lock.get("domain_base_iri") or "")
         self.members.setdefault(domain_base, {"slug": "domain", "base_iri": domain_base, "version": "", "source_base": ""})
+        self.graphs = {str(g["graph"]): g for g in self.lock.get("graphs") or [] if isinstance(g, dict) and g.get("graph")} if lazy else {}
+        self.store = union_store(snapshot, load=not self.graphs)
+        self.pending = set(self.graphs)  # the graphs not loaded yet
+        self.loading = threading.Lock()
+
+    def reach(self, iris) -> None:
+        """Load the graphs a walk from these IRIs can meet that are not loaded yet."""
+        if not self.pending:
+            return
+        wanted: set[str] = set()
+        for iri in iris:
+            owner = self.registry.owner(iri)
+            if owner is None:
+                wanted = set(self.graphs)
+                break
+            wanted.add(owner.base_iri)
+            wanted.update(g for g, entry in self.graphs.items() if owner.base_iri in (entry.get("names") or []))
+        self.load(wanted)
+
+    def load(self, graphs=None) -> None:
+        """Load the named graphs not loaded yet, every one when none is named, each from where the lock says it lies in graph.nq."""
+        import pyoxigraph as ox
+
+        with self.loading:
+            for g in sorted((set(graphs) if graphs is not None else set(self.graphs)) & self.pending):
+                entry = self.graphs[g]
+                with (self.snapshot / "graph.nq").open("rb") as f:
+                    f.seek(int(entry["offset"]))
+                    data = f.read(int(entry["bytes"]))
+                quads = list(ox.parse(data, format=ox.RdfFormat.N_QUADS)) if data else []
+                if len(quads) != int(entry["quads"]) or any(q.graph_name != ox.NamedNode(g) for q in quads):
+                    warn(f"graph.nq does not hold <{g}> where workspace.lock.yaml says; loading graph.nq whole")
+                    self.store.store.load(path=str(self.snapshot / "graph.nq"), format=ox.RdfFormat.N_QUADS)
+                    self.pending.clear()
+                    return
+                self.store.store.extend(quads)
+                self.pending.discard(g)
+                warn(f"loaded <{g}>: {len(quads)} quads")
 
     def owner(self, iri: str) -> dict | None:
         """The lock entry of the bundle whose namespace holds the IRI, with the registry's title, or None."""
@@ -1936,7 +2175,7 @@ def mcp_server(args) -> int:
     except ImportError:  # the SDK before 2.0 named it FastMCP
         from mcp.server.fastmcp import FastMCP as MCPServer
 
-    ws = Workspace(snapshot_dir(args))
+    ws = Workspace(snapshot_dir(args), lazy=True)
     domain = str(ws.lock.get("domain") or "")
     server = MCPServer(
         "lokf-registry",
@@ -1967,6 +2206,7 @@ def mcp_server(args) -> int:
         for _ in range(depth):
             nxt: list[str] = []
             for node in frontier:
+                ws.reach([node])  # the graphs that hold this node's quads, before they are read
                 n = ox.NamedNode(node)
                 for q in (*raw.quads_for_pattern(n, None, None, None), *raw.quads_for_pattern(None, None, n, None)):
                     if q in quads:
@@ -2008,7 +2248,7 @@ def mcp_server(args) -> int:
 
     @server.tool()
     def neighbors(iri: str, depth: int = 1, limit: int = LIMIT_DEFAULT) -> dict:
-        """The triples around an IRI, in and out, across every bundle's graph, with the graph that asserted each: {iri, triples: [{graph, subject, predicate, object: {value, kind}}], count, truncated}. depth is at most 3 hops and limit at most 2000 triples; truncated says when the limit cut the answer."""
+        """The triples around an IRI, in and out, across every bundle's graph, loading a bundle's graph when the walk first reaches it, with the graph that asserted each: {iri, triples: [{graph, subject, predicate, object: {value, kind}}], count, truncated}. depth is at most 3 hops and limit at most 2000 triples; truncated says when the limit cut the answer."""
         quads, truncated = around([iri], depth, limit)
         return {"iri": iri, "count": len(quads), "truncated": truncated,
                 "triples": [{"graph": graph_of(q), "subject": term(q.subject)["value"], "predicate": q.predicate.value, "object": term(q.object)} for q in quads]}
@@ -2031,7 +2271,7 @@ def mcp_server(args) -> int:
 
     @server.tool()
     def federated_sparql(query: str, limit: int = ROWS_MAX) -> dict:
-        """SPARQL over the union of every bundle's graph, the schema prefixes preset; GRAPH ?g binds the asserting bundle's base_iri. query may name a stored query (labels.rq, moved.rq, unowned.rq, links.rq, members.rq). SELECT gives {columns, rows, truncated} with at most limit rows (1000 at most); ASK {boolean}; CONSTRUCT or DESCRIBE {turtle}. SERVICE is refused, as the toolkit refuses it."""
+        """SPARQL over the union of every bundle's graph, the schema prefixes preset, which loads every graph on the first call; GRAPH ?g binds the asserting bundle's base_iri. query may name a stored query (labels.rq, moved.rq, unowned.rq, links.rq, members.rq). SELECT gives {columns, rows, truncated} with at most limit rows (1000 at most); ASK {boolean}; CONSTRUCT or DESCRIBE {turtle}. SERVICE is refused, as the toolkit refuses it."""
         text = query.strip()
         if STORED_QUERY.match(text):
             stored = ws.snapshot / "queries" / text
@@ -2039,6 +2279,7 @@ def mcp_server(args) -> int:
                 return {"error": f"no stored query {text}; those here are {', '.join(sorted(p.name for p in (ws.snapshot / 'queries').glob('*.rq')))}"}
             query = stored.read_text(encoding="utf-8")
         limit = max(1, min(int(limit), ROWS_MAX))
+        ws.load()  # a query may reach any graph
         try:
             form = query_form(query)
             if form in ("construct", "describe"):
@@ -2066,7 +2307,9 @@ def mcp_server(args) -> int:
         summary = trust.trust_summary(read_frontmatter(path)) if path.name != "index.md" and text.startswith("---") else None
         return {"iri": iri, "bundle": owner, "path": path.relative_to(ws.snapshot).as_posix(), "source_url": source, "markdown": text, "trust": summary}
 
-    warn(f"lokf-registry over {ws.snapshot}: {len(ws.store)} quads, {len(ws.members)} bundles, five tools; stdio")
+    warn(f"lokf-registry over {ws.snapshot}: {len(ws.members)} bundles, "
+         + (f"{len(ws.graphs)} graphs, each loaded when a walk first reaches a namespace it names" if ws.graphs else f"{len(ws.store)} quads")
+         + "; five tools; stdio")
     server.run(transport="stdio")
     return 0
 
@@ -2086,6 +2329,8 @@ def main(argv=None) -> int:
     b.add_argument("--max-bytes", type=int, default=DEFAULT_MAX_BYTES, help="refuse a zip that unpacks to more than this")
     b.add_argument("--no-attestation", action="store_true", help="skip gh attestation verify")
     b.add_argument("--verify-only", action="store_true", help="fetch and verify every zip, export, load and gate, write nothing")
+    b.add_argument("--visibility", default="", choices=["", "public", "private", "internal", "unknown"],
+                   help="the host repository's visibility, which decides whether an internal member may join (default: asked of gh)")
     b.set_defaults(func=build)
     m = sub.add_parser("members", help="propose moving each member to its newest released zip, as a patch for the pen")
     m.add_argument("--cache", default=None)
@@ -2104,6 +2349,11 @@ def main(argv=None) -> int:
     q.add_argument("--snapshot", default="snapshot")
     q.add_argument("--format", choices=["table", "json"], default="table")
     q.set_defaults(func=query)
+    d = sub.add_parser("diff", help="what changed between two workspaces, as Markdown for a release's notes")
+    d.add_argument("old", help="the earlier workspace: its lock, an unpacked workspace, or a workspace-<tag>.zip")
+    d.add_argument("new", help="the later workspace, in any of the same forms")
+    d.add_argument("--out", default="", help="write the Markdown here instead of to standard output")
+    d.set_defaults(func=diff)
     x = sub.add_parser("mcp", help="the lokf-registry MCP server (stdio) over the snapshot: resolve_iri, neighbors, subgraph, federated_sparql, read_document")
     x.add_argument("--snapshot", default="snapshot", help="the snapshot folder under the root, or an absolute path to an unpacked workspace")
     x.set_defaults(func=mcp_server)

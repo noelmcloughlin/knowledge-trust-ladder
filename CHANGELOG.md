@@ -8,6 +8,9 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The workspace counts the links between its members.** The lock and the workspace index list each typed relation in one bundle whose target is a concept of another, by slot, and `queries/links.rq` counts them over the graph. So a domain sees which members other members link into.
 - **The workspace carries `graph.json`**, every bundle's concepts and typed relations as cytoscape.js elements. Each node names its bundle, and the links between bundles are marked.
+- **The MCP server loads a member's graph when a walk first reaches it**, as section 11.4 of the LOKF specification has members load. `graph.nq` lies graph by graph, and the lock's `graphs` says where each graph lies and which namespaces it names. So a question about one bundle leaves the rest unloaded, and a SPARQL query loads every graph.
+- **The federation build has the `sensitivity` gate of LOKF section 11.5.** A member concept says `public`, `internal` or `confidential`, public unless set. An internal member joins once a person confirms `sensitivity: internal` on the Domain concept, and only in a private or internal repository; a confidential one joins no workspace. The registry entry carries the field, and the workflow keeps a workspace that holds internal metadata off the site.
+- **A domain host's release notes say what changed in its workspace.** `knowledge-federate.py diff` compares two workspaces, and the federation workflow adds the members that joined, moved or left, and the links between them, to each release's notes.
 - **A domain host's graph page draws the workspace.** Its *The workspace* view draws every bundle the domain names, each in a colour of its own, with the links between bundles dashed, from the `graph.json` the federation workflow serves. `WORKSPACE` in `site.config.mjs` names that folder, and is on when the repository has the workflow.
 
 ### Fixed
