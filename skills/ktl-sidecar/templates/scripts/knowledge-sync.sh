@@ -555,7 +555,7 @@ main() {
     fi
   fi
   if [[ "$website" -eq 1 ]]; then
-    echo "   website  the site's copies are synced; build it there to check: cd website && npm ci && npm run build"
+    echo "   website  the site's copies are synced; build it there to check: cd website && npm ci --ignore-scripts && npm run build"
   fi
 
   if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 && "$pin_moved" -eq 0 ]]; then

@@ -228,7 +228,7 @@ build() {
     fail=1
   fi
 }
-(cd "$host/website" && npm ci --no-audit --no-fund --silent)
+(cd "$host/website" && npm ci --ignore-scripts --no-audit --no-fund --silent)
 build
 for f in index.html knowledge/index.html knowledge/services/example-service-a/index.html health/index.html graph/index.html \
          knowledge/concepts.jsonld knowledge/graph.json knowledge/graph.nt knowledge/datasets.jsonld \
