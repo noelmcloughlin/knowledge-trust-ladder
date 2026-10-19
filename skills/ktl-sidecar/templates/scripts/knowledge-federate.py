@@ -177,6 +177,12 @@ DEFAULT_MAX_BYTES = 200 * 1024 * 1024
 # this is far above any real one, and it keeps a zip of many tiny entries
 # from filling the disk's inodes within --max-bytes.
 MAX_ENTRIES = 100_000
+# A distribution's name becomes a file name in the workspace, so it is one
+# plain segment: no folder, no leading dot, nothing a shell or a path reads.
+PLAIN_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]*")
+# Files a browser runs when the workspace's site serves them. A bundle is
+# Markdown; one of these in a member's zip would run on the host's site.
+ACTIVE_SUFFIXES = {".html", ".htm", ".xhtml", ".shtml", ".svg", ".svgz", ".js", ".mjs", ".xml", ".xsl", ".xslt"}
 # The librarian wrapper refuses to pass a credential under a name gh reads,
 # so the job's token arrives under this one. It leaves this process's
 # environment here and reaches gh alone, never lokf or anything else run.
@@ -300,6 +306,8 @@ class Member:
         dist = dists[0]
         self.zip_url = str(dist.get("access_url") or "")
         self.zip_name = str(dist.get("name") or pathlib.PurePosixPath(urllib.parse.urlparse(self.zip_url).path).name)
+        if not PLAIN_NAME.fullmatch(self.zip_name):
+            raise Failed(f"{concept_path}: distribution.name must be one plain file name, not {self.zip_name!r}")
         # The first distribution is what the build fetches: the release's
         # zip, or, for a bundle that releases none, the concepts.jsonld its
         # site serves, the file section 11.1 of the LOKF specification has a
@@ -334,6 +342,8 @@ class Member:
         for extra in dists[1:]:
             url = str(extra.get("access_url") or "")
             name = str(extra.get("name") or pathlib.PurePosixPath(urllib.parse.urlparse(url).path).name)
+            if not PLAIN_NAME.fullmatch(name):
+                raise Failed(f"{concept_path}: a further distribution's name must be one plain file name, not {name!r}")
             if name.endswith((".yaml", ".yml")) and not self.schema_url:
                 self.schema_url, self.schema_name = url, name
                 self.schema_sha256 = self.further_digest(extra, "schema", name)
@@ -762,6 +772,10 @@ def check_zip(path: pathlib.Path, max_bytes: int) -> None:
                 raise Failed(f"{path.name}: unpacks to more than {max_bytes} bytes")
             if name.startswith(("/", "\\")) or ".." in pathlib.PurePosixPath(name).parts or "\\" in name:
                 raise Failed(f"{path.name}: entry {name!r} leaves the archive root")
+            if any(part.startswith(".") for part in pathlib.PurePosixPath(name).parts):
+                raise Failed(f"{path.name}: entry {name!r} is hidden, which a bundle zip never carries (a .git folder there would be run by git)")
+            if pathlib.PurePosixPath(name).suffix.lower() in ACTIVE_SUFFIXES:
+                raise Failed(f"{path.name}: entry {name!r} is a file a browser runs, which the workspace's site would serve")
             if not name.startswith("knowledge/"):
                 raise Failed(f"{path.name}: entry {name!r} is outside knowledge/, the root the release workflow packs")
             if (info.external_attr >> 16) & 0o170000 == 0o120000:
@@ -1146,7 +1160,10 @@ def health_line(root: pathlib.Path, bundle_root: pathlib.Path) -> str:
     script = root / ".lokf" / "scripts" / "knowledge-report.sh"
     if not script.is_file():
         return "no knowledge-report.sh in this host"
-    done = subprocess.run(["bash", str(script), "--root", str(bundle_root), "health"], capture_output=True, text=True)
+    # The member's folder holds what its zip held. GIT_DIR points git at no
+    # repository, so no file from the zip is read as git's configuration.
+    env = {**os.environ, "GIT_DIR": os.devnull, "GIT_CEILING_DIRECTORIES": str(bundle_root.parent)}
+    done = subprocess.run(["bash", str(script), "--root", str(bundle_root), "health"], capture_output=True, text=True, env=env)
     out = (done.stdout or done.stderr).strip().splitlines()
     return out[-1] if out else "no health line"
 

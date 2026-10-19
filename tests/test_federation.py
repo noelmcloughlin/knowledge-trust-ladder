@@ -8,8 +8,11 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 1. a build resolves the members into a lock, loads one named graph per
    bundle plus the lock graph, gates clean, and writes the same bytes twice;
 2. a tampered checksum, a zip whose index.md names another base_iri, a zip
-   holding a symbolic link, and a domain that names a bundle already in the
-   federation each stop the build and leave the previous snapshot in place,
+   holding a symbolic link, a hidden file such as a .git folder or a file a
+   browser runs, a distribution name that is not one plain file name, and a
+   domain that names a bundle already in the federation each stop the build
+   and leave the previous snapshot in place, and the health line runs git on
+   no repository a member's zip could carry,
    as do a checksum that is not 64 hex digits, a namespace that nests with
    another's, a redirect out of http, and a zip that cannot be read; a
    download that meets a server error is tried again;
@@ -181,12 +184,14 @@ def make_bundle(root: Path, base_iri: str, title: str, concepts: dict[str, dict]
     return k
 
 
-def zip_bundle(knowledge: Path, zip_path: Path, symlink: bool = False) -> str:
-    """The bundle as the release workflow packs it: root knowledge/, names sorted. Returns the sha256."""
+def zip_bundle(knowledge: Path, zip_path: Path, symlink: bool = False, extra: dict[str, str] | None = None) -> str:
+    """The bundle as the release workflow packs it: root knowledge/, names sorted, and any extra entries. Returns the sha256."""
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for p in sorted(knowledge.rglob("*")):
             if p.is_file():
                 zf.write(p, "knowledge/" + p.relative_to(knowledge).as_posix())
+        for name, content in (extra or {}).items():
+            zf.writestr(name, content)
         if symlink:
             info = zipfile.ZipInfo("knowledge/link.md")
             info.create_system = 3
@@ -671,7 +676,7 @@ def test_a_checksum_must_be_64_hex_digits(federation, tmp_path):
     assert victim.read_bytes() == b"kept"
 
 
-@pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate"])
+@pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate", "gitdir", "page", "name"])
 def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_path, fault):
     host = federation["host"]
     assert federate(host, "build", "--no-attestation").rc == 0
@@ -688,6 +693,23 @@ def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_pat
         sha = zip_bundle(federation["b"], federation["b_zip"], symlink=True)
         concept.write_text(text.replace(federation["b_sha"], sha), encoding="utf-8")
         expect = "symbolic link"
+    elif fault == "gitdir":
+        # git reads a .git folder in the unpacked member as a repository,
+        # and its configuration can name a command git runs.
+        marker = tmp_path / "ran"
+        sha = zip_bundle(federation["b"], federation["b_zip"], extra={
+            "knowledge/.git/HEAD": "ref: refs/heads/main\n",
+            "knowledge/.git/config": f"[core]\n\trepositoryformatversion = 0\n\tfsmonitor = \"touch {marker}; false\"\n",
+        })
+        concept.write_text(text.replace(federation["b_sha"], sha), encoding="utf-8")
+        expect = "is hidden"
+    elif fault == "page":
+        sha = zip_bundle(federation["b"], federation["b_zip"], extra={"knowledge/glossary/other.svg": "<svg onload='alert(1)'/>"})
+        concept.write_text(text.replace(federation["b_sha"], sha), encoding="utf-8")
+        expect = "a file a browser runs"
+    elif fault == "name":
+        concept.write_text(text.replace("name: b.zip", "name: ../../../.lokf/scripts/knowledge-report.sh"), encoding="utf-8")
+        expect = "must be one plain file name"
     else:
         concept.write_text(text.replace("base_iri: https://b.example/knowledge/", "base_iri: https://a.example/knowledge/"), encoding="utf-8")
         expect = "already in the federation"
@@ -695,6 +717,32 @@ def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_pat
     assert r.rc == 1 and expect in r.out, r.out
     assert (host / "snapshot" / "graph.nq").read_bytes() == before, "the previous snapshot stays"
     assert not (host / "snapshot.new").exists()
+    assert not (tmp_path / "ran").exists(), "nothing in the member's zip ran"
+    assert read(host / ".lokf" / "scripts" / "knowledge-report.sh") == read(SCRIPTS / "knowledge-report.sh"), "the host's report script is its own"
+
+
+@needs_uv
+def test_the_report_on_a_member_reads_no_git_configuration_from_it(tmp_path):
+    """The member's folder holds what its zip held, so the health line runs git on no repository there."""
+    member_root = tmp_path / "workspace" / "bundles" / "b"
+    k = make_bundle(member_root / ".lokf", "https://b.example/knowledge/", "B", {})
+    marker = tmp_path / "ran"
+    write(k / ".git" / "HEAD", "ref: refs/heads/main\n")
+    write(k / ".git" / "config", f"[core]\n\trepositoryformatversion = 0\n\tfsmonitor = \"touch {marker}; false\"\n")
+    (k / ".git" / "objects").mkdir()
+    (k / ".git" / "refs").mkdir()
+    host = tmp_path / "host"
+    write(host / ".lokf" / "scripts" / "knowledge-report.sh", read(SCRIPTS / "knowledge-report.sh"))
+    Git(tmp_path).init()
+    code = (
+        "import importlib.util, pathlib, sys\n"
+        f"spec = importlib.util.spec_from_file_location('kf', {str(SCRIPT)!r})\n"
+        "kf = importlib.util.module_from_spec(spec); spec.loader.exec_module(kf)\n"
+        f"print(kf.health_line(pathlib.Path({str(host)!r}), pathlib.Path({str(member_root)!r})))\n"
+    )
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", code], cwd=tmp_path)
+    assert r.rc == 0 and "Confirmed by a person" in r.out, r.out
+    assert not marker.exists(), "git ran the member's fsmonitor command"
 
 
 def test_a_member_that_is_a_domain_is_followed(federation, tmp_path):
