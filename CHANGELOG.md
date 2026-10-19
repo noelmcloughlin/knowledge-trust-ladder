@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.53.0] - 2026-10-19
+
 ### Added
 
 - **The workspace counts the links between its members.** The lock, the workspace index and `queries/links.rq` count the typed relations in one bundle whose target is a concept of another, by slot.
@@ -19,6 +21,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
+- **The sync script no longer fails after a complete sync that replaces it with a longer copy.** Bash read on into the new copy and ran a line from its middle, so the run exited with an error and the sync workflow opened no pull request. The script now exits on the line that calls `main`, a v0.52.0 copy also stops when it syncs to this release, and `scripts/sync-sidecar.sh` runs each sibling's script from a copy.
+- **A confidential ingest entry is refused where git could commit its copy.** The script checks that git ignores `.lokf/.cache/mirror/` and tracks nothing there before it fetches the entry.
+- **The sync keeps a host's `.lokf/.gitignore` current.** A host kept the copy ktl-sidecar Step 1 first wrote, so it could lack the template's later lines, such as `.cache/`, where a confidential copy goes.
+- **The scheduled librarian stops before any agent runs when git does not ignore `.agents/`.** It stopped only after the agent had run, at the write-scope check, with `?? .agents/`.
 - **The federation gate refuses a link into a member's namespace that names no concept of that member**, as `--check-refs` refuses one inside a bundle, under the same `unowned_targets` policy. It checked only that some member owned the namespace.
 - **The federation gate reads a reified `relations` entry as it reads the slot that entry names**, so a target no member owns there stops the build too. `links.rq` and `unowned.rq` count such entries as well.
 - **The members script moves the other members when it cannot check one**, which the hand-off names. When the GitHub API refuses a release list as rate limited, gh asks again with the job's token.
@@ -35,15 +41,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A reader keeps no partial answer to a range request as the whole file**, and `--previous` refuses a site address, from which no zip member could be held.
 - **The federation workflow's weekly schedule no longer takes the place of a release build that waits for its turn**, and each job has a time limit.
 - **A domain host's site serves each member's release inside the workspace.** The Pages upload left out the hidden `bundles/<slug>/.lokf/` folders, so every member link in the served workspace index answered 404.
-
-## [0.52.1] - 2026-10-19
-
-### Fixed
-
-- **The sync script no longer fails after a complete sync that replaces it with a longer copy.** Bash read on into the new copy and ran a line from its middle, so the run exited with an error and the sync workflow opened no pull request. The script now exits on the line that calls `main`, a v0.52.0 copy also stops when it syncs to this release, and `scripts/sync-sidecar.sh` runs each sibling's script from a copy.
-- **A confidential ingest entry is refused where git could commit its copy.** The script checks that git ignores `.lokf/.cache/mirror/` and tracks nothing there before it fetches the entry.
-- **The sync keeps a host's `.lokf/.gitignore` current.** A host kept the copy ktl-sidecar Step 1 first wrote, so it could lack the template's later lines, such as `.cache/`, where a confidential copy goes.
-- **The scheduled librarian stops before any agent runs when git does not ignore `.agents/`.** It stopped only after the agent had run, at the write-scope check, with `?? .agents/`.
 
 ## [0.52.0] - 2026-10-18
 
