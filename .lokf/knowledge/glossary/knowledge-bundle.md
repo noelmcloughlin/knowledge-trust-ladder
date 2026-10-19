@@ -12,7 +12,7 @@ sources:
   - resource: docs/obsidian.md
   - resource: skills/ktl-librarian/SKILL.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-18T18:20:55Z"
 about:
   - https://w3id.org/ktl/knowledge/glossary/lokf
@@ -30,6 +30,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-18T18:20:55Z"
 stale_after: 2028-09-24
+status: draft
 ---
 
 # Overview
@@ -55,3 +56,7 @@ semantic header (`base_iri`, `context`, versions, publisher) plus the table
 of contents; `knowledge/log.md` records knowledge changes only. The bundle is
 the durable layer between scattered sources and the next task - the thing that
 stops each session re-finding, re-connecting, and re-judging the same material.
+
+## Open questions
+
+- 2026-10-19, human:noelmcloughlin: the knowledge-bundle glossary concept is stale, refresh against sources.

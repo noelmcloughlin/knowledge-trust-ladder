@@ -14,7 +14,6 @@ sources:
 generated:
   by: process:ktl-librarian
   at: "2026-10-15T01:30:10Z"
-status: draft
 about:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
@@ -29,6 +28,9 @@ relatedTo:
 verified:
   - by: process:ktl-librarian
     at: "2026-10-19T18:47:10Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-19T20:46:38Z"
+stale_after: 2027-10-19
 ---
 
 # Overview
@@ -55,7 +57,3 @@ Each handoff is written down, not left to convention:
 - the pen marks what the librarian creates `status: draft`;
 - a curator's `verified` event by a `human:` actor confirms it;
 - the librarian consumes the docent's `.lokf/feedback.md` entries on its next run.
-
-## Open questions
-
-- 2026-10-13, human:noelmcloughlin: the registrar is said to include "two optional Obsidian plugins", following `README.md` line 95, but README line 71, `docs/obsidian.md` line 41 and `CHANGELOG.md` put KTL Curator with the curator, so only KTL Registrar is the registrar's; README line 95 needs the same fix. Also carry that the curator is always a person, that the librarian and curator are the first line and the registrar the second, what ktl-prose never changes, and the README's Runs column.

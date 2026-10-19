@@ -149,3 +149,4 @@ index versions lokf`, since `uv pip` has no `index` subcommand.
 ## Open questions
 
 - 2026-10-18, human:noelmcloughlin: align three passages with their sources: the job-token sentence (`skills/ktl-librarian/references/scheduled-task.md`, step 4), the sentences on the prompt flag, the file-writing tool and the pull-request setting (`.lokf/scripts/knowledge-librarian.sh` and `scheduled-task.md`, steps 2 and 5), and the paragraph on sources outside the repository (`skills/ktl-librarian/references/ingest.md`).
+- 2026-10-19, human:noelmcloughlin: add `skills/ktl-sidecar/references/automation.md` to `sources` for the file-writing-tool sentence; in the job-token sentence, the members script reads the token "or", as `scheduled-task.md` step 4 says, not "and".

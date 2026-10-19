@@ -6,7 +6,7 @@ description: Why the bundle is `.lokf/knowledge`, one real folder on every host,
 genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-13T01:20:21Z"
 about:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
@@ -92,3 +92,4 @@ The reversal keeps these, because they cost nothing and still cover a shared fol
 
 - 2026-10-14, process:ktl-librarian: Since 2026-10-14 the portability matrix in `skills/ktl-sidecar/references/portability.md` says that on GitLab, Forgejo and Gitea the GitHub Actions workflows are lost, ktl-website's deploy included. This concept says the three GitHub Actions workflows are the only loss there.
 - 2026-10-18, process:ktl-librarian: Step 5 of `skills/ktl-sidecar/SKILL.md` now installs the federation, sync and ingest templates and asks for lint coverage of six `.github/workflows/*.yaml`, and `CHANGELOG.md` (0.48.0) says the sidecar's pages name Codeberg beside GitLab, Forgejo and Gitea. This concept speaks of three GitHub Actions workflows and names only GitLab, Forgejo and Gitea.
+- 2026-10-19, human:noelmcloughlin: refresh against sources.

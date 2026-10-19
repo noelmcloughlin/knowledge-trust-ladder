@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-19T12:28:10Z"
 verified:
   - by: human:noelmcloughlin
@@ -27,6 +27,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-19T12:28:10Z"
 stale_after: 2027-04-19
+status: draft
 ---
 
 # Overview
@@ -52,3 +53,7 @@ One more change waits for LOKF 0.9.0. SkillWiki's verifier specs check an output
 - **What a state names.** SkillWiki stores a skill's state. KTL stores no label: `knowledge-report.sh` computes each one from the events.
 - **Scores and signals.** SkillWiki attaches a `confidence` number. LOKF's schema says that "OKF stores signals, never a score", and KTL records a named person's verdict where SkillWiki has a number.
 - **A declined proposal.** SkillWiki can raise a rejected proposal again. The librarian proposes nothing again from a pull request a person closed without merging, until the source moves or a reader asks again.
+
+## Open questions
+
+- 2026-10-19, human:noelmcloughlin: refresh against sources.

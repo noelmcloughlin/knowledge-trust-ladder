@@ -11,7 +11,7 @@ sources:
   - resource: skills/ktl-librarian/SKILL.md
   - resource: skills/ktl-sidecar/SKILL.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-13T00:25:28Z"
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-four-roles
@@ -45,3 +45,4 @@ The curator is always a person; the skill and the plugin that carry the name are
 ## Open questions
 
 - 2026-10-13, process:ktl-librarian: Since 2026-10-13 the fifth-role section is on `docs/architecture.md`, not in `README.md`, so `resource`, `sources` and "The README calls it the fifth role" should name that page. That page and `docs/obsidian.md` now say KTL Registrar does the registrar's work and KTL Curator assists the curator, while this concept and its description say both plugins do the registrar's work.
+- 2026-10-19, human:noelmcloughlin: refresh against sources.

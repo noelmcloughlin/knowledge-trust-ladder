@@ -20,12 +20,14 @@ verified:
     at: "2026-10-19T13:18:24Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:11:23Z"
+  - by: human:noelmcloughlin
+    at: "2026-10-19T20:41:59Z"
+stale_after: 2027-10-19
 sources:
   - resource: docs/three-lines.md
   - resource: docs/three-lines-critics.md
   - resource: CHANGELOG.md
   - resource: docs/architecture.md
-status: draft
 ---
 # Overview
 
@@ -85,7 +87,3 @@ The main page closes with what remains and who owns it, in three lines:
 - upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
 - this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names fetching a federation member from a private repository, which `docs/federation.md` says remains a design.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
-
-## Open questions
-
-- 2026-10-18, human:noelmcloughlin: review the three lines sources (`docs/three-lines.md`, `docs/three-lines-critics.md` and `docs/architecture.md`), which recent commits changed since this concept was last confirmed (0c3ea0a, 2026-10-13); the concept is not fully aligned with them.

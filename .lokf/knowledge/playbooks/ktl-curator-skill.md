@@ -81,3 +81,4 @@ The curation policy carries three optional switches: `Independent re-check:`, `E
 ## Open questions
 
 - 2026-10-18, human:noelmcloughlin: review the changes to the ktl-curator skill and its sources over the 16 to 20 commits since this concept was last confirmed (0c3ea0a, 2026-10-13), and bring the concept up to date with them.
+- 2026-10-19, human:noelmcloughlin: the `MemberDomain` sentence drops qualifiers; carry what `skills/ktl-curator/references/domain-bundle.md` says a confirmation attests (that the domain belongs under the admission rule, and who answers for it). Then refresh the whole concept against all its sources.
