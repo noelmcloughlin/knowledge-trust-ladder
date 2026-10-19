@@ -50,6 +50,7 @@
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py serve
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py query snapshot/queries/labels.rq
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py mcp
+#   uv run --project .lokf .lokf/scripts/knowledge-federate.py diff OLD NEW
 #
 # `build` writes snapshot.new/ and renames it to snapshot/ in one step, so a
 # reader never sees half a federation; a failed build leaves the previous
@@ -106,6 +107,10 @@
 # `--snapshot` as a folder, a workspace-<tag>.zip read in place, or the
 # address of the site that serves the workspace, which it reads a graph at a
 # time by range request; and `--member`, to read those bundles alone.
+# `diff` says what changed between two workspaces, each a lock, a folder, a
+# zip or a site: the members that joined, moved, left, are held or are left
+# out, and the links between them. The federation workflow adds its answer
+# to the notes of each release.
 #
 # What the snapshot holds: index.md (the members, their versions, licences
 # and health lines, each member's own index first), llms.txt,
@@ -3314,14 +3319,14 @@ def main(argv=None) -> int:
     m.set_defaults(func=members)
     s = sub.add_parser("serve", help="SPARQL endpoint and graph page over the snapshot")
     s.add_argument("--snapshot", default="snapshot", help="a workspace folder under the root, an absolute path to one or to a workspace-<tag>.zip, or the address of the site that serves one")
-    s.add_argument("--member", action="append", metavar="SLUG", help="read this bundle alone, by slug or base_iri, and no other; repeat it for more")
+    s.add_argument("--member", action="append", metavar="SLUG|BASE_IRI", help="read this bundle alone, by slug or base_iri, and no other; repeat it for more")
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8000)
     s.set_defaults(func=serve)
     q = sub.add_parser("query", help="run SPARQL (a file or text) over the snapshot")
     q.add_argument("query", help="SPARQL text, a file of it, or a stored query of the workspace by name, such as links.rq")
     q.add_argument("--snapshot", default="snapshot", help="a workspace folder under the root, an absolute path to one or to a workspace-<tag>.zip, or the address of the site that serves one")
-    q.add_argument("--member", action="append", metavar="SLUG", help="read this bundle alone, by slug or base_iri, and no other; repeat it for more")
+    q.add_argument("--member", action="append", metavar="SLUG|BASE_IRI", help="read this bundle alone, by slug or base_iri, and no other; repeat it for more")
     q.add_argument("--format", choices=["table", "json"], default="table")
     q.set_defaults(func=query)
     d = sub.add_parser("diff", help="what changed between two workspaces, as Markdown for a release's notes")
@@ -3331,7 +3336,7 @@ def main(argv=None) -> int:
     d.set_defaults(func=diff)
     x = sub.add_parser("mcp", help="the lokf-registry MCP server (stdio) over the snapshot: resolve_iri, neighbors, subgraph, federated_sparql, read_document")
     x.add_argument("--snapshot", default="snapshot", help="a workspace folder under the root, an absolute path to one or to a workspace-<tag>.zip, or the address of the site that serves one")
-    x.add_argument("--member", action="append", metavar="SLUG", help="read this bundle alone, by slug or base_iri, and no other; repeat it for more")
+    x.add_argument("--member", action="append", metavar="SLUG|BASE_IRI", help="read this bundle alone, by slug or base_iri, and no other; repeat it for more")
     x.set_defaults(func=mcp_server)
     args = ap.parse_args(argv)
     # The librarian wrapper hands its prompt to AGENT_CLI as `-p "<prompt>"`;
