@@ -64,8 +64,6 @@ export const DOCS = {
         "context-layer-technology",
         "three-lines",
         "three-lines-critics",
-        "wikiskill",
-        "skillwiki",
       ],
     },
     { label: "Maintaining", pages: ["releasing", "signing-commits", "threat-model", "repository-layout"] },
