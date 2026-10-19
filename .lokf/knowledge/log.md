@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-19
+
+* **Curation**: human:noelmcloughlin corrected 1: What KTL took from SkillWiki now cites the paper, arXiv:2606.16523, its code at `050d540` and `CHANGELOG.md` instead of `docs/skillwiki.md`, and is due for review on 2027-04-19.
+
 ## 2026-10-18
 
 * **Changed**: Curating a domain bundle says the diamond rule's stop lasts until both owners pin one release, as the curator's domain-bundle.md now does.

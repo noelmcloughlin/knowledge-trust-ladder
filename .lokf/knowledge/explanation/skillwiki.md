@@ -2,11 +2,13 @@
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/skillwiki
 title: What KTL took from SkillWiki
-description: "What Knowledge Trust Ladder (KTL) took from the SkillWiki paper (Huang et al., 2026) and its code, as `docs/skillwiki.md` says: the four changes the reading made to the skills, the excerpt check that waits for LOKF 0.9.0, and where the two designs part, such as who stands behind a decision."
+description: "What Knowledge Trust Ladder (KTL) took from the SkillWiki paper (Huang et al., 2026) and its code: the four changes the reading made to the skills, the excerpt check that waits for LOKF 0.9.0, and where the two designs part, such as who stands behind a decision."
 genre: explanation
-resource: docs/skillwiki.md
+resource: https://arxiv.org/abs/2606.16523
 sources:
-- resource: docs/skillwiki.md
+- resource: https://arxiv.org/abs/2606.16523
+- resource: https://github.com/Huangdingcheng/SkillWiki/tree/050d540215374f73cf295c410a8beb4415f7c128
+- resource: CHANGELOG.md
 about:
 - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
@@ -16,18 +18,20 @@ relatedTo:
 - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: human:noelmcloughlin
-  at: "2026-10-13T00:59:27Z"
+  at: "2026-10-19T12:28:10Z"
 verified:
 - by: human:noelmcloughlin
   at: "2026-10-13T00:59:27Z"
 - by: process:ktl-librarian
   at: "2026-10-16T23:58:13Z"
-stale_after: 2026-10-14
+- by: human:noelmcloughlin
+  at: "2026-10-19T12:28:10Z"
+stale_after: 2027-04-19
 ---
 
 # Overview
 
-`docs/skillwiki.md` says what Knowledge Trust Ladder (KTL) took from one paper and its code, and where the two designs part. The paper is *SkillWiki: A Living Knowledge Infrastructure for Agent Skills* (Huang et al., Harbin Institute of Technology, Tencent and Nanyang Technological University, June 2026). The page cites the code at commit `050d540`. SkillWiki is not WikiSkill, the Google Research paper that [WikiSkill](wikiskill.md) covers.
+*SkillWiki: A Living Knowledge Infrastructure for Agent Skills* (Huang et al., Harbin Institute of Technology, Tencent and Nanyang Technological University, June 2026, arXiv:2606.16523) is a paper with code, cited here at commit `050d540`. This concept records what Knowledge Trust Ladder (KTL) took from both, and where the two designs part. SkillWiki is not WikiSkill, the Google Research paper that [WikiSkill](wikiskill.md) covers.
 
 SkillWiki turns trajectories, documents, API specifications, scripts and earlier skills into skills. It governs them through a lifecycle of eight stored states, a provenance graph and feedback from their runs. A SkillWiki skill is executable, and a KTL concept is a claim about a repository with the sources it rests on. So SkillWiki asks whether a skill still works, and KTL asks who stands behind a claim.
 
