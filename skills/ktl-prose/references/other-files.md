@@ -55,8 +55,8 @@ Lay out each paragraph you reword the way the host does, and leave the others as
 ## Proving the change
 
 ```sh
-python3 <skill>/scripts/prose-check.py --against HEAD <files>     # a file git already held
-python3 <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied first
+uv run <skill>/scripts/prose-check.py --against HEAD <files>     # a file git already held
+uv run <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied first
 ```
 
 Fix each finding, or explain it in the hand-off. Outside the bundle a person may ask for a change of content in the same request, and the script cannot know that. A changed heading is only a note here, and other pages may link to it. Search for its anchor before you keep the change.

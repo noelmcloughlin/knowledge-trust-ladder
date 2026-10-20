@@ -4,6 +4,21 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The pen checks the schema before it writes.** `knowledge-apply.sh` runs `lokf validate` on every concept a patch would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit.
+- **The preflight warns about a python3 older than 3.9**, about being run from ktl-sidecar's own folder, and names KTL skills installed for one user.
+
+### Fixed
+
+- **The sidecar's scripts run behind a package mirror.** The pen, the conventions check and the ingest try `.lokf/.venv` first and `uv run` after it, because `uv run` fails behind a mirror that serves no upload times. No script picks a Python older than 3.9.
+- **When its runner cannot start, the conventions check says so and exits 2**, instead of reporting findings against the bundle.
+- **A freshly installed skeleton passes its own conventions:** the dummy services' descriptions match their index bullets.
+- **ktl-prose runs its check through `uv run`**, so an old `python3` never runs it.
+- **ktl-sidecar's Step 0 runs the preflight from the host repository's root.**
+- **The librarian's audit lints the files it touched**, not `.lokf/.venv/`.
+- **A release attaches a linkml-sidecar host's schema.** The `schema :=` line may name any file in the repository, and the released copy imports LOKF core as `lokf`, so a domain can resolve that import.
+
 ## [0.54.0] - 2026-10-20
 
 ### Changed

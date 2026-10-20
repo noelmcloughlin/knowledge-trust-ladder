@@ -43,6 +43,7 @@ from __future__ import annotations
 import http.server
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -683,3 +684,44 @@ def test_the_workflow_hands_over_the_ingest_secrets_and_no_other(checks):
                "knowledge_ingest_lower": "no", "OTHER_SECRET": "z", "KNOWLEDGE_INGEST_GITHUB_TOKEN": "ghp_y"}
     done = subprocess.run(["jq", "-r", m.group(1)], input=json.dumps(secrets), capture_output=True, text=True)
     checks.ok(done.returncode == 0 and done.stdout == "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN=tok=en\nKNOWLEDGE_INGEST_GITHUB_TOKEN=ghp_y\n", "two names, a value with an equals sign kept whole, a multi-line value left out", done.stdout + done.stderr)
+
+
+def venv_python(root, refuse=""):
+    """A .lokf/.venv python that runs this interpreter, and fails the wrapper's import check when it names `refuse`."""
+    guard = f'case "$*" in *{refuse}*) exit 1 ;; esac\n' if refuse else ""
+    write(root / ".lokf" / ".venv" / "bin" / "python", f'#!/bin/sh\n{guard}exec "{sys.executable}" "$@"\n').chmod(0o755)
+
+
+def failing_uv(tmp_path):
+    """A PATH whose uv fails as uv does behind a package mirror that serves no upload times."""
+    uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 2\n")
+    uv.chmod(0o755)
+    return f"{uv.parent}:{os.environ['PATH']}"
+
+
+def test_a_venv_with_pypdf_runs_the_ingest_before_uv(tmp_path):
+    root = tmp_path / "repo"
+    (root / ".lokf" / "knowledge").mkdir(parents=True)
+    venv_python(root)
+    result = run(["bash", INGEST, "--root", root], env={"PATH": failing_uv(tmp_path)})
+    assert "no manifest" in result.out and "No solution" not in result.out, f"the ingest did not run from the sidecar's .venv: {result.out}"
+
+
+def test_a_venv_without_pypdf_leaves_the_ingest_to_uv(tmp_path):
+    """uv installs pypdf for the script, so a .venv without it is the fallback, not the first choice."""
+    root = tmp_path / "repo"
+    (root / ".lokf" / "knowledge").mkdir(parents=True)
+    venv_python(root, refuse="pypdf")
+    result = run(["bash", INGEST, "--root", root], env={"PATH": failing_uv(tmp_path)})
+    assert "No solution" in result.out, f"the ingest chose a .venv without pypdf over uv: {result.out}"
+
+
+def test_without_uv_a_venv_without_pypdf_still_runs_the_ingest(tmp_path):
+    path = "/usr/bin:/bin"
+    if shutil.which("uv", path=path):
+        pytest.skip("uv is on /usr/bin - the without-uv case cannot be staged here")
+    root = tmp_path / "repo"
+    (root / ".lokf" / "knowledge").mkdir(parents=True)
+    venv_python(root, refuse="pypdf")
+    result = run(["bash", INGEST, "--root", root], env={"PATH": path})
+    assert "no manifest" in result.out, f"the ingest did not fall back to the .venv's pyyaml: {result.out}"

@@ -235,7 +235,7 @@ The `pack` job compares the bundle's git tree at the tag with its tree at the ne
 
 ### The domain schema beside it
 
-When the host's `.lokf/justfile` names a schema on its `schema :=` line, the release carries that file too, as `schema-<tag>-<name>.yaml` with its own `.sha256` and attestation. A domain that admits the bundle names it as a second distribution of the member concept and validates the bundle against it, rather than against LOKF core alone. The line is read as text and must name a file in `.lokf/`, never a path.
+When the host's `.lokf/justfile` names a schema on its `schema :=` line, the release carries that file too, as `schema-<tag>-<name>.yaml` with its own `.sha256` and attestation. A domain that admits the bundle names it as a second distribution of the member concept and validates the bundle against it, rather than against LOKF core alone. The line is read as text, relative to `.lokf/`, and may name any file in the repository, such as a linkml-sidecar schema, but never one outside it. A domain puts the released schema beside the bundle with LOKF's own `lokf.yaml`, so the released copy imports LOKF core as `lokf`. A relative import of `.lokf/lokf.yaml`, as linkml-sidecar writes it, is rewritten to `lokf` in the copy. An import of any other local file stops the release.
 
 ### What the zip holds
 
@@ -390,7 +390,7 @@ Three more pins decide what a run installs, and no update tool moves them:
 
 - **The skill.** `TRUST_LADDER_SKILLS_REF` names a release tag of the skills repository, and `TRUST_LADDER_SKILLS_SHA` the commit that tag named when the pin was set. A tag can be moved, and what it names is the instructions an agent follows unattended. So the install step installs nothing unless the tag still names that commit. Move the two together.
 - **The toolkit.** All three workflows install it with `uv sync --locked`: what `.lokf/uv.lock` names, each file checked against the hash recorded there. A lock that is missing or behind `.lokf/pyproject.toml` fails the step, so commit `uv.lock`, and run `uv lock` in the change that moves the `lokf` floor.
-- **The parser.** The Python halves of the conventions script and the pen install PyYAML through `uv run`, from the dependency block each file carries. That block names one release, and `exclude-newer` takes no file uploaded after its date. A copy from a newer release of the sidecar moves both.
+- **The parser.** The Python halves of the conventions script and the pen run with `.lokf/.venv` when it holds PyYAML, so in the workflows they use what `uv.lock` pins. Without such a `.venv`, they install PyYAML through `uv run`, from the dependency block each file carries. That block names one release, and `exclude-newer` takes no file uploaded after its date. A copy from a newer release of the sidecar moves both.
 
 ## `knowledge-report.sh`: what a program can say about the bundle
 

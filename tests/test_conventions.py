@@ -19,6 +19,7 @@ import json
 import os
 import re
 import shutil
+import sys
 
 import pytest
 
@@ -362,6 +363,57 @@ def test_without_uv_the_shell_half_says_what_it_skipped(good):
     assert result and matches(
         result.out, r"^OK - .*\(rules 2, 3, 4, 7, 9, 10, 12 and 13 not checked: uv not found\)"
     ), f"conventions script without uv did not say what it skipped: {result.out}"
+
+
+def failing_uv(tmp_path):
+    """A PATH whose uv fails as uv does behind a package mirror that serves no upload times."""
+    fake = write(
+        tmp_path / "fakebin" / "uv",
+        "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 2\n",
+    )
+    fake.chmod(0o755)
+    return f"{fake.parent}{os.pathsep}{os.environ['PATH']}"
+
+
+def test_a_runner_that_cannot_start_is_not_a_finding(good, tmp_path):
+    result = bash(CONVENTIONS, good, env={"PATH": failing_uv(tmp_path)})
+    assert result.rc == 2, f"conventions script did not exit 2 when uv could not run its parser's half: {result.out}"
+    assert "could not run" in result.out and "OK -" not in result.out, f"conventions script misreported a runner failure: {result.out}"
+    shown = bash(CONVENTIONS, good, env={"PATH": failing_uv(tmp_path)}, stdout_only=True)
+    assert "No solution" not in shown.out, f"conventions script printed uv's error as a finding: {shown.out}"
+
+
+def test_the_sidecar_venv_runs_the_parser_half_before_uv(good, tmp_path):
+    """A host behind a mirror runs the parser's half from .lokf/.venv, which uv sync installed from uv.lock."""
+    scripts = tmp_path / ".lokf" / "scripts"
+    scripts.mkdir(parents=True)
+    for name in ("knowledge-conventions.sh", "knowledge-conventions.py"):
+        shutil.copy(SCRIPTS / name, scripts / name)
+    write(tmp_path / ".lokf" / ".venv" / "bin" / "python", f'#!/bin/sh\nexec "{sys.executable}" "$@"\n').chmod(0o755)
+    result = bash(scripts / "knowledge-conventions.sh", good, env={"PATH": failing_uv(tmp_path)})
+    assert result and "not checked" not in result.out, f"conventions script did not run its parser's half from the sidecar's .venv: {result.out}"
+
+
+def test_the_installed_skeleton_keeps_every_convention(tmp_path):
+    """The bundle ktl-sidecar installs, with its placeholders filled, passes the gate before anyone edits it."""
+    k = tmp_path / ".lokf" / "knowledge"
+    shutil.copytree(SCRIPTS.parent / "knowledge", k)
+    values = {
+        "PROJ_NAME": "Acme",
+        "PROJ_DESC": "The Acme project.",
+        "PROJ_SLUG": "acme",
+        "BASE_IRI": "https://acme.example/knowledge/",
+        "OWNER_NAME": "Ada",
+        "OWNER_SLUG": "ada",
+        "TODAY": "2026-09-14",
+    }
+    for path in k.rglob("*.md"):
+        text = path.read_text(encoding="utf-8")
+        for token, value in values.items():
+            text = text.replace(f"<{token}>", value)
+        path.write_text(text, encoding="utf-8")
+    result = bash(CONVENTIONS, k)
+    assert result, f"the sidecar's skeleton breaks its own conventions: {result.out}"
 
 
 def test_reads_a_bundle_reached_through_a_link(good):

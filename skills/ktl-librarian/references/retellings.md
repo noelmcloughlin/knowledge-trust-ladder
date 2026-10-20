@@ -55,8 +55,8 @@ A concept whose `derivedFrom` names another concept of the bundle, and whose `ta
 Where ktl-prose is installed, check the retelling with its script, from the repository root:
 
 ```sh
-python3 <ktl-prose>/scripts/prose-check.py .lokf/knowledge/young-readers/the-pen.md
-python3 <ktl-prose>/scripts/prose-check.py --derived-from .lokf/knowledge/glossary/the-pen.md .lokf/knowledge/young-readers/the-pen.md
+uv run <ktl-prose>/scripts/prose-check.py .lokf/knowledge/young-readers/the-pen.md
+uv run <ktl-prose>/scripts/prose-check.py --derived-from .lokf/knowledge/glossary/the-pen.md .lokf/knowledge/young-readers/the-pen.md
 ```
 
 The first holds the retelling to its band's limits, and the second shows it adds nothing the adult concept does not hold. Fix each finding with a `rewrite`. In the hand-off, name each retelling, what it left out, and the adult concept a curator confirms it against.

@@ -30,14 +30,15 @@
 #
 # Usage: knowledge-conventions.py <bundle-dir> [--since <commit>]. Same contract as the shell
 # half: one line per finding on stdout, exit 1 if any; "OK" and exit 0 if
-# none. Invoked by knowledge-conventions.sh through `uv run`, which reads the
-# dependency block above and needs nothing preinstalled; run directly it
-# needs python3 and pyyaml.
+# none. knowledge-conventions.sh runs it with the sidecar's .venv, or through
+# `uv run`, which reads the dependency block above and needs nothing
+# preinstalled. Run directly, it needs python3 3.9 or later and pyyaml.
 #
 # That block names one PyYAML release, and `exclude-newer` takes no file
 # uploaded after its date. A registry never replaces a file, so every run
 # installs the files that were there when the pin was set, and this gate runs
-# what a person reviewed. Move the version and the date together, here and in
+# what a person reviewed. The .venv holds what uv.lock pins, by hash, which a
+# person reviewed too. Move the version and the date together, here and in
 # knowledge-apply.py; the skills repository's contract holds the two equal.
 
 from __future__ import annotations
