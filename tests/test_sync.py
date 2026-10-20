@@ -6,15 +6,15 @@ skills repository, the real templates at two tags, and on a host at the
 first tag, and pin what the script's header says:
 
 1. it copies the templates the release changed, adds a template a file the
-   host carries needs, reports one ktl-sidecar's Step 5 decides, moves the
-   pin to the tag and the commit it names, and writes the changelog entry
-   under "## [Unreleased]" and "### Security";
+   host carries needs, and reports one ktl-sidecar's Step 5 decides. It
+   moves the pin to the tag and the commit it names, and writes the
+   changelog entry under "## [Unreleased]" and "### Security";
 2. a host at the release has nothing to sync, and the entry is written once;
 3. the entry joins a Security section the changelog already has, at its end,
    and a section is added last when there is none;
 4. the host's justfile keeps its own first line and `schema :=` line;
 5. --commit works on sync-<tag> from origin's default branch and leaves the
-   default branch and the tree as they were, and a tree with uncommitted
+   default branch and the tree as they were. A tree with uncommitted
    changes, a branch that exists, a tag that is not a release and a tag the
    source lacks are each refused;
 6. without --source the host's copy clones the tag and reads its manifest,
@@ -605,7 +605,7 @@ def test_apply_allows_a_script_made_executable_and_refuses_a_dirty_checkout(tmp_
 
 
 def test_every_synced_template_is_in_step_5_and_the_manifest_is_the_one_list():
-    """A new template lands in two places: the manifest, which the sync script, the preflight and contract check 11 read, and ktl-sidecar's Step 5 table."""
+    """A new template is added in two places: the manifest, which the sync script, the preflight and contract check 11 read, and ktl-sidecar's Step 5 table."""
     skill = read(SKILL)
     pairs = synced_pairs()
     assert pairs, "the manifest lists nothing"

@@ -325,7 +325,7 @@ KEY_CASES = [
 
 @pytest.mark.parametrize(("label", "key", "name", "want", "expect"), KEY_CASES, ids=[c[0] for c in KEY_CASES])
 def test_the_key_reaches_the_agent_under_the_given_name_only(host, agents, tmp_path, label, key, name, want, expect):
-    """Not as AGENT_API_KEY, and not at all when the name is one the wrapper refuses: it exits 2 before the agent runs."""
+    """Not as AGENT_API_KEY, and never when the name is one the wrapper refuses: it exits 2 before the agent runs."""
     out = tmp_path / "env.out"
     status = wrapper(
         host, {"AGENT_CLI": agents["env"], "ENV_OUT": out, "AGENT_API_KEY": key, "AGENT_API_KEY_ENV": name}

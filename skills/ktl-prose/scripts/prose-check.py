@@ -425,9 +425,10 @@ def top_value(fm: list[str], key: str) -> str | None:
 def standing(doc: Doc, expect_concept: bool = False) -> tuple[str, str]:
     """Where a file stands, as a rule name and the words for it.
 
-    Only `rewrite` allows a rewording outright, and `unrecorded` allows one a
-    person named. The order is the order of the table in SKILL.md. The script
-    fails closed: an event it cannot read is never taken for a missing one.
+    Only `rewrite` allows a rewording with no condition, and `unrecorded`
+    allows one a person named. The order is the order of the table in
+    SKILL.md. The script fails closed: an event it cannot read is never
+    taken for a missing one.
     """
     unreadable = ("unreadable", "frontmatter the script cannot read")
     if doc.fm is None:
@@ -1033,7 +1034,7 @@ class Kept:
             # A list, ordered or table marker counts only where it opens a
             # block or continues one of its own kind. On a wrapped prose line it
             # is text, and a number that starts such a line is a fact, not an
-            # item number - so re-laying a paragraph out does not seem to change
+            # item number. So re-laying a paragraph out does not seem to change
             # a list or lose a year.
             at_start = block is None
             is_item = bool(LIST_MARK.match(content)) and (at_start or block_is_list)

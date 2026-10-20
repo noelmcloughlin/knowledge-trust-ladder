@@ -99,7 +99,7 @@ def half_installed(tmp_path):
 
 
 def test_warns_when_the_conventions_parser_is_missing_beside_the_shell_half(half_installed):
-    """A host with that gate fails outright, so the preflight says so even with no sidecar installed."""
+    """On such a host the gate fails, so the preflight says so even with no sidecar installed."""
     result = preflight(half_installed)
     assert result and matches(result.out, r"^warn    copies .*knowledge-conventions\.py missing"), (
         f"preflight did not report the missing knowledge-conventions.py: {result.out}"
