@@ -188,3 +188,19 @@ def test_names_skills_installed_for_one_user(tmp_path):
     assert result and matches(result.out, r"^info    skills +user scope: ~/\.copilot/skills: prose; the scheduled librarian"), (
         f"preflight did not name a skill installed for one user: {result.out}"
     )
+
+
+def test_warns_when_run_from_a_folder_inside_the_sidecar_skill(tmp_path):
+    skill = tmp_path / "ktl-sidecar"
+    write(skill / "SKILL.md", "---\nname: ktl-sidecar\n---\n")
+    script = write(skill / "templates" / "scripts" / "knowledge-preflight.sh", "")
+    shutil.copy(PREFLIGHT, script)
+    result = bash(script, cwd=script.parent)
+    assert result and matches(result.out, r"^warn    root .*skill's own folder"), (
+        f"preflight screened a folder inside the ktl-sidecar skill as if it were the host: {result.out}"
+    )
+
+
+def test_a_repository_that_holds_the_skill_is_not_the_skill():
+    result = preflight(".", cwd=REPO)
+    assert result and not matches(result.out, r"^warn    root "), f"preflight took the skills repository for the skill: {result.out}"
