@@ -54,6 +54,8 @@ After:  Commits typed with Conventional Commits decide the version [...] All fiv
 
 The script reports each paragraph or list item past 150 words as `paragraph`, and never a table cell. The limit is the Federal Plain Language Guidelines' "no more than 150 words in three to eight sentences". The script counts 21 in the docs and skills before the third pass and none after it.
 
+No script sees a second topic, so here is a method for the paragraph, as rule 1 has one for the verb. Write down the grammatical subject of each sentence, in order. A paragraph on one topic gives a run of subjects that name one thing, or that thing and its parts. Two sets of subjects that take turns are two topics in one paragraph. In a comment that said which half of a check reads which rules, and how the Python half is started, the subjects ran *rules*, *this script*, *rules*, *this half*, *a runner*. Split by set, and not where the eye happens to rest. Williams calls the run of subjects a topic string, and makes it his test of whether a reader finds a passage coherent. The script reports a paragraph past eight sentences as `sentences`, the top of the Federal Plain Language Guidelines' three to eight.
+
 It gives way to sense. The aim is that every word tells, and some sentences need their length. A semicolon is right in a series whose items hold commas. A paragraph gives way to an argument that a break would cut in two. Split where the topic turns, never at a word count: a page of one-sentence paragraphs is as hard to follow as one block, since nothing groups its sentences.
 
 ## 4. Say the step, then the reason
@@ -63,6 +65,13 @@ A reader who must act wants the action first. The reason helps only once they kn
 ```text
 Before: The `provenance` job in each repository's `knowledge-registrar.yaml` checks those, because a claim that a named person checked a concept has to be tied back to that person, and it accepts either an approving review from the confirming account or a verified commit attributed to it.
 After:  The `provenance` job in each repository's `knowledge-registrar.yaml` checks those. It accepts either an approving review from the confirming account or a verified commit attributed to it. [...] The job exists because a claim that a named person checked a concept has to be tied back to that person.
+```
+
+The same order holds for a rule and its exception: state the rule, then the exception with its reason. An exception that comes first asks the reader to hold a "but" whose other side has not arrived. The Federal Plain Language Guidelines put an exception to an exception beside a double negative, and Gopen and Swan found that readers want the known before the new.
+
+```text
+Before: Rules 13 and 14 go there too: they read git as well, but they compare parsed values. Rules 1, 5, 6, 8 and 11 stay here: they are git and filesystem facts.
+After:  This shell half checks rules 1, 5, 6, 8 and 11 itself: they are git and filesystem facts. Rules 13 and 14 read git too, but they compare parsed values, so the Python half checks them as well.
 ```
 
 This is a house rule. It gives way when the reason is a warning: put a danger before the step that meets it.
@@ -117,6 +126,8 @@ After:  The gate checks each pull request. If the gate fails, it blocks the merg
 
 That pair was made for this page. The two passes show the rule as a pattern: each role name is set in bold, and each of "host", "gate" and "forge" is defined once and then kept.
 
+A pointing word is a name too. "Here", "there", "this half" and "that" each stand for a file or a part of one, and each is one more name for the reader to resolve. In a comment, name the file or the half. In one script the Python half had four names and the shell half three, and no sentence read wrong on its own.
+
 It does not give way. When the repetition grates, restructure the sentence.
 
 ## 9. Choose the plain word, and define a term where it first appears
@@ -154,6 +165,8 @@ The third pass replaced the figures below. The script reports the words of the f
 | "holds every other hand to the same" | "asks the same of every other writer" |
 | "door", "through one door" | the way in, by its name, or "in one way only" |
 
+The quiet figures are the ones a writer does not see. A rule "goes to" a half, a key "comes first", a script "hands" a file to another. Each makes the program a place and its parts things that travel, and asks the reader to turn the journey back into the action. Rule 1 is the test and the repair: name the actor and the literal verb, as in "the Python half checks rule 4" and "the .venv is tried first". Most of these are phrasal verbs, which Thrush's study found a non-native reader can misread, and Microsoft's guidance for a worldwide audience asks writers to avoid such idioms. The script lists none of them: "go", "come" and "hand" are literal too often.
+
 It gives way to an abbreviation that is the thing's own name: CI, YAML, IRI. A term the page has defined needs no second definition. A figure gives way to a name the project defines, such as *the pen* or *the doorway*, once its page has defined it. It gives way to a word of the analogy the project names its roles by, such as the librarian's *desk*, once the project's glossary defines it. It gives way too to a term of art the reader's own field uses in that exact sense, such as pinning a version.
 
 ## 10. Cut words that carry nothing
@@ -175,6 +188,8 @@ After:  It never touches the Node build (`build.yml`) or the LOKF bundle's seman
 ```
 
 A fourth pass reworded the bundles of three sibling repositories. It cut "own" 58 times of 84, and "itself" or "themselves" 33 times of 43. It kept each one that draws a contrast, as "its own two checks" and "approves itself" do, so the script lists neither word.
+
+A later reading added two words to the list. "Outright" is an intensifier, and Pinker's point about intensifiers holds for it: an unmodified word is read as absolute, and the modifier turns it into a graded claim. So the reader asks what the comparison is, and the sentence never says. "At all" follows a negative that is already whole. The script reports each as `words`, and a reading decides.
 
 That pass also measured what a rewording does to length. It cleared 305 of the script's 312 findings, and the text went from 15,526 words to 15,688. A fragment given its verb, and "pull request" written for "PR", cost more words than the cuts saved. The 7 findings left sit under `## Open questions`, which a rewording never touches.
 
@@ -253,7 +268,7 @@ It gives way in a table, frontmatter and a heading, which keep their own lines, 
 
 - **The rules are defaults.** Strunk opens his own rules by observing that "the best writers sometimes disregard the rules of rhetoric". That is why each rule above says when it gives way.
 - **Rules 4, 5 and 6 are house rules, stricter than the books.** The conventions the gate checks are stricter than OKF in the same way. The reason is the same: an agent told a rule in prose breaks it, and a strict rule is one a script can check.
-- **A script sees part of four rules.** `scripts/prose-check.py` reports `long` and `paragraph` for rule 3, `dash` for rule 5, and `words` for rules 9 and 10. Each finding is a candidate, not a verdict. It skips frontmatter, fenced and indented code blocks, code spans, link targets, headings, quotations and a short emphasised label, and reads a prose line that opens with an inline HTML tag. The other nine rules need a reader, and so does every figure of speech it does not list.
+- **A script sees part of four rules.** `scripts/prose-check.py` reports `long`, `paragraph` and `sentences` for rule 3, `dash` for rule 5, and `words` for rules 9 and 10. Each finding is a candidate, not a verdict. It skips frontmatter, fenced and indented code blocks, code spans, link targets, headings, quotations and a short emphasised label, and reads a prose line that opens with an inline HTML tag. Given a script (`.sh`, `.py`, `.yaml`, `.yml`, `.toml` or a justfile), it reads each `#` comment block as a paragraph, and in Python each docstring. It leaves out a shebang, a directive, a `# /// script` block and the body of a heredoc. The other nine rules need a reader, and so does every figure of speech it does not list.
 - **The script also reports a character no reader sees, as `unseen`.** That is no rule of style but a hazard. A zero-width space or a byte order mark renders as nothing. A right-to-left override reorders what a reader sees: the "Trojan Source" attack (CVE-2021-42574) uses it to make code read differently from how it runs. An agent that types such a character's escape into a tool call can write the character itself. Delete one from prose you may reword, and report one in code, in a quotation or in a concept you may not touch.
 
 ## What was left out, and why
@@ -278,7 +293,14 @@ The addresses sit in a fenced block so that a link checker does not fetch sites 
 | Strunk and White, *The Elements of Style*, fourth edition | The table of contents, and Strunk's text of 1918 | Rules 1, 2, 3, 5, 7, 9, 10, 11 and 12. Rule 1 is its "Keep related words together", rule 3's paragraph its "Make the paragraph the unit of composition", rule 7 its "Express coordinate ideas in similar form", rule 10 its "Omit needless words", and rule 11 its "Put statements in positive form". |
 | William Zinsser, *On Writing Well* | Secondary pages that quote the book | Rules 3, 4, 8, 9, 10 and 12: clutter, unity, short paragraphs and the first sentence. |
 | GOV.UK style guide, "A to Z", its words to avoid | The entry in full | Rule 9's figures of speech: "land (unless you're talking about aircraft)", and the advice to replace a metaphor "by breaking the term into what you're actually doing". |
-| Federal Plain Language Guidelines, March 2011, revised May 2011 | The sections on jargon, short paragraphs and topic sentences | Rule 3's paragraph limit, and rule 9's warning about terms a team knows well. |
+| Federal Plain Language Guidelines, March 2011, revised May 2011 | The sections on jargon, short paragraphs, topic sentences, and double negatives and exceptions to exceptions | Rule 3's paragraph and sentence limits, rule 4's rule before its exception, and rule 9's warning about terms a team knows well. |
+| Joseph Williams and Joseph Bizup, *Style: Lessons in Clarity and Grace* | Secondary pages that summarise the lessons | Rule 3's method: the topic string, a passage's run of sentence subjects, as the test of coherence. |
+| George Gopen and Judith Swan, "The Science of Scientific Writing" (1990) | A transcription of the article | Rule 4's rule before its exception, and rule 1: readers want the known before the new, and the verb close to the subject. |
+| Steven Pinker, *The Sense of Style* | Secondary pages that quote the book | Rule 10: an intensifier reads as a hedge, because an unmodified word is read as absolute. |
+| Emily Thrush, "Plain English? A study of plain English vocabulary and international audiences" (2001) | The abstract | Rule 9's quiet figures: a non-native reader can misread a phrasal verb. |
+| Microsoft Writing Style Guide, "Writing tips" for global communications | In full | Rule 9: avoid idioms for a worldwide audience. |
+| George Lakoff and Mark Johnson, *Metaphors We Live By* | Not read for this page; the term is theirs | Rule 9's quiet figures: a program as a place, and its parts as things that travel. |
+| ASD-STE100, Simplified Technical English | The standard's FAQ, and secondary summaries of its rules | Rules 3 and 8: one topic to a paragraph, at most six sentences, and one meaning to a word. The counts come from the summaries, not the standard. |
 | George Orwell, "Politics and the English Language" (1946) | Its six rules, and its passage on dying metaphors | Rule 9: "Never use a metaphor, simile or other figure of speech which you are used to seeing in print". |
 | Writer's Digest, on basic writing principles | In full | Rules 3 and 7. |
 | Grammarly, on words to cut | In full | Rule 3, and the list behind rule 10. |
@@ -322,4 +344,12 @@ https://docs.github.com/en/get-started/writing-on-github/getting-started-with-wr
 https://docs.github.com/en/repositories/working-with-files/using-files/working-with-non-code-files
 https://obsidian.md/help/syntax
 https://forum.obsidian.md/t/strict-line-breaks-in-live-preview/109696
+https://www.antoinebuteau.com/lessons-from-joseph-m-williams-joseph-bizup/
+https://www.win.tue.nl/~wstomv/quotes/science-of-scientific-writing.html
+https://www.stafforini.com/quotes/?p=2300
+https://newrepublic.com/article/119687/steven-pinker-language-interview-jesse-singal
+https://digitalcommons.memphis.edu/facpubs/3866
+https://learn.microsoft.com/en-us/style-guide/global-communications/writing-tips
+https://asd-ste100.org/STE_faq.html
+https://plainlanguage.gov/guidelines/concise/use-positive-language/
 ```
