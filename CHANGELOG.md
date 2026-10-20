@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **ktl-prose's check reads a script's comments.** Given a shell, Python, YAML or TOML file or a justfile, `prose-check.py` holds each `#` comment block, and each Python docstring, to the rules a paragraph keeps.
+
+### Changed
+
+- **The check reports a paragraph of more than eight sentences**, and lists "outright" and "at all" among the words to cut. The rules page gains a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion.
+
 ## [0.54.1] - 2026-10-20
 
 ### Added

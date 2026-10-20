@@ -8,19 +8,26 @@
 # text break a rule a script can see? Did a rewording change anything but the
 # wording? Whether the meaning held is a question for a reader.
 #
-#   prose-check.py FILE...                what a script sees: dash, long, paragraph, words, unseen
-#   prose-check.py --audience BAND FILE...  the same at the limits of a band of readers, with sentences and a grade
+#   prose-check.py FILE...                what a script sees: dash, long, paragraph, sentences, words, unseen
+#   prose-check.py --audience BAND FILE...  the same at the limits of a band of readers, with a grade
 #   prose-check.py --before OLD NEW       what differs besides the wording, and the words before and after
 #   prose-check.py --against REF FILE...  the same, against the version git holds at REF
 #   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword, and its readers
 #   prose-check.py --derived-from ADULT YOUNG  what a retelling holds that the text it retells does not
 #
+# A FILE is Markdown, or a script. A `.sh`, `.bash`, `.py`, `.yaml`, `.yml`
+# or `.toml` file, or a justfile, is read as its `#` comments and, in Python,
+# its docstrings: each block of comment lines is a paragraph, and an empty
+# comment line splits one. The shebang, a directive such as `# shellcheck`, a
+# `# /// script` block and the body of a heredoc are left out. Code is never
+# read, so a fact in it is not checked.
+#
 # A band holds a page to the limits references/young-readers.md gives for
 # readers aged 8 to 12, aged 13 to 18, or dyslexic. A page that opens by
 # naming its readers, as "This page is for readers aged 13 to 18." does, is
-# held to that band with no flag. Under a band the script also counts the
-# sentences in each paragraph, and notes the page's Automated Readability
-# Index with the counts it comes from. The index is a hint, never a finding.
+# held to that band with no flag. A band sets its own count of sentences in
+# a paragraph, and the script notes the page's Automated Readability Index
+# with the counts it comes from. The index is a hint, never a finding.
 #
 # A retelling may say less than the text it retells, and never more. So
 # --derived-from reports a number, a link, a code span, a quotation, an HTML
@@ -63,6 +70,9 @@ RESERVED = {"index.md", "log.md", "diataxis.md"}
 MAX_WORDS = 40
 # The Federal Plain Language Guidelines' ceiling for a paragraph.
 MAX_PARAGRAPH = 150
+# The top of the same guidelines' "three to eight sentences" for a paragraph.
+# A band sets its own count, and a list item has none.
+MAX_SENTENCES = 8
 # The bands of readers, as references/young-readers.md gives them with their
 # sources: the words in a sentence and in a paragraph, the sentences in a
 # paragraph, and the Automated Readability Index a page should stay at or
@@ -138,12 +148,16 @@ NAMES_READERS = re.compile(r"\bfor readers aged (\d{1,2}) to (\d{1,2})\b", re.I)
 # every offset and line number stays true after masking.
 MASK = ""
 
-# The words the first hand pass cut, and the stock phrases it replaced.
+# The words the first hand pass cut, the stock phrases it replaced, and two a
+# later reading added: an intensifier that points at a comparison the
+# sentence never makes, and the tail of a negative that is already whole.
 # "actually", "really", "simply" and "just" stay off the list on purpose: the
 # second pass kept every one of them.
 WORDS = {
     "deliberately": "cut it, or say what was chosen",
     "honestly": "cut it",
+    "outright": "cut it, or say what it is compared with",
+    "at all": "cut it: the negative before it is already whole",
     "in order to": 'write "to"',
     "due to the fact that": 'write "because"',
     "e.g.": 'write "for example"',
@@ -169,6 +183,18 @@ WORD = re.compile(
     + r")(?![\w-])|(?<![A-Za-z])e\.g\.",
     re.I,
 )
+# The files read as scripts rather than as Markdown, by suffix; a file called
+# justfile is one too. In a script the prose is its whole-line `#` comments,
+# and in Python its docstrings as well.
+SCRIPT_SUFFIXES = {".sh", ".bash", ".py", ".yaml", ".yml", ".toml"}
+COMMENT_LINE = re.compile(r"^\s*#(.*)$")
+# A comment that is not prose: the shebang, and a directive a tool reads.
+DIRECTIVE = re.compile(r"^#(?:!|\s*(?:shellcheck|noqa|type:|fmt:|ruff:|pylint:|mypy:|pyright:|yamllint|-\*-)\b)")
+# The `# /// script` block of PEP 723, which names a script's packages.
+SCRIPT_BLOCK = re.compile(r"^#\s*///\s*\w+\s*$")
+SCRIPT_BLOCK_END = re.compile(r"^#\s*///\s*$")
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_]\w*)\1")
+DOCSTRING = re.compile(r"^(\s*)[rRuUbB]{0,2}(\"\"\"|''')(.*)$")
 # A spaced hyphen, an em dash anywhere, and an en dash that is not a range.
 DASH = re.compile(r"(?<=\S) --? (?=\S)|—|(?<!\d)–|–(?!\d)")
 SENTENCE_END = re.compile(r"(?<=[.!?])[\"')\]*_”]*\s+(?=[A-Z`*\[(\"“])")
@@ -470,6 +496,76 @@ def mask(text: str) -> str:
     return out
 
 
+def is_script(path: Path) -> bool:
+    return path.suffix.lower() in SCRIPT_SUFFIXES or path.name.lower() == "justfile"
+
+
+def script_doc(text: str, python: bool = False) -> Doc:
+    """The prose of a script, laid out on the lines it came from.
+
+    Each whole-line `#` comment keeps its text with the mark removed, and in
+    Python each docstring keeps its lines, less the indent of its opening
+    quotes. Every other line is blank, so a block of comments reads as a
+    paragraph, an empty comment line splits one, and a line of code ends one,
+    as a blank line does in Markdown. Left out: the shebang, a directive such
+    as `# shellcheck`, a `# /// script` block, and the body of a heredoc,
+    which is data. A triple-quoted string is a docstring when it opens the
+    module or follows a line that ends with a colon, so a quoted block
+    assigned to a name is data too.
+    """
+    out: list[str] = []
+    terminator: str | None = None
+    in_block = False
+    in_doc: tuple[str, int] | None = None
+    seen_code = False
+    previous = ""
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if terminator is not None:
+            out.append("")
+            if stripped == terminator:
+                terminator = None
+            continue
+        if in_doc:
+            quotes, indent = in_doc
+            end = line.find(quotes)
+            content = line if end < 0 else line[:end]
+            if end >= 0:
+                in_doc = None
+            out.append(content[indent:] if not content[:indent].strip() else content.lstrip())
+            continue
+        found = COMMENT_LINE.match(line)
+        if found:
+            if in_block:
+                in_block = not SCRIPT_BLOCK_END.match(stripped)
+                out.append("")
+            elif SCRIPT_BLOCK.match(stripped) or DIRECTIVE.match(stripped):
+                in_block = bool(SCRIPT_BLOCK.match(stripped))
+                out.append("")
+            else:
+                body = found.group(1)
+                out.append(body[1:] if body.startswith(" ") else body)
+            continue
+        opening = DOCSTRING.match(line) if python else None
+        if opening and (not seen_code or previous.rstrip().endswith(":")):
+            indent, quotes, rest = len(opening.group(1)), opening.group(2), opening.group(3)
+            end = rest.find(quotes)
+            out.append((rest if end < 0 else rest[:end]).strip())
+            if end < 0:
+                in_doc = (quotes, indent)
+            seen_code = True
+            previous = ""
+            continue
+        heredoc = HEREDOC.search(line)
+        if heredoc:
+            terminator = heredoc.group(2)
+        out.append("")
+        if stripped:
+            seen_code = True
+            previous = line
+    return Doc("\n".join(out))
+
+
 def prose_blocks(doc: Doc):
     """Each paragraph, list item and table cell of the body that the style rules read."""
     block: Block | None = None
@@ -627,9 +723,8 @@ def style(
 ) -> list[tuple[int, str, str]]:
     """Dash, long, paragraph, sentences and words: what a script can see of the house style.
 
-    A table cell is no paragraph, and a list item is held to the same limit.
-    Only a band sets a limit on the sentences in a paragraph, and a list item
-    has none.
+    A table cell is no paragraph, and a list item is held to the same limit
+    on words. The limit on sentences is a paragraph's alone.
     """
     findings: list[tuple[int, str, str]] = []
     for block in prose_blocks(doc):
@@ -1172,17 +1267,27 @@ def reserved_in_bundle(path: Path) -> bool:
     return path.name in RESERVED and bundle_root(path) is not None
 
 
-def check_style(files: list[Path], max_words: int | None = None, max_paragraph: int | None = None, audience: str | None = None):
+def check_style(
+    files: list[Path],
+    max_words: int | None = None,
+    max_paragraph: int | None = None,
+    audience: str | None = None,
+    max_sentences: int | None = None,
+):
     """The style rules for each file, and a character no reader sees in any of them.
 
     A file is held to the band --audience names, or else to the band its
-    first paragraph names, or else to the adult limits. --max-words and
-    --max-paragraph set their own limit over any band's.
+    first paragraph names, or else to the adult limits. --max-words,
+    --max-paragraph and --max-sentences set their own limit over any band's.
+    A script is read as its comments; the search for a character no reader
+    sees reads its every line.
     """
     findings, notes = [], []
     for path in files:
-        doc = Doc(read(path))
-        found = unseen(doc)
+        text = read(path)
+        whole = Doc(text)
+        doc = script_doc(text, python=path.suffix.lower() == ".py") if is_script(path) else whole
+        found = unseen(whole)
         if reserved_in_bundle(path):
             notes.append((path, 1, "reserved", "a reserved bundle file is not held to the style rules"))
         else:
@@ -1200,7 +1305,8 @@ def check_style(files: list[Path], max_words: int | None = None, max_paragraph: 
             band = BANDS.get(name) if name else None
             words = max_words if max_words is not None else band.words if band else MAX_WORDS
             paragraph = max_paragraph if max_paragraph is not None else band.paragraph if band else MAX_PARAGRAPH
-            found += style(doc, words, paragraph, band.sentences if band else None, band_words=band is not None)
+            count = max_sentences if max_sentences is not None else band.sentences if band else MAX_SENTENCES
+            found += style(doc, words, paragraph, count, band_words=band is not None)
             for rule, note in (("grade", graded(doc, name, band)), ("vocabulary", vocabulary(doc))) if band else ():
                 if note:
                     notes.append((path, 1, rule, note))
@@ -1489,7 +1595,7 @@ def list_bundle(directory: Path) -> int:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="prose-check.py",
-        usage="prose-check.py [--audience BAND] [--max-words N] [--max-paragraph N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR | --derived-from ADULT YOUNG",
+        usage="prose-check.py [--audience BAND] [--max-words N] [--max-paragraph N] [--max-sentences N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR | --derived-from ADULT YOUNG",
         description="Report what a script can see of plain prose, and prove that a rewording changed only wording.",
     )
     parser.add_argument("files", nargs="*", type=Path, metavar="FILE")
@@ -1500,6 +1606,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--audience", choices=sorted(BANDS), metavar="BAND")
     parser.add_argument("--max-words", type=int, metavar="N")
     parser.add_argument("--max-paragraph", type=int, metavar="N")
+    parser.add_argument("--max-sentences", type=int, metavar="N")
     if len(argv) < 2:
         parser.print_usage(sys.stderr)
         return 2
@@ -1527,7 +1634,7 @@ def main(argv: list[str]) -> int:
         elif args.against:
             findings, notes, fine = check_against(args.against, args.files)
         else:
-            findings, notes, fine = check_style(args.files, args.max_words, args.max_paragraph, args.audience)
+            findings, notes, fine = check_style(args.files, args.max_words, args.max_paragraph, args.audience, args.max_sentences)
     except Usage as exc:
         print(f"prose-check.py: {exc}", file=sys.stderr)
         return 2

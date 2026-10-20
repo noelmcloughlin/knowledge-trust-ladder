@@ -19,7 +19,8 @@ import pytest
 from conftest import REPO, Git, run, write
 
 PROSE = REPO / "skills" / "ktl-prose" / "scripts" / "prose-check.py"
-PARA = "Each check reads one file. " * 32
+# 160 words in eight sentences: over the word limit, and inside the sentence count.
+PARA = "Each check reads one file and compares it with the earlier version the repository holds before it reports what differs. " * 8
 LIB = 'generated:\n  by: process:ktl-librarian\n  at: "2026-09-01T05:00:00Z"\n'
 BODY_A = "The Orders API serves order data. It reads 3 tables."
 BODY_B = "The Orders API reads 3 tables and serves order data."
@@ -686,3 +687,60 @@ def test_derived_from_takes_no_file(retold):
 
 def test_a_band_with_derived_from_is_a_usage_error(retold):
     expect(2, "run them apart", "--audience with --derived-from is a usage error", "--audience", "8-12", "--derived-from", retold / "adult.md", retold / "young.md")
+
+
+# A script's prose: its whole-line `#` comments, and in Python its docstrings,
+# read under the same rules. Code, a directive, a PEP 723 block and a heredoc
+# body are not prose, and are left alone.
+FILLER = "The gate reads each changed file and compares it with the earlier version the repository holds before it reports a difference. "
+
+
+@pytest.fixture(scope="module")
+def scripts(tmp_path_factory):
+    d = tmp_path_factory.mktemp("scripts")
+    write(d / "para.sh", "#!/usr/bin/env bash\n# " + (FILLER * 8).strip() + "\nset -eu\n")
+    write(d / "split.sh", "#!/usr/bin/env bash\n# " + (FILLER * 4).strip() + "\n#\n# " + (FILLER * 4).strip() + "\nset -eu\n")
+    write(
+        d / "quiet.sh",
+        "#!/bin/bash -\n# shellcheck disable=SC2016 # a - b\n# /// script\n# dependencies = [\"a - b\"]\n# ///\ncat <<'EOF'\n# x - y\nEOF\necho 'a - b'  # trailing - here\n",
+    )
+    write(d / "items.sh", "# Steps:\n#   - the fix lands\n#     in the release\n#   - the key - is read\n")
+    write(
+        d / "doc.py",
+        '"""A module - with a dash."""\n\nFORMAT = """\na - b\n"""\n\n\ndef f():\n    """Say what happens: the key lands.\n\n    - a - b\n    """\n    return 1  # the fix lands\n',
+    )
+    write(d / "flow.yaml", "name: x\n# The job - runs.\njobs:\n  a:\n    run: |\n      # inside - a comment\n      python - <<'PY'\n      # data - not read\n      PY\n")
+    write(d / "justfile", '# Recipes - for the bundle.\nbundle := "knowledge"\n\nlokf-validate:\n    #!/usr/bin/env bash\n    uv run lokf validate\n')
+    write(d / "sentences.md", "# A page\n\n" + "It reads. " * 9 + "\n\n- " + "It reads. " * 9 + "\n")
+    write(d / "words.md", "# A page\n\nThe pen refuses it outright. Nothing in the bundle changes at all.\n")
+    return d
+
+
+SCRIPTS = [
+    (1, "para.sh:2: paragraph: 168 words in one paragraph", "a comment block over 150 words is reported, on the line it starts", ["para.sh"]),
+    (0, "OK", "an empty comment line splits a block", ["split.sh"]),
+    (0, "OK", "a shebang, a shellcheck directive, a PEP 723 block, a heredoc body and code are left alone", ["quiet.sh"]),
+    (1, 'items.sh:2: words: "lands"', "a list in a comment is read as items", ["items.sh"]),
+    (1, "items.sh:4: dash:", "and a dash in an item is reported with its line", ["items.sh"]),
+    (1, "doc.py:1: dash:", "a module docstring is read", ["doc.py"]),
+    (1, 'doc.py:9: words: "lands"', "a function docstring is read, on its own lines", ["doc.py"]),
+    (1, "doc.py:11: dash:", "a list in a docstring is read", ["doc.py"]),
+    (1, "flow.yaml:2: dash:", "a workflow's comment is read", ["flow.yaml"]),
+    (1, "flow.yaml:6: dash:", "and so is a comment inside a run block", ["flow.yaml"]),
+    (1, "justfile:1: dash:", "a justfile's comment is read, and a recipe's shebang is not", ["justfile"]),
+    (1, "sentences.md:3: sentences: 9 sentences in one paragraph, and the limit is 8", "a paragraph over eight sentences is reported", ["sentences.md"]),
+    (0, "OK", "a higher --max-sentences lets it pass, and a list item has no count", ["--max-sentences", "12", "sentences.md"]),
+    (1, 'words.md:3: words: "outright"', "an intensifier that names no comparison is reported", ["words.md"]),
+    (1, 'words.md:3: words: "at all"', "and so is the tail of a negative", ["words.md"]),
+]
+
+
+@pytest.mark.parametrize(("status", "text", "what", "args"), SCRIPTS, ids=[w for _, _, w, _ in SCRIPTS])
+def test_scripts_and_sentences(scripts, status, text, what, args):
+    expect(status, text, what, *[scripts / a if "." in a or a == "justfile" else a for a in args])
+
+
+def test_code_data_and_a_trailing_comment_are_not_read(scripts):
+    out = prose(scripts / "doc.py", scripts / "flow.yaml", scripts / "quiet.sh").out
+    for line in ("doc.py:4:", "doc.py:13:", "flow.yaml:8:", "quiet.sh:"):
+        assert line not in out, f"prose-check.py read code, data or a trailing comment as prose: {out}"
