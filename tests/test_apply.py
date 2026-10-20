@@ -1438,3 +1438,41 @@ def test_the_sidecar_venv_runs_the_pen_before_uv(tmp_path):
     uv.chmod(0o755)
     result = bash(scripts / "knowledge-apply.sh", "--format", env={"PATH": f"{uv.parent}{os.pathsep}{os.environ['PATH']}"})
     assert result and "ops:" in result.out, f"the pen did not run from the sidecar's .venv: {result.out}"
+
+
+def recording_lokf(root, say, rc):
+    """A toolkit in .lokf/.venv that notes the folder it ran in and its arguments, says `say` and exits `rc`."""
+    calls = root.parent / f"{root.name}-lokf-calls.txt"
+    write(root / ".lokf" / ".venv" / "bin" / "lokf", f'#!/bin/sh\necho "$(pwd -P) $*" >> "{calls}"\n{say}\nexit {rc}\n').chmod(0o755)
+    return calls
+
+
+def test_a_toolkit_that_cannot_validate_does_not_refuse_the_patch(ka):
+    """A failure with no [ERROR] line is the toolkit's, such as one installed without LinkML."""
+    recording_lokf(ka, "echo 'validation needs LinkML, which the core install leaves out.' >&2", 1)
+    result = applies(ka, DRAFT_EDIT)
+    assert "schema not checked: lokf validate could not run (validation needs LinkML" in result.out, (
+        f"the pen did not say the toolkit could not run: {result.out}"
+    )
+
+
+def test_the_pen_validates_with_the_domain_schema_the_justfile_names(ka):
+    write(ka / ".lokf" / "justfile", 'bundle := "knowledge"\nschema := "schemas/acme.yaml"\n')
+    write(ka / ".lokf" / "schemas" / "acme.yaml", "id: https://acme.example/schema\n")
+    calls = recording_lokf(ka, "echo OK", 0)
+    result = applies(ka, DRAFT_EDIT)
+    line = read(calls).strip()
+    folder, _, args = line.partition(" ")
+    assert "schema checked" in result.out and folder == str((ka / ".lokf" / "schemas").resolve()) and args.startswith("validate --schema acme.yaml "), (
+        f"the pen did not run lokf validate from the schema's folder with --schema: {line} // {result.out}"
+    )
+
+
+def test_an_unreadable_schema_line_is_reported_not_read_as_no_schema(ka):
+    """Validated against LOKF core alone, every concept of a domain type would be refused."""
+    write(ka / ".lokf" / "justfile", "schema := 'acme.yaml'\n")
+    calls = recording_lokf(ka, "echo OK", 0)
+    result = applies(ka, DRAFT_EDIT)
+    assert 'schema line is not in the form schema := "<file>"' in result.out and not calls.exists(), (
+        f"the pen read an unreadable schema line as no schema: {result.out}"
+    )

@@ -990,8 +990,16 @@ def check_keys(op: dict) -> None:
 
 
 # The justfile line that names a domain schema, as the sidecar's template
-# writes it: `schema := "<path relative to .lokf/>"`, empty for none.
-SCHEMA_LINE = re.compile(r'^schema\s*:=\s*"([^"]*)"\s*$', re.M)
+# writes it: `schema := "<path relative to .lokf/>"`, empty for none. The
+# release workflow and knowledge-federate.py read only this form. A `schema`
+# line in any other form is reported, not read as no schema: validating a
+# domain's concepts against LOKF core alone would refuse every valid one.
+SCHEMA_LINE = re.compile(r'^schema := "([^"]*)"$', re.M)
+ANY_SCHEMA_LINE = re.compile(r"^(export\s+)?schema\s*:=", re.M)
+# The prefixes `lokf validate` gives a finding that fails the check. A failure
+# with neither, such as a toolkit without LinkML or a schema file that is not
+# there, is the toolkit's, and says nothing about the patch.
+FAILING = ("[ERROR]", "[FATAL]")
 
 
 def schema_findings(root: Path, files: dict) -> tuple:
@@ -1013,7 +1021,10 @@ def schema_findings(root: Path, files: dict) -> tuple:
         return [], "schema not checked: the lokf toolkit is not installed in .lokf/.venv; run uv sync in .lokf/"
     cmd, cwd = [str(exe), "validate"], lokf_dir
     justfile = lokf_dir / "justfile"
-    named = SCHEMA_LINE.search(justfile.read_text(encoding="utf-8")) if justfile.is_file() else None
+    recipes = justfile.read_text(encoding="utf-8") if justfile.is_file() else ""
+    named = SCHEMA_LINE.search(recipes)
+    if named is None and ANY_SCHEMA_LINE.search(recipes):
+        return [], 'schema not checked: the justfile\'s schema line is not in the form schema := "<file>"'
     if named and named.group(1):
         schema = (lokf_dir / named.group(1)).resolve()
         cmd, cwd = cmd + ["--schema", schema.name], schema.parent
@@ -1033,9 +1044,12 @@ def schema_findings(root: Path, files: dict) -> tuple:
     if done.returncode == 0:
         return [], "schema checked: lokf validate accepts every concept this patch writes"
     out = (done.stdout + done.stderr).replace(str(staged), ".lokf/knowledge")
-    # The validator echoes a rejected concept whole on one line, and gives the
-    # reason on the next, so each line is cut at 240 characters.
     lines = [shown(line) for line in out.splitlines() if line.strip()]
+    if not any(line.startswith(FAILING) for line in lines):
+        return [], f"schema not checked: lokf validate could not run ({lines[0][:200] if lines else f'exit {done.returncode}'})"
+    # The validator echoes a rejected concept whole on one line, and gives the
+    # reason and a hint on the lines after, so each line is cut at 240
+    # characters and all of them are kept.
     return [f"schema: {line[:240]}{' ...' if len(line) > 240 else ''}" for line in lines], ""
 
 
