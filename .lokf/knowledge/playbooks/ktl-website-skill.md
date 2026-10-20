@@ -29,7 +29,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-20T23:23:33Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -63,6 +63,8 @@ Since 0.45.0 (2026-10-16, `CHANGELOG.md`) a concept's card shows its open questi
 Since 0.48.0 (2026-10-17, `CHANGELOG.md`) a figure on a wide screen stays in the text column, and a click opens it at full size. The change is in the template's `theme.css` and `Mermaid.astro`, so a host gets it with its next website repair.
 
 Since 0.53.0 (2026-10-19, `CHANGELOG.md`) a domain host's graph page draws the workspace. Its *The workspace* view draws every bundle the domain names, each in a colour and shape of its own, with the links between bundles dashed, from the `graph.json` the federation workflow serves. `WORKSPACE` in `site.config.mjs` turns the view on or off, and `"auto"` turns it on when the repository has `.github/workflows/knowledge-federation.yaml` (`references/customising.md`).
+
+Since 0.54.0 (2026-10-20, `CHANGELOG.md`) the graph page keeps the graph at full height in full screen. Search and filters sit in a side panel that scrolls, and switching between *This bundle* and *The workspace* draws the other graph in place, so full screen stays on. Each filter shows a count, each group has *All* and *None*, and a line says "N of M concepts shown" whenever a filter is off. Every filter still starts on.
 
 A release page links the repository, the docs and the bundle at the release's tag, which the `RELEASE_TAG` option names. A page and its retelling offer each other as reading levels: a `PAGES` entry's `retells` names the page it retells, and a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names.
 

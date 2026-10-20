@@ -1,5 +1,16 @@
 # Change Log
 
+## 2026-10-20
+
+* **Changed**: ktl-prose skill: the check reads a script's comments and docstrings, reports a paragraph past eight sentences, lists "outright" and "at all", and runs through `uv run`; the rules page gains four methods (0.55.0, `CHANGELOG.md`, `scripts/prose-check.py`, `references/other-files.md`).
+* **Changed**: ktl-sidecar skill: the preflight runs from the repository's root and warns about an old python3, the scripts run with `.lokf/.venv` before `uv run` behind a package mirror, and the release attaches a schema from anywhere in the repository (0.55.0, `CHANGELOG.md`, `references/portability.md`, `references/automation.md`).
+* **Changed**: ktl-librarian skill: the pen validates every concept a patch would write against the schema when `.lokf/.venv` holds the toolkit (0.55.0, `references/patch.md`). Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: The pen: it validates every concept a patch would write against the schema when `.lokf/.venv` holds the toolkit (0.55.0, `references/patch.md`).
+* **Changed**: Releasing: the `schema :=` line may name any file in the repository since 0.55.0, and the released schema imports LOKF core as `lokf` (`CHANGELOG.md`, `knowledge-release.yaml`).
+* **Changed**: ktl-website skill: the graph page's full screen and filter controls (0.54.0, `CHANGELOG.md`).
+* **Changed**: Website: the graph explorer's side panel and filter controls (0.54.0, `CHANGELOG.md`). Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-docent skill: `sources` names the skill's own `scripts/` folder, the copies of the report and feedback scripts the concept describes, which the coverage sweep found under no concept. Edited since a person confirmed it; the label says so until the curator looks again.
+
 ## 2026-10-19
 
 * **Question**: `policies/security.md` asks the curator to bring the person-written policy in line with `SECURITY.md` as #253 left it, since the pen does not rewrite a person's text.

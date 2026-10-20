@@ -25,7 +25,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-03T09:42:48Z"
   - by: process:ktl-librarian
-    at: "2026-10-19T23:21:13Z"
+    at: "2026-10-20T23:23:33Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T00:25:28Z"
 stale_after: 2027-09-10

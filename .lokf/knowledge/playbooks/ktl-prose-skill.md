@@ -25,7 +25,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T20:01:11Z"
+  at: "2026-10-20T23:23:33Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -53,6 +53,8 @@ A museum edits its labels before the exhibition opens. `ktl-prose` does that for
 12. Open each page by saying who it is for.
 13. Report what you cannot fix.
 
+Since 0.55.0 `references/rules.md` also gives a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion.
+
 A last section of `references/rules.md`, apart from the thirteen, says where a line ends in the source. In the bundle that is one line for each paragraph and each list item, as ktl-librarian writes it. Outside the bundle the host's layout holds: one line per paragraph, one sentence per line, or a fixed column. A file's layout changes only when the person asks.
 
 # Which concepts it may reword
@@ -79,7 +81,7 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 # Steps
 
 0. **Preflight**: run the preflight and the conventions script first, as every skill that touches the bundle does. The skill never opens `.lokf/feedback.md`.
-1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph` and `words` run over those, with `unseen` for a character no reader sees. Then the agent reads them, because only a reader sees a late verb.
+1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. Since 0.55.0 `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". The script runs through `uv run`, or a python3 of 3.9 or later, never bare `python`. Then the agent reads them, because only a reader sees a late verb.
 2. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, lay out what it rewords the way the file's project does, and leave what cannot be fixed.
 3. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, such as a character no reader sees that the rewording added, and the agent undoes it.
 4. **Log** one **Prose** line in `log.md`.
@@ -87,7 +89,7 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 
 # Outside the bundle
 
-The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout, and how to apply the rules by hand to comments in scripts and workflows.
+The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout. Since 0.55.0 the script reads a script too: given a `.sh`, `.bash`, `.py`, `.yaml`, `.yml` or `.toml` file, or a justfile, it reads the `#` comments and, in Python, the docstrings, each block of comment lines as a paragraph, and never the code. `references/other-files.md` makes the block a change touches, not the lines it adds, the unit of a comment review.
 
 # Younger readers
 

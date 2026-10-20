@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-20T23:23:33Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -41,7 +41,7 @@ verified:
 
 ktl-sidecar runs **once** per repository, or to repair a missing or broken sidecar file. A repair rewrites only the missing or broken file, and never overwrites concept files. It never authors concepts. It has seven steps, 0 to 6:
 
-- **Step 0.** Run the preflight and gather the host project's facts. The preflight says what the machine can do, and the layout is the same on every host: `.lokf/knowledge` is the real folder (see [Hosts and doorways](../explanation/hosts-and-doorways.md)).
+- **Step 0.** Run the preflight from the host repository's root and gather the host project's facts. The preflight says what the machine can do, and the layout is the same on every host: `.lokf/knowledge` is the real folder (see [Hosts and doorways](../explanation/hosts-and-doorways.md)).
 - **Step 1.** Copy each file from `templates/` and substitute placeholders as literal text with Python, not sed, since a value holding sed's delimiter or GNU sed's `e` command would change what the command does. Since 2026-09-17 the files include `.lokf/.gitattributes`, which keeps the bundle on LF.
 - **Step 2.** Add three root-level pointers: `llms.txt`, a README aside, and a `knowledge_bundle` symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian (see [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)).
 - **Step 3.** Verify no placeholder survives.
@@ -99,7 +99,7 @@ With an optional variable, `KNOWLEDGE_RETRIEVAL`, each run that changes the bund
 
 A first job, `earlier`, reads what became of the pull requests the workflow opened before. While one is still open, every scheduled run stops before the agent, in the first seven days too. On a scheduled run, the quiet check counts none of what a person declined by closing one without merging, and the librarian proposes none of it again until it changes. The librarian's hand-off, its own words for the reviewer, goes with the patch, and `publish` shows it under *From the librarian*, in a code block (2026-10-04).
 
-The third workflow, `knowledge-release.yaml` (since 2026-09-24), needs no agent. It attaches the bundle to a GitHub release as `knowledge-<tag>-<repository>.zip` with a checksum. Since the `m365/` folder was added, it also attaches one Copilot skill zip per instructions file under `.lokf/m365/` beside it, built by `.lokf/m365/knowledge-m365.sh`. It skips a release whose bundle matches the last one released. It runs when dispatched by hand or, once the `KNOWLEDGE_RELEASE_ENABLED` repository variable is `true`, on each published release.
+The third workflow, `knowledge-release.yaml` (since 2026-09-24), needs no agent. It attaches the bundle to a GitHub release as `knowledge-<tag>-<repository>.zip` with a checksum. Since the `m365/` folder was added, it also attaches one Copilot skill zip per instructions file under `.lokf/m365/` beside it, built by `.lokf/m365/knowledge-m365.sh`. It skips a release whose bundle matches the last one released. When `.lokf/justfile` names a schema on its `schema :=` line, the release attaches that file too, as `schema-<tag>-<name>.yaml`. Since 0.55.0 the line may name any file in the repository, such as a linkml-sidecar schema, but never one outside it, and the released copy imports LOKF core as `lokf`. It runs when dispatched by hand or, once the `KNOWLEDGE_RELEASE_ENABLED` repository variable is `true`, on each published release.
 
 **A domain host (0.44.0).** `references/automation.md` describes a domain host as one whose bundle names other bundles. Each `MemberBundle` concept names one released zip and its checksum, and a `MemberDomain` concept does the same when that bundle is a domain in turn. A person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. Nothing in the host's three files runs a model:
 
@@ -113,6 +113,10 @@ The librarian workflow template installs a pinned `ktl-librarian` into `.agents/
 **Keeping the sidecar current (0.47.0).** `knowledge-sync.yaml` runs weekly and on demand. When the skills pin is behind the newest release, its read-only `sync` job runs the host's own `knowledge-sync.sh`, which reads the release's `knowledge-sync.manifest` and writes the release's templates over the host's copies, moves the pin and writes the changelog entry. Its `publish` job runs the default branch's copy of the script with `--apply`. That refuses a patch that touches anything but the sidecar's copies, the site's copies, the pin and `CHANGELOG.md`, or that deletes, renames or links a file. It keeps every workflow as the default branch has it but for the pin, and holds the workflow changes the release brought for a person to read and apply. It then pushes the branch `knowledge-sync`, leased to the commit the `earlier` job read, and opens one pull request there, refreshed until it is merged, with the `KNOWLEDGE_SYNC_TOKEN` secret from the `knowledge-sync` Environment. Without the secret the run attaches its change and opens nothing. When the optional `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` variable names an Environment with required reviewers, the `review` and `push-workflows` jobs push the held workflow changes once a reviewer approves (0.53.0).
 
 **Knowledge outside the repository (0.49.0).** `.lokf/ingest.yaml` names each source outside the repository, `knowledge-ingest.sh` fetches it and writes it as Markdown under `.lokf/mirror/<entry id>/`, and `.lokf/ingest.lock.yaml` records what was fetched. `knowledge-ingest.yaml` runs weekly and on demand once `KNOWLEDGE_INGEST_ENABLED` is `true`. Its read-only `ingest` job hands the script only the secrets whose names start `KNOWLEDGE_INGEST_`, from the `knowledge-ingest` Environment, and its `publish` job opens one pull request on the branch `knowledge-ingest`, refreshed until it is merged. A scheduled run also prunes a mirror file whose source is gone or has left the selection, that no concept cites, and that an earlier run recorded so.
+
+**Behind a package mirror, or with an old python3 (0.55.0).** A company package index, such as Nexus or Artifactory, often serves no upload times, and then `uv run` cannot resolve a script whose header names `exclude-newer`. So the pen, the conventions check and the ingest run with `.lokf/.venv` first, which `uv sync` installs from `uv.lock`, and through `uv run` after it (`references/portability.md`). No script picks a Python older than 3.9. When its runner cannot start, the conventions check says so and exits 2, rather than reporting findings against the bundle.
+
+The preflight warns on its `python` line when python3 is older than 3.9, and on its `root` line when it screened the skill's own folder rather than the repository. It also lists KTL skills installed for one user, under `~/.copilot/skills/`, `~/.claude/skills/` or `~/.agents/skills/`. Those serve that user's live sessions, but the scheduled librarian runs on a fresh runner and needs a copy in the repository (`references/prerequisites.md`).
 
 ## Open questions
 
