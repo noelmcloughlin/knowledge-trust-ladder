@@ -41,7 +41,7 @@ done
 py="$here/knowledge-ingest.py"
 [ -f "$py" ] || { echo "knowledge-ingest: $py is missing beside this script; run ktl-sidecar's repair path" >&2; exit 2; }
 usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c "import sys; assert sys.version_info >= (3, 9); import $2" >/dev/null 2>&1; }
-venv="$here/../.venv/bin/python"; [ -e "$venv" ] || venv="$here/../.venv/Scripts/python.exe"
+venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
 # --status reads the manifest and the lock and nothing else, so pyyaml alone
 # serves it without uv resolving the script's packages: the preflight calls it
 # on machines that may be offline.

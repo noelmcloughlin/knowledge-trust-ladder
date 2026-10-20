@@ -289,7 +289,7 @@ here="$(dirname "$0")"
 py="$here/knowledge-conventions.py"
 rules="rules 2, 3, 4, 7, 9, 10, 12 and 13"
 [ -z "$since" ] || rules="rules 2, 3, 4, 7, 9, 10, 12, 13 and 14"
-venv="$here/../.venv/bin/python"; [ -e "$venv" ] || venv="$here/../.venv/Scripts/python.exe"
+venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
 runner=""
 if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
   runner="$venv"
@@ -311,7 +311,9 @@ if [ -n "$runner" ]; then
     1) printf '%s\n' "$out"; fail=1 ;;
     *) unrun=1
        printf '%s\n' "$out" >&2
-       echo "$rules not checked: $runner could not run $py (exit $rc). Behind a package mirror, run uv sync in .lokf/ and this script uses that .venv." >&2 ;;
+       hint=""
+       [ "$runner" = uv ] && hint=" Behind a package mirror, run uv sync in .lokf/ and this script uses that .venv."
+       echo "$rules not checked: $runner could not run $py (exit $rc).$hint" >&2 ;;
   esac
 else
   skipped="$rules not checked: uv not found"

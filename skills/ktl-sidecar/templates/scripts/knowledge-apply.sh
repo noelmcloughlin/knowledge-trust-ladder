@@ -44,7 +44,7 @@ done
 py="$here/knowledge-apply.py"
 [ -f "$py" ] || { echo "knowledge-apply: $py is missing beside this script; run ktl-sidecar's repair path" >&2; exit 2; }
 usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; }
-venv="$here/../.venv/bin/python"; [ -e "$venv" ] || venv="$here/../.venv/Scripts/python.exe"
+venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
 if usable "$venv"; then
   exec "$venv" "$py" --root "$root" ${args[@]+"${args[@]}"}
 elif command -v uv >/dev/null 2>&1; then
