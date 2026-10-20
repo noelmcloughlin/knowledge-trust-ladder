@@ -80,20 +80,20 @@ bash scripts/knowledge-conventions.sh     # the bundle keeps its conventions bef
 
 No `.lokf/knowledge/index.md`? Then there is no bundle to work on. Say so, mention that ktl-sidecar can create one, and work only on a file the person names.
 
-The check script is `scripts/prose-check.py` in this skill's directory. Run it with `python3`, or with `uv run` where there is no python3. The commands below write `<skill>` for that directory.
+The check script is `scripts/prose-check.py` in this skill's directory, which the commands below write as `<skill>`. Run it with `uv run`, as they do, or with a `python3` of 3.9 or later, never bare `python`. An older Python stops at the script's `__future__` line.
 
 ## Step 1: report (always, read-only)
 
 1. Ask the script which files you may reword, from the repository root. It prints `rewrite` or `skip: <why>` for each, in the order of the table above:
 
    ```sh
-   python3 <skill>/scripts/prose-check.py --bundle .lokf/knowledge
+   uv run <skill>/scripts/prose-check.py --bundle .lokf/knowledge
    ```
 
 2. Run the style checks over the files it marks `rewrite`. Each finding is a candidate, not a verdict:
 
    ```sh
-   python3 <skill>/scripts/prose-check.py <files>
+   uv run <skill>/scripts/prose-check.py <files>
    ```
 
 3. Read those files. Only a reader sees a late verb, a reason given before its step, two names for one thing, or a figure of speech the script does not list.
@@ -140,8 +140,8 @@ Take the concepts the person asked for: every one the report marks `rewrite`, or
 From the repository root:
 
 ```sh
-python3 <skill>/scripts/prose-check.py --against HEAD <files>     # a file git already held
-python3 <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied in Step 2
+uv run <skill>/scripts/prose-check.py --against HEAD <files>     # a file git already held
+uv run <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied in Step 2
 ```
 
 A **finding** names something other than wording that differs: a number, a link, a code span, an inline HTML tag, a quotation, or a fenced block. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a character no reader sees that the rewording added. Undo what it names. A rewording has no reason to change any of them. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
@@ -155,7 +155,7 @@ bash scripts/knowledge-conventions.sh
 just lokf-validate
 ```
 
-Run the host's Markdown lint too, where it has one. With neither python3 nor uv the check cannot run. Say so in the hand-off, and do not call the rewording proven.
+Run the host's Markdown lint too, where it has one. With neither uv nor a python3 of 3.9 or later, the check cannot run. Say so in the hand-off, and do not call the rewording proven.
 
 ## Step 4: log the pass
 

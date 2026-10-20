@@ -21,7 +21,7 @@ Report the findings as a checklist, fix the mechanical ones through the pen, and
 
 ## Lint the Markdown too
 
-The toolkit validates frontmatter and the projected graph, so a bundle can be schema-valid and still fail the host's lint gate on its bodies. Treat that as part of the audit, not as the host's problem. If the host has a markdownlint config at its root (`.markdownlint-cli2.jsonc`, `.markdownlint.jsonc`, `.markdownlint.json` or `.markdownlint.yaml`), run `npx markdownlint-cli2 '**/*.md'`, quoted so the shell does not expand the glob, and fix what it reports on files you touched.
+The toolkit validates frontmatter and the projected graph, so a bundle can be schema-valid and still fail the host's lint gate on its bodies. Treat that as part of the audit, not as the host's problem. If the host has a markdownlint config at its root (`.markdownlint-cli2.jsonc`, `.markdownlint.jsonc`, `.markdownlint.json` or `.markdownlint.yaml`), run `npx markdownlint-cli2 <files>` on the files you touched, and fix what it reports. A bare `'**/*.md'` also lints `.lokf/.venv/`, whose packages include Markdown that is not yours.
 
 Where `npx` is missing, grep the files you changed for the mistake that has already failed CI for this skill. Markdown reads a line that begins with a dash and a space as a list item. So a spaced dash ("X - Y") in carried-over text that wrapping moves to the start of a line turns a paragraph into a list, and fails `MD032/blanks-around-lists`. Look for such a line whose previous line is unindented prose: not blank, not a heading, not another list item, and not the indented continuation of a wrapped bullet. Writing each paragraph as one unwrapped line avoids the trap, since there is then no line break before the dash.
 
