@@ -18,5 +18,5 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for <PROJ_NAME>. Every M
 
 # Services
 
-* [Example Service A](services/example-service-a.md) - placeholder; replace with a real service.
-* [Example Service B](services/example-service-b.md) - placeholder; replace with a real service.
+* [Example Service A](services/example-service-a.md) - Placeholder service; replace with a real service of <PROJ_NAME>.
+* [Example Service B](services/example-service-b.md) - Placeholder service; replace with a real service of <PROJ_NAME>.
