@@ -4,20 +4,17 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **ktl-prose's check reads a script's comments.** Given a shell, Python, YAML or TOML file or a justfile, `prose-check.py` holds each `#` comment block, and each Python docstring, to the rules a paragraph keeps.
-
-### Changed
-
-- **The check reports a paragraph of more than eight sentences**, and lists "outright" and "at all" among the words to cut. The rules page gains a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion.
-
-## [0.54.1] - 2026-10-20
+## [0.55.0] - 2026-10-20
 
 ### Added
 
 - **The pen checks the schema before it writes.** `knowledge-apply.sh` runs `lokf validate` on every concept a patch would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit.
 - **The preflight warns about a python3 older than 3.9**, about being run from ktl-sidecar's own folder, and names KTL skills installed for one user.
+- **ktl-prose's check reads a script's comments.** Given a shell, Python, YAML or TOML file or a justfile, `prose-check.py` holds each `#` comment block, and each Python docstring, to the rules a paragraph keeps.
+
+### Changed
+
+- **The check reports a paragraph of more than eight sentences**, and lists "outright" and "at all" among the words to cut. The rules page gains a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion.
 
 ### Fixed
 
