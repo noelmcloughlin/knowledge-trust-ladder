@@ -276,8 +276,9 @@ jobs:
 
 
           for entry in imports:
-              # `lokf` is the name a domain resolves; a CURIE such as
-              # linkml:types, or a URL, resolves anywhere.
+              # A domain resolves `lokf` by name. A CURIE such as linkml:types,
+              # or a URL, resolves anywhere.
+
               if not isinstance(entry, str) or entry == "lokf" or ":" in entry:
                   continue
               local = source.parent / (entry if entry.endswith((".yaml", ".yml")) else entry + ".yaml")

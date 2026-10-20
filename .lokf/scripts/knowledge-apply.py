@@ -1012,8 +1012,11 @@ def schema_findings(root: Path, files: dict) -> tuple:
     pyproject.toml as it does for the bundle. The validator runs with the
     domain schema the justfile names, from that schema's folder, as the
     justfile's recipes run it. The toolkit is the sidecar's .venv, which needs
-    no network. Without it the check is skipped and the note says so. Returns
-    the findings and a note.
+    no network. The check is skipped, and the note says why, when the .venv
+    holds no toolkit, when the toolkit cannot run, or when the justfile's
+    schema line is not in the form the release reads. Returns the findings
+    and a note.
+
     """
     lokf_dir = root / ".lokf"
     exe = next((p for p in (lokf_dir / ".venv" / "bin" / "lokf", lokf_dir / ".venv" / "Scripts" / "lokf.exe") if p.is_file()), None)

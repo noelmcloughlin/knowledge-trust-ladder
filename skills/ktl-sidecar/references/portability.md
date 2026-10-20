@@ -87,7 +87,7 @@ Three Windows habits to know about:
 
 A company package index, such as Nexus or Artifactory, often serves no upload times. `uv sync` in `.lokf/` still installs the toolkit, pinned by hash in `uv.lock`. There uv cannot resolve the packages of a script whose header names `exclude-newer`: it drops every file it cannot date, and reports the pin as unsatisfiable. So run `uv sync` in `.lokf/` once. The pen, the conventions check and the ingest then run with `.lokf/.venv`. The ingest reads a PDF with pypdf, which the toolkit does not install. Run `uv add pypdf` in `.lokf/` to add it. When the conventions check exits 2 and says "could not run", the runner failed, not the bundle.
 
-Every script needs Python 3.9 or later. Where python3 is older, as on RHEL 8, the preflight warns. Run each sidecar script through its `.sh` half, which chooses the interpreter, and ktl-prose's check through `uv run`. Never run a script with bare `python`, which is Python 2 on some hosts.
+Every script needs Python 3.9 or later. Where python3 is older, the preflight warns. Run each sidecar script through its `.sh` half, which chooses the interpreter, and ktl-prose's check through `uv run`. Never run a script with bare `python`, which is Python 2 on some hosts, except as last resort.
 
 ### Synced or shared folders: OneDrive, SharePoint, Drive, Dropbox, iCloud
 
