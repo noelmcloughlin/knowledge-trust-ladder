@@ -2,6 +2,7 @@
 
 ## 2026-10-20
 
+* **Prose**: reworded 6 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Changed**: ktl-prose skill: the check reads a script's comments and docstrings, reports a paragraph past eight sentences, lists "outright" and "at all", and runs through `uv run`; the rules page gains four methods (0.55.0, `CHANGELOG.md`, `scripts/prose-check.py`, `references/other-files.md`).
 * **Changed**: ktl-sidecar skill: the preflight runs from the repository's root and warns about an old python3, the scripts run with `.lokf/.venv` before `uv run` behind a package mirror, and the release attaches a schema from anywhere in the repository (0.55.0, `CHANGELOG.md`, `references/portability.md`, `references/automation.md`).
 * **Changed**: ktl-librarian skill: the pen validates every concept a patch would write against the schema when `.lokf/.venv` holds the toolkit (0.55.0, `references/patch.md`). Edited since a person confirmed it; the label says so until the curator looks again.

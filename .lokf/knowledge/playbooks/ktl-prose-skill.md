@@ -89,7 +89,7 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 
 # Outside the bundle
 
-The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout. Since 0.55.0 the script reads a script too: given a `.sh`, `.bash`, `.py`, `.yaml`, `.yml` or `.toml` file, or a justfile, it reads the `#` comments and, in Python, the docstrings, each block of comment lines as a paragraph, and never the code. `references/other-files.md` makes the block a change touches, not the lines it adds, the unit of a comment review.
+The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout. Since 0.55.0 the script reads a script too. Given a `.sh`, `.bash`, `.py`, `.yaml`, `.yml` or `.toml` file, or a justfile, it reads the `#` comments and, in Python, the docstrings, each block of comment lines as a paragraph. It never reads the code. `references/other-files.md` makes the block a change touches, not the lines it adds, the unit of a comment review.
 
 # Younger readers
 
