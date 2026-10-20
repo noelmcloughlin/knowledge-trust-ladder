@@ -950,7 +950,7 @@ def pdf_to_text(data: bytes) -> tuple[str, str]:
     try:
         from pypdf import PdfReader
     except ImportError as e:
-        raise Refused("pypdf is not installed; run through uv, which installs it") from e
+        raise Refused("pypdf is not installed; run through uv, which installs it, or run uv add pypdf in .lokf/") from e
     try:
         reader = PdfReader(io.BytesIO(data))
         if reader.is_encrypted:
