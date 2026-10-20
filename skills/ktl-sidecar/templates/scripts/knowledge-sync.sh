@@ -59,11 +59,11 @@
 #   --report <file>   write the report as Markdown, for a pull request body
 #   --no-checks       skip the sidecar's checks on the synced copies
 #   --apply <patch>   instead of a sync, put a patch a sync made onto this
-#                     clean checkout, for the workflow's privileged job:
-#                     refuse a path or a change a sync may not make, keep
-#                     every workflow as it is but for the pin, set the pin
-#                     to <tag> and --pin-sha, and write the workflow changes
-#                     the patch carried to --held, for a person to apply
+#                     clean checkout, for the workflow's privileged job.
+#                     Refuse a path or a change a sync may not make, and keep
+#                     every workflow as it is but for the pin. Set the pin to
+#                     <tag> and --pin-sha, and write the workflow changes the
+#                     patch carried to --held, for a person to apply
 #   --held <file>     where --apply writes the workflow changes it held
 #   --pin-sha <sha>   the commit <tag> names, checked by the caller
 #
