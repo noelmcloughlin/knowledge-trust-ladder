@@ -56,6 +56,7 @@ import os
 import re
 import shutil
 import stat
+import sys
 
 import pytest
 
@@ -1348,24 +1349,38 @@ def test_the_federation_check_holds_a_member_as_the_release_build_would():
 
 
 def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
-    """The step's own lines, run against a justfile that names a schema, names none, names a path, and names a missing file."""
+    """The step's own lines, run against six justfiles. They name a schema beside the bundle, none, one in a linkml-sidecar project, one outside the repository, a missing file, and a schema that imports a local file the release cannot carry."""
     body = step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]")
     assert 'asset="schema-${TAG//\\//-}-$NAME.yaml"' in body, "knowledge-release.yaml no longer packs the schema as schema-<tag>-<name>.yaml"
     script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + body)
+    write(tmp_path / "outside.yaml", "id: https://x.example/outside\n")
+    linkml = (
+        "id: https://x.example/acme\nname: acme\nimports:\n  - linkml:types\n"
+        "  # LinkML resolves the path relative to this file.\n  - ../../../../.lokf/lokf\n"
+        "classes:\n  Gadget:\n    is_a: Concept\n"
+    )
 
-    def attempt(line):
+    def attempt(line, files=()):
         host = tmp_path / f"host{len(list(tmp_path.iterdir()))}"
         write(host / ".lokf" / "justfile", f'set shell := ["bash", "-cu"]\n{line}\n')
-        write(host / ".lokf" / "domain.yaml", "id: https://x.example/schema\nname: x\n")
+        write(host / ".lokf" / "domain.yaml", "id: https://x.example/schema\nname: x\nimports:\n  - linkml:types\n  - lokf\n")
+        write(host / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf\n")
+        write(host / ".lokf" / ".venv" / "bin" / "python", f'#!/bin/sh\nexec "{sys.executable}" "$@"\n').chmod(0o755)
+        for rel, text in files:
+            write(host / rel, text)
         (host / "temp" / "release").mkdir(parents=True)
         return run(["bash", script], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v1.2.3", "NAME": "host"}), host / "temp" / "release"
 
     r, out = attempt('schema := "domain.yaml"')
-    assert r.rc == 0 and read(out / "schema-v1.2.3-host.yaml") == "id: https://x.example/schema\nname: x\n", r.out
+    assert r.rc == 0 and read(out / "schema-v1.2.3-host.yaml") == "id: https://x.example/schema\nname: x\nimports:\n  - linkml:types\n  - lokf\n", r.out
     assert run(["sha256sum", "-c", "schema-v1.2.3-host.yaml.sha256"], cwd=out).rc == 0
     r, out = attempt('schema := ""')
     assert r.rc == 0 and "none is attached" in r.out and not list(out.iterdir()), r.out
-    r, out = attempt('schema := "../lokf.yaml"')
-    assert r.rc == 1 and "not a path" in r.out, r.out
+    r, out = attempt('schema := "../.linkml/src/acme/schema/acme.yaml"', [(".linkml/src/acme/schema/acme.yaml", linkml)])
+    assert r.rc == 0 and read(out / "schema-v1.2.3-host.yaml") == linkml.replace("  - ../../../../.lokf/lokf\n", "  - lokf\n"), r.out
+    r, out = attempt('schema := "../../outside.yaml"')
+    assert r.rc == 1 and "outside this repository" in r.out and not list(out.iterdir()), r.out
     r, out = attempt('schema := "missing.yaml"')
-    assert r.rc == 1 and "not in .lokf/" in r.out, r.out
+    assert r.rc == 1 and "not a file" in r.out, r.out
+    r, out = attempt('schema := "acme.yaml"', [(".lokf/acme.yaml", "id: https://x.example/acme\nimports:\n  - lokf\n  - parts\n"), (".lokf/parts.yaml", "id: https://x.example/parts\n")])
+    assert r.rc == 1 and "imports parts, a local file the release does not carry" in r.out and not list(out.iterdir()), r.out

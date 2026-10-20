@@ -11,11 +11,13 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
-- **The sidecar's scripts run behind a package mirror.** The pen, the conventions check and the ingest run with `.lokf/.venv` before `uv run`, which a mirror serving no upload times refuses, and no script picks a Python older than 3.9.
-- **The conventions check reports a runner it could not start as that**, exiting 2, not as findings against the bundle.
+- **The sidecar's scripts run behind a package mirror.** The pen, the conventions check and the ingest try `.lokf/.venv` first and `uv run` after it, because `uv run` fails behind a mirror that serves no upload times. No script picks a Python older than 3.9.
+- **When its runner cannot start, the conventions check says so and exits 2**, instead of reporting findings against the bundle.
 - **A freshly installed skeleton passes its own conventions:** the dummy services' descriptions match their index bullets.
-- **ktl-prose runs its check through `uv run`**, so an old `python3` never runs it, and ktl-sidecar's Step 0 runs the preflight from the host repository's root.
+- **ktl-prose runs its check through `uv run`**, so an old `python3` never runs it.
+- **ktl-sidecar's Step 0 runs the preflight from the host repository's root.**
 - **The librarian's audit lints the files it touched**, not `.lokf/.venv/`.
+- **A release attaches a linkml-sidecar host's schema.** The `schema :=` line may name any file in the repository, and the released copy imports LOKF core as `lokf`, so a domain can resolve that import.
 
 ## [0.54.0] - 2026-10-20
 

@@ -235,7 +235,7 @@ The `pack` job compares the bundle's git tree at the tag with its tree at the ne
 
 ### The domain schema beside it
 
-When the host's `.lokf/justfile` names a schema on its `schema :=` line, the release carries that file too, as `schema-<tag>-<name>.yaml` with its own `.sha256` and attestation. A domain that admits the bundle names it as a second distribution of the member concept and validates the bundle against it, rather than against LOKF core alone. The line is read as text and must name a file in `.lokf/`, never a path.
+When the host's `.lokf/justfile` names a schema on its `schema :=` line, the release carries that file too, as `schema-<tag>-<name>.yaml` with its own `.sha256` and attestation. A domain that admits the bundle names it as a second distribution of the member concept and validates the bundle against it, rather than against LOKF core alone. The line is read as text, relative to `.lokf/`, and may name any file in the repository, such as a linkml-sidecar schema, but never one outside it. A domain puts the released schema beside the bundle with LOKF's own `lokf.yaml`, so the released copy imports LOKF core as `lokf`. A relative import of `.lokf/lokf.yaml`, as linkml-sidecar writes it, is rewritten to `lokf` in the copy. An import of any other local file stops the release.
 
 ### What the zip holds
 
