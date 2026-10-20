@@ -45,9 +45,21 @@ case "$os" in
   *) host="$os" ;;
 esac
 if have sha256sum; then digest="sha256sum"; elif have shasum; then digest="shasum -a 256"; else digest=""; fi
-if have python3; then py=python3; elif have python; then py=python; else py=""; fi
+# Only python3 is probed, because bare `python` is Python 2 on some hosts.
+# The skills' scripts need 3.9 or later, which an enterprise host's python3
+# often is not.
+pyv=""
+have python3 && pyv="$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null)"
 printf 'Preflight for %s\n' "$root"
-ok host "$host, bash ${BASH_VERSION%%(*}; digest: ${digest:-none (macOS: install coreutils, or use uv run python)}; python: ${py:-none (use uv run python)}"
+ok host "$host, bash ${BASH_VERSION%%(*}; digest: ${digest:-none (macOS: install coreutils, or use uv run python)}; python3: ${pyv:-none (use uv run python)}"
+case "$pyv" in
+  2.*|3.[0-8]) warn python "python3 is $pyv and the skills' scripts need 3.9 or later: run each through uv run or the sidecar's .venv, never python3 or python" ;;
+esac
+# The sidecar's preflight run from its own folder screens the skill, not the
+# host. Step 0 runs it from the host repository's root.
+if [ -f "$root/SKILL.md" ] && [ -f "$root/templates/scripts/knowledge-preflight.sh" ]; then
+  warn root "$root is the ktl-sidecar skill's own folder, not a repository to screen: run this from the host repository's root, or pass that root"
+fi
 
 # ---- bundle ----------------------------------------------------------------
 # Every find takes a trailing slash. A host may have made .lokf/knowledge a
@@ -235,6 +247,18 @@ if [ -n "$found" ]; then
 else
   info skills "no KTL skill installed under .claude/skills, .github/skills, .agents/skills or skills/"
 fi
+# Skills installed for one user serve that user's live sessions. The
+# scheduled librarian runs on a fresh runner and reads only a copy in the
+# repository.
+user=""
+for dir in .claude/skills .copilot/skills .agents/skills; do
+  here=""
+  for s in ktl-sidecar ktl-librarian ktl-curator ktl-docent ktl-prose ktl-website; do
+    [ -f "${HOME:-/nonexistent}/$dir/$s/SKILL.md" ] && here="$here ${s#ktl-}"
+  done
+  [ -n "$here" ] && user="${user}${user:+; }~/$dir:$here"
+done
+[ -z "$user" ] || info skills "user scope: $user; the scheduled librarian needs a copy in the repository"
 
 # ---- host copies of the sidecar's templates ----------------------------------
 # The conventions script runs its Python half, so a host holding the .sh

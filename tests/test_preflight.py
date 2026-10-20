@@ -159,3 +159,32 @@ def test_run_under_sh_stops_and_names_bash(script):
     result = run(["sh", SCRIPTS / script, "x"])
     assert not result, f"{script} run under sh did not stop: {result.out}"
     assert matches(result.out, r"^run this with bash"), f"{script} run under sh failed some other way: {result.out}"
+
+
+def test_warns_about_a_python3_older_than_the_scripts_need(tmp_path):
+    fake = write(tmp_path / "fakebin" / "python3", "#!/bin/sh\necho 3.6\n")
+    fake.chmod(0o755)
+    result = preflight(tmp_path / "fakebin", env={"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}"})
+    assert result and matches(result.out, r"^warn    python +python3 is 3\.6 .*uv run"), (
+        f"preflight did not warn about python3 3.6: {result.out}"
+    )
+
+
+def test_warns_when_it_screens_the_sidecar_skill_itself(tmp_path):
+    """A skill installed for one user sits outside every repository, so run from its folder the preflight screens that folder."""
+    skill = tmp_path / "ktl-sidecar"
+    write(skill / "SKILL.md", "---\nname: ktl-sidecar\n---\n")
+    shutil.copy(PREFLIGHT, write(skill / "templates" / "scripts" / "knowledge-preflight.sh", ""))
+    result = bash(skill / "templates" / "scripts" / "knowledge-preflight.sh", cwd=skill)
+    assert result and matches(result.out, r"^warn    root .*skill's own folder"), (
+        f"preflight screened the ktl-sidecar skill as if it were the host: {result.out}"
+    )
+
+
+def test_names_skills_installed_for_one_user(tmp_path):
+    home = tmp_path / "home"
+    write(home / ".copilot" / "skills" / "ktl-prose" / "SKILL.md", "---\nname: ktl-prose\n---\n")
+    result = preflight(tmp_path, env={"HOME": home})
+    assert result and matches(result.out, r"^info    skills +user scope: ~/\.copilot/skills: prose; the scheduled librarian"), (
+        f"preflight did not name a skill installed for one user: {result.out}"
+    )
