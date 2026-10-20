@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.54.1] - 2026-10-20
+
 ### Added
 
 - **The pen checks the schema before it writes.** `knowledge-apply.sh` runs `lokf validate` on every concept a patch would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit.
