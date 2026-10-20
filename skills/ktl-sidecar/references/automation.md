@@ -390,7 +390,7 @@ Three more pins decide what a run installs, and no update tool moves them:
 
 - **The skill.** `TRUST_LADDER_SKILLS_REF` names a release tag of the skills repository, and `TRUST_LADDER_SKILLS_SHA` the commit that tag named when the pin was set. A tag can be moved, and what it names is the instructions an agent follows unattended. So the install step installs nothing unless the tag still names that commit. Move the two together.
 - **The toolkit.** All three workflows install it with `uv sync --locked`: what `.lokf/uv.lock` names, each file checked against the hash recorded there. A lock that is missing or behind `.lokf/pyproject.toml` fails the step, so commit `uv.lock`, and run `uv lock` in the change that moves the `lokf` floor.
-- **The parser.** The Python halves of the conventions script and the pen install PyYAML through `uv run`, from the dependency block each file carries. That block names one release, and `exclude-newer` takes no file uploaded after its date. A copy from a newer release of the sidecar moves both.
+- **The parser.** The Python halves of the conventions script and the pen run with `.lokf/.venv` when it holds PyYAML, so in the workflows they use what `uv.lock` pins. Without such a `.venv`, they install PyYAML through `uv run`, from the dependency block each file carries. That block names one release, and `exclude-newer` takes no file uploaded after its date. A copy from a newer release of the sidecar moves both.
 
 ## `knowledge-report.sh`: what a program can say about the bundle
 
