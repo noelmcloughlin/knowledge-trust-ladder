@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The graph page keeps the graph at full height in full screen.** Search and filters move into a side panel that scrolls, and switching between *This bundle* and *The workspace* draws the other graph in place, so full screen stays on.
+- **The graph's filters read as controls.** Larger rows, a count on each entry, *All* and *None* on each group, and an "N of M concepts shown" line whenever a filter is off; every filter still starts on.
+
 ## [0.53.0] - 2026-10-19
 
 ### Added
