@@ -108,19 +108,20 @@
 # A bundle written to the letter of OKF may fail them; that is a policy of the
 # gate, not a defect in the bundle.
 #
-# Rules 2, 3, 7, 9, 10 and 12 are questions about a document's YAML that a
-# real parse answers outright, and rule 4 goes with them. So this script hands
-# them to knowledge-conventions.py (same directory). It runs that with the
-# sidecar's own .venv when the .venv holds pyyaml and is Python 3.9 or later,
-# and otherwise through `uv run`, which needs nothing preinstalled.
-# knowledge-apply.sh says why the .venv comes first. Rules 13 and 14 go there
-# too: they read git as well, but they compare parsed values. Rules 1, 5, 6, 8
-# and 11 stay here: they are git and filesystem facts, and this half, grep and
-# awk only, keeps running wherever bash and git do, with no toolchain at all.
-# Without either runner, this half still runs and says so. A runner that
-# cannot start the parser's half, such as `uv run` refused by a package
-# mirror, is reported as a runner failure, not as a finding, and the script
-# exits 2.
+# Rules 2, 3, 7, 9, 10 and 12 are checks on a document's YAML that need a
+# parser, and rule 4 is checked with them. So the Python half,
+# knowledge-conventions.py in the same directory, checks them. This shell
+# half checks rules 1, 5, 6, 8 and 11 itself: they are git and filesystem
+# facts, which grep and awk can check wherever bash and git run, with no
+# toolchain. Rules 13 and 14 read git too, but they compare parsed values,
+# so the Python half checks them as well.
+#
+# This script runs the Python half with the sidecar's .venv when the .venv
+# holds pyyaml and is Python 3.9 or later. Otherwise it runs the Python half
+# through `uv run`. knowledge-apply.sh says why the .venv is tried first.
+# Without either runner, the shell half still runs and says so. A runner that
+# cannot start the Python half, such as `uv run` refused by a package mirror,
+# is reported as a runner failure, not as a finding, and the script exits 2.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
@@ -129,7 +130,7 @@
 #
 # Usage: knowledge-conventions.sh [bundle-dir] [--since <commit>]   (default:
 # knowledge, i.e. run from .lokf/). Exit 1 with one line per finding; nothing
-# else is written. Exit 2 when the parser's half could not run, with the
+# else is written. Exit 2 when the Python half could not run, with the
 # reason on stderr.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [bundle-dir] [--since <commit>]" >&2; exit 2; }
 set -euo pipefail
@@ -284,7 +285,7 @@ while IFS= read -r f; do
   fi
 done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
-# ---- 2, 3, 4, 7, 9, 10, 12, 13, 14. the parser's half --------------------------
+# ---- 2, 3, 4, 7, 9, 10, 12, 13, 14. the Python half ----------------------------
 here="$(dirname "$0")"
 py="$here/knowledge-conventions.py"
 rules="rules 2, 3, 4, 7, 9, 10, 12 and 13"
