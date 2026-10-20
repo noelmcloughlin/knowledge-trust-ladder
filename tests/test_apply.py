@@ -35,7 +35,9 @@ stays in the contract script: it is a fact about this repository's own pages.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
+import sys
 
 import pytest
 
@@ -1385,3 +1387,54 @@ def test_delete_takes_a_dot_slash_fragment_link_out_of_a_list_of_links(fragment_
         and has_line(index, "Links: [B](x/b.md).")
         and has_line(folder, "Both: [B](b.md).")
     ), f"delete left a ./#fragment link in a list, or did not keep the rest: {index} // {folder}"
+
+
+def fake_lokf(root, rc):
+    """A toolkit in .lokf/.venv whose validate rejects every concept it is given, or accepts them all."""
+    say = 'echo "[ERROR] $2/playbooks/draft.md: sources is not of type object"' if rc else 'echo "OK"'
+    write(root / ".lokf" / ".venv" / "bin" / "lokf", f"#!/bin/sh\n{say}\nexit {rc}\n").chmod(0o755)
+
+
+DRAFT_EDIT = lines(
+    "ops:",
+    "  - op: patch",
+    "    path: playbooks/draft.md",
+    '    edits: [{replace: {target: "The old text.", content: "The new text."}}]',
+    '    log: "the draft now says the new text"',
+)
+
+
+def test_a_patch_the_schema_rejects_writes_nothing(ka):
+    fake_lokf(ka, 1)
+    for dry in ([], ["--dry-run"]):
+        write(patch_file(ka), DRAFT_EDIT)
+        before = tree_digest(ka)
+        result = apply(ka, *dry, patch_file(ka))
+        assert result.rc == 1 and tree_digest(ka) == before, f"the pen wrote what lokf validate rejects ({dry}): {result.out}"
+        assert "schema: [ERROR] .lokf/knowledge/playbooks/draft.md" in result.out, f"the pen did not name the rejected concept by its own path: {result.out}"
+    assert not [p for p in (ka / ".lokf").iterdir() if p.name.startswith(".pen-check-")], "the pen left its staged copy behind"
+
+
+def test_a_patch_the_schema_accepts_is_written_and_says_so(ka):
+    fake_lokf(ka, 0)
+    result = applies(ka, DRAFT_EDIT)
+    assert "schema checked" in result.out and "The new text." in read(ka / ".lokf" / "knowledge" / "playbooks" / "draft.md"), (
+        f"the pen did not write a patch lokf validate accepts, or did not say it checked: {result.out}"
+    )
+
+
+def test_without_the_toolkit_the_pen_says_the_schema_was_not_checked(ka):
+    result = applies(ka, DRAFT_EDIT)
+    assert "schema not checked" in result.out, f"the pen did not say it skipped the schema: {result.out}"
+
+
+def test_the_sidecar_venv_runs_the_pen_before_uv(tmp_path):
+    """A host behind a mirror runs the pen from .lokf/.venv, which uv sync installed from uv.lock."""
+    scripts = tmp_path / ".lokf" / "scripts"
+    for name in ("knowledge-apply.sh", "knowledge-apply.py"):
+        write(scripts / name, (SCRIPTS / name).read_text(encoding="utf-8"))
+    write(tmp_path / ".lokf" / ".venv" / "bin" / "python", f'#!/bin/sh\nexec "{sys.executable}" "$@"\n').chmod(0o755)
+    uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 2\n")
+    uv.chmod(0o755)
+    result = bash(scripts / "knowledge-apply.sh", "--format", env={"PATH": f"{uv.parent}{os.pathsep}{os.environ['PATH']}"})
+    assert result and "ops:" in result.out, f"the pen did not run from the sidecar's .venv: {result.out}"

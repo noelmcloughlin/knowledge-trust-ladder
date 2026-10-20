@@ -19,7 +19,10 @@
 #   - moves a feedback entry an operation says it handled out of feedback.md
 #     and into the ledger of questions readers asked, ten to a patch at most;
 #   - refuses an operation that would write a `human:` actor, rewrite text a
-#     person wrote, or delete a concept a person confirmed or left a note on.
+#     person wrote, or delete a concept a person confirmed or left a note on;
+#   - refuses a patch whose concepts `lokf validate` rejects, with --dry-run
+#     too, when the sidecar's .venv holds the toolkit, and says when it could
+#     not check them.
 # Nothing is written unless every operation passes.
 #
 # Two things hold for every concept it writes, whatever the operations were.
@@ -50,7 +53,8 @@
 # The dependency block above names one PyYAML release, and `exclude-newer`
 # takes no file uploaded after its date, so every run installs the files
 # that were there when the pin was set. Move the two together, here and in
-# knowledge-conventions.py.
+# knowledge-conventions.py. knowledge-apply.sh runs the script with the
+# sidecar's .venv first, which holds what uv.lock pins.
 #
 # Operations (each a mapping under `ops:` with `op:` and `path:`):
 #   create    frontmatter + body for a concept that does not exist yet
@@ -76,6 +80,8 @@ import argparse
 import datetime as dt
 import os
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
 import unicodedata
@@ -983,6 +989,56 @@ def check_keys(op: dict) -> None:
         raise Refused(f"{op['path']}: {op['op']} does not take {', '.join(unknown)}; it takes {', '.join(known)}")
 
 
+# The justfile line that names a domain schema, as the sidecar's template
+# writes it: `schema := "<path relative to .lokf/>"`, empty for none.
+SCHEMA_LINE = re.compile(r'^schema\s*:=\s*"([^"]*)"\s*$', re.M)
+
+
+def schema_findings(root: Path, files: dict) -> tuple:
+    """What `lokf validate` says of the concepts about to be written.
+
+    The rules above check what an operation may change, not the shape the
+    schema gives a slot, so a `sources` entry written as a bare string would
+    pass them and fail the validator after the write. The concepts are staged
+    in a folder inside .lokf/, so the validator finds the sidecar's
+    pyproject.toml as it does for the bundle. The validator runs with the
+    domain schema the justfile names, from that schema's folder, as the
+    justfile's recipes run it. The toolkit is the sidecar's .venv, which needs
+    no network. Without it the check is skipped and the note says so. Returns
+    the findings and a note.
+    """
+    lokf_dir = root / ".lokf"
+    exe = next((p for p in (lokf_dir / ".venv" / "bin" / "lokf", lokf_dir / ".venv" / "Scripts" / "lokf.exe") if p.is_file()), None)
+    if exe is None:
+        return [], "schema not checked: the lokf toolkit is not installed in .lokf/.venv; run uv sync in .lokf/"
+    cmd, cwd = [str(exe), "validate"], lokf_dir
+    justfile = lokf_dir / "justfile"
+    named = SCHEMA_LINE.search(justfile.read_text(encoding="utf-8")) if justfile.is_file() else None
+    if named and named.group(1):
+        schema = (lokf_dir / named.group(1)).resolve()
+        cmd, cwd = cmd + ["--schema", schema.name], schema.parent
+    stage = Path(tempfile.mkdtemp(dir=str(lokf_dir), prefix=".pen-check-"))
+    staged = stage / "knowledge"
+    try:
+        for rel, text in files.items():
+            file = staged / rel
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_text(text, encoding="utf-8", newline="\n")
+        done = subprocess.run(cmd + [str(staged)], cwd=str(cwd), capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", timeout=600)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return [], f"schema not checked: lokf validate could not run ({exc})"
+    finally:
+        shutil.rmtree(stage, ignore_errors=True)
+    if done.returncode == 0:
+        return [], "schema checked: lokf validate accepts every concept this patch writes"
+    out = (done.stdout + done.stderr).replace(str(staged), ".lokf/knowledge")
+    # The validator echoes a rejected concept whole on one line, and gives the
+    # reason on the next, so each line is cut at 240 characters.
+    lines = [shown(line) for line in out.splitlines() if line.strip()]
+    return [f"schema: {line[:240]}{' ...' if len(line) > 240 else ''}" for line in lines], ""
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="knowledge-apply.py", add_help=True)
     ap.add_argument("--root")
@@ -1099,6 +1155,17 @@ def main(argv: list[str]) -> int:
     ledger_text = bundle.ledger_text()
     if ledger_text is not None:
         writes.append((bundle.ledger, ledger_text))
+    concepts = {path: dump(c.fm, c.body) for path, c in bundle.concepts.items() if c.touched and not c.deleted}
+    schema_note = ""
+    if concepts:
+        top = bundle.knowledge / "index.md"
+        concepts["index.md"] = bundle.indexes.get(top) or top.read_text(encoding="utf-8")
+        found, schema_note = schema_findings(root, concepts)
+        if found:
+            for line in found:
+                print(line)
+            print(f"refused: lokf validate rejects what this patch would write ({len(found)} line(s)); nothing was written")
+            return 1
     # The hand-off goes first, outside the bundle, so a file that cannot be
     # written stops the run before the bundle is touched.
     if a.handoff and not a.dry_run:
@@ -1156,6 +1223,8 @@ def main(argv: list[str]) -> int:
         after = "leave the patch file in place: the wrapper applies it after you finish, and the workflow validates the bundle"
     else:
         after = "nothing was written: apply it without --dry-run, then run lokf validate --check-refs and knowledge-conventions.sh"
+    if schema_note:
+        print(schema_note)
     print(f"{'OK (dry run)' if a.dry_run else 'OK'} - {len(doc['ops'])} operation(s) by {by} at {bundle.now}; {after}")
     return 0
 
