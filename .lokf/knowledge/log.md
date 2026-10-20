@@ -2,6 +2,7 @@
 
 ## 2026-10-20
 
+* **Changed**: ktl-prose skill: the check reads a comment's layout, a table of options row by row and no command, and `--against` compares a script as its comments (`references/other-files.md`, `scripts/prose-check.py`).
 * **Prose**: reworded 6 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Changed**: ktl-prose skill: the check reads a script's comments and docstrings, reports a paragraph past eight sentences, lists "outright" and "at all", and runs through `uv run`; the rules page gains four methods (0.55.0, `CHANGELOG.md`, `scripts/prose-check.py`, `references/other-files.md`).
 * **Changed**: ktl-sidecar skill: the preflight runs from the repository's root and warns about an old python3, the scripts run with `.lokf/.venv` before `uv run` behind a package mirror, and the release attaches a schema from anywhere in the repository (0.55.0, `CHANGELOG.md`, `references/portability.md`, `references/automation.md`).
