@@ -65,7 +65,7 @@ Hand off the files the person named and no others. Give the counts before and af
 
 ## Comments in scripts and workflows
 
-Given a `.sh`, `.py`, `.yaml`, `.yml` or `.toml` file, or a justfile, the script reads its `#` comments, and in Python its docstrings, under the same rules. Each block of comment lines is a paragraph, and an empty comment line splits one. It leaves out a shebang, a `# shellcheck` or similar directive, a `# /// script` block, and a `#` line inside a heredoc, which is data. A comment that lays out a command's options reads as prose to it, so a finding there is a candidate to weigh, as every finding is.
+Given a `.sh`, `.py`, `.yaml`, `.yml` or `.toml` file, or a justfile, the script reads its `#` comments, and in Python its docstrings, under the same rules. Each block of comment lines is a paragraph, and an empty comment line splits one. It leaves out a shebang, a `# shellcheck` or similar directive, a `# /// script` block, and a `#` line inside a heredoc, which is data. It reads a comment's layout as a person does. An indented line in columns is a table row, read as one cell with the lines indented under it, so a table of options is never one long sentence. An indented line after a `Usage` line, a line ending with a colon or an empty line is a command, and is not read, unless it starts as a sentence does.
 
 The unit of a comment review is the block a change touches, not the lines it adds. A change that puts two sentences into a paragraph of five can take it past the limit, and only the whole block shows that. Read and count the block. Split a long one with an empty comment line where its topic turns, and keep the comment's line breaks as the code around it wraps them.
 
@@ -80,4 +80,4 @@ Then show that only comments changed:
 git diff -U0 -- <file> | grep -E '^[+-]' | grep -vE '^(\+\+\+|---) ' | grep -vE '^[+-][[:space:]]*(#|//|$)'
 ```
 
-That prints every changed line that is not a whole-line comment. Each line it prints must differ only after its comment mark.
+That prints every changed line that is not a whole-line comment. Each line it prints must differ only after its comment mark. `--against` and `--before` compare a script as its comments and docstrings, and read every line for a character no reader sees, so only this command shows that the code did not change.

@@ -211,6 +211,7 @@ fi
 #     may name. The toolkit runs through uvx at that floor, so the comparison
 #     is against the schema a host installs, not whatever this machine holds.
 #     Without uv the check fails, as check 11's does.
+#
 # 7d. knowledge-report.sh counts how many concepts rely on each concept from
 #     a fixed list of relation fields. The schema ranges every relation slot
 #     over Concept, so that list is held to the slots the schema declares,
@@ -350,12 +351,14 @@ else
   # self-links are not a sibling depending on us, and counting them reports
   # every page the skills link to internally. Skip them, and .venv, which is
   # only slow. (git-aware greps hide these via .gitignore; plain grep does not.)
+  #
   # A link to a heading is recorded with it, as path#anchor; a heading of the
   # repository's front page counts as README.md#anchor, apart from GitHub's own
   # #readme. A w3id.org/ktl address names a file by its page: docs/<page>/ is
   # docs/<page>.md, knowledge/<id> is .lokf/knowledge/<id>.md, and the site's
   # root is the README. A sibling's own namespace under w3id.org/ktl/ is not
   # a link into this repository and is dropped.
+  #
   # A sibling's website build writes copies of its pages under website/, which
   # git ignores; one quotes a link inside a folded YAML string, and read as a
   # link it ends in a backslash. A domain host's build writes its workspace
@@ -449,17 +452,19 @@ done
 #     the copies under .github/ and .lokf/scripts/ rather than the templates
 #     themselves (actionlint is pointed at both, ShellCheck scans the tree).
 #     So the copies must stay byte-identical, or a template change is
-#     released unlinted. knowledge-librarian.yaml is among them, apart from
-#     the values of TRUST_LADDER_SKILLS_REF and TRUST_LADDER_SKILLS_SHA: the
+#     released unlinted. Among them is knowledge-librarian.yaml, apart from
+#     the values of TRUST_LADDER_SKILLS_REF and TRUST_LADDER_SKILLS_SHA. The
 #     release commit moves the template's pin but may not touch
 #     .github/workflows/, and the install step that reads the pin is skipped
 #     in this repository anyway.
+#
 #     Which copies there are is the sidecar's knowledge-sync.manifest, the
 #     one list the sync script, the preflight and this check read. So the
-#     manifest is checked first: every template it names exists, every
-#     always and needs line names a template it lists, and every file under
-#     the templates' github/, scripts/ and m365/ folders is in it, so a new
-#     workflow or script cannot be released without a sync for it.
+#     manifest is checked first. Each template it names must exist, each
+#     always and needs line must name a template it lists, and each file
+#     under the templates' github/, scripts/ and m365/ folders must be in it.
+#     A new workflow or script then cannot be released without a sync for it.
+#
 #     Then the conventions script runs on this repository's own bundle. What
 #     it reports on a bundle that breaks each rule is tests/test_conventions.py.
 say ""
@@ -907,7 +912,7 @@ fi
 # commit must be the one its tag names, and whatever moves the tag must move
 # the commit with it: the release step, and the sync into a sibling. This
 # agreement can only be read where the tag is on the clone, so it skips where
-# the tag is not - a shallow or tag-less checkout has nothing to compare. The
+# the tag is not: a shallow or tag-less checkout has nothing to compare. The
 # skip says whether the recorded commit is at least a real object here, which
 # the content half above has read from, so the skip is not a blind one.
 # pin_sha is read above, beside the pin.

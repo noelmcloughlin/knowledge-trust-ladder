@@ -12,10 +12,10 @@
 #   2. Every `at:` is a quoted string, and a UTC time to the second, as
 #      `date -u +%Y-%m-%dT%H:%M:%SZ` writes it. Unquoted, YAML hands the
 #      toolkit a datetime object and the curator's string comparison a
-#      surprise. In another shape the readers disagree: the report cannot
-#      read a lower-case `t`, which the federation build reads, no script
-#      reads a lower-case `z`, and the workspace's stored queries, which
-#      compare times as written, put an offset or a fraction out of order. A
+#      surprise. In another shape the readers disagree. The report cannot
+#      read a lower-case `t`, which the federation build reads, and no script
+#      reads a lower-case `z`. The workspace's stored queries compare times
+#      as written, so they put an offset or a fraction out of order. A
 #      person's event that no script reads would confirm every later edit.
 #   3. `verified` is a list, never a bare `{ by, at }` mapping, and carries at
 #      most one `process:ktl-librarian` event: the librarian replaces its
@@ -43,7 +43,7 @@
 #      how every sync client names a conflict copy.
 #   9. Every concept starts with a `---` frontmatter block that closes, with no
 #      byte order mark in front of it. A BOM from a web editor or Notepad, or a
-#      file with no block at all, would otherwise pass this script unread.
+#      file with no block, would otherwise pass this script unread.
 #  10. The fields the provenance gates read line by line are spelt so a line
 #      reader and a parser see the same thing. They are `id`, and `by`, `at`
 #      and `revision` on an event, and they carry no tags, anchors, aliases,
@@ -89,7 +89,7 @@
 #      what the concept says. Rule 13 compares with the commit that recorded
 #      the confirmation, so an edit made in that same commit reads as
 #      confirmed. With `--since <commit>`, each commit after it is read
-#      against every parent: one that adds a `human:` event no parent holds
+#      against every parent. One that adds a `human:` event no parent holds
 #      may change the concept's claims only when `generated.by` names that
 #      same person, which is how Correct now records an edit the person made.
 #      The registrar's gate passes the pull request's base. Without
@@ -136,8 +136,8 @@
 set -euo pipefail
 
 # The bundle directory may be a link, on a host that keeps the real folder as
-# a visible knowledge_bundle/. find never enters a link it is handed bare, so
-# the trailing slash below is what makes it read the files at all.
+# a visible knowledge_bundle/. Handed a link bare, find never enters it, so
+# the trailing slash below is what makes it read the files.
 bundle="${1:-knowledge}"; bundle="${bundle%/}"
 since=""
 if [ $# -gt 1 ]; then

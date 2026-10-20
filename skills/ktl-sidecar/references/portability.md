@@ -61,7 +61,7 @@ What has to be rewritten is what talks to GitHub:
 - In the registrar workflow, the `provenance` job reads reviews and commit verification through `gh api`. GitLab exposes the same facts as `GET /projects/:id/merge_requests/:iid/approvals` and `GET /projects/:id/repository/commits/:sha/signature`. Forgejo, which Codeberg runs, and Gitea expose them as the pull request's reviews and the commit's `verification` object.
 - The release workflow uploads the zip with `gh release upload` and records a GitHub attestation. On another forge, attach the zip through that forge's release API, or skip the workflow; the bundle is in git either way.
 
-One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions, on Codeberg among other hosts, and Gitea Actions run GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below needs no forge at all.
+One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions, on Codeberg among other hosts, and Gitea Actions run GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below needs no forge.
 
 ### Not Linux: Windows and PowerShell
 
@@ -111,7 +111,7 @@ A real folder inside the vault is indexed like any other, and so is a link whose
 
 ### The ingest on another host
 
-`knowledge-ingest.sh` is bash and Python, and runs wherever `uv` or `python3` with PyYAML does. Without git it runs by hand, with the credentials in the environment, and the lock is the record of what was fetched; the `command` kind then takes any file under the root, since no git can say whether it is tracked. On a forge other than GitHub, schedule the script in that CI with the secrets it names, pass `--visibility`, and open the merge request from the branch it leaves, as the sync's recipe above does for its workflow.
+`knowledge-ingest.sh` is bash and Python, and runs wherever `uv` or `python3` with PyYAML does. Without git it runs by hand, with the credentials in the environment, and the lock is the record of what was fetched. The `command` kind then takes any file under the root, since no git can say whether it is tracked. On a forge other than GitHub, schedule the script in that CI with the secrets it names, pass `--visibility`, and open the merge request from the branch it leaves, as the sync's recipe above does for its workflow.
 
 ## The forge-free gate
 

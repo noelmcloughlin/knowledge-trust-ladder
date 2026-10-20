@@ -17,7 +17,7 @@ Every page comes from a file the repository already holds, so a change to the si
 - The home page's source, from its first `#` title down (a `#` heading inside fenced code does not count). A line that links the site's own address is dropped, since on the site it would link to the page it is on. With no source, the page opens with the bundle's own introduction.
 - A `PAGES` entry, from its file's `#` title down, with the entry's label as the title when the file has none.
 - A `PAGES` entry whose `retells` names a file with a page on the site is a retelling of that page, at the reading level its `level` words. Both pages open with a Reading level line under the title: the page as Full, then each retelling by its level, the current one unlinked. Search leaves the line out.
-- The home page, each `PAGES` entry and each docs page is served as Markdown too, at the page's path with `.md` added (`/index.md`, `/<slug>.md`, `/docs/<name>.md`): the file from its `#` title down, with every link, image and raw-HTML address made a full one, as in `llms-full.txt`. The page's head names the file as its `text/markdown` alternate, and `llms.txt` links it.
+- The home page, each `PAGES` entry and each docs page is served as Markdown too, at the page's path with `.md` added (`/index.md`, `/<slug>.md`, `/docs/<name>.md`). That Markdown is the file from its `#` title down, with every link, image and raw-HTML address made a full one, as in `llms-full.txt`. The page's head names the file as its `text/markdown` alternate, and `llms.txt` links it.
 - GitHub's `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]` alerts become the site's asides.
 - A `<picture>` with a dark source becomes two images, one shown in each of the site's themes.
 
@@ -47,7 +47,7 @@ Every page comes from a file the repository already holds, so a change to the si
 
 ## Links
 
-- Raw HTML in any Markdown the site renders, the feed included, passes as GitHub renders a README: a tag GitHub allows keeps the attributes it allows, an address that is not http, https, mailto, a path or a fragment is dropped, and any other markup is shown as text. The build's log names each one (`scripts/raw-html.mjs`).
+- Raw HTML in any Markdown the site renders, the feed included, passes as GitHub renders a README. A tag GitHub allows keeps the attributes it allows, and an address that is not http, https, mailto, a path or a fragment is dropped. Any other markup is shown as text. The build's log names each one (`scripts/raw-html.mjs`).
 - A file the sync copies, under `.assets/`, the bundle, the logo or the databases, is copied as a file. A link is followed only when it ends inside the repository, and an SVG that holds a script, an event handler or a `javascript:` address is left out. The build's log names each file left out.
 - A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a schema page to `/schema/<name>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
 - An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does; otherwise the text stays as written.
@@ -57,7 +57,7 @@ Every page comes from a file the repository already holds, so a change to the si
 ## The changelog
 
 - Keep a Changelog headings, `## [x.y.z] - YYYY-MM-DD`, become one page per release and a comparison page between each pair; `## [Unreleased]` is skipped. The brackets are stripped for the plugin, and links to repository files are rewritten as above.
-- A release whose tag git has, `RELEASE_TAG` with its number in place of `{version}`, opens with a line that links the repository, the docs folder and `.lokf/knowledge/` at that tag on GitHub, and the release itself, so a reader can see each as it stood. A release promoted but not yet tagged, or a tag not yet fetched, has no such line until the next build.
+- A release whose tag git has opens with a line that links the repository, the docs folder and `.lokf/knowledge/` at that tag on GitHub, and the release itself, so a reader can see each as it stood. The tag is `RELEASE_TAG` with the release's number in place of `{version}`. A release promoted but not yet tagged, or a tag not yet fetched, has no such line until the next build.
 
 ## The figures and the logo
 

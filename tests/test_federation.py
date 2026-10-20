@@ -1,117 +1,153 @@
 """The federation build: knowledge-federate.py over fixture bundles.
 
 Two tiny bundles and a domain that names them by zip are built under a
-temporary host, and the script is run the way a host runs it, through the
+temporary host. The script is run the way a host runs it, through the
 repository's own sidecar environment (`uv run --project .lokf`), so the lokf
 toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 
 1. a build resolves the members into a lock, loads one named graph per
    bundle plus the lock graph, gates clean, and writes the same bytes twice;
-2. a tampered checksum, a zip whose index.md names another base_iri, a zip
-   holding a symbolic link, a hidden file such as a .git folder or a file a
-   browser runs, a distribution name that is not one plain file name, and a
-   domain that names a bundle already in the federation each stop the build
-   and leave the previous snapshot in place, and the health line runs git on
-   no repository a member's zip could carry,
-   as do a checksum that is not 64 hex digits, a namespace that nests with
-   another's, a redirect out of http, and a zip that cannot be read; a
-   download that meets a server error is tried again;
+
+2. each of these stops the build and leaves the previous snapshot in place:
+   - a tampered checksum;
+   - a zip whose index.md names another base_iri;
+   - a zip holding a symbolic link, a hidden file such as a .git folder or
+     a file a browser runs;
+   - a distribution name that is not one plain file name;
+   - a domain that names a bundle already in the federation;
+   - a checksum that is not 64 hex digits;
+   - a namespace that nests with another's;
+   - a redirect out of http;
+   - a zip that cannot be read.
+   The health line runs git on no repository a member's zip could carry,
+   and a download that meets a server error is tried again;
+
 2a. a bundle that releases no zip joins by the concepts.jsonld its site
-   serves, written out as the bundle, with the graph its own export gave;
-   a file that names another base_iri, a concept outside its namespace or a
+   serves, written out as the bundle, with the graph its own export gave.
+   A file that names another base_iri, a concept outside its namespace or a
    path that climbs out of the bundle is refused;
+
 2b. a member whose file cannot be fetched is held at its last good state,
    as the previous workspace holds it, as a folder or a zip, at the same
-   release or an earlier one; a check does the same, and a workspace of
-   another domain is not taken; a release zip that serves other bytes is
+   release or an earlier one. A check does the same, and a workspace of
+   another domain is not taken. A release zip that serves other bytes is
    held only at the release a build fetched, a check holds nothing its pull
    request proposes, and a member no previous workspace held is left out;
+
 3. a typed relation whose target no member owns stops the build under
-   `unowned_targets: fail` and is reported under `report`, and so does one
+   `unowned_targets: fail` and is reported under `report`. So does one
    whose target lies in a member's namespace and names no concept of it;
+
 3a. the links between members are counted in the lock, the index and
-   `links.rq`, and `graph.json` draws every bundle with those links; a
+   `links.rq`, and `graph.json` draws every bundle with those links. A
    reified `relations` entry is gated and counted as the slot it names;
+
 4. a member that is itself a domain is followed one tier down;
+
 4a. the diamond rule: a bundle two domains name at one release joins once,
-   named by both, and named at two releases it stops the build, as a
-   second naming with an unknown sensitivity does;
+   named by both. Named at two releases it stops the build, as a second
+   naming with an unknown sensitivity does;
+
 4b. the depth a build follows is the top Domain concept's `max_depth`, 3
    unless set, and a `MemberDomain` whose zip holds no Domain stops it;
+
 4c. a concept a curator retired (`status: deprecated`) takes no part: a
    retired Domain concept is not a second top, and a retired member is
    neither built into the workspace nor moved by `members`;
-4d. a member joins only as a person confirmed it: one no person confirmed
+
+4d. a member joins only as a person confirmed it. One no person confirmed
    is left out and listed as waiting, at the top tier and in a member
-   domain's zip, while `--verify-only` still checks its zip; one moved by a
+   domain's zip, while `--verify-only` still checks its zip. One moved by a
    commit no person confirmed is built at the release the default branch
    held confirmed, until a person confirms the move, and an error about
-   that release says what waits; a member a person sent back stays;
+   that release says what waits. A member a person sent back stays;
+
 4e. the walk through history takes only the default branch's own line, the
-   concept's own path and IRI, and a confirmation whose event still stands:
-   a removed confirmation, a renamed concept, an `id` changed in place, a
+   concept's own path and IRI, and a confirmation whose event still stands.
+   A removed confirmation, a renamed concept, an `id` changed in place, a
    retirement undone without a confirmation and a text that only stood on
    a side branch each leave the member out or at its earlier release;
+
 4f. the Domain concept's `unowned_targets` and `max_depth` count only as a
    person confirmed them, and the gate names a member that waits when a
    link lies in its namespace;
+
 4g. a member that waits in a member domain joins at the release that
    domain's own build took, from the lock in the workspace the
-   `MemberDomain` names; a workspace that is another domain's, or whose
+   `MemberDomain` names. A workspace that is another domain's, or whose
    checksum is wrong, stops the build, and a lock that names no member
    concept or no release of that member leaves it out;
+
 4h. a member names the files of one release: a workspace from another
    release of the same repository is refused;
+
 4i. a member joins only at the `sensitivity` its domain cleared: an
    internal one once a person confirms `internal` on the Domain concept,
    and only in a private or internal repository, and a confidential one
-   never; a raised sensitivity counts before a person confirms it, and
+   never. A raised sensitivity counts before a person confirms it, and
    domain.yaml lets a Domain clear public or internal alone;
+
 5. `--verify-only` runs the gate as the next release build would, so a link
    into a member no person has confirmed fails before the merge, and writes
-   nothing; `members` leaves a non-GitHub member as it is;
+   nothing. `members` leaves a non-GitHub member as it is;
+
 5a. a schema released beside a member's zip, named as a second distribution,
    is what the member's fit is checked against, and a wrong digest for it
    stops the build;
+
 5b. `mcp` serves the workspace index as its instructions and answers the
    five tools of the specification's section 11.4, each bounded, a
    SPARQL CONSTRUCT and SELECT too, and `read_document` falls back to a
    bundle's concepts.jsonld;
+
 5c. it loads a graph when a walk first reaches a namespace that graph
    names, and each answer is the one a workspace loaded whole gives;
+
 5d. `diff` says which members joined, moved, left, were released again or
    grew sensitive between two workspaces, and the links that went with them;
+
 5e. a walk that steps to an IRI no bundle owns loads the graphs that share
    it and no more;
+
 5f. the readers read a workspace from its zip, or from the site that serves
    it, a graph at a time by range request, with the answers a folder gives;
+
 5g. a reader given members reads those bundles alone, and refuses the
    stored queries that read the lock graph;
+
 5h. a licence given as text, and a concept whose id lies outside its
    bundle's namespace, read as released;
+
 6. `members` moves a member's old tag, zip name and day in its description
    and body as well as its frontmatter, in a patch the pen applies, and
    names the lines it had to leave in its question;
+
 7. its question calls a member "confirmed" only when a person confirmed the
    concept as it stands, and puts the move to a person as a question alone
    when a person wrote the concept;
+
 8. a dry run prints the patch while a librarian pull request is open, and a
    real run then writes nothing;
+
 9. `members --add owner/repo` drafts a member concept from that repository's
    newest bundle release, quoting the description in the release's own
-   index, with the schema released beside it, as a
-   `MemberDomain` when that release is a domain, and refuses a path that
-   exists or a namespace that nests with a member's;
+   index, with the schema released beside it. It drafts a `MemberDomain`
+   when that release is a domain, and refuses a path that exists or a
+   namespace that nests with a member's;
+
 9a. for a member domain, `members` names the workspace its release
    carries: on a move, on its own when the release attached it later, and
-   again when the workspace was attached again with other bytes.
+   again when the workspace was attached again with other bytes;
+
 10. under the librarian wrapper, `members` hands the job token that arrives
-    as KNOWLEDGE_FEDERATE_TOKEN to gh alone, and with no credential at all
-    it stops and says which variables give it one; the attestation must come
-    from the member's release workflow, and a gh too old to pin it is named;
+    as KNOWLEDGE_FEDERATE_TOKEN to gh alone. With no credential it stops
+    and says which variables give it one. The attestation must come from
+    the member's release workflow, and a gh too old to pin it is named;
+
 11. `members` moves a member its site serves to the file the site serves
     now, asking with the validators it kept, and `members --add <address>`
     drafts one from a site's concepts.jsonld;
+
 12. `members` moves the others when it cannot check one, and asks gh for a
     release list the API refuses as rate limited.
 
@@ -458,7 +494,7 @@ def test_a_bundle_that_releases_no_zip_joins_by_the_file_its_site_serves(federat
     """c releases no zip: its site serves the concepts.jsonld lokf export writes, which a person confirmed by its checksum.
 
     The build writes that file out as the bundle it was exported from and
-    builds it as any member: c's link into a is counted, its graph is the
+    builds it as any member. So c's link into a is counted, its graph is the
     one its own export gave, and the file is kept beside it. When the site
     serves another file since, the build stops, or, given the previous
     workspace, holds c as that file. A file that names another base_iri, a
@@ -1422,7 +1458,7 @@ def test_mcp_loads_the_graphs_that_share_an_iri_no_bundle_owns_and_no_more(feder
 
     The lock lists it under `shares` in a's graph and in b's. A walk from
     a's term that steps to it loads the graphs that share it, and not the
-    domain's, which holds no such IRI; a walk that starts at it loads every
+    domain's, which holds no such IRI. A walk that starts at it loads every
     graph, since only a graph that shares an IRI lists it. Each answer is
     the one a workspace loaded whole gives.
     """
@@ -1773,10 +1809,12 @@ Neither {OLD[0]}-rc1, {OLD[0]}1 nor the build at {OLD[1]} is this release.
 def released(tmp_path):
     """A domain of four members released on GitHub, each with a newer release, and stand-ins for the GitHub API and gh.
 
-    a is a draft whose body names the old release in lines that move, in a
-    line that occurs twice, and in its lokf:related block and open
-    questions; b is confirmed by a person; c was edited after a person
-    confirmed it; d was written by a person.
+    - a is a draft whose body names the old release in lines that move, in
+      a line that occurs twice, and in its lokf:related block and open
+      questions;
+    - b is confirmed by a person;
+    - c was edited after a person confirmed it;
+    - d was written by a person.
     """
     d_iri = "https://d.example/federation/"
     top = d_iri + "domains/federation"

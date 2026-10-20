@@ -713,6 +713,55 @@ def scripts(tmp_path_factory):
     write(d / "justfile", '# Recipes - for the bundle.\nbundle := "knowledge"\n\nlokf-validate:\n    #!/usr/bin/env bash\n    uv run lokf validate\n')
     write(d / "sentences.md", "# A page\n\n" + "It reads. " * 9 + "\n\n- " + "It reads. " * 9 + "\n")
     write(d / "words.md", "# A page\n\nThe pen refuses it outright. Nothing in the bundle changes at all.\n")
+    # A comment's layout: a usage line, a command under it, and a table of
+    # options whose rows run to 60 words together and to 25 each.
+    write(
+        d / "table.sh",
+        "#!/usr/bin/env bash\n"
+        "# Usage: tool.sh [--root <dir>] [--dry-run] [--keep] <patch>\n"
+        "#        tool.sh --format | grep - x\n"
+        "#   --root <dir>   the folder the run reads its files from and writes its\n"
+        "#                  report into, by default two levels above this script\n"
+        "#   --dry-run      report every finding and what the run would write, and\n"
+        "#                  write nothing to the bundle or to any other folder\n"
+        "#   --keep         leave the patch file in place once the run applied it,\n"
+        "#                  so a person can read it again after the run\n"
+        "# The run then reads the patch file and writes each change it names.\n"
+        "set -eu\n",
+    )
+    # A row's own text is still read: a dash in one, and a listed word in a
+    # row whose name is too wide to leave a gap.
+    write(
+        d / "rows.sh",
+        "# Inputs:\n"
+        "#   AGENT_CLI           the command - it runs the agent\n"
+        "#   KNOWLEDGE_SKIP_QUIET optional: the fix lands when nothing waits\n",
+    )
+    # A command after a colon or an empty line is not read, and a line that
+    # starts as a sentence does is.
+    write(
+        d / "command.yaml",
+        "# Run this once:\n#   gh api -X POST repos/o/r/pages - f\n#\n#   The fix lands in the next release.\nname: x\n",
+    )
+    # A list item's paragraphs after an empty line, and an item numbered with a
+    # letter, keep their prose.
+    write(
+        d / "items.py",
+        '"""Checks.\n\n1. a build resolves the members.\n\n   The fix lands in the lock.\n2a. a bundle that releases no zip\n   joins - by its site.\n"""\n',
+    )
+    # A sentence that starts with a name in lowercase is a sentence of its own.
+    write(
+        d / "names.md",
+        "# A page\n\n"
+        + "The report counts the tracked files that no concept names and lists them under each folder it reads. " * 2
+        + "ktl-docent reads the bullets alone and chooses a concept from them before it opens any file at all."
+        + " .lokf/ holds the bundle.\n",
+    )
+    write(
+        d / "spans.md",
+        "# A page\n\nThe grade is 4.71 x letters - 21.43, and `run` ends its options as in cmd -- <args> here."
+        " The gate stops at all of them, and at all times.\n",
+    )
     return d
 
 
@@ -732,6 +781,14 @@ SCRIPTS = [
     (0, "OK", "a higher --max-sentences lets it pass, and a list item has no count", ["--max-sentences", "12", "sentences.md"]),
     (1, 'words.md:3: words: "outright"', "an intensifier that names no comparison is reported", ["words.md"]),
     (1, 'words.md:3: words: "at all"', "and so is the tail of a negative", ["words.md"]),
+    (0, "OK", "a usage line, a command under it and a table of options are not one long sentence", ["table.sh"]),
+    (1, "rows.sh:2: dash:", "a row's own text is still read", ["rows.sh"]),
+    (1, 'rows.sh:3: words: "lands"', "and so is a row whose name leaves no gap", ["rows.sh"]),
+    (1, 'command.yaml:4: words: "lands"', "a command is not read, and a line that starts as a sentence is", ["command.yaml"]),
+    (1, 'items.py:5: words: "lands"', "a list item's paragraph after an empty line is read", ["items.py"]),
+    (1, "items.py:7: dash:", "and so is the continuation of an item numbered with a letter", ["items.py"]),
+    (1, 'names.md:3: words: "at all"', "a sentence that starts with a lowercase name is a sentence of its own", ["names.md"]),
+    (0, "OK", "a minus, an end of options and \"at all\" before a noun are not reported", ["spans.md"]),
 ]
 
 
@@ -744,3 +801,36 @@ def test_code_data_and_a_trailing_comment_are_not_read(scripts):
     out = prose(scripts / "doc.py", scripts / "flow.yaml", scripts / "quiet.sh").out
     for line in ("doc.py:4:", "doc.py:13:", "flow.yaml:8:", "quiet.sh:"):
         assert line not in out, f"prose-check.py read code, data or a trailing comment as prose: {out}"
+
+
+def test_layout_findings_name_only_their_own_lines(scripts):
+    out = prose(scripts / "table.sh", scripts / "command.yaml", scripts / "names.md").out
+    for line in ("table.sh:", "command.yaml:2:", "names.md:3: long:"):
+        assert line not in out, f"prose-check.py read a command or a table as prose, or ran two sentences together: {out}"
+
+
+@pytest.fixture
+def script_repo(tmp_path):
+    """A committed script with comments, a docstring and quoted strings in its code."""
+    write(
+        tmp_path / "tool.py",
+        '"""Read the bundle - and report."""\n\n# The gate reads every file it is given.\nNAME = "a - b"\nprint("it reads", NAME)\n',
+    )
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "tool")
+    return tmp_path
+
+
+def test_a_script_is_compared_as_its_comments_against_head(script_repo):
+    write(
+        script_repo / "tool.py",
+        '"""Read the bundle, and report."""\n\n# The gate reads each file it is given.\nNAME = "a - c"\nprint("it reads", NAME, 3)\n',
+    )
+    expect(0, "OK", "a script's code may change while its comments are reworded", "--against", "HEAD", script_repo / "tool.py")
+
+
+def test_a_character_no_reader_sees_in_a_script_s_code_is_reported_against_head(script_repo):
+    write(script_repo / "tool.py", (script_repo / "tool.py").read_text().replace('"a - b"', f'"a{ZWSP} - b"'))
+    expect(1, "tool.py:4: unseen:", "a character no reader sees added to a script's code is reported", "--against", "HEAD", script_repo / "tool.py")

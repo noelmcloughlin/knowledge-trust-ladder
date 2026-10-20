@@ -9,17 +9,17 @@ and pin:
 2. a private address is refused unless the manifest allows it;
 3. a PDF's text layer is mirrored, and a PDF without one is refused;
 4. a Confluence selection is listed with its versions and fetched by v2 on
-   Cloud and v1 on Data Center; an unchanged page costs no body; a page that
-   leaves the selection is unlisted; --prune removes an uncited file and
-   keeps a cited one;
+   Cloud and v1 on Data Center. An unchanged page costs no body, and a page
+   that leaves the selection is unlisted. --prune removes an uncited file
+   and keeps a cited one;
 5. a git path at a ref is mirrored by its commit, with a file that is not
    Markdown kept in a fence;
 6. a command's output is mirrored, an untracked command is refused, and a
    command past its timeout fails the entry and nothing else;
 7. the manifest's refusals: an unknown key, a variable name outside the
    KNOWLEDGE_INGEST_ namespace, an internal entry in a public repository,
-   and a confidential entry where git would see its copy, which goes to the
-   cache once git ignores it and tracks nothing there;
+   and a confidential entry where git would see its copy. That entry goes to
+   the cache once git ignores it and tracks nothing there;
 8. --patch writes a Reference concept per mirrored item of an entry that asks,
    and a later patch keeps the sources a person added;
 9. --status prints one line with the token names and no value;

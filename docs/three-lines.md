@@ -5,7 +5,7 @@ Regulated industries use the **three lines of defence** to say who owns a risk, 
 | Line | In the model | In KTL |
 | --- | --- | --- |
 | **First**: owns the work and its risk | operational management | The **librarian** derives every record from a source it names, records its own re-checks as `process:` and never as a person, and marks what it cannot settle `status: draft` with an open question. The **curator**, a named person, decides what the team accepts as true: confirm, correct, send back, retire, or leave for later. Maker and checker: the agent cannot vouch, and the person does not derive. |
-| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change and again as the CI gate, `knowledge-apply.sh`, the pen, as the only way the librarian writes the bundle, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval of the pull request or their signature on the commit, and the pen refuses to write a `human:` actor at all. It never judges truth: a verdict is only ever what that person said. |
+| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change and again as the CI gate, `knowledge-apply.sh`, the pen, as the only way the librarian writes the bundle, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval of the pull request or their signature on the commit, and the pen refuses to write any `human:` actor. It never judges truth: a verdict is only ever what that person said. |
 | **Third**: independent assurance | internal audit | The **bundle** holds the evidence an independent reviewer needs, listed below, and not the review, because assurance is independent only when it comes from someone other than the authors. |
 
 <p align="center">
@@ -45,7 +45,7 @@ Every trust label is computed from the frontmatter on each read and never stored
 Four limits on what that evidence shows:
 
 - A confirmation records who and when. It records which state of the source only when the event carries `revision`, and even then the state the skill fetched, not what the person read.
-- The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person. A repository carrying `.lokf/curators/` settles who may confirm at all. Which kinds of concept each may confirm is still the curation policy's prose.
+- The gate checks identity, not entitlement: that `human:ada` is ada, not that ada was the right person. A repository carrying `.lokf/curators/` settles who may confirm. Which kinds of concept each may confirm is still the curation policy's prose.
 - An Environment attestation records only that a listed reviewer clicked Approve, not that they opened the source.
 - The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file and nothing checks approvals. A host without git has only its platform's version history.
 
