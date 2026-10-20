@@ -232,7 +232,7 @@ jobs:
       #
       # A domain that admits this bundle puts the released schema beside the
       # bundle with LOKF's own lokf.yaml, so the released copy must import
-      # LOKF core by the name `lokf`. linkml-sidecar's schema imports it by a
+      # LOKF core by the name `lokf`. A linkml-sidecar schema imports it by a
       # relative path to .lokf/lokf.yaml, and the step rewrites that one import
       # in the copy. An import of any other local file would not resolve
       # beside the bundle, so it stops the step.

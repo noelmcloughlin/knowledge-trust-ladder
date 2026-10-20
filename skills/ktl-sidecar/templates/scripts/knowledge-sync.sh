@@ -173,7 +173,7 @@ plain_path='^[]A-Za-z0-9._/@+[-]+$'
 # back to what the checkout has, but for the pin, which is set here from
 # the tag and the commit the caller checked at the skills repository. A
 # workflow on a branch pushed with a token runs on that push, with the
-# repository's secrets and a token its own permissions: key can raise, so
+# repository's secrets and a token its own permissions: key can raise. So
 # no workflow the release wrote may reach the branch before a person reads
 # it. Those changes go to <held>, a patch that applies on top of the result.
 apply_patch() {
@@ -328,7 +328,7 @@ main() {
   # in the release's order; the always and needs lines say when a copy the
   # host lacks is added. A copy path is held to the plain characters the
   # templates use and to the host's tree, so a release cannot name a path
-  # outside it, and a rule this copy of the script does not know is kept to
+  # outside it. A rule this copy of the script does not know is kept to
   # report. A line with a field missing is a release's mistake, and stops
   # the sync before it writes.
   local pairs=() titled=() always=() needs=() unknown=() rule a b rest line
@@ -458,8 +458,8 @@ main() {
       # A copy that differs only on its `uses:` lines was bumped by the
       # host's Dependabot ahead of the template. The template's pins win,
       # since the copy must match it, and the report says so: the next
-      # bump in the skills repository brings the same release back. awk
-      # alone decides, reading the whole diff: diff exits 1 whenever the
+      # bump in the skills repository brings the same release back. Only
+      # awk decides, reading the whole diff: diff exits 1 whenever the
       # files differ, so under pipefail a pipeline from it fails for every
       # copy, whichever lines differ.
       if awk '/^[<>]/ { if (/uses: /) pin = 1; else other = 1 } END { exit (pin && !other) ? 0 : 1 }' <(diff <(unpin < "$want") <(unpin < "$host/$dst")); then

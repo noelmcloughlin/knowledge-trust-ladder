@@ -29,9 +29,9 @@
 # A person's record is the same after as before: each `human:` event and each
 # note in a person's name, read as knowledge-provenance.sh --unattended reads
 # them. And a frontmatter value the operation did not name keeps the text the
-# file held: YAML reads `1.10`, `0123456`, `12:30:00`, `yes` and an unquoted
-# time as a number, a boolean or a date, and written back from that they
-# would read `1.1`, `42798`, `45000`, `true` and a time in another shape.
+# file held. YAML reads `1.10`, `0123456`, `12:30:00`, `yes` and an unquoted
+# time as a number, a boolean or a date. Written back from that, they would
+# read `1.1`, `42798`, `45000`, `true` and a time in another shape.
 #
 # `--format` prints the patch file's shape. So the format comes from the
 # script that enforces it, and a host needs no particular release of the skill
@@ -1198,7 +1198,7 @@ def main(argv: list[str]) -> int:
     else:
         # Write every changed file to a temporary file beside it first. Only
         # once all of them are written does the run put them in place, so a
-        # write that fails - a read-only file, a full disk - stops the run with
+        # write that fails (a read-only file, a full disk) stops the run with
         # the bundle untouched, rather than leaving it half applied.
         staged: dict[Path, str] = {}
         try:

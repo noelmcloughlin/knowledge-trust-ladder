@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
 # The federation build: the job that turns a domain bundle into a workspace.
-# A domain is a thin LOKF bundle whose concepts are other bundles, each a
+# A domain is a thin LOKF bundle whose concepts are other bundles. Each is a
 # `MemberBundle`, or a `MemberDomain` when that bundle is a domain in turn,
-# that names one released zip and that zip's checksum (the
-# schema is .lokf/domain.yaml, laid down by ktl-sidecar for a domain host).
+# and names one released zip and that zip's checksum. The schema is
+# .lokf/domain.yaml, laid down by ktl-sidecar for a domain host.
 # A bundle that releases no zip names instead the concepts.jsonld its site
-# serves, the file section 11.1 of the LOKF specification has a producer
-# publish, with that file's checksum; the build writes it out as the bundle
-# it was exported from and builds it as it builds a zip's.
+# serves, with that file's checksum. Section 11.1 of the LOKF specification
+# has a producer publish that file. The build writes it out as the bundle it
+# was exported from and builds it as it builds a zip's.
+#
 # This script reads those concepts and builds the workspace the KTL context
-# layer page describes: resolve the members into a lock, fetch and verify
-# each zip, register and export each bundle with the lokf toolkit, load one
-# named graph per bundle, gate the links that cross bundles, and swap the
-# result in whole. It runs no agent, and it never writes to the bundle.
+# layer page describes. It resolves the members into a lock, fetches and
+# verifies each zip, registers and exports each bundle with the lokf
+# toolkit, loads one named graph per bundle, gates the links that cross
+# bundles, and swaps the result in whole. It runs no agent, and it never
+# writes to the bundle.
+#
 # A concept a curator retired (`status: deprecated`) takes no part: a
 # retired Domain concept is no top, and a retired member is not built.
 # A member joins only as a person confirmed it. One moved since, by a merged
 # pull request no person has confirmed, is built at the newest release its
-# default branch held confirmed, read from the first-parent history of the
-# concept's own path, with its own id, while that person's event still
-# stands: a confirmation withdrawn later counts for no earlier text either.
-# One no person confirmed is left out. The lock lists both under `waiting`,
-# and index.md under "Waiting for a person". The top Domain concept's
-# `unowned_targets` and `max_depth` count only as a person confirmed them
-# too, and the defaults stand in when no person has.
+# default branch held confirmed. That release is read from the first-parent
+# history of the concept's own path, with its own id, while that person's
+# event still stands. A confirmation withdrawn later counts for no earlier
+# text either. One no person confirmed is left out. The lock lists both
+# under `waiting`, and index.md under "Waiting for a person". The top Domain
+# concept's `unowned_targets` and `max_depth` count only as a person
+# confirmed them too, and the defaults stand in when no person has.
+#
 # A member domain's zip has no history. There a member a person confirmed
 # as it stands joins as it stands. One that waits joins at the release that
 # domain's own build took, as the lock in the workspace it released
@@ -32,11 +36,12 @@
 # person who confirms the concept confirms that checksum, as they do the
 # bundle zip's. With no workspace named, or no entry for the member in its
 # lock, the member is left out.
+#
 # A member whose zip is itself a domain is followed, tier by tier, as deep
 # as the top Domain concept's `max_depth` allows (3 unless it says
-# otherwise); its members join the same workspace, and the lock says which
+# otherwise). Its members join the same workspace, and the lock says which
 # domain named each. A bundle two domains name at one release joins once,
-# named by both (the diamond rule); named at two releases it stops the
+# named by both (the diamond rule). Named at two releases, it stops the
 # build, because a named graph holds one release. The domain a build starts
 # from is that build's top, and may itself be a member of another domain:
 # every domain bounds a workspace of its own.
@@ -56,89 +61,103 @@
 # reader never sees half a federation; a failed build leaves the previous
 # snapshot in place. Given `--previous`, the workspace the release before
 # built, a member whose confirmed bytes cannot be fetched (its address does
-# not answer, or serves other bytes now) is held as that workspace holds it,
-# as section 11.5 has an unreachable member degrade to its last good state;
-# the lock, the registry's status and the index say so. A release zip that
-# serves other bytes is held only at the release a build fetched before,
-# since its checksum is then wrong or its asset replaced. A member that
-# workspace did not hold has no last good state, so it is left out and
-# named until a build can fetch it. A file that fails a check once fetched
-# still stops the build. `--verify-only` runs every step up to the gate in
-# a temporary folder and writes nothing; a pull request that changes the
-# domain bundle runs it, with `--previous` too, so it holds a member as the
-# next release build would. It takes this domain's member concepts as they
-# stand, since those are what the pull request asks a person to confirm,
-# and it never holds or leaves out a member the pull request proposes, one
-# no person has confirmed as it stands. It takes a member domain's members
-# as the build does, since that domain's own person confirms them.
-# `members` is the domain's
-# librarian: a script, not a model, that lists each member's releases, picks
-# the newest that carries a bundle zip, verifies it, and writes the change
-# as operations in .lokf/patch.yaml for the pen (knowledge-apply.sh) to
-# apply, so the sidecar's librarian workflow can run it as AGENT_CLI. For a
-# member its site serves, it asks for the file with the validators it kept
-# from the last look, a conditional request, and proposes the new checksum,
-# with the day the file changed as the version. The change moves the old
-# release's tag, zip name and day in the concept's description and body as
-# well as its frontmatter, so the text never contradicts `version`. For a
-# member domain it also names the workspace that release carries, and
-# proposes it on its own when the release attached it after the member
-# moved. `members --add owner/repo` drafts a member concept from a
-# repository's newest bundle release, as a `create` for the pen, so
-# admitting a bundle is the same verified step as moving one; `members --add
-# <address>` drafts one from the concepts.jsonld a site serves. A release
-# that carries the bundle's own schema beside the zip
-# (`schema-<tag>-<name>.yaml`, which knowledge-release.yaml attaches when
-# the host's justfile names one) is named as a second distribution, and the
-# build validates that bundle against it instead of LOKF core alone. `serve`
-# and `query` read the snapshot through the toolkit's own store and server,
-# with the union of the named graphs as the default graph. `mcp` is the
-# `lokf-registry` server the LOKF specification's section 11.4 describes,
-# over the same snapshot: resolve_iri, neighbors, subgraph, federated_sparql
-# and read_document, each bounded in depth and size, with the workspace
-# index as the server's instructions so an agent reads it before anything
-# else. It loads a member's graph when a walk first reaches its namespace,
-# from where the lock says that graph lies in graph.nq, checked against the
-# digest the lock gives, together with every graph that names that
-# namespace, so a link into the member is there too, and with the graphs
-# that share an IRI no bundle owns when the walk steps to it. A document is
-# read from the workspace's copy of the release, else its concepts.jsonld,
-# else its source, live, the chain section 11.4 gives. Each reader takes
-# `--snapshot` as a folder, a workspace-<tag>.zip read in place, or the
-# address of the site that serves the workspace, which it reads a graph at a
-# time by range request; and `--member`, to read those bundles alone.
+# not answer, or serves other bytes now) is held as that workspace holds it.
+# This follows section 11.5, which has an unreachable member degrade to its
+# last good state. The lock, the registry's status and the index say so. A
+# release zip that serves other bytes is held only at the release a build
+# fetched before, since its checksum is then wrong or its asset replaced. A
+# member that workspace did not hold has no last good state, so it is left
+# out and named until a build can fetch it. A file that fails a check once
+# fetched still stops the build.
+#
+# `--verify-only` runs every step up to the gate in a temporary folder and
+# writes nothing. A pull request that changes the domain bundle runs it, with
+# `--previous` too, so it holds a member as the next release build would. It
+# takes this domain's member concepts as they stand, since those are what
+# the pull request asks a person to confirm. It never holds or leaves out a
+# member the pull request proposes, one no person has confirmed as it
+# stands. It takes a member domain's members as the build does, since that
+# domain's own person confirms them.
+#
+# `members` is the domain's librarian: a script, not a model, that lists
+# each member's releases, picks the newest that carries a bundle zip, and
+# verifies it. It writes the change as operations in .lokf/patch.yaml for the
+# pen (knowledge-apply.sh) to apply, so the sidecar's librarian workflow can
+# run it as AGENT_CLI. For a member its site serves, it asks for the file
+# with the validators it kept from the last look, a conditional request, and
+# proposes the new checksum, with the day the file changed as the version.
+# The change moves the old release's tag, zip name and day in the concept's
+# description and body as well as its frontmatter, so the text never
+# contradicts `version`. For a member domain it also names the workspace that
+# release carries, and proposes it on its own when the release attached it
+# after the member moved.
+#
+# `members --add owner/repo` drafts a member concept from a repository's
+# newest bundle release, as a `create` for the pen, so admitting a bundle is
+# the same verified step as moving one. `members --add <address>` drafts one
+# from the concepts.jsonld a site serves. A release that carries the
+# bundle's own schema beside the zip (`schema-<tag>-<name>.yaml`, which
+# knowledge-release.yaml attaches when the host's justfile names one) is
+# named as a second distribution. The build then validates that bundle
+# against it instead of LOKF core alone.
+#
+# `serve` and `query` read the snapshot through the toolkit's own store and
+# server, with the union of the named graphs as the default graph.
+#
+# `mcp` is the `lokf-registry` server the LOKF specification's section 11.4
+# describes, over the same snapshot: resolve_iri, neighbors, subgraph,
+# federated_sparql and read_document, each bounded in depth and size. The
+# workspace index is the server's instructions, so an agent reads it before
+# anything else. It loads a member's graph when a walk first reaches its
+# namespace, from where the lock says that graph lies in graph.nq, checked
+# against the digest the lock gives. It loads every graph that names that
+# namespace with it, so a link into the member is there too. When the walk
+# steps to an IRI no bundle owns, it loads the graphs that share that IRI. A
+# document is read from the workspace's copy of the release, else its
+# concepts.jsonld, else its source, live, the chain section 11.4 gives.
+#
+# Each reader takes `--snapshot` as a folder, a workspace-<tag>.zip read in
+# place, or the address of the site that serves the workspace, which it
+# reads a graph at a time by range request. Each also takes `--member`, to
+# read those bundles alone.
+#
 # `diff` says what changed between two workspaces, each a lock, a folder, a
 # zip or a site: the members that joined, moved, left, are held or are left
-# out, and the links between them. The federation workflow adds its answer
+# out, and the links between them. The federation workflow adds its output
 # to the notes of each release.
 #
-# What the snapshot holds: index.md (the members, their versions, licences
-# and health lines, each member's own index first), llms.txt,
-# workspace.lock.yaml, lokf-registry.yaml, registry.jsonld, graph.nq,
-# graph.json (every bundle's concepts and the links between bundles, for a
-# site's graph page), bundles/<slug>/.lokf/knowledge/ (each release,
-# unpacked or written out, and read-only, with a served member's file in
-# bundles/<slug>/.lokf/ beside it),
-# export/<slug>/ (the four files lokf export writes), queries/*.rq and
-# gate-report.md.
+# What the snapshot holds:
+#   - index.md: the members, their versions, licences and health lines, each
+#     member's own index first.
+#   - llms.txt, workspace.lock.yaml, lokf-registry.yaml, registry.jsonld and
+#     graph.nq.
+#   - graph.json: every bundle's concepts and the links between bundles, for
+#     a site's graph page.
+#   - bundles/<slug>/.lokf/knowledge/: each release, unpacked or written out,
+#     and read-only, with a served member's file in bundles/<slug>/.lokf/
+#     beside it.
+#   - export/<slug>/: the four files lokf export writes.
+#   - queries/*.rq and gate-report.md.
 #
-# Why each check is here: the checksum ties the bytes to what a person
-# confirmed; the attestation (gh attestation verify, when gh is present and
-# the zip came from a GitHub release) ties them to the workflow that built
-# them; a zip is refused when it holds a symlink, a path outside its root,
-# or more bytes than --max-bytes, before anything in it is read; the
-# unpacked index.md must name the base_iri the member concept declared, a
-# check the toolkit's own registry cannot make; the lock in a member
-# domain's workspace must name that domain and its base_iri, so one
-# domain's workspace never stands in for another's; and blank nodes are given
-# canonical labels before the graph is written, because lokf export labels
-# them at random and the same releases must give the same bytes.
+# Why each check is here:
+#   - The checksum ties the bytes to what a person confirmed.
+#   - The attestation (gh attestation verify, when gh is present and the zip
+#     came from a GitHub release) ties them to the workflow that built them.
+#   - A zip is refused when it holds a symlink, a path outside its root, or
+#     more bytes than --max-bytes, before anything in it is read.
+#   - The unpacked index.md must name the base_iri the member concept
+#     declared, a check the toolkit's own registry cannot make.
+#   - The lock in a member domain's workspace must name that domain and its
+#     base_iri, so one domain's workspace never stands in for another's.
+#   - Blank nodes are given canonical labels before the graph is written,
+#     because lokf export labels them at random and the same releases must
+#     give the same bytes.
 #
 # gh needs a credential to verify an attestation. The sidecar's librarian
-# wrapper strips every token from the agent's environment and passes one
-# back only under a name gh does not read, so a domain host sets the
+# wrapper strips every token from the agent's environment, and passes one
+# back only under a name gh does not read. So a domain host sets the
 # variables AGENT_USE_JOB_TOKEN to true and AGENT_API_KEY_ENV to
-# KNOWLEDGE_FEDERATE_TOKEN: the refresh job's read-only token then arrives
+# KNOWLEDGE_FEDERATE_TOKEN. The refresh job's read-only token then arrives
 # under that name, and this script hands it to gh alone, as GH_TOKEN.
 """The federation build, the domain's librarian, and a reader over the snapshot."""
 
@@ -189,8 +208,8 @@ ACTIVE_SUFFIXES = {".html", ".htm", ".xhtml", ".shtml", ".svg", ".svgz", ".js", 
 JOB_TOKEN = os.environ.pop("KNOWLEDGE_FEDERATE_TOKEN", "")
 # Where a member may be fetched from. A member concept names its address, and
 # a check fetches one a pull request proposes before any person has read it,
-# so by default only http and https to a public address. --allow-local lets
-# a person build from local files and a local server; a confirmed
+# so by default only http and https to a public address. A person can build
+# from local files and a local server with --allow-local, and a confirmed
 # `private_addresses: allow` on the top Domain concept lets the build reach
 # a forge on the host's own network.
 ALLOW_LOCAL = False
@@ -236,7 +255,7 @@ class Unobtainable(Failed):
     matches, a zip that reaches outside its root, a failed attestation)
     stops the build as any other finding does. `other_bytes` is true when
     the address answered with bytes other than the ones a person confirmed,
-    and false when it did not answer at all.
+    and false when it did not answer.
     """
 
     def __init__(self, msg: str, other_bytes: bool = False):
@@ -485,11 +504,12 @@ def confirmed_text(concept, iri: str, path_iri: str, history: bool) -> tuple[dic
     because a confirmation belongs to the concept it names. And one of the
     events that confirmed it must still stand in the text as it is now: a
     person who removed their event withdrew that confirmation, which then
-    counts for no earlier text either. The walk ends where the path held
-    another concept, held none, or held it retired, since a person's
-    confirmation is what brings back a member that left. A concept read from
-    a member domain's zip has no history, so there only the text as it
-    stands can serve.
+    counts for no earlier text either.
+
+    The walk ends where the path held another concept, held none, or held it
+    retired, since a person's confirmation is what brings back a member that
+    left. A concept read from a member domain's zip has no history, so there
+    only the text as it stands can serve.
     """
     if confirmed_by_person(concept.data):
         return concept.data, ""
