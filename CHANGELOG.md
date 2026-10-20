@@ -4,11 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **ktl-prose's check reads a comment's layout.** A table of options is read row by row, and a usage line or a command under a colon is not read, so neither is reported as one long sentence. `--against` compares a script as its comments.
-- **The check reports fewer false findings.** A sentence may start with a lowercase name such as `ktl-docent` or `.lokf/`, and a minus, a `-- <args>` marker, "at all of" and "at all times" are no longer reported.
-
 ## [0.55.0] - 2026-10-20
 
 ### Added
@@ -30,6 +25,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **ktl-sidecar's Step 0 runs the preflight from the host repository's root.**
 - **The librarian's audit lints the files it touched**, not `.lokf/.venv/`.
 - **A release attaches a linkml-sidecar host's schema.** The `schema :=` line may name any file in the repository, and the released copy imports LOKF core as `lokf`, so a domain can resolve that import.
+- **ktl-prose's check reads a comment's layout.** A table of options is read row by row, and a usage line or a command under a colon is not read, so neither is reported as one long sentence. `--against` compares a script as its comments.
+- **The check reports fewer false findings.** A sentence may start with a lowercase name such as `ktl-docent` or `.lokf/`, and a minus, a `-- <args>` marker, "at all of" and "at all times" are no longer reported.
 
 ## [0.54.0] - 2026-10-20
 
