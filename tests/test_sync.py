@@ -199,6 +199,20 @@ def test_a_host_at_the_release_has_nothing_to_sync(tmp_path, skills, checks):
     checks.ok(read(host / "CHANGELOG.md").count(ENTRY_START) == 1, "the entry is written once")
 
 
+def test_a_host_with_a_site_gets_the_site_templates_brackets_and_all(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    write(host / "website" / "site.config.mjs", "export const TITLE = 'Acme';\n")
+    git = Git(host)
+    git("add", "-A")
+    git("commit", "-qm", "a site")
+    result = sync(host, skills)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    route = "website/src/pages/og/[...route].ts"
+    checks.ok(has_line(result.out, f"   added    {route} (the site cannot build without it)"), "a route named with brackets is added", result.out)
+    checks.ok(read(host / route) == read(WEBSITE_TEMPLATES / "website" / "src" / "pages" / "og" / "[...route].ts"), "with the template's bytes")
+    checks.ok(read(host / "website" / "site.config.mjs") == "export const TITLE = 'Acme';\n", "the site file the host owns is left alone")
+
+
 def test_the_entry_joins_an_existing_security_section_at_its_end(tmp_path, skills, checks):
     changelog = "# Changelog\n\n## [Unreleased]\n\n### Changed\n\n- Something.\n\n### Security\n\n- Earlier line.\n\n## [1.0.0] - 2026-01-01\n"
     host = make_host(tmp_path, skills, changelog=changelog)
