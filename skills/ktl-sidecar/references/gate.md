@@ -46,7 +46,7 @@ Each of the first five, and the eleventh, has been broken by an agent that had i
 
 Rules 2, 3, 8 and 10 are house rules, stricter than OKF, which permits an unquoted datetime, a bare `verified` mapping, any file name and any YAML. The gate asks more so that a datetime reaches every consumer as one string in one shape, and an event is always appended to a list. It also asks that a name never collides on a case-insensitive host, and that an event reads the same to a line reader as to a parser. Every reader here still accepts a bare mapping, as OKF requires, so that half of rule 3 is style, not safety.
 
-The script is two files. Rules 2, 3, 4, 7, 9, 10, 12 and 13 are questions about a document's YAML, which a real parser answers outright where grep and awk only approximate. `knowledge-conventions.sh` hands those to `knowledge-conventions.py` beside it, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. That header names one PyYAML release and takes no file uploaded after a set date. Rule 13 reads git too, from the Python half. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
+The script is two files. Rules 2, 3, 4, 7, 9, 10, 12 and 13 are questions about a document's YAML, which a real parser decides where grep and awk only approximate. `knowledge-conventions.sh` hands those to `knowledge-conventions.py` beside it, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. That header names one PyYAML release and takes no file uploaded after a set date. Rule 13 reads git too, from the Python half. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
 
 ## The `provenance` job
 
@@ -58,7 +58,7 @@ So the job collects the actor of every `human:` event the pull request adds, cha
 
 - a re-dated event counts;
 - a renamed concept does not;
-- an id quoted in an `## Open questions` note or a body code fence is not an event at all.
+- an id quoted in an `## Open questions` note or a body code fence is not an event.
 
 A removal is a claim too, because a person's record is never removed without that person. A `verified` event that the base holds and the head does not needs its actor's backing, whether the event was struck out or its concept deleted. A person's `generated` record may give way to another person's, which is what the curator's Correct writes and which the second person backs as an addition. It may give way to nothing else without the first person. With that person's backing, it may give way to `process:ktl-curator`, which ktl-curator writes when that person sends a concept back and releases the text they wrote to the librarian.
 

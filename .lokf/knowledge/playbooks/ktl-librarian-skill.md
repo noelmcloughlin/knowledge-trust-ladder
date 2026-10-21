@@ -26,7 +26,7 @@ sources:
   - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-20T23:23:33Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -73,7 +73,7 @@ When a count or a name changes in one source, the run searches the bundle for th
 
 ## The pen
 
-The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script called the pen, checks every operation and writes the files. The pen stamps `generated` from the clock, keeps a `description` equal to its two index bullets, and files each log line under the day's heading. It refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed or left a note on. It also refuses a patch that would add, change or remove a `human:` event or a person's note, however its operations spell it, and one that handles more than ten feedback entries. `references/patch.md` gives the eight operations, and `knowledge-apply.sh --format` prints the same block, so the scheduled wrapper's prompt names no file of the skill.
+The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script called the pen, checks every operation and writes the files. The pen stamps `generated` from the clock, keeps a `description` equal to its two index bullets, and files each log line under the day's heading. It refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed or left a note on. It also refuses a patch that would add, change or remove a `human:` event or a person's note, however its operations spell it, and one that handles more than ten feedback entries. Since 0.55.0 it also runs `lokf validate` on every concept it would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit, and says `schema not checked` when it cannot run that check. `references/patch.md` gives the eight operations, and `knowledge-apply.sh --format` prints the same block, so the scheduled wrapper's prompt names no file of the skill.
 
 A patch may carry one `log` line for every operation that gives none, and the pen writes that line once (0.45.1). It may also carry `handoff`, up to ten lines for the reviewer in the agent's own words. The pen holds each to one line of printable text and writes none of it to the bundle, and the scheduled pull request shows them under *From the librarian*, in a code block (0.32.0). `reindex` re-derives a concept's two index bullets without touching the concept, and `resolve` withdraws an open question the librarian itself asked.
 

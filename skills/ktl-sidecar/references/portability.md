@@ -2,7 +2,7 @@
 
 The skills are repository-agnostic. Run them in any directory tree, including an empty one. The bundle is the same on every host: `.lokf/knowledge/`, one Markdown file per concept, validated by the same toolkit. What varies is the shell, the version control, the forge (GitHub, GitLab, Codeberg, Forgejo, Gitea, or none), and what each of the four skills can do there.
 
-**Run the preflight first.** Before the sidecar exists it is `bash templates/scripts/knowledge-preflight.sh`; afterwards it is `.lokf/scripts/knowledge-preflight.sh`. Its last line names your case, and the matching section below says what to do. If a line names something you cannot fix yourself, [prerequisites.md](prerequisites.md) says who can, and what to send them.
+**Run the preflight first.** Before the sidecar exists, run `bash <skill>/templates/scripts/knowledge-preflight.sh` from the repository's root, where `<skill>` is ktl-sidecar's directory. Afterwards, run `.lokf/scripts/knowledge-preflight.sh`. Its last line names your case, and the matching section below says what to do. If a line names something you cannot fix yourself, [prerequisites.md](prerequisites.md) says who can, and what to send them.
 
 | Host | Works | Lost | Substitute |
 | --- | --- | --- | --- |
@@ -13,12 +13,15 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | GitLab, Codeberg, Forgejo, Gitea | the sidecar, librarian, docent; the curator with `glab` or the signing-key route | the GitHub Actions workflows, ktl-website's deploy included | the wrapper in that CI, the gate ported per the recipe below, or the forge-free gate |
 | No forge, git only | everything local | the gate, pull requests, the scheduled loop | review by the host's own mechanism; the forge-free gate for confirmations |
 | No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
+| Behind a package mirror, or python3 older than 3.9 | everything | `uv run` of the sidecar's scripts; python3 for any script | `.lokf/.venv` after `uv sync`; `uv run` for ktl-prose's check (below) |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |
 | Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle; the auditor once it exists | the other three skills, source checks, `feedback.md` | the `ktl-docent-m365-<tag>-<repository>.zip` a release carries, or `.lokf/m365/knowledge-m365.sh` on the bundle folder ([m365.md](m365.md)) |
 
 ## Install all four skills together
 
 Install **all four** skills, `ktl-sidecar`, `ktl-librarian`, `ktl-curator` and `ktl-docent`, into one skill directory: `.claude/skills/` (Claude Code), `.github/skills/` (Copilot-style agents), `.agents/skills/` (a generic, tool-agnostic convention) or bare `skills/` (a repository that publishes the skills it also uses). Those are the directories the wrapper script searches for `ktl-librarian/SKILL.md`, in that order; any other directory goes into its `candidate` list ([automation.md](automation.md)). Each skill is a directory, `templates/` and `references/` included, and all four are generic: copy them unmodified, and the **librarian**'s first run discovers the project's knowledge sources itself.
+
+A skill installed for one user, under `~/.copilot/skills/`, `~/.claude/skills/` or `~/.agents/skills/`, serves that user's live sessions. The preflight lists it, but the scheduled librarian runs on a fresh runner and needs a copy in the repository.
 
 Two copies of a skill in two of those directories drift: an installer updates one and not the other, and whichever an agent reads wins. The preflight compares every pair it finds and warns when they differ. Keep one, or reinstall both from the same release.
 
@@ -58,7 +61,7 @@ What has to be rewritten is what talks to GitHub:
 - In the registrar workflow, the `provenance` job reads reviews and commit verification through `gh api`. GitLab exposes the same facts as `GET /projects/:id/merge_requests/:iid/approvals` and `GET /projects/:id/repository/commits/:sha/signature`. Forgejo, which Codeberg runs, and Gitea expose them as the pull request's reviews and the commit's `verification` object.
 - The release workflow uploads the zip with `gh release upload` and records a GitHub attestation. On another forge, attach the zip through that forge's release API, or skip the workflow; the bundle is in git either way.
 
-One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions, on Codeberg among other hosts, and Gitea Actions run GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below needs no forge at all.
+One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions, on Codeberg among other hosts, and Gitea Actions run GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below needs no forge.
 
 ### Not Linux: Windows and PowerShell
 
@@ -79,6 +82,12 @@ Three Windows habits to know about:
 - **Line endings.** Git for Windows checks files out with CRLF unless told otherwise. `.lokf/.gitattributes` (Step 1) tells it otherwise for the bundle, and the conventions script reads CRLF and a byte order mark the same as LF regardless, so a Windows checkout gives the verdict CI gives.
 - **Path length.** Windows limits a path to 260 characters unless `git config core.longpaths true` is set; a deep bundle under a synced folder can reach it.
 - **The doorway link.** Step 2's `knowledge_bundle` doorway is `ln -s` from a POSIX shell. On Windows prefer a junction, `mklink /J knowledge_bundle .lokf\knowledge`, which needs neither administrator rights nor Developer Mode, and which Obsidian follows exactly as it follows a symlink. `mklink /D` under Developer Mode makes a true symlink if one is wanted. A filesystem that supports neither (some FAT32 or exFAT volumes, older network mounts) skips it: the doorway is a convenience pointer, and every skill and toolkit command still addresses `.lokf/knowledge` directly.
+
+### Behind a package mirror, or with an old python3
+
+A company package index, such as Nexus or Artifactory, often serves no upload times. `uv sync` in `.lokf/` still installs the toolkit, pinned by hash in `uv.lock`. There uv cannot resolve the packages of a script whose header names `exclude-newer`: it drops every file it cannot date, and reports the pin as unsatisfiable. So run `uv sync` in `.lokf/` once. The pen, the conventions check and the ingest then run with `.lokf/.venv`. The ingest reads a PDF with pypdf, which the toolkit does not install. Run `uv add pypdf` in `.lokf/` to add it. When the conventions check exits 2 and says "could not run", the runner failed, not the bundle.
+
+Every script needs Python 3.9 or later. Where python3 is older, the preflight warns. Run each sidecar script through its `.sh` half, which chooses the interpreter, and ktl-prose's check through `uv run`. Never run a script with bare `python`, which is Python 2 on some hosts, except as last resort.
 
 ### Synced or shared folders: OneDrive, SharePoint, Drive, Dropbox, iCloud
 
@@ -102,7 +111,7 @@ A real folder inside the vault is indexed like any other, and so is a link whose
 
 ### The ingest on another host
 
-`knowledge-ingest.sh` is bash and Python, and runs wherever `uv` or `python3` with PyYAML does. Without git it runs by hand, with the credentials in the environment, and the lock is the record of what was fetched; the `command` kind then takes any file under the root, since no git can say whether it is tracked. On a forge other than GitHub, schedule the script in that CI with the secrets it names, pass `--visibility`, and open the merge request from the branch it leaves, as the sync's recipe above does for its workflow.
+`knowledge-ingest.sh` is bash and Python, and runs wherever `uv` or `python3` with PyYAML does. Without git it runs by hand, with the credentials in the environment, and the lock is the record of what was fetched. The `command` kind then takes any file under the root, since no git can say whether it is tracked. On a forge other than GitHub, schedule the script in that CI with the secrets it names, pass `--visibility`, and open the merge request from the branch it leaves, as the sync's recipe above does for its workflow.
 
 ## The forge-free gate
 

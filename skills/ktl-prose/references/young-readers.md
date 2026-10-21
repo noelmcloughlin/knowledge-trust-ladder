@@ -47,7 +47,7 @@ Ages are the scale, because readers come from many school systems. ISCED, UNESCO
 The check script holds a page to a band's limits:
 
 ```sh
-python3 <skill>/scripts/prose-check.py --audience 13-18 <file>
+uv run <skill>/scripts/prose-check.py --audience 13-18 <file>
 ```
 
 A page that opens as rule 1 below asks, "This page is for readers aged 13 to 18.", names its own band. A plain style run then holds it to that band, and a note says so. Give `--audience` to a page that names no band, such as an original before its pass for dyslexic readers. A page that names one band while `--audience` asks for another is a finding. `--max-words` and `--max-paragraph` still set their own limit when given.
@@ -62,7 +62,7 @@ Under a band, the script also counts the sentences in each paragraph, and report
 The check script compares a retelling with the text it retells, in one direction:
 
 ```sh
-python3 <skill>/scripts/prose-check.py --derived-from <original> <retelling>
+uv run <skill>/scripts/prose-check.py --derived-from <original> <retelling>
 ```
 
 A number, a link target, a code span, a quotation, an inline HTML tag or a fenced block that the retelling holds and the original does not is a finding. So is a first paragraph that does not link the original, and in the bundle a `derivedFrom` that does not name the adult concept. A heading spelt like `## Open questions` but not exactly so is a finding too. What the retelling left out is a note, and so is a `should` the original never has, a keyword left in capitals, or a link to another concept of the bundle.

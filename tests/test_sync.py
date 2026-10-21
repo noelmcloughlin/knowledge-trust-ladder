@@ -6,15 +6,15 @@ skills repository, the real templates at two tags, and on a host at the
 first tag, and pin what the script's header says:
 
 1. it copies the templates the release changed, adds a template a file the
-   host carries needs, reports one ktl-sidecar's Step 5 decides, moves the
-   pin to the tag and the commit it names, and writes the changelog entry
-   under "## [Unreleased]" and "### Security";
+   host carries needs, and reports one ktl-sidecar's Step 5 decides. It
+   moves the pin to the tag and the commit it names, and writes the
+   changelog entry under "## [Unreleased]" and "### Security";
 2. a host at the release has nothing to sync, and the entry is written once;
 3. the entry joins a Security section the changelog already has, at its end,
    and a section is added last when there is none;
 4. the host's justfile keeps its own first line and `schema :=` line;
 5. --commit works on sync-<tag> from origin's default branch and leaves the
-   default branch and the tree as they were, and a tree with uncommitted
+   default branch and the tree as they were. A tree with uncommitted
    changes, a branch that exists, a tag that is not a release and a tag the
    source lacks are each refused;
 6. without --source the host's copy clones the tag and reads its manifest,
@@ -197,6 +197,20 @@ def test_a_host_at_the_release_has_nothing_to_sync(tmp_path, skills, checks):
     checks.ok(has_line(result.out, "   nothing to sync") and has_line(result.out, "   pin      already v1.1.0"), "nothing to sync", result.out)
     checks.ok(not git("status", "--porcelain"), "the tree is left clean")
     checks.ok(read(host / "CHANGELOG.md").count(ENTRY_START) == 1, "the entry is written once")
+
+
+def test_a_host_with_a_site_gets_the_site_templates_brackets_and_all(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    write(host / "website" / "site.config.mjs", "export const TITLE = 'Acme';\n")
+    git = Git(host)
+    git("add", "-A")
+    git("commit", "-qm", "a site")
+    result = sync(host, skills)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    route = "website/src/pages/og/[...route].ts"
+    checks.ok(has_line(result.out, f"   added    {route} (the site cannot build without it)"), "a route named with brackets is added", result.out)
+    checks.ok(read(host / route) == read(WEBSITE_TEMPLATES / "website" / "src" / "pages" / "og" / "[...route].ts"), "with the template's bytes")
+    checks.ok(read(host / "website" / "site.config.mjs") == "export const TITLE = 'Acme';\n", "the site file the host owns is left alone")
 
 
 def test_the_entry_joins_an_existing_security_section_at_its_end(tmp_path, skills, checks):
@@ -605,7 +619,7 @@ def test_apply_allows_a_script_made_executable_and_refuses_a_dirty_checkout(tmp_
 
 
 def test_every_synced_template_is_in_step_5_and_the_manifest_is_the_one_list():
-    """A new template lands in two places: the manifest, which the sync script, the preflight and contract check 11 read, and ktl-sidecar's Step 5 table."""
+    """A new template is added in two places: the manifest, which the sync script, the preflight and contract check 11 read, and ktl-sidecar's Step 5 table."""
     skill = read(SKILL)
     pairs = synced_pairs()
     assert pairs, "the manifest lists nothing"

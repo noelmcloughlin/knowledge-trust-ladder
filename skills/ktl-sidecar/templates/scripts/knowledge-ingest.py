@@ -10,32 +10,42 @@
 # Reads .lokf/ingest.yaml, fetches each source it names, converts it to
 # Markdown and writes it under .lokf/mirror/<entry id>/, one file per page
 # or document, with a header: origin, title, version, digest, retrieval
-# time, converter. .lokf/ingest.lock.yaml records the same per item and a
-# status: ok, gone, unlisted, failed or refused. A mirror file is repository
+# time, converter. The lock, .lokf/ingest.lock.yaml, records the same per
+# item and a status: ok, gone, unlisted, failed or refused. A mirror file is repository
 # content the librarian reads as any tracked file. It is not knowledge yet.
 #
-# Kinds: confluence (a label, space, page, tree or CQL selection; v1 search
-# everywhere, v2 body on Cloud and v1 on Data Center; the version number is
-# the change signal), http (addresses serving HTML, Markdown, text or PDF;
-# ETag and Last-Modified when the server gives them, else the digest), git
-# (a path at a ref, over https, or http and a local path where the manifest
-# allows private addresses; the commit is the version and the blob id the
-# change signal; a file that is not Markdown is fenced), command (a tracked
-# command's output; the command's own digest is recorded too). Listing comes
-# before fetching, so an unchanged source costs a listing and no body. The
+# Kinds:
+#   - `confluence`: a label, space, page, tree or CQL selection; v1 search
+#     everywhere, v2 body on Cloud and v1 on Data Center; the version number
+#     is the change signal.
+#   - `http`: addresses serving HTML, Markdown, text or PDF; ETag and
+#     Last-Modified when the server gives them, else the digest.
+#   - `git`: a path at a ref, over https, or http and a local path where the
+#     manifest allows private addresses; the commit is the version and the
+#     blob id the change signal; a file that is not Markdown is fenced.
+#   - `command`: a tracked command's output; the command's own digest is
+#     recorded too.
+#
+# Listing comes before fetching, so an unchanged source costs a listing and no body. The
 # mirror and the lock change only when content changes. An entry that leaves
 # the manifest takes its folder with it. A file the lock names and the disk
 # has lost is fetched again and reported as restored.
 #
-# Refused and recorded: a token in the manifest (auth names environment
-# variables starting KNOWLEDGE_INGEST_); an entry the repository's
-# visibility does not allow (internal: a private repository only;
-# confidential: never committed, kept under .lokf/.cache/mirror/, and refused
-# where git does not ignore that folder or tracks a file in it); more
-# than max_items; a body over max_item_bytes or a mirror over
-# max_total_bytes; a private address unless the manifest allows it; a path
-# outside the mirror root; an unexpected content type; a PDF with no text
-# layer. Characters no reader sees are removed, apart from the two joiners
+# Refused and recorded:
+#   - a token in the manifest (auth names environment variables starting
+#     KNOWLEDGE_INGEST_);
+#   - an entry the repository's visibility does not allow (internal: a
+#     private repository only; confidential: never committed, kept under
+#     .lokf/.cache/mirror/, and refused where git does not ignore that folder
+#     or tracks a file in it);
+#   - more than max_items;
+#   - a body over max_item_bytes or a mirror over max_total_bytes;
+#   - a private address unless the manifest allows it;
+#   - a path outside the mirror root;
+#   - an unexpected content type;
+#   - a PDF with no text layer.
+#
+# Characters no reader sees are removed, apart from the two joiners
 # some scripts spell with. One entry's failure, expected or not, never stops
 # the others.
 #
@@ -950,7 +960,7 @@ def pdf_to_text(data: bytes) -> tuple[str, str]:
     try:
         from pypdf import PdfReader
     except ImportError as e:
-        raise Refused("pypdf is not installed; run through uv, which installs it") from e
+        raise Refused("pypdf is not installed; run through uv, which installs it, or run uv add pypdf in .lokf/") from e
     try:
         reader = PdfReader(io.BytesIO(data))
         if reader.is_encrypted:

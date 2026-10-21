@@ -12,7 +12,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
   - by: process:ktl-librarian
-    at: "2026-10-19T21:26:04Z"
+    at: "2026-10-20T23:23:33Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T00:43:23Z"
 stale_after: 2027-09-10

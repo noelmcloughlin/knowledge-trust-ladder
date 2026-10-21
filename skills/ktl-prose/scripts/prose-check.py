@@ -8,19 +8,33 @@
 # text break a rule a script can see? Did a rewording change anything but the
 # wording? Whether the meaning held is a question for a reader.
 #
-#   prose-check.py FILE...                what a script sees: dash, long, paragraph, words, unseen
-#   prose-check.py --audience BAND FILE...  the same at the limits of a band of readers, with sentences and a grade
+#   prose-check.py FILE...                what a script sees: dash, long, paragraph, sentences, words, unseen
+#   prose-check.py --audience BAND FILE...  the same at the limits of a band of readers, with a grade
 #   prose-check.py --before OLD NEW       what differs besides the wording, and the words before and after
 #   prose-check.py --against REF FILE...  the same, against the version git holds at REF
 #   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword, and its readers
 #   prose-check.py --derived-from ADULT YOUNG  what a retelling holds that the text it retells does not
 #
+# A FILE is Markdown, or a script. A `.sh`, `.bash`, `.py`, `.yaml`, `.yml`
+# or `.toml` file, or a justfile, is read as its `#` comments and, in Python,
+# its docstrings: each block of comment lines is a paragraph, and an empty
+# comment line splits one. The shebang, a directive such as `# shellcheck`, a
+# `# /// script` block and the body of a heredoc are left out. Code is never
+# read, so a fact in it is not checked.
+#
+# A comment's layout is read as a person reads it. An indented line laid out
+# in columns, as a table of options or exit codes is, starts a row. Its first
+# column is a name. The rest of the row, with the lines indented under it, is
+# read as one table cell. An indented line that follows a `Usage` line, a
+# line ending with a colon or an empty line is a command, and is not read. So
+# a table or a command is never taken for one long sentence.
+#
 # A band holds a page to the limits references/young-readers.md gives for
 # readers aged 8 to 12, aged 13 to 18, or dyslexic. A page that opens by
 # naming its readers, as "This page is for readers aged 13 to 18." does, is
-# held to that band with no flag. Under a band the script also counts the
-# sentences in each paragraph, and notes the page's Automated Readability
-# Index with the counts it comes from. The index is a hint, never a finding.
+# held to that band with no flag. A band sets its own count of sentences in
+# a paragraph, and the script notes the page's Automated Readability Index
+# with the counts it comes from. The index is a hint, never a finding.
 #
 # A retelling may say less than the text it retells, and never more. So
 # --derived-from reports a number, a link, a code span, a quotation, an HTML
@@ -63,6 +77,9 @@ RESERVED = {"index.md", "log.md", "diataxis.md"}
 MAX_WORDS = 40
 # The Federal Plain Language Guidelines' ceiling for a paragraph.
 MAX_PARAGRAPH = 150
+# The top of the same guidelines' "three to eight sentences" for a paragraph.
+# A band sets its own count, and a list item has none.
+MAX_SENTENCES = 8
 # The bands of readers, as references/young-readers.md gives them with their
 # sources: the words in a sentence and in a paragraph, the sentences in a
 # paragraph, and the Automated Readability Index a page should stay at or
@@ -138,12 +155,16 @@ NAMES_READERS = re.compile(r"\bfor readers aged (\d{1,2}) to (\d{1,2})\b", re.I)
 # every offset and line number stays true after masking.
 MASK = ""
 
-# The words the first hand pass cut, and the stock phrases it replaced.
+# The words the first hand pass cut, the stock phrases it replaced, and two a
+# later reading added: an intensifier that points at a comparison the
+# sentence never makes, and the tail of a negative that is already whole.
 # "actually", "really", "simply" and "just" stay off the list on purpose: the
 # second pass kept every one of them.
 WORDS = {
     "deliberately": "cut it, or say what was chosen",
     "honestly": "cut it",
+    "outright": "cut it, or say what it is compared with",
+    "at all": "cut it: the negative before it is already whole",
     "in order to": 'write "to"',
     "due to the fact that": 'write "because"',
     "e.g.": 'write "for example"',
@@ -161,17 +182,57 @@ FIGURES = {
     ("load-bearing",): "say what depends on it",
 }
 WORDS.update((form, advice) for forms, advice in FIGURES.items() for form in forms)
+# A listed phrase that is not one when certain words follow it. In "at all
+# of them" and "at all times", "all" belongs to the words after it, and no
+# negative comes before.
+NOT_BEFORE = {"at all": r"(?!\s+(?:of|times|costs|hours|levels|stages|points)\b)"}
 # A letter, a digit, an underscore or a hyphen on either side makes another
 # word: `arm64`, `wire-format`.
 WORD = re.compile(
     r"(?<![\w-])(?:"
-    + "|".join(sorted((re.escape(word) for word in WORDS if word != "e.g."), key=len, reverse=True))
+    + "|".join(
+        re.escape(word) + NOT_BEFORE.get(word, "")
+        for word in sorted((word for word in WORDS if word != "e.g."), key=len, reverse=True)
+    )
     + r")(?![\w-])|(?<![A-Za-z])e\.g\.",
     re.I,
 )
-# A spaced hyphen, an em dash anywhere, and an en dash that is not a range.
-DASH = re.compile(r"(?<=\S) --? (?=\S)|—|(?<!\d)–|–(?!\d)")
-SENTENCE_END = re.compile(r"(?<=[.!?])[\"')\]*_”]*\s+(?=[A-Z`*\[(\"“])")
+# The files read as scripts rather than as Markdown, by suffix; a file called
+# justfile is one too. In a script the prose is its whole-line `#` comments,
+# and in Python its docstrings as well.
+SCRIPT_SUFFIXES = {".sh", ".bash", ".py", ".yaml", ".yml", ".toml"}
+COMMENT_LINE = re.compile(r"^\s*#(.*)$")
+# A comment that is not prose: the shebang, and a directive a tool reads.
+DIRECTIVE = re.compile(r"^#(?:!|\s*(?:shellcheck|noqa|type:|fmt:|ruff:|pylint:|mypy:|pyright:|yamllint|-\*-)\b)")
+# The `# /// script` block of PEP 723, which names a script's packages.
+SCRIPT_BLOCK = re.compile(r"^#\s*///\s*\w+\s*$")
+SCRIPT_BLOCK_END = re.compile(r"^#\s*///\s*$")
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_]\w*)\1")
+DOCSTRING = re.compile(r"^(\s*)[rRuUbB]{0,2}(\"\"\"|''')(.*)$")
+# A comment's columns: two spaces or more between words. Two spaces after a
+# full stop are a sentence's own spacing, and three or more are a column.
+COLUMN_GAP = re.compile(r"(?:[^\s.!?] {2,}|\S {3,})\S")
+# How an indented line that opens a block starts when it is prose, not a
+# command: a capital that does not set a variable, a code span or emphasis.
+SENTENCE_START = re.compile(r"^\s*(?:[A-Z](?![A-Z0-9_]*=)|[`*])")
+# An item numbered with a letter as well, as `2a.` is, which Markdown does
+# not count as a list item.
+LETTERED_MARK = re.compile(r"^\s*\d+[a-z][.)]\s+")
+USAGE = re.compile(r"^\s*usage\s*[:,]", re.I)
+# A spaced hyphen, an em dash anywhere, and an en dash that is not a range. A
+# spaced hyphen before a digit is a minus or a range, and a double one before
+# a placeholder ends a command's options, as in `cmd -- <args>`: neither is
+# punctuation. The placeholder may already be masked as a tag.
+DASH = re.compile(r"(?<=\S) (?:-(?! \d)|--(?! [<" + MASK + r"])) (?=\S)|—|(?<!\d)–|–(?!\d)")
+# A sentence starts with a capital, a code span, emphasis, a link or a
+# quotation. It also starts with a name written in lowercase: a path such as
+# `.lokf/`, an option such as `--root`, or a name with a hyphen, a dot, a
+# slash or brackets inside it, such as ktl-docent, knowledge-report.sh or
+# main().
+SENTENCE_END = re.compile(
+    r"(?<=[.!?])[\"')\]*_”]*\s+"
+    r"(?=[A-Z`*\[(\"“]|(?:\.|--?)[a-z]|[a-z][\w']*(?:[-_/]\w|\.[a-z]|\(\)))"
+)
 ABBREVIATION = re.compile(r"\b(?:e\.g|i\.e|vs|cf)\.$", re.I)
 
 FENCE = re.compile(r"^\s*(?:>\s?)*(`{3,}|~{3,})")
@@ -399,9 +460,10 @@ def top_value(fm: list[str], key: str) -> str | None:
 def standing(doc: Doc, expect_concept: bool = False) -> tuple[str, str]:
     """Where a file stands, as a rule name and the words for it.
 
-    Only `rewrite` allows a rewording outright, and `unrecorded` allows one a
-    person named. The order is the order of the table in SKILL.md. The script
-    fails closed: an event it cannot read is never taken for a missing one.
+    Only `rewrite` allows a rewording with no condition, and `unrecorded`
+    allows one a person named. The order is the order of the table in
+    SKILL.md. The script fails closed: an event it cannot read is never
+    taken for a missing one.
     """
     unreadable = ("unreadable", "frontmatter the script cannot read")
     if doc.fm is None:
@@ -468,6 +530,151 @@ def mask(text: str) -> str:
         if len([word for word in found.group(2).split() if word not in "-–—"]) <= 5:
             out = hide(out, found.start(2), found.end(2))
     return out
+
+
+def is_script(path: Path) -> bool:
+    return path.suffix.lower() in SCRIPT_SUFFIXES or path.name.lower() == "justfile"
+
+
+def script_doc(text: str, python: bool = False) -> Doc:
+    """The prose of a script, laid out on the lines it came from.
+
+    Each whole-line `#` comment keeps its text with the mark removed, and in
+    Python each docstring keeps its lines, less the indent of its opening
+    quotes. Every other line is blank, so a block of comments reads as a
+    paragraph, an empty comment line splits one, and a line of code ends one,
+    as a blank line does in Markdown. Left out: the shebang, a directive such
+    as `# shellcheck`, a `# /// script` block, and the body of a heredoc,
+    which is data. A triple-quoted string is a docstring when it opens the
+    module or follows a line that ends with a colon, so a quoted block
+    assigned to a name is data too. Each block of comments and each docstring
+    is then read for its layout, as `laid_out` says.
+    """
+    out: list[str] = []
+    blocks: list[list[int]] = []
+    block: list[int] | None = None
+    terminator: str | None = None
+    in_block = False
+    in_doc: tuple[str, int] | None = None
+    seen_code = False
+    previous = ""
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if terminator is not None:
+            out.append("")
+            if stripped == terminator:
+                terminator = None
+            continue
+        if in_doc:
+            quotes, indent = in_doc
+            end = line.find(quotes)
+            content = line if end < 0 else line[:end]
+            if end >= 0:
+                in_doc = None
+            out.append(content[indent:] if not content[:indent].strip() else content.lstrip())
+            blocks[-1].append(len(out) - 1)
+            continue
+        found = COMMENT_LINE.match(line)
+        if found:
+            if in_block:
+                in_block = not SCRIPT_BLOCK_END.match(stripped)
+                out.append("")
+                block = None
+            elif SCRIPT_BLOCK.match(stripped) or DIRECTIVE.match(stripped):
+                in_block = bool(SCRIPT_BLOCK.match(stripped))
+                out.append("")
+                block = None
+            else:
+                body = found.group(1)
+                out.append(body[1:] if body.startswith(" ") else body)
+                if block is None:
+                    block = []
+                    blocks.append(block)
+                block.append(len(out) - 1)
+            continue
+        block = None
+        opening = DOCSTRING.match(line) if python else None
+        if opening and (not seen_code or previous.rstrip().endswith(":")):
+            indent, quotes, rest = len(opening.group(1)), opening.group(2), opening.group(3)
+            end = rest.find(quotes)
+            out.append((rest if end < 0 else rest[:end]).strip())
+            blocks.append([len(out) - 1])
+            if end < 0:
+                in_doc = (quotes, indent)
+            seen_code = True
+            previous = ""
+            continue
+        heredoc = HEREDOC.search(line)
+        if heredoc:
+            terminator = heredoc.group(2)
+        out.append("")
+        if stripped:
+            seen_code = True
+            previous = line
+    for numbers in blocks:
+        laid_out(out, numbers)
+    return Doc("\n".join(out))
+
+
+def laid_out(lines: list[str], numbers: list[int]) -> None:
+    """Read one block of comments, or one docstring, for its layout, in place.
+
+    Indent is measured from the block's own text. A line indented further is
+    prose when it is a list item, continues one (an empty line between does
+    not end the item, as in Markdown), or continues the line above it. It is
+    a command, and is blanked, when it follows a `Usage` line, a line that
+    ends with a colon, an empty line or the top of the block, and does not
+    start as a sentence does.
+
+    When its words stand in columns, the line starts a row, which becomes one
+    table cell on the row's first line: the first column, a name, is dropped,
+    and each line indented under the row is moved into the cell. A line level
+    with a row starts the next one, even when its name is too wide to leave a
+    gap. So a table of options or a command line is not read as one long
+    sentence, the prose after a table is not run into its last row, and each
+    row's own text is still read whole.
+    """
+    texts = [lines[n] for n in numbers if lines[n].strip()]
+    if not texts:
+        return
+    base = min(len(text) - len(text.lstrip()) for text in texts)
+    state, edge, opens = "", 0, True
+    row_at, row = 0, ""
+
+    def cell(text: str) -> str:
+        return "| " + text.replace("|", "\\|") + " |"
+
+    for n in numbers:
+        text = lines[n]
+        if not text.strip():
+            state, opens = ("item" if state == "item" else ""), True
+            continue
+        indent = len(text) - len(text.lstrip())
+        inner = indent - base >= 2
+        if not inner and USAGE.match(text):
+            lines[n], state = "", "command"
+        elif LIST_MARK.match(text) or LETTERED_MARK.match(text):
+            state, edge = "item", indent
+        elif inner and state == "item" and indent > edge:
+            pass
+        elif inner and COLUMN_GAP.search(text.strip()):
+            rest = " ".join(re.split(r"\s{2,}", text.strip())[1:])
+            if state == "row" and indent > edge:
+                row, lines[n] = f"{row} {rest}", ""
+            else:
+                row_at, row, state, edge = n, rest, "row", indent
+            lines[row_at] = cell(row)
+        elif inner and state == "row" and indent > edge:
+            row, lines[n] = f"{row} {text.strip()}", ""
+            lines[row_at] = cell(row)
+        elif inner and state == "row" and indent == edge:
+            row_at, row = n, (text.split(None, 1) + [""])[1]
+            lines[n] = cell(row)
+        elif inner and (opens or state == "command") and not SENTENCE_START.match(text):
+            lines[n], state = "", "command"
+        else:
+            state = "prose"
+        opens = text.rstrip().endswith(":")
 
 
 def prose_blocks(doc: Doc):
@@ -627,9 +834,8 @@ def style(
 ) -> list[tuple[int, str, str]]:
     """Dash, long, paragraph, sentences and words: what a script can see of the house style.
 
-    A table cell is no paragraph, and a list item is held to the same limit.
-    Only a band sets a limit on the sentences in a paragraph, and a list item
-    has none.
+    A table cell is no paragraph, and a list item is held to the same limit
+    on words. The limit on sentences is a paragraph's alone.
     """
     findings: list[tuple[int, str, str]] = []
     for block in prose_blocks(doc):
@@ -938,7 +1144,7 @@ class Kept:
             # A list, ordered or table marker counts only where it opens a
             # block or continues one of its own kind. On a wrapped prose line it
             # is text, and a number that starts such a line is a fact, not an
-            # item number - so re-laying a paragraph out does not seem to change
+            # item number. So re-laying a paragraph out does not seem to change
             # a list or lose a year.
             at_start = block is None
             is_item = bool(LIST_MARK.match(content)) and (at_start or block_is_list)
@@ -1046,8 +1252,12 @@ def differences(rule: str, what: str, old: list[tuple[str, int]], new: list[tupl
             yield new_line[token], rule, f'{what} "{token}" appears {times(now)}, and the earlier text had it {times(was)}', how
 
 
-def compare(path: Path, old: Doc, new: Doc, expect_concept: bool):
-    """What differs between two versions besides the wording: findings, notes, and the words each version holds."""
+def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc, Doc] | None = None):
+    """What differs between two versions besides the wording: findings, notes, and the words each version holds.
+
+    For a script, OLD and NEW are its prose, and RAW is the whole file twice,
+    which the search for a character no reader sees reads, code included.
+    """
     findings: list[tuple[int, str, str]] = []
     notes: list[tuple[int, str, str]] = []
     was, now = standing(old, expect_concept), standing(new, expect_concept)
@@ -1062,11 +1272,12 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool):
         findings.append((line, "frontmatter", "this line differs from the earlier text, and a rewording changes no frontmatter"))
 
     # A character no reader sees, which no rewording has cause to add.
-    had = Counter(char for line in old.lines for char in line if unseen_char(char))
-    has = Counter(char for line in new.lines for char in line if unseen_char(char))
+    whole_old, whole_new = raw or (old, new)
+    had = Counter(char for line in whole_old.lines for char in line if unseen_char(char))
+    has = Counter(char for line in whole_new.lines for char in line if unseen_char(char))
     for char in sorted(has):
         if has[char] > had[char]:
-            line = next(number for number, text in enumerate(new.lines, start=1) if char in text)
+            line = next(number for number, text in enumerate(whole_new.lines, start=1) if char in text)
             findings.append((line, "unseen", f"{described(char)} is new, and a rewording adds no character a reader cannot see"))
 
     # A concept somebody vouched for keeps its body. No flag turns this off.
@@ -1172,17 +1383,27 @@ def reserved_in_bundle(path: Path) -> bool:
     return path.name in RESERVED and bundle_root(path) is not None
 
 
-def check_style(files: list[Path], max_words: int | None = None, max_paragraph: int | None = None, audience: str | None = None):
+def check_style(
+    files: list[Path],
+    max_words: int | None = None,
+    max_paragraph: int | None = None,
+    audience: str | None = None,
+    max_sentences: int | None = None,
+):
     """The style rules for each file, and a character no reader sees in any of them.
 
     A file is held to the band --audience names, or else to the band its
-    first paragraph names, or else to the adult limits. --max-words and
-    --max-paragraph set their own limit over any band's.
+    first paragraph names, or else to the adult limits. --max-words,
+    --max-paragraph and --max-sentences set their own limit over any band's.
+    A script is read as its comments; the search for a character no reader
+    sees reads its every line.
     """
     findings, notes = [], []
     for path in files:
-        doc = Doc(read(path))
-        found = unseen(doc)
+        text = read(path)
+        whole = Doc(text)
+        doc = script_doc(text, python=path.suffix.lower() == ".py") if is_script(path) else whole
+        found = unseen(whole)
         if reserved_in_bundle(path):
             notes.append((path, 1, "reserved", "a reserved bundle file is not held to the style rules"))
         else:
@@ -1200,7 +1421,8 @@ def check_style(files: list[Path], max_words: int | None = None, max_paragraph: 
             band = BANDS.get(name) if name else None
             words = max_words if max_words is not None else band.words if band else MAX_WORDS
             paragraph = max_paragraph if max_paragraph is not None else band.paragraph if band else MAX_PARAGRAPH
-            found += style(doc, words, paragraph, band.sentences if band else None, band_words=band is not None)
+            count = max_sentences if max_sentences is not None else band.sentences if band else MAX_SENTENCES
+            found += style(doc, words, paragraph, count, band_words=band is not None)
             for rule, note in (("grade", graded(doc, name, band)), ("vocabulary", vocabulary(doc))) if band else ():
                 if note:
                     notes.append((path, 1, rule, note))
@@ -1209,10 +1431,21 @@ def check_style(files: list[Path], max_words: int | None = None, max_paragraph: 
 
 
 def check_pair(label: Path, old_text: str, new_text: str, in_bundle: bool):
-    """Compare two versions of one file, with the bundle's reserved files set apart. The third value is the words before and after, which a reserved file does not count towards."""
+    """Compare two versions of one file, with the bundle's reserved files set apart. The third value is the words before and after, which a reserved file does not count towards.
+
+    A script is compared as its comments and docstrings, so a change to its
+    code is no finding here; the search for a character no reader sees still
+    reads every line.
+    """
     if in_bundle and label.name == "log.md":
         return [], [(label, 1, "reserved", "the bundle's log is not compared; ktl-prose adds one line to it")], (0, 0)
     old, new = Doc(old_text), Doc(new_text)
+    if is_script(label):
+        python = label.suffix.lower() == ".py"
+        found, noted, words = compare(
+            label, script_doc(old_text, python), script_doc(new_text, python), expect_concept=False, raw=(old, new)
+        )
+        return [(label, *f) for f in found], [(label, *n) for n in noted], words
     if in_bundle and label.name in RESERVED:
         if old.lines != new.lines:
             return [(label, 1, "reserved", "ktl-prose never rewords a reserved bundle file")], [], (0, 0)
@@ -1489,7 +1722,7 @@ def list_bundle(directory: Path) -> int:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="prose-check.py",
-        usage="prose-check.py [--audience BAND] [--max-words N] [--max-paragraph N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR | --derived-from ADULT YOUNG",
+        usage="prose-check.py [--audience BAND] [--max-words N] [--max-paragraph N] [--max-sentences N] FILE... | --before OLD NEW | --against REF FILE... | --bundle DIR | --derived-from ADULT YOUNG",
         description="Report what a script can see of plain prose, and prove that a rewording changed only wording.",
     )
     parser.add_argument("files", nargs="*", type=Path, metavar="FILE")
@@ -1500,6 +1733,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--audience", choices=sorted(BANDS), metavar="BAND")
     parser.add_argument("--max-words", type=int, metavar="N")
     parser.add_argument("--max-paragraph", type=int, metavar="N")
+    parser.add_argument("--max-sentences", type=int, metavar="N")
     if len(argv) < 2:
         parser.print_usage(sys.stderr)
         return 2
@@ -1527,7 +1761,7 @@ def main(argv: list[str]) -> int:
         elif args.against:
             findings, notes, fine = check_against(args.against, args.files)
         else:
-            findings, notes, fine = check_style(args.files, args.max_words, args.max_paragraph, args.audience)
+            findings, notes, fine = check_style(args.files, args.max_words, args.max_paragraph, args.audience, args.max_sentences)
     except Usage as exc:
         print(f"prose-check.py: {exc}", file=sys.stderr)
         return 2

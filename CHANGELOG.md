@@ -4,6 +4,36 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.55.1] - 2026-10-21
+
+### Fixed
+
+- **A sync reaches a host with a website again.** Since 0.53.0 it stopped at `src/pages/og/[...route].ts`, because its website step refused square brackets in a path; it now allows the same characters as `--apply`.
+
+## [0.55.0] - 2026-10-20
+
+### Added
+
+- **The pen checks the schema before it writes.** `knowledge-apply.sh` runs `lokf validate` on every concept a patch would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit.
+- **The preflight warns about a python3 older than 3.9**, about being run from ktl-sidecar's own folder, and names KTL skills installed for one user.
+- **ktl-prose's check reads a script's comments.** Given a shell, Python, YAML or TOML file or a justfile, `prose-check.py` holds each `#` comment block, and each Python docstring, to the rules a paragraph keeps.
+
+### Changed
+
+- **The check reports a paragraph of more than eight sentences**, and lists "outright" and "at all" among the words to cut. The rules page gains a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion.
+
+### Fixed
+
+- **The sidecar's scripts run behind a package mirror.** The pen, the conventions check and the ingest try `.lokf/.venv` first and `uv run` after it, because `uv run` fails behind a mirror that serves no upload times. No script picks a Python older than 3.9.
+- **When its runner cannot start, the conventions check says so and exits 2**, instead of reporting findings against the bundle.
+- **A freshly installed skeleton passes its own conventions:** the dummy services' descriptions match their index bullets.
+- **ktl-prose runs its check through `uv run`**, so an old `python3` never runs it.
+- **ktl-sidecar's Step 0 runs the preflight from the host repository's root.**
+- **The librarian's audit lints the files it touched**, not `.lokf/.venv/`.
+- **A release attaches a linkml-sidecar host's schema.** The `schema :=` line may name any file in the repository, and the released copy imports LOKF core as `lokf`, so a domain can resolve that import.
+- **ktl-prose's check reads a comment's layout.** A table of options is read row by row, and a usage line or a command under a colon is not read, so neither is reported as one long sentence. `--against` compares a script as its comments.
+- **The check reports fewer false findings.** A sentence may start with a lowercase name such as `ktl-docent` or `.lokf/`, and a minus, a `-- <args>` marker, "at all of" and "at all times" are no longer reported.
+
 ## [0.54.0] - 2026-10-20
 
 ### Changed

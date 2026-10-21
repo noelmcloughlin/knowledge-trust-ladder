@@ -2,7 +2,7 @@
 type: Service
 id: <BASE_IRI>services/example-service-a
 title: Example Service A
-description: Placeholder service - replace with a real service of <PROJ_NAME>.
+description: Placeholder service; replace with a real service of <PROJ_NAME>.
 endpoint: https://<PROJ_SLUG>.example/api/example-a
 ---
 

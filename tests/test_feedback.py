@@ -8,7 +8,7 @@ script has to earn that trust:
 - newest first across days and within a day, with a day after today (another
   machine's clock) left above rather than doubled;
 - the two kinds the librarian can consume, in any letter case, and no third;
-- an attribution shaped as both provenance gates shape a login, or none at all;
+- an attribution shaped as both provenance gates shape a login, or none;
 - one line per entry, whatever it is handed;
 - a concept named only on a Disagreement, only in the bundle's own spelling,
   and only one the bundle holds;

@@ -60,7 +60,7 @@ Written by ktl-docent; consumed and cleared by ktl-librarian on its next run. Ne
 
 ### A Miss
 
-Record the question the bundle could not answer, **where you found the answer**, and, if obvious, what kind of concept it would be and what it relates to. Put the reader's question first, in quotes, as the example does with `Q: "..."`: the librarian passes it on as asked. The place is the repository path or URL; it is what lets the librarian derive the concept directly instead of rediscovering it. If you could not find the answer either, say so. The librarian will then create a draft placeholder carrying the question, and a person will see it in the curator's queue. Say also which of two cases this is: a concept looked relevant from `index.md` and did not answer, naming it, or nothing relevant was listed at all. The first is a description the librarian fixes; the second is a concept it derives.
+Record the question the bundle could not answer, **where you found the answer**, and, if obvious, what kind of concept it would be and what it relates to. Put the reader's question first, in quotes, as the example does with `Q: "..."`: the librarian passes it on as asked. The place is the repository path or URL; it is what lets the librarian derive the concept directly instead of rediscovering it. If you could not find the answer either, say so. The librarian will then create a draft placeholder carrying the question, and a person will see it in the curator's queue. Say also which of two cases this is: a concept looked relevant from `index.md` and did not answer, naming it, or nothing relevant was listed. The first is a description the librarian fixes; the second is a concept it derives.
 
 ### A Disagreement
 

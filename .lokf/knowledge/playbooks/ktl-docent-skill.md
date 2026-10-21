@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T21:26:04Z"
+  at: "2026-10-20T23:23:33Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -27,6 +27,7 @@ sources:
   - resource: skills/ktl-docent/references/answering.md
   - resource: skills/ktl-docent/references/feedback.md
   - resource: skills/ktl-docent/references/obsidian.md
+  - resource: skills/ktl-docent/scripts
   - resource: docs/architecture.md
 status: draft
 ---

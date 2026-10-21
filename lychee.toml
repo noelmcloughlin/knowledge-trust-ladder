@@ -40,9 +40,9 @@ exclude = [
   '^https://docs\.snowflake\.com/',
   # A GitHub issue or pull request page answered a CI runner with 500 past
   # every retry, while the issue was open and the page served 200 elsewhere
-  # (checked 2026-10-14). validate.yml's next step checks each such link
-  # through GitHub's API with the job's own token instead, so a deleted or
-  # moved issue still fails and a page GitHub fails to render does not.
+  # (checked 2026-10-14). The next step in validate.yml checks each such
+  # link through GitHub's API with the job's own token instead, so a deleted
+  # or moved issue still fails and a page GitHub fails to render does not.
   '^https://github\.com/[^/]+/[^/]+/(issues|pull)/[0-9]+',
 ]
 
@@ -58,12 +58,13 @@ exclude_path = [
 ]
 
 # github.com answers automated clients with 503 or 429 on a file page
-# (/blob/) while it serves the repository pages, and on 2026-10-12 it did
-# so to a CI runner and a workstation alike, past every retry above.
-# raw.githubusercontent.com serves the same file at the same commit, tag
-# or branch, and answers 404 once the file is gone, so lychee checks each
-# file link there instead. lychee remaps a link before it applies
-# `exclude`, so an exclusion for a file link must name its raw address.
+# (/blob/) while it serves the repository pages. On 2026-10-12 it did so
+# to a CI runner and a workstation alike, past every retry above. The raw
+# host, raw.githubusercontent.com, serves the same file at the same
+# commit, tag or branch, and answers 404 once the file is gone, so lychee
+# checks each file link there instead. An exclusion for a file link must
+# name its raw address, since lychee remaps a link before it applies
+# `exclude`.
 remap = [
   '^https://github\.com/([^/]+/[^/]+)/blob/([^?#]+)([?#].*)?$ https://raw.githubusercontent.com/$1/$2',
 ]

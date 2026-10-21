@@ -14,7 +14,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-19T20:01:11Z"
+    at: "2026-10-20T23:23:33Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:06:43Z"
   - by: human:noelmcloughlin

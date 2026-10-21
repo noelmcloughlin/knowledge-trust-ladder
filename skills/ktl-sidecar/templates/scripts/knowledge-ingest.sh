@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
-# The ingest's shell half. It runs knowledge-ingest.py beside it through
-# `uv run` (the script's header names pyyaml and pypdf) or, without uv,
-# through python3 with pyyaml. The script reads .lokf/ingest.yaml, mirrors
+# The ingest's shell half. It runs knowledge-ingest.py beside it with the
+# first of these that it finds:
+#   - the sidecar's own .venv, when that holds pyyaml and pypdf;
+#   - `uv run`, since the script's header names both;
+#   - the .venv or python3 with pyyaml alone, which reads every source but a
+#     PDF.
+# knowledge-apply.sh says why the .venv comes first, and why each must be
+# Python 3.9 or later. Behind a mirror that serves no upload times, `uv add
+# pypdf` in .lokf/ puts pypdf in the .venv, so no run needs `uv run`.
+#
+# The script reads .lokf/ingest.yaml, mirrors
 # the sources it names under .lokf/mirror/ and records them in
 # .lokf/ingest.lock.yaml. The ingest workflow runs it with the manifest's
 # secrets and no agent; ktl-librarian runs it in a live session.
@@ -32,16 +40,23 @@ done
 [ -n "$root" ] || root="$(cd "$here/../.." && pwd)"
 py="$here/knowledge-ingest.py"
 [ -f "$py" ] || { echo "knowledge-ingest: $py is missing beside this script; run ktl-sidecar's repair path" >&2; exit 2; }
-# --status reads the manifest and the lock and nothing else, so python3 with
-# pyyaml serves it without uv resolving the script's packages: the preflight
-# calls it on machines that may be offline.
-if [ -n "$status" ] && command -v python3 >/dev/null 2>&1 && python3 -c 'import yaml' >/dev/null 2>&1; then
-  exec python3 "$py" --root "$root" ${args[@]+"${args[@]}"}
+usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c "import sys; assert sys.version_info >= (3, 9); import $2" >/dev/null 2>&1; }
+venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
+# --status reads the manifest and the lock and nothing else, so pyyaml alone
+# serves it without uv resolving the script's packages: the preflight calls it
+# on machines that may be offline.
+if [ -n "$status" ]; then
+  for p in "$venv" python3; do
+    usable "$p" yaml && exec "$p" "$py" --root "$root" ${args[@]+"${args[@]}"}
+  done
 fi
-if command -v uv >/dev/null 2>&1; then
+if usable "$venv" "yaml, pypdf"; then
+  exec "$venv" "$py" --root "$root" ${args[@]+"${args[@]}"}
+elif command -v uv >/dev/null 2>&1; then
   exec uv run --quiet "$py" --root "$root" ${args[@]+"${args[@]}"}
-elif command -v python3 >/dev/null 2>&1 && python3 -c 'import yaml' >/dev/null 2>&1; then
-  exec python3 "$py" --root "$root" ${args[@]+"${args[@]}"}
 fi
-echo "knowledge-ingest: needs uv, which installs pyyaml and pypdf for the script, or python3 with pyyaml; nothing was written. The sidecar's references/prerequisites.md says who installs uv." >&2
+for p in "$venv" python3; do
+  usable "$p" yaml && exec "$p" "$py" --root "$root" ${args[@]+"${args[@]}"}
+done
+echo "knowledge-ingest: needs the sidecar's .venv (uv sync in .lokf/), uv, which installs pyyaml and pypdf for the script, or python3 3.9 or later with pyyaml; nothing was written. The sidecar's references/prerequisites.md says who installs uv." >&2
 exit 2

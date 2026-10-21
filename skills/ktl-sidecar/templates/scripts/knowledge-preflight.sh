@@ -45,9 +45,31 @@ case "$os" in
   *) host="$os" ;;
 esac
 if have sha256sum; then digest="sha256sum"; elif have shasum; then digest="shasum -a 256"; else digest=""; fi
-if have python3; then py=python3; elif have python; then py=python; else py=""; fi
+# Only python3 is probed, because bare `python` is Python 2 on some hosts.
+# The skills' scripts need 3.9 or later, which an enterprise host's python3
+# often is not.
+pyv=""
+have python3 && pyv="$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null)"
 printf 'Preflight for %s\n' "$root"
-ok host "$host, bash ${BASH_VERSION%%(*}; digest: ${digest:-none (macOS: install coreutils, or use uv run python)}; python: ${py:-none (use uv run python)}"
+ok host "$host, bash ${BASH_VERSION%%(*}; digest: ${digest:-none (macOS: install coreutils, or use uv run python)}; python3: ${pyv:-none (use uv run python)}"
+case "$pyv" in
+  2.*|3.[0-8]) warn python "python3 is $pyv and the skills' scripts need 3.9 or later: run each through uv run or the sidecar's .venv, never python3 or python" ;;
+esac
+# The skill's copy of this script, run from the skill's folder or a folder in
+# it, screens the skill, not the host. Step 0 runs it from the host
+# repository's root. A host's own copy sits in .lokf/scripts/. A repository
+# that holds the skill, as the skills repository does, is the skill's parent.
+# Neither is warned about.
+self="$(cd "$(dirname "$0")" 2>/dev/null && pwd -P)"
+case "$self" in
+  */templates/scripts)
+    skill="${self%/templates/scripts}"
+    if [ -f "$skill/SKILL.md" ]; then
+      case "$root/" in
+        "$skill"/*) warn root "$root is in the ktl-sidecar skill's own folder, not a repository to screen: run this from the host repository's root, or pass that root" ;;
+      esac
+    fi ;;
+esac
 
 # ---- bundle ----------------------------------------------------------------
 # Every find takes a trailing slash. A host may have made .lokf/knowledge a
@@ -235,16 +257,28 @@ if [ -n "$found" ]; then
 else
   info skills "no KTL skill installed under .claude/skills, .github/skills, .agents/skills or skills/"
 fi
+# Skills installed for one user serve that user's live sessions. The
+# scheduled librarian runs on a fresh runner and reads only a copy in the
+# repository.
+user=""
+for dir in .claude/skills .copilot/skills .agents/skills; do
+  here=""
+  for s in ktl-sidecar ktl-librarian ktl-curator ktl-docent ktl-prose ktl-website; do
+    [ -f "${HOME:-/nonexistent}/$dir/$s/SKILL.md" ] && here="$here ${s#ktl-}"
+  done
+  [ -n "$here" ] && user="${user}${user:+; }~/$dir:$here"
+done
+[ -z "$user" ] || info skills "user scope: $user; the scheduled librarian needs a copy in the repository"
 
 # ---- host copies of the sidecar's templates ----------------------------------
 # The conventions script runs its Python half, so a host holding the .sh
-# without the .py has a gate that fails outright, not a stale copy. This is
-# reported whether or not a sidecar is installed to compare against. A bundle with no
-# knowledge-feedback.sh is the same kind of gap rather than drift. ktl-docent
-# runs its own copy, but an earlier release runs this one, and without it has
-# to open feedback.md to add an entry, which is the one thing that script
-# exists to stop. A host on a sidecar that predates it should hear so before a
-# reader's first recorded gap, not after.
+# without the .py has a gate that fails, not a stale copy. This is reported
+# whether or not a sidecar is installed to compare against. A bundle with no
+# knowledge-feedback.sh is the same kind of gap rather than drift. A current
+# ktl-docent runs its own copy, but an earlier release runs this one, and
+# without it has to open feedback.md to add an entry, which is the one thing
+# that script exists to stop. A host on a sidecar that predates it should
+# hear so before a reader's first recorded gap, not after.
 script_gaps=""
 if [ -f "$root/.lokf/scripts/knowledge-conventions.sh" ] && [ ! -f "$root/.lokf/scripts/knowledge-conventions.py" ]; then
   script_gaps=".lokf/scripts/knowledge-conventions.py missing beside the .sh, which runs it"
@@ -298,7 +332,7 @@ if [ -f "$root/.lokf/ingest.yaml" ]; then
     case "$status" in
       "ingest: "*"missing from the mirror"*|"ingest: "*"the lock does not name"*) warn ingest "${status#ingest: }" ;;
       "ingest: "*) info ingest "${status#ingest: }" ;;
-      *) info ingest ".lokf/ingest.yaml is here; its status was not read (no uv, or no python3 with pyyaml)" ;;
+      *) info ingest ".lokf/ingest.yaml is here; its status was not read (no .lokf/.venv or python3 3.9 or later with pyyaml, and uv could not run it)" ;;
     esac
   else
     warn ingest ".lokf/ingest.yaml is here but .lokf/scripts/knowledge-ingest.sh is not, so nothing is mirrored - the ktl-sidecar repair lays it down"

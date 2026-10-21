@@ -99,7 +99,7 @@ def half_installed(tmp_path):
 
 
 def test_warns_when_the_conventions_parser_is_missing_beside_the_shell_half(half_installed):
-    """A host with that gate fails outright, so the preflight says so even with no sidecar installed."""
+    """On such a host the gate fails, so the preflight says so even with no sidecar installed."""
     result = preflight(half_installed)
     assert result and matches(result.out, r"^warn    copies .*knowledge-conventions\.py missing"), (
         f"preflight did not report the missing knowledge-conventions.py: {result.out}"
@@ -159,3 +159,48 @@ def test_run_under_sh_stops_and_names_bash(script):
     result = run(["sh", SCRIPTS / script, "x"])
     assert not result, f"{script} run under sh did not stop: {result.out}"
     assert matches(result.out, r"^run this with bash"), f"{script} run under sh failed some other way: {result.out}"
+
+
+def test_warns_about_a_python3_older_than_the_scripts_need(tmp_path):
+    fake = write(tmp_path / "fakebin" / "python3", "#!/bin/sh\necho 3.6\n")
+    fake.chmod(0o755)
+    result = preflight(tmp_path / "fakebin", env={"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}"})
+    assert result and matches(result.out, r"^warn    python +python3 is 3\.6 .*uv run"), (
+        f"preflight did not warn about python3 3.6: {result.out}"
+    )
+
+
+def test_warns_when_it_screens_the_sidecar_skill_itself(tmp_path):
+    """A skill installed for one user sits outside every repository, so run from its folder the preflight screens that folder."""
+    skill = tmp_path / "ktl-sidecar"
+    write(skill / "SKILL.md", "---\nname: ktl-sidecar\n---\n")
+    shutil.copy(PREFLIGHT, write(skill / "templates" / "scripts" / "knowledge-preflight.sh", ""))
+    result = bash(skill / "templates" / "scripts" / "knowledge-preflight.sh", cwd=skill)
+    assert result and matches(result.out, r"^warn    root .*skill's own folder"), (
+        f"preflight screened the ktl-sidecar skill as if it were the host: {result.out}"
+    )
+
+
+def test_names_skills_installed_for_one_user(tmp_path):
+    home = tmp_path / "home"
+    write(home / ".copilot" / "skills" / "ktl-prose" / "SKILL.md", "---\nname: ktl-prose\n---\n")
+    result = preflight(tmp_path, env={"HOME": home})
+    assert result and matches(result.out, r"^info    skills +user scope: ~/\.copilot/skills: prose; the scheduled librarian"), (
+        f"preflight did not name a skill installed for one user: {result.out}"
+    )
+
+
+def test_warns_when_run_from_a_folder_inside_the_sidecar_skill(tmp_path):
+    skill = tmp_path / "ktl-sidecar"
+    write(skill / "SKILL.md", "---\nname: ktl-sidecar\n---\n")
+    script = write(skill / "templates" / "scripts" / "knowledge-preflight.sh", "")
+    shutil.copy(PREFLIGHT, script)
+    result = bash(script, cwd=script.parent)
+    assert result and matches(result.out, r"^warn    root .*skill's own folder"), (
+        f"preflight screened a folder inside the ktl-sidecar skill as if it were the host: {result.out}"
+    )
+
+
+def test_a_repository_that_holds_the_skill_is_not_the_skill():
+    result = preflight(".", cwd=REPO)
+    assert result and not matches(result.out, r"^warn    root "), f"preflight took the skills repository for the skill: {result.out}"

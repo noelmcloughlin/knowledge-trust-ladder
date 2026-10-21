@@ -2,11 +2,12 @@ name: Knowledge federation
 
 # Builds the workspace of a domain host: the graph of every bundle the
 # domain's member concepts name, one named graph per bundle, from their
-# released zips. .lokf/scripts/knowledge-federate.py does the work (resolve
-# a lock, fetch and verify each zip, register and export each bundle with
-# the lokf toolkit, load, gate the links that cross bundles, swap), and this
-# workflow runs it, publishes the result, and keeps the site current. It
-# runs no LLM or agent, and it never commits or pushes.
+# released zips. The script .lokf/scripts/knowledge-federate.py does the
+# work: it resolves a lock, fetches and verifies each zip, registers and
+# exports each bundle with the lokf toolkit, loads, gates the links that
+# cross bundles, and swaps. This workflow runs it, publishes the result,
+# and keeps the site current. It runs no LLM or agent, and it never commits
+# or pushes.
 #
 # Four jobs, each for one event, each with the least it needs:
 #
@@ -24,8 +25,8 @@ name: Knowledge federation
 #
 #   build     a release of this repository, or a dispatch naming one: build
 #             the workspace from the tag, holding a member whose release
-#             cannot be fetched as the previous release's workspace holds it,
-#             write what changed since that workspace for the release notes,
+#             cannot be fetched as the previous release's workspace holds it.
+#             Write what changed since that workspace for the release notes,
 #             build the website when there is one, and hand both to
 #             `publish` as artifacts. A push to the default branch rebuilds
 #             the website alone and reuses the newest released workspace, so
@@ -76,7 +77,7 @@ on:
 
 permissions: {} # deny by default; each job requests only the scopes it needs
 
-# A run that waits in a group gives way to the next run of that group, so
+# A run that waits in a group gives way to the next run of that group. So
 # the weekly schedule, which only starts the librarian, waits in a group of
 # its own and never takes the place of a release build.
 concurrency:
