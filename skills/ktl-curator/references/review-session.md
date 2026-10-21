@@ -247,6 +247,14 @@ Do not add a bullet to the nearest `index.md`. That file is the librarian's, and
 
 **Git-tracked `.lokf/`.** Prepare a pull request scoped to `.lokf/`, titled "Curation: <date>", and open it only when the person says so, since it is theirs to submit. Its body holds the health line before and after, the verbs taken, and the `just lokf-validate` output (or "validation skipped - no `uv`"). The `knowledge-registrar.yaml` gate, if installed, runs on it, including its `provenance` job, which re-checks every `human:` event the pull request adds.
 
+Commit the verdicts in a commit of their own, signed, on top of the commit that changed the concepts, and never amend them into it. The registrar's conventions check reads each commit of the pull request (rule 14), and fails one that records a person's confirmation and also changes what the concept says. The squash merge afterwards is fine, because the gate runs on the pull request. Before you push, run the check as the gate does, from `.lokf/`, naming the pull request's base branch:
+
+```bash
+bash scripts/knowledge-conventions.sh knowledge --since "$(git merge-base origin/main HEAD)"
+```
+
+Without `--since`, the script skips rule 14, so a run that passes here can still fail at the gate.
+
 Each named person must have approved the pull request or, when the pull request is their own, have signed its commits, since GitHub will not let authors approve themselves. Tell the person plainly that the pull request needs their approval or signature before the confirmations they just gave will pass. If they are the repository's only maintainer, tell them that GitHub will not let them approve their own pull request, so signing their commits is the path (ktl-sidecar's `references/gate.md` has the three-line setup). That is the gate working, not a fault in it. It is what makes their confirmation something a later reader can check rather than take on faith.
 
 **Gitignored `.lokf/`.** There is no diff to show; hand the person the list of changed files and the health line instead.

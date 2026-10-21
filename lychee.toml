@@ -22,6 +22,9 @@ exclude = [
   # re-check these by hand on the bundle's refresh, not here.
   '^https://doi\.org/',
   '^https://www\.parliament\.uk/',
+  # bis.org answers automated clients with 403, even with a browser's user
+  # agent; the Internet Archive serves the same PDF (checked 2026-10-22).
+  '^https://www\.bis\.org/',
   # conventionalcommits.org (Netlify) answers CI runners with 503 on every
   # retry while serving 200 elsewhere; not a dead link. Drop this exclusion
   # if CI reaches it again.
