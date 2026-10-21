@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T20:01:11Z"
+  at: "2026-10-20T23:23:33Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -33,6 +33,7 @@ The pen:
 - stamps `generated` from the clock;
 - keeps a concept's `description` equal to its two index bullets;
 - files each line in `log.md`;
+- runs `lokf validate` on every concept a patch would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit (0.55.0);
 - moves a feedback entry the librarian handled into `.lokf/questions.md`, ten to a patch at most.
 
 It refuses a `human:` actor, a rewrite of text a person wrote, and the deletion of a concept a person confirmed or left a note on. It also refuses a patch after which any concept it writes would hold a person's record other than the one the file held. That covers a `human:` event or a person's note added, changed or removed, however the operations spelt it.

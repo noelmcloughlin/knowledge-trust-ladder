@@ -24,7 +24,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-19T23:21:13Z"
+    at: "2026-10-20T23:23:33Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:19:37Z"
 status: draft

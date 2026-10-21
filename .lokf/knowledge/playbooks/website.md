@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-20T23:23:33Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -83,7 +83,7 @@ Both commands run `npm run sync` first. The sync runs `lokf export` from the sid
 
 The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, and runs npm's and the toolkit's packages, and the repository's own site code, under a read-only token. It installs the site's packages with `npm ci --ignore-scripts` and builds with Astro's telemetry off. `deploy` runs harden-runner and GitHub's own deploy-pages action and nothing else, and holds the Pages scopes. It runs for the default branch only, and the scheduled run deploys too, once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Before setting the variable, a maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
 
-The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records. The two typefaces, Source Serif 4 for headings and Atkinson Hyperlegible Next for text, are self-hosted from Fontsource under the SIL Open Font License 1.1.
+The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records. Since 0.54.0 its search and filters sit in a side panel beside a graph that keeps its full height in full screen, and each filter shows a count, with *All* and *None* on each group (`CHANGELOG.md`). The two typefaces, Source Serif 4 for headings and Atkinson Hyperlegible Next for text, are self-hosted from Fontsource under the SIL Open Font License 1.1.
 
 ## Open questions
 
