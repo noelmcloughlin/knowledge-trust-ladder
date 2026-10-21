@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.55.1] - 2026-10-21
+
 ### Fixed
 
 - **A sync reaches a host with a website again.** Since 0.53.0 it stopped at `src/pages/og/[...route].ts`, because its website step refused square brackets in a path; it now allows the same characters as `--apply`.
