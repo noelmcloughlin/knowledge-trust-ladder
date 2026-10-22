@@ -25,7 +25,7 @@ uv run gen-doc -d docs domain.yaml                        # browsable reference 
 uv run gen-shacl       domain.yaml                        # shapes for the projected graph
 ```
 
-The same schema serves the people who think in JSON, Python, or docs pages and the people who think in graphs. That is the point of writing it in LinkML rather than in any one of those. If your sidecar pins plain `lokf` without the `[build]` extra, add the extra rather than installing `linkml` separately, so the two stay version-compatible.
+The same schema serves the people who think in JSON, Python, or docs pages and the people who think in graphs. That is the point of writing it in LinkML rather than in any one of those. If your sidecar pins plain `lokf` without the `[build]` extra, add the extra rather than installing `linkml` separately, so the two stay version-compatible. A domain schema that grows past a few classes earns a project of its own, with lint, tests and a docs site: the [linkml-sidecar](https://github.com/noelmcloughlin/linkml-sidecar) skills install one beside the bundle, or around a schema the repository already holds, and their linkml-author skill knows what `lokf validate` expects of a domain schema.
 
 ## When the domain already has a schema
 
