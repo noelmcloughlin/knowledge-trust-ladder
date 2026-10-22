@@ -128,6 +128,13 @@ That pair was made for this page. The two passes show the rule as a pattern: eac
 
 A pointing word is a name too. "Here", "there", "this half" and "that" each stand for a file or a part of one, and each is one more name for the reader to resolve. In a comment, name the file or the half. In one script the Python half had four names and the shell half three, and no sentence read wrong on its own.
 
+"Either way", "regardless" and "in both cases" point at alternatives, and the reader must be able to find them: in the same paragraph, or as the items of the list or the subsections the sentence closes. A README used "either way" after a section called "Three cases", and no reader could say which two it meant. The repair is to name the cases, or to cut the sentence when the page states its fact elsewhere (rule 10).
+
+```text
+Before: linkml-author works on the schema either way.
+After:  linkml-author works on the schema with or without the sidecar.
+```
+
 It does not give way. When the repetition grates, restructure the sentence.
 
 ## 9. Choose the plain word, and define a term where it first appears
@@ -151,7 +158,7 @@ Before: `base_iri` plus a concept's path mints its IRI. Never remove these keys,
 After:  A concept's IRI is `base_iri` plus its path. Never remove these keys, and never build IRIs in a URL space the project does not control.
 ```
 
-The third pass replaced the figures below. The script reports the words of the first five rows as `words`, since none is literal in a technical text. The words of the last four have literal uses too, so a reader decides.
+The third pass replaced the figures below. The script reports the words of the first five rows as `words`, since none is literal in a technical text. The words of the last five have literal uses too, so a reader decides. The last row names a place by a posture, and a reader whose first language is not English can take "lies" for the other verb.
 
 | Figure | Say instead |
 | --- | --- |
@@ -164,6 +171,7 @@ The third pass replaced the figures below. The script reports the words of the f
 | "travels with", "reads off" | "is uploaded with", "checks on" or "finds on" |
 | "holds every other hand to the same" | "asks the same of every other writer" |
 | "door", "through one door" | the way in, by its name, or "in one way only" |
+| "where it lies", "where it stands", "untouched where it lies" | "in place", "in the same file", or name the folder; for a thing neither moved nor changed, say both |
 
 The quiet figures are the ones a writer does not see. A rule "goes to" a half, a key "comes first", a script "hands" a file to another. Each makes the program a place and its parts things that travel, and asks the reader to turn the journey back into the action. Rule 1 is the test and the repair: name the actor and the literal verb, as in "the Python half checks rule 4" and "the .venv is tried first". Most of these are phrasal verbs, which Thrush's study found a non-native reader can misread, and Microsoft's guidance for a worldwide audience asks writers to avoid such idioms. The script lists none of them: "go", "come" and "hand" are literal too often.
 
@@ -193,7 +201,16 @@ A later reading added two words to the list. "Outright" is an intensifier, and P
 
 That pass also measured what a rewording does to length. It cleared 305 of the script's 312 findings, and the text went from 15,526 words to 15,688. A fragment given its verb, and "pull request" written for "PR", cost more words than the cuts saved. The 7 findings left sit under `## Open questions`, which a rewording never touches.
 
-It gives way to a hedge that states a real condition: "usually" is a fact when the exception exists. The second pass kept "actually", "really", "simply" and "just" wherever they carried a contrast, so the script lists none of them.
+A sentence can carry nothing too. One kind repeats what the page already says. An install page that follows its commands with "The commands above install for your user." has said so in the commands, and a README that names a doorway once and then narrates it ("open the link itself, never the host root") has told the reader twice. Another kind gives a reason the reader can supply. Cut a sentence only when every fact in it is stated elsewhere on the same page, in words you can point at. When a fact is merely something the reader could work out, keep the sentence and report it under rule 13, since whether a newcomer could work it out is the author's call. The opening sentence of a page is never the one cut (rule 12), and in the bundle a body that repeats its `description` is doing what rule 12 asks.
+
+```text
+Before: Open the `knowledge_bundle` link as a vault. Open the link itself, never the host root, because the link is what points at the bundle.
+After:  Open the `knowledge_bundle` link as a vault.
+```
+
+A pass that cuts sentences still adds words elsewhere, as the fourth pass's figures show, so a shorter page is not the aim. A page that says each thing once is.
+
+It gives way to a hedge that states a real condition: "usually" is a fact when the exception exists. The second pass kept "actually", "really", "simply" and "just" wherever they carried a contrast, so the script lists none of them. It gives way to a sentence repeated on purpose for a reader who skims, such as a warning before the step it guards, which is rule 4's exception.
 
 ## 11. Say what is, and what to do
 
@@ -229,6 +246,8 @@ Exact:  Provide 20 spare tiles of each type used, including all variations in co
 ```
 
 Report a vague quantity, a sentence you cannot parse and a claim that looks wrong, each with its line. Leave the text as it is, and never guess. A wrong fact in a concept is ktl-librarian's to correct from the source.
+
+Two more cases go in the report, because only the author can settle them. One is a quantity no source on the page gives: "a repository that holds a schema but no project, which is most of them" counts something nobody counted, and the author either has the count or cuts the clause. The other is a phrase that stands for a list the text never gives: "both skills find the schema by what files say" stands for the three files the skills look for, and the author either names them or points at the page that does. In the bundle the source may hold the count or the list, and ktl-librarian carries it over.
 
 Plain wording is no proof of a true claim. Paul Graham argues that writing which sounds good is more likely to be right, because the writer who repairs a clumsy sentence often has to repair the idea in it. He limits that to writing used to develop ideas. A copy editor who smooths another's sentence gets the sound without the repair.
 
