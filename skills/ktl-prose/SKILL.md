@@ -36,7 +36,7 @@ A text for a younger reader is a retelling, not a rewording: it leaves detail ou
 7. Turn a run of conditions or steps into a list, every item in the same form.
 8. Use the same word for the same thing every time.
 9. Choose the plain word, and say literally what happens: a key is "added", not "landed". Keep each technical term exact, define a term where it first appears, and write abbreviations out.
-10. Cut words that carry nothing. Keep a hedge that states a real condition.
+10. Cut words, and sentences, that carry nothing. Keep a hedge that states a real condition.
 11. Say what is, and what to do. Keep a prohibition that guards something.
 12. Open each page by saying who it is for and what it gives them.
 13. Report what you cannot fix. Never guess.
@@ -96,7 +96,7 @@ The check script is `scripts/prose-check.py` in this skill's directory, which th
    uv run <skill>/scripts/prose-check.py <files>
    ```
 
-3. Read those files. Only a reader sees a late verb, a reason given before its step, two names for one thing, or a figure of speech the script does not list.
+3. Read every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows.
 
 An `unseen` finding is a character no reader sees, such as a zero-width space or a right-to-left override. Delete it in Step 2 where you may reword. In code, in a quotation or in a concept you may not touch, report it with its line and leave it.
 
@@ -144,7 +144,7 @@ uv run <skill>/scripts/prose-check.py --against HEAD <files>     # a file git al
 uv run <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied in Step 2
 ```
 
-A **finding** names something other than wording that differs: a number, a link, a code span, an inline HTML tag, a quotation, or a fenced block. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a character no reader sees that the rewording added. Undo what it names. A rewording has no reason to change any of them. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
+A **finding** names something other than wording that differs: a number, a link, a code span, an inline HTML tag, a quotation, or a fenced block. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a character no reader sees that the rewording added. Undo what it names. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
 
 A **note** asks you to look again. It names a number, a day or a month written as a word, a `must` or a `not` that came or went, or a text that grew or lost more than a fifth of its words. When nothing but the wording differs, the `OK` line gives the words before and after.
 

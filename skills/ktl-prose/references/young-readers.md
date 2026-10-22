@@ -10,7 +10,7 @@ ktl-prose makes three kinds of change, and each has its own rules.
 
 - **A retelling** is a new text for readers in a band of ages. It leaves detail out, explains each term and may reorder what it keeps. It never says what the original does not say.
 
-- **A pass for dyslexic readers** is a rewording under tighter limits. A dyslexic reader needs every fact, so the pass keeps them all and changes the page where it stands.
+- **A pass for dyslexic readers** is a rewording under tighter limits. A dyslexic reader needs every fact, so the pass keeps them all and changes the page in place.
 
 A retelling leaves facts out and adds explanations, and a rewording must never do either. So a retelling is always a new file, linked to the original, and the original stays as it is.
 
@@ -146,7 +146,7 @@ ktl-prose writes the retelling itself, in a live session, in a new file beside o
 
 ## The pass for dyslexic readers
 
-A pass for dyslexic readers is a rewording at the `dyslexia` limits: the same facts, in shorter sentences and paragraphs, where the page stands. Run the style check with `--audience dyslexia` before and after, and prove the rewording with `--before` or `--against` as Step 3 says. In the bundle it covers the concepts Step 1 marks `rewrite`. Outside the bundle it covers a file a person names, at the cost [other-files.md](other-files.md#before-you-reword-a-source) describes.
+A pass for dyslexic readers is a rewording at the `dyslexia` limits: the same facts, in shorter sentences and paragraphs, in the same file. Run the style check with `--audience dyslexia` before and after, and prove the rewording with `--before` or `--against` as Step 3 says. In the bundle it covers the concepts Step 1 marks `rewrite`. Outside the bundle it covers a file a person names, at the cost [other-files.md](other-files.md#before-you-reword-a-source) describes.
 
 Two rules join the thirteen, because a dyslexic reader meets crowded text as a barrier:
 

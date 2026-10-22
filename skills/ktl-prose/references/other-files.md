@@ -46,7 +46,7 @@ A person may ask for a version of a file for younger readers, such as a README f
 
 A new file costs the bundle nothing beyond that one sentence, because no concept rests on it yet. A file this page says you never touch is never retold either.
 
-For dyslexic readers there is no second file. Reword the original where it stands, at the `dyslexia` limits in [young-readers.md](young-readers.md#the-pass-for-dyslexic-readers).
+For dyslexic readers there is no second file. Reword the original in place, at the `dyslexia` limits in [young-readers.md](young-readers.md#the-pass-for-dyslexic-readers).
 
 ## Line breaks
 
