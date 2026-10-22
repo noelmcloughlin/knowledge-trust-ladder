@@ -204,3 +204,20 @@ def test_warns_when_run_from_a_folder_inside_the_sidecar_skill(tmp_path):
 def test_a_repository_that_holds_the_skill_is_not_the_skill():
     result = preflight(".", cwd=REPO)
     assert result and not matches(result.out, r"^warn    root "), f"preflight took the skills repository for the skill: {result.out}"
+
+
+def test_warns_when_the_lock_was_made_against_another_index(tmp_path):
+    host = tmp_path / "host"
+    write(host / ".lokf" / "uv.lock", '[[package]]\nname = "lokf"\nsource = { registry = "https://pypi.org/simple" }\n')
+    # uv's settings come from the environment and a user uv.toml, so the test
+    # runs with neither, and with an empty configuration folder.
+    clean = {"unset": ("UV_DEFAULT_INDEX", "UV_INDEX_URL")}
+    config = {"XDG_CONFIG_HOME": tmp_path / "config"}
+    result = run(["bash", PREFLIGHT, host], env={**config, "UV_DEFAULT_INDEX": "https://reader:s3cret@nexus.example/repository/pypi/simple"}, **clean)
+    assert result and matches(result.out, r"^warn    lock         \.lokf/uv\.lock was made against pypi\.org, and uv here reads nexus\.example "), (
+        f"preflight did not say the lock names another index than uv reads: {result.out}"
+    )
+    assert "s3cret" not in result.out and "reader" not in result.out, f"preflight printed an index URL's credentials: {result.out}"
+    write(tmp_path / "config" / "uv" / "uv.toml", '[[index]]\nname = "corp"\nurl = "https://pypi.org/simple"\ndefault = true\n')
+    result = run(["bash", PREFLIGHT, host], env=config, **clean)
+    assert result and not matches(result.out, r"^warn    lock"), f"preflight warned about a lock made against the index uv reads: {result.out}"

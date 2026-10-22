@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The preflight asks the package index uv reads**, a company mirror included, and prints only its host name. It warns when `.lokf/uv.lock` was made against another index, since `uv sync --locked` then fails and `uv sync` rewrites the lock.
+- **The sidecar's portability page says what a mirror does to the lock**, and how a proxy that inspects TLS gets its certificate trusted by uv.
+
 ## [0.55.1] - 2026-10-22
 
 ### Fixed
