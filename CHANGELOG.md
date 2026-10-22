@@ -4,6 +4,13 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **ktl-prose reads every file in scope, the ones its script cleared too.** Its rules now name the dead sentence, a quantity no source gives, and "either way" with no alternatives named.
+- **ktl-curator commits a verdict apart from the change it confirms**, as conventions rule 14 checks.
+- **ktl-librarian's domain-schema page brings a published vocabulary in with `lokf adapt`.**
+- **The website template takes Astro 7.4.0** and the patch releases of its plugins.
+
 ## [0.55.1] - 2026-10-21
 
 ### Fixed
