@@ -62,7 +62,7 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
    The schema need not sit beside the bundle. The variable takes any path relative to `.lokf/`, and the schema's own `imports:` entry names `lokf.yaml` relative to the schema file. Three layouts recur:
 
-   - **A linkml-sidecar.** A host that wants the full LinkML toolchain for the schema (lint, generators, docs, tests, `copier update`) installs the [linkml-sidecar](https://github.com/noelmcloughlin/linkml-sidecar) skill. It writes the schema as `.linkml/src/<slug>/schema/<slug>.yaml`, imports `.lokf/lokf.yaml` from there, and sets `schema := "../.linkml/src/<slug>/schema/<slug>.yaml"` itself.
+   - **A linkml-sidecar.** A host that wants the full LinkML toolchain for the schema (lint, generators, docs, tests, `copier update`) installs the [linkml-sidecar](https://github.com/noelmcloughlin/linkml-sidecar#install) skill. It writes the schema as `.linkml/src/<slug>/schema/<slug>.yaml`, imports `.lokf/lokf.yaml` from there, and sets `schema := "../.linkml/src/<slug>/schema/<slug>.yaml"` itself.
    - **A schema project at the root.** A repository that is itself a LinkML schema project, made with copier at its root, sets `schema := "../src/<slug>/schema/<slug>.yaml"`.
    - **A schema anywhere else.** A schema the repository keeps elsewhere sets the path to that file.
 
