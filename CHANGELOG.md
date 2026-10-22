@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.55.2] - 2026-10-22
+
 ### Fixed
 
 - **The preflight asks the package index uv reads**, a company mirror included, and prints only its host name. It warns when `.lokf/uv.lock` was made against another index, since `uv sync --locked` then fails and `uv sync` rewrites the lock.
