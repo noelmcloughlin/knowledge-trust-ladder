@@ -81,7 +81,7 @@
       // The pointer may have moved on while the index loaded.
       if (!preview || current !== a) return;
       card.innerHTML = [
-        `<p class="ktl-preview__head"><span class="ktl-card__type">${escapeHtml(preview.type)}</span>${preview.genre ? ` · ${escapeHtml(preview.genre)}` : ""}</p>`,
+        `<p class="ktl-preview__head"><span class="ktl-card__type">${escapeHtml(preview.type)}</span>${preview.genre && preview.genre.toLowerCase() !== preview.type.toLowerCase() ? ` · ${escapeHtml(preview.genre)}` : ""}</p>`,
         `<p class="ktl-preview__title">${escapeHtml(preview.title)}</p>`,
         `<p><span class="ktl-label ktl-label--${escapeHtml(preview.tone)}">${escapeHtml(preview.label)}</span></p>`,
         ...(preview.definition ? [`<p class="ktl-preview__definition">${inline(preview.definition)}</p>`] : []),

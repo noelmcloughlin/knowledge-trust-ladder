@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **ktl-website's card head names a field once.** The genre stands after a lower-case "genre" key, and a genre that repeats the type is left off the card, the link preview and the social card.
+
 ## [0.56.1] - 2026-10-24
 
 ### Fixed
