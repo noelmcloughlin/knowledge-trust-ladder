@@ -24,13 +24,17 @@ const clip = (text: string, max = 160) => {
   return cut.slice(0, cut.lastIndexOf(" ")) + "…";
 };
 
+// The type, and the genre when it is not the type's own word.
+const typeLine = ({ typeName, genre }: { typeName: string; genre?: string }) =>
+  genre && genre.toLowerCase() !== typeName.toLowerCase() ? `${typeName} · ${genre}` : typeName;
+
 export const { getStaticPaths, GET } = await OGImageRoute({
   param: "route",
   pages: CARD_PAGES,
   getImageOptions: (_path, page: (typeof CARD_PAGES)[string]) => ({
     title: page.title,
     description: page.lokf
-      ? `${page.lokf.label.charAt(0).toUpperCase()}${page.lokf.label.slice(1)}\n${[page.lokf.typeName, page.lokf.genre].filter(Boolean).join(" · ")}\n${page.lokf.id} · ${TITLE}`
+      ? `${page.lokf.label.charAt(0).toUpperCase()}${page.lokf.label.slice(1)}\n${typeLine(page.lokf)}\n${page.lokf.id} · ${TITLE}`
       : `${clip(page.description ?? "")}\n${TITLE}`,
     bgGradient: [[253, 252, 250]],
     border: { color: page.lokf ? EDGE[page.lokf.tone] : GREEN, width: 24, side: "inline-start" },
