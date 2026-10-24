@@ -94,6 +94,11 @@ h1#_top,
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+/* The type reads a step above the genre and tags beside it. */
+.ktl-card__type {
+  color: var(--sl-color-gray-2);
+  font-weight: 600;
+}
 .ktl-card__tag::before {
   content: "\00b7";
   margin-inline: 0.5em;
