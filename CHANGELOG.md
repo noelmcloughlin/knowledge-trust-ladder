@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **ktl-website's cards show a concept's genre.** The concept card and the link preview give the genre beside the type, the social card gives both, and search gains a Genre filter.
+- **ktl-website words a type as the bundle spells it.** A word the bundle's prose writes with capitals keeps them, so `SlsaSourceControlSystem` reads "SLSA source control system" on every card and in relation names.
+
 ## [0.56.1] - 2026-10-24
 
 ### Fixed

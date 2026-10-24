@@ -1,5 +1,5 @@
 // A social card for every page the sync wrote: its title in the book face,
-// and for a concept its trust label and ID beside an edge in its trust
+// and for a concept its trust label, type, genre and ID beside an edge in its trust
 // colour, theme.css's light chart steps. The fonts are read from the
 // installed packages, relative to the site's folder, so the build fetches
 // nothing.
@@ -30,7 +30,7 @@ export const { getStaticPaths, GET } = await OGImageRoute({
   getImageOptions: (_path, page: (typeof CARD_PAGES)[string]) => ({
     title: page.title,
     description: page.lokf
-      ? `${page.lokf.label.charAt(0).toUpperCase()}${page.lokf.label.slice(1)}\n${page.lokf.id} · ${TITLE}`
+      ? `${page.lokf.label.charAt(0).toUpperCase()}${page.lokf.label.slice(1)}\n${[page.lokf.typeName, page.lokf.genre].filter(Boolean).join(" · ")}\n${page.lokf.id} · ${TITLE}`
       : `${clip(page.description ?? "")}\n${TITLE}`,
     bgGradient: [[253, 252, 250]],
     border: { color: page.lokf ? EDGE[page.lokf.tone] : GREEN, width: 24, side: "inline-start" },

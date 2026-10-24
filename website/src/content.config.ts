@@ -21,6 +21,10 @@ const concept = z.object({
   id: z.string(),
   iri: z.string(),
   type: z.string(),
+  // The type as words, as the cards show it.
+  typeName: z.string(),
+  // The Diátaxis genre, which the card shows beside the type.
+  genre: z.string().optional(),
   group: z.string(),
   status: z.string().optional(),
   label: z.string(),

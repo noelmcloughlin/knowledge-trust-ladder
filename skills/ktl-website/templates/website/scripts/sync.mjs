@@ -338,10 +338,56 @@ function audienceOf(data) {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/** A relation slot's name as words, so derivedFrom reads "Derived from". */
-function slotName(slot) {
-  const words = slot.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ").toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
+// How the bundle's prose spells a word with a capital past its first letter,
+// such as SLSA or GitHub, by the word in lower case. A name gives no sign
+// that Slsa is an acronym, so the prose decides. Found before any name is
+// worded.
+let spellings = new Map();
+
+/**
+ * The spellings the bundle's titles, descriptions, definitions and bodies
+ * use, leaving out code, links and addresses. A spelling counts only where it
+ * is at least as common as the word in lower case, so "it" never reads "IT".
+ */
+function findSpellings(concepts) {
+  const counts = new Map();
+  for (const c of concepts) {
+    const prose = [c.data.title, c.data.description, c.data.definition, c.body]
+      .filter(Boolean)
+      .join("\n")
+      .replace(/^(`{3,}|~{3,})[^]*?^\1/gm, "")
+      .replace(/`[^`]*`/g, "")
+      .replace(/\]\([^)]*\)/g, "]")
+      .replace(/<?https?:\/\/\S+/g, "");
+    for (const word of prose.match(/[A-Za-z][A-Za-z0-9]*/g) ?? []) {
+      const key = word.toLowerCase();
+      if (!counts.has(key)) counts.set(key, new Map());
+      counts.get(key).set(word, (counts.get(key).get(word) ?? 0) + 1);
+    }
+  }
+  const found = new Map();
+  for (const [key, forms] of counts) {
+    const [best, n] = [...forms].filter(([w]) => /^.+[A-Z]/.test(w)).sort((a, b) => b[1] - a[1])[0] ?? [];
+    if (best && n >= (forms.get(key) ?? 0)) found.set(key, best);
+  }
+  return found;
+}
+
+/**
+ * A class or slot name as words, so derivedFrom reads "Derived from" and
+ * SlsaSourceControlSystem "SLSA source control system": a word the name
+ * writes in capitals keeps them, and so does one the prose spells with them.
+ * Within a sentence, the first word takes no capital of its own.
+ */
+function slotName(slot, { inSentence = false } = {}) {
+  const words = slot
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .split(/[\s_]+/)
+    .filter(Boolean)
+    .map((w) => spellings.get(w.toLowerCase()) ?? (/^[A-Z0-9]{2,}$/.test(w) ? w : w.toLowerCase()));
+  const text = words.join(" ");
+  return !inSentence && words[0] === words[0]?.toLowerCase() ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }
 
 function githubFile(repoPath) {
@@ -394,6 +440,7 @@ function buildConcepts(exported, labels) {
     const label = labels.get(id) ?? "nobody has checked this yet";
     return { id, iri, data, body, text, label, tone: toneOf(label), title: String(data.title ?? id) };
   });
+  spellings = findSpellings(concepts);
   const byIri = new Map(concepts.map((c) => [c.iri, c]));
   const linkTo = (iri) => {
     const c = byIri.get(iri);
@@ -423,6 +470,8 @@ function buildConcepts(exported, labels) {
       id: c.id,
       iri: c.iri,
       type: String(c.data.type ?? "Concept"),
+      typeName: slotName(String(c.data.type ?? "Concept")),
+      ...(c.data.genre ? { genre: String(c.data.genre) } : {}),
       group: c.id.includes("/") ? c.id.split("/")[0] : "",
       ...(c.data.status ? { status: String(c.data.status) } : {}),
       label: c.label,
@@ -448,7 +497,7 @@ function buildConcepts(exported, labels) {
       })),
       incoming: edges
         .filter((e) => e.target === c.iri && byIri.has(e.source))
-        .map((e) => ({ name: slotName(e.slot ?? e.predicate).toLowerCase(), from: linkTo(e.source) }))
+        .map((e) => ({ name: slotName(e.slot ?? e.predicate, { inSentence: true }), from: linkTo(e.source) }))
         .sort((a, b) => a.from.text.localeCompare(b.from.text)),
       ...(licence ? { licence: licenceOf(licence) } : {}),
       // The graph explorer opened on this concept; the id keeps its slashes.
@@ -565,7 +614,7 @@ const labelSpan = (c) => `<span class="ktl-label ktl-label--${c.tone}">${c.label
 
 /**
  * What a link to a concept shows before the reader follows it: the title,
- * the type, the trust label and the definition, by concept id, for
+ * the type and genre, the trust label and the definition, by concept id, for
  * src/components/ConceptPreviews.astro to read. The definition keeps its
  * code spans, as the card shows them; the description stands in without one.
  */
@@ -579,7 +628,8 @@ function writePreviews(concepts) {
           c.id,
           {
             title: c.title,
-            type: slotName(c.record.type),
+            type: c.record.typeName,
+            ...(c.record.genre ? { genre: c.record.genre } : {}),
             label: c.label,
             tone: c.tone,
             ...(definition ? { definition: String(definition) } : {}),
@@ -644,7 +694,7 @@ function writeOverview(root, concepts, health) {
     `- [datasets.jsonld](${k}/datasets.jsonld): a schema.org Dataset description for each Dataset or Table concept.`,
     `- [index.md](${k}/index.md): the bundle's root file, which declares the header above.`,
     `- [log.xml](${k}/log.xml): the [bundle log](${k}/log/) as an Atom feed, its newest ${FEED_DAYS} days.`,
-    `- [previews.json](${k}/previews.json): each concept's title, type, trust label and definition, which a link to the concept shows before it is followed.`,
+    `- [previews.json](${k}/previews.json): each concept's title, type, genre, trust label and definition, which a link to the concept shows before it is followed.`,
     `- Each concept page links the concept's own Markdown file and its JSON-LD, at the concept's path with \`.md\` or \`.jsonld\` added.`,
     ...(existsSync(resolve(REPO_ROOT, ".github", "workflows", "knowledge-release.yaml"))
       ? [`- The bundle as it stood at each release is a zip on the [releases page](${REPO_URL}/releases).`]
@@ -1156,7 +1206,7 @@ function writeLlmsFullTxt(concepts, root) {
       `## ${c.title}`,
       "",
       `- Label: ${c.label}`,
-      `- Type: ${slotName(c.record.type)}`,
+      `- Type: ${c.record.typeName}`,
       `- Address: ${c.iri}`,
       `- Page: ${page}`,
       `- Markdown: ${SITE_URL}/knowledge/${c.id}.md`,
