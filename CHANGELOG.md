@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.56.0] - 2026-10-24
+
 ### Added
 
 - **ktl-website keeps old addresses and leaves a folder out.** `REDIRECTS` redirects an old address, such as a retired mkdocs site's `/elements/<Term>/`, to its page, and `DOCS.exclude` keeps a path such as `templates-linkml/` off the site.
