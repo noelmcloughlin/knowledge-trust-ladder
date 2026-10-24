@@ -35,8 +35,11 @@ export const REPO = required("REPO");
 export const REPO_URL = `https://github.com/${REPO}`;
 export const CUSTOM_DOMAIN = given.CUSTOM_DOMAIN ?? null;
 // A custom domain serves the site at its root; a project site lives under
-// the owner's Pages domain at /<repository>/.
-export const SITE = CUSTOM_DOMAIN ? `https://${CUSTOM_DOMAIN}` : required("SITE").replace(/\/$/, "");
+// the owner's Pages domain at /<repository>/. The host is lowercased, as Astro
+// writes it in every canonical and social card address, so an owner spelt
+// with capitals (BretFisher) still matches the links the build checks.
+const lowerHost = (url) => url.replace(/^(https?:\/\/)([^/]+)/i, (_, scheme, host) => scheme + host.toLowerCase());
+export const SITE = lowerHost(CUSTOM_DOMAIN ? `https://${CUSTOM_DOMAIN}` : required("SITE").replace(/\/$/, ""));
 export const BASE = CUSTOM_DOMAIN ? "" : required("BASE").replace(/\/$/, "");
 export const SITE_URL = SITE + BASE;
 export const TITLE = required("TITLE");
