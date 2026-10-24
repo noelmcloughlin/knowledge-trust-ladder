@@ -353,6 +353,18 @@ def test_the_data_is_its_databases_and_one_metadata_file_and_a_torn_copy_stops_t
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_lowercases_an_owner_spelt_with_capitals(tmp_path):
+    """Astro lowercases the host in the addresses it writes, so check-links compares against the same spelling."""
+    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    site = lay_down(tmp_path)
+    config = site / "site.config.mjs"
+    config.write_text(config.read_text(encoding="utf-8").replace("https://acme.github.io", "https://AcmeCorp.github.io"), encoding="utf-8")
+    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
+    assert result, f"config.mjs failed: {result.out}"
+    assert json.loads(result.out)["SITE"] == "https://acmecorp.github.io"
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
 def test_config_refuses_a_placeholder_left_behind(tmp_path):
     write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
     site = tmp_path / "website"
