@@ -1,12 +1,14 @@
 ---
-// A concept's record as a catalogue card: its type, genre and tags across the top,
-// with its ID as the call number; the rung it stands on and its trust label
-// in the words ktl-curator and ktl-docent use; its definition; and the rest
-// of its record below. The label comes from knowledge-report.sh, so the site
-// never derives it a second way. Search indexes only the definition, so a
-// result's excerpt never opens on the card's labels run together, and three
-// attributes give Pagefind a Type, a Genre and a Trust filter, which Starlight's
-// search box shows: Pagefind still reads filters in a part it leaves out.
+// A concept's record as a catalogue card: its type, genre and tags across
+// the top, with its ID as the call number; the rung it stands on and its
+// trust label in the words ktl-curator and ktl-docent use; its definition;
+// and the rest of its record below. The label comes from
+// knowledge-report.sh, so the site never derives it a second way.
+//
+// Search indexes only the definition, so a result's excerpt never opens on
+// the card's labels run together. Three attributes give Pagefind a Type, a
+// Genre and a Trust filter, which Starlight's search box shows: Pagefind
+// still reads filters in a part it leaves out.
 import TrustRung from "./TrustRung.astro";
 import { trustLabel } from "../trust";
 
@@ -23,14 +25,14 @@ const day = (at: string) => at.slice(0, 10);
 // An Explanation's genre is explanation: the card names it once, and search
 // still files it under its genre.
 const genreIsType = concept.genre?.toLowerCase() === concept.typeName.toLowerCase();
-// A definition is plain text with Markdown code spans; escape it, then set the spans.
+// A definition is plain text with Markdown code spans. Escape it, then set the spans.
 const inline = (text: string) =>
   text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/`([^`]+)`/g, "<code>$1</code>");
-// The label's first clause names the rung; a draft, a reopening, a passed
+// The label's first clause names the rung. A draft, a reopening, a passed
 // review date or a reader's dispute follows on a line of its own. A reopening
 // is a flag, not a rung: the rung stays, and the questions that wait are
 // shown under it.

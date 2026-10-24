@@ -1,8 +1,8 @@
 // A social card for every page the sync wrote: its title in the book face,
-// and for a concept its trust label, type, genre and ID beside an edge in its trust
-// colour, theme.css's light chart steps. The fonts are read from the
-// installed packages, relative to the site's folder, so the build fetches
-// nothing.
+// and for a concept its trust label, type, genre and ID beside an edge in
+// its trust colour, theme.css's light chart steps. The fonts are read from
+// the installed packages, relative to the site's folder, so the build
+// fetches nothing.
 import { OGImageRoute } from "astro-og-canvas";
 import { CARD_PAGES } from "../../socialCards";
 import { TITLE } from "../../../site.config.mjs";

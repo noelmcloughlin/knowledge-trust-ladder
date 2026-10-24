@@ -1,12 +1,12 @@
 // The site's values and options, in one place. scripts/config.mjs reads this
 // file, fills in every option left out, settles each "auto" against the
-// repository and checks the required values; `node scripts/config.mjs`
+// repository and checks the required values. `node scripts/config.mjs`
 // prints the result. Nothing here runs code, so the pages that show the
 // title import it too.
 //
 // The first five values are required. The rest are optional: leave one out,
 // or set it to "auto", and the site shows that part of the repository when
-// the repository has it; set it to null to leave that part out.
+// the repository has it. Set it to null to leave that part out.
 
 // The repository, as owner/name, and the site's address: the owner's GitHub
 // Pages domain and the path under it. A user site (the <owner>.github.io
@@ -25,7 +25,7 @@ export const DESCRIPTION = "<PROJ_DESC>";
 export const BRANCH = "main";
 
 // A custom domain, which the sync writes to public/CNAME, or null for a
-// Pages address. The domain's DNS stays the repository's own business.
+// Pages address. The site leaves the domain's DNS to the repository.
 export const CUSTOM_DOMAIN = null;
 
 // The logo, as paths from the repository root: a light version, a dark one
@@ -47,7 +47,7 @@ export const ASSETS = "auto";
 // groups, every page sits in one Guides group, by title, with the folder's
 // index.md first as its Overview. With groups, the sync stops with an error
 // when a group names a missing page or a page has no group, so a new page
-// cannot go missing from the sidebar. "auto" takes docs/ when there is one;
+// cannot go missing from the sidebar. "auto" takes docs/ when there is one.
 // null shows no docs pages.
 //   export const DOCS = { dir: "docs", groups: [{ label: "Guides", pages: ["install", "usage"] }], exclude: ["templates-linkml"] };
 export const DOCS = "auto";
@@ -66,7 +66,7 @@ export const CHANGELOG = "auto";
 // The tag a release carries, with {version} for its number. A release page
 // links the repository, the docs and the bundle at that tag, and the release
 // itself, when git has the tag. A repository whose tags carry no "v" sets
-// "{version}"; null links nothing.
+// "{version}". null links nothing.
 export const RELEASE_TAG = "v{version}";
 
 // Pages from files outside the docs folder, each at /<slug>/, listed in the
@@ -80,14 +80,14 @@ export const PAGES = [];
 // The LinkML schema's pages, which gen-doc writes, under a Schema topic: a
 // folder, and the command that writes it, which the sync runs when the
 // folder is missing. "auto" takes the first of the root, a linkmo project
-// and .linkml/ whose justfile has a gen-doc recipe; null shows no schema.
+// and .linkml/ whose justfile has a gen-doc recipe. null shows no schema.
 //   export const SCHEMA = { dir: "docs/elements", build: "just gen-doc" };
 export const SCHEMA = "auto";
 
 // The data: a folder of SQLite databases and their Datasette metadata, served
 // under /browse/ with a page that opens each in Datasette Lite, and the
 // command that writes it. The databases go on the public site, so it is null
-// until set; "auto" takes a linkmo project's browse/ folder.
+// until set. "auto" takes a linkmo project's browse/ folder.
 //   export const BROWSE = { dir: "browse", build: "just build-browse" };
 export const BROWSE = null;
 

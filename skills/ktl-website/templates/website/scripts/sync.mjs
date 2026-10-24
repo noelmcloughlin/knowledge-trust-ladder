@@ -1,5 +1,5 @@
 // Writes the site's generated sources from the repository before every
-// build, so that no page is written twice. Nothing it writes is committed;
+// build, so that no page is written twice. Nothing it writes is committed.
 // website/.gitignore lists each place:
 //
 //   src/content/docs/  a page for the README, each docs/ page, each concept,
@@ -66,7 +66,7 @@ const GENERATED = resolve(SITE_DIR, "src", "generated");
 const PUBLIC = resolve(SITE_DIR, "public");
 const PUBLIC_KNOWLEDGE = resolve(PUBLIC, "knowledge");
 const REPORT = resolve(REPO_ROOT, ".lokf", "scripts", "knowledge-report.sh");
-// The bundle log's feed holds the log's newest days, a day to an entry; the
+// The bundle log's feed holds the log's newest days, a day to an entry. The
 // log page holds them all.
 const FEED_DAYS = 20;
 
@@ -85,7 +85,7 @@ const MERMAID = /^[ \t>]*(`{3,}|~{3,})[ \t]*mermaid(?=\s|$)/m;
 // JSON is YAML, so the frontmatter needs no YAML writer. A page with a
 // mermaid diagram is marked, and only such a page loads the script that draws
 // it (src/components/Mermaid.astro). Only on such a page does the Markdown
-// plugin leave a diagram for that script; elsewhere it stays code.
+// plugin leave a diagram for that script. Elsewhere it stays code.
 function page(path, frontmatter, body) {
   const marked = MERMAID.test(body) ? { ...frontmatter, ktlMermaid: true } : frontmatter;
   write(path, `---\n${JSON.stringify(marked, null, 2)}\n---\n\n${body.trim()}\n`);
@@ -319,7 +319,7 @@ function toneOf(label) {
   if (label.startsWith("checked by automation")) return "automation";
   return "nobody";
 }
-// The ladder, top first; src/trust.ts words each state in the same order.
+// The ladder, top first. src/trust.ts words each state in the same order.
 const TONE_ORDER = ["person", "edited", "automation", "nobody", "retired"];
 
 /**
@@ -340,8 +340,8 @@ function audienceOf(data) {
 
 // How the bundle's prose spells a word with a capital past its first letter,
 // such as SLSA or GitHub, by the word in lower case. A name gives no sign
-// that Slsa is an acronym, so the prose decides. Found before any name is
-// worded.
+// that Slsa is an acronym, so the prose decides. The spellings are found
+// before any name is worded.
 let spellings = new Map();
 
 /**
@@ -421,7 +421,7 @@ const licenceMd = (value) => {
 };
 
 // The page head carries the concept as JSON-LD. Escaping <, > and & keeps a
-// field value such as "</script>" from ending the block; \uXXXX is still JSON.
+// field value such as "</script>" from ending the block, and \uXXXX is still JSON.
 const scriptSafe = (doc) =>
   JSON.stringify(doc).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
 
@@ -500,7 +500,7 @@ function buildConcepts(exported, labels) {
         .map((e) => ({ name: slotName(e.slot ?? e.predicate, { inSentence: true }), from: linkTo(e.source) }))
         .sort((a, b) => a.from.text.localeCompare(b.from.text)),
       ...(licence ? { licence: licenceOf(licence) } : {}),
-      // The graph explorer opened on this concept; the id keeps its slashes.
+      // The graph explorer opened on this concept. The id keeps its slashes.
       graph: `${BASE}/graph/?concept=${encodeURIComponent(c.id).replace(/%2F/g, "/")}`,
       files: {
         markdown: `${BASE}/knowledge/${c.id}.md`,
@@ -616,7 +616,8 @@ const labelSpan = (c) => `<span class="ktl-label ktl-label--${c.tone}">${c.label
  * What a link to a concept shows before the reader follows it: the title,
  * the type and genre, the trust label and the definition, by concept id, for
  * src/components/ConceptPreviews.astro to read. The definition keeps its
- * code spans, as the card shows them; the description stands in without one.
+ * code spans, as the card shows them. A concept with no definition shows its
+ * description instead.
  */
 function writePreviews(concepts) {
   const previews = Object.fromEntries(
@@ -756,7 +757,7 @@ function logLineTimes() {
       stdio: ["ignore", "pipe", "ignore"],
       maxBuffer: 256 * 1024 * 1024,
     });
-    // Each line opens with its commit and its number; the commit's details
+    // Each line opens with its commit and its number. The commit's details
     // follow the first line it owns, and a tab opens the line's own text.
     const bySha = new Map();
     let sha = null;
@@ -881,7 +882,7 @@ async function writeLogFeed(root) {
 }
 
 // The health page is an Astro page, src/pages/health.astro, which charts
-// these numbers; the sync only gathers them.
+// these numbers. The sync only gathers them.
 function writeHealth(concepts, health, full) {
   const count = (list) => Object.fromEntries(TONE_ORDER.map((t) => [t, list.filter((c) => c.tone === t).length]));
   const groups = bundleGroups().map((group) => {
@@ -1398,9 +1399,8 @@ function buildFolder(name, part, isBuilt) {
  * each line that opens a <details> or holds its <summary>, and before each
  * that closes it, so the YAML inside is a code block, not raw HTML. The
  * mermaid diagrams stay as written: the Markdown plugin leaves them for the
- * browser to draw, and their
- * links, such as ../Action/, resolve because each page's address keeps its
- * element's name.
+ * browser to draw, and their links, such as ../Action/, resolve because each
+ * page's address keeps its element's name.
  */
 function fromGenDoc(text) {
   let wrapped = false;
@@ -1516,7 +1516,7 @@ function withoutPlugins(metadata) {
 /**
  * The data: each database in BROWSE's folder, served under /browse/ with its
  * Datasette metadata, and a page that opens each in Datasette Lite.
- * config.mjs's browseFiles says which files those are; the rest of the
+ * config.mjs's browseFiles says which files those are. The rest of the
  * folder is never copied. The metadata is published as metadata.json, which
  * Datasette reads as readily as YAML, without its plugins' settings.
  */

@@ -1,10 +1,11 @@
 // @ts-check
-// The site. Every page is built from a file the repository already holds.
-// Each concept in the knowledge bundle becomes a page with its trust label,
-// and the four files `lokf export` writes are served beside them. The README,
-// the docs pages, the changelog, the schema's pages and the data become
-// pages when site.config.mjs shows them. scripts/sync.mjs writes the
-// generated sources before every build; nothing it writes is committed.
+// The site's Astro configuration. Every page is built from a file the
+// repository already holds. Each concept in the knowledge bundle becomes a
+// page with its trust label, and the four files `lokf export` writes are
+// served beside them. The README, the docs pages, the changelog, the schema's
+// pages and the data become pages when site.config.mjs shows them.
+// scripts/sync.mjs writes the generated sources before every build. Nothing
+// it writes is committed.
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { satteri } from "@astrojs/markdown-satteri";
@@ -178,7 +179,7 @@ export default defineConfig({
         PageSidebar: "./src/components/PageSidebar.astro",
         MarkdownContent: "./src/components/MarkdownContent.astro",
       },
-      // The generated sources are untracked, so git cannot date them; a
+      // The generated sources are untracked, so git cannot date them. A
       // concept page shows its own `generated` and `verified` times instead.
       lastUpdated: false,
       routeMiddleware: "./src/routeData.ts",
@@ -188,7 +189,7 @@ export default defineConfig({
         starlightImageZoom(),
         // A page per release, read from the changelog through the sync.
         ...(CHANGELOG ? [starlightChangelogs()] : []),
-        // The sidebar lists the eight newest releases; the topics option puts
+        // The sidebar lists the eight newest releases. The topics option puts
         // every release page under the Releases topic, the older ones and the
         // comparisons too, and every schema page under the Schema topic, the
         // schema's own page among them.
