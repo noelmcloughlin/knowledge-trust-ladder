@@ -94,11 +94,6 @@ h1#_top,
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-/* A field's key reads in lower case before its value. */
-.ktl-card__key {
-  letter-spacing: 0;
-  text-transform: none;
-}
 /* The type reads a step above the genre and tags beside it. */
 .ktl-card__type {
   color: var(--sl-color-gray-2);
