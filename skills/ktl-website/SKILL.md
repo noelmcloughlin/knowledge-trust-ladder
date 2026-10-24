@@ -1,6 +1,6 @@
 ---
 name: ktl-website
-description: 'Build a browsable website for the `.lokf/` knowledge bundle that ktl-sidecar installed in this repository: an Astro Starlight site in `website/`, with a page per concept and its trust label, a health page, a knowledge graph, search by trust and type, the four `lokf export` files served beside the pages, and the README, the docs, the changelog, the LinkML schema''s pages and the data in Datasette Lite when the repository has them, deployed to GitHub Pages by a workflow. Use when: someone asks to publish, browse, present or deploy the knowledge bundle; wants a website, a docs site or GitHub Pages for it, or one to replace an mkdocs site; or asks to repair or update a `website/` this skill laid down. Not for writing or confirming concepts; that is ktl-librarian and ktl-curator. Not for installing the bundle itself; that is ktl-sidecar, which runs first. Keywords: website, GitHub Pages, Astro, Starlight, documentation site, knowledge graph, LinkML, Datasette, OKF, LOKF, trust ladder.'
+description: 'Build a browsable website for the `.lokf/` knowledge bundle that ktl-sidecar installed in this repository: an Astro Starlight site in `website/`, with a page per concept and its trust label, a health page, a knowledge graph, search by trust and type, the four `lokf export` files served beside the pages, and the README, the docs, the changelog, the LinkML schema''s pages and the data in Datasette Lite when the repository has them, deployed to GitHub Pages by a workflow. Use when: someone asks to publish, browse, present or deploy the knowledge bundle; wants a website, a docs site or GitHub Pages for it, or one to replace an mkdocs site; or asks to repair or update a `website/` this skill installed. Not for writing or confirming concepts; that is ktl-librarian and ktl-curator. Not for installing the bundle itself; that is ktl-sidecar, which runs first. Keywords: website, GitHub Pages, Astro, Starlight, documentation site, knowledge graph, LinkML, Datasette, OKF, LOKF, trust ladder.'
 license: Apache-2.0
 compatibility: 'Requires a `.lokf/` sidecar from ktl-sidecar 0.30.0 or later (its `knowledge-report.sh`, and a committed `uv.lock`), uv, Node.js 22.12 or later with npm, a POSIX shell (bash; Git for Windows on Windows) and python3 or uv for placeholder substitution. Step 5''s workflow is GitHub Actions and GitHub Pages; on another forge the host publishes `website/dist` itself.'
 ---
@@ -18,7 +18,7 @@ Install a **website** for the knowledge bundle in the repository this skill is i
 
 > Guardrails: three files are the repository's own once written, and a repair never replaces them: `website/site.config.mjs`, `website/README.md` and `website/src/styles/custom.css`. A `website/` that is not this skill's (no `site.config.mjs` in it) is never written into; stop and ask. Stop too when the sidecar's preflight reports the bundle unhealthy, and send that to ktl-sidecar or ktl-librarian first. Deployment is GitHub Actions and GitHub Pages; elsewhere, [references/deploy.md](references/deploy.md) says what the host does itself.
 
-## Step 0 - Gather the facts
+## Step 0: gather the facts
 
 **First, the preflight.** Run `bash scripts/website-preflight.sh <repo-root>` from this skill's directory and read its screen before anything else. It runs the sidecar's own preflight inside it, then checks the report script, the toolkit and its lock, Node.js and npm, and the origin remote and the default branch. It says whether another publisher already holds the repository's Pages, whether `website/` exists, and which of the README, `docs/`, `CHANGELOG.md` and `.assets/` the site can show. Its `mkdocs` line says whether an mkdocs site is there for the website to replace. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. When the person cannot act on a `missing` or `warn` line, write them a request note from [references/prerequisites.md](references/prerequisites.md).
 
@@ -37,7 +37,7 @@ Then settle, from the preflight's lines, what the site shows: whether the README
 
 **When the site replaces an mkdocs site**, which the `mkdocs` line names, read `mkdocs.yml` once, by eye. Give each page `nav` names an entry in `REDIRECTS` from its mkdocs address, such as `"/about": "/docs/about/"`. Give the schema's folder two entries, `"/elements": "/schema/"` and `"/elements/[...slug]": "/schema/[...slug]"`, which follow the schema as it grows. Put each folder `exclude_docs` names in `DOCS.exclude`, and check the Pages address against `site_url`. The redirects keep those addresses after `mkdocs.yml` is gone, because the w3id rules for a schema name them.
 
-## Step 1 - Lay the site down
+## Step 1: install the site
 
 ```bash
 cp -R <this skill>/templates/website website && mv website/gitignore website/.gitignore
@@ -62,11 +62,11 @@ Then edit `website/site.config.mjs` for what the preflight settled: `LOGO` when 
 
 **Repair or update.** When `website/site.config.mjs` already exists, the preflight's `website` line names each file that differs from its template or is missing. Copy those templates over, one file at a time, and never the three files the repository owns. Each new option has a default in `scripts/config.mjs`, so an older `site.config.mjs` keeps working.
 
-## Step 2 - Keep the repository's checks off the generated folders (add only)
+## Step 2: keep the repository's checks off the generated folders (add only)
 
 The build writes `website/dist/`, `website/public/`, `website/src/content/`, `website/src/generated/` and `website/node_modules/`, which `website/.gitignore` keeps out of git. A Markdown lint, link check or spell check that runs over `**/*.md` still reaches them locally. The preflight's `lint` line names the configurations. Add an exclusion for `website/(dist|public|src/content|src/generated|node_modules)/` to each, as the skills repository's `lychee.toml` and `.markdownlint-cli2.jsonc` do, and nothing else at the root. If the repository runs Dependabot, suggest the `npm` entry for `/website` from [references/deploy.md](references/deploy.md) in one line; do not add it unasked.
 
-## Step 3 - Verify
+## Step 3: verify
 
 ```bash
 grep -rn -e '<REPO_' -e '<PROJ_' website/
@@ -74,25 +74,25 @@ grep -rn -e '<REPO_' -e '<PROJ_' website/
 
 No match means every placeholder is resolved. Then `node website/scripts/config.mjs` prints what the sync will read: check that `LOGO`, `DOCS`, `CHANGELOG` and `HOME.source` say what the person expects.
 
-## Step 4 - Build
+## Step 4: build
 
 ```bash
 cd website && npm ci --ignore-scripts && npm run build
 ```
 
-`npm ci --ignore-scripts` installs the pinned packages and runs none of their install scripts. `npm run build` runs the sync (`lokf export` from `.lokf/`'s own environment, the report script, the pages), the build, and a check of every link between the pages. A schema or data folder not built yet is built first, with its command. The three errors a first build meets: a docs page with no group (`DOCS.groups` is out of step), a home source with no `#` title (`HOME.source`), and a missing `knowledge-report.sh` (the sidecar repair).
+`npm ci --ignore-scripts` installs the pinned packages and runs none of their install scripts. `npm run build` runs the sync (`lokf export` from `.lokf/`'s own environment, the report script, the pages), the build, and a check of every link between the pages. A schema or data folder not built yet is built first, with its command. A first build can stop on any of several errors. Three of them, with what fixes each, are a docs page with no group (`DOCS.groups` is out of step), a home source with no `#` title (`HOME.source`), and a missing `knowledge-report.sh` (the sidecar repair).
 
 `npm run dev` serves the site at `http://localhost:4321<BASE>/`. Commit `website/`. Git ignores the generated folders. With no Node.js or uv, report the build as skipped: the workflow builds in CI. [references/inputs.md](references/inputs.md) says what each page is built from.
 
-## Step 5 - Install the deploy workflow (optional)
+## Step 5: install the deploy workflow (optional)
 
 Skip this step when `.lokf/` is gitignored (the workflow builds from the checkout) or the repository is not on GitHub. Copy `templates/github/knowledge-website.yaml` to `.github/workflows/knowledge-website.yaml`. It has no placeholders. It builds the site on every pull request that touches its inputs and deploys nothing until the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Setting it, and the one-time switch of Pages to Actions, are the maintainer's: give the two commands from [references/deploy.md](references/deploy.md), and do not run them. When the preflight's `pages` line warned of another publisher, install the workflow all the same and say that the variable stays unset until that publisher is retired. The same page gives the options. An mkdocs site is retired in Step 5b.
 
-## Step 5b - Retire mkdocs (the maintainer's)
+## Step 5b: retire mkdocs (the maintainer's)
 
 When the preflight's `mkdocs` line found `mkdocs.yml`, this site replaces it, and the build's link check has followed every redirect Step 1 wrote. Retiring mkdocs changes Pages and deletes a branch, so give the maintainer the list in [references/deploy.md](references/deploy.md#retiring-mkdocs) and run none of its Pages or branch steps. With the maintainer's agreement, put the list's file changes on the site's branch. Say once that the pull request preview is lost.
 
-## Step 6 - Hand off
+## Step 6: hand off
 
 Tell the person:
 

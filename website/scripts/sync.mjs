@@ -1011,9 +1011,9 @@ function writeHome() {
   // The home page: the source from its title down, under a hero. The logo
   // above a README's title is for GitHub, and the hero shows the logo itself.
   // A line that links this site's home page is left out, since here it would
-  // link to the page it is on: the README keeps that link, and the pointers
-  // the site gives as buttons, on a line of their own. Each step passes over
-  // fenced code, and a source with no title stops the build. With no source,
+  // link to the page it is on. The README keeps that link on a line of its
+  // own, together with the pointers the site gives as buttons. Each step
+  // passes over fenced code, and a source with no title stops the build. With no source,
   // the page opens with the bundle's own introduction, the text its overview
   // page opens with.
   const home = [`](${SITE_URL})`, `](${SITE_URL}/)`, `<${SITE_URL}>`, `<${SITE_URL}/>`];
