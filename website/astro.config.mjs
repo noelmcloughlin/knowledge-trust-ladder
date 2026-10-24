@@ -104,6 +104,34 @@ if (CHANGELOG) {
   });
 }
 
+// Each build names its stylesheet after its content, and a deploy removes the
+// last build's files. A page the browser kept from before the deploy, for up
+// to ten minutes on GitHub Pages, then names a stylesheet that is gone and
+// shows unstyled. When a stylesheet fails to load, the page reloads once,
+// which asks the server for the page afresh. The flag holds the page's path,
+// so a stylesheet that is truly missing costs one reload, not a loop, and a
+// page that loads its stylesheets clears it.
+const reloadOnStaleStylesheet = `(() => {
+  const key = "ktl-stylesheet-reload";
+  let failed = false;
+  addEventListener("error", (event) => {
+    const link = event.target;
+    if (!(link instanceof HTMLLinkElement) || link.rel !== "stylesheet") return;
+    failed = true;
+    try {
+      if (sessionStorage.getItem(key) === location.pathname) return;
+      sessionStorage.setItem(key, location.pathname);
+    } catch {
+      return;
+    }
+    location.reload();
+  }, true);
+  addEventListener("load", () => {
+    if (failed) return;
+    try { sessionStorage.removeItem(key); } catch {}
+  });
+})();`;
+
 export default defineConfig({
   site: SITE,
   base: BASE || "/",
@@ -122,9 +150,9 @@ export default defineConfig({
         : {}),
       ...(FAVICON === "/favicon.svg" ? {} : { favicon: FAVICON }),
       social: [{ icon: "github", label: "GitHub", href: REPO_URL }],
-      // Every page names the bundle log's feed, which the sync writes, so a
-      // feed reader given any of the site's addresses finds it.
       head: [
+        // Every page names the bundle log's feed, which the sync writes, so a
+        // feed reader given any of the site's addresses finds it.
         {
           tag: "link",
           attrs: {
@@ -134,6 +162,7 @@ export default defineConfig({
             href: `${BASE}/knowledge/log.xml`,
           },
         },
+        { tag: "script", content: reloadOnStaleStylesheet },
       ],
       // The two typefaces are self-hosted, so no page calls a font service.
       // custom.css comes last and is the host's own: a rule there wins.
