@@ -109,13 +109,38 @@ export const DOCS = (() => {
   const value = given.DOCS === undefined ? "auto" : given.DOCS;
   if (value === null) return null;
   const docs =
-    value === "auto" ? { dir: "docs" } : typeof value === "string" ? { dir: value } : { dir: value.dir ?? "docs", groups: value.groups };
+    value === "auto"
+      ? { dir: "docs" }
+      : typeof value === "string"
+        ? { dir: value }
+        : { dir: value.dir ?? "docs", groups: value.groups, exclude: value.exclude };
   if (!isDir(docs.dir)) {
     if (value === "auto") return null;
     fail(`DOCS names ${docs.dir}, which is not a folder in the repository`);
   }
-  return { dir: docs.dir, groups: docs.groups ?? null };
+  // The paths under the folder that are not pages of the site, each a file
+  // or a folder. A path that names no file or folder is a typo, and stops
+  // the build here.
+  const exclude = (docs.exclude ?? []).map((path) => (typeof path === "string" ? path.replace(/^\/+|\/+$/g, "") : path));
+  for (const path of exclude) {
+    if (typeof path !== "string" || !has(`${docs.dir}/${path}`)) fail(`DOCS.exclude names ${path}, which is not in ${docs.dir}/`);
+  }
+  return { dir: docs.dir, groups: docs.groups ?? null, exclude };
 })();
+
+/**
+ * A docs page's address under the site's base, as Starlight gives it: each
+ * folder and the file name in lower case, with the characters
+ * github-slugger drops left out, and an index page at its folder's address.
+ */
+export function docsRoute(name) {
+  const slug = name
+    .split("/")
+    .map((part) => part.toLowerCase().replace(/[^\p{L}\p{M}\p{N}\p{Pc}\- ]/gu, "").replace(/ /g, "-"))
+    .join("/");
+  const folder = slug === "index" ? "" : slug.replace(/\/index$/, "");
+  return folder ? `/docs/${folder}/` : "/docs/";
+}
 
 export const CHANGELOG = (() => {
   const value = given.CHANGELOG === undefined ? "auto" : given.CHANGELOG;
@@ -325,10 +350,10 @@ export function conceptIds() {
  * pages are the files git sees there, tracked or untracked but never
  * ignored, so a folder a generator writes stays out. Where there is no git,
  * they are the files a walk of the folder finds.
- * A file PAGES names has a page of its own and is left out here, and so is
- * the schema's folder, which has a topic of its own. The list is read once
- * per process, since the home page's buttons, the links and the sync all ask
- * for it.
+ * A file PAGES names has a page of its own and is left out here, and so are
+ * the schema's folder, which has a topic of its own, and each path
+ * DOCS.exclude names. The list is read once per process, since the home
+ * page's buttons, the links and the sync all ask for it.
  */
 export function docsPages() {
   if (docsPagesRead) return docsPagesRead;
@@ -357,6 +382,7 @@ export function docsPages() {
     files
       .filter((f) => f.startsWith(dir + "/") && f.endsWith(".md") && !extra.has(f) && !(schema && f.startsWith(schema)) && isFile(f))
       .map((f) => f.slice(dir.length + 1, -3))
+      .filter((name) => !DOCS.exclude.some((path) => `${name}.md` === path || name === path || name.startsWith(`${path}/`)))
       .sort(),
   ));
 }
@@ -404,6 +430,28 @@ export function schemaPages() {
   return (schemaPagesRead = Object.freeze(pages));
 }
 
+/**
+ * The old addresses REDIRECTS names, each redirected to a page of the site
+ * under its base, as a map for astro.config.mjs. An entry whose key and value
+ * both end in [...slug] stands for one redirect per schema page, so the
+ * redirects follow the schema as it grows. The schema's folder is read once
+ * the sync has built it.
+ */
+export function redirects() {
+  const value = given.REDIRECTS ?? {};
+  if (typeof value !== "object" || Array.isArray(value)) fail("REDIRECTS must be an object, each old address to a page of the site");
+  const map = {};
+  for (const [from, to] of Object.entries(value)) {
+    if (typeof to !== "string" || !from.startsWith("/") || !to.startsWith("/")) fail(`REDIRECTS: ${from} and ${to} must each be an address that starts with /`);
+    const slug = from.endsWith("/[...slug]");
+    if (slug !== to.endsWith("/[...slug]")) fail(`REDIRECTS: ${from} to ${to}; both ends close with /[...slug], or neither does`);
+    if (slug && !SCHEMA) fail(`REDIRECTS: ${from} stands for the schema's pages, and the site shows no schema`);
+    if (!slug) map[from] = BASE + to;
+    else for (const page of schemaPages()) map[from.replace("[...slug]", page.name)] = `${BASE}${to.replace("[...slug]", page.name)}/`;
+  }
+  return map;
+}
+
 const DATABASE = /\.(?:sqlite3?|db)$/;
 const METADATA = /^metadata\.(?:ya?ml|json)$/;
 
@@ -440,5 +488,5 @@ export function browseFiles() {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const settled = { REPO, SITE, BASE, TITLE, DESCRIPTION, BRANCH, CUSTOM_DOMAIN, REF, LOGO, ASSETS, DOCS, CHANGELOG, RELEASE_TAG, PAGES, HOME, SCHEMA, BROWSE, WORKSPACE };
-  console.log(JSON.stringify({ ...settled, docsPages: docsPages(), bundleGroups: bundleGroups(), workspace: workspaceLinks() }, null, 2));
+  console.log(JSON.stringify({ ...settled, docsPages: docsPages(), bundleGroups: bundleGroups(), workspace: workspaceLinks(), redirects: redirects() }, null, 2));
 }

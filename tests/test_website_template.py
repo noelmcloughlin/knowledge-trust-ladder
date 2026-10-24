@@ -7,10 +7,13 @@ settle the options against the host it sits in and refuse a placeholder. It
 finds a LinkML project's schema pages in a justfile of any name just reads,
 and its data only when asked. It trusts no folder name a shell would read as
 a command, and refuses gen-doc's subfolders, two metadata files and a
-database caught mid-write. The three files a repair never replaces are named
-in the skill's page, its preflight, the contract and the sidecar's
-knowledge-sync.sh, and the four must agree. The build itself is scripts/smoke-test-website.sh, which
-needs the network.
+database caught mid-write.
+
+A docs page's address is the one Starlight gives it, DOCS.exclude keeps a
+folder off the site, and REDIRECTS follows the schema's pages. The three
+files a repair never replaces are named in the skill's page, its preflight,
+the contract and the sidecar's knowledge-sync.sh, and the four must agree.
+The build itself is scripts/smoke-test-website.sh, which needs the network.
 """
 
 from __future__ import annotations
@@ -152,15 +155,20 @@ def test_config_takes_one_logo_path_as_the_light_version(tmp_path):
     assert json.loads(result.out)["LOGO"] == {"light": "brand/acme.png", "dark": "brand/acme.png", "favicon": None}
 
 
-def settle(site, **options):
-    """`node scripts/config.mjs` with some options of site.config.mjs replaced, as the settled JSON."""
+def configure(site, stdout_only=False, **options):
+    """`node scripts/config.mjs` with some options of site.config.mjs replaced, as its result."""
     config = site / "site.config.mjs"
     text = config.read_text(encoding="utf-8")
     for name, value in options.items():
-        text, n = re.subn(rf"^export const {name} = .*$", f"export const {name} = {value};", text, flags=re.M)
+        text, n = re.subn(rf"^export const {name} = .*$", lambda _: f"export const {name} = {value};", text, flags=re.M)
         assert n == 1, name
     config.write_text(text, encoding="utf-8")
-    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
+    return run(["node", "scripts/config.mjs"], cwd=site, stdout_only=stdout_only)
+
+
+def settle(site, **options):
+    """`configure`, as the settled JSON."""
+    result = configure(site, stdout_only=True, **options)
     assert result, f"config.mjs failed: {result.out}"
     return json.loads(result.out)
 
@@ -216,6 +224,55 @@ def test_the_docs_pages_leave_the_schema_folder_out(tmp_path):
     write(tmp_path / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
     settled = settle(lay_down(tmp_path))
     assert settled["docsPages"] == ["guide"]
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_docs_exclude_keeps_a_folder_off_and_refuses_a_path_that_names_nothing(tmp_path):
+    bundle(tmp_path)
+    for name in ("index", "guide", "templates-linkml/README", "notes/draft"):
+        write(tmp_path / "docs" / f"{name}.md", "# A page\n")
+    site = lay_down(tmp_path)
+    assert settle(site)["docsPages"] == ["guide", "index", "notes/draft", "templates-linkml/README"]
+    assert settle(site, DOCS='{ exclude: ["templates-linkml/", "notes/draft.md"] }')["docsPages"] == ["guide", "index"]
+    result = configure(site, DOCS='{ exclude: ["template-linkml"] }')
+    assert not result and "DOCS.exclude names template-linkml" in result.out, f"config.mjs took an exclude that names nothing: {result.out}"
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_a_docs_page_s_address_is_the_one_starlight_gives_it(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / "docs" / "index.md", "# Home\n")
+    write(tmp_path / "docs" / "Getting Started.md", "# Start\n")
+    site = lay_down(tmp_path)
+    names = ["index", "guide", "how-to/index", "templates-linkml/README", "Getting Started"]
+    result = evaluate(site, f"{json.dumps(names)}.map(config.docsRoute)")
+    assert result, f"docsRoute failed: {result.out}"
+    assert value(result) == ["/docs/", "/docs/guide/", "/docs/how-to/", "/docs/templates-linkml/readme/", "/docs/getting-started/"]
+    script = "import { route } from './scripts/routes.mjs'; console.log(JSON.stringify(['docs/index.md', 'docs/Getting Started.md'].map(route)));"
+    result = run(["node", "--input-type=module", "-e", script], cwd=site)
+    assert result and value(result) == ["/acme-platform/docs/", "/acme-platform/docs/getting-started/"], f"a link to a docs page missed it: {result.out}"
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_redirects_take_the_base_and_follow_the_schema_s_pages(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / "docs" / "elements" / "index.md", "# acme\n")
+    write(tmp_path / "docs" / "elements" / "Service.md", "# Class: Service\n")
+    write(tmp_path / "docs" / "elements" / "Status.md", "# Enum: Status\n")
+    write(tmp_path / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
+    site = lay_down(tmp_path)
+    assert settle(site)["redirects"] == {}
+    old = '{ "/elements": "/schema/", "/elements/[...slug]": "/schema/[...slug]", "/about": "/docs/about/" }'
+    assert settle(site, REDIRECTS=old)["redirects"] == {
+        "/elements": "/acme-platform/schema/",
+        "/elements/Service": "/acme-platform/schema/Service/",
+        "/elements/Status": "/acme-platform/schema/Status/",
+        "/about": "/acme-platform/docs/about/",
+    }
+    result = configure(site, REDIRECTS='{ "/elements/[...slug]": "/schema/" }')
+    assert not result and "or neither does" in result.out, f"config.mjs took a slug with one end: {result.out}"
+    result = configure(site, REDIRECTS='{ "/a/[...slug]": "/b/[...slug]" }', SCHEMA="null")
+    assert not result and "shows no schema" in result.out, f"config.mjs took a slug with no schema: {result.out}"
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")

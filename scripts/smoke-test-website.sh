@@ -180,6 +180,11 @@ PY
 >   web --> api
 > ```
 MD
+  # A retired mkdocs site leaves an About page, whose old address a w3id rule
+  # names, and gen-doc's templates folder, which is not a page.
+  printf '# About\n\nWho runs the platform.\n' > docs/about.md
+  mkdir -p docs/templates-linkml
+  printf '# Templates for gen-doc\n' > docs/templates-linkml/README.md
   # A retelling of the guide, and one of a concept, each for one audience.
   printf '# The guide, in short\n\nThe platform, in fewer words.\n' > docs/guide.en-simple.md
   cat > .lokf/knowledge/services/example-service-a-simple.md <<'MD'
@@ -207,6 +212,8 @@ for old, new in (
     ('export const SCHEMA = "auto";', 'export const SCHEMA = { dir: "docs/elements", build: "python3 tools/schema-pages.py" };'),
     ("export const BROWSE = null;", 'export const BROWSE = { dir: "data", build: "python3 tools/data.py" };'),
     ("export const PAGES = [];", 'export const PAGES = [{ slug: "simple", source: "docs/guide.en-simple.md", label: "In short", retells: "docs/guide.md" }];'),
+    ('export const DOCS = "auto";', 'export const DOCS = { dir: "docs", exclude: ["templates-linkml"] };'),
+    ("export const REDIRECTS = {};", 'export const REDIRECTS = { "/elements": "/schema/", "/elements/[...slug]": "/schema/[...slug]", "/about": "/docs/about/" };'),
 ):
     assert text.count(old) == 1, old
     text = text.replace(old, new)
@@ -285,6 +292,10 @@ assert "a quoted diagram with words after its language is drawn" \
   "grep -q 'class=\"ktl-mermaid\"' \"$dist/docs/architecture/index.html\" && grep -q '_astro/Mermaid' \"$dist/docs/architecture/index.html\""
 assert "a page and its retelling offer each other as reading levels, among the docs and in the bundle" \
   "grep -q 'aria-label=\"Reading levels\"' \"$dist/docs/guide/index.html\" && grep -q 'href=\"/acme-platform/simple/\">In short</a>' \"$dist/docs/guide/index.html\" && grep -q 'href=\"/acme-platform/docs/guide/\">Full</a>' \"$dist/simple/index.html\" && grep -q 'href=\"/acme-platform/knowledge/services/example-service-a-simple/\">Ages 13 to 18</a>' \"$dist/knowledge/services/example-service-a/index.html\" && grep -q 'href=\"/acme-platform/knowledge/services/example-service-a/\">Full</a>' \"$dist/knowledge/services/example-service-a-simple/index.html\" && ! grep -q 'Reading levels' \"$dist/docs/architecture/index.html\""
+assert "a schema page's old address sends the browser on to its page" \
+  "grep -q 'http-equiv=\"refresh\" content=\"0;url=/acme-platform/schema/Service/\"' \"$dist/elements/Service/index.html\""
+assert "the About page's old address sends the browser on to its page" "grep -q 'url=/acme-platform/docs/about/\"' \"$dist/about/index.html\""
+assert "the folder DOCS.exclude names is not on the site" "[[ ! -e \"$dist/docs/templates-linkml\" ]]"
 assert "llms.txt lists the schema and the data" "grep -q '/schema/)' \"$dist/llms.txt\" && grep -q '/browse/)' \"$dist/llms.txt\""
 assert "nothing of the template is left to commit" "[[ -z \$(git -C \"$host\" status --porcelain) ]]"
 
