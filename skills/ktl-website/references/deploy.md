@@ -4,9 +4,9 @@
 
 ## The two jobs
 
-`build` checks the repository out with its full history, since the health page's "a source moved" lines come from git. It installs the lokf toolkit with `uv sync --locked` in `.lokf/`, and installs the site's packages with `npm ci --ignore-scripts`, so no package runs an install script. It runs `npm run build` (the sync, the build, the link check) with Astro's telemetry off, and uploads `website/dist` as the Pages artifact. It holds `contents: read` and no secret, and third-party code runs there only, beside the repository's own: `site.config.mjs`, the files under `website/`, and the commands that build the schema's pages and the data. A private repository should turn harden-runner's egress policy to `block`, with the package registries allowed.
+`build` checks the repository out with its full history, since the health page's "a source moved" lines come from git. It installs the lokf toolkit with `uv sync --locked` in `.lokf/`, and installs the site's packages with `npm ci --ignore-scripts`, so no package runs an install script. It runs `npm run build` (the sync, the build, the link check) with Astro's telemetry off, and uploads `website/dist` as the Pages artifact. It holds `contents: read` and no secret. Third-party code runs in this job only, beside the repository's own: `site.config.mjs`, the files under `website/`, and the commands that build the schema's pages and the data. A private repository should turn harden-runner's egress policy to `block`, with the package registries allowed.
 
-`deploy` runs harden-runner and GitHub's own `deploy-pages` action and nothing else, with the `pages: write` and `id-token: write` scopes, in the `github-pages` environment, which GitHub limits to the default branch when it creates it. It runs only on the default branch, and only once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Until then the workflow builds on every pull request and deploys nothing, which is the state to leave it in where another publisher exists.
+`deploy` runs harden-runner and GitHub's own `deploy-pages` action and nothing else. It holds the `pages: write` and `id-token: write` scopes and runs in the `github-pages` environment, which GitHub limits to the default branch when it creates it. It runs only on the default branch, and only once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Until then the workflow builds on every pull request and deploys nothing, which is the state to leave it in where another publisher exists.
 
 The workflow has no placeholders and names no branch: it reads the repository's default branch from the event.
 
@@ -22,15 +22,15 @@ Datasette Lite fetches each database from the site, which GitHub Pages allows fr
 2. Set the variable on the repository: Settings, Secrets and variables, Actions, Variables, **Repository variables**; or `gh variable set KNOWLEDGE_WEBSITE_ENABLED --body true`, which sets it there. Do not set it on an environment such as `github-pages`: the deploy job's `if:` is read before any environment applies, and it sees only repository and organization variables, so the deploy stays skipped.
 3. Push to the default branch, or run the workflow by hand, and open the address `site.config.mjs` names. The first deploy can take a minute to appear.
 
-A private repository publishes Pages only on a paid plan; the build still runs on every pull request.
+A private repository publishes Pages only on a paid plan. The build still runs on every pull request.
 
 ## Another publisher
 
 Two publishers overwrite each other's site, so the preflight's `pages` line warns when it finds one: a workflow that names `deploy-pages`, `upload-pages-artifact`, `gh-pages`, `gh-deploy` or `github-pages-deploy-action`, a `CNAME` file, or an `mkdocs.yml` with a `site_url`. Install the workflow, leave the variable unset, and put the choice to the maintainer:
 
 - **Retire the other publisher** and let this workflow publish the whole site. The knowledge site has a home page built from the README and shows the LinkML schema's `gen-doc` pages itself, so it can be the repository's site. For an mkdocs site, the next section lists the steps.
-- **Keep the other publisher and serve the bundle inside it.** The four files `lokf export` writes are plain files; a MkDocs or Sphinx build can copy them into its own output from a build step, which makes the repository a producer node without this site.
-- **Publish from the `gh-pages` branch under a sub-path**, with an action such as `peaceiris/actions-gh-pages` and a `destination_dir`, and `BASE` set to that path. This survives only beside a publisher that does not force-push the branch; `mkdocs gh-deploy --force` does.
+- **Keep the other publisher and serve the bundle inside it.** The four files `lokf export` writes are plain files. A MkDocs or Sphinx build can copy them into its own output from a build step, which makes the repository a producer node without this site.
+- **Publish from the `gh-pages` branch under a sub-path**, with an action such as `peaceiris/actions-gh-pages` and a `destination_dir`, and `BASE` set to that path. This survives only beside a publisher that does not force-push the branch, and `mkdocs gh-deploy --force` does force-push it.
 
 ## Retiring mkdocs
 
@@ -60,7 +60,7 @@ The workflow builds from the checkout, which lacks a gitignored bundle. Build th
 
 ## Another forge
 
-The workflow is GitHub Actions. On GitLab, Codeberg, Forgejo, Gitea or another forge, run the same commands in that forge's CI (`uv sync --locked` in `.lokf/`, then `npm ci --ignore-scripts` and `npm run build` in `website/`) and publish `website/dist` as its pages artifact. GitLab, for example, takes a `public/` folder from a job named `pages`. Links to repository files still name `github.com`, since `REPO_URL` does; a forge-neutral link is a change to `scripts/routes.mjs`.
+The workflow is GitHub Actions. On GitLab, Codeberg, Forgejo, Gitea or another forge, run the same commands in that forge's CI (`uv sync --locked` in `.lokf/`, then `npm ci --ignore-scripts` and `npm run build` in `website/`) and publish `website/dist` as its pages artifact. GitLab, for example, takes a `public/` folder from a job named `pages`. Links to repository files still name `github.com`, since `REPO_URL` does. A forge-neutral link needs a change to `scripts/routes.mjs`.
 
 ## Keeping the site's packages current
 
@@ -78,4 +78,4 @@ The site's npm packages are pinned in `website/package-lock.json`. A Dependabot 
         patterns: ["*"]
 ```
 
-A bump moves `website/package.json` and the lock away from the skill's templates, which the preflight's `website` line reports as drift. That drift is expected; the next release of the skill carries the same packages.
+A bump moves `website/package.json` and the lock away from the skill's templates, which the preflight's `website` line reports as drift. That drift is expected. The next release of the skill carries the same packages.

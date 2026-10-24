@@ -1,10 +1,11 @@
 // @ts-check
-// The site. Every page is built from a file the repository already holds.
-// Each concept in the knowledge bundle becomes a page with its trust label,
-// and the four files `lokf export` writes are served beside them. The README,
-// the docs pages, the changelog, the schema's pages and the data become
-// pages when site.config.mjs shows them. scripts/sync.mjs writes the
-// generated sources before every build; nothing it writes is committed.
+// The site's Astro configuration. Every page is built from a file the
+// repository already holds. Each concept in the knowledge bundle becomes a
+// page with its trust label, and the four files `lokf export` writes are
+// served beside them. The README, the docs pages, the changelog, the schema's
+// pages and the data become pages when site.config.mjs shows them.
+// scripts/sync.mjs writes the generated sources before every build. Nothing
+// it writes is committed.
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { satteri } from "@astrojs/markdown-satteri";
@@ -104,6 +105,34 @@ if (CHANGELOG) {
   });
 }
 
+// Each build names its stylesheet after its content, and a deploy removes the
+// last build's files. A page the browser kept from before the deploy, for up
+// to ten minutes on GitHub Pages, then names a stylesheet that is gone and
+// shows unstyled. When a stylesheet fails to load, the page reloads once,
+// which asks the server for the page afresh. The flag holds the page's path,
+// so a stylesheet that is truly missing costs one reload, not a loop, and a
+// page that loads its stylesheets clears it.
+const reloadOnStaleStylesheet = `(() => {
+  const key = "ktl-stylesheet-reload";
+  let failed = false;
+  addEventListener("error", (event) => {
+    const link = event.target;
+    if (!(link instanceof HTMLLinkElement) || link.rel !== "stylesheet") return;
+    failed = true;
+    try {
+      if (sessionStorage.getItem(key) === location.pathname) return;
+      sessionStorage.setItem(key, location.pathname);
+    } catch {
+      return;
+    }
+    location.reload();
+  }, true);
+  addEventListener("load", () => {
+    if (failed) return;
+    try { sessionStorage.removeItem(key); } catch {}
+  });
+})();`;
+
 export default defineConfig({
   site: SITE,
   base: BASE || "/",
@@ -122,9 +151,9 @@ export default defineConfig({
         : {}),
       ...(FAVICON === "/favicon.svg" ? {} : { favicon: FAVICON }),
       social: [{ icon: "github", label: "GitHub", href: REPO_URL }],
-      // Every page names the bundle log's feed, which the sync writes, so a
-      // feed reader given any of the site's addresses finds it.
       head: [
+        // Every page names the bundle log's feed, which the sync writes, so a
+        // feed reader given any of the site's addresses finds it.
         {
           tag: "link",
           attrs: {
@@ -134,6 +163,7 @@ export default defineConfig({
             href: `${BASE}/knowledge/log.xml`,
           },
         },
+        { tag: "script", content: reloadOnStaleStylesheet },
       ],
       // The two typefaces are self-hosted, so no page calls a font service.
       // custom.css comes last and is the host's own: a rule there wins.
@@ -149,7 +179,7 @@ export default defineConfig({
         PageSidebar: "./src/components/PageSidebar.astro",
         MarkdownContent: "./src/components/MarkdownContent.astro",
       },
-      // The generated sources are untracked, so git cannot date them; a
+      // The generated sources are untracked, so git cannot date them. A
       // concept page shows its own `generated` and `verified` times instead.
       lastUpdated: false,
       routeMiddleware: "./src/routeData.ts",
@@ -159,7 +189,7 @@ export default defineConfig({
         starlightImageZoom(),
         // A page per release, read from the changelog through the sync.
         ...(CHANGELOG ? [starlightChangelogs()] : []),
-        // The sidebar lists the eight newest releases; the topics option puts
+        // The sidebar lists the eight newest releases. The topics option puts
         // every release page under the Releases topic, the older ones and the
         // comparisons too, and every schema page under the Schema topic, the
         // schema's own page among them.

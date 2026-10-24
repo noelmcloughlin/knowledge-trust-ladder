@@ -1,4 +1,4 @@
-"""The ktl-website templates lay down a complete site, and the files a host owns are named alike everywhere.
+"""The ktl-website templates install a complete site, and the files a host owns are named alike everywhere.
 
 Step 1 of the skill copies templates/website/ into a host and fills four
 placeholders in two files. The copy must be complete, the bracket file name

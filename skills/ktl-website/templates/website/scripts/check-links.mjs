@@ -3,10 +3,10 @@
 // must reach an element with that id. A page's social card, named by its
 // full address, must be a file too. The generated text files, llms.txt,
 // llms-full.txt and the bundle log's feed, name the site's pages by their
-// full addresses, and those must reach a file as well. A page REDIRECTS
-// writes redirects the browser, and its target must be a page. This script
-// does not check a link that leaves the site; validate.yml's lychee run
-// checks the repository's own Markdown.
+// full addresses, and those must reach a file as well. Each redirect page
+// that REDIRECTS writes must point at a page. This script does not check a
+// link that leaves the site. validate.yml's lychee run checks the
+// repository's own Markdown.
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { BASE, SITE, SITE_DIR, SITE_URL } from "./config.mjs";

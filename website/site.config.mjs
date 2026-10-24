@@ -1,12 +1,12 @@
 // The site's values and options, in one place. scripts/config.mjs reads this
 // file, fills in every option left out, settles each "auto" against the
-// repository and checks the required values; `node scripts/config.mjs`
+// repository and checks the required values. `node scripts/config.mjs`
 // prints the result. Nothing here runs code, so the pages that show the
 // title import it too.
 //
 // The first five values are required. The rest are optional: leave one out,
 // or set it to "auto", and the site shows that part of the repository when
-// the repository has it; set it to null to leave that part out.
+// the repository has it. Set it to null to leave that part out.
 
 // The repository, as owner/name, and the site's address: the owner's GitHub
 // Pages domain and the path under it. A user site (the <owner>.github.io
@@ -26,7 +26,7 @@ export const DESCRIPTION =
 export const BRANCH = "main";
 
 // A custom domain, which the sync writes to public/CNAME, or null for a
-// Pages address. The domain's DNS stays the repository's own business.
+// Pages address. The site leaves the domain's DNS to the repository.
 export const CUSTOM_DOMAIN = null;
 
 // The logo, as paths from the repository root: a light version, a dark one
@@ -49,7 +49,7 @@ export const ASSETS = ".assets";
 // page sits in one Guides group, by title. With groups, the sync stops with
 // an error when a group names a missing page or a page has no group, so a new
 // page cannot go missing from the sidebar. "auto" takes docs/ when there is
-// one; null shows no docs pages.
+// one. null shows no docs pages.
 export const DOCS = {
   dir: "docs",
   groups: [

@@ -1,6 +1,6 @@
 # Step 1: the options in site.config.mjs, and the files the repository owns
 
-`website/site.config.mjs` holds every value the site takes from the repository: its addresses, its title, and which of its files the site shows beside the knowledge bundle. `scripts/config.mjs` reads it, fills in each option left out, settles each `"auto"` against the repository and checks the required values; `node scripts/config.mjs` prints the result. Three files are the repository's own, and the skill's repair never replaces them: `site.config.mjs`, `README.md` and `src/styles/custom.css`. Every other file under `website/` is a copy of a template.
+`website/site.config.mjs` holds every value the site takes from the repository: its addresses, its title, and which of its files the site shows beside the knowledge bundle. `scripts/config.mjs` reads it, fills in each option left out, settles each `"auto"` against the repository and checks the required values. `node scripts/config.mjs` prints the result. Three files are the repository's own, and the skill's repair never replaces them: `site.config.mjs`, `README.md` and `src/styles/custom.css`. Every other file under `website/` is a copy of a template.
 
 ## The options
 
@@ -33,14 +33,14 @@ With `DOCS.groups`, the sync stops with an error when a group names a page that 
 
 ## Two configurations
 
-A bare repository, with a bundle and a README, is the template as Step 1 fills it: the five required values, `LOGO`, `ASSETS`, `DOCS`, `CHANGELOG` and `SCHEMA` at `"auto"`, no `PAGES`, no `BROWSE`, and `HOME` at its defaults. Such a site has the KTL logo, a home page from the README, the bundle's pages, the health page, the graph and search. It gains a Guide topic, a Releases topic or a Schema topic the day a `docs/` folder, a changelog or a `gen-doc` recipe appears.
+A bare repository, with a bundle and a README, is the template as Step 1 fills it: the five required values, `LOGO`, `ASSETS`, `DOCS`, `CHANGELOG` and `SCHEMA` at `"auto"`, no `PAGES`, no `BROWSE`, and `HOME` at its defaults. Such a site has the KTL logo, a home page from the README, the bundle's pages, the health page, the graph and search. It gains a Guide topic, a Releases topic or a Schema topic once a `docs/` folder, a changelog or a `gen-doc` recipe is added.
 
 The skills repository's own `website/site.config.mjs` sets every option: a logo, four docs groups, a tagline taken from a docs page, four buttons and a page for younger readers. It is the fuller example to copy from.
 
 ## The look
 
-`src/styles/custom.css` is loaded last, so a rule there wins over the house style in `theme.css` and `catalogue.css`. The accent and the trust colours are custom properties at the top of `theme.css`; copy the ones to change into `custom.css` rather than editing `theme.css`, which a repair replaces.
+`src/styles/custom.css` is loaded last, so a rule there wins over the house style in `theme.css` and `catalogue.css`. The accent and the trust colours are custom properties at the top of `theme.css`. Copy the ones to change into `custom.css` rather than editing `theme.css`, which a repair replaces.
 
 ## What a repair keeps
 
-Repair mode copies each template over a copy that is missing or differs, and never touches the three files above. A new option arrives with a default in `scripts/config.mjs`, so an older `site.config.mjs` keeps working after a repair, and a person adds the option only to use it.
+Repair mode copies each template over a copy that is missing or differs, and never touches the three files above. Each new option has a default in `scripts/config.mjs`, so an older `site.config.mjs` keeps working after a repair, and a person adds the option only to use it.

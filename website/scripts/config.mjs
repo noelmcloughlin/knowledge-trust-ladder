@@ -34,10 +34,10 @@ function required(name) {
 export const REPO = required("REPO");
 export const REPO_URL = `https://github.com/${REPO}`;
 export const CUSTOM_DOMAIN = given.CUSTOM_DOMAIN ?? null;
-// A custom domain serves the site at its root; a project site lives under
-// the owner's Pages domain at /<repository>/. The host is lowercased, as Astro
-// writes it in every canonical and social card address, so an owner spelt
-// with capitals (BretFisher) still matches the links the build checks.
+// A custom domain serves the site at its root. A project site is served
+// under the owner's Pages domain at /<repository>/. The host is lowercased,
+// as Astro writes it in every canonical and social card address, so an owner
+// spelt with capitals (BretFisher) still matches the links the build checks.
 const lowerHost = (url) => url.replace(/^(https?:\/\/)([^/]+)/i, (_, scheme, host) => scheme + host.toLowerCase());
 export const SITE = lowerHost(CUSTOM_DOMAIN ? `https://${CUSTOM_DOMAIN}` : required("SITE").replace(/\/$/, ""));
 export const BASE = CUSTOM_DOMAIN ? "" : required("BASE").replace(/\/$/, "");
@@ -47,7 +47,7 @@ export const DESCRIPTION = required("DESCRIPTION");
 export const BRANCH = given.BRANCH ?? "main";
 
 // Links to repository files name the commit the site was built from, so a
-// reader lands on the text the page was rendered from.
+// reader opens the text the page was rendered from.
 export const REF = (() => {
   if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
   try {

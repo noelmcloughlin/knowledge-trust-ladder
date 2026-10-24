@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **ktl-website reloads a page kept from before a deploy.** A page whose stylesheet the deploy removed reloads once and shows styled, instead of unstyled for up to ten minutes.
+
 ## [0.56.1] - 2026-10-24
 
 ### Fixed

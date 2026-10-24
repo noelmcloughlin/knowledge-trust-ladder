@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # What this host can and cannot do for the ktl-website skill: one read-only
-# screen before the site is laid down, built or deployed. The skill runs it
+# screen before the site is installed, built or deployed. The skill runs it
 # first and repeats its summary line in the hand-off, so a missing tool
 # disables a step out loud instead of failing a build.
 #
 # Each line is `ok`, `warn`, `missing` or `info`, then one summary line:
 #   Preflight: <n> missing, <m> warnings. Missing disables: <steps>.
-# Exit 0 always: the skill reads the lines; nothing here is a gate.
+# Exit 0 always: the skill reads the lines, and nothing here is a gate.
 #
 # Bash 3.2 and POSIX tools only, as the sidecar's preflight, so it runs on
 # macOS's stock bash and on Git for Windows.
@@ -70,7 +70,7 @@ else
   info sidecar "no .lokf/scripts/knowledge-preflight.sh: a sidecar older than 0.30.0, or none - the ktl-sidecar repair lays it down"
 fi
 # The concept pages show the labels knowledge-report.sh prints, so the site
-# never works a label out a second way; without the script there is no page.
+# never works a label out a second way. Without the script there is no page.
 if [ -f "$root/.lokf/scripts/knowledge-report.sh" ]; then
   health="$(cd "$root" && bash .lokf/scripts/knowledge-report.sh --root "$root" health 2>/dev/null | tail -n 1)"
   if [ -n "$health" ]; then ok report "knowledge-report.sh: $health"; else warn report "knowledge-report.sh printed no health line - run it by hand: bash .lokf/scripts/knowledge-report.sh health"; fi
@@ -160,7 +160,7 @@ if [ -f "$root/mkdocs.yml" ] && grep -q '^site_url:' "$root/mkdocs.yml"; then
 fi
 pages_api=""
 if have gh && [ -n "$slug" ] && gh auth status >/dev/null 2>&1; then
-  # A 404 means Pages is not on yet, and gh prints the error body; only a success counts.
+  # A 404 means Pages is not on yet, and gh prints the error body. Only a success counts.
   pages_api="$(gh api "repos/$slug/pages" --jq '"Pages is on: built from \(.build_type)" + (if .source.branch then ", branch " + .source.branch else "" end) + (if .cname then ", custom domain " + .cname else "" end)' 2>/dev/null)" || pages_api=""
 fi
 if [ -n "$publishers" ]; then

@@ -1,6 +1,6 @@
 # What the site reads from the repository
 
-Every page comes from a file the repository already holds, so a change to the site is a change to that file. This page lists each input and the rule the sync applies to it, so a page that looks wrong can be traced to its source. The sync is `website/scripts/sync.mjs`; it runs before every build and commits nothing.
+Every page comes from a file the repository already holds, so a change to the site is a change to that file. This page lists each input and the rule the sync applies to it, so a page that looks wrong can be traced to its source. The sync is `website/scripts/sync.mjs`. It runs before every build and commits nothing.
 
 ## The bundle
 
@@ -52,23 +52,23 @@ Every page comes from a file the repository already holds, so a change to the si
 - Raw HTML in any Markdown the site renders, the feed included, passes as GitHub renders a README. A tag GitHub allows keeps the attributes it allows, and an address that is not http, https, mailto, a path or a fragment is dropped. Any other markup is shown as text. The build's log names each one (`scripts/raw-html.mjs`).
 - A file the sync copies, under `.assets/`, the bundle, the logo or the databases, is copied as a file. A link is followed only when it ends inside the repository, and an SVG that holds a script, an event handler or a `javascript:` address is left out. The build's log names each file left out.
 - A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a schema page to `/schema/<name>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
-- An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does; otherwise the text stays as written.
+- An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does. Otherwise the text stays as written.
 - A link to a concept page, in a page's content, shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, and Escape dismisses it. The script reads `/knowledge/previews.json`, which the sync writes, once per page. The sidebars' links are left out, since each sidebar entry carries its label as a tooltip.
 - After the build, `scripts/check-links.mjs` fails the build when a link between the site's own pages, a link to a heading, or a page's social card does not resolve. It reads `llms.txt`, `llms-full.txt` and the bundle log's feed too, and fails when one names a page of the site that is not there. Links that leave the site are not checked.
 
 ## The changelog
 
-- Keep a Changelog headings, `## [x.y.z] - YYYY-MM-DD`, become one page per release and a comparison page between each pair; `## [Unreleased]` is skipped. The brackets are stripped for the plugin, and links to repository files are rewritten as above.
+- Keep a Changelog headings, `## [x.y.z] - YYYY-MM-DD`, become one page per release and a comparison page between each pair. `## [Unreleased]` is skipped. The brackets are stripped for the plugin, and links to repository files are rewritten as above.
 - A release whose tag git has opens with a line that links the repository, the docs folder and `.lokf/knowledge/` at that tag on GitHub, and the release itself, so a reader can see each as it stood. The tag is `RELEASE_TAG` with the release's number in place of `{version}`. A release promoted but not yet tagged, or a tag not yet fetched, has no such line until the next build.
 
 ## The figures and the logo
 
-- The figures folder is served under `/assets/`. The logo's light and dark files are copied to `src/generated/`, and the favicon to `/favicon.<type>`; with `LOGO = null`, the site's own ladder mark is the favicon and the title is shown as text.
+- The figures folder is served under `/assets/`. The logo's light and dark files are copied to `src/generated/`, and the favicon to `/favicon.<type>`. With `LOGO = null`, the site's own ladder mark is the favicon and the title is shown as text.
 - `LOGO` left out or `"auto"` takes the Knowledge Trust Ladder logo. That is a `knowledge-trust-ladder-logo.svg` git sees in the repository, tracked or untracked but never ignored, outside `website/` and outside a skill's templates, the one nearest the root first. With none, it is the copy in `website/src/assets/`. The `-dark.svg` file beside it is the dark version when there is one.
 
 ## `llms.txt` and `llms-full.txt`
 
-- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`; `DESCRIPTION` stands in without it. The rest of that file is generated: the docs pages and the extra pages, each by its Markdown file, then every concept with its Markdown file and its trust label. Under Optional come the bundle in full, then the schema's overview and the data page when the site has them.
+- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`, or `DESCRIPTION` when there is no such line. The rest of that file is generated: the docs pages and the extra pages, each by its Markdown file, then every concept with its Markdown file and its trust label. Under Optional come the bundle in full, then the schema's overview and the data page when the site has them.
 - `/llms-full.txt` holds every concept's text in one file, under the same summary. Each concept opens with its trust label, its type, its address, its page, its Markdown file and its sources. Its headings move down under its title, and its links and wikilinks become full addresses, since the file has none of its own to resolve them against.
 
 ## What search leaves out
