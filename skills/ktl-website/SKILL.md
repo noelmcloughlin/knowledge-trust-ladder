@@ -20,7 +20,7 @@ Lay down a **website** for the knowledge bundle in the repository this skill is 
 
 ## Step 0 - Gather the facts
 
-**First, the preflight.** Run `bash scripts/website-preflight.sh <repo-root>` from this skill's directory and read its screen before anything else. It runs the sidecar's own preflight inside it, then checks the report script, the toolkit and its lock, Node.js and npm, and the origin remote and the default branch. It says whether another publisher already holds the repository's Pages, and whether that is an mkdocs site the website replaces (the `mkdocs` line), whether `website/` exists, and which of the README, `docs/`, `CHANGELOG.md` and `.assets/` the site can show. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. When the person cannot act on a `missing` or `warn` line, write them a request note from [references/prerequisites.md](references/prerequisites.md).
+**First, the preflight.** Run `bash scripts/website-preflight.sh <repo-root>` from this skill's directory and read its screen before anything else. It runs the sidecar's own preflight inside it, then checks the report script, the toolkit and its lock, Node.js and npm, and the origin remote and the default branch. It says whether another publisher already holds the repository's Pages, whether `website/` exists, and which of the README, `docs/`, `CHANGELOG.md` and `.assets/` the site can show. Its `mkdocs` line says whether an mkdocs site is there for the website to replace. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. When the person cannot act on a `missing` or `warn` line, write them a request note from [references/prerequisites.md](references/prerequisites.md).
 
 Resolve every placeholder from real sources before writing anything; never leave a `<...>` token behind.
 
@@ -35,7 +35,7 @@ Resolve every placeholder from real sources before writing anything; never leave
 
 Then settle, from the preflight's lines, what the site shows: whether the README, the docs, the changelog, the figures and the schema's pages are there, and whether a `build-browse` recipe writes data. The data goes on the site only when the person asks for it, since its databases become public. The logo (`LOGO`) stays `"auto"`, the Knowledge Trust Ladder logo, unless the person names a file of the repository's own, such as one the `assets` line lists. The template's `"auto"` settings take each when it is. [references/customising.md](references/customising.md) describes every option.
 
-**Over an mkdocs site**, which the `mkdocs` line names, read `mkdocs.yml` once, by eye. Each page `nav` names keeps its mkdocs address in `REDIRECTS`, such as `"/about": "/docs/about/"`. The schema's folder takes two entries, `"/elements": "/schema/"` and `"/elements/[...slug]": "/schema/[...slug]"`, which follow the schema as it grows. Each folder `exclude_docs` names goes in `DOCS.exclude`, and `site_url` confirms the Pages address. The w3id rules for a schema name those addresses, so they outlive `mkdocs.yml`.
+**When the site replaces an mkdocs site**, which the `mkdocs` line names, read `mkdocs.yml` once, by eye. Give each page `nav` names an entry in `REDIRECTS` from its mkdocs address, such as `"/about": "/docs/about/"`. Give the schema's folder two entries, `"/elements": "/schema/"` and `"/elements/[...slug]": "/schema/[...slug]"`, which follow the schema as it grows. Put each folder `exclude_docs` names in `DOCS.exclude`, and check the Pages address against `site_url`. The redirects keep those addresses after `mkdocs.yml` is gone, because the w3id rules for a schema name them.
 
 ## Step 1 - Lay the site down
 
@@ -58,7 +58,7 @@ open(path, "w", encoding="utf-8").write(text)
 ' {}
 ```
 
-Then edit `website/site.config.mjs` for what the preflight settled: `LOGO` when the person named a logo of the repository's own, `BRANCH` when the default branch is not `main`, `CUSTOM_DOMAIN` for a custom domain, and `BASE = ""` for a user site. Leave the `"auto"` options alone unless the person wants a part left out (`null`) or placed (`DOCS.groups`, `PAGES`, `HOME.actions`). Over an mkdocs site, write the `REDIRECTS` and `DOCS.exclude` Step 0 read. Set `BROWSE` to the data's folder and the command that writes it when the person wants the data published.
+Then edit `website/site.config.mjs` for what the preflight settled: `LOGO` when the person named a logo of the repository's own, `BRANCH` when the default branch is not `main`, `CUSTOM_DOMAIN` for a custom domain, and `BASE = ""` for a user site. Leave the `"auto"` options alone unless the person wants a part left out (`null`) or placed (`DOCS.groups`, `PAGES`, `HOME.actions`). When the site replaces an mkdocs site, write the `REDIRECTS` and `DOCS.exclude` entries that Step 0 read. Set `BROWSE` to the data's folder and the command that writes it when the person wants the data published.
 
 **Repair or update.** When `website/site.config.mjs` already exists, the preflight's `website` line names each file that differs from its template or is missing. Copy those templates over, one file at a time, and never the three files the repository owns. A new option arrives with a default in `scripts/config.mjs`, so an older `site.config.mjs` keeps working.
 
@@ -88,7 +88,7 @@ Skip this step when `.lokf/` is gitignored (the workflow builds from the checkou
 
 ## Step 5b - Retire mkdocs (the maintainer's)
 
-When the preflight's `mkdocs` line found `mkdocs.yml`, this site replaces it, and the build's link check has followed every redirect Step 1 wrote. Retiring mkdocs changes Pages and deletes a branch, so give the maintainer the list in [references/deploy.md](references/deploy.md#retiring-mkdocs) and run none of its Pages or branch steps. With the maintainer's agreement, its file changes go on the site's branch. Say once that the pull request preview is lost.
+When the preflight's `mkdocs` line found `mkdocs.yml`, this site replaces it, and the build's link check has followed every redirect Step 1 wrote. Retiring mkdocs changes Pages and deletes a branch, so give the maintainer the list in [references/deploy.md](references/deploy.md#retiring-mkdocs) and run none of its Pages or branch steps. With the maintainer's agreement, put the list's file changes on the site's branch. Say once that the pull request preview is lost.
 
 ## Step 6 - Hand off
 
@@ -98,7 +98,7 @@ Tell the person:
 - whether Step 4's build ran and passed, or was skipped, and what the sync printed (`sync: N concept pages, ...`);
 - which parts the site shows (README, docs, changelog, figures, logo, the schema's pages, the data) and which it left out, and why;
 - what was left alone: an existing `website/`, the lint configurations, Pages and the variable;
-- over an mkdocs site, the redirects written and the Step 5b steps still the maintainer's;
+- when the site replaces an mkdocs site, the redirects written and the Step 5b steps that are still the maintainer's;
 - the preflight's last line, as printed;
 - that the site serves the four `lokf export` files at `<SITE>/<BASE>/knowledge/`, so that address is a candidate `base_iri` for the bundle when its current one is a placeholder or a code-host URL (ktl-librarian's Rule 2 has the migration);
 - that the next ktl-librarian run reads the site as any other change to the repository, with `website/README.md` as the source for a playbook concept.

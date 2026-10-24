@@ -107,8 +107,8 @@ if (CHANGELOG) {
 export default defineConfig({
   site: SITE,
   base: BASE || "/",
-  // The old addresses REDIRECTS names, each a page that sends the browser on
-  // to a page here, so a w3id rule or an old link still reaches it.
+  // Each old address REDIRECTS names gets a page that redirects the browser
+  // to a page of this site, so a w3id rule or an old link still reaches it.
   redirects: redirects(),
   markdown: {
     processor: satteri({ mdastPlugins: [markdownKtl({ conceptIds: conceptIds() })] }),

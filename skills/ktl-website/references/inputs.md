@@ -24,9 +24,9 @@ Every page comes from a file the repository already holds, so a change to the si
 ## The docs pages
 
 - Each `.md` file git sees under the docs folder (tracked, or untracked and not ignored), except a file `PAGES` names. The title is the file's `#` line, and the description its first sentence.
-- With `DOCS.groups`, a page sits where its group says; without, every page sits in one group by title, nested folders included, with the folder's `index.md` first as its Overview at `/docs/`.
+- With `DOCS.groups`, a page sits where its group says. Without them, every page sits in one group by title, nested folders included, and the folder's `index.md` comes first, as its Overview at `/docs/`.
 - A page's address is the one Starlight gives it: `/docs/<name>/` in lower case, and an `index.md` at its folder's address.
-- A path `DOCS.exclude` names, a file or a folder, is not a page.
+- A file or folder that `DOCS.exclude` names is not a page.
 
 ## The schema's pages
 

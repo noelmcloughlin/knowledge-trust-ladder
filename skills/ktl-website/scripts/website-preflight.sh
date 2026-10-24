@@ -170,7 +170,7 @@ elif [ -n "$pages_api" ]; then
 else
   ok pages "no other Pages publisher found${slug:+; gh api repos/$slug/pages says whether Pages is on}"
 fi
-# An mkdocs site is one this site replaces: Step 0 reads mkdocs.yml once,
+# The knowledge site replaces an mkdocs site: Step 0 reads mkdocs.yml once,
 # and Step 5b gives the maintainer the retirement list.
 if [ -f "$root/mkdocs.yml" ]; then
   info mkdocs "mkdocs.yml at the root - the site replaces it: Step 0 reads its nav and exclude_docs into REDIRECTS and DOCS.exclude, and Step 5b retires it (references/deploy.md)"

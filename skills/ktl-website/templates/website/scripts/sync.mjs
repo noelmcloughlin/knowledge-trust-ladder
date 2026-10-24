@@ -879,9 +879,9 @@ function writeDocs() {
     const { title, body } = takeTitle(repoFile(source));
     return { name, source, title: title ?? name, description: describe(body), body, route: docsRoute(name) };
   });
-  // Grouped pages keep their group's order. Ungrouped ones sit by title, the
-  // folder's index first, as its overview, and each one's sidebar entry says
-  // where.
+  // Grouped pages keep their group's order. Ungrouped ones sit by title, with
+  // the folder's index first as its overview, and each one's sidebar entry
+  // says where.
   const order = groups ? groups.flatMap((g) => g.pages) : null;
   const rank = (d) => (d.name === "index" ? 0 : 1);
   docs.sort((a, b) => (order ? order.indexOf(a.name) - order.indexOf(b.name) : rank(a) - rank(b) || a.title.localeCompare(b.title)));

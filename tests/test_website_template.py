@@ -7,12 +7,13 @@ settle the options against the host it sits in and refuse a placeholder. It
 finds a LinkML project's schema pages in a justfile of any name just reads,
 and its data only when asked. It trusts no folder name a shell would read as
 a command, and refuses gen-doc's subfolders, two metadata files and a
-database caught mid-write. A docs page's address is the one Starlight gives
-it, DOCS.exclude keeps a folder off the site, and REDIRECTS follows the
-schema's pages. The three files a repair never replaces are named
-in the skill's page, its preflight, the contract and the sidecar's
-knowledge-sync.sh, and the four must agree. The build itself is scripts/smoke-test-website.sh, which
-needs the network.
+database caught mid-write.
+
+A docs page's address is the one Starlight gives it, DOCS.exclude keeps a
+folder off the site, and REDIRECTS follows the schema's pages. The three
+files a repair never replaces are named in the skill's page, its preflight,
+the contract and the sidecar's knowledge-sync.sh, and the four must agree.
+The build itself is scripts/smoke-test-website.sh, which needs the network.
 """
 
 from __future__ import annotations

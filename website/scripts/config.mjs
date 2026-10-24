@@ -118,8 +118,9 @@ export const DOCS = (() => {
     if (value === "auto") return null;
     fail(`DOCS names ${docs.dir}, which is not a folder in the repository`);
   }
-  // The paths under the folder that are not pages of the site, a file or a
-  // folder each; one that names nothing is a typo, and stops here.
+  // The paths under the folder that are not pages of the site, each a file
+  // or a folder. A path that names no file or folder is a typo, and stops
+  // the build here.
   const exclude = (docs.exclude ?? []).map((path) => (typeof path === "string" ? path.replace(/^\/+|\/+$/g, "") : path));
   for (const path of exclude) {
     if (typeof path !== "string" || !has(`${docs.dir}/${path}`)) fail(`DOCS.exclude names ${path}, which is not in ${docs.dir}/`);
@@ -130,7 +131,7 @@ export const DOCS = (() => {
 /**
  * A docs page's address under the site's base, as Starlight gives it: each
  * folder and the file name in lower case, with the characters
- * github-slugger drops dropped, and an index page at its folder's address.
+ * github-slugger drops left out, and an index page at its folder's address.
  */
 export function docsRoute(name) {
   const slug = name
@@ -430,10 +431,11 @@ export function schemaPages() {
 }
 
 /**
- * The old addresses REDIRECTS names, each sent on to a page of the site under
- * its base, as a map for astro.config.mjs. An entry whose two sides end in
- * [...slug] stands for one redirect per schema page, so the redirects follow
- * the schema as it grows; the folder is read once the sync has built it.
+ * The old addresses REDIRECTS names, each redirected to a page of the site
+ * under its base, as a map for astro.config.mjs. An entry whose key and value
+ * both end in [...slug] stands for one redirect per schema page, so the
+ * redirects follow the schema as it grows. The schema's folder is read once
+ * the sync has built it.
  */
 export function redirects() {
   const value = given.REDIRECTS ?? {};

@@ -6,11 +6,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
-- **ktl-website keeps old addresses and leaves a folder out.** `REDIRECTS` sends an old address, such as a retired mkdocs site's `/elements/<Term>/`, on to its page, and `DOCS.exclude` keeps a path such as `templates-linkml/` off the site.
+- **ktl-website keeps old addresses and leaves a folder out.** `REDIRECTS` redirects an old address, such as a retired mkdocs site's `/elements/<Term>/`, to its page, and `DOCS.exclude` keeps a path such as `templates-linkml/` off the site.
 
 ### Fixed
 
-- **A link to a docs folder's `index.md` reaches its page**, which Starlight serves at the folder's address, and that page opens the Guide as its Overview.
+- **A link to a docs folder's `index.md` reaches its page**, which Starlight serves at the folder's address, and that page comes first in the Guide, as its Overview.
 
 ## [0.55.2] - 2026-10-22
 

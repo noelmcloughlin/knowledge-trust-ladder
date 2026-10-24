@@ -180,8 +180,8 @@ PY
 >   web --> api
 > ```
 MD
-  # What a retired mkdocs site leaves: an About page whose old address a w3id
-  # rule names, and gen-doc's templates folder, which is not a page.
+  # A retired mkdocs site leaves an About page, whose old address a w3id rule
+  # names, and gen-doc's templates folder, which is not a page.
   printf '# About\n\nWho runs the platform.\n' > docs/about.md
   mkdir -p docs/templates-linkml
   printf '# Templates for gen-doc\n' > docs/templates-linkml/README.md
