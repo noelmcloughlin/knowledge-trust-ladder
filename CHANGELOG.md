@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.56.1] - 2026-10-24
+
 ### Fixed
 
 - **ktl-website builds for an owner spelt with capitals.** `SITE`'s host is lowercased, as Astro writes it, so the link check no longer reports every social card broken.
