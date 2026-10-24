@@ -94,7 +94,7 @@ assert "the preflight sees the README, the docs and the changelog" \
 assert "the preflight reads the owner and the name from the remote" "grep -qE '^ok +git .*acme/acme-platform' <<<\"\$preflight\""
 
 echo ""
-echo "Step 1: lay the site down"
+echo "Step 1: install the site"
 (
   cd "$host"
   cp -R "$skill/templates/website" website

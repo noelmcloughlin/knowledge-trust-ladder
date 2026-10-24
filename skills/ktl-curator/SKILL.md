@@ -44,7 +44,7 @@ Say these to the human. Do not say RDF, IRI, SPARQL, predicate, or tier. The fie
 | *N* other concepts rely on this | how many concepts link to it; the more, the further a mistake spreads |
 | Doesn't fit the known vocabulary | its type is neither one of LOKF's core classes nor a class of the host's own domain schema, where it has one; see [references/domain-schemas.md](references/domain-schemas.md) |
 
-## Step 1 - Report (always; read-only; one screen)
+## Step 1: report (always; read-only; one screen)
 
 Run `bash .lokf/scripts/knowledge-preflight.sh` first (read-only; a bundle that predates it gets the copy from ktl-sidecar's `templates/scripts/`), then `bash .lokf/scripts/knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. Items 5, 6 and 8 are worked out by hand, as [references/trust-fields.md](references/trust-fields.md) says. On a sidecar that predates it, read every concept's frontmatter under `.lokf/knowledge/` (skip `index.md` and `log.md`) and compute the labels by [references/trust-fields.md](references/trust-fields.md). Print the following, in this order and nothing more:
 
@@ -64,7 +64,7 @@ Run `bash .lokf/scripts/knowledge-preflight.sh` first (read-only; a bundle that 
 
 Write nothing in Step 1. If `.lokf/knowledge/` does not exist, stop and point at ktl-sidecar. The full template is in [references/trust-fields.md](references/trust-fields.md).
 
-## Step 2 - Review session (only if the human says yes)
+## Step 2: review session (only if the human says yes)
 
 **Is a person actually here?** This is the only step in the whole stack that writes a person's word into the bundle, so run it only in a live session with that person. Stop after Step 1, and say why, if any of this holds:
 
@@ -103,7 +103,7 @@ Say "I'll record your answers as `human:<id>` - ok?" before the first write. Nev
 - Never edit or remove an existing human `verified` event. Append.
 - A short session is a good session. Stop when they stop; the frontmatter is the progress record.
 
-## Step 3 - Dig deeper (opt-in)
+## Step 3: dig deeper (opt-in)
 
 Two of these write `human:<id>` into a concept (the curation policy, and a gap placeholder), so they need the same authenticated id as *Confirm*; see **Who** above. Without one, describe what you would write and stop.
 
