@@ -28,7 +28,9 @@ import {
   TITLE,
   bundleGroups,
   conceptIds,
+  docsRoute,
   groupLabel,
+  redirects,
   schemaPages,
 } from "./scripts/config.mjs";
 
@@ -37,7 +39,7 @@ import {
 const docsSidebar = !DOCS
   ? []
   : DOCS.groups
-    ? DOCS.groups.map((group) => ({ label: group.label, items: group.pages.map((page) => `docs/${page}`) }))
+    ? DOCS.groups.map((group) => ({ label: group.label, items: group.pages.map((page) => docsRoute(page).slice(1, -1)) }))
     : [{ label: "Guides", items: [{ autogenerate: { directory: "docs" } }] }];
 
 // The schema's pages in the sidebar: the overview, then a group per kind in
@@ -105,6 +107,9 @@ if (CHANGELOG) {
 export default defineConfig({
   site: SITE,
   base: BASE || "/",
+  // The old addresses REDIRECTS names, each a page that sends the browser on
+  // to a page here, so a w3id rule or an old link still reaches it.
+  redirects: redirects(),
   markdown: {
     processor: satteri({ mdastPlugins: [markdownKtl({ conceptIds: conceptIds() })] }),
   },

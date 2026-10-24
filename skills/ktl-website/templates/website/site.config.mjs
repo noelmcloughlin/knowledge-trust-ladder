@@ -41,14 +41,22 @@ export const LOGO = "auto";
 // /assets/. "auto" takes .assets/ when there is one.
 export const ASSETS = "auto";
 
-// The docs pages: a folder, and the sidebar groups its pages sit in, each
-// page named by its path under the folder without .md. With no groups, every
-// page sits in one Guides group, by title. With groups, the sync stops with
-// an error when a group names a missing page or a page has no group, so a new
-// page cannot go missing from the sidebar. "auto" takes docs/ when there is
-// one; null shows no docs pages.
-//   export const DOCS = { dir: "docs", groups: [{ label: "Guides", pages: ["install", "usage"] }] };
+// The docs pages: a folder, the sidebar groups its pages sit in, each page
+// named by its path under the folder without .md, and the paths under the
+// folder, a file or a folder each, that are not pages of the site. With no
+// groups, every page sits in one Guides group, by title, the folder's
+// index.md first as its Overview. With groups, the sync stops with an error
+// when a group names a missing page or a page has no group, so a new page
+// cannot go missing from the sidebar. "auto" takes docs/ when there is one;
+// null shows no docs pages.
+//   export const DOCS = { dir: "docs", groups: [{ label: "Guides", pages: ["install", "usage"] }], exclude: ["templates-linkml"] };
 export const DOCS = "auto";
+
+// Old addresses under BASE, each sent on to a page of the site, such as the
+// ones a retired mkdocs site gave its pages and a w3id rule still names. An
+// entry whose two ends close with /[...slug] stands for one per schema page.
+//   export const REDIRECTS = { "/elements": "/schema/", "/elements/[...slug]": "/schema/[...slug]", "/about": "/docs/about/" };
+export const REDIRECTS = {};
 
 // A Keep a Changelog file, read as a page per release. "auto" takes
 // CHANGELOG.md when it holds a released version.

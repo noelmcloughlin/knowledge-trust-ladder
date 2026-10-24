@@ -3,9 +3,10 @@
 // an element with that id, and a page's social card, named by its full
 // address, must be a file too. The generated text files, llms.txt,
 // llms-full.txt and the bundle log's feed, name the site's pages by their
-// full addresses, and those must reach a file as well. A link that leaves
-// the site is not checked here; validate.yml's lychee run checks the
-// repository's own Markdown.
+// full addresses, and those must reach a file as well. A page REDIRECTS
+// writes sends the browser on, and where it sends it must be a page. A link
+// that leaves the site is not checked here; validate.yml's lychee run checks
+// the repository's own Markdown.
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { BASE, SITE, SITE_DIR, SITE_URL } from "./config.mjs";
@@ -62,6 +63,10 @@ for (const file of pages) {
     else if (hash.length > 1 && hit.endsWith(".html") && !idsOf(hit).has(decodeURIComponent(hash.slice(1)))) {
       broken.push(`${from}: ${url} (no such heading)`);
     }
+  }
+  for (const m of html.matchAll(/<meta http-equiv="refresh" content="\d+;url=([^"]+)"/g)) {
+    checked++;
+    if (!target(new URL(m[1].replace(/&amp;/g, "&"), `https://site.invalid${BASE}${from}`).pathname)) broken.push(`${from}: sends the browser on to ${m[1]}`);
   }
   for (const m of html.matchAll(/<meta property="og:image" content="([^"]+)"/g)) {
     checked++;

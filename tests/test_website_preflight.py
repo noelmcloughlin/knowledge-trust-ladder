@@ -4,7 +4,8 @@ It runs on this repository, and on a bare directory with no bundle, no git and
 no site, where every section has to cope with absence rather than fail. It:
 
 - reads a README's title, and says when there is none;
-- warns of another Pages publisher, but not of its own workflow;
+- warns of another Pages publisher, but not of its own workflow, and names
+  an mkdocs site as the one the site replaces;
 - warns of a changelog with no released version;
 - reads the owner and the name from the origin remote;
 - names the report script the sidecar must still install;
@@ -71,6 +72,13 @@ def test_warns_of_another_pages_publisher(tmp_path):
     )
     result = preflight(tmp_path)
     assert result and matches(result.out, r"^warn    pages .*deploy-docs\.yaml"), f"preflight missed the publisher: {result.out}"
+    assert not matches(result.out, r"^info    mkdocs"), f"preflight named an mkdocs site with no mkdocs.yml: {result.out}"
+    write(tmp_path / "mkdocs.yml", "site_name: acme\nsite_url: https://acme.github.io/acme-platform\n")
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^warn    pages .*deploy-docs\.yaml, mkdocs\.yml with a site_url"), f"preflight missed mkdocs' site_url: {result.out}"
+    assert matches(result.out, r"^info    mkdocs +mkdocs\.yml at the root - the site replaces it: .*REDIRECTS and DOCS\.exclude"), (
+        f"preflight did not name the mkdocs site the site replaces: {result.out}"
+    )
 
 
 def test_leaves_its_own_workflow_out_of_the_publishers(tmp_path):

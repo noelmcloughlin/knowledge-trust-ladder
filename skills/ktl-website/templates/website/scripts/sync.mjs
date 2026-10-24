@@ -53,6 +53,7 @@ import {
   bundleGroups,
   conceptIds,
   docsPages,
+  docsRoute,
   groupLabel,
   schemaPages,
   workspaceLinks,
@@ -876,14 +877,16 @@ function writeDocs() {
   const docs = found.map((name) => {
     const source = `${DOCS.dir}/${name}.md`;
     const { title, body } = takeTitle(repoFile(source));
-    return { name, source, title: title ?? name, description: describe(body), body };
+    return { name, source, title: title ?? name, description: describe(body), body, route: docsRoute(name) };
   });
-  // Grouped pages keep their group's order; ungrouped ones sit by title, and
-  // each one's sidebar entry says where.
+  // Grouped pages keep their group's order. Ungrouped ones sit by title, the
+  // folder's index first, as its overview, and each one's sidebar entry says
+  // where.
   const order = groups ? groups.flatMap((g) => g.pages) : null;
-  docs.sort((a, b) => (order ? order.indexOf(a.name) - order.indexOf(b.name) : a.title.localeCompare(b.title)));
+  const rank = (d) => (d.name === "index" ? 0 : 1);
+  docs.sort((a, b) => (order ? order.indexOf(a.name) - order.indexOf(b.name) : rank(a) - rank(b) || a.title.localeCompare(b.title)));
   docs.forEach((d, i) => {
-    d.markdown = writeMarkdown(d.source, `/docs/${d.name}/`);
+    d.markdown = writeMarkdown(d.source, d.route);
     page(
       resolve(CONTENT, "docs", `${d.name}.md`),
       {
@@ -892,11 +895,11 @@ function writeDocs() {
         // A page named after its sidebar group opens the group, labelled as
         // each bundle group's index is.
         ...(groups && groups.some((g) => g.label.toLowerCase() === d.name) ? { sidebar: { label: "Overview" } } : {}),
-        ...(groups ? {} : { sidebar: { order: i + 1 } }),
+        ...(groups ? {} : { sidebar: { order: i + 1, ...(d.name === "index" ? { label: "Overview" } : {}) } }),
         ktlSource: d.source,
         editUrl: `${REPO_URL}/edit/${BRANCH}/${d.source}`,
         head: [markdownAlternate(d.markdown)],
-        ...levelsOf(`${BASE}/docs/${d.name}/`),
+        ...levelsOf(BASE + d.route),
       },
       prepare(d.body),
     );
