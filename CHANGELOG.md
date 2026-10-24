@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **ktl-website's card head reads the same on every concept.** The genre stands beside the type as a plain tag, without the lower-case "genre" key, as the link preview and the social card give it.
-
 ## [0.56.1] - 2026-10-24
 
 ### Fixed
@@ -16,6 +12,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **ktl-website's cards show a concept's genre.** The concept card and the link preview give the genre beside the type, the social card gives both, and search gains a Genre filter.
 - **ktl-website words a type as the bundle spells it.** A word the bundle's prose writes with capitals keeps them, so `SlsaSourceControlSystem` reads "SLSA source control system" on every card and in relation names.
 - **ktl-website's card head names a field once.** The genre stands after a lower-case "genre" key, and a genre that repeats the type is left off the card, the link preview and the social card.
+- **ktl-website's card head reads the same on every concept.** The genre stands beside the type as a plain tag, without the lower-case "genre" key, as the link preview and the social card give it.
 
 ## [0.56.0] - 2026-10-24
 
