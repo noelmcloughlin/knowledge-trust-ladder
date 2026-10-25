@@ -1,9 +1,9 @@
-# The curated context layer: one bundle, and a federation of bundles
+# The curated context layer
 
 > [!NOTE]
-> This page is for anyone deciding what a context layer is, what one Knowledge Trust Ladder (KTL) bundle provides, and why KTL federates LOKF bundles through domains. Each quotation is from the source's own text, read on 2026-10-12. [A federation of bundles](federation.md) says how a federation is built and run, and [What a KTL context layer integrates with](context-layer-technology.md) names the products a workspace can use.
+> [A federation of bundles](federation.md) says how a federation is built and run, and [What a KTL context layer integrates with](context-layer-technology.md) names the products a workspace can use.
 
-Below, a *context layer* is a governed layer between an organisation's sources and whoever consumes them, a person or an agent, that persists from one task to the next. *The bundle* is the corpus KTL keeps in `.lokf/knowledge/`, one Markdown concept per file.
+A *context layer* is a governed layer between an organisation's sources and whoever consumes them, a person or an agent, that persists from one task to the next. *The bundle* is the corpus KTL keeps in `.lokf/knowledge/`, one Markdown concept per file.
 
 ## What people mean by a context layer
 

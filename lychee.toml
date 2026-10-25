@@ -17,7 +17,7 @@ exclude = [
   '^https://w3id\.org/lokf/context\.jsonld$',
   # Publisher DOI resolvers (Wiley, ACM, SAGE, Elsevier) and parliament.uk
   # answer automated clients with 403 while serving the same pages to a
-  # browser; docs/three-lines-critics.md cites them and each was opened
+  # browser; docs/three-lines.md cites them and each was opened
   # and read by hand on 2026-09-16. A DOI is a persistent identifier, so
   # re-check these by hand on the bundle's refresh, not here.
   '^https://doi\.org/',

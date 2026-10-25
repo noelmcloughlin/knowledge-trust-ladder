@@ -35,8 +35,7 @@ docs/
   obsidian.md           the bundle as a vault of its own, and the two plugins
   m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first
   ingest.md             knowledge outside the repository: the manifest, the mirror and the ingest pull request
-  three-lines.md        the roles in the three lines of defence, and what an auditor can check
-  three-lines-critics.md  the model's critics, quoted, and what a bundle answers
+  three-lines.md        the roles in the three lines of defence, what an auditor can check, and the critics
   skills-repositories.md  KTL in a repository whose content is Agent Skills, and what remains to do
   releasing.md          how the three repositories release, and the settings it needs
   signing-commits.md    signing commits, which the provenance gate reads

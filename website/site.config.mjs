@@ -63,7 +63,6 @@ export const DOCS = {
         "federation",
         "context-layer-technology",
         "three-lines",
-        "three-lines-critics",
       ],
     },
     { label: "Maintaining", pages: ["releasing", "signing-commits", "threat-model", "repository-layout"] },
