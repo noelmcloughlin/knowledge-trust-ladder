@@ -1613,6 +1613,33 @@ def test_a_member_at_a_local_path_or_a_private_address_needs_an_opt_in(federatio
         assert r.rc == 0 and "a person confirmed private_addresses: allow" in r.out, r.out
 
 
+def test_a_name_that_turns_private_after_the_check_is_refused_at_the_connection(tmp_path, monkeypatch):
+    """A name may answer a public address to the check and a private one to the connection (DNS rebinding), so the connection checks the address it opens."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("knowledge_federate_rebind", SCRIPT)
+    kf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kf)
+    files = write(tmp_path / "files" / "a.zip", "zip").parent
+    with serving(files, tmp_path / "server") as (url, log):
+        url = url.replace("127.0.0.1", "rebind.example.invalid") + "a.zip"
+        real = kf.socket.getaddrinfo
+        answers = iter(["93.184.216.34", "127.0.0.1"])
+
+        def rebinding(host, *args, **kwargs):
+            return real(next(answers, "127.0.0.1") if host == "rebind.example.invalid" else host, *args, **kwargs)
+
+        monkeypatch.setattr(kf.socket, "getaddrinfo", rebinding)
+        with pytest.raises(kf.Failed, match="resolves to 127.0.0.1, a private address"):
+            kf.fetch(url, tmp_path / "got.zip")
+        assert not log.exists() or not read(log).strip(), read(log)
+        # The checked connection still opens to an address it permits.
+        monkeypatch.setattr(kf.socket, "getaddrinfo", lambda host, *a, **k: real("127.0.0.1", *a, **k))
+        monkeypatch.setattr(kf, "private_address", lambda address: False)
+        kf.fetch(url, tmp_path / "got.zip")
+        assert read(tmp_path / "got.zip") == "zip"
+
+
 def test_the_readers_read_a_workspace_from_its_zip_or_the_site_that_serves_it(federation, served_workspace, tmp_path):
     """The MCP server reads the workspace as a site serves it, and as a workspace-<tag>.zip, as it reads the folder.
 
@@ -1712,7 +1739,7 @@ spec = importlib.util.spec_from_file_location("knowledge_federate", script)
 federate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(federate)
 urls = json.loads(pathlib.Path(served).read_text(encoding="utf-8"))
-def http_fetch(url, accept=None, headers=None, max_bytes=None, timeout=60):
+def http_fetch(url, accept=None, headers=None, max_bytes=None, timeout=60, member=False):
     if url not in urls:
         raise urllib.error.URLError(url + " is not served by this test")
     entry = urls[url]

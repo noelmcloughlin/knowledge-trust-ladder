@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The federation build and the ingest check the address each connection opens.** A name that answers a public address to the check and a private one to the connection (DNS rebinding) now reaches nothing, unless private addresses are allowed.
+- **CI lints the ingest workflow template.** actionlint now names `knowledge-ingest.yaml` with the other templates.
+
 ## [0.56.1] - 2026-10-24
 
 ### Fixed

@@ -687,11 +687,70 @@ def private_host(host: str | None) -> bool:
         addresses = {info[4][0] for info in socket.getaddrinfo(host, None)}
     except (socket.gaierror, UnicodeError):
         return False  # a name that does not resolve is no address; the request fails on its own
-    for address in addresses:
-        ip = ipaddress.ip_address(address.split("%", 1)[0])
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
-            return True
-    return False
+    return any(private_address(address) for address in addresses)
+
+
+def private_address(address: str) -> bool:
+    ip = ipaddress.ip_address(address.split("%", 1)[0])
+    return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified
+
+
+def connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
+    """Open a connection as socket.create_connection does, to an address that was checked, unless the build may reach the host's own network.
+
+    refuse_private checks a member's host before the request, and the
+    connection resolves the name again. A name whose answer changes between
+    the two (DNS rebinding) would pass the first and reach the second, so
+    the name is resolved once, here, and the socket connects to the address
+    that was checked.
+    """
+    if ALLOW_PRIVATE:
+        return socket.create_connection(address, timeout, source_address)
+    host, port = address
+    infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+    for *_, sockaddr in infos:
+        if private_address(sockaddr[0]):
+            raise Failed(f"{host} resolves to {sockaddr[0]}, a private address, which a member is not fetched from unless a "
+                         "person confirms private_addresses: allow on the Domain concept, or the build runs with --allow-local")
+    last: OSError | None = None
+    for family, kind, proto, _, sockaddr in infos:
+        sock = socket.socket(family, kind, proto)
+        try:
+            if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                sock.settimeout(timeout)
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(sockaddr)
+            return sock
+        except OSError as e:
+            sock.close()
+            last = e
+    raise last or OSError(f"{host} resolves to no address")
+
+
+class PublicHTTPConnection(http.client.HTTPConnection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._create_connection = connect_public
+
+
+class PublicHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._create_connection = connect_public
+
+
+# Through a proxy the connection is to the proxy, which resolves the
+# member's name itself, so only the check before the request applies.
+class PublicHTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(http.client.HTTPConnection if req.has_proxy() else PublicHTTPConnection, req)
+
+
+class PublicHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        proxied = req.has_proxy() or req._tunnel_host
+        return self.do_open(http.client.HTTPSConnection if proxied else PublicHTTPSConnection, req, context=self._context)
 
 
 def allow_private_from(top, domain_iri: str, bundle, confirmed: dict | None) -> None:
@@ -745,10 +804,13 @@ class Redirects(urllib.request.HTTPRedirectHandler):
 
 
 OPENER = urllib.request.build_opener(Redirects())
+# A member's address, which refuse_private checked, is checked again at the
+# connection. A reader's own workspace may be on the reader's own network.
+MEMBER_OPENER = urllib.request.build_opener(Redirects(), PublicHTTPHandler(), PublicHTTPSHandler())
 
 
 def http_fetch(url: str, accept: str | None = None, headers: dict | None = None, max_bytes: int | None = None,
-               timeout: int = 60) -> tuple[int, dict, bytes]:
+               timeout: int = 60, member: bool = False) -> tuple[int, dict, bytes]:
     """GET an http(s) URL: its status, its headers named in lower case, and its body, read no further than max_bytes.
 
     A conditional request the server answers 304 comes back with no body,
@@ -756,7 +818,7 @@ def http_fetch(url: str, accept: str | None = None, headers: dict | None = None,
     """
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **({"Accept": accept} if accept else {}), **(headers or {})})
     try:
-        resp = OPENER.open(req, timeout=timeout)  # noqa: S310 - a URL a person confirmed, or the workspace a reader names
+        resp = (MEMBER_OPENER if member else OPENER).open(req, timeout=timeout)  # noqa: S310 - a URL a person confirmed, or the workspace a reader names
     except urllib.error.HTTPError as e:
         if e.code == 304:
             return 304, {k.lower(): v for k, v in e.headers.items()}, b""
@@ -772,8 +834,8 @@ def http_fetch(url: str, accept: str | None = None, headers: dict | None = None,
         return resp.status, {**{k.lower(): v for k, v in resp.headers.items()}, ":url": resp.geturl()}, b"".join(chunks)
 
 
-def http_get(url: str, accept: str | None = None, timeout: int = 60, max_bytes: int | None = None) -> bytes:
-    return http_fetch(url, accept=accept, timeout=timeout, max_bytes=max_bytes)[2]
+def http_get(url: str, accept: str | None = None, timeout: int = 60, max_bytes: int | None = None, member: bool = False) -> bytes:
+    return http_fetch(url, accept=accept, timeout=timeout, max_bytes=max_bytes, member=member)[2]
 
 
 def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> None:
@@ -799,7 +861,7 @@ def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> N
     last: Exception | None = None
     for attempt in range(3):
         try:
-            dest.write_bytes(http_get(url, max_bytes=max_bytes))
+            dest.write_bytes(http_get(url, max_bytes=max_bytes, member=True))
             return
         except urllib.error.HTTPError as e:
             if e.code < 500 and e.code != 429:
@@ -2417,7 +2479,7 @@ def look_served(url: str, cache: pathlib.Path, max_bytes: int) -> tuple[str, str
         raise Failed(f"{url}: a site is read over http or https")
     refuse_private(url)
     try:
-        status, got, body = http_fetch(url, headers=headers, max_bytes=max_bytes)
+        status, got, body = http_fetch(url, headers=headers, max_bytes=max_bytes, member=True)
     except (OSError, http.client.HTTPException) as e:
         raise Failed(f"{url}: could not be fetched ({e})") from e
     if status == 304 and headers:

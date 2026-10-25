@@ -500,11 +500,67 @@ def address_is_private(host: str) -> bool:
         infos = socket.getaddrinfo(host, None)
     except socket.gaierror as e:
         raise FetchFailed(f"{host} does not resolve ({e})") from e
-    for info in infos:
-        addr = ipaddress.ip_address(info[4][0])
-        if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved or addr.is_multicast or addr.is_unspecified:
-            return True
-    return False
+    return any(ip_is_private(info[4][0]) for info in infos)
+
+
+def ip_is_private(address: str) -> bool:
+    addr = ipaddress.ip_address(address.split("%", 1)[0])
+    return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved or addr.is_multicast or addr.is_unspecified
+
+
+def connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
+    """Open a connection as socket.create_connection does, to an address that was checked.
+
+    http_get checks the host before the request, and the connection resolves
+    the name again. A name whose answer changes between the two (DNS
+    rebinding) would pass the first and reach the second, so the name is
+    resolved once, here, and the socket connects to the address that was
+    checked.
+    """
+    host, port = address
+    infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+    for *_, sockaddr in infos:
+        if ip_is_private(sockaddr[0]):
+            raise Refused(f"{host} resolves to {sockaddr[0]}, a private or link-local address; allow_private_addresses: true permits them")
+    last: OSError | None = None
+    for family, kind, proto, _, sockaddr in infos:
+        sock = socket.socket(family, kind, proto)
+        try:
+            if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                sock.settimeout(timeout)
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(sockaddr)
+            return sock
+        except OSError as e:
+            sock.close()
+            last = e
+    raise last or OSError(f"{host} resolves to no address")
+
+
+class PublicHTTPConnection(http.client.HTTPConnection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._create_connection = connect_public
+
+
+class PublicHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._create_connection = connect_public
+
+
+# Through a proxy the connection is to the proxy, which resolves the
+# source's name itself, so only the check before the request applies.
+class PublicHTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(http.client.HTTPConnection if req.has_proxy() else PublicHTTPConnection, req)
+
+
+class PublicHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        proxied = req.has_proxy() or req._tunnel_host
+        return self.do_open(http.client.HTTPSConnection if proxied else PublicHTTPSConnection, req, context=self._context)
 
 
 class Redirects(urllib.request.HTTPRedirectHandler):
@@ -547,7 +603,7 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
     if not allow_private and address_is_private(parts.hostname or ""):
         raise Refused(f"{parts.hostname} is a private or link-local address; allow_private_addresses: true permits them")
     redirects = Redirects(allow_private)
-    opener = urllib.request.build_opener(redirects)
+    opener = urllib.request.build_opener(redirects, *(() if allow_private else (PublicHTTPHandler(), PublicHTTPSHandler())))
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
     last = ""
     for attempt in range(ATTEMPTS):
@@ -1234,6 +1290,8 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict,
             continue
         etag = resp.headers.get("etag", "")
         lm = resp.headers.get("last-modified", "")
+        # The version is for reading, so it drops a weak ETag's W/ prefix and
+        # the quotes. The lock keeps the ETag as served, for If-None-Match.
         version = re.sub(r"^W/", "", etag).strip('"') if etag else (utc(lm) if lm else digest[:12])
         it = Item(item=item_id, origin=url, title=title or name, version=version, last_modified=utc(lm) if lm else "",
                   etag=etag, text=text, converted_by=how, sha256=digest, size=len(resp.data))
