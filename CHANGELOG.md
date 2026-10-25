@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The workflows run the `just` that `.lokf/uv.lock` pins, checked by hash.** The sidecar's `pyproject.toml` names `rust-just==1.47.0`. A host without it still gets that version by name, and the preflight says to run `uv add rust-just==1.47.0` in `.lokf/`.
+
 ### Fixed
 
 - **The federation build and the ingest check the address each connection opens.** A name that answers a public address to the check and a private one to the connection (DNS rebinding) now reaches nothing, unless private addresses are allowed.

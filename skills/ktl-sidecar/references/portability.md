@@ -29,7 +29,7 @@ Two copies of a skill in two of those directories drift: an installer updates on
 
 ## Tooling
 
-Validation uses [`uv`](https://docs.astral.sh/uv/) and the `lokf` PyPI package. [`just`](https://just.systems/) is optional: `uvx --from rust-just just` runs the same recipes. The files scaffold without them; only Step 4's validation needs them installed, and Step 4 gives the raw-schema fallback when Python is unavailable. Every script this skill installs runs on bash 3.2 with POSIX tools, so macOS's stock shell and Git for Windows are covered. `mapfile`, `declare -A` and GNU-only flags are avoided for that reason.
+Validation uses [`uv`](https://docs.astral.sh/uv/) and the `lokf` PyPI package. [`just`](https://just.systems/) is optional: `uv sync` installs the version `uv.lock` pins, and `uv run just` runs the same recipes. The files scaffold without them; only Step 4's validation needs them installed, and Step 4 gives the raw-schema fallback when Python is unavailable. Every script this skill installs runs on bash 3.2 with POSIX tools, so macOS's stock shell and Git for Windows are covered. `mapfile`, `declare -A` and GNU-only flags are avoided for that reason.
 
 The host copies of those scripts and workflows are meant to stay byte-identical to the templates they came from, so that a template fix reaches the host on the next sidecar repair. The preflight compares each host copy with the installed sidecar's template and warns on a difference. A host that edits a copy knowingly (a stricter checkout step, say) owns that copy from then on, and should say so where it documents its automation.
 

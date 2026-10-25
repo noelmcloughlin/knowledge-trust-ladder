@@ -400,11 +400,12 @@ It takes a directory lock for the rewrite, so two runs in one checkout cannot dr
 
 The runner, `ubuntu-latest`, is the only project-specific choice; swap in a self-hosted runner group and internal-CA env if your organisation needs them. Actions are pinned to commit SHAs with a version comment. Bump them with your usual update tooling; Dependabot and Renovate handle SHA pins.
 
-Three more pins decide what a run installs, and no update tool moves them:
+Four more pins decide what a run installs, and no update tool moves them:
 
 - **The skill.** `TRUST_LADDER_SKILLS_REF` names a release tag of the skills repository, and `TRUST_LADDER_SKILLS_SHA` the commit that tag named when the pin was set. A tag can be moved, and what it names is the instructions an agent follows unattended. So the install step installs nothing unless the tag still names that commit. Move the two together.
 - **The toolkit.** All three workflows install it with `uv sync --locked`: what `.lokf/uv.lock` names, each file checked against the hash recorded there. A lock that is missing or behind `.lokf/pyproject.toml` fails the step, so commit `uv.lock`, and run `uv lock` in the change that moves the `lokf` floor.
 - **The parser.** The Python halves of the conventions script and the pen run with `.lokf/.venv` when it holds PyYAML, so in the workflows they use what `uv.lock` pins. Without such a `.venv`, they install PyYAML through `uv run`, from the dependency block each file carries. That block names one release, and `exclude-newer` takes no file uploaded after its date. A copy from a newer release of the sidecar moves both.
+- **The recipe runner.** Where `.lokf/pyproject.toml` names `rust-just`, the workflows run the `just` that `uv.lock` pins, checked by hash. A host that has not added it gets the same version fetched by name. Move the two together, in the pyproject's line and in the workflows' `uvx --from rust-just==` fallback.
 
 ## `knowledge-report.sh`: what a program can say about the bundle
 

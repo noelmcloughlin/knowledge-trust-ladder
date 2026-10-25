@@ -99,9 +99,13 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
+      # just comes from .lokf/uv.lock, checked against its hash, and only
+      # its own command goes on PATH.
       - name: Install just
         run: |
-          uv tool install rust-just==1.47.0
+          uv sync --locked --project .lokf
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Use Node.js
