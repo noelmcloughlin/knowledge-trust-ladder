@@ -9,11 +9,11 @@ sources:
   - resource: docs/architecture.md
   - resource: skills/ktl-librarian/SKILL.md
   - resource: skills/ktl-docent/SKILL.md
-  - resource: docs/three-lines-critics.md
+  - resource: docs/three-lines.md
   - resource: docs/obsidian.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-15T01:30:10Z"
+  at: "2026-10-25T23:53:02Z"
 about:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill

@@ -1,5 +1,11 @@
 # Change Log
 
+## 2026-10-25
+
+* **Changed**: `docs/three-lines-critics.md` is folded into `docs/three-lines.md`, so the concepts that cited the critics page now cite the three lines page. `explanation/three-lines-of-defence.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: `docs/three-lines-critics.md` is folded into `docs/three-lines.md`, so the concepts that cited the critics page now cite the three lines page. `explanation/why-four-roles.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: `docs/three-lines-critics.md` is folded into `docs/three-lines.md`, so the concepts that cited the critics page now cite the three lines page. `playbooks/knowledge-sources.md` was edited since a person confirmed it; the label says so until the curator looks again.
+
 ## 2026-10-20
 
 * **Changed**: ktl-prose skill: the check reads a comment's layout, a table of options row by row and no command, and `--against` compares a script as its comments (`references/other-files.md`, `scripts/prose-check.py`).

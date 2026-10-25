@@ -2,12 +2,12 @@
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 title: Three lines of defence - where each role sits, and what an auditor can check
-description: "The librarian, curator, registrar, sidecar and docent placed in the IIA's Three Lines Model, for whoever adopts KTL: who owns a claim, what a machine checks, what a person can examine afterwards, the four limits on that evidence, what the critics page answers, and what remains to do and who does it."
+description: "The librarian, curator, registrar, sidecar and docent placed in the IIA's Three Lines Model, for whoever adopts KTL: who owns a claim, what a machine checks, what a person can examine afterwards, the four limits on that evidence, the model's critics with KTL's answer to each, and what remains to do and who does it."
 genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T20:01:11Z"
+  at: "2026-10-25T23:53:02Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -25,7 +25,6 @@ verified:
 stale_after: 2027-10-19
 sources:
   - resource: docs/three-lines.md
-  - resource: docs/three-lines-critics.md
   - resource: CHANGELOG.md
   - resource: docs/architecture.md
 ---
@@ -62,7 +61,7 @@ Four limits bound what that evidence proves:
 - An Environment attestation records only that a listed reviewer clicked Approve.
 - The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file, and nothing checks approvals. A host without git has only its platform's version history.
 
-The critics have a page of their own, `docs/three-lines-critics.md`, arranged since 2026-09-23 by criticism rather than by critic. A table at the top lists nine points with who raised them and a verdict. Each section then quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page, citing each paper by DOI and the two reports by URL.
+The critics have a section of the page, arranged since 2026-09-23 by criticism rather than by critic. A table at its head lists nine points with who raised them and a verdict. Each criticism then has a section that quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page, citing each paper by DOI and the two reports by URL.
 
 Three points are met by construction:
 
@@ -82,7 +81,7 @@ Three are not KTL's role, and each is the job of the adopting organisation or of
 - *a fourth line for a weak internal audit*, raised by Arndorfer and Minto.
 - *the model's effectiveness is untested*, raised by Davies and Zhivitskaya and by Schuett.
 
-The main page closes with what remains and who owns it, in three lines:
+The page then lists what remains and who owns it, in three lines:
 
 - upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
 - this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names fetching a federation member from a private repository, which `docs/federation.md` says remains a design.

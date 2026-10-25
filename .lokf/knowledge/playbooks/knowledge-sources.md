@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-25T23:53:02Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -76,7 +76,7 @@ sources:
 | `.claude-plugin/plugin.json`, `marketplace.json` | the Claude Code plugin route to the skills (2026-09-19), six of them since `ktl-website` (0.39.0), as `docs/install.md` counts, carried by `explanation/why-a-distribution-repository.md` | diff the install commands in `docs/install.md` against that concept; check 3c holds the two keyword lists identical |
 | `CONTRIBUTING.md` | the contributing playbook | diff the layout table and the pre-PR checklist; since 2026-09-14 the release-process and signing detail live in `docs/releasing.md`/`docs/signing-commits.md` instead, and a word-budget check (`validate-repository.sh` check 10) holds this file to 1000 words |
 | `docs/releasing.md`, `docs/signing-commits.md` | the release-process detail (`CONTRIBUTING.md` used to carry it) that `playbooks/releasing.md` and `policies/versioning.md`'s bump rule now derive from; `docs/signing-commits.md` backs the one-sentence summary in `playbooks/contributing.md`, no concept of its own | diff `playbooks/releasing.md` and `policies/versioning.md`'s Conventional-Commits table against `docs/releasing.md`'s |
-| `docs/three-lines.md`, `docs/three-lines-critics.md` | the roles placed in the three lines of defence, what an auditor can check and what remains to do and who does it; the critics, quoted, and what a bundle answers and leaves open, on the second page | diff `explanation/three-lines-of-defence.md`; confirm every external link on both pages still resolves and still says what is quoted, and that the cross-links between the two pages still meet their headings |
+| `docs/three-lines.md` | the roles placed in the three lines of defence, what an auditor can check, the critics, quoted, and what a bundle answers and leaves open, and what remains to do and who does it | diff `explanation/three-lines-of-defence.md`; confirm every external link on the page still resolves and still says what is quoted, and that the verdict table's links still meet their headings |
 | the WikiSkill paper (Tang et al., 2026) and the SkillWiki paper (Huang et al., 2026) | `explanation/wikiskill.md` and `explanation/skillwiki.md`, the record of what KTL took from each paper, citing the paper, `CHANGELOG.md` and the skill files where each change lives. Since 0.53.0 `docs/for-the-curious.md` holds what KTL took from the two papers, and `docs/wikiskill.md` and `docs/skillwiki.md` are gone | re-check each change a concept lists against `CHANGELOG.md` and the skill files it cites |
 | `docs/skills-repositories.md` | whether KTL helps a repository whose content is Agent Skills, with two runs and what remains to do | diff `explanation/skills-repositories.md`; re-check the run on `anthropics/skills` |
 | `docs/context-layer.md`, `docs/context-layer-technology.md`, `docs/federation.md` | what a context layer is, one bundle as one repository's layer, and why KTL federates bundles through domains. Since 0.53.0 `docs/federation.md` holds the whole federation design, from domains as manifests to the decisions an adopter makes, and the technology page names the products a workspace can use. `explanation/context-layer.md` summarises the three pages, the glossary term defines the layer, and `playbooks/domain-bundle.md` cites the federation page | diff the concept; re-check a vendor's page only where the concept states what it says |
