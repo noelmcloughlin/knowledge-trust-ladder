@@ -1,6 +1,6 @@
 # For the curious
 
-This page is for anyone who wants the mechanics behind [the architecture](architecture.md), which helps decide whether to install these skills. It says who writes the bundle and what checks each write, exactly what "confirmed by a person" rests on, how readers and verdicts steer the next run, and what to do when a bundle outgrows the built-in vocabulary.
+This page is for anyone who wants the mechanics behind [the architecture](architecture.md).
 
 ## Who writes the bundle, and what checks it
 

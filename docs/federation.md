@@ -1,7 +1,7 @@
 # A federation of bundles
 
 > [!NOTE]
-> This page is for whoever runs a domain host of Knowledge Trust Ladder (KTL), or reads its workspace. It says what a domain is made of, how it names bundles and other domains, how the workspace is built and kept current, what exists and what remains a design, and what an adopter decides. [The curated context layer](context-layer.md) says what a context layer is and why KTL federates by domains, and [What a KTL context layer integrates with](context-layer-technology.md) names the products a workspace can use. The curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md) has the worked example, and the sidecar's [automation.md](../skills/ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host) the workflow and its variables.
+> This page is for whoever runs a domain host of Knowledge Trust Ladder (KTL), or reads its workspace. [The curated context layer](context-layer.md) says what a context layer is and why KTL federates by domains.
 
 A *domain* is a named set of bundles with one accountable owner, kept as a thin LOKF bundle in a repository of its own. A domain may name other domains. The domain a build starts from is that build's *top domain*, and the same domain may be a member of another. *The workspace* is the graph built from the top domain's members, one named graph per bundle.
 

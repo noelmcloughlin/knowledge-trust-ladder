@@ -1,6 +1,6 @@
 # Install
 
-This page is for anyone installing the six skills: it gives every way to install them, what each needs on the machine, and how to pin them to one release. [Quick start](#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
+This page is for anyone installing the six skills. Already have a healthy `.lokf/`? Skip the **sidecar**.
 
 ## Quick start
 

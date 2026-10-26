@@ -1,6 +1,6 @@
 # The bundle in Obsidian
 
-This page is for the people who open the bundle in Obsidian: what to open, what to install there, and where the rest is written down. [The architecture](architecture.md) says where a bundle lives, and which two plugins work inside Obsidian: one does the **registrar**'s work, and the other assists the **curator**.
+This page is for the people who open the bundle in Obsidian.
 
 ## Two vaults
 
@@ -52,6 +52,7 @@ The skills install the same layout on every host: the real folder `.lokf/knowled
 
 ## Where the rest is written
 
+- **Where the two plugins fit among the roles** is in [the architecture](architecture.md#the-fifth-role-which-is-not-a-skill): one does the **registrar**'s work, and the other assists the **curator**.
 - **Using each plugin**: the status bar, the report, the review card and the commands are on each plugin's usage page, [KTL Registrar](https://w3id.org/ktl/registrar/docs/using/) and [KTL Curator](https://w3id.org/ktl/curator/docs/using/).
 - **How Obsidian treats the doorway on each host** is in this repository's playbook [Open the knowledge bundle in Obsidian](../.lokf/knowledge/playbooks/open-bundle-in-obsidian.md), which also says why the bundle is never a folder inside a vault. [Hosts and doorways](../.lokf/knowledge/explanation/hosts-and-doorways.md) records why there is one layout.
 - **Shared folders, Windows, and hosts without git** are in the sidecar's [`portability.md`](../skills/ktl-sidecar/references/portability.md).
