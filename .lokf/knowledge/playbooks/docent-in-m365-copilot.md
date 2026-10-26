@@ -12,7 +12,7 @@ sources:
   - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T21:26:04Z"
+  at: "2026-10-26T20:05:58Z"
 status: draft
 isPartOf:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
@@ -71,7 +71,7 @@ With the **Agents Toolkit CLI** (`atk`, for developers, on Node.js):
 2. Export `TEAMSFX_AGENT_SKILLS=true` and `ATK_FRONTIER=true`. Skills are hidden without the variable its version reads: `TEAMSFX_AGENT_SKILLS` in the 1.1.17 release, `ATK_FRONTIER` from the 1.1.18 betas on.
 3. Run `atk add skill --from <zip> -i false`, then `atk provision --env dev` and `atk preview --env dev`, in the same shell. Without the variable, the toolkit packs the agent without the skill's files.
 
-The page says to skip `atk validate` for now, because it rejects the `agent_skills` entry the toolkit itself wrote. Either way, an agent cannot yet have both skills and embedded files.
+The page says to skip `atk validate` for now, because it rejects the `agent_skills` entry the toolkit itself wrote. Whichever route the reader takes, an agent cannot yet have skills and embedded files together.
 
 # 3. Ask it something
 

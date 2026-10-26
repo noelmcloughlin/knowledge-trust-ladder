@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-10-20T23:23:33Z"
+  at: "2026-10-26T20:05:58Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -81,9 +81,11 @@ Both commands run `npm run sync` first. The sync runs `lokf export` from the sid
 
 `knowledge-website.yaml` runs on a push and on a pull request that touch `website/`, `.lokf/`, `knowledge_bundle/`, `README.md`, `docs/`, `.assets/`, `CHANGELOG.md`, `llms.txt`, `.linkml/`, a justfile, a `pyproject.toml`, a `uv.lock` or the workflow itself. It also runs every Monday at 05:23 UTC, and it can be run by hand. A push builds on the default branch only. A pull request gets the same build, link check included, and no deployment.
 
-The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, and runs npm's and the toolkit's packages, and the repository's own site code, under a read-only token. It installs the site's packages with `npm ci --ignore-scripts` and builds with Astro's telemetry off. `deploy` runs harden-runner and GitHub's own deploy-pages action and nothing else, and holds the Pages scopes. It runs for the default branch only, and the scheduled run deploys too, once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Before setting the variable, a maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
+The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, runs the `just` that `.lokf/uv.lock` pins where it pins one, with that command alone linked onto PATH (0.56.1), and runs npm's and the toolkit's packages, and the repository's own site code, under a read-only token. It installs the site's packages with `npm ci --ignore-scripts` and builds with Astro's telemetry off. `deploy` runs harden-runner and GitHub's own deploy-pages action and nothing else, and holds the Pages scopes. It runs for the default branch only, and the scheduled run deploys too, once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Before setting the variable, a maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
 
 The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records. Since 0.54.0 its search and filters sit in a side panel beside a graph that keeps its full height in full screen, and each filter shows a count, with *All* and *None* on each group (`CHANGELOG.md`). The two typefaces, Source Serif 4 for headings and Atkinson Hyperlegible Next for text, are self-hosted from Fontsource under the SIL Open Font License 1.1.
+
+Since 0.56.1 (`CHANGELOG.md`) a concept's card, its link preview and its social card give the genre beside the type, a genre that repeats the type is left off, and search gains a Genre filter. A type is worded as the bundle's prose spells it. A page the browser kept from before a deploy reloads once when the deploy removed its stylesheet, instead of showing unstyled for up to ten minutes.
 
 ## Open questions
 

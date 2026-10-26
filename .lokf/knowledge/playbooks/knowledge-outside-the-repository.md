@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-26T20:05:58Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -73,4 +73,4 @@ The workflow runs on Sundays and keeps one pull request open on the branch `know
 
 # Security
 
-The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. `docs/threat-model.md` covers the ingest workflow.
+The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. Since 0.56.1 it checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing, unless the manifest allows private addresses (`CHANGELOG.md`). `docs/threat-model.md` covers the ingest workflow.

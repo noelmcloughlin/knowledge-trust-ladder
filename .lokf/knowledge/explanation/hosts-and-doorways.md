@@ -7,7 +7,7 @@ genre: explanation
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T21:26:04Z"
+  at: "2026-10-26T20:05:58Z"
 about:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
@@ -61,6 +61,7 @@ Since 2026-09-17 the sidecar's `references/portability.md` is a matrix, host by 
 - git with no forge;
 - no git at all, where the platform's version history is the record of who changed what;
 - an Obsidian vault;
+- since 0.55.0, a machine behind a package mirror or a proxy, or with a python3 older than 3.9, such as RHEL 8's: the sidecar's scripts run from `.lokf/.venv` after `uv sync`, the committed lock is made against the index the gate's runner reads, and uv is told to trust the proxy's certificate;
 - since 2026-09-24, a Microsoft 365 Copilot declarative agent, which holds the docent, from a snapshot of the bundle packed inside the skill, and the auditor once it exists (see [The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
 
 A SharePoint or OneDrive workspace with no git whose curators sign in to Microsoft 365 would need an identity of its own. The curator's domain-schema guidance records it as a shape held in reserve.

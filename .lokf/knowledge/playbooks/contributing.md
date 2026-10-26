@@ -19,7 +19,7 @@ sources:
   - resource: docs/signing-commits.md
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-16T23:58:13Z"
+    at: "2026-10-26T20:05:58Z"
 ---
 
 # Overview

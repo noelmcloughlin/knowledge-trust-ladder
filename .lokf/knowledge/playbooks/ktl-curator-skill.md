@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-26T20:05:58Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -82,7 +82,7 @@ On a host with no forge, the id is the account the platform's version history sh
 - **Retire**: `status: deprecated`, and the skill asks what replaced the concept. When the person names another concept, the `**Deprecation**` line in `log.md` links it after "replaced by", and `knowledge-report.sh` labels the retired concept *retired, replaced by* that path.
 - **Later**: keep or set `status: draft`, with an optional review date.
 
-There is no "confirm everything". After the session the skill prepends one `**Curation**` line with the counts to `log.md`, and prepares a pull request scoped to `.lokf/` that it opens only when the person says so. Each named person must have approved that pull request or, when the pull request is their own, have signed its commits.
+There is no "confirm everything". After the session the skill prepends one `**Curation**` line with the counts to `log.md`, and prepares a pull request scoped to `.lokf/` that it opens only when the person says so. It commits the verdicts in a signed commit of their own, on top of the commit that changed the concepts and never amended into it, because conventions rule 14 reads each commit of the pull request and fails one that records a person's confirmation and also changes what the concept says; the squash merge afterwards is fine. Before the push it runs the conventions check as the gate does, with `--since` naming the merge-base with the pull request's base branch, since without `--since` the script skips rule 14 (0.55.1, `references/review-session.md`). Each named person must have approved that pull request or, when the pull request is their own, have signed its commits.
 
 **Revision.** Where the toolkit accepts it, a confirmation event also carries `revision`, the state of the source the person was shown. For a committed path it is the full commit hash of the last commit that touched the file. For a URL it is the ETag, else a `sha256:` digest. The field is proposed for lokf 0.9.0 and not yet released, so the skill leaves it out on every released toolkit, when the file has uncommitted changes, and where the host has no version control.
 
@@ -96,7 +96,7 @@ The skill speaks in plain labels, never RDF, IRI, SPARQL, predicate or tier. *St
 
 ## Step 3: dig deeper
 
-Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain schema when the vocabulary drifts into a deep or safety-critical domain (`references/domain-schemas.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder write `human:<id>`, so they need the same authenticated id as *Confirm*.
+Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain schema when the vocabulary drifts into a deep or safety-critical domain, and for the linkml-sidecar skills once a schema grows past a few classes (`references/domain-schemas.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder write `human:<id>`, so they need the same authenticated id as *Confirm*.
 
 The skill reads the curation policy's table of review intervals tolerantly. Rows name classes in prose, so the match ignores spaces and plural form: "Glossary terms" is `GlossaryTerm`, and "people" is `Person`. A row naming a class the skill does not know binds nothing. The policy carries three optional switches: `Independent re-check:`, `Evidence first:` and `Younger readers:`. The last names a band of age, 8-12 or 13-18, or both, and ktl-librarian may then write retellings of confirmed concepts for those readers on its scheduled runs. Each retelling is a new concept, which a person confirms against the concept it retells.
 
@@ -108,7 +108,7 @@ Confirming a `MemberDomain`, a member whose bundle is itself a domain, attests t
 
 Before confirming a member, the curator opens the release the concept names and checks three things: the zip and its `.sha256` are attached, the digest in `.sha256` is the concept's `checksum`, and the release's repository is the one the `base_iri` belongs to. The members script checked the zip's checksum and attestation when it wrote the change, and the pull request's hand-off lines say so. For a `MemberDomain`, the curator checks its `workspace-<tag>.zip` the same way. For a member its site serves, the curator compares the digest of the file the concept names with its `checksum`. When the bundle's subject is not public, the curator sets its `sensitivity` before confirming. A confirmation belongs to the concept's `id`, so a concept moved to a new id waits for a confirmation of its own.
 
-Accepting a member's move to a new release is the same confirm again. Sending a member back keeps it at the release the person confirmed, and retiring its concept takes it out of the next build. In Obsidian, a person lists `Domain`, `MemberBundle` and `MemberDomain` under *Known LOKF types* in both KTL Curator and KTL Registrar.
+Accepting a member's move to a new release is the same confirm again. When the new release names another namespace, the members script moves the member's `base_iri` too and its question says so, since each of the member's concepts then has a new IRI and a link into the old namespace counts as unowned; before confirming, the curator checks that the new namespace belongs to the member, as its repository or site shows (`references/domain-bundle.md`). Sending a member back keeps it at the release the person confirmed, and retiring its concept takes it out of the next build. In Obsidian, a person lists `Domain`, `MemberBundle` and `MemberDomain` under *Known LOKF types* in both KTL Curator and KTL Registrar.
 
 ## Open questions
 

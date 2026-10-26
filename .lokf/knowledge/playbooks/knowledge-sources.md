@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-25T23:53:02Z"
+  at: "2026-10-26T20:05:58Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -82,7 +82,7 @@ sources:
 | `docs/context-layer.md`, `docs/context-layer-technology.md`, `docs/federation.md` | what a context layer is, one bundle as one repository's layer, and why KTL federates bundles through domains. Since 0.53.0 `docs/federation.md` holds the whole federation design, from domains as manifests to the decisions an adopter makes, and the technology page names the products a workspace can use. `explanation/context-layer.md` summarises the three pages, the glossary term defines the layer, and `playbooks/domain-bundle.md` cites the federation page | diff the concept; re-check a vendor's page only where the concept states what it says |
 | `website/`, `.github/workflows/knowledge-website.yaml` | the Astro Starlight site built from the README, `docs/`, the bundle and `CHANGELOG.md`, and the workflow that publishes it to GitHub Pages, named `website.yml` until 2026-10-14; `playbooks/website.md` since 2026-10-12. Since 0.39.0 both are copies of ktl-website's templates, which check 11w holds byte-identical | diff `website/README.md` and the workflow's triggers and jobs against the concept; the components, styles and scripts under `website/` are consciously excluded as concepts |
 | `SECURITY.md` | the slim security policy (reporting, supported versions, a surface table) | diff the surface table and the reporting/supported-versions text |
-| `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the other two repositories' `SECURITY.md`, so a heading rename here is a breaking change there |
+| `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the sibling repositories, the two plugins' `SECURITY.md` and ai-linkmo among them, and check 9 records each anchor, so a heading rename here is a breaking change there |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
 | `.github/workflows/validate.yml`, `publish.yml` | the validation and releasing playbooks | diff job names, triggers, and the pinned action SHAs |
 | `.github/workflows/semantic-release.yml`, `.github/scripts/changelog-release.mjs`, `.releaserc.json` | the version-and-changelog automation `playbooks/releasing.md` and `policies/versioning.md` describe | diff the `release` job's steps, the script's `verifyRelease`/`generateNotes` behaviour, and `.releaserc.json`'s `releaseRules` (which commit types map to which bump) and the preset it names, since the default Angular preset reads no `!` after the type, against the concept's Overview; the `release` job runs behind the `release` Environment, as `publish.yml` does, while the `plan` job runs on every pull request with no environment |

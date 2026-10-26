@@ -15,7 +15,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/okf-specification
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-20T23:23:33Z"
+    at: "2026-10-26T20:05:58Z"
 sources:
   - resource: docs/architecture.md
 ---
