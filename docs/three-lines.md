@@ -7,7 +7,7 @@ Knowledge Trust Ladder (KTL) was not built to it, but each of its roles fits. Th
 | Line | In the model | In KTL |
 | --- | --- | --- |
 | **First**: owns the work and its risk | operational management | The **librarian** derives every record from a source it names, records its own re-checks as `process:` and never as a person, and marks what it cannot settle `status: draft` with an open question. The **curator**, a named person, decides what the team accepts as true: confirm, correct, send back, retire, or leave for later. Maker and checker: the agent cannot vouch, and the person does not derive. |
-| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change and again as the CI gate, `knowledge-apply.sh`, the pen, as the only way the librarian writes the bundle, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval of the pull request or their signature on the commit, and the pen refuses to write any `human:` actor. The registrar never judges truth: a verdict is only ever what that person said. |
+| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change and again as the continuous integration (CI) gate, `knowledge-apply.sh`, the pen, as the only way the librarian writes the bundle, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval of the pull request or their signature on the commit, and the pen refuses to write any `human:` actor. The registrar never judges truth: a verdict is only ever what that person said. |
 | **Third**: independent assurance | internal audit | The **bundle** holds the evidence an independent reviewer needs, listed below, and not the review, because assurance is independent only when it comes from someone other than the authors. |
 
 <p align="center">
@@ -17,7 +17,7 @@ Knowledge Trust Ladder (KTL) was not built to it, but each of its roles fits. Th
   </picture>
 </p>
 
-The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: it rewords what the librarian wrote before a person confirms it. A copy editor is not the author, so it writes no `generated` record, and `log.md` and git record the pass.
+The **docent** sits outside the lines, where the reader does, and reports what it could not answer to the librarian, as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: it rewords what the librarian wrote before a person confirms it. A copy editor is not the author, so it writes no `generated` record, and `log.md` and git record the pass.
 
 Above the lines sits a governing body: for a bundle, the owners of the repository that holds it. Their two instruments are the organisation's rules for AI-assisted work (this project's are its [AI covenant](../AI_COVENANT.md)) and the curation policy. The policy is a concept in the bundle that says who curates and how often each kind of concept is re-confirmed, and it is reviewed like any other concept. The [four levels of checking](for-the-curious.md#four-levels-of-checking) are these same checks ordered by when they happen.
 
@@ -93,7 +93,7 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **What KTL does.** The gate reads the whole pull request and the repository's history, and asks the forge, not the author, whether the named person approved or signed. The IIA's 2026 text makes such unfiltered access the condition of independence.
 
-**Verdict: met by construction, with one limit.** The gate sees what the first line wrote, not what it never derived. A missing concept shows up only as a docent miss.
+**Verdict: met by construction, with one limit.** The gate sees what the first line wrote, not what it never derived. A missing concept appears only as a docent miss.
 
 ### Process is followed, judgement is absent
 
@@ -123,7 +123,7 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **What KTL does.** Every record names the source it was derived from, so faithfulness can be checked against something. What the librarian cannot settle is marked `status: draft` with an open question until a person decides. The registrar checks what needs no judgement: a local `resource` that no longer exists, and a `revision` naming no commit that holds it. It fetches no URL.
 
-**Verdict: answered in part.** Left open, by design: the registrar never judges truth, and the librarian's scheduled re-check is the same kind of tool that wrote the text, so it is self-review. The independent judgement is the curator's.
+**Verdict: answered in part.** Left open: the registrar never judges truth, and the librarian's scheduled re-check is the same kind of tool that wrote the text, so it is self-review. The independent judgement is the curator's.
 
 ### The lines do not coordinate in practice
 

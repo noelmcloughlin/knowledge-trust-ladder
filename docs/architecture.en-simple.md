@@ -21,7 +21,7 @@ Three things can happen to every entry, and the bundle records which of them hap
 
 ## Why does a project need it?
 
-The knowledge already exists, in code, documents, diagrams and policies. But every task starts the same way. Someone finds the material, connects it, and judges what is still true. Then the next person or assistant pays for that work again.
+The knowledge already exists, in code, documents, diagrams and policies. But every task starts the same way. Someone finds the material, connects it, and judges what is still true. Then the next person or assistant does that work again.
 
 A **knowledge bundle** keeps that work instead of throwing it away. It is a plain folder of Markdown concept files, like a library's catalogue. It sits between the sources and whoever reads them, a person or an agent. It lasts from one task to the next.
 
@@ -38,7 +38,7 @@ KTL names its roles after people who work in libraries and museums. Four of the 
 
 The fifth role, the **registrar**, keeps the records in order, and programs do that job. The `lokf` toolkit checks every change. On each pull request that touches the bundle, [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks it in continuous integration (CI).
 
-The librarian writes the bundle only through one script, `knowledge-apply.sh`, called **the pen**. The pen stamps who wrote each record, and when. It refuses a change that would forge or remove a person's confirmation. Another script, `knowledge-report.sh`, works out each trust label, so no model does that arithmetic.
+The librarian writes the bundle only through one script, `knowledge-apply.sh`, called **the pen**. The pen stamps who wrote each record, and when. It refuses a change that would fake or remove a person's confirmation. Another script, `knowledge-report.sh`, works out each trust label, so no model does that arithmetic.
 
 One more skill has no role of its own. [`ktl-prose`](../skills/ktl-prose/SKILL.md) is the librarian's copy editor. It rewords what an agent wrote in plain English, and changes the wording but never a fact.
 
@@ -54,7 +54,7 @@ Each entry carries a label in plain words:
 
 Other labels say an entry is **still a draft**, **edited since a person last confirmed it**, **past its review date** or **retired**. **Reopened** means a person confirmed it, and a new question is waiting.
 
-The labels are worked out from each entry every time it is read, and never stored. So they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of entries in a sitting.
+The labels are worked out from each entry every time it is read, and never stored. So they always agree with what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of entries in a sitting.
 
 ## Where can I read more?
 
