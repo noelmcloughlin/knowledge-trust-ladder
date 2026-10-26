@@ -3,6 +3,7 @@
 ## 2026-10-26
 
 * **Changed**: Curating a domain bundle says a release that names another namespace moves the member's `base_iri`, as `skills/ktl-curator/references/domain-bundle.md` says.
+* **Prose**: reworded 1 concept body in plain English. No fact, link, number or frontmatter changed.
 
 ## 2026-10-25
 
