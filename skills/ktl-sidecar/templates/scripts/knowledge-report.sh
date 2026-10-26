@@ -155,6 +155,12 @@
 # not an error: the source map may leave its folder out on purpose and say
 # why.
 #
+# A concept's `exclusions` (lokf 0.9.0 and later) list what someone looked at
+# and left out on purpose, each with a reason. A file under such a path is
+# counted apart, as left out on purpose, and never as unnamed. A concept that
+# names the file wins, since one concept may use what another leaves out. An
+# exclusion is never a source, so it never moves and never makes work.
+#
 # Three kinds of file are not counted:
 #   - a tracked file deleted from the working tree;
 #   - the sidecar's own `.lokf/` and `knowledge_bundle`, apart from the
@@ -165,10 +171,11 @@
 #
 # `coverage <dir>` lists the unnamed files under a folder, and `coverage .`
 # lists them all. `--why <path>` names the concept that claims each path, so
-# a reviewer can find its entry in the source map. It reads frontmatter only.
+# a reviewer can find its entry in the source map, and says apart which
+# concept left it out. It reads frontmatter only.
 #
 # `--strict` exits 1 when:
-#   - a tracked file in scope is named by nobody;
+#   - a tracked file in scope is named by nobody, and left out by nobody;
 #   - a folder given holds no tracked file, as a mistyped one does;
 #   - the whole count holds a path it cannot read;
 #   - the count cannot run.
@@ -239,6 +246,7 @@ trap 'rm -rf "$tmp"' EXIT
 #      that human time as written  the later of generated.at and verified.at as written
 #      the revision that human event carries, a commit hash cut to seven characters
 #   R  path  resource            one per `resource:` line, the concept's own and each source's
+#   X  path  resource            one per exclusion's `resource:` line, which no R line repeats
 #   Q  path  date  actor  text   one per bullet under ## Open questions
 # Times are normalised to one UTC shape, as conventions rule 11 does, so they
 # compare as strings; a time in any other shape is left out, never guessed.
@@ -322,15 +330,19 @@ NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm
 fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); inv = 0; fm = 0; body = 1; next }
 fm {
   if (inflow) { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
+  if ($0 ~ /^[A-Za-z_][A-Za-z0-9_]*:/) { top = $0; sub(/:.*/, "", top) }
   if ($0 ~ /^title:/) title = val($0)
   else if ($0 ~ /^status:/) status = val($0)
   else if ($0 ~ /^stale_after:/) stale = val($0)
   else if ($0 ~ /^timestamp:/) tstamp = val($0)
   else if ($0 ~ /^id:/) cid = val($0)
   else if ($0 ~ /^type:/) ctype = val($0)
+  # A resource under `exclusions` is a material left out on purpose, never a
+  # source, so it comes out as an X line and never stands for the concept.
   if ($0 ~ /^[ \t]*(- )?resource:[ \t]*[^ \t]/) {
     r = $0; sub(/^[ \t]*(- )?resource:/, "", r); r = unq(r)
-    if (r != "") { print "R\t" path "\t" r; if ($0 ~ /^resource:/) topres = r; else if (firstres == "") firstres = r }
+    if (r != "" && top == "exclusions" && $0 !~ /^resource:/) print "X\t" path "\t" r
+    else if (r != "") { print "R\t" path "\t" r; if ($0 ~ /^resource:/) topres = r; else if (firstres == "") firstres = r }
   }
   if ($0 ~ /^(verified|generated):/) {
     relend(); emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated):[ \t]*/, "", rest)
@@ -1095,13 +1107,14 @@ EOF
 }
 
 # ---- coverage ----------------------------------------------------------------
-# Each path a concept names, as `concept<TAB>path`: every `resource:` value,
-# the concept's own and each source's, with a fragment cut off and a leading
-# ./ or a trailing / removed. A URL, an absolute path and `.`, the root
-# itself, name no file here.
+# Each path a concept lists, as `concept<TAB>path<TAB>kind`: every
+# `resource:` value, with a fragment cut off and a leading ./ or a trailing /
+# removed. The kind is N for the concept's own and each source's, which name
+# the path, and X for each exclusion's, which leaves it out. A URL, an
+# absolute path and `.`, the root itself, name no file here.
 named_pairs() {
-  printf '%s\n' "$all" | awk -F'\t' '$1 == "R" { p = $3; sub(/#.*/, "", p); sub(/^\.\//, "", p); sub(/\/+$/, "", p)
-    if (p != "" && p != "." && p !~ /:\/\// && p !~ /^\//) print $2 "\t" p }' | LC_ALL=C sort -u
+  printf '%s\n' "$all" | awk -F'\t' '$1 == "R" || $1 == "X" { p = $3; sub(/#.*/, "", p); sub(/^\.\//, "", p); sub(/\/+$/, "", p)
+    if (p != "" && p != "." && p !~ /:\/\// && p !~ /^\//) print $2 "\t" p "\t" ($1 == "R" ? "N" : "X") }' | LC_ALL=C sort -u
 }
 # A path argument, under the root: each leading ./, repeated /, /./ and
 # trailing / or /. removed, and `.` for the root itself. It runs in a command
@@ -1121,9 +1134,9 @@ cov_path() {  # <path>
   done
   printf '%s\n' "${d:-.}"
 }
-# Which concepts name each path, or a folder above it. Every path is checked
-# before anything is printed. A path arrives through the environment, so that
-# awk reads no backslash in it as an escape.
+# Which concepts name each path, or a folder above it, and which leave it
+# out. Every path is checked before anything is printed. A path arrives
+# through the environment, so that awk reads no backslash in it as an escape.
 why() {  # <path>...
   [ $# -gt 0 ] || usage
   local d there
@@ -1139,9 +1152,10 @@ why() {  # <path>...
     esac
     there=""; [ -e "$root/$d" ] || there=" (no such file or folder here)"
     KTL_PATH="$d" KTL_THERE="$there" awk -F'\t' 'BEGIN { w = ENVIRON["KTL_PATH"]; x = ENVIRON["KTL_THERE"] }
-      w == $2 { print "- " w ": named by " $1 x; n++ }
-      w != $2 && substr(w, 1, length($2) + 1) == $2 "/" { print "- " w ": under " $2 ", which " $1 " names" x; n++ }
-      substr($2, 1, length(w) + 1) == w "/" { inside[$2] = 1 }
+      w == $2 && $3 == "N" { print "- " w ": named by " $1 x; n++ }
+      w == $2 && $3 == "X" { print "- " w ": left out on purpose by " $1 x; n++ }
+      w != $2 && substr(w, 1, length($2) + 1) == $2 "/" { print "- " w ": under " $2 ", which " $1 ($3 == "N" ? " names" : " leaves out on purpose") x; n++ }
+      $3 == "N" && substr($2, 1, length(w) + 1) == w "/" { inside[$2] = 1 }
       END {
         if (n) exit
         for (k in inside) m++
@@ -1150,7 +1164,7 @@ why() {  # <path>...
   done < "$tmp/whys"
 }
 coverage() {  # [--strict] [<dir>...] | --why <path>...
-  local d total covered unc hidden pend pend_unc strict=0 flagged=0
+  local d total covered unc hidden pend pend_unc left aside="" strict=0 flagged=0
   : > "$tmp/want"
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -1165,21 +1179,24 @@ coverage() {  # [--strict] [<dir>...] | --why <path>...
     echo "Coverage: not computed here, since this folder has no git history to list the tracked files"
     return "$strict"
   fi
-  named_pairs | cut -f2 | LC_ALL=C sort -u > "$tmp/named"
+  named_pairs > "$tmp/pairs"
+  awk -F'\t' '$3 == "N" { print $2 }' "$tmp/pairs" | LC_ALL=C sort -u > "$tmp/named"
+  awk -F'\t' '$3 == "X" { print $2 }' "$tmp/pairs" | LC_ALL=C sort -u > "$tmp/excluded"
   # Git lists each path with its kind:
   #   D  a tracked file deleted from the working tree, which no longer counts;
   #   T  a file git tracks;
   #   U  a file git would add. The ignore rules leave the rest out.
   # Out come an A line for every path counted, an F line for each one under
-  # no named path, and one S line of counts. Git lists an untracked
-  # repository inside as a folder, so its trailing / is removed. Git quotes a
-  # path that holds a control character. Such a path is counted apart, and
-  # never printed or compared.
+  # no named path, an E line for each one that only an exclusion accounts
+  # for, and one S line of counts. Git lists an untracked repository inside
+  # as a folder, so its trailing / is removed. Git quotes a path that holds a
+  # control character. Such a path is counted apart, and never printed or
+  # compared.
   { git -C "$root" -c core.quotePath=false ls-files --deleted 2>/dev/null | awk '{ print "D\t" $0 }'
     git -C "$root" -c core.quotePath=false ls-files 2>/dev/null | awk '{ print "T\t" $0 }'
     git -C "$root" -c core.quotePath=false ls-files --others --exclude-standard 2>/dev/null | awk '{ print "U\t" $0 }'; } \
-  | awk -v named="$tmp/named" '
-  BEGIN { while ((getline p < named) > 0) N[p] = 1; close(named) }
+  | awk -v named="$tmp/named" -v excluded="$tmp/excluded" '
+  BEGIN { while ((getline p < named) > 0) N[p] = 1; close(named); while ((getline p < excluded) > 0) X[p] = 1; close(excluded) }
   { sub(/\r$/, ""); kind = substr($0, 1, 1); f = substr($0, 3) }
   kind == "D" { gone[f] = 1; next }
   (f in gone) || (f in seen) { next }
@@ -1189,12 +1206,14 @@ coverage() {  # [--strict] [<dir>...] | --why <path>...
   {
     sub(/\/$/, "", f); p = f; acc = (p in N)
     while (!acc && (i = match(p, /\/[^\/]*$/)) > 0) { p = substr(p, 1, i - 1); acc = (p in N) }
+    out = 0
+    if (!acc) { p = f; out = (p in X); while (!out && (i = match(p, /\/[^\/]*$/)) > 0) { p = substr(p, 1, i - 1); out = (p in X) } }
     print "A\t" kind "\t" f
-    if (kind == "T") { total++; if (acc) covered++; else { unc++; print "F\tT\t" f } }
-    else { pend++; if (!acc) { pend_unc++; print "F\tU\t" f } }
+    if (kind == "T") { total++; if (acc) covered++; else if (out) { left++; print "E\tT\t" f } else { unc++; print "F\tT\t" f } }
+    else { pend++; if (!acc && !out) { pend_unc++; print "F\tU\t" f } }
   }
-  END { printf "S\t%d\t%d\t%d\t%d\t%d\t%d\n", total + 0, covered + 0, unc + 0, hidden + 0, pend + 0, pend_unc + 0 }' > "$tmp/cov"
-  IFS=$'\t' read -r _ total covered unc hidden pend pend_unc < <(awk -F'\t' '$1 == "S"' "$tmp/cov")
+  END { printf "S\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", total + 0, covered + 0, unc + 0, hidden + 0, pend + 0, pend_unc + 0, left + 0 }' > "$tmp/cov"
+  IFS=$'\t' read -r _ total covered unc hidden pend pend_unc left < <(awk -F'\t' '$1 == "S"' "$tmp/cov")
   # A folder git tracks nothing under, such as a copy made outside its
   # repository but inside another, has no list to compare.
   if [ "$((total + hidden))" -eq 0 ]; then
@@ -1203,7 +1222,9 @@ coverage() {  # [--strict] [<dir>...] | --why <path>...
   fi
   echo "Coverage - $today (computed by knowledge-report.sh from frontmatter and git; paths and counts only)"
   if [ ! -s "$tmp/want" ]; then
-    echo "Tracked files under a path a concept names as its resource or one of its sources: $covered of $total · under none: $unc"
+    # A bundle that leaves nothing out prints the line it always has.
+    [ "${left:-0}" -eq 0 ] || aside=" · left out on purpose: $left"
+    echo "Tracked files under a path a concept names as its resource or one of its sources: $covered of $total$aside · under none: $unc"
     awk -F'\t' '$1 == "F" && $2 == "T" { i = index($3, "/"); t = i ? substr($3, 1, i) : ""; C[t]++ } END { for (t in C) print t "\t" C[t] }' "$tmp/cov" \
       | LC_ALL=C sort | awk -F'\t' '{ print "- " ($1 == "" ? "at the top level" : $1) ": " $2 }'
     flagged=$((unc + hidden))
@@ -1222,10 +1243,11 @@ coverage() {  # [--strict] [<dir>...] | --why <path>...
         { under = (w == "." || $3 == w || substr($3, 1, length(w) + 1) == w "/") }
         $1 == "A" && under { if ($2 == "T") has++; if ($3 == w) file = 1 }
         $1 == "F" && under { if ($2 == "T") { n++; out = out "- " $3 "\n" } else { m++; late = late "- " $3 " (not tracked yet)\n" } }
+        $1 == "E" && under { aside++ }
         END {
           label = (w == "." ? "the whole tree" : file ? w : w "/")
           if (!has) print label ": git tracks no file here"
-          else print label ": " (n ? n : "none") " under no named path" (m ? ", and " m " more not tracked yet" : "")
+          else print label ": " (n ? n : "none") " under no named path" (aside ? ", " aside " left out on purpose" : "") (m ? ", and " m " more not tracked yet" : "")
           printf "%s%s", out, late
           print (has ? n : 1) + 0 >> out_n
           print m + 0 >> late_n
