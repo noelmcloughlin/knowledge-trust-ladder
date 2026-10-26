@@ -6,8 +6,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
-- **The federation's members script moves the day of a pruned release.** When the release list no longer holds a member's old release, the day the text gives after the old tag moves to the new release's day.
-- **The federation's members script follows a member's moved namespace.** When a new release's `index.md`, or a served file's `@base`, names another `base_iri`, the patch sets it and the question says so, where the build refused the member before.
+- **The federation's members script moves the day of a pruned release.** When the release list no longer holds a member's old release, the day the text writes right after the old tag moves with the tag, and only there.
+- **The federation's members script follows a member's moved namespace.** When a new release's `index.md`, or a served file's `@base`, names another `base_iri`, the patch sets it and the question says so, where the build refused the member before. A namespace the build would refuse leaves the member as it is.
+- **The federation's members script cuts a long hand-off line.** The pen refuses a patch with a line over 300 characters, which a failed attestation or a moved namespace could give.
+- **A federation build finds a waiting member by the namespace it builds.** The lock's waiting entry named the namespace a move proposes, so a member held or left out at its old one kept its old entry.
 - **The federation build and members script remove the files they download.** A zip, schema or served file fetched to check its digest and attestation goes into a temporary folder, removed when the run ends, unless `--cache` names a folder to keep them in.
 
 ## [0.56.2] - 2026-10-27
