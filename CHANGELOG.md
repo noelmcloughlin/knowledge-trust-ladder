@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The federation's members script moves the day of a pruned release.** When the release list no longer holds a member's old release, the day the text gives after the old tag moves to the new release's day.
+- **The federation's members script follows a member's moved namespace.** When a new release's `index.md`, or a served file's `@base`, names another `base_iri`, the patch sets it and the question says so, where the build refused the member before.
+
 ## [0.56.2] - 2026-10-27
 
 ### Fixed

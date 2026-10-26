@@ -120,7 +120,12 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 
 6. `members` moves a member's old tag, zip name and day in its description
    and body as well as its frontmatter, in a patch the pen applies, and
-   names the lines it had to leave in its question;
+   names the lines it had to leave in its question. The day moves too when
+   the release list no longer holds the old release;
+
+6a. a member whose new release names another namespace moves to it, in its
+   frontmatter and where its text gives it as code, and its question says
+   so. One whose new namespace nests with another member's stays as it is;
 
 7. its question calls a member "confirmed" only when a person confirmed the
    concept as it stands, and puts the move to a person as a question alone
@@ -145,8 +150,9 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
     the member's release workflow, and a gh too old to pin it is named;
 
 11. `members` moves a member its site serves to the file the site serves
-    now, asking with the validators it kept, and `members --add <address>`
-    drafts one from a site's concepts.jsonld;
+    now, and to its new namespace when the file's @base moved, asking with
+    the validators it kept, and `members --add <address>` drafts one from a
+    site's concepts.jsonld;
 
 12. `members` moves the others when it cannot check one, and asks gh for a
     release list the API refuses as rate limited.
@@ -1834,7 +1840,7 @@ Neither {OLD[0]}-rc1, {OLD[0]}1 nor the build at {OLD[1]} is this release.
 
 @pytest.fixture
 def released(tmp_path):
-    """A domain of four members released on GitHub, each with a newer release, and stand-ins for the GitHub API and gh.
+    """A domain of four members released on GitHub, each with a newer release of a bundle in its own namespace, and stand-ins for the GitHub API and gh.
 
     - a is a draft whose body names the old release in lines that move, in
       a line that occurs twice, and in its lokf:related block and open
@@ -1858,6 +1864,12 @@ def released(tmp_path):
     zip_path = tmp_path / "release.zip"
     sha = zip_bundle(bundle, zip_path)
     sums = write(tmp_path / "release.zip.sha256", f"{sha}  release.zip\n")
+    zips = {"a": (zip_path, sums)}
+    for slug in "bcd":
+        k = make_bundle(tmp_path / f"{slug}_bundle", f"https://{slug}.example/knowledge/", slug.upper(),
+                        {"glossary/term.md": {"type": "GlossaryTerm", "title": "Term", "description": "A term.", "resource": f"https://example.test/{slug}"}})
+        zipped = tmp_path / f"{slug}.zip"
+        zips[slug] = (zipped, write(tmp_path / f"{slug}.zip.sha256", f"{zip_bundle(k, zipped)}  {slug}.zip\n"))
     schema = write(tmp_path / "schema.yaml", SCHEMA)
     schema_sums = write(tmp_path / "schema.yaml.sha256", f"{hashlib.sha256(schema.read_bytes()).hexdigest()}  schema.yaml\n")
 
@@ -1877,8 +1889,7 @@ def released(tmp_path):
         listing = write(tmp_path / "api" / f"{slug}.json", json.dumps(releases))
         served[f"https://api.github.com/repos/acme/{slug}/releases?per_page=100"] = str(listing)
         asset, checksum = releases[0]["assets"][:2]
-        served[asset["browser_download_url"]] = str(zip_path)
-        served[checksum["browser_download_url"]] = str(sums)
+        served[asset["browser_download_url"]], served[checksum["browser_download_url"]] = map(str, zips[slug])
     # e has a bundle release of its own and no member concept yet, and its
     # index describes it with no full stop; nested's release is bundle A
     # again, whose namespace a member already holds.
@@ -1928,10 +1939,22 @@ def ops_for(patch: dict, slug: str) -> dict:
     return {op["op"]: op for op in patch["ops"] if op["path"] == f"members/{slug}.md"}
 
 
-def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(released):
+def prune(released, tag: str) -> None:
+    """Each release list as the API gives it once that release is deleted, as a repository prunes a superseded one."""
+    for listing in (released["tmp"] / "api").glob("*.json"):
+        listing.write_text(json.dumps([r for r in json.loads(listing.read_text(encoding="utf-8")) if r["tag_name"] != tag]), encoding="utf-8")
+
+
+@pytest.mark.parametrize("pruned", [False, True], ids=["listed", "pruned"])
+def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(released, pruned):
+    """The old release's day moves with its tag, from the text after the tag when the release list no longer holds it."""
     host = released["host"]
+    if pruned:
+        prune(released, OLD[0])
     r = members_run(released)
     assert r.rc == 0 and "4 member(s) moved" in r.out, r.out
+    handoff = yaml.safe_load(read(host / ".lokf" / "patch.yaml"))["handoff"]
+    assert not any("no day was moved" in line for line in handoff), handoff
     r = run(["bash", APPLY, "--root", host], cwd=host)
     assert r.rc == 0, r.out
     text = read(host / ".lokf" / "knowledge" / "members" / "a.md")
@@ -1956,6 +1979,44 @@ def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(rele
     person = read(host / ".lokf" / "knowledge" / "members" / "d.md")
     assert "version: v1.0.0" in person and "The d bundle as released at v1.0.0 on 2026-10-15." in person, "a concept a person wrote keeps its text"
     assert "A person wrote this concept, so this patch leaves its text and frontmatter as they are." in person, person
+
+
+def test_members_moves_a_member_to_the_namespace_its_new_release_names(released):
+    """The new releases of b and d name another namespace in their index.md, and c's names a's.
+
+    b moves to its new namespace in its frontmatter and where its text gives
+    the namespace as code, while the site's address in angle brackets stays,
+    since the build refuses a member whose zip names another base_iri. d's
+    question names the move, since a person wrote d. c stays as it is.
+    """
+    host, tmp = released["host"], released["tmp"]
+    old = "https://b.example/knowledge/"
+    fm = yaml.safe_load(read(host / ".lokf" / "knowledge" / "members" / "b.md").split("---\n")[1])
+    rewrite(host, "b", fm, f"\nIts concepts are in the namespace `{old}`, which its site serves at <{old}>.\n")
+    served = json.loads(read(tmp / "served.json"))
+    asset = "https://github.com/acme/{0}/releases/download/v1.1.0/knowledge-v1.1.0-{0}.zip"
+    for slug in "bd":
+        k = make_bundle(tmp / f"{slug}_moved", f"https://w3id.example/{slug}/knowledge/", slug.upper(), {})
+        zipped = tmp / f"{slug}-moved.zip"
+        sums = write(tmp / f"{slug}-moved.zip.sha256", f"{zip_bundle(k, zipped)}  {zipped.name}\n")
+        served[asset.format(slug)], served[asset.format(slug) + ".sha256"] = str(zipped), str(sums)
+    served[asset.format("c")], served[asset.format("c") + ".sha256"] = str(tmp / "release.zip"), str(tmp / "release.zip.sha256")
+    write(tmp / "served.json", json.dumps(served))
+    r = members_run(released)
+    assert r.rc == 0 and "3 member(s) moved" in r.out, r.out
+    patch = yaml.safe_load(read(host / ".lokf" / "patch.yaml"))
+    assert not ops_for(patch, "c") and any(line.startswith("members/c: could not be checked, so it stays as it is: acme/c at v1.1.0: its namespace https://a.example/knowledge/ nests with members/a's")
+                                           for line in patch["handoff"]), patch["handoff"]
+    moves = "Its namespace moves from {0}.example/knowledge/ to https://w3id.example/{1}/knowledge/, so each of its concepts has a new IRI, and the gate counts a link into the old one as unowned."
+    assert moves.format("https://b", "b") in ops_for(patch, "b")["question"]["text"], ops_for(patch, "b")
+    assert moves.format("https://d", "d") in ops_for(patch, "d")["question"]["text"] and "patch" not in ops_for(patch, "d"), ops_for(patch, "d")
+    assert ops_for(patch, "a")["patch"]["set"].get("base_iri") is None, "a namespace that stays is not set"
+    r = run(["bash", APPLY, "--root", host], cwd=host)
+    assert r.rc == 0, r.out
+    text = read(host / ".lokf" / "knowledge" / "members" / "b.md")
+    assert yaml.safe_load(text.split("---\n")[1])["base_iri"] == "https://w3id.example/b/knowledge/", text
+    assert f"Its concepts are in the namespace `https://w3id.example/b/knowledge/`, which its site serves at <{old}>." in text, text
+    assert "Its namespace moved to `https://w3id.example/b/knowledge/`." in read(host / ".lokf" / "knowledge" / "log.md")
 
 
 def test_members_calls_a_member_confirmed_only_when_a_person_confirmed_it(released):
@@ -2148,6 +2209,16 @@ def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path)
     assert fm["distribution"] == [{"name": "concepts.jsonld", "access_url": t_iri + "concepts.jsonld", "media_type": "application/ld+json",
                                    "checksum": "sha256:" + hashlib.sha256((t_site / "concepts.jsonld").read_bytes()).hexdigest()}]
     assert 'The description in its own index reads "The T bundle". Its site served `concepts.jsonld`' in created["body"] and "which releases no zip" in created["body"]
+    # The site now serves a file whose @base is another namespace, and the
+    # patch moves the member to it.
+    moved = make_bundle(tmp_path / "s-moved", "https://w3id.example/s/knowledge/", "S", {"glossary/s.md": {"type": "GlossaryTerm", "title": "S term", "description": "S's term.", "resource": "https://example.test/s"}})
+    served[url] = {"path": str(export_bundle(moved, tmp_path / "s-moved-site") / "concepts.jsonld"), "headers": {"etag": '"s-2"', "last-modified": "Wed, 21 Oct 2026 09:00:00 GMT"}}
+    write(tmp_path / "served.json", json.dumps(served))
+    r = members_run(released, "--dry-run", stdout_only=True)
+    assert r.rc == 0, r.out
+    ops = ops_for(yaml.safe_load(r.out), "s")
+    assert ops["patch"]["set"]["base_iri"] == "https://w3id.example/s/knowledge/" and ops["patch"]["set"]["version"] == "2026-10-21", ops
+    assert f"Its namespace moves from {s_iri} to https://w3id.example/s/knowledge/, so each of its concepts has a new IRI" in ops["question"]["text"], ops
 
 
 IN_PROCESS = r"""

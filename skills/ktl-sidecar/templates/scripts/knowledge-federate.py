@@ -2392,6 +2392,59 @@ def body_edits(body: str, move) -> tuple[list[dict], int]:
     return edits, left
 
 
+def written_days(version: str, description: str, body: str | None) -> set[str]:
+    """The days a concept's text gives a release right after its tag, as this script writes them: "v1.0.0 on 2026-10-15".
+
+    Only the description and the body lines a move may edit are read, so a
+    person's event or an open question that dates something else after the
+    tag gives no day.
+    """
+    lines = body.split("\n") if body is not None else []
+    kept = protected_lines(lines)
+    texts = [description, *(line for i, line in enumerate(lines) if i not in kept and not PERSON_LINE.match(line))]
+    pattern = re.compile(rf"(?<![\w.]){re.escape(version)} on (\d{{4}}-\d{{2}}-\d{{2}})(?![\w-]|\.\w)")
+    return {m.group(1) for text in texts for m in pattern.finditer(text)}
+
+
+def refuse_nesting(what: str, base_iri: str, taken: dict[str, str], own: str = "") -> None:
+    """Stop when a namespace nests with one another member concept holds, since a bundle joins once, under a namespace of its own."""
+    for other, who in taken.items():
+        if other and who != own and (base_iri.startswith(other) or other.startswith(base_iri)):
+            raise Failed(f"{what}: its namespace {base_iri} nests with {who}'s {other}; a bundle joins once, under a namespace of its own")
+
+
+def namespace_move(old: str, new: str) -> str:
+    """The sentence a member's question gains when its namespace moves, or "" when it stays."""
+    if old == new:
+        return ""
+    return f" Its namespace moves from {old} to {new}, so each of its concepts has a new IRI, and the gate counts a link into the old one as unowned."
+
+
+def zip_base_iri(zip_path: pathlib.Path, what: str) -> str:
+    """The base_iri a release zip's knowledge/index.md names, read without unpacking the zip, which obtain() has checked."""
+    try:
+        with zipfile.ZipFile(zip_path) as zf:
+            meta = frontmatter_of(zf.read("knowledge/index.md").decode("utf-8"))
+    except (KeyError, zipfile.BadZipFile, UnicodeDecodeError, ValueError, TypeError, yaml.YAMLError) as e:
+        raise Failed(f"{what}: the zip holds no readable knowledge/index.md ({e})") from e
+    base_iri = str(meta.get("base_iri") or "")
+    if not base_iri:
+        raise Failed(f"{what}: the zip's index.md names no base_iri")
+    return base_iri
+
+
+def served_base(path: pathlib.Path, url: str) -> str:
+    """The base_iri a served concepts.jsonld names: the @base of its @context."""
+    try:
+        contexts = json.loads(path.read_text(encoding="utf-8")).get("@context")
+    except (UnicodeDecodeError, ValueError, AttributeError) as e:
+        raise Failed(f"{url}: not the concepts.jsonld lokf export writes ({e})") from e
+    base = next((c["@base"] for c in (contexts if isinstance(contexts, list) else [contexts]) if isinstance(c, dict) and isinstance(c.get("@base"), str)), "")
+    if not base:
+        raise Failed(f"{url}: its @context names no @base, so the file names no base_iri")
+    return base
+
+
 def digest_of(sum_asset: dict, what: str) -> str:
     """The digest a release's .sha256 asset starts with."""
     text = http_get(sum_asset["browser_download_url"]).decode("utf-8", "replace").split()
@@ -2503,25 +2556,34 @@ def served_count(path: pathlib.Path, member: Member) -> int:
         return sum(1 for p in write_out(path, pathlib.Path(tmp), member).rglob("*.md") if p.name != "index.md")
 
 
-def served_move(c, member: Member, cache: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str]) -> None:
+def served_move(c, member: Member, cache: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str], taken: dict[str, str]) -> None:
     """For a member that releases no zip: propose the file its site serves now, when its digest is not the one the concept names."""
     sha, day, path = look_served(member.zip_url, cache, args.max_bytes)
     if sha == member.sha256:
         current.append(f"{member.slug}: {member.zip_url} serves the file the concept names")
         return
+    # The file's @base says where its concepts lie now, and the build
+    # refuses a member concept that names another namespace.
+    base = served_base(path, member.zip_url)
+    renamed = base != member.base_iri
+    if renamed:
+        refuse_nesting(member.zip_url, base, taken, c.concept_id)
     distribution = [{**c.data["distribution"][0], "checksum": f"sha256:{sha}"}, *c.data["distribution"][1:]]
-    count = served_count(path, Member(c.path, {**c.data, "distribution": distribution}, "", 1))
+    count = served_count(path, Member(c.path, {**c.data, "base_iri": base, "distribution": distribution}, "", 1))
     version, where = day, c.concept_id + ".md"
     confirmed = confirmed_by_person(c.data)
     asked = (f"{member.zip_url} serves another file since {'the confirmed ' if confirmed else ''}{member.version}, last changed on {day}; does this member move to it?"
+             f"{namespace_move(member.base_iri, base)}"
              " A served file can change again before the domain releases; the build then holds the member at its last good state.")
-    verdict = f"served file read and written out, {count} concept(s) under {member.base_iri}"
+    verdict = f"served file read and written out, {count} concept(s) under {base}"
     if written_by_person(c.data):
         ops.append({"op": "question", "path": where, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
         handoff.append(f"{member.slug}: {member.version} -> {version}; {verdict}; a person wrote the concept, so only a question was added.")
         return
-    move = mover({member.version: version})
-    sets: dict = {"version": version, "distribution": distribution}
+    # The namespace moves where the text gives it as code, as this script
+    # writes it, so the site's address in angle brackets stays.
+    move = mover({member.version: version, f"`{member.base_iri}`": f"`{base}`"})
+    sets: dict = {"version": version, **({"base_iri": base} if renamed else {}), "distribution": distribution}
     description = str(c.data.get("description") or "")
     if move(description) != description:
         sets["description"] = move(description)
@@ -2531,12 +2593,15 @@ def served_move(c, member: Member, cache: pathlib.Path, args, ops: list[dict], h
     if edits:
         op["edits"] = edits
     op["set"] = sets
-    op["log"] = f"**Changed**: {member.title} moved to the file its site serves since {day}."
+    op["log"] = f"**Changed**: {member.title} moved to the file its site serves since {day}." + (f" Its namespace moved to `{base}`." if renamed else "")
     ops.append(op)
     if left:
-        asked += f" {left} line(s) of the body still name {member.version}; this patch left them as they were, because each occurs more than once in the body or reads as a person's record."
+        asked += (f" {left} line(s) of the body still name {member.version}{' or the old namespace' if renamed else ''}; this patch left them as they were,"
+                  " because each occurs more than once in the body or reads as a person's record.")
     ops.append({"op": "question", "path": where, "text": asked})
     handoff.append(f"{member.slug}: {member.version} -> {version}; {verdict}; a person confirms the member{' again' if confirmed else ''} to accept it.")
+    taken.pop(member.base_iri, None)
+    taken[base] = c.concept_id
 
 
 def served_slug(base_iri: str) -> str:
@@ -2551,16 +2616,8 @@ def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathl
     url = spec if spec.endswith(".jsonld") else spec.rstrip("/") + "/concepts.jsonld"
     folder = url.rsplit("/", 1)[0]
     sha, day, path = look_served(url, cache, args.max_bytes)
-    try:
-        contexts = json.loads(path.read_text(encoding="utf-8")).get("@context")
-    except (UnicodeDecodeError, ValueError, AttributeError) as e:
-        raise Failed(f"{url}: not the concepts.jsonld lokf export writes ({e})") from e
-    base = next((c["@base"] for c in (contexts if isinstance(contexts, list) else [contexts]) if isinstance(c, dict) and isinstance(c.get("@base"), str)), "")
-    if not base:
-        raise Failed(f"{url}: its @context names no @base, so there is no base_iri to admit")
-    for other, who in taken.items():
-        if other and (base.startswith(other) or other.startswith(base)):
-            raise Failed(f"{url}: its namespace {base} nests with {who}'s {other}; a bundle joins once, under a namespace of its own")
+    base = served_base(path, url)
+    refuse_nesting(url, base, taken)
     slug = served_slug(base)
     where = f"members/{slug}.md"
     if (knowledge / where).exists():
@@ -2599,11 +2656,11 @@ def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathl
                    "a person confirms the member to admit it.")
 
 
-def move_member(c, cache: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str]) -> None:
+def move_member(c, cache: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str], taken: dict[str, str]) -> None:
     """Propose moving one member concept to the newest release or file its source carries, as operations for the pen."""
     member = Member(c.path, c.data, "", 1)
     if member.served:
-        served_move(c, member, cache, args, ops, handoff, current)
+        served_move(c, member, cache, args, ops, handoff, current, taken)
         return
     if not member.github:
         current.append(f"{member.slug}: not a GitHub release, left as it is")
@@ -2651,41 +2708,59 @@ def move_member(c, cache: pathlib.Path, args, ops: list[dict], handoff: list[str
         return
     distribution = release_distributions(release, zip_asset, sum_asset, member.slug, member.declared_domain)
     moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
-    _, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
+    zip_path, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
+    # The release's own index.md says where its concepts lie now, and the
+    # build refuses a member concept that names another namespace.
+    base_iri = zip_base_iri(zip_path, f"{owner}/{repo} at {tag}")
+    renamed = base_iri != member.base_iri
+    if renamed:
+        refuse_nesting(f"{owner}/{repo} at {tag}", base_iri, taken, c.concept_id)
+        moved = Member(c.path, {**moved.data, "base_iri": base_iri}, "", 1)
+        verdict += f"; base_iri moves to {base_iri}, read from the zip"
     verdict += verify_schema(moved, cache, not args.no_attestation, args.max_bytes)
     verdict += verify_workspace(moved, cache, args.max_bytes, not args.no_attestation)
     release_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
-    asked = f"{owner}/{repo} released {tag} after {'the confirmed ' if confirmed else ''}{member.version}; does this member move to it?"
+    asked = (f"{owner}/{repo} released {tag} after {'the confirmed ' if confirmed else ''}{member.version}; does this member move to it?"
+             + namespace_move(member.base_iri, base_iri))
     if written_by_person(c.data):
         # The pen refuses any patch of a concept a person wrote, so the
         # move goes to the curator as a question alone.
         ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
         handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}; a person wrote the concept, so only a question was added.")
         return
-    # The move reaches the text too: the old tag, zip name and day become
-    # the new ones in the description and in the body, so the concept no
-    # longer says one release in `version` and another in its prose.
-    old_day = release_day(next((r for r in releases if r.get("tag_name") == member.version), None))
-    move = mover({member.version: tag, member.zip_name: zip_asset["name"], old_day: release_day(release), member.schema_name: moved.schema_name,
-                  member.workspace_name: moved.workspace_name})
-    sets: dict = {"version": tag, "release": release_url, "resource": release_url, "distribution": distribution}
+    # The move reaches the text too: the old tag, zip name, day and
+    # namespace become the new ones in the description and in the body, so
+    # the concept no longer says one release in `version` and another in
+    # its prose. The old day is the release list's, and also each day the
+    # text writes after the old tag, since a release pruned from the list,
+    # or past its first hundred, is not there. The namespace moves where
+    # the text gives it as code, as this script writes it.
     description = str(c.data.get("description") or "")
+    body = concept_body(c.path)
+    old_days = {release_day(next((r for r in releases if r.get("tag_name") == member.version), None))}
+    old_days |= written_days(member.version, description, body)
+    old_days.discard("")
+    move = mover({**{day: release_day(release) for day in old_days}, member.version: tag, member.zip_name: zip_asset["name"],
+                  member.schema_name: moved.schema_name, member.workspace_name: moved.workspace_name, f"`{member.base_iri}`": f"`{base_iri}`"})
+    sets: dict = {"version": tag, "release": release_url, "resource": release_url, **({"base_iri": base_iri} if renamed else {}), "distribution": distribution}
     if move(description) != description:
         sets["description"] = move(description)
-    body = concept_body(c.path)
     edits, left = body_edits(body, move) if body is not None else ([], 0)
     op: dict = {"op": "patch", "path": path}
     if edits:
         op["edits"] = edits
     op["set"] = sets
-    op["log"] = f"**Changed**: {member.title} moved from {member.version} to {tag}; the release carries `{zip_asset['name']}`."
+    op["log"] = (f"**Changed**: {member.title} moved from {member.version} to {tag}; the release carries `{zip_asset['name']}`."
+                 + (f" Its namespace moved to `{base_iri}`." if renamed else ""))
     ops.append(op)
     if left:
-        asked += (f" {left} line(s) of the body still name {member.version}, its zip or its day; this patch left them as they were,"
+        asked += (f" {left} line(s) of the body still name {member.version}, its zip{', its day or the old namespace' if renamed else ' or its day'}; this patch left them as they were,"
                   " because each occurs more than once in the body or reads as a person's record.")
     ops.append({"op": "question", "path": path, "text": asked})
-    note = "" if old_day else f"; {member.version} is not in the release list, so its day was not moved"
+    note = "" if old_days else f"; neither the release list nor the text gives {member.version} a day, so no day was moved"
     handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}{note}; a person confirms the member{' again' if confirmed else ''} to accept it.")
+    taken.pop(member.base_iri, None)
+    taken[base_iri] = c.concept_id
 
 
 def members(args) -> int:
@@ -2700,19 +2775,21 @@ def members(args) -> int:
     handoff: list[str] = []
     current: list[str] = []
     failed: list[str] = []
+    # The namespace each member concept holds, which a move proposes to
+    # change and an added member must not nest with.
+    taken = {str(c.data.get("base_iri") or ""): c.concept_id for c in member_concepts}
     for c in member_concepts:
         # A member that cannot be checked, its address down or its release
         # list refused, leaves the others to be moved, and the hand-off
         # names it.
         try:
-            move_member(c, cache, args, ops, handoff, current)
+            move_member(c, cache, args, ops, handoff, current, taken)
         except Failed as e:
             failed.append(f"{c.concept_id}: could not be checked, so it stays as it is: {e}")
     # A repository named with --add joins the same way a member moves: its
     # newest bundle release is verified first, then its own index.md says what
     # it is and where its namespace lies, and the pen creates the concept as
     # a draft with a question, for a person to confirm.
-    taken = {str(c.data.get("base_iri") or ""): c.concept_id for c in member_concepts}
     added = 0
     for spec in args.add or []:
         if spec.startswith(("http://", "https://")):
@@ -2741,9 +2818,7 @@ def members(args) -> int:
         base_iri = str(meta.get("base_iri") or "")
         if not base_iri:
             raise Failed(f"{owner}/{repo}: the zip's index.md names no base_iri")
-        for other, who in taken.items():
-            if other and (base_iri.startswith(other) or other.startswith(base_iri)):
-                raise Failed(f"{owner}/{repo}: its namespace {base_iri} nests with {who}'s {other}; a bundle joins once, under a namespace of its own")
+        refuse_nesting(f"{owner}/{repo}", base_iri, taken)
         taken[base_iri] = slug
         # A release that holds a Domain concept is a domain in turn: the
         # concept says so, and the build follows its members. The concept
