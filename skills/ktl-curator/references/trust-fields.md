@@ -81,13 +81,20 @@ Sources that moved since a confirmation: <Title> - <source> (<date>). Confirmed 
 For a second person to re-check (<n>, picked by a rule the curator cannot steer):
 - <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Independent re-check:` line above 0
 
-Ready to record: human:<id> via gh · signing on · attended   | or what is missing and which verbs that removes, from the preflight
+Ready to record: human:<id> via gh · signing on · attended   | or what is missing and which verbs that removes, from the preflight and your own instructions, for example:
+Ready to record: this machine isn't signed in to GitHub, so I can't record a confirmation in your name; I can still send back, retire or mark for later. Signing in is `gh auth login`, or one of the routes in references/portability.md.
 
 <remaining> more not yet checked. Run again anytime - every confirmation counts.
-Want to go through these now?
+Want to go through these now?   | when Step 2 can run; otherwise one of the two lines below, and nothing after it
+**Not recording verdicts in this run: CI is set. Run the curator in a session you attend.**   | a hard stop: the reason in words the person can check, then what changes it
+**Not recording verdicts yet: my instructions say you cannot answer mid-task. If you are here, reply and we go on, one item per turn.**   | the weaker sign: Step 2 goes on when the person replies
 ```
 
 The health line is the one number to watch over time: "confirmed by a person: *a* of *N*" rising is the bundle earning trust. It is derived every time, never stored: the spec keeps scores out of frontmatter.
+
+## Sample for a second person
+
+When the curation policy carries `Independent re-check: <n>` above zero, Step 1 lists n concepts confirmed by a person, for someone else to re-check. Sort their paths by the `sha256sum` (`shasum -a 256` where there is none, as on macOS) of path plus today's date, and take the first n. Nobody chooses the hash and the date moves the order daily, so the curator cannot steer the pick.
 
 ## Checking a confirmation against git
 
