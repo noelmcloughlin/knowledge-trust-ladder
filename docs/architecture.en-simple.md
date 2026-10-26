@@ -38,7 +38,7 @@ KTL names its roles after people who work in libraries and museums. Four of the 
 
 The fifth role, the **registrar**, keeps the records in order, and programs do that job. The `lokf` toolkit checks every change. On each pull request that touches the bundle, [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks it in continuous integration (CI).
 
-The librarian writes the bundle only through one script, `knowledge-apply.sh`, called **the pen**. The pen stamps where each record came from. It refuses a change that would forge or remove a person's confirmation. Another script, `knowledge-report.sh`, works out each trust label, so no model does that arithmetic.
+The librarian writes the bundle only through one script, `knowledge-apply.sh`, called **the pen**. The pen stamps who wrote each record, and when. It refuses a change that would forge or remove a person's confirmation. Another script, `knowledge-report.sh`, works out each trust label, so no model does that arithmetic.
 
 One more skill has no role of its own. [`ktl-prose`](../skills/ktl-prose/SKILL.md) is the librarian's copy editor. It rewords what an agent wrote in plain English, and changes the wording but never a fact.
 

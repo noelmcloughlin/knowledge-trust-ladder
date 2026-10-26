@@ -38,7 +38,7 @@ OKF calls a bundle "The unit of distribution", as a git repository, a tarball or
 - an `imported` marker that does not inherit trust ([open-knowledge-format #15](https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/15));
 - partial visibility across a trust boundary ([#32](https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/32)).
 
-None had a maintainer's reply when read.
+None had a maintainer's reply when read on 2026-10-12.
 
 Section 11 of the LOKF specification answers in linked-data terms: a registry of bundles, each keyed by its namespace, through which any IRI resolves to the bundle that owns it. KTL adds who answers for the set. A *domain* is a thin bundle in a repository of its own that selects released bundles, and one accountable owner confirms each bundle it admits. A domain may select domains in turn, and a build turns the one it starts from into one workspace, one named graph per bundle. [A federation of bundles](federation.md) says how.
 

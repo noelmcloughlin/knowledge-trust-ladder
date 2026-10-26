@@ -2,7 +2,7 @@
 
 Regulated industries use the **three lines of defence** to say who owns a risk, who keeps the rules, and who checks independently. The reference version is the Three Lines Model of The Institute of Internal Auditors (IIA), [updated in 2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) and reissued as a [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf) in 2026.
 
-Knowledge Trust Ladder (KTL) was not built to it, but each of its roles fits. This page answers the three questions a governance reader brings: who is accountable for a claim, what a machine checks, and what can be examined afterwards. It then sets what the model's critics say against what KTL answers. Every control named here already exists in KTL.
+Knowledge Trust Ladder (KTL) was not built to it, but each of its roles fits. This page answers the three questions a governance reader brings: who is accountable for a claim, what a machine checks, and what can be examined afterwards. It then sets what the model's critics say against what KTL answers. Every control named on this page already exists in KTL.
 
 | Line | In the model | In KTL |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ Above the lines sits a governing body: for a bundle, the owners of the repositor
 
 The IIA's own text says the lines "are not intended to denote structural elements but a useful differentiation in roles", and that roles "may overlap in practice" given "clear accountability, transparency, and safeguards to preserve objectivity and avoid self-review risks". KTL does not decide who plays each line. The organisation that adopts it does, with one person or a department per line.
 
-The tooling keeps the lines apart whether one person or a department holds each. The **curator**'s identity comes from the forge, never from the person. It is the login this machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, which anyone can edit, and never what the person types into the agent's chat. Where an organisation lets one person both author and confirm, the gate takes their signature on the commit, since GitHub will not let them approve their own pull request. An Environment with required reviewers is the one logged exception.
+The tooling keeps the lines apart whether one person or a department holds each. The **curator**'s identity comes from the forge, never from the person. It is the login this machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, which anyone can edit, and never what the person types into the agent's chat. Where an organisation lets one person both author and confirm, the gate takes their signature on the commit, since GitHub will not let them approve their own pull request. A repository that cannot sign, and has nobody else to approve, has one logged exception: an approval from a required reviewer of an Environment.
 
 ## What an auditor can check
 
@@ -111,8 +111,6 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 - Who confirms what, and how often, is a reviewed policy rather than a habit, the direction Green points.
 - The docent's evidence-first mode quotes the source before any answer that rests on an unconfirmed concept. It is off by default, because Buçinca found such designs cost goodwill.
 
-Once `revision` is released ([What remains to do](#what-remains-to-do-and-who-does-it)), a confirmation will also say which state of the source it rested on.
-
 **Verdict: answered in part.** Left open:
 
 - Nothing shows that the person read the source. A signature proves who decided, and `revision` names what the skill fetched.
@@ -131,7 +129,7 @@ Once `revision` is released ([What remains to do](#what-remains-to-do-and-who-do
 
 **The criticism.** A survey of 415 chief audit executives found coordination between internal audit and the other lines uneven in practice ([Bantleon et al., International Journal of Auditing, 2021](https://doi.org/10.1111/ijau.12201)). A systematic review found the model's use in cybersecurity "fragmented at best" ([Valkenburg and Bongiovanni, Computers & Security, 2024](https://doi.org/10.1016/j.cose.2024.103708)).
 
-**What KTL does.** It makes no claim about coordination. Its lines hand off through a pull request, the log and the docent's feedback to the librarian, all of which [an auditor can check](#what-an-auditor-can-check).
+**What KTL does.** Its lines hand off through a pull request, the log and the docent's feedback to the librarian, all of which [an auditor can check](#what-an-auditor-can-check).
 
 **Verdict: answered in part.** The hand-offs are written down. Whether the lines coordinate beyond them is not something a bundle shows.
 
@@ -155,14 +153,14 @@ Once `revision` is released ([What remains to do](#what-remains-to-do-and-who-do
 
 **The criticism.** Davies and Zhivitskaya find the model's origins opaque and its effectiveness untested. Schuett notes that "the model has been criticized and there is not much empirical evidence for its effectiveness", and concludes that within its limits it "can plausibly contribute to a reduction of risks from AI".
 
-**What KTL does.** It claims nothing about the model, which KTL was not built to. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a random sample of confirmed concepts when the policy names a size.
+**What KTL does.** It claims nothing about the model. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a random sample of confirmed concepts when the policy names a size.
 
 **Verdict: not KTL's role.**
 
 ## What remains to do, and who does it
 
 - **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and LOKF releasing it in 0.9.0.
-- **KTL.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, of which the curator's sampling step is the first half; its Copilot form is one instructions file beside the docent's under `.lokf/m365/` ([m365.md](m365.md)). Fetching a federation member from a private repository ([federation.md](federation.md#what-exists-and-what-remains-a-design)).
+- **KTL.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, of which the curator's sampling step is the first half, and [its Copilot form](m365.md#how-it-is-put-together). Fetching a federation member from a private repository ([federation.md](federation.md#what-exists-and-what-remains-a-design)).
 - **The organisation's.** Naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
 
 ## Sources
