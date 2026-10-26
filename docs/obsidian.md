@@ -1,6 +1,6 @@
 # The bundle in Obsidian
 
-[The architecture](architecture.md) says where a bundle lives, and which two plugins work inside Obsidian: one does the **registrar**'s work, and the other assists the **curator**. This page is for the people who open the bundle in Obsidian: what to open, what to install there, and where the rest is written down.
+This page is for the people who open the bundle in Obsidian: what to open, what to install there, and where the rest is written down. [The architecture](architecture.md) says where a bundle lives, and which two plugins work inside Obsidian: one does the **registrar**'s work, and the other assists the **curator**.
 
 ## Two vaults
 
@@ -45,7 +45,7 @@ A bundle is a folder of Markdown notes with a few properties each, which is what
 
 The skills install the same layout on every host: the real folder `.lokf/knowledge/`, and the `knowledge_bundle` doorway beside it. Where the host's folder sits decides what a plugin can reach from the bundle's vault, and what syncs.
 
-- **A code repository.** The **librarian** derives the bundle from code and docs, and you check it in `knowledge_bundle` opened as a vault. Concepts cite sources above that vault, such as `src/…` and `docs/…`, which no plugin can open from there. The KTL Curator plugin shows such a source as a path with a copy button.
+- **A code repository.** The **librarian** derives the bundle from code and docs, and you check it in `knowledge_bundle` opened as a vault. Concepts cite sources above that vault, such as `src/…` and `docs/…`, which no plugin can open from that vault. The KTL Curator plugin shows such a source as a path with a copy button.
 - **Your vault, kept in git.** Run the skills at the host, and the sidecar is installed beside your notes. Your vault indexes neither `.lokf/` nor the doorway, so it never sees the bundle, and you curate in a second vault opened through the doorway. The bundle stays in the one repository with the notes it was derived from. Splitting it into a repository of its own is a later choice for a team.
 - **A shared drive or a SharePoint library.** The sidecar syncs as files. OneDrive syncs neither symbolic links nor junctions, so make the doorway per machine with `just lokf-link` in `.lokf/`, or open the bundle by path. A team that wants a synced, visible folder may rearrange by hand, with a real `knowledge_bundle/` and `.lokf/knowledge` linking onto it, as the sidecar's [`portability.md`](../skills/ktl-sidecar/references/portability.md) says. Both plugins then detect the folder as a bundle inside a vault (*Which folder is the bundle* on either plugin's architecture page).
 - **Many hosts, one vault.** Link each repository's `.lokf/knowledge` into a folder of your own vault (`projects/acme-knowledge → ~/git/acme/.lokf/knowledge`) and list those folders under the plugins' *Bundle root folders* setting. Every bundle you curate is then in one vault, beside the notes you keep about them, and the KTL Curator plugin can open each source beside its claim. This is the one arrangement that puts exhibits in your vault's index, at the cost the plugins' architecture pages name. Obsidian Sync does not carry such links.

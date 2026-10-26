@@ -5,7 +5,7 @@ This page is for readers aged 13 to 18. It retells [the architecture page](archi
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/knowledge-trust-ladder-card-dark.svg">
-    <img src="../.assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
+    <img src="../.assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles: sidecar, librarian, registrar, curator and docent" width="720" />
   </picture>
 </p>
 
@@ -36,13 +36,13 @@ KTL names its roles after people who work in libraries and museums. Four of the 
 - The **curator** is always a person, and the skill only helps. It puts the source next to each claim. The person decides: confirm, correct, retire or send back.
 - The **docent** answers questions from the bundle, and says how far each answer has been checked. Docent is a museum's name for a guide. When the bundle has no answer, the docent records the miss for the librarian. It never changes the bundle.
 
-The fifth role, the **registrar**, keeps the records in order, and programs play it. The `lokf` toolkit checks every change. On each pull request that touches the bundle, [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks it in continuous integration (CI).
+The fifth role, the **registrar**, keeps the records in order, and programs do that job. The `lokf` toolkit checks every change. On each pull request that touches the bundle, [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks it in continuous integration (CI).
 
-The librarian writes the bundle only through one script, `knowledge-apply.sh`, called **the pen**. The pen stamps where each record came from. It refuses a change that would forge or remove a person's confirmation. Another script, `knowledge-report.sh`, works out each trust label, so no model does that arithmetic.
+The librarian writes the bundle only through one script, `knowledge-apply.sh`, called **the pen**. The pen stamps who wrote each record, and when. It refuses a change that would forge or remove a person's confirmation. Another script, `knowledge-report.sh`, works out each trust label, so no model does that arithmetic.
 
 One more skill has no role of its own. [`ktl-prose`](../skills/ktl-prose/SKILL.md) is the librarian's copy editor. It rewords what an agent wrote in plain English, and changes the wording but never a fact.
 
-Another, [`ktl-website`](../skills/ktl-website/SKILL.md), builds a website from the bundle. Anyone can browse it there and see each entry's label.
+Another, [`ktl-website`](../skills/ktl-website/SKILL.md), builds a website from the bundle. Anyone can browse the bundle on that website and see each entry's label.
 
 ## How far can you trust an entry?
 
@@ -54,7 +54,7 @@ Each entry carries a label in plain words:
 
 Other labels say an entry is **still a draft**, **edited since a person last confirmed it**, **past its review date** or **retired**. **Reopened** means a person confirmed it, and a new question is waiting.
 
-The labels are worked out from each entry every time it is read, and never stored. So they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
+The labels are worked out from each entry every time it is read, and never stored. So they cannot drift from what they describe. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of entries in a sitting.
 
 ## Where can I read more?
 

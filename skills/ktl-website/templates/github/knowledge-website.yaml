@@ -116,12 +116,20 @@ jobs:
       # A schema or a data folder that site.config.mjs shows is written by
       # its own command, which the sync runs when the folder is missing, as it
       # always is here. A LinkML project's commands are recipes for just, a
-      # command runner the runner image lacks. setup-uv puts the tool
-      # directory on PATH on Windows only, so the step adds it.
+      # command runner the runner image lacks. Where .lokf/uv.lock pins
+      # rust-just, the step links the copy it checked by hash, alone, so the
+      # sidecar's other commands stay off PATH; else it installs the same
+      # version by name. setup-uv puts the tool directory on PATH on Windows
+      # only, so the step adds it.
       - name: Install just, when the site builds a folder with it
         run: |
           if node website/scripts/config.mjs | grep -q '"build": "just '; then
-            uv tool install rust-just==1.47.0
+            if grep -qx 'name = "rust-just"' .lokf/uv.lock; then
+              mkdir -p "$HOME/.local/bin"
+              ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
+            else
+              uv tool install rust-just==1.47.0
+            fi
             echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           fi
 

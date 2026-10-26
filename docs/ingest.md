@@ -2,7 +2,7 @@
 
 The librarian reads the repository, and a bundle cites what the librarian can read. Much of what a team knows lives elsewhere: a wiki space, a document on an intranet address, a file in another repository, the output of a command. The ingest brings a copy in. A manifest names each source, a script writes it as Markdown under `.lokf/mirror/`, and a pull request shows what changed. The librarian then derives concepts from the copy as from any tracked file, citing both the copy and its origin.
 
-Nothing in the trust ladder changes. A concept derived from a wiki page is agent-derived until a person confirms it, as one derived from a README is. Knowledge Trust Ladder (KTL) keeps the same work list, gate and review; the ingest adds reach.
+Nothing in the trust ladder changes. A concept derived from a wiki page is agent-derived until a person confirms it, as one derived from a README is. Knowledge Trust Ladder (KTL) keeps the same work list, gate and review.
 
 <p align="center">
   <picture>
@@ -18,9 +18,9 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
 - **Pages and documents at an address**: HTML, Markdown, plain text and PDF. Most PDFs work, meaning any whose text can be selected and copied in a viewer. A scan of paper holds pictures of pages and no text, and is refused.
 - **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository.
-- **The output of a command** this repository holds: a client for a service with no fetcher here, a schema dump, an export.
+- **The output of a command** this repository holds: a client for a service the ingest has no fetcher for, a schema dump, an export.
 
-There is no fetcher for Jira, since issues are unsuitable as knowledge sources. Attachments and images are not fetched; a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only through a command that prints it.
+There is no fetcher for Jira, since issues are unsuitable as knowledge sources. Attachments and images are not fetched, and a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only through a command that prints it.
 
 ## How it works
 
@@ -30,7 +30,7 @@ There is no fetcher for Jira, since issues are unsuitable as knowledge sources. 
 
 **The lock**, `.lokf/ingest.lock.yaml`, records the same per item with a status: `ok`, `gone` after a 404 or 410, `unlisted` when the selector no longer returns it, `failed` when a request did not complete, `refused` with the reason. The mirror and the lock change only when content changes.
 
-The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian holds no secret with which to fetch. Never clear it before a run; refresh it instead, since a run fetches only what moved and restores any file the disk has lost. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
+The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian holds no secret with which to fetch. Never clear it before a run. Refresh it instead, since a run fetches only what moved and restores any file the disk has lost. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
 
 A workflow runs the script on Sundays and keeps one pull request open with the changes, refreshed until a person merges it. The librarian's Monday run then finds each concept whose mirror file moved in its work list.
 
@@ -101,7 +101,7 @@ entries:
     why: the live database schema
 ```
 
-A command is code the repository runs with its secrets near, so commit one a person has read. It receives the variables its own `auth` block names, and its last error line goes into the lock. An entry taken out of the manifest loses its folder on the next run, and the summary names each file a concept still cites.
+A command is code the repository runs in a job that holds secrets, so commit one a person has read. It receives the variables its own `auth` block names, and its last error line goes into the lock. An entry taken out of the manifest loses its folder on the next run, and the summary names each file a concept still cites.
 
 ## Sensitivity
 
@@ -113,7 +113,7 @@ The workflow passes the repository's visibility from the forge. By hand, the scr
 
 1. Install the ingest files with ktl-sidecar's Step 5, or its repair: the script and its shell half under `.lokf/scripts/`, the workflow and the pull request template.
 2. Copy the sidecar's `templates/ingest.yaml` to `.lokf/ingest.yaml` and replace its examples.
-3. Store each credential as a secret in the `knowledge-ingest` Environment, limited to the default branch, under the name the manifest gives ([how](../skills/ktl-sidecar/references/automation.md#keep-each-secret-in-its-environment)). Every name starts `KNOWLEDGE_INGEST_`, and the workflow hands over those secrets only. For Confluence Cloud, an API token with read scopes and an expiry, with the account's email as the user. A git credential needs git 2.31 or later.
+3. Store each credential as a secret in the `knowledge-ingest` Environment, limited to the default branch, under the name the manifest gives ([how](../skills/ktl-sidecar/references/automation.md#keep-each-secret-in-its-environment)). Every name starts `KNOWLEDGE_INGEST_`, and the workflow hands over those secrets only. For Confluence Cloud, use an API token with read scopes and an expiry, with the account's email as the user. A git credential needs git 2.31 or later.
 4. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General.
 5. Start one run from the Actions tab and read its summary.
 
@@ -129,11 +129,11 @@ bash .lokf/scripts/knowledge-ingest.sh --prune                   # remove gone a
 bash .lokf/scripts/knowledge-ingest.sh --patch                   # Reference concepts for the entries that ask
 ```
 
-Set the same variable names in the environment. The librarian runs the first command itself at the start of a live session. Commit the mirror and the lock with the bundle change. A host with no git runs the script the same way, and the lock is its record. The preflight's `ingest` line counts files the lock names that are missing, files the lock does not name, and files waiting for a prune. The confidential cache under `.lokf/.cache/mirror/` may be deleted at any time; the next run fetches it again.
+Set the same variable names in the environment. The librarian runs the first command itself at the start of a live session. Commit the mirror and the lock with the bundle change. A host with no git runs the script the same way, and the lock is its record. The preflight's `ingest` line counts files the lock names that are missing, files the lock does not name, and files waiting for a prune. The confidential cache under `.lokf/.cache/mirror/` may be deleted at any time, and the next run fetches it again.
 
 ## The pull request
 
-The body is the run's summary, then the checklist. Read the diff as you would read the page: is this text something the repository should hold? A page that should not be here comes out of the manifest, not out of the diff. A file marked `gone` or `unlisted` stays while a concept cites it, until the librarian has handled that concept. Once none does, the next scheduled run removes it, and the diff shows the removal; the lock's `since` date says how long it has been away. A line marked `failed` with a credential's name is a secret not yet set, or expired; the run shows it as a warning too.
+The body is the run's summary, then the checklist. Read the diff as you would read the page: is this text something the repository should hold? A page that should not be in the repository comes out of the manifest, not out of the diff. A file marked `gone` or `unlisted` stays while a concept cites it, until the librarian has handled that concept. Once none does, the next scheduled run removes it, and the diff shows the removal. The lock's `since` date says how long it has been away. A line marked `failed` with a credential's name is a secret not yet set, or expired, and the run shows it as a warning too.
 
 A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed, and a run started by hand proposes it now. No checks run on this pull request, and that is expected: GitHub starts none for a pull request a workflow opens, and the mirror holds no bundle file to check. Merge it, and the librarian's next run reads what changed.
 

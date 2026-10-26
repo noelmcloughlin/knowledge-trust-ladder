@@ -6,7 +6,8 @@ and pin:
 
 1. an http address is mirrored with its header and its lock record, a second
    run that gets 304 writes nothing, and a changed page is fetched again;
-2. a private address is refused unless the manifest allows it;
+2. a private address is refused unless the manifest allows it, and so is a
+   name that turns private between the check and the connection;
 3. a PDF's text layer is mirrored, and a PDF without one is refused;
 4. a Confluence selection is listed with its versions and fetched by v2 on
    Cloud and v1 on Data Center. An unchanged page costs no body, and a page
@@ -217,6 +218,32 @@ def test_a_private_address_is_refused_unless_the_manifest_allows_it(tmp_path, se
     checks.ok(item["status"] == "refused" and "private" in item["reason"], "the lock says refused", str(item))
     result = ingest(root, "--strict")
     checks.ok(result.rc == 1, "--strict exits 1 on a refusal", result.out)
+
+
+def test_a_name_that_turns_private_after_the_check_is_refused_at_the_connection(server, checks, monkeypatch):
+    """A name may answer a public address to the check and a private one to the connection (DNS rebinding), so the connection checks the address it opens."""
+    m = load_module()
+    Stub.routes["/r.md"] = (200, {"Content-Type": "text/markdown"}, b"# R\n")
+    port = server.rsplit(":", 1)[1]
+    url = f"http://rebind.example.invalid:{port}/r.md"
+    real = m.socket.getaddrinfo
+    answers = iter(["93.184.216.34", "127.0.0.1"])
+
+    def rebinding(host, *args, **kwargs):
+        address = next(answers, "127.0.0.1") if host == "rebind.example.invalid" else host
+        return real(address, *args, **kwargs)
+
+    monkeypatch.setattr(m.socket, "getaddrinfo", rebinding)
+    try:
+        m.http_get(url, {}, False, 10_000)
+        checks.ok(False, "the second answer is refused")
+    except m.Refused as e:
+        checks.ok("resolves to 127.0.0.1" in str(e), "the second answer is refused, by the address it named", str(e))
+    checks.ok(not Stub.requests, "nothing reached the server", str(Stub.requests))
+    # The checked connection still opens to an address it permits.
+    monkeypatch.setattr(m.socket, "getaddrinfo", lambda host, *a, **k: real("127.0.0.1", *a, **k))
+    monkeypatch.setattr(m, "ip_is_private", lambda address: False)
+    checks.ok(m.http_get(url, {}, False, 10_000).data == b"# R\n", "a permitted address is fetched through the checked connection")
 
 
 # 3. pdf

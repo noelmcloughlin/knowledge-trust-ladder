@@ -1,8 +1,9 @@
 # Architecture
 
-This page explains why a repository needs a catalogue, who keeps the catalogue, and how far each claim in it has been checked. It is for anyone deciding whether to use Knowledge Trust Ladder (KTL), and for anyone who keeps a bundle with it. A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
+> [!NOTE]
+> A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
 
-KTL is an architecture inspired by [LOKF](https://lokf.nolan-nichols.com/specification/), by [LinkML](https://linkml.io/linkml/) and by this poem:
+Knowledge Trust Ladder (KTL) is an architecture inspired by [LOKF](https://lokf.nolan-nichols.com/specification/), by [LinkML](https://linkml.io/linkml/) and by this poem:
 
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
@@ -16,7 +17,7 @@ KTL keeps any repository's scattered knowledge as a **collection**: catalogued, 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/knowledge-trust-ladder-card-dark.svg">
-    <img src="../.assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles - sidecar, librarian, registrar, curator and docent" width="720" />
+    <img src="../.assets/knowledge-trust-ladder-card.svg" alt="Knowledge Trust Ladder: raw sources become a knowledge bundle, kept by five roles: sidecar, librarian, registrar, curator and docent" width="720" />
   </picture>
 </p>
 
@@ -30,7 +31,7 @@ A **knowledge bundle** is the catalogue: a plain folder of Markdown concept file
 
 A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and context the next task can start from. It is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.8.0/lokf.yaml). People, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html) can read it.
 
-**KTL is an OKF runtime** to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". Here those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. A domain whose concepts stop fitting it [extends the schema](../skills/ktl-curator/references/domain-schemas.md), so its own types are checked rather than tolerated. Whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from [many federated into one layer](context-layer.md#many-bundles-federated-into-one-context-layer-the-design).
+**KTL is an OKF runtime** to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". In KTL those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. A domain whose concepts stop fitting it [extends the schema](../skills/ktl-curator/references/domain-schemas.md), so its own types are checked rather than tolerated. Whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from [many federated into one layer](context-layer.md#many-bundles-federated-into-one-context-layer-the-design).
 
 ## Four skills, three lines of the poem
 
@@ -38,7 +39,7 @@ A bundle is prose a person reads, structure a schema checks, meaning a graph can
 | --- | --- | --- |
 | [`ktl-sidecar`](../skills/ktl-sidecar/SKILL.md) | **Sidecar**, *lays the network*. Installs the sidecar from bundled templates: `.lokf/`, a dot-folder beside the code like `.git/`, kept out of the project's build. It holds tooling, docs, a dummy skeleton at `.lokf/knowledge/`, and a `knowledge_bundle` link for folder pickers that hide dot-folders. Repairs a broken sidecar file. Its [portability page](../skills/ktl-sidecar/references/portability.md) covers Windows, macOS, other forges, no git and synced folders. | once |
 | [`ktl-librarian`](../skills/ktl-librarian/SKILL.md) | **Librarian**, *binds it into order*. Scrapes the repository, derives concepts with their sources, classifies them, links them with typed relationships, audits, and hands off for review. Like a real librarian it catalogues without vouching: *facts about the repository*, never verdicts about truth. | often, including on a schedule |
-| [`ktl-curator`](../skills/ktl-curator/SKILL.md) | **Curator**, *holds the scales*. A person's assistant. It shows what needs a look, puts the source next to the claim, and records the verdict (confirm, correct, retire, send back) in the bundle's own frontmatter. *Judgments a person made*, never facts it derived. | a little, regularly |
+| [`ktl-curator`](../skills/ktl-curator/SKILL.md) | **Curator**, *holds the scales*. A person's assistant. It shows what needs a look, puts the source next to the claim, and records the verdict (confirm, correct, retire, send back) in the bundle's own frontmatter. *Judgements a person made*, never facts it derived. | a little, regularly |
 | [`ktl-docent`](../skills/ktl-docent/SKILL.md) ([examples](examples/docent.md)) | **Docent**, *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. Answers from the bundle and labels how far each concept has been trusted. Checks exact values at the source. When the bundle has no answer it explores the repository and records the miss, which becomes the librarian's next task. Like a real docent it explains the exhibition without moving anything on the shelves: read-only on the bundle. | whenever anyone asks |
 
 **Curator** is the museum sense, the one who authenticates, weighs provenance and decides what goes on exhibit. It is not the data-management sense, which is the **librarian**'s job. The curator is always a person, and the skill and the plugin that carry the name reach no verdict of their own.
@@ -54,7 +55,7 @@ On a fresh repository they run in order: **sidecar**, then **librarian** filling
 
 ### The fifth role, which is not a skill
 
-The **registrar** keeps the records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. No person has to do it: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or their signed commit.
+The **registrar** keeps the records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. No human has to do this: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. It also ties each confirmation that is added or removed to that person's approval or their signed commit.
 
 At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is `knowledge-apply.sh`, *the pen*, the only way the librarian writes the bundle, and it refuses a change that would forge or remove a confirmation ([who writes the bundle](for-the-curious.md#who-writes-the-bundle-and-what-checks-it)). At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the summary at the top of this page: a check gives the same answer every time, which neither the librarian nor the curator can promise.
 
@@ -77,7 +78,7 @@ In the **three lines of defence** that regulated industries use, the librarian a
 
 ### The sixth skill, which publishes the bundle
 
-[`ktl-website`](../skills/ktl-website/SKILL.md) builds a website for the bundle. It has a page per concept with its trust label, the health page, the knowledge graph and search by trust and type, and it serves the four files `lokf export` writes beside the pages. The repository's README, docs, changelog and LinkML schema pages join them when it has them. Its data joins them as SQLite databases to open in Datasette Lite, once a person turns that on. A workflow publishes the site to GitHub Pages. This repository's own [site](https://w3id.org/ktl/) is the template's first copy. It is optional, like `ktl-prose`.
+[`ktl-website`](../skills/ktl-website/SKILL.md) builds a website for the bundle. It has a page per concept with its trust label, the health page, the knowledge graph and search by trust and type, and it serves the four files `lokf export` writes beside the pages. The repository's README, docs, changelog and LinkML schema pages join them when it has them. Its data joins them as SQLite databases to open in Datasette Lite, once a person turns that on. A workflow publishes the site to GitHub Pages. This repository's [site](https://w3id.org/ktl/) is the template's first copy. The website skill is optional, like `ktl-prose`.
 
 ## Trust stays visible
 
@@ -91,7 +92,7 @@ The **curator** reports each concept's trust record in plain words:
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/trust-ladder-dark.svg">
-    <img src="../.assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person - what drops a concept a rung, and what only flags it" width="720" />
+    <img src="../.assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person. It shows what drops a concept a rung, and what only flags it" width="720" />
   </picture>
 </p>
 
@@ -110,7 +111,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, how readers and verdicts steer the next run, and what to do when a bundle outgrows LOKF's vocabulary | [for-the-curious.md](for-the-curious.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [obsidian.md](obsidian.md) |
-| Where each role sits in the three lines of defence, and [the model's critics](three-lines-critics.md) | [three-lines.md](three-lines.md) |
+| Where each role sits in the three lines of defence, and [the model's critics](three-lines.md#what-the-critics-say) | [three-lines.md](three-lines.md) |
 | Whether KTL helps a repository whose content is Agent Skills, and what remains to do there | [skills-repositories.md](skills-repositories.md) |
 | Versioning: all six skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [releasing.md](releasing.md), [CHANGELOG.md](../CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](../CONTRIBUTING.md), [repository-layout.md](repository-layout.md), [SECURITY.md](../SECURITY.md) |

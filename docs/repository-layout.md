@@ -35,8 +35,7 @@ docs/
   obsidian.md           the bundle as a vault of its own, and the two plugins
   m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first
   ingest.md             knowledge outside the repository: the manifest, the mirror and the ingest pull request
-  three-lines.md        the roles in the three lines of defence, and what an auditor can check
-  three-lines-critics.md  the model's critics, quoted, and what a bundle answers
+  three-lines.md        the roles in the three lines of defence, what an auditor can check, and the critics
   skills-repositories.md  KTL in a repository whose content is Agent Skills, and what remains to do
   releasing.md          how the three repositories release, and the settings it needs
   signing-commits.md    signing commits, which the provenance gate reads
@@ -66,4 +65,4 @@ website/                   the website: Astro Starlight, this repository's copy 
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
 ```
 
-Each `SKILL.md` is a lean router. Anything not needed on every invocation lives in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget. `ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/` and `ktl-website/scripts/` hold the one script each runs in place.
+Each `SKILL.md` is a lean router. Anything not needed on every invocation is in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget. `ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/` and `ktl-website/scripts/` hold the one script each runs in place.

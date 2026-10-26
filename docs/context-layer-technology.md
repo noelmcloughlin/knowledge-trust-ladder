@@ -1,7 +1,7 @@
 # What a KTL context layer integrates with
 
 > [!NOTE]
-> This page is for anyone choosing the artifact repository, the store and the agent surface for the workspace that [A federation of bundles](federation.md) describes. Every product fact comes from the vendor's own documentation, read on 2026-10-12, and nothing here is an endorsement.
+> This page is for anyone choosing the artifact repository, the store and the agent surface for the workspace that [A federation of bundles](federation.md) describes.
 
 Below, *the toolkit* is `lokf` at 0.8.0, the floor the sidecar pins. A bundle leaves the toolkit in three forms:
 
@@ -23,11 +23,11 @@ A domain's workspace adds `graph.nq`, one named graph per bundle, and a registry
 
 ## RDF stores with SPARQL
 
-The workspace's graph is `graph.nq`, in N-Quads, and every SPARQL 1.1 store surveyed loads N-Quads with its named graphs: among them Oxigraph, the toolkit's own engine, Apache Jena Fuseki, GraphDB, Stardog, OpenLink Virtuoso and Amazon Neptune. What separates them is hosting, scale and price, which their own documentation covers. Managed SPARQL exists on AWS, through Amazon Neptune and marketplace offerings such as GraphDB's, and natively on neither Azure nor Google Cloud, whose graph services speak Gremlin or GQL. There, a store runs on a virtual machine or a marketplace image, or the bundle takes the tables route. Among the property-graph stores surveyed, only Neo4j's neosemantics imports N-Quads with their named graphs, and only on self-hosted Neo4j, not on Aura; the others take the tables.
+The workspace's graph is `graph.nq`, in N-Quads, and every SPARQL 1.1 store surveyed loads N-Quads with its named graphs: among them Oxigraph, the toolkit's own engine, Apache Jena Fuseki, GraphDB, Stardog, OpenLink Virtuoso and Amazon Neptune. What separates them is hosting, scale and price, which their own documentation covers. Managed SPARQL exists on AWS, through Amazon Neptune and marketplace offerings such as GraphDB's, and natively on neither Azure nor Google Cloud, whose graph services speak Gremlin or GQL. On those two clouds, a store runs on a virtual machine or a marketplace image, or the bundle takes the tables route. Among the property-graph stores surveyed, only Neo4j's neosemantics imports N-Quads with their named graphs, and only on self-hosted Neo4j, not on Aura. The others take the tables route.
 
 ## Catalogues and semantic layers
 
-`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalogue below that takes tables can read that output. The tables carry the structure and the frontmatter; the bound predicates, the meaning a graph carries, stay in the RDF.
+`lokf tables` projects a bundle to "one table per concept type (the nodes) plus a single `relations` table (the typed edges: `source`, `predicate`, `target`)", as CSV, Parquet or SQLite. For BigQuery or Athena it writes the Parquet to the location given and prints the external-table statements that register it. Every catalogue below that takes tables can read that output. The tables carry the structure and the frontmatter. The bound predicates, the meaning a graph carries, stay in the RDF.
 
 | Product | What a bundle can feed it | What comes out |
 | --- | --- | --- |

@@ -32,7 +32,7 @@ The `knowledge_bundle` link at the repository root is this same `knowledge/` dir
 ## Prerequisites
 
 - [`uv`](https://docs.astral.sh/uv/), the Python package runner.
-- [`just`](https://just.systems/), optional, for the shortcut recipes.
+- [`just`](https://just.systems/), optional, for the shortcut recipes. `uv sync` installs the version `uv.lock` pins, which `uv run just` runs.
 
 ## Use it
 
@@ -54,7 +54,7 @@ uv run lokf serve knowledge
 uv run lokf convert knowledge --format ttl
 ```
 
-When the justfile's `schema` line names a domain schema, run the recipes instead: `uvx --from rust-just just lokf-validate` needs no install, and passes the schema.
+When the justfile's `schema` line names a domain schema, run the recipes instead: `uv run just lokf-validate` needs no other install, and passes the schema.
 
 ## Add or edit a concept
 

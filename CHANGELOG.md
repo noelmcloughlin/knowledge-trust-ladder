@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **`docs/three-lines.md` holds the model's critics.** `docs/three-lines-critics.md` is folded into it, and the docs pages' titles are shorter.
+- **The workflows run the `just` that `.lokf/uv.lock` pins, checked by hash.** The sidecar's `pyproject.toml` names `rust-just==1.47.0`. A host without it still gets that version by name, and the preflight says to run `uv add rust-just==1.47.0` in `.lokf/`.
+
+### Fixed
+
+- **The federation build and the ingest check the address each connection opens.** A name that answers a public address to the check and a private one to the connection (DNS rebinding) now reaches nothing, unless private addresses are allowed.
+- **CI lints the ingest workflow template.** actionlint now names `knowledge-ingest.yaml` with the other templates.
+
 ## [0.56.1] - 2026-10-24
 
 ### Fixed

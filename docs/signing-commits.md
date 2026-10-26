@@ -2,15 +2,15 @@
 
 A signature ties a commit to you cryptographically, so the forge can show it `Verified`. In the KTL repositories it is *required* for one thing: a pull request that adds or removes a `by: human:` verification event in `.lokf/knowledge/`.
 
-The `provenance` job in each repository's `knowledge-registrar.yaml` checks those. It accepts either an approving review from the confirming account or a verified commit attributed to it. A sole maintainer cannot approve their own pull request, so for them the signature is the only path. The job exists because a claim that a named person checked a concept has to be tied back to that person: [threat-model.md](threat-model.md) says what such a confirmation proves.
+The `provenance` job in each repository's `knowledge-registrar.yaml` checks those. It accepts either an approving review from the confirming account or a verified commit attributed to it. A sole maintainer cannot approve their own pull request, so for them the signature is the only way. The job exists because a claim that a named person checked a concept has to be tied back to that person: [threat-model.md](threat-model.md) says what such a confirmation proves.
 
 You are encouraged to sign everything. It costs one setup and nothing afterwards.
 
-**Choose one format: GPG or SSH.** Mixing them is the usual failure. Git reads `user.signingkey` in whichever format `gpg.format` names, so a file in the wrong format fails with `could not load public key`. If you have no preference, GPG is the one to pick: it carries an identity and an expiry of its own, which is what the sections below manage. Either way, the address in `git config user.email` must be a **verified email** on your GitHub account, or every commit stays `Unverified`.
+**Choose one format: GPG or SSH.** Mixing them is the usual failure. Git reads `user.signingkey` in whichever format `gpg.format` names, so a file in the wrong format fails with `could not load public key`. If you have no preference, GPG is the one to pick: it carries an identity and an expiry of its own, which is what the sections below manage. Whichever format you choose, the address in `git config user.email` must be a **verified email** on your GitHub account, or every commit stays `Unverified`.
 
 ## GPG, step by step
 
-The key lives in `~/.gnupg/`. You never save it to a file of your own: exporting prints it to the screen for pasting.
+The key is kept in `~/.gnupg/`. You never save it to a file of your own: exporting prints it to the screen for pasting.
 
 1. **Create it.** Choose `ECC (sign only)` with `Curve 25519`, and an expiry of 1-2 years rather than `0` (never expires). An expiry limits the damage if the key is ever lost, and extending it later is one command.
 
@@ -18,7 +18,7 @@ The key lives in `~/.gnupg/`. You never save it to a file of your own: exporting
    gpg --full-generate-key
    ```
 
-2. **Set a passphrase, and record it in your password manager as you type it.** There is no recovery: a forgotten passphrase means the key is dead and you start again.
+2. **Set a passphrase, and record it in your password manager as you type it.** There is no recovery: a forgotten passphrase means the key is unusable and you start again.
 
 3. **Find the fingerprint**, the 40-character string on the line under `sec`:
 
@@ -48,7 +48,7 @@ The key lives in `~/.gnupg/`. You never save it to a file of your own: exporting
 
    You want `gpg: Good signature from ...`. GitHub's own verdict is the `Verified` badge next to the commit once pushed.
 
-7. **Optional, but it removes most of the friction:** cache the passphrase for the working day instead of being asked every commit. Put this in `~/.gnupg/gpg-agent.conf`, then run `gpgconf --reload gpg-agent`:
+7. **Optional, but it removes most of the prompts:** cache the passphrase for the working day instead of being asked every commit. Put this in `~/.gnupg/gpg-agent.conf`, then run `gpgconf --reload gpg-agent`:
 
    ```text
    default-cache-ttl 28800
