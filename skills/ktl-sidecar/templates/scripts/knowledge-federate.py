@@ -1657,17 +1657,26 @@ def stored_queries() -> dict[str, str]:
 
 
 def build(args) -> int:
-    """The build, with snapshot.new removed whenever it stops short of the swap."""
-    new = None
-    try:
-        return _build(args, lambda path: globals().__setitem__("_NEW", path))
-    finally:
-        new = globals().pop("_NEW", None)
-        if new is not None and pathlib.Path(new).exists() and not getattr(sys, "_federate_swapped", False):
-            shutil.rmtree(new, ignore_errors=True)
+    """The build, with snapshot.new removed whenever it stops short of the swap, and the files it downloaded removed when it ends."""
+    with tempfile.TemporaryDirectory(prefix="federate-build-") as tmp:
+        try:
+            return _build(args, downloads(args, pathlib.Path(tmp)), lambda path: globals().__setitem__("_NEW", path))
+        finally:
+            new = globals().pop("_NEW", None)
+            if new is not None and pathlib.Path(new).exists() and not getattr(sys, "_federate_swapped", False):
+                shutil.rmtree(new, ignore_errors=True)
 
 
-def _build(args, note_new) -> int:
+def downloads(args, tmp: pathlib.Path) -> pathlib.Path:
+    """Where a run downloads the files it checks: the folder --cache names, which keeps them by digest for later runs, else one in the run's temporary folder.
+
+    A build unpacks or copies each file into the snapshot, and the members
+    script only checks them, so nothing needs a download once the run ends.
+    """
+    return pathlib.Path(args.cache).expanduser() if args.cache else tmp / "downloads"
+
+
+def _build(args, cache: pathlib.Path, note_new) -> int:
     import pyoxigraph as ox
     from lokf.model import load_bundle
     from lokf.registry import REGISTRY_VERSION, Registry, entry_for_bundle
@@ -1712,7 +1721,6 @@ def _build(args, note_new) -> int:
     tag = args.tag or ""
     snapshot_iri = args.snapshot_iri or (f"{args.release_base.rstrip('/')}/{tag}" if tag and args.release_base else f"urn:knowledge-federate:snapshot:{tag or 'untagged'}")
     out = root / args.out
-    cache = pathlib.Path(args.cache).expanduser() if args.cache else root / ".lokf" / ".cache" / "federation"
     say(f"domain {domain_iri} ({len(member_concepts)} members), policy unowned_targets={policy}, max_depth={max_depth}"
         + (f", sensitivity={clearance}" if clearance != "public" else ""))
     # The workspace the release before built, for a member whose confirmed
@@ -2501,21 +2509,21 @@ def verify_workspace(member: Member, cache: pathlib.Path, max_bytes: int, attest
     return f"; workspace {member.workspace_name} checked, and its lock is that domain's"
 
 
-# What the members script last saw at each served address, in the cache:
-# the digest, the day, and the validators a conditional request sends.
+# What the members script last saw at each served address, kept in
+# .lokf/.cache/federation/ from one run to the next: the digest, the day,
+# and the validators a conditional request sends. It holds no file.
 VALIDATORS = "validators.json"
 
 
-def look_served(url: str, cache: pathlib.Path, max_bytes: int) -> tuple[str, str, pathlib.Path]:
-    """What a site serves at a member's address now: the file's digest, the day it last changed, and its copy in the cache.
+def look_served(url: str, cache: pathlib.Path, book: pathlib.Path, max_bytes: int, named: str = "") -> tuple[str, str, pathlib.Path | None]:
+    """What a site serves at a member's address now: the file's digest, the day it last changed, and its copy among the run's downloads.
 
-    The request is conditional when the cache has seen the address before,
-    as section 11.5 of the LOKF specification guards a harvest, so an
-    unchanged file costs a 304 and no download. The day is the file's
-    Last-Modified date, else today's.
+    The request is conditional when the member concept names, as `named`,
+    the digest the site served at the last look, as section 11.5 of the LOKF
+    specification guards a harvest. An unchanged file then costs a 304 and
+    no download, and needs no copy, since the concept names it already: the
+    copy is None. The day is the file's Last-Modified date, else today's.
     """
-    cache.mkdir(parents=True, exist_ok=True)
-    book = cache / VALIDATORS
     try:
         every = json.loads(book.read_text(encoding="utf-8")) if book.is_file() else {}
     except ValueError:
@@ -2523,9 +2531,8 @@ def look_served(url: str, cache: pathlib.Path, max_bytes: int) -> tuple[str, str
     seen = every.get(url) or {}
     if not CHECKSUM.fullmatch(f"sha256:{seen.get('sha256', '')}"):
         seen = {}  # a record that names no digest is no record
-    kept = cache / f"{seen.get('sha256', '')}.jsonld"
     headers = {}
-    if seen.get("sha256") and kept.is_file():
+    if named and seen.get("sha256") == named:
         headers.update({"If-None-Match": seen["etag"]} if seen.get("etag") else {})
         headers.update({"If-Modified-Since": seen["last_modified"]} if seen.get("last_modified") else {})
     if urllib.parse.urlparse(url).scheme not in ("http", "https"):
@@ -2536,8 +2543,9 @@ def look_served(url: str, cache: pathlib.Path, max_bytes: int) -> tuple[str, str
     except (OSError, http.client.HTTPException) as e:
         raise Failed(f"{url}: could not be fetched ({e})") from e
     if status == 304 and headers:
-        return seen["sha256"], str(seen.get("day") or ""), kept
+        return seen["sha256"], str(seen.get("day") or ""), None
     sha = hashlib.sha256(body).hexdigest()
+    cache.mkdir(parents=True, exist_ok=True)
     path = cache / f"{sha}.jsonld"
     path.write_bytes(body)
     try:
@@ -2546,6 +2554,7 @@ def look_served(url: str, cache: pathlib.Path, max_bytes: int) -> tuple[str, str
         day = ""
     day = day or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     every[url] = {"sha256": sha, "day": day, **{k: got[h] for k, h in (("etag", "etag"), ("last_modified", "last-modified")) if got.get(h)}}
+    book.parent.mkdir(parents=True, exist_ok=True)
     book.write_text(json.dumps(every, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return sha, day, path
 
@@ -2556,9 +2565,9 @@ def served_count(path: pathlib.Path, member: Member) -> int:
         return sum(1 for p in write_out(path, pathlib.Path(tmp), member).rglob("*.md") if p.name != "index.md")
 
 
-def served_move(c, member: Member, cache: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str], taken: dict[str, str]) -> None:
+def served_move(c, member: Member, cache: pathlib.Path, book: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str], taken: dict[str, str]) -> None:
     """For a member that releases no zip: propose the file its site serves now, when its digest is not the one the concept names."""
-    sha, day, path = look_served(member.zip_url, cache, args.max_bytes)
+    sha, day, path = look_served(member.zip_url, cache, book, args.max_bytes, member.sha256)
     if sha == member.sha256:
         current.append(f"{member.slug}: {member.zip_url} serves the file the concept names")
         return
@@ -2611,11 +2620,11 @@ def served_slug(base_iri: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", (parts[-1] if parts else parsed.netloc.split(".")[0]).lower()).strip("-") or "member"
 
 
-def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathlib.Path, args, taken: dict, ops: list[dict], handoff: list[str]) -> None:
+def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathlib.Path, book: pathlib.Path, args, taken: dict, ops: list[dict], handoff: list[str]) -> None:
     """Draft a member concept for a bundle that releases no zip, from the concepts.jsonld its site serves at this address, as a create for the pen."""
     url = spec if spec.endswith(".jsonld") else spec.rstrip("/") + "/concepts.jsonld"
     folder = url.rsplit("/", 1)[0]
-    sha, day, path = look_served(url, cache, args.max_bytes)
+    sha, day, path = look_served(url, cache, book, args.max_bytes)
     base = served_base(path, url)
     refuse_nesting(url, base, taken)
     slug = served_slug(base)
@@ -2656,11 +2665,11 @@ def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathl
                    "a person confirms the member to admit it.")
 
 
-def move_member(c, cache: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str], taken: dict[str, str]) -> None:
+def move_member(c, cache: pathlib.Path, book: pathlib.Path, args, ops: list[dict], handoff: list[str], current: list[str], taken: dict[str, str]) -> None:
     """Propose moving one member concept to the newest release or file its source carries, as operations for the pen."""
     member = Member(c.path, c.data, "", 1)
     if member.served:
-        served_move(c, member, cache, args, ops, handoff, current, taken)
+        served_move(c, member, cache, book, args, ops, handoff, current, taken)
         return
     if not member.github:
         current.append(f"{member.slug}: not a GitHub release, left as it is")
@@ -2764,13 +2773,20 @@ def move_member(c, cache: pathlib.Path, args, ops: list[dict], handoff: list[str
 
 
 def members(args) -> int:
+    """The members script, with the files it downloaded to check each release, and the zips it unpacked, removed when it ends."""
+    with tempfile.TemporaryDirectory(prefix="federate-members-") as tmp:
+        return _members(args, pathlib.Path(tmp))
+
+
+def _members(args, tmp: pathlib.Path) -> int:
     root = find_root(args.root)
     knowledge = root / ".lokf" / "knowledge"
     bundle, domains, member_concepts = read_domain(knowledge)
     top = top_domain(bundle, domains)
     domain_iri = bundle.iri(top)
     allow_private_from(top, domain_iri, bundle, None)
-    cache = pathlib.Path(args.cache).expanduser() if args.cache else root / ".lokf" / ".cache" / "federation"
+    cache = downloads(args, tmp)
+    book = root / ".lokf" / ".cache" / "federation" / VALIDATORS
     ops: list[dict] = []
     handoff: list[str] = []
     current: list[str] = []
@@ -2783,7 +2799,7 @@ def members(args) -> int:
         # list refused, leaves the others to be moved, and the hand-off
         # names it.
         try:
-            move_member(c, cache, args, ops, handoff, current, taken)
+            move_member(c, cache, book, args, ops, handoff, current, taken)
         except Failed as e:
             failed.append(f"{c.concept_id}: could not be checked, so it stays as it is: {e}")
     # A repository named with --add joins the same way a member moves: its
@@ -2793,7 +2809,7 @@ def members(args) -> int:
     added = 0
     for spec in args.add or []:
         if spec.startswith(("http://", "https://")):
-            served_add(spec, knowledge, domain_iri, cache, args, taken, ops, handoff)
+            served_add(spec, knowledge, domain_iri, cache, book, args, taken, ops, handoff)
             added += 1
             continue
         owner, _, repo = spec.partition("/")
@@ -2813,7 +2829,7 @@ def members(args) -> int:
         probe = Member(knowledge / path, {"base_iri": "https://pending.invalid/", "version": tag, "distribution": distribution}, domain_iri, 1)
         zip_path, verdict = obtain(probe, cache, args.max_bytes, not args.no_attestation)
         verdict += verify_schema(probe, cache, not args.no_attestation, args.max_bytes)
-        kdir = unpack(zip_path, pathlib.Path(tempfile.mkdtemp(prefix="federate-add-")) / slug)
+        kdir = unpack(zip_path, tmp / "add" / slug)
         meta = read_frontmatter(kdir / "index.md")
         base_iri = str(meta.get("base_iri") or "")
         if not base_iri:
@@ -3569,6 +3585,9 @@ def mcp_server(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+CACHE_HELP = "a folder that keeps the files a run downloads, by digest, for later runs to reuse (default: none, and they are removed when the run ends)"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog=NAME, description=__doc__)
     ap.add_argument("--root", help="the repository root (default: found above the current directory)")
@@ -3581,7 +3600,7 @@ def main(argv=None) -> int:
     b.add_argument("--release-base", default="", help="the release page prefix, e.g. https://github.com/o/r/releases/tag; with --tag it names the snapshot")
     b.add_argument("--snapshot-iri", default="", help="the lock graph's IRI, when not derived from --release-base and --tag")
     b.add_argument("--public-url", default=None, help="where the snapshot is served; default from website/site.config.mjs")
-    b.add_argument("--cache", default=None, help="where zips are kept by digest (default .lokf/.cache/federation)")
+    b.add_argument("--cache", default=None, help=CACHE_HELP)
     b.add_argument("--max-bytes", type=int, default=DEFAULT_MAX_BYTES, help="refuse a zip that unpacks to more than this")
     b.add_argument("--no-attestation", action="store_true", help="skip gh attestation verify")
     b.add_argument("--verify-only", action="store_true", help="fetch and verify every zip, export, load and gate, write nothing")
@@ -3591,7 +3610,7 @@ def main(argv=None) -> int:
                    "a member whose confirmed release cannot be fetched is held as that workspace holds it")
     b.set_defaults(func=build)
     m = sub.add_parser("members", help="propose moving each member to its newest released zip, as a patch for the pen")
-    m.add_argument("--cache", default=None)
+    m.add_argument("--cache", default=None, help=CACHE_HELP)
     m.add_argument("--max-bytes", type=int, default=DEFAULT_MAX_BYTES)
     m.add_argument("--no-attestation", action="store_true")
     m.add_argument("--dry-run", action="store_true", help="print the patch instead of writing .lokf/patch.yaml")

@@ -121,7 +121,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 6. `members` moves a member's old tag, zip name and day in its description
    and body as well as its frontmatter, in a patch the pen applies, and
    names the lines it had to leave in its question. The day moves too when
-   the release list no longer holds the old release;
+   the release list no longer holds the old release. Neither `members` nor
+   a build keeps a file it downloaded;
 
 6a. a member whose new release names another namespace moves to it, in its
    frontmatter and where its text gives it as code, and its question says
@@ -150,9 +151,9 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
     the member's release workflow, and a gh too old to pin it is named;
 
 11. `members` moves a member its site serves to the file the site serves
-    now, and to its new namespace when the file's @base moved, asking with
-    the validators it kept, and `members --add <address>` drafts one from a
-    site's concepts.jsonld;
+    now, and to its new namespace when the file's @base moved. Once the
+    concept names the file, it asks with the validators it kept, and
+    `members --add <address>` drafts one from a site's concepts.jsonld;
 
 12. `members` moves the others when it cannot check one, and asks gh for a
     release list the API refuses as rate limited.
@@ -950,7 +951,7 @@ def test_a_moved_member_is_built_at_the_release_a_person_confirmed(federation, t
     assert entries[federation["b_iri"]]["version"] == "v1.0.0" and entries[federation["b_iri"]]["sha256"] == federation["b_sha"]
     assert lock["waiting"] == [{"concept": federation["d_iri"] + "members/b", "base_iri": federation["b_iri"], "proposed": "v2.0.0", "built": "v1.0.0"}]
     assert "members/b>: v2.0.0 waits; built at v1.0.0." in (host / "snapshot" / "index.md").read_text(encoding="utf-8")
-    shutil.rmtree(host / ".lokf" / ".cache")
+    assert not (host / ".lokf" / ".cache").exists(), "a build keeps none of the files it downloaded"
     federation["b_zip"].unlink()
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 1 and "no such file" in r.out and "b is built at v1.0.0, the release a person last confirmed, and its concept now names v2.0.0, which joins once a person confirms it" in r.out, \
@@ -1948,11 +1949,13 @@ def prune(released, tag: str) -> None:
 @pytest.mark.parametrize("pruned", [False, True], ids=["listed", "pruned"])
 def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(released, pruned):
     """The old release's day moves with its tag, from the text after the tag when the release list no longer holds it."""
-    host = released["host"]
+    host, tmp = released["host"], released["tmp"] / "tmp"
     if pruned:
         prune(released, OLD[0])
-    r = members_run(released)
+    tmp.mkdir()
+    r = members_run(released, env={"TMPDIR": tmp})
     assert r.rc == 0 and "4 member(s) moved" in r.out, r.out
+    assert not (host / ".lokf" / ".cache").exists() and not any(tmp.glob("federate-*")), "the files downloaded to check each release are removed"
     handoff = yaml.safe_load(read(host / ".lokf" / "patch.yaml"))["handoff"]
     assert not any("no day was moved" in line for line in handoff), handoff
     r = run(["bash", APPLY, "--root", host], cwd=host)
@@ -2049,9 +2052,11 @@ def test_a_dry_run_prints_the_patch_while_a_librarian_pull_request_is_open(relea
 
 
 def test_members_add_drafts_a_member_from_a_repository_release(released):
-    host = released["host"]
-    r = members_run(released, "--add", "acme/e")
+    host, tmp = released["host"], released["tmp"] / "tmp"
+    tmp.mkdir()
+    r = members_run(released, "--add", "acme/e", env={"TMPDIR": tmp})
     assert r.rc == 0 and "5 member(s) moved or proposed" in r.out, r.out
+    assert not any(tmp.glob("federate-*")), "the zip unpacked to read its index is removed"
     r = run(["bash", APPLY, "--root", host], cwd=host)
     assert r.rc == 0, r.out
     text = read(host / ".lokf" / "knowledge" / "members" / "e.md")
@@ -2198,9 +2203,11 @@ def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path)
     assert ops["patch"]["set"]["description"] == "The s bundle its site served on 2026-10-20."
     assert f"{url} serves another file since the confirmed 2026-10-01, last changed on 2026-10-20; does this member move to it?" in ops["question"]["text"]
     assert any("served file read and written out, 1 concept(s)" in line for line in patch["handoff"]), patch["handoff"]
+    # The file is not kept, so a run before the move is applied asks for it
+    # whole again.
     log = tmp_path / "requests.log"
     r = members_run(released, "--dry-run", stdout_only=True, env={"RUNNER_LOG": str(log)})
-    assert r.rc == 0 and yaml.safe_load(r.out) == patch and f"{url} 304" in log.read_text(encoding="utf-8"), "an unchanged file costs a 304"
+    assert r.rc == 0 and yaml.safe_load(r.out) == patch and f"{url} 200" in log.read_text(encoding="utf-8"), r.out
     r = members_run(released, "--dry-run", "--add", t_iri, stdout_only=True)
     assert r.rc == 0, r.out
     created = ops_for(yaml.safe_load(r.out), "ktl")["create"]
@@ -2219,6 +2226,12 @@ def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path)
     ops = ops_for(yaml.safe_load(r.out), "s")
     assert ops["patch"]["set"]["base_iri"] == "https://w3id.example/s/knowledge/" and ops["patch"]["set"]["version"] == "2026-10-21", ops
     assert f"Its namespace moves from {s_iri} to https://w3id.example/s/knowledge/, so each of its concepts has a new IRI" in ops["question"]["text"], ops
+    # Once the concept names the file, an unchanged one costs a 304, and the
+    # cache holds the validators alone.
+    rewrite(host, "s", {**concept, **ops["patch"]["set"]})
+    r = members_run(released, "--dry-run", env={"RUNNER_LOG": str(log)})
+    assert r.rc == 0 and "serves the file the concept names" in r.out and f"{url} 304" in log.read_text(encoding="utf-8"), "an unchanged file costs a 304\n" + r.out
+    assert [p.name for p in (host / ".lokf" / ".cache" / "federation").iterdir()] == ["validators.json"]
 
 
 IN_PROCESS = r"""
