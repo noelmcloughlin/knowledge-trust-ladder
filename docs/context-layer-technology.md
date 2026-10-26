@@ -1,4 +1,4 @@
-# What a KTL context layer integrates with
+# Context Workspace integrations
 
 > [!NOTE]
 > This page is for anyone choosing the artifact repository, the store and the agent surface for the workspace that [A federation of bundles](federation.md) describes.
