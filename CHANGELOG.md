@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The sidecar reads lokf 0.9.0's `exclusions`.** Coverage and `--why` count an excluded file apart and never as a source, and conventions rule 18 fails a blank reason or a material listed both ways.
+
 ## [0.59.0] - 2026-10-28
 
 ### Added
