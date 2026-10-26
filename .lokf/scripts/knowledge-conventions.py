@@ -6,7 +6,7 @@
 # exclude-newer = "2025-10-01T00:00:00Z"
 # ///
 # The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9, 10, 12,
-# 13, 14, 15, 16 and 17 (see that script's header for the list).
+# 13, 14, 15, 16, 17 and 18 (see that script's header for the list).
 #
 # Rules 2, 3, 7 and 9 are questions about a document's YAML that a real
 # parser can decide, where grep and awk could only approximate. Is this
@@ -25,8 +25,9 @@
 # knowledge-apply.sh writes the whole frontmatter back and a requoted value is
 # no change. Rule 14 walks the commits after a base and compares each concept
 # that gains a person's confirmation with the same file in every parent, as
-# parsed values too. The shell half checks rules 1, 5, 6, 8 and 11: they are
-# git and filesystem facts, and need no uv.
+# parsed values too. Rule 18 reads each exclusion beside the concept's
+# sources, which a line reader cannot pair. The shell half checks rules 1, 5,
+# 6, 8 and 11: they are git and filesystem facts, and need no uv.
 #
 # Rules 15, 16 and 17 join one parsed thing to another. Rule 15 reads
 # `resource` and `sources` as parsed values, so a key with no value counts as
@@ -218,6 +219,26 @@ def moment(value) -> str:
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z", value):
         return value[:19] + "Z"
     return ""
+
+
+def listed(frontmatter: dict, field: str) -> list[tuple[int, dict]]:
+    """The mapping entries of a list field with their positions in it, a bare mapping read as a one-item list."""
+    found = frontmatter.get(field) or []
+    if isinstance(found, dict):
+        found = [found]
+    if not isinstance(found, list):
+        return []
+    return [(i, e) for i, e in enumerate(found) if isinstance(e, dict)]
+
+
+def same_material(value) -> str | None:
+    """A resource as rule 18 compares it, as `lokf validate` does: `./docs/a.md`, `docs/a.md` and `docs/a.md/` name one material."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    key = value.strip()
+    while key.startswith("./"):
+        key = key[2:]
+    return key.rstrip("/") or key
 
 
 def under(value, base: str):
@@ -668,6 +689,20 @@ def check_file(
             in_section = False
         if in_section and line.startswith("- ") and not OPEN_QUESTION.match(line):
             findings.append(f"{path}: open question not '- YYYY-MM-DD, <actor>: ...': {line[:60]}")
+
+    # 18. each exclusion says why the material was left out, and no material
+    #     is both a source and an exclusion of one concept.
+    used = {same_material(s.get("resource")) for _, s in listed(frontmatter, "sources")}
+    for i, exclusion in listed(frontmatter, "exclusions"):
+        reason = exclusion.get("reason")
+        if not isinstance(reason, str) or not reason.strip():
+            findings.append(f"{path}: exclusions[{i}] gives no reason - say in a sentence why the material was left out")
+        key = same_material(exclusion.get("resource"))
+        if key is not None and key in used:
+            findings.append(
+                f"{path}: exclusions[{i}].resource {json.dumps(exclusion.get('resource'))} is also one of its sources - "
+                "a concept cannot derive from a material and leave it out; keep one"
+            )
 
     # 7. one file per id: collected here, reported once every file is read.
     concept_id = frontmatter.get("id")

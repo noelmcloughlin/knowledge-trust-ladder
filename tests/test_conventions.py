@@ -9,7 +9,7 @@ so a small history stages a confirmation alone, one with an edit, Correct now
 and a merge. Rule 17 reads log.md against the bundle, so another history
 stages two days of logged writes after a base.
 
-Twelve of the seventeen rules run through `uv run`, so without uv the script
+Thirteen of the eighteen rules run through `uv run`, so without uv the script
 reports none of them. These tests fail, rather than skip, when uv is missing:
 the job that runs them installs it.
 """
@@ -33,7 +33,7 @@ CONVENTIONS = SCRIPTS / "knowledge-conventions.sh"
 def _uv_is_needed():
     if not have("uv"):
         pytest.fail(
-            "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17 cannot run - install uv, or add the setup-uv step to the workflow running this"
+            "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16, 17 and 18 cannot run - install uv, or add the setup-uv step to the workflow running this"
         )
 
 
@@ -245,6 +245,21 @@ def findings(tmp_path_factory) -> str:
         x / "fence.md",
         '---\ntype: Service\nresource: pinned.md\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n',
     )
+    # Rule 18: an exclusion with a blank reason, one with none, and a material
+    # listed as a source and, spelt another way, as an exclusion. A folder
+    # left out apart from the one file the concept uses must pass, written as
+    # a bare mapping, which every reader takes as a one-item list.
+    write(bad / "docs" / "a.md", "a\n")
+    write(bad / "tests" / "x.md", "x\n")
+    write(x / "ex-blank.md", "---\ntype: Service\nresource: pinned.md\nexclusions:\n- resource: docs/a.md\n  reason: '  '\n- resource: tests\n---\n")
+    write(
+        x / "ex-both.md",
+        "---\ntype: Service\nsources:\n- resource: docs/a.md\nexclusions:\n- resource: ./docs/a.md\n  reason: a draft\n---\n",
+    )
+    write(
+        x / "ex-folder.md",
+        "---\ntype: Service\nsources:\n- resource: tests/x.md\nexclusions:\n  resource: tests\n  reason: the suite, apart from the fixture this concept uses\n---\n",
+    )
     # Rule 12: a bullet left behind by an edited description fails, in the
     # folder's index and in the root's. A bullet that still agrees, a concept
     # no index lists, and a line that lists two concepts must all pass.
@@ -321,6 +336,9 @@ REPORTED = [
     "r13-edited.md: changed since human:contract confirmed it (2026-09-02, in ",
     "r13-description.md: changed since human:contract confirmed it",
     "r13-moved-edited.md: changed since human:contract confirmed it",
+    "ex-blank.md: exclusions[0] gives no reason",
+    "ex-blank.md: exclusions[1] gives no reason",
+    'ex-both.md: exclusions[0].resource "./docs/a.md" is also one of its sources',
     *(f"{name}.md: timestamp {json.dumps(at)} at verified.[0].at is not a UTC time to the second" for name, at in ODD_TIMES),
     f"{ODD_STAMP[0]}.md: timestamp {json.dumps(ODD_STAMP[1])} at generated.at is not a UTC time to the second",
     "r15-none.md: neither resource nor sources names where it came from",
@@ -356,6 +374,7 @@ ACCEPTED = [
     ("r15-sources.md", "whose sources list stands in for a resource"),
     ("fn-ok.md", "whose footnotes each name an id, each have a definition line, and quote their resources"),
     ("fn-code.md", "whose only footnote marks sit in a code fence and a code span"),
+    ("ex-folder.md", "whose exclusion is a folder holding the one file it uses, written as a bare mapping"),
 ]
 
 
@@ -406,7 +425,7 @@ def test_without_uv_the_shell_half_says_what_it_skipped(good):
         pytest.skip("uv is on /usr/bin - the without-uv case cannot be staged here")
     result = bash(CONVENTIONS, good, env={"PATH": path}, stdout_only=True)
     assert result and matches(
-        result.out, r"^OK - .*\(rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17 not checked: uv not found\)"
+        result.out, r"^OK - .*\(rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16, 17 and 18 not checked: uv not found\)"
     ), f"conventions script without uv did not say what it skipped: {result.out}"
 
 
