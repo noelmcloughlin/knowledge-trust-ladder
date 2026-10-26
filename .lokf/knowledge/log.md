@@ -2,6 +2,7 @@
 
 ## 2026-10-26
 
+* **Prose**: reworded 15 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Changed**: Context layer follows `docs/architecture.md`'s wording since 62e1ac5: the next person or assistant does that work again.
 * **Changed**: Curator spells judgements as `docs/architecture.md` does since 62e1ac5.
 * **Changed**: Desk says the pen refuses a change that would fake or remove a confirmation, as `docs/architecture.md` puts it since 62e1ac5.

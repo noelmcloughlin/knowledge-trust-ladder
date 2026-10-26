@@ -69,7 +69,7 @@ The workflow runs on Sundays and keeps one pull request open on the branch `know
 
 # What the librarian does
 
-`skills/ktl-librarian/references/ingest.md` gives the rules. In a live session the librarian runs `knowledge-ingest.sh` before the work list; unattended it does not. A concept derived from a mirrored page names the mirror file as its `resource` and the origin as a `sources` entry, with the entry's `owner` as `author`. A `Reference` concept is the other way round. The source map gains one row per entry, naming the entry's folder. A file marked `gone` or `unlisted` stays while a concept cites it, and the librarian re-verifies each such concept. The librarian derives nothing from a file the lock does not mark `ok`.
+`skills/ktl-librarian/references/ingest.md` gives the rules. In a live session the librarian runs `knowledge-ingest.sh` before the work list. Unattended, it does not. A concept derived from a mirrored page names the mirror file as its `resource` and the origin as a `sources` entry, with the entry's `owner` as `author`. A `Reference` concept is the other way round. The source map gains one row per entry, naming the entry's folder. A file marked `gone` or `unlisted` stays while a concept cites it, and the librarian re-verifies each such concept. The librarian derives nothing from a file the lock does not mark `ok`.
 
 # Security
 

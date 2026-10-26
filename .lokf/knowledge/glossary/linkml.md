@@ -29,4 +29,4 @@ verified:
 
 LinkML is the schema language [LOKF](lokf.md) is written in, and its creators are the LinkML Community. LOKF's specification is a single LinkML schema, `lokf.yaml`. The JSON Schema, JSON-LD context, SHACL shapes and OWL ontology are generated from it and never edited by hand, and this bundle consumes that schema.
 
-A [domain schema](domain-schema.md) that extends LOKF's is written in LinkML too, so that one schema serves the people who think in JSON, Python or docs pages and the people who think in graphs. The scaffolded sidecar depends on `lokf[build]`, whose `[build]` extra pulls in the `linkml` package, the full generator suite, so a domain schema costs no new installation.
+A [domain schema](domain-schema.md) that extends LOKF's is written in LinkML too, so that one schema serves the people who think in JSON, Python or docs pages and the people who think in graphs. The scaffolded sidecar depends on `lokf[build]`, whose `[build]` extra installs the `linkml` package, the full generator suite, so a domain schema costs no new installation.

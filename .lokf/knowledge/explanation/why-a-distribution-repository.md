@@ -34,7 +34,7 @@ The skills are installed from this repository rather than copied into each proje
 - the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --global --skill <skill>`), which can fail behind a company proxy or an internal npm registry;
 - a Claude Code plugin that bundles all six (`/plugin marketplace add noelmcloughlin/knowledge-trust-ladder`, then `/plugin install knowledge-trust-ladder@knowledge-trust-ladder`), declared by `.claude-plugin/plugin.json` and `marketplace.json`.
 
-A user install keeps the instructions an agent follows under the user's control, and the scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A team that wants every member on one version installs into the repository instead: it leaves out `--global`, or passes `--scope project`, and commits the `skills-lock.json` that `npx skills` writes.
+A user install keeps the instructions an agent follows under the user's control. The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A team that wants every member on one version installs into the repository instead: it leaves out `--global`, or passes `--scope project`, and commits the `skills-lock.json` that `npx skills` writes.
 
 All six skills are released together under one `vMAJOR.MINOR.PATCH` tag with one `CHANGELOG.md`, so a set pinned to one tag agrees with itself. To pin it, append the tag to the skill name (`ktl-docent@v0.16.0`) or pass `--pin`. `docs/install.md` carries the commands, the pinning rule, and what each skill needs on the machine.
 

@@ -39,7 +39,7 @@ The vault someone already keeps is the **workshop**: notes change freely there, 
 1. Choose **File → Open folder as vault** → `knowledge_bundle`. The bundle becomes a small vault: every note a concept, the root `index.md` carrying the bundle's header. Obsidian writes its workspace state through the link into the real `.lokf/knowledge/.obsidian/`. That folder is harmless to `lokf validate` (it reads only `*.md`) and excluded from git by `.lokf/.gitignore`.
 2. Install KTL Registrar and KTL Curator *in that vault*, since Obsidian installs plugins per vault. There is nothing to configure: the root `index.md` carries the bundle's header, so the whole vault is the bundle.
 
-The doorway is invisible to any vault it sits inside (the reconciler below), so the workshop vault and the exhibition vault never index the same file. Open the link itself: a vault opened at the host root never lists the bundle.
+The doorway is invisible to any vault it sits inside (the reconciler below), so the workshop vault and the exhibition vault never index the same file.
 
 Per host:
 
@@ -49,12 +49,12 @@ Per host:
 
 # What Obsidian does with the link on each host
 
-Obsidian 1.13.7's file reconciler (`reconcileSymbolicLinkCreation`) resolves a link's real path and **skips the link when that path equals, contains, or lies inside a folder it is already watching**. The vault root is always one of those folders. Its help page says the same in words: it ignores "a symlink to a parent folder of the vault, or from one folder in the vault to another folder in the same vault", as a safeguard against a note being indexed twice. Dot-directories are never indexed. Two consequences follow:
+Obsidian 1.13.7's file reconciler (`reconcileSymbolicLinkCreation`) resolves a link's real path and **skips the link when that path equals, contains, or is inside a folder it is already watching**. The vault root is always one of those folders. Its help page says the same in words: it ignores "a symlink to a parent folder of the vault, or from one folder in the vault to another folder in the same vault", as a safeguard against a note being indexed twice. Dot-directories are never indexed. Two consequences follow:
 
 - **From a vault opened at the host's root** (a code repository, or a notes vault kept in git that the sidecar was installed into), neither `.lokf/` nor `knowledge_bundle` appears. The sidecar is invisible to that vault by the same rule that hides `.obsidian/` and `.git/`. So point people at the doorway, not the root.
 
   For a notes vault this is the feature that makes the sidecar safe to keep *inside* the vault folder. The workshop and the exhibition never index the same file, which is the one hazard Obsidian's caution about nested vaults names. On a code-repository host the cost runs the other way. Concepts cite sources such as `src/…` and `docs/…` that sit above the small vault, so no plugin can open them from there. KTL Curator shows such a source as a path with a copy button.
-- **A link whose target lies outside the vault is followed.** An Obsidian user with one vault and many repositories can link each repository's `.lokf/knowledge` into a folder of that vault (`projects/acme-knowledge -> ~/git/acme/.lokf/knowledge`), and list those folders under the plugins' *Bundle root folders* setting. The sources are then inside the vault for the review card to open. This is the one arrangement that does put exhibits in the workshop's index, so it costs what a real folder costs (below). Obsidian Sync does not carry such links either, so keep them out of a synced vault.
+- **A link whose target is outside the vault is followed.** An Obsidian user with one vault and many repositories can link each repository's `.lokf/knowledge` into a folder of that vault (`projects/acme-knowledge -> ~/git/acme/.lokf/knowledge`), and list those folders under the plugins' *Bundle root folders* setting. The sources are then inside the vault for the review card to open. This is the one arrangement that does put exhibits in the workshop's index, so it costs what a real folder costs (below). Obsidian Sync does not carry such links either, so keep them out of a synced vault.
 
 # Why the bundle is never a real folder inside a vault
 

@@ -26,7 +26,7 @@ verified:
 
 # Overview
 
-LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. Concepts stop fitting those classes typically in a deep or safety-critical domain, such as medicine, law, finance or safety engineering. The answer is then a **domain schema** written in [LinkML](linkml.md) that extends [LOKF](lokf.md)'s. The [curator](curator.md) flags concepts that no longer fit, the team decides, and the [librarian](librarian.md) applies it.
+LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. Concepts typically stop fitting those classes in a deep or safety-critical domain, such as medicine, law, finance or safety engineering. The answer is then a **domain schema** written in [LinkML](linkml.md) that extends [LOKF](lokf.md)'s. The [curator](curator.md) flags concepts that no longer fit, the team decides, and the [librarian](librarian.md) applies it.
 
 The architecture page says that a domain that extends the schema has its own types checked rather than tolerated ([when the built-in vocabulary stops fitting](../explanation/domain-schemas.md)).
 
