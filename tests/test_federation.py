@@ -123,15 +123,15 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    and body as well as its frontmatter, in a patch the pen applies, and
    names the lines it had to leave in its question. When the release list
    no longer holds the old release, the day the text writes after the old
-   tag moves with it, and no other. Neither `members` nor a build keeps a
-   file it downloaded;
+   tag moves with the tag, and only there. Neither `members` nor a build
+   keeps a file it downloaded;
 
 6a. a member whose new release names another namespace moves to it, in its
    frontmatter and where its text gives it as code, and its question says
-   so and counts the lines that still name the old one. A hand-off line too
-   long for the pen is cut. One whose new namespace the build would refuse
-   stays as it is: one that nests with another member's or the domain's, or
-   that does not end in / or #;
+   so and counts the lines that still name the old one. A member whose new
+   namespace the build would refuse stays as it is: a namespace that nests
+   with another member's or the domain's, or that does not end in / or #.
+   A hand-off line too long for the pen is cut;
 
 7. its question calls a member "confirmed" only when a person confirmed the
    concept as it stands, and puts the move to a person as a question alone
@@ -157,7 +157,7 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 
 11. `members` moves a member its site serves to the file the site serves
     now, and to its new namespace when the file's @base moved. Once the
-    concept names the file, it asks with the validators it kept, and
+    concept names the file, `members` asks with the validators it kept.
     `members --add <address>` drafts one from a site's concepts.jsonld;
 
 12. `members` moves the others when it cannot check one, and asks gh for a
@@ -2020,11 +2020,11 @@ def test_members_moves_a_member_to_the_namespace_its_new_release_names(released)
     """The new releases of b and d name another namespace in their index.md, and c's names a's.
 
     b moves to its new namespace in its frontmatter and where its text gives
-    the namespace as code, while the site's address in angle brackets stays,
-    since the build refuses a member whose zip names another base_iri, and
-    the question counts that line. d's question names the move, since a
-    person wrote d, and its namespace is long enough that its hand-off line
-    is cut for the pen. c stays as it is.
+    the namespace as code, since the build refuses a member whose zip names
+    another base_iri. The site's address in angle brackets stays, and the
+    question counts that line. d's question names the move, since a person
+    wrote d. Its namespace is long enough that its hand-off line is cut for
+    the pen. c stays as it is.
     """
     host, tmp = released["host"], released["tmp"]
     old = "https://b.example/knowledge/"

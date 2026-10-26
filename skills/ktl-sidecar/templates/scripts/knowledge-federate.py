@@ -83,15 +83,19 @@
 # each member's releases, picks the newest that carries a bundle zip, and
 # verifies it. It writes the change as operations in .lokf/patch.yaml for the
 # pen (knowledge-apply.sh) to apply, so the sidecar's librarian workflow can
-# run it as AGENT_CLI. For a member its site serves, it asks for the file,
-# with the validators it kept from the last look once the concept names the
-# file it saw then, and proposes the new checksum, with the day the file
-# changed as the version. The change moves the old release's tag, zip name
-# and day in the concept's description and body as well as its frontmatter,
-# so the text never contradicts `version`. When the new release names another
-# namespace, the change moves `base_iri` too, and the question says so. For a
-# member domain it also names the workspace that release carries, and
-# proposes it on its own when the release attached it after the member moved.
+# run it as AGENT_CLI.
+#
+# The change moves the old release's tag, zip name and day in the concept's
+# description and body as well as its frontmatter, so the text never
+# contradicts `version`. When the new release names another namespace, the
+# change moves `base_iri` too, and the question says so. For a member domain
+# it also names the workspace that release carries, and proposes it on its
+# own when the release attached it after the member moved.
+#
+# For a member its site serves, it asks for the file and proposes the new
+# checksum, with the day the file changed as the version. Once the concept
+# names the file the script saw at the last look, the script asks with the
+# validators it kept from that look.
 #
 # `members --add owner/repo` drafts a member concept from a repository's
 # newest bundle release, as a `create` for the pen, so admitting a bundle is
@@ -612,8 +616,9 @@ def take_confirmed(bundle, concepts, history: bool, waiting: list[dict], release
         if data is not c.data:
             moved = proposed or "a newer release"
             say(f"{iri}: {moved} waits for a person's confirmation; built at {data.get('version') or 'the release'}, {how}")
-            # The namespace is the one the build takes, since a move may
-            # change it, and a member held or left out is found by it.
+            # The entry names the namespace the build takes, since a move
+            # may change it, and the build finds a member held or left out
+            # by that namespace.
             waiting.append({**note, "base_iri": str(data.get("base_iri") or ""), "built": str(data.get("version") or "")})
         taken.append((c.path, data, moved, iri))
     return taken
@@ -1868,7 +1873,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
         say(f"{member.slug}: {member.version} {verdict}; base_iri checked")
         size = zip_path.stat().st_size if zip_path is not None else None
         if zip_path is not None and not args.cache:
-            # The bundle folder holds what the file held now, so a run that
+            # The bundle folder now holds what the file held, so a run that
             # keeps no cache frees the space at once.
             zip_path.unlink()
         resolved.append((member, size, kdir, verdict))
@@ -2432,8 +2437,8 @@ def day_moves(version: str, listed: str, tag: str, day: str, description: str, b
 
     The release list gives the old day when it still holds the old release,
     and then that day moves wherever the text gives it. A release pruned from
-    the list, or past its first hundred, is not there, so the day the text
-    writes right after the old tag is taken instead, and it moves only
+    the list, or past its first hundred, is not there. The day the text
+    writes right after the old tag is then taken instead, and it moves only
     there, with the tag, since the same day elsewhere may date something
     else.
     """
@@ -2454,7 +2459,7 @@ def check_namespace(what: str, base_iri: str, taken: dict[str, str], own: str = 
     """Stop when a release names a namespace the build would refuse.
 
     A namespace is an http or https IRI that ends in / or #, so that it holds
-    whole path segments, and it nests with neither the domain's nor another
+    whole path segments. It nests with neither the domain's nor another
     member's, since a bundle joins once, under a namespace of its own.
     `taken` maps each namespace to who holds it, the domain's included, and
     `own` names the member concept that may keep its own.
@@ -2580,10 +2585,11 @@ def verify_workspace(member: Member, cache: pathlib.Path, max_bytes: int, attest
 # What the members script last saw at each served address, kept in
 # .lokf/.cache/federation/ from one run to the next: the digest, the day,
 # and the validators a conditional request sends. It holds no file. A run
-# in a fresh checkout, as the librarian workflow's, finds none and asks for
-# each file whole. The workflow keeps no cache of it on purpose: it runs
-# whatever AGENT_CLI names, and a record written there could pair a site's
-# current ETag with the old digest, so the site's 304 would hide a change.
+# in a fresh checkout, such as the librarian workflow's, finds none and asks
+# for each file whole. The workflow keeps no cache of it, because its job
+# runs whatever AGENT_CLI names, and a record that job wrote could pair a
+# site's current ETag with the old digest, so the site's 304 would hide a
+# change.
 VALIDATORS = "validators.json"
 
 
@@ -2643,8 +2649,8 @@ def served_move(c, member: Member, cache: pathlib.Path, book: pathlib.Path, args
     if sha == member.sha256:
         current.append(f"{member.slug}: {member.zip_url} serves the file the concept names")
         return
-    # The file's @base says where its concepts lie now, and the build
-    # refuses a member concept that names another namespace.
+    # The file's @base names the namespace its concepts are in now, and the
+    # build refuses a member concept that names another namespace.
     base = served_base(path, member.zip_url)
     renamed = base != member.base_iri
     if renamed:
@@ -2791,8 +2797,9 @@ def move_member(c, cache: pathlib.Path, book: pathlib.Path, args, ops: list[dict
     distribution = release_distributions(release, zip_asset, sum_asset, member.slug, member.declared_domain)
     moved = Member(c.path, {**c.data, "version": tag, "distribution": distribution}, "", 1)
     zip_path, verdict = obtain(moved, cache, args.max_bytes, not args.no_attestation)
-    # The release's own index.md says where its concepts lie now, and the
-    # build refuses a member concept that names another namespace.
+    # The release's own index.md names the namespace its concepts are in
+    # now, and the build refuses a member concept that names another
+    # namespace.
     base_iri = zip_base_iri(zip_path, f"{owner}/{repo} at {tag}")
     renamed = base_iri != member.base_iri
     if renamed:
@@ -2810,7 +2817,7 @@ def move_member(c, cache: pathlib.Path, book: pathlib.Path, args, ops: list[dict
         ops.append({"op": "question", "path": path, "text": f"{asked} A person wrote this concept, so this patch leaves its text and frontmatter as they are."})
         handoff.append(f"{member.slug}: {member.version} -> {tag}; {verdict}; a person wrote the concept, so only a question was added.")
         return
-    # The move reaches the text too: the old tag, zip name, day and
+    # The move changes the text too: the old tag, zip name, day and
     # namespace become the new ones in the description and in the body, so
     # the concept no longer says one release in `version` and another in
     # its prose. day_moves() says where the old day comes from. The
@@ -2852,8 +2859,9 @@ def move_member(c, cache: pathlib.Path, book: pathlib.Path, args, ops: list[dict
     taken[base_iri] = c.concept_id
 
 
-# The hand-off lines the pen takes: as many lines as this, each no longer
-# than this, or it refuses the whole patch. knowledge-apply.py sets both.
+# The pen takes at most HANDOFF_LINES hand-off lines, each at most
+# HANDOFF_CHARS characters long, and refuses the whole patch otherwise.
+# knowledge-apply.py sets both limits.
 HANDOFF_LINES, HANDOFF_CHARS = 10, 300
 
 

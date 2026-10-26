@@ -20,7 +20,8 @@ patch.yaml
 
 # knowledge-federate.py keeps .cache/federation/validators.json here on a
 # domain host: what each served member's site last served, for a conditional
-# request. The release zips it checks go to a temporary folder it removes.
+# request. It downloads the release zips it checks to a temporary folder,
+# which it removes.
 # knowledge-ingest.py keeps the mirror of a confidential entry under
 # .cache/mirror/, which is never committed.
 .cache/
