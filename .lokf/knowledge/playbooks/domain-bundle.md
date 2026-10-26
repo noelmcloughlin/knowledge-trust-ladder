@@ -18,7 +18,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-26T19:01:33Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -79,6 +79,8 @@ The diamond rule: when two domains name the same bundle at the same release, the
 # What moves a member
 
 The domain's librarian is a script, `knowledge-federate.py members`, which the sidecar's librarian workflow runs as `AGENT_CLI`. It picks each member's newest release that carries a bundle zip and verifies its checksum and attestation, or the new file a served member's site now serves. It writes the move for the pen with a question for the curator. The member then reads as edited since a person confirmed it, and the build keeps the confirmed release and lists the move under *Waiting for a person*.
+
+A release that names another namespace moves the member's `base_iri` too. The question says so, since each of the member's concepts then has a new IRI, and asks the curator to check that the new namespace belongs to the member.
 
 A member whose file cannot be fetched at a release is held as the previous release's workspace holds it, under *Held at its last good state*, and left out when that workspace never held it. A release zip that serves other bytes stops the build, unless an earlier build fetched that very release.
 

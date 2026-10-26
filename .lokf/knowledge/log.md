@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-26
+
+* **Changed**: Curating a domain bundle says a release that names another namespace moves the member's `base_iri`, as `skills/ktl-curator/references/domain-bundle.md` says.
+
 ## 2026-10-25
 
 * **Changed**: `docs/three-lines-critics.md` is folded into `docs/three-lines.md`, so the concepts that cited the critics page now cite the three lines page. `explanation/three-lines-of-defence.md` was edited since a person confirmed it; the label says so until the curator looks again.
