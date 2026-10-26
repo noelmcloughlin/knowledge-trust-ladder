@@ -1,6 +1,6 @@
 # How the three repositories release
 
-[`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder), [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) release the same way. Each repository's `semantic-release.yml` runs the same pinned [semantic-release](https://semantic-release.gitbook.io/) tool. This page is the shared part. Each workflow's own header comment carries that repository's detail and the reasons behind it.
+This page is for contributors and maintainers of [`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder), [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator), which release the same way. Each repository's `semantic-release.yml` runs the same pinned [semantic-release](https://semantic-release.gitbook.io/) tool. This page is the shared part. Each workflow's own header comment carries that repository's detail and the reasons behind it.
 
 ## The version is computed; you write the commit message
 

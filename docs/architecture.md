@@ -1,7 +1,7 @@
 # Architecture
 
 > [!NOTE]
-> A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
+> This page is for anyone deciding whether to install the skills it describes. A shorter version, for readers aged 13 to 18, is in [architecture.en-simple.md](architecture.en-simple.md).
 
 Knowledge Trust Ladder (KTL) is an architecture inspired by [LOKF](https://lokf.nolan-nichols.com/specification/), by [LinkML](https://linkml.io/linkml/) and by this poem:
 

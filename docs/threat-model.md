@@ -1,6 +1,6 @@
 # Threat model
 
-[`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder), [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator) run the same scheduled agent from the same `ktl-sidecar` templates and release the same way, so they share this threat model. Each repository's `SECURITY.md` says how to report, what that repository owns, and what it inherits from here.
+This page is for anyone who reviews the security of [`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder), [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator), or of a host that installs their skills. The three repositories run the same scheduled agent from the same `ktl-sidecar` templates and release the same way, so they share this threat model. Each repository's `SECURITY.md` says how to report, what that repository owns, and what it inherits from here.
 
 Two facts shape everything below. The skills are prose executed by whichever large language model (LLM) agent runs them, so anywhere a skill sends the agent to read content it did not author is a prompt-injection surface. And the bundle's central trust signal, a `verified` event whose actor starts with `human:`, is a string in a Markdown file that any writer can type.
 

@@ -1,6 +1,6 @@
 # Knowledge outside the repository
 
-The librarian reads the repository, and a bundle cites what the librarian can read. Much of what a team knows is kept elsewhere: a wiki space, a document on an intranet address, a file in another repository, the output of a command. The ingest copies such a source into the repository. A manifest names each source, a script writes it as Markdown under `.lokf/mirror/`, and a pull request shows what changed. The librarian then derives concepts from the copy as from any tracked file, citing both the copy and its origin.
+This page is for a team that keeps much of its knowledge outside the repository: in a wiki space, a document on an intranet address, a file in another repository, or the output of a command. The librarian reads the repository, and a bundle cites what the librarian can read. The ingest copies such a source into the repository. A manifest names each source, a script writes it as Markdown under `.lokf/mirror/`, and a pull request shows what changed. The librarian then derives concepts from the copy as from any tracked file, citing both the copy and its origin.
 
 Nothing in the trust ladder changes. A concept derived from a wiki page is agent-derived until a person confirms it, as one derived from a README is. Knowledge Trust Ladder (KTL) keeps the same work list, gate and review.
 
