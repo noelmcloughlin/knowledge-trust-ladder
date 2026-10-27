@@ -46,7 +46,3 @@ The configuration agrees with that page on `!` since 0.56.3 (`CHANGELOG.md`). `.
 All six skills are released together under one tag rather than versioned independently, so a set pinned to one tag agrees with itself (`docs/architecture.md`).
 
 One asymmetry to know: tags carry a `v` prefix (`v0.16.0`), and `publish.yml` refuses a version typed without it, while `CHANGELOG.md` headings never do (`## [0.16.0]`). The workflow's cross-check strips the `v` before comparing the two.
-
-## Open questions
-
-- 2026-10-27, human:noelmcloughlin: change the preset: set `"preset": "conventionalcommits"` in `.releaserc.json` and pin `conventional-changelog-conventionalcommits` beside commit-analyzer in `semantic-release.yml`, so `!` after the type gives a major release as `docs/releasing.md` says. The page and the `plan` job stay as they are; the fix lands outside `.lokf/`, in its own change.

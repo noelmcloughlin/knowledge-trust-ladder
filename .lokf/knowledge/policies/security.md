@@ -69,7 +69,3 @@ A skill's `Scope:` line is prose, not a permission. Run interactively, an agent 
 - A reader's own words to ktl-docent. That boundary belongs to the agent harness, not to a Markdown file.
 
 Check 10 of `scripts/validate-repository.sh` fails when `SECURITY.md` outgrows a word budget of 900. Its comment says the file sits between 450 and 800 words, and was 1,400 to 1,900 before `docs/threat-model.md` took the design.
-
-## Open questions
-
-- 2026-10-27, human:noelmcloughlin: refresh against sources.

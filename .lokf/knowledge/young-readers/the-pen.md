@@ -54,3 +54,7 @@ It also refuses a patch that would add, change or remove a person's record. That
 # Who else writes the bundle?
 
 The pen is the librarian's only way to write the bundle. A person writes the curator's verdicts another way, through ktl-curator or the KTL Curator plugin. The architecture page names the pen as the [[registrar]] for the librarian.
+
+## Open questions
+
+- 2026-10-27, human:noelmcloughlin: carry over four things `glossary/the-pen.md` says that this retelling leaves out: the `lokf validate` run (:11); moving feedback into `.lokf/questions.md` (:12); the scheduled-run wrapper and `KNOWLEDGE_PEN_DRY_RUN_ONLY` (:16); the `handoff` lines (:16). The :NN numbers count lines of `glossary/the-pen.md` after its frontmatter.
