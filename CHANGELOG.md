@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.58.0] - 2026-10-27
+
 ### Added
 
 - **Three conventions the gate checks, rules 15 to 17.** Every concept names where it came from, as `resource` or a `sources` entry. A footnote joins a claim to a `sources` entry by its `id`, one id names one resource across the bundle, and each **Added** and **Deprecation** bullet a run logs names a concept the bundle holds.
