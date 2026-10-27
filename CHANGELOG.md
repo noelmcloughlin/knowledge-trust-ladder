@@ -4,11 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.57.0] - 2026-10-27
+
 ### Added
 
 - **A ktl-website home page offers a Schema button when the site shows a LinkML schema's pages.**
-
-## [0.56.3] - 2026-10-27
 
 ### Fixed
 
