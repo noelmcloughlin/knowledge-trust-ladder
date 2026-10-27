@@ -10,8 +10,8 @@ sources:
   - resource: scripts/validate-repository.sh
   - resource: CHANGELOG.md
 generated:
-  by: process:ktl-curator
-  at: "2026-10-19T22:35:12Z"
+  by: process:ktl-librarian
+  at: "2026-10-27T01:03:06Z"
 references:
   - https://w3id.org/ktl/knowledge/policies/threat-model
   - https://w3id.org/ktl/knowledge/playbooks/repository-validation
@@ -21,7 +21,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-09-26T20:21:41Z"
   - by: process:ktl-librarian
-    at: "2026-10-19T20:01:11Z"
+    at: "2026-10-27T01:03:06Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T00:41:54Z"
   - by: human:noelmcloughlin
@@ -48,24 +48,27 @@ An automated skill audit, such as Snyk's or Socket's on a skills catalog, gets i
 
 # What executes here
 
-The repository is mostly Markdown. Four groups of things in it run, or are run by other systems, and they are the attack surface:
+The repository is mostly Markdown. Five things in it run, or are run by other systems, and they are the attack surface:
 
 | Surface | What guards it |
 | --- | --- |
-| the nine scripts and five workflows under `skills/ktl-sidecar/templates/`, which the sidecar copies into other repositories, where they run | the template's own design: separate jobs, so the agent never meets a write token; a `publish` job that confines the patch to the bundle and refuses a `human:` claim; a preflight and a forge-free gate that only read git and gpg |
-| this repository's workflows: `validate.yml` on every pull request; `knowledge-registrar.yaml`, `knowledge-librarian.yaml` and `knowledge-release.yaml`, its own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, and harden-runner in audit mode; each workflow's header comment says why it is shaped as it is |
-| `skills/ktl-prose/scripts/prose-check.py` and `skills/ktl-docent/scripts/`, the scripts a skill runs in place, in whichever repository installs it | `prose-check.py` uses the standard library only; it reads the files it is given and the skill's own word list, calls `git show` with an argument list and writes nothing. The docent's two are byte-identical copies of the sidecar's templates: `knowledge-report.sh` reads the bundle and git, and `knowledge-feedback.sh` writes one line to `.lokf/feedback.md`. None opens a network connection |
-| the six skills' `SKILL.md` and `references/` prose, executed by whichever LLM agent runs it, here and in every consumer | each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one |
+| `skills/ktl-sidecar/templates/`: fourteen scripts and six workflows that the sidecar copies into other repositories, where they run | The template's own design. Separate jobs mean the agent never meets a write token. A `publish` job confines the patch to the bundle and refuses a `human:` claim. A preflight and a forge-free gate only read git and gpg. Each workflow reads its secrets from an Environment limited to the default branch. A domain host's federation build runs nothing a member's zip holds, and refuses a hidden file or a path-like name in one. A host's sync runs no code from the release, and the branch it pushes carries no workflow the release wrote, since those wait for a person. |
+| `.github/workflows/`: `validate.yml` on every pull request; `knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml` and `knowledge-website.yaml`, this repository's own copies of the templates; `semantic-release.yml` and `publish.yml`, which write to `main` behind the `release` Environment | Actions pinned to commit SHAs, `permissions: {}` at the top of every workflow, and harden-runner in audit mode. Each workflow's header comment says why it is shaped as it is. |
+| `skills/ktl-prose/scripts/prose-check.py` and `skills/ktl-docent/scripts/`: the scripts a skill runs in place, in whichever repository installs it | `prose-check.py` uses the standard library only. It reads the files it is given and the skill's own word list, calls `git show` with an argument list, and writes nothing. The docent's two are byte-identical copies of the sidecar's templates: `knowledge-report.sh` reads the bundle and git, and `knowledge-feedback.sh` writes one line to `.lokf/feedback.md`. None opens a network connection. |
+| `skills/ktl-website/templates/`: the site's build scripts and one workflow that the website skill copies into other repositories, where they run, and `scripts/website-preflight.sh`, run in place | The workflow's `build` job runs npm's packages without their install scripts, the lokf toolkit, `just`, and the repository's own site code and build commands, under a read-only token with no secret. Its `deploy` job runs harden-runner and GitHub's deploy action, and only once a repository variable is set. The sync copies only files inside the repository and passes raw HTML as GitHub renders it. The preflight writes nothing, and runs the sidecar's preflight and report. |
+| The six skills' `SKILL.md` and `references/` prose, executed by whichever LLM agent runs it, here and in every consumer | Each skill's guardrail for its own input path: content the agent did not author is quoted, never followed, and only an authenticated person's verdict is recorded as one. |
 
-A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access the harness grants it, and only the scheduled workflow enforces its scope. So review what the agent changed before you commit. Five skills, ktl-curator, ktl-librarian, ktl-prose, ktl-sidecar, and ktl-website, also run the scripts in the repository's `.lokf/scripts/`, which anyone who can commit there can change. ktl-docent runs only its own scripts, so a question runs none of the repository's code.
+Each row in `SECURITY.md` links to the section of the threat model that holds its reasoning. The sidecar's templates link to the prompt-injection guards and the sync workflow, the workflows to repository hardening, the website's templates to the website, and the skills' prose to the prompt-injection guards and human attribution.
+
+A skill's `Scope:` line is prose, not a permission. Run interactively, an agent has whatever access the harness grants it, and only the scheduled workflow enforces its scope. So review what the agent changed before you commit. Five skills also run the scripts in the repository's `.lokf/scripts/`: ktl-curator, ktl-librarian, ktl-prose, ktl-sidecar and ktl-website. ktl-website runs the site's code under `website/` too. Anyone who can commit to the repository can change that code. ktl-docent runs only its own scripts, so a question runs none of the repository's code.
 
 # Not covered
 
-- A compromised runner, upstream action or agent harness: the policy is a baseline, not a sandbox. A finding there is still reported, with scope and reproduction.
+- A compromised runner, upstream action or agent harness: the policy is a baseline, not a sandbox. A finding in one is still reported, with scope and reproduction.
 - Whether a bundle is *true*. The gate proves who vouched, not what they read, and `AI_COVENANT.md` sets the human-accountability rules.
 - A reader's own words to ktl-docent. That boundary belongs to the agent harness, not to a Markdown file.
 
-Check 10 of `scripts/validate-repository.sh` fails when `SECURITY.md` outgrows a word budget of 900. Its comment says the file sits between 450 and 800 words and ran to 1,400 to 1,900 before `docs/threat-model.md` took the design.
+Check 10 of `scripts/validate-repository.sh` fails when `SECURITY.md` outgrows a word budget of 900. Its comment says the file sits between 450 and 800 words, and was 1,400 to 1,900 before `docs/threat-model.md` took the design.
 
 ## Open questions
 

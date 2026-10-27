@@ -2,6 +2,12 @@
 
 ## 2026-10-27
 
+* **Changed**: the threat model concept splits its sync and ingest paragraphs where the topic changes, so each stays under the length the prose rules set. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the threat model concept now carries each limit and check a person's note named as dropped from `docs/threat-model.md`: the workflow write to `main`, the ingest's limits, the sync's committer check, the wrapper's own limit, what `build` decides, the pen's caps and what the page does not cover. It no longer names a commit that is not on `main`. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Rewrite**: the security policy concept follows `SECURITY.md` again, as a person's note asked: five surfaces instead of four, the website's templates and preflight among them, the sidecar's fourteen scripts and six workflows, and the Environment, federation and sync guards. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the ktl-sidecar skill concept says the librarian workflow reads `KNOWLEDGE_LIBRARIAN_ENABLED` in step conditions of the `refresh` job, as a person's note and `.github/workflows/knowledge-librarian.yaml` say, not in the job's own condition.
+* **Resolved**: the question on the ktl-sidecar skill concept assumed the switch is read in a job's condition; the workflow reads it only in step conditions, so the question is asked again on that footing.
+* **Changed**: the ktl-sidecar skill concept asks whether `automation.md`'s reason for keeping the librarian's variables off an Environment holds when the workflow reads its switch in step conditions.
 * **Curation**: human:noelmcloughlin confirmed none and sent 3 back, after reading each concept beside its sources, and cleared all 20 of their own notes. The ktl-sidecar skill and the Threat model went back with notes on where they part from their sources, and the Security policy went back with its text released to the librarian for a refresh from `SECURITY.md`, its four librarian questions cleared. Two librarian questions now carry the person's answer: the release preset becomes `conventionalcommits` (Versioning policy), and all of `website/src/` is excluded as concepts (Knowledge sources).
 
 ## 2026-10-26

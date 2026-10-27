@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-10-27T01:03:06Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -35,7 +35,7 @@ sources:
   - resource: skills/ktl-sidecar/templates
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-19T18:47:10Z"
+    at: "2026-10-27T01:03:06Z"
 ---
 # Overview
 
@@ -93,7 +93,7 @@ GitHub does not start `pull_request` workflows for a pull request opened with th
 
 For Claude Code, `AGENT_API_KEY_ENV` is `ANTHROPIC_API_KEY` with a Console key, billed per use, or `CLAUDE_CODE_OAUTH_TOKEN` with a subscription token. That is the long-lived token that `claude setup-token` prints on the person's own machine, and its runs count against that subscription's usage limits. `AGENT_USE_JOB_TOKEN` stays unset, since Claude Code cannot use the job's GitHub token. For Copilot CLI the job token serves, or a fine-grained personal token with *Copilot Requests* in `AGENT_API_KEY`.
 
-Each of these variables goes under Repository variables, never on an Environment. The page's reason is that a job's `if:` reads only repository and organization variables, and `KNOWLEDGE_LIBRARIAN_ENABLED` is read there. The workflow reads `AGENT_API_KEY_ENV`, `AGENT_PROMPT_FLAG` and `KNOWLEDGE_RETRIEVAL` in a step of the `refresh` job, which runs in the `knowledge-librarian` Environment. The secrets go in the `knowledge-librarian` Environment, limited to the default branch. A table on that page lists every switch and secret.
+Each of these variables goes under Repository variables, never on an Environment. The page's reason is that a job's `if:` reads only repository and organization variables. The workflow reads `KNOWLEDGE_LIBRARIAN_ENABLED` in the `if:` of steps of the `refresh` job, not in the job's own `if:`, and reads `AGENT_API_KEY_ENV`, `AGENT_PROMPT_FLAG` and `KNOWLEDGE_RETRIEVAL` in one of those steps. That job runs in the `knowledge-librarian` Environment. The secrets go in the `knowledge-librarian` Environment, limited to the default branch. A table on that page lists every switch and secret.
 
 The prompt follows `-p` unless the optional `AGENT_PROMPT_FLAG` names another flag, or `arg` for an agent that takes the prompt as its last argument, such as Codex CLI. The page states the five conditions any other agent must meet (0.40.0). The wrapper's prompt tells the agent to write `.lokf/patch.yaml` with its own file-writing tool, never with a shell redirect, a heredoc or a script, since an unattended run may deny a shell write. The Claude Code command confines the agent's file tool with `Edit(.lokf/patch.yaml)`. An `Edit` rule covers every file-writing tool, the Write tool included, and Claude Code ignores a `Write(<path>)` rule. The list does not confine the shell, so the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY` for the agent, and the pen then only checks the patch file and leaves it for the wrapper to apply (0.53.0).
 
@@ -144,5 +144,5 @@ The preflight warns on its `python` line when python3 is older than 3.9, and on 
 
 ## Open questions
 
-- 2026-10-26, process:ktl-librarian: `skills/ktl-sidecar/references/automation.md` says each librarian variable goes under Repository variables because a variable set on an Environment is never seen, since a job's `if:` reads only repository and organization variables. `.github/workflows/knowledge-librarian.yaml` reads `KNOWLEDGE_LIBRARIAN_ENABLED` in the `refresh` job's `if:`, and `AGENT_API_KEY_ENV`, `AGENT_PROMPT_FLAG` and `KNOWLEDGE_RETRIEVAL` in a step of that job, which runs in the `knowledge-librarian` Environment. The concept follows the page. Does the page's reason hold for the variables a step reads, or should it name the `if:` alone?
 - 2026-10-27, human:noelmcloughlin: line 96: `KNOWLEDGE_LIBRARIAN_ENABLED` is read in step `if:`s, not the job's.
+- 2026-10-27, process:ktl-librarian: `skills/ktl-sidecar/references/automation.md` says a variable set on an Environment is never seen, because a job's `if:` reads only repository and organization variables. `.github/workflows/knowledge-librarian.yaml` reads `KNOWLEDGE_LIBRARIAN_ENABLED` only in the `if:` of steps of the `refresh` job, which runs in the `knowledge-librarian` Environment, and no job's `if:` reads it. No source here says whether those step conditions see a variable set on that Environment. Does the page's reason hold for this workflow, or should the page give another one?
