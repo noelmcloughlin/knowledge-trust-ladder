@@ -55,6 +55,12 @@
 #   - Worth ten minutes today, the queue itself.
 # "The curator's queue" below says how a relation's target is found.
 #
+# It also lists each retired concept whose successor no person has confirmed:
+# the concept the newest **Deprecation** line in log.md links after "replaced
+# by", when the bundle holds it, carrying no `verified` event by a human:
+# actor. Exclusion follows affirmation: an agent may propose a retirement, and
+# the incumbent governs until a person affirms its successor.
+#
 # One fact comes from git and not from frontmatter, so a host without git is
 # told it was not computed: whether a source "moved" after an event. The
 # event is the later of `generated.at` and the newest `verified` event for
@@ -378,7 +384,11 @@ END {
   relend()
   emit()
   if (gen_at == "" && tstamp != "") { gen_at = norm(tstamp); gen_raw = tstamp }
-  st = norm(stale); if (st != "") st = substr(st, 1, 10)
+  # A review date is read by its day, since the specification makes a concept
+  # stale from that instant on and LOKF 0.9.0 types stale_after as a datetime:
+  # in UTC where the value carries an offset, else as the day its first ten
+  # characters name, which is how the website reads it.
+  st = norm(stale); if (st != "") st = substr(st, 1, 10); else if (stale ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) st = substr(stale, 1, 10)
   if (human_rev ~ /^[0-9a-f]+$/ && length(human_rev) > 7) human_rev = substr(human_rev, 1, 7)
   printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev
   printf "I\t%s\t%s\t%s\t%s\n", path, cid, ctype, (topres != "" ? topres : firstres)
@@ -646,6 +656,36 @@ labels() {  # [<path>...]
     if ($4 != "deprecated" && ($2 in disp)) s = s ", a reader disputed this on " disp[$2]
     seen[$2] = 1; print "- " $3 " (" $2 ") - " s }
   END { for (i = 1; i <= nw; i++) if (!(w[i] in seen)) print "- " w[i] " - no such concept in this bundle" }'
+}
+
+# The retired concepts whose successor no person has confirmed, as one
+# section: the successor is the one `successors` names, when the bundle holds
+# it as a concept, and it carries no `verified` event by a human: actor. Each
+# line names the retired concept, its successor and the successor's label, in
+# the words `labels` prints, so that ktl-curator says what waits on whom.
+unconfirmed_successors() {
+  { successors; disputed; printf '%s\n' "$all"; } | awk -F'\t' -v today="$today" -v dir="$bundle" "$label_fn"'
+  function held(p,  line, there) {
+    if (p !~ /^[a-z0-9][a-z0-9._\/-]*\.md$/ || p ~ /\.\./) return 0
+    there = (getline line < (dir "/" p)); close(dir "/" p); return there >= 0
+  }
+  function full(p,  s) {  # the label `labels` prints for the concept at row p
+    $0 = row[p]; s = label()
+    if ($4 == "deprecated" && (p in after) && after[p] != p && held(after[p])) s = s ", replaced by " after[p]
+    if ($4 != "deprecated" && (p in disp)) s = s ", a reader disputed this on " disp[p]
+    return s
+  }
+  $1 == "S" { if (!($2 in after)) after[$2] = $3; next }
+  $1 == "X" { if (!($2 in disp)) disp[$2] = $3; next }
+  $1 == "C" { nc++; order[nc] = $2; row[$2] = $0; human[$2] = $9 }
+  END {
+    for (i = 1; i <= nc; i++) {
+      p = order[i]; $0 = row[p]
+      if ($4 != "deprecated" || !(p in after) || after[p] == p || !(after[p] in row) || human[after[p]] > 0) continue
+      n++; body = body "- " p ": " after[p] " - " full(after[p]) "\n"
+    }
+    print "Retired, with a successor no person has confirmed: " (n ? n : "none"); if (n) printf "%s", body
+  }'
 }
 
 # The join every list below needs: each concept with its resources, their
@@ -1255,6 +1295,8 @@ case "$cmd" in
     lists confirmed-moved
     echo ""
     ranked lists
+    echo ""
+    unconfirmed_successors
     echo ""
     echo "Reader feedback waiting: $(waiting_feedback)"
     disputed | awk -F'\t' '{ n++; body = body "- " $2 " (" $3 ")\n" } END { print "Disputed by a reader, waiting for the librarian: " (n ? n : "none"); if (n) printf "%s", body }'

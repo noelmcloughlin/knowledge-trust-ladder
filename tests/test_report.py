@@ -32,6 +32,11 @@ A retired concept's label names its successor from the newest **Deprecation**
 line in log.md, and only one the bundle holds. A waiting Disagreement that
 names its concept right after the kind marks that concept, from its newest
 day.
+
+A retired concept whose successor no person has confirmed is listed with that
+successor's label, and only when the bundle holds the successor: exclusion
+follows affirmation. A review date is read by its day, so a datetime value
+counts from the day it names.
 """
 
 from __future__ import annotations
@@ -721,6 +726,28 @@ def test_a_concept_behind_a_byte_order_mark_is_read_not_dropped(tmp_path):
     )
 
 
+@pytest.mark.parametrize(
+    ("value", "past"),
+    [
+        ("{today}T23:59:59Z", True),
+        ("{today}T10:00:00", True),
+        ("{tomorrow}T00:00:00Z", False),
+    ],
+)
+def test_a_datetime_review_date_is_read_as_its_day(tmp_path, value, past):
+    """LOKF 0.9.0 types stale_after as a datetime, and a concept is stale from that instant on, so its day is what today is compared with, as the website compares it."""
+    now = datetime.now(timezone.utc)
+    value = value.format(today=now.strftime("%Y-%m-%d"), tomorrow=(now + timedelta(days=1)).strftime("%Y-%m-%d"))
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n")
+    write(kk / "x" / "dated.md", f'---\ntype: Service\ntitle: Dated\nstale_after: "{value}"\n---\n')
+    labels = report(tmp_path, "labels", "x/dated.md").out
+    health = report(tmp_path, "health").out
+    assert ("past its review date" in labels) == past and (" Past review date: 1 " in health) == past, (
+        f"report script read the review date {value} wrongly: {labels}; {health}"
+    )
+
+
 def test_byte_order_mark_handling_runs_byte_oriented_for_any_awk():
     """A UTF-8 gawk reads sprintf("%c", 239) as a two-byte character and leaves the mark, so the script runs under LC_ALL=C."""
     assert has_line(read(REPORT), "export LC_ALL=C"), (
@@ -730,7 +757,7 @@ def test_byte_order_mark_handling_runs_byte_oriented_for_any_awk():
 
 @pytest.fixture
 def queue(tmp_path):
-    """The curator's queue: reliance in every spelling, a review date due soon, a derived concept, retired ones with and without a successor, and a disputed one."""
+    """The curator's queue: reliance in every spelling, a review date due soon, a derived concept, retired ones whose successor a person confirmed, no person has, the bundle lacks, or that have none, and a disputed one."""
     kzk = tmp_path / ".lokf" / "knowledge"
     now = datetime.now(timezone.utc)
     soon = (now + timedelta(days=10)).strftime("%Y-%m-%d")
@@ -739,10 +766,11 @@ def queue(tmp_path):
     write(kzk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
     # Old: the newest line names Hub, an earlier one named A; the newest wins.
     # Lost: its successor Missing is not in the bundle. Gone: the newest line
-    # names no successor though an earlier one did.
+    # names no successor though an earlier one did. Prior: its successor
+    # Origin is in the bundle, and no person has confirmed it.
     write(
         kzk / "log.md",
-        "# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n* **Deprecation**: [Gone](../x/gone.md) retired, with no replacement.\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n* **Deprecation**: [Gone](../x/gone.md) retired - replaced by [A](../x/a.md).\n",
+        "# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n* **Deprecation**: [Gone](../x/gone.md) retired, with no replacement.\n* **Deprecation**: [Prior](../x/prior.md) retired - replaced by [Origin](../x/origin.md).\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n* **Deprecation**: [Gone](../x/gone.md) retired - replaced by [A](../x/a.md).\n",
     )
     write(
         tmp_path / ".lokf" / "feedback.md",
@@ -808,6 +836,7 @@ def queue(tmp_path):
     )
     zc("lost", "Service", "id: https://acme.example/knowledge/x/lost\ntitle: Lost\nstatus: deprecated\n")
     zc("gone", "Service", "id: https://acme.example/knowledge/x/gone\ntitle: Gone\nstatus: deprecated\n")
+    zc("prior", "Service", "id: https://acme.example/knowledge/x/prior\ntitle: Prior\nstatus: deprecated\n")
     zc("no-id", "Service", "title: No id\n")
     zc(
         "e",
@@ -847,6 +876,8 @@ QUEUE = [
     "- x/hub.md (3)",
     "- x/origin.md (1)",
     "- x/no-id.md (1)",
+    "Retired, with a successor no person has confirmed: 1",
+    "- x/prior.md: x/origin.md - checked by automation only",
     "Disputed by a reader, waiting for the librarian: 1",
     "- x/hub.md (2026-03-04)",
 ]
@@ -871,6 +902,22 @@ def test_a_concept_never_relies_on_itself_a_retired_one_counts_for_nothing_and_a
     )
 
 
+def test_a_retirement_waits_only_while_no_person_has_confirmed_a_successor_the_bundle_holds(queue):
+    """Exclusion follows affirmation: Old's successor Hub carries a person's event, Lost's is not in the bundle, and Gone names none."""
+    root, _, _ = queue
+    out = report(root).out
+    assert not re.search(r"^- x/(old|lost|gone)\.md: ", out, re.M), (
+        f"report script listed a retirement whose successor a person confirmed, the bundle lacks, or that names none: {out}"
+    )
+
+
+def test_a_retirement_log_md_links_no_successor_to_waits_on_none(moved):
+    out = report(moved).out
+    assert has_line(out, "Retired, with a successor no person has confirmed: none"), (
+        f"report script listed a successor for a retirement log.md does not link: {out}"
+    )
+
+
 def test_labels_keep_the_docents_footer_shape(queue):
     root, _, _ = queue
     result = report(root, "labels", "x/c.md")
@@ -885,6 +932,7 @@ def test_labels_keep_the_docents_footer_shape(queue):
         "- Old (x/old.md) - retired, replaced by x/hub.md",
         "- Lost (x/lost.md) - retired",
         "- Gone (x/gone.md) - retired",
+        "- Prior (x/prior.md) - retired, replaced by x/origin.md",
         "- Hub (x/hub.md) - confirmed by a person, 2026-01-02, a reader disputed this on 2026-03-04",
         "- A (x/a.md) - nobody has checked this yet",
         "- E (x/e.md) - nobody has checked this yet",
@@ -892,7 +940,7 @@ def test_labels_keep_the_docents_footer_shape(queue):
 )
 def test_a_retired_concept_names_its_successor_and_a_disputed_one_its_newest_day(queue, want):
     root, _, _ = queue
-    out = report(root, "labels", "x/old.md", "x/lost.md", "x/gone.md", "x/hub.md", "x/a.md", "x/e.md").out
+    out = report(root, "labels", "x/old.md", "x/lost.md", "x/gone.md", "x/prior.md", "x/hub.md", "x/a.md", "x/e.md").out
     assert has_line(out, want), f"report script did not print '{want}': {out}"
 
 

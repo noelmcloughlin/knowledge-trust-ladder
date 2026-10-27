@@ -205,6 +205,12 @@ Independent re-check: 0
 
 Set above zero and every ktl-curator report lists that many concepts confirmed by a person, picked by a rule the curator cannot steer, with their sources, for someone other than the person who confirmed them. Their verdict is recorded as a separate `verified` event. How often that second person acts on the list is for the team to set here in words.
 
+# Automation re-check
+
+Automation re-check: 0
+
+Set above zero and every ktl-curator report lists that many concepts checked by automation only, picked by the same rule, with their sources, for a person to check against them. What automation passed is then sampled by a rule the curator cannot steer, and the verdict goes through the ordinary verbs.
+
 # How the docent answers
 
 Evidence first: no
@@ -218,7 +224,7 @@ Younger readers: no
 Set to a band of age, 8-12 or 13-18, or to both with a comma between, and ktl-librarian may write retellings of confirmed concepts for those readers on its scheduled runs. Each one is a new concept, which a person confirms against the concept it retells. With no band, a retelling is written only when a person asks for one.
 ```
 
-Step 1's report reads the `Independent re-check:` line, ktl-docent reads `Evidence first:`, and ktl-librarian and ktl-prose read `Younger readers:`. All three are optional, and absent means off.
+Step 1's report reads the `Independent re-check:` and `Automation re-check:` lines, ktl-docent reads `Evidence first:`, and ktl-librarian and ktl-prose read `Younger readers:`. All four are optional, and absent means off.
 
 Derive `stale_after` as *confirmation date + the row's interval*, and always show the date before writing it. Read the table tolerantly. A row names its classes in prose, so match ignoring spaces and plural form: "Glossary terms" is `GlossaryTerm`, "attested computations" is `AttestedComputation`, "Policies" is `Policy`, "people" is `Person`. A row naming a class you do not know binds nothing. A host that extends the vocabulary with a domain schema may set an interval for its own classes the same way.
 
