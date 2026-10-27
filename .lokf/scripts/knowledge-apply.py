@@ -1037,7 +1037,8 @@ def schema_findings(root: Path, files: dict) -> tuple:
         for rel, text in files.items():
             file = staged / rel
             file.parent.mkdir(parents=True, exist_ok=True)
-            file.write_text(text, encoding="utf-8", newline="\n")
+            with open(file, "w", encoding="utf-8", newline="\n") as f:  # Path.write_text takes newline= only from Python 3.10
+                f.write(text)
         done = subprocess.run(cmd + [str(staged)], cwd=str(cwd), capture_output=True, text=True,
                               encoding="utf-8", errors="replace", timeout=600)
     except (OSError, subprocess.TimeoutExpired) as exc:

@@ -57,6 +57,8 @@ jobs:
     name: Mirror the sources the manifest names (read-only)
     if: vars.KNOWLEDGE_INGEST_ENABLED == 'true'
     runs-on: ubuntu-latest
+    # The script starts no work after 25 minutes, its --time-limit, so what
+    # it fetched is written and handed on before the job is stopped here.
     timeout-minutes: 30
     # The KNOWLEDGE_INGEST_ secrets belong in this Environment, limited to
     # the default branch, so a workflow on any other branch cannot read
@@ -132,8 +134,9 @@ jobs:
           bash "$script" "${args[@]}"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
           # A source the run could not fetch is a warning on the run, so a
-          # green run never hides an expired token.
-          grep -E '^(- |  - ).*: (failed|refused)(,|$)' "$RUNNER_TEMP/summary.md" | sed 's/^ *- //; s/^/::warning::/' || true
+          # green run never hides an expired token, and so is a run its time
+          # limit cut short.
+          grep -E '^(- |  - ).*: (failed|refused)(,|$)|time limit' "$RUNNER_TEMP/summary.md" | sed 's/^ *- //; s/^/::warning::/' || true
           if [ -n "$(git status --porcelain -- .lokf/mirror .lokf/ingest.lock.yaml)" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else

@@ -14,13 +14,13 @@
 # .lokf/ingest.lock.yaml. The ingest workflow runs it with the manifest's
 # secrets and no agent; ktl-librarian runs it in a live session.
 #
-# Usage: knowledge-ingest.sh [--root <dir>] [--visibility <v>] [--only <id>]... [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]]
+# Usage: knowledge-ingest.sh [--root <dir>] [--visibility <v>] [--only <id>]... [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]] [--time-limit <minutes>]
 #   The Python half's header says what each flag does. --root is the
 #   repository root; default: two levels above this script.
 # Exit 0 completed; 1 stopped before any write; 2 usage or no runner.
-[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [--visibility <v>] [--only <id>] [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]]" >&2; exit 2; }
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [--visibility <v>] [--only <id>] [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]] [--time-limit <minutes>]" >&2; exit 2; }
 set -u
-usage() { echo "usage: ${0##*/} [--root <dir>] [--visibility <v>] [--only <id>] [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]]" >&2; exit 2; }
+usage() { echo "usage: ${0##*/} [--root <dir>] [--visibility <v>] [--only <id>] [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]] [--time-limit <minutes>]" >&2; exit 2; }
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root=""
 args=()
@@ -28,7 +28,7 @@ status=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --root) [ $# -ge 2 ] || usage; root="$2"; shift 2 ;;
-    --visibility|--only|--summary|--timeout|--now|--manifest|--lock) [ $# -ge 2 ] || usage; args+=("$1" "$2"); shift 2 ;;
+    --visibility|--only|--summary|--timeout|--time-limit|--now|--manifest|--lock) [ $# -ge 2 ] || usage; args+=("$1" "$2"); shift 2 ;;
     --patch) args+=("$1"); shift; if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then args+=("$1"); shift; fi ;;
     --status) status=1; args+=("$1"); shift ;;
     --dry-run|--prune|--strict) args+=("$1"); shift ;;
