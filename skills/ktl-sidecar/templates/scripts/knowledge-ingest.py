@@ -1884,6 +1884,13 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
         parts.append("tokens present: " + ", ".join(present))
     if absent:
         parts.append("tokens absent: " + ", ".join(absent))
+    # A git entry that names a host is held to its checked address by
+    # http.curloptResolve, which an older git ignores, so the run refuses to
+    # fetch it. Saying so here lets the preflight warn before a run fails.
+    pinned = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled and pin_needed(e.url, manifest.allow_private)
+              and not ip_literal(urllib.parse.urlsplit(e.url).hostname or "")]
+    if pinned and shutil.which("git") and git_version() < (2, 37):
+        parts.append(f"this git is {shown_version(git_version())}, and a git entry that names a host needs 2.37 or later: {', '.join(pinned)}")
     return "ingest: " + "; ".join(parts)
 
 

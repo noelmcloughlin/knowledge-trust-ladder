@@ -25,7 +25,8 @@ and pin:
    the cache once git ignores it and tracks nothing there;
 8. --patch writes a Reference concept per mirrored item of an entry that asks,
    and a later patch keeps the sources a person added;
-9. --status prints one line with the token names and no value;
+9. --status prints one line with the token names and no value, and names
+   each git entry a git older than 2.37 would refuse;
 10. the converter turns Confluence storage format into Markdown blocks, keeps
     the body after head metadata and macro parameters, resolves links,
     honours a declared charset and keeps the joiners;
@@ -652,6 +653,24 @@ def test_status_prints_one_line_with_names_and_no_value(tmp_path, server, checks
     checks.ok("me@example.invalid" not in result.out, "no value")
     result = run(["bash", INGEST, "--root", root, "--status"], env=TOKENS)
     checks.ok(result and result.out.startswith("ingest: 1 entries"), "the shell half passes --status through", result.out)
+
+
+def test_status_says_when_git_is_too_old_for_a_git_entry_that_names_a_host(tmp_path, checks, monkeypatch):
+    """A git entry that names a host needs git 2.37 to be held to its checked address, so the status line names each one an older git would refuse."""
+    m = load_module()
+    entries = [{"id": "wiki", "kind": "git", "url": "https://git.acme.example/wiki.git", "ref": "main", "sensitivity": "public"},
+               {"id": "by-address", "kind": "git", "url": "https://93.184.216.34/notes.git", "ref": "main", "sensitivity": "public"}]
+    root = host(tmp_path, manifest_for(entries, allow_private_addresses=False), git=False)
+    paths = (root, root / ".lokf" / "ingest.yaml", root / ".lokf" / "ingest.lock.yaml", {})
+    monkeypatch.setattr(m, "git_version", lambda: (2, 36))
+    line = m.status_line(*paths)
+    checks.ok(line.endswith("; this git is 2.36, and a git entry that names a host needs 2.37 or later: wiki"),
+              "an older git is named, with the entry that names a host and not the one that names an address", line)
+    monkeypatch.setattr(m, "git_version", lambda: (2, 37))
+    checks.ok("needs 2.37" not in m.status_line(*paths), "git 2.37 says nothing", m.status_line(*paths))
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for(entries)))
+    monkeypatch.setattr(m, "git_version", lambda: (2, 36))
+    checks.ok("needs 2.37" not in m.status_line(*paths), "a manifest that allows private addresses takes no pin, so says nothing", m.status_line(*paths))
 
 
 # 10. the converter

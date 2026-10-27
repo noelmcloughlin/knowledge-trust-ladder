@@ -6,8 +6,9 @@ where every section has to cope with absence rather than fail. It warns about
 a CRLF file, counts a bundle reached through a link, and reads
 `commit.gpgsign = yes` with no signing key as signing on. It names a sidecar
 script that is missing beside its partner, and says when the gate would
-install from a lock git does not hold. Each sidecar script run under sh stops
-on one line that names bash.
+install from a lock git does not hold. It warns when git is too old for an
+ingest `git` entry. Each sidecar script run under sh stops on one line that
+names bash.
 
 The rows the sidecar's prerequisites page must carry for each preflight line
 stay in the contract script: that is a fact about this repository's own pages.
@@ -167,6 +168,22 @@ def test_warns_about_a_python3_older_than_the_scripts_need(tmp_path):
     result = preflight(tmp_path / "fakebin", env={"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}"})
     assert result and matches(result.out, r"^warn    python +python3 is 3\.6 .*uv run"), (
         f"preflight did not warn about python3 3.6: {result.out}"
+    )
+
+
+def test_warns_when_git_is_too_old_for_an_ingest_git_entry(tmp_path):
+    """The ingest refuses to fetch a git entry that names a host with a git older than 2.37, so the preflight warns before a run fails."""
+    write(tmp_path / ".lokf" / "ingest.yaml",
+          'ingest_version: "1"\nentries:\n  - id: wiki\n    kind: git\n    url: https://git.acme.example/wiki.git\n    ref: main\n')
+    scripts = tmp_path / ".lokf" / "scripts"
+    scripts.mkdir(parents=True)
+    for name in ("knowledge-ingest.sh", "knowledge-ingest.py"):
+        shutil.copy(SCRIPTS / name, scripts)
+    fake = write(tmp_path / "fakebin" / "git", f'#!/bin/sh\n[ "$1" = "--version" ] && {{ echo "git version 2.36.6"; exit 0; }}\nexec {shutil.which("git")} "$@"\n')
+    fake.chmod(0o755)
+    result = preflight(tmp_path, env={"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}"})
+    assert result and matches(result.out, r"^warn    ingest +.*this git is 2\.36, and a git entry that names a host needs 2\.37 or later: wiki"), (
+        f"preflight did not warn about git 2.36: {result.out}"
     )
 
 

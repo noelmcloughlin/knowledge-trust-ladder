@@ -7,6 +7,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **A `!` after the type releases a major version.** `.releaserc.json` names the Conventional Commits preset, so a `feat!:` commit no longer releases nothing, as `docs/releasing.md` already said.
+- **The preflight warns when git is too old for an ingest `git` entry**, and names each entry a run would refuse.
 
 ### Security
 
