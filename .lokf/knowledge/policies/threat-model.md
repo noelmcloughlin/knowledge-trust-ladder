@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-27T02:34:29Z"
+  at: "2026-10-27T02:56:06Z"
 verified:
   - by: process:ktl-librarian
     at: "2026-10-27T01:03:48Z"
@@ -36,7 +36,7 @@ Since 2026-10-05, ktl-docent runs none of them. It runs its own copies of `knowl
 
 **Repository hardening**:
 
-- Actions are pinned to commit SHAs everywhere, including the six templates under `skills/ktl-sidecar/templates/github/` and `skills/ktl-website/templates/github/`. Dependabot bumps the workflow pins, and the templates are bumped by hand, since Dependabot scans only `.github/workflows/`.
+- Actions are pinned to commit SHAs everywhere, including the seven workflow templates under `skills/ktl-sidecar/templates/github/` and `skills/ktl-website/templates/github/`. Dependabot bumps the workflow pins, and the templates are bumped by hand, since Dependabot scans only `.github/workflows/`.
 - `permissions: {}` is at the top of every workflow.
 - The agent step runs the reviewed, in-repo wrapper, never a repository variable's content as a command. `AGENT_CLI` chooses the agent, `KNOWLEDGE_LIBRARIAN_ENABLED` turns it on, and the workflow triggers only on `schedule` and `workflow_dispatch`. A domain host's members script takes the job token as `KNOWLEDGE_FEDERATE_TOKEN`, removes it from its own environment, and hands it to `gh` alone, to verify attestations.
 - harden-runner runs in audit mode on any job that installs packages or runs third-party code.
