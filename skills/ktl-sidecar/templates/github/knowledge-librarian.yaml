@@ -538,15 +538,16 @@ jobs:
             // it, and is shown as nothing more. The pen cleaned it there; it
             // is cleaned again here, since that job could be blinded: ten
             // lines of 300 characters at most, with no backtick and no
-            // character a reader cannot see. Unicode's own categories say
-            // which those are, as they do in the pen: a control, a format
-            // character such as a zero-width space, a bidirectional control
-            // or a tag character, and a line or paragraph separator. It goes
+            // character a reader cannot see. Unicode says which those are,
+            // as it does in the pen: a control, a format character such as
+            // a zero-width space, a bidirectional control or a tag character,
+            // another character it calls default ignorable, such as a
+            // variation selector, and a line or paragraph separator. It goes
             // in a code block, where no link, image, mention or HTML renders.
             let handoff = [];
             try {
               handoff = fs.readFileSync(HANDOFF_FILE, 'utf8').split('\n')
-                .map((l) => l.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '').replace(/`/g, "'").trim().slice(0, 300))
+                .map((l) => l.replace(/[\p{Cc}\p{Cf}\p{Default_Ignorable_Code_Point}\p{Zl}\p{Zp}]/gu, '').replace(/`/g, "'").trim().slice(0, 300))
                 .filter((l) => l !== '')
                 .slice(0, 10);
             } catch (e) {

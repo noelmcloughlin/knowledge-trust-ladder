@@ -119,7 +119,7 @@ Any one of these refuses the whole file, and nothing is written:
 - a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
 - a `patch`, `rewrite`, `delete` or `resolve` with no `log` line, its own or the patch's; a `title` with square brackets;
 - a `from_feedback` line the feedback file does not hold, or more than ten of them in one file; `asked` on an operation with no `from_feedback`, or with no printable text;
-- a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once the characters no reader sees are gone. Those are the controls and the format characters, such as a zero-width space, a bidirectional mark or a tag character, and the script takes them out of a reader's question too.
+- a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once the characters no reader sees are gone. Those are the controls, the format characters, such as a zero-width space, a bidirectional mark or a tag character, and the other characters Unicode calls default ignorable, such as a variation selector. The script takes them out of a reader's question too.
 
 ## Exit codes
 

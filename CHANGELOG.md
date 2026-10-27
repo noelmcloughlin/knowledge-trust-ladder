@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Security
+
+- **The pen and the librarian's pull request take out the characters the mirror takes out, variation selectors among them**, and the ingest refuses a file name that holds one. They went by Unicode's control and format categories alone.
+
 ## [0.57.0] - 2026-10-27
 
 ### Added

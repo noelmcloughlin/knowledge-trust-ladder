@@ -692,7 +692,7 @@ def test_the_earlier_job_reads_pull_requests_under_a_read_only_token_and_runs_no
     ), "knowledge-librarian.yaml's earlier job holds more than a token that reads pull requests"
 
 
-CLEAN_LINE = r""".map((l) => l.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '').replace(/`/g, "'").trim().slice(0, 300))"""
+CLEAN_LINE = r""".map((l) => l.replace(/[\p{Cc}\p{Cf}\p{Default_Ignorable_Code_Point}\p{Zl}\p{Zp}]/gu, '').replace(/`/g, "'").trim().slice(0, 300))"""
 
 
 def clean_line():
@@ -711,7 +711,7 @@ def js(code_point):
 
 
 @pytest.mark.skipif(not have("node"), reason="node not installed locally - CI runs the hand-off's cleaning")
-def test_the_cleaning_removes_a_bidirectional_mark_a_soft_hyphen_a_tag_character_and_a_line_separator():
+def test_the_cleaning_removes_a_bidirectional_mark_a_soft_hyphen_a_tag_character_a_variation_selector_and_a_line_separator():
     sample = (
         "a"
         + js(0x061C)
@@ -722,6 +722,9 @@ def test_the_cleaning_removes_a_bidirectional_mark_a_soft_hyphen_a_tag_character
         + " more"
         + js(0xFFF9)
         + " than"
+        + js(0xFE0F)
+        + js(0xE0100)
+        + js(0x3164)
         + js(0x180E)
         + " a"
         + js(0x200B)

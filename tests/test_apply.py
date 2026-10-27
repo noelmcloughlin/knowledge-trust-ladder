@@ -1023,7 +1023,7 @@ def test_a_list_is_written_indented_under_its_key(ka):
 
 
 def test_a_readers_question_and_a_handoff_line_lose_every_character_a_reader_cannot_see(with_kept):
-    """By Unicode's own categories: a zero-width space, a right-to-left override, an Arabic letter mark, a soft hyphen and a tag character."""
+    """As Unicode marks them: a zero-width space, a right-to-left override, an Arabic letter mark, a soft hyphen, a tag character, variation selectors and a Hangul filler."""
     khand = with_kept / "handoff.txt"
     write(
         with_kept / ".lokf" / "feedback.md",
@@ -1055,6 +1055,9 @@ def test_a_readers_question_and_a_handoff_line_lose_every_character_a_reader_can
         + " more"
         + esc(0xFFF9)
         + " than"
+        + esc(0xFE0F)
+        + esc(0xE0100)
+        + esc(0x3164)
         + esc(0x180E)
         + " a"
         + esc(0x200B)
