@@ -24,14 +24,20 @@ and pin:
    and keeps a cited one;
 5. a git path at a ref is mirrored by its commit, with a file that is not
    Markdown kept in a fence. A git older than 2.31 is refused, git reads no
-   ~/.netrc, and with a credential git follows no redirect;
+   ~/.netrc, and with a credential git follows no redirect. Only the files
+   that changed are downloaded, and a server that refuses files by their
+   ids gets the ref fetched whole;
 6. a command's output is mirrored, an untracked command is refused, and a
-   command past its timeout fails the entry and nothing else;
+   command past its timeout fails the entry and nothing else. The timeout
+   stops every process the command started;
 7. the manifest's refusals: an unknown key, a variable name outside the
    KNOWLEDGE_INGEST_ namespace, a value of the wrong type, an internal entry
    in a public repository, and a confidential entry where git would see its
-   copy. That entry goes to the cache once git ignores it and tracks nothing
-   there, and an entry made confidential leaves the committed mirror;
+   copy or its record. That entry goes to the cache once git ignores it and
+   tracks nothing there, and an entry made confidential leaves the committed
+   mirror. The committed lock holds a confidential entry's status alone, and
+   no title, address or author, unless the entry sets lock_details. A lock of
+   another shape stops the run by name;
 8. --patch writes a Reference concept per mirrored item of an entry that asks,
    and a later patch keeps the sources a person added;
 9. --status prints one line with the token names and no value, and names
@@ -44,18 +50,25 @@ and pin:
 11. the shell half refuses to run under sh;
 12. a redirect to another host, port or scheme drops the credential, of any
     header name, a 503 is retried, and a weak ETag is the version without
-    its prefix. A secret's trailing line break is trimmed, one inside it is
-    refused by name, and a body sent a byte at a time fails at a deadline;
+    its prefix. A new ETag for the same bytes is recorded only by a run that
+    changes the lock anyway. A secret's trailing line break is trimmed, one
+    inside it is refused by name, and a body sent a byte at a time fails at
+    a deadline;
 13. a Confluence listing is paged, one page's missing body is that page's
     alone, and an answer of the wrong shape fails the entry and nothing else.
     A title arrives as one clean line, and a listing without end is cut off;
 14. a git entry follows a changed include at the same commit, and skips a
     binary file by name. A file whose mirror name a Markdown file beside it
-    has is skipped, and a large file is refused;
+    has is skipped, a name the workflow would not publish is spelled plain,
+    and a large file is refused;
 15. an entry that leaves the manifest takes its folder with it, and no run
     removes or writes a file outside the mirror;
 16. the mirror cap refuses the item that would pass it;
-17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no other.
+17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no
+    other, and a source not fetched or a run cut short is a warning on the run;
+18. at its time limit a run starts no more work, and an item or an entry it
+    did not reach keeps its record for the next run. A wait the limit cuts
+    is the limit's, not the source's.
 """
 
 from __future__ import annotations
@@ -395,7 +408,7 @@ def test_git_is_held_to_the_address_the_check_found_and_follows_no_redirect(chec
     # 127.0.0.1 stands for the public answer the check gets, 127.0.0.2 for the private one after it.
     monkeypatch.setattr(m.socket, "getaddrinfo", rebinding)
     monkeypatch.setattr(m, "ip_is_private", lambda address: address != "127.0.0.1")
-    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, "2026-10-18T06:00:00Z", 30)
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, 30)
     entry = m.Entry(id="wiki", kind="git", url=url, ref="main")
     try:
         m.run_git(ctx, entry, {})
@@ -491,7 +504,7 @@ def test_a_pinned_git_stops_at_a_redirect_that_git_would_otherwise_follow(tmp_pa
         real = m.socket.getaddrinfo
         monkeypatch.setattr(m.socket, "getaddrinfo", lambda host, *a, **k: real("127.0.0.1" if host == "rebind.example.invalid" else host, *a, **k))
         monkeypatch.setattr(m, "ip_is_private", lambda address: False)  # 127.0.0.1 stands for a public address
-        ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, "2026-10-18T06:00:00Z", 30)
+        ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, 30)
         entry = m.Entry(id="wiki", kind="git", url=url, ref="main")
         try:
             m.run_git(ctx, entry, {})
@@ -560,7 +573,7 @@ def test_the_pin_checks_every_answer_and_holds_only_a_named_host(checks, monkeyp
     closed = socket.create_server(("127.0.0.1", 0))
     port = closed.getsockname()[1]
     closed.close()
-    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, "2026-10-18T06:00:00Z", 30)
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, 30)
     try:
         m.run_git(ctx, m.Entry(id="wiki", kind="git", url=f"https://127.0.0.1:{port}/wiki.git", ref="main"), {})
         checks.ok(False, "nothing listens, so the fetch fails")
@@ -639,7 +652,7 @@ def test_git_takes_the_route_the_check_found_whatever_its_configuration_says(tmp
     proxy, through = first_lines()
     other, around = first_lines()
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(write(tmp_path / "gitconfig", f"[http]\n\tproxy = http://127.0.0.1:{other.getsockname()[1]}\n")))
-    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, "2026-10-18T06:00:00Z", 30)
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, 30)
     real = m.socket.getaddrinfo
     try:
         # Behind a proxy with no outside DNS. curl splits no_proxy at a space and Python does not, so only curl would bypass the proxy.
@@ -683,7 +696,7 @@ def test_git_reads_no_netrc(server, tmp_path, checks, monkeypatch):
         handler.end_headers()
 
     Stub.routes["/wiki.git/info/refs"] = challenge
-    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, "2026-10-18T06:00:00Z", 30)
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, 30)
     with contextlib.suppress(m.FetchFailed):
         m.run_git(ctx, m.Entry(id="wiki", kind="git", url=f"{server}/wiki.git", ref="main"), {})
     sent = [h.get("Authorization", "") for _, h in Stub.requests]
@@ -699,7 +712,7 @@ def test_a_git_address_that_git_rewrites_is_refused(tmp_path, checks, monkeypatc
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(config))
     monkeypatch.setattr(m.socket, "getaddrinfo", lambda host, *a, **k: answering("93.184.216.34"))
     monkeypatch.setattr(m, "git_version", lambda: (2, 43))
-    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, "2026-10-18T06:00:00Z", 30)
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, 30)
     try:
         m.run_git(ctx, m.Entry(id="wiki", kind="git", url="https://git.acme.example.invalid/acme/wiki.git", ref="main"), {})
         checks.ok(False, "a rewritten address is refused")
@@ -868,7 +881,7 @@ def test_a_git_older_than_2_31_is_refused_for_every_git_entry(tmp_path, checks, 
     m = load_module()
     monkeypatch.setattr(m, "git_version", lambda: (2, 30))
     monkeypatch.setattr(m, "git_pin", lambda url: pytest.fail("the version is checked before any address"))
-    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, "2026-10-18T06:00:00Z", 30)
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, 30)
     try:
         m.run_git(ctx, m.Entry(id="wiki", kind="git", url=str(tmp_path), ref="main"), {})
         checks.ok(False, "a git older than 2.31 is refused")
@@ -887,6 +900,67 @@ def test_a_git_entry_with_a_credential_follows_no_redirect(tmp_path, server, che
     checks.ok(any(p.startswith("/wiki.git/") and h.get("X-Api-Key") == "secret-token-value" for p, h in Stub.requests),
               "the address the manifest names gets the credential", str(Stub.requests))
     checks.ok(not any(p.startswith("/moved.git/") for p, _ in Stub.requests), "the other host gets no request, so no credential", str(Stub.requests))
+
+
+def test_a_git_entry_downloads_only_the_files_that_changed(tmp_path, checks, monkeypatch):
+    """The first fetch takes the commit and its trees, then the run asks for each chosen file whose blob id the lock does not hold. A file refused
+    for its size is not asked for again while it and the cap stay the same. Where the server takes the filter and then refuses files by their
+    ids, as a server that speaks only git's first protocol does, the ref is fetched again whole."""
+    upstream = tmp_path / "upstream"
+    upstream.mkdir()
+    g = Git(upstream)
+    g.init()
+    g("config", "uploadpack.allowFilter", "true")
+    for name in ("a", "b", "c"):
+        write(upstream / f"{name}.md", f"# {name}\n")
+    write(upstream / "big.md", "x" * 3000)
+    write(upstream / "elsewhere" / "huge.bin", "y" * 50_000)
+    g("add", "-A")
+    g("commit", "-q", "-m", "one", env=IDENT)
+    m = load_module()
+    calls = []
+    real = subprocess.run
+
+    def recording(args, *rest, **kwargs):
+        if args[:1] == ["git"]:
+            calls.append((list(args), kwargs.get("input") or b""))
+        return real(args, *rest, **kwargs)
+
+    monkeypatch.setattr(m.subprocess, "run", recording)
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, 30)
+    entry = m.Entry(id="wiki", kind="git", url=str(upstream), ref="main", include=["*.md"], max_item_bytes=2000)
+    oid = {name: g("rev-parse", f"HEAD:{name}") for name in ("a.md", "b.md", "c.md", "big.md")}
+    items, unchanged = m.run_git(ctx, entry, {})
+    fetches = [(args, data.decode().split()) for args, data in calls if "fetch" in args]
+    checks.ok(len(fetches) == 2 and "--filter=blob:none" in fetches[0][0] and sorted(fetches[1][1]) == sorted(oid.values()),
+              "the first fetch takes no file, and the second the four chosen ones, not the file outside the include", str(fetches))
+    by = {it.item: it for it in items}
+    checks.ok(by["big.md"].refused == "over max_item_bytes (2000)" and by["big.md"].blob == oid["big.md"] and "# b" in by["b.md"].text,
+              "a file over the cap is refused with its blob id, and the others are read", str(items))
+    prior = {it.item: {"status": "ok", "blob": it.blob, "sha256": "sha256:" + it.sha256} for it in items if not it.refused}
+    prior["big.md"] = {"status": "refused", "reason": "over max_item_bytes (2000)", "blob": oid["big.md"]}
+    write(upstream / "a.md", "# a, changed\n")
+    g("add", "-A")
+    g("commit", "-q", "-m", "two", env=IDENT)
+    calls.clear()
+    items, unchanged = m.run_git(ctx, entry, prior)
+    asked = [data.decode().split() for args, data in calls if "--stdin" in args]
+    checks.ok(asked == [[g("rev-parse", "HEAD:a.md")]] and [it.item for it in items] == ["a.md"] and sorted(unchanged) == ["b.md", "big.md", "c.md"],
+              "the next run asks for the changed file alone, and leaves the refused one as it was", str(asked))
+    real_env = m.git_env
+
+    def first_protocol(*args, **kwargs):
+        env = real_env(*args, **kwargs)
+        n = int(env["GIT_CONFIG_COUNT"])
+        env[f"GIT_CONFIG_KEY_{n}"], env[f"GIT_CONFIG_VALUE_{n}"], env["GIT_CONFIG_COUNT"] = "protocol.version", "0", str(n + 1)
+        return env
+
+    monkeypatch.setattr(m, "git_env", first_protocol)
+    calls.clear()
+    items, unchanged = m.run_git(ctx, entry, {})
+    fetches = [args for args, _ in calls if "fetch" in args]
+    checks.ok(len(fetches) == 3 and "--filter=blob:none" in fetches[0] and "--stdin" in fetches[1] and "--filter=blob:none" not in fetches[2]
+              and sorted(it.item for it in items if it.text) == ["a.md", "b.md", "c.md"], "refused its files by id, the run fetches the ref whole", str(fetches))
 
 
 # 6. command
@@ -919,6 +993,45 @@ def test_a_command_is_mirrored_only_once_tracked_and_fails_on_its_own(tmp_path, 
     checks.ok(result and "refused, .lokf/ingest/schema.sh has changes git has not committed" in result.out, "a command edited since its commit is refused", result.out)
 
 
+def alive(pid: int) -> bool:
+    """Whether a process runs, a zombie counting as gone."""
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    try:
+        return read(Path(f"/proc/{pid}/stat")).rsplit(")", 1)[-1].split()[0] != "Z"
+    except (FileNotFoundError, ProcessLookupError):  # gone between the two looks, or no /proc to ask
+        return not Path("/proc/self").exists()
+
+
+def test_a_command_stopped_by_a_timeout_takes_every_process_it_started(tmp_path, checks):
+    """A command stopped alone would leave a process it started in the background running, holding its output open. Its own timeout and the run's
+    time limit both stop the whole group, and the time limit leaves the entry's record for the next run."""
+    if not hasattr(os, "killpg"):
+        pytest.skip("no process groups here")
+    m = load_module()
+    root = host(tmp_path, manifest_for([{"id": "slow", "kind": "command", "command": ".lokf/ingest/slow.sh", "sensitivity": "public"}]))
+    write(root / ".lokf" / "ingest" / "slow.sh", "#!/bin/sh\nsleep 30 &\necho $! > \"$1\"\nwait\n").chmod(0o755)
+    Git(root)("add", "-A")
+    Git(root)("commit", "-q", "-m", "slow", env=IDENT)
+    for name, raised in (("timeout", m.FetchFailed), ("time limit", m.OutOfTime)):
+        pid_file = tmp_path / f"{name.replace(' ', '-')}.pid"
+        until = time.monotonic() + 1 if raised is m.OutOfTime else 0.0
+        ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, 30, root, until)
+        started = time.monotonic()
+        try:
+            m.run_command(ctx, m.Entry(id="slow", kind="command", command=".lokf/ingest/slow.sh", args=[str(pid_file)], timeout=1 if not until else 60), {}, root)
+            checks.ok(False, f"the {name} stops the command")
+        except raised:
+            pass
+        pid = int(read(pid_file))
+        deadline = time.monotonic() + 3
+        while alive(pid) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        checks.ok(not alive(pid) and time.monotonic() - started < 5, f"the {name} stops the process the command left in the background too")
+
+
 # 7. the manifest
 
 
@@ -942,12 +1055,19 @@ def test_the_manifest_refuses_what_its_header_says(tmp_path, server, checks):
     result = ingest(root, "--visibility", "public")
     checks.ok(result and "refused, git does not ignore .lokf/.cache/mirror/" in result.out, "confidential is refused where git would see its copy", result.out)
     checks.ok(not (root / ".lokf" / ".cache").exists(), "and nothing is fetched")
+    write(root / ".lokf" / ".gitignore", ".cache/mirror/\n")
+    result = ingest(root, "--visibility", "public")
+    checks.ok(result and "refused, git does not ignore .lokf/.cache/ingest.lock.yaml" in result.out and not (root / ".lokf" / ".cache").exists(),
+              "and where git would see the records of its copy", result.out)
     write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
     result = ingest(root, "--visibility", "public")
     checks.ok(result and "1 fetched" in result.out, "confidential is fetched anywhere, once git ignores the cache", result.out)
     checks.ok(list((root / ".lokf" / ".cache" / "mirror" / "c").glob("*.md")), "and goes to the cache")
     checks.ok(not (root / ".lokf" / "mirror" / "c").exists(), "never to the mirror")
-    checks.ok(lock_of(root)["entries"]["c"]["items"] and "a" not in lock_of(root)["entries"], "the lock follows the manifest")
+    checks.ok(lock_of(root)["entries"]["c"] == {"status": "ok"} and "a" not in lock_of(root)["entries"],
+              "the committed lock holds the confidential entry's status alone, and follows the manifest", str(lock_of(root)))
+    checks.ok(yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]["c"]["items"]
+              and ".cache" not in Git(root)("status", "--porcelain", "--untracked-files=all"), "its records are in the cache's lock, which git ignores")
     before = read(root / ".lokf" / "ingest.lock.yaml")
     result = ingest(root, "--visibility", "public", "--dry-run")
     checks.ok(result and read(root / ".lokf" / "ingest.lock.yaml") == before, "a dry run writes nothing", result.out)
@@ -988,6 +1108,12 @@ def test_the_manifest_refuses_a_value_of_the_wrong_type(tmp_path, checks):
         write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
         result = ingest(root)
         checks.ok(result.rc == 1 and f"knowledge-ingest: {message}" in result.out and "Traceback" not in result.out, message, result.out)
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "a", "kind": "http", "urls": [url]}])))
+    for lock in ("ingest_lock_version: '1'\nentries:\n  a: [1, 2]\n", "ingest_lock_version: '1'\nentries:\n  a:\n    items:\n      x: one\n", "- one\n"):
+        write(root / ".lokf" / "ingest.lock.yaml", lock)
+        result = ingest(root)
+        checks.ok(result.rc == 1 and "knowledge-ingest: ingest.lock.yaml: " in result.out and "Traceback" not in result.out,
+                  "a lock edited into another shape stops the run by name", result.out)
 
 
 def test_an_entry_made_confidential_leaves_the_committed_mirror(tmp_path, server, checks):
@@ -1004,9 +1130,73 @@ def test_an_entry_made_confidential_leaves_the_committed_mirror(tmp_path, server
     cached = list((root / ".lokf" / ".cache" / "mirror" / "pay").glob("*.md"))
     checks.ok(result and committed and not committed[0].exists() and len(cached) == 1 and "# Pay bands" in read(cached[0]),
               "made confidential, its copy leaves the committed mirror for the cache", result.out)
-    item = next(iter(lock_of(root)["entries"]["pay"]["items"].values()))
-    checks.ok(item["path"].startswith(".lokf/.cache/mirror/pay/"), "the lock follows the copy", str(item))
+    item = next(iter(yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]["pay"]["items"].values()))
+    checks.ok(item["path"].startswith(".lokf/.cache/mirror/pay/") and lock_of(root)["entries"]["pay"] == {"status": "ok"},
+              "the record follows the copy to the cache's lock", str(item))
     checks.ok("- pay: its sensitivity puts its files in .lokf/.cache/mirror/pay/, so 1 file elsewhere is removed" in result.out, "the summary says so", result.out)
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([entry])))
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and len(list((root / ".lokf" / "mirror" / "pay").glob("*.md"))) == 1 and not list((root / ".lokf" / ".cache" / "mirror").rglob("*.md"))
+              and "pay" not in yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]
+              and lock_of(root)["entries"]["pay"]["items"], "made internal again, the copy and its record come back to the committed mirror and lock", result.out)
+
+
+def test_a_confidential_entry_commits_no_title_address_or_author_unless_it_asks(tmp_path, server, checks):
+    """The lock is committed, so a confidential page's record stays in the cache's lock, and the committed one says how the entry's run went.
+    lock_details: true records the items in the committed lock, as for any entry, and turned off again they move back."""
+    pages = {"123": {"title": "Pay review", "version": 2, "storage": "<p>Bands rise in April.</p>"}}
+    confluence_routes(server, True, pages)
+    Stub.routes["/wiki/rest/api/content/search"] = (200, {"Content-Type": "application/json"}, json.dumps({"results": [
+        {"id": "123", "title": "Pay review", "version": {"number": 2, "when": "2026-10-03T09:12:44Z", "by": {"accountId": "5b10ac8d"}},
+         "_links": {"webui": "/spaces/HR/pages/123/Pay+review"}},
+        {"id": "124", "title": "Redundancy list", "version": {"number": 1, "by": {"accountId": "7c20bd9e"}},
+         "_links": {"webui": "/spaces/HR/pages/124/Redundancy+list"}}]}).encode())
+    m = confluence_manifest(server, True)
+    m["entries"][0]["sensitivity"] = "confidential"
+    root = host(tmp_path, m)
+    write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    result = ingest(root, "--visibility", "public")
+    committed = read(root / ".lokf" / "ingest.lock.yaml")
+    checks.ok(result and "- runbooks (confluence, label ktl): 1 fetched, 1 gone" in result.out and lock_of(root)["entries"]["runbooks"] == {"status": "ok"},
+              "the committed lock says how the run went", result.out + committed)
+    for secret in ("Pay review", "Redundancy", "/spaces/HR", "5b10ac8d", "123", "124"):
+        checks.ok(secret not in committed and secret not in result.out, f"neither the committed lock nor the summary holds {secret}", result.out + committed)
+    checks.ok("  - 1 item: gone" in result.out, "the summary counts the page that went, and names none", result.out)
+    cached = yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]["runbooks"]["items"]
+    checks.ok(cached["123"]["title"] == "Pay review" and cached["123"]["author"] == "5b10ac8d" and "/spaces/HR/pages/123/" in cached["123"]["origin"],
+              "the cache's lock records title, address and author", str(cached))
+    checks.ok("author: 5b10ac8d" in read(root / ".lokf" / ".cache" / "mirror" / "runbooks" / "123.md"), "and the copy's header holds them, for the librarian")
+    result = ingest(root, "--visibility", "public")
+    checks.ok(result and "1 unchanged" in result.out, "the cache's lock is what keeps an unchanged page from being fetched again", result.out)
+    shutil.rmtree(root / ".lokf" / ".cache")
+    result = ingest(root, "--visibility", "public", "--now", "2026-10-25T06:00:00Z")
+    checks.ok(result and "1 fetched" in result.out and read(root / ".lokf" / "ingest.lock.yaml") == committed,
+              "a checkout without the cache, as in the workflow, fetches the copy again and changes no line of the committed lock", result.out)
+    m["entries"][0]["lock_details"] = True
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(m))
+    result = ingest(root, "--visibility", "public")
+    items = lock_of(root)["entries"]["runbooks"]["items"]
+    checks.ok(result and items["123"]["title"] == "Pay review" and items["123"]["author"] == "5b10ac8d" and "124: gone" in result.out
+              and "runbooks" not in yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"],
+              "lock_details: true moves the records to the committed lock, and the summary names the pages", result.out + str(items))
+    checks.ok("1 unchanged" in result.out, "the copy in the cache counts as current, so the switch fetches nothing", result.out)
+    m["entries"][0]["disabled"] = True
+    del m["entries"][0]["lock_details"]
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(m))
+    result = ingest(root, "--visibility", "public")
+    checks.ok(result and lock_of(root)["entries"]["runbooks"] == {"status": "ok"}
+              and yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]["runbooks"]["items"]["123"]["title"] == "Pay review",
+              "turned off again, the records leave the committed lock even on a run that does not fetch the entry", read(root / ".lokf" / "ingest.lock.yaml"))
+    del m["entries"][0]["disabled"]
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(m))
+    Stub.routes["/wiki/rest/api/content/search"] = (200, {"Content-Type": "application/json"}, json.dumps({"results": []}).encode())
+    copy = root / ".lokf" / ".cache" / "mirror" / "runbooks" / "123.md"
+    result = ingest(root, "--visibility", "public", "--prune", "--now", "2026-11-01T06:00:00Z")
+    checks.ok(result and "- runbooks: a confidential copy went unlisted on this run, so it stays until the next" in result.out and copy.is_file(),
+              "a page that left the selection is unlisted, and the summary names no path", result.out)
+    result = ingest(root, "--visibility", "public", "--prune", "--now", "2026-11-08T06:00:00Z")
+    checks.ok(result and "- runbooks: a confidential copy was unlisted since 2026-11-01 and no concept cites it; removed" in result.out
+              and not copy.exists() and "123" not in result.out, "a later prune removes the copy, naming none", result.out)
 
 
 # 8. --patch
@@ -1174,12 +1364,36 @@ def test_the_converter_grows_in_step_with_the_page(checks):
 
 def test_the_shell_half_refuses_sh(tmp_path, checks):
     result = run(["sh", INGEST, "--status"])
-    checks.ok(result.rc == 2 and has_line(result.out, "run this with bash: bash knowledge-ingest.sh [--root <dir>] [--visibility <v>] [--only <id>] [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]]"), "refused under sh", result.out)
+    checks.ok(result.rc == 2 and has_line(result.out, "run this with bash: bash knowledge-ingest.sh [--root <dir>] [--visibility <v>] [--only <id>] [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]] [--time-limit <minutes>]"), "refused under sh", result.out)
     result = run(["bash", INGEST, "--root", tmp_path, "--status"])
     checks.ok(result and result.out == "ingest: no .lokf/ingest.yaml, so no source outside the repository is mirrored", "no manifest is one line", result.out)
 
 
 # 12. redirects and retries
+
+
+def test_new_validators_for_the_same_bytes_wait_for_the_next_change(tmp_path, server, checks):
+    """A server may give a new ETag for bytes that did not change, after a deploy or on every answer. Alone that changes no line of the lock;
+    the next run that changes the lock anyway records it, and the run after that asks with it and gets 304. The version stays as fetched."""
+    Stub.routes["/a.md"] = (200, {"Content-Type": "text/markdown", "ETag": '"a1"'}, b"# A\n")
+    entry = {"id": "s", "kind": "http", "urls": [f"{server}/a.md"], "sensitivity": "public"}
+    root = host(tmp_path, manifest_for([entry]))
+    ingest(root)
+    before = read(root / ".lokf" / "ingest.lock.yaml")
+    Stub.routes["/a.md"] = (200, {"Content-Type": "text/markdown", "ETag": '"a2"'}, b"# A\n")
+    result = ingest(root)
+    checks.ok(result and "1 unchanged" in result.out and "Nothing changed" in result.out and read(root / ".lokf" / "ingest.lock.yaml") == before,
+              "a new ETag for the same bytes changes no line of the lock on its own", result.out)
+    Stub.routes["/b.md"] = (200, {"Content-Type": "text/markdown"}, b"# B\n")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(entry, urls=[f"{server}/a.md", f"{server}/b.md"])])))
+    result = ingest(root)
+    a = next(i for i in lock_of(root)["entries"]["s"]["items"].values() if i["origin"].endswith("/a.md"))
+    checks.ok(result and "1 fetched, 1 unchanged" in result.out and a["etag"] == '"a2"' and a["version"] == "a1",
+              "a run that changes the lock records the new ETag too, and keeps the version the copy was fetched at", str(a))
+    Stub.requests = []
+    result = ingest(root)
+    checks.ok(result and "Nothing changed" in result.out and any(p == "/a.md" and h.get("If-None-Match") == '"a2"' for p, h in Stub.requests),
+              "the next run asks with the new ETag, and the answer is 304", str(Stub.requests))
 
 
 def test_a_redirect_to_another_host_drops_the_credential_and_a_503_is_retried(tmp_path, server, checks):
@@ -1378,9 +1592,9 @@ def test_a_git_entry_follows_a_changed_include_and_skips_a_binary_file(tmp_path,
     checks.ok(result and "1 unchanged, 1 unlisted" in result.out, "a narrowed include unlists the file it drops", result.out)
 
 
-def test_a_git_file_whose_name_the_mirror_cannot_hold_is_skipped_or_refused_alone(tmp_path, checks):
+def test_a_git_file_whose_name_the_mirror_cannot_hold_is_skipped_renamed_or_refused_alone(tmp_path, checks):
     """notes would be mirrored as notes.md, the name of the Markdown file beside it, so the two would take turns in it, and data as data.md, a folder's name.
-    A name the workflow does not publish is refused, a line break in one stays out of the summary's lines, and a file over the cap is refused, or skipped when binary, by the size git lists."""
+    A name the workflow does not publish is spelled plain, a line break in one stays out of the summary's lines, and a file over the cap is refused, or skipped when binary."""
     upstream = tmp_path / "upstream"
     upstream.mkdir()
     g = Git(upstream)
@@ -1401,10 +1615,19 @@ def test_a_git_file_whose_name_the_mirror_cannot_hold_is_skipped_or_refused_alon
         result = ingest(root)
         notes = read(root / ".lokf" / "mirror" / "wiki" / "notes.md")
         checks.ok("# Markdown notes" in notes and "plain notes" not in notes, f"run {n}: the Markdown file keeps its name", notes)
-    checks.ok("  - notes: skipped, notes.md, its mirror name, is the name of the Markdown file beside it" in result.out
-              and "  - data: skipped, data.md, its mirror name, is the name of the folder beside it" in result.out
+    checks.ok("  - notes: skipped, the mirror would give it the name of the Markdown file beside it" in result.out
+              and "  - data: skipped, the mirror would give it the name of the folder beside it" in result.out
               and (root / ".lokf" / "mirror" / "wiki" / "data.md" / "x.md").is_file(), "a file whose mirror name is taken is skipped, named", result.out)
-    checks.ok("  - Release Notes.md: refused, a name with a character outside A-Z" in result.out, "a name the workflow does not publish is refused", result.out)
+    release = lock_of(root)["entries"]["wiki"]["items"]["Release Notes.md"]
+    checks.ok(release["status"] == "ok" and re.fullmatch(r"\.lokf/mirror/wiki/Release-Notes-[0-9a-f]{8}\.md", release["path"])
+              and "title: Release Notes.md\n" in read(root / release["path"]), "a name the workflow does not publish is spelled plain, and the header keeps it", str(release))
+    m = load_module()
+    names = ["a b.md", "a-b.md", "Café/über notes.md", "runbooks/deploy.md", "日本.md"]
+    spelled = [m.publishable(n) for n in names]
+    checks.ok(spelled[1] == "a-b.md" and spelled[3] == "runbooks/deploy.md" and len(set(spelled)) == len(spelled)
+              and re.fullmatch(r"a-b-[0-9a-f]{8}\.md", spelled[0]) and re.fullmatch(r"Cafe-[0-9a-f]{8}/uber-notes-[0-9a-f]{8}\.md", spelled[2])
+              and re.fullmatch(r"item-[0-9a-f]{8}\.md", spelled[4]) and all(re.fullmatch(r"[A-Za-z0-9._/@+-]+", s) for s in spelled),
+              "a plain name stays, accents are dropped, and two names that spell alike stay apart", str(spelled))
     checks.ok(not any(line.startswith("::") for line in result.out.splitlines()), "a line break in a file's name starts no line of the summary", result.out)
     checks.ok("  - big.txt.md: refused, over max_item_bytes (2000)" in result.out and "  - big.bin.md: skipped, a binary file" in result.out,
               "a large text file is refused and a large binary file skipped", result.out)
@@ -1518,6 +1741,22 @@ def test_the_workflow_hands_over_the_ingest_secrets_and_no_other(checks):
     checks.ok(done.returncode == 0 and done.stdout == "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN=tok=en\nKNOWLEDGE_INGEST_GITHUB_TOKEN=ghp_y\n", "two names, a value with an equals sign kept whole, a multi-line value left out", done.stdout + done.stderr)
 
 
+def test_the_workflow_warns_of_a_source_not_fetched_and_of_the_time_limit(checks):
+    """A green run never hides an expired token or a run cut short, so each such line of the summary becomes a warning on the run."""
+    m = re.search(r"grep -E '([^']+)' \"\$RUNNER_TEMP/summary.md\"", read(WORKFLOW))
+    checks.ok(m is not None, "the workflow picks the warnings out of the summary with one grep")
+    summary = "\n".join([
+        "## Ingest on 2026-10-18", "",
+        "- a (http, 1 address): failed, gave up after 3 attempts", "- b (git, / at main): 2 fetched", "  - x.md: refused, over max_item_bytes (2000)",
+        "- c (http, 3 addresses): 1 fetched, 2 not reached", "  - 2 items: not reached, the run's time limit passed first, so they wait for the next run",
+        "- d (command, x.sh): not reached, the run's time limit of 25 minutes passed first, so its records wait for the next run as they were",
+        "- e (confluence, label ktl): 3 unchanged", "",
+    ])
+    done = subprocess.run(["grep", "-E", m.group(1)], input=summary, capture_output=True, text=True)
+    checks.ok([line.split(":")[0].strip("- ") for line in done.stdout.splitlines()] == ["a (http, 1 address)", "x.md", "2 items", "d (command, x.sh)"],
+              "a failure, a refusal and each line about the time limit, and nothing else", done.stdout)
+
+
 def venv_python(root, refuse=""):
     """A .lokf/.venv python that runs this interpreter, and fails the wrapper's import check when it names `refuse`."""
     guard = f'case "$*" in *{refuse}*) exit 1 ;; esac\n' if refuse else ""
@@ -1557,3 +1796,88 @@ def test_without_uv_a_venv_without_pypdf_still_runs_the_ingest(tmp_path):
     venv_python(root, refuse="pypdf")
     result = run(["bash", INGEST, "--root", root], env={"PATH": path})
     assert "no manifest" in result.out, f"the ingest did not fall back to the .venv's pyyaml: {result.out}"
+
+
+# 18. the run's time limit
+
+
+def test_a_run_stops_at_its_time_limit_and_keeps_what_it_did_not_reach(tmp_path, server, checks, monkeypatch, capsys):
+    """At the limit the run starts no more work. An item it did not reach keeps its record, and so does an entry, and the lock is written with
+    what the run did. The next run takes up the rest."""
+    names = ("one", "two", "three", "four")
+    for name in names:
+        Stub.routes[f"/{name}.md"] = (200, {"Content-Type": "text/markdown"}, f"# {name}\n".encode())
+    a = {"id": "a", "kind": "http", "urls": [f"{server}/{n}.md" for n in names[:3]], "sensitivity": "public"}
+    b = {"id": "b", "kind": "http", "urls": [f"{server}/four.md"], "sensitivity": "public"}
+    root = host(tmp_path, manifest_for([a, b]))
+    ingest(root)
+    before = lock_of(root)
+    for name in names:
+        Stub.routes[f"/{name}.md"] = (200, {"Content-Type": "text/markdown"}, f"# {name}, revised\n".encode())
+    (root / next(i["path"] for i in before["entries"]["a"]["items"].values() if i["origin"].endswith("/three.md"))).unlink()
+    m = load_module()
+    served = []
+    real_get = m.http_get
+
+    def counting(*args, **kwargs):
+        served.append(args[0])
+        return real_get(*args, **kwargs)
+
+    monkeypatch.setattr(m, "http_get", counting)
+    monkeypatch.setattr(m.Context, "out_of_time", lambda self: bool(served))
+    rc = m.main(["--root", str(root), "--visibility", "private", "--now", "2026-10-18T07:00:00Z"])
+    out = capsys.readouterr().out
+    checks.ok(rc == 0 and "- a (http, 3 addresses): 1 fetched, 2 not reached" in out
+              and "  - 2 items: not reached, the run's time limit passed first, so they wait for the next run" in out
+              and "- b (http, 1 address): not reached, the run's time limit of 25 minutes passed first" in out, "the summary says what waits", out)
+    after = lock_of(root)
+    fetched = [i for i in after["entries"]["a"]["items"].values() if i["origin"].endswith("/one.md")]
+    kept = {k: v for k, v in after["entries"]["a"]["items"].items() if not v["origin"].endswith("/one.md")}
+    checks.ok(fetched and fetched[0]["retrieved_at"] == "2026-10-18T07:00:00Z" and "revised" in read(root / fetched[0]["path"]),
+              "the item reached is fetched and recorded", str(after))
+    checks.ok(kept == {k: v for k, v in before["entries"]["a"]["items"].items() if k in kept} and len(kept) == 2
+              and after["entries"]["b"] == before["entries"]["b"], "the items and the entry not reached keep their records, one whose file was lost included, and none is unlisted", str(after))
+    monkeypatch.setattr(m.Context, "out_of_time", lambda self: False)
+    rc = m.main(["--root", str(root), "--visibility", "private", "--now", "2026-10-18T08:00:00Z"])
+    out = capsys.readouterr().out
+    checks.ok(rc == 0 and "- a (http, 3 addresses): 1 fetched, 1 restored, 1 unchanged" in out and "- b (http, 1 address): 1 fetched" in out,
+              "the next run takes up the rest", out)
+    result = run(["bash", INGEST, "--root", root, "--time-limit", "5", "--dry-run", "--visibility", "private"], env=TOKENS)
+    checks.ok(result and "Nothing changed" in result.out, "the shell half passes --time-limit through", result.out)
+
+
+def test_a_wait_the_time_limit_cuts_is_the_limits_not_the_sources(checks):
+    """A request still running when the limit passes stops there, as OutOfTime and not a failure, so its item keeps its record."""
+    m = load_module()
+    listener = socket.create_server(("127.0.0.1", 0))
+
+    def drip():
+        with contextlib.suppress(OSError):
+            conn, _ = listener.accept()
+            with conn:
+                conn.recv(65536)
+                conn.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/markdown\r\nContent-Length: 100\r\n\r\n")
+                for _ in range(100):
+                    time.sleep(0.1)
+                    conn.sendall(b"x")
+
+    threading.Thread(target=drip, daemon=True).start()
+    started = time.monotonic()
+    try:
+        m.http_get(f"http://127.0.0.1:{listener.getsockname()[1]}/slow.md", {}, True, 10_000, timeout=30, until=time.monotonic() + 1)
+        checks.ok(False, "the request stops at the limit")
+    except m.OutOfTime:
+        checks.ok(time.monotonic() - started < 3, "at the limit, not at the body's own deadline", f"{time.monotonic() - started:.1f} s")
+    finally:
+        listener.close()
+    listener = socket.create_server(("127.0.0.1", 0))
+    listener.settimeout(0.5)
+    try:
+        m.http_get(f"http://127.0.0.1:{listener.getsockname()[1]}/x.md", {}, True, 10_000, until=time.monotonic() - 1)
+        checks.ok(False, "a request after the limit is not made")
+    except m.OutOfTime:
+        with contextlib.suppress(TimeoutError, socket.timeout):
+            listener.accept()[0].close()
+            checks.ok(False, "a request after the limit opens no connection")
+    finally:
+        listener.close()

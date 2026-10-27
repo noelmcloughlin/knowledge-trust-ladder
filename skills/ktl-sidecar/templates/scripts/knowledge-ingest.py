@@ -14,6 +14,12 @@
 # item and a status: ok, gone, unlisted, failed or refused. A mirror file is repository
 # content the librarian reads as any tracked file. It is not knowledge yet.
 #
+# A confidential entry's copies and their records stay out of git: the copies
+# under .lokf/.cache/mirror/ and the records in .lokf/.cache/ingest.lock.yaml.
+# The committed lock holds the entry's status alone, so no title, address or
+# author of a confidential page is committed, unless the entry sets
+# lock_details: true.
+#
 # Kinds:
 #   - `confluence`: a label, space, page, tree or CQL selection; v1 search
 #     everywhere, v2 body on Cloud and v1 on Data Center; the version number
@@ -22,14 +28,19 @@
 #     Last-Modified when the server gives them, else the digest.
 #   - `git`: a path at a ref, over https, or http and a local path where the
 #     manifest allows private addresses; the commit is the version and the
-#     blob id the change signal; a file that is not Markdown is fenced.
+#     blob id the change signal, so a file is downloaded only when it
+#     changed; a file that is not Markdown is fenced.
 #   - `command`: a tracked command's output; the command's own digest is
 #     recorded too.
 #
 # Listing comes before fetching, so an unchanged source costs a listing and no body. The
 # mirror and the lock change only when content changes. An entry that leaves
 # the manifest takes its folder with it. A file the lock names and the disk
-# has lost is fetched again and reported as restored.
+# has lost is fetched again and reported as restored. A name the workflow
+# would not publish, such as one with a space, is spelled in plain
+# characters, with a digest of the name so no two meet. At its time limit
+# the run starts no more work and writes what it has, and what it did not
+# reach keeps its record for the next run.
 #
 # Refused and recorded:
 #   - a token in the manifest (auth names environment variables starting
@@ -55,6 +66,7 @@
 #   knowledge-ingest.py [--root DIR] [--visibility public|private|internal|unknown]
 #                       [--only ID]... [--dry-run] [--prune] [--strict]
 #                       [--summary FILE] [--status] [--patch [FILE]]
+#                       [--time-limit MINUTES]
 #   --dry-run   compare and fetch, write nothing
 #   --only      one entry; the others keep their lock state
 #   --prune     delete a gone or unlisted file no concept cites, once an
@@ -64,6 +76,8 @@
 #   --status    one line for the preflight
 #   --patch     Reference concepts for entries with `reference: true`, as
 #               operations for knowledge-apply.sh, to .lokf/patch.yaml or FILE
+#   --time-limit  the minutes after which the run starts no more work (25),
+#               so it ends inside the workflow job's 30 with its work written
 # Exit 0 completed (the lock says how each entry fared); 1 stopped by the
 # manifest or an argument before any write; 2 a tool is missing.
 #
@@ -77,6 +91,7 @@ from __future__ import annotations
 import argparse
 import base64
 import codecs
+import contextlib
 import fnmatch
 import functools
 import hashlib
@@ -88,6 +103,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -97,6 +113,7 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from html.parser import HTMLParser
@@ -116,20 +133,24 @@ ENV_NAME = re.compile(r"^KNOWLEDGE_INGEST_[A-Z0-9_]+$")
 ENTRY_ID = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 SENSITIVITIES = ("public", "internal", "confidential")
 MIRROR = ".lokf/mirror"
+CACHE = ".lokf/.cache/mirror"  # a confidential entry's copies, which git ignores
+CACHE_LOCK = ".lokf/.cache/ingest.lock.yaml"  # their records, beside them
 TOP_KEYS = {"ingest_version", "max_total_bytes", "allow_private_addresses", "services", "defaults", "entries"}
 SERVICE_KEYS = {"kind", "site", "api", "auth"}
 AUTH_KEYS = {"scheme", "env", "user_env", "header"}
-DEFAULT_KEYS = {"sensitivity", "max_items", "max_item_bytes", "authors"}
+DEFAULT_KEYS = {"sensitivity", "max_items", "max_item_bytes", "authors", "lock_details"}
 ENTRY_KEYS = {
     "id", "kind", "service", "site", "api", "auth", "select", "urls", "url", "ref", "path", "include", "exclude",
     "command", "args", "timeout", "convert", "owner", "why", "license", "sensitivity", "max_items",
-    "max_item_bytes", "authors", "disabled", "reference",
+    "max_item_bytes", "authors", "lock_details", "disabled", "reference",
 }
 SELECT_KEYS = {"label", "space", "page", "tree", "cql"}
 CONVERTS = ("html-markdown", "pdf-text", "text")
-DEFAULTS = {"sensitivity": "internal", "max_items": 200, "max_item_bytes": 1_000_000, "authors": True}
+DEFAULTS = {"sensitivity": "internal", "max_items": 200, "max_item_bytes": 1_000_000, "authors": True, "lock_details": False}
 DEFAULT_TOTAL_BYTES = 50_000_000
 TIMEOUT = 30
+TIME_LIMIT = 25  # minutes; the workflow's job stops at 30, and the work after the run takes about one
+GIT_BATCH = 50  # the files a git entry downloads at a time, so a run stopped at its limit keeps those it read
 BODY_TIMEOUTS = 10  # the time a whole body may take, in timeouts: the timeout bounds each wait for a byte, and a body sent a byte at a time meets it
 ATTEMPTS = 3
 TEXT_TYPES = {"text/markdown": "text", "text/x-markdown": "text", "text/plain": "text", "text/html": "html-markdown",
@@ -159,6 +180,10 @@ class FetchFailed(Exception):
 
 class Gone(Exception):
     """The source answered 404 or 410."""
+
+
+class OutOfTime(Exception):
+    """The run passed its time limit. The item in hand, and every one after it, keeps its record for the next run."""
 
 
 def say(msg: str) -> None:
@@ -236,6 +261,32 @@ def slug(text: str) -> str:
     return s[:60] or "item"
 
 
+def md_name(item: str) -> str:
+    """The mirror's name for an item: its own when it ends .md, else with .md added."""
+    return item if item.endswith(".md") else item + ".md"
+
+
+def publishable(name: str) -> str:
+    """A mirror path the workflow publishes: the name as it is when it is plain, else each part that is not spelled in plain characters.
+
+    Accents are dropped, any other character outside the plain set becomes
+    a hyphen, and a digest of the part as it was is added, so two names
+    that spell alike, such as "a b.md" and "a-b.md", never meet.
+    """
+    if PLAIN_PATH.fullmatch(name):
+        return name
+    parts = []
+    for part in name.split("/"):
+        if PLAIN_PATH.fullmatch(part):
+            parts.append(part)
+            continue
+        stem, ext = (part[:-3], ".md") if part.endswith(".md") else (part, "")
+        plain = unicodedata.normalize("NFKD", stem).encode("ascii", "ignore").decode()
+        plain = re.sub(r"[^A-Za-z0-9._@+-]+", "-", plain).strip("-")[:60].rstrip("-") or "item"
+        parts.append(f"{plain}-{sha256_hex(part.encode('utf-8', 'surrogatepass'))[:8]}{ext}")
+    return "/".join(parts)
+
+
 # ---- the manifest -----------------------------------------------------------
 
 
@@ -304,8 +355,14 @@ class Entry:
     max_items: int = 200
     max_item_bytes: int = 1_000_000
     authors: bool = True
+    lock_details: bool = False
     disabled: bool = False
     reference: bool = False
+
+    @property
+    def local_lock(self) -> bool:
+        """Whether the entry's item records stay out of the committed lock: a confidential entry's do, unless it sets lock_details."""
+        return self.sensitivity == "confidential" and not self.lock_details
 
     def describe(self) -> str:
         if self.kind == "confluence":
@@ -416,7 +473,8 @@ def read_manifest(path: Path) -> Manifest:
     raw_defaults = raw.get("defaults") or {}
     only_keys(raw_defaults, DEFAULT_KEYS, "defaults")
     defaults.update(raw_defaults)
-    defaults["authors"] = flag(raw_defaults.get("authors"), "defaults.authors", DEFAULTS["authors"])
+    for key in ("authors", "lock_details"):
+        defaults[key] = flag(raw_defaults.get(key), f"defaults.{key}", DEFAULTS[key])
     entries_raw = raw.get("entries")
     if not isinstance(entries_raw, list) or not entries_raw:
         raise Stop(f"{path.name}: entries is a list with at least one entry")
@@ -466,6 +524,7 @@ def read_manifest(path: Path) -> Manifest:
             max_items=positive_int(e.get("max_items", defaults["max_items"]), f"{where}.max_items", 200),
             max_item_bytes=positive_int(e.get("max_item_bytes", defaults["max_item_bytes"]), f"{where}.max_item_bytes", 1_000_000),
             authors=flag(e.get("authors"), f"{where}.authors", defaults["authors"]),
+            lock_details=flag(e.get("lock_details"), f"{where}.lock_details", defaults["lock_details"]),
             disabled=flag(e.get("disabled"), f"{where}.disabled", False),
             reference=flag(e.get("reference"), f"{where}.reference", False),
         )
@@ -536,10 +595,30 @@ def read_lock(path: Path) -> dict:
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except (yaml.YAMLError, UnicodeDecodeError) as e:
         raise Stop(f"{path} is not YAML: {e}") from e
-    if str(raw.get("ingest_lock_version", "")) != LOCK_VERSION:
+    if not isinstance(raw, dict) or str(raw.get("ingest_lock_version", "")) != LOCK_VERSION:
         raise Stop(f"{path.name}: ingest_lock_version is \"{LOCK_VERSION}\" for this script")
-    raw.setdefault("entries", {})
+    # A lock edited by hand into another shape stops the run here, by name,
+    # and not with a traceback halfway through.
+    shape = f"{path.name}: entries maps each entry id to its record, and a record's items map each item id to its record"
+    raw["entries"] = raw.get("entries") or {}
+    if not isinstance(raw["entries"], dict):
+        raise Stop(shape)
+    for record in raw["entries"].values():
+        if not isinstance(record, dict):
+            raise Stop(shape)
+        if "items" in record:
+            record["items"] = record["items"] or {}
+        if not isinstance(record.get("items", {}), dict) or not all(isinstance(it, dict) for it in record.get("items", {}).values()):
+            raise Stop(shape)
     return raw
+
+
+def read_cache_lock(path: Path) -> dict:
+    """The records of the confidential entries' copies, or none when the cache was cleared or cannot be read, since a run then fetches the copies again."""
+    try:
+        return read_lock(path)
+    except Stop:
+        return {"ingest_lock_version": LOCK_VERSION, "entries": {}}
 
 
 class Dumper(yaml.SafeDumper):
@@ -706,8 +785,18 @@ class Response:
     data: bytes
 
 
-def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeout: int = TIMEOUT, accept_304: bool = False) -> Response:
-    """GET with retries on 429, 5xx and a broken connection, a size cap read as it streams, and the address checks. 404 and 410 raise Gone."""
+def capped(seconds: float, until: float) -> float:
+    """A wait of up to seconds, cut to the time left before until, a time.monotonic() or 0 for no limit, and never under a second."""
+    return seconds if not until else max(1.0, min(seconds, until - time.monotonic()))
+
+
+def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeout: int = TIMEOUT, accept_304: bool = False,
+             until: float = 0.0) -> Response:
+    """GET with retries on 429, 5xx and a broken connection, a size cap read as it streams, and the address checks. 404 and 410 raise Gone.
+
+    until is when the run's time limit passes, as a time.monotonic(), or 0
+    for none. Each wait is cut to it, and once it passes OutOfTime is raised.
+    """
     parts = urllib.parse.urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.netloc or "@" in parts.netloc:
         raise Refused(f"{url} is not a plain http(s) address")
@@ -718,10 +807,12 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
     last = ""
     for attempt in range(ATTEMPTS):
+        if until and time.monotonic() >= until:
+            raise OutOfTime()
         redirects.hops = 0
         delay = 2 ** attempt
         try:
-            with opener.open(req, timeout=timeout) as resp:  # noqa: S310 - an address the manifest names
+            with opener.open(req, timeout=capped(timeout, until)) as resp:  # noqa: S310 - an address the manifest names
                 deadline = time.monotonic() + timeout * BODY_TIMEOUTS
                 data = bytearray()
                 while len(data) <= max_bytes:
@@ -729,6 +820,8 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
                     if not chunk:
                         break
                     data += chunk
+                    if until and time.monotonic() > until:
+                        raise OutOfTime()
                     if time.monotonic() > deadline:
                         raise FetchFailed(f"the body took more than {timeout * BODY_TIMEOUTS} seconds")
                 if len(data) > max_bytes:
@@ -753,6 +846,9 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
             raise FetchFailed(f"{url} is not an address this script can fetch ({why})") from e
         except (OSError, http.client.HTTPException) as e:  # a timeout, TLS, a reset, a broken or truncated response
             last = f"{parts.netloc}: {getattr(e, 'reason', e)}"
+        # A wait the time limit cuts short is the limit's, not the source's.
+        if until and time.monotonic() + (delay if attempt < ATTEMPTS - 1 else 0) >= until:
+            raise OutOfTime()
         if attempt < ATTEMPTS - 1:
             time.sleep(delay)
     raise FetchFailed(f"gave up after {ATTEMPTS} attempts: {last}")
@@ -1243,7 +1339,7 @@ def convert(data: bytes, content_type: str, how: str, charset: str = "", base: s
 
 @dataclass
 class Item:
-    """One mirrored item, as the lock and the mirror header record it."""
+    """One mirrored item, as the lock and the mirror header record it, or the reason it was refused, failed or skipped."""
 
     item: str
     origin: str
@@ -1252,19 +1348,33 @@ class Item:
     last_modified: str = ""
     author: str = ""
     etag: str = ""
+    last_modified_header: str = ""  # as served, for If-Modified-Since
     blob: str = ""
     text: str = ""
     converted_by: str = ""
     sha256: str = ""
+    command_sha256: str = ""
+    refused: str = ""
+    failed: str = ""
+    skipped: str = ""
 
 
 class Context:
-    def __init__(self, manifest: Manifest, environ: dict, now: str, timeout: int, root: Path | None = None):
+    def __init__(self, manifest: Manifest, environ: dict, timeout: int, root: Path | None = None, until: float = 0.0):
         self.manifest = manifest
         self.environ = environ
-        self.now = now
         self.timeout = timeout
         self.root = root
+        self.until = until  # when the run's time limit passes, as a time.monotonic(), or 0 for none
+        self.fresher: dict = {}  # (entry id, item id): the validators a server now gives for content that did not change
+        self.left: dict = {}  # entry id: {item id: its record, or None}, for the items the time limit left for the next run
+
+    def out_of_time(self) -> bool:
+        return bool(self.until) and time.monotonic() >= self.until
+
+    def leave(self, entry: Entry, item_id: str, was: dict | None) -> None:
+        """An item the time limit left for the next run, with the record it keeps, if it has one."""
+        self.left.setdefault(entry.id, {})[item_id] = was
 
     def headers(self, entry: Entry) -> dict:
         name, value = entry.auth.value(self.environ)
@@ -1273,7 +1383,7 @@ class Context:
     def get(self, url: str, entry: Entry, extra: dict | None = None, accept_304: bool = False) -> Response:
         headers = self.headers(entry)
         headers.update(extra or {})
-        return http_get(url, headers, self.manifest.allow_private, entry.max_item_bytes, self.timeout, accept_304)
+        return http_get(url, headers, self.manifest.allow_private, entry.max_item_bytes, self.timeout, accept_304, self.until)
 
 
 class Confluence:
@@ -1308,7 +1418,7 @@ class Confluence:
     def gateway(self) -> None:
         """A scoped token calls Atlassian's gateway, under the site's cloud id, which the site itself tells."""
         self.gateway_tried = True
-        resp = http_get(self.site + "/_edge/tenant_info", {}, self.ctx.manifest.allow_private, 10_000, self.ctx.timeout)
+        resp = http_get(self.site + "/_edge/tenant_info", {}, self.ctx.manifest.allow_private, 10_000, self.ctx.timeout, until=self.ctx.until)
         try:
             cloud_id = json.loads(resp.data.decode("utf-8"))["cloudId"]
         except (UnicodeDecodeError, ValueError, KeyError) as e:
@@ -1379,8 +1489,8 @@ class Confluence:
         return f"{self.web}/pages/{page_id}"
 
 
-def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, list[str]]:
-    """The items to keep or write, by id; the items left untouched because unchanged; and the ids listed. One page's failure is that page's."""
+def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]:
+    """The items to keep or write, by id, and the records of the items left untouched because unchanged. One page's failure is that page's."""
     c = Confluence(ctx, entry)
     listed = c.listing()
     if len(listed) > entry.max_items:
@@ -1394,22 +1504,24 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
         if was and was.get("status") == "ok" and was.get("version") == r["version"] and r["version"]:
             unchanged[pid] = was
             continue
+        if ctx.out_of_time():
+            ctx.leave(entry, pid, was)
+            continue
         origin = c.origin(r["webui"], pid)
         try:
             storage, _page = c.body(pid)
             text, title, _how = convert(storage.encode("utf-8"), "text/html", "html-markdown", base=origin)
+        except OutOfTime:
+            ctx.leave(entry, pid, was)
+            continue
         except Gone:
             items.append(Item(item=pid, origin=origin, title=r["title"], version="gone"))
             continue
         except Refused as e:
-            it = Item(item=pid, origin=origin, title=r["title"])
-            it.refused = str(e)  # type: ignore[attr-defined]
-            items.append(it)
+            items.append(Item(item=pid, origin=origin, title=r["title"], refused=str(e)))
             continue
         except FetchFailed as e:
-            it = Item(item=pid, origin=origin, title=r["title"])
-            it.failed = str(e)  # type: ignore[attr-defined]
-            items.append(it)
+            items.append(Item(item=pid, origin=origin, title=r["title"], failed=str(e)))
             continue
         raw = storage.encode("utf-8")
         items.append(Item(
@@ -1417,16 +1529,18 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
             author=r["author"] if entry.authors else "", text=text, converted_by="confluence-storage-markdown/1",
             sha256=sha256_hex(raw),
         ))
-    return items, unchanged, [r["id"] for r in listed]
+    return items, unchanged
 
 
-def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, list[str]]:
-    items, unchanged, listed = [], {}, []
+def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]:
+    items, unchanged = [], {}
     for url in entry.urls:
         name = slug(PurePosixPath(urllib.parse.urlsplit(url).path).stem or urllib.parse.urlsplit(url).hostname or "page")
         item_id = f"{name}-{sha256_hex(url.encode())[:8]}"
-        listed.append(item_id)
         was = prior.get(item_id) or {}
+        if ctx.out_of_time():
+            ctx.leave(entry, item_id, was or None)
+            continue
         extra = {}
         if was.get("status") == "ok" and was.get("etag"):
             extra["If-None-Match"] = was["etag"]
@@ -1439,32 +1553,36 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict,
                 continue
             digest = sha256_hex(resp.data)
             if was.get("status") == "ok" and was.get("sha256") == "sha256:" + digest:
+                # A server may give new validators for the same bytes, after
+                # a deploy or on every answer. The run that next changes the
+                # lock records them, so they change no line of a lock that
+                # would not change anyway.
+                fresh = {"etag": resp.headers.get("etag", ""), "last_modified_header": resp.headers.get("last-modified", "")}
+                if any(fresh[k] != was.get(k, "") for k in fresh):
+                    ctx.fresher[(entry.id, item_id)] = fresh
                 unchanged[item_id] = was
                 continue
             text, title, how = convert(resp.data, content_type_of(resp.headers), entry.convert, charset_of(resp.headers), base=url)
+        except OutOfTime:
+            ctx.leave(entry, item_id, was or None)
+            continue
         except Gone:
             items.append(Item(item=item_id, origin=url, title=was.get("title", ""), version="gone"))
             continue
         except Refused as e:
-            it = Item(item=item_id, origin=url, title=was.get("title", ""))
-            it.refused = str(e)  # type: ignore[attr-defined]
-            items.append(it)
+            items.append(Item(item=item_id, origin=url, title=was.get("title", ""), refused=str(e)))
             continue
         except FetchFailed as e:
-            it = Item(item=item_id, origin=url, title=was.get("title", ""))
-            it.failed = str(e)  # type: ignore[attr-defined]
-            items.append(it)
+            items.append(Item(item=item_id, origin=url, title=was.get("title", ""), failed=str(e)))
             continue
         etag = resp.headers.get("etag", "")
         lm = resp.headers.get("last-modified", "")
         # The version is for reading, so it drops a weak ETag's W/ prefix and
         # the quotes. The lock keeps the ETag as served, for If-None-Match.
         version = one_line(re.sub(r"^W/", "", etag).strip('"')) if etag else (utc(lm) if lm else digest[:12])
-        it = Item(item=item_id, origin=url, title=title or name, version=version, last_modified=utc(lm) if lm else "",
-                  etag=etag, text=text, converted_by=how, sha256=digest)
-        it.last_modified_header = lm  # type: ignore[attr-defined]
-        items.append(it)
-    return items, unchanged, listed
+        items.append(Item(item=item_id, origin=url, title=title or name, version=version, last_modified=utc(lm) if lm else "",
+                          etag=etag, last_modified_header=lm, text=text, converted_by=how, sha256=digest))
+    return items, unchanged
 
 
 def git_url_kind(url: str) -> str:
@@ -1598,8 +1716,8 @@ def git_origin(entry: Entry, sha: str, file: str) -> str:
     return f"{entry.url}@{sha}:{file}"
 
 
-def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, list[str]]:
-    """A shallow fetch of the ref, then each chosen file by its blob id, which the lock records so an unchanged file costs no read."""
+def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]:
+    """The ref's commit and its trees, then each chosen file that changed, by its blob id, which the lock records so an unchanged file is never downloaded."""
     if not shutil.which("git"):
         raise FetchFailed("git is not installed")
     # git_env sets git's protocol limits and the credential through
@@ -1612,86 +1730,139 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
     tmp = Path(tempfile.mkdtemp(prefix="ingest-git-"))
     try:
         env = git_env(entry, ctx, tmp, pinned)  # the fetch's folder is HOME too: it holds no .netrc or .gitconfig
-
-        def git(*args, data=False):
-            done = subprocess.run(["git", "-C", str(tmp), *args], env=env, capture_output=True, timeout=600)
-            if done.returncode != 0:
-                err = done.stderr.decode("utf-8", "replace").strip().splitlines()
-                raise FetchFailed("git " + args[0] + " failed: " + (err[-1] if err else "no message"))
-            return done.stdout if data else done.stdout.decode("utf-8", "replace")
-
-        def start_of(oid: str) -> bytes:
-            """The first 8000 bytes of a blob, which say whether it is binary, read without the rest of it."""
-            with subprocess.Popen(["git", "-C", str(tmp), "cat-file", "blob", oid], env=env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as p:
-                start = p.stdout.read(8000)
-                p.kill()
-            return start
-
-        git("init", "-q")
         # Git reads a relative path against the folder it runs in, the fetch's
         # own, so a path the manifest writes that way is read against the root.
         url = str((ctx.root / entry.url).resolve()) if ctx.root and entry.url.startswith(("./", "../")) else entry.url
-        git("remote", "add", "origin", url)
-        # Git rewrites an address by any url.<base>.insteadOf it reads, the
-        # global configuration's included, and fetches the rewritten one. The
-        # pin and the credential are scoped to the address as the manifest
-        # writes it, so git would fetch a rewritten address with neither, and
-        # resolve its name itself. ls-remote --get-url applies the rewrite
-        # without connecting.
-        fetched = git("ls-remote", "--get-url", "origin").strip()
-        if fetched != url:
-            raise Refused(f"git's configuration rewrites {url} to {fetched} (url.<base>.insteadOf), which the address check and the "
-                          "credential do not cover; name the address git fetches in the manifest, or remove the rewrite")
-        git("fetch", "-q", "--depth", "1", "origin", entry.ref)
-        sha = git("rev-parse", "FETCH_HEAD").strip()
-        when = utc(git("log", "-1", "--format=%cI", "FETCH_HEAD").strip())
-        spec = ["FETCH_HEAD"] + (["--", entry.path] if entry.path else [])
-        blobs = {}
-        for line in git("ls-tree", "-r", "-l", "-z", *spec, data=True).decode("utf-8", "replace").split("\0"):
-            meta, _, name = line.partition("\t")
-            fields = meta.split()
-            if len(fields) == 4 and fields[1] == "blob" and fields[0] != "120000" and name:  # a symbolic link is not content
-                blobs[name] = (fields[2], int(fields[3]))
-        include = entry.include or ["*.md"]
-        chosen = []
-        for f, (oid, size) in blobs.items():
-            rel = f[len(entry.path) + 1:] if entry.path and f.startswith(entry.path + "/") else f
-            if any(fnmatch.fnmatch(rel, g) for g in include) and not any(fnmatch.fnmatch(rel, g) for g in entry.exclude):
-                chosen.append((f, rel, oid, size))
-        if len(chosen) > entry.max_items:
-            raise Refused(f"the path holds more than max_items ({entry.max_items}) matching files; narrow include or raise the cap")
-        # A file that is not Markdown is mirrored as its name with .md added,
-        # which a Markdown file or a folder beside it may already have. That
-        # one keeps the name: two files would take turns in it from run to
-        # run, and a file and a folder cannot share it.
-        markdown = {rel for _, rel, _, _ in chosen if rel.endswith(".md")}
-        folders = {str(p) for _, rel, _, _ in chosen for p in PurePosixPath(rel).parents}
-        items, unchanged = [], {}
-        for f, rel, oid, size in chosen:
-            if ".." in PurePosixPath(rel).parts or rel.startswith("/"):
-                continue
-            item_id = rel if rel.endswith(".md") else rel + ".md"
-            if item_id != rel and (item_id in markdown or item_id in folders):
-                it = Item(item=rel, origin=git_origin(entry, sha, f), title=rel)
-                beside = "Markdown file" if item_id in markdown else "folder"
-                it.skipped = f"{item_id}, its mirror name, is the name of the {beside} beside it"  # type: ignore[attr-defined]
-                items.append(it)
-                continue
-            was = prior.get(item_id)
-            if was and was.get("status") == "ok" and was.get("blob") == oid:
-                unchanged[item_id] = was
-                continue
+        try:
+            return mirror_git(ctx, entry, prior, env, tmp / "partial", url, partial=True)
+        except FilesRefused:
+            # The server took the filter and then refused the files by their
+            # ids, as one that speaks only git's first protocol does. The
+            # ref is fetched again whole, into a folder of its own, since
+            # git fetches nothing for a commit it already holds.
+            return mirror_git(ctx, entry, prior, env, tmp / "whole", url, partial=False)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+class FilesRefused(Exception):
+    """The server sent a commit's trees and refused its files by their ids."""
+
+
+def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, url: str, partial: bool) -> tuple[list[Item], dict]:
+    """The items of a git entry, fetched into repo: with partial, the commit's trees alone at first, and then only the files that changed."""
+    repo.mkdir()
+
+    def git(*args, data=False, stdin=None):
+        try:
+            done = subprocess.run(["git", "-C", str(repo), *args], env=env, input=stdin, capture_output=True, timeout=capped(600, ctx.until))
+        except subprocess.TimeoutExpired as e:
+            if ctx.out_of_time():
+                raise OutOfTime() from e
+            raise FetchFailed(f"git {args[0]} ran past 600 seconds") from e
+        if done.returncode != 0:
+            err = done.stderr.decode("utf-8", "replace").strip().splitlines()
+            raise FetchFailed("git " + args[0] + " failed: " + (err[-1] if err else "no message"))
+        return done.stdout if data else done.stdout.decode("utf-8", "replace")
+
+    def start_of(oid: str) -> bytes:
+        """The first 8000 bytes of a blob, which say whether it is binary, read without the rest of it."""
+        with subprocess.Popen(["git", "-C", str(repo), "cat-file", "blob", oid], env=env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as p:
+            start = p.stdout.read(8000)
+            p.kill()
+        return start
+
+    git("init", "-q")
+    # A fetch of files by their ids must name no commit the repository
+    # holds. A commit it named would tell the server that the commit's files
+    # are here too, and the server would send none.
+    git("config", "fetch.negotiationAlgorithm", "noop")
+    git("remote", "add", "origin", url)
+    # Git rewrites an address by any url.<base>.insteadOf it reads, the
+    # global configuration's included, and fetches the rewritten one. The
+    # pin and the credential are scoped to the address as the manifest
+    # writes it, so git would fetch a rewritten address with neither, and
+    # resolve its name itself. ls-remote --get-url applies the rewrite
+    # without connecting.
+    fetched = git("ls-remote", "--get-url", "origin").strip()
+    if fetched != url:
+        raise Refused(f"git's configuration rewrites {url} to {fetched} (url.<base>.insteadOf), which the address check and the "
+                      "credential do not cover; name the address git fetches in the manifest, or remove the rewrite")
+    # With the filter the server sends the commit and its trees, and no file
+    # until one is asked for. A server that knows no filter sends them all.
+    git("fetch", "-q", "--depth", "1", *(["--filter=blob:none"] if partial else []), "origin", entry.ref)
+    sha = git("rev-parse", "FETCH_HEAD").strip()
+    when = utc(git("log", "-1", "--format=%cI", "FETCH_HEAD").strip())
+    spec = ["FETCH_HEAD"] + (["--", entry.path] if entry.path else [])
+    blobs = {}
+    # ls-tree runs without -l, which would download every file to give its size.
+    for line in git("ls-tree", "-r", "-z", *spec, data=True).decode("utf-8", "replace").split("\0"):
+        meta, _, name = line.partition("\t")
+        fields = meta.split()
+        if len(fields) == 3 and fields[1] == "blob" and fields[0] != "120000" and name:  # a symbolic link is not content
+            blobs[name] = fields[2]
+    include = entry.include or ["*.md"]
+    chosen = []
+    for f, oid in blobs.items():
+        rel = f[len(entry.path) + 1:] if entry.path and f.startswith(entry.path + "/") else f
+        if any(fnmatch.fnmatch(rel, g) for g in include) and not any(fnmatch.fnmatch(rel, g) for g in entry.exclude):
+            chosen.append((f, rel, oid))
+    if len(chosen) > entry.max_items:
+        raise Refused(f"the path holds more than max_items ({entry.max_items}) matching files; narrow include or raise the cap")
+    # A file that is not Markdown is mirrored as its name with .md added,
+    # which a Markdown file or a folder beside it may already have. That
+    # one keeps the name: two files would take turns in it from run to
+    # run, and a file and a folder cannot share it.
+    markdown = {rel for _, rel, _ in chosen if rel.endswith(".md")}
+    folders = {str(p) for _, rel, _ in chosen for p in PurePosixPath(rel).parents}
+    too_big = f"over max_item_bytes ({entry.max_item_bytes})"
+    items, unchanged, wanted = [], {}, []
+    for f, rel, oid in chosen:
+        if ".." in PurePosixPath(rel).parts or rel.startswith("/"):
+            continue
+        item_id = md_name(rel)
+        if item_id != rel and (item_id in markdown or item_id in folders):
+            beside = "Markdown file" if item_id in markdown else "folder"
+            items.append(Item(item=rel, origin=git_origin(entry, sha, f), title=rel, skipped=f"the mirror would give it the name of the {beside} beside it"))
+            continue
+        was = prior.get(item_id)
+        # A file refused for its size is not downloaded again while it and the cap stay the same.
+        if was and was.get("blob") == oid and (was.get("status") == "ok" or (was.get("status") == "refused" and was.get("reason") == too_big)):
+            unchanged[item_id] = was
+            continue
+        wanted.append((f, rel, oid, item_id, was))
+    # The files that changed, a batch at a time, so a run stopped at its
+    # time limit keeps the batches it read.
+    for start in range(0, len(wanted), GIT_BATCH):
+        batch = wanted[start:start + GIT_BATCH]
+        try:
+            if ctx.out_of_time():
+                raise OutOfTime()
+            if partial:
+                try:
+                    git("fetch", "-q", "--no-tags", "--no-write-fetch-head", "--recurse-submodules=no", "--filter=blob:none", "--stdin", "origin",
+                        stdin="".join(oid + "\n" for _, _, oid, _, _ in batch).encode())
+                except FetchFailed as e:
+                    raise FilesRefused() from e
+        except OutOfTime:
+            for _, _, _, item_id, was in wanted[start:]:
+                ctx.leave(entry, item_id, was)
+            break
+        sizes = {}
+        for line in git("cat-file", "--batch-check=%(objectname) %(objectsize)", stdin="".join(oid + "\n" for _, _, oid, _, _ in batch).encode()).splitlines():
+            oid, _, size = line.partition(" ")
+            if size.isdigit():
+                sizes[oid] = int(size)
+        for f, rel, oid, item_id, was in batch:
+            size = sizes.get(oid, 0)
             # Of a file over the cap only the start is read: enough to tell a
             # binary file, which is skipped, from text, which is refused.
             data = git("cat-file", "blob", oid, data=True) if size <= entry.max_item_bytes else start_of(oid)
             if b"\x00" in data[:8000]:
-                it = Item(item=item_id, origin=git_origin(entry, sha, f), title=rel)
-                it.skipped = "a binary file"  # type: ignore[attr-defined]
-                items.append(it)
+                items.append(Item(item=item_id, origin=git_origin(entry, sha, f), title=rel, skipped="a binary file"))
                 continue
             if size > entry.max_item_bytes:
-                items.append(Item(item=item_id, origin=git_origin(entry, sha, f), version=sha, title=rel))
-                items[-1].refused = f"over max_item_bytes ({entry.max_item_bytes})"  # type: ignore[attr-defined]
+                items.append(Item(item=item_id, origin=git_origin(entry, sha, f), version=sha, title=rel, blob=oid, refused=too_big))
                 continue
             digest = sha256_hex(data)
             if was and was.get("status") == "ok" and was.get("sha256") == "sha256:" + digest:
@@ -1702,12 +1873,10 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
                 text = fence(text, PurePosixPath(rel).suffix.lstrip(".")) + "\n"
             items.append(Item(item=item_id, origin=git_origin(entry, sha, f), title=rel, version=sha, last_modified=when,
                               blob=oid, text=text, converted_by="git/1", sha256=digest))
-        return items, unchanged, [c[1] if c[1].endswith(".md") else c[1] + ".md" for c in chosen]
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+    return items, unchanged
 
 
-def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[list[Item], dict, list[str]]:
+def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[list[Item], dict]:
     path = root / entry.command
     if not path.is_file():
         raise Refused(f"{entry.command} is not a file under the repository root")
@@ -1724,27 +1893,40 @@ def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[li
     for name in entry.auth.names():
         if name in ctx.environ:
             env[name] = ctx.environ[name]
+    if ctx.out_of_time():
+        raise OutOfTime()
+    # The command leads a process group of its own, so its timeout stops
+    # every process it started. Stopped alone, it would leave one it started
+    # in the background running, and holding its output open.
+    group = hasattr(os, "killpg")
     try:
-        done = subprocess.run([str(path), *entry.args], cwd=str(root), env=env, capture_output=True, timeout=entry.timeout)
-    except subprocess.TimeoutExpired as e:
-        raise FetchFailed(f"the command ran past its timeout ({entry.timeout}s)") from e
+        with subprocess.Popen([str(path), *entry.args], cwd=str(root), env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              start_new_session=group) as proc:
+            try:
+                out, err = proc.communicate(timeout=capped(entry.timeout, ctx.until))
+            except subprocess.TimeoutExpired as e:
+                if group:
+                    with contextlib.suppress(OSError):
+                        os.killpg(proc.pid, signal.SIGKILL)
+                proc.kill()
+                if ctx.out_of_time():
+                    raise OutOfTime() from e
+                raise FetchFailed(f"the command ran past its timeout ({entry.timeout}s)") from e
     except OSError as e:
         raise FetchFailed(f"the command could not be run ({e.strerror})") from e
-    if done.returncode != 0:
-        err = done.stderr.decode("utf-8", "replace").strip().splitlines()
-        raise FetchFailed(f"the command exited {done.returncode}: {err[-1][:200] if err else 'no message'}")
-    data = done.stdout
+    if proc.returncode != 0:
+        lines = err.decode("utf-8", "replace").strip().splitlines()
+        raise FetchFailed(f"the command exited {proc.returncode}: {lines[-1][:200] if lines else 'no message'}")
+    data = out
     if len(data) > entry.max_item_bytes:
         raise Refused(f"the output is over max_item_bytes ({entry.max_item_bytes})")
     digest = sha256_hex(data)
     was = prior.get(entry.id)
     if was and was.get("status") == "ok" and was.get("sha256") == "sha256:" + digest and was.get("command_sha256") == command_digest:
-        return [], {entry.id: was}, [entry.id]
+        return [], {entry.id: was}
     text, title, how = convert(data, "text/plain", entry.convert or "text")
-    it = Item(item=entry.id, origin=f"command:{entry.command}", title=title or entry.command, version=digest[:12],
-              text=text, converted_by=how, sha256=digest)
-    it.command_sha256 = command_digest  # type: ignore[attr-defined]
-    return [it], {}, [entry.id]
+    return [Item(item=entry.id, origin=f"command:{entry.command}", title=title or entry.command, version=digest[:12],
+                 text=text, converted_by=how, sha256=digest, command_sha256=command_digest)], {}
 
 
 # ---- the run -------------------------------------------------------------------
@@ -1778,17 +1960,17 @@ def allowed_here(sensitivity: str, visibility: str) -> str:
 
 
 def cache_exposed(root: Path) -> str:
-    """Empty when git would commit nothing a confidential entry writes, else the reason the entry is refused. A root outside git commits nothing."""
-    cache = ".lokf/.cache/mirror/"
+    """Empty when git would commit nothing a confidential entry writes, its copies and their records, else the reason the entry is refused. A root outside git commits nothing."""
     if not shutil.which("git") or subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True).returncode != 0:
         return ""
     # check-ignore reads the ignore rules for a path that need not exist. It
     # exits 1 when no rule ignores the path, and 128 when it cannot tell, and
     # either refuses the entry.
-    if subprocess.run(["git", "-C", str(root), "check-ignore", "-q", "--no-index", cache + "probe"], capture_output=True).returncode != 0:
-        return f"git does not ignore {cache}, where a confidential copy goes; add .cache/ to .lokf/.gitignore, as the sidecar's template does"
-    if subprocess.run(["git", "-C", str(root), "ls-files", "--", cache], capture_output=True, text=True).stdout.strip():
-        return f"git tracks files under {cache}; remove them with git rm --cached before a confidential entry runs"
+    for path, what in ((CACHE + "/probe", f"{CACHE}/, where a confidential copy goes"), (CACHE_LOCK, f"{CACHE_LOCK}, where a confidential copy's record goes")):
+        if subprocess.run(["git", "-C", str(root), "check-ignore", "-q", "--no-index", path], capture_output=True).returncode != 0:
+            return f"git does not ignore {what}; add .cache/ to .lokf/.gitignore, as the sidecar's template does"
+    if subprocess.run(["git", "-C", str(root), "ls-files", "--", CACHE + "/", CACHE_LOCK], capture_output=True, text=True).stdout.strip():
+        return f"git tracks files under {CACHE}/ or {CACHE_LOCK}; remove them with git rm --cached before a confidential entry runs"
     return ""
 
 
@@ -1850,21 +2032,47 @@ def cited_paths(root: Path) -> set:
     return out
 
 
+COUNTS = ("fetched", "restored", "unchanged", "gone", "unlisted", "failed", "refused", "skipped", "not reached")
+
+
+def refresh(record: dict, fresh: dict) -> None:
+    """Put a server's new validators in an item's record, and drop one the server no longer gives."""
+    for key, value in fresh.items():
+        if value:
+            record[key] = value
+        else:
+            record.pop(key, None)
+
+
 class Run:
-    def __init__(self, args, root: Path, manifest: Manifest, lock: dict, visibility: str, environ: dict):
+    def __init__(self, args, root: Path, manifest: Manifest, lock: dict, visibility: str, environ: dict, cache_lock: dict | None = None):
         self.args, self.root, self.manifest, self.lock, self.visibility = args, root, manifest, lock, visibility
+        self.cache_lock = cache_lock if cache_lock is not None else {"ingest_lock_version": LOCK_VERSION, "entries": {}}
         self.now = now_utc(args.now)
-        self.ctx = Context(manifest, environ, self.now, args.timeout, root)
+        self.ctx = Context(manifest, environ, args.timeout, root, time.monotonic() + args.time_limit * 60 if args.time_limit else 0.0)
         self.summary: list[str] = []
         self.failed = 0
         self.writes: list[tuple[Path, str]] = []
         self.removals: list[Path] = []
-        self.counts = {"fetched": 0, "restored": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
+        self.exposed: str | None = None
 
     def mirror_root(self, entry: Entry) -> Path:
         if entry.sensitivity == "confidential":
-            return self.root / ".lokf" / ".cache" / "mirror"
+            return self.root / CACHE
         return self.root / self.manifest.mirror
+
+    def book(self, entry: Entry) -> dict:
+        """The lock that holds an entry's item records: the cache's for a confidential entry, unless it sets lock_details, else the committed one."""
+        return self.cache_lock if entry.local_lock else self.lock
+
+    def records(self, entry: Entry) -> dict:
+        return (self.book(entry)["entries"].get(entry.id) or {}).get("items", {})
+
+    def cache_exposed(self) -> str:
+        """cache_exposed's answer for this root, asked once a run."""
+        if self.exposed is None:
+            self.exposed = cache_exposed(self.root)
+        return self.exposed
 
     def rel(self, path: Path) -> str:
         return path.relative_to(self.root).as_posix()
@@ -1879,57 +2087,66 @@ class Run:
 
     def removable(self, path: str) -> bool:
         """Whether the run may remove a file the lock names: only one inside either mirror, whatever else the lock says."""
-        return any(self.within(path, mirror) for mirror in (self.root / self.manifest.mirror, self.root / ".lokf" / ".cache" / "mirror"))
+        return any(self.within(path, mirror) for mirror in (self.root / self.manifest.mirror, self.root / CACHE))
 
     def entry_mirror_size(self, prior: dict) -> int:
         return sum(int(v.get("bytes", 0) or 0) for v in prior.values() if v.get("status") == "ok")
 
     def total_mirror_size(self) -> int:
-        """The mirror's bytes, over the entries the manifest names: one that left it is removed by this run, so it frees its bytes now."""
-        named = {e.id for e in self.manifest.entries}
-        return sum(self.entry_mirror_size(e.get("items", {})) for eid, e in self.lock["entries"].items() if eid in named)
+        """The mirror's bytes, the cache's included, over the entries the manifest names: one that left it is removed by this run, so it frees its bytes now."""
+        return sum(self.entry_mirror_size(self.records(e)) for e in self.manifest.entries)
 
     def run_entry(self, entry: Entry) -> None:
-        record = self.lock["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
-        prior = record.get("items", {})
-        counts = {"fetched": 0, "restored": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
+        book = self.book(entry)
+        record = book["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
+        record.setdefault("items", {})
+        counts = dict.fromkeys(COUNTS, 0)
         why = allowed_here(entry.sensitivity, self.visibility)
         if not why and entry.sensitivity == "confidential":
-            why = cache_exposed(self.root)
+            why = self.cache_exposed()
         if why:
             record.update({"status": "refused", "reason": why})
             self.failed += 1
             self.summary.append(f"- {entry.id} ({entry.describe()}): refused, {why}")
             return
+        # The other lock may hold the entry's records from before: from a run
+        # with lock_details set the other way, or from before the entry was
+        # made confidential or stopped being so. They join this lock's.
+        other = self.cache_lock if book is self.lock else self.lock
+        for item_id, was in ((other["entries"].pop(entry.id, None) or {}).get("items") or {}).items():
+            record["items"].setdefault(item_id, was)
+        prior = record["items"]
         folder = self.mirror_root(entry) / entry.id
         # The sensitivity picks the folder, so after a change the entry's files
-        # are in the other mirror. Each is removed there: a current one is
-        # fetched again into this folder, and the record of one away or failing
-        # is dropped. So an entry made confidential leaves the committed mirror.
+        # are in the other mirror. Each is removed there and its record
+        # dropped, and a current one is fetched again into this folder. So an
+        # entry made confidential leaves the committed mirror.
         moved = [i for i, was in prior.items() if was.get("path") and not self.within(str(was["path"]), folder)]
         for i in moved:
             if self.removable(str(prior[i]["path"])):
                 self.removals.append(self.root / str(prior[i]["path"]))
-            if prior[i].get("status") != "ok":
-                del prior[i]
+            del prior[i]
         if moved:
             n = len(moved)
             self.summary.append(f"- {entry.id}: its sensitivity puts its files in {self.rel(folder)}/, so {n} file{'s' if n != 1 else ''} "
                                 f"elsewhere {'are' if n != 1 else 'is'} removed")
         # A file the lock calls current and the disk has lost is handed to the
         # kind as if new, so it is fetched again instead of skipped as unchanged.
-        lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and i not in moved and not (self.root / was["path"]).is_file()}
-        missing = lost | {i for i in moved if i in prior}
-        present = {i: was for i, was in prior.items() if i not in missing}
+        lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not (self.root / was["path"]).is_file()}
+        present = {i: was for i, was in prior.items() if i not in lost}
         try:
             if entry.kind == "confluence":
-                items, unchanged, listed = run_confluence(self.ctx, entry, present)
+                items, unchanged = run_confluence(self.ctx, entry, present)
             elif entry.kind == "http":
-                items, unchanged, listed = run_http(self.ctx, entry, present)
+                items, unchanged = run_http(self.ctx, entry, present)
             elif entry.kind == "git":
-                items, unchanged, listed = run_git(self.ctx, entry, present)
+                items, unchanged = run_git(self.ctx, entry, present)
             else:
-                items, unchanged, listed = run_command(self.ctx, entry, present, self.root)
+                items, unchanged = run_command(self.ctx, entry, present, self.root)
+        except OutOfTime:
+            self.summary.append(f"- {entry.id} ({entry.describe()}): stopped, the run's time limit passed while it ran, so its records wait "
+                                "for the next run as they were")
+            return
         except Refused as e:
             record.update({"status": "refused", "reason": str(e)})
             self.failed += 1
@@ -1949,24 +2166,37 @@ class Run:
         record["status"] = "ok"
         record.pop("reason", None)
         new_items: dict = {}
-        skipped: list[str] = []
+        skipped: list[tuple[str, str]] = []
         total = self.total_mirror_size() - self.entry_mirror_size(prior)
         for item_id, was in unchanged.items():
+            fresh = self.ctx.fresher.get((entry.id, item_id))
+            if fresh and book is self.cache_lock:
+                refresh(was, fresh)  # a lock git never sees takes them at once
             new_items[item_id] = was
-            counts["unchanged"] += 1
-            total += int(was.get("bytes", 0) or 0)
+            counts["refused" if was.get("status") == "refused" else "unchanged"] += 1
+            total += int(was.get("bytes", 0) or 0) if was.get("status") == "ok" else 0
+        # An item the time limit left keeps the record it had, one whose file
+        # was lost included, and one it never had waits for the next run.
+        for item_id, was in self.ctx.left.get(entry.id, {}).items():
+            was = was or prior.get(item_id)
+            if was:
+                new_items[item_id] = was
+                total += int(was.get("bytes", 0) or 0) if was.get("status") == "ok" else 0
+            counts["not reached"] += 1
         for it in items:
             was = prior.get(it.item) or {}
-            if getattr(it, "skipped", ""):
-                skipped.append(f"  - {it.item}: skipped, {it.skipped}")  # type: ignore[attr-defined]
+            if it.skipped:
+                skipped.append((it.item, it.skipped))
                 counts["skipped"] += 1
                 continue
-            if getattr(it, "refused", ""):
-                new_items[it.item] = dict(was, status="refused", reason=it.refused, origin=it.origin, title=it.title)  # type: ignore[attr-defined]
+            # A file refused for its size keeps the blob id it was refused at, so it is not downloaded again while it stays so.
+            blob = {"blob": it.blob} if it.blob else {}
+            if it.refused:
+                new_items[it.item] = dict(was, status="refused", reason=it.refused, origin=it.origin, title=it.title, **blob)
                 counts["refused"] += 1
                 continue
-            if getattr(it, "failed", ""):
-                new_items[it.item] = dict(was, status="failed", reason=it.failed, origin=it.origin, title=it.title)  # type: ignore[attr-defined]
+            if it.failed:
+                new_items[it.item] = dict(was, status="failed", reason=it.failed, origin=it.origin, title=it.title)
                 counts["failed"] += 1
                 continue
             if it.version == "gone":
@@ -1976,7 +2206,8 @@ class Run:
             # The folder is the resolved root and the names below it, so a path
             # that leaves it, by `..` or by a symbolic link the repository
             # holds, such as the entry's folder linked elsewhere, is refused.
-            target = (folder / (it.item if it.item.endswith(".md") else it.item + ".md")).resolve()
+            # A name the workflow would not publish is spelled plain.
+            target = (folder / publishable(md_name(it.item))).resolve()
             try:
                 target.relative_to(folder)
             except ValueError:
@@ -1985,12 +2216,6 @@ class Run:
                 continue
             if target.suffix != ".md" or "\n" in it.item or any(unicodedata.category(c) in ("Cc", "Cf") for c in it.item):
                 new_items[it.item] = dict(was, status="refused", reason="a name this script does not write", origin=it.origin)
-                counts["refused"] += 1
-                continue
-            if not PLAIN_PATH.fullmatch(it.item):
-                # The workflow refuses a whole patch with such a path, so this file alone is refused.
-                reason = "a name with a character outside A-Z, a-z, 0-9 and . _ / @ + -, which the workflow does not publish; exclude it, or rename it at the source"
-                new_items[it.item] = dict(was, status="refused", reason=reason, origin=it.origin)
                 counts["refused"] += 1
                 continue
             # The caps count the Markdown the mirror holds, which can outgrow the
@@ -2013,18 +2238,9 @@ class Run:
             same = it.item in lost and was.get("sha256") == "sha256:" + it.sha256 and was.get("retrieved_at")
             lock_item = {"path": self.rel(target), "origin": it.origin, "title": it.title, "version": str(it.version),
                          "sha256": "sha256:" + it.sha256, "bytes": written, "retrieved_at": was["retrieved_at"] if same else self.now, "status": "ok"}
-            if it.last_modified:
-                lock_item["last_modified"] = it.last_modified
-            if it.author:
-                lock_item["author"] = it.author
-            if it.etag:
-                lock_item["etag"] = it.etag
-            if it.blob:
-                lock_item["blob"] = it.blob
-            if getattr(it, "last_modified_header", ""):
-                lock_item["last_modified_header"] = it.last_modified_header  # type: ignore[attr-defined]
-            if getattr(it, "command_sha256", ""):
-                lock_item["command_sha256"] = it.command_sha256  # type: ignore[attr-defined]
+            for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "command_sha256"):
+                if getattr(it, key):
+                    lock_item[key] = getattr(it, key)
             new_items[it.item] = lock_item
             counts["restored" if it.item in lost else "fetched"] += 1
             self.writes.append((target, mirror_header(entry, it, lock_item) + it.text))
@@ -2033,16 +2249,26 @@ class Run:
                 new_items[item_id] = dict(was, status="unlisted", since=self.away_since(was))
                 counts["unlisted"] += 1
         record["items"] = new_items
-        for k, v in counts.items():
-            self.counts[k] += v
         parts = [f"{v} {k}" for k, v in counts.items() if v]
         self.summary.append(f"- {entry.id} ({entry.describe()}): " + (", ".join(parts) if parts else "nothing listed"))
-        for item_id, it in sorted(new_items.items()):
-            if it.get("status") in ("refused", "failed", "gone", "unlisted"):
+        if counts["not reached"]:
+            n = counts["not reached"]
+            self.summary.append(f"  - {n} item{'s' if n != 1 else ''}: not reached, the run's time limit passed first, so "
+                                f"{'they wait' if n != 1 else 'it waits'} for the next run")
+        problems =[(item_id, it) for item_id, it in sorted(new_items.items()) if it.get("status") in ("refused", "failed", "gone", "unlisted")]
+        if entry.local_lock:
+            # The summary is the pull request's body, so a confidential
+            # entry's lines count its items and name none.
+            tally = Counter((str(it["status"]), str(it.get("reason") or "")) for _, it in problems)
+            tally.update(("skipped", reason) for _, reason in skipped)
+            for (status, reason), n in sorted(tally.items()):
+                self.summary.append(f"  - {n} item{'s' if n != 1 else ''}: {status}" + (f", {reason}" if reason else ""))
+        else:
+            for item_id, it in problems:
                 reason = f", {it['reason']}" if it.get("reason") else ""
                 since = f" since {it['since'][:10]}" if it.get("since") and it["status"] in ("gone", "unlisted") else ""
                 self.summary.append(f"  - {item_id}: {it['status']}{since}{reason}")
-        self.summary.extend(skipped)
+            self.summary.extend(f"  - {item_id}: skipped, {reason}" for item_id, reason in skipped)
         if counts["failed"] or counts["refused"]:
             self.failed += 1
 
@@ -2053,27 +2279,32 @@ class Run:
     def prune(self) -> None:
         """Remove a gone or unlisted file no concept cites, once an earlier run recorded it so: the pull request shows the status one week and the removal the next."""
         cited = cited_paths(self.root)
-        for eid, record in self.lock["entries"].items():
-            for item_id in list(record.get("items", {})):
-                it = record["items"][item_id]
-                if it.get("status") not in ("gone", "unlisted"):
-                    continue
-                path = it.get("path", "")
-                if path and not self.removable(str(path)):
-                    self.summary.append(f"- {eid}: the lock names {path}, outside the mirror, so it stays")
-                    continue
-                if path in cited:
-                    self.summary.append(f"- {eid}: {path} is {it['status']} and a concept still cites it, so it stays")
-                    continue
-                if str(it.get("since", "")) >= self.now:
-                    self.summary.append(f"- {eid}: {path} went {it['status']} on this run, so it stays until the next")
-                    continue
-                self.removals.append(self.root / path)
-                del record["items"][item_id]
-                self.summary.append(f"- {eid}: {path} was {it['status']} since {str(it.get('since', ''))[:10] or 'an earlier run'} and no concept cites it; removed")
+        for book in (self.lock, self.cache_lock):
+            for eid, record in book["entries"].items():
+                for item_id in list(record.get("items", {})):
+                    it = record["items"][item_id]
+                    if it.get("status") not in ("gone", "unlisted"):
+                        continue
+                    path = it.get("path", "")
+                    # A line about a confidential copy names no path, since the summary is the pull request's body.
+                    shown_path = "a confidential copy" if book is self.cache_lock else path
+                    if path and not self.removable(str(path)):
+                        self.summary.append(f"- {eid}: the lock names {shown_path}, outside the mirror, so it stays")
+                        continue
+                    if path in cited:
+                        self.summary.append(f"- {eid}: {shown_path} is {it['status']} and a concept still cites it, so it stays")
+                        continue
+                    if str(it.get("since", "")) >= self.now:
+                        self.summary.append(f"- {eid}: {shown_path} went {it['status']} on this run, so it stays until the next")
+                        continue
+                    if path:
+                        self.removals.append(self.root / path)
+                    del record["items"][item_id]
+                    self.summary.append(f"- {eid}: {shown_path} was {it['status']} since {str(it.get('since', ''))[:10] or 'an earlier run'} "
+                                        "and no concept cites it; removed")
 
-    def commit(self, lock_path: Path) -> bool:
-        """Write the mirror files and the lock, or say what would be written. True when anything changed on disk."""
+    def commit(self, lock_path: Path, cache_path: Path) -> bool:
+        """Write the mirror files and both locks, or say what would be written. True when anything changed on disk."""
         changed = False
         for path, text in self.writes:
             if path.is_file() and path.read_text(encoding="utf-8") == text:
@@ -2082,22 +2313,45 @@ class Run:
             if not self.args.dry_run:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text, encoding="utf-8", newline="\n")
-        left = [eid for eid in self.lock["entries"] if not any(e.id == eid for e in self.manifest.entries)]
-        cited = cited_paths(self.root) if left else set()
-        for eid in left:
-            record = self.lock["entries"].pop(eid)
-            for _item_id, it in sorted(record.get("items", {}).items()):
-                path = str(it.get("path", ""))
-                if not path:
+        named = {e.id for e in self.manifest.entries}
+        for book in (self.lock, self.cache_lock):
+            left = [eid for eid in book["entries"] if eid not in named]
+            cited = cited_paths(self.root) if left and book is self.lock else set()
+            for eid in left:
+                record = book["entries"].pop(eid)
+                paths = [str(it.get("path", "")) for _, it in sorted(record.get("items", {}).items()) if it.get("path")]
+                if book is self.cache_lock:
+                    # The summary names no confidential copy.
+                    gone = [p for p in paths if self.removable(p)]
+                    self.removals += [self.root / p for p in gone]
+                    if gone:
+                        self.summary.append(f"- {eid}: no longer in the manifest, so its {len(gone)} confidential "
+                                            f"cop{'ies are' if len(gone) != 1 else 'y is'} removed")
                     continue
-                if not self.removable(path):
-                    self.summary.append(f"- {eid}: no longer in the manifest, and the lock names {path}, outside the mirror, so it stays")
-                    continue
-                self.removals.append(self.root / path)
-                note = ", and a concept still cites it, so the work list will name its source as gone" if path in cited else ""
-                self.summary.append(f"- {eid}: no longer in the manifest, so {path} is removed{note}")
-            if not record.get("items"):
-                self.summary.append(f"- {eid}: no longer in the manifest, so its record is dropped")
+                for path in paths:
+                    if not self.removable(path):
+                        self.summary.append(f"- {eid}: no longer in the manifest, and the lock names {path}, outside the mirror, so it stays")
+                        continue
+                    self.removals.append(self.root / path)
+                    note = ", and a concept still cites it, so the work list will name its source as gone" if path in cited else ""
+                    self.summary.append(f"- {eid}: no longer in the manifest, so {path} is removed{note}")
+                if not record.get("items"):
+                    self.summary.append(f"- {eid}: no longer in the manifest, so its record is dropped")
+        # The committed lock's line for a confidential entry says how its last
+        # run went, and nothing of its items: their records move to the
+        # cache's lock, those from before included, whether or not the entry
+        # ran.
+        for entry in self.manifest.entries:
+            if not entry.local_lock:
+                continue
+            committed = self.lock["entries"].get(entry.id) or {}
+            if committed.get("items"):
+                cached = self.cache_lock["entries"].setdefault(entry.id, {"status": committed.get("status", "ok"), "items": {}})
+                for item_id, was in committed["items"].items():
+                    cached.setdefault("items", {}).setdefault(item_id, was)
+            record = self.cache_lock["entries"].get(entry.id)
+            if record is not None:
+                self.lock["entries"][entry.id] = {key: record[key] for key in ("status", "reason") if key in record}
         for path in self.removals:
             if path.is_file():
                 changed = True
@@ -2107,12 +2361,31 @@ class Run:
                     while parent != self.root and parent.is_dir() and not any(parent.iterdir()):
                         parent.rmdir()
                         parent = parent.parent
+        before = lock_path.read_text(encoding="utf-8") if lock_path.is_file() else None
         text = to_yaml(self.lock)
-        if not lock_path.is_file() or lock_path.read_text(encoding="utf-8") != text:
+        if self.ctx.fresher and text != before:
+            # New validators are written only with another change: a lock
+            # that changes anyway takes those a server gave for bytes that
+            # did not change.
+            for (eid, item_id), fresh in self.ctx.fresher.items():
+                it = ((self.lock["entries"].get(eid) or {}).get("items") or {}).get(item_id)
+                if it and it.get("status") == "ok":
+                    refresh(it, fresh)
+            text = to_yaml(self.lock)
+        if text != before:
             changed = True
             if not self.args.dry_run:
                 lock_path.parent.mkdir(parents=True, exist_ok=True)
                 lock_path.write_text(text, encoding="utf-8", newline="\n")
+        # The cache's lock is written only where git ignores it, and only once
+        # it holds a record.
+        if self.cache_lock["entries"] or cache_path.is_file():
+            text = to_yaml(self.cache_lock)
+            if (not cache_path.is_file() or cache_path.read_text(encoding="utf-8") != text) and not self.cache_exposed():
+                changed = True
+                if not self.args.dry_run:
+                    cache_path.parent.mkdir(parents=True, exist_ok=True)
+                    cache_path.write_text(text, encoding="utf-8", newline="\n")
         return changed
 
 
@@ -2128,7 +2401,10 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     absent = [n for n in names if not environ.get(n)]
     files, newest, missing, away, named = 0, "", 0, 0, set()
     try:
-        lock = read_lock(lock_path)
+        books = [read_lock(lock_path), read_cache_lock(root / CACHE_LOCK)]
+    except Stop:
+        books = []
+    for lock in books:
         for record in lock["entries"].values():
             for it in record.get("items", {}).values():
                 path = str(it.get("path", ""))
@@ -2140,8 +2416,6 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
                         missing += 1
                 elif it.get("status") in ("gone", "unlisted"):
                     away += 1
-    except Stop:
-        pass
     mirror = root / MIRROR
     stray = sum(1 for f in mirror.rglob("*") if f.is_file() and f.relative_to(root).as_posix() not in named) if mirror.is_dir() else 0
     parts = [f"{len(manifest.entries)} entries in .lokf/ingest.yaml", f"{files} mirrored files" + (f", newest {newest[:10]}" if newest else ", no lock yet")]
@@ -2172,7 +2446,7 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     return "ingest: " + "; ".join(parts)
 
 
-def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path) -> int:
+def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, cache_lock: dict | None = None) -> int:
     """Reference concepts for the entries that ask for them, as operations for the pen; how many."""
     if patch_path.exists():
         raise Stop(f"{patch_path} exists; apply or remove it first")
@@ -2182,7 +2456,9 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path) ->
     for entry in manifest.entries:
         if not entry.reference:
             continue
-        record = lock["entries"].get(entry.id) or {}
+        # A confidential entry's records are in the cache's lock, unless it sets lock_details.
+        book = cache_lock if entry.local_lock and cache_lock is not None else lock
+        record = book["entries"].get(entry.id) or {}
         committed = entry.sensitivity != "confidential"
         for item_id, it in sorted(record.get("items", {}).items()):
             if it.get("status") != "ok":
@@ -2233,6 +2509,17 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path) ->
     return len(ops)
 
 
+def minutes(text: str) -> int:
+    """--time-limit's value: whole minutes, 0 for none."""
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError("whole minutes, 0 for no limit") from None
+    if value < 0:
+        raise argparse.ArgumentTypeError("whole minutes, 0 for no limit")
+    return value
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="knowledge-ingest.py", description="Mirror knowledge from outside the repository into .lokf/mirror/.")
     ap.add_argument("--root", default="")
@@ -2248,10 +2535,12 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--patch", nargs="?", const=".lokf/patch.yaml", default="")
     ap.add_argument("--now", default="")
     ap.add_argument("--timeout", type=int, default=TIMEOUT)
+    ap.add_argument("--time-limit", type=minutes, default=TIME_LIMIT)
     args = ap.parse_args(argv)
     root = Path(args.root).resolve() if args.root else Path.cwd().resolve()
     manifest_path = Path(args.manifest) if args.manifest else root / ".lokf" / "ingest.yaml"
     lock_path = Path(args.lock) if args.lock else root / ".lokf" / "ingest.lock.yaml"
+    cache_path = root / CACHE_LOCK
     environ = dict(os.environ)
     if args.status:
         say(status_line(root, manifest_path, lock_path, environ))
@@ -2259,30 +2548,35 @@ def main(argv: list[str]) -> int:
     try:
         manifest = read_manifest(manifest_path)
         lock = read_lock(lock_path)
+        cache_lock = read_cache_lock(cache_path)
         for eid in args.only:
             if not any(e.id == eid for e in manifest.entries):
                 raise Stop(f"--only {eid} names no entry in the manifest")
         if args.patch:
-            n = write_patch(root, manifest, lock, root / args.patch if not Path(args.patch).is_absolute() else Path(args.patch))
+            n = write_patch(root, manifest, lock, root / args.patch if not Path(args.patch).is_absolute() else Path(args.patch), cache_lock)
             say(f"wrote {n} operation{'s' if n != 1 else ''} for the pen" if n else "no entry asks for Reference concepts, or every one has its concept")
             return 0
         visibility = repository_visibility(root, args.visibility)
-        run = Run(args, root, manifest, lock, visibility, environ)
+        run = Run(args, root, manifest, lock, visibility, environ, cache_lock)
         for entry in manifest.entries:
             if args.only and entry.id not in args.only:
                 continue
             if entry.disabled:
                 run.summary.append(f"- {entry.id}: disabled, its mirror kept as it is")
                 continue
+            if run.ctx.out_of_time():
+                run.summary.append(f"- {entry.id} ({entry.describe()}): not reached, the run's time limit of {args.time_limit} minutes "
+                                   "passed first, so its records wait for the next run as they were")
+                continue
             run.run_entry(entry)
         if args.prune:
             run.prune()
-        changed = run.commit(lock_path)
+        changed = run.commit(lock_path, cache_path)
     except Stop as e:
         print(f"knowledge-ingest: {e}", file=sys.stderr)
         return 1
     heading = f"## Ingest on {run.now[:10]}" + (" (dry run)" if args.dry_run else "")
-    files = sum(1 for r in lock["entries"].values() for it in r.get("items", {}).values() if it.get("status") == "ok")
+    files = sum(1 for e in manifest.entries for it in run.records(e).values() if it.get("status") == "ok")
     size = run.total_mirror_size()
     tail = (f"Mirror: {files} file{'s' if files != 1 else ''}, {size / 1_000_000:.1f} MB, repository {visibility}. "
             "Nothing fetched is knowledge yet: the librarian derives concepts from the mirror on its next run.")
