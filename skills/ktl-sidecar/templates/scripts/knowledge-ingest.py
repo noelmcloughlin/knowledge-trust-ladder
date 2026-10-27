@@ -203,7 +203,10 @@ def utc(text: str) -> str:
     t = text.strip()
     if t.endswith("Z"):
         t = t[:-1] + "+00:00"
-    t = re.sub(r"(\.\d{1,6})\d+", r"\1", t)
+    # The fraction gets six digits, which fromisoformat reads on every Python
+    # from 3.9. Before 3.11 it reads three or six digits only, so .5 and
+    # .000123456 would both stop it.
+    t = re.sub(r"\.(\d+)", lambda m: "." + (m.group(1) + "000000")[:6], t)
     try:
         d = datetime.fromisoformat(t)
     except ValueError:
@@ -250,6 +253,12 @@ def shown(text: str) -> str:
 def one_line(text: str) -> str:
     """A title or a name as the mirror header and the lock record it: one line, with no character a reader cannot see."""
     return " ".join(shown(text).split())
+
+
+def write_text(path: Path, text: str) -> None:
+    """Write UTF-8 text with line feeds on every platform. Path.write_text takes newline= only from Python 3.10, and the script runs on 3.9."""
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
 
 
 def sha256_hex(data: bytes) -> str:
@@ -2312,7 +2321,7 @@ class Run:
             changed = True
             if not self.args.dry_run:
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(text, encoding="utf-8", newline="\n")
+                write_text(path, text)
         named = {e.id for e in self.manifest.entries}
         for book in (self.lock, self.cache_lock):
             left = [eid for eid in book["entries"] if eid not in named]
@@ -2376,7 +2385,7 @@ class Run:
             changed = True
             if not self.args.dry_run:
                 lock_path.parent.mkdir(parents=True, exist_ok=True)
-                lock_path.write_text(text, encoding="utf-8", newline="\n")
+                write_text(lock_path, text)
         # The cache's lock is written only where git ignores it, and only once
         # it holds a record.
         if self.cache_lock["entries"] or cache_path.is_file():
@@ -2385,7 +2394,7 @@ class Run:
                 changed = True
                 if not self.args.dry_run:
                     cache_path.parent.mkdir(parents=True, exist_ok=True)
-                    cache_path.write_text(text, encoding="utf-8", newline="\n")
+                    write_text(cache_path, text)
         return changed
 
 
@@ -2505,7 +2514,7 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
                         "log": f"**Added**: {title}, a reference to a source the ingest mirrors."})
     if not ops:
         return 0
-    patch_path.write_text(to_yaml({"by": "process:knowledge-ingest", "ops": ops}), encoding="utf-8", newline="\n")
+    write_text(patch_path, to_yaml({"by": "process:knowledge-ingest", "ops": ops}))
     return len(ops)
 
 
@@ -2590,7 +2599,7 @@ def main(argv: list[str]) -> int:
     text = "\n".join(lines)
     say(text.rstrip("\n"))
     if args.summary:
-        Path(args.summary).write_text(text, encoding="utf-8", newline="\n")
+        write_text(Path(args.summary), text)
     if args.strict and run.failed:
         return 1
     return 0

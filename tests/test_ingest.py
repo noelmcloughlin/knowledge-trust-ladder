@@ -1274,7 +1274,7 @@ def test_status_says_when_git_is_too_old_for_a_git_entry(tmp_path, checks, monke
 # 10. the converter
 
 
-def test_the_converter_turns_storage_format_into_markdown_blocks(checks):
+def test_the_converter_turns_storage_format_into_markdown_blocks(checks, monkeypatch):
     m = load_module()
     text, title = m.html_to_markdown("<html><head><title>T</title></head><body><h2>Two</h2><p>One <i>two</i>  three<br/>four</p><pre>a\n  b</pre><blockquote><p>q</p></blockquote><hr/><ol><li>x</li><li>y</li></ol></body></html>")
     checks.ok(title == "T", "the title", title)
@@ -1282,6 +1282,21 @@ def test_the_converter_turns_storage_format_into_markdown_blocks(checks):
     checks.ok(m.shown("a\u200bb\u202ec\x07d\u00a0e") == "abcd e", "invisible characters are removed and a no-break space becomes a space", m.shown("a\u200bb\u202ec\x07d\u00a0e"))
     checks.ok(m.utc("2026-10-03T09:12:44.123+01:00") == "2026-10-03T08:12:44Z" and m.utc("Sat, 18 Oct 2026 06:00:00 GMT") == "2026-10-18T06:00:00Z", "timestamps in one UTC shape")
     checks.ok(m.utc("0001-01-01T00:00:00+01:00") == "0001-01-01T00:00:00+01:00", "a time an offset carries past year 1 is kept as given")
+
+    class Before311(m.datetime):
+        """fromisoformat as Python 3.9 and 3.10 read it: a fraction of three or six digits only."""
+
+        @classmethod
+        def fromisoformat(cls, text):
+            fraction = re.search(r"\.(\d+)", text)
+            if fraction and len(fraction.group(1)) not in (3, 6):
+                raise ValueError(f"Invalid isoformat string: {text!r}")
+            return super().fromisoformat(text)
+
+    monkeypatch.setattr(m, "datetime", Before311)
+    fractions = ("2026-10-03T09:12:44.5+01:00", "2026-10-03T09:12:44.000+01:00", "2026-10-03T09:12:44.1234567891Z")
+    checks.ok([m.utc(t) for t in fractions] == ["2026-10-03T08:12:44Z", "2026-10-03T08:12:44Z", "2026-10-03T09:12:44Z"],
+              "a fraction of any length, which Python before 3.11 reads only in three or six digits", str([m.utc(t) for t in fractions]))
 
 
 def test_the_converter_keeps_the_body_after_head_metadata_and_macro_parameters(checks):

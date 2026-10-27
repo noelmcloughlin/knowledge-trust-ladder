@@ -16,6 +16,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A `git` entry downloads only the files that changed**, where it downloaded every file at the commit. A file refused for its size is not downloaded again while it stays the same.
 - **A new ETag for unchanged bytes is recorded by the next run that changes the lock**, so later runs get 304 where they fetched the body each time. A server that gives a new one on every answer changes no line of the lock.
 - **A `command` entry's timeout stops every process the command started**, where one it left in the background kept running. A lock edited into another shape stops the run by name, not with a traceback.
+- **The ingest and the pen run on Python 3.9, as their shell halves say**, where both wrote files with an argument Python takes only from 3.10. Before 3.11 the ingest also kept a time with a fraction of a second in its own offset, not UTC.
 
 ### Security
 
