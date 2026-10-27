@@ -1,0 +1,181 @@
+name: Docent eval
+
+# Runs ktl-docent on the holdout, tests/docent-holdout.yaml, through
+# `claude plugin eval`: one case per captured question under evals/, each run
+# once in an empty directory that holds the bundle alone
+# (evals/scaffold-bundle.sh), graded by pattern. A case passes when the
+# answer names the concept the holdout expects and the docent skill is what
+# answered; the suite passes when at most one case fails (the justfile's
+# docent-eval recipe).
+#
+# What a green run proves, and what it does not. It proves that the docent,
+# with this bundle and this week's model, named the expected concept for
+# all but at most one question. It does not prove that an answer was right:
+# no judge reads the answers, and a wrong answer can name the right
+# concept. tests/test_docent_holdout.py, which every pull request runs,
+# proves the expected concepts still exist; this run proves the docent
+# finds them.
+#
+# It runs weekly and by hand, never on a pull request or a push: each run is
+# eight paid agent runs under a cost ceiling, which a pull request from a
+# fork must never be able to spend. It is inert until the repository
+# variable KNOWLEDGE_DOCENT_EVAL_ENABLED is `true`.
+#
+# One job, read-only. The agent runs under a read-only token with no git
+# credential on disk. Its API credential is the AGENT_API_KEY secret of the
+# `docent-eval` Environment, limited to the default branch, handed to it
+# under the name the AGENT_API_KEY_ENV repository variable gives, as the
+# librarian's wrapper hands over its key; the secret reaches this job and
+# nothing else. Nothing is written to the repository: the results go up as
+# a workflow artifact and into the run's summary.
+on:
+  schedule:
+    - cron: "0 7 * * 3" # Wednesdays at 07:00 UTC; Monday morning is the registrar's and the librarian's
+  workflow_dispatch:
+
+permissions: {} # deny by default; the one job requests read alone
+
+concurrency:
+  group: docent-eval
+  cancel-in-progress: false
+
+jobs:
+  docent-eval:
+    name: Run the docent on the holdout (agent, read-only)
+    # Set the variable under Repository variables, not on an environment: a
+    # job's `if:` sees only repository and organization variables. Anything
+    # but `true`, or unset, skips the job and spends nothing.
+    if: vars.KNOWLEDGE_DOCENT_EVAL_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    # Eight runs of five minutes at most, after the install steps.
+    timeout-minutes: 60
+    # AGENT_API_KEY belongs in this Environment, limited to the default
+    # branch, so a workflow on any other branch cannot read it. It records
+    # no deployment.
+    environment:
+      name: docent-eval
+      deployment: false
+    permissions:
+      contents: read # read the repo only; no write token near the agent
+    steps:
+      # Same audit-mode egress monitor the other workflows use; this job
+      # installs packages and runs a third-party agent.
+      - name: Harden the runner
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # keep GITHUB_TOKEN off disk while the agent runs
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+
+      # just comes from .lokf/uv.lock, checked against its hash, and only
+      # its own command goes on PATH, as validate.yml installs it.
+      - name: Install just
+        run: |
+          uv sync --locked --project .lokf
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Claude Code runs the eval and is the agent under test's runtime; it
+      # installs through npm and needs Node 18 or newer, which a runner
+      # image does not promise.
+      - name: Set up Node for Claude Code
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      # Pinned, as the sidecar's automation page pins the agent commands, so
+      # a run executes the code that was tried. `claude plugin eval` needs
+      # 2.1.269 or later. A new release reaches this job when the pin moves.
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@2.1.310
+
+      # Set these up under Settings -> Secrets and variables -> Actions: the
+      # variables on the repository, and the secret on the docent-eval
+      # Environment, limited to the default branch.
+      #   1. Set KNOWLEDGE_DOCENT_EVAL_ENABLED to "true" to turn on the run.
+      #   2. Set AGENT_API_KEY_ENV to the name Claude Code reads its
+      #      credential from: ANTHROPIC_API_KEY for a Console key, or
+      #      CLAUDE_CODE_OAUTH_TOKEN for the token `claude setup-token`
+      #      prints. The librarian reads the same variable.
+      #   3. Put the key or token in the AGENT_API_KEY secret.
+      #   4. Optional: set KNOWLEDGE_DOCENT_EVAL_COST to the ceiling in US
+      #      dollars, a list-price estimate checked before each run starts;
+      #      unset, it is 5.
+      # The name is checked as the librarian's wrapper checks it, so a slip
+      # cannot hand the key to gh, git or the runner, and the key reaches
+      # the recipe's environment alone, never a log or an argument list.
+      # The cost reaches the script through the environment, not by
+      # expansion into it.
+      - name: Run the docent on the holdout
+        env:
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          AGENT_API_KEY_ENV: ${{ vars.AGENT_API_KEY_ENV }}
+          KNOWLEDGE_DOCENT_EVAL_COST: ${{ vars.KNOWLEDGE_DOCENT_EVAL_COST || '5' }}
+        run: |
+          set -euo pipefail
+          key_name="${AGENT_API_KEY_ENV:-}"
+          agent_key="${AGENT_API_KEY:-}"
+          unset AGENT_API_KEY AGENT_API_KEY_ENV
+          if [ -z "$agent_key" ]; then
+            echo "::error::the AGENT_API_KEY secret of the docent-eval Environment is empty; the eval needs a Claude Code credential"
+            exit 2
+          fi
+          if [ -z "$key_name" ]; then
+            echo "::error::set the AGENT_API_KEY_ENV repository variable to the name Claude Code reads its credential from: ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN"
+            exit 2
+          fi
+          if ! [[ "$key_name" =~ ^[A-Z][A-Z0-9_]*_(API_KEY|TOKEN|KEY)$ ]] \
+             || [[ "$key_name" =~ ^(GITHUB|GH|GIT|RUNNER|ACTIONS)_ ]]; then
+            echo "::error::AGENT_API_KEY_ENV '$key_name' is refused: use the upper-case name Claude Code reads its key from, ending _API_KEY, _TOKEN or _KEY and not starting GITHUB_, GH_, GIT_, RUNNER_ or ACTIONS_"
+            exit 2
+          fi
+          if ! [[ "$KNOWLEDGE_DOCENT_EVAL_COST" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::KNOWLEDGE_DOCENT_EVAL_COST '$KNOWLEDGE_DOCENT_EVAL_COST' is not a number of US dollars"
+            exit 2
+          fi
+          export "$key_name=$agent_key"
+          just docent-eval "cost=$KNOWLEDGE_DOCENT_EVAL_COST"
+
+      # The count and each failed case's name, from the result the recipe
+      # read, on the run's page; or the reason there is none.
+      - name: Write the summary
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          result=evals/results/docent-eval.json
+          {
+            echo "## Docent holdout"
+            echo ""
+            if [ -s "$result" ]; then
+              echo "$(jq -r '.aggregates.casesPassed' "$result") of $(jq -r '.aggregates.casesTotal' "$result") cases named the expected concept; the bar is all but one."
+              if [ "$(jq -r '.partial // false' "$result")" = "true" ]; then
+                echo ""
+                echo "The run was partial ($(jq -r '.partialReason // "unknown"' "$result")): not every case ran, so the count is not the suite's."
+              fi
+              failed="$(jq -r '.cases[] | select(.aggregates.score < 1) | .name' "$result")"
+              if [ -n "$failed" ]; then
+                echo ""
+                echo "Failed:"
+                echo ""
+                printf '%s\n' "$failed" | sed 's/^/- /'
+              fi
+            else
+              echo "No result was written: the suite did not load, or the run stopped before any case."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The JSON the recipe read, and the HTML report of the same run, for
+      # anyone reading why a case failed. Nothing is committed.
+      - name: Upload the results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docent-eval-results
+          path: evals/results/
+          if-no-files-found: warn

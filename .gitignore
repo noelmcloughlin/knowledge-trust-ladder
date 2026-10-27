@@ -15,3 +15,6 @@ __pycache__/
 
 # Papers are cited by their arXiv link, never committed.
 *.pdf
+
+# What each `claude plugin eval` run writes beside the cases (evals/README.md).
+evals/results/

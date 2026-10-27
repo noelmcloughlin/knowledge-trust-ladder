@@ -24,6 +24,7 @@ skills/
   semantic-release.yml       version and changelog from Conventional Commits on main; never tags
   publish.yml                maintainer-gated release (workflow_dispatch only)
   knowledge-website.yaml     ktl-website's workflow: builds website/ on each PR, publishes the default branch's build to Pages
+  docent-eval.yml            the docent holdout, run through `claude plugin eval` weekly and by hand under a cost cap; never on a pull request
 docs/
   architecture.md       the architecture the poem, LOKF and LinkML inspired: the catalogue, the five roles and the trust ladder
   architecture.en-simple.md  the architecture page retold for readers aged 13 to 18
@@ -56,6 +57,12 @@ tests/                     the behavioural tests of the sidecar scripts and the 
   test_*.py                one module per script: the pen, the gate, the report, the conventions checker,
                            the feedback recorder, the preflight, the prose checker, the layouts the
                            wrapper and the workflows run in, and the website skill's preflight and templates
+  docent-holdout.yaml      the eight captured docent questions and the concept each answer should rest on, as data; outside .lokf/ so the docent cannot read it
+  docent-holdout-schema.yaml  its LinkML shape, importing LOKF's schema for Concept
+  test_docent_holdout.py   checks that each expected concept still exists and that evals/ asks the same questions
+evals/                     the holdout as `claude plugin eval` cases, one directory per question with its prompt, graders and scaffold; README.md says how to run it
+  scaffold-bundle.sh       copies .lokf/knowledge/ alone into a run's empty directory
+justfile                   `just docent-eval` runs that suite under a cost cap, `just docent-holdout` its test; the sidecar's recipes stay in .lokf/justfile
 website/                   the website: Astro Starlight, this repository's copy of ktl-website's templates
   site.config.mjs          the site's values and options: addresses, title, logo, docs groups, extra pages
   scripts/config.mjs       settles those options against the repository; `node scripts/config.mjs` prints them

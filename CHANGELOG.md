@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **Three conventions the gate checks, rules 15 to 17.** Every concept names where it came from, as `resource` or a `sources` entry. A footnote in a body joins a claim to a `sources` entry by its `id`, each id is cited and defined, and one id names one resource across the bundle. Each **Added** and **Deprecation** bullet a run logs names a concept the bundle holds, read since the pull request's base at the gate. The count moves from fourteen to seventeen wherever the pages and scripts state it.
+- **The librarian gives a source an `id` and cites it with a footnote** wherever a claim rests on a number, a name or a qualifier; `references/golden-rules.md` says how to choose the id and write the footnote.
+- **A docent holdout, and an eval that runs it.** `tests/docent-holdout.yaml` pairs the eight captured questions with the concept each answer should rest on, a test fails when one of those concepts moves, and `just docent-eval` runs ktl-docent on them through `claude plugin eval`, weekly under a cost ceiling in `docent-eval.yml` and never on a pull request. [The docent eval](docs/threat-model.md#the-docent-eval) says what a green run proves.
+- **The curator's report lists each retired concept whose successor no person has confirmed.** An agent may propose a retirement, and the retired concept governs until a person confirms the successor; `knowledge-report.sh` prints the list and ktl-curator's Step 1 says what it means.
+- **A curation policy may carry `Automation re-check: <n>`.** The curator's report then lists n concepts checked by automation only, picked by the same hash rule as `Independent re-check:`, for a person to check against their sources.
+
+### Fixed
+
+- **The sidecar's two example concepts carry a `resource`**, the placeholder endpoint they already name, so the skeleton keeps rule 15 before anyone edits it.
+- **A review date is read by its day.** `knowledge-report.sh` compared `stale_after` with today as whole strings, so a datetime value, which LOKF 0.9.0 types the field as, could read as not yet due on its own day, or as no date at all.
+
 ## [0.57.0] - 2026-10-27
 
 ### Added

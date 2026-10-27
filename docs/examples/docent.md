@@ -143,6 +143,8 @@ The link checker follows each link below on every build, so a concept that is re
 | 7. What is the roadmap for a fifth skill? | [playbooks/ktl-prose-skill.md](../../.lokf/knowledge/playbooks/ktl-prose-skill.md), [explanation/why-four-roles.md](../../.lokf/knowledge/explanation/why-four-roles.md); a miss when captured, and the skill exists now |
 | 8. Who do I contact about a security issue? | [policies/security.md](../../.lokf/knowledge/policies/security.md) |
 
+[`tests/docent-holdout.yaml`](../../tests/docent-holdout.yaml) holds the same pairs as data, [`tests/test_docent_holdout.py`](../../tests/test_docent_holdout.py) checks on every pull request that each concept still exists, and `just docent-eval` runs the docent on them weekly through `claude plugin eval`, from the cases under [`evals/`](../../evals/README.md).
+
 ---
 
 Try these yourself once `ktl-docent` is installed, or ask your own: that is the point of the skill.
