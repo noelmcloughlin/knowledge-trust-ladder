@@ -2,6 +2,7 @@
 
 ## 2026-10-27
 
+* **Changed**: the knowledge sources map's external-URLs row names the Conventional Commits preset's parser in place of the Angular preset pages, as `policies/versioning.md` and `playbooks/releasing.md` cite it since 0.56.3. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the threat model concept counts seven workflow templates under the two template folders, as `docs/threat-model.md` does since fc02830. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the versioning policy says a `!` after the type gives a major release, since `.releaserc.json` names the Conventional Commits preset and `semantic-release.yml` pins it (0.56.3). The preset's parser replaces the Angular parser among its sources. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Resolved**: the versioning question on `!` is settled, since `.releaserc.json` names the Conventional Commits preset from fc02830 on, the change a person's answer asked for.
