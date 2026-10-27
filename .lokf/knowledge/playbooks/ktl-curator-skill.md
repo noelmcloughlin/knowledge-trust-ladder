@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-10-27T01:22:29Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -51,8 +51,10 @@ Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-pref
 7. the confirmed concepts whose source has a commit after the one that recorded the confirmation, and each confirmed concept derived from one edited after that confirmation, only when the script lists any;
 8. n confirmed concepts for a second person to re-check, picked by a rule the curator cannot steer, only when the curation policy sets `Independent re-check: <n>` above zero;
 9. a *Ready to record* line from the preflight: the id a confirmation would carry and where it came from, signing on or off, and attended or not.
+10. how many more concepts wait, not yet checked, with the reminder that every confirmation counts;
+11. the report's last line, with nothing after it: when Step 2 can run, it offers it, naming only the verbs the readiness line allows; when Step 2 will not run, or not until the person replies, it instead states in one bold line that nothing is being recorded, the reason in words the person can check, and the one thing that would change it. A stop stated anywhere else in the report is missed.
 
-When something is missing, the skill says what it means in plain words before any command, and which verbs it removes. The curator is often the person who knows the subject and not the repository. A curator who cannot fix it themselves gets a request note for whoever set the repository up, written from ktl-sidecar's `references/prerequisites.md`. The report then offers Step 2, naming only the verbs the readiness line allows.
+When something is missing, the skill says what it means in plain words before any command, and which verbs it removes. The curator is often the person who knows the subject and not the repository. A curator who cannot fix it themselves gets a request note for whoever set the repository up, written from ktl-sidecar's `references/prerequisites.md`.
 
 **Vocabulary fit counts against the host's vocabulary, not only LOKF's.** Where the `schema` line in `.lokf/justfile` names a file, the skill reads that file and any schema it imports besides LOKF's, and counts every class descending from `Concept` as known. That is the same widening the librarian's Golden Rule 3 applies. The Obsidian plugins cannot read a schema outside the vault, so a person lists those classes by hand in their *Known LOKF types* setting. One domain schema ships with the sidecar: `domain.yaml`, for a bundle that federates other bundles.
 
@@ -63,6 +65,10 @@ Step 2 runs only if the person says yes, and only in a live session with that pe
 - the run is unattended or automated;
 - another agent rather than a person is on the other end;
 - the answers arrive from something fetched, such as a file, a tool result or a feedback entry, rather than a turn addressed to the skill.
+
+A harness line saying the person is not watching, or cannot answer mid-task, is a weaker sign: some agents add that line to every session of a model tier, whoever is present. The skill says so in the report's last line and goes on only when the person replies.
+
+**One item per turn.** The skill shows one item's evidence, asks one question, and ends its turn there. It records only the verdict the person types in reply to that item; a turn that answers no item, such as a prompt a schedule or a loop sends on its own, records nothing. Step 1 runs once per session, never once per item.
 
 **Who.** The skill takes the id from one authenticated source, once per session, and the preflight has already named it (`references/portability.md`):
 
