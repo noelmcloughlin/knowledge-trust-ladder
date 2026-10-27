@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Security
-
-- **The pen and the librarian's pull request take out the characters the mirror takes out, variation selectors among them**, and the ingest refuses a file name that holds one. They went by Unicode's control and format categories alone.
-
 ## [0.57.0] - 2026-10-27
 
 ### Added
@@ -49,6 +45,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **One source can no longer hold the run or fill the disk.** A body has a deadline of ten timeouts, a Confluence listing ends after a page for each result `max_items` allows, lists and quotes nest at most eight deep, and the caps count the Markdown written.
 - **The mirror keeps no `javascript:` or `data:` link, whatever the scheme's letter case, and no character Unicode marks as invisible**, variation selectors among them. Each title and each line of the summary is one line.
 - **An `http` entry needs `allow_private_addresses: true` for a plain `http://` address**, as the manifest's comment says.
+- **The pen and the librarian's pull request take out the characters the mirror takes out, variation selectors among them**, and the ingest refuses a file name that holds one. They went by Unicode's control and format categories alone.
 
 ## [0.56.2] - 2026-10-27
 
