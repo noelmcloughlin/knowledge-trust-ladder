@@ -6,10 +6,13 @@ and pin:
 
 1. an http address is mirrored with its header and its lock record, a second
    run that gets 304 writes nothing, and a changed page is fetched again;
-2. a private address is refused unless the manifest allows it, and so is a
-   name that turns private between the check and the connection. Git is
-   held to the address the check found and follows no redirect. Through a
-   proxy, the name is checked once and the proxy resolves it;
+2. a private address, which is any address that is not global, is refused
+   unless the manifest allows it, and so is a name that turns private
+   between the check and the connection. Git is held to every address the
+   check found, and stops at a redirect it would otherwise follow. An IP
+   address takes no pin, and an address git's own configuration rewrites is
+   refused. Through a proxy, the name is checked once and the proxy
+   resolves it;
 3. a PDF's text layer is mirrored, and a PDF without one is refused;
 4. a Confluence selection is listed with its versions and fetched by v2 on
    Cloud and v1 on Data Center. An unchanged page costs no body, and a page
@@ -371,10 +374,126 @@ def test_git_is_held_to_the_address_the_check_found_and_follows_no_redirect(chec
         checks.ok("xn--" in str(e), "a host name outside ASCII, which git would not match to its pin, is refused", str(e))
 
 
+def recording_listener():
+    """A socket on 127.0.0.1 that records each connection it accepts, and the list it records them in."""
+    listener = socket.create_server(("127.0.0.1", 0))
+    listener.settimeout(0.2)
+    reached = []
+
+    def accept():
+        while True:
+            try:
+                conn, _ = listener.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                return
+            reached.append(True)
+            conn.close()
+
+    threading.Thread(target=accept, daemon=True).start()
+    return listener, reached
+
+
+def test_a_pinned_git_stops_at_a_redirect_that_git_would_otherwise_follow(tmp_path, checks, monkeypatch):
+    """A redirect would send git to a name it resolves itself, so the pinned fetch stops at the 302; git's default follows it."""
+    import ssl
+
+    m = load_module()
+    if m.git_version() < (2, 37):
+        pytest.skip("git 2.37 or later reads http.curloptResolve")
+    if not shutil.which("openssl"):
+        pytest.skip("openssl makes the test's certificate")
+    for name in m.PASSED_THROUGH:
+        monkeypatch.delenv(name, raising=False)
+    cert, key = tmp_path / "cert.pem", tmp_path / "key.pem"
+    subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", str(key), "-out", str(cert), "-days", "1",
+                    "-subj", "/CN=rebind.example.invalid", "-addext", "subjectAltName=DNS:rebind.example.invalid"], check=True, capture_output=True)
+    monkeypatch.setenv("GIT_SSL_CAINFO", str(cert))  # passed through to git, as a company's certificate is
+    elsewhere, reached = recording_listener()
+    asked = []
+
+    class Redirect(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *args):  # noqa: D102 - quiet
+            pass
+
+        def do_GET(self):  # noqa: N802 - the handler's name
+            asked.append(self.path)
+            self.send_response(302)
+            self.send_header("Location", f"https://127.0.0.1:{elsewhere.getsockname()[1]}{self.path}")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Redirect)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain(cert, key)
+    httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    try:
+        url = f"https://rebind.example.invalid:{httpd.server_address[1]}/acme/wiki.git"
+        real = m.socket.getaddrinfo
+        monkeypatch.setattr(m.socket, "getaddrinfo", lambda host, *a, **k: real("127.0.0.1" if host == "rebind.example.invalid" else host, *a, **k))
+        monkeypatch.setattr(m, "ip_is_private", lambda address: False)  # 127.0.0.1 stands for a public address
+        ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, "2026-10-18T06:00:00Z", 30)
+        entry = m.Entry(id="wiki", kind="git", url=url, ref="main")
+        try:
+            m.run_git(ctx, entry, {})
+            checks.ok(False, "the redirect stops the fetch")
+        except m.FetchFailed as e:
+            checks.ok("302" in str(e), "git stops at the 302", str(e))
+        checks.ok(asked == ["/acme/wiki.git/info/refs?service=git-upload-pack"] and not reached,
+                  "git asked once, over the pinned TLS connection, and went nowhere else", f"{asked} {reached}")
+        # The same pin without followRedirects=false: git follows the redirect, so the setting is what stops it.
+        control = tmp_path / "control"
+        env = m.git_env(entry, ctx, [p for p in m.git_pin(url) if p[0].endswith("curloptResolve")])
+        subprocess.run(["git", "init", "-q", str(control)], env=env, capture_output=True, timeout=60)
+        for args in (["remote", "add", "origin", url], ["fetch", "-q", "--depth", "1", "origin", "main"]):
+            subprocess.run(["git", "-C", str(control), *args], env=env, capture_output=True, timeout=60)
+        checks.ok(reached == [True], "without the setting, git follows the redirect to the other address", str(reached))
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+        elsewhere.close()
+
+
 def answering(*addresses):
     """getaddrinfo's answer for the addresses, IPv4 and IPv6, port 443, with no resolver asked."""
     return [(socket.AF_INET6, socket.SOCK_STREAM, 6, "", (a, 443, 0, 0)) if ":" in a else (socket.AF_INET, socket.SOCK_STREAM, 6, "", (a, 443))
             for a in addresses]
+
+
+def test_the_pin_checks_every_answer_and_holds_only_a_named_host(checks, monkeypatch):
+    """Every answer is checked and pinned, IPv6 in brackets; an IP address needs no pin and no newer git; a manifest that allows private addresses takes no pin."""
+    m = load_module()
+    names = {"mixed.example.invalid": ["93.184.216.34", "10.0.0.7"], "dual.example.invalid": ["93.184.216.34", "2606:2800:220:1:248:1893:25c8:1946"],
+             "six.example.invalid": ["2606:2800:220:1:248:1893:25c8:1946"]}
+    monkeypatch.setattr(m.socket, "getaddrinfo", lambda host, *a, **k: answering(*names.get(host, [host])))
+    monkeypatch.setattr(m, "git_version", lambda: (2, 43))
+    try:
+        m.git_pin("https://mixed.example.invalid/wiki.git")
+        checks.ok(False, "a name with one private answer among public ones is refused")
+    except m.Refused as e:
+        checks.ok("mixed.example.invalid resolves to 10.0.0.7" in str(e), "a name with one private answer among public ones is refused", str(e))
+    url = "https://dual.example.invalid/wiki.git"
+    checks.ok(dict(m.git_pin(url)).get(f"http.{url}.curloptResolve") == "dual.example.invalid:443:93.184.216.34,[2606:2800:220:1:248:1893:25c8:1946]",
+              "every answer is pinned, an IPv6 one in brackets", str(m.git_pin(url)))
+    url = "https://six.example.invalid/wiki.git"
+    checks.ok(dict(m.git_pin(url)).get(f"http.{url}.curloptResolve") == "six.example.invalid:443:[2606:2800:220:1:248:1893:25c8:1946]",
+              "an IPv6 answer alone is pinned in brackets", str(m.git_pin(url)))
+    monkeypatch.setattr(m, "git_version", lambda: (2, 36))
+    url = "https://93.184.216.34/wiki.git"
+    checks.ok(m.git_pin(url) == [(f"http.{url}.followRedirects", "false")], "an IP address takes no pin, so an older git serves", str(m.git_pin(url)))
+    # A manifest that allows private addresses takes no pin and no check: git connects as it would by hand.
+    monkeypatch.setattr(m, "git_pin", lambda url: pytest.fail("a manifest that allows private addresses takes no pin"))
+    closed = socket.create_server(("127.0.0.1", 0))
+    port = closed.getsockname()[1]
+    closed.close()
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, True, []), {}, "2026-10-18T06:00:00Z", 30)
+    try:
+        m.run_git(ctx, m.Entry(id="wiki", kind="git", url=f"https://127.0.0.1:{port}/wiki.git", ref="main"), {})
+        checks.ok(False, "nothing listens, so the fetch fails")
+    except m.FetchFailed as e:
+        checks.ok("fetch failed" in str(e), "the fetch ran unpinned and failed at the closed port", str(e))
 
 
 def test_a_git_address_that_git_rewrites_is_refused(tmp_path, checks, monkeypatch):
