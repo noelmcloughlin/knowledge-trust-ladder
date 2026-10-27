@@ -107,3 +107,4 @@ sources:
 ## Open questions
 
 - 2026-10-18, process:ktl-librarian: The website rows exclude the site's components, styles and scripts. Is the rest of `src/`, in `website/` and in ktl-website's template, excluded too: its pages, `assets/`, `content.config.ts`, `routeData.ts`, `socialCards.ts` and `trust.ts`? If not, `playbooks/website.md` and `playbooks/ktl-website-skill.md` should cite them.
+- 2026-10-27, human:noelmcloughlin: exclude all of `src/`, in `website/` and in ktl-website's template: its pages, `assets/`, `content.config.ts`, `routeData.ts`, `socialCards.ts` and `trust.ts` are site code like the components and styles, so both website rows should say the whole of `src/` is consciously excluded as concepts. `playbooks/website.md` cites the files it names through `website/README.md`.

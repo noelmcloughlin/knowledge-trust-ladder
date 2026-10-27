@@ -49,5 +49,5 @@ One asymmetry to know: tags carry a `v` prefix (`v0.16.0`), and `publish.yml` re
 
 ## Open questions
 
-- 2026-10-13, human:noelmcloughlin: the table says `!` after the type gives a major release, as `docs/releasing.md` does, but `.releaserc.json` uses the default Angular preset, which may not parse a `feat!:` header. Check what the configuration actually does with `!` before this concept repeats the claim.
 - 2026-10-13, process:ktl-librarian: `docs/releasing.md` and the `plan` job in `.github/workflows/semantic-release.yml` treat `!` after the type as breaking. `.releaserc.json` names no preset, and the default Angular preset of commit-analyzer, which the workflow pins at 13.0.1, has no place for `!` in its header pattern, so a `feat!:` commit releases nothing. Which should change: the preset, or the page and the plan job?
+- 2026-10-27, human:noelmcloughlin: change the preset: set `"preset": "conventionalcommits"` in `.releaserc.json` and pin `conventional-changelog-conventionalcommits` beside commit-analyzer in `semantic-release.yml`, so `!` after the type gives a major release as `docs/releasing.md` says. The page and the `plan` job stay as they are; the fix lands outside `.lokf/`, in its own change.

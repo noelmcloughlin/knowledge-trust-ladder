@@ -43,7 +43,3 @@ Scaffolded bundles depend on `lokf[build]>=0.8.0`, a floor and not a pin. Since 
 Where Python is unavailable, the skills fall back to a structural cross-check against the raw schema, which is not a validation run. They read it from the commit tagged `v0.8.0`, which matches the `lokf` floor: `raw.githubusercontent.com/nicholsn/lokf/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/lokf.yaml`. Since 2026-10-05 the URL names that commit, never a tag or `main`, because a tag can be moved. The pin moves with the floor, so the fallback cross-checks against the schema the installed toolkit enforces. That file is byte-identical to the schema inside the `lokf` 0.8.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present.
 
 ktl-librarian checks the toolkit's version in a live session. It compares the latest `lokf` on PyPI with the `>=` floor in `.lokf/pyproject.toml`. For a minor or patch release it raises the floor, runs `uv sync` and validates again. For a major release, or a breaking change in the changelog, it asks the person first. It never bumps `linkml` on its own.
-
-## Open questions
-
-- 2026-10-19, human:noelmcloughlin: refresh against sources.

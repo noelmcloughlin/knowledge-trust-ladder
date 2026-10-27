@@ -77,7 +77,3 @@ The page lists designs, not features. Each would extend KTL's checks from what t
 - the excerpt check, once the `sources[].excerpt` field proposed for LOKF 0.9.0 is released.
 
 That is a condition check, the work a museum gives its conservator rather than its librarian. If KTL takes these on, they belong to a new role.
-
-## Open questions
-
-- 2026-10-19, human:noelmcloughlin: refresh against sources.

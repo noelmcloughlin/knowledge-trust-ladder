@@ -89,7 +89,3 @@ The reversal keeps these, because they cost nothing and still cover a shared fol
 - the dual pathspecs in the Step 5 templates;
 - the plugins' auto-detection of a top-level `knowledge_bundle/`, and their *Bundle root folders* setting;
 - the junction guidance for Windows.
-
-## Open questions
-
-- 2026-10-19, human:noelmcloughlin: refresh against sources.

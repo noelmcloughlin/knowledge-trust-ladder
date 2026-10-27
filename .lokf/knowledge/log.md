@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-27
+
+* **Curation**: human:noelmcloughlin confirmed none and sent 3 back, after reading each concept beside its sources, and cleared all 20 of their own notes. The ktl-sidecar skill and the Threat model went back with notes on where they part from their sources, and the Security policy went back with its text released to the librarian for a refresh from `SECURITY.md`, its four librarian questions cleared. Two librarian questions now carry the person's answer: the release preset becomes `conventionalcommits` (Versioning policy), and all of `website/src/` is excluded as concepts (Knowledge sources).
+
 ## 2026-10-26
 
 * **Prose**: reworded 15 concept bodies in plain English. No fact, link, number or frontmatter changed.

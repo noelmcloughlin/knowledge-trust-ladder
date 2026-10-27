@@ -109,5 +109,4 @@ Once the agent returns, the wrapper removes whatever is at the paths the workflo
 
 ## Open questions
 
-- 2026-10-19, human:noelmcloughlin: do a fresh check with sources and ask curator questions on deviations if any exist.
-- 2026-10-19, human:noelmcloughlin: needs refresh from sources
+- 2026-10-27, human:noelmcloughlin: review lines 48 (workflow write to `main`), 66 (ingest drops a limit), 106 (what this does not cover, drops the outer limit) and 58 (sync, leaves out the committer check); the `build` job "decides what `publish` signs" (:37); the ingest refuses an unexpected content type and drops the credential on a redirect (:74); the pen refuses more than ten feedback entries (:104); the hand-off strips characters by Unicode category (:105); the PR "never pushes to `main` and never auto-merges" (:123). The :NN numbers are lines of `docs/threat-model.md`.

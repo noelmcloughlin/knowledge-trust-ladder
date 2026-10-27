@@ -45,7 +45,3 @@ In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins work
 In the three lines of defence that regulated industries use, the librarian and the curator are the first line, the registrar the second, and the bundle holds the evidence a third line would need ([three lines of defence](three-lines-of-defence.md)).
 
 The curator is always a person. The skill and the plugin that carry the name reach no verdict of their own.
-
-## Open questions
-
-- 2026-10-19, human:noelmcloughlin: refresh against sources.

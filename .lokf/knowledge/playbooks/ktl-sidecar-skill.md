@@ -144,6 +144,5 @@ The preflight warns on its `python` line when python3 is older than 3.9, and on 
 
 ## Open questions
 
-- 2026-10-13, human:noelmcloughlin: the wrapper does not search `.agents/skills/` first; `skills/ktl-sidecar/SKILL.md` gives the order `.claude/skills/`, `.github/skills/`, `.agents/skills/`, then bare `skills/`. "Added the same day" for `references/m365.md` reads as 2026-10-07, but git adds it on 2026-09-24. Also carry "Never overwrite concept files", that `<BASE_IRI>` is never the code-host repository URL, that tracked or gitignored changes four things, and that placeholders are substituted via Python, not sed.
-- 2026-10-19, human:noelmcloughlin: refresh against sources.
 - 2026-10-26, process:ktl-librarian: `skills/ktl-sidecar/references/automation.md` says each librarian variable goes under Repository variables because a variable set on an Environment is never seen, since a job's `if:` reads only repository and organization variables. `.github/workflows/knowledge-librarian.yaml` reads `KNOWLEDGE_LIBRARIAN_ENABLED` in the `refresh` job's `if:`, and `AGENT_API_KEY_ENV`, `AGENT_PROMPT_FLAG` and `KNOWLEDGE_RETRIEVAL` in a step of that job, which runs in the `knowledge-librarian` Environment. The concept follows the page. Does the page's reason hold for the variables a step reads, or should it name the `if:` alone?
+- 2026-10-27, human:noelmcloughlin: line 96: `KNOWLEDGE_LIBRARIAN_ENABLED` is read in step `if:`s, not the job's.

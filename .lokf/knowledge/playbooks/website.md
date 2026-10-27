@@ -86,7 +86,3 @@ The workflow has two jobs, for least privilege. `build` installs the lokf toolki
 The graph explorer, `src/components/KnowledgeGraph.astro`, is adapted from the LOKF toolkit's own site under Apache-2.0, as `website/NOTICE` records. Since 0.54.0 its search and filters sit in a side panel beside a graph that keeps its full height in full screen, and each filter shows a count, with *All* and *None* on each group (`CHANGELOG.md`). The two typefaces, Source Serif 4 for headings and Atkinson Hyperlegible Next for text, are self-hosted from Fontsource under the SIL Open Font License 1.1.
 
 Since 0.56.1 (`CHANGELOG.md`) a concept's card, its link preview and its social card give the genre beside the type, a genre that repeats the type is left off, and search gains a Genre filter. A type is worded as the bundle's prose spells it. A page the browser kept from before a deploy reloads once when the deploy removed its stylesheet, instead of showing unstyled for up to ten minutes.
-
-## Open questions
-
-- 2026-10-19, human:noelmcloughlin: refresh against sources.
