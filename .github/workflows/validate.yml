@@ -158,7 +158,7 @@ jobs:
 
       # Catches what YAML parsing alone misses (bad expressions, wrong
       # contexts, invalid `needs:`, shellcheck on `run:` blocks). Unlike
-      # `gh skill publish --dry-run`, it also reaches the five workflow
+      # `gh skill publish --dry-run`, it also reaches the seven workflow
       # templates under skills/*/templates/github/ that get copied into
       # other repositories and run there. With no paths given
       # actionlint looks only under .github/workflows/, so the templates are

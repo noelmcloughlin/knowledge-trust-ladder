@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **A `!` after the type releases a major version.** `.releaserc.json` names the Conventional Commits preset, so a `feat!:` commit no longer releases nothing, as `docs/releasing.md` already said.
+
 ## [0.56.2] - 2026-10-27
 
 ### Fixed
