@@ -370,7 +370,7 @@ if [ -f "$root/.lokf/ingest.yaml" ]; then
   if [ -f "$root/.lokf/scripts/knowledge-ingest.sh" ]; then
     status="$(bash "$root/.lokf/scripts/knowledge-ingest.sh" --root "$root" --status 2>/dev/null)" || status=""
     case "$status" in
-      "ingest: "*"missing from the mirror"*|"ingest: "*"the lock does not name"*|"ingest: "*"needs 2.3"[17]" or later"*) warn ingest "${status#ingest: }" ;;
+      "ingest: "*"missing from the mirror"*|"ingest: "*"the lock does not name"*|"ingest: "*"this git is "*) warn ingest "${status#ingest: }" ;;
       "ingest: "*) info ingest "${status#ingest: }" ;;
       *) info ingest ".lokf/ingest.yaml is here; its status was not read (no .lokf/.venv or python3 3.9 or later with pyyaml, and uv could not run it)" ;;
     esac

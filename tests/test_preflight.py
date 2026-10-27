@@ -171,36 +171,23 @@ def test_warns_about_a_python3_older_than_the_scripts_need(tmp_path):
     )
 
 
-def test_warns_when_git_is_too_old_for_an_ingest_git_entry(tmp_path):
-    """The ingest refuses to fetch a git entry that names a host with a git older than 2.37, so the preflight warns before a run fails."""
-    write(tmp_path / ".lokf" / "ingest.yaml",
-          'ingest_version: "1"\nentries:\n  - id: wiki\n    kind: git\n    url: https://git.acme.example/wiki.git\n    ref: main\n')
+@pytest.mark.parametrize("top, url, version, warning", [
+    ("", "https://git.acme.example/wiki.git", "2.36.6", r"this git is 2\.36, and a git entry that names a host needs 2\.37 or later: wiki"),
+    ("allow_private_addresses: true\n", "http://git.lan/wiki.git", "2.30.9", r"this git is 2\.30, and every git entry needs 2\.31 or later: wiki"),
+], ids=["a host name needs 2.37", "any entry needs 2.31"])
+def test_warns_when_git_is_too_old_for_an_ingest_git_entry(tmp_path, top, url, version, warning):
+    """The ingest refuses a git entry with a git older than it needs, 2.31 for any and 2.37 for one held to a host's address, so the preflight warns first."""
+    write(tmp_path / ".lokf" / "ingest.yaml", f'ingest_version: "1"\n{top}entries:\n  - id: wiki\n    kind: git\n    url: {url}\n    ref: main\n')
     scripts = tmp_path / ".lokf" / "scripts"
     scripts.mkdir(parents=True)
     for name in ("knowledge-ingest.sh", "knowledge-ingest.py"):
         shutil.copy(SCRIPTS / name, scripts)
-    fake = write(tmp_path / "fakebin" / "git", f'#!/bin/sh\n[ "$1" = "--version" ] && {{ echo "git version 2.36.6"; exit 0; }}\nexec {shutil.which("git")} "$@"\n')
+    fake = write(tmp_path / "fakebin" / "git", f'#!/bin/sh\n[ "$1" = "--version" ] && {{ echo "git version {version}"; exit 0; }}\nexec {shutil.which("git")} "$@"\n')
     fake.chmod(0o755)
-    result = preflight(tmp_path, env={"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}"})
-    assert result and matches(result.out, r"^warn    ingest +.*this git is 2\.36, and a git entry that names a host needs 2\.37 or later: wiki"), (
-        f"preflight did not warn about git 2.36: {result.out}"
-    )
-
-
-def test_warns_when_git_is_too_old_for_any_ingest_git_entry(tmp_path):
-    """Every ingest git entry needs git 2.31, which reads the configuration the run sets, so the preflight warns where the manifest allows private addresses too."""
-    write(tmp_path / ".lokf" / "ingest.yaml",
-          'ingest_version: "1"\nallow_private_addresses: true\nentries:\n  - id: notes\n    kind: git\n    url: http://git.lan/notes.git\n    ref: main\n')
-    scripts = tmp_path / ".lokf" / "scripts"
-    scripts.mkdir(parents=True)
-    for name in ("knowledge-ingest.sh", "knowledge-ingest.py"):
-        shutil.copy(SCRIPTS / name, scripts)
-    fake = write(tmp_path / "fakebin" / "git", f'#!/bin/sh\n[ "$1" = "--version" ] && {{ echo "git version 2.30.9"; exit 0; }}\nexec {shutil.which("git")} "$@"\n')
-    fake.chmod(0o755)
-    result = preflight(tmp_path, env={"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}"})
-    assert result and matches(result.out, r"^warn    ingest +.*this git is 2\.30, and every git entry needs 2\.31 or later: notes"), (
-        f"preflight did not warn about git 2.30: {result.out}"
-    )
+    # A proxy that resolves the name would take the pin away, and with it the need for 2.37.
+    unproxied = {name: "" for name in ("https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY")}
+    result = preflight(tmp_path, env={"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}", **unproxied})
+    assert result and matches(result.out, r"^warn    ingest +.*" + warning), f"preflight did not warn about git {version}: {result.out}"
 
 
 def test_warns_when_it_screens_the_sidecar_skill_itself(tmp_path):
