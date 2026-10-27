@@ -196,6 +196,26 @@ class Checks:
             pytest.fail(f"{len(self.failed)} check(s) failed:\n- " + "\n- ".join(self.failed), pytrace=False)
 
 
+def pytest_configure(config):
+    """Build each script's uv environment once, before pytest-xdist starts its workers.
+
+    uv keeps one environment per script path, and builds it, or rebuilds a
+    stale one, on the script's first run. On 2026-10-27 the four workers of a
+    CI run started the conventions script at once, and one failed to import
+    yaml.loader from that environment. Built here first, each environment is
+    complete before any test starts. Without uv, offline, or with a uv that
+    has no `sync --script`, the tests build it as before.
+    """
+    if hasattr(config, "workerinput") or not have("uv"):
+        return
+    for script in sorted([*SCRIPTS.glob("*.py"), *(REPO / "skills" / "ktl-prose" / "scripts").glob("*.py")]):
+        if "\n# /// script\n" in script.read_text(encoding="utf-8"):
+            try:
+                subprocess.run(["uv", "sync", "--quiet", "--script", str(script)], capture_output=True, timeout=300, check=False)
+            except subprocess.TimeoutExpired:
+                pass
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _isolated_environment(tmp_path_factory):
     patch = pytest.MonkeyPatch()
