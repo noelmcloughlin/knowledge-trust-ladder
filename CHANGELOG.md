@@ -15,7 +15,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The ingest refuses a `git` entry when git is older than 2.31.** An older git ignores the protocol limits and the credential that the script sets in git's environment. The preflight warns before a run.
 - **The ingest's git reads no `~/.netrc`, `~/.gitconfig` or `/etc/gitconfig`.** Through curl, git sent the credential of a `.netrc` default entry to any host that asked, and a git older than 2.32 read both configuration files. A file that `GIT_CONFIG_GLOBAL` names is still read.
 
-## [0.56.3] - 2026-10-27
+## [0.57.0] - 2026-10-27
+
+### Added
+
+- **A ktl-website home page offers a Schema button when the site shows a LinkML schema's pages.**
 
 ### Fixed
 

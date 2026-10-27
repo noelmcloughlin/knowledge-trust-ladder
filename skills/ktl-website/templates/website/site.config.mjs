@@ -102,6 +102,6 @@ export const WORKSPACE = "auto";
 // tagline under the title (a string, { boldLineOf: <file> } for the first
 // line of that file that is bold throughout, or DESCRIPTION when null); and
 // the buttons, with site-relative links (Browse the bundle, Architecture when
-// the docs have an architecture page, Bundle health and Knowledge graph when
-// null).
+// the docs have an architecture page, Schema when the site shows the schema,
+// Bundle health and Knowledge graph when null).
 export const HOME = { source: "auto", tagline: null, actions: null };
