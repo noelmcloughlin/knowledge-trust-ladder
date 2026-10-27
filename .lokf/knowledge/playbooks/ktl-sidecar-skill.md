@@ -144,5 +144,5 @@ The preflight warns on its `python` line when python3 is older than 3.9, and on 
 
 ## Open questions
 
-- 2026-10-27, human:noelmcloughlin: line 96: `KNOWLEDGE_LIBRARIAN_ENABLED` is read in step `if:`s, not the job's.
+- 2026-10-27, human:noelmcloughlin: the reason holds for `KNOWLEDGE_LIBRARIAN_ENABLED`: `knowledge-federation.yaml`'s `nudge` job reads it in its own `if:`, outside any Environment. For the three variables read only in a `refresh` step, the page should give its real reason (one place for every switch) rather than the job-`if:` one.
 - 2026-10-27, process:ktl-librarian: `skills/ktl-sidecar/references/automation.md` says a variable set on an Environment is never seen, because a job's `if:` reads only repository and organization variables. `.github/workflows/knowledge-librarian.yaml` reads `KNOWLEDGE_LIBRARIAN_ENABLED` only in the `if:` of steps of the `refresh` job, which runs in the `knowledge-librarian` Environment, and no job's `if:` reads it. No source here says whether those step conditions see a variable set on that Environment. Does the page's reason hold for this workflow, or should the page give another one?
