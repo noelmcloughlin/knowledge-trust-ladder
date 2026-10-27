@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The curator's report ends with its stop.** When the review session will not run, the report's last line says so, gives the reason, and names what changes it. A harness line saying the person cannot answer no longer stops the session on its own: the curator says it and goes on only when the person replies, one item per turn.
+
 ## [0.56.1] - 2026-10-26
 
 ### Changed

@@ -36,6 +36,8 @@ git cat-file commit HEAD | grep -qE '^gpgsig' \
 
 If signing is off and this person would be the one opening the curation PR, tell them before they spend twenty minutes confirming things. GitHub does not let anyone approve their own pull request, so the `provenance` job's only remaining evidence is their signature. Without it, every confirmation from this session is rejected at the gate.
 
+The full setup, GPG or SSH, is [docs/signing-commits.md](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/signing-commits.md) in the skill's home repository.
+
 What to say, and what not to do:
 
 - Show the three `git config` lines from ktl-sidecar's [`references/gate.md`](../../ktl-sidecar/references/gate.md), and the part that catches people out: the same key must also be added at `github.com/settings/keys` **as a signing key**, because the job reads GitHub's verdict, not the local one.
