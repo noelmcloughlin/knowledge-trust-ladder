@@ -4,19 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **The federation's members script moves the day of a pruned release.** When the release list no longer holds a member's old release, the day the text writes right after the old tag moves with the tag, and only there.
-- **The federation's members script follows a member's moved namespace.** When a new release's `index.md`, or a served file's `@base`, names another `base_iri`, the patch sets it and the question says so. The build refused such a member before. A namespace the build would refuse leaves the member as it is.
-- **The federation's members script cuts a long hand-off line.** The pen refuses a patch with a hand-off line over 300 characters, and the line for a failed attestation or a moved namespace could be that long.
-- **A federation build finds a waiting member by the namespace it builds.** The lock's waiting entry named the namespace a move proposes, so the entry of a member held or left out at its old namespace was not updated.
-- **The federation build and members script remove the files they download.** Each zip, schema or served file fetched to check its digest and attestation is downloaded to a temporary folder, which is removed when the run ends, unless `--cache` names a folder to keep the files in.
-
 ## [0.56.2] - 2026-10-27
 
 ### Fixed
 
 - **The curator's report ends with its stop.** When the review session will not run, the report's last line says so, gives the reason, and names what changes it. A harness line saying the person cannot answer no longer stops the session on its own: the curator says it and goes on only when the person replies, one item per turn.
+- **The federation's members script moves the day of a pruned release.** When the release list no longer holds a member's old release, the day the text writes right after the old tag moves with the tag, and only there.
+- **The federation's members script follows a member's moved namespace.** When a new release's `index.md`, or a served file's `@base`, names another `base_iri`, the patch sets it and the question says so. The build refused such a member before. A namespace the build would refuse leaves the member as it is.
+- **The federation's members script cuts a long hand-off line.** The pen refuses a patch with a hand-off line over 300 characters, and the line for a failed attestation or a moved namespace could be that long.
+- **A federation build finds a waiting member by the namespace it builds.** The lock's waiting entry named the namespace a move proposes, so the entry of a member held or left out at its old namespace was not updated.
+- **The federation build and members script remove the files they download.** Each zip, schema or served file fetched to check its digest and attestation is downloaded to a temporary folder, which is removed when the run ends, unless `--cache` names a folder to keep the files in.
 
 ## [0.56.1] - 2026-10-26
 
