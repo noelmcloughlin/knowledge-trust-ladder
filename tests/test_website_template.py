@@ -187,6 +187,16 @@ def test_config_takes_the_schema_from_a_gen_doc_recipe_and_leaves_the_data_off(t
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_the_home_page_offers_the_schema_s_pages_when_the_site_shows_them(tmp_path):
+    bundle(tmp_path)
+    write(tmp_path / "docs" / "architecture.md", "# Architecture\n\nHow the platform is built.\n")
+    write(tmp_path / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
+    actions = settle(lay_down(tmp_path))["HOME"]["actions"]
+    assert [a["text"] for a in actions] == ["Browse the bundle", "Architecture", "Schema", "Bundle health", "Knowledge graph"]
+    assert actions[2] == {"text": "Schema", "link": "/schema/", "variant": "secondary"}
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
 def test_config_finds_a_linkmo_project_and_its_data_when_asked(tmp_path):
     bundle(tmp_path)
     write(tmp_path / ".copier-answers.linkmo.yml", "_commit: v0.1.0\nlinkmo_dir: acme-linkmo\n")
