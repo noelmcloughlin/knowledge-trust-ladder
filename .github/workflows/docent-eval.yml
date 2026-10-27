@@ -4,16 +4,14 @@ name: Docent eval
 # `claude plugin eval`: one case per captured question under evals/, each run
 # once in an empty directory that holds the bundle alone
 # (evals/scaffold-bundle.sh), graded by pattern. A case passes when the
-# answer names the concept the holdout expects and the docent skill is what
-# answered; the suite passes when at most one case fails (the justfile's
-# docent-eval recipe).
+# docent skill answered and named the concept the holdout expects. The suite
+# passes when at most one case fails (the justfile's docent-eval recipe).
 #
-# What a green run proves, and what it does not. It proves that the docent,
-# with this bundle and this week's model, named the expected concept for
-# all but at most one question. It does not prove that an answer was right:
-# no judge reads the answers, and a wrong answer can name the right
-# concept. tests/test_docent_holdout.py, which every pull request runs,
-# proves the expected concepts still exist; this run proves the docent
+# A green run proves that the docent, with this bundle and this week's
+# model, named the expected concept for all but one question, not that an
+# answer was right: no judge reads the answers, and a wrong answer can name
+# the right concept. tests/test_docent_holdout.py proves on every pull
+# request that the expected concepts exist; this run proves the docent
 # finds them.
 #
 # It runs weekly and by hand, never on a pull request or a push: each run is
@@ -21,13 +19,12 @@ name: Docent eval
 # fork must never be able to spend. It is inert until the repository
 # variable KNOWLEDGE_DOCENT_EVAL_ENABLED is `true`.
 #
-# One job, read-only. The agent runs under a read-only token with no git
-# credential on disk. Its API credential is the AGENT_API_KEY secret of the
-# `docent-eval` Environment, limited to the default branch, handed to it
-# under the name the AGENT_API_KEY_ENV repository variable gives, as the
-# librarian's wrapper hands over its key; the secret reaches this job and
-# nothing else. Nothing is written to the repository: the results go up as
-# a workflow artifact and into the run's summary.
+# The one job has a read-only token and no git credential on disk. Its API
+# credential is the AGENT_API_KEY secret of the `docent-eval` Environment,
+# limited to the default branch, exported under the name the
+# AGENT_API_KEY_ENV repository variable gives, as the librarian's wrapper
+# exports its key, so the secret reaches this job alone. The results go to a
+# workflow artifact and the run's summary, never to the repository.
 on:
   schedule:
     - cron: "0 7 * * 3" # Wednesdays at 07:00 UTC; Monday morning is the registrar's and the librarian's
@@ -108,7 +105,7 @@ jobs:
       #      dollars, a list-price estimate checked before each run starts;
       #      unset, it is 5.
       # The name is checked as the librarian's wrapper checks it, so a slip
-      # cannot hand the key to gh, git or the runner, and the key reaches
+      # cannot pass the key to gh, git or the runner, and the key reaches
       # the recipe's environment alone, never a log or an argument list.
       # The cost reaches the script through the environment, not by
       # expansion into it.

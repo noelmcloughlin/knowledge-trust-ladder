@@ -58,8 +58,8 @@
 # It also lists each retired concept whose successor no person has confirmed:
 # the concept the newest **Deprecation** line in log.md links after "replaced
 # by", when the bundle holds it, carrying no `verified` event by a human:
-# actor. Exclusion follows affirmation: an agent may propose a retirement, and
-# the incumbent governs until a person affirms its successor.
+# actor. An agent may propose a retirement, but the retired concept governs
+# until a person confirms its successor.
 #
 # One fact comes from git and not from frontmatter, so a host without git is
 # told it was not computed: whether a source "moved" after an event. The
@@ -384,10 +384,10 @@ END {
   relend()
   emit()
   if (gen_at == "" && tstamp != "") { gen_at = norm(tstamp); gen_raw = tstamp }
-  # A review date is read by its day, since the specification makes a concept
-  # stale from that instant on and LOKF 0.9.0 types stale_after as a datetime:
-  # in UTC where the value carries an offset, else as the day its first ten
-  # characters name, which is how the website reads it.
+  # A review date is read by its day: in UTC where the value carries an
+  # offset, else as the day its first ten characters name, as the website
+  # reads it. The specification makes a concept stale from that instant on,
+  # and LOKF 0.9.0 types stale_after as a datetime.
   st = norm(stale); if (st != "") st = substr(st, 1, 10); else if (stale ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) st = substr(stale, 1, 10)
   if (human_rev ~ /^[0-9a-f]+$/ && length(human_rev) > 7) human_rev = substr(human_rev, 1, 7)
   printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev

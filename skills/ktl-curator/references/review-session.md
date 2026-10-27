@@ -209,7 +209,7 @@ Set above zero and every ktl-curator report lists that many concepts confirmed b
 
 Automation re-check: 0
 
-Set above zero and every ktl-curator report lists that many concepts checked by automation only, picked by the same rule, with their sources, for a person to check against them. What automation passed is then sampled by a rule the curator cannot steer, and the verdict goes through the ordinary verbs.
+Set above zero and every ktl-curator report lists that many concepts checked by automation only, picked by the same rule, which the curator cannot steer, with their sources, for a person to check against them. The verdict goes through the ordinary verbs.
 
 # How the docent answers
 

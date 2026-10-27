@@ -3,11 +3,9 @@
 # should rest on today, as data. That page is what a person reads; this file
 # is what tests/test_docent_holdout.py checks and what evals/ asks.
 #
-# It lives under tests/, outside .lokf/ and outside the docent's search
-# path, on purpose: a question the docent could read beside its answer would
-# test nothing. The eval copies only the bundle, .lokf/knowledge/, into each
-# run (evals/scaffold-bundle.sh), so neither this file nor the cases under
-# evals/ are in reach of the agent under test.
+# It lives under tests/, outside .lokf/ and the docent's search path, so the
+# docent never reads a question beside its answer. The eval copies only the
+# bundle, .lokf/knowledge/, into each run (evals/scaffold-bundle.sh).
 #
 # Each question names the concepts its answer should rest on by IRI:
 # base_iri joined with the concept's path in the bundle without `.md`, which

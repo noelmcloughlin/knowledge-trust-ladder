@@ -99,7 +99,7 @@ The health line is the one number to watch over time: "confirmed by a person: *a
 
 ## Sample for a second person
 
-When the curation policy carries `Independent re-check: <n>` above zero, Step 1 lists n concepts confirmed by a person, for someone else to re-check. When it carries `Automation re-check: <n>` above zero, Step 1 lists n concepts checked by automation only (a `verified` list with events, none by a `human:` actor, and no `status: draft`), for a person to check against their sources. Each list is picked the same way: sort the paths by the `sha256sum` (`shasum -a 256` where there is none, as on macOS) of path plus today's date, and take the first n. Nobody chooses the hash and the date moves the order daily, so the curator cannot steer the pick, and what automation passed is sampled by a rule nobody steers. A verdict on either list goes through the ordinary verbs.
+When the curation policy carries `Independent re-check: <n>` above zero, Step 1 lists n concepts confirmed by a person, for someone else to re-check. When it carries `Automation re-check: <n>` above zero, Step 1 lists n concepts checked by automation only (a `verified` list with events, none by a `human:` actor, and no `status: draft`), for a person to check against their sources. Each list is picked the same way: sort the paths by the `sha256sum` (`shasum -a 256` where there is none, as on macOS) of path plus today's date, and take the first n. Nobody chooses the hash and the date moves the order daily, so the curator cannot steer the pick. A verdict on either list goes through the ordinary verbs.
 
 ## Checking a confirmation against git
 

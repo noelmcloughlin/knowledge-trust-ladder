@@ -903,7 +903,7 @@ def test_a_concept_never_relies_on_itself_a_retired_one_counts_for_nothing_and_a
 
 
 def test_a_retirement_waits_only_while_no_person_has_confirmed_a_successor_the_bundle_holds(queue):
-    """Exclusion follows affirmation: Old's successor Hub carries a person's event, Lost's is not in the bundle, and Gone names none."""
+    """Old's successor Hub carries a person's event, Lost's is not in the bundle, and Gone names none."""
     root, _, _ = queue
     out = report(root).out
     assert not re.search(r"^- x/(old|lost|gone)\.md: ", out, re.M), (

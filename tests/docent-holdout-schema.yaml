@@ -1,10 +1,9 @@
 # The holdout schema: what tests/docent-holdout.yaml is made of, and how a
-# question names the concepts its answer should rest on. The holdout is data
-# a test reads and an eval asks, so it has a shape a validator can check, as
-# the bundle has, and the shape borrows LOKF's own vocabulary wherever it
-# names a concept, so a holdout entry and a typed relation point at a
-# concept the same way. Its namespace is Knowledge Trust Ladder's. Why each
-# class is shaped as it is:
+# question names the concepts its answer should rest on. A test reads the
+# holdout and an eval asks it, so it has a shape a validator can check, as
+# the bundle has. The shape borrows LOKF's vocabulary wherever it names a
+# concept, so a holdout entry and a typed relation point at a concept the
+# same way. Its namespace is Knowledge Trust Ladder's.
 #
 # DocentHoldout: one holdout file, and the class a validation run names.
 #   `base_iri` is LOKF's own slot, the bundle's namespace as

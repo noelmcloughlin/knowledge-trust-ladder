@@ -11,12 +11,11 @@
 # repository, so it is found from this script's own path, under evals/.
 #
 # Only the bundle goes in: .lokf/knowledge/, and the knowledge_bundle
-# doorway link beside it, pointing where the repository's points. Nothing
-# else: not tests/, where the holdout names each question's expected
-# concept; not evals/, where the cases and graders are; not
-# .lokf/feedback.md, which holds other readers' reports and which the docent
-# never reads anyway. So the agent under test sees the bundle a reader
-# would, and no crib.
+# doorway link beside it, pointing where the repository's points. tests/
+# names each question's expected concept and evals/ holds the cases and
+# graders, so neither goes in, and nor does .lokf/feedback.md, which holds
+# other readers' reports. The agent under test sees the bundle a reader
+# would, and no answers.
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd -P)"

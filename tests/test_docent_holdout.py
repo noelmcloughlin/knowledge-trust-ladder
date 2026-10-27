@@ -4,10 +4,10 @@ docs/examples/docent.md captured eight questions the docent answered against
 this repository's own bundle, with a table naming the concept each answer
 should rest on today. tests/docent-holdout.yaml holds those pairs as data,
 outside .lokf/ and the docent's search path, so the docent cannot read a
-question beside its answer; and evals/ holds the same holdout as `claude
-plugin eval` cases, which docent-eval.yml runs weekly under a cost ceiling
-and no pull request ever runs. None of the three is read from another, so
-these tests hold them together, at no model call:
+question beside its answer. evals/ holds the same holdout as `claude plugin
+eval` cases, which docent-eval.yml runs weekly under a cost ceiling and no
+pull request ever runs. None of the three is read from another, so these
+tests hold them together, at no model call:
 
 - the holdout's base_iri is the bundle's, every expected IRI starts with
   it, and the concept it names is a file under .lokf/knowledge/, so a
@@ -16,11 +16,11 @@ these tests hold them together, at no model call:
 - each slug is unique, each question has text, each says whether all of
   its concepts belong in the answer or any one suffices, and the page's
   headings and table still carry the same questions and concepts;
-- evals/ has one case per question and no other: its prompt carries the
-  question, a regex grader names each expected concept's path, a tool_used
-  grader requires the ktl-docent skill, no grader asks a judge, no case may
-  run a shell, and each case's scaffold runs the one script that copies the
-  bundle, and nothing else, into a run's empty directory;
+- evals/ has one case per question and no other. Its prompt carries the
+  question, a regex grader names each expected concept's path, and a
+  tool_used grader requires the ktl-docent skill. No grader asks a judge, no
+  case may run a shell, and each case's scaffold runs the one script that
+  copies the bundle, and nothing else, into a run's empty directory;
 - the holdout validates against tests/docent-holdout-schema.yaml with
   LinkML's validator from the sidecar's .lokf/.venv, when that environment
   holds linkml, from a directory where the schema sits beside the toolkit's

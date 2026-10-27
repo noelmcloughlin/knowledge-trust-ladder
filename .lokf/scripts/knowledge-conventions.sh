@@ -104,15 +104,15 @@
 #  16. A footnote joins a claim to a source. In a body, outside a code fence
 #      or a code span, each `[^label]` reference and each `[^label]: text`
 #      definition line uses the `id` of one of the concept's `sources`
-#      entries; each id is cited at least once; each cited label has its
-#      definition line; and the definition holds the entry's `resource`
+#      entries. Each id is cited at least once, each cited label has its
+#      definition line, and the definition holds the entry's `resource`
 #      verbatim, so a reader sees the source beside the claim and the
 #      footnote cannot drift from its entry. An id is lowercase a-z, 0-9,
-#      `.`, `_` and `-`, as rule 8 has a path, and names one resource across
-#      the bundle: under LOKF's published context a Source id mints the
-#      source node's IRI under the bundle base, so one id for two resources
-#      merges them into one RDF node. OKF v0.2 section 5.1 says a footnote
-#      whose label equals `id` attributes the claim to that entry.
+#      `.`, `_` and `-`, as rule 8 has a path. It names one resource across
+#      the bundle: under LOKF's published context a Source id becomes the
+#      IRI of the source's node under the bundle base, so one id for two
+#      resources merges them into one RDF node. OKF v0.2 section 5.1 says a
+#      footnote whose label equals `id` attributes the claim to that entry.
 #  17. A logged write has a file behind it. Each `**Added**` and
 #      `**Deprecation**` bullet in log.md names a concept the bundle holds:
 #      by its first link, read as knowledge-report.sh reads a Deprecation

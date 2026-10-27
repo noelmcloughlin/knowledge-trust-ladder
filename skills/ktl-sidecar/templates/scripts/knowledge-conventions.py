@@ -88,8 +88,8 @@ RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 # it as an option.
 COMMIT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/~^-]*")
 # Rule 16's shape for a `sources[].id`: what rule 8 allows in a path segment.
-# Under LOKF's published context the id mints the source node's IRI under the
-# bundle base, so it is held to the shape a path is.
+# Under LOKF's published context the id becomes the IRI of the source's node
+# under the bundle base, so it is held to the shape a path is.
 SOURCE_ID = re.compile(r"[a-z0-9][a-z0-9._-]*")
 # A footnote reference, and a definition line, which Markdown reads at the
 # start of a line with at most three spaces before it.
@@ -411,8 +411,8 @@ def footnotes(path: Path, frontmatter: dict, body: str, source_ids: dict[str, di
     """Rule 16: each footnote in the body joins a claim to one of the concept's `sources` entries, by that entry's `id`.
 
     A reference `[^label]` and a definition line `[^label]: text` each use
-    an id the entry list holds; each id is cited at least once; each cited
-    label has its definition line; and the definition holds the entry's
+    an id the entry list holds. Each id is cited at least once, each cited
+    label has its definition line, and the definition holds the entry's
     `resource` verbatim, so a reader sees the source beside the claim and
     the footnote cannot drift from its entry. A footnote mark in a code
     fence or a code span is an example, not a reference. Each id is recorded
@@ -753,9 +753,9 @@ def main(argv: list[str]) -> int:
             )
 
     # 16. across the bundle, one id names one resource. Under LOKF's published
-    #     context a Source id resolves against the bundle base and mints the
-    #     source node's IRI, so one id for two resources merges them into one
-    #     RDF node, and a query then credits each claim to both.
+    #     context a Source id, resolved against the bundle base, becomes the
+    #     IRI of the source's node, so one id for two resources merges them
+    #     into one RDF node, and a query then credits each claim to both.
     for label, by_resource in sorted(source_ids.items()):
         if len(by_resource) > 1:
             where = "; ".join(f"{resource or '(no resource)'} in {' '.join(str(p) for p in paths)}" for resource, paths in by_resource.items())
