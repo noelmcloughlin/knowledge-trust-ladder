@@ -246,6 +246,7 @@ done
 assert "the home page is the README's" "grep -q 'The platform Acme runs' \"$host/website/dist/index.html\""
 assert "the README's link to the guide goes to its page" "grep -q 'href=\"/acme-platform/docs/guide/\"' \"$host/website/dist/index.html\""
 assert "the home page offers the architecture page as a button" "grep -q 'class=\"sl-link-button[^\"]*\" href=\"/acme-platform/docs/architecture/\"' \"$host/website/dist/index.html\""
+assert "the home page offers the schema's pages as a button" "grep -q 'class=\"sl-link-button[^\"]*\" href=\"/acme-platform/schema/\"' \"$host/website/dist/index.html\""
 assert "the header shows the Knowledge Trust Ladder logo" "grep -q '_astro/logo-light[^\"]*\\.svg' \"$host/website/dist/index.html\""
 assert "a concept page carries its trust label" "grep -qi 'checked' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
 assert "the sync writes each concept's preview, and a concept page carries the script that shows one" \
@@ -311,6 +312,7 @@ build
 assert "the home page is there, from the bundle's own introduction" "[[ -f \"$host/website/dist/index.html\" ]] && grep -q 'Acme Platform' \"$host/website/dist/index.html\""
 assert "no docs pages" "[[ ! -d \"$host/website/dist/docs\" ]]"
 assert "the home page offers no architecture page" "! grep -q 'docs/architecture/' \"$host/website/dist/index.html\""
+assert "the home page offers no schema" "! grep -q '/acme-platform/schema/' \"$host/website/dist/index.html\""
 assert "no release pages" "[[ ! -d \"$host/website/dist/changelog\" ]]"
 assert "no schema pages and no data page" "[[ ! -d \"$host/website/dist/schema\" && ! -d \"$host/website/dist/browse\" ]]"
 assert "the bundle's pages, the health page and the graph are still there" \
