@@ -184,7 +184,7 @@ def test_warns_when_git_is_too_old_for_an_ingest_git_entry(tmp_path, top, url, v
         shutil.copy(SCRIPTS / name, scripts)
     fake = write(tmp_path / "fakebin" / "git", f'#!/bin/sh\n[ "$1" = "--version" ] && {{ echo "git version {version}"; exit 0; }}\nexec {shutil.which("git")} "$@"\n')
     fake.chmod(0o755)
-    # A proxy that resolves the name would take the pin away, and with it the need for 2.37.
+    # Through a proxy that resolves names, git gets no pin and needs no 2.37, so the run names no proxy.
     unproxied = {name: "" for name in ("https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY")}
     result = preflight(tmp_path, env={"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}", **unproxied})
     assert result and matches(result.out, r"^warn    ingest +.*" + warning), f"preflight did not warn about git {version}: {result.out}"

@@ -12,10 +12,10 @@ and pin:
    check found, and stops at a redirect it would otherwise follow. An IP
    address takes no pin, and an address git's own configuration rewrites is
    refused. Through a proxy, the name is checked once and the proxy
-   resolves it, and a name that resolves only at the proxy goes there
-   unchecked. Git goes through the proxy the check found, or none, whatever
-   its configuration or no_proxy says, and a proxy that resolves the name
-   leaves nothing to pin;
+   resolves it, and a name that resolves only at the proxy is not checked.
+   Git uses the proxy the check found, or none, whatever its configuration
+   or no_proxy says, and through a proxy that resolves names it takes no
+   pin;
 3. a PDF's text layer is mirrored, and a PDF without one is refused;
 4. a Confluence selection is listed with its versions and fetched by v2 on
    Cloud and v1 on Data Center. An unchanged page costs no body, and a page
@@ -321,7 +321,7 @@ def no_outside_dns(real):
 
 
 def test_behind_a_proxy_a_name_that_does_not_resolve_here_goes_to_the_proxy(server, checks, monkeypatch):
-    """Behind a proxy with no outside DNS only the proxy resolves a source's name, so the ingest lets it through, a redirect's too, as the federation build does."""
+    """Behind a proxy with no outside DNS only the proxy resolves a source's name, so the ingest sends the request there unchecked, a redirect's too, as the federation build does."""
     m = load_module()
     url = "http://outside.example.invalid/old.md"
 
@@ -532,7 +532,7 @@ def test_the_pin_checks_every_answer_and_holds_only_a_named_host(checks, monkeyp
     url = "https://93.184.216.34/wiki.git"
     checks.ok(m.git_pin(url) == [(f"http.{url}.followRedirects", "false"), (f"http.{url}.proxy", "")], "an IP address takes no pin, so an older git serves",
               str(m.git_pin(url)))
-    # A proxy that resolves the name gets the name, so a pin would hold nothing; curl resolves the name for SOCKS5, so the pin stays.
+    # A proxy that resolves names gets the name, so a pin would change nothing. For SOCKS5, curl resolves the name, so the pin stays.
     url = "https://dual.example.invalid/wiki.git"
     monkeypatch.setenv("https_proxy", "http://proxy.acme.example.invalid:3128")
     checks.ok(m.git_pin(url) == [(f"http.{url}.followRedirects", "false"), (f"http.{url}.proxy", "http://proxy.acme.example.invalid:3128")],
@@ -558,7 +558,10 @@ def test_the_pin_checks_every_answer_and_holds_only_a_named_host(checks, monkeyp
 
 
 def test_behind_a_proxy_git_takes_a_name_that_does_not_resolve_here_unpinned(checks, monkeypatch):
-    """Only the proxy can resolve such a name, so git is sent there with no pin and no newer git, and still follows no redirect; without a proxy, through one curl resolves for, or past it by no_proxy, the name fails."""
+    """Only the proxy can resolve such a name, so git is sent there with no pin and needs no newer git, and still follows no redirect.
+
+    Without a proxy, through SOCKS5, for which curl resolves names, or past the proxy by no_proxy, the name fails.
+    """
     m = load_module()
     for name in m.PASSED_THROUGH:
         monkeypatch.delenv(name, raising=False)
@@ -628,7 +631,7 @@ def test_git_takes_the_route_the_check_found_whatever_its_configuration_says(tmp
     ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, "2026-10-18T06:00:00Z", 30)
     real = m.socket.getaddrinfo
     try:
-        # Behind a proxy with no outside DNS. curl splits no_proxy at a space and Python does not, so only curl would go around the proxy.
+        # Behind a proxy with no outside DNS. curl splits no_proxy at a space and Python does not, so only curl would bypass the proxy.
         monkeypatch.setattr(m.socket, "getaddrinfo", no_outside_dns(real))
         monkeypatch.setenv("https_proxy", f"http://127.0.0.1:{proxy.getsockname()[1]}")
         monkeypatch.setenv("no_proxy", "git.acme.example.invalid unused.example.invalid")
@@ -838,7 +841,7 @@ def test_a_git_path_at_a_ref_is_mirrored_by_its_commit(tmp_path, checks):
 
 
 def test_a_git_older_than_2_31_is_refused_for_every_git_entry(tmp_path, checks, monkeypatch):
-    """An older git ignores GIT_CONFIG_COUNT, so the protocol limits and the credential would not hold; the entry is refused even where no pin is taken."""
+    """An older git ignores GIT_CONFIG_COUNT, so the protocol limits and the credential would not hold. The entry is refused even where no pin is taken."""
     m = load_module()
     monkeypatch.setattr(m, "git_version", lambda: (2, 30))
     monkeypatch.setattr(m, "git_pin", lambda url: pytest.fail("the version is checked before any address"))
@@ -968,7 +971,7 @@ def test_status_prints_one_line_with_names_and_no_value(tmp_path, server, checks
 
 
 def test_status_says_when_git_is_too_old_for_a_git_entry(tmp_path, checks, monkeypatch):
-    """Every git entry needs git 2.31, and one held to a host's checked address 2.37, so the status line names each one an older git would refuse."""
+    """Every git entry needs git 2.31, and one that git_pin holds to a host's checked address needs 2.37, so the status line names each entry an older git would refuse."""
     m = load_module()
     for name in m.PASSED_THROUGH:
         monkeypatch.delenv(name, raising=False)

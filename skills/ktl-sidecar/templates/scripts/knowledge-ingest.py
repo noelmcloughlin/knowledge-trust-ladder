@@ -502,8 +502,8 @@ def proxy_for(url: str, git: bool = False) -> str:
     """The proxy a request to url goes through, as urllib decides it, or "" for none.
 
     urllib reads the environment, and on macOS and Windows the system's
-    settings too. For git, all_proxy counts as well, which git reads where
-    no proxy names the scheme.
+    settings too. For git, all_proxy counts too: git reads it when no
+    variable names a proxy for the scheme.
     """
     parts = urllib.parse.urlsplit(url)
     proxies = urllib.request.getproxies()
@@ -512,7 +512,7 @@ def proxy_for(url: str, git: bool = False) -> str:
 
 
 def proxy_resolves(proxy: str) -> bool:
-    """Whether a proxy resolves the names it is asked for. Every kind does but SOCKS4 and SOCKS5, for which curl resolves them."""
+    """Whether a proxy resolves the names it is asked for. Every kind does except SOCKS4 and SOCKS5, for which curl resolves the names."""
     kind = proxy.lower()
     return bool(proxy) and (not kind.startswith("socks") or kind.startswith(("socks5h", "socks4a")))
 
@@ -521,8 +521,8 @@ def address_is_private(url: str) -> bool:
     """Whether the name in url resolves to an address that is not public.
 
     Behind a proxy with no outside DNS, a name may resolve only at the
-    proxy. It goes there unchecked, as in the federation build, and the
-    proxy must refuse a private address itself.
+    proxy. For such a name this answers False, as the federation build
+    does, and the proxy must refuse a private address itself.
     """
     host = urllib.parse.urlsplit(url).hostname or ""
     try:
@@ -1392,11 +1392,12 @@ def git_pin(url: str) -> list[tuple[str, str]]:
     git ignores, hands git the addresses that were checked. A redirect would
     send git to a name it resolves itself, so none is followed.
 
-    Git goes through the proxy proxy_for found, or through none, whatever
-    its own configuration says, and git_env removes no_proxy, by which curl
-    would choose again. So the check and the fetch agree on the route. A
-    proxy that resolves the name leaves the pin nothing to hold, so it
-    takes none, and a name that resolves only there goes to it unchecked.
+    Git uses the proxy proxy_for chose, or none, whatever its own
+    configuration says, and git_env removes no_proxy, which curl would read
+    to choose again. So the check and the fetch agree on the route. Through
+    a proxy that resolves names, curl does not resolve the name, so a pin
+    would change nothing and git gets none. A name that resolves only at
+    such a proxy is sent to it unchecked.
     """
     parts = urllib.parse.urlsplit(url)
     host, port = parts.hostname or "", parts.port or (443 if parts.scheme == "https" else 80)
@@ -1427,10 +1428,11 @@ def git_env(entry: Entry, ctx: Context, home: Path, pinned: list | tuple = ()) -
     """A clean environment for git: the protocols the manifest allows, the route git_pin checked, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
     # The identity is for the reflog of the fetched ref: without one, git looks
     # the user up, which on a machine with a slow name service waits seconds.
+    #
     # HOME is a folder of the run's own: curl sends the credential of a
     # ~/.netrc default entry to any host, and git 2.31, which predates
-    # GIT_CONFIG_GLOBAL and GIT_CONFIG_SYSTEM, reads ~/.gitconfig.
-    # GIT_CONFIG_NOSYSTEM keeps every version from /etc/gitconfig.
+    # GIT_CONFIG_GLOBAL and GIT_CONFIG_SYSTEM, reads ~/.gitconfig. With
+    # GIT_CONFIG_NOSYSTEM, no version of git reads /etc/gitconfig.
     env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": str(home), "GIT_TERMINAL_PROMPT": "0",
                           "GIT_CONFIG_GLOBAL": os.environ.get("GIT_CONFIG_GLOBAL", "/dev/null"), "GIT_CONFIG_NOSYSTEM": "1",
                           "GIT_AUTHOR_NAME": "knowledge-ingest", "GIT_AUTHOR_EMAIL": "knowledge-ingest@localhost",
@@ -1468,8 +1470,8 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
     """A shallow fetch of the ref, then each chosen file by its blob id, which the lock records so an unchanged file costs no read."""
     if not shutil.which("git"):
         raise FetchFailed("git is not installed")
-    # git_env hands git its protocol limits and the credential by
-    # GIT_CONFIG_COUNT, which an older git ignores without a word.
+    # git_env sets git's protocol limits and the credential through
+    # GIT_CONFIG_COUNT, which a git older than 2.31 ignores silently.
     found = git_version()
     if found < (2, 31):
         raise FetchFailed(f"git 2.31 or later is needed to read the protocol limits and the credential the ingest sets, "
@@ -1936,9 +1938,10 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     if absent:
         parts.append("tokens absent: " + ", ".join(absent))
     # Every git entry needs git 2.31, which reads the configuration the run
-    # sets in the environment, and one git_pin holds to a checked address
-    # 2.37, which reads http.curloptResolve: a host name no proxy resolves.
-    # The run refuses either with an older git, so the preflight warns first.
+    # sets in the environment. An entry that git_pin holds to a checked
+    # address, a host name that no proxy resolves, needs 2.37, which reads
+    # http.curloptResolve. The run refuses either with an older git, so the
+    # preflight warns first.
     gits = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled]
     pinned = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled and pin_needed(e.url, manifest.allow_private)
               and not ip_literal(urllib.parse.urlsplit(e.url).hostname or "") and not proxy_resolves(proxy_for(e.url, git=True))]

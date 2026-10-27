@@ -149,4 +149,4 @@ The curator and the docent need nothing new. A mirror file is a tracked path: th
 
 The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. The [threat model](threat-model.md#the-ingest-workflow) says what else guards it.
 
-Behind a proxy, the proxy resolves each name. The script still refuses a name that resolves here to a private address, and lets one that resolves only at the proxy through, so the proxy must refuse private addresses itself. Where the manifest refuses private addresses, a `git` entry takes the proxy the environment names, `https_proxy` or `all_proxy`, and not one from git's own configuration.
+Behind a proxy, the proxy resolves each name. The script still refuses a name that resolves locally to a private address. It cannot check a name that resolves only at the proxy, so the proxy must refuse private addresses itself. Where the manifest refuses private addresses, git uses the proxy that `https_proxy` or `all_proxy` names for a `git` entry, and ignores any proxy in git's own configuration.
