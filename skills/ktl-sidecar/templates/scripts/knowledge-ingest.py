@@ -130,8 +130,8 @@ ATTEMPTS = 3
 TEXT_TYPES = {"text/markdown": "text", "text/x-markdown": "text", "text/plain": "text", "text/html": "html-markdown",
               "application/xhtml+xml": "html-markdown", "application/pdf": "pdf-text"}
 KEPT = "\u200c\u200d"  # the zero-width non-joiner and joiner, which Persian, Arabic and Indic scripts and emoji sequences spell with
-PASSED_THROUGH = ("http_proxy", "https_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR",
-                  "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "CURL_CA_BUNDLE")  # a proxy and a company's certificate reach git and a command
+PASSED_THROUGH = ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
+                  "SSL_CERT_FILE", "SSL_CERT_DIR", "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "CURL_CA_BUNDLE")  # a proxy and a company's certificate reach git and a command
 
 
 class Stop(Exception):
@@ -498,10 +498,38 @@ def to_yaml(data) -> str:
 # ---- http ---------------------------------------------------------------------
 
 
-def address_is_private(host: str) -> bool:
+def proxy_for(url: str, git: bool = False) -> str:
+    """The proxy a request to url goes through, as urllib decides it, or "" for none.
+
+    urllib reads the environment, and on macOS and Windows the system's
+    settings too. For git, all_proxy counts too: git reads it when no
+    variable names a proxy for the scheme.
+    """
+    parts = urllib.parse.urlsplit(url)
+    proxies = urllib.request.getproxies()
+    proxy = proxies.get(parts.scheme) or (proxies.get("all", "") if git else "")
+    return "" if not proxy or urllib.request.proxy_bypass(parts.netloc) else proxy
+
+
+def proxy_resolves(proxy: str) -> bool:
+    """Whether a proxy resolves the names it is asked for. Every kind does except SOCKS4 and SOCKS5, for which curl resolves the names."""
+    kind = proxy.lower()
+    return bool(proxy) and (not kind.startswith("socks") or kind.startswith(("socks5h", "socks4a")))
+
+
+def address_is_private(url: str) -> bool:
+    """Whether the name in url resolves to an address that is not public.
+
+    Behind a proxy with no outside DNS, a name may resolve only at the
+    proxy. For such a name this answers False, as the federation build
+    does, and the proxy must refuse a private address itself.
+    """
+    host = urllib.parse.urlsplit(url).hostname or ""
     try:
         infos = socket.getaddrinfo(host, None)
     except socket.gaierror as e:
+        if proxy_for(url):
+            return False
         raise FetchFailed(f"{host} does not resolve ({e})") from e
     return any(ip_is_private(info[4][0]) for info in infos)
 
@@ -587,7 +615,7 @@ class Redirects(urllib.request.HTTPRedirectHandler):
         new = urllib.parse.urlsplit(newurl)
         if new.scheme not in ("http", "https") or "@" in new.netloc:
             raise FetchFailed(f"redirected to an address this script does not fetch: {new.scheme}://{new.netloc}")
-        if not self.allow_private and address_is_private(new.hostname or ""):
+        if not self.allow_private and address_is_private(newurl):
             raise FetchFailed(f"redirected to a private address: {new.hostname}")
         nxt = super().redirect_request(req, fp, code, msg, headers, newurl)
         if nxt is not None and new.hostname != urllib.parse.urlsplit(req.full_url).hostname:
@@ -610,7 +638,7 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
     parts = urllib.parse.urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.netloc or "@" in parts.netloc:
         raise Refused(f"{url} is not a plain http(s) address")
-    if not allow_private and address_is_private(parts.hostname or ""):
+    if not allow_private and address_is_private(url):
         raise Refused(f"{parts.hostname} is a private or link-local address; allow_private_addresses: true permits them")
     redirects = Redirects(allow_private)
     opener = urllib.request.build_opener(redirects, *(() if allow_private else (PublicHTTPHandler(), PublicHTTPSHandler())))
@@ -1356,30 +1384,39 @@ def pin_needed(url: str, allow_private: bool) -> bool:
 
 
 def git_pin(url: str) -> list[tuple[str, str]]:
-    """The configuration that holds git to the addresses checked here: the name resolved once, and no redirect.
+    """The configuration that holds git to the addresses checked here: no redirect, the proxy, and the name resolved once.
 
     Git resolves the name again when it connects, so a name that answers a
     public address to the check and a private one to git (DNS rebinding)
     would pass. http.curloptResolve, which git reads from 2.37 and an older
     git ignores, hands git the addresses that were checked. A redirect would
-    send git to a name it resolves itself, so none is followed. Through a
-    proxy, the proxy resolves the name, and only the check here applies.
+    send git to a name it resolves itself, so none is followed.
+
+    Git uses the proxy proxy_for chose, or none, whatever its own
+    configuration says, and git_env removes no_proxy, which curl would read
+    to choose again. So the check and the fetch agree on the route. Through
+    a proxy that resolves names, curl does not resolve the name, so a pin
+    would change nothing and git gets none. A name that resolves only at
+    such a proxy is sent to it unchecked.
     """
     parts = urllib.parse.urlsplit(url)
     host, port = parts.hostname or "", parts.port or (443 if parts.scheme == "https" else 80)
     if not host.isascii():
         raise Refused(f"{host}: write the host name in ASCII, its xn-- form, so git can be held to the address that was checked")
+    proxy = proxy_for(url, git=True)
+    config = [(f"http.{url}.followRedirects", "false"), (f"http.{url}.proxy", proxy)]
     try:
         infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
     except socket.gaierror as e:
+        if proxy_resolves(proxy):
+            return config
         raise FetchFailed(f"{host} does not resolve ({e})") from e
     addresses = list(dict.fromkeys(info[4][0] for info in infos))
     for address in addresses:
         if ip_is_private(address):
             raise Refused(f"{host} resolves to {address}, a private or link-local address; allow_private_addresses: true permits it")
-    config = [(f"http.{url}.followRedirects", "false")]
-    if ip_literal(host):
-        return config  # an address, which git does not resolve
+    if ip_literal(host) or proxy_resolves(proxy):
+        return config  # git does not resolve an address, nor a name the proxy resolves
     found = git_version()
     if found < (2, 37):
         raise FetchFailed(f"git 2.37 or later is needed to hold the fetch to the address that was checked, and this git is {shown_version(found)}")
@@ -1387,15 +1424,24 @@ def git_pin(url: str) -> list[tuple[str, str]]:
     return config + [(f"http.{url}.curloptResolve", f"{host}:{port}:{pinned}")]
 
 
-def git_env(entry: Entry, ctx: Context, pinned: list | tuple = ()) -> dict:
-    """A clean environment for git: the protocols the manifest allows, the addresses git_pin checked, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
+def git_env(entry: Entry, ctx: Context, home: Path, pinned: list | tuple = ()) -> dict:
+    """A clean environment for git: the protocols the manifest allows, the route git_pin checked, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
     # The identity is for the reflog of the fetched ref: without one, git looks
     # the user up, which on a machine with a slow name service waits seconds.
-    env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "GIT_TERMINAL_PROMPT": "0",
-                          "GIT_CONFIG_GLOBAL": os.environ.get("GIT_CONFIG_GLOBAL", "/dev/null"), "GIT_CONFIG_SYSTEM": "/dev/null",
+    #
+    # HOME is a folder of the run's own: curl sends the credential of a
+    # ~/.netrc default entry to any host, and git 2.31, which predates
+    # GIT_CONFIG_GLOBAL and GIT_CONFIG_SYSTEM, reads ~/.gitconfig. With
+    # GIT_CONFIG_NOSYSTEM, no version of git reads /etc/gitconfig.
+    env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": str(home), "GIT_TERMINAL_PROMPT": "0",
+                          "GIT_CONFIG_GLOBAL": os.environ.get("GIT_CONFIG_GLOBAL", "/dev/null"), "GIT_CONFIG_NOSYSTEM": "1",
                           "GIT_AUTHOR_NAME": "knowledge-ingest", "GIT_AUTHOR_EMAIL": "knowledge-ingest@localhost",
                           "GIT_COMMITTER_NAME": "knowledge-ingest", "GIT_COMMITTER_EMAIL": "knowledge-ingest@localhost",
                           "LC_ALL": "C.UTF-8", "TMPDIR": os.environ.get("TMPDIR", tempfile.gettempdir())})
+    if pinned:
+        # git_pin named the proxy, or none, and no_proxy would let curl choose again.
+        env.pop("no_proxy", None)
+        env.pop("NO_PROXY", None)
     config = [("credential.helper", ""), ("protocol.allow", "never"), ("protocol.https.allow", "always")]
     if ctx.manifest.allow_private:
         config += [("protocol.http.allow", "always"), ("protocol.file.allow", "always")]
@@ -1424,10 +1470,17 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
     """A shallow fetch of the ref, then each chosen file by its blob id, which the lock records so an unchanged file costs no read."""
     if not shutil.which("git"):
         raise FetchFailed("git is not installed")
+    # git_env sets git's protocol limits and the credential through
+    # GIT_CONFIG_COUNT, which a git older than 2.31 ignores silently.
+    found = git_version()
+    if found < (2, 31):
+        raise FetchFailed(f"git 2.31 or later is needed to read the protocol limits and the credential the ingest sets, "
+                          f"and this git is {shown_version(found)}")
     pinned = git_pin(entry.url) if pin_needed(entry.url, ctx.manifest.allow_private) else []
-    env = git_env(entry, ctx, pinned)
     tmp = Path(tempfile.mkdtemp(prefix="ingest-git-"))
     try:
+        env = git_env(entry, ctx, tmp, pinned)  # the fetch's folder is HOME too: it holds no .netrc or .gitconfig
+
         def git(*args, data=False):
             done = subprocess.run(["git", "-C", str(tmp), *args], env=env, capture_output=True, timeout=600)
             if done.returncode != 0:
@@ -1884,13 +1937,20 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
         parts.append("tokens present: " + ", ".join(present))
     if absent:
         parts.append("tokens absent: " + ", ".join(absent))
-    # A git entry that names a host is held to its checked address by
-    # http.curloptResolve, which an older git ignores, so the run refuses to
-    # fetch it. Saying so here lets the preflight warn before a run fails.
+    # Every git entry needs git 2.31, which reads the configuration the run
+    # sets in the environment. An entry that git_pin holds to a checked
+    # address, a host name that no proxy resolves, needs 2.37, which reads
+    # http.curloptResolve. The run refuses either with an older git, so the
+    # preflight warns first.
+    gits = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled]
     pinned = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled and pin_needed(e.url, manifest.allow_private)
-              and not ip_literal(urllib.parse.urlsplit(e.url).hostname or "")]
-    if pinned and shutil.which("git") and git_version() < (2, 37):
-        parts.append(f"this git is {shown_version(git_version())}, and a git entry that names a host needs 2.37 or later: {', '.join(pinned)}")
+              and not ip_literal(urllib.parse.urlsplit(e.url).hostname or "") and not proxy_resolves(proxy_for(e.url, git=True))]
+    if gits and shutil.which("git"):
+        found = git_version()
+        if found < (2, 31):
+            parts.append(f"this git is {shown_version(found)}, and every git entry needs 2.31 or later: {', '.join(gits)}")
+        elif pinned and found < (2, 37):
+            parts.append(f"this git is {shown_version(found)}, and a git entry that names a host needs 2.37 or later: {', '.join(pinned)}")
     return "ingest: " + "; ".join(parts)
 
 

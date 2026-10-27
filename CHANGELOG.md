@@ -4,6 +4,17 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **Behind a proxy with no outside DNS, the ingest fetches a source whose name resolves only at the proxy**, as the federation build does. A name that resolves locally is still checked, and without a proxy a name that does not resolve still fails.
+- **A `git` entry fetched through a proxy that resolves names needs no git 2.37**, since curl sends the name to such a proxy and a pin to the checked address would change nothing. Git uses the proxy the ingest chose, or none, whatever its own configuration or `no_proxy` says.
+- **The ingest passes `all_proxy` to git and to a `command` entry**, as it passes `https_proxy`.
+
+### Security
+
+- **The ingest refuses a `git` entry when git is older than 2.31.** An older git ignores the protocol limits and the credential that the script sets in git's environment. The preflight warns before a run.
+- **The ingest's git reads no `~/.netrc`, `~/.gitconfig` or `/etc/gitconfig`.** Through curl, git sent the credential of a `.netrc` default entry to any host that asked, and a git older than 2.32 read both configuration files. A file that `GIT_CONFIG_GLOBAL` names is still read.
+
 ## [0.57.0] - 2026-10-27
 
 ### Added
