@@ -96,6 +96,31 @@
 #      `--since` the rule is skipped, since on a branch's whole history a
 #      squash merge folds a librarian's edit and a later confirmation into
 #      one commit.
+#  15. Every concept names where it came from: a top-level `resource`, or a
+#      `sources` list with an entry. The librarian's refresh follows those
+#      back to the origin, and the coverage count credits a file to a concept
+#      through them, so a concept with neither can be neither re-verified
+#      nor counted.
+#  16. A footnote joins a claim to a source. In a body, outside a code fence
+#      or a code span, each `[^label]` reference and each `[^label]: text`
+#      definition line uses the `id` of one of the concept's `sources`
+#      entries. Each id is cited at least once, each cited label has its
+#      definition line, and the definition holds the entry's `resource`
+#      verbatim, so a reader sees the source beside the claim and the
+#      footnote cannot drift from its entry. An id is lowercase a-z, 0-9,
+#      `.`, `_` and `-`, as rule 8 has a path. It names one resource across
+#      the bundle: under LOKF's published context a Source id becomes the
+#      IRI of the source's node under the bundle base, so one id for two
+#      resources merges them into one RDF node. OKF v0.2 section 5.1 says a
+#      footnote whose label equals `id` attributes the claim to that entry.
+#  17. A logged write has a file behind it. Each `**Added**` and
+#      `**Deprecation**` bullet in log.md names a concept the bundle holds:
+#      by its first link, read as knowledge-report.sh reads a Deprecation
+#      line, or by starting with a concept's title, as the pen writes an
+#      Added line. With `--since <commit>` the bullets added since the base
+#      are read; without it, those under the newest day heading, where the
+#      latest run's claims sit. A `**Removal**` bullet under the same or a
+#      newer day heading excuses a bullet whose concept is gone.
 #
 # Rules 2, 3, 8 and 10 are house rules, stricter than the format. OKF permits
 # an unquoted datetime, a bare `verified` mapping, any file name and any YAML.
@@ -114,7 +139,8 @@
 # half checks rules 1, 5, 6, 8 and 11 itself: they are git and filesystem
 # facts, which grep and awk can check wherever bash and git run, with no
 # toolchain. Rules 13 and 14 read git too, but they compare parsed values,
-# so the Python half checks them as well.
+# so the Python half checks them as well. Rules 15, 16 and 17 join parsed
+# frontmatter to a body and to log.md, so the Python half checks them too.
 #
 # This script runs the Python half with the sidecar's .venv when the .venv
 # holds pyyaml and is Python 3.9 or later. Otherwise it runs the Python half
@@ -285,11 +311,11 @@ while IFS= read -r f; do
   fi
 done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
-# ---- 2, 3, 4, 7, 9, 10, 12, 13, 14. the Python half ----------------------------
+# ---- 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16, 17. the Python half ----------------
 here="$(dirname "$0")"
 py="$here/knowledge-conventions.py"
-rules="rules 2, 3, 4, 7, 9, 10, 12 and 13"
-[ -z "$since" ] || rules="rules 2, 3, 4, 7, 9, 10, 12, 13 and 14"
+rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17"
+[ -z "$since" ] || rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16 and 17"
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
 runner=""
 if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then

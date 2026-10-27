@@ -1,0 +1,76 @@
+# The docent holdout: the eight questions docs/examples/docent.md captured
+# against this repository's own bundle, each with the concept its answer
+# should rest on today, as data. That page is what a person reads; this file
+# is what tests/test_docent_holdout.py checks and what evals/ asks.
+#
+# It lives under tests/, outside .lokf/ and the docent's search path, so the
+# docent never reads a question beside its answer. The eval copies only the
+# bundle, .lokf/knowledge/, into each run (evals/scaffold-bundle.sh).
+#
+# Each question names the concepts its answer should rest on by IRI:
+# base_iri joined with the concept's path in the bundle without `.md`, which
+# is how a typed relation such as dependsOn names a concept. The test checks
+# that each still exists in the bundle, so a concept that moves fails the
+# suite the way `lokf validate --check-refs` fails a relation. all_expected
+# says whether every concept listed belongs in the answer or any one of them
+# suffices. No question carries captured_on, because the page gives no day
+# for the captures. note is the first sentence of the answer the docent gave
+# then, as captured, and nothing grades it.
+#
+# The shape is tests/docent-holdout-schema.yaml. A second set, the ten
+# questions once asked against a clone of anthropics/skills, which were
+# never committed, can be added as a second file in the same shape when
+# that run is repeated.
+base_iri: https://w3id.org/ktl/knowledge/
+questions:
+  - id: what-is-lokf
+    question: "What is LOKF?"
+    expects:
+      - https://w3id.org/ktl/knowledge/glossary/lokf
+    all_expected: true
+    note: "LOKF (Linked Open Knowledge Format) is a semantic profile of OKF in which every field, type, and relationship is bound to a public vocabulary, so the same Markdown expands losslessly to JSON-LD and RDF (bundle: `glossary/lokf.md`, checked by automation only)."
+  - id: okf-concept-file
+    question: "What does OKF require of a concept file?"
+    expects:
+      - https://w3id.org/ktl/knowledge/glossary/okf
+      - https://w3id.org/ktl/knowledge/references/okf-specification
+    all_expected: true
+    note: "OKF (Open Knowledge Format) requires only that a concept file's path serve as its ID and that its YAML frontmatter carry a `type` field - everything else is optional."
+  - id: first-skill-to-run
+    question: "I have a repo with no `.lokf/` yet - which skill do I run first?"
+    expects:
+      - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
+    all_expected: true
+    note: "Run `ktl-sidecar` first."
+  - id: librarian-and-curator
+    question: "How do ktl-librarian and ktl-curator relate?"
+    expects:
+      - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
+      - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
+    all_expected: true
+    note: "`ktl-curator` `dependsOn` `ktl-librarian`: the curator's job - recording a person's verdicts - only makes sense once the librarian has derived concepts to review."
+  - id: contribute-a-change
+    question: "How do I contribute a change to these skills?"
+    expects:
+      - https://w3id.org/ktl/knowledge/playbooks/contributing
+    all_expected: true
+    note: "There's no build step - the skills are Markdown, YAML, and one shell script."
+  - id: gh-cli-version
+    question: "What GitHub CLI version do I need for `gh skill`?"
+    expects:
+      - https://w3id.org/ktl/knowledge/references/gh-skill-cli
+    all_expected: true
+    note: "The bundle's Reference concept says `gh skill` was added in GitHub CLI v2.90.0, and `README.md` independently states the same figure."
+  - id: fifth-skill-roadmap
+    question: "What's the roadmap for a fifth skill after ktl-docent?"
+    expects:
+      - https://w3id.org/ktl/knowledge/playbooks/ktl-prose-skill
+      - https://w3id.org/ktl/knowledge/explanation/why-four-roles
+    all_expected: false
+    note: "I don't see anything in the bundle about a planned fifth skill - the Explanation concept on why there are four roles explains the current design, not a roadmap, and I searched the rest of the repository too."
+  - id: security-contact
+    question: "Who do I contact to report a security issue, and is that policy confirmed by a person?"
+    expects:
+      - https://w3id.org/ktl/knowledge/policies/security
+    all_expected: true
+    note: "Use GitHub's private vulnerability reporting (linked from `SECURITY.md`) rather than a public issue or a direct email - that's the documented channel, not the maintainer's personal contact."

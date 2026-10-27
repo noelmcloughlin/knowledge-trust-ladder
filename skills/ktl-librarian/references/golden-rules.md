@@ -56,7 +56,7 @@ Typed relations are LOKF's core upgrade over plain OKF. Each maps to a fixed RDF
 | `definedBy` | `rdfs:isDefinedBy` | formally defined by |
 | `source` | `dcterms:source` | sourced from the target |
 
-**Multivalued means always a YAML list, even for one value.** A bare scalar (`dependsOn: <iri>`) reads naturally but fails schema validation, because the generated schema requires an array for every one of these ten slots. Write a one-item list instead: `dependsOn:` on its own line, then `- <iri>` indented below it. A real audit of this bundle found the bare form in 12 of 25 concepts, and only `lokf validate` catches it.
+**Multivalued means always a YAML list, even for one value.** A bare scalar (`dependsOn: <iri>`) reads naturally but fails schema validation, because the generated schema requires an array for every one of these ten slots. Write a one-item list instead: `dependsOn:` on its own line, then `- <iri>` indented below it. A real audit of this bundle found the bare form in 12 of 25 concepts, and only `lokf validate` catches it. Check each direction: `isPartOf` against `hasPart`, `dependsOn` against `derivedFrom`.
 
 For a predicate outside this set, use the generic `relations` list of reified objects: a `predicate` from the `RelationType` vocabulary, such as `joinsWith`, and a `target`. Markdown links in the body stay valid and welcome beside the typed fields.
 
@@ -76,10 +76,14 @@ These optional families (OKF v0.2 §5.4) make trust signals queryable RDF instea
 | ------ | ----- | ---------------------- | ------- |
 | provenance | `generated` | `{ by, at, revision? }`, `prov:wasGeneratedBy` | who or what produced the current content, and when; `revision` (lokf 0.9.0 and later) is the state of the `resource` it was derived from. **Supersedes `timestamp`**. |
 | trust | `verified` | list of `{ by, at, revision? }`, `lokf:verified` | verification events; a bare `{ by, at }` mapping MUST be read as a one-element list. |
-| provenance | `sources` | list of Source, `schema:isBasedOn` | materials the concept derives from, each with a `resource` (REQUIRED). A Source may also carry `id` (a footnote or merge key), `title`, `author`, `usage_count`, `last_modified` (a datetime) and `excerpt` (lokf 0.9.0 and later: the exact passage the concept relies on, quoted verbatim). `author` is an actor string: `<prefix>:<id>` such as `team:docs`, or `<producer>/<version>`. Supersedes `citations`. |
+| provenance | `sources` | list of Source, `schema:isBasedOn` | materials the concept derives from, each with a `resource` (REQUIRED). A Source may also carry `id` (a footnote label, below), `title`, `author`, `usage_count`, `last_modified` (a datetime) and `excerpt` (lokf 0.9.0 and later: the exact passage the concept relies on, quoted verbatim). `author` is an actor string: `<prefix>:<id>` such as `team:docs`, or `<producer>/<version>`. Supersedes `citations`. |
 | usage | `usage_window` | `{ from, to }` (datetimes), `lokf:usageWindow` | the window framing `usage_count` signals; a sibling of `sources`, which a Source entry MAY override. |
 | lifecycle | `status` | `draft`, `stable` or `deprecated`, `schema:creativeWorkStatus` | absent means stable. |
 | lifecycle | `stale_after` | datetime, `schema:expires` | stale when `now >= stale_after`; a bare `YYYY-MM-DD` is read as that day at 00:00:00Z. |
+
+**A footnote joins a claim to its source.** Give a Source an `id` wherever a claim rests on a number, a name or a qualifier it supplies. The id is the resource's file name without its folder, in lowercase: `architecture.md` for `docs/architecture.md`. Where two resources share a file name, put the folder that tells them apart in front, joined with a hyphen, and for a URL take the last segment of its path. One id names one resource across the bundle, and a resource takes the same id in every concept that cites it. Under LOKF's context the id becomes the IRI of the source's node under the bundle base, so one id for two resources would merge them into one node.
+
+In the body, write `[^id]` after the claim, and one definition line `[^id]: <resource>, <where in it>` at the end of the body, before `## Open questions`, with the resource written exactly as the entry has it. A footnote reference is text, so a `patch` edit may add one beside the claim it backs. Conventions rule 16 checks the join: each footnote names an id the entry list holds, each id is cited at least once, each citation has its definition line, and the definition quotes the resource.
 
 **Actors** (`generated.by`, `verified[].by`, `sources[].author`) are plain OKF §7 literal strings (`<producer>/<version>`, `human:<id>`, `process:<id>`), carried verbatim and never coerced to IRIs. **Trust tiers derive from them and are never stored:** no `verified` event means *unverified*; only non-human actors mean *machine-confirmed*; any `human:` actor means *human-reviewed*. `knowledge-report.sh` computes each concept's label from these fields.
 

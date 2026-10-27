@@ -78,8 +78,13 @@ Not tied to a signed commit: <h> - <titles>. Recorded as confirmed by a person, 
 
 Sources that moved since a confirmation: <Title> - <source> (<date>). Confirmed by a person, and its source has a later commit.   | omit this line entirely when the script lists none, or compared nothing
 
+Retired, with a successor no person has confirmed: <Title> - <successor title> (<successor path>), <the successor's label>. An agent may propose a retirement; the retired concept governs until a person confirms the successor.   | omit this line entirely when the script lists none
+
 For a second person to re-check (<n>, picked by a rule the curator cannot steer):
 - <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Independent re-check:` line above 0
+
+For a person to check what automation passed (<n>, picked by the same rule):
+- <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Automation re-check:` line above 0
 
 Ready to record: human:<id> via gh · signing on · attended   | or what is missing and which verbs that removes, from the preflight and your own instructions, for example:
 Ready to record: this machine isn't signed in to GitHub, so I can't record a confirmation in your name; I can still send back, retire or mark for later. Signing in is `gh auth login`, or one of the routes in references/portability.md.
@@ -94,7 +99,7 @@ The health line is the one number to watch over time: "confirmed by a person: *a
 
 ## Sample for a second person
 
-When the curation policy carries `Independent re-check: <n>` above zero, Step 1 lists n concepts confirmed by a person, for someone else to re-check. Sort their paths by the `sha256sum` (`shasum -a 256` where there is none, as on macOS) of path plus today's date, and take the first n. Nobody chooses the hash and the date moves the order daily, so the curator cannot steer the pick.
+When the curation policy carries `Independent re-check: <n>` above zero, Step 1 lists n concepts confirmed by a person, for someone else to re-check. When it carries `Automation re-check: <n>` above zero, Step 1 lists n concepts checked by automation only (a `verified` list with events, none by a `human:` actor, and no `status: draft`), for a person to check against their sources. Each list is picked the same way: sort the paths by the `sha256sum` (`shasum -a 256` where there is none, as on macOS) of path plus today's date, and take the first n. Nobody chooses the hash and the date moves the order daily, so the curator cannot steer the pick. A verdict on either list goes through the ordinary verbs.
 
 ## Checking a confirmation against git
 

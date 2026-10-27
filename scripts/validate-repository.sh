@@ -610,11 +610,11 @@ fi
 
 say ""
 say "Running knowledge-conventions.sh on this repository's bundle..."
-# Nine of the fourteen rules run through `uv run`, so without uv the script
+# Twelve of the seventeen rules run through `uv run`, so without uv the script
 # reports none of them. Name the cause once, up front: a job that runs this
 # contract installs uv (validate.yml and publish.yml both do).
 if ! command -v uv >/dev/null 2>&1; then
-  err "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12 and 13 cannot run on this repository's bundle - install uv, or add the setup-uv step to the workflow running this"
+  err "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17 cannot run on this repository's bundle - install uv, or add the setup-uv step to the workflow running this"
 fi
 if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge >/dev/null); then
   ok "this repository's bundle keeps the conventions"

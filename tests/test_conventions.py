@@ -6,9 +6,10 @@ anything, so one bundle breaks each rule and the script must name each break.
 A bundle that keeps every rule must pass: with CRLF line endings, through a
 link, and without uv. Rule 14 reads the commits after a pull request's base,
 so a small history stages a confirmation alone, one with an edit, Correct now
-and a merge.
+and a merge. Rule 17 reads log.md against the bundle, so another history
+stages two days of logged writes after a base.
 
-Nine of the fourteen rules run through `uv run`, so without uv the script
+Twelve of the seventeen rules run through `uv run`, so without uv the script
 reports none of them. These tests fail, rather than skip, when uv is missing:
 the job that runs them installs it.
 """
@@ -32,7 +33,7 @@ CONVENTIONS = SCRIPTS / "knowledge-conventions.sh"
 def _uv_is_needed():
     if not have("uv"):
         pytest.fail(
-            "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12 and 13 cannot run - install uv, or add the setup-uv step to the workflow running this"
+            "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17 cannot run - install uv, or add the setup-uv step to the workflow running this"
         )
 
 
@@ -40,7 +41,7 @@ def r13(x, name, title, description, generated_at, more, body, base="https://exa
     """A concept human:contract confirmed on 2026-09-02, for rule 13."""
     write(
         x / f"{name}.md",
-        "---\ntype: Service\n"
+        "---\ntype: Service\nresource: pinned.md\n"
         f"id: {base}x/{name}\n"
         f"title: {title}\n"
         f"description: {description}\n"
@@ -59,7 +60,15 @@ def pinned(revision):
 
 
 def stamped(at):
-    return f'---\ntype: Service\ngenerated:\n  by: process:ktl-librarian\n  at: "{at}"\n---\n'
+    return f'---\ntype: Service\nresource: pinned.md\ngenerated:\n  by: process:ktl-librarian\n  at: "{at}"\n---\n'
+
+
+def sourced(x, name, sources, body):
+    """A concept with `sources` entries and a body, for rule 16."""
+    write(
+        x / f"{name}.md",
+        f"---\ntype: Service\nid: https://example.invalid/k/x/{name}\nsources:\n{sources}---\n\n# Overview\n\n{body}\n",
+    )
 
 
 # Rule 2: quoted times that one reader takes differently from another. No
@@ -210,7 +219,7 @@ def findings(tmp_path_factory) -> str:
     )
     write(
         x / "co-comment-apart.md",
-        '---\ntype: Service\nid: https://example.invalid/k/x/co\nverified:\n  # a comment on a line of its own\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "etag#1"\n---\n',
+        '---\ntype: Service\nresource: pinned.md\nid: https://example.invalid/k/x/co\nverified:\n  # a comment on a line of its own\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n    revision: "etag#1"\n---\n',
     )
     for name, at in ODD_TIMES:
         write(
@@ -234,7 +243,7 @@ def findings(tmp_path_factory) -> str:
     write(x / "l-list.md", "---\n- just a list\n---\n")
     write(
         x / "fence.md",
-        '---\ntype: Service\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n',
+        '---\ntype: Service\nresource: pinned.md\nid: https://example.invalid/k/x/fence\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-14T00:00:00Z"\n---\n\n```yaml\nverified:\n  - by: process:ktl-librarian\n    at: "2026-09-15T00:00:00Z"\n```\n',
     )
     # Rule 12: a bullet left behind by an edited description fails, in the
     # folder's index and in the root's. A bullet that still agrees, a concept
@@ -245,11 +254,11 @@ def findings(tmp_path_factory) -> str:
     )
     write(
         x / "idx-fresh.md",
-        "---\ntype: Service\nid: https://example.invalid/k/x/fresh\ntitle: Fresh\ndescription: >-\n  folded, and\n  still equal.\n---\n",
+        "---\ntype: Service\nresource: pinned.md\nid: https://example.invalid/k/x/fresh\ntitle: Fresh\ndescription: >-\n  folded, and\n  still equal.\n---\n",
     )
     write(
         x / "idx-shared.md",
-        "---\ntype: Service\nid: https://example.invalid/k/x/shared\ntitle: Shared\ndescription: listed only beside another.\n---\n",
+        "---\ntype: Service\nresource: pinned.md\nid: https://example.invalid/k/x/shared\ntitle: Shared\ndescription: listed only beside another.\n---\n",
     )
     write(
         k / "index.md",
@@ -259,6 +268,27 @@ def findings(tmp_path_factory) -> str:
         x / "index.md",
         "# X\n\n* [Stale, renamed](idx-stale.md) - what the concept says now.\n* [Fresh](idx-fresh.md) - folded, and still equal.\n",
     )
+    # Rule 15: a concept with neither `resource` nor `sources` fails, and one
+    # with only `sources` passes.
+    write(x / "r15-none.md", "---\ntype: Service\nid: https://example.invalid/k/x/r15-none\n---\n")
+    write(x / "r15-sources.md", "---\ntype: Service\nid: https://example.invalid/k/x/r15-sources\nsources:\n  - resource: pinned.md\n---\n")
+    # Rule 16: a footnote whose label no id matches, a cited id with no
+    # definition line, a definition that lacks its resource, an id no footnote
+    # cites, an id with an upper-case letter, and one id naming two resources
+    # in two concepts. A concept whose footnotes are all in order, one of them
+    # quoting its resource inside backticks, must pass, and so must one whose
+    # only footnote marks sit in a code fence and a code span.
+    pin = "  - id: pin\n    resource: pinned.md\n"
+    other = "  - id: other\n    resource: https://example.invalid/other\n"
+    sourced(x, "fn-nolabel", pin, "A claim.[^pin] Another.[^ghost]\n\n[^pin]: pinned.md, line 1")
+    sourced(x, "fn-nodef", pin, "A claim.[^pin]")
+    sourced(x, "fn-noresource", pin, "A claim.[^pin]\n\n[^pin]: the pinned file, line 1")
+    sourced(x, "fn-uncited", pin, "A claim with no footnote.")
+    sourced(x, "fn-upper", "  - id: Pin\n    resource: pinned.md\n", "A claim.[^Pin]\n\n[^Pin]: pinned.md, line 1")
+    sourced(x, "fn-two-a", "  - id: shared\n    resource: pinned.md\n", "A claim.[^shared]\n\n[^shared]: pinned.md, line 1")
+    sourced(x, "fn-two-b", "  - id: shared\n    resource: https://example.invalid/other\n", "A claim.[^shared]\n\n[^shared]: https://example.invalid/other, section 2")
+    sourced(x, "fn-ok", pin + other, "A claim.[^pin] Another.[^other]\n\n[^pin]: `pinned.md`, line 1\n[^other]: https://example.invalid/other, section 2")
+    sourced(x, "fn-code", "  - resource: pinned.md\n", "Write `[^id]` after the claim.\n\n```markdown\nA claim.[^example]\n\n[^example]: docs/x.md, line 1\n```")
     return bash(CONVENTIONS, k).out
 
 
@@ -293,6 +323,13 @@ REPORTED = [
     "r13-moved-edited.md: changed since human:contract confirmed it",
     *(f"{name}.md: timestamp {json.dumps(at)} at verified.[0].at is not a UTC time to the second" for name, at in ODD_TIMES),
     f"{ODD_STAMP[0]}.md: timestamp {json.dumps(ODD_STAMP[1])} at generated.at is not a UTC time to the second",
+    "r15-none.md: neither resource nor sources names where it came from",
+    "fn-nolabel.md: footnote [^ghost] names no sources[].id",
+    "fn-nodef.md: footnote [^pin] has no definition line",
+    "fn-noresource.md: footnote definition [^pin] does not quote its resource pinned.md",
+    "fn-uncited.md: sources[].id pin is cited by no footnote",
+    'fn-upper.md: sources[].id "Pin" is not lowercase',
+    "id shared names more than one resource",
 ]
 
 
@@ -316,6 +353,9 @@ ACCEPTED = [
     ("r13-restamped.md", "whose edit moved generated past the confirmation"),
     ("r13-reconfirmed.md", "whose person confirmed it again after the edit"),
     ("r13-moved.md", "whose id moved with the bundle's base_iri and nothing else"),
+    ("r15-sources.md", "whose sources list stands in for a resource"),
+    ("fn-ok.md", "whose footnotes each name an id, each have a definition line, and quote their resources"),
+    ("fn-code.md", "whose only footnote marks sit in a code fence and a code span"),
 ]
 
 
@@ -335,6 +375,11 @@ def test_reports_a_parse_error_on_one_line(findings):
     assert count_lines(findings, "y-bad.md") == 1, "conventions script spread a YAML parse error over several lines"
 
 
+@pytest.mark.parametrize("name", ["fn-nolabel.md", "fn-nodef.md", "fn-noresource.md", "fn-uncited.md", "fn-upper.md"])
+def test_rule_16_reports_each_failure_once(findings, name):
+    assert count_lines(findings, name) == 1, f"conventions rule 16 reported {name} more than once, or not at all:\n{findings}"
+
+
 @pytest.fixture
 def good(tmp_path):
     """A bundle that keeps every convention, checked out with CRLF line endings."""
@@ -344,7 +389,7 @@ def good(tmp_path):
     )
     write(
         k / "x" / "a.md",
-        '---\r\ntype: Service\r\nid: https://example.invalid/k/x/a\r\ndescription: >-\r\n  folded, which the gates\r\n  never read\r\nverified:\r\n  - by: process:ktl-librarian\r\n    at: "2026-09-14T00:00:00Z"\r\n---\r\n\r\n## Open questions\r\n\r\n- 2026-09-14, process:ktl-librarian: fine\r\n',
+        '---\r\ntype: Service\r\nresource: https://example.invalid/a\r\nid: https://example.invalid/k/x/a\r\ndescription: >-\r\n  folded, which the gates\r\n  never read\r\nverified:\r\n  - by: process:ktl-librarian\r\n    at: "2026-09-14T00:00:00Z"\r\n---\r\n\r\n## Open questions\r\n\r\n- 2026-09-14, process:ktl-librarian: fine\r\n',
     )
     return k
 
@@ -361,7 +406,7 @@ def test_without_uv_the_shell_half_says_what_it_skipped(good):
         pytest.skip("uv is on /usr/bin - the without-uv case cannot be staged here")
     result = bash(CONVENTIONS, good, env={"PATH": path}, stdout_only=True)
     assert result and matches(
-        result.out, r"^OK - .*\(rules 2, 3, 4, 7, 9, 10, 12 and 13 not checked: uv not found\)"
+        result.out, r"^OK - .*\(rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17 not checked: uv not found\)"
     ), f"conventions script without uv did not say what it skipped: {result.out}"
 
 
@@ -438,7 +483,7 @@ CONFIRMED = 'verified:\n  - by: human:contract\n    at: "2026-09-04T00:00:00Z"\n
 def v14c(k, name, by, at, verified, body):
     write(
         k / "x" / f"{name}.md",
-        f"---\ntype: Service\nid: https://example.invalid/k/x/{name}\ntitle: {name}\n"
+        f"---\ntype: Service\nid: https://example.invalid/k/x/{name}\ntitle: {name}\nresource: https://example.invalid/src/{name}\n"
         f'generated:\n  by: {by}\n  at: "{at}"\n{verified}---\n\n# Overview\n\n{body}\n',
     )
 
@@ -515,3 +560,91 @@ def test_rule_14_says_when_the_clone_lacks_the_base(rule14):
     assert "rule 14: the base commit 0123456789abcdef is not in this clone's history" in result.out, (
         f"conventions rule 14 failed some other way on an unknown base: {result.out}"
     )
+
+
+# Rule 17. Each Added and Deprecation bullet names a concept the bundle holds,
+# by its first link or by starting with a concept's title. Two days of claims
+# are committed after a base: `--since` reads both days, and no base reads
+# the newest day only, where the latest run's claims sit. An old claim nobody
+# can check sits in the base commit, out of both scopes.
+
+
+@pytest.fixture(scope="module")
+def rule17(tmp_path_factory):
+    """A bundle whose newest day claims two writes nothing backs, and the base commit before that day."""
+    v17 = tmp_path_factory.mktemp("conventions-rule17")
+    k = v17 / "k"
+    git = Git(v17)
+    git.init()
+    concepts = [("orders-api", "Orders API", ""), ("build", "Build, preview and edit the website", ""), ("legacy", "Legacy Sync", "status: deprecated\n")]
+    for name, title, more in concepts:
+        write(
+            k / "x" / f"{name}.md",
+            f"---\ntype: Service\nid: https://example.invalid/k/x/{name}\ntitle: {title}\nresource: https://example.invalid/src/{name}\n{more}---\n",
+        )
+    old = "\n## 2026-09-01\n\n* **Added**: An old claim nobody checks, from `nowhere.md`.\n"
+    write(k / "log.md", "# Change Log\n" + old)
+    git("add", "-A")
+    git("commit", "-q", "-m", "base")
+    base = git("rev-parse", "HEAD")
+    write(
+        k / "log.md",
+        "# Change Log\n\n## 2026-09-03\n\n"
+        "* **Added**: Nothing of the kind, from `nowhere.md`.\n"
+        "* **Deprecation**: [Gone](../x/gone.md) retired - replaced by [Orders API](../x/orders-api.md).\n"
+        "* **Deprecation**: [Legacy Sync](../x/legacy.md) retired - replaced by [Orders API](../x/orders-api.md).\n"
+        "* **Added**: Build, preview and edit the website, from `website/README.md`.\n"
+        "* **Added**: [Orders API](./x/orders-api.md), from\n  `services/orders/openapi.yaml`.\n"
+        "* **Added**: Orders API, from `services/orders/openapi.yaml`.\n"
+        "* **Removal**: Short lived.\n"
+        "* **Removal**: [Briefly](../x/briefly.md) deleted with its source.\n"
+        "* **Added**: Gone today, from `c.md`.\n"
+        "* **Removal**: Gone today.\n"
+        "\n## 2026-09-02\n\n"
+        "* **Added**: Short lived, from `a.md`.\n"
+        "* **Added**: [Briefly](../x/briefly.md), from `b.md`.\n"
+        "* **Added**: Yesterday's slip, from `d.md`.\n" + old,
+    )
+    git("commit", "-q", "-am", "two days of logged writes")
+    return k, base
+
+
+def rule17_out(rule17, since):
+    k, base = rule17
+    return bash(CONVENTIONS, k, *(["--since", base] if since else [])).out
+
+
+R17_REPORTED = [
+    "log.md: Added bullet under 2026-09-03 names no concept the bundle holds: Nothing of the kind",
+    re.compile(r"log\.md: Deprecation bullet under 2026-09-03 links .*k/x/gone\.md, which the bundle lacks"),
+]
+R17_ACCEPTED = [
+    ("An old claim", "an Added bullet under a day older than the newest, and older than the base"),
+    ("Build, preview", "an Added bullet naming a concept by a title with a comma in it"),
+    ("Orders API", "an Added bullet linking the concept across a wrapped line, and one naming it by title"),
+    ("Legacy Sync", "a Deprecation bullet linking a retired concept the bundle still holds"),
+    ("Short lived", "an Added bullet excused by a Removal under a newer day"),
+    ("Briefly", "a linked Added bullet excused by a Removal that links the same path"),
+    ("Gone today", "an Added bullet excused by a Removal under the same day"),
+]
+
+
+@pytest.mark.parametrize("since", [True, False], ids=["since-base", "newest-day"])
+@pytest.mark.parametrize("want", R17_REPORTED, ids=lambda w: w.pattern if isinstance(w, re.Pattern) else w)
+def test_rule_17_reports_a_logged_write_nothing_backs(rule17, since, want):
+    out = rule17_out(rule17, since)
+    found = want.search(out) if isinstance(want, re.Pattern) else want in out
+    assert found, f"conventions rule 17 did not report '{want}': {out}"
+
+
+@pytest.mark.parametrize("since", [True, False], ids=["since-base", "newest-day"])
+@pytest.mark.parametrize(("quiet", "why"), R17_ACCEPTED, ids=[q for q, _ in R17_ACCEPTED])
+def test_rule_17_accepts(rule17, since, quiet, why):
+    out = rule17_out(rule17, since)
+    assert quiet not in out, f"conventions rule 17 reported {quiet}, {why}: {out}"
+
+
+def test_rule_17_reads_an_older_day_only_since_a_base(rule17):
+    """A slip under the day before the newest is new since the base, and out of scope without one."""
+    assert "Yesterday's slip" in rule17_out(rule17, True), "conventions rule 17 missed a bullet the commits after the base added under an older day"
+    assert "Yesterday's slip" not in rule17_out(rule17, False), "conventions rule 17 read past the newest day with no base"

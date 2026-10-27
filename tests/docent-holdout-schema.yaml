@@ -1,0 +1,86 @@
+# The holdout schema: what tests/docent-holdout.yaml is made of, and how a
+# question names the concepts its answer should rest on. A test reads the
+# holdout and an eval asks it, so it has a shape a validator can check, as
+# the bundle has. The shape borrows LOKF's vocabulary wherever it names a
+# concept, so a holdout entry and a typed relation point at a concept the
+# same way. Its namespace is Knowledge Trust Ladder's.
+#
+# DocentHoldout: one holdout file, and the class a validation run names.
+#   `base_iri` is LOKF's own slot, the bundle's namespace as
+#   .lokf/knowledge/index.md declares it, so every expected concept is an
+#   IRI under it and the test can turn each back into a path in the bundle.
+#   `questions` holds the questions inline, as a list, since a question has
+#   no life outside its holdout.
+#
+# HoldoutQuestion: one question. `id` is LOKF's identifier slot narrowed to
+#   a plain string: a short slug a reader can name a case by, and the name
+#   of the case directory under evals/, not an IRI, because a question is
+#   not a concept. `question` is the text sent to the docent, as the
+#   captured page gives it. `expects` ranges over Concept, as dependsOn
+#   does, so a value is a concept's IRI and nothing looser; it is
+#   multivalued and required because a question with no expected concept
+#   grades nothing. `all_expected` says how to read that list: true when
+#   every concept belongs in the answer, false when any one of them
+#   suffices; it is required so that no entry rests on a default.
+#   `captured_on` is the day the answer was captured, left out when the
+#   page gives none. `note` is the first sentence of the captured answer,
+#   for a reader, and nothing grades it.
+#
+# lokf is imported by its file name, as the sidecar's domain.yaml imports
+# it, and LinkML resolves a relative import beside the importing file. So a
+# validation run copies this schema and the toolkit's pinned lokf.yaml into
+# one directory first, as tests/test_docent_holdout.py does.
+id: https://w3id.org/ktl/schema/docent-holdout
+name: docent-holdout
+imports:
+  - linkml:types
+  - lokf
+default_range: string
+default_prefix: holdout
+prefixes:
+  holdout: https://w3id.org/ktl/schema/docent-holdout/
+  linkml: https://w3id.org/linkml/
+  lokf: https://w3id.org/lokf/
+classes:
+  DocentHoldout:
+    description: a holdout file, with the bundle's namespace and its questions
+    tree_root: true
+    slots: [base_iri, questions]
+    slot_usage:
+      base_iri: {required: true}
+      questions: {required: true}
+  HoldoutQuestion:
+    description: one captured question and the concepts its answer should rest on
+    slots: [id, question, expects, all_expected, captured_on, note]
+    slot_usage:
+      id:
+        description: a short slug naming the question, and its case directory under evals/
+        range: string
+        pattern: "^[a-z0-9][a-z0-9-]*$"
+      question: {required: true}
+slots:
+  questions:
+    description: the questions, inline, in the order the captured page gives them
+    range: HoldoutQuestion
+    multivalued: true
+    inlined: true
+    inlined_as_list: true
+  question:
+    description: the question text, exactly as the captured page gives it
+    range: string
+  expects:
+    description: the concepts the answer should rest on, each by its IRI under base_iri
+    range: Concept
+    multivalued: true
+    required: true
+    inlined: false
+  all_expected:
+    description: true when every concept in expects belongs in the answer; false when any one of them suffices
+    range: boolean
+    required: true
+  captured_on:
+    description: the day the answer was captured, when the page gives one
+    range: date
+  note:
+    description: the first sentence of the captured answer, for a reader; nothing grades it
+    range: string

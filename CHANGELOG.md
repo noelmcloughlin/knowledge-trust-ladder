@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **Three conventions the gate checks, rules 15 to 17.** Every concept names where it came from, as `resource` or a `sources` entry. A footnote joins a claim to a `sources` entry by its `id`, one id names one resource across the bundle, and each **Added** and **Deprecation** bullet a run logs names a concept the bundle holds.
+- **The librarian gives a source an `id` and cites it with a footnote** wherever a claim rests on a number, a name or a qualifier; `references/golden-rules.md` says how.
+- **A docent holdout, and an eval that runs it.** `tests/docent-holdout.yaml` pairs the eight captured questions with the concept each answer should rest on, and a test fails when one of those concepts moves. `just docent-eval` runs ktl-docent on them through `claude plugin eval`, and `docent-eval.yml` runs it weekly under a cost ceiling, never on a pull request ([the docent eval](docs/threat-model.md#the-docent-eval)).
+- **The curator's report lists each retired concept whose successor no person has confirmed.** An agent may propose a retirement, but the retired concept governs until a person confirms the successor.
+- **A curation policy may carry `Automation re-check: <n>`.** The curator's report then lists n concepts checked by automation only, picked by the same hash rule as `Independent re-check:`, for a person to check against their sources.
+
+### Fixed
+
+- **The sidecar's two example concepts carry a `resource`**, the placeholder endpoint they already name, so the skeleton keeps rule 15 before anyone edits it.
+- **A review date is read by its day.** `knowledge-report.sh` compared `stale_after` with today as whole strings, so a datetime, the type LOKF 0.9.0 gives the field, could read as not yet due on its own day, or as no date at all.
+
 ## [0.57.0] - 2026-10-27
 
 ### Added
