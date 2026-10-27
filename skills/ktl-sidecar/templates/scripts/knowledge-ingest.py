@@ -159,7 +159,8 @@ KEPT = "\u200c\u200d"  # the zero-width non-joiner and joiner, which Persian, Ar
 # The characters Unicode calls default ignorable, which a renderer draws as
 # nothing, beyond the format and control characters: variation selectors,
 # which can spell hidden text after a visible character, the Hangul fillers
-# and the combining grapheme joiner, among others.
+# and the combining grapheme joiner, among others. knowledge-apply.py holds
+# the same list.
 IGNORABLE = re.compile("[\u034f\u115f\u1160\u17b4\u17b5\u180b-\u180f\u2065\u3164\ufe00-\ufe0f\uffa0\ufff0-\ufff8\U000e0000-\U000e0fff]")
 PLAIN_PATH = re.compile(r"[A-Za-z0-9._/@+-]+")  # the characters the workflow's publish job lets a path hold
 PASSED_THROUGH = ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
@@ -2254,7 +2255,7 @@ class Run:
                 new_items[it.item] = dict(was, status="refused", reason="a path outside the entry's folder", origin=it.origin)
                 counts["refused"] += 1
                 continue
-            if target.suffix != ".md" or "\n" in it.item or any(unicodedata.category(c) in ("Cc", "Cf") for c in it.item):
+            if target.suffix != ".md" or "\n" in it.item or any(unicodedata.category(c) in ("Cc", "Cf") or IGNORABLE.match(c) for c in it.item):
                 new_items[it.item] = dict(was, status="refused", reason="a name this script does not write", origin=it.origin)
                 counts["refused"] += 1
                 continue

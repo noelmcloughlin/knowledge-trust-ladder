@@ -93,7 +93,7 @@ A moved source stops making work once the librarian's own question covers it: an
 
 Each declined item makes work again once it changes after that pull request: its source moves, a person leaves a new note, or a reader asks again. A run you start from the Actions tab reads no record and waits for no open pull request, so starting one is how you ask the librarian to try again. The pull request it opens then names the earlier one. `earlier` reads the three hundred newest pull requests, and keeps the ten newest of this workflow's that were closed without merging.
 
-**The hand-off is the agent's words, and the pull request says so.** The patch file may carry `handoff`, up to ten lines for the reviewer, such as a send-back that came up twice or a source that did not answer. The pen accepts each only as one line of printable text with no backtick, and writes them nowhere in the bundle. `publish` cleans them again and shows them in a code block, where no link, image, mention or HTML renders. Both take out every character a reader cannot see, by its Unicode category: a control, a zero-width space, a bidirectional mark or a tag character.
+**The hand-off is the agent's words, and the pull request says so.** The patch file may carry `handoff`, up to ten lines for the reviewer, such as a send-back that came up twice or a source that did not answer. The pen accepts each only as one line of printable text with no backtick, and writes them nowhere in the bundle. `publish` cleans them again and shows them in a code block, where no link, image, mention or HTML renders. Both take out every character a reader cannot see, as Unicode marks it: a control, a zero-width space, a bidirectional mark, a tag character or a variation selector.
 
 The guardrails:
 

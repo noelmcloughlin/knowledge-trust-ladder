@@ -1448,6 +1448,14 @@ def test_the_converter_reads_a_head_left_open_and_keeps_only_safe_links(checks):
     checks.ok("\ud800" not in text and text.encode("utf-8"), "a charset that decodes to a lone surrogate leaves text a file can hold", repr(text))
 
 
+def test_the_pen_drops_the_default_ignorable_characters_the_mirror_drops():
+    """knowledge-apply.py holds the ingest's list, so a hand-off line, a reader's question and a log line lose what a mirrored page loses."""
+    listed = [re.search(r"^IGNORABLE = .*$", read(SCRIPTS / name), re.M) for name in ("knowledge-ingest.py", "knowledge-apply.py")]
+    assert all(listed) and listed[0].group(0) == listed[1].group(0), (
+        f"the pen and the ingest list different default ignorable characters: {[m.group(0) if m else None for m in listed]}"
+    )
+
+
 def test_a_page_the_converter_cannot_read_is_refused_alone(checks, monkeypatch):
     """A stray end tag converts, and any other failure of the converter refuses that page, as a broken PDF is refused, not its entry."""
     m = load_module()
@@ -1764,6 +1772,7 @@ def test_a_git_file_whose_name_the_mirror_cannot_hold_is_skipped_renamed_or_refu
     write(upstream / "data.md" / "x.md", "# X\n")
     write(upstream / "Release Notes.md", "# Release notes\n")
     write(upstream / "a\n::error::forged.md", "# Forged\n")
+    write(upstream / "deploy\ufe0f\U000e0100.md", "# Deploy\n")
     write(upstream / "big.txt", "x" * 3000)
     (upstream / "big.bin").write_bytes(b"\x00" * 3000)
     g("add", "-A")
@@ -1788,6 +1797,9 @@ def test_a_git_file_whose_name_the_mirror_cannot_hold_is_skipped_renamed_or_refu
               and re.fullmatch(r"item-[0-9a-f]{8}\.md", spelled[4]) and all(re.fullmatch(r"[A-Za-z0-9._/@+-]+", s) for s in spelled),
               "a plain name stays, accents are dropped, and two names that spell alike stay apart", str(spelled))
     checks.ok(not any(line.startswith("::") for line in result.out.splitlines()), "a line break in a file's name starts no line of the summary", result.out)
+    hidden = lock_of(root)["entries"]["wiki"]["items"].get("deploy\ufe0f\U000e0100.md", {})
+    checks.ok(hidden.get("status") == "refused" and hidden.get("reason") == "a name this script does not write",
+              "a name that holds a variation selector is refused, as one with a format character is", str(hidden))
     checks.ok("  - big.txt.md: refused, over max_item_bytes (2000)" in result.out and "  - big.bin.md: skipped, a binary file" in result.out,
               "a large text file is refused and a large binary file skipped", result.out)
 
