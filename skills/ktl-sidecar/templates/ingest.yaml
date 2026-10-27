@@ -28,7 +28,7 @@ defaults:                        # what an entry inherits
   sensitivity: internal          # public: committed anywhere; internal: a private repository only;
                                  # confidential: never committed, kept under the ignored .lokf/.cache/mirror/
   max_items: 200                 # a selector over this is refused whole, never mirrored in part
-  max_item_bytes: 1000000
+  max_item_bytes: 1000000        # each body fetched, and the Markdown written from it
   authors: true                  # false leaves account ids out of the headers
 
 entries:

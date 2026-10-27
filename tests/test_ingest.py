@@ -16,35 +16,44 @@ and pin:
    Git uses the proxy the check found, or none, whatever its configuration
    or no_proxy says, and through a proxy that resolves names it takes no
    pin;
-3. a PDF's text layer is mirrored, and a PDF without one is refused;
+3. a PDF's text layer is mirrored, and a PDF without one is refused. The
+   script's header pins the pypdf these tests install;
 4. a Confluence selection is listed with its versions and fetched by v2 on
    Cloud and v1 on Data Center. An unchanged page costs no body, and a page
    that leaves the selection is unlisted. --prune removes an uncited file
    and keeps a cited one;
 5. a git path at a ref is mirrored by its commit, with a file that is not
-   Markdown kept in a fence. A git older than 2.31 is refused, and git
-   reads no ~/.netrc;
+   Markdown kept in a fence. A git older than 2.31 is refused, git reads no
+   ~/.netrc, and with a credential git follows no redirect;
 6. a command's output is mirrored, an untracked command is refused, and a
    command past its timeout fails the entry and nothing else;
 7. the manifest's refusals: an unknown key, a variable name outside the
-   KNOWLEDGE_INGEST_ namespace, an internal entry in a public repository,
-   and a confidential entry where git would see its copy. That entry goes to
-   the cache once git ignores it and tracks nothing there;
+   KNOWLEDGE_INGEST_ namespace, a value of the wrong type, an internal entry
+   in a public repository, and a confidential entry where git would see its
+   copy. That entry goes to the cache once git ignores it and tracks nothing
+   there, and an entry made confidential leaves the committed mirror;
 8. --patch writes a Reference concept per mirrored item of an entry that asks,
    and a later patch keeps the sources a person added;
 9. --status prints one line with the token names and no value, and names
    each git entry a git older than 2.31 or 2.37 would refuse;
 10. the converter turns Confluence storage format into Markdown blocks, keeps
     the body after head metadata and macro parameters, resolves links,
-    honours a declared charset and keeps the joiners;
+    honours a declared charset and keeps the joiners. It reads a head left
+    open, keeps a link to an http, https or mailto address only, makes a
+    line break in the text a space, and writes no lone surrogate;
 11. the shell half refuses to run under sh;
-12. a redirect to another host drops the credential, a 503 is retried, and a
-    weak ETag is the version without its prefix;
+12. a redirect to another host, port or scheme drops the credential, of any
+    header name, a 503 is retried, and a weak ETag is the version without
+    its prefix. A secret's trailing line break is trimmed, one inside it is
+    refused by name, and a body sent a byte at a time fails at a deadline;
 13. a Confluence listing is paged, one page's missing body is that page's
-    alone, and an answer of the wrong shape fails the entry and nothing else;
+    alone, and an answer of the wrong shape fails the entry and nothing else.
+    A title arrives as one clean line, and a listing without end is cut off;
 14. a git entry follows a changed include at the same commit, and skips a
-    binary file by name;
-15. an entry that leaves the manifest takes its folder with it;
+    binary file by name. A file whose mirror name a Markdown file beside it
+    has is skipped, and a large file is refused;
+15. an entry that leaves the manifest takes its folder with it, and no run
+    removes or writes a file outside the mirror;
 16. the mirror cap refuses the item that would pass it;
 17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no other.
 """
@@ -62,12 +71,13 @@ import socket
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 
 import pytest
 import yaml
 
-from conftest import SCRIPTS, TEMPLATES, Git, has_line, matches, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, Git, has_line, matches, read, run, write
 
 INGEST = SCRIPTS / "knowledge-ingest.sh"
 INGEST_PY = SCRIPTS / "knowledge-ingest.py"
@@ -220,7 +230,8 @@ def test_http_mirrors_a_page_then_writes_nothing_on_304_and_fetches_a_change(tmp
 
 def test_a_private_address_is_refused_unless_the_manifest_allows_it(tmp_path, server, checks):
     Stub.routes["/p.md"] = (200, {"Content-Type": "text/markdown"}, b"# P\n")
-    m = manifest_for([{"id": "p", "kind": "http", "urls": [f"{server}/p.md"], "sensitivity": "public"}])
+    # https, since plain http needs the allowance too. The check refuses the address before any TLS.
+    m = manifest_for([{"id": "p", "kind": "http", "urls": [f"{server.replace('http://', 'https://')}/p.md"], "sensitivity": "public"}])
     m["allow_private_addresses"] = False
     root = host(tmp_path, m)
     result = ingest(root)
@@ -718,6 +729,15 @@ def test_a_pdf_text_layer_is_mirrored_and_a_blank_pdf_is_refused(tmp_path, serve
     checks.ok(blank["status"] == "refused" and "no text layer" in blank["reason"], "a blank PDF is refused", str(blank))
 
 
+def test_the_header_pins_the_pypdf_the_tests_install(checks):
+    """pypdf reads PDFs from outside the repository, and Dependabot raises it in tests/requirements.txt but cannot read the script's header."""
+    header = re.search(r'"pypdf==([^"]+)"', read(INGEST_PY))
+    tests = re.search(r"^pypdf==(\S+)$", read(REPO / "tests" / "requirements.txt"), re.M)
+    checks.ok(header and tests and header.group(1) == tests.group(1),
+              "the script's header pins the pypdf the tests run; move exclude-newer past its upload with it",
+              f"header {header and header.group(1)}, tests {tests and tests.group(1)}")
+
+
 # 4. confluence
 
 STORAGE = """<h1>Deploy runbook</h1><p>Deploy with <strong>care</strong> and <a href="https://acme.example/x">the console</a>.</p>
@@ -838,6 +858,9 @@ def test_a_git_path_at_a_ref_is_mirrored_by_its_commit(tmp_path, checks):
     g("commit", "-q", "-m", "two", env=IDENT)
     result = ingest(root)
     checks.ok(result and "1 fetched, 1 unchanged" in result.out, "a new commit refetches the changed file only", result.out)
+    write(root / ".lokf" / "ingest.yaml", read(root / ".lokf" / "ingest.yaml").replace(str(upstream), "../upstream"))
+    result = ingest(root)
+    checks.ok(result and "2 unchanged" in result.out, "a relative path is read against the repository root, not git's own folder", result.out)
 
 
 def test_a_git_older_than_2_31_is_refused_for_every_git_entry(tmp_path, checks, monkeypatch):
@@ -851,6 +874,19 @@ def test_a_git_older_than_2_31_is_refused_for_every_git_entry(tmp_path, checks, 
         checks.ok(False, "a git older than 2.31 is refused")
     except m.FetchFailed as e:
         checks.ok("git 2.31 or later" in str(e) and str(e).endswith("this git is 2.30"), "a git older than 2.31 is refused, naming its version", str(e))
+
+
+def test_a_git_entry_with_a_credential_follows_no_redirect(tmp_path, server, checks):
+    """On a redirect to another host, curl drops an Authorization header and keeps a header of any other name, so with a credential git follows none, even where the manifest allows private addresses."""
+    port = server.rsplit(":", 1)[1]
+    Stub.routes["/wiki.git/info/refs"] = (302, {"Location": f"http://localhost:{port}/moved.git/info/refs?service=git-upload-pack"}, b"")
+    auth = {"scheme": "header", "header": "X-Api-Key", "env": "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN"}
+    root = host(tmp_path, manifest_for([{"id": "wiki", "kind": "git", "url": f"{server}/wiki.git", "ref": "main", "auth": auth, "sensitivity": "public"}]))
+    result = ingest(root)
+    checks.ok(result and "- wiki (git, / at main): failed, git fetch failed" in result.out, "the fetch stops at the redirect", result.out)
+    checks.ok(any(p.startswith("/wiki.git/") and h.get("X-Api-Key") == "secret-token-value" for p, h in Stub.requests),
+              "the address the manifest names gets the credential", str(Stub.requests))
+    checks.ok(not any(p.startswith("/moved.git/") for p, _ in Stub.requests), "the other host gets no request, so no credential", str(Stub.requests))
 
 
 # 6. command
@@ -878,6 +914,9 @@ def test_a_command_is_mirrored_only_once_tracked_and_fails_on_its_own(tmp_path, 
     checks.ok("failed, the command ran past its timeout (1s)" in result.out, "the slow command fails its entry alone", result.out)
     checks.ok(lock_of(root)["entries"]["slow"]["status"] == "failed", "the lock says failed")
     checks.ok(lock_of(root)["entries"]["schema"]["items"]["schema"]["command_sha256"], "the command's own digest is recorded")
+    write(root / ".lokf" / "ingest" / "schema.sh", read(root / ".lokf" / "ingest" / "schema.sh") + "echo edited\n")
+    result = ingest(root)
+    checks.ok(result and "refused, .lokf/ingest/schema.sh has changes git has not committed" in result.out, "a command edited since its commit is refused", result.out)
 
 
 # 7. the manifest
@@ -925,6 +964,49 @@ def test_the_manifest_refuses_what_its_header_says(tmp_path, server, checks):
     write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "g", "kind": "git", "url": "http://wiki.acme.example/x.git", "ref": "main"}], allow_private_addresses=False)))
     result = ingest(root)
     checks.ok(result.rc == 1 and "is not https; allow_private_addresses: true permits http and local paths" in result.out, "a git url over http needs the allowance", result.out)
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "h", "kind": "http", "urls": ["http://vendor.example/spec.md"]}], allow_private_addresses=False)))
+    result = ingest(root)
+    checks.ok(result.rc == 1 and "http://vendor.example/spec.md is over http; use https, or allow_private_addresses: true" in result.out,
+              "an http address needs the allowance too, as the manifest's comment says", result.out)
+
+
+def test_the_manifest_refuses_a_value_of_the_wrong_type(tmp_path, checks):
+    """Python counts the string "false" as true, and a string where a list belongs as a list of its characters, so each is refused by name."""
+    url = "https://vendor.example/spec.md"
+    cases = [
+        (manifest_for([{"id": "a", "kind": "http", "urls": [url]}], allow_private_addresses="false"), "allow_private_addresses is true or false, without quotes"),
+        (manifest_for([{"id": "a", "kind": "http", "urls": [url], "disabled": "no"}]), "entries.a.disabled is true or false, without quotes"),
+        (manifest_for([{"id": "a", "kind": "http", "urls": url}]), "entries.a.urls is a list, not a single string"),
+        (manifest_for([{"id": "a", "kind": "git", "url": "https://acme.example/wiki.git", "ref": "main", "include": "docs/*.md"}]),
+         "entries.a.include is a list, not a single string"),
+        (manifest_for([{"id": "a", "kind": "command", "command": "x.sh", "args": "--format markdown"}]), "entries.a.args is a list, not a single string"),
+        (manifest_for([{"id": "a", "kind": "confluence", "site": "https://acme.atlassian.net", "select": "label"}]),
+         "entries.a: select is a mapping, such as label: ktl"),
+    ]
+    root = host(tmp_path, cases[0][0], git=False)
+    for manifest, message in cases:
+        write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
+        result = ingest(root)
+        checks.ok(result.rc == 1 and f"knowledge-ingest: {message}" in result.out and "Traceback" not in result.out, message, result.out)
+
+
+def test_an_entry_made_confidential_leaves_the_committed_mirror(tmp_path, server, checks):
+    """Sensitivity picks the mirror, so a copy written while the entry was internal is removed once it is confidential, and fetched again into the cache."""
+    Stub.routes["/pay.md"] = (200, {"Content-Type": "text/markdown"}, b"# Pay bands\n")
+    entry = {"id": "pay", "kind": "http", "urls": [f"{server}/pay.md"], "sensitivity": "internal"}
+    root = host(tmp_path, manifest_for([entry]))
+    write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    ingest(root, "--visibility", "private")
+    committed = list((root / ".lokf" / "mirror" / "pay").glob("*.md"))
+    checks.ok(len(committed) == 1, "an internal entry is mirrored where git commits it")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(entry, sensitivity="confidential")])))
+    result = ingest(root, "--visibility", "private")
+    cached = list((root / ".lokf" / ".cache" / "mirror" / "pay").glob("*.md"))
+    checks.ok(result and committed and not committed[0].exists() and len(cached) == 1 and "# Pay bands" in read(cached[0]),
+              "made confidential, its copy leaves the committed mirror for the cache", result.out)
+    item = next(iter(lock_of(root)["entries"]["pay"]["items"].values()))
+    checks.ok(item["path"].startswith(".lokf/.cache/mirror/pay/"), "the lock follows the copy", str(item))
+    checks.ok("- pay: its sensitivity puts its files in .lokf/.cache/mirror/pay/, so 1 file elsewhere is removed" in result.out, "the summary says so", result.out)
 
 
 # 8. --patch
@@ -1009,6 +1091,7 @@ def test_the_converter_turns_storage_format_into_markdown_blocks(checks):
     checks.ok(text == "## Two\n\nOne *two* three\nfour\n\n```\na\n  b\n```\n\n> q\n\n---\n\n1. x\n2. y\n", "the blocks", text)
     checks.ok(m.shown("a\u200bb\u202ec\x07d\u00a0e") == "abcd e", "invisible characters are removed and a no-break space becomes a space", m.shown("a\u200bb\u202ec\x07d\u00a0e"))
     checks.ok(m.utc("2026-10-03T09:12:44.123+01:00") == "2026-10-03T08:12:44Z" and m.utc("Sat, 18 Oct 2026 06:00:00 GMT") == "2026-10-18T06:00:00Z", "timestamps in one UTC shape")
+    checks.ok(m.utc("0001-01-01T00:00:00+01:00") == "0001-01-01T00:00:00+01:00", "a time an offset carries past year 1 is kept as given")
 
 
 def test_the_converter_keeps_the_body_after_head_metadata_and_macro_parameters(checks):
@@ -1026,6 +1109,64 @@ def test_the_converter_keeps_the_body_after_head_metadata_and_macro_parameters(c
     text, _, _ = m.convert('<html><head><meta charset="windows-1252"></head><body><p>€ 5</p></body></html>'.encode("cp1252"), "text/html", "")
     checks.ok(text == "€ 5\n", "a charset the page declares is read too", text)
     checks.ok(m.shown("\u0646\u200c\u0647 \U0001f468\u200d\U0001f469 a\u200bb") == "\u0646\u200c\u0647 \U0001f468\u200d\U0001f469 ab", "the joiners stay and the zero-width space goes", m.shown("\u0646\u200c\u0647"))
+
+
+def test_the_converter_reads_a_head_left_open_and_keeps_only_safe_links(checks):
+    m = load_module()
+    text, title = m.html_to_markdown("<html><head><title>Runbook</title><meta charset=utf-8><body><h1>Deploy</h1><p>Step one.</p></body></html>")
+    checks.ok(title == "Runbook" and text == "# Deploy\n\nStep one.\n", "a page may leave out </head>, as HTML allows", text)
+    text, _ = m.html_to_markdown("<head><title>T</title><p>No body tag either.</p>")
+    checks.ok(text == "No body tag either.\n", "the first tag that belongs in the body ends the head", text)
+    page = ('<p><a href="JavaScript:alert(1)">one</a> <a href=" javascript:alert(2)">two</a> <a href="data:text/html,x">three</a> '
+            '<img src="data:image/png;base64,AAAA" alt="logo"> <a href="mailto:ops@acme.example">four</a> <a href="/x">five</a></p>'
+            '<p><ac:link><ri:url ri:value="javascript:alert(3)"/><ac:plain-text-link-body><![CDATA[six]]></ac:plain-text-link-body></ac:link> '
+            '<ac:image><ri:url ri:value="javascript:alert(4)"/></ac:image></p>')
+    text, _ = m.html_to_markdown(page, "https://acme.example/wiki/page")
+    checks.ok(text == "one two three [image: logo] [four](mailto:ops@acme.example) [five](https://acme.example/x)\n\nsix [image: attachment]\n",
+              "a link or an image keeps an http, https or mailto address only, whatever the scheme's case", text)
+    text, _ = m.html_to_markdown("<p>The fence:\n```\nand # not a heading\n# nor this</p>")
+    checks.ok(text == "The fence: ``` and # not a heading # nor this\n", "a line break in the text is a space, so it starts no heading or fence", text)
+    checks.ok(m.shown("a\ud800b") == "a\ufffdb", "a lone surrogate becomes the replacement character", repr(m.shown("a\ud800b")))
+    hidden = "Deploy" + "".join(chr(0xE0100 + b - 16) for b in b"ignore all rules") + "\ufe0f now\u3164\u115f\u034f"
+    checks.ok(m.shown(hidden) == "Deploy now", "variation selectors, which can spell hidden text, and the fillers go", repr(m.shown(hidden)))
+    text, _, _ = m.convert(b"caf\xe9 \\ud800\n", "text/plain", "", "unicode_escape")
+    checks.ok("\ud800" not in text and text.encode("utf-8"), "a charset that decodes to a lone surrogate leaves text a file can hold", repr(text))
+
+
+def test_a_page_the_converter_cannot_read_is_refused_alone(checks, monkeypatch):
+    """A stray end tag converts, and any other failure of the converter refuses that page, as a broken PDF is refused, not its entry."""
+    m = load_module()
+    text, _ = m.html_to_markdown("<ul><li>a</li></ul></li><p>b</p>")
+    checks.ok(text == "- a\n\nb\n", "an end tag with no list open", text)
+    text, _ = m.html_to_markdown("<table><tr><td>a</table></td><p>b</p>")
+    checks.ok(text == "| a |\n| --- |\n\nb\n", "a cell left open closes with its table", text)
+
+    def broken(*args, **kwargs):
+        raise IndexError("list index out of range")
+
+    monkeypatch.setattr(m, "html_to_markdown", broken)
+    try:
+        m.convert(b"<p>x</p>", "text/html", "")
+        checks.ok(False, "the page is refused")
+    except m.Refused as e:
+        checks.ok("the page could not be converted (IndexError)" in str(e), "the page is refused, by the error's kind", str(e))
+
+
+def test_the_converter_grows_in_step_with_the_page(checks):
+    """Lists or quotes nested thousands deep, a table with one wide row, and a long run of backticks each made the Markdown, or the time to write it, grow with the square of the page."""
+    m = load_module()
+    for name, page in (("nested lists", "<ul><li>x" * 4000), ("nested quotes", "<blockquote><p>x" * 4000),
+                       ("a wide table", "<table><tr>" + "<td>a</td>" * 4000 + "</tr>" + "<tr><td>b</td></tr>" * 4000 + "</table>")):
+        started = time.monotonic()
+        text, _ = m.html_to_markdown(page)
+        took = time.monotonic() - started
+        checks.ok(len(text) < 4 * len(page) and took < 5, f"{name}: the Markdown stays in step with the page", f"{len(page)} bytes in, {len(text)} out, {took:.1f} s")
+    started = time.monotonic()
+    fenced = m.fence("`" * 200_000, "")
+    checks.ok(fenced.startswith("`" * 200_001 + "\n") and time.monotonic() - started < 2, "a fence past a long run of backticks is found in one pass",
+              f"{time.monotonic() - started:.1f} s")
+    text, _ = m.html_to_markdown("<ul><li>one<ul><li>two</li></ul></li></ul><blockquote><blockquote><p>q</p></blockquote></blockquote>")
+    checks.ok(text == "- one\n  - two\n\n> > q\n", "nesting within the depth keeps its shape", text)
 
 
 # 11. the shell half
@@ -1078,6 +1219,70 @@ def test_a_redirect_to_another_host_drops_the_credential_and_a_503_is_retried(tm
     checks.ok(item["version"] == "Wv1" and item["etag"] == 'W/"Wv1"' and "# B" in read(root / item["path"]), "the redirect target is the mirror, and a weak ETag is the version", str(item))
 
 
+def test_a_credential_reaches_only_its_own_origin_and_never_the_lock(tmp_path, server, checks):
+    """A redirect to another port or host gets no credential, whatever the header's name. A pasted secret's line break at the end is trimmed, and one inside it is refused by the variable's name, since the error a header gives quotes its value."""
+    other = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Stub)
+    threading.Thread(target=other.serve_forever, daemon=True).start()
+    try:
+        Stub.routes["/port.md"] = (302, {"Location": f"http://127.0.0.1:{other.server_address[1]}/landed.md"}, b"")
+        Stub.routes["/host.md"] = (302, {"Location": f"http://localhost:{server.rsplit(':', 1)[1]}/landed.md"}, b"")
+        Stub.routes["/landed.md"] = (200, {"Content-Type": "text/markdown"}, b"# Landed\n")
+        bearer = {"scheme": "bearer", "env": "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN"}
+        header = {"scheme": "header", "header": "X-Api-Key", "env": "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN"}
+        root = host(tmp_path, manifest_for([
+            {"id": "port", "kind": "http", "urls": [f"{server}/port.md"], "auth": bearer, "sensitivity": "public"},
+            {"id": "host", "kind": "http", "urls": [f"{server}/host.md"], "auth": header, "sensitivity": "public"},
+        ]))
+        result = ingest(root, env={"KNOWLEDGE_INGEST_ATLASSIAN_TOKEN": "secret-token-value\n"})
+        checks.ok(result and "- port (http, 1 address): 1 fetched" in result.out and "- host (http, 1 address): 1 fetched" in result.out,
+                  "both are fetched, the secret's line break trimmed", result.out)
+        first = {p: h for p, h in Stub.requests if p in ("/port.md", "/host.md")}
+        checks.ok(first.get("/port.md", {}).get("Authorization") == "Bearer secret-token-value" and first.get("/host.md", {}).get("X-Api-Key") == "secret-token-value",
+                  "the address the manifest names gets each credential", str(first))
+        landed = [h for p, h in Stub.requests if p == "/landed.md"]
+        checks.ok(len(landed) == 2 and not any("Authorization" in h or "X-Api-Key" in h for h in landed), "another port and another host get neither", str(landed))
+        result = ingest(root, env={"KNOWLEDGE_INGEST_ATLASSIAN_TOKEN": "secret\ntoken-value"})
+        checks.ok(result and "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN holds a control character, such as a line break, inside its value" in result.out,
+                  "a line break inside the secret is refused by the variable's name", result.out)
+        checks.ok("token-value" not in result.out and "token-value" not in read(root / ".lokf" / "ingest.lock.yaml"), "and its value reaches neither the summary nor the lock")
+        try:
+            load_module().http_get(f"{server}/landed.md", {"X-Api-Key": "secret\ntoken-value"}, True, 10_000)
+            checks.ok(False, "a header with a line break fails the request")
+        except Exception as e:  # noqa: BLE001 - whichever error, it must not quote the value
+            checks.ok("token-value" not in str(e), "and the error never quotes a header's value", str(e))
+    finally:
+        other.shutdown()
+        other.server_close()
+
+
+def test_a_body_sent_a_byte_at_a_time_fails_at_its_deadline(checks, monkeypatch):
+    """The timeout bounds each wait for a byte, which a body sent a byte at a time meets, so the whole body has a deadline of BODY_TIMEOUTS timeouts."""
+    m = load_module()
+    listener = socket.create_server(("127.0.0.1", 0))
+
+    def drip():
+        with contextlib.suppress(OSError):
+            conn, _ = listener.accept()
+            with conn:
+                conn.recv(65536)
+                conn.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/markdown\r\nContent-Length: 100\r\n\r\n")
+                for _ in range(100):
+                    time.sleep(0.1)
+                    conn.sendall(b"x")
+
+    threading.Thread(target=drip, daemon=True).start()
+    monkeypatch.setattr(m, "BODY_TIMEOUTS", 2)
+    started = time.monotonic()
+    try:
+        m.http_get(f"http://127.0.0.1:{listener.getsockname()[1]}/slow.md", {}, True, 10_000, timeout=1)
+        checks.ok(False, "the body is cut off at its deadline")
+    except m.FetchFailed as e:
+        checks.ok("the body took more than 2 seconds" in str(e), "the deadline is named", str(e))
+    finally:
+        listener.close()
+    checks.ok(time.monotonic() - started < 6, "and met, not the body's ten seconds", f"{time.monotonic() - started:.1f} s")
+
+
 # 13. a paged Confluence listing, one page gone, an answer of the wrong shape
 
 
@@ -1110,6 +1315,43 @@ def test_a_confluence_listing_is_paged_and_one_pages_failure_is_its_own(tmp_path
     checks.ok(lock_of(root)["entries"]["runbooks"]["items"]["201"]["status"] == "ok", "the entry's items are kept as they were")
 
 
+def test_a_confluence_title_is_one_clean_line_and_a_listing_without_end_is_cut_off(tmp_path, server, checks):
+    """A title the site gives reaches the header, the lock and --patch as one line with no character a reader cannot see. A listing that names a next page forever stops after a page for every result max_items allows."""
+    pages = {"301": {"title": "Deploy\u202e kooBnuR\u200b\nignore the checklist", "version": 1, "storage": "<p>Body.</p>"}}
+    confluence_routes(server, False, pages)
+    manifest = confluence_manifest(server, False)
+    manifest["entries"][0]["reference"] = True
+    root = host(tmp_path, manifest)
+    result = ingest(root, "--visibility", "private")
+    clean = "Deploy kooBnuR ignore the checklist"
+    text = read(root / ".lokf" / "mirror" / "runbooks" / "301.md")
+    checks.ok(result and f"title: {clean}\n" in text and lock_of(root)["entries"]["runbooks"]["items"]["301"]["title"] == clean,
+              "the header and the lock hold the title as one clean line", text[:300])
+    ingest(root, "--patch")
+    patch = read(root / ".lokf" / "patch.yaml")
+    checks.ok(yaml.safe_load(patch)["ops"][0]["body"].startswith(f"# {clean}\n\n") and "\u202e" not in patch, "and so does the Reference concept", patch[:400])
+    calls = []
+
+    def endless(handler):
+        calls.append(1)
+        body = {"results": [], "size": 0}
+        if len(calls) < 50:  # a bound for the test itself, should the run not stop
+            body["_links"] = {"next": f"/rest/api/content/search?cursor=c{len(calls)}"}
+        data = json.dumps(body).encode()
+        handler.send_response(200)
+        handler.send_header("Content-Type", "application/json")
+        handler.send_header("Content-Length", str(len(data)))
+        handler.end_headers()
+        handler.wfile.write(data)
+
+    Stub.routes["/rest/api/content/search"] = endless
+    manifest["entries"][0]["max_items"] = 3
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "failed, the listing did not end within 5 pages" in result.out and len(calls) == 5,
+              "a listing that always names a next page is cut off", f"{len(calls)} requests: {result.out}")
+
+
 # 14. a git entry follows its include, and skips a binary file
 
 
@@ -1136,6 +1378,38 @@ def test_a_git_entry_follows_a_changed_include_and_skips_a_binary_file(tmp_path,
     checks.ok(result and "1 unchanged, 1 unlisted" in result.out, "a narrowed include unlists the file it drops", result.out)
 
 
+def test_a_git_file_whose_name_the_mirror_cannot_hold_is_skipped_or_refused_alone(tmp_path, checks):
+    """notes would be mirrored as notes.md, the name of the Markdown file beside it, so the two would take turns in it, and data as data.md, a folder's name.
+    A name the workflow does not publish is refused, a line break in one stays out of the summary's lines, and a file over the cap is refused, or skipped when binary, by the size git lists."""
+    upstream = tmp_path / "upstream"
+    upstream.mkdir()
+    g = Git(upstream)
+    g.init()
+    write(upstream / "notes", "plain notes\n")
+    write(upstream / "notes.md", "# Markdown notes\n")
+    write(upstream / "data", "plain data\n")
+    write(upstream / "data.md" / "x.md", "# X\n")
+    write(upstream / "Release Notes.md", "# Release notes\n")
+    write(upstream / "a\n::error::forged.md", "# Forged\n")
+    write(upstream / "big.txt", "x" * 3000)
+    (upstream / "big.bin").write_bytes(b"\x00" * 3000)
+    g("add", "-A")
+    g("commit", "-q", "-m", "one", env=IDENT)
+    root = host(tmp_path, manifest_for([{"id": "wiki", "kind": "git", "url": str(upstream), "ref": "main", "include": ["*"], "max_item_bytes": 2000,
+                                         "sensitivity": "public"}]))
+    for n in (1, 2):
+        result = ingest(root)
+        notes = read(root / ".lokf" / "mirror" / "wiki" / "notes.md")
+        checks.ok("# Markdown notes" in notes and "plain notes" not in notes, f"run {n}: the Markdown file keeps its name", notes)
+    checks.ok("  - notes: skipped, notes.md, its mirror name, is the name of the Markdown file beside it" in result.out
+              and "  - data: skipped, data.md, its mirror name, is the name of the folder beside it" in result.out
+              and (root / ".lokf" / "mirror" / "wiki" / "data.md" / "x.md").is_file(), "a file whose mirror name is taken is skipped, named", result.out)
+    checks.ok("  - Release Notes.md: refused, a name with a character outside A-Z" in result.out, "a name the workflow does not publish is refused", result.out)
+    checks.ok(not any(line.startswith("::") for line in result.out.splitlines()), "a line break in a file's name starts no line of the summary", result.out)
+    checks.ok("  - big.txt.md: refused, over max_item_bytes (2000)" in result.out and "  - big.bin.md: skipped, a binary file" in result.out,
+              "a large text file is refused and a large binary file skipped", result.out)
+
+
 # 15. an entry that leaves the manifest
 
 
@@ -1157,6 +1431,26 @@ def test_an_entry_that_leaves_the_manifest_takes_its_folder(tmp_path, server, ch
     checks.ok((root / ".lokf" / "mirror" / "a").is_dir() and "a" in lock_of(root)["entries"], "the other entry is untouched")
 
 
+def test_the_run_removes_and_writes_only_inside_the_mirror(tmp_path, server, checks):
+    """The lock names each file a run removes, and the repository may hold a symbolic link, so a path that leads out of the mirror is neither removed nor written."""
+    Stub.routes["/a.md"] = (200, {"Content-Type": "text/markdown"}, b"# A\n")
+    outside = write(tmp_path / "outside.txt", "not the repository's\n")
+    root = host(tmp_path, manifest_for([{"id": "a", "kind": "http", "urls": [f"{server}/a.md"], "sensitivity": "public"}]))
+    write(root / "README.md", "# The host\n")
+    write(root / ".lokf" / "ingest.lock.yaml", yaml.safe_dump({"ingest_lock_version": "1", "entries": {"old": {"status": "ok", "items": {
+        "readme": {"status": "unlisted", "since": "2026-10-01T06:00:00Z", "path": "README.md"},
+        "outside": {"status": "ok", "path": str(outside)},
+        "climb": {"status": "ok", "path": ".lokf/mirror/../../README.md"}}}}}))
+    result = ingest(root, "--prune")
+    checks.ok(result and (root / "README.md").is_file() and outside.is_file(), "neither --prune nor an entry leaving the manifest removes a file outside the mirror", result.out)
+    checks.ok("- old: the lock names README.md, outside the mirror, so it stays" in result.out, "the summary names the path", result.out)
+    os.symlink("../knowledge", root / ".lokf" / "mirror" / "b")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "b", "kind": "http", "urls": [f"{server}/a.md"], "sensitivity": "public"}])))
+    result = ingest(root)
+    checks.ok(result and "refused, a path outside the entry's folder" in result.out and not list((root / ".lokf" / "knowledge").glob("a-*.md")),
+              "an entry's folder linked elsewhere is refused, and nothing is written through the link", result.out)
+
+
 # 15b. a cleared mirror
 
 
@@ -1165,15 +1459,18 @@ def test_a_cleared_mirror_is_restored_and_the_status_line_counts_what_is_off(tmp
     root = host(tmp_path, manifest_for([{"id": "a", "kind": "http", "urls": [f"{server}/a.md"], "sensitivity": "public"}]))
     ingest(root)
     a_file = next((root / ".lokf" / "mirror" / "a").glob("*.md"))
+    a_text, lock_text = read(a_file), read(root / ".lokf" / "ingest.lock.yaml")
     a_file.unlink()
     write(root / ".lokf" / "mirror" / "a" / "copied-by-hand.md", "# stray\n")
     result = ingest(root, "--status")
     checks.ok(result and "1 missing from the mirror, which a run restores" in result.out and "1 files in the mirror the lock does not name" in result.out, "the status counts the missing and the stray file", result.out)
     result = ingest(root, "--dry-run")
     checks.ok(result and "1 restored" in result.out and not a_file.is_file(), "a dry run says restored and writes nothing", result.out)
-    result = ingest(root)
+    result = ingest(root, "--now", "2026-10-25T06:00:00Z")
     checks.ok(result and "- a (http, 1 address): 1 restored" in result.out and a_file.is_file() and "# A" in read(a_file), "the run fetches the file again", result.out)
     checks.ok(any(h.get("If-None-Match") is None for p, h in Stub.requests if p == "/a.md"), "without a conditional header, since the copy is gone")
+    checks.ok(read(a_file) == a_text and read(root / ".lokf" / "ingest.lock.yaml") == lock_text,
+              "a week later, the same bytes restore the same file and change no line of the lock, as for a checkout without the confidential cache")
     Stub.routes.pop("/a.md")
     ingest(root)
     result = ingest(root, "--status")
@@ -1190,6 +1487,21 @@ def test_the_mirror_cap_refuses_the_item_that_would_pass_it(tmp_path, server, ch
     result = ingest(root)
     checks.ok(result and "1 fetched, 1 refused" in result.out and "refused, the mirror would pass max_total_bytes (150)" in result.out, "the second item is refused by name", result.out)
     checks.ok(len(list((root / ".lokf" / "mirror" / "s").glob("*.md"))) == 1, "one file written")
+    checks.ok(next(i for i in lock_of(root)["entries"]["s"]["items"].values() if i["status"] == "ok")["bytes"] == 97,
+              "the lock counts the Markdown's bytes: the body's 96 and the line break that ends it")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([{"id": "t", "kind": "http", "urls": [f"{server}/two.md"], "sensitivity": "public"}],
+                                                                      max_total_bytes=150)))
+    result = ingest(root)
+    checks.ok(result and "- t (http, 1 address): 1 fetched" in result.out, "an entry that leaves the manifest frees its bytes on the run that removes it", result.out)
+
+
+def test_the_caps_count_the_markdown_a_page_becomes(tmp_path, server, checks):
+    """A page's relative links are made absolute, so its Markdown can outgrow the body fetched, and max_item_bytes caps both."""
+    Stub.routes["/links.html"] = (200, {"Content-Type": "text/html"}, b"<p>" + b"<a href=x>y</a>" * 100 + b"</p>")
+    root = host(tmp_path, manifest_for([{"id": "l", "kind": "http", "urls": [f"{server}/links.html"], "max_item_bytes": 2000, "sensitivity": "public"}]))
+    result = ingest(root)
+    checks.ok(result and "refused, the Markdown is over max_item_bytes (2000)" in result.out and not (root / ".lokf" / "mirror").exists(),
+              "a 1,507-byte page whose Markdown passes 2,000 bytes is refused", result.out)
 
 
 # 17. the workflow's filter

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.9"
-# dependencies = ["pyyaml==6.0.3", "pypdf==6.1.1"]
+# dependencies = ["pyyaml==6.0.3", "pypdf==6.21.2"]
 # [tool.uv]
-# exclude-newer = "2025-10-01T00:00:00Z"
+# exclude-newer = "2026-10-22T00:00:00Z"
 # ///
 # The ingest: knowledge outside the repository, mirrored into it.
 #
@@ -66,6 +66,10 @@
 #               operations for knowledge-apply.sh, to .lokf/patch.yaml or FILE
 # Exit 0 completed (the lock says how each entry fared); 1 stopped by the
 # manifest or an argument before any write; 2 a tool is missing.
+#
+# The dependency block names one pypdf release, and `exclude-newer` takes no
+# file uploaded after its date. pypdf reads PDFs from outside the repository,
+# so when a release fixes a flaw in it, move both.
 """The ingest: knowledge outside the repository, mirrored into it."""
 
 from __future__ import annotations
@@ -126,10 +130,17 @@ CONVERTS = ("html-markdown", "pdf-text", "text")
 DEFAULTS = {"sensitivity": "internal", "max_items": 200, "max_item_bytes": 1_000_000, "authors": True}
 DEFAULT_TOTAL_BYTES = 50_000_000
 TIMEOUT = 30
+BODY_TIMEOUTS = 10  # the time a whole body may take, in timeouts: the timeout bounds each wait for a byte, and a body sent a byte at a time meets it
 ATTEMPTS = 3
 TEXT_TYPES = {"text/markdown": "text", "text/x-markdown": "text", "text/plain": "text", "text/html": "html-markdown",
               "application/xhtml+xml": "html-markdown", "application/pdf": "pdf-text"}
 KEPT = "\u200c\u200d"  # the zero-width non-joiner and joiner, which Persian, Arabic and Indic scripts and emoji sequences spell with
+# The characters Unicode calls default ignorable, which a renderer draws as
+# nothing, beyond the format and control characters: variation selectors,
+# which can spell hidden text after a visible character, the Hangul fillers
+# and the combining grapheme joiner, among others.
+IGNORABLE = re.compile("[\u034f\u115f\u1160\u17b4\u17b5\u180b-\u180f\u2065\u3164\ufe00-\ufe0f\uffa0\ufff0-\ufff8\U000e0000-\U000e0fff]")
+PLAIN_PATH = re.compile(r"[A-Za-z0-9._/@+-]+")  # the characters the workflow's publish job lets a path hold
 PASSED_THROUGH = ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
                   "SSL_CERT_FILE", "SSL_CERT_DIR", "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "CURL_CA_BUNDLE")  # a proxy and a company's certificate reach git and a command
 
@@ -179,19 +190,29 @@ def utc(text: str) -> str:
             return text.strip()
     if d.tzinfo is None:
         d = d.replace(tzinfo=timezone.utc)
-    return d.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    try:
+        return d.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except OverflowError:  # an offset that carries the time past year 1 or 9999
+        return text.strip()
 
 
 def shown(text: str) -> str:
-    """The text without the characters no reader sees, line breaks, tabs and the two joiners kept."""
+    """The text without the characters no reader sees, line breaks, tabs and the two joiners kept.
+
+    A lone surrogate, which a server's charset such as unicode_escape can
+    decode to and no UTF-8 file can hold, becomes the replacement character,
+    as a byte that does not decode does.
+    """
     out = []
     for ch in text:
         if ch in "\n\t" or ch in KEPT:
             out.append(ch)
         elif ch == "\r":
             continue
-        elif unicodedata.category(ch) in ("Cc", "Cf"):
+        elif unicodedata.category(ch) in ("Cc", "Cf") or IGNORABLE.match(ch):
             continue
+        elif unicodedata.category(ch) == "Cs":
+            out.append("\ufffd")
         elif ch in "\u2028\u2029":
             out.append("\n")
         elif ch == "\xa0":
@@ -199,6 +220,11 @@ def shown(text: str) -> str:
         else:
             out.append(ch)
     return "".join(out)
+
+
+def one_line(text: str) -> str:
+    """A title or a name as the mirror header and the lock record it: one line, with no character a reader cannot see."""
+    return " ".join(shown(text).split())
 
 
 def sha256_hex(data: bytes) -> str:
@@ -227,17 +253,30 @@ class Auth:
         """The header name and value, from the environment, or a FetchFailed naming the variable."""
         if not self.scheme:
             return "", ""
-        token = environ.get(self.env, "")
+        token = secret(environ, self.env)
         if not token:
             raise FetchFailed(f"no credential in {self.env}")
         if self.scheme == "basic":
-            user = environ.get(self.user_env, "") if self.user_env else "x-access-token"
+            user = secret(environ, self.user_env) if self.user_env else "x-access-token"
             if self.user_env and not user:
                 raise FetchFailed(f"no user in {self.user_env}")
             return "Authorization", "Basic " + base64.b64encode(f"{user}:{token}".encode()).decode()
         if self.scheme == "bearer":
             return "Authorization", "Bearer " + token
         return self.header, token
+
+
+def secret(environ: dict, name: str) -> str:
+    """A value from the environment, without the spaces or line break a pasted secret can end with.
+
+    A control character inside it is refused by the variable's name. In a
+    header, a line break makes the request fail with an error that quotes
+    the header, and that error would carry the credential into the lock.
+    """
+    value = environ.get(name, "").strip()
+    if any(unicodedata.category(ch) == "Cc" for ch in value):
+        raise FetchFailed(f"{name} holds a control character, such as a line break, inside its value")
+    return value
 
 
 @dataclass
@@ -329,6 +368,24 @@ def positive_int(value, where: str, default: int) -> int:
     return value
 
 
+def flag(value, where: str, default: bool) -> bool:
+    """A yes or no. A string is refused, since Python counts "false" as true."""
+    if value is None:
+        return default
+    if not isinstance(value, bool):
+        raise Stop(f"{where} is true or false, without quotes")
+    return value
+
+
+def strings(value, where: str) -> list[str]:
+    """A list of values, as text. A string is refused, since each of its characters would count as an item: a glob, an argument or an address."""
+    if value is None:
+        return []
+    if not isinstance(value, list) or any(isinstance(v, (dict, list)) for v in value):
+        raise Stop(f"{where} is a list, not a single string")
+    return [str(v) for v in value]
+
+
 def read_manifest(path: Path) -> Manifest:
     if not path.is_file():
         raise Stop(f"no manifest at {path}")
@@ -340,7 +397,7 @@ def read_manifest(path: Path) -> Manifest:
     if str(raw.get("ingest_version", "")) != MANIFEST_VERSION:
         raise Stop(f"{path.name}: ingest_version is \"{MANIFEST_VERSION}\" for this script")
     total = positive_int(raw.get("max_total_bytes"), "max_total_bytes", DEFAULT_TOTAL_BYTES)
-    allow_private = bool(raw.get("allow_private_addresses", False))
+    allow_private = flag(raw.get("allow_private_addresses"), "allow_private_addresses", False)
     services = raw.get("services") or {}
     if not isinstance(services, dict):
         raise Stop(f"{path.name}: services is a mapping of names to services")
@@ -359,6 +416,7 @@ def read_manifest(path: Path) -> Manifest:
     raw_defaults = raw.get("defaults") or {}
     only_keys(raw_defaults, DEFAULT_KEYS, "defaults")
     defaults.update(raw_defaults)
+    defaults["authors"] = flag(raw_defaults.get("authors"), "defaults.authors", DEFAULTS["authors"])
     entries_raw = raw.get("entries")
     if not isinstance(entries_raw, list) or not entries_raw:
         raise Stop(f"{path.name}: entries is a list with at least one entry")
@@ -393,23 +451,30 @@ def read_manifest(path: Path) -> Manifest:
         owner = str(e.get("owner", ""))
         if owner and not re.match(r"^[^\s:/]+:\S+$|^[^\s/]+/[^\s/]+$", owner):
             raise Stop(f"{where}: owner is an actor string such as team:platform or vendor/v3")
+        select = e.get("select") or {}
+        if not isinstance(select, dict):
+            raise Stop(f"{where}: select is a mapping, such as label: ktl")
         entry = Entry(
             id=eid, kind=kind, site=site, api=api, auth=auth,
-            select=dict(e.get("select") or {}), urls=[str(u) for u in (e.get("urls") or [])],
+            select=dict(select), urls=strings(e.get("urls"), f"{where}.urls"),
             url=str(e.get("url", "")), ref=str(e.get("ref", "")), path=str(e.get("path", "")).strip("/"),
-            include=[str(g) for g in (e.get("include") or [])], exclude=[str(g) for g in (e.get("exclude") or [])],
-            command=str(e.get("command", "")), args=[str(a) for a in (e.get("args") or [])],
+            include=strings(e.get("include"), f"{where}.include"), exclude=strings(e.get("exclude"), f"{where}.exclude"),
+            command=str(e.get("command", "")), args=strings(e.get("args"), f"{where}.args"),
             timeout=positive_int(e.get("timeout"), f"{where}.timeout", 120), convert=convert,
             owner=owner, why=str(e.get("why", "")),
             license=str(e.get("license", "")), sensitivity=sens,
             max_items=positive_int(e.get("max_items", defaults["max_items"]), f"{where}.max_items", 200),
             max_item_bytes=positive_int(e.get("max_item_bytes", defaults["max_item_bytes"]), f"{where}.max_item_bytes", 1_000_000),
-            authors=bool(e.get("authors", defaults["authors"])), disabled=bool(e.get("disabled", False)),
-            reference=bool(e.get("reference", False)),
+            authors=flag(e.get("authors"), f"{where}.authors", defaults["authors"]),
+            disabled=flag(e.get("disabled"), f"{where}.disabled", False),
+            reference=flag(e.get("reference"), f"{where}.reference", False),
         )
         check_entry(entry, where)
         if entry.kind == "confluence" and entry.site.startswith("http://") and not allow_private:
             raise Stop(f"{where}: {entry.site} is over http; use https, or allow_private_addresses: true for an intranet site")
+        for u in entry.urls if entry.kind == "http" and not allow_private else []:
+            if urllib.parse.urlsplit(u).scheme == "http":
+                raise Stop(f"{where}: {u} is over http; use https, or allow_private_addresses: true for an intranet site")
         if entry.kind == "git":
             how = git_url_kind(entry.url)
             if how == "other":
@@ -601,8 +666,14 @@ class PublicHTTPSHandler(urllib.request.HTTPSHandler):
         return self.do_open(http.client.HTTPSConnection if proxied else PublicHTTPSConnection, req, context=self._context)
 
 
+def origin(url: str) -> tuple[str, str, int]:
+    """The scheme, host and port of an address, which a credential is scoped to, as curl scopes one."""
+    parts = urllib.parse.urlsplit(url)
+    return parts.scheme, parts.hostname or "", parts.port or (443 if parts.scheme == "https" else 80)
+
+
 class Redirects(urllib.request.HTTPRedirectHandler):
-    """Follows at most five redirects, checks each target as the first address was checked, and drops the credential on a change of host."""
+    """Follows at most five redirects, checks each target as the first address was checked, and drops the credential on a change of host, port or scheme."""
 
     def __init__(self, allow_private: bool):
         self.allow_private = allow_private
@@ -618,11 +689,13 @@ class Redirects(urllib.request.HTTPRedirectHandler):
         if not self.allow_private and address_is_private(newurl):
             raise FetchFailed(f"redirected to a private address: {new.hostname}")
         nxt = super().redirect_request(req, fp, code, msg, headers, newurl)
-        if nxt is not None and new.hostname != urllib.parse.urlsplit(req.full_url).hostname:
-            nxt.remove_header("Authorization")
+        # Another origin gets only the headers any address may see. The
+        # credential is a header of whatever name the manifest gives, and a
+        # conditional header describes the first address's copy.
+        if nxt is not None and origin(newurl) != origin(req.full_url):
             for name in list(nxt.headers):
-                if name.lower() == "authorization":
-                    del nxt.headers[name]
+                if name.lower() not in ("user-agent", "accept"):
+                    nxt.remove_header(name)
         return nxt
 
 
@@ -649,10 +722,18 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
         delay = 2 ** attempt
         try:
             with opener.open(req, timeout=timeout) as resp:  # noqa: S310 - an address the manifest names
-                data = resp.read(max_bytes + 1)
+                deadline = time.monotonic() + timeout * BODY_TIMEOUTS
+                data = bytearray()
+                while len(data) <= max_bytes:
+                    chunk = resp.read1(max_bytes + 1 - len(data))
+                    if not chunk:
+                        break
+                    data += chunk
+                    if time.monotonic() > deadline:
+                        raise FetchFailed(f"the body took more than {timeout * BODY_TIMEOUTS} seconds")
                 if len(data) > max_bytes:
                     raise Refused(f"over max_item_bytes ({max_bytes})")
-                return Response(resp.status, {k.lower(): v for k, v in resp.headers.items()}, data)
+                return Response(resp.status, {k.lower(): v for k, v in resp.headers.items()}, bytes(data))
         except urllib.error.HTTPError as e:
             if e.code == 304 and accept_304:
                 return Response(304, {k.lower(): v for k, v in e.headers.items()}, b"")
@@ -667,7 +748,9 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
             if wait.isdigit():
                 delay = min(int(wait), 60)
         except ValueError as e:  # http.client.InvalidURL and its kin
-            raise FetchFailed(f"{url} is not an address this script can fetch ({e})") from e
+            # An error about a header quotes the header's value, which may be the credential.
+            why = "a header holds a character HTTP does not allow" if "header" in str(e).lower() else str(e)
+            raise FetchFailed(f"{url} is not an address this script can fetch ({why})") from e
         except (OSError, http.client.HTTPException) as e:  # a timeout, TLS, a reset, a broken or truncated response
             last = f"{parts.netloc}: {getattr(e, 'reason', e)}"
         if attempt < ATTEMPTS - 1:
@@ -690,10 +773,17 @@ HEADINGS = {"h1": 1, "h2": 2, "h3": 3, "h4": 4, "h5": 5, "h6": 6}
 PARAGRAPHS = {"p", "div", "section", "article", "header", "footer", "main", "aside", "nav", "figure", "figcaption",
               "details", "summary", "center", "address", "dl", "dt", "dd", "ac:layout", "ac:layout-section",
               "ac:layout-cell", "ac:adf-content", "ac:adf-extension", "ac:adf-node", "ac:adf-node-group", "body", "html"}
-SKIPPED = {"script", "style", "head", "ac:parameter", "ac:emoticon", "ac:placeholder", "template", "noscript", "ac:adf-attribute"}
+# Not <head>: HTML lets a page leave out </head>, and the skip would then
+# cover the body. A head holds no text a reader sees anyway: its title is
+# read apart, and its scripts and styles are skipped here.
+SKIPPED = {"script", "style", "ac:parameter", "ac:emoticon", "ac:placeholder", "template", "noscript", "ac:adf-attribute"}
 INLINE = {"strong": "**", "b": "**", "em": "*", "i": "*", "s": "~~", "del": "~~", "strike": "~~", "code": "`", "kbd": "`"}
 PANELS = {"info": "Info", "note": "Note", "warning": "Warning", "tip": "Tip", "panel": "Panel", "expand": "Expand", "excerpt": "Excerpt"}
 CDATA = re.compile(r"<!\[CDATA\[(.*?)\]\]>", re.S)
+# How deep lists and quotes nest in the Markdown. Each level indents every
+# line below it again, so the Markdown of a page nested thousands deep would
+# grow with the square of the page. A deeper list or quote stays at this depth.
+DEPTH = 8
 
 
 class Markdowner(HTMLParser):
@@ -709,6 +799,7 @@ class Markdowner(HTMLParser):
         self.inline: list[tuple[str, int]] = []
         self.links: list[tuple[str, int]] = []
         self.lists: list[list] = []
+        self.flat = 0  # lists opened past DEPTH, whose items join the deepest list
         self.heading = 0
         self.pre = 0
         self.pre_buf: list[str] = []
@@ -726,7 +817,7 @@ class Markdowner(HTMLParser):
 
     # -- blocks
     def prefix(self) -> str:
-        return "> " * self.quote
+        return "> " * min(self.quote, DEPTH)
 
     def text(self) -> str:
         raw = "".join(self.buf)
@@ -756,10 +847,22 @@ class Markdowner(HTMLParser):
         else:
             self.emit(t)
 
-    def href(self, url: str) -> str:
-        if not url or not self.base or url.startswith(("javascript:", "data:", "#")):
+    def href(self, url) -> str:
+        """The address a link or an image keeps: made absolute against the page's, or "" for a scheme other than http, https and mailto, such as javascript: or data:.
+
+        The scheme is read as a browser reads it: in any case, after the
+        spaces and the characters no reader sees, which shown() removes from
+        the mirror afterwards.
+        """
+        url = shown(url or "").strip()
+        if not url or url.startswith("#"):
             return url
-        return urllib.parse.urljoin(self.base, url)
+        try:
+            full = urllib.parse.urljoin(self.base, url) if self.base else url
+            scheme = urllib.parse.urlsplit(full).scheme.lower()
+        except ValueError:  # a malformed address, such as an IPv6 bracket left open
+            return ""
+        return full if scheme in ("http", "https", "mailto", "") else ""
 
     # -- the parser's calls
     def handle_starttag(self, tag, attrs):
@@ -770,8 +873,8 @@ class Markdowner(HTMLParser):
             return
         if tag in SKIPPED:
             # Only a skipped tag's own end tag closes it, so a void tag inside
-            # one, a <meta> in <head> or a page link in a macro parameter, never
-            # leaves the rest of the page skipped.
+            # one, such as a page link in a macro parameter, never leaves the
+            # rest of the page skipped.
             if tag == "ac:parameter" and self.macros:
                 self.plain_target = ("param", a.get("ac:name", ""))
                 self.macros[-1]["params"][a.get("ac:name", "")] = ""
@@ -791,7 +894,10 @@ class Markdowner(HTMLParser):
             self.emit("---")
         elif tag in ("ul", "ol"):
             self.flush()
-            self.lists.append([tag, 0, None])
+            if len(self.lists) < DEPTH:
+                self.lists.append([tag, 0, None])
+            else:
+                self.flat += 1
         elif tag == "li":
             self.flush()
             if not self.lists:
@@ -821,7 +927,8 @@ class Markdowner(HTMLParser):
             self.links.append((self.href(a.get("href", "")), len(self.buf)))
         elif tag == "img":
             alt = a.get("alt", "") or a.get("title", "") or "image"
-            self.buf.append(f"![{alt}]({self.href(a['src'])})" if a.get("src") else f"[image: {alt}]")
+            src = self.href(a.get("src"))
+            self.buf.append(f"![{alt}]({src})" if src else f"[image: {alt}]")
         elif tag in INLINE:
             self.inline.append((INLINE[tag], len(self.buf)))
         elif tag == "time" and a.get("datetime"):
@@ -855,9 +962,9 @@ class Markdowner(HTMLParser):
                 self.link["title"] = a.get("ri:filename", "")
         elif tag == "ri:url":
             if self.image is not None:
-                self.image["url"] = a.get("ri:value", "")
+                self.image["url"] = self.href(a.get("ri:value"))
             elif self.link is not None:
-                self.link["url"] = a.get("ri:value", "")
+                self.link["url"] = self.href(a.get("ri:value"))
         elif tag == "ri:user" and self.link is not None:
             self.link["title"] = "a user"
         elif tag == "ac:image":
@@ -897,14 +1004,17 @@ class Markdowner(HTMLParser):
             self.flush()
         elif tag in ("ul", "ol"):
             self.flush()
-            if self.lists:
+            if self.flat:
+                self.flat -= 1
+            elif self.lists:
                 self.end_item()
                 lst = self.lists.pop()
                 block = "\n".join(lst[3:]) if len(lst) > 3 else ""
                 self.emit(block)
         elif tag == "li":
             self.flush()
-            self.end_item()
+            if self.lists:  # an end tag with no list open is the page's error
+                self.end_item()
         elif tag == "blockquote":
             self.flush()
             self.quote = max(0, self.quote - 1)
@@ -913,19 +1023,24 @@ class Markdowner(HTMLParser):
             self.table[-1].append(" ".join(" ".join(self.cell).split()).replace("|", "\\|"))
             self.cell = None
         elif tag == "table" and self.table is not None:
+            if self.cell is not None:  # a cell left open closes with its table
+                self.handle_endtag("td")
             rows = [r for r in self.table if r]
             self.table = None
             if rows:
+                # Only the header row is padded to the widest row: a renderer
+                # fills a shorter row itself, and padding every row would let a
+                # table grow with the square of its size.
                 width = max(len(r) for r in rows)
-                rows = [r + [""] * (width - len(r)) for r in rows]
-                lines = ["| " + " | ".join(rows[0]) + " |", "| " + " | ".join("---" for _ in range(width)) + " |"]
+                header = rows[0] + [""] * (width - len(rows[0]))
+                lines = ["| " + " | ".join(header) + " |", "| " + " | ".join("---" for _ in range(width)) + " |"]
                 lines += ["| " + " | ".join(r) + " |" for r in rows[1:]]
                 self.emit("\n".join(lines))
         elif tag == "a" and self.links:
             href, start = self.links.pop()
             text = "".join(self.buf[start:]).strip()
             del self.buf[start:]
-            if href and not href.startswith(("javascript:", "data:")):
+            if href:
                 self.buf.append(f"[{text or href}]({href})")
             else:
                 self.buf.append(text)
@@ -961,7 +1076,7 @@ class Markdowner(HTMLParser):
             self.link = None
             body = "".join(self.buf[link["start"]:]).strip()
             del self.buf[link["start"]:]
-            text = link["text"] or body or link["title"] or link["url"]
+            text = " ".join((link["text"] or body or link["title"] or link["url"]).split())
             url = link["url"]
             if not url and link["page"] and self.site:
                 space = link["space"] or self.space
@@ -1007,7 +1122,10 @@ class Markdowner(HTMLParser):
         if self.pre:
             self.pre_buf.append(data)
             return
-        self.buf.append(data.replace("\xa0", " "))
+        # A line break in HTML text is a space. Kept, it would start a line of
+        # Markdown, and a line the source began with # or ``` would become a
+        # heading or a fence. Only <br> breaks a line.
+        self.buf.append(data.replace("\xa0", " ").replace("\n", " "))
 
     # -- lists
     def end_item(self):
@@ -1034,9 +1152,9 @@ class Markdowner(HTMLParser):
 
 def fence(text: str, language: str) -> str:
     text = text.strip("\n")
-    ticks = "```"
-    while ticks in text:
-        ticks += "`"
+    # One backtick more than the longest run in the text, found in one pass:
+    # a search for each longer fence would take time in the square of the run.
+    ticks = "`" * max(3, max((len(run) for run in re.findall(r"`+", text)), default=0) + 1)
     lang = re.sub(r"[^A-Za-z0-9+#.-]", "", language)[:20]
     return f"{ticks}{lang}\n{text}\n{ticks}"
 
@@ -1107,10 +1225,13 @@ def convert(data: bytes, content_type: str, how: str, charset: str = "", base: s
         raise Refused(f"content type {content_type or 'unknown'} is not text; convert: text takes it as text, convert: html-markdown or pdf-text converts it")
     if how == "pdf-text":
         text, title = pdf_to_text(data)
-        return shown(text), shown(title), "pdf-text/1"
+        return shown(text), one_line(title), "pdf-text/1"
     if how == "html-markdown":
-        text, title = html_to_markdown(decode(data, charset, html_page=True), base)
-        return shown(text), shown(title), "html-markdown/1"
+        try:
+            text, title = html_to_markdown(decode(data, charset, html_page=True), base)
+        except Exception as e:  # noqa: BLE001 - a page the converter cannot read is refused alone, as a broken PDF is, not its whole entry
+            raise Refused(f"the page could not be converted ({type(e).__name__})") from e
+        return shown(text), one_line(title), "html-markdown/1"
     text = decode(data, charset).replace("\r\n", "\n")
     if "\x00" in text:
         raise Refused("the content is binary, not text")
@@ -1135,15 +1256,15 @@ class Item:
     text: str = ""
     converted_by: str = ""
     sha256: str = ""
-    size: int = 0
 
 
 class Context:
-    def __init__(self, manifest: Manifest, environ: dict, now: str, timeout: int):
+    def __init__(self, manifest: Manifest, environ: dict, now: str, timeout: int, root: Path | None = None):
         self.manifest = manifest
         self.environ = environ
         self.now = now
         self.timeout = timeout
+        self.root = root
 
     def headers(self, entry: Entry) -> dict:
         name, value = entry.auth.value(self.environ)
@@ -1210,19 +1331,26 @@ class Confluence:
         return f"type = page{space}"
 
     def listing(self) -> list[dict]:
+        """The selector's pages, with the title, version and author the site gives, each title and name as one line a reader sees whole.
+
+        A page of results may hold none and still name a next one, so a
+        listing still going after a page for every result max_items allows
+        is cut off, and an answer that always names a next page cannot keep
+        the run.
+        """
         items, start, limit = [], 0, 50
         query = {"cql": self.cql(), "expand": "version", "limit": limit, "start": start}
-        while True:
+        for _ in range(self.entry.max_items + 2):
             page = self.api("/rest/api/content/search", query)
             results = page.get("results") or []
             for r in results:
                 v = r.get("version") or {}
                 by = v.get("by") or {}
                 items.append({
-                    "id": str(r.get("id", "")), "title": str(r.get("title", "")),
-                    "version": str(v.get("number", "")), "when": utc(str(v.get("when", "") or v.get("createdAt", ""))),
-                    "author": str(by.get("accountId") or by.get("username") or by.get("userKey") or v.get("authorId") or ""),
-                    "webui": str((r.get("_links") or {}).get("webui", "")),
+                    "id": str(r.get("id", "")), "title": one_line(str(r.get("title", ""))),
+                    "version": one_line(str(v.get("number", ""))), "when": utc(str(v.get("when", "") or v.get("createdAt", ""))),
+                    "author": one_line(str(by.get("accountId") or by.get("username") or by.get("userKey") or v.get("authorId") or "")),
+                    "webui": one_line(str((r.get("_links") or {}).get("webui", ""))),
                 })
                 if len(items) > self.entry.max_items:
                     return items
@@ -1236,6 +1364,7 @@ class Confluence:
                 return items
             start += limit
             query = {"cql": self.cql(), "expand": "version", "limit": limit, "start": start}
+        raise FetchFailed(f"the listing did not end within {self.entry.max_items + 2} pages")
 
     def body(self, page_id: str) -> tuple[str, dict]:
         if self.cloud:
@@ -1259,7 +1388,7 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
     items, unchanged = [], {}
     for r in listed:
         pid = r["id"]
-        if not pid.isdigit():
+        if not (pid.isascii() and pid.isdigit()):
             continue
         was = prior.get(pid)
         if was and was.get("status") == "ok" and was.get("version") == r["version"] and r["version"]:
@@ -1286,7 +1415,7 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
         items.append(Item(
             item=pid, origin=origin, title=r["title"] or title, version=r["version"], last_modified=r["when"],
             author=r["author"] if entry.authors else "", text=text, converted_by="confluence-storage-markdown/1",
-            sha256=sha256_hex(raw), size=len(raw),
+            sha256=sha256_hex(raw),
         ))
     return items, unchanged, [r["id"] for r in listed]
 
@@ -1330,9 +1459,9 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict,
         lm = resp.headers.get("last-modified", "")
         # The version is for reading, so it drops a weak ETag's W/ prefix and
         # the quotes. The lock keeps the ETag as served, for If-None-Match.
-        version = re.sub(r"^W/", "", etag).strip('"') if etag else (utc(lm) if lm else digest[:12])
+        version = one_line(re.sub(r"^W/", "", etag).strip('"')) if etag else (utc(lm) if lm else digest[:12])
         it = Item(item=item_id, origin=url, title=title or name, version=version, last_modified=utc(lm) if lm else "",
-                  etag=etag, text=text, converted_by=how, sha256=digest, size=len(resp.data))
+                  etag=etag, text=text, converted_by=how, sha256=digest)
         it.last_modified_header = lm  # type: ignore[attr-defined]
         items.append(it)
     return items, unchanged, listed
@@ -1448,7 +1577,10 @@ def git_env(entry: Entry, ctx: Context, home: Path, pinned: list | tuple = ()) -
     config += pinned
     if entry.auth.scheme and git_url_kind(entry.url) in ("https", "http"):
         name, value = entry.auth.value(ctx.environ)
-        config.append((f"http.{entry.url}.extraHeader", f"{name}: {value}"))
+        # On a redirect to another host, curl drops an Authorization header
+        # and keeps a header of any other name, so with a credential git
+        # follows no redirect, as where git_pin holds it.
+        config += [(f"http.{entry.url}.followRedirects", "false"), (f"http.{entry.url}.extraHeader", f"{name}: {value}")]
     env["GIT_CONFIG_COUNT"] = str(len(config))
     for i, (key, value) in enumerate(config):
         env[f"GIT_CONFIG_KEY_{i}"] = key
@@ -1488,8 +1620,18 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
                 raise FetchFailed("git " + args[0] + " failed: " + (err[-1] if err else "no message"))
             return done.stdout if data else done.stdout.decode("utf-8", "replace")
 
+        def start_of(oid: str) -> bytes:
+            """The first 8000 bytes of a blob, which say whether it is binary, read without the rest of it."""
+            with subprocess.Popen(["git", "-C", str(tmp), "cat-file", "blob", oid], env=env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as p:
+                start = p.stdout.read(8000)
+                p.kill()
+            return start
+
         git("init", "-q")
-        git("remote", "add", "origin", entry.url)
+        # Git reads a relative path against the folder it runs in, the fetch's
+        # own, so a path the manifest writes that way is read against the root.
+        url = str((ctx.root / entry.url).resolve()) if ctx.root and entry.url.startswith(("./", "../")) else entry.url
+        git("remote", "add", "origin", url)
         # Git rewrites an address by any url.<base>.insteadOf it reads, the
         # global configuration's included, and fetches the rewritten one. The
         # pin and the credential are scoped to the address as the manifest
@@ -1497,43 +1639,57 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
         # resolve its name itself. ls-remote --get-url applies the rewrite
         # without connecting.
         fetched = git("ls-remote", "--get-url", "origin").strip()
-        if fetched != entry.url:
-            raise Refused(f"git's configuration rewrites {entry.url} to {fetched} (url.<base>.insteadOf), which the address check and the "
+        if fetched != url:
+            raise Refused(f"git's configuration rewrites {url} to {fetched} (url.<base>.insteadOf), which the address check and the "
                           "credential do not cover; name the address git fetches in the manifest, or remove the rewrite")
         git("fetch", "-q", "--depth", "1", "origin", entry.ref)
         sha = git("rev-parse", "FETCH_HEAD").strip()
         when = utc(git("log", "-1", "--format=%cI", "FETCH_HEAD").strip())
         spec = ["FETCH_HEAD"] + (["--", entry.path] if entry.path else [])
         blobs = {}
-        for line in git("ls-tree", "-r", "-z", *spec, data=True).decode("utf-8", "replace").split("\0"):
+        for line in git("ls-tree", "-r", "-l", "-z", *spec, data=True).decode("utf-8", "replace").split("\0"):
             meta, _, name = line.partition("\t")
             fields = meta.split()
-            if len(fields) == 3 and fields[1] == "blob" and fields[0] != "120000" and name:  # a symbolic link is not content
-                blobs[name] = fields[2]
+            if len(fields) == 4 and fields[1] == "blob" and fields[0] != "120000" and name:  # a symbolic link is not content
+                blobs[name] = (fields[2], int(fields[3]))
         include = entry.include or ["*.md"]
         chosen = []
-        for f, oid in blobs.items():
+        for f, (oid, size) in blobs.items():
             rel = f[len(entry.path) + 1:] if entry.path and f.startswith(entry.path + "/") else f
             if any(fnmatch.fnmatch(rel, g) for g in include) and not any(fnmatch.fnmatch(rel, g) for g in entry.exclude):
-                chosen.append((f, rel, oid))
+                chosen.append((f, rel, oid, size))
         if len(chosen) > entry.max_items:
             raise Refused(f"the path holds more than max_items ({entry.max_items}) matching files; narrow include or raise the cap")
+        # A file that is not Markdown is mirrored as its name with .md added,
+        # which a Markdown file or a folder beside it may already have. That
+        # one keeps the name: two files would take turns in it from run to
+        # run, and a file and a folder cannot share it.
+        markdown = {rel for _, rel, _, _ in chosen if rel.endswith(".md")}
+        folders = {str(p) for _, rel, _, _ in chosen for p in PurePosixPath(rel).parents}
         items, unchanged = [], {}
-        for f, rel, oid in chosen:
+        for f, rel, oid, size in chosen:
             if ".." in PurePosixPath(rel).parts or rel.startswith("/"):
                 continue
             item_id = rel if rel.endswith(".md") else rel + ".md"
+            if item_id != rel and (item_id in markdown or item_id in folders):
+                it = Item(item=rel, origin=git_origin(entry, sha, f), title=rel)
+                beside = "Markdown file" if item_id in markdown else "folder"
+                it.skipped = f"{item_id}, its mirror name, is the name of the {beside} beside it"  # type: ignore[attr-defined]
+                items.append(it)
+                continue
             was = prior.get(item_id)
             if was and was.get("status") == "ok" and was.get("blob") == oid:
                 unchanged[item_id] = was
                 continue
-            data = git("cat-file", "blob", oid, data=True)
+            # Of a file over the cap only the start is read: enough to tell a
+            # binary file, which is skipped, from text, which is refused.
+            data = git("cat-file", "blob", oid, data=True) if size <= entry.max_item_bytes else start_of(oid)
             if b"\x00" in data[:8000]:
                 it = Item(item=item_id, origin=git_origin(entry, sha, f), title=rel)
                 it.skipped = "a binary file"  # type: ignore[attr-defined]
                 items.append(it)
                 continue
-            if len(data) > entry.max_item_bytes:
+            if size > entry.max_item_bytes:
                 items.append(Item(item=item_id, origin=git_origin(entry, sha, f), version=sha, title=rel))
                 items[-1].refused = f"over max_item_bytes ({entry.max_item_bytes})"  # type: ignore[attr-defined]
                 continue
@@ -1545,7 +1701,7 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
             if not rel.endswith(".md"):
                 text = fence(text, PurePosixPath(rel).suffix.lstrip(".")) + "\n"
             items.append(Item(item=item_id, origin=git_origin(entry, sha, f), title=rel, version=sha, last_modified=when,
-                              blob=oid, text=text, converted_by="git/1", sha256=digest, size=len(data)))
+                              blob=oid, text=text, converted_by="git/1", sha256=digest))
         return items, unchanged, [c[1] if c[1].endswith(".md") else c[1] + ".md" for c in chosen]
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -1559,6 +1715,9 @@ def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[li
         tracked = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", entry.command], capture_output=True)
         if tracked.returncode != 0:
             raise Refused(f"{entry.command} is not tracked by git; a command runs only once it is committed")
+        edited = subprocess.run(["git", "-C", str(root), "status", "--porcelain", "--", entry.command], capture_output=True, text=True)
+        if edited.stdout.strip():
+            raise Refused(f"{entry.command} has changes git has not committed; a command runs only as committed")
     command_digest = sha256_hex(path.read_bytes())
     env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
                           "TMPDIR": os.environ.get("TMPDIR", tempfile.gettempdir()), "KNOWLEDGE_INGEST_ENTRY": entry.id})
@@ -1583,7 +1742,7 @@ def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[li
         return [], {entry.id: was}, [entry.id]
     text, title, how = convert(data, "text/plain", entry.convert or "text")
     it = Item(item=entry.id, origin=f"command:{entry.command}", title=title or entry.command, version=digest[:12],
-              text=text, converted_by=how, sha256=digest, size=len(data))
+              text=text, converted_by=how, sha256=digest)
     it.command_sha256 = command_digest  # type: ignore[attr-defined]
     return [it], {}, [entry.id]
 
@@ -1598,7 +1757,10 @@ def repository_visibility(root: Path, given: str) -> str:
     if env:
         return env
     if shutil.which("gh"):
-        done = subprocess.run(["gh", "repo", "view", "--json", "visibility", "--jq", ".visibility"], cwd=str(root), capture_output=True, text=True)
+        try:
+            done = subprocess.run(["gh", "repo", "view", "--json", "visibility", "--jq", ".visibility"], cwd=str(root), capture_output=True, text=True, timeout=30)
+        except subprocess.TimeoutExpired:  # gh waits on the network behind a proxy it cannot pass
+            return "unknown"
         if done.returncode == 0 and done.stdout.strip().lower() in ("public", "private", "internal"):
             return done.stdout.strip().lower()
     return "unknown"
@@ -1692,7 +1854,7 @@ class Run:
     def __init__(self, args, root: Path, manifest: Manifest, lock: dict, visibility: str, environ: dict):
         self.args, self.root, self.manifest, self.lock, self.visibility = args, root, manifest, lock, visibility
         self.now = now_utc(args.now)
-        self.ctx = Context(manifest, environ, self.now, args.timeout)
+        self.ctx = Context(manifest, environ, self.now, args.timeout, root)
         self.summary: list[str] = []
         self.failed = 0
         self.writes: list[tuple[Path, str]] = []
@@ -1707,20 +1869,30 @@ class Run:
     def rel(self, path: Path) -> str:
         return path.relative_to(self.root).as_posix()
 
+    def within(self, path: str, folder: Path) -> bool:
+        """Whether a path the lock records lies in the folder, with each symbolic link on the way followed."""
+        try:
+            (self.root / path).resolve().relative_to(folder)
+        except ValueError:
+            return False
+        return True
+
+    def removable(self, path: str) -> bool:
+        """Whether the run may remove a file the lock names: only one inside either mirror, whatever else the lock says."""
+        return any(self.within(path, mirror) for mirror in (self.root / self.manifest.mirror, self.root / ".lokf" / ".cache" / "mirror"))
+
     def entry_mirror_size(self, prior: dict) -> int:
         return sum(int(v.get("bytes", 0) or 0) for v in prior.values() if v.get("status") == "ok")
 
     def total_mirror_size(self) -> int:
-        return sum(self.entry_mirror_size(e.get("items", {})) for e in self.lock["entries"].values())
+        """The mirror's bytes, over the entries the manifest names: one that left it is removed by this run, so it frees its bytes now."""
+        named = {e.id for e in self.manifest.entries}
+        return sum(self.entry_mirror_size(e.get("items", {})) for eid, e in self.lock["entries"].items() if eid in named)
 
     def run_entry(self, entry: Entry) -> None:
         record = self.lock["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
         prior = record.get("items", {})
         counts = {"fetched": 0, "restored": 0, "unchanged": 0, "gone": 0, "unlisted": 0, "failed": 0, "refused": 0, "skipped": 0}
-        # A file the lock calls current and the disk has lost is handed to the
-        # kind as if new, so it is fetched again instead of skipped as unchanged.
-        missing = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not (self.root / was["path"]).is_file()}
-        present = {i: was for i, was in prior.items() if i not in missing}
         why = allowed_here(entry.sensitivity, self.visibility)
         if not why and entry.sensitivity == "confidential":
             why = cache_exposed(self.root)
@@ -1729,6 +1901,26 @@ class Run:
             self.failed += 1
             self.summary.append(f"- {entry.id} ({entry.describe()}): refused, {why}")
             return
+        folder = self.mirror_root(entry) / entry.id
+        # The sensitivity picks the folder, so after a change the entry's files
+        # are in the other mirror. Each is removed there: a current one is
+        # fetched again into this folder, and the record of one away or failing
+        # is dropped. So an entry made confidential leaves the committed mirror.
+        moved = [i for i, was in prior.items() if was.get("path") and not self.within(str(was["path"]), folder)]
+        for i in moved:
+            if self.removable(str(prior[i]["path"])):
+                self.removals.append(self.root / str(prior[i]["path"]))
+            if prior[i].get("status") != "ok":
+                del prior[i]
+        if moved:
+            n = len(moved)
+            self.summary.append(f"- {entry.id}: its sensitivity puts its files in {self.rel(folder)}/, so {n} file{'s' if n != 1 else ''} "
+                                f"elsewhere {'are' if n != 1 else 'is'} removed")
+        # A file the lock calls current and the disk has lost is handed to the
+        # kind as if new, so it is fetched again instead of skipped as unchanged.
+        lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and i not in moved and not (self.root / was["path"]).is_file()}
+        missing = lost | {i for i in moved if i in prior}
+        present = {i: was for i, was in prior.items() if i not in missing}
         try:
             if entry.kind == "confluence":
                 items, unchanged, listed = run_confluence(self.ctx, entry, present)
@@ -1758,7 +1950,6 @@ class Run:
         record.pop("reason", None)
         new_items: dict = {}
         skipped: list[str] = []
-        folder = self.mirror_root(entry) / entry.id
         total = self.total_mirror_size() - self.entry_mirror_size(prior)
         for item_id, was in unchanged.items():
             new_items[item_id] = was
@@ -1782,9 +1973,12 @@ class Run:
                 new_items[it.item] = dict(was, status="gone", origin=it.origin, since=self.away_since(was))
                 counts["gone"] += 1
                 continue
+            # The folder is the resolved root and the names below it, so a path
+            # that leaves it, by `..` or by a symbolic link the repository
+            # holds, such as the entry's folder linked elsewhere, is refused.
             target = (folder / (it.item if it.item.endswith(".md") else it.item + ".md")).resolve()
             try:
-                target.relative_to(folder.resolve())
+                target.relative_to(folder)
             except ValueError:
                 new_items[it.item] = dict(was, status="refused", reason="a path outside the entry's folder", origin=it.origin)
                 counts["refused"] += 1
@@ -1793,14 +1987,32 @@ class Run:
                 new_items[it.item] = dict(was, status="refused", reason="a name this script does not write", origin=it.origin)
                 counts["refused"] += 1
                 continue
-            if total + it.size > self.manifest.max_total_bytes:
+            if not PLAIN_PATH.fullmatch(it.item):
+                # The workflow refuses a whole patch with such a path, so this file alone is refused.
+                reason = "a name with a character outside A-Z, a-z, 0-9 and . _ / @ + -, which the workflow does not publish; exclude it, or rename it at the source"
+                new_items[it.item] = dict(was, status="refused", reason=reason, origin=it.origin)
+                counts["refused"] += 1
+                continue
+            # The caps count the Markdown the mirror holds, which can outgrow the
+            # body fetched: links made absolute, or a PDF's compressed text.
+            written = len(it.text.encode("utf-8"))
+            if written > entry.max_item_bytes:
+                reason = f"the Markdown is over max_item_bytes ({entry.max_item_bytes})"
+                new_items[it.item] = dict(was, status="refused", reason=reason, origin=it.origin)
+                counts["refused"] += 1
+                continue
+            if total + written > self.manifest.max_total_bytes:
                 reason = f"the mirror would pass max_total_bytes ({self.manifest.max_total_bytes})"
                 new_items[it.item] = dict(was, status="refused", reason=reason, origin=it.origin)
                 counts["refused"] += 1
                 continue
-            total += it.size
+            total += written
+            # A copy restored with the bytes the lock records keeps its time,
+            # so a checkout without the confidential cache, or a file deleted
+            # by hand, changes no line of the lock and no byte of the file.
+            same = it.item in lost and was.get("sha256") == "sha256:" + it.sha256 and was.get("retrieved_at")
             lock_item = {"path": self.rel(target), "origin": it.origin, "title": it.title, "version": str(it.version),
-                         "sha256": "sha256:" + it.sha256, "bytes": it.size, "retrieved_at": self.now, "status": "ok"}
+                         "sha256": "sha256:" + it.sha256, "bytes": written, "retrieved_at": was["retrieved_at"] if same else self.now, "status": "ok"}
             if it.last_modified:
                 lock_item["last_modified"] = it.last_modified
             if it.author:
@@ -1814,7 +2026,7 @@ class Run:
             if getattr(it, "command_sha256", ""):
                 lock_item["command_sha256"] = it.command_sha256  # type: ignore[attr-defined]
             new_items[it.item] = lock_item
-            counts["restored" if it.item in missing else "fetched"] += 1
+            counts["restored" if it.item in lost else "fetched"] += 1
             self.writes.append((target, mirror_header(entry, it, lock_item) + it.text))
         for item_id, was in prior.items():
             if item_id not in new_items:
@@ -1847,6 +2059,9 @@ class Run:
                 if it.get("status") not in ("gone", "unlisted"):
                     continue
                 path = it.get("path", "")
+                if path and not self.removable(str(path)):
+                    self.summary.append(f"- {eid}: the lock names {path}, outside the mirror, so it stays")
+                    continue
                 if path in cited:
                     self.summary.append(f"- {eid}: {path} is {it['status']} and a concept still cites it, so it stays")
                     continue
@@ -1874,6 +2089,9 @@ class Run:
             for _item_id, it in sorted(record.get("items", {}).items()):
                 path = str(it.get("path", ""))
                 if not path:
+                    continue
+                if not self.removable(path):
+                    self.summary.append(f"- {eid}: no longer in the manifest, and the lock names {path}, outside the mirror, so it stays")
                     continue
                 self.removals.append(self.root / path)
                 note = ", and a concept still cites it, so the work list will name its source as gone" if path in cited else ""
@@ -2070,7 +2288,11 @@ def main(argv: list[str]) -> int:
             "Nothing fetched is knowledge yet: the librarian derives concepts from the mirror on its next run.")
     if not changed:
         tail = "Nothing changed since the last run. " + tail
-    lines = [heading, "", *run.summary, "", tail, ""]
+    # Each line of the summary stays one line, indent kept: a file name or a
+    # reason a source gave may hold a line break, which would start a line of
+    # the pull request's body, or a workflow command in the job's log.
+    summary = [line[: len(line) - len(line.lstrip(" "))] + one_line(line) for line in run.summary]
+    lines = [heading, "", *summary, "", tail, ""]
     text = "\n".join(lines)
     say(text.rstrip("\n"))
     if args.summary:

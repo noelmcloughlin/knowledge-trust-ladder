@@ -19,7 +19,7 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
 
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
 - **Pages and documents at an address**: HTML, Markdown, plain text and PDF. Most PDFs work, meaning any whose text can be selected and copied in a viewer. A scan of paper holds pictures of pages and no text, and is refused.
-- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. Every such entry needs git 2.31 or later. Where the manifest refuses private addresses, git follows no redirect, and an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
+- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. Every such entry needs git 2.31 or later. Git follows no redirect with a credential, or where the manifest refuses private addresses. There an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
 - **The output of a command** this repository holds: a client for a service the ingest has no fetcher for, a schema dump, an export.
 
 There is no fetcher for Jira, since issues are unsuitable as knowledge sources. Attachments and images are not fetched, and a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only through a command that prints it.
@@ -28,7 +28,7 @@ There is no fetcher for Jira, since issues are unsuitable as knowledge sources. 
 
 **The manifest**, `.lokf/ingest.yaml`, lists what to mirror: for each entry a place, a selector, who answers for the source and why this repository mirrors it. It holds no token. An `auth` block names environment variables.
 
-**The mirror**, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, a page id or a path, never its title, so a retitled page is the same file. Links are made absolute, and a PDF carries a comment before each page so a concept can cite the page.
+**The mirror**, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, a page id or a path, never its title, so a retitled page is the same file. The workflow publishes a name of letters, digits and `._/@+-` only, so a file named otherwise, with a space for example, is refused. Links are made absolute, and a PDF carries a comment before each page so a concept can cite the page.
 
 **The lock**, `.lokf/ingest.lock.yaml`, records the same per item with a status: `ok`, `gone` after a 404 or 410, `unlisted` when the selector no longer returns it, `failed` when a request did not complete, `refused` with the reason. The mirror and the lock change only when content changes.
 
@@ -60,7 +60,7 @@ services:                        # a site and its credential, written once
 defaults:                        # what an entry inherits
   sensitivity: internal          # public, internal or confidential; see below
   max_items: 200                 # a selector over this is refused whole, never mirrored in part
-  max_item_bytes: 1000000
+  max_item_bytes: 1000000        # each body fetched, and the Markdown written from it
   authors: true                  # false leaves account ids out of the headers
 
 entries:
@@ -107,7 +107,7 @@ A command is code the repository runs in a job that holds secrets, so commit one
 
 ## Sensitivity
 
-A committed mirror is published as far as the repository is, so the script refuses what the repository's visibility does not allow. `public` may be committed anywhere. `internal`, the default, may be committed to a private repository only. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, a concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text no person reviewed. The script refuses a `confidential` entry when git does not ignore that folder or tracks a file in it.
+A committed mirror is published as far as the repository is, so the script refuses what the repository's visibility does not allow. `public` may be committed anywhere. `internal`, the default, may be committed to a private repository only. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, a concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text no person reviewed. The script refuses a `confidential` entry when git does not ignore that folder or tracks a file in it. When an entry's sensitivity changes, the next run removes its files from the old folder and fetches them into the new one.
 
 The workflow passes the repository's visibility from the forge. By hand, the script asks `gh` when it is signed in, and otherwise counts the repository as public until `--visibility private` says otherwise.
 
