@@ -25,7 +25,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-20T23:45:11Z"
+  at: "2026-10-26T20:05:58Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -48,12 +48,12 @@ A museum edits its labels before the exhibition opens. `ktl-prose` does that for
 7. Turn a run of conditions into a list.
 8. Use the same word for the same thing.
 9. Choose the plain word, say literally what happens, and keep each technical term exact.
-10. Cut words that carry nothing.
+10. Cut words, and sentences, that carry nothing.
 11. Say what is, and what to do.
 12. Open each page by saying who it is for.
 13. Report what you cannot fix.
 
-Since 0.55.0 `references/rules.md` also gives a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion.
+Since 0.55.0 `references/rules.md` also gives a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion. Since 0.55.1 it names the dead sentence, which repeats what the page already says or gives a reason the reader can supply, and "either way" with no alternatives the reader can find. It also names two cases only the author can settle: a quantity no source on the page gives, and a phrase that stands for a list the text never gives (`CHANGELOG.md`).
 
 A last section of `references/rules.md`, apart from the thirteen, says where a line ends in the source. In the bundle that is one line for each paragraph and each list item, as ktl-librarian writes it. Outside the bundle the host's layout holds: one line per paragraph, one sentence per line, or a fixed column. A file's layout changes only when the person asks.
 
@@ -81,7 +81,7 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 # Steps
 
 0. **Preflight**: run the preflight and the conventions script first, as every skill that touches the bundle does. The skill never opens `.lokf/feedback.md`.
-1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. Since 0.55.0 `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". The script runs through `uv run`, or a python3 of 3.9 or later, never bare `python`. Then the agent reads them, because only a reader sees a late verb.
+1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. Since 0.55.0 `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". The script runs through `uv run`, or a python3 of 3.9 or later, never bare `python`. Then the agent reads every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows.
 2. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, lay out what it rewords the way the file's project does, and leave what cannot be fixed.
 3. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, such as a character no reader sees that the rewording added, and the agent undoes it.
 4. **Log** one **Prose** line in `log.md`.

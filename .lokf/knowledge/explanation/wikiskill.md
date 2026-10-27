@@ -26,7 +26,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/skillwiki
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T20:01:11Z"
+  at: "2026-10-26T20:05:58Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -55,8 +55,8 @@ Reading the paper in October 2026 changed the skills in seven places, and `CHANG
 - **A declined proposal is not proposed again.** The scheduled workflow reads the pull requests a person closed without merging, and the librarian proposes none of their changes again until the source moves, a person leaves a new note or a reader asks again. While its pull request is open, a scheduled run opens no second one.
 - **The index entry is the retrieval interface.** The paper's maintainer prompt calls the index entries "the MOST IMPORTANT part of the wiki". The docent picks one to three concepts from the `index.md` bullets before it opens anything. A bullet copies the concept's `description`, and the pen keeps the copies equal. A miss on a question an existing concept answers is a defect in that description, not a reason for a twin.
 - **A recurring question is a signal.** The pen moves each feedback entry the librarian handles into `questions.md`, a ledger that only grows, and `knowledge-report.sh` names the concepts readers keep arriving at.
-- **The maintainer's run is bounded.** The paper caps what its maintainer reads in each iteration. The librarian starts from a work list `knowledge-report.sh` computes from history, never from a clock, and handles at most ten feedback entries a run, oldest first. A scheduled week in which nothing waits runs no agent, and a scheduled run in a month's first seven days goes ahead regardless.
-- **A measured outcome beside the gate.** The paper keeps a skill change only if a validation score rises. A scheduled refresh can carry a retrieval score beside KTL's gate: the agent chooses concepts from `index.md` alone for each question in the ledger, and a program scores the reply. The pull request shows `n of m`, and a person decides, so a neutral change still merges.
+- **The maintainer's run is bounded.** The paper caps what its maintainer reads in each iteration. The librarian starts from a work list `knowledge-report.sh` computes from history, never from a clock, and handles at most ten feedback entries a run, oldest first. In a scheduled week in which nothing waits, no agent runs, except in a month's first seven days, when the run goes ahead for the sources no program compares.
+- **A measured outcome beside the gate.** The paper keeps a skill change only if a validation score rises. A scheduled refresh can carry a retrieval score beside KTL's gate: the agent chooses concepts from `index.md` alone for each question in the ledger, and a program scores the reply. The pull request shows `n of m`, and a person merges as before, whatever the score.
 
 The paper's results also support two things KTL already did. Its ablation finds the persistent wiki worth fifteen points on average, and the pen refuses to delete a concept a person confirmed. The paper lists pruning as unsolved, and KTL has `stale_after`, `status: deprecated` and the librarian's orphan sweep.
 

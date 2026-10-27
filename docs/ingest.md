@@ -1,6 +1,8 @@
 # Knowledge outside the repository
 
-The librarian reads the repository, and a bundle cites what the librarian can read. Much of what a team knows lives elsewhere: a wiki space, a document on an intranet address, a file in another repository, the output of a command. The ingest brings a copy in. A manifest names each source, a script writes it as Markdown under `.lokf/mirror/`, and a pull request shows what changed. The librarian then derives concepts from the copy as from any tracked file, citing both the copy and its origin.
+This page is for a team that keeps much of its knowledge outside the repository.
+
+The librarian reads the repository, and a bundle cites what the librarian can read. The ingest copies that knowledge into the repository. A manifest names each source, a script writes it as Markdown under `.lokf/mirror/`, and a pull request shows what changed. The librarian then derives concepts from the copy as from any tracked file, citing both the copy and its origin.
 
 Nothing in the trust ladder changes. A concept derived from a wiki page is agent-derived until a person confirms it, as one derived from a README is. Knowledge Trust Ladder (KTL) keeps the same work list, gate and review.
 
@@ -30,7 +32,7 @@ There is no fetcher for Jira, since issues are unsuitable as knowledge sources. 
 
 **The lock**, `.lokf/ingest.lock.yaml`, records the same per item with a status: `ok`, `gone` after a 404 or 410, `unlisted` when the selector no longer returns it, `failed` when a request did not complete, `refused` with the reason. The mirror and the lock change only when content changes.
 
-The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian holds no secret with which to fetch. Never clear it before a run. Refresh it instead, since a run fetches only what moved and restores any file the disk has lost. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
+The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian holds no secret with which to fetch. Never clear it before a run. Refresh it instead, since a run fetches only what moved and restores any file missing from the disk. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
 
 A workflow runs the script on Sundays and keeps one pull request open with the changes, refreshed until a person merges it. The librarian's Monday run then finds each concept whose mirror file moved in its work list.
 
@@ -101,7 +103,7 @@ entries:
     why: the live database schema
 ```
 
-A command is code the repository runs in a job that holds secrets, so commit one a person has read. It receives the variables its own `auth` block names, and its last error line goes into the lock. An entry taken out of the manifest loses its folder on the next run, and the summary names each file a concept still cites.
+A command is code the repository runs in a job that holds secrets, so commit one a person has read. It receives the variables its own `auth` block names, and its last error line is written to the lock. An entry taken out of the manifest loses its folder on the next run, and the summary names each file a concept still cites.
 
 ## Sensitivity
 
@@ -133,7 +135,7 @@ Set the same variable names in the environment. The librarian runs the first com
 
 ## The pull request
 
-The body is the run's summary, then the checklist. Read the diff as you would read the page: is this text something the repository should hold? A page that should not be in the repository comes out of the manifest, not out of the diff. A file marked `gone` or `unlisted` stays while a concept cites it, until the librarian has handled that concept. Once none does, the next scheduled run removes it, and the diff shows the removal. The lock's `since` date says how long it has been away. A line marked `failed` with a credential's name is a secret not yet set, or expired, and the run shows it as a warning too.
+The body is the run's summary, then the checklist. Read the diff as you would read the page: is this text something the repository should hold? Remove a page that should not be in the repository from the manifest, not from the diff. A file marked `gone` or `unlisted` stays while a concept cites it, until the librarian has handled that concept. Once none does, the next scheduled run removes it, and the diff shows the removal. The lock's `since` date says how long it has been away. A line marked `failed` with a credential's name is a secret not yet set, or expired, and the run shows it as a warning too.
 
 A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed, and a run started by hand proposes it now. No checks run on this pull request, and that is expected: GitHub starts none for a pull request a workflow opens, and the mirror holds no bundle file to check. Merge it, and the librarian's next run reads what changed.
 

@@ -24,7 +24,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T00:59:27Z"
   - by: process:ktl-librarian
-    at: "2026-10-20T23:23:33Z"
+    at: "2026-10-26T20:05:58Z"
   - by: human:noelmcloughlin
     at: "2026-10-19T12:28:10Z"
 stale_after: 2027-04-19
@@ -56,7 +56,3 @@ Since 0.53.0, `docs/for-the-curious.md` holds what KTL took from the paper, unde
 - **What a state names.** SkillWiki stores a skill's state. KTL stores no label: `knowledge-report.sh` computes each one from the events.
 - **Scores and signals.** SkillWiki attaches a `confidence` number. LOKF's schema says that "OKF stores signals, never a score", and KTL records a named person's verdict where SkillWiki has a number.
 - **A declined proposal.** SkillWiki can raise a rejected proposal again. The librarian proposes nothing again from a pull request a person closed without merging, until the source moves, a person leaves a new note or a reader asks again.
-
-## Open questions
-
-- 2026-10-19, human:noelmcloughlin: refresh against sources.

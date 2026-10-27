@@ -1,6 +1,6 @@
 # Repository layout
 
-[The architecture](architecture.md) says what each skill is for. This is the tree behind it.
+This page is for contributors looking for a file in the repository. [The architecture](architecture.md) says what each skill is for.
 
 ```text
 skills/
@@ -65,4 +65,6 @@ website/                   the website: Astro Starlight, this repository's copy 
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
 ```
 
-Each `SKILL.md` is a lean router. Anything not needed on every invocation is in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget. `ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/` and `ktl-website/scripts/` hold the one script each runs in place.
+Each `SKILL.md` is a short router. Anything not needed on every invocation is in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget.
+
+`ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/` and `ktl-website/scripts/` hold the one script each runs in place. `ktl-docent/scripts/` holds the docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`. Contract check 11a keeps them identical to the sidecar's templates, so a question to the docent runs no script the host repository supplies.

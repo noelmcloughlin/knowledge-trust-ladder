@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-20T23:23:33Z"
+  at: "2026-10-26T20:05:58Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -50,7 +50,7 @@ The pin is two values, so the same step moves `TRUST_LADDER_SKILLS_SHA` to the c
 
 Two qualifying merges to `main` between one `publish.yml` run and the next compute the *same* next version twice. The next version is computed from the last tag, and `gh skill publish` is a separate, later, human-triggered step. `promote` now checks whether the top released heading's version is still untagged. If so, it folds the new entries into it by `###` subsection instead of inserting a second heading for the same version. That was the bug that wrote two `## [0.19.0] - 2026-09-17` headings, orphaning the second merge's entries above an empty `[Unreleased]`. Check 14 in `playbooks/repository-validation.md` proves the fold and would have caught the original duplication. Since 0.42.0 the fold leaves out an entry the pending section already holds, because a pull request stacked on another still carries the other's entries under `[Unreleased]`, and check 14 proves that each entry is listed once.
 
-The `plan` job also calls `changelog-release.mjs check` as its own step, not only inside `--dry-run`. Semantic-release detects a pull-request event and skips every plugin lifecycle hook, including `@semantic-release/exec`'s. So the `check` the paragraph before describes never ran on a pull request until this fix, and an empty `[Unreleased]` would have merged silently. That step reads the pull request's own commits first, and runs `check` only when one of them would release (the types `.releaserc.json` acts on). So a `chore:` or `docs:` pull request, a Dependabot action bump among them, is not failed for notes it was never going to release.
+The `plan` job also calls `changelog-release.mjs check` as its own step, not only inside `--dry-run`. Semantic-release detects a pull-request event and skips every plugin lifecycle hook, including `@semantic-release/exec`'s. So the `check` the paragraph before describes never ran on a pull request until this fix, and an empty `[Unreleased]` would have merged silently. That step reads the pull request's own commits first, from the merge-base of the base branch and the head commit (2026-10-21). `HEAD` is GitHub's trial merge with that day's `main`, so on a branch that `main` has moved past it would read `main`'s commits too. It runs `check` only when one of them would release (the types `.releaserc.json` acts on). So a `chore:` or `docs:` pull request, a Dependabot action bump among them, is not failed for notes it was never going to release.
 
 When the commits would release, a second step requires the pull request *title* to carry a releasing type, because a squash merge takes its subject from the title. GitHub's default title has none: pull request #46 merged that way and released nothing, its notes left waiting in `[Unreleased]`. The trigger names `edited` alongside the default pull-request types, because retitling is how that check is cleared and the default types never fire on a title change. Without it, the remedy the error message asks for could not clear the check.
 
@@ -89,6 +89,6 @@ To open the pull requests on the day of a release, a maintainer runs `scripts/sy
 
 Once the pull requests are merged, `scripts/sync-sidecar.sh --finish <tag> <sibling>...` puts each sibling back on its default branch, brings it up to date and removes the branch.
 
-The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync. The template's pin is never bumped by hand, which would cut a pointless release. A tag that is not on origin is refused, because a sibling's scheduled librarian clones from there and would fail to install.
+The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so. The template's pin is never bumped by hand, which would cut a pointless release. A tag that is not on origin is refused, because a sibling's scheduled librarian clones from there and would fail to install.
 
 Both checks read the `workflow_dispatch` version input through an `env:` variable rather than interpolating `${{ inputs.version }}` straight into the shell script. That hardening change (2026-09-12) closes a script-injection vector without changing what the checks verify.

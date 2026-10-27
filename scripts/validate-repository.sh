@@ -312,6 +312,8 @@ sibling_paths=(
   "docs/threat-model.md#interactive-use-scope-is-advisory-not-enforced"
   "docs/threat-model.md#prompt-injection-guards"
   "docs/threat-model.md#repository-hardening"
+  "docs/threat-model.md#the-sync-workflow"
+  "docs/threat-model.md#the-website"
   "docs/three-lines.md"
   "skills/ktl-librarian/references/domain-schema.md"
   "skills/ktl-curator/references/review-session.md"

@@ -14,7 +14,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T01:24:15Z"
+  at: "2026-10-26T20:05:58Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -28,7 +28,7 @@ verified:
 Since 0.42.0 the README uses the word for the sites too. Its Exhibitions section lists each site that `ktl-website` builds to show a repository's collection. Since 2026-10-16 it lists five:
 
 - this repository's own bundle, at `https://w3id.org/ktl/knowledge/`;
-- the KTL Curator Obsidian plugin's, at `https://noelmcloughlin.github.io/obsidian-ktl-curator/knowledge/`;
-- the KTL Registrar Obsidian plugin's, at `https://noelmcloughlin.github.io/obsidian-ktl-registrar/knowledge/`;
-- KTL Federation's, the domain that federates member bundles into one workspace as a context layer, linked at its repository, `https://github.com/noelmcloughlin/ktl-federation`;
+- the KTL Curator Obsidian plugin's, at `https://w3id.org/ktl/curator/knowledge/`;
+- the KTL Registrar Obsidian plugin's, at `https://w3id.org/ktl/registrar/knowledge/`;
+- KTL Federation's, the domain that federates member bundles into one workspace as a context layer, at `https://w3id.org/ktl/federation/knowledge/`;
 - AI-LinkMO's.

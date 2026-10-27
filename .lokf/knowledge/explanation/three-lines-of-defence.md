@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-25T23:53:02Z"
+  at: "2026-10-26T20:05:58Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -27,6 +27,7 @@ sources:
   - resource: docs/three-lines.md
   - resource: CHANGELOG.md
   - resource: docs/architecture.md
+  - resource: docs/m365.md
 ---
 # Overview
 
@@ -40,7 +41,7 @@ The **docent** sits outside the lines, where the reader does, and reports what i
 
 Lines are roles, not headcount: the IIA's text says the lines "are not intended to denote structural elements but a useful differentiation in roles" and "may overlap in practice" given "clear accountability, transparency, and safeguards". The adopting organisation decides who plays each line, and the tooling holds the lines apart either way.
 
-The page says the curator's identity comes from the forge, never from the person. It is the login the machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, and never what is typed into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where one person both authors and confirms, the signature is the route, and an Environment with required reviewers is the one logged exception.
+The page says the curator's identity comes from the forge, never from the person. It is the login the machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, and never what is typed into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where one person both authors and confirms, the signature is the route. A repository that cannot sign, and has nobody else to approve, has one logged exception: an approval from a required reviewer of an Environment.
 
 An auditor's questions each have a fixed place to look:
 
@@ -52,7 +53,7 @@ An auditor's questions each have a fixed place to look:
 - Whether that confirmation is really tied to the named person: the `provenance` job's log carries the forge's verdict on the approval or the signature. Locally, the curator's *Not tied to a signed commit* count does the same. Whether a person's record has been removed without them: the same job's log, since a confirmation struck out or gone with its concept needs that person's approval or signature, as an added one does. On the scheduled librarian's pull request, `knowledge-provenance.sh --unattended` checks it in the job that holds the write token.
 - When it must be looked at again, and by what rule: `stale_after`, proposed from `policies/knowledge-curation.md`.
 - What changed, and why: `log.md` and git.
-- Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which nothing here runs yet. The bundle projects to RDF and answers SPARQL.
+- Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which no KTL check runs yet. The bundle projects to RDF and answers SPARQL.
 
 Four limits bound what that evidence proves:
 
@@ -84,5 +85,5 @@ Three are not KTL's role, and each is the job of the adopting organisation or of
 The page then lists what remains and who owns it, in three lines:
 
 - upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
-- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The auditor skill's Microsoft 365 Copilot form is to be one more instructions file beside the docent's under `.lokf/m365/`. The list also names fetching a federation member from a private repository, which `docs/federation.md` says remains a design.
+- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The page links the auditor skill's Microsoft 365 Copilot form to `docs/m365.md`, which holds one instructions file per read-only role under `.lokf/m365/`. The list also names fetching a federation member from a private repository, which `docs/federation.md` says remains a design.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.

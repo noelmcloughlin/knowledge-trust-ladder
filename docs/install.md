@@ -1,6 +1,6 @@
 # Install
 
-This page gives every way to install the six skills, what each needs on the machine, and how to pin them to one release. [Quick start](#quick-start) says which skills to start with. Already have a healthy `.lokf/`? Skip the **sidecar**.
+This page is for anyone installing the six skills. Already have a healthy `.lokf/`? Skip the **sidecar**.
 
 ## Quick start
 
@@ -43,11 +43,13 @@ In PowerShell or cmd, type the command on one line without the `\` continuations
 
 ## Install for your user, not into the repository
 
-The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts, and a user install keeps the instructions an agent follows under your control ([threat-model.md](threat-model.md)). Install into the repository only when a team wants every member on one version: leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
+A user install keeps the instructions an agent follows under your control ([threat-model.md](threat-model.md)). The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. Install into the repository only when a team wants every member on one version: leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
 
 ## Turn on the workflows
 
-Each workflow the skills install does nothing until a repository variable turns it on. Set these under Repository variables (Settings, Secrets and variables, Actions, Variables), never on an Environment, which a job's `if:` cannot read. Put each secret in the Environment of the workflow that reads it, limited to the default branch, never as a repository secret that any branch's workflow can read. [The sidecar's automation page](../skills/ktl-sidecar/references/automation.md#switches-and-where-they-go) lists every switch and secret, and where each goes. The workflows are GitHub Actions. On GitLab, Codeberg, Forgejo or Gitea, [the sidecar's portability page](../skills/ktl-sidecar/references/portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says what their CI runs instead, and what the forge-free gate replaces.
+Each workflow the skills install does nothing until a repository variable turns it on. Set these under Repository variables (Settings, Secrets and variables, Actions, Variables), never on an Environment, which a job's `if:` cannot read. Put each secret in the Environment of the workflow that reads it, limited to the default branch, never as a repository secret that any branch's workflow can read. [The sidecar's automation page](../skills/ktl-sidecar/references/automation.md#switches-and-where-they-go) lists every switch and secret, and where each goes.
+
+The workflows are GitHub Actions. On GitLab, Codeberg, Forgejo or Gitea, [the sidecar's portability page](../skills/ktl-sidecar/references/portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says what their CI runs instead, and what the forge-free gate replaces.
 
 ## Pin to one tag
 

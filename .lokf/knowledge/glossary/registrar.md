@@ -21,11 +21,11 @@ generated:
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-19T23:21:13Z"
+    at: "2026-10-26T20:05:58Z"
 ---
 
 # Overview
 
 A *registrar* is the person in a museum who keeps the collection's records. The architecture page names Knowledge Trust Ladder's fifth role after it: the registrar "keeps the records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read".
 
-No person has to play the role. The `lokf` toolkit checks every change, and CI's `knowledge-registrar.yaml` checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or signed commit. On another forge, or with none, `knowledge-provenance.sh` checks each confirmation's signature against the keys under `.lokf/curators/` instead. At the librarian's desk the registrar is `knowledge-apply.sh`, the pen, and at the reader's desk and the curator's it is `knowledge-report.sh`. In Obsidian, the KTL Registrar plugin checks each record as it is typed.
+No person has to play the role. The `lokf` toolkit checks every change, and CI's `knowledge-registrar.yaml` checks every pull request that touches the bundle. The workflow also ties each confirmation that is added or removed to that person's approval or signed commit. On another forge, or with none, `knowledge-provenance.sh` checks each confirmation's signature against the keys under `.lokf/curators/` instead. At the librarian's desk the registrar is `knowledge-apply.sh`, the pen, and at the reader's desk and the curator's it is `knowledge-report.sh`. In Obsidian, the KTL Registrar plugin checks each record as it is typed.

@@ -19,7 +19,7 @@ sources:
   - resource: docs/signing-commits.md
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-16T23:58:13Z"
+    at: "2026-10-26T20:05:58Z"
 ---
 
 # Overview
@@ -34,7 +34,7 @@ Before a pull request:
 - run `gh skill publish --dry-run` if the GitHub CLI is present;
 - add a line or two under `CHANGELOG.md`'s `[Unreleased]` when behaviour changes. The reasoning belongs beside the code, not in the changelog entry.
 
-The sibling repositories link deep into files here, and their own link checks follow those URLs. `validate-repository.sh` check 9 lists the paths. Move one only together with its links, and when a change there needs something new here, merge this side first.
+The sibling repositories link deep into this repository's files, and their own link checks follow those URLs. `validate-repository.sh` check 9 lists the paths. Move one only together with its links, and when a change in a sibling needs something new in this repository, merge this repository's change first.
 
 A change under a skill's `templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical. The one exception is the skills pin in `knowledge-librarian.yaml`, which the release commit moves in the template only.
 

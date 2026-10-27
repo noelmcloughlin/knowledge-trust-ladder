@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-26T20:05:58Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -69,8 +69,8 @@ The workflow runs on Sundays and keeps one pull request open on the branch `know
 
 # What the librarian does
 
-`skills/ktl-librarian/references/ingest.md` gives the rules. In a live session the librarian runs `knowledge-ingest.sh` before the work list; unattended it does not. A concept derived from a mirrored page names the mirror file as its `resource` and the origin as a `sources` entry, with the entry's `owner` as `author`. A `Reference` concept is the other way round. The source map gains one row per entry, naming the entry's folder. A file marked `gone` or `unlisted` stays while a concept cites it, and the librarian re-verifies each such concept. The librarian derives nothing from a file the lock does not mark `ok`.
+`skills/ktl-librarian/references/ingest.md` gives the rules. In a live session the librarian runs `knowledge-ingest.sh` before the work list. Unattended, it does not. A concept derived from a mirrored page names the mirror file as its `resource` and the origin as a `sources` entry, with the entry's `owner` as `author`. A `Reference` concept is the other way round. The source map gains one row per entry, naming the entry's folder. A file marked `gone` or `unlisted` stays while a concept cites it, and the librarian re-verifies each such concept. The librarian derives nothing from a file the lock does not mark `ok`.
 
 # Security
 
-The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. `docs/threat-model.md` covers the ingest workflow.
+The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. Since 0.56.1 it checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing, unless the manifest allows private addresses (`CHANGELOG.md`). `docs/threat-model.md` covers the ingest workflow.

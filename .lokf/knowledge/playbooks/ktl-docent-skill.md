@@ -19,7 +19,7 @@ references:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-19T23:21:13Z"
+    at: "2026-10-26T20:05:58Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:17:30Z"
 sources:
@@ -92,7 +92,3 @@ The docent never carries a secret, credential, token or connection string into a
 **The Snyk W011 findings.** The first, on `.lokf/feedback.md`, is addressed: the docent never reads the file. The second, on the repository fallback, is acknowledged and contained by what the docent cannot do. It never edits `.lokf/knowledge/`, and its one write is a feedback entry through the script, which accepts only one line of one of the two kinds. The Copilot variant cannot write the file at all and hands the reader the line to paste. The [threat model](../policies/threat-model.md) lists this surface and what it does not cover.
 
 **The Gen Agent Trust Hub audit of 2026-10-04, addressed.** For command and dynamic execution, a trust label and a feedback entry each come from a script in the skill's own `scripts/` folder, so no label depends on the model's arithmetic and the model never opens `.lokf/feedback.md`. The scripts treat bundle and reader text as data only. For data exposure, the skill keeps only the asker's login from `gh` or `glab`, and an entry carries it only when the asker agreed. The threat model says where that stops: a repository that holds its own copy of the skill supplies the scripts as well.
-
-## Open questions
-
-- 2026-10-19, human:noelmcloughlin: refresh against sources.

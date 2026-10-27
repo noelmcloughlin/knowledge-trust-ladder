@@ -25,7 +25,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-09-26T20:36:11Z"
   - by: process:ktl-librarian
-    at: "2026-10-20T23:23:33Z"
+    at: "2026-10-26T20:05:58Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T00:16:44Z"
   - by: human:noelmcloughlin
@@ -64,7 +64,3 @@ ktl-sidecar puts a `knowledge_bundle` link at the host's root. It is the same `k
 `docs/obsidian.md` calls the vault a person already has the **workshop**, and nothing in it is moved or migrated. The bundle is the **exhibition**: the checked part of what the workshop knows, and the part that teammates, CI and agents read. It opens as a small vault of its own through the `knowledge_bundle` link, never through the repository root, which cannot see a dot-folder or a link that resolves inside it. The two vaults never index the same file.
 
 The plugins installed in that vault need no configuration, because the root `index.md` carries the bundle's header, so the whole vault is the bundle. Obsidian writes that vault's workspace state to `.lokf/knowledge/.obsidian/`, which the sidecar's `.gitignore` excludes. A person who links each repository's `.lokf/knowledge` into a folder of their own vault makes the one arrangement that puts exhibits in that vault's index, at the cost the plugins' architecture pages name.
-
-## Open questions
-
-- 2026-10-19, human:noelmcloughlin: the knowledge-bundle glossary concept is stale, refresh against sources.
