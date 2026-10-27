@@ -498,10 +498,32 @@ def to_yaml(data) -> str:
 # ---- http ---------------------------------------------------------------------
 
 
-def address_is_private(host: str) -> bool:
+def through_proxy(url: str, git: bool = False) -> bool:
+    """Whether a request to url goes through a proxy, which then resolves the name itself.
+
+    urllib reads the proxy from the environment, and on macOS and Windows
+    from the system's settings too. Git reads the environment only, where
+    curl takes all_proxy for any scheme that has no proxy of its own.
+    """
+    parts = urllib.parse.urlsplit(url)
+    if git:
+        proxies = urllib.request.getproxies_environment()
+        return bool(proxies.get(parts.scheme) or proxies.get("all")) and not urllib.request.proxy_bypass_environment(parts.netloc)
+    return bool(urllib.request.getproxies().get(parts.scheme)) and not urllib.request.proxy_bypass(parts.netloc)
+
+
+def address_is_private(host: str, proxied: bool = False) -> bool:
+    """Whether a name resolves to an address that is not public.
+
+    Behind a proxy with no outside DNS, a name may resolve only at the
+    proxy. It goes there unchecked, as in the federation build, and the
+    proxy must refuse a private address itself.
+    """
     try:
         infos = socket.getaddrinfo(host, None)
     except socket.gaierror as e:
+        if proxied:
+            return False
         raise FetchFailed(f"{host} does not resolve ({e})") from e
     return any(ip_is_private(info[4][0]) for info in infos)
 
@@ -587,7 +609,7 @@ class Redirects(urllib.request.HTTPRedirectHandler):
         new = urllib.parse.urlsplit(newurl)
         if new.scheme not in ("http", "https") or "@" in new.netloc:
             raise FetchFailed(f"redirected to an address this script does not fetch: {new.scheme}://{new.netloc}")
-        if not self.allow_private and address_is_private(new.hostname or ""):
+        if not self.allow_private and address_is_private(new.hostname or "", through_proxy(newurl)):
             raise FetchFailed(f"redirected to a private address: {new.hostname}")
         nxt = super().redirect_request(req, fp, code, msg, headers, newurl)
         if nxt is not None and new.hostname != urllib.parse.urlsplit(req.full_url).hostname:
@@ -610,7 +632,7 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
     parts = urllib.parse.urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.netloc or "@" in parts.netloc:
         raise Refused(f"{url} is not a plain http(s) address")
-    if not allow_private and address_is_private(parts.hostname or ""):
+    if not allow_private and address_is_private(parts.hostname or "", through_proxy(url)):
         raise Refused(f"{parts.hostname} is a private or link-local address; allow_private_addresses: true permits them")
     redirects = Redirects(allow_private)
     opener = urllib.request.build_opener(redirects, *(() if allow_private else (PublicHTTPHandler(), PublicHTTPSHandler())))
@@ -1364,20 +1386,24 @@ def git_pin(url: str) -> list[tuple[str, str]]:
     git ignores, hands git the addresses that were checked. A redirect would
     send git to a name it resolves itself, so none is followed. Through a
     proxy, the proxy resolves the name, and only the check here applies.
+    Behind a proxy with no outside DNS, a name that does not resolve here
+    goes to the proxy unchecked and unpinned, as in http_get.
     """
     parts = urllib.parse.urlsplit(url)
     host, port = parts.hostname or "", parts.port or (443 if parts.scheme == "https" else 80)
     if not host.isascii():
         raise Refused(f"{host}: write the host name in ASCII, its xn-- form, so git can be held to the address that was checked")
+    config = [(f"http.{url}.followRedirects", "false")]
     try:
         infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
     except socket.gaierror as e:
+        if through_proxy(url, git=True):
+            return config
         raise FetchFailed(f"{host} does not resolve ({e})") from e
     addresses = list(dict.fromkeys(info[4][0] for info in infos))
     for address in addresses:
         if ip_is_private(address):
             raise Refused(f"{host} resolves to {address}, a private or link-local address; allow_private_addresses: true permits it")
-    config = [(f"http.{url}.followRedirects", "false")]
     if ip_literal(host):
         return config  # an address, which git does not resolve
     found = git_version()
@@ -1424,6 +1450,11 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
     """A shallow fetch of the ref, then each chosen file by its blob id, which the lock records so an unchanged file costs no read."""
     if not shutil.which("git"):
         raise FetchFailed("git is not installed")
+    # git_env hands git its protocol limits and the credential by
+    # GIT_CONFIG_COUNT, which an older git ignores without a word.
+    if git_version() < (2, 31):
+        raise FetchFailed(f"git 2.31 or later is needed to read the protocol limits and the credential the ingest sets, "
+                          f"and this git is {shown_version(git_version())}")
     pinned = git_pin(entry.url) if pin_needed(entry.url, ctx.manifest.allow_private) else []
     env = git_env(entry, ctx, pinned)
     tmp = Path(tempfile.mkdtemp(prefix="ingest-git-"))
@@ -1884,12 +1915,16 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
         parts.append("tokens present: " + ", ".join(present))
     if absent:
         parts.append("tokens absent: " + ", ".join(absent))
-    # A git entry that names a host is held to its checked address by
-    # http.curloptResolve, which an older git ignores, so the run refuses to
-    # fetch it. Saying so here lets the preflight warn before a run fails.
+    # Every git entry needs git 2.31, which reads the configuration the run
+    # sets in the environment, and one that names a host 2.37, which reads
+    # the http.curloptResolve that holds it to its checked address. The run
+    # refuses either with an older git, so the preflight warns before then.
+    gits = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled]
     pinned = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled and pin_needed(e.url, manifest.allow_private)
               and not ip_literal(urllib.parse.urlsplit(e.url).hostname or "")]
-    if pinned and shutil.which("git") and git_version() < (2, 37):
+    if gits and shutil.which("git") and git_version() < (2, 31):
+        parts.append(f"this git is {shown_version(git_version())}, and every git entry needs 2.31 or later: {', '.join(gits)}")
+    elif pinned and shutil.which("git") and git_version() < (2, 37):
         parts.append(f"this git is {shown_version(git_version())}, and a git entry that names a host needs 2.37 or later: {', '.join(pinned)}")
     return "ingest: " + "; ".join(parts)
 

@@ -19,7 +19,7 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
 
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
 - **Pages and documents at an address**: HTML, Markdown, plain text and PDF. Most PDFs work, meaning any whose text can be selected and copied in a viewer. A scan of paper holds pictures of pages and no text, and is refused.
-- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. Where the manifest refuses private addresses, git follows no redirect, and an entry that names a host, not an IP address, needs git 2.37 or later. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
+- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. Every such entry needs git 2.31 or later. Where the manifest refuses private addresses, git follows no redirect, and an entry that names a host, not an IP address, needs git 2.37 or later. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
 - **The output of a command** this repository holds: a client for a service the ingest has no fetcher for, a schema dump, an export.
 
 There is no fetcher for Jira, since issues are unsuitable as knowledge sources. Attachments and images are not fetched, and a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only through a command that prints it.
@@ -105,6 +105,8 @@ entries:
 
 A command is code the repository runs in a job that holds secrets, so commit one a person has read. It receives the variables its own `auth` block names, and its last error line is written to the lock. An entry taken out of the manifest loses its folder on the next run, and the summary names each file a concept still cites.
 
+Behind a proxy that `https_proxy` names, the proxy resolves each address. The script still refuses a name that resolves here to a private address, and lets one that resolves only at the proxy through, so the proxy must refuse private addresses itself.
+
 ## Sensitivity
 
 A committed mirror is published as far as the repository is, so the script refuses what the repository's visibility does not allow. `public` may be committed anywhere. `internal`, the default, may be committed to a private repository only. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, a concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text no person reviewed. The script refuses a `confidential` entry when git does not ignore that folder or tracks a file in it.
@@ -115,7 +117,7 @@ The workflow passes the repository's visibility from the forge. By hand, the scr
 
 1. Install the ingest files with ktl-sidecar's Step 5, or its repair: the script and its shell half under `.lokf/scripts/`, the workflow and the pull request template.
 2. Copy the sidecar's `templates/ingest.yaml` to `.lokf/ingest.yaml` and replace its examples.
-3. Store each credential as a secret in the `knowledge-ingest` Environment, limited to the default branch, under the name the manifest gives ([how](../skills/ktl-sidecar/references/automation.md#keep-each-secret-in-its-environment)). Every name starts `KNOWLEDGE_INGEST_`, and the workflow hands over those secrets only. For Confluence Cloud, use an API token with read scopes and an expiry, with the account's email as the user. A git credential needs git 2.31 or later.
+3. Store each credential as a secret in the `knowledge-ingest` Environment, limited to the default branch, under the name the manifest gives ([how](../skills/ktl-sidecar/references/automation.md#keep-each-secret-in-its-environment)). Every name starts `KNOWLEDGE_INGEST_`, and the workflow hands over those secrets only. For Confluence Cloud, use an API token with read scopes and an expiry, with the account's email as the user.
 4. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General.
 5. Start one run from the Actions tab and read its summary.
 

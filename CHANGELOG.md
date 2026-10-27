@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **Behind a proxy with no outside DNS, the ingest fetches a source whose name resolves only at the proxy**, as the federation build does. A name that resolves here is still checked, and without a proxy a name that does not resolve still fails.
+
+### Security
+
+- **The ingest refuses a `git` entry when git is older than 2.31**, which ignores the protocol limits and the credential the script sets in its environment. The preflight warns before a run.
+
 ## [0.56.3] - 2026-10-27
 
 ### Fixed
