@@ -30,7 +30,16 @@ There is no fetcher for Jira, since issues are unsuitable as knowledge sources. 
 
 **The mirror**, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, a page id or a path, never its title, so a retitled page is the same file. The workflow publishes a name of letters, digits and `._/@+-` only, so a file named otherwise is spelled with those characters, with a digest of its name added: `Release Notes.md` becomes `Release-Notes-2040e8c7.md`, and its header keeps the name. Links are made absolute, and a PDF carries a comment before each page so a concept can cite the page.
 
-**The lock**, `.lokf/ingest.lock.yaml`, records the same per item with a status: `ok`, `gone` after a 404 or 410, `unlisted` when the selector no longer returns it, `failed` when a request did not complete, `refused` with the reason. The mirror and the lock change only when content changes.
+**The lock**, `.lokf/ingest.lock.yaml`, records the same per item, with one of these statuses:
+
+- `ok` for a current copy;
+- `gone` after a 404 or 410;
+- `unlisted` when the selector no longer returns it, or returns a file that is binary now;
+- `failed` when a request did not complete;
+- `refused`, with the reason;
+- `skipped` for a binary file that a `git` entry's include matches.
+
+The mirror and the lock change only when content changes.
 
 The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian holds no secret with which to fetch. Never clear it before a run. Refresh it instead, since a run fetches only what moved and restores any file missing from the disk. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
 
@@ -110,7 +119,7 @@ A command is code the repository runs in a job that holds secrets, so commit one
 
 A committed mirror is published as far as the repository is, so the script refuses what the repository's visibility does not allow. `public` may be committed anywhere. `internal`, the default, may be committed to a private repository only. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, a concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text no person reviewed.
 
-A confidential entry's records go to `.lokf/.cache/ingest.lock.yaml`, beside its copies. The committed lock says only how the entry's last run went, so no page's title, address or author is committed. With `lock_details: true`, the committed lock records the entry's items, as it does for any other entry. The script refuses a `confidential` entry when git does not ignore the cache or tracks a file in it. When an entry's sensitivity changes, the next run removes its files from the old folder and fetches them into the new one.
+A confidential entry's records go to `.lokf/.cache/ingest.lock.yaml`, beside its copies. The committed lock says only how the entry's last run went, so no page's title, address or author is committed. The summary counts the entry's items and names none. With `lock_details: true`, the committed lock records the entry's items, as it does for any other entry. The script refuses a `confidential` entry when git does not ignore the cache or tracks a file in it. When an entry's sensitivity or `lock_details` changes, its next run moves its records and removes its files from the old folder, then fetches them into the new one.
 
 The workflow passes the repository's visibility from the forge. By hand, the script asks `gh` when it is signed in, and otherwise counts the repository as public until `--visibility private` says otherwise.
 

@@ -11,14 +11,14 @@
 # Markdown and writes it under .lokf/mirror/<entry id>/, one file per page
 # or document, with a header: origin, title, version, digest, retrieval
 # time, converter. The lock, .lokf/ingest.lock.yaml, records the same per
-# item and a status: ok, gone, unlisted, failed or refused. A mirror file is repository
+# item and a status: ok, gone, unlisted, failed, refused or skipped. A mirror file is repository
 # content the librarian reads as any tracked file. It is not knowledge yet.
 #
 # A confidential entry's copies and their records stay out of git: the copies
 # under .lokf/.cache/mirror/ and the records in .lokf/.cache/ingest.lock.yaml.
 # The committed lock holds the entry's status alone, so no title, address or
 # author of a confidential page is committed, unless the entry sets
-# lock_details: true.
+# lock_details: true. Records move between the locks on the entry's next run.
 #
 # Kinds:
 #   - `confluence`: a label, space, page, tree or CQL selection; v1 search
@@ -253,6 +253,12 @@ def shown(text: str) -> str:
 def one_line(text: str) -> str:
     """A title or a name as the mirror header and the lock record it: one line, with no character a reader cannot see."""
     return " ".join(shown(text).split())
+
+
+def discreet(reason: str) -> str:
+    """A reason as the summary and the committed lock give it for a confidential entry: each address cut to its site, and no line a command printed."""
+    reason = re.sub(r"\b([a-z][a-z0-9+.-]*://[^/\s?#'\")]*)[^\s'\")]*", r"\1", reason)
+    return re.sub(r"^(the command exited -?\d+):.*$", r"\1", reason, flags=re.S)
 
 
 def write_text(path: Path, text: str) -> None:
@@ -1835,8 +1841,9 @@ def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, u
             items.append(Item(item=rel, origin=git_origin(entry, sha, f), title=rel, skipped=f"the mirror would give it the name of the {beside} beside it"))
             continue
         was = prior.get(item_id)
-        # A file refused for its size is not downloaded again while it and the cap stay the same.
-        if was and was.get("blob") == oid and (was.get("status") == "ok" or (was.get("status") == "refused" and was.get("reason") == too_big)):
+        # A binary file, and one refused for its size, is not downloaded again
+        # while it, and the cap, stay the same.
+        if was and was.get("blob") == oid and (was.get("status") in ("ok", "skipped") or (was.get("status") == "refused" and was.get("reason") == too_big)):
             unchanged[item_id] = was
             continue
         wanted.append((f, rel, oid, item_id, was))
@@ -1868,7 +1875,7 @@ def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, u
             # binary file, which is skipped, from text, which is refused.
             data = git("cat-file", "blob", oid, data=True) if size <= entry.max_item_bytes else start_of(oid)
             if b"\x00" in data[:8000]:
-                items.append(Item(item=item_id, origin=git_origin(entry, sha, f), title=rel, skipped="a binary file"))
+                items.append(Item(item=item_id, origin=git_origin(entry, sha, f), title=rel, blob=oid, skipped="a binary file"))
                 continue
             if size > entry.max_item_bytes:
                 items.append(Item(item=item_id, origin=git_origin(entry, sha, f), version=sha, title=rel, blob=oid, refused=too_big))
@@ -1983,13 +1990,13 @@ def cache_exposed(root: Path) -> str:
     return ""
 
 
-def mirror_header(entry: Entry, it: Item, lock_item: dict) -> str:
-    fm = {"origin": it.origin, "title": it.title, "ingest": entry.id, "kind": entry.kind, "version": str(it.version),
-          "sha256": "sha256:" + it.sha256, "retrieved_at": lock_item["retrieved_at"], "converted_by": it.converted_by}
-    if it.last_modified:
-        fm["last_modified"] = it.last_modified
-    if it.author:
-        fm["author"] = it.author
+def mirror_header(entry: Entry, record: dict, converted_by: str) -> str:
+    """The header a mirror file opens with, from the item's lock record."""
+    fm = {"origin": record.get("origin", ""), "title": record.get("title", ""), "ingest": entry.id, "kind": entry.kind,
+          "version": str(record.get("version", "")), "sha256": record["sha256"], "retrieved_at": record["retrieved_at"], "converted_by": converted_by}
+    for key in ("last_modified", "author"):
+        if record.get(key):
+            fm[key] = record[key]
     if entry.license:
         fm["license"] = entry.license
     order = ["origin", "title", "ingest", "kind", "version", "last_modified", "author", "sha256", "retrieved_at", "converted_by", "license"]
@@ -1998,7 +2005,7 @@ def mirror_header(entry: Entry, it: Item, lock_item: dict) -> str:
         if key in fm:
             lines.append(yaml.dump({key: fm[key]}, Dumper=Dumper, allow_unicode=True, width=10_000, default_flow_style=False).rstrip("\n"))
     lines.append("---")
-    lines.append(f"<!-- A mirror of {it.origin}, kept by the ingest. Edit the source, not this file: the next run writes it again. -->")
+    lines.append(f"<!-- A mirror of {fm['origin']}, kept by the ingest. Edit the source, not this file: the next run writes it again. -->")
     return "\n".join(lines) + "\n\n"
 
 
@@ -2042,6 +2049,8 @@ def cited_paths(root: Path) -> set:
 
 
 COUNTS = ("fetched", "restored", "unchanged", "gone", "unlisted", "failed", "refused", "skipped", "not reached")
+# What each kind compares, beside the digest, to keep an item's record as it is.
+KEPT_BY = {"confluence": ("version",), "http": (), "git": (), "command": ("command_sha256",)}
 
 
 def refresh(record: dict, fresh: dict) -> None:
@@ -2064,6 +2073,7 @@ class Run:
         self.writes: list[tuple[Path, str]] = []
         self.removals: list[Path] = []
         self.exposed: str | None = None
+        self.settled: set = set()  # the confidential entries that ran to an end, whose committed line this run writes
 
     def mirror_root(self, entry: Entry) -> Path:
         if entry.sensitivity == "confidential":
@@ -2075,7 +2085,12 @@ class Run:
         return self.cache_lock if entry.local_lock else self.lock
 
     def records(self, entry: Entry) -> dict:
-        return (self.book(entry)["entries"].get(entry.id) or {}).get("items", {})
+        """An entry's item records, from both locks, with those of the lock that holds them first. An entry that has not run since its
+        sensitivity or lock_details changed keeps some in the other lock, and its files where they were."""
+        other = self.cache_lock if self.book(entry) is self.lock else self.lock
+        merged = dict((other["entries"].get(entry.id) or {}).get("items") or {})
+        merged.update((self.book(entry)["entries"].get(entry.id) or {}).get("items") or {})
+        return merged
 
     def cache_exposed(self) -> str:
         """cache_exposed's answer for this root, asked once a run."""
@@ -2107,42 +2122,41 @@ class Run:
 
     def run_entry(self, entry: Entry) -> None:
         book = self.book(entry)
-        record = book["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
-        record.setdefault("items", {})
+        other = self.cache_lock if book is self.lock else self.lock
+        shown = discreet if entry.local_lock else str
         counts = dict.fromkeys(COUNTS, 0)
         why = allowed_here(entry.sensitivity, self.visibility)
         if not why and entry.sensitivity == "confidential":
             why = self.cache_exposed()
         if why:
-            record.update({"status": "refused", "reason": why})
+            # An entry refused before any fetch keeps its records where they
+            # are, and the committed lock says why.
+            book["entries"].setdefault(entry.id, {"status": "ok", "items": {}}).update({"status": "refused", "reason": why})
+            if book is self.cache_lock:
+                self.lock["entries"].setdefault(entry.id, {}).update({"status": "refused", "reason": discreet(why)})
             self.failed += 1
-            self.summary.append(f"- {entry.id} ({entry.describe()}): refused, {why}")
+            self.summary.append(f"- {entry.id} ({entry.describe()}): refused, {shown(why)}")
             return
         # The other lock may hold the entry's records from before: from a run
         # with lock_details set the other way, or from before the entry was
-        # made confidential or stopped being so. They join this lock's.
-        other = self.cache_lock if book is self.lock else self.lock
-        for item_id, was in ((other["entries"].pop(entry.id, None) or {}).get("items") or {}).items():
-            record["items"].setdefault(item_id, was)
-        prior = record["items"]
+        # made confidential or stopped being so. They join this lock's once the
+        # entry has run. Nothing changes before then, so an entry the time
+        # limit stops keeps both locks and its files as they were.
+        prior = self.records(entry)
         folder = self.mirror_root(entry) / entry.id
         # The sensitivity picks the folder, so after a change the entry's files
         # are in the other mirror. Each is removed there and its record
         # dropped, and a current one is fetched again into this folder. So an
         # entry made confidential leaves the committed mirror.
         moved = [i for i, was in prior.items() if was.get("path") and not self.within(str(was["path"]), folder)]
+        elsewhere = [self.root / str(prior[i]["path"]) for i in moved if self.removable(str(prior[i]["path"]))]
         for i in moved:
-            if self.removable(str(prior[i]["path"])):
-                self.removals.append(self.root / str(prior[i]["path"]))
             del prior[i]
-        if moved:
-            n = len(moved)
-            self.summary.append(f"- {entry.id}: its sensitivity puts its files in {self.rel(folder)}/, so {n} file{'s' if n != 1 else ''} "
-                                f"elsewhere {'are' if n != 1 else 'is'} removed")
         # A file the lock calls current and the disk has lost is handed to the
         # kind as if new, so it is fetched again instead of skipped as unchanged.
         lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not (self.root / was["path"]).is_file()}
         present = {i: was for i, was in prior.items() if i not in lost}
+        failure = None
         try:
             if entry.kind == "confluence":
                 items, unchanged = run_confluence(self.ctx, entry, present)
@@ -2157,33 +2171,39 @@ class Run:
                                 "for the next run as they were")
             return
         except Refused as e:
-            record.update({"status": "refused", "reason": str(e)})
-            self.failed += 1
-            self.summary.append(f"- {entry.id} ({entry.describe()}): refused, {e}")
-            return
+            failure = ("refused", str(e))
         except (FetchFailed, Gone) as e:
-            record.update({"status": "failed", "reason": str(e)})
-            self.failed += 1
-            self.summary.append(f"- {entry.id} ({entry.describe()}): failed, {e}")
-            return
+            failure = ("failed", str(e))
         except Exception as e:  # noqa: BLE001 - a surprise in one entry is recorded there, and the run goes on
-            reason = f"an error this script did not expect, {type(e).__name__}: {' '.join(str(e).split())[:200]}"
-            record.update({"status": "failed", "reason": reason})
+            failure = ("failed", f"an error this script did not expect, {type(e).__name__}: {' '.join(str(e).split())[:200]}")
+        record = book["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
+        other["entries"].pop(entry.id, None)
+        self.removals += elsewhere
+        if book is self.cache_lock:
+            self.settled.add(entry.id)
+        if moved:
+            n = len(moved)
+            self.summary.append(f"- {entry.id}: its sensitivity puts its files in {self.rel(folder)}/, so {n} file{'s' if n != 1 else ''} "
+                                f"elsewhere {'are' if n != 1 else 'is'} removed")
+        if failure:
+            status, reason = failure
+            record.update({"status": status, "reason": reason, "items": prior})
             self.failed += 1
-            self.summary.append(f"- {entry.id} ({entry.describe()}): failed, {reason}")
+            self.summary.append(f"- {entry.id} ({entry.describe()}): {status}, {shown(reason)}")
             return
         record["status"] = "ok"
         record.pop("reason", None)
         new_items: dict = {}
         skipped: list[tuple[str, str]] = []
-        total = self.total_mirror_size() - self.entry_mirror_size(prior)
+        total = self.total_mirror_size() - self.entry_mirror_size(self.records(entry))
         for item_id, was in unchanged.items():
             fresh = self.ctx.fresher.get((entry.id, item_id))
             if fresh and book is self.cache_lock:
                 refresh(was, fresh)  # a lock git never sees takes them at once
             new_items[item_id] = was
-            counts["refused" if was.get("status") == "refused" else "unchanged"] += 1
-            total += int(was.get("bytes", 0) or 0) if was.get("status") == "ok" else 0
+            status = str(was.get("status", "ok"))
+            counts[status if status in ("refused", "skipped") else "unchanged"] += 1
+            total += int(was.get("bytes", 0) or 0) if status == "ok" else 0
         # An item the time limit left keeps the record it had, one whose file
         # was lost included, and one it never had waits for the next run.
         for item_id, was in self.ctx.left.get(entry.id, {}).items():
@@ -2194,12 +2214,23 @@ class Run:
             counts["not reached"] += 1
         for it in items:
             was = prior.get(it.item) or {}
-            if it.skipped:
-                skipped.append((it.item, it.skipped))
-                counts["skipped"] += 1
-                continue
-            # A file refused for its size keeps the blob id it was refused at, so it is not downloaded again while it stays so.
+            # A binary file, and one refused for its size, keeps the blob id it
+            # was skipped or refused at, so it is not downloaded again while it
+            # stays so. A file skipped for its name needs no record. A file
+            # mirrored before that is binary now is unlisted, so its copy waits
+            # for --prune, and for no concept to cite it, as any unlisted copy does.
             blob = {"blob": it.blob} if it.blob else {}
+            if it.skipped and it.blob and was.get("path"):
+                new_items[it.item] = dict(was, status="unlisted", since=self.away_since(was), reason=f"{it.skipped} now")
+                counts["unlisted"] += 1
+                continue
+            if it.skipped:
+                counts["skipped"] += 1
+                if it.blob:
+                    new_items[it.item] = {"status": "skipped", "reason": it.skipped, "origin": it.origin, "title": it.title, **blob}
+                else:
+                    skipped.append((it.item, it.skipped))
+                continue
             if it.refused:
                 new_items[it.item] = dict(was, status="refused", reason=it.refused, origin=it.origin, title=it.title, **blob)
                 counts["refused"] += 1
@@ -2241,20 +2272,26 @@ class Run:
                 counts["refused"] += 1
                 continue
             total += written
-            # A copy restored with the bytes the lock records keeps its time,
-            # so a checkout without the confidential cache, or a file deleted
-            # by hand, changes no line of the lock and no byte of the file.
-            same = it.item in lost and was.get("sha256") == "sha256:" + it.sha256 and was.get("retrieved_at")
-            lock_item = {"path": self.rel(target), "origin": it.origin, "title": it.title, "version": str(it.version),
-                         "sha256": "sha256:" + it.sha256, "bytes": written, "retrieved_at": was["retrieved_at"] if same else self.now, "status": "ok"}
-            for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "command_sha256"):
-                if getattr(it, key):
-                    lock_item[key] = getattr(it, key)
+            # A copy restored with the bytes its record names keeps the record,
+            # as an unchanged copy does. So a checkout without the confidential
+            # cache, or a file deleted by hand, changes no line of the lock and
+            # no byte of the file, even after a commit or a validator moved.
+            same = (it.item in lost and was.get("status") == "ok" and was.get("sha256") == "sha256:" + it.sha256 and was.get("retrieved_at")
+                    and all(str(was.get(key, "")) == str(getattr(it, key)) for key in KEPT_BY[entry.kind]))
+            if same:
+                lock_item = dict(was, path=self.rel(target), bytes=written)
+            else:
+                lock_item = {"path": self.rel(target), "origin": it.origin, "title": it.title, "version": str(it.version),
+                             "sha256": "sha256:" + it.sha256, "bytes": written, "retrieved_at": self.now, "status": "ok"}
+                for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "command_sha256"):
+                    if getattr(it, key):
+                        lock_item[key] = getattr(it, key)
             new_items[it.item] = lock_item
             counts["restored" if it.item in lost else "fetched"] += 1
-            self.writes.append((target, mirror_header(entry, it, lock_item) + it.text))
+            self.writes.append((target, mirror_header(entry, lock_item, it.converted_by) + it.text))
         for item_id, was in prior.items():
-            if item_id not in new_items:
+            # A file no longer listed is unlisted, and one that was skipped needs its record no more.
+            if item_id not in new_items and was.get("status") != "skipped":
                 new_items[item_id] = dict(was, status="unlisted", since=self.away_since(was))
                 counts["unlisted"] += 1
         record["items"] = new_items
@@ -2264,11 +2301,12 @@ class Run:
             n = counts["not reached"]
             self.summary.append(f"  - {n} item{'s' if n != 1 else ''}: not reached, the run's time limit passed first, so "
                                 f"{'they wait' if n != 1 else 'it waits'} for the next run")
-        problems =[(item_id, it) for item_id, it in sorted(new_items.items()) if it.get("status") in ("refused", "failed", "gone", "unlisted")]
+        problems = [(item_id, it) for item_id, it in sorted(new_items.items()) if it.get("status") in ("refused", "failed", "gone", "unlisted", "skipped")]
         if entry.local_lock:
             # The summary is the pull request's body, so a confidential
-            # entry's lines count its items and name none.
-            tally = Counter((str(it["status"]), str(it.get("reason") or "")) for _, it in problems)
+            # entry's lines count its items, name none, and cut each address
+            # in a reason to its site.
+            tally = Counter((str(it["status"]), discreet(str(it.get("reason") or ""))) for _, it in problems)
             tally.update(("skipped", reason) for _, reason in skipped)
             for (status, reason), n in sorted(tally.items()):
                 self.summary.append(f"  - {n} item{'s' if n != 1 else ''}: {status}" + (f", {reason}" if reason else ""))
@@ -2346,21 +2384,13 @@ class Run:
                     self.summary.append(f"- {eid}: no longer in the manifest, so {path} is removed{note}")
                 if not record.get("items"):
                     self.summary.append(f"- {eid}: no longer in the manifest, so its record is dropped")
-        # The committed lock's line for a confidential entry says how its last
-        # run went, and nothing of its items: their records move to the
-        # cache's lock, those from before included, whether or not the entry
-        # ran.
-        for entry in self.manifest.entries:
-            if not entry.local_lock:
-                continue
-            committed = self.lock["entries"].get(entry.id) or {}
-            if committed.get("items"):
-                cached = self.cache_lock["entries"].setdefault(entry.id, {"status": committed.get("status", "ok"), "items": {}})
-                for item_id, was in committed["items"].items():
-                    cached.setdefault("items", {}).setdefault(item_id, was)
-            record = self.cache_lock["entries"].get(entry.id)
-            if record is not None:
-                self.lock["entries"][entry.id] = {key: record[key] for key in ("status", "reason") if key in record}
+        # The committed lock's line for a confidential entry that ran says how
+        # the run went, and nothing of its items, whose records are in the
+        # cache's lock. An entry that did not run keeps its line as it was,
+        # records from before included, until it does.
+        for eid in sorted(self.settled):
+            record = self.cache_lock["entries"].get(eid) or {}
+            self.lock["entries"][eid] = {key: discreet(str(record[key])) if key == "reason" else record[key] for key in ("status", "reason") if key in record}
         for path in self.removals:
             if path.is_file():
                 changed = True

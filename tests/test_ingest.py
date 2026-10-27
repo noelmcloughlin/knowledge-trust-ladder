@@ -1144,28 +1144,32 @@ def test_an_entry_made_confidential_leaves_the_committed_mirror(tmp_path, server
 def test_a_confidential_entry_commits_no_title_address_or_author_unless_it_asks(tmp_path, server, checks):
     """The lock is committed, so a confidential page's record stays in the cache's lock, and the committed one says how the entry's run went.
     lock_details: true records the items in the committed lock, as for any entry, and turned off again they move back."""
-    pages = {"123": {"title": "Pay review", "version": 2, "storage": "<p>Bands rise in April.</p>"}}
+    pages = {"908123": {"title": "Pay review", "version": 2, "storage": "<p>Bands rise in April.</p>"}}
     confluence_routes(server, True, pages)
     Stub.routes["/wiki/rest/api/content/search"] = (200, {"Content-Type": "application/json"}, json.dumps({"results": [
-        {"id": "123", "title": "Pay review", "version": {"number": 2, "when": "2026-10-03T09:12:44Z", "by": {"accountId": "5b10ac8d"}},
-         "_links": {"webui": "/spaces/HR/pages/123/Pay+review"}},
-        {"id": "124", "title": "Redundancy list", "version": {"number": 1, "by": {"accountId": "7c20bd9e"}},
-         "_links": {"webui": "/spaces/HR/pages/124/Redundancy+list"}}]}).encode())
+        {"id": "908123", "title": "Pay review", "version": {"number": 2, "when": "2026-10-03T09:12:44Z", "by": {"accountId": "5b10ac8d"}},
+         "_links": {"webui": "/spaces/HR/pages/908123/Pay+review"}},
+        {"id": "908124", "title": "Redundancy list", "version": {"number": 1, "by": {"accountId": "7c20bd9e"}},
+         "_links": {"webui": "/spaces/HR/pages/908124/Redundancy+list"}},
+        {"id": "908125", "title": "Board minutes", "version": {"number": 5, "by": {"accountId": "7c20bd9e"}},
+         "_links": {"webui": "/spaces/HR/pages/908125/Board+minutes"}}]}).encode())
+    Stub.routes["/wiki/api/v2/pages/908125"] = (200, {"Content-Type": "text/html"}, b"<html><body>Sign in</body></html>")
     m = confluence_manifest(server, True)
     m["entries"][0]["sensitivity"] = "confidential"
     root = host(tmp_path, m)
     write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
     result = ingest(root, "--visibility", "public")
     committed = read(root / ".lokf" / "ingest.lock.yaml")
-    checks.ok(result and "- runbooks (confluence, label ktl): 1 fetched, 1 gone" in result.out and lock_of(root)["entries"]["runbooks"] == {"status": "ok"},
+    checks.ok(result and "- runbooks (confluence, label ktl): 1 fetched, 1 gone, 1 failed" in result.out and lock_of(root)["entries"]["runbooks"] == {"status": "ok"},
               "the committed lock says how the run went", result.out + committed)
-    for secret in ("Pay review", "Redundancy", "/spaces/HR", "5b10ac8d", "123", "124"):
+    for secret in ("Pay review", "Redundancy", "Board minutes", "/spaces/HR", "5b10ac8d", "908123", "908124", "908125", "/wiki/api"):
         checks.ok(secret not in committed and secret not in result.out, f"neither the committed lock nor the summary holds {secret}", result.out + committed)
-    checks.ok("  - 1 item: gone" in result.out, "the summary counts the page that went, and names none", result.out)
+    checks.ok("  - 1 item: gone" in result.out and f"  - 1 item: failed, {server} did not return JSON" in result.out,
+              "the summary counts the pages that went and failed, names none, and cuts an address in a reason to its site", result.out)
     cached = yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]["runbooks"]["items"]
-    checks.ok(cached["123"]["title"] == "Pay review" and cached["123"]["author"] == "5b10ac8d" and "/spaces/HR/pages/123/" in cached["123"]["origin"],
+    checks.ok(cached["908123"]["title"] == "Pay review" and cached["908123"]["author"] == "5b10ac8d" and "/spaces/HR/pages/908123/" in cached["908123"]["origin"],
               "the cache's lock records title, address and author", str(cached))
-    checks.ok("author: 5b10ac8d" in read(root / ".lokf" / ".cache" / "mirror" / "runbooks" / "123.md"), "and the copy's header holds them, for the librarian")
+    checks.ok("author: 5b10ac8d" in read(root / ".lokf" / ".cache" / "mirror" / "runbooks" / "908123.md"), "and the copy's header holds them, for the librarian")
     result = ingest(root, "--visibility", "public")
     checks.ok(result and "1 unchanged" in result.out, "the cache's lock is what keeps an unchanged page from being fetched again", result.out)
     shutil.rmtree(root / ".lokf" / ".cache")
@@ -1176,27 +1180,133 @@ def test_a_confidential_entry_commits_no_title_address_or_author_unless_it_asks(
     write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(m))
     result = ingest(root, "--visibility", "public")
     items = lock_of(root)["entries"]["runbooks"]["items"]
-    checks.ok(result and items["123"]["title"] == "Pay review" and items["123"]["author"] == "5b10ac8d" and "124: gone" in result.out
+    checks.ok(result and items["908123"]["title"] == "Pay review" and items["908123"]["author"] == "5b10ac8d" and "908124: gone" in result.out
               and "runbooks" not in yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"],
               "lock_details: true moves the records to the committed lock, and the summary names the pages", result.out + str(items))
     checks.ok("1 unchanged" in result.out, "the copy in the cache counts as current, so the switch fetches nothing", result.out)
     m["entries"][0]["disabled"] = True
     del m["entries"][0]["lock_details"]
     write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(m))
+    with_details = read(root / ".lokf" / "ingest.lock.yaml")
     result = ingest(root, "--visibility", "public")
-    checks.ok(result and lock_of(root)["entries"]["runbooks"] == {"status": "ok"}
-              and yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]["runbooks"]["items"]["123"]["title"] == "Pay review",
-              "turned off again, the records leave the committed lock even on a run that does not fetch the entry", read(root / ".lokf" / "ingest.lock.yaml"))
+    checks.ok(result and read(root / ".lokf" / "ingest.lock.yaml") == with_details,
+              "turned off again on an entry that does not run, the records stay where they are until it does", result.out)
     del m["entries"][0]["disabled"]
     write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(m))
+    result = ingest(root, "--visibility", "public")
+    checks.ok(result and "1 unchanged" in result.out and lock_of(root)["entries"]["runbooks"] == {"status": "ok"}
+              and yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]["runbooks"]["items"]["908123"]["title"] == "Pay review",
+              "once it runs, they move to the cache's lock, and the copy there counts as current", read(root / ".lokf" / "ingest.lock.yaml"))
     Stub.routes["/wiki/rest/api/content/search"] = (200, {"Content-Type": "application/json"}, json.dumps({"results": []}).encode())
-    copy = root / ".lokf" / ".cache" / "mirror" / "runbooks" / "123.md"
+    copy = root / ".lokf" / ".cache" / "mirror" / "runbooks" / "908123.md"
     result = ingest(root, "--visibility", "public", "--prune", "--now", "2026-11-01T06:00:00Z")
     checks.ok(result and "- runbooks: a confidential copy went unlisted on this run, so it stays until the next" in result.out and copy.is_file(),
               "a page that left the selection is unlisted, and the summary names no path", result.out)
     result = ingest(root, "--visibility", "public", "--prune", "--now", "2026-11-08T06:00:00Z")
     checks.ok(result and "- runbooks: a confidential copy was unlisted since 2026-11-01 and no concept cites it; removed" in result.out
-              and not copy.exists() and "123" not in result.out, "a later prune removes the copy, naming none", result.out)
+              and not copy.exists() and "908123" not in result.out, "a later prune removes the copy, naming none", result.out)
+
+
+def test_records_move_between_the_locks_only_when_the_entry_runs(tmp_path, server, checks, monkeypatch, capsys):
+    """An entry that does not run, or that is refused, keeps its records and its copies where they are, so a record that names a committed copy is
+    never lost before the copy goes. Only an entry that runs to an end rewrites its line in the committed lock: a stop at the time limit, or
+    --only another entry, leaves it as it was."""
+    Stub.routes["/pay.md"] = (200, {"Content-Type": "text/markdown"}, b"# Pay bands\n")
+    Stub.routes["/pub.md"] = (200, {"Content-Type": "text/markdown"}, b"# Public\n")
+    pay = {"id": "pay", "kind": "http", "urls": [f"{server}/pay.md"], "sensitivity": "internal"}
+    pub = {"id": "pub", "kind": "http", "urls": [f"{server}/pub.md"], "sensitivity": "public"}
+    root = host(tmp_path / "a", manifest_for([pay, pub]))
+    write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    ingest(root, "--visibility", "private")
+    copy = next((root / ".lokf" / "mirror" / "pay").glob("*.md"))
+    before = lock_of(root)["entries"]["pay"]
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(pay, sensitivity="confidential", disabled=True), pub])))
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and lock_of(root)["entries"]["pay"] == before and copy.is_file(),
+              "made confidential and disabled in one change, the entry keeps its records and its copy", result.out)
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(pay, sensitivity="confidential"), pub])))
+    shutil.rmtree(root / ".lokf" / ".cache", ignore_errors=True)
+    result = ingest(root, "--visibility", "private")
+    status = ingest(root, "--status")
+    checks.ok(result and not copy.exists() and lock_of(root)["entries"]["pay"] == {"status": "ok"} and "does not name" not in status.out,
+              "once it runs, on a checkout without the cache, its copy leaves the committed mirror and no stray file stays", result.out + status.out)
+
+    exposed = host(tmp_path / "b", manifest_for([pay]))
+    ingest(exposed, "--visibility", "private")
+    copy = next((exposed / ".lokf" / "mirror" / "pay").glob("*.md"))
+    before = lock_of(exposed)["entries"]["pay"]
+    write(exposed / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(pay, sensitivity="confidential")])))
+    result = ingest(exposed, "--visibility", "private")
+    line = lock_of(exposed)["entries"]["pay"]
+    checks.ok(result and "refused, git does not ignore .lokf/.cache/mirror/" in result.out and line["status"] == "refused"
+              and line["items"] == before["items"] and copy.is_file(), "refused where git would see the cache, it keeps its records and its copy", str(line))
+    checks.ok("Mirror: 1 file," in result.out, "and the summary still counts the copy those records name", result.out)
+    write(exposed / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    result = ingest(exposed, "--visibility", "private")
+    checks.ok(result and not copy.exists() and lock_of(exposed)["entries"]["pay"] == {"status": "ok"}, "and once git ignores the cache, they go", result.out)
+
+    write(root / ".lokf" / "ingest.lock.yaml", yaml.safe_dump({"ingest_lock_version": "1", "entries": {
+        "pay": {"status": "failed", "reason": "gave up after 3 attempts"}, "pub": lock_of(root)["entries"]["pub"]}}))
+    failed = read(root / ".lokf" / "ingest.lock.yaml")
+    shutil.rmtree(root / ".lokf" / ".cache", ignore_errors=True)
+    m = load_module()
+
+    def stopped(*args, **kwargs):
+        raise m.OutOfTime()
+
+    monkeypatch.setattr(m, "run_http", stopped)
+    rc = m.main(["--root", str(root), "--visibility", "private", "--only", "pay"])
+    out = capsys.readouterr().out
+    checks.ok(rc == 0 and "- pay (http, 1 address): stopped, the run's time limit passed while it ran" in out and read(root / ".lokf" / "ingest.lock.yaml") == failed,
+              "a stop at the time limit leaves the committed line as it was", out)
+    write(root / ".lokf" / ".cache" / "ingest.lock.yaml", yaml.safe_dump({"ingest_lock_version": "1", "entries": {"pay": {"status": "refused", "reason": "an old run here", "items": {}}}}))
+    result = ingest(root, "--visibility", "private", "--only", "pub")
+    checks.ok(result and lock_of(root)["entries"]["pay"] == {"status": "failed", "reason": "gave up after 3 attempts"},
+              "--only another entry leaves it as it was, whatever this machine's cache says", read(root / ".lokf" / "ingest.lock.yaml"))
+
+
+def test_a_confidential_command_s_output_stays_out_of_the_summary_and_the_committed_lock(tmp_path, checks):
+    """A command prints what it likes when it fails, so for a confidential entry the summary and the committed lock give its exit status alone."""
+    root = host(tmp_path, manifest_for([{"id": "hr", "kind": "command", "command": ".lokf/ingest/hr.sh", "sensitivity": "confidential"}]))
+    write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    write(root / ".lokf" / "ingest" / "hr.sh", "#!/bin/sh\necho 'no access to Pay review for Alice Example' >&2\nexit 3\n").chmod(0o755)
+    Git(root)("add", "-A")
+    Git(root)("commit", "-q", "-m", "hr", env=IDENT)
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "- hr (command, .lokf/ingest/hr.sh): failed, the command exited 3" in result.out and "Alice" not in result.out
+              and lock_of(root)["entries"]["hr"] == {"status": "failed", "reason": "the command exited 3"}, "the exit status alone", result.out)
+    checks.ok("Alice" in yaml.safe_load(read(root / ".lokf" / ".cache" / "ingest.lock.yaml"))["entries"]["hr"]["reason"],
+              "the cache's lock keeps the line, for the person who runs it")
+
+
+def test_lock_details_change_no_line_when_only_the_cache_is_missing(tmp_path, server, checks):
+    """With lock_details: true, the workflow's checkout restores every confidential copy. A copy whose bytes did not change keeps its record, as an
+    unchanged one does, though the repository's commit or the server's validators moved, and its file comes back byte for byte."""
+    upstream = tmp_path / "upstream"
+    upstream.mkdir()
+    g = Git(upstream)
+    g.init()
+    write(upstream / "docs" / "a.md", "# A\n")
+    write(upstream / "other" / "b.txt", "one\n")
+    g("add", "-A")
+    g("commit", "-q", "-m", "one", env=IDENT)
+    Stub.routes["/p.md"] = (200, {"Content-Type": "text/markdown", "ETag": '"p1"', "Last-Modified": "Sat, 17 Oct 2026 06:00:00 GMT"}, b"# P\n")
+    root = host(tmp_path, manifest_for([
+        {"id": "wiki", "kind": "git", "url": str(upstream), "ref": "main", "path": "docs", "sensitivity": "confidential", "lock_details": True},
+        {"id": "page", "kind": "http", "urls": [f"{server}/p.md"], "sensitivity": "confidential", "lock_details": True}]))
+    write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    ingest(root, "--visibility", "private")
+    before = read(root / ".lokf" / "ingest.lock.yaml")
+    copies = {p: read(p) for p in (root / ".lokf" / ".cache" / "mirror").rglob("*.md")}
+    write(upstream / "other" / "b.txt", "two\n")
+    g("add", "-A")
+    g("commit", "-q", "-m", "two", env=IDENT)
+    Stub.routes["/p.md"] = (200, {"Content-Type": "text/markdown", "ETag": '"p2"', "Last-Modified": "Sun, 18 Oct 2026 06:00:00 GMT"}, b"# P\n")
+    shutil.rmtree(root / ".lokf" / ".cache")
+    result = ingest(root, "--visibility", "private", "--now", "2026-10-25T06:00:00Z")
+    checks.ok(result and result.out.count("1 restored") == 2 and read(root / ".lokf" / "ingest.lock.yaml") == before,
+              "the committed lock keeps every line", result.out)
+    checks.ok(len(copies) == 2 and all(p.is_file() and read(p) == text for p, text in copies.items()), "and each copy comes back as it was")
 
 
 # 8. --patch
@@ -1602,9 +1712,43 @@ def test_a_git_entry_follows_a_changed_include_and_skips_a_binary_file(tmp_path,
     write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(entry, include=["*"])])))
     result = ingest(root)
     checks.ok(result and "1 fetched, 1 unchanged, 1 skipped" in result.out and "logo.png.md: skipped, a binary file" in result.out, "a changed include at the same commit is followed, and the binary file is named", result.out)
+    logo = lock_of(root)["entries"]["wiki"]["items"]["logo.png.md"]
+    checks.ok(logo["status"] == "skipped" and logo["blob"] == g("rev-parse", "HEAD:logo.png") and "path" not in logo,
+              "the binary file keeps a record of its blob id, so it is not downloaded again while it stays the same", str(logo))
+    result = ingest(root)
+    checks.ok(result and "2 unchanged, 1 skipped" in result.out and "logo.png.md: skipped, a binary file" in result.out and "Nothing changed" in result.out,
+              "and the next run names it again", result.out)
     write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest_for([dict(entry, include=["*.yaml"])])))
     result = ingest(root)
     checks.ok(result and "1 unchanged, 1 unlisted" in result.out, "a narrowed include unlists the file it drops", result.out)
+
+
+def test_a_git_file_that_turns_binary_leaves_its_copy_to_prune(tmp_path, checks):
+    """A file mirrored as text that turns binary upstream is unlisted, so its stale copy waits for --prune and for no concept to cite it, as any
+    unlisted copy does. Once the copy is gone, the binary file keeps a record of its own and is not downloaded again."""
+    upstream = tmp_path / "upstream"
+    upstream.mkdir()
+    g = Git(upstream)
+    g.init()
+    write(upstream / "notes.md", "# Notes\n")
+    g("add", "-A")
+    g("commit", "-q", "-m", "one", env=IDENT)
+    root = host(tmp_path, manifest_for([{"id": "wiki", "kind": "git", "url": str(upstream), "ref": "main", "sensitivity": "public"}]))
+    ingest(root)
+    copy = root / ".lokf" / "mirror" / "wiki" / "notes.md"
+    (upstream / "notes.md").write_bytes(b"# Notes\n\x00binary\n")
+    g("add", "-A")
+    g("commit", "-q", "-m", "two", env=IDENT)
+    result = ingest(root, "--prune")
+    checks.ok(result and "- wiki (git, / at main): 1 unlisted" in result.out and "  - notes.md: unlisted since 2026-10-18, a binary file now" in result.out
+              and copy.is_file(), "the file is unlisted, and its copy stays for now", result.out)
+    result = ingest(root, "--prune", "--now", "2026-10-25T06:00:00Z")
+    checks.ok(result and "- wiki: .lokf/mirror/wiki/notes.md was unlisted since 2026-10-18 and no concept cites it; removed" in result.out and not copy.exists(),
+              "a later prune removes the stale copy", result.out)
+    result = ingest(root, "--now", "2026-11-01T06:00:00Z")
+    record = lock_of(root)["entries"]["wiki"]["items"]["notes.md"]
+    checks.ok(result and "1 skipped" in result.out and record["status"] == "skipped" and "path" not in record and record["blob"] == g("rev-parse", "HEAD:notes.md"),
+              "then the binary file keeps a record of its own, with no copy", str(record))
 
 
 def test_a_git_file_whose_name_the_mirror_cannot_hold_is_skipped_renamed_or_refused_alone(tmp_path, checks):
