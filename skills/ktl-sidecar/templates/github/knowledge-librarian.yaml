@@ -42,7 +42,7 @@ jobs:
       record: ${{ steps.read.outputs.record }}
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -158,7 +158,7 @@ jobs:
       # installs packages, installs a skill everywhere but the repository
       # that publishes it, and runs a third-party agent.
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -169,7 +169,7 @@ jobs:
           persist-credentials: false # keep GITHUB_TOKEN off disk while the agent runs
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           python-version: "3.12"
 
@@ -205,8 +205,8 @@ jobs:
         if: github.repository != 'noelmcloughlin/knowledge-trust-ladder'
         env:
           TRUST_LADDER_SKILLS_REPO: https://github.com/noelmcloughlin/knowledge-trust-ladder
-          TRUST_LADDER_SKILLS_REF: v0.56.1 # the one pin; point your docs here instead of repeating it
-          TRUST_LADDER_SKILLS_SHA: ae304cb924a0d8ffea4d04b6d737a58ee20dd3b0 # the commit that tag names
+          TRUST_LADDER_SKILLS_REF: v0.56.2 # the one pin; point your docs here instead of repeating it
+          TRUST_LADDER_SKILLS_SHA: 332b2b3207f430a3286b38aec3cd2bc8f77b911f # the commit that tag names
         run: |
           set -euo pipefail
           tmp="$(mktemp -d)"
@@ -430,7 +430,7 @@ jobs:
       pull-requests: write # open the review PR
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
