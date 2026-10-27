@@ -19,7 +19,7 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
 
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
 - **Pages and documents at an address**: HTML, Markdown, plain text and PDF. Most PDFs work, meaning any whose text can be selected and copied in a viewer. A scan of paper holds pictures of pages and no text, and is refused.
-- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository.
+- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. Where the manifest refuses private addresses, git follows no redirect, and an entry that names a host, not an IP address, needs git 2.37 or later. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
 - **The output of a command** this repository holds: a client for a service the ingest has no fetcher for, a schema dump, an export.
 
 There is no fetcher for Jira, since issues are unsuitable as knowledge sources. Attachments and images are not fetched, and a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only through a command that prints it.

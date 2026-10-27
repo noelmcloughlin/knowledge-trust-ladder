@@ -41,6 +41,8 @@
 #   - more than max_items;
 #   - a body over max_item_bytes or a mirror over max_total_bytes;
 #   - a private address unless the manifest allows it;
+#   - a git host name outside ASCII, where the manifest refuses private
+#     addresses, and a git address that git's own configuration rewrites;
 #   - a path outside the mirror root;
 #   - an unexpected content type;
 #   - a PDF with no text layer.
@@ -72,6 +74,7 @@ import argparse
 import base64
 import codecs
 import fnmatch
+import functools
 import hashlib
 import html
 import http.client
@@ -504,8 +507,15 @@ def address_is_private(host: str) -> bool:
 
 
 def ip_is_private(address: str) -> bool:
+    """Whether an address is anything but a public one.
+
+    is_private leaves out the shared address space, 100.64.0.0/10, which
+    carrier NAT, a Tailscale network and Alibaba Cloud's metadata service
+    (100.100.100.200) use. So an address that is not global is refused too.
+    """
     addr = ipaddress.ip_address(address.split("%", 1)[0])
-    return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved or addr.is_multicast or addr.is_unspecified
+    return (addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved or addr.is_multicast
+            or addr.is_unspecified or not addr.is_global)
 
 
 def connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
@@ -1316,8 +1326,69 @@ def passed_through(env: dict) -> dict:
     return {name: os.environ[name] for name in PASSED_THROUGH if os.environ.get(name)} | env
 
 
-def git_env(entry: Entry, ctx: Context) -> dict:
-    """A clean environment for git: the protocols the manifest allows, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
+@functools.lru_cache(maxsize=None)
+def git_version() -> tuple[int, int]:
+    """The major and minor version of the git on PATH, read once a run, or (0, 0) when it cannot be read."""
+    try:
+        out = subprocess.run(["git", "--version"], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return (0, 0)
+    found = re.search(r"(\d+)\.(\d+)", out)
+    return (int(found[1]), int(found[2])) if found else (0, 0)
+
+
+def shown_version(version: tuple[int, int]) -> str:
+    return f"{version[0]}.{version[1]}" if version != (0, 0) else "of a version this script cannot read"
+
+
+def ip_literal(host: str) -> bool:
+    """Whether a URL's host is an address, which git connects to without resolving it."""
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return True
+
+
+def pin_needed(url: str, allow_private: bool) -> bool:
+    """Whether git must be held to the addresses checked here: an http(s) address where the manifest refuses private ones."""
+    return git_url_kind(url) in ("https", "http") and not allow_private
+
+
+def git_pin(url: str) -> list[tuple[str, str]]:
+    """The configuration that holds git to the addresses checked here: the name resolved once, and no redirect.
+
+    Git resolves the name again when it connects, so a name that answers a
+    public address to the check and a private one to git (DNS rebinding)
+    would pass. http.curloptResolve, which git reads from 2.37 and an older
+    git ignores, hands git the addresses that were checked. A redirect would
+    send git to a name it resolves itself, so none is followed. Through a
+    proxy, the proxy resolves the name, and only the check here applies.
+    """
+    parts = urllib.parse.urlsplit(url)
+    host, port = parts.hostname or "", parts.port or (443 if parts.scheme == "https" else 80)
+    if not host.isascii():
+        raise Refused(f"{host}: write the host name in ASCII, its xn-- form, so git can be held to the address that was checked")
+    try:
+        infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+    except socket.gaierror as e:
+        raise FetchFailed(f"{host} does not resolve ({e})") from e
+    addresses = list(dict.fromkeys(info[4][0] for info in infos))
+    for address in addresses:
+        if ip_is_private(address):
+            raise Refused(f"{host} resolves to {address}, a private or link-local address; allow_private_addresses: true permits it")
+    config = [(f"http.{url}.followRedirects", "false")]
+    if ip_literal(host):
+        return config  # an address, which git does not resolve
+    found = git_version()
+    if found < (2, 37):
+        raise FetchFailed(f"git 2.37 or later is needed to hold the fetch to the address that was checked, and this git is {shown_version(found)}")
+    pinned = ",".join(f"[{address}]" if ":" in address else address for address in addresses)
+    return config + [(f"http.{url}.curloptResolve", f"{host}:{port}:{pinned}")]
+
+
+def git_env(entry: Entry, ctx: Context, pinned: list | tuple = ()) -> dict:
+    """A clean environment for git: the protocols the manifest allows, the addresses git_pin checked, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
     # The identity is for the reflog of the fetched ref: without one, git looks
     # the user up, which on a machine with a slow name service waits seconds.
     env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "GIT_TERMINAL_PROMPT": "0",
@@ -1328,6 +1399,7 @@ def git_env(entry: Entry, ctx: Context) -> dict:
     config = [("credential.helper", ""), ("protocol.allow", "never"), ("protocol.https.allow", "always")]
     if ctx.manifest.allow_private:
         config += [("protocol.http.allow", "always"), ("protocol.file.allow", "always")]
+    config += pinned
     if entry.auth.scheme and git_url_kind(entry.url) in ("https", "http"):
         name, value = entry.auth.value(ctx.environ)
         config.append((f"http.{entry.url}.extraHeader", f"{name}: {value}"))
@@ -1352,10 +1424,8 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
     """A shallow fetch of the ref, then each chosen file by its blob id, which the lock records so an unchanged file costs no read."""
     if not shutil.which("git"):
         raise FetchFailed("git is not installed")
-    if git_url_kind(entry.url) in ("https", "http") and not ctx.manifest.allow_private \
-            and address_is_private(urllib.parse.urlsplit(entry.url).hostname or ""):
-        raise Refused("the repository is at a private address; allow_private_addresses: true permits it")
-    env = git_env(entry, ctx)
+    pinned = git_pin(entry.url) if pin_needed(entry.url, ctx.manifest.allow_private) else []
+    env = git_env(entry, ctx, pinned)
     tmp = Path(tempfile.mkdtemp(prefix="ingest-git-"))
     try:
         def git(*args, data=False):
@@ -1367,6 +1437,16 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
 
         git("init", "-q")
         git("remote", "add", "origin", entry.url)
+        # Git rewrites an address by any url.<base>.insteadOf it reads, the
+        # global configuration's included, and fetches the rewritten one. The
+        # pin and the credential are scoped to the address as the manifest
+        # writes it, so git would fetch a rewritten address with neither, and
+        # resolve its name itself. ls-remote --get-url applies the rewrite
+        # without connecting.
+        fetched = git("ls-remote", "--get-url", "origin").strip()
+        if fetched != entry.url:
+            raise Refused(f"git's configuration rewrites {entry.url} to {fetched} (url.<base>.insteadOf), which the address check and the "
+                          "credential do not cover; name the address git fetches in the manifest, or remove the rewrite")
         git("fetch", "-q", "--depth", "1", "origin", entry.ref)
         sha = git("rev-parse", "FETCH_HEAD").strip()
         when = utc(git("log", "-1", "--format=%cI", "FETCH_HEAD").strip())
@@ -1804,6 +1884,13 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
         parts.append("tokens present: " + ", ".join(present))
     if absent:
         parts.append("tokens absent: " + ", ".join(absent))
+    # A git entry that names a host is held to its checked address by
+    # http.curloptResolve, which an older git ignores, so the run refuses to
+    # fetch it. Saying so here lets the preflight warn before a run fails.
+    pinned = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled and pin_needed(e.url, manifest.allow_private)
+              and not ip_literal(urllib.parse.urlsplit(e.url).hostname or "")]
+    if pinned and shutil.which("git") and git_version() < (2, 37):
+        parts.append(f"this git is {shown_version(git_version())}, and a git entry that names a host needs 2.37 or later: {', '.join(pinned)}")
     return "ingest: " + "; ".join(parts)
 
 

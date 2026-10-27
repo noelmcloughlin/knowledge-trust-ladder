@@ -688,7 +688,7 @@ def waits_note(member) -> str:
 # fetching and verifying a release zip
 # ---------------------------------------------------------------------------
 def private_host(host: str | None) -> bool:
-    """Whether a host name is, or resolves to, a loopback, private, link-local or otherwise reserved address."""
+    """Whether a host name is, or resolves to, a loopback, private, link-local, reserved or otherwise not global address."""
     if not host:
         return False
     try:
@@ -699,8 +699,15 @@ def private_host(host: str | None) -> bool:
 
 
 def private_address(address: str) -> bool:
+    """Whether an address is anything but a public one.
+
+    is_private leaves out the shared address space, 100.64.0.0/10, which
+    carrier NAT, a Tailscale network and Alibaba Cloud's metadata service
+    (100.100.100.200) use. So an address that is not global is refused too.
+    """
     ip = ipaddress.ip_address(address.split("%", 1)[0])
-    return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified
+    return (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast
+            or ip.is_unspecified or not ip.is_global)
 
 
 def connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
