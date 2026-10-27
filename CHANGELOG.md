@@ -4,8 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.57.0] - 2026-10-27
+
+### Added
+
+- **A ktl-website home page offers a Schema button when the site shows a LinkML schema's pages.**
+
 ### Fixed
 
+- **A `!` after the type releases a major version.** `.releaserc.json` names the Conventional Commits preset, so a `feat!:` commit no longer releases nothing, as `docs/releasing.md` already said.
+- **The preflight warns when git is too old for an ingest `git` entry**, and names each entry a run would refuse.
+- **Behind a proxy with no outside DNS, the ingest fetches a source whose name resolves only at the proxy**, as the federation build does. A name that resolves locally is still checked, and without a proxy a name that does not resolve still fails.
+- **A `git` entry fetched through a proxy that resolves names needs no git 2.37**, since curl sends the name to such a proxy and a pin to the checked address would change nothing. Git uses the proxy the ingest chose, or none, whatever its own configuration or `no_proxy` says.
+- **The ingest passes `all_proxy` to git and to a `command` entry**, as it passes `https_proxy`.
 - **The ingest converts a page that leaves out `</head>`, as HTML allows**, where it mirrored an empty file. A line break in a page's text is a space, so it starts no heading or code block.
 - **The ingest refuses a manifest value of the wrong type, by name.** A quoted `"false"` counted as true, a string where a list belongs as a list of its characters, and a string `select` stopped the run with a traceback.
 - **One page or file fails only itself.** A page the converter cannot read is refused alone, and a charset that decodes to a lone surrogate no longer stops the run before the lock is written.
@@ -20,6 +31,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Security
 
+- **The ingest holds a `git` entry that names a host to the addresses its check found, and follows no redirect for it**, so DNS rebinding cannot reach a private address through git unless a proxy resolves the name. Without `allow_private_addresses` such an entry needs git 2.37 or later, and a host name outside ASCII is refused: write its `xn--` form.
+- **The ingest and the federation build count every address that is not global as private.** Python's `is_private` leaves out the shared address space, 100.64.0.0/10, which holds Alibaba Cloud's metadata service and Tailscale's networks.
+- **The ingest refuses a `git` entry whose address git's own configuration rewrites** with `url.<base>.insteadOf`, since the address check and the credential cover only the address the manifest names.
+- **The ingest refuses a `git` entry when git is older than 2.31.** An older git ignores the protocol limits and the credential that the script sets in git's environment. The preflight warns before a run.
+- **The ingest's git reads no `~/.netrc`, `~/.gitconfig` or `/etc/gitconfig`.** Through curl, git sent the credential of a `.netrc` default entry to any host that asked, and a git older than 2.32 read both configuration files. A file that `GIT_CONFIG_GLOBAL` names is still read.
 - **The ingest keeps a credential to its own origin, and git follows no redirect with one.** A redirect to another port or scheme kept `Authorization`, and one to another host kept a `header` credential, which curl keeps too.
 - **No credential reaches the lock or the summary.** A secret ending in a line break failed its request with an error that quoted the header, so the script trims that line break and refuses one inside a secret, by name.
 - **The ingest removes and writes files only inside the mirror**, whatever path the lock names or symbolic link the repository holds. It deleted any file a lock named, inside the repository or outside it.
@@ -29,28 +45,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **One source can no longer hold the run or fill the disk.** A body has a deadline of ten timeouts, a Confluence listing ends after a page for each result `max_items` allows, lists and quotes nest at most eight deep, and the caps count the Markdown written.
 - **The mirror keeps no `javascript:` or `data:` link, whatever the scheme's letter case, and no character Unicode marks as invisible**, variation selectors among them. Each title and each line of the summary is one line.
 - **An `http` entry needs `allow_private_addresses: true` for a plain `http://` address**, as the manifest's comment says.
-
-## [0.57.0] - 2026-10-27
-
-### Added
-
-- **A ktl-website home page offers a Schema button when the site shows a LinkML schema's pages.**
-
-### Fixed
-
-- **A `!` after the type releases a major version.** `.releaserc.json` names the Conventional Commits preset, so a `feat!:` commit no longer releases nothing, as `docs/releasing.md` already said.
-- **The preflight warns when git is too old for an ingest `git` entry**, and names each entry a run would refuse.
-- **Behind a proxy with no outside DNS, the ingest fetches a source whose name resolves only at the proxy**, as the federation build does. A name that resolves locally is still checked, and without a proxy a name that does not resolve still fails.
-- **A `git` entry fetched through a proxy that resolves names needs no git 2.37**, since curl sends the name to such a proxy and a pin to the checked address would change nothing. Git uses the proxy the ingest chose, or none, whatever its own configuration or `no_proxy` says.
-- **The ingest passes `all_proxy` to git and to a `command` entry**, as it passes `https_proxy`.
-
-### Security
-
-- **The ingest holds a `git` entry that names a host to the addresses its check found, and follows no redirect for it**, so DNS rebinding cannot reach a private address through git unless a proxy resolves the name. Without `allow_private_addresses` such an entry needs git 2.37 or later, and a host name outside ASCII is refused: write its `xn--` form.
-- **The ingest and the federation build count every address that is not global as private.** Python's `is_private` leaves out the shared address space, 100.64.0.0/10, which holds Alibaba Cloud's metadata service and Tailscale's networks.
-- **The ingest refuses a `git` entry whose address git's own configuration rewrites** with `url.<base>.insteadOf`, since the address check and the credential cover only the address the manifest names.
-- **The ingest refuses a `git` entry when git is older than 2.31.** An older git ignores the protocol limits and the credential that the script sets in git's environment. The preflight warns before a run.
-- **The ingest's git reads no `~/.netrc`, `~/.gitconfig` or `/etc/gitconfig`.** Through curl, git sent the credential of a `.netrc` default entry to any host that asked, and a git older than 2.32 read both configuration files. A file that `GIT_CONFIG_GLOBAL` names is still read.
 
 ## [0.56.2] - 2026-10-27
 
