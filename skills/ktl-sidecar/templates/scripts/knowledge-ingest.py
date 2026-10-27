@@ -504,8 +504,15 @@ def address_is_private(host: str) -> bool:
 
 
 def ip_is_private(address: str) -> bool:
+    """Whether an address is anything but a public one.
+
+    is_private leaves out the shared address space, 100.64.0.0/10, which
+    carrier NAT, a Tailscale network and Alibaba Cloud's metadata service
+    (100.100.100.200) use. So an address that is not global is refused too.
+    """
     addr = ipaddress.ip_address(address.split("%", 1)[0])
-    return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved or addr.is_multicast or addr.is_unspecified
+    return (addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved or addr.is_multicast
+            or addr.is_unspecified or not addr.is_global)
 
 
 def connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):

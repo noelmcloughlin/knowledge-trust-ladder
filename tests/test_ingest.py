@@ -224,6 +224,29 @@ def test_a_private_address_is_refused_unless_the_manifest_allows_it(tmp_path, se
     checks.ok(result.rc == 1, "--strict exits 1 on a refusal", result.out)
 
 
+@pytest.mark.parametrize(("address", "refused"), [
+    ("127.0.0.1", True), ("10.0.0.1", True), ("169.254.169.254", True), ("::1", True), ("fe80::1", True), ("fd00::1", True),
+    # The shared address space, which is_private leaves out: carrier NAT, Tailscale, Alibaba Cloud's metadata service.
+    ("100.64.0.1", True), ("100.100.100.200", True), ("::ffff:100.100.100.200", True),
+    ("8.8.8.8", False), ("140.82.112.3", False), ("2606:4700:4700::1111", False), ("2a00:1450:4009::200e", False),
+])
+def test_an_address_that_is_not_global_is_private(address, refused):
+    """Every address that is not global counts as private, and a public one never does."""
+    assert load_module().ip_is_private(address) is refused, address
+
+
+def test_a_name_in_the_shared_address_space_is_refused_before_the_request(checks, monkeypatch):
+    """A name that answers 100.100.100.200, Alibaba Cloud's metadata service, is refused like any private address, and nothing is requested."""
+    m = load_module()
+    real = m.socket.getaddrinfo
+    monkeypatch.setattr(m.socket, "getaddrinfo", lambda host, *a, **k: real("100.100.100.200" if host == "meta.example.invalid" else host, *a, **k))
+    try:
+        m.http_get("http://meta.example.invalid/latest/meta-data/", {}, False, 10_000, timeout=2)
+        checks.ok(False, "an address in the shared address space is refused")
+    except m.Refused as e:
+        checks.ok("private or link-local" in str(e), "an address in the shared address space is refused", str(e))
+
+
 def test_a_name_that_turns_private_after_the_check_is_refused_at_the_connection(server, checks, monkeypatch):
     """A name may answer a public address to the check and a private one to the connection (DNS rebinding), so the connection checks the address it opens."""
     m = load_module()

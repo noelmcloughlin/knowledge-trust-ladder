@@ -1670,6 +1670,22 @@ def test_a_name_that_turns_private_after_the_check_is_refused_at_the_connection(
         assert read(tmp_path / "got.zip") == "zip"
 
 
+@pytest.mark.parametrize(("address", "refused"), [
+    ("127.0.0.1", True), ("10.0.0.1", True), ("169.254.169.254", True), ("::1", True), ("fe80::1", True), ("fd00::1", True),
+    # The shared address space, which is_private leaves out: carrier NAT, Tailscale, Alibaba Cloud's metadata service.
+    ("100.64.0.1", True), ("100.100.100.200", True), ("::ffff:100.100.100.200", True),
+    ("8.8.8.8", False), ("140.82.112.3", False), ("2606:4700:4700::1111", False), ("2a00:1450:4009::200e", False),
+])
+def test_a_member_address_that_is_not_global_is_private(address, refused):
+    """A member is fetched from a public address only, so every address that is not global counts as private, and a public one never does."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("knowledge_federate_addresses", SCRIPT)
+    kf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kf)
+    assert kf.private_address(address) is refused, address
+
+
 def test_through_a_proxy_a_member_name_is_checked_once_and_the_proxy_resolves_it(tmp_path, monkeypatch):
     """A proxy, which may sit on a private address, resolves a member's name itself, so the build checks the name before the request and no more."""
     import http.server
