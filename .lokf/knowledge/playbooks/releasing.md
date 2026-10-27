@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-10-27T02:56:06Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -27,7 +27,7 @@ sources:
   - resource: CHANGELOG.md
   - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
   - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
-  - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-angular-v8.3.1/packages/conventional-changelog-angular/src/parser.js
+  - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-conventionalcommits-v8.0.0/packages/conventional-changelog-conventionalcommits/src/parser.js
 verified:
   - by: process:ktl-librarian
     at: "2026-10-19T20:01:11Z"
@@ -35,7 +35,7 @@ verified:
 
 # Overview
 
-A person no longer hand-picks the version, but two tools never race to tag it. `semantic-release.yml`'s `release` job runs on every push to `main`, behind the `release` GitHub Environment. `@semantic-release/commit-analyzer` computes the next version from Conventional Commits since the last *tag*, using `.releaserc.json`'s `releaseRules`. Those rules add one type, `security:`, as a patch. A commit they do not match falls to the analyzer's default rules, where `fix:`, `perf:` and a revert give a patch, `feat:` a minor release, and a `BREAKING CHANGE:` note a major one. The analyzer reads each commit with its default Angular preset, whose header pattern has no place for `!`, so a `feat!:` commit releases nothing. `docs/releasing.md` counts such a commit as a major release, and the `plan` job as one that would release.
+A person no longer hand-picks the version, but two tools never race to tag it. `semantic-release.yml`'s `release` job runs on every push to `main`, behind the `release` GitHub Environment. `@semantic-release/commit-analyzer` computes the next version from Conventional Commits since the last *tag*, using `.releaserc.json`'s `releaseRules`. Those rules add one type, `security:`, as a patch. A commit they do not match falls to the analyzer's default rules, where `fix:`, `perf:` and a revert give a patch, `feat:` a minor release, and a `BREAKING CHANGE:` note a major one. Since 0.56.3 (`CHANGELOG.md`), the analyzer reads each commit with the Conventional Commits preset, which `.releaserc.json` names and `semantic-release.yml` pins as `conventional-changelog-conventionalcommits@8.0.0` beside `@semantic-release/commit-analyzer@13.0.1`. That preset's header pattern allows a `!` after the type, so a `feat!:` commit gives a major release, as `docs/releasing.md` says. The `plan` job counts such a commit as one that would release.
 
 Semantic-release always runs with `--dry-run`, so it never writes, commits, tags, or publishes anything here. `@semantic-release/exec` calls `.github/scripts/changelog-release.mjs check` with the computed version, which refuses to proceed if `CHANGELOG.md`'s `## [Unreleased]` section is empty, and `notes`, which supplies the release notes.
 
