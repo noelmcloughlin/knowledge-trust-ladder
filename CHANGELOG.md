@@ -11,7 +11,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Security
 
-- **The ingest holds a `git` entry to the addresses its check found, and follows no redirect for it**, so DNS rebinding cannot reach a private address through git. Without `allow_private_addresses` this needs git 2.37 or later. Through a proxy, the proxy resolves each name and must refuse a private address itself.
+- **The ingest holds a `git` entry that names a host to the addresses its check found, and follows no redirect for it**, so DNS rebinding cannot reach a private address through git unless a proxy resolves the name. Without `allow_private_addresses` such an entry needs git 2.37 or later, and a host name outside ASCII is refused: write its `xn--` form.
 - **The ingest and the federation build count every address that is not global as private.** Python's `is_private` leaves out the shared address space, 100.64.0.0/10, which holds Alibaba Cloud's metadata service and Tailscale's networks.
 - **The ingest refuses a `git` entry whose address git's own configuration rewrites** with `url.<base>.insteadOf`, since the address check and the credential cover only the address the manifest names.
 

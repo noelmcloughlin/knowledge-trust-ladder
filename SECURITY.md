@@ -32,5 +32,5 @@ A skill's `Scope:` line is prose, not a permission. Run interactively, an agent 
 
 - A compromised runner, upstream action or agent harness: this is a baseline, not a sandbox. Report a finding in one anyway, with scope and reproduction.
 - Whether a bundle is *true*. The gate proves who vouched, not what they read; [AI_COVENANT.md](AI_COVENANT.md) sets the human-accountability rules.
-- A proxy's own egress. Through a proxy, the proxy resolves each name the federation build and the ingest fetch, so it must refuse a private address itself.
+- A proxy's own egress. The [threat model](docs/threat-model.md#repository-hardening) says why a proxy must refuse a private address itself.
 - A reader's own words to ktl-docent. That boundary belongs to the agent harness, not to a Markdown file.
