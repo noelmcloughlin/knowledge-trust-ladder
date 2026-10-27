@@ -370,6 +370,30 @@ def test_git_is_held_to_the_address_the_check_found_and_follows_no_redirect(chec
         checks.ok("xn--" in str(e), "a host name outside ASCII, which git would not match to its pin, is refused", str(e))
 
 
+def answering(*addresses):
+    """getaddrinfo's answer for the addresses, IPv4 and IPv6, port 443, with no resolver asked."""
+    return [(socket.AF_INET6, socket.SOCK_STREAM, 6, "", (a, 443, 0, 0)) if ":" in a else (socket.AF_INET, socket.SOCK_STREAM, 6, "", (a, 443))
+            for a in addresses]
+
+
+def test_a_git_address_that_git_rewrites_is_refused(tmp_path, checks, monkeypatch):
+    """Git rewrites an address by a url.<base>.insteadOf in its own configuration, which the pin and the credential would not cover, so the entry is refused before any fetch."""
+    m = load_module()
+    for name in m.PASSED_THROUGH:
+        monkeypatch.delenv(name, raising=False)
+    config = write(tmp_path / "gitconfig", '[url "https://mirror.example.invalid/"]\n\tinsteadOf = https://git.acme.example.invalid/\n')
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(config))
+    monkeypatch.setattr(m.socket, "getaddrinfo", lambda host, *a, **k: answering("93.184.216.34"))
+    monkeypatch.setattr(m, "git_version", lambda: (2, 43))
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, "2026-10-18T06:00:00Z", 30)
+    try:
+        m.run_git(ctx, m.Entry(id="wiki", kind="git", url="https://git.acme.example.invalid/acme/wiki.git", ref="main"), {})
+        checks.ok(False, "a rewritten address is refused")
+    except m.Refused as e:
+        checks.ok("rewrites https://git.acme.example.invalid/acme/wiki.git to https://mirror.example.invalid/acme/wiki.git" in str(e),
+                  "a rewritten address is refused, naming both addresses", str(e))
+
+
 # 3. pdf
 
 

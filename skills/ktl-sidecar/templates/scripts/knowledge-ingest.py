@@ -41,6 +41,8 @@
 #   - more than max_items;
 #   - a body over max_item_bytes or a mirror over max_total_bytes;
 #   - a private address unless the manifest allows it;
+#   - a git host name outside ASCII, where the manifest refuses private
+#     addresses, and a git address that git's own configuration rewrites;
 #   - a path outside the mirror root;
 #   - an unexpected content type;
 #   - a PDF with no text layer.
@@ -1435,6 +1437,16 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
 
         git("init", "-q")
         git("remote", "add", "origin", entry.url)
+        # Git rewrites an address by any url.<base>.insteadOf it reads, the
+        # global configuration's included, and fetches the rewritten one. The
+        # pin and the credential are scoped to the address as the manifest
+        # writes it, so git would fetch a rewritten address with neither, and
+        # resolve its name itself. ls-remote --get-url applies the rewrite
+        # without connecting.
+        fetched = git("ls-remote", "--get-url", "origin").strip()
+        if fetched != entry.url:
+            raise Refused(f"git's configuration rewrites {entry.url} to {fetched} (url.<base>.insteadOf), which the address check and the "
+                          "credential do not cover; name the address git fetches in the manifest, or remove the rewrite")
         git("fetch", "-q", "--depth", "1", "origin", entry.ref)
         sha = git("rev-parse", "FETCH_HEAD").strip()
         when = utc(git("log", "-1", "--format=%cI", "FETCH_HEAD").strip())
