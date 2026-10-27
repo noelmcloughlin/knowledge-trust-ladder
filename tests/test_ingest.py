@@ -355,7 +355,7 @@ def test_git_is_held_to_the_address_the_check_found_and_follows_no_redirect(chec
         m.run_git(ctx, entry, {})
         checks.ok(False, "a name that answers private to the check is refused")
     except m.Refused as e:
-        checks.ok("at a private address" in str(e), "a name that answers private to the check is refused before git runs", str(e))
+        checks.ok("rebind.example.invalid resolves to 127.0.0.2, a private" in str(e), "a name that answers private to the check is refused before git runs, by name and address", str(e))
     answers = iter(["127.0.0.1"])
     monkeypatch.setattr(m, "git_version", lambda: (2, 36))
     try:

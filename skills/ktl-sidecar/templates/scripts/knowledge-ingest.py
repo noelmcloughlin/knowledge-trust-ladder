@@ -72,6 +72,7 @@ import argparse
 import base64
 import codecs
 import fnmatch
+import functools
 import hashlib
 import html
 import http.client
@@ -1323,9 +1324,33 @@ def passed_through(env: dict) -> dict:
     return {name: os.environ[name] for name in PASSED_THROUGH if os.environ.get(name)} | env
 
 
+@functools.lru_cache(maxsize=None)
 def git_version() -> tuple[int, int]:
-    found = re.search(r"(\d+)\.(\d+)", subprocess.run(["git", "--version"], capture_output=True, text=True).stdout)
+    """The major and minor version of the git on PATH, read once a run, or (0, 0) when it cannot be read."""
+    try:
+        out = subprocess.run(["git", "--version"], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return (0, 0)
+    found = re.search(r"(\d+)\.(\d+)", out)
     return (int(found[1]), int(found[2])) if found else (0, 0)
+
+
+def shown_version(version: tuple[int, int]) -> str:
+    return f"{version[0]}.{version[1]}" if version != (0, 0) else "of a version this script cannot read"
+
+
+def ip_literal(host: str) -> bool:
+    """Whether a URL's host is an address, which git connects to without resolving it."""
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return True
+
+
+def pin_needed(url: str, allow_private: bool) -> bool:
+    """Whether git must be held to the addresses checked here: an http(s) address where the manifest refuses private ones."""
+    return git_url_kind(url) in ("https", "http") and not allow_private
 
 
 def git_pin(url: str) -> list[tuple[str, str]]:
@@ -1347,16 +1372,15 @@ def git_pin(url: str) -> list[tuple[str, str]]:
     except socket.gaierror as e:
         raise FetchFailed(f"{host} does not resolve ({e})") from e
     addresses = list(dict.fromkeys(info[4][0] for info in infos))
-    if any(ip_is_private(address) for address in addresses):
-        raise Refused("the repository is at a private address; allow_private_addresses: true permits it")
+    for address in addresses:
+        if ip_is_private(address):
+            raise Refused(f"{host} resolves to {address}, a private or link-local address; allow_private_addresses: true permits it")
     config = [(f"http.{url}.followRedirects", "false")]
-    try:
-        ipaddress.ip_address(host)
+    if ip_literal(host):
         return config  # an address, which git does not resolve
-    except ValueError:
-        pass
-    if git_version() < (2, 37):
-        raise FetchFailed("git 2.37 or later is needed to hold the fetch to the address that was checked")
+    found = git_version()
+    if found < (2, 37):
+        raise FetchFailed(f"git 2.37 or later is needed to hold the fetch to the address that was checked, and this git is {shown_version(found)}")
     pinned = ",".join(f"[{address}]" if ":" in address else address for address in addresses)
     return config + [(f"http.{url}.curloptResolve", f"{host}:{port}:{pinned}")]
 
@@ -1398,7 +1422,7 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
     """A shallow fetch of the ref, then each chosen file by its blob id, which the lock records so an unchanged file costs no read."""
     if not shutil.which("git"):
         raise FetchFailed("git is not installed")
-    pinned = git_pin(entry.url) if git_url_kind(entry.url) in ("https", "http") and not ctx.manifest.allow_private else []
+    pinned = git_pin(entry.url) if pin_needed(entry.url, ctx.manifest.allow_private) else []
     env = git_env(entry, ctx, pinned)
     tmp = Path(tempfile.mkdtemp(prefix="ingest-git-"))
     try:
