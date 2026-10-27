@@ -8,6 +8,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **A `!` after the type releases a major version.** `.releaserc.json` names the Conventional Commits preset, so a `feat!:` commit no longer releases nothing, as `docs/releasing.md` already said.
 
+### Security
+
+- **The ingest holds a `git` entry to the addresses its check found, and follows no redirect for it**, so DNS rebinding cannot reach a private address through git. Without `allow_private_addresses` this needs git 2.37 or later. Through a proxy, the proxy resolves each name and must refuse a private address itself.
+
 ## [0.56.2] - 2026-10-27
 
 ### Fixed

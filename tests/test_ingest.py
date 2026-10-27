@@ -7,7 +7,9 @@ and pin:
 1. an http address is mirrored with its header and its lock record, a second
    run that gets 304 writes nothing, and a changed page is fetched again;
 2. a private address is refused unless the manifest allows it, and so is a
-   name that turns private between the check and the connection;
+   name that turns private between the check and the connection. Git is
+   held to the address the check found and follows no redirect. Through a
+   proxy, the name is checked once and the proxy resolves it;
 3. a PDF's text layer is mirrored, and a PDF without one is refused;
 4. a Confluence selection is listed with its versions and fetched by v2 on
    Cloud and v1 on Data Center. An unchanged page costs no body, and a page
@@ -41,12 +43,14 @@ and pin:
 
 from __future__ import annotations
 
+import contextlib
 import http.server
 import importlib.util
 import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -244,6 +248,103 @@ def test_a_name_that_turns_private_after_the_check_is_refused_at_the_connection(
     monkeypatch.setattr(m.socket, "getaddrinfo", lambda host, *a, **k: real("127.0.0.1", *a, **k))
     monkeypatch.setattr(m, "ip_is_private", lambda address: False)
     checks.ok(m.http_get(url, {}, False, 10_000).data == b"# R\n", "a permitted address is fetched through the checked connection")
+
+
+def test_through_a_proxy_the_name_is_checked_once_and_the_proxy_resolves_it(server, checks, monkeypatch):
+    """A proxy, which may sit on a private address, resolves the source's name itself, so the ingest checks the name before the request and no more."""
+    m = load_module()
+    url = "http://rebind.example.invalid/r.md"
+    Stub.routes[url] = (200, {"Content-Type": "text/markdown"}, b"# R\n")
+    for name in ("no_proxy", "NO_PROXY", "HTTP_PROXY"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("http_proxy", server)
+    real = m.socket.getaddrinfo
+    answers = iter(["93.184.216.34", "127.0.0.1"])
+    looked_up = []
+
+    def rebinding(host, *args, **kwargs):
+        if host == "rebind.example.invalid":
+            looked_up.append(host)
+            return real(next(answers, "127.0.0.1"), *args, **kwargs)
+        return real(host, *args, **kwargs)
+
+    monkeypatch.setattr(m.socket, "getaddrinfo", rebinding)
+    checks.ok(m.http_get(url, {}, False, 10_000).data == b"# R\n", "the proxy, at a private address, fetches a name that answered public")
+    checks.ok(looked_up == ["rebind.example.invalid"] and [p for p, _ in Stub.requests] == [url],
+              "the ingest looked the name up once, and the proxy got the whole address", f"{looked_up} {Stub.requests}")
+    Stub.requests = []
+    try:
+        m.http_get(url, {}, False, 10_000)
+        checks.ok(False, "a name that answers private to the check is refused")
+    except m.Refused as e:
+        checks.ok("private or link-local" in str(e) and not Stub.requests, "a name that answers private to the check never reaches the proxy", str(e))
+
+
+def test_git_is_held_to_the_address_the_check_found_and_follows_no_redirect(checks, monkeypatch):
+    """Git resolves a name again when it connects, so the ingest hands it the addresses it checked, and a later answer (DNS rebinding) is never asked for."""
+    m = load_module()
+    if m.git_version() < (2, 37):
+        pytest.skip("git 2.37 or later reads http.curloptResolve")
+    for name in m.PASSED_THROUGH:
+        monkeypatch.delenv(name, raising=False)
+    listener = socket.create_server(("127.0.0.1", 0))
+    listener.settimeout(30)
+    port, reached = listener.getsockname()[1], []
+
+    def accept():
+        with contextlib.suppress(OSError):
+            conn, _ = listener.accept()
+            reached.append(True)
+            conn.close()
+
+    threading.Thread(target=accept, daemon=True).start()
+    url = f"https://rebind.example.invalid:{port}/acme/wiki.git"
+    real = m.socket.getaddrinfo
+    answers = iter(["127.0.0.1", "127.0.0.2"])
+    looked_up = []
+
+    def rebinding(host, *args, **kwargs):
+        if host == "rebind.example.invalid":
+            looked_up.append(host)
+            return real(next(answers, "127.0.0.2"), *args, **kwargs)
+        return real(host, *args, **kwargs)
+
+    # 127.0.0.1 stands for the public answer the check gets, 127.0.0.2 for the private one after it.
+    monkeypatch.setattr(m.socket, "getaddrinfo", rebinding)
+    monkeypatch.setattr(m, "ip_is_private", lambda address: address != "127.0.0.1")
+    ctx = m.Context(m.Manifest(m.MIRROR, 1_000_000, False, []), {}, "2026-10-18T06:00:00Z", 30)
+    entry = m.Entry(id="wiki", kind="git", url=url, ref="main")
+    try:
+        m.run_git(ctx, entry, {})
+        checks.ok(False, "the listener speaks no TLS, so the fetch fails")
+    except m.FetchFailed:
+        pass
+    listener.close()
+    # The name does not resolve outside this process, so only the pin takes git to the listener.
+    checks.ok(reached == [True] and looked_up == ["rebind.example.invalid"], "git connected to the address the check found, which it asked for once",
+              f"{reached} {looked_up}")
+    answers = iter(["127.0.0.1"])
+    pinned = dict(m.git_pin(url))
+    checks.ok(pinned == {f"http.{url}.followRedirects": "false", f"http.{url}.curloptResolve": f"rebind.example.invalid:{port}:127.0.0.1"},
+              "the pin, and no redirect", str(pinned))
+    answers = iter(["127.0.0.2"])
+    try:
+        m.run_git(ctx, entry, {})
+        checks.ok(False, "a name that answers private to the check is refused")
+    except m.Refused as e:
+        checks.ok("at a private address" in str(e), "a name that answers private to the check is refused before git runs", str(e))
+    answers = iter(["127.0.0.1"])
+    monkeypatch.setattr(m, "git_version", lambda: (2, 36))
+    try:
+        m.git_pin(url)
+        checks.ok(False, "a git that cannot be pinned is refused")
+    except m.FetchFailed as e:
+        checks.ok("git 2.37 or later" in str(e), "a git older than 2.37, which would resolve the name again, is refused", str(e))
+    try:
+        m.git_pin("https://bücher.example/wiki.git")
+        checks.ok(False, "a host name outside ASCII is refused")
+    except m.Refused as e:
+        checks.ok("xn--" in str(e), "a host name outside ASCII, which git would not match to its pin, is refused", str(e))
 
 
 # 3. pdf

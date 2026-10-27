@@ -1670,6 +1670,57 @@ def test_a_name_that_turns_private_after_the_check_is_refused_at_the_connection(
         assert read(tmp_path / "got.zip") == "zip"
 
 
+def test_through_a_proxy_a_member_name_is_checked_once_and_the_proxy_resolves_it(tmp_path, monkeypatch):
+    """A proxy, which may sit on a private address, resolves a member's name itself, so the build checks the name before the request and no more."""
+    import http.server
+    import importlib.util
+    import threading
+
+    heard = []
+
+    class Proxy(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):  # noqa: N802 - the handler's name
+            heard.append(self.path)
+            self.send_response(200)
+            self.send_header("Content-Length", "3")
+            self.end_headers()
+            self.wfile.write(b"zip")
+
+    proxy = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Proxy)
+    threading.Thread(target=proxy.serve_forever, daemon=True).start()
+    try:
+        for name in ("no_proxy", "NO_PROXY", "HTTP_PROXY"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("http_proxy", f"http://127.0.0.1:{proxy.server_address[1]}")
+        spec = importlib.util.spec_from_file_location("knowledge_federate_proxy", SCRIPT)
+        kf = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(kf)  # the openers read the proxy as the script starts
+        real = kf.socket.getaddrinfo
+        answers = iter(["93.184.216.34", "127.0.0.1"])
+        looked_up = []
+
+        def rebinding(host, *args, **kwargs):
+            if host == "rebind.example.invalid":
+                looked_up.append(host)
+                return real(next(answers, "127.0.0.1"), *args, **kwargs)
+            return real(host, *args, **kwargs)
+
+        monkeypatch.setattr(kf.socket, "getaddrinfo", rebinding)
+        url = "http://rebind.example.invalid/a.zip"
+        kf.fetch(url, tmp_path / "got.zip")
+        assert read(tmp_path / "got.zip") == "zip"
+        assert heard == [url] and looked_up == ["rebind.example.invalid"], (heard, looked_up)
+        # A name that answers a private address to the check never reaches the proxy.
+        with pytest.raises(kf.Failed, match="rebind.example.invalid is a private address"):
+            kf.fetch(url, tmp_path / "got.zip")
+        assert heard == [url], heard
+    finally:
+        proxy.shutdown()
+
+
 def test_the_readers_read_a_workspace_from_its_zip_or_the_site_that_serves_it(federation, served_workspace, tmp_path):
     """The MCP server reads the workspace as a site serves it, and as a workspace-<tag>.zip, as it reads the folder.
 

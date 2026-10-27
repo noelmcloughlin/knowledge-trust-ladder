@@ -1316,8 +1316,46 @@ def passed_through(env: dict) -> dict:
     return {name: os.environ[name] for name in PASSED_THROUGH if os.environ.get(name)} | env
 
 
-def git_env(entry: Entry, ctx: Context) -> dict:
-    """A clean environment for git: the protocols the manifest allows, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
+def git_version() -> tuple[int, int]:
+    found = re.search(r"(\d+)\.(\d+)", subprocess.run(["git", "--version"], capture_output=True, text=True).stdout)
+    return (int(found[1]), int(found[2])) if found else (0, 0)
+
+
+def git_pin(url: str) -> list[tuple[str, str]]:
+    """The configuration that holds git to the addresses checked here: the name resolved once, and no redirect.
+
+    Git resolves the name again when it connects, so a name that answers a
+    public address to the check and a private one to git (DNS rebinding)
+    would pass. http.curloptResolve, which git reads from 2.37 and an older
+    git ignores, hands git the addresses that were checked. A redirect would
+    send git to a name it resolves itself, so none is followed. Through a
+    proxy, the proxy resolves the name, and only the check here applies.
+    """
+    parts = urllib.parse.urlsplit(url)
+    host, port = parts.hostname or "", parts.port or (443 if parts.scheme == "https" else 80)
+    if not host.isascii():
+        raise Refused(f"{host}: write the host name in ASCII, its xn-- form, so git can be held to the address that was checked")
+    try:
+        infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+    except socket.gaierror as e:
+        raise FetchFailed(f"{host} does not resolve ({e})") from e
+    addresses = list(dict.fromkeys(info[4][0] for info in infos))
+    if any(ip_is_private(address) for address in addresses):
+        raise Refused("the repository is at a private address; allow_private_addresses: true permits it")
+    config = [(f"http.{url}.followRedirects", "false")]
+    try:
+        ipaddress.ip_address(host)
+        return config  # an address, which git does not resolve
+    except ValueError:
+        pass
+    if git_version() < (2, 37):
+        raise FetchFailed("git 2.37 or later is needed to hold the fetch to the address that was checked")
+    pinned = ",".join(f"[{address}]" if ":" in address else address for address in addresses)
+    return config + [(f"http.{url}.curloptResolve", f"{host}:{port}:{pinned}")]
+
+
+def git_env(entry: Entry, ctx: Context, pinned: list | tuple = ()) -> dict:
+    """A clean environment for git: the protocols the manifest allows, the addresses git_pin checked, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
     # The identity is for the reflog of the fetched ref: without one, git looks
     # the user up, which on a machine with a slow name service waits seconds.
     env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "GIT_TERMINAL_PROMPT": "0",
@@ -1328,6 +1366,7 @@ def git_env(entry: Entry, ctx: Context) -> dict:
     config = [("credential.helper", ""), ("protocol.allow", "never"), ("protocol.https.allow", "always")]
     if ctx.manifest.allow_private:
         config += [("protocol.http.allow", "always"), ("protocol.file.allow", "always")]
+    config += pinned
     if entry.auth.scheme and git_url_kind(entry.url) in ("https", "http"):
         name, value = entry.auth.value(ctx.environ)
         config.append((f"http.{entry.url}.extraHeader", f"{name}: {value}"))
@@ -1352,10 +1391,8 @@ def run_git(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict, 
     """A shallow fetch of the ref, then each chosen file by its blob id, which the lock records so an unchanged file costs no read."""
     if not shutil.which("git"):
         raise FetchFailed("git is not installed")
-    if git_url_kind(entry.url) in ("https", "http") and not ctx.manifest.allow_private \
-            and address_is_private(urllib.parse.urlsplit(entry.url).hostname or ""):
-        raise Refused("the repository is at a private address; allow_private_addresses: true permits it")
-    env = git_env(entry, ctx)
+    pinned = git_pin(entry.url) if git_url_kind(entry.url) in ("https", "http") and not ctx.manifest.allow_private else []
+    env = git_env(entry, ctx, pinned)
     tmp = Path(tempfile.mkdtemp(prefix="ingest-git-"))
     try:
         def git(*args, data=False):
