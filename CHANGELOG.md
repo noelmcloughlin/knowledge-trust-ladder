@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A host's composite domain schema is released as one file.** A schema that imports `lokf adapt` copies beside `lokf.yaml` is attached with each copy merged in, keeping every IRI and setting, and a name two files define differently stops the release.
+
+### Fixed
+
+- **A release that changes only the domain schema attaches it.** The compare step looked at the bundle's tree alone, so such a release uploaded nothing. It now compares the `schema :=` line, the schema and the local files the schema imports too.
+
 ## [0.58.0] - 2026-10-28
 
 ### Added

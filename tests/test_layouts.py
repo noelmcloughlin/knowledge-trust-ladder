@@ -59,6 +59,7 @@ import stat
 import sys
 
 import pytest
+import yaml
 
 from conftest import SCRIPTS, TEMPLATES, WORKFLOWS, has_line, have, matches, read, run, write
 
@@ -1352,7 +1353,7 @@ def test_the_federation_check_holds_a_member_as_the_release_build_would():
 
 
 def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
-    """The step's own lines, run against six justfiles. They name a schema beside the bundle, none, one in a linkml-sidecar project, one outside the repository, a missing file, and a schema that imports a local file the release cannot carry."""
+    """The step's own lines, run against six justfiles. They name a schema beside the bundle, none, one in a linkml-sidecar project, one outside the repository, a missing file, and a schema that imports a local file that is not there."""
     body = step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]")
     assert 'asset="schema-${TAG//\\//-}-$NAME.yaml"' in body, "knowledge-release.yaml no longer packs the schema as schema-<tag>-<name>.yaml"
     script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + body)
@@ -1385,5 +1386,117 @@ def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
     assert r.rc == 1 and "outside this repository" in r.out and not list(out.iterdir()), r.out
     r, out = attempt('schema := "missing.yaml"')
     assert r.rc == 1 and "not a file" in r.out, r.out
-    r, out = attempt('schema := "acme.yaml"', [(".lokf/acme.yaml", "id: https://x.example/acme\nimports:\n  - lokf\n  - parts\n"), (".lokf/parts.yaml", "id: https://x.example/parts\n")])
-    assert r.rc == 1 and "imports parts, a local file the release does not carry" in r.out and not list(out.iterdir()), r.out
+    r, out = attempt('schema := "acme.yaml"', [(".lokf/acme.yaml", "id: https://x.example/acme\nimports:\n  - lokf\n  - parts\n")])
+    assert r.rc == 1 and "imports parts.yaml, which is not a LinkML schema file" in r.out and not list(out.iterdir()), r.out
+
+
+def pack_schema(tmp_path, files, core="id: https://w3id.org/lokf\nclasses:\n  Concept: {}\n"):
+    """Run the template's "Pack the domain schema" lines in a host holding these .lokf/ files and a justfile naming tdu.yaml."""
+    script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]"))
+    host = tmp_path / "host"
+    write(host / ".lokf" / "justfile", 'schema := "tdu.yaml"\n')
+    write(host / ".lokf" / "lokf.yaml", core)
+    write(host / ".lokf" / ".venv" / "bin" / "python", f'#!/bin/sh\nexec "{sys.executable}" "$@"\n').chmod(0o755)
+    for rel, text in files.items():
+        write(host / ".lokf" / rel, text)
+    (host / "temp" / "release").mkdir(parents=True)
+    r = run(["bash", script], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v1", "NAME": "host"})
+    asset = host / "temp" / "release" / "schema-v1-host.yaml"
+    return r, (yaml.safe_load(read(asset)) if asset.is_file() else None)
+
+
+def test_the_release_merges_the_adapted_copies_a_composite_imports(tmp_path):
+    """A host composite that imports two `lokf adapt` copies is released as one file: each copy merged with what it imports in turn, every IRI written out as LinkML derives it, and LOKF core still imported by name."""
+    r, doc = pack_schema(tmp_path, {
+        "tdu.yaml": "id: https://x.example/tdu\nname: tdu\nprefixes:\n  linkml: https://w3id.org/linkml/\nimports: [linkml:types, lokf, slsa, 'gha']\n",
+        "slsa.yaml": (
+            "id: https://x.example/slsa-lokf\nname: slsa\ndefault_prefix: slsa\nprefixes:\n  slsa: https://x.example/slsa/\n"
+            "imports:\n- linkml:types\n- lokf\n# A copy may import a module of its own.\n- parts/more  # beside it\n"
+            "classes:\n  SlsaParty:\n    is_a: Concept\n    attributes:\n      party_name:\n      party_type:\n        slot_uri: schema:roleName\n"
+            "enums:\n  SlsaLevel:\n    permissible_values:\n      L1: {}\n"
+        ),
+        "parts/more.yaml": "id: https://x.example/more\nname: more\nimports:\n  - ../lokf\nslots:\n  build level:\n    range: string\n",
+        "gha.yaml": (
+            "id: https://x.example/gha-lokf\nname: gha\ndefault_prefix: gha\nprefixes:\n  gha: https://x.example/gha/\n"
+            "imports:\n  - lokf\nclasses:\n  GhaWorkflow:\n    is_a: Concept\n    class_uri: gha:Workflow\n"
+        ),
+    })
+    assert r.rc == 0 and "Merged slsa.yaml" in r.out and "Merged parts/more.yaml" in r.out and "Merged gha.yaml" in r.out, r.out
+    assert doc["imports"] == ["linkml:types", "lokf"], doc["imports"]
+    assert doc["prefixes"] == {"linkml": "https://w3id.org/linkml/", "slsa": "https://x.example/slsa/", "gha": "https://x.example/gha/"}, doc["prefixes"]
+    party = doc["classes"]["SlsaParty"]
+    assert party["class_uri"] == "slsa:SlsaParty" and party["attributes"]["party_name"] == {"slot_uri": "slsa:party_name"}, party
+    assert party["attributes"]["party_type"]["slot_uri"] == "schema:roleName", "an IRI the copy names was replaced"
+    assert doc["classes"]["GhaWorkflow"]["class_uri"] == "gha:Workflow" and doc["enums"]["SlsaLevel"]["enum_uri"] == "slsa:SlsaLevel", doc
+    assert doc["slots"]["build level"]["slot_uri"] == "https://x.example/more/build_level", "a schema with no default_prefix lost its id-based IRI"
+
+
+def test_the_release_merge_keeps_what_linkml_reads_from_each_file(tmp_path):
+    """LinkML takes an element's IRI, and the settings of its structured patterns, from the file that defines it. The merged copy keeps both: for a default prefix written as an IRI, for two classes a YAML alias shares, and for a copy's settings and CURIE maps."""
+    r, doc = pack_schema(tmp_path, {
+        "tdu.yaml": "id: https://x.example/tdu\nname: tdu\nimports:\n  - lokf\n  - uri\n  - al\n",
+        "uri.yaml": (
+            "id: https://x.example/u-schema\ndefault_prefix: https://x.example/u/\nsettings:\n  code: '[A-Z]{3}'\n"
+            "default_curi_maps:\n  - semweb_context\nclasses:\n  UriThing:\n    is_a: Concept\n"
+        ),
+        "al.yaml": "id: https://x.example/al\ndefault_prefix: al\nprefixes:\n  al: https://x.example/al/\nclasses:\n  AlOne: &shared\n    is_a: Concept\n  AlTwo: *shared\n",
+    })
+    assert r.rc == 0, r.out
+    assert doc["classes"]["UriThing"]["class_uri"] == "https://x.example/u/UriThing", "a default prefix written as an IRI took a colon"
+    assert doc["classes"]["AlOne"]["class_uri"] == "al:AlOne" and doc["classes"]["AlTwo"]["class_uri"] == "al:AlTwo", "two classes a YAML alias shares took one IRI"
+    assert doc["settings"] == {"code": "[A-Z]{3}"} and doc["default_curi_maps"] == ["semweb_context"], doc
+
+
+@pytest.mark.parametrize("files, why", [
+    ({"tdu.yaml": "id: https://x.example/tdu\nimports:\n  - a\n  - b\n", "a.yaml": "id: https://x.example/a\nclasses:\n  Thing:\n    is_a: Concept\n",
+      "b.yaml": "id: https://x.example/b\nclasses:\n  Thing:\n    is_a: Concept\n    class_uri: b:Thing\n"}, "b.yaml defines the class Thing, which an earlier file defines differently"),
+    ({"tdu.yaml": "id: https://x.example/tdu\nimports:\n  - a\n", "a.yaml": "id: https://x.example/a\nclasses:\n  Concept:\n    description: mine\n"}, "a.yaml defines the class Concept, which LOKF core defines too"),
+    ({"tdu.yaml": "id: https://x.example/tdu\nprefixes:\n  ex: https://x.example/one/\nimports:\n  - a\n", "a.yaml": "id: https://x.example/a\nprefixes:\n  ex: https://x.example/two/\n"}, "a.yaml maps the prefix ex to https://x.example/two/"),
+    ({"tdu.yaml": "id: https://x.example/tdu\nsettings:\n  code: x\nimports:\n  - a\n", "a.yaml": "id: https://x.example/a\nsettings:\n  code: y\n"}, "a.yaml sets code to y, and an earlier file sets it to x"),
+    ({"tdu.yaml": "id: https://x.example/tdu\nimports:\n  - ../../outside\n", "../../outside.yaml": "id: https://x.example/outside\n"}, "tdu.yaml imports ../../outside, which is outside this repository"),
+    ({"tdu.yaml": "id: https://x.example/tdu\nimports:\n  - a\n", "a.yaml": "id: https://x.example/a\nimports:\n  - b\n"}, "a.yaml imports b.yaml, which is not a LinkML schema file"),
+], ids=["two-definitions", "core-name", "prefix", "setting", "outside", "nested-missing"])
+def test_the_release_refuses_a_merge_that_would_lose_a_definition(tmp_path, files, why):
+    """LinkML keeps the last definition of a name without a word, so a merge that would drop one stops the release instead. So does an import of a file outside the repository, or of one that is not there."""
+    r, doc = pack_schema(tmp_path, files)
+    assert r.rc == 1 and why in r.out and doc is None, r.out
+
+
+def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path):
+    """The compare step's own lines, at six tags: a README edit, an edit to each copy the composite imports in a flow list over two lines, a refreshed lokf.yaml, and a justfile that names another schema already there. Only the README edit and the refreshed lokf.yaml leave an otherwise unchanged bundle without a zip."""
+    body = step_body(RELEASE_YAML, "Compare with the last released bundle", r"^      [#-]")
+    script = write(tmp_path / "compare.sh", "#!/usr/bin/env bash\n" + body)
+    gh = write(tmp_path / "bin" / "gh", '#!/bin/sh\n[ "$1 $2" = "release view" ] && { echo "$3"; exit 0; }\n[ "$1" = api ] && { echo "$PREV"; exit 0; }\nexit 1\n')
+    gh.chmod(0o755)
+    h = make_host(tmp_path / "host", "default")
+    write(h / ".lokf" / "justfile", re.sub(r'(?m)^schema := ""$', 'schema := "tdu.yaml"', read(h / ".lokf" / "justfile")))
+    write(h / ".lokf" / "tdu.yaml", "id: https://x.example/tdu\nimports: [linkml:types, lokf,  # core\n  'slsa', gha]  # two copies\n")
+    write(h / ".lokf" / "slsa.yaml", "id: https://x.example/slsa\nimports:\n  # LOKF core by name\n  - lokf\n  - lokf.yaml\n")
+    write(h / ".lokf" / "gha.yaml", "id: https://x.example/gha\n")
+    write(h / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf\n")
+    edits = {
+        "v2": ("README.md", lambda text: text + "more\n"),
+        "v3": (".lokf/slsa.yaml", lambda text: text + "classes: {}\n"),
+        "v4": (".lokf/lokf.yaml", lambda text: text + "title: refreshed\n"),
+        "v5": (".lokf/gha.yaml", lambda text: text + "classes: {}\n"),
+        "v6": (".lokf/justfile", lambda text: text.replace('schema := "tdu.yaml"', 'schema := "slsa.yaml"')),
+    }
+    git(h, "add", "-A")
+    git(h, "commit", "-q", "-m", "schema")
+    git(h, "-c", "tag.gpgSign=false", "tag", "v1")
+    for tag, (rel, edit) in edits.items():
+        write(h / rel, edit(read(h / rel)))
+        git(h, "commit", "-qam", tag)
+        git(h, "-c", "tag.gpgSign=false", "tag", tag)
+    outputs = {}
+    for prev, tag in zip(["v1", *edits], edits):
+        git(h, "checkout", "-q", tag)
+        out = write(tmp_path / f"out-{tag}", "")
+        r = run(["bash", script], cwd=h, env={"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "PREV": prev, "TAG": tag, "GH_REPO": "o/host", "GITHUB_OUTPUT": out, "FORCE": "false"})
+        assert r.rc == 0, r.out
+        outputs[tag] = (read(out), r.out)
+    assert "changed=false" in outputs["v2"][0], outputs["v2"]
+    assert "changed=true" in outputs["v3"][0] and "its domain schema changed" in outputs["v3"][1], outputs["v3"]
+    assert "changed=false" in outputs["v4"][0], "a refreshed lokf.yaml, which the released copy imports by name, released the bundle again"
+    assert "changed=true" in outputs["v5"][0] and "its domain schema changed" in outputs["v5"][1], "a copy on a flow list's second line was not compared"
+    assert "changed=true" in outputs["v6"][0] and "now names slsa.yaml" in outputs["v6"][1], outputs["v6"]

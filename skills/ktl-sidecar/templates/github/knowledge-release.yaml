@@ -29,10 +29,11 @@ name: Knowledge Release
 #   gh workflow run knowledge-release.yaml --ref "$TAG" -f tag="$TAG"
 # with `actions: write` on that job.
 #
-# A release whose bundle is unchanged gets no zip. `pack` compares the
-# bundle's git tree at this tag with its tree at the newest other published
-# release that carries a knowledge bundle, as a zip or as the tarball earlier
-# releases attached. When the two match, the run ends
+# A release whose bundle and domain schema are unchanged gets no zip. `pack`
+# compares the bundle's git tree at this tag with its tree at the newest
+# other published release that carries a knowledge bundle, as a zip or as the
+# tarball earlier releases attached. It compares the justfile's `schema :=`
+# line and the schema's files the same way. When both match, the run ends
 # green with a notice and uploads nothing. The `force` input of a manual run
 # skips the comparison, for repairing a release's assets.
 #
@@ -121,11 +122,66 @@ jobs:
             done
             return 1
           }
+          # The schema the `schema :=` line of .lokf/justfile names at a tag.
+          schema_at() {
+            git show "refs/tags/$1:.lokf/justfile" 2>/dev/null | sed -n 's/^schema := "\([^"]*\)"$/\1/p' | head -n 1 || true
+          }
+          # The domain schema and the local files it imports in turn, as paths
+          # in the repository. lokf.yaml is left out, because the released copy
+          # imports it by name. Nothing is installed yet, so python3 reads the
+          # import lines as text, whether a block list or a flow list.
+          schema_files() {
+            [ -n "$1" ] || return 0
+            python3 -I - "$1" <<'PY'
+          import pathlib
+          import re
+          import sys
+
+          repo = pathlib.Path.cwd().resolve()
+          core = (repo / ".lokf" / "lokf.yaml").resolve()
+          todo, seen = [(repo / ".lokf" / sys.argv[1]).resolve()], set()
+          while todo:
+              path = todo.pop()
+              if path in seen or path == core or not path.is_relative_to(repo) or not path.is_file():
+                  continue
+              seen.add(path)
+              print(path.relative_to(repo))
+              lines = [re.sub(r"(^|\s+)#.*$", "", line) for line in path.read_text(encoding="utf-8").splitlines()]
+              entries = []
+              for i, line in enumerate(lines):
+                  if not line.startswith("imports:"):
+                      continue
+                  rest = line[len("imports:") :].strip()
+                  if rest.startswith("["):
+                      for more in lines[i + 1 :]:
+                          if "]" in rest:
+                              break
+                          rest += " " + more.strip()
+                      entries += rest[1:].split("]")[0].split(",")
+                      continue
+                  for item in lines[i + 1 :]:
+                      if item.strip():
+                          if not (block := re.match(r"\s*-\s*(.+)", item)):
+                              break
+                          entries.append(block.group(1))
+              for entry in entries:
+                  entry = entry.strip().strip("\"'")
+                  if entry and entry != "lokf" and ":" not in entry:
+                      todo.append((path.parent / (entry if entry.endswith((".yaml", ".yml")) else entry + ".yaml")).resolve())
+          PY
+          }
           # Both tags are spelt in full, so a name is never read as an option
           # or as a branch of the same name.
           gh release view "$TAG" --json tagName --jq .tagName >/dev/null \
             || { echo "::error::No release exists for tag $TAG. Create the release first, then run this workflow again."; exit 1; }
           read -r tree path < <(bundle_tree "$TAG") || { echo "::error::No bundle folder at $TAG"; exit 1; }
+          # A command substitution stops the step when schema_files fails,
+          # where a process substitution would hide the failure.
+          schema="$(schema_at "$TAG")"
+          list="$(schema_files "$schema")" \
+            || { echo "::error::The domain schema $schema, or a file it imports, could not be read at $TAG"; exit 1; }
+          files=()
+          [ -z "$list" ] || mapfile -t files <<< "$list"
           echo "path=$path" >> "$GITHUB_OUTPUT"
           # Newest first. Drafts are left out, since nobody has published them.
           # The tag is filtered in the shell, so no tag name reaches jq's source.
@@ -144,12 +200,18 @@ jobs:
           elif ! read -r prev_tree _ < <(bundle_tree "$prev"); then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "::warning::$prev carries a bundle but its tag holds no bundle folder here; attaching without a comparison."
-          elif [ "$tree" = "$prev_tree" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::The bundle at $TAG is identical to the one released with $prev (tree ${tree:0:12}), so no zip is attached."
-          else
+          elif [ "$tree" != "$prev_tree" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "The bundle changed since $prev: $(git diff --shortstat "refs/tags/$prev" "refs/tags/$TAG" -- "$path")"
+          elif [ "$(schema_at "$prev")" != "$schema" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "The bundle is the one $prev released, but .lokf/justfile now names ${schema:-no domain schema}."
+          elif [ "${#files[@]}" -gt 0 ] && ! git --literal-pathspecs diff --quiet "refs/tags/$prev" "refs/tags/$TAG" -- "${files[@]}"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "The bundle is the one $prev released, but its domain schema changed: $(git --literal-pathspecs diff --shortstat "refs/tags/$prev" "refs/tags/$TAG" -- "${files[@]}")"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::The bundle and domain schema at $TAG are identical to the ones released with $prev (tree ${tree:0:12}), so no zip is attached."
           fi
 
       - name: Set up uv
@@ -238,8 +300,16 @@ jobs:
       # bundle with LOKF's own lokf.yaml, so the released copy must import
       # LOKF core by the name `lokf`. A linkml-sidecar schema imports it by a
       # relative path to .lokf/lokf.yaml, and the step rewrites that one import
-      # in the copy. An import of any other local file would not resolve
-      # beside the bundle, so it stops the step.
+      # in the copy.
+      #
+      # Any other local file would not resolve beside the bundle, so a schema
+      # that imports one, such as a host's composite of two `lokf adapt`
+      # copies, is released with each such file merged into it. The merge
+      # writes out every merged element's IRI and carries each file's
+      # settings, so the copy validates and projects as the composite does.
+      # It stops on a name two files define differently, since LinkML would
+      # keep the last one without a word. It also stops on an import from
+      # outside the repository.
       - name: Pack the domain schema
         if: steps.compare.outputs.changed == 'true'
         env:
@@ -262,6 +332,7 @@ jobs:
           esac
           asset="schema-${TAG//\//-}-$NAME.yaml"
           .lokf/.venv/bin/python -I - "$path" "$repo/.lokf/lokf.yaml" "$RUNNER_TEMP/release/$asset" <<'PY'
+          import copy
           import pathlib
           import re
           import sys
@@ -269,9 +340,11 @@ jobs:
           import yaml
 
           source, core, target = (pathlib.Path(p) for p in sys.argv[1:])
+          core, repo = core.resolve(), pathlib.Path.cwd().resolve()
           text = source.read_text(encoding="utf-8")
           doc = yaml.safe_load(text)
           imports = (doc.get("imports") or []) if isinstance(doc, dict) else []
+          KINDS = {"types": "type", "enums": "enum", "subsets": "subset", "slots": "slot", "classes": "class"}
 
 
           def stop(message):
@@ -279,20 +352,117 @@ jobs:
               sys.exit(1)
 
 
-          for entry in imports:
+          def local(base, entry):
               # A domain resolves `lokf` by name. A CURIE such as linkml:types,
               # or a URL, resolves anywhere.
-
               if not isinstance(entry, str) or entry == "lokf" or ":" in entry:
+                  return None
+              return (base.parent / (entry if entry.endswith((".yaml", ".yml")) else entry + ".yaml")).resolve()
+
+
+          def load(path, base):
+              part = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else None
+              if not isinstance(part, dict):
+                  stop(f"{base.name} imports {path.name}, which is not a LinkML schema file")
+              return part
+
+
+          # LinkML's camelcase and underscore, from linkml_runtime.utils.formatutils.
+          def camel(name):
+              return "".join(w[0].upper() + w[1:] for w in re.sub(r"_+", " ", name.strip().replace(",", "")).split())
+
+
+          def under(name):
+              return re.sub(r"\s+", "_", name.strip()).replace(",", "").replace("-", "_")
+
+
+          def pin_iris(part):
+              # An element takes its IRI from the default prefix of the schema
+              # that defines it, which is a prefix name or an IRI, or from the
+              # schema's id when it has none. Once merged, it would take this
+              # file's, so each IRI is written out first, as LinkML's
+              # SchemaLoader derives it. Each element is copied, so two that a
+              # YAML alias shares get an IRI each.
+              prefix = str(part.get("default_prefix") or "")
+              if not prefix:
+                  prefix = str(part.get("id", ""))
+                  prefix += "" if prefix.endswith(("/", "#", "_", ":")) else "/"
+              stem = prefix if ":/" in prefix else prefix + ":"
+              for kind, key, form in (("classes", "class_uri", camel), ("slots", "slot_uri", under), ("enums", "enum_uri", camel)):
+                  for name in list(part.get(kind) or {}):
+                      element = copy.deepcopy(part[kind][name]) if isinstance(part[kind][name], dict) else {}
+                      element.setdefault(key, stem + form(name))
+                      for attr in list(element.get("attributes") or {}) if kind == "classes" else []:
+                          if not isinstance(element["attributes"][attr], dict):
+                              element["attributes"][attr] = {}
+                          element["attributes"][attr].setdefault("slot_uri", stem + under(attr))
+                      part[kind][name] = element
+
+
+          parts = []
+          for entry in imports:
+              path = local(source, entry)
+              if path is None:
                   continue
-              local = source.parent / (entry if entry.endswith((".yaml", ".yml")) else entry + ".yaml")
-              if local.resolve() != core.resolve():
-                  stop(f"{source.name} imports {entry}, a local file the release does not carry, so a domain could not resolve it")
+              if path != core:
+                  parts.append(path)
+                  continue
               line = re.compile(r"^(\s*-\s*)([\"']?)" + re.escape(entry) + r"\2(\s*(#.*)?)$", re.M)
               text, count = line.subn(lambda m: m.group(1) + "lokf" + m.group(3), text)
               if count != 1:
                   stop(f"{source.name} imports {entry} in a form this step cannot rewrite; list it on a line of its own under imports:")
-          target.write_text(text, encoding="utf-8")
+          if not parts:
+              target.write_text(text, encoding="utf-8")
+              sys.exit(0)
+
+          doc = yaml.safe_load(text)
+          known = {kind: dict(doc.get(kind) or {}) for kind in KINDS}
+          prefixes, settings = dict(doc.get("prefixes") or {}), dict(doc.get("settings") or {})
+          curi_maps = list(doc.get("default_curi_maps") or [])
+          core_doc = load(core, source)
+          kept, seen = [], {source.resolve(), core}
+          queue = [(source, entry) for entry in doc.get("imports") or []]
+          while queue:
+              base, entry = queue.pop(0)
+              path = local(base, entry)
+              if path is None or path == core:
+                  name = "lokf" if path == core else entry
+                  if name not in kept:
+                      kept.append(name)
+                  continue
+              if path in seen:
+                  continue
+              if not path.is_relative_to(repo):
+                  stop(f"{base.name} imports {entry}, which is outside this repository")
+              seen.add(path)
+              part = load(path, base)
+              pin_iris(part)
+              queue += [(path, nested) for nested in part.get("imports") or []]
+              for prefix, iri in (part.get("prefixes") or {}).items():
+                  have = prefixes.get(prefix, (core_doc.get("prefixes") or {}).get(prefix))
+                  if have is not None and have != iri:
+                      stop(f"{path.name} maps the prefix {prefix} to {iri}, and LOKF core or an earlier file maps it to {have}")
+                  prefixes[prefix] = iri
+              # LinkML resolves a structured pattern with the settings of the
+              # file that defines it, and adds every file's CURIE maps.
+              for name, value in (part.get("settings") or {}).items():
+                  if settings.get(name, value) != value:
+                      stop(f"{path.name} sets {name} to {value}, and an earlier file sets it to {settings[name]}")
+                  settings[name] = value
+              curi_maps += [m for m in part.get("default_curi_maps") or [] if m not in curi_maps]
+              for kind, word in KINDS.items():
+                  for name, element in (part.get(kind) or {}).items():
+                      if name in (core_doc.get(kind) or {}):
+                          stop(f"{path.name} defines the {word} {name}, which LOKF core defines too")
+                      if name in known[kind] and known[kind][name] != element:
+                          stop(f"{path.name} defines the {word} {name}, which an earlier file defines differently")
+                      known[kind][name] = element
+              print(f"Merged {path.relative_to(source.parent) if path.is_relative_to(source.parent) else path.name} into the released copy")
+          doc["prefixes"] = prefixes
+          doc["imports"] = kept
+          doc.update({key: value for key, value in (("settings", settings), ("default_curi_maps", curi_maps)) if value})
+          doc.update({kind: known[kind] for kind in KINDS if known[kind]})
+          target.write_text(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True, width=1000), encoding="utf-8")
           PY
           (cd "$RUNNER_TEMP/release" && sha256sum "$asset" > "$asset.sha256")
           echo "Packed $schema into $asset"
