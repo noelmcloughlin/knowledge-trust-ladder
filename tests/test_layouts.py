@@ -1444,26 +1444,33 @@ def test_the_release_refuses_a_merge_that_would_lose_a_definition(tmp_path, file
 
 
 def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path):
-    """The compare step's own lines, at four tags: a README edit, an edit to a copy the composite imports, and a refreshed lokf.yaml. Only the copy's edit releases a bundle that is otherwise unchanged."""
+    """The compare step's own lines, at six tags: a README edit, an edit to each copy the composite imports in a flow list over two lines, a refreshed lokf.yaml, and a justfile that names another schema already there. Only the README edit and the refreshed lokf.yaml leave an otherwise unchanged bundle without a zip."""
     body = step_body(RELEASE_YAML, "Compare with the last released bundle", r"^      [#-]")
     script = write(tmp_path / "compare.sh", "#!/usr/bin/env bash\n" + body)
     gh = write(tmp_path / "bin" / "gh", '#!/bin/sh\n[ "$1 $2" = "release view" ] && { echo "$3"; exit 0; }\n[ "$1" = api ] && { echo "$PREV"; exit 0; }\nexit 1\n')
     gh.chmod(0o755)
     h = make_host(tmp_path / "host", "default")
     write(h / ".lokf" / "justfile", re.sub(r'(?m)^schema := ""$', 'schema := "tdu.yaml"', read(h / ".lokf" / "justfile")))
-    write(h / ".lokf" / "tdu.yaml", "id: https://x.example/tdu\nimports: [linkml:types, lokf, 'slsa']  # two copies\n")
+    write(h / ".lokf" / "tdu.yaml", "id: https://x.example/tdu\nimports: [linkml:types, lokf,  # core\n  'slsa', gha]  # two copies\n")
     write(h / ".lokf" / "slsa.yaml", "id: https://x.example/slsa\nimports:\n  # LOKF core by name\n  - lokf\n  - lokf.yaml\n")
+    write(h / ".lokf" / "gha.yaml", "id: https://x.example/gha\n")
     write(h / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf\n")
-    edits = {"v2": ("README.md", "more\n"), "v3": (".lokf/slsa.yaml", "classes: {}\n"), "v4": (".lokf/lokf.yaml", "title: refreshed\n")}
+    edits = {
+        "v2": ("README.md", lambda text: text + "more\n"),
+        "v3": (".lokf/slsa.yaml", lambda text: text + "classes: {}\n"),
+        "v4": (".lokf/lokf.yaml", lambda text: text + "title: refreshed\n"),
+        "v5": (".lokf/gha.yaml", lambda text: text + "classes: {}\n"),
+        "v6": (".lokf/justfile", lambda text: text.replace('schema := "tdu.yaml"', 'schema := "slsa.yaml"')),
+    }
     git(h, "add", "-A")
     git(h, "commit", "-q", "-m", "schema")
     git(h, "-c", "tag.gpgSign=false", "tag", "v1")
-    for tag, (rel, more) in edits.items():
-        write(h / rel, read(h / rel) + more)
+    for tag, (rel, edit) in edits.items():
+        write(h / rel, edit(read(h / rel)))
         git(h, "commit", "-qam", tag)
         git(h, "-c", "tag.gpgSign=false", "tag", tag)
     outputs = {}
-    for prev, tag in (("v1", "v2"), ("v2", "v3"), ("v3", "v4")):
+    for prev, tag in zip(["v1", *edits], edits):
         git(h, "checkout", "-q", tag)
         out = write(tmp_path / f"out-{tag}", "")
         r = run(["bash", script], cwd=h, env={"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "PREV": prev, "TAG": tag, "GH_REPO": "o/host", "GITHUB_OUTPUT": out, "FORCE": "false"})
@@ -1472,3 +1479,5 @@ def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path):
     assert "changed=false" in outputs["v2"][0], outputs["v2"]
     assert "changed=true" in outputs["v3"][0] and "its domain schema changed" in outputs["v3"][1], outputs["v3"]
     assert "changed=false" in outputs["v4"][0], "a refreshed lokf.yaml, which the released copy imports by name, released the bundle again"
+    assert "changed=true" in outputs["v5"][0] and "its domain schema changed" in outputs["v5"][1], "a copy on a flow list's second line was not compared"
+    assert "changed=true" in outputs["v6"][0] and "now names slsa.yaml" in outputs["v6"][1], outputs["v6"]

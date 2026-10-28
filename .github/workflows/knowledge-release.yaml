@@ -122,15 +122,17 @@ jobs:
             done
             return 1
           }
-          # The domain schema the justfile names at this tag, and the local
-          # files it imports in turn, as paths in the repository. lokf.yaml is
-          # left out, because the released copy imports it by name. Nothing is
-          # installed yet, so python3 reads the import lines as text.
+          # The schema the `schema :=` line of .lokf/justfile names at a tag.
+          schema_at() {
+            git show "refs/tags/$1:.lokf/justfile" 2>/dev/null | sed -n 's/^schema := "\([^"]*\)"$/\1/p' | head -n 1 || true
+          }
+          # The domain schema and the local files it imports in turn, as paths
+          # in the repository. lokf.yaml is left out, because the released copy
+          # imports it by name. Nothing is installed yet, so python3 reads the
+          # import lines as text, a block list or a flow list.
           schema_files() {
-            local schema
-            schema="$(sed -n 's/^schema := "\([^"]*\)"$/\1/p' .lokf/justfile 2>/dev/null | head -n 1)"
-            [ -n "$schema" ] || return 0
-            python3 -I - "$schema" <<'PY'
+            [ -n "$1" ] || return 0
+            python3 -I - "$1" <<'PY'
           import pathlib
           import re
           import sys
@@ -144,18 +146,26 @@ jobs:
                   continue
               seen.add(path)
               print(path.relative_to(repo))
-              lines, entries = path.read_text(encoding="utf-8").splitlines(), []
+              lines = [re.sub(r"(^|\s+)#.*$", "", line) for line in path.read_text(encoding="utf-8").splitlines()]
+              entries = []
               for i, line in enumerate(lines):
-                  if flow := re.match(r"imports:\s*\[(.*)\]", line):
-                      entries += flow.group(1).split(",")
-                  elif re.match(r"imports:\s*(#.*)?$", line):
-                      for item in lines[i + 1 :]:
-                          if item.strip() and not item.lstrip().startswith("#"):
-                              if not (block := re.match(r"\s*-\s*(.+)", item)):
-                                  break
-                              entries.append(block.group(1))
+                  if not line.startswith("imports:"):
+                      continue
+                  rest = line[len("imports:") :].strip()
+                  if rest.startswith("["):
+                      for more in lines[i + 1 :]:
+                          if "]" in rest:
+                              break
+                          rest += " " + more.strip()
+                      entries += rest[1:].split("]")[0].split(",")
+                      continue
+                  for item in lines[i + 1 :]:
+                      if item.strip():
+                          if not (block := re.match(r"\s*-\s*(.+)", item)):
+                              break
+                          entries.append(block.group(1))
               for entry in entries:
-                  entry = re.sub(r"\s+#.*$", "", entry).strip().strip("\"'")
+                  entry = entry.strip().strip("\"'")
                   if entry and entry != "lokf" and ":" not in entry:
                       todo.append((path.parent / (entry if entry.endswith((".yaml", ".yml")) else entry + ".yaml")).resolve())
           PY
@@ -165,7 +175,12 @@ jobs:
           gh release view "$TAG" --json tagName --jq .tagName >/dev/null \
             || { echo "::error::No release exists for tag $TAG. Create the release first, then run this workflow again."; exit 1; }
           read -r tree path < <(bundle_tree "$TAG") || { echo "::error::No bundle folder at $TAG"; exit 1; }
-          mapfile -t files < <(schema_files)
+          # Read whole, since a process substitution would hide a failure.
+          schema="$(schema_at "$TAG")"
+          list="$(schema_files "$schema")" \
+            || { echo "::error::The domain schema $schema, or a file it imports, could not be read at $TAG"; exit 1; }
+          files=()
+          [ -z "$list" ] || mapfile -t files <<< "$list"
           echo "path=$path" >> "$GITHUB_OUTPUT"
           # Newest first. Drafts are left out, since nobody has published them.
           # The tag is filtered in the shell, so no tag name reaches jq's source.
@@ -187,6 +202,9 @@ jobs:
           elif [ "$tree" != "$prev_tree" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "The bundle changed since $prev: $(git diff --shortstat "refs/tags/$prev" "refs/tags/$TAG" -- "$path")"
+          elif [ "$(schema_at "$prev")" != "$schema" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "The bundle is the one $prev released, but .lokf/justfile now names ${schema:-no domain schema}."
           elif [ "${#files[@]}" -gt 0 ] && ! git --literal-pathspecs diff --quiet "refs/tags/$prev" "refs/tags/$TAG" -- "${files[@]}"; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "The bundle is the one $prev released, but its domain schema changed: $(git --literal-pathspecs diff --shortstat "refs/tags/$prev" "refs/tags/$TAG" -- "${files[@]}")"
