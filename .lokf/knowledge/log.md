@@ -2,6 +2,7 @@
 
 ## 2026-10-28
 
+* **Changed**: the threat model concept follows `docs/threat-model.md` as #292 and #294 left it: through a proxy the proxy resolves every name the federation build and the ingest fetch, and the ingest section gives the page's four findings, with the address rule for a `git` entry, the script's user and why a command is trusted, what the lock never records, what leaves the job, and the force-push. It drops the link-local wording and the 0.56.1 date the page does not give. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Prose**: reworded 3 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Changed**: the ktl-curator skill concept says the report lists each retired concept whose successor no person has confirmed, and samples concepts checked by automation only when the curation policy sets `Automation re-check:`, its fourth switch, as `SKILL.md` and `references/review-session.md` say since 0.58.0. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-librarian skill says that every concept names a `resource` or a `sources` entry, which conventions rule 15 checks since 0.58.0, and that the librarian cites a source by its `id` in a footnote, which rule 16 checks (`SKILL.md`, `CHANGELOG.md`). It also says where a confidential ingest entry's items are recorded, as `references/ingest.md` does. Edited since a person confirmed it; the label says so until the curator looks again.
