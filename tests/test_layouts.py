@@ -1431,14 +1431,33 @@ def test_the_release_merges_the_adapted_copies_a_composite_imports(tmp_path):
     assert doc["slots"]["build level"]["slot_uri"] == "https://x.example/more/build_level", "a schema with no default_prefix lost its id-based IRI"
 
 
+def test_the_release_merge_keeps_what_linkml_reads_from_each_file(tmp_path):
+    """LinkML takes an element's IRI, and the settings of its structured patterns, from the file that defines it. The merged copy keeps both: for a default prefix written as an IRI, for two classes a YAML alias shares, and for a copy's settings and CURIE maps."""
+    r, doc = pack_schema(tmp_path, {
+        "tdu.yaml": "id: https://x.example/tdu\nname: tdu\nimports:\n  - lokf\n  - uri\n  - al\n",
+        "uri.yaml": (
+            "id: https://x.example/u-schema\ndefault_prefix: https://x.example/u/\nsettings:\n  code: '[A-Z]{3}'\n"
+            "default_curi_maps:\n  - semweb_context\nclasses:\n  UriThing:\n    is_a: Concept\n"
+        ),
+        "al.yaml": "id: https://x.example/al\ndefault_prefix: al\nprefixes:\n  al: https://x.example/al/\nclasses:\n  AlOne: &shared\n    is_a: Concept\n  AlTwo: *shared\n",
+    })
+    assert r.rc == 0, r.out
+    assert doc["classes"]["UriThing"]["class_uri"] == "https://x.example/u/UriThing", "a default prefix written as an IRI took a colon"
+    assert doc["classes"]["AlOne"]["class_uri"] == "al:AlOne" and doc["classes"]["AlTwo"]["class_uri"] == "al:AlTwo", "two classes a YAML alias shares took one IRI"
+    assert doc["settings"] == {"code": "[A-Z]{3}"} and doc["default_curi_maps"] == ["semweb_context"], doc
+
+
 @pytest.mark.parametrize("files, why", [
     ({"tdu.yaml": "id: https://x.example/tdu\nimports:\n  - a\n  - b\n", "a.yaml": "id: https://x.example/a\nclasses:\n  Thing:\n    is_a: Concept\n",
       "b.yaml": "id: https://x.example/b\nclasses:\n  Thing:\n    is_a: Concept\n    class_uri: b:Thing\n"}, "b.yaml defines the class Thing, which an earlier file defines differently"),
     ({"tdu.yaml": "id: https://x.example/tdu\nimports:\n  - a\n", "a.yaml": "id: https://x.example/a\nclasses:\n  Concept:\n    description: mine\n"}, "a.yaml defines the class Concept, which LOKF core defines too"),
     ({"tdu.yaml": "id: https://x.example/tdu\nprefixes:\n  ex: https://x.example/one/\nimports:\n  - a\n", "a.yaml": "id: https://x.example/a\nprefixes:\n  ex: https://x.example/two/\n"}, "a.yaml maps the prefix ex to https://x.example/two/"),
-], ids=["two-definitions", "core-name", "prefix"])
+    ({"tdu.yaml": "id: https://x.example/tdu\nsettings:\n  code: x\nimports:\n  - a\n", "a.yaml": "id: https://x.example/a\nsettings:\n  code: y\n"}, "a.yaml sets code to y, and an earlier file sets it to x"),
+    ({"tdu.yaml": "id: https://x.example/tdu\nimports:\n  - ../../outside\n", "../../outside.yaml": "id: https://x.example/outside\n"}, "tdu.yaml imports ../../outside, which is outside this repository"),
+    ({"tdu.yaml": "id: https://x.example/tdu\nimports:\n  - a\n", "a.yaml": "id: https://x.example/a\nimports:\n  - b\n"}, "a.yaml imports b.yaml, which is not a LinkML schema file"),
+], ids=["two-definitions", "core-name", "prefix", "setting", "outside", "nested-missing"])
 def test_the_release_refuses_a_merge_that_would_lose_a_definition(tmp_path, files, why):
-    """LinkML keeps the last definition of a name without a word, so a merge that would drop one stops the release instead."""
+    """LinkML keeps the last definition of a name without a word, so a merge that would drop one stops the release instead. So does an import of a file outside the repository, or of one that is not there."""
     r, doc = pack_schema(tmp_path, files)
     assert r.rc == 1 and why in r.out and doc is None, r.out
 

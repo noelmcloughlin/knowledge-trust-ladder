@@ -303,8 +303,9 @@ jobs:
       # so a schema that imports one, such as a host's composite of two
       # `lokf adapt` copies, is released with each such file merged into it.
       # The merge writes out every merged element's IRI, so the graph is the
-      # same, and stops on a name two files define differently, since LinkML
-      # would keep the last one without a word.
+      # same. It stops on a name two files define differently, since LinkML
+      # would keep the last one without a word, and on an import from outside
+      # the repository, as it stops on such a schema.
       - name: Pack the domain schema
         if: steps.compare.outputs.changed == 'true'
         env:
@@ -327,6 +328,7 @@ jobs:
           esac
           asset="schema-${TAG//\//-}-$NAME.yaml"
           .lokf/.venv/bin/python -I - "$path" "$repo/.lokf/lokf.yaml" "$RUNNER_TEMP/release/$asset" <<'PY'
+          import copy
           import pathlib
           import re
           import sys
@@ -334,7 +336,7 @@ jobs:
           import yaml
 
           source, core, target = (pathlib.Path(p) for p in sys.argv[1:])
-          core = core.resolve()
+          core, repo = core.resolve(), pathlib.Path.cwd().resolve()
           text = source.read_text(encoding="utf-8")
           doc = yaml.safe_load(text)
           imports = (doc.get("imports") or []) if isinstance(doc, dict) else []
@@ -354,10 +356,10 @@ jobs:
               return (base.parent / (entry if entry.endswith((".yaml", ".yml")) else entry + ".yaml")).resolve()
 
 
-          def load(path):
+          def load(path, base):
               part = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else None
               if not isinstance(part, dict):
-                  stop(f"{source.name} imports {path.name}, which is not a LinkML schema file")
+                  stop(f"{base.name} imports {path.name}, which is not a LinkML schema file")
               return part
 
 
@@ -372,14 +374,19 @@ jobs:
 
           def pin_iris(part):
               # An element takes its IRI from the default prefix of the schema
-              # that defines it, or from the schema's id when it has none.
-              # Merged, it would take this file's, so each IRI is written out
-              # first, as LinkML's SchemaView.get_uri derives it.
-              stem = f"{part['default_prefix']}:" if part.get("default_prefix") else str(part.get("id", ""))
-              stem += "" if stem.endswith(("/", "#", "_", ":")) else "/"
+              # that defines it, a prefix name or an IRI, or from the schema's
+              # id when it has none. Merged, it would take this file's, so each
+              # IRI is written out first, as LinkML's SchemaLoader derives it.
+              # Each element is copied, so two that a YAML alias shares get an
+              # IRI each.
+              prefix = str(part.get("default_prefix") or "")
+              if not prefix:
+                  prefix = str(part.get("id", ""))
+                  prefix += "" if prefix.endswith(("/", "#", "_", ":")) else "/"
+              stem = prefix if ":/" in prefix else prefix + ":"
               for kind, key, form in (("classes", "class_uri", camel), ("slots", "slot_uri", under), ("enums", "enum_uri", camel)):
                   for name in list(part.get(kind) or {}):
-                      element = part[kind][name] if isinstance(part[kind][name], dict) else {}
+                      element = copy.deepcopy(part[kind][name]) if isinstance(part[kind][name], dict) else {}
                       element.setdefault(key, stem + form(name))
                       for attr in list(element.get("attributes") or {}) if kind == "classes" else []:
                           if not isinstance(element["attributes"][attr], dict):
@@ -406,8 +413,9 @@ jobs:
 
           doc = yaml.safe_load(text)
           known = {kind: dict(doc.get(kind) or {}) for kind in KINDS}
-          prefixes = dict(doc.get("prefixes") or {})
-          core_doc = load(core)
+          prefixes, settings = dict(doc.get("prefixes") or {}), dict(doc.get("settings") or {})
+          curi_maps = list(doc.get("default_curi_maps") or [])
+          core_doc = load(core, source)
           kept, seen = [], {source.resolve(), core}
           queue = [(source, entry) for entry in doc.get("imports") or []]
           while queue:
@@ -420,8 +428,10 @@ jobs:
                   continue
               if path in seen:
                   continue
+              if not path.is_relative_to(repo):
+                  stop(f"{base.name} imports {entry}, which is outside this repository")
               seen.add(path)
-              part = load(path)
+              part = load(path, base)
               pin_iris(part)
               queue += [(path, nested) for nested in part.get("imports") or []]
               for prefix, iri in (part.get("prefixes") or {}).items():
@@ -429,6 +439,13 @@ jobs:
                   if have is not None and have != iri:
                       stop(f"{path.name} maps the prefix {prefix} to {iri}, and LOKF core or an earlier file maps it to {have}")
                   prefixes[prefix] = iri
+              # LinkML resolves a structured pattern with the settings of the
+              # file that defines it, and adds every file's CURIE maps.
+              for name, value in (part.get("settings") or {}).items():
+                  if settings.get(name, value) != value:
+                      stop(f"{path.name} sets {name} to {value}, and an earlier file sets it to {settings[name]}")
+                  settings[name] = value
+              curi_maps += [m for m in part.get("default_curi_maps") or [] if m not in curi_maps]
               for kind, word in KINDS.items():
                   for name, element in (part.get(kind) or {}).items():
                       if name in (core_doc.get(kind) or {}):
@@ -439,6 +456,7 @@ jobs:
               print(f"Merged {path.relative_to(source.parent) if path.is_relative_to(source.parent) else path.name} into the released copy")
           doc["prefixes"] = prefixes
           doc["imports"] = kept
+          doc.update({key: value for key, value in (("settings", settings), ("default_curi_maps", curi_maps)) if value})
           doc.update({kind: known[kind] for kind in KINDS if known[kind]})
           target.write_text(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True, width=1000), encoding="utf-8")
           PY

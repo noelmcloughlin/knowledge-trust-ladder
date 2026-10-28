@@ -6,7 +6,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Added
 
-- **A host's composite domain schema is released as one file.** A schema that imports `lokf adapt` copies beside `lokf.yaml` is attached with each copy merged in and every IRI written out, and a name two files define differently stops the release.
+- **A host's composite domain schema is released as one file.** A schema that imports `lokf adapt` copies beside `lokf.yaml` is attached with each copy merged in, keeping every IRI and setting, and a name two files define differently stops the release.
 
 ### Fixed
 
