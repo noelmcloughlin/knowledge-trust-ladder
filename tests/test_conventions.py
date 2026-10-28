@@ -433,7 +433,7 @@ def test_behind_a_mirror_without_upload_times_the_parser_half_still_runs(good, t
     path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz")
     result = bash(CONVENTIONS, good, env={"PATH": path})
     assert result and "not checked" not in result.out, f"conventions script did not run its parser's half behind the mirror: {result.out}"
-    assert "exclude-newer is lifted for pyyaml;" in result.out, f"conventions script did not say it lifted the date: {result.out}"
+    assert "exclude-newer is lifted for pyyaml." in result.out, f"conventions script did not say it lifted the date: {result.out}"
     assert "--exclude-newer-package pyyaml=false" in read(log), f"uv run did not get the lifted date: {read(log)}"
 
 

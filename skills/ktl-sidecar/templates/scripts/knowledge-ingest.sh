@@ -53,7 +53,7 @@ uv_ready() {
     fi
     for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
   done
-  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted; the versions stay pinned. uv sync in .lokf/ pins them by hash instead." >&2
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. Run uv sync in .lokf/ to pin them by hash." >&2
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"

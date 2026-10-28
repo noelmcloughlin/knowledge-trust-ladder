@@ -83,7 +83,7 @@ Copy each template to its destination, then substitute the placeholders it lists
 | `templates/knowledge/services/index.md` | `.lokf/knowledge/services/index.md` | - |
 | `templates/knowledge/services/example-service-a.md`, `-b.md` | same paths under `.lokf/` (DUMMY; ktl-librarian replaces) | PROJ_NAME, PROJ_SLUG, BASE_IRI |
 | `templates/queries.http` *(optional, default on)* | `.lokf/queries.http` | PROJ_NAME |
-| `templates/ingest.yaml` | `.lokf/ingest.yaml.sample`: the ingest's example manifest, inert until Step 5 copies it to `.lokf/ingest.yaml` | - |
+| `templates/ingest.yaml` | `.lokf/ingest.yaml.sample`: the ingest's example manifest, unused until Step 5 copies it to `.lokf/ingest.yaml` | - |
 
 ```bash
 mkdir -p .lokf/knowledge/services

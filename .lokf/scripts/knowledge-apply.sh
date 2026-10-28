@@ -15,10 +15,10 @@
 # first line.
 #
 # uv_ready installs the header's packages before the run, so uv's exit 1 on
-# a failed resolve never reads as findings. On an index with no upload
-# times, as many Nexus and Artifactory mirrors are, uv drops each file and
+# a failed resolution never reads as findings. On an index with no upload
+# times, as a Nexus or Artifactory mirror often is, uv drops each file and
 # warns that it "is missing an upload date". Only then does uv_ready lift
-# the date, for the packages uv names, round by round; the versions stay
+# the date, for the packages uv names, round by round. The versions stay
 # pinned. Any other failure is not retried. knowledge-conventions.sh and
 # knowledge-ingest.sh carry the same function, and the contract holds the
 # three equal.
@@ -67,7 +67,7 @@ uv_ready() {
     fi
     for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
   done
-  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted; the versions stay pinned. uv sync in .lokf/ pins them by hash instead." >&2
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. Run uv sync in .lokf/ to pin them by hash." >&2
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"

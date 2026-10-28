@@ -1448,7 +1448,7 @@ def test_behind_a_mirror_without_upload_times_the_pen_lifts_the_date_and_keeps_t
     path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz")
     result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": path})
     assert result and "ops:" in result.out, f"the pen did not run behind the mirror: {result.out}"
-    assert "exclude-newer is lifted for pyyaml; the versions stay pinned" in result.out, f"the pen did not say it lifted the date: {result.out}"
+    assert "exclude-newer is lifted for pyyaml. The versions stay pinned" in result.out, f"the pen did not say it lifted the date: {result.out}"
     runs = [line for line in read(log).split("\n") if line.startswith("run ")]
     assert runs and "--exclude-newer-package pyyaml=false" in runs[0], f"uv run did not get the lifted date: {read(log)}"
 

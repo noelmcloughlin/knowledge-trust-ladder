@@ -145,8 +145,9 @@
 # This script runs the Python half with the sidecar's .venv when the .venv
 # holds pyyaml and is Python 3.9 or later, and otherwise through `uv run`
 # after uv_ready. knowledge-apply.sh explains both. Without uv, the shell
-# half still runs and says so. A runner that cannot install or start the
-# Python half is a runner failure, not a finding, and the script exits 2.
+# half still runs and says so. When uv cannot install the packages, or a
+# runner cannot start the Python half, the script reports a runner failure,
+# not a finding, and exits 2.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
@@ -328,7 +329,7 @@ uv_ready() {
     fi
     for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
   done
-  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted; the versions stay pinned. uv sync in .lokf/ pins them by hash instead." >&2
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. Run uv sync in .lokf/ to pin them by hash." >&2
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
@@ -341,7 +342,7 @@ elif uv_ready "$py"; then
 elif command -v uv >/dev/null 2>&1; then
   unrun=1
   [ -z "$uverr" ] || printf '%s\n' "$uverr" >&2
-  echo "$rules not checked: uv could not run $py, as it could not install its packages. Run uv sync in .lokf/ and this script uses that .venv." >&2
+  echo "$rules not checked: uv could not run $py, because it could not install its packages. Run uv sync in .lokf/ and this script uses that .venv." >&2
 fi
 if [ -n "$runner" ]; then
   rc=0

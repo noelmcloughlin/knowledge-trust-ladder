@@ -82,9 +82,9 @@
 # manifest or an argument before any write; 2 a tool is missing.
 #
 # The dependency block names one pypdf release, and `exclude-newer` takes no
-# file uploaded after its date; behind a mirror with no upload times, the
-# shell half lifts it. pypdf reads PDFs from outside the repository, so when
-# a release fixes a flaw in it, move both.
+# file uploaded after its date. Behind a mirror with no upload times, the
+# shell half lifts that date. pypdf reads PDFs from outside the repository,
+# so when a release fixes a flaw in it, move both.
 """The ingest: knowledge outside the repository, mirrored into it."""
 
 from __future__ import annotations
