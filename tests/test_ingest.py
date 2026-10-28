@@ -20,8 +20,9 @@ and pin:
    script's header pins the pypdf these tests install;
 4. a Confluence selection is listed with its versions and fetched by v2 on
    Cloud and v1 on Data Center. An unchanged page costs no body, and a page
-   that leaves the selection is unlisted. --prune removes an uncited file
-   and keeps a cited one;
+   that leaves the selection is unlisted. --prune removes an uncited file,
+   one a concept only lists among its exclusions included, and keeps a cited
+   one;
 5. a git path at a ref is mirrored by its commit, with a file that is not
    Markdown kept in a fence. A git older than 2.31 is refused, git reads no
    ~/.netrc, and with a credential git follows no redirect. Only the files
@@ -822,7 +823,8 @@ def test_a_confluence_selection_is_listed_fetched_and_kept_current(tmp_path, ser
     later = ("--now", "2026-10-25T06:00:00Z")
     result = ingest(root, "--visibility", "private", "--prune", *later)
     checks.ok(result and "a concept still cites it, so it stays" in result.out, "a cited file is kept by --prune", result.out)
-    (root / ".lokf" / "knowledge" / "playbooks" / "rollback.md").unlink()
+    # A concept that now lists the file among its exclusions no longer cites it.
+    write(root / ".lokf" / "knowledge" / "playbooks" / "rollback.md", "---\ntype: Playbook\ntitle: Rollback\nexclusions:\n- resource: .lokf/mirror/runbooks/124.md\n  reason: the page left the runbook space\n---\n# Rollback\n")
     result = ingest(root, "--visibility", "private", "--prune", *later)
     checks.ok(result and "was unlisted since 2026-10-18 and no concept cites it; removed" in result.out, "an uncited file is removed by a later --prune", result.out)
     checks.ok(not (root / ".lokf" / "mirror" / "runbooks" / "124.md").exists(), "the file is gone")

@@ -2032,7 +2032,11 @@ def frontmatter_of(path: Path) -> dict:
 
 
 def cited_paths(root: Path) -> set:
-    """Every path a concept names in resource or sources, relative to the root, with a fragment cut off."""
+    """Every path a concept names in resource or sources, relative to the root, with a fragment cut off.
+
+    An exclusion cites nothing: a concept that left a mirror file out on
+    purpose does not keep it once its item is gone or unlisted.
+    """
     out = set()
     knowledge = root / ".lokf" / "knowledge"
     if not knowledge.is_dir():

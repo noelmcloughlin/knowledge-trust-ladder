@@ -74,7 +74,7 @@ In the **three lines of defence** that regulated industries use, the librarian a
 
 ### The fifth skill, which is not a role
 
-[`ktl-prose`](../skills/ktl-prose/SKILL.md) is the **librarian**'s copy editor. It rewords what an agent wrote, in plain English, before a person confirms it. It changes the wording and never a fact, it leaves every byte of frontmatter alone, and it never touches a concept a person wrote or confirmed. It is optional, and the roles above lose nothing without it.
+[`ktl-prose`](../skills/ktl-prose/SKILL.md) is the **librarian**'s copy editor. It rewords what an agent wrote, in plain English, before a person confirms it. It changes the wording and never a fact, it leaves every byte of frontmatter alone, and it never touches a concept a person wrote or confirmed. It is optional.
 
 ### The sixth skill, which publishes the bundle
 

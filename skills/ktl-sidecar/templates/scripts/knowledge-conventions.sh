@@ -121,19 +121,29 @@
 #      are read; without it, those under the newest day heading, where the
 #      latest run's claims sit. A `**Removal**` bullet under the same or a
 #      newer day heading excuses a bullet whose concept is gone.
+#  18. Each `exclusions` entry (lokf 0.9.0 and later) gives a `reason` that is
+#      not blank, and no material is both a source and an exclusion of one
+#      concept. An exclusion records that someone looked at a material and
+#      set it aside, so a blank reason leaves a reviewer nothing to check, and
+#      a material listed both ways is derived from and left out at once.
+#      Paths are compared as `lokf validate` compares them, so `./docs/a.md`,
+#      `docs/a.md` and `docs/a.md/` name one material. The toolkit only warns
+#      of the second; this gate fails it.
 #
-# Rules 2, 3, 8 and 10 are house rules, stricter than the format. OKF permits
-# an unquoted datetime, a bare `verified` mapping, any file name and any YAML.
+# Rules 2, 3, 8, 10 and 18 are house rules, stricter than the format. OKF
+# permits an unquoted datetime, a bare `verified` mapping, any file name and
+# any YAML, and LOKF a blank reason and a material listed both ways.
 # Every reader here reads a bare mapping as a one-item list, as it MUST: the
 # toolkit, both plugins and the gates. This bundle asks more of itself so that:
 #   - an event is always appended to a list and never converted first;
 #   - a datetime reaches every consumer as the same string;
 #   - a name never collides on a case-insensitive host;
-#   - an event reads the same to a line reader as to a parser.
+#   - an event reads the same to a line reader as to a parser;
+#   - an exclusion always says why, and never contradicts a source.
 # A bundle written to the letter of OKF may fail them; that is a policy of the
 # gate, not a defect in the bundle.
 #
-# Rules 2, 3, 7, 9, 10 and 12 are checks on a document's YAML that need a
+# Rules 2, 3, 7, 9, 10, 12 and 18 are checks on a document's YAML that need a
 # parser, and rule 4 is checked with them. So the Python half,
 # knowledge-conventions.py in the same directory, checks them. This shell
 # half checks rules 1, 5, 6, 8 and 11 itself: they are git and filesystem
@@ -311,11 +321,11 @@ while IFS= read -r f; do
   fi
 done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
 
-# ---- 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16, 17. the Python half ----------------
+# ---- 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18. the Python half ------------
 here="$(dirname "$0")"
 py="$here/knowledge-conventions.py"
-rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17"
-[ -z "$since" ] || rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16 and 17"
+rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16, 17 and 18"
+[ -z "$since" ] || rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16, 17 and 18"
 uvflags=(); uverr=""; uvhint="Run uv sync in .lokf/ to pin them by hash."
 uv_ready() {
   local err names name again unpinned lifted=""

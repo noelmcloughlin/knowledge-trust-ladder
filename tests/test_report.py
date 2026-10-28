@@ -1126,6 +1126,53 @@ def test_coverage_strict_exits_1_while_a_file_in_scope_is_named_by_nobody_or_a_f
     assert report(cov, "coverage", "--bogus").rc == 2
 
 
+def test_coverage_counts_a_file_left_out_on_purpose_apart_and_a_concept_naming_it_wins(cov):
+    """An exclusion (lokf 0.9.0 and later) accounts for a file without naming it."""
+    write(
+        cov / ".lokf" / "knowledge" / "x" / "left.md",
+        "---\ntype: Playbook\ntitle: Left out\nexclusions:\n- resource: data/raw.csv\n  reason: a generated extract\n  by: human:ada\n"
+        "- resource: ./docs/\n  reason: drafts, apart from the page another concept uses\n---\n",
+    )
+    r = report(cov, "coverage")
+    assert r, r.out
+    assert has_line(r.out, COUNT + "4 of 6 · left out on purpose: 2 · under none: 0")
+    assert "data/" not in r.out and "docs/" not in r.out
+    r = report(cov, "coverage", "docs", "data/raw.csv")
+    assert has_line(r.out, "docs/: none under no named path, 1 left out on purpose")
+    assert has_line(r.out, "data/raw.csv: none under no named path, 1 left out on purpose")
+    assert "orphan" not in r.out
+    assert report(cov, "coverage", "--strict").rc == 0
+    want = [
+        "- data/raw.csv: left out on purpose by x/left.md",
+        "- docs/orphan.md: under docs, which x/left.md leaves out on purpose",
+        "- docs/kept.md: named by x/kept.md",
+        "- docs/kept.md: under docs, which x/left.md leaves out on purpose",
+    ]
+    r = report(cov, "coverage", "--why", "data/raw.csv", "docs/orphan.md", "docs/kept.md")
+    assert r and all(has_line(r.out, line) for line in want), r.out
+    assert "docs/orphan.md: under no named path" not in r.out
+
+
+def test_an_exclusion_never_moves_and_never_stands_for_the_concept(kr):
+    """A concept's first source is the one the queue shows, never an exclusion listed above it."""
+    kk = kr / ".lokf" / "knowledge"
+    write(
+        kk / "x" / "aside.md",
+        '---\ntype: Service\ntitle: Aside\nexclusions:\n- resource: src/c.md\n  reason: a copy of b\nsources:\n- resource: src/b.md\n'
+        'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n---\n',
+    )
+    git = Git(kr)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a concept that leaves c out")
+    append(kr / "src" / "c.md", "c2\n")
+    git("commit", "-q", "-am", "the excluded file moves")
+    out = report(kr, "worklist").out
+    assert "- x/confirmed.md: src/c.md (" in out, out
+    assert "x/aside.md" not in out, out
+    out = report(kr).out
+    assert matches(out, r"^\d\. Aside \(Service\) - .* - src/b\.md$"), out
+
+
 def test_coverage_reads_a_sidecar_in_a_subfolder_from_its_own_root(tmp_path):
     host = tmp_path / "host"
     kk = host / ".lokf" / "knowledge"
