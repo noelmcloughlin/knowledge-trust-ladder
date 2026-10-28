@@ -21,7 +21,7 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
    cd .lokf && uv run python -c "from importlib.resources import files; print(files('lokf') / 'data' / 'lokf.yaml')" | xargs -I{} cp {} lokf.yaml
    ```
 
-   The copy does double duty. `convert`, `serve` and `query` take no `--schema` flag and resolve `lokf.yaml` from the current directory and its ancestors before the packaged copy. From `.lokf/`, this is therefore also the schema they read.
+   The copy does double duty. Run from `.lokf/` without `--schema`, `lokf validate` and `lokf vocab` read it as LOKF core, because lokf looks for `lokf.yaml` in the current directory and its ancestors before its packaged copy.
 
 2. **The domain schema**, `.lokf/<slug>.yaml`, with its namespace under the same authority as `base_iri` (Rule 2). A learning-programme bundle, for instance:
 
@@ -58,7 +58,7 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
 3. **Frontmatter names the class exactly.** A record with `type: Reference` and a `source_kind` key fails: `Reference` does not declare the key, and `SourceSnapshotReference` requires its own name. Write the subclass name. `is_a` still makes it `rdfs:subClassOf` its parent in the projected graph.
 
-4. **Name the schema.** In the sidecar's `justfile`, set the one variable: `schema := "<slug>.yaml"`. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, running from the schema's directory so a relative import in it resolves, and the three workflows (`knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`) run the recipes, so nothing else in the sidecar changes. A sidecar scaffolded before the variable existed runs `lokf validate` inline in its justfile and its workflows; ktl-sidecar's repair lays down the current copies of those four files. That one variable is also how the **librarian** learns the host's vocabulary. Rule 3 has it read the schema the justfile names and treat every `Concept` descendant there as a class it may choose. `lokf vocab` lists relations only and takes no `--schema`, so the file itself is the source.
+4. **Name the schema.** In the sidecar's `justfile`, set the one variable: `schema := "<slug>.yaml"`. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, running from the schema's directory so a relative import in it resolves, and the three workflows (`knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`) run the recipes, so nothing else in the sidecar changes. A sidecar scaffolded before the variable existed runs `lokf validate` inline in its justfile and its workflows; ktl-sidecar's repair lays down the current copies of those four files. That one variable is also how the **librarian** learns the host's vocabulary. Rule 3 has it read the schema the justfile names and treat every `Concept` descendant there as a class it may choose. `lokf vocab` reads LOKF core alone and takes no `--schema`, so the file itself is the source.
 
    The schema need not sit beside the bundle. The variable takes any path relative to `.lokf/`, and the schema's own `imports:` entry names `lokf.yaml` relative to the schema file. Three layouts recur:
 
