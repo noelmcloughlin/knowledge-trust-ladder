@@ -16,7 +16,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The skills describe `revision`, `excerpt` and `lokf adapt` as released**, and the audit fallback links `lokf.yaml` at the v0.9.0 commit.
 - **The librarian's domain-schema page says how to import a published vocabulary** through its `lokf adapt` copy, with lmodel/slsa's release as the tested case.
 - **A domain build still indexes a member's explicit ids outside its namespace.** lokf 0.9.0 refuses them unless the registrant allows them, and a person's confirmation admits each member, so the build allows them; lokf still refuses one in another member's namespace.
-- **The reliance count follows `isReplacedBy`**, the relation slot lokf 0.9.0 adds.
+- **The reliance count and the docent follow `isReplacedBy`**, the relation slot lokf 0.9.0 adds.
 
 ### Fixed
 

@@ -339,7 +339,7 @@ fm {
     next
   }
   if (inv && $0 ~ /^[^ \t-]/) { emit(); inv = 0 }
-  # The typed relations: the thirteen fields the schema ranges over Concept,
+  # The typed relations: the fourteen fields the schema ranges over Concept,
   # each a block list, a one-line flow list or a bare value, and `relations`,
   # a list of { predicate, target } mappings, block or one-line flow. The
   # contract in the skills repository holds the list of fields to the schema.
