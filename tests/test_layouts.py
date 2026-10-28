@@ -1387,3 +1387,35 @@ def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
     assert r.rc == 1 and "not a file" in r.out, r.out
     r, out = attempt('schema := "acme.yaml"', [(".lokf/acme.yaml", "id: https://x.example/acme\nimports:\n  - lokf\n  - parts\n"), (".lokf/parts.yaml", "id: https://x.example/parts\n")])
     assert r.rc == 1 and "imports parts, a local file the release does not carry" in r.out and not list(out.iterdir()), r.out
+
+
+def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path):
+    """The compare step's own lines, at four tags: a README edit, an edit to a copy the composite imports, and a refreshed lokf.yaml. Only the copy's edit releases a bundle that is otherwise unchanged."""
+    body = step_body(RELEASE_YAML, "Compare with the last released bundle", r"^      [#-]")
+    script = write(tmp_path / "compare.sh", "#!/usr/bin/env bash\n" + body)
+    gh = write(tmp_path / "bin" / "gh", '#!/bin/sh\n[ "$1 $2" = "release view" ] && { echo "$3"; exit 0; }\n[ "$1" = api ] && { echo "$PREV"; exit 0; }\nexit 1\n')
+    gh.chmod(0o755)
+    h = make_host(tmp_path / "host", "default")
+    write(h / ".lokf" / "justfile", re.sub(r'(?m)^schema := ""$', 'schema := "tdu.yaml"', read(h / ".lokf" / "justfile")))
+    write(h / ".lokf" / "tdu.yaml", "id: https://x.example/tdu\nimports: [linkml:types, lokf, 'slsa']  # two copies\n")
+    write(h / ".lokf" / "slsa.yaml", "id: https://x.example/slsa\nimports:\n  # LOKF core by name\n  - lokf\n  - lokf.yaml\n")
+    write(h / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf\n")
+    edits = {"v2": ("README.md", "more\n"), "v3": (".lokf/slsa.yaml", "classes: {}\n"), "v4": (".lokf/lokf.yaml", "title: refreshed\n")}
+    git(h, "add", "-A")
+    git(h, "commit", "-q", "-m", "schema")
+    git(h, "-c", "tag.gpgSign=false", "tag", "v1")
+    for tag, (rel, more) in edits.items():
+        write(h / rel, read(h / rel) + more)
+        git(h, "commit", "-qam", tag)
+        git(h, "-c", "tag.gpgSign=false", "tag", tag)
+    outputs = {}
+    for prev, tag in (("v1", "v2"), ("v2", "v3"), ("v3", "v4")):
+        git(h, "checkout", "-q", tag)
+        out = write(tmp_path / f"out-{tag}", "")
+        r = run(["bash", script], cwd=h, env={"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "PREV": prev, "TAG": tag, "GH_REPO": "o/host", "GITHUB_OUTPUT": out, "FORCE": "false"})
+        assert r.rc == 0, r.out
+        outputs[tag] = (read(out), r.out)
+    assert "changed=false" in outputs["v2"][0], outputs["v2"]
+    assert "changed=true" in outputs["v3"][0] and "its domain schema changed" in outputs["v3"][1], outputs["v3"]
+    assert "changed=false" in outputs["v4"][0], "a refreshed lokf.yaml, which the released copy imports by name, released the bundle again"
+

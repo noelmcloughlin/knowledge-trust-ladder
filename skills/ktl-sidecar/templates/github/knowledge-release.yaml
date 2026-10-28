@@ -29,12 +29,13 @@ name: Knowledge Release
 #   gh workflow run knowledge-release.yaml --ref "$TAG" -f tag="$TAG"
 # with `actions: write` on that job.
 #
-# A release whose bundle is unchanged gets no zip. `pack` compares the
-# bundle's git tree at this tag with its tree at the newest other published
-# release that carries a knowledge bundle, as a zip or as the tarball earlier
-# releases attached. When the two match, the run ends
-# green with a notice and uploads nothing. The `force` input of a manual run
-# skips the comparison, for repairing a release's assets.
+# A release whose bundle and domain schema are unchanged gets no zip. `pack`
+# compares the bundle's git tree at this tag with its tree at the newest
+# other published release that carries a knowledge bundle, as a zip or as the
+# tarball earlier releases attached, and the domain schema's files the same
+# way. When both match, the run ends green with a notice and uploads nothing.
+# The `force` input of a manual run skips the comparison, for repairing a
+# release's assets.
 #
 # Two jobs, for least privilege. `pack` installs the lokf toolkit (third-party
 # packages), validates the bundle and builds the zip under a read-only
@@ -121,11 +122,50 @@ jobs:
             done
             return 1
           }
+          # The domain schema the justfile names at this tag, and the local
+          # files it imports in turn, as paths in the repository. lokf.yaml is
+          # left out, because the released copy imports it by name. Nothing is
+          # installed yet, so python3 reads the import lines as text.
+          schema_files() {
+            local schema
+            schema="$(sed -n 's/^schema := "\([^"]*\)"$/\1/p' .lokf/justfile 2>/dev/null | head -n 1)"
+            [ -n "$schema" ] || return 0
+            python3 -I - "$schema" <<'PY'
+          import pathlib
+          import re
+          import sys
+
+          repo = pathlib.Path.cwd().resolve()
+          core = (repo / ".lokf" / "lokf.yaml").resolve()
+          todo, seen = [(repo / ".lokf" / sys.argv[1]).resolve()], set()
+          while todo:
+              path = todo.pop()
+              if path in seen or path == core or not path.is_relative_to(repo) or not path.is_file():
+                  continue
+              seen.add(path)
+              print(path.relative_to(repo))
+              lines, entries = path.read_text(encoding="utf-8").splitlines(), []
+              for i, line in enumerate(lines):
+                  if flow := re.match(r"imports:\s*\[(.*)\]", line):
+                      entries += flow.group(1).split(",")
+                  elif re.match(r"imports:\s*(#.*)?$", line):
+                      for item in lines[i + 1 :]:
+                          if item.strip() and not item.lstrip().startswith("#"):
+                              if not (block := re.match(r"\s*-\s*(.+)", item)):
+                                  break
+                              entries.append(block.group(1))
+              for entry in entries:
+                  entry = re.sub(r"\s+#.*$", "", entry).strip().strip("\"'")
+                  if entry and entry != "lokf" and ":" not in entry:
+                      todo.append((path.parent / (entry if entry.endswith((".yaml", ".yml")) else entry + ".yaml")).resolve())
+          PY
+          }
           # Both tags are spelt in full, so a name is never read as an option
           # or as a branch of the same name.
           gh release view "$TAG" --json tagName --jq .tagName >/dev/null \
             || { echo "::error::No release exists for tag $TAG. Create the release first, then run this workflow again."; exit 1; }
           read -r tree path < <(bundle_tree "$TAG") || { echo "::error::No bundle folder at $TAG"; exit 1; }
+          mapfile -t files < <(schema_files)
           echo "path=$path" >> "$GITHUB_OUTPUT"
           # Newest first. Drafts are left out, since nobody has published them.
           # The tag is filtered in the shell, so no tag name reaches jq's source.
@@ -144,12 +184,15 @@ jobs:
           elif ! read -r prev_tree _ < <(bundle_tree "$prev"); then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "::warning::$prev carries a bundle but its tag holds no bundle folder here; attaching without a comparison."
-          elif [ "$tree" = "$prev_tree" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::The bundle at $TAG is identical to the one released with $prev (tree ${tree:0:12}), so no zip is attached."
-          else
+          elif [ "$tree" != "$prev_tree" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "The bundle changed since $prev: $(git diff --shortstat "refs/tags/$prev" "refs/tags/$TAG" -- "$path")"
+          elif [ "${#files[@]}" -gt 0 ] && ! git --literal-pathspecs diff --quiet "refs/tags/$prev" "refs/tags/$TAG" -- "${files[@]}"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "The bundle is the one $prev released, but its domain schema changed: $(git --literal-pathspecs diff --shortstat "refs/tags/$prev" "refs/tags/$TAG" -- "${files[@]}")"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::The bundle and domain schema at $TAG are identical to the ones released with $prev (tree ${tree:0:12}), so no zip is attached."
           fi
 
       - name: Set up uv

@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **A release that changes only the domain schema attaches it.** The compare step looked at the bundle's tree alone, so such a release uploaded nothing; it now compares the schema and the local files it imports as well.
+
 ## [0.58.0] - 2026-10-28
 
 ### Added
