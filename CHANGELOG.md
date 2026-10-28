@@ -4,6 +4,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.59.0] - 2026-10-28
+
+### Added
+
+- **A host's composite domain schema is released as one file.** A schema that imports `lokf adapt` copies beside `lokf.yaml` is attached with each copy merged in, keeping every IRI and setting, and a name two files define differently stops the release.
+
 ### Changed
 
 - **The sidecar requires lokf 0.9.0.** A host raises the floor in `.lokf/pyproject.toml` by hand, refreshes any `.lokf/lokf.yaml`, runs `uv lock` and renames each `supporting_text` key to `excerpt`. The sync leaves `pyproject.toml` alone.
@@ -11,12 +17,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The librarian's domain-schema page says how to import a published vocabulary** through its `lokf adapt` copy, with lmodel/slsa's release as the tested case.
 - **A domain build still indexes a member's explicit ids outside its namespace.** lokf 0.9.0 refuses them unless the registrant allows them. A person's confirmation admits each member, so the build allows them, and lokf still refuses one in another member's namespace.
 - **The reliance count and the docent follow `isReplacedBy`**, the relation slot lokf 0.9.0 adds.
-
-## [0.59.0] - 2026-10-28
-
-### Added
-
-- **A host's composite domain schema is released as one file.** A schema that imports `lokf adapt` copies beside `lokf.yaml` is attached with each copy merged in, keeping every IRI and setting, and a name two files define differently stops the release.
 
 ### Fixed
 
