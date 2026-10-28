@@ -143,13 +143,10 @@
 # frontmatter to a body and to log.md, so the Python half checks them too.
 #
 # This script runs the Python half with the sidecar's .venv when the .venv
-# holds pyyaml and is Python 3.9 or later. Otherwise it runs the Python half
-# through `uv run`, once uv_ready has installed its packages.
-# knowledge-apply.sh says why the .venv is tried first, and what uv_ready
-# does behind a package mirror. Without uv, the shell half still runs and
-# says so. A uv that cannot install the packages, or a runner that cannot
-# start the Python half, is reported as a runner failure, not as a finding,
-# and the script exits 2.
+# holds pyyaml and is Python 3.9 or later, and otherwise through `uv run`
+# after uv_ready. knowledge-apply.sh explains both. Without uv, the shell
+# half still runs and says so. A runner that cannot install or start the
+# Python half is a runner failure, not a finding, and the script exits 2.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
@@ -331,7 +328,7 @@ uv_ready() {
     fi
     for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
   done
-  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so uv installed$lifted at the pinned versions without the header's exclude-newer date; uv sync in .lokf/ gives the scripts a .venv that uv.lock pins by hash" >&2
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted; the versions stay pinned. uv sync in .lokf/ pins them by hash instead." >&2
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
@@ -344,7 +341,7 @@ elif uv_ready "$py"; then
 elif command -v uv >/dev/null 2>&1; then
   unrun=1
   [ -z "$uverr" ] || printf '%s\n' "$uverr" >&2
-  echo "$rules not checked: uv could not run $py, since it could not install the packages the script's header names. Behind a package mirror, run uv sync in .lokf/ and this script uses that .venv." >&2
+  echo "$rules not checked: uv could not run $py, as it could not install its packages. Run uv sync in .lokf/ and this script uses that .venv." >&2
 fi
 if [ -n "$runner" ]; then
   rc=0

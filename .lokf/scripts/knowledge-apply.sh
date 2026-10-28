@@ -14,16 +14,14 @@
 # enterprise host python3 is often older, and the script would stop at its
 # first line.
 #
-# uv_ready asks uv to install the header's packages before anything runs, so
-# a resolver failure, which uv reports with exit 1, never reads as findings.
-# An index that serves no upload times, as a Nexus or Artifactory mirror
-# often does, makes `exclude-newer` drop every file, and uv warns that each
-# "is missing an upload date". Only then does uv_ready lift the date, for
-# the packages uv named and no others, round by round, since a dependency's
-# own dependency is named only once its parent resolves. The versions stay
-# as the header pins them. Any other failure is not retried. The function is
-# the same in knowledge-conventions.sh and knowledge-ingest.sh, and the
-# skills repository's contract holds the three equal.
+# uv_ready installs the header's packages before the run, so uv's exit 1 on
+# a failed resolve never reads as findings. On an index with no upload
+# times, as many Nexus and Artifactory mirrors are, uv drops each file and
+# warns that it "is missing an upload date". Only then does uv_ready lift
+# the date, for the packages uv names, round by round; the versions stay
+# pinned. Any other failure is not retried. knowledge-conventions.sh and
+# knowledge-ingest.sh carry the same function, and the contract holds the
+# three equal.
 #
 # Usage: knowledge-apply.sh [--dry-run] [--keep] [--handoff <file>] [--root <repo-root>] [<patch-file>]
 #        knowledge-apply.sh --format
@@ -69,7 +67,7 @@ uv_ready() {
     fi
     for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
   done
-  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so uv installed$lifted at the pinned versions without the header's exclude-newer date; uv sync in .lokf/ gives the scripts a .venv that uv.lock pins by hash" >&2
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted; the versions stay pinned. uv sync in .lokf/ pins them by hash instead." >&2
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"

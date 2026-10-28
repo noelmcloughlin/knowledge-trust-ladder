@@ -607,10 +607,9 @@ if [[ "$pyyaml_pins" == "2 2 " ]]; then
 else
   err "knowledge-apply.py and knowledge-conventions.py must each carry 'dependencies = [\"pyyaml==<version>\"]' and an 'exclude-newer' date, the same in both - one is missing, unpinned or different"
 fi
-# Each shell half that runs its Python half through uv carries one uv_ready
-# function, which lifts that date only where the package index serves no
-# upload times. knowledge-apply.sh says why. A fix to one copy must reach the
-# other two.
+# The three shell halves that run a Python half through uv carry one
+# uv_ready function, which knowledge-apply.sh explains. A fix to one copy
+# must reach the other two.
 uv_ready_copies="$(for f in apply conventions ingest; do sed -n '/^uv_ready() {$/,/^}$/p' "$templates/scripts/knowledge-$f.sh" | cksum; done | sort -u)"
 if [[ "$(printf '%s\n' "$uv_ready_copies" | wc -l | tr -d ' ')" == 1 && "$uv_ready_copies" != "4294967295 0" ]]; then
   ok "knowledge-apply.sh, knowledge-conventions.sh and knowledge-ingest.sh carry the same uv_ready"

@@ -115,7 +115,7 @@ jobs:
             exit 1
           fi
           if [ ! -f .lokf/ingest.yaml ]; then
-            echo "::notice::No .lokf/ingest.yaml here, so there is nothing to mirror. Copy .lokf/ingest.yaml.sample to .lokf/ingest.yaml and replace its examples."
+            echo "::notice::No .lokf/ingest.yaml here, so there is nothing to mirror. Copy .lokf/ingest.yaml.sample to start."
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi

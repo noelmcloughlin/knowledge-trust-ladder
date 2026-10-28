@@ -168,13 +168,12 @@ def replace_in(path: Path, old: str, new: str) -> None:
 
 
 def mirror_uv(tmp_path: Path, *missing: str) -> tuple[str, Path]:
-    """A PATH whose uv resolves as uv does on a package index that serves no upload times, and the file that logs its calls.
+    """A PATH whose uv behaves as on an index with no upload times, and the file that logs its calls.
 
-    Each name in `missing` is a file uv warns "is missing an upload date", one
-    a round, as uv names a dependency's own dependency only once its parent
-    resolves, until the shell half passes --exclude-newer-package <package>=false
-    for it. Then `uv sync --script` succeeds and `uv run` runs the script with
-    this interpreter. With no names, it is a uv that resolves at once.
+    uv warns about one file of `missing` a round, until the shell half lifts
+    it with --exclude-newer-package <package>=false. Then `sync` succeeds and
+    `run` runs the script with this interpreter. With no names, uv resolves
+    at once.
     """
     log = tmp_path / "mirrorbin" / "uv-calls.txt"
     rounds = ""

@@ -2,12 +2,10 @@
 # The ingest's shell half. It runs knowledge-ingest.py beside it with the
 # first of these that it finds:
 #   - the sidecar's own .venv, when that holds pyyaml and pypdf;
-#   - `uv run`, since the script's header names both, once uv_ready has
-#     installed them;
+#   - `uv run` after uv_ready, since the script's header names both;
 #   - the .venv or python3 with pyyaml alone, which reads every source but a
 #     PDF.
-# knowledge-apply.sh says why the .venv comes first, why each must be
-# Python 3.9 or later, and what uv_ready does behind a package mirror.
+# knowledge-apply.sh explains the order, the Python 3.9 floor and uv_ready.
 # `uv add pypdf` in .lokf/ puts pypdf in the .venv, so no run needs `uv run`.
 #
 # The script reads .lokf/ingest.yaml, mirrors
@@ -55,7 +53,7 @@ uv_ready() {
     fi
     for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
   done
-  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so uv installed$lifted at the pinned versions without the header's exclude-newer date; uv sync in .lokf/ gives the scripts a .venv that uv.lock pins by hash" >&2
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted; the versions stay pinned. uv sync in .lokf/ pins them by hash instead." >&2
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
@@ -74,7 +72,7 @@ elif uv_ready "$py"; then
 fi
 for p in "$venv" python3; do
   if usable "$p" yaml; then
-    [ -z "$uverr" ] || echo "knowledge-ingest: uv could not install the script's packages, so this run has no pypdf and refuses each PDF" >&2
+    [ -z "$uverr" ] || echo "knowledge-ingest: uv could not install the script's packages, so this run refuses each PDF" >&2
     exec "$p" "$py" --root "$root" ${args[@]+"${args[@]}"}
   fi
 done

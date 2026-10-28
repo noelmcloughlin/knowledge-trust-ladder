@@ -20,8 +20,8 @@ You write normal Markdown; you get a validated, queryable graph for free.
 |-- pyproject.toml        # declares the `lokf` toolkit as a dependency
 |-- justfile              # convenience commands (below)
 |-- scripts/              # the librarian wrapper and its apply script, the report script, the preflight, the gate's two checks, the docent's feedback recorder and the ingest
-|-- ingest.yaml.sample    # the ingest's manifest with examples; nothing reads it under this name
-|-- ingest.yaml           # appears on a host that mirrors sources outside the repository, copied from the sample: what the ingest fetches, and from where
+|-- ingest.yaml.sample    # the ingest's example manifest; inert until copied to ingest.yaml
+|-- ingest.yaml           # appears on a host that mirrors sources outside the repository: what the ingest fetches, and from where
 |-- mirror/               # appears with it: the fetched pages and documents, one Markdown file each, which the librarian cites
 |-- ingest/               # the usual place for a command the ingest runs, committed and reviewed as any file
 |-- m365/                 # the Microsoft 365 Copilot skills' instructions and their builder; the release workflow packs them
