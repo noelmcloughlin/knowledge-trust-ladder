@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-27T02:56:06Z"
+  at: "2026-10-28T00:35:16Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -25,6 +25,7 @@ sources:
   - resource: .github/workflows/knowledge-release.yaml
   - resource: scripts/sync-sidecar.sh
   - resource: CHANGELOG.md
+    id: changelog.md
   - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
   - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
   - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-conventionalcommits-v8.0.0/packages/conventional-changelog-conventionalcommits/src/parser.js
@@ -35,7 +36,7 @@ verified:
 
 # Overview
 
-A person no longer hand-picks the version, but two tools never race to tag it. `semantic-release.yml`'s `release` job runs on every push to `main`, behind the `release` GitHub Environment. `@semantic-release/commit-analyzer` computes the next version from Conventional Commits since the last *tag*, using `.releaserc.json`'s `releaseRules`. Those rules add one type, `security:`, as a patch. A commit they do not match falls to the analyzer's default rules, where `fix:`, `perf:` and a revert give a patch, `feat:` a minor release, and a `BREAKING CHANGE:` note a major one. Since 0.56.3 (`CHANGELOG.md`), the analyzer reads each commit with the Conventional Commits preset, which `.releaserc.json` names and `semantic-release.yml` pins as `conventional-changelog-conventionalcommits@8.0.0` beside `@semantic-release/commit-analyzer@13.0.1`. That preset's header pattern allows a `!` after the type, so a `feat!:` commit gives a major release, as `docs/releasing.md` says. The `plan` job counts such a commit as one that would release.
+A person no longer hand-picks the version, but two tools never race to tag it. `semantic-release.yml`'s `release` job runs on every push to `main`, behind the `release` GitHub Environment. `@semantic-release/commit-analyzer` computes the next version from Conventional Commits since the last *tag*, using `.releaserc.json`'s `releaseRules`. Those rules add one type, `security:`, as a patch. A commit they do not match falls to the analyzer's default rules, where `fix:`, `perf:` and a revert give a patch, `feat:` a minor release, and a `BREAKING CHANGE:` note a major one. Since 0.57.0,[^changelog.md] the analyzer reads each commit with the Conventional Commits preset, which `.releaserc.json` names and `semantic-release.yml` pins as `conventional-changelog-conventionalcommits@8.0.0` beside `@semantic-release/commit-analyzer@13.0.1`. That preset's header pattern allows a `!` after the type, so a `feat!:` commit gives a major release, as `docs/releasing.md` says. The `plan` job counts such a commit as one that would release.
 
 Semantic-release always runs with `--dry-run`, so it never writes, commits, tags, or publishes anything here. `@semantic-release/exec` calls `.github/scripts/changelog-release.mjs check` with the computed version, which refuses to proceed if `CHANGELOG.md`'s `## [Unreleased]` section is empty, and `notes`, which supplies the release notes.
 
@@ -92,3 +93,5 @@ Once the pull requests are merged, `scripts/sync-sidecar.sh --finish <tag> <sibl
 The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so. The template's pin is never bumped by hand, which would cut a pointless release. A tag that is not on origin is refused, because a sibling's scheduled librarian clones from there and would fail to install.
 
 Both checks read the `workflow_dispatch` version input through an `env:` variable rather than interpolating `${{ inputs.version }}` straight into the shell script. That hardening change (2026-09-12) closes a script-injection vector without changing what the checks verify.
+
+[^changelog.md]: CHANGELOG.md, 0.57.0, Fixed

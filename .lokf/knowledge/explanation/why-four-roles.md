@@ -27,7 +27,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-26T20:05:58Z"
+    at: "2026-10-28T00:35:16Z"
   - by: human:noelmcloughlin
     at: "2026-10-19T20:46:38Z"
 stale_after: 2027-10-19
