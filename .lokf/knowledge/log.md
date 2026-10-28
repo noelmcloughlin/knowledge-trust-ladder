@@ -2,6 +2,7 @@
 
 ## 2026-10-28
 
+* **Prose**: reworded 3 concept bodies in plain English. No fact, link, number or frontmatter changed.
 * **Changed**: the ktl-curator skill concept says the report lists each retired concept whose successor no person has confirmed, and samples concepts checked by automation only when the curation policy sets `Automation re-check:`, its fourth switch, as `SKILL.md` and `references/review-session.md` say since 0.58.0. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-librarian skill says that every concept names a `resource` or a `sources` entry, which conventions rule 15 checks since 0.58.0, and that the librarian cites a source by its `id` in a footnote, which rule 16 checks (`SKILL.md`, `CHANGELOG.md`). It also says where a confidential ingest entry's items are recorded, as `references/ingest.md` does. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the ktl-sidecar skill concept says the federation workflow's `nudge` job reads `KNOWLEDGE_LIBRARIAN_ENABLED` in its own `if:`, as a person's note says and `templates/github/knowledge-federation.yaml` shows. It also carries the seventeen conventions of 0.58.0 from `references/gate.md`, and the ingest's git versions and time limit of 0.57.0 from `references/prerequisites.md` and `references/automation.md`.

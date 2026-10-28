@@ -38,7 +38,7 @@ The ingest was released in 0.49.0, and 0.50.0 added the restore of lost mirror f
 
 - **Pages and documents at an address**: HTML, Markdown, plain text and PDF. A PDF with no text layer, such as a scan, is refused.
 
-- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. A run downloads the file list, then only the files that changed. Every such entry needs git 2.31 or later. Git follows no redirect with a credential, or where the manifest refuses private addresses, and there an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name.[^docs-ingest.md] So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. An address that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
+- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. A run downloads the file list, then only the files that changed. Every such entry needs git 2.31 or later. Git follows no redirect with a credential. Where the manifest refuses private addresses, git follows no redirect, and an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name.[^docs-ingest.md] So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. An address that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
 
 - **The output of a command** the repository holds.
 
@@ -56,7 +56,9 @@ The mirror is tracked, so the work list, the gate and coverage read it as reposi
 
 # Sensitivity
 
-The script refuses what the repository's visibility does not allow. `public` may be committed anywhere, and `internal`, the default, only to a private repository. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, the concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text no person reviewed. A confidential entry's records go to `.lokf/.cache/ingest.lock.yaml`, beside its copies. The committed lock says only how the entry's last run went, so no page's title, address or author is committed, and the summary counts the entry's items and names none. With `lock_details: true`, the committed lock records the entry's items as it does for any other entry. The script refuses a `confidential` entry when git does not ignore the cache or tracks a file in it. When an entry's sensitivity or `lock_details` changes, its next run moves its records and removes its files from the old folder, then fetches them into the new one.
+The script refuses what the repository's visibility does not allow. `public` may be committed anywhere, and `internal`, the default, only to a private repository. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, the concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text no person reviewed.
+
+A confidential entry's records go to `.lokf/.cache/ingest.lock.yaml`, beside its copies. The committed lock says only how the entry's last run went, so no page's title, address or author is committed, and the summary counts the entry's items and names none. With `lock_details: true`, the committed lock records the entry's items as it does for any other entry. The script refuses a `confidential` entry when git does not ignore the cache or tracks a file in it. When an entry's sensitivity or `lock_details` changes, its next run moves its records and removes its files from the old folder, then fetches them into the new one.
 
 # Turn it on
 
