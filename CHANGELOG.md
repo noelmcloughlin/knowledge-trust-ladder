@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.59.0] - 2026-10-28
+
 ### Added
 
 - **A host's composite domain schema is released as one file.** A schema that imports `lokf adapt` copies beside `lokf.yaml` is attached with each copy merged in, keeping every IRI and setting, and a name two files define differently stops the release.
