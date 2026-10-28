@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-27T01:03:06Z"
+  at: "2026-10-28T00:35:16Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -22,17 +22,23 @@ references:
 sources:
   - resource: skills/ktl-sidecar/SKILL.md
   - resource: skills/ktl-sidecar/references/automation.md
+    id: automation.md
   - resource: skills/ktl-sidecar/references/gate.md
+    id: gate.md
   - resource: skills/ktl-sidecar/references/portability.md
   - resource: skills/ktl-sidecar/references/prerequisites.md
+    id: ktl-sidecar-prerequisites.md
   - resource: skills/ktl-sidecar/references/m365.md
   - resource: .github/workflows/knowledge-librarian.yaml
   - resource: skills/ktl-librarian/references/scheduled-task.md
   - resource: .lokf/scripts/knowledge-preflight.sh
   - resource: CHANGELOG.md
+    id: changelog.md
   - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/61b9355f0dfa037ff8e165affa285344e451c209
   - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/8fcdd867e45528a21f20f177fb63306afe8d278d
   - resource: skills/ktl-sidecar/templates
+  - resource: skills/ktl-sidecar/templates/github/knowledge-federation.yaml
+    id: knowledge-federation.yaml
 verified:
   - by: process:ktl-librarian
     at: "2026-10-27T01:03:06Z"
@@ -81,6 +87,8 @@ The forge-free gate verifies GPG keys with their subkeys and SSH keys alike agai
 
 The conventions script's thirteenth convention fails an edit to a confirmed concept that leaves `generated` older than the confirmation (2026-10-04). A move of the bundle's `base_iri` is no edit, since an id or relation target that moved with it still says the same (0.42.0). Its fourteenth, given a base commit with `--since`, fails a commit that records a person's confirmation and also changes the concept's claims, unless `generated.by` names that same person. The `validate` job passes the merge-base of the pull request's base and head, the commit the `provenance` job also uses (2026-10-07).
 
+Since 0.58.0 the conventions script checks seventeen conventions.[^gate.md] The fifteenth asks every concept to name where it came from, as a top-level `resource` or a `sources` entry. The sixteenth joins each footnote in a body to a `sources` entry by its `id`, and holds one `id` to one resource across the bundle. The seventeenth asks that each `**Added**` and `**Deprecation**` bullet in `log.md` names a concept the bundle holds. The sidecar's two example concepts carry a `resource` since that release, so the skeleton keeps the fifteenth before anyone edits it.[^changelog.md]
+
 `gate.md` also carries what Step 5 points a curator at:
 
 - the signing setup for one who opens their own pull request. That is the SSH key already used to push, registered on GitHub a second time as a *signing* key. GitHub blocks approving one's own pull request, and the `provenance` gate then needs a signature;
@@ -93,7 +101,7 @@ GitHub does not start `pull_request` workflows for a pull request opened with th
 
 For Claude Code, `AGENT_API_KEY_ENV` is `ANTHROPIC_API_KEY` with a Console key, billed per use, or `CLAUDE_CODE_OAUTH_TOKEN` with a subscription token. That is the long-lived token that `claude setup-token` prints on the person's own machine, and its runs count against that subscription's usage limits. `AGENT_USE_JOB_TOKEN` stays unset, since Claude Code cannot use the job's GitHub token. For Copilot CLI the job token serves, or a fine-grained personal token with *Copilot Requests* in `AGENT_API_KEY`.
 
-Each of these variables goes under Repository variables, never on an Environment. The page's reason is that a job's `if:` reads only repository and organization variables. The workflow reads `KNOWLEDGE_LIBRARIAN_ENABLED` in the `if:` of steps of the `refresh` job, not in the job's own `if:`, and reads `AGENT_API_KEY_ENV`, `AGENT_PROMPT_FLAG` and `KNOWLEDGE_RETRIEVAL` in one of those steps. That job runs in the `knowledge-librarian` Environment. The secrets go in the `knowledge-librarian` Environment, limited to the default branch. A table on that page lists every switch and secret.
+Each of these variables goes under Repository variables, never on an Environment. The page's reason is that a job's `if:` reads only repository and organization variables.[^automation.md] That reason holds for `KNOWLEDGE_LIBRARIAN_ENABLED` on a domain host, since the federation workflow's `nudge` job reads it in the job's own `if:`, outside any Environment.[^knowledge-federation.yaml] The librarian workflow reads `KNOWLEDGE_LIBRARIAN_ENABLED` in the `if:` of steps of the `refresh` job, not in the job's own `if:`, and reads `AGENT_API_KEY_ENV`, `AGENT_PROMPT_FLAG` and `KNOWLEDGE_RETRIEVAL` in one of those steps. That job runs in the `knowledge-librarian` Environment. The secrets go in the `knowledge-librarian` Environment, limited to the default branch. A table on that page lists every switch and secret.
 
 The prompt follows `-p` unless the optional `AGENT_PROMPT_FLAG` names another flag, or `arg` for an agent that takes the prompt as its last argument, such as Codex CLI. The page states the five conditions any other agent must meet (0.40.0). The wrapper's prompt tells the agent to write `.lokf/patch.yaml` with its own file-writing tool, never with a shell redirect, a heredoc or a script, since an unattended run may deny a shell write. The Claude Code command confines the agent's file tool with `Edit(.lokf/patch.yaml)`. An `Edit` rule covers every file-writing tool, the Write tool included, and Claude Code ignores a `Write(<path>)` rule. The list does not confine the shell, so the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY` for the agent, and the pen then only checks the patch file and leaves it for the wrapper to apply (0.53.0).
 
@@ -132,7 +140,9 @@ The librarian workflow template installs a pinned `ktl-librarian` into `.agents/
 
 It then pushes the branch `knowledge-sync`, leased to the commit the `earlier` job read, and opens one pull request there, refreshed until it is merged, with the `KNOWLEDGE_SYNC_TOKEN` secret from the `knowledge-sync` Environment. Without the secret the run attaches its change and opens nothing. When the optional `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` variable names an Environment with required reviewers, the `review` and `push-workflows` jobs push the held workflow changes once a reviewer approves (0.53.0).
 
-**Knowledge outside the repository (0.49.0).** `.lokf/ingest.yaml` names each source outside the repository, `knowledge-ingest.sh` fetches it and writes it as Markdown under `.lokf/mirror/<entry id>/`, and `.lokf/ingest.lock.yaml` records what was fetched. `knowledge-ingest.yaml` runs weekly and on demand once `KNOWLEDGE_INGEST_ENABLED` is `true`. Its read-only `ingest` job passes the script only the secrets whose names start `KNOWLEDGE_INGEST_`, from the `knowledge-ingest` Environment, and its `publish` job opens one pull request on the branch `knowledge-ingest`, refreshed until it is merged. A scheduled run also prunes a mirror file whose source is gone or has left the selection, that no concept cites, and that an earlier run recorded so. Since 0.56.1 the ingest checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing unless the manifest allows private addresses (`CHANGELOG.md`).
+**Knowledge outside the repository (0.49.0).** `.lokf/ingest.yaml` names each source outside the repository, `knowledge-ingest.sh` fetches it and writes it as Markdown under `.lokf/mirror/<entry id>/`, and `.lokf/ingest.lock.yaml` records what was fetched. `knowledge-ingest.yaml` runs weekly and on demand once `KNOWLEDGE_INGEST_ENABLED` is `true`. Its read-only `ingest` job passes the script only the secrets whose names start `KNOWLEDGE_INGEST_`, from the `knowledge-ingest` Environment, and its `publish` job opens one pull request on the branch `knowledge-ingest`, refreshed until it is merged. A scheduled run also prunes a mirror file whose source is gone or has left the selection, that no concept cites, and that an earlier run recorded so.
+
+Since 0.56.1 the ingest checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing unless the manifest allows private addresses (`CHANGELOG.md`). Since 0.57.0 every `git` entry needs git 2.31 or later, and one that names a host, not an IP address, needs 2.37 or later unless the manifest allows private addresses or a proxy resolves the name.[^changelog.md] With an older git the run refuses the entry, and the preflight's `ingest` line warns before a run.[^ktl-sidecar-prerequisites.md] The script starts no work after 25 minutes, inside the job's 30, and leaves what it did not reach to the next run.[^automation.md]
 
 **Behind a package mirror, or with an old python3 (0.55.0).** A company package index, such as Nexus or Artifactory, often serves no upload times, and then `uv run` cannot resolve a script whose header names `exclude-newer`. So the pen, the conventions check and the ingest run with `.lokf/.venv` first, which `uv sync` installs from `uv.lock`, and through `uv run` after it (`references/portability.md`). No script picks a Python older than 3.9. When its runner cannot start, the conventions check says so and exits 2, rather than reporting findings against the bundle.
 
@@ -141,6 +151,12 @@ Since 0.55.2 the preflight asks the package index uv reads: PyPI, or the mirror 
 Since 0.56.1 the sidecar's `pyproject.toml` names `rust-just==1.47.0`, so the workflows run the `just` that `uv.lock` pins, checked by hash. A host that has not added it gets the same version fetched by name, and the preflight's `just-pin` line says to run `uv add rust-just==1.47.0` in `.lokf/`. `references/automation.md` lists the recipe runner as a fourth pin no update tool moves, kept in step with the workflows' `uvx --from rust-just==` fallback.
 
 The preflight warns on its `python` line when python3 is older than 3.9, and on its `root` line when it screened the skill's own folder rather than the repository. It also lists KTL skills installed for one user, under `~/.copilot/skills/`, `~/.claude/skills/` or `~/.agents/skills/`. Those serve that user's live sessions, but the scheduled librarian runs on a fresh runner and needs a copy in the repository (`references/prerequisites.md`).
+
+[^gate.md]: skills/ktl-sidecar/references/gate.md, "The seventeen conventions"
+[^changelog.md]: CHANGELOG.md, 0.57.0 and 0.58.0
+[^automation.md]: skills/ktl-sidecar/references/automation.md, the librarian's variables and the `ingest` job
+[^knowledge-federation.yaml]: skills/ktl-sidecar/templates/github/knowledge-federation.yaml, the `nudge` job
+[^ktl-sidecar-prerequisites.md]: skills/ktl-sidecar/references/prerequisites.md, the `ingest` row
 
 ## Open questions
 

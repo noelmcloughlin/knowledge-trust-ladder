@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-10-27T09:23:26Z"
+  at: "2026-10-28T00:35:16Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -21,6 +21,7 @@ sources:
   - resource: README.md
   - resource: docs/federation.md
   - resource: docs/repository-layout.md
+    id: repository-layout.md
   - resource: docs/examples
   - resource: docs/ingest.md
   - resource: skills/ktl-librarian/references/ingest.md
@@ -40,6 +41,7 @@ sources:
   - resource: .github/dependabot.yml
   - resource: .github/workflows/knowledge-registrar.yaml
   - resource: CHANGELOG.md
+    id: changelog.md
   - resource: docs/architecture.en-simple.md
   - resource: website/src
   - resource: website/scripts
@@ -55,6 +57,24 @@ sources:
   - resource: llms.txt
   - resource: .gitignore
   - resource: scripts/companion-diagrams.mjs
+  - resource: docs/threat-model.md
+    id: docs-threat-model.md
+  - resource: evals
+  - resource: justfile
+  - resource: .github/workflows/docent-eval.yml
+  - resource: website/astro.config.mjs
+  - resource: website/site.config.mjs
+  - resource: website/package.json
+  - resource: website/package-lock.json
+  - resource: website/tsconfig.json
+  - resource: website/.gitignore
+  - resource: skills/ktl-website/templates/website/astro.config.mjs
+  - resource: skills/ktl-website/templates/website/package.json
+  - resource: skills/ktl-website/templates/website/package-lock.json
+  - resource: skills/ktl-website/templates/website/tsconfig.json
+  - resource: skills/ktl-website/templates/website/gitignore
+  - resource: skills/ktl-website/templates/website/NOTICE
+  - resource: skills/ktl-website/templates/website/README.md
 ---
 
 # Sources swept for this bootstrap discovery pass
@@ -64,7 +84,7 @@ sources:
 | `skills/*/SKILL.md` | the six skill Playbooks | re-read each router; a changed step list, guardrail, or frontmatter `description` is a drift signal |
 | `skills/*/references/*.md`, `skills/ktl-prose/scripts/prose-check.py`, `skills/ktl-prose/assets/voa-word-book.txt`, `skills/ktl-docent/scripts/*.sh` | detail behind each skill Playbook; the prose skill's check script, which `playbooks/ktl-prose-skill.md` describes; and, since 2026-10-05, ktl-docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which `playbooks/ktl-docent-skill.md` describes; the references include the librarian's `agent-skills.md` and `retellings.md` and the prose skill's `young-readers.md`; `voa-word-book.txt` is the word list `prose-check.py` reads under a band of readers | diff against the claims in the corresponding concept body; check 11a holds the docent's two scripts byte-identical to their templates |
 | `skills/ktl-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, the `justfile` with its `schema` variable for a domain schema, `.gitattributes`, `gitignore`, `llms.txt`, `queries.http`, the two READMEs, the `knowledge/` skeleton, the scripts (preflight, conventions and its Python half, librarian wrapper, apply and its Python half, report, provenance gate, feedback recorder; since 0.44.0 the federation build `knowledge-federate.py`; since 0.47.0 the sync `knowledge-sync.sh`; since 0.49.0 the ingest `knowledge-ingest.sh` and its Python half), the workflows (registrar, librarian and, since 2026-09-24, release; since 0.44.0 `knowledge-federation.yaml` with a domain host's `domain.yaml`; since 0.47.0 `knowledge-sync.yaml`; since 0.49.0 `knowledge-ingest.yaml`; the last two each with a pull request template), since 0.47.0 `knowledge-sync.manifest`, the list of what a sync keeps current, since 0.49.0 `ingest.yaml`, the ingest's manifest, and, also since 2026-09-24, `m365/`: the Copilot skills' builder and the docent's instructions for Copilot | diff `pyproject.toml` (the `lokf` floor), the `justfile` recipes against `explanation/domain-schemas.md`, and the template lists in the skill's Step 1 and Step 5 tables |
-| `skills/ktl-website/templates/`, `skills/ktl-website/scripts/website-preflight.sh` | what the website skill lays down in a host: the site under `templates/website/`, which this repository's own `website/` copies, and the deploy workflow `knowledge-website.yaml`; and the preflight it runs in place. `playbooks/ktl-website-skill.md` since 2026-10-14 | diff the step list, the four placeholders and the three files a host owns against the concept; the whole of the site's `src/` and its scripts are consciously excluded as concepts, as under `website/`; since 0.53.0 the scripts include `raw-html.mjs`, which holds raw HTML to what GitHub renders, and `playbooks/ktl-website-skill.md` names it |
+| `skills/ktl-website/templates/`, `skills/ktl-website/scripts/website-preflight.sh` | what the website skill lays down in a host: the site under `templates/website/`, which this repository's own `website/` copies, and the deploy workflow `knowledge-website.yaml`; and the preflight it runs in place. `playbooks/ktl-website-skill.md` since 2026-10-14 | diff the step list, the four placeholders and the three files a host owns against the concept; the whole of the site's `src/` and its scripts are consciously excluded as concepts, as under `website/`; since 0.53.0 the scripts include `raw-html.mjs`, which holds raw HTML to what GitHub renders, and `playbooks/ktl-website-skill.md` names it; the template's `astro.config.mjs`, `package.json`, `package-lock.json`, `tsconfig.json`, `gitignore` and `NOTICE` are copied to `website/` byte for byte, and its `README.md` and `site.config.mjs` hold the placeholders Step 1 substitutes, which `playbooks/ktl-website-skill.md` describes |
 | `skills/ktl-sidecar/templates/knowledge-sync.manifest`, `skills/ktl-sidecar/templates/scripts/knowledge-sync.sh`, `skills/ktl-sidecar/templates/github/knowledge-sync.yaml`, `knowledge-sync-pull-request.md` | since 0.47.0, how a host keeps its sidecar current by itself: the manifest that lists each template, its copy and the rule for it, which the sync script, the preflight and contract check 11 read; the sync script, which `scripts/sync-sidecar.sh` runs in each sibling; and the weekly workflow that keeps one pull request refreshed to the newest release. `playbooks/releasing.md` and `playbooks/repository-validation.md` describe them | diff the manifest's rules against check 11 in `playbooks/repository-validation.md`, and the workflow's schedule and the script's steps against `playbooks/releasing.md`; this repository has nothing to sync itself to, so it carries no copy |
 | `docs/ingest.md`, `skills/ktl-librarian/references/ingest.md`, `skills/ktl-sidecar/templates/ingest.yaml`, `skills/ktl-sidecar/templates/scripts/knowledge-ingest.sh`, `knowledge-ingest.py`, `skills/ktl-sidecar/templates/github/knowledge-ingest.yaml`, `knowledge-ingest-pull-request.md` | since 0.49.0, the ingest that mirrors knowledge from outside the repository: the manifest `.lokf/ingest.yaml`, the script that writes each source as Markdown under `.lokf/mirror/` with `.lokf/ingest.lock.yaml` recording what was fetched, the workflow that opens one pull request with what changed, and the librarian's page on reading and citing the mirror; since 0.50.0 the ingest restores a lost mirror file and prunes on a schedule. `playbooks/knowledge-outside-the-repository.md` carries it | diff the four kinds of source, the manifest's refusals, the workflow's jobs and secrets and the librarian's rules for the mirror against that concept; this repository has no `.lokf/ingest.yaml`, so it carries no copy |
 | `README.md`, `docs/architecture.md`, `docs/install.md`, `docs/repository-layout.md` | project identity: since 2026-10-13 the README is a doorway that keeps the poem, the opening paragraph, LOKF and LinkML as inspirations and the agents note, lists the Exhibitions (the sites that show a repository's collection) since 0.42.0, with the two Obsidian plugins' sites among them since 2026-10-16 and the site of KTL Federation, the domain that federates member bundles into one workspace, and points to the website at `https://w3id.org/ktl/` and, since 0.43.1, to the site's pages for the quick start, the retelling and `docs/architecture.md`, which holds the four-role narrative, the trust ladder, the reading list and the credits; the install commands, prerequisites table and pinning rule, on their own page since 2026-09-19 when the README became a front door, and the quick start since 2026-10-13; the repository tree, likewise on its own page | diff the roles table and the `Read on` table on `docs/architecture.md`; diff `docs/install.md` against `references/gh-skill-cli.md` and `references/open-skills-cli.md`; diff the tree against the working copy |
@@ -78,7 +98,7 @@ sources:
 | the WikiSkill paper (Tang et al., 2026) and the SkillWiki paper (Huang et al., 2026) | `explanation/wikiskill.md` and `explanation/skillwiki.md`, the record of what KTL took from each paper, citing the paper, `CHANGELOG.md` and the skill files where each change lives. Since 0.53.0 `docs/for-the-curious.md` holds what KTL took from the two papers, and `docs/wikiskill.md` and `docs/skillwiki.md` are gone | re-check each change a concept lists against `CHANGELOG.md` and the skill files it cites |
 | `docs/skills-repositories.md` | whether KTL helps a repository whose content is Agent Skills, with two runs and what remains to do | diff `explanation/skills-repositories.md`; re-check the run on `anthropics/skills` |
 | `docs/context-layer.md`, `docs/context-layer-technology.md`, `docs/federation.md` | what a context layer is, one bundle as one repository's layer, and why KTL federates bundles through domains. Since 0.53.0 `docs/federation.md` holds the whole federation design, from domains as manifests to the decisions an adopter makes, and the technology page names the products a workspace can use. `explanation/context-layer.md` summarises the three pages, the glossary term defines the layer, and `playbooks/domain-bundle.md` cites the federation page | diff the concept; re-check a vendor's page only where the concept states what it says |
-| `website/`, `.github/workflows/knowledge-website.yaml` | the Astro Starlight site built from the README, `docs/`, the bundle and `CHANGELOG.md`, and the workflow that publishes it to GitHub Pages, named `website.yml` until 2026-10-14; `playbooks/website.md` since 2026-10-12. Since 0.39.0 both are copies of ktl-website's templates, which check 11w holds byte-identical | diff `website/README.md` and the workflow's triggers and jobs against the concept; the whole of `src/` and the scripts under `website/` are consciously excluded as concepts |
+| `website/`, `.github/workflows/knowledge-website.yaml` | the Astro Starlight site built from the README, `docs/`, the bundle and `CHANGELOG.md`, and the workflow that publishes it to GitHub Pages, named `website.yml` until 2026-10-14; `playbooks/website.md` since 2026-10-12. Since 0.39.0 both are copies of ktl-website's templates, which check 11w holds byte-identical | diff `website/README.md` and the workflow's triggers and jobs against the concept; the whole of `src/` and the scripts under `website/` are consciously excluded as concepts, and so is the build's configuration, `astro.config.mjs`, `package.json` and its lock, `tsconfig.json` and `.gitignore`; `playbooks/website.md` describes `site.config.mjs`, the site's values and options, and the Astro override in `package.json` |
 | `SECURITY.md` | the slim security policy (reporting, supported versions, a surface table) | diff the surface table and the reporting/supported-versions text |
 | `docs/threat-model.md` | the shared threat model (2026-09-14 on, replacing `SECURITY.md`'s own design section) - repository hardening, the `human:` attribution gate, prompt-injection guards | diff `policies/threat-model.md`; its section headings are deep-linked by the sibling repositories, the two plugins' `SECURITY.md` and ai-linkmo among them, and check 9 records each anchor, so a heading rename here is a breaking change there |
 | `AI_COVENANT.md`, `CODE_OF_CONDUCT.md` | governance policies | diff each; both are adapted from upstream documents that may themselves change |
@@ -89,6 +109,7 @@ sources:
 | `.github/ISSUE_TEMPLATE/bug_report.md` and `feature_request.md`, `.github/pull_request_template.md`, `.github/dependabot.yml` | contributor intake forms and pin maintenance | consciously excluded as concepts: they are intake forms and maintenance configuration, not knowledge about the repository; re-check only that each template still names all six skills and that its `AI_COVENANT.md` link is absolute |
 | `scripts/*.sh` | what the validation playbook claims CI enforces; since 2026-09-24 `sync-sidecar.sh`, the maintainer's tool the releasing playbook describes, which is not a CI check; and since 0.39.0 `smoke-test-website.sh`, which `validate.yml`'s `smoke-test-website` job runs | re-read the assertions; a new check is a gap in the playbook; diff `sync-sidecar.sh`'s refusals and steps against `playbooks/releasing.md` |
 | `tests/*.py`, `tests/requirements.txt`, `pytest.ini` | the behavioural tests of the sidecar scripts and the prose checker, which ran inside `scripts/validate-repository.sh` until 2026-10-07; `validate.yml` runs them in its `test-scripts` job and `publish.yml` runs them before a release | consciously excluded as concepts; re-check that `playbooks/repository-validation.md` still names the job that runs them and the contract checks that moved there |
+| `evals/`, `tests/docent-holdout.yaml`, `tests/docent-holdout-schema.yaml`, `tests/test_docent_holdout.py`, `justfile`, `.github/workflows/docent-eval.yml` | since 0.58.0,[^changelog.md] the docent holdout: the eight captured docent questions and the concept each answer should rest on, as data, with its LinkML shape; the same questions as `claude plugin eval` cases; the test that checks that each expected concept still exists and that `evals/` asks the same questions; the root `justfile`'s `docent-eval` and `docent-holdout` recipes; and the workflow that runs the suite weekly and by hand under a cost cap, never on a pull request[^repository-layout.md] | consciously excluded as concepts: the questions and the concept each expects are kept outside `.lokf/`, so the docent never reads a question beside its answer,[^docs-threat-model.md] and no concept names a question or the concept it expects; `policies/threat-model.md` and `policies/security.md` carry the workflow's guards; re-check that `evals/scaffold-bundle.sh` still copies the bundle alone |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
 | external URLs cited across the repo | the seven Reference concepts; the commit-analyzer's README and default release rules and the Conventional Commits preset's parser, which `policies/versioning.md` and `playbooks/releasing.md` cite; and the toolkit's `cli.py`, which `references/lokf-toolkit.md` cites | confirm each still resolves and still says what the concept claims |
 | `.assets/*.svg`, `.assets/companions/`, `scripts/companion-diagrams.mjs` | the social-preview card, which `docs/architecture.md` shows since the README left it on 2026-10-13, the project's logo mark, the diagrams `docs/` pages embed, and the lifecycle diagram, which the README showed until `ktl-architecture.svg` replaced it. Since 2026-10-19 `.assets/companions/` holds the Archify flow diagrams that some figures link beside them, each a light and a dark SVG drawn from its `.archify.json`, and `scripts/companion-diagrams.mjs` draws them again when a maintainer runs it by hand, as `docs/repository-layout.md` says | consciously excluded as concepts: the card and the mark carry no knowledge, and each diagram, a companion too, draws what the page that embeds or links it says; re-check only that each diagram still matches that page |
@@ -101,6 +122,10 @@ sources:
 - **No `Service`, `Dataset`, `Table`, `Metric` or `AttestedComputation` concept exists**, and that is correct. This repository holds documentation, agent skills and CI, and publishes a static website: it runs no API, stores no data and defines no measured quantity. `playbooks/website.md` covers the website.
 - **No `Person` or `Organization` concept.** The maintainer is recorded once, as the bundle's `publisher` in `index.md`, and no concept links to a person.
 - **`base_iri` is `https://w3id.org/ktl/knowledge/`**, a persistent namespace the project controls. Every concept's `@id` is made under it, and the w3id rule redirects each one to the concept's page on the site, its JSON-LD or its Markdown file. KTL Federation names this bundle by it, so the namespace stays constant across releases, as `docs/federation.md` asks of a member.
+
+[^changelog.md]: CHANGELOG.md, 0.58.0, Added
+[^repository-layout.md]: docs/repository-layout.md, the lines for `.github/workflows/docent-eval.yml`, `tests/`, `evals/` and `justfile`
+[^docs-threat-model.md]: docs/threat-model.md, The docent eval
 
 ## Open questions
 

@@ -10,6 +10,7 @@ sources:
   - resource: docs/architecture.md
   - resource: CONTRIBUTING.md
   - resource: CHANGELOG.md
+    id: changelog.md
   - resource: .github/workflows/publish.yml
   - resource: .releaserc.json
   - resource: .github/workflows/semantic-release.yml
@@ -18,7 +19,7 @@ sources:
   - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-conventionalcommits-v8.0.0/packages/conventional-changelog-conventionalcommits/src/parser.js
 generated:
   by: process:ktl-librarian
-  at: "2026-10-27T02:56:06Z"
+  at: "2026-10-28T00:35:16Z"
 about: []
 verified:
   - by: process:ktl-librarian
@@ -41,8 +42,10 @@ relatedTo:
 
 `docs/releasing.md` gives the bump for each type: `feat:` is minor, `fix:` and `security:` are patch, and a `BREAKING CHANGE:` footer or `!` after the type is major. `docs:`, `chore:`, `refactor:`, `style:`, `test:` and `ci:` release nothing: the change is merged, and its changelog entries are released with the next release that does.
 
-The configuration agrees with that page on `!` since 0.56.3 (`CHANGELOG.md`). `.releaserc.json` names the Conventional Commits preset (`"preset": "conventionalcommits"`), and `semantic-release.yml` pins `conventional-changelog-conventionalcommits@8.0.0` beside `@semantic-release/commit-analyzer@13.0.1`. That preset's header pattern allows a `!` after the type, so a `feat!:` or `fix!:` commit gives a major release, as a `BREAKING CHANGE:` note does. The workflow's comment says the preset is named because the default, Angular, does not read the `!`. The analyzer's default rules also give `perf:` and a revert a patch, and `.releaserc.json` adds `security:` as a patch. The `plan` job in `semantic-release.yml` counts a commit with `!` as one that would release.
+The configuration agrees with that page on `!` since 0.57.0.[^changelog.md] `.releaserc.json` names the Conventional Commits preset (`"preset": "conventionalcommits"`), and `semantic-release.yml` pins `conventional-changelog-conventionalcommits@8.0.0` beside `@semantic-release/commit-analyzer@13.0.1`. That preset's header pattern allows a `!` after the type, so a `feat!:` or `fix!:` commit gives a major release, as a `BREAKING CHANGE:` note does. The workflow's comment says the preset is named because the default, Angular, does not read the `!`. The analyzer's default rules also give `perf:` and a revert a patch, and `.releaserc.json` adds `security:` as a patch. The `plan` job in `semantic-release.yml` counts a commit with `!` as one that would release.
 
 All six skills are released together under one tag rather than versioned independently, so a set pinned to one tag agrees with itself (`docs/architecture.md`).
 
 One asymmetry to know: tags carry a `v` prefix (`v0.16.0`), and `publish.yml` refuses a version typed without it, while `CHANGELOG.md` headings never do (`## [0.16.0]`). The workflow's cross-check strips the `v` before comparing the two.
+
+[^changelog.md]: CHANGELOG.md, 0.57.0, Fixed

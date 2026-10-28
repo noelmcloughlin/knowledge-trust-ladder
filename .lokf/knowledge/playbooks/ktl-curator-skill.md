@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-27T01:22:29Z"
+  at: "2026-10-28T00:35:16Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -16,7 +16,9 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 sources:
   - resource: skills/ktl-curator/SKILL.md
+    id: ktl-curator-skill.md
   - resource: skills/ktl-curator/references/review-session.md
+    id: review-session.md
   - resource: skills/ktl-curator/references/trust-fields.md
   - resource: skills/ktl-curator/references/portability.md
   - resource: skills/ktl-curator/references/domain-bundle.md
@@ -40,16 +42,16 @@ The skill writes four frontmatter keys and one body heading: `verified` (a perso
 
 ## Step 1: the report
 
-Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-preflight.sh` first, then `knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. The skill works out three items by hand, as `references/trust-fields.md` says: the vocabulary fit, the confirmations git cannot back, and the sample for a second person. The report prints, in this order:
+Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-preflight.sh` first, then `knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. The skill works out three items by hand, as `references/trust-fields.md` says: the vocabulary fit, the confirmations git cannot back, and the samples the curation policy asks for. The report prints, in this order:
 
 1. a health line, which counts among others the concepts reopened and the confirmations not tied to a signed commit;
 2. at most five items *worth ten minutes today*, ranked in groups and, within a group, by how many other concepts rely on each through the thirteen relation fields and `relations[].target`;
 3. the open questions, a person's notes before the librarian's, with each question dated no later than a person's later confirmation listed apart as looking answered;
-4. how many reader feedback entries wait, counted with `grep -c` and never read, so no reader's text enters the session;
+4. how many reader feedback entries wait, counted with `grep -c` and never read;
 5. the vocabulary fit;
 6. the confirmations git cannot back, only when there are any;
-7. the confirmed concepts whose source has a commit after the one that recorded the confirmation, and each confirmed concept derived from one edited after that confirmation, only when the script lists any;
-8. n confirmed concepts for a second person to re-check, picked by a rule the curator cannot steer, only when the curation policy sets `Independent re-check: <n>` above zero;
+7. the confirmed concepts whose source has a commit after the one that recorded the confirmation, each confirmed concept derived from one edited after that confirmation, and each retired concept whose successor no person has confirmed, only when the script lists any: an agent may propose a retirement, but the retired concept governs until a person confirms the successor;[^ktl-curator-skill.md]
+8. the samples the curation policy asks for, only when it sets `Independent re-check: <n>` or `Automation re-check: <n>` above zero: n concepts confirmed by a person, for someone other than the person who confirmed them to re-check, and n concepts checked by automation only, for a person to check against their sources, both picked by a rule the curator cannot steer;[^ktl-curator-skill.md]
 9. a *Ready to record* line from the preflight: the id a confirmation would carry and where it came from, signing on or off, and attended or not.
 10. how many more concepts wait, not yet checked, with the reminder that every confirmation counts;
 11. the report's last line, with nothing after it: when Step 2 can run, it offers it, naming only the verbs the readiness line allows; when Step 2 will not run, or not until the person replies, it instead states in one bold line that nothing is being recorded, the reason in words the person can check, and the one thing that would change it. A stop stated anywhere else in the report is missed.
@@ -104,7 +106,7 @@ The skill speaks in plain labels, never RDF, IRI, SPARQL, predicate or tier. *St
 
 Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain schema when the vocabulary drifts into a deep or safety-critical domain, and for the linkml-sidecar skills once a schema grows past a few classes (`references/domain-schemas.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder write `human:<id>`, so they need the same authenticated id as *Confirm*.
 
-The skill reads the curation policy's table of review intervals tolerantly. Rows name classes in prose, so the match ignores spaces and plural form: "Glossary terms" is `GlossaryTerm`, and "people" is `Person`. A row naming a class the skill does not know binds nothing. The policy carries three optional switches: `Independent re-check:`, `Evidence first:` and `Younger readers:`. The last names a band of age, 8-12 or 13-18, or both, and ktl-librarian may then write retellings of confirmed concepts for those readers on its scheduled runs. Each retelling is a new concept, which a person confirms against the concept it retells.
+The skill reads the curation policy's table of review intervals tolerantly. Rows name classes in prose, so the match ignores spaces and plural form: "Glossary terms" is `GlossaryTerm`, and "people" is `Person`. A row naming a class the skill does not know binds nothing. The policy carries four optional switches: `Independent re-check:`, `Automation re-check:`, `Evidence first:` and `Younger readers:`.[^review-session.md] The last names a band of age, 8-12 or 13-18, or both, and ktl-librarian may then write retellings of confirmed concepts for those readers on its scheduled runs. Each retelling is a new concept, which a person confirms against the concept it retells.
 
 ## On a domain host
 
@@ -115,3 +117,6 @@ Confirming a `MemberDomain`, a member whose bundle is itself a domain, attests t
 Before confirming a member, the curator opens the release the concept names and checks three things: the zip and its `.sha256` are attached, the digest in `.sha256` is the concept's `checksum`, and the release's repository is the one the `base_iri` belongs to. The members script checked the zip's checksum and attestation when it wrote the change, and the pull request's hand-off lines say so. For a `MemberDomain`, the curator checks its `workspace-<tag>.zip` the same way. For a member its site serves, the curator compares the digest of the file the concept names with its `checksum`. When the bundle's subject is not public, the curator sets its `sensitivity` before confirming. A confirmation belongs to the concept's `id`, so a concept moved to a new id waits for a confirmation of its own.
 
 Accepting a member's move to a new release is the same confirm again. When the new release names another namespace, the members script moves the member's `base_iri` too and its question says so, since each of the member's concepts then has a new IRI and a link into the old namespace counts as unowned; before confirming, the curator checks that the new namespace belongs to the member, as its repository or site shows (`references/domain-bundle.md`). Sending a member back keeps it at the release the person confirmed, and retiring its concept takes it out of the next build. In Obsidian, a person lists `Domain`, `MemberBundle` and `MemberDomain` under *Known LOKF types* in both KTL Curator and KTL Registrar.
+
+[^ktl-curator-skill.md]: skills/ktl-curator/SKILL.md, Step 1, items 7 and 8
+[^review-session.md]: skills/ktl-curator/references/review-session.md, the curation policy template

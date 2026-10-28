@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-10-28T00:35:16Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -17,15 +17,22 @@ sources:
   - resource: .github/workflows/validate.yml
   - resource: scripts/validate-repository.sh
   - resource: CHANGELOG.md
+    id: changelog.md
   - resource: tests/test_website_preflight.py
   - resource: tests/test_website_template.py
+    id: test_website_template.py
   - resource: scripts/smoke-test-website.sh
+    id: smoke-test-website.sh
   - resource: tests/test_federation.py
+    id: test_federation.py
   - resource: tests/test_ingest.py
+    id: test_ingest.py
   - resource: tests/test_sync.py
   - resource: tests/requirements.txt
   - resource: scripts/smoke-test-install.sh
   - resource: skills/ktl-sidecar/templates/knowledge-sync.manifest
+  - resource: tests/test_docent_holdout.py
+    id: test_docent_holdout.py
 verified:
   - by: process:ktl-librarian
     at: "2026-10-20T23:23:33Z"
@@ -89,16 +96,19 @@ The tests run the scripts under `skills/ktl-sidecar/templates/`, `skills/ktl-pro
 
 - `test_apply.py`: the pen, `knowledge-apply.sh` (check 19).
 - `test_conventions.py`: `knowledge-conventions.sh` on a bundle that breaks each rule, and on a bundle that keeps every rule with CRLF line endings, through a link and without uv (check 11's synthetic bundle, and check 11c).
+- `test_docent_holdout.py`: since 0.58.0, the docent holdout in `tests/docent-holdout.yaml`, with no model call.[^changelog.md] It checks that each concept the holdout expects is still a file in the bundle, and that `evals/` has one case per question, each asking the same question. The holdout sits outside `.lokf/`, so the docent never reads a question beside its answer.[^test_docent_holdout.py]
 - `test_federation.py`: `knowledge-federate.py` on two fixture bundles and a domain that names them (0.44.0). It checks the lock, one named graph per bundle, and the same bytes from two builds. It also covers the checks that stop a build and keep the previous snapshot, and the gate on a target no member owns. It covers a member that is itself a domain, the diamond rule, the depth a build follows, a schema released beside a member's zip, the `mcp` server, `--verify-only` and `members`.
 
   Since 0.50.1 it also covers which members join: a member is built as a person last confirmed it, a member no person confirmed waits outside the workspace, and a retired member or `Domain` concept is left out. Since 0.53.0 the build runs lokf in its own process, and a test checks that a failing lokf command fails there as a separate process would and that the build's working directory is put back. Also since 0.53.0 it checks that a build reaches a member at a local path only with `--allow-local`, and at a private address only as a person confirmed on the Domain concept. A zip holding a `.git` folder or a file a browser runs, and a distribution name that is not one plain file name, stop the build, and the report on a member reads no git configuration from it.
 
   Since 0.56.1 it checks that a name which turns private after the check is refused at the connection. It also checks that a member's move to another namespace waits under the namespace it is built at, and that a move the build would refuse leaves the member as it is.
 
+  Since 0.57.0 it checks that every address that is not global counts as private, the shared address space included, and that through a proxy a member's name is checked once and the proxy resolves it.[^test_federation.py]
+
   The module makes the sidecar's environment once, under a lock all parallel workers share, before any test runs uv in it. Without uv every test in it skips.
 
 - `test_feedback.py`: `knowledge-feedback.sh` (check 12a).
-- `test_ingest.py`: `knowledge-ingest.py` on throwaway repositories against servers of its own. It covers each kind of source, the manifest's refusals, `--patch`, `--status` and the shell half's refusal to run under `sh`, and since 0.56.1 a name that turns private after the check and is refused at the connection.
+- `test_ingest.py`: `knowledge-ingest.py` on throwaway repositories against servers of its own. It covers each kind of source, the manifest's refusals, `--patch`, `--status` and the shell half's refusal to run under `sh`, and since 0.56.1 a name that turns private after the check and is refused at the connection. Since 0.57.0 it also covers a `git` entry held to the addresses its check found, with no redirect followed, and the refusal of a git older than 2.31. The same release added tests for a confidential entry's records kept out of the committed lock, the run's time limit, and the pypdf the script's header pins.[^test_ingest.py]
 - `test_layouts.py`: the librarian wrapper, the librarian, registrar and release workflows, and the `just lokf-link` recipe, with and without the doorway link (formerly `scripts/test-sidecar-layouts.sh`).
 - `test_preflight.py`: `knowledge-preflight.sh`, and each sidecar script's refusal to run under `sh` (check 12).
 - `test_prose_check.py`: `prose-check.py` (check 18).
@@ -106,7 +116,7 @@ The tests run the scripts under `skills/ktl-sidecar/templates/`, `skills/ktl-pro
 - `test_report.py`: `knowledge-report.sh` and the curator's queue (checks 20 and 20a).
 - `test_sync.py`: `knowledge-sync.sh` on a stand-in for the skills repository at two tags and a host at the first, and `scripts/sync-sidecar.sh`, which runs each sibling's own copy, and its `--finish`. It also checks that the report calls a copy a pin bump only when its `uses:` lines are all that differ (0.50.1). Since 0.53.0 it also tests `--apply`, which holds every workflow change but the pin and takes the pin from the caller, not from the patch. `--apply` refuses a deletion, a link, a path a sync may not touch, a copy inside a `.git` folder and a dirty checkout. Since 0.55.1 a host with a site gets the site templates, a route named with brackets included.
 - `test_website_preflight.py`: `website-preflight.sh` on this repository and on a bare directory, and its refusal to run under `sh`; check 12w keeps the rows its lines need.
-- `test_website_template.py`: the ktl-website templates installed on a temporary host, with no placeholder left, and the three files a host owns named alike in the skill's page, its preflight, the contract and the sidecar's `knowledge-sync.sh`. Since 0.53.0 it also checks that raw HTML passes only as GitHub renders it, and that the Markdown plugin checks raw HTML on every page. Since 0.56.0 it checks `DOCS.exclude`, a docs page's address as Starlight gives it, the redirects `REDIRECTS` writes, and that the site's host is lowercased for an owner spelt with capitals.
+- `test_website_template.py`: the ktl-website templates installed on a temporary host, with no placeholder left, and the three files a host owns named alike in the skill's page, its preflight, the contract and the sidecar's `knowledge-sync.sh`. Since 0.53.0 it also checks that raw HTML passes only as GitHub renders it, and that the Markdown plugin checks raw HTML on every page. Since 0.56.0 it checks `DOCS.exclude`, a docs page's address as Starlight gives it, the redirects `REDIRECTS` writes, and that the site's host is lowercased for an owner spelt with capitals. Since 0.57.0 it checks that the home page offers a Schema button when the site shows the schema's pages.[^test_website_template.py]
 
 Every subprocess runs under an isolated git config, so a global `commit.gpgsign=true` signs no fixture commit, and under a temporary directory of pytest's own. A layout test that needs `just`, `jq`, `node`, `zip` or `unzip` skips and says so when the tool is missing. The conventions tests fail, rather than skip, when uv is missing.
 
@@ -115,7 +125,14 @@ Every subprocess runs under an isolated git config, so a global `commit.gpgsign=
 - `lint-scripts` runs ShellCheck on the whole tree.
 - `lint-workflows` runs `actionlint`, pointed by path at this repository's workflows and at the workflow templates that get copied into other repositories: the sidecar's `knowledge-librarian.yaml`, `knowledge-registrar.yaml`, `knowledge-release.yaml`, `knowledge-federation.yaml` (since 0.44.0), `knowledge-sync.yaml` and, since 0.56.1, `knowledge-ingest.yaml`, and ktl-website's `knowledge-website.yaml`. It would otherwise look only under `.github/workflows/`. It ignores the `copilot-requests` permission, which actionlint 1.7.12 predates. The job also checks that every `uses:` in this repository's workflows and those templates names a commit SHA or image digest rather than a floating tag or branch.
 - `smoke-test` installs the skills from the checkout into a throwaway consumer repository through `scripts/smoke-test-install.sh`. It checks that ktl-docent's two scripts come with the install. It also checks that, run from where the installer put them, they label a concept and record a gap in a reader's repository.
-- `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, twice. One build has a README, a docs page, a changelog, the schema's pages and the data, and since 0.56.0 the redirects a retired mkdocs site needs and a folder `DOCS.exclude` keeps off the site. The other has none of them. This repository's own site, which `knowledge-website.yaml` builds, proves the fuller configuration.
+- `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, twice. One build has a README, a docs page, a changelog, the schema's pages and the data, and since 0.56.0 the redirects a retired mkdocs site needs and a folder `DOCS.exclude` keeps off the site. The other has none of them. Since 0.57.0 the fuller build's home page offers the schema's pages as a button, and the other's offers none.[^smoke-test-website.sh] This repository's own site, which `knowledge-website.yaml` builds, proves the fuller configuration.
 - `validate-markdown` runs markdownlint, lychee, and codespell. Codespell skips `knowledge_bundle`, the link to `.lokf/knowledge`, which it already checks at its real path.
 
 The schedule runs weekly because otherwise link rot, an upstream `gh skill` change or drift in the install path would show up only on the next pull request that happens to run.
+
+[^changelog.md]: CHANGELOG.md, 0.57.0 and 0.58.0
+[^test_docent_holdout.py]: tests/test_docent_holdout.py, the module's docstring
+[^test_federation.py]: tests/test_federation.py, the private-address and proxy tests
+[^test_ingest.py]: tests/test_ingest.py, the tests added in 0.57.0
+[^test_website_template.py]: tests/test_website_template.py, the home page's buttons
+[^smoke-test-website.sh]: scripts/smoke-test-website.sh, the home page's assertions

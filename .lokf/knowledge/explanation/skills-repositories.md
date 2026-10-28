@@ -7,6 +7,7 @@ genre: explanation
 resource: docs/skills-repositories.md
 sources:
   - resource: docs/skills-repositories.md
+    id: docs-skills-repositories.md
   - resource: skills/ktl-librarian/references/agent-skills.md
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
@@ -17,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-28T00:35:16Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:02:36Z"
@@ -42,7 +43,7 @@ KTL helps with the knowledge around a repository's skills, and leaves the skills
 
 # Evidence
 
-The page reports two runs. This repository has kept a bundle since 9 September 2026. Each of its six skills has a `Playbook` concept that summarises the `SKILL.md` at a third to a half of its length and adds typed relations to the other skills. The ktl-librarian concept cites eleven sources, so almost any commit to the skill puts it back on the work list, and each of its three confirmations was overtaken by the next derivation. Five of the eight captured docent answers in `docs/examples/docent.md` are about the skills. Collections move at different speeds: in `anthropics/skills`, most `SKILL.md` files changed one to four times in the ten months to October 2026, so there most confirmations would hold.
+The page reports two runs. This repository has kept a bundle since 9 September 2026. Each of its six skills has a `Playbook` concept that summarises the `SKILL.md` at a third to a half of its length and adds typed relations to the other skills. The ktl-librarian concept cites eighteen sources, so almost any commit to the skill puts it back on the work list, and each of its four confirmations was overtaken by the next derivation.[^docs-skills-repositories.md] Five of the eight captured docent answers in `docs/examples/docent.md` are about the skills. Collections move at different speeds: in `anthropics/skills`, most `SKILL.md` files changed one to four times in the ten months to October 2026, so there most confirmations would hold.
 
 The second run used a clone of `anthropics/skills` at commit `683bc88` of 5 October 2026. The librarian derived 27 draft concepts: one `Playbook` for each of the 19 skills, and eight more. Every check passed on the first apply. The docent then named the expected skill for each of ten questions, in five and a half minutes. Every concept read *nobody has checked this yet, still a draft*, so the docent opened each skill's `SKILL.md` before it answered, as its rules say for an unchecked concept. A control agent given only the skills' `name` and `description` answered the same ten correctly in 28 seconds. So on that collection the bundle did not route better than the descriptions do, and what it added was the detail the descriptions leave out. On a collection whose descriptions were weaker, or a project whose concepts carry relations the frontmatter cannot hold, the bundle has more to add.
 
@@ -77,3 +78,5 @@ The page lists designs, not features. Each would extend KTL's checks from what t
 - the excerpt check, once the `sources[].excerpt` field proposed for LOKF 0.9.0 is released.
 
 That is a condition check, the work a museum gives its conservator rather than its librarian. If KTL takes these on, they belong to a new role.
+
+[^docs-skills-repositories.md]: docs/skills-repositories.md, *What two runs showed*

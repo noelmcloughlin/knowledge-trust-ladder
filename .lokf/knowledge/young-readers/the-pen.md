@@ -16,7 +16,7 @@ tags:
   - audience-13-18
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-10-28T00:35:16Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -40,6 +40,8 @@ ktl-librarian never edits a file under `.lokf/knowledge/` by hand. It describes 
 - It stamps `generated` from the clock.
 - It keeps a concept's `description` equal to its two index bullets.
 - It files each line in `log.md`.
+- It runs `lokf validate` on every concept a patch would write, when `.lokf/.venv` holds the toolkit. It does this with `--dry-run` too.
+- It moves a feedback entry the librarian handled into `.lokf/questions.md`. A patch handles ten entries at most.
 
 # What does the pen refuse?
 
@@ -50,6 +52,16 @@ The pen refuses:
 - the deletion of a concept a person confirmed or left a note on.
 
 It also refuses a patch that would add, change or remove a person's record. That record is a `human:` event or a person's note.
+
+# What happens in the scheduled run?
+
+In the scheduled run, the wrapper applies the patch file after the agent has finished. It refuses a run in which the agent changed any other file.
+
+In the agent's step, the pen only checks the patch. The wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`. So a run without `--dry-run` writes nothing, and it leaves the patch file for the wrapper.
+
+# What can the librarian tell the reviewer?
+
+A patch may also carry `handoff`. These are up to ten lines for the person reviewing the change, in the librarian's own words. The pen holds each one to one line of printable text, and writes none of them to the bundle. The scheduled pull request shows them under *From the librarian*.
 
 # Who else writes the bundle?
 

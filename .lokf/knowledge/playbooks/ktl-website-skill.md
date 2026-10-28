@@ -8,6 +8,7 @@ resource: skills/ktl-website/SKILL.md
 sources:
   - resource: skills/ktl-website/SKILL.md
   - resource: skills/ktl-website/references/customising.md
+    id: customising.md
   - resource: skills/ktl-website/references/deploy.md
   - resource: skills/ktl-website/references/inputs.md
   - resource: skills/ktl-website/references/prerequisites.md
@@ -16,6 +17,7 @@ sources:
   - resource: .github/workflows/validate.yml
   - resource: docs/architecture.md
   - resource: CHANGELOG.md
+    id: changelog.md
   - resource: skills/ktl-website/scripts/website-preflight.sh
   - resource: skills/ktl-website/templates/website/site.config.mjs
 dependsOn:
@@ -29,7 +31,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-10-28T00:35:16Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -71,6 +73,8 @@ Since 0.54.0 (2026-10-20, `CHANGELOG.md`) the graph page keeps the graph at full
 
 Since 0.56.1 (`CHANGELOG.md`) a concept's card, its link preview and its social card give the genre beside the type as a plain tag. A genre that repeats the type is left off, and search gains a Genre filter. A type is worded as the bundle's prose spells it, so `SlsaSourceControlSystem` reads "SLSA source control system" on every card and in relation names. The site's host is lowercased, as Astro writes it, so an owner spelt with capitals passes the link check. A page the browser kept from before a deploy reloads once when the deploy removed its stylesheet.
 
+Since 0.57.0 the home page offers a Schema button when the site shows the LinkML schema's pages.[^changelog.md] With `HOME.actions` unset, the buttons are then Browse the bundle, Architecture when the docs folder has `architecture.md`, Schema, Bundle health and Knowledge graph.[^customising.md]
+
 A release page links the repository, the docs and the bundle at the release's tag, which the `RELEASE_TAG` option names. A page and its retelling offer each other as reading levels: a `PAGES` entry's `retells` names the page it retells, and a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names.
 
 # Deployment
@@ -84,3 +88,6 @@ The variable goes under Repository variables, never on an environment, because t
 # In this repository
 
 This repository's own `website/` is the template's first copy, and `.github/workflows/knowledge-website.yaml` is the workflow's. The contract's check 11w holds every template byte-identical to its copy, apart from the three files the repository owns, and fails a tracked file under `website/` that has no template. The `smoke-test-website` job builds the template on a host made from the sidecar's dummy skeleton twice: once with a README, a docs page, a changelog, the schema's pages and the data, and once with none of them. The skill was added in 0.39.0 (2026-10-13), and 0.41.0 added the Schema topic, the data pages and the weekly run (2026-10-14, `CHANGELOG.md`).
+
+[^changelog.md]: CHANGELOG.md, 0.57.0
+[^customising.md]: skills/ktl-website/references/customising.md, the `HOME` row
