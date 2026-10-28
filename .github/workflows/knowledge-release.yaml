@@ -32,10 +32,10 @@ name: Knowledge Release
 # A release whose bundle and domain schema are unchanged gets no zip. `pack`
 # compares the bundle's git tree at this tag with its tree at the newest
 # other published release that carries a knowledge bundle, as a zip or as the
-# tarball earlier releases attached, and the domain schema's files the same
-# way. When both match, the run ends green with a notice and uploads nothing.
-# The `force` input of a manual run skips the comparison, for repairing a
-# release's assets.
+# tarball earlier releases attached. It compares the justfile's `schema :=`
+# line and the schema's files the same way. When both match, the run ends
+# green with a notice and uploads nothing. The `force` input of a manual run
+# skips the comparison, for repairing a release's assets.
 #
 # Two jobs, for least privilege. `pack` installs the lokf toolkit (third-party
 # packages), validates the bundle and builds the zip under a read-only
@@ -129,7 +129,7 @@ jobs:
           # The domain schema and the local files it imports in turn, as paths
           # in the repository. lokf.yaml is left out, because the released copy
           # imports it by name. Nothing is installed yet, so python3 reads the
-          # import lines as text, a block list or a flow list.
+          # import lines as text, whether a block list or a flow list.
           schema_files() {
             [ -n "$1" ] || return 0
             python3 -I - "$1" <<'PY'
@@ -175,7 +175,8 @@ jobs:
           gh release view "$TAG" --json tagName --jq .tagName >/dev/null \
             || { echo "::error::No release exists for tag $TAG. Create the release first, then run this workflow again."; exit 1; }
           read -r tree path < <(bundle_tree "$TAG") || { echo "::error::No bundle folder at $TAG"; exit 1; }
-          # Read whole, since a process substitution would hide a failure.
+          # A command substitution stops the step when schema_files fails,
+          # where a process substitution would hide the failure.
           schema="$(schema_at "$TAG")"
           list="$(schema_files "$schema")" \
             || { echo "::error::The domain schema $schema, or a file it imports, could not be read at $TAG"; exit 1; }
@@ -299,13 +300,16 @@ jobs:
       # bundle with LOKF's own lokf.yaml, so the released copy must import
       # LOKF core by the name `lokf`. A linkml-sidecar schema imports it by a
       # relative path to .lokf/lokf.yaml, and the step rewrites that one import
-      # in the copy. Any other local file would not resolve beside the bundle,
-      # so a schema that imports one, such as a host's composite of two
-      # `lokf adapt` copies, is released with each such file merged into it.
-      # The merge writes out every merged element's IRI, so the graph is the
-      # same. It stops on a name two files define differently, since LinkML
-      # would keep the last one without a word, and on an import from outside
-      # the repository, as it stops on such a schema.
+      # in the copy.
+      #
+      # Any other local file would not resolve beside the bundle, so a schema
+      # that imports one, such as a host's composite of two `lokf adapt`
+      # copies, is released with each such file merged into it. The merge
+      # writes out every merged element's IRI and carries each file's
+      # settings, so the copy validates and projects as the composite does.
+      # It stops on a name two files define differently, since LinkML would
+      # keep the last one without a word. It also stops on an import from
+      # outside the repository.
       - name: Pack the domain schema
         if: steps.compare.outputs.changed == 'true'
         env:
@@ -374,11 +378,11 @@ jobs:
 
           def pin_iris(part):
               # An element takes its IRI from the default prefix of the schema
-              # that defines it, a prefix name or an IRI, or from the schema's
-              # id when it has none. Merged, it would take this file's, so each
-              # IRI is written out first, as LinkML's SchemaLoader derives it.
-              # Each element is copied, so two that a YAML alias shares get an
-              # IRI each.
+              # that defines it, which is a prefix name or an IRI, or from the
+              # schema's id when it has none. Once merged, it would take this
+              # file's, so each IRI is written out first, as LinkML's
+              # SchemaLoader derives it. Each element is copied, so two that a
+              # YAML alias shares get an IRI each.
               prefix = str(part.get("default_prefix") or "")
               if not prefix:
                   prefix = str(part.get("id", ""))
