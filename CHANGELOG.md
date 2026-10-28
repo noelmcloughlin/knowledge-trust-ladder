@@ -10,6 +10,13 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **A host's composite domain schema is released as one file.** A schema that imports `lokf adapt` copies beside `lokf.yaml` is attached with each copy merged in, keeping every IRI and setting, and a name two files define differently stops the release.
 
+### Changed
+
+- **The sidecar requires lokf 0.9.0.** A host raises the floor in `.lokf/pyproject.toml` by hand, since the sync leaves that file alone, refreshes `.lokf/lokf.yaml`, runs `uv lock`, and renames any `supporting_text` key to `excerpt`.
+- **The skills describe `revision`, `excerpt` and `lokf adapt` as released**, and the audit fallback links `lokf.yaml` at the v0.9.0 commit.
+- **A domain build still indexes a member's explicit ids outside its namespace.** lokf 0.9.0 refuses them unless the registrant allows them, and a person's confirmation admits each member, so the build allows them; lokf still refuses one in another member's namespace.
+- **The reliance count follows `isReplacedBy`**, the relation slot lokf 0.9.0 adds.
+
 ### Fixed
 
 - **A release that changes only the domain schema attaches it.** The compare step looked at the bundle's tree alone, so such a release uploaded nothing. It now compares the `schema :=` line, the schema and the local files the schema imports too.

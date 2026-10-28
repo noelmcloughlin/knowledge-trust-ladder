@@ -12,7 +12,7 @@ description = "LOKF knowledge-bundle tooling for <PROJ_NAME>."
 # Keep in sync with the `lokf` toolkit's own requires-python floor.
 requires-python = ">=3.10"
 dependencies = [
-    "lokf[build]>=0.8.0",
+    "lokf[build]>=0.9.0",
     # The recipe runner the workflows use, pinned here so uv.lock checks it
     # by hash; keep the version in step with the workflows' uvx fallback.
     "rust-just==1.47.0",

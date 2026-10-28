@@ -12,9 +12,9 @@ Create a fresh **`.lokf/` sidecar** inside the repository this skill is invoked 
 > Sources: lokf.nolan-nichols.com is the canonical site for what LOKF *means*
 > (spec, Golden Rules). The tooling this skill installs comes from the
 > [`lokf` PyPI package](https://pypi.org/project/lokf/). With no Python, the
-> fallback (Step 4) is the raw schema from the commit tagged `v0.8.0`, which
+> fallback (Step 4) is the raw schema from the commit tagged `v0.9.0`, which
 > matches `templates/pyproject.toml`'s floor:
-> <https://raw.githubusercontent.com/nicholsn/lokf/66073c3eb8b8ca6ca00fb66ba11beca235eaedc8/lokf.yaml>.
+> <https://raw.githubusercontent.com/nicholsn/lokf/eab5fe35b99e154bec9aabc03656446b891311f8/lokf.yaml>.
 > The URL never names a tag or `main`: a tag can be moved, and `main` can be
 > ahead of the toolkit. Cite each for its own role in generated docs.
 

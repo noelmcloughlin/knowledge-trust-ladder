@@ -86,7 +86,7 @@ A `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or docum
 - **A URL**: the `ETag` header if the server sends one, else `sha256:` plus the digest of the body you quoted from (`curl -sL <url> | sha256sum`; `shasum -a 256` on macOS). Prefer the ETag: a digest of a page that changes on every fetch cannot later tell "the source moved" from "the page is dynamic".
 - **Several `sources`**: the `resource`'s revision only.
 
-Quote it always, like `at`. An all-digit commit id is otherwise read as a number and fails `lokf validate`, and an ETag carries its own double quotes (`revision: 'W/"33a64df5"'`). Leave the key out rather than guess, and leave it out where the toolkit rejects it. Every released version does, since the field is proposed for lokf 0.9.0 and not yet released (`uv run lokf --version` in `.lokf/`).
+Quote it always, like `at`. An all-digit commit id is otherwise read as a number and fails `lokf validate`, and an ETag carries its own double quotes (`revision: 'W/"33a64df5"'`). Leave the key out rather than guess, and leave it out where the toolkit rejects it: every version before lokf 0.9.0 does (`uv run lokf --version` in `.lokf/`).
 
 If the body has an `## Open questions` section and the person says those are answered, delete the section. Otherwise leave it. The report lists apart each question dated no later than this person's earlier confirmation: it looks answered, so ask, and clear it only on their word.
 
