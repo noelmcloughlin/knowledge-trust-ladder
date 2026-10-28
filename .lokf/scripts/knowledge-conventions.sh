@@ -143,11 +143,11 @@
 # frontmatter to a body and to log.md, so the Python half checks them too.
 #
 # This script runs the Python half with the sidecar's .venv when the .venv
-# holds pyyaml and is Python 3.9 or later. Otherwise it runs the Python half
-# through `uv run`. knowledge-apply.sh says why the .venv is tried first.
-# Without either runner, the shell half still runs and says so. A runner that
-# cannot start the Python half, such as `uv run` refused by a package mirror,
-# is reported as a runner failure, not as a finding, and the script exits 2.
+# holds pyyaml and is Python 3.9 or later, and otherwise through `uv run`
+# after uv_ready. knowledge-apply.sh explains both. Without uv, the shell
+# half still runs and says so. When uv cannot install the packages, or a
+# runner cannot start the Python half, the script reports a runner failure,
+# not a finding, and exits 2.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
@@ -316,18 +316,45 @@ here="$(dirname "$0")"
 py="$here/knowledge-conventions.py"
 rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17"
 [ -z "$since" ] || rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16 and 17"
+uvflags=(); uverr=""; uvhint="Run uv sync in .lokf/ to pin them by hash."
+uv_ready() {
+  local err names name again unpinned lifted=""
+  command -v uv >/dev/null 2>&1 || return 1
+  uv sync --offline --quiet --script "$1" >/dev/null 2>&1 && return 0
+  until err="$(uv sync --color never --script "$1" ${uvflags[@]+"${uvflags[@]}"} 2>&1 >/dev/null)"; do
+    names="$(printf '%s\n' "$err" | sed -n 's/^warning: \([^ ]*\) is missing an upload date.*/\1/p' | tr -d '\140' | sed 's/-[0-9].*//' | tr '[:upper:]' '[:lower:]' | tr '_.' '--' | sort -u)"
+    again=""; unpinned=""
+    for name in $names; do
+      case " $lifted " in *" $name "*) again=1 ;; esac
+      case "$name" in *[!a-z0-9-]*) unpinned="$unpinned $name"; continue ;; esac
+      grep -qiE "^# dependencies = .*\"${name//-/[-_.]}==" "$1" || unpinned="$unpinned $name"
+    done
+    if [ -z "$names" ] || [ -n "$again$unpinned" ]; then
+      uverr="$(printf '%s\n' "$err" | grep -v ' is missing an upload date' || true)"
+      [ -z "$unpinned" ] || uverr+=$'\n'"${0##*/}: the package index serves no upload times for$unpinned, which the script's header does not pin with ==, so exclude-newer stays."
+      return 1
+    fi
+    for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
+  done
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. $uvhint" >&2
+  return 0
+}
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
 runner=""
+skipped=""; unrun=0
 if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
   runner="$venv"
-elif command -v uv >/dev/null 2>&1; then
+elif uv_ready "$py"; then
   runner=uv
+elif command -v uv >/dev/null 2>&1; then
+  unrun=1
+  [ -z "$uverr" ] || printf '%s\n' "$uverr" >&2
+  echo "$rules not checked: uv could not run $py, because it could not install its packages. Run uv sync in .lokf/ and this script uses that .venv." >&2
 fi
-skipped=""; unrun=0
 if [ -n "$runner" ]; then
   rc=0
   if [ "$runner" = uv ]; then
-    out="$(uv run --quiet "$py" "$bundle" ${since:+--since "$since"} 2>&1)" || rc=$?
+    out="$(uv run --quiet ${uvflags[@]+"${uvflags[@]}"} "$py" "$bundle" ${since:+--since "$since"} 2>&1)" || rc=$?
   else
     out="$("$runner" "$py" "$bundle" ${since:+--since "$since"} 2>&1)" || rc=$?
   fi
@@ -342,7 +369,7 @@ if [ -n "$runner" ]; then
        [ "$runner" = uv ] && hint=" Behind a package mirror, run uv sync in .lokf/ and this script uses that .venv."
        echo "$rules not checked: $runner could not run $py (exit $rc).$hint" >&2 ;;
   esac
-else
+elif [ "$unrun" -eq 0 ]; then
   skipped="$rules not checked: uv not found"
   echo "$skipped - install uv, or run $py directly with python3 3.9 or later and pyyaml" >&2
 fi

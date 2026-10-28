@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.9"
-# dependencies = ["pyyaml==6.0.3", "pypdf==6.21.2"]
+# dependencies = ["pyyaml==6.0.3", "pypdf==6.21.2", "typing-extensions==4.16.0; python_version < '3.11'"]
 # [tool.uv]
 # exclude-newer = "2026-10-22T00:00:00Z"
 # ///
@@ -82,8 +82,11 @@
 # manifest or an argument before any write; 2 a tool is missing.
 #
 # The dependency block names one pypdf release, and `exclude-newer` takes no
-# file uploaded after its date. pypdf reads PDFs from outside the repository,
-# so when a release fixes a flaw in it, move both.
+# file uploaded after its date. Before Python 3.11, pypdf needs
+# typing-extensions, so the block pins that too. Behind a mirror with no
+# upload times, the shell half lifts the date only for a pinned package.
+# When a release fixes a flaw in pypdf, which reads PDFs from outside the
+# repository, move the pins and the date together.
 """The ingest: knowledge outside the repository, mirrored into it."""
 
 from __future__ import annotations

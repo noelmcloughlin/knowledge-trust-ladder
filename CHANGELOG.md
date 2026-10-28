@@ -4,6 +4,15 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **ktl-sidecar installs the ingest's example manifest as `.lokf/ingest.yaml.sample`**, for a host to copy to `.lokf/ingest.yaml`.
+
+### Fixed
+
+- **The pen, the conventions check and the ingest run behind a package mirror with no upload times.** They lift `exclude-newer` only for a pinned package that uv reports without an upload date, and the ingest pins typing-extensions too.
+- **A uv that cannot install a script's packages no longer reads as findings.** The conventions check exits 2, the pen falls back to python3 or exits 2, and the ingest falls back to a `.venv` without pypdf.
+
 ## [0.58.0] - 2026-10-27
 
 ### Added

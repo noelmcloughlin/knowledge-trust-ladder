@@ -1,9 +1,11 @@
+# Sourced from: ktl-sidecar/templates/ingest.yaml
 # What the ingest mirrors from outside this repository. knowledge-ingest.sh
 # reads this file, fetches each entry, converts it to Markdown and writes it
 # under .lokf/mirror/<entry id>/; ingest.lock.yaml records what was fetched.
 # No token goes here: an auth block names environment variables starting
 # KNOWLEDGE_INGEST_, and the workflow hands over the secrets of those names.
-# Replace the examples with your own, or delete this file to mirror nothing.
+# Copy .lokf/ingest.yaml.sample to .lokf/ingest.yaml and replace the examples.
+# The ingest reads only .lokf/ingest.yaml, and mirrors nothing without it.
 # An entry taken out of this file loses its mirror folder on the next run.
 
 ingest_version: "1"

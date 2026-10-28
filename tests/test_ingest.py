@@ -90,7 +90,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import REPO, SCRIPTS, TEMPLATES, Git, has_line, matches, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, Git, has_line, matches, mirror_uv, read, run, write
 
 INGEST = SCRIPTS / "knowledge-ingest.sh"
 INGEST_PY = SCRIPTS / "knowledge-ingest.py"
@@ -1936,7 +1936,7 @@ def venv_python(root, refuse=""):
 
 def failing_uv(tmp_path):
     """A PATH whose uv fails as uv does behind a package mirror that serves no upload times."""
-    uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 2\n")
+    uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 1\n")
     uv.chmod(0o755)
     return f"{uv.parent}:{os.environ['PATH']}"
 
@@ -1954,8 +1954,32 @@ def test_a_venv_without_pypdf_leaves_the_ingest_to_uv(tmp_path):
     root = tmp_path / "repo"
     (root / ".lokf" / "knowledge").mkdir(parents=True)
     venv_python(root, refuse="pypdf")
+    path, log = mirror_uv(tmp_path)
+    result = run(["bash", INGEST, "--root", root], env={"PATH": path})
+    assert "no manifest" in result.out and any(line.startswith("run ") for line in read(log).split("\n")), f"the ingest chose a .venv without pypdf over uv: {result.out}"
+
+
+def test_a_uv_that_cannot_install_pypdf_leaves_the_ingest_to_a_venv_without_it(tmp_path):
+    """A uv that cannot resolve the header is not retried; the .venv reads every source but a PDF, and the run says so."""
+    root = tmp_path / "repo"
+    (root / ".lokf" / "knowledge").mkdir(parents=True)
+    venv_python(root, refuse="pypdf")
     result = run(["bash", INGEST, "--root", root], env={"PATH": failing_uv(tmp_path)})
-    assert "No solution" in result.out, f"the ingest chose a .venv without pypdf over uv: {result.out}"
+    assert "no manifest" in result.out and "this run refuses each PDF" in result.out, f"the ingest did not fall back to the .venv: {result.out}"
+
+
+def test_behind_a_mirror_without_upload_times_the_ingest_lifts_the_date_round_by_round(tmp_path):
+    """The date is lifted for each package uv names, round by round, and for no other."""
+    root = tmp_path / "repo"
+    (root / ".lokf" / "knowledge").mkdir(parents=True)
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz", "pypdf-6.21.2-py3-none-any.whl", "typing_extensions-4.16.0-py3-none-any.whl")
+    result = run(["bash", INGEST, "--root", root], env={"PATH": path})
+    assert "no manifest" in result.out, f"the ingest did not run behind the mirror: {result.out}"
+    assert "exclude-newer is lifted for pyyaml pypdf typing-extensions." in result.out, f"the ingest did not name each package whose date it lifted: {result.out}"
+    assert "Run uv add pypdf in .lokf/" in result.out, f"the ingest's hint did not name pypdf, which uv sync in .lokf/ does not install: {result.out}"
+    runs = [line for line in read(log).split("\n") if line.startswith("run ")]
+    flags = re.findall(r"--exclude-newer-package (\S+)", runs[0]) if runs else []
+    assert flags == ["pyyaml=false", "pypdf=false", "typing-extensions=false"], f"uv run did not get exactly the lifted packages: {read(log)}"
 
 
 def test_without_uv_a_venv_without_pypdf_still_runs_the_ingest(tmp_path):

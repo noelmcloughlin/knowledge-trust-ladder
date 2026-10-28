@@ -115,7 +115,7 @@ jobs:
             exit 1
           fi
           if [ ! -f .lokf/ingest.yaml ]; then
-            echo "::notice::No .lokf/ingest.yaml here, so there is nothing to mirror. The sidecar's templates/ingest.yaml is the shape."
+            echo "::notice::No .lokf/ingest.yaml here, so there is nothing to mirror. Copy .lokf/ingest.yaml.sample to start; ktl-sidecar's repair adds the sample where it is missing."
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi

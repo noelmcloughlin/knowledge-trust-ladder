@@ -41,7 +41,7 @@ import sys
 
 import pytest
 
-from conftest import SCRIPTS, bash, esc, has_line, matches, read, today_utc, tree_digest, write
+from conftest import SCRIPTS, bash, esc, has_line, matches, mirror_uv, read, today_utc, tree_digest, write
 
 APPLY = SCRIPTS / "knowledge-apply.sh"
 
@@ -1437,10 +1437,81 @@ def test_the_sidecar_venv_runs_the_pen_before_uv(tmp_path):
     for name in ("knowledge-apply.sh", "knowledge-apply.py"):
         write(scripts / name, (SCRIPTS / name).read_text(encoding="utf-8"))
     write(tmp_path / ".lokf" / ".venv" / "bin" / "python", f'#!/bin/sh\nexec "{sys.executable}" "$@"\n').chmod(0o755)
-    uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 2\n")
+    uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 1\n")
     uv.chmod(0o755)
     result = bash(scripts / "knowledge-apply.sh", "--format", env={"PATH": f"{uv.parent}{os.pathsep}{os.environ['PATH']}"})
     assert result and "ops:" in result.out, f"the pen did not run from the sidecar's .venv: {result.out}"
+
+
+def test_behind_a_mirror_without_upload_times_the_pen_lifts_the_date_and_keeps_the_pin(tmp_path):
+    """uv drops every file it cannot date, so the pen lifts exclude-newer for the package uv names, and says so."""
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz")
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": path})
+    assert result and "ops:" in result.out, f"the pen did not run behind the mirror: {result.out}"
+    assert "exclude-newer is lifted for pyyaml. The versions stay pinned" in result.out, f"the pen did not say it lifted the date: {result.out}"
+    runs = [line for line in read(log).split("\n") if line.startswith("run ")]
+    assert runs and "--exclude-newer-package pyyaml=false" in runs[0], f"uv run did not get the lifted date: {read(log)}"
+
+
+def test_a_uv_that_cannot_install_pyyaml_is_not_a_finding(tmp_path):
+    """uv exits 1 when it cannot resolve, the pen's exit for findings; a failure with no missing upload date is not retried."""
+    fakebin = tmp_path / "fakebin"
+    write(fakebin / "uv", "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 1\n").chmod(0o755)
+    write(fakebin / "python3", "#!/bin/sh\nexit 1\n").chmod(0o755)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": f"{fakebin}{os.pathsep}{os.environ['PATH']}"})
+    assert result.rc == 2, f"the pen did not exit 2 when uv could not install pyyaml: {result.rc} {result.out}"
+    assert "No solution found" in result.out and "nothing was written" in result.out, f"the pen did not show uv's error: {result.out}"
+
+
+def test_a_uv_that_cannot_install_pyyaml_leaves_the_pen_to_python3_and_says_so(tmp_path):
+    """python3's own PyYAML is a release no pin holds, so the run says it fell back."""
+    fakebin = tmp_path / "fakebin"
+    write(fakebin / "uv", "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 1\n").chmod(0o755)
+    write(fakebin / "python3", f'#!/bin/sh\nexec "{sys.executable}" "$@"\n').chmod(0o755)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": f"{fakebin}{os.pathsep}{os.environ['PATH']}"})
+    assert result and "ops:" in result.out, f"the pen did not run with python3: {result.out}"
+    assert "so this run uses python3's own" in result.out, f"the pen did not say it fell back to python3: {result.out}"
+
+
+def test_a_complete_script_environment_runs_the_pen_with_the_index_down(tmp_path):
+    """uv_ready tries offline first, so a script environment already built needs no index."""
+    path, log = mirror_uv(tmp_path, ready=True)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": path})
+    assert result and "ops:" in result.out, f"the pen did not run with the index down: {result.out}"
+    syncs = [line for line in read(log).split("\n") if line.startswith("sync ")]
+    assert syncs and all("--offline" in line for line in syncs), f"the pen asked the index although the environment was complete: {read(log)}"
+
+
+def test_forced_colour_does_not_hide_the_missing_upload_date(tmp_path):
+    """With FORCE_COLOR set, uv colours each warning, and a coloured warning names no package."""
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz")
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": path, "FORCE_COLOR": "1"})
+    assert result and "exclude-newer is lifted for pyyaml." in result.out, f"the pen did not lift the date with FORCE_COLOR set: {result.out}"
+
+
+def test_a_file_name_in_backticks_still_names_its_package(tmp_path):
+    """uv 0.13 puts the file name in backticks, and earlier releases do not."""
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz", ticks=True)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": path})
+    assert result and "exclude-newer is lifted for pyyaml." in result.out, f"the pen did not read a file name in backticks: {result.out}"
+
+
+def test_the_pen_lifts_no_date_for_a_package_its_header_does_not_pin(tmp_path):
+    """No pin holds such a package, so the mirror could serve any version of it. Its date stays, and the pen exits 2."""
+    path, log = mirror_uv(tmp_path, "other_pkg-1.0-py3-none-any.whl")
+    write(tmp_path / "mirrorbin" / "python3", "#!/bin/sh\nexit 1\n").chmod(0o755)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": path})
+    assert result.rc == 2 and "other-pkg, which the script's header does not pin" in result.out, f"the pen did not refuse to lift an unpinned package: {result.rc} {result.out}"
+    assert "other-pkg=false" not in read(log), f"the pen lifted the date of a package its header does not pin: {read(log)}"
+
+
+def test_the_pen_stops_when_a_lifted_date_changes_nothing(tmp_path):
+    """A uv that warns again about a package already lifted is not retried round after round."""
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz", ignores_lift=True)
+    write(tmp_path / "mirrorbin" / "python3", "#!/bin/sh\nexit 1\n").chmod(0o755)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": path})
+    online = [line for line in read(log).split("\n") if line.startswith("sync ") and "--offline" not in line]
+    assert result.rc == 2 and len(online) == 2, f"the pen retried a lift that changed nothing: {result.rc} {read(log)}"
 
 
 def recording_lokf(root, say, rc):
