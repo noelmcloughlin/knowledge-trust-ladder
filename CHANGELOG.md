@@ -8,6 +8,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **ktl-sidecar installs the ingest's example manifest as `.lokf/ingest.yaml.sample`.** A host that mirrors sources outside its repository copies it to `.lokf/ingest.yaml`, instead of finding `templates/ingest.yaml` in the skill.
 
+### Fixed
+
+- **The pen, the conventions check and the ingest run behind a package mirror that serves no upload times.** Without `.lokf/.venv`, uv dropped every file there and each script failed; each now lifts the `exclude-newer` date for the packages uv says have no upload date, keeps the pinned versions, and says so.
+- **A uv that cannot install a script's packages is no longer read as findings.** uv exits 1 when it cannot resolve, the exit the pen and the conventions check use for findings; both now exit 2, and the ingest falls back to a `.venv` without pypdf.
+
 ## [0.58.0] - 2026-10-27
 
 ### Added

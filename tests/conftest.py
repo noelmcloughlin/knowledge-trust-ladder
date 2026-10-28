@@ -32,6 +32,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -164,6 +165,35 @@ def matches(text: str, pattern: str) -> bool:
 def replace_in(path: Path, old: str, new: str) -> None:
     """sed -i 's/old/new/': every occurrence, in place."""
     write(path, read(path).replace(old, new))
+
+
+def mirror_uv(tmp_path: Path, *missing: str) -> tuple[str, Path]:
+    """A PATH whose uv resolves as uv does on a package index that serves no upload times, and the file that logs its calls.
+
+    Each name in `missing` is a file uv warns "is missing an upload date", one
+    a round, as uv names a dependency's own dependency only once its parent
+    resolves, until the shell half passes --exclude-newer-package <package>=false
+    for it. Then `uv sync --script` succeeds and `uv run` runs the script with
+    this interpreter. With no names, it is a uv that resolves at once.
+    """
+    log = tmp_path / "mirrorbin" / "uv-calls.txt"
+    rounds = ""
+    for name in missing:
+        package = re.sub(r"[_.]", "-", re.sub(r"-[0-9].*", "", name).lower())
+        rounds += (
+            f'case " $* " in *" {package}=false "*) ;; *)\n'
+            f'  echo "warning: {name} is missing an upload date, but user provided: 2025-10-01T00:00:00Z" >&2\n'
+            '  echo "  x No solution found when resolving script dependencies:" >&2\n'
+            "  exit 1 ;;\nesac\n"
+        )
+    fake = write(
+        tmp_path / "mirrorbin" / "uv",
+        f'#!/bin/sh\necho "$*" >> "{log}"\n{rounds}[ "$1" = sync ] && exit 0\nshift\n'
+        'while [ $# -gt 0 ]; do case "$1" in --quiet) shift ;; --exclude-newer-package) shift 2 ;; *) break ;; esac; done\n'
+        f'exec "{sys.executable}" "$@"\n',
+    )
+    fake.chmod(0o755)
+    return f"{fake.parent}{os.pathsep}{os.environ['PATH']}", log
 
 
 def tree_digest(root: Path, skip=("patch.yaml",)) -> str:

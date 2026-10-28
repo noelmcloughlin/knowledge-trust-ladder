@@ -9,11 +9,21 @@
 # script runs it with the sidecar's own .venv when that holds pyyaml, then
 # through `uv run` (the script's own header names pyyaml), then through
 # python3 where pyyaml is installed. The .venv comes first because `uv sync`
-# installed it from uv.lock, so a run needs no package index. An index that
-# serves no upload times, as a Nexus or Artifactory mirror often does, makes
-# `uv run` refuse every file the script's `exclude-newer` names. Each
-# interpreter must be Python 3.9 or later. On an enterprise host python3 is
-# often older, and the script would stop at its first line.
+# installed it from uv.lock, so a run needs no package index and each file is
+# checked by hash. Each interpreter must be Python 3.9 or later. On an
+# enterprise host python3 is often older, and the script would stop at its
+# first line.
+#
+# uv_ready asks uv to install the header's packages before anything runs, so
+# a resolver failure, which uv reports with exit 1, never reads as findings.
+# An index that serves no upload times, as a Nexus or Artifactory mirror
+# often does, makes `exclude-newer` drop every file, and uv warns that each
+# "is missing an upload date". Only then does uv_ready lift the date, for
+# the packages uv named and no others, round by round, since a dependency's
+# own dependency is named only once its parent resolves. The versions stay
+# as the header pins them. Any other failure is not retried. The function is
+# the same in knowledge-conventions.sh and knowledge-ingest.sh, and the
+# skills repository's contract holds the three equal.
 #
 # Usage: knowledge-apply.sh [--dry-run] [--keep] [--handoff <file>] [--root <repo-root>] [<patch-file>]
 #        knowledge-apply.sh --format
@@ -46,13 +56,30 @@ done
 py="$here/knowledge-apply.py"
 [ -f "$py" ] || { echo "knowledge-apply: $py is missing beside this script; run ktl-sidecar's repair path" >&2; exit 2; }
 usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; }
+uvflags=(); uverr=""
+uv_ready() {
+  local err names name lifted="" round=0
+  command -v uv >/dev/null 2>&1 || return 1
+  until err="$(uv sync --script "$1" ${uvflags[@]+"${uvflags[@]}"} 2>&1 >/dev/null)"; do
+    names="$(printf '%s\n' "$err" | sed -n 's/^warning: \([^ ]*\) is missing an upload date.*/\1/p' | tr -d '\140' | sed 's/-[0-9].*//' | tr '[:upper:]' '[:lower:]' | tr '_.' '--' | sort -u)"
+    round=$((round + 1))
+    if [ -z "$names" ] || [ "$round" -gt 5 ]; then
+      uverr="$(printf '%s\n' "$err" | grep -v '^warning: ' || true)"
+      return 1
+    fi
+    for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
+  done
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so uv installed$lifted at the pinned versions without the header's exclude-newer date; uv sync in .lokf/ gives the scripts a .venv that uv.lock pins by hash" >&2
+  return 0
+}
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
 if usable "$venv"; then
   exec "$venv" "$py" --root "$root" ${args[@]+"${args[@]}"}
-elif command -v uv >/dev/null 2>&1; then
-  exec uv run --quiet "$py" --root "$root" ${args[@]+"${args[@]}"}
+elif uv_ready "$py"; then
+  exec uv run --quiet ${uvflags[@]+"${uvflags[@]}"} "$py" --root "$root" ${args[@]+"${args[@]}"}
 elif usable python3; then
   exec python3 "$py" --root "$root" ${args[@]+"${args[@]}"}
 fi
-echo "knowledge-apply: needs the sidecar's .venv (uv sync in .lokf/), uv, or python3 3.9 or later with pyyaml; nothing was written. The sidecar's references/prerequisites.md says who installs uv." >&2
+[ -z "$uverr" ] || printf '%s\n' "$uverr" >&2
+echo "knowledge-apply: needs the sidecar's .venv (uv sync in .lokf/), uv that can install pyyaml, or python3 3.9 or later with pyyaml; nothing was written. The sidecar's references/prerequisites.md says who installs uv." >&2
 exit 2

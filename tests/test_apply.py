@@ -41,7 +41,7 @@ import sys
 
 import pytest
 
-from conftest import SCRIPTS, bash, esc, has_line, matches, read, today_utc, tree_digest, write
+from conftest import SCRIPTS, bash, esc, has_line, matches, mirror_uv, read, today_utc, tree_digest, write
 
 APPLY = SCRIPTS / "knowledge-apply.sh"
 
@@ -1437,10 +1437,30 @@ def test_the_sidecar_venv_runs_the_pen_before_uv(tmp_path):
     for name in ("knowledge-apply.sh", "knowledge-apply.py"):
         write(scripts / name, (SCRIPTS / name).read_text(encoding="utf-8"))
     write(tmp_path / ".lokf" / ".venv" / "bin" / "python", f'#!/bin/sh\nexec "{sys.executable}" "$@"\n').chmod(0o755)
-    uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 2\n")
+    uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 1\n")
     uv.chmod(0o755)
     result = bash(scripts / "knowledge-apply.sh", "--format", env={"PATH": f"{uv.parent}{os.pathsep}{os.environ['PATH']}"})
     assert result and "ops:" in result.out, f"the pen did not run from the sidecar's .venv: {result.out}"
+
+
+def test_behind_a_mirror_without_upload_times_the_pen_lifts_the_date_and_keeps_the_pin(tmp_path):
+    """uv drops every file it cannot date, so the pen lifts exclude-newer for the package uv names, and says so."""
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz")
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": path})
+    assert result and "ops:" in result.out, f"the pen did not run behind the mirror: {result.out}"
+    assert "uv installed pyyaml at the pinned versions without the header's exclude-newer date" in result.out, f"the pen did not say it lifted the date: {result.out}"
+    runs = [line for line in read(log).split("\n") if line.startswith("run ")]
+    assert runs and "--exclude-newer-package pyyaml=false" in runs[0], f"uv run did not get the lifted date: {read(log)}"
+
+
+def test_a_uv_that_cannot_install_pyyaml_is_not_a_finding(tmp_path):
+    """uv exits 1 when it cannot resolve, the pen's exit for findings; a failure with no missing upload date is not retried."""
+    fakebin = tmp_path / "fakebin"
+    write(fakebin / "uv", "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 1\n").chmod(0o755)
+    write(fakebin / "python3", "#!/bin/sh\nexit 1\n").chmod(0o755)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--format", "--root", tmp_path, env={"PATH": f"{fakebin}{os.pathsep}{os.environ['PATH']}"})
+    assert result.rc == 2, f"the pen did not exit 2 when uv could not install pyyaml: {result.rc} {result.out}"
+    assert "No solution found" in result.out and "nothing was written" in result.out, f"the pen did not show uv's error: {result.out}"
 
 
 def recording_lokf(root, say, rc):

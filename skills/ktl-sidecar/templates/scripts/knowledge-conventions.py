@@ -46,8 +46,9 @@
 # That block names one PyYAML release, and `exclude-newer` takes no file
 # uploaded after its date. A registry never replaces a file, so every run
 # installs the files that were there when the pin was set, and this gate runs
-# what a person reviewed. The .venv holds what uv.lock pins, by hash, which a
-# person reviewed too. Move the version and the date together, here and in
+# what a person reviewed. On an index that serves no upload times, the shell
+# half lifts the date for the packages uv names and keeps the version. The
+# .venv holds what uv.lock pins, by hash, which a person reviewed too. Move the version and the date together, here and in
 # knowledge-apply.py; the skills repository's contract holds the two equal.
 
 from __future__ import annotations

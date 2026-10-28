@@ -24,7 +24,7 @@ import sys
 
 import pytest
 
-from conftest import BOM, SCRIPTS, Git, bash, count_lines, have, matches, write
+from conftest import BOM, SCRIPTS, Git, bash, count_lines, have, matches, mirror_uv, read, write
 
 CONVENTIONS = SCRIPTS / "knowledge-conventions.sh"
 
@@ -414,7 +414,7 @@ def failing_uv(tmp_path):
     """A PATH whose uv fails as uv does behind a package mirror that serves no upload times."""
     fake = write(
         tmp_path / "fakebin" / "uv",
-        "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 2\n",
+        "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 1\n",
     )
     fake.chmod(0o755)
     return f"{fake.parent}{os.pathsep}{os.environ['PATH']}"
@@ -426,6 +426,15 @@ def test_a_runner_that_cannot_start_is_not_a_finding(good, tmp_path):
     assert "could not run" in result.out and "OK -" not in result.out, f"conventions script misreported a runner failure: {result.out}"
     shown = bash(CONVENTIONS, good, env={"PATH": failing_uv(tmp_path)}, stdout_only=True)
     assert "No solution" not in shown.out, f"conventions script printed uv's error as a finding: {shown.out}"
+
+
+def test_behind_a_mirror_without_upload_times_the_parser_half_still_runs(good, tmp_path):
+    """uv drops every file it cannot date, so the shell half lifts exclude-newer for the package uv names, and says so."""
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz")
+    result = bash(CONVENTIONS, good, env={"PATH": path})
+    assert result and "not checked" not in result.out, f"conventions script did not run its parser's half behind the mirror: {result.out}"
+    assert "uv installed pyyaml at the pinned versions" in result.out, f"conventions script did not say it lifted the date: {result.out}"
+    assert "--exclude-newer-package pyyaml=false" in read(log), f"uv run did not get the lifted date: {read(log)}"
 
 
 def test_the_sidecar_venv_runs_the_parser_half_before_uv(good, tmp_path):

@@ -144,10 +144,12 @@
 #
 # This script runs the Python half with the sidecar's .venv when the .venv
 # holds pyyaml and is Python 3.9 or later. Otherwise it runs the Python half
-# through `uv run`. knowledge-apply.sh says why the .venv is tried first.
-# Without either runner, the shell half still runs and says so. A runner that
-# cannot start the Python half, such as `uv run` refused by a package mirror,
-# is reported as a runner failure, not as a finding, and the script exits 2.
+# through `uv run`, once uv_ready has installed its packages.
+# knowledge-apply.sh says why the .venv is tried first, and what uv_ready
+# does behind a package mirror. Without uv, the shell half still runs and
+# says so. A uv that cannot install the packages, or a runner that cannot
+# start the Python half, is reported as a runner failure, not as a finding,
+# and the script exits 2.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
@@ -316,18 +318,38 @@ here="$(dirname "$0")"
 py="$here/knowledge-conventions.py"
 rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16 and 17"
 [ -z "$since" ] || rules="rules 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16 and 17"
+uvflags=(); uverr=""
+uv_ready() {
+  local err names name lifted="" round=0
+  command -v uv >/dev/null 2>&1 || return 1
+  until err="$(uv sync --script "$1" ${uvflags[@]+"${uvflags[@]}"} 2>&1 >/dev/null)"; do
+    names="$(printf '%s\n' "$err" | sed -n 's/^warning: \([^ ]*\) is missing an upload date.*/\1/p' | tr -d '\140' | sed 's/-[0-9].*//' | tr '[:upper:]' '[:lower:]' | tr '_.' '--' | sort -u)"
+    round=$((round + 1))
+    if [ -z "$names" ] || [ "$round" -gt 5 ]; then
+      uverr="$(printf '%s\n' "$err" | grep -v '^warning: ' || true)"
+      return 1
+    fi
+    for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
+  done
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so uv installed$lifted at the pinned versions without the header's exclude-newer date; uv sync in .lokf/ gives the scripts a .venv that uv.lock pins by hash" >&2
+  return 0
+}
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
 runner=""
+skipped=""; unrun=0
 if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
   runner="$venv"
-elif command -v uv >/dev/null 2>&1; then
+elif uv_ready "$py"; then
   runner=uv
+elif command -v uv >/dev/null 2>&1; then
+  unrun=1
+  [ -z "$uverr" ] || printf '%s\n' "$uverr" >&2
+  echo "$rules not checked: uv could not run $py, since it could not install the packages the script's header names. Behind a package mirror, run uv sync in .lokf/ and this script uses that .venv." >&2
 fi
-skipped=""; unrun=0
 if [ -n "$runner" ]; then
   rc=0
   if [ "$runner" = uv ]; then
-    out="$(uv run --quiet "$py" "$bundle" ${since:+--since "$since"} 2>&1)" || rc=$?
+    out="$(uv run --quiet ${uvflags[@]+"${uvflags[@]}"} "$py" "$bundle" ${since:+--since "$since"} 2>&1)" || rc=$?
   else
     out="$("$runner" "$py" "$bundle" ${since:+--since "$since"} 2>&1)" || rc=$?
   fi
@@ -342,7 +364,7 @@ if [ -n "$runner" ]; then
        [ "$runner" = uv ] && hint=" Behind a package mirror, run uv sync in .lokf/ and this script uses that .venv."
        echo "$rules not checked: $runner could not run $py (exit $rc).$hint" >&2 ;;
   esac
-else
+elif [ "$unrun" -eq 0 ]; then
   skipped="$rules not checked: uv not found"
   echo "$skipped - install uv, or run $py directly with python3 3.9 or later and pyyaml" >&2
 fi
