@@ -30,7 +30,7 @@ It checks out the full history, because conventions 6, 11, 13, 14 and 17 read th
 3. `verified` is a list, carrying at most one `process:ktl-librarian` event.
 4. Each `## Open questions` bullet has the `- YYYY-MM-DD, <actor>: ...` shape the curator quotes.
 5. Every `resource:` that is not a URL names a file or directory that still exists relative to the repository root, so a vanished source fails the gate rather than waiting for the librarian's next refresh. URLs are never fetched.
-6. Every commit-shaped `revision` on an event (lokf 0.9.0+) names a commit that holds the concept's local `resource`. A shallow clone is reported, not passed.
+6. Every commit-shaped `revision` on an event names a commit that holds the concept's local `resource`. A shallow clone is reported, not passed.
 7. One file per `id`. A sync client's conflict copy carries its original's `id`, validates, and silently merges into it in the graph.
 8. Every path is lowercase. Two paths differing only by case collide on Windows, macOS and SharePoint, and a space, a parenthesis or an upper-case host name is how sync clients name a conflict copy.
 9. Every concept has a closed frontmatter block, with no byte order mark in front of it.

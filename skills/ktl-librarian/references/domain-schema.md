@@ -21,7 +21,7 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
    cd .lokf && uv run python -c "from importlib.resources import files; print(files('lokf') / 'data' / 'lokf.yaml')" | xargs -I{} cp {} lokf.yaml
    ```
 
-   The copy does double duty. Run from `.lokf/` without `--schema`, `lokf validate` and `lokf vocab` read it as LOKF core, because lokf looks for `lokf.yaml` in the current directory and its ancestors before its packaged copy.
+   The copy has a second use. Run from `.lokf/` without `--schema`, `lokf validate` and `lokf vocab` read it as LOKF core, because lokf looks for `lokf.yaml` in the current directory and its ancestors before its packaged copy.
 
 2. **The domain schema**, `.lokf/<slug>.yaml`, with its namespace under the same authority as `base_iri` (Rule 2). A learning-programme bundle, for instance:
 
@@ -54,7 +54,7 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
    A class `is_a: Concept` joins the bundle's concept union automatically, and so does any descendant of it: the core classes become the core plus yours. Subclass a built-in whose meaning fits. Give a class of its own to what no built-in describes (a delivery pattern is not a `Policy`, however tempting the stretch). Never leave extra keys on a built-in unchanged.
 
-   A published vocabulary the domain schema needs does not go into `imports:` as it is. LinkML merges every imported name into one namespace without a warning, so the vocabulary's own `id`, `type` or `name` would merge with LOKF's. Import the copy `lokf adapt` makes instead ([Importing a published vocabulary](#importing-a-published-vocabulary)).
+   A published vocabulary the domain schema needs does not go into `imports:` as it is. Import the copy `lokf adapt` makes instead ([Importing a published vocabulary](#importing-a-published-vocabulary)).
 
 3. **Frontmatter names the class exactly.** A record with `type: Reference` and a `source_kind` key fails: `Reference` does not declare the key, and `SourceSnapshotReference` requires its own name. Write the subclass name. `is_a` still makes it `rdfs:subClassOf` its parent in the projected graph.
 
@@ -74,13 +74,13 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
 ## Importing a published vocabulary
 
-A domain schema can import an existing LinkML vocabulary instead of, or as well as, declaring classes of its own. Import a copy that `lokf adapt` makes, never the vocabulary itself. LinkML merges imported names into one namespace and keeps the last definition, so a vocabulary that also declares `Person` or `name` would silently replace LOKF's. `lokf adapt`, from lokf 0.9.0, replaces the vocabulary's identifier and type slots with LOKF's, renames every other shared name while keeping its IRI, and re-roots the vocabulary's top classes on `Concept`, so they become types a concept can name ([adapt](https://lokf.nolan-nichols.com/toolkit/adapt/)):
+A domain schema can import an existing LinkML vocabulary instead of, or as well as, declaring classes of its own. Import a copy that `lokf adapt` makes, never the vocabulary itself. LinkML merges imported names into one namespace without a warning and keeps the last definition, so a vocabulary's own `id`, `type`, `name` or `Person` would replace LOKF's. `lokf adapt`, from lokf 0.9.0, replaces the vocabulary's identifier and type slots with LOKF's, renames every other shared name while keeping its IRI, and re-roots the vocabulary's top classes on `Concept`, so they become types a concept can name ([adapt](https://lokf.nolan-nichols.com/toolkit/adapt/)):
 
 ```bash
 cd .lokf && uv run lokf adapt <vocabulary>.yaml --root <TopClass> ...   # writes <vocabulary>_lokf.yaml
 ```
 
-Import `<vocabulary>_lokf` beside `lokf`. A vocabulary whose root class carries an identifier, such as biolink-model's `entity`, needs no `--root`: `adapt` finds it. `--root` re-roots a class on `Concept` only, never on a LOKF class such as `Service`. LOKF's [domain schemas guide](https://lokf.nolan-nichols.com/guide/domain-schemas/) walks through biolink-model. Two rules remain:
+List `<vocabulary>_lokf` under `imports:` with `lokf`. A vocabulary whose root class carries an identifier, such as biolink-model's `entity`, needs no `--root`: `adapt` finds it. `--root` re-roots a class on `Concept` only, never on a LOKF class such as `Service`. LOKF's [domain schemas guide](https://lokf.nolan-nichols.com/guide/domain-schemas/) walks through biolink-model. Two rules remain:
 
 - **Name the class in frontmatter.** `type: SlsaSourceRepository` projects as `a slsa:SlsaSourceRepository`.
 - **List its slots on a class of your own.** Every class is closed, and a vocabulary such as gist attaches few slots to its classes. Declare `GovernedRequirement: {is_a: Requirement, class_uri: gist:Requirement, slots: [is_governed_by]}` and write `type: GovernedRequirement`. A slot ranging over one of the vocabulary's classes takes a concept IRI that `--check-refs` checks. One ranging over `Any` takes an IRI that `--check-refs` leaves alone.
@@ -96,9 +96,9 @@ cp /tmp/slsa/schema-<tag>-slsa.yaml .lokf/slsa.yaml
 
 Then set `schema := "slsa.yaml"`, and record the tag in the commit that adds the copy. `uv run lokf convert --schema slsa.yaml knowledge` gives `a slsa:SlsaSourceRepository ; slsa:hosted_by <…>`, and the rest of the bundle projects as before.
 
-A host that needs two published vocabularies, such as SLSA's and GitHub Actions', keeps one adapt copy of each beside `lokf.yaml`. A composite schema of a few lines imports `lokf` and both copies and declares nothing, and the schema variable of step 4 names it. LinkML merges the copies into one namespace as it merges any import, so a class, slot, enum or type may share a name across them, or with LOKF core, only where it means the same thing. The release attaches the composite as one file with the copies merged in, and stops on a name that two files define differently ([automation.md](../../ktl-sidecar/references/automation.md#the-domain-schema-beside-it)).
+A host that needs two published vocabularies, such as SLSA's and GitHub Actions', keeps one adapt copy of each beside `lokf.yaml`. A composite schema of a few lines imports `lokf` and both copies, declares nothing, and is the file the `schema :=` line names (step 4). LinkML merges the copies into one namespace as it merges any import, so two copies may share a class, slot, enum or type name only where it means the same thing. The release attaches the composite as one file with the copies merged in. It stops on a name that two files define differently, and on a name a copy shares with LOKF core ([automation.md](../../ktl-sidecar/references/automation.md#the-domain-schema-beside-it)).
 
-Which vocabulary to use, if any, is the team's call ([ktl-curator/references/domain-schemas.md](../../ktl-curator/references/domain-schemas.md)). LOKF's own classes already sit on schema.org, PROV, DCAT and SKOS.
+Which vocabulary to use, if any, is the team's call ([ktl-curator/references/domain-schemas.md](../../ktl-curator/references/domain-schemas.md)). LOKF's own classes already map onto schema.org, PROV, DCAT and SKOS.
 
 ## What a domain schema does not do
 

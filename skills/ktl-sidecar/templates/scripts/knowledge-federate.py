@@ -1698,6 +1698,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     import pyoxigraph as ox
     from lokf.model import load_bundle
     from lokf.registry import REGISTRY_VERSION, Registry, entry_for_bundle
+    # lokf 0.8.0 has no allow_foreign_ids parameter, and indexes such ids anyway.
     foreign_ids = {"allow_foreign_ids": True} if "allow_foreign_ids" in inspect.signature(entry_for_bundle).parameters else {}
     from lokf.schema import vocabulary
 
@@ -1956,9 +1957,9 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
         source_base = member.source_base if member else ""
         # From lokf 0.9.0 the registry refuses an explicit id outside a
         # member's base_iri unless the registrant allows it (SPEC 11.3, rule
-        # 3). A person's confirmation admits each member, as 0.8.0 indexed
-        # such ids, so the build allows them, and lokf still refuses one in
-        # another member's namespace or LOKF's own.
+        # 3). A person's confirmation admits each member, so the build allows
+        # such ids, as lokf 0.8.0 did. lokf still refuses one in another
+        # member's namespace or LOKF's own.
         entry = entry_for_bundle(kdir, source_base or None, **foreign_ids)
         entry.path = None
         # Section 11.2's harvest status: a member held at its last good state says so.
