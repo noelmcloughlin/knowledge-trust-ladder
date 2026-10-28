@@ -167,27 +167,36 @@ def replace_in(path: Path, old: str, new: str) -> None:
     write(path, read(path).replace(old, new))
 
 
-def mirror_uv(tmp_path: Path, *missing: str) -> tuple[str, Path]:
+def mirror_uv(tmp_path: Path, *missing: str, ready=False, ignores_lift=False, ticks=False) -> tuple[str, Path]:
     """A PATH whose uv behaves as on an index with no upload times, and the file that logs its calls.
 
     uv warns about one file of `missing` a round, until the shell half lifts
     it with --exclude-newer-package <package>=false. Then `sync` succeeds and
     `run` runs the script with this interpreter. With no names, uv resolves
-    at once.
+    at once. With FORCE_COLOR set and no `--color never`, uv colours the
+    warning, as the real one does. `ready` is a complete script environment
+    with the index down: an offline sync succeeds and any other fails.
+    `ignores_lift` warns whatever is lifted. `ticks` puts the file name in
+    backticks, as uv 0.13 does.
     """
     log = tmp_path / "mirrorbin" / "uv-calls.txt"
+    colour = "\\033[1m\\033[33mwarning\\033[39m\\033[0m\\033[1m:\\033[0m"
+    head = 'w=warning:\ncase " $* " in *" --color never "*) ;; *) [ -z "${FORCE_COLOR:-}" ] || w="$(printf \'' + colour + "')\" ;; esac\n"
+    if ready:
+        head += 'case " $* " in *" --offline "*) [ "$1" = sync ] && exit 0 ;; esac\n[ "$1" = sync ] && { echo "error: Failed to fetch the index" >&2; exit 2; }\n'
     rounds = ""
     for name in missing:
         package = re.sub(r"[_.]", "-", re.sub(r"-[0-9].*", "", name).lower())
-        rounds += (
-            f'case " $* " in *" {package}=false "*) ;; *)\n'
-            f'  echo "warning: {name} is missing an upload date, but user provided: 2025-10-01T00:00:00Z" >&2\n'
+        shown = f"\\`{name}\\`" if ticks else name
+        warn = (
+            f'  echo "$w {shown} is missing an upload date, but user provided: 2025-10-01T00:00:00Z" >&2\n'
             '  echo "  x No solution found when resolving script dependencies:" >&2\n'
-            "  exit 1 ;;\nesac\n"
+            "  exit 1"
         )
+        rounds += f"{warn}\n" if ignores_lift else f'case " $* " in *" {package}=false "*) ;; *)\n{warn} ;;\nesac\n'
     fake = write(
         tmp_path / "mirrorbin" / "uv",
-        f'#!/bin/sh\necho "$*" >> "{log}"\n{rounds}[ "$1" = sync ] && exit 0\nshift\n'
+        f'#!/bin/sh\necho "$*" >> "{log}"\n{head}{rounds}[ "$1" = sync ] && exit 0\nshift\n'
         'while [ $# -gt 0 ]; do case "$1" in --quiet) shift ;; --exclude-newer-package) shift 2 ;; *) break ;; esac; done\n'
         f'exec "{sys.executable}" "$@"\n',
     )

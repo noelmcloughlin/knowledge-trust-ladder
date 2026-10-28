@@ -15,13 +15,16 @@
 # first line.
 #
 # uv_ready installs the header's packages before the run, so uv's exit 1 on
-# a failed resolution never reads as findings. On an index with no upload
-# times, as a Nexus or Artifactory mirror often is, uv drops each file and
-# warns that it "is missing an upload date". Only then does uv_ready lift
-# the date, for the packages uv names, round by round. The versions stay
-# pinned. Any other failure is not retried. knowledge-conventions.sh and
-# knowledge-ingest.sh carry the same function, and the contract holds the
-# three equal.
+# a failed resolution never reads as findings. It tries offline first, so a
+# script environment that is already complete runs with the index down. On
+# an index with no upload times, as a Nexus or Artifactory mirror often is,
+# uv drops each file and warns that it "is missing an upload date". Only
+# then does uv_ready lift the date, round by round, for each package uv
+# names that the header pins with ==, so the versions stay pinned. It turns
+# uv's colour off, since FORCE_COLOR would hide that warning. Any other
+# failure is not retried, nor a package uv names again once lifted.
+# knowledge-conventions.sh and knowledge-ingest.sh carry the same function,
+# and the contract holds the three equal.
 #
 # Usage: knowledge-apply.sh [--dry-run] [--keep] [--handoff <file>] [--root <repo-root>] [<patch-file>]
 #        knowledge-apply.sh --format
@@ -54,20 +57,27 @@ done
 py="$here/knowledge-apply.py"
 [ -f "$py" ] || { echo "knowledge-apply: $py is missing beside this script; run ktl-sidecar's repair path" >&2; exit 2; }
 usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; }
-uvflags=(); uverr=""
+uvflags=(); uverr=""; uvhint="Run uv sync in .lokf/ to pin them by hash."
 uv_ready() {
-  local err names name lifted="" round=0
+  local err names name again unpinned lifted=""
   command -v uv >/dev/null 2>&1 || return 1
-  until err="$(uv sync --script "$1" ${uvflags[@]+"${uvflags[@]}"} 2>&1 >/dev/null)"; do
+  uv sync --offline --quiet --script "$1" >/dev/null 2>&1 && return 0
+  until err="$(uv sync --color never --script "$1" ${uvflags[@]+"${uvflags[@]}"} 2>&1 >/dev/null)"; do
     names="$(printf '%s\n' "$err" | sed -n 's/^warning: \([^ ]*\) is missing an upload date.*/\1/p' | tr -d '\140' | sed 's/-[0-9].*//' | tr '[:upper:]' '[:lower:]' | tr '_.' '--' | sort -u)"
-    round=$((round + 1))
-    if [ -z "$names" ] || [ "$round" -gt 5 ]; then
-      uverr="$(printf '%s\n' "$err" | grep -v '^warning: ' || true)"
+    again=""; unpinned=""
+    for name in $names; do
+      case " $lifted " in *" $name "*) again=1 ;; esac
+      case "$name" in *[!a-z0-9-]*) unpinned="$unpinned $name"; continue ;; esac
+      grep -qiE "^# dependencies = .*\"${name//-/[-_.]}==" "$1" || unpinned="$unpinned $name"
+    done
+    if [ -z "$names" ] || [ -n "$again$unpinned" ]; then
+      uverr="$(printf '%s\n' "$err" | grep -v ' is missing an upload date' || true)"
+      [ -z "$unpinned" ] || uverr+=$'\n'"${0##*/}: the package index serves no upload times for$unpinned, which the script's header does not pin with ==, so exclude-newer stays."
       return 1
     fi
     for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
   done
-  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. Run uv sync in .lokf/ to pin them by hash." >&2
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. $uvhint" >&2
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
@@ -76,6 +86,7 @@ if usable "$venv"; then
 elif uv_ready "$py"; then
   exec uv run --quiet ${uvflags[@]+"${uvflags[@]}"} "$py" --root "$root" ${args[@]+"${args[@]}"}
 elif usable python3; then
+  [ -z "$uverr" ] || echo "knowledge-apply: uv could not install pyyaml, so this run uses python3's own" >&2
   exec python3 "$py" --root "$root" ${args[@]+"${args[@]}"}
 fi
 [ -z "$uverr" ] || printf '%s\n' "$uverr" >&2

@@ -10,8 +10,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
-- **The pen, the conventions check and the ingest run behind a package mirror with no upload times.** They lift `exclude-newer` for each package uv reports without an upload date, and keep the pinned versions.
-- **A uv that cannot install a script's packages no longer reads as findings.** The pen and the conventions check exit 2, and the ingest falls back to a `.venv` without pypdf.
+- **The pen, the conventions check and the ingest run behind a package mirror with no upload times.** They lift `exclude-newer` only for a pinned package that uv reports without an upload date, and the ingest pins typing-extensions too.
+- **A uv that cannot install a script's packages no longer reads as findings.** The conventions check exits 2, the pen falls back to python3 or exits 2, and the ingest falls back to a `.venv` without pypdf.
 
 ## [0.58.0] - 2026-10-27
 

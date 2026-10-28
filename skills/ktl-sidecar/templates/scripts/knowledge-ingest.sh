@@ -40,20 +40,27 @@ done
 py="$here/knowledge-ingest.py"
 [ -f "$py" ] || { echo "knowledge-ingest: $py is missing beside this script; run ktl-sidecar's repair path" >&2; exit 2; }
 usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c "import sys; assert sys.version_info >= (3, 9); import $2" >/dev/null 2>&1; }
-uvflags=(); uverr=""
+uvflags=(); uverr=""; uvhint="Run uv add pypdf in .lokf/ to pin them by hash."
 uv_ready() {
-  local err names name lifted="" round=0
+  local err names name again unpinned lifted=""
   command -v uv >/dev/null 2>&1 || return 1
-  until err="$(uv sync --script "$1" ${uvflags[@]+"${uvflags[@]}"} 2>&1 >/dev/null)"; do
+  uv sync --offline --quiet --script "$1" >/dev/null 2>&1 && return 0
+  until err="$(uv sync --color never --script "$1" ${uvflags[@]+"${uvflags[@]}"} 2>&1 >/dev/null)"; do
     names="$(printf '%s\n' "$err" | sed -n 's/^warning: \([^ ]*\) is missing an upload date.*/\1/p' | tr -d '\140' | sed 's/-[0-9].*//' | tr '[:upper:]' '[:lower:]' | tr '_.' '--' | sort -u)"
-    round=$((round + 1))
-    if [ -z "$names" ] || [ "$round" -gt 5 ]; then
-      uverr="$(printf '%s\n' "$err" | grep -v '^warning: ' || true)"
+    again=""; unpinned=""
+    for name in $names; do
+      case " $lifted " in *" $name "*) again=1 ;; esac
+      case "$name" in *[!a-z0-9-]*) unpinned="$unpinned $name"; continue ;; esac
+      grep -qiE "^# dependencies = .*\"${name//-/[-_.]}==" "$1" || unpinned="$unpinned $name"
+    done
+    if [ -z "$names" ] || [ -n "$again$unpinned" ]; then
+      uverr="$(printf '%s\n' "$err" | grep -v ' is missing an upload date' || true)"
+      [ -z "$unpinned" ] || uverr+=$'\n'"${0##*/}: the package index serves no upload times for$unpinned, which the script's header does not pin with ==, so exclude-newer stays."
       return 1
     fi
     for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
   done
-  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. Run uv sync in .lokf/ to pin them by hash." >&2
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. $uvhint" >&2
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
@@ -72,7 +79,7 @@ elif uv_ready "$py"; then
 fi
 for p in "$venv" python3; do
   if usable "$p" yaml; then
-    [ -z "$uverr" ] || echo "knowledge-ingest: uv could not install the script's packages, so this run refuses each PDF" >&2
+    [ -z "$uverr" ] || usable "$p" pypdf || echo "knowledge-ingest: uv could not install the script's packages, so this run refuses each PDF" >&2
     exec "$p" "$py" --root "$root" ${args[@]+"${args[@]}"}
   fi
 done

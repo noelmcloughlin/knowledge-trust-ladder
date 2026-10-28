@@ -49,8 +49,8 @@
 # what a person reviewed. Behind a mirror with no upload times, the shell
 # half lifts the date but keeps the version. The .venv holds what uv.lock
 # pins, by hash, which a person reviewed too. Move the version and the date
-# together, here and in
-# knowledge-apply.py; the skills repository's contract holds the two equal.
+# together, here and in knowledge-apply.py; the skills repository's contract
+# holds the two equal.
 
 from __future__ import annotations
 
