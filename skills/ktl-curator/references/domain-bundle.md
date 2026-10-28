@@ -37,7 +37,7 @@ isPartOf:
 
 ## What a confirmation attests
 
-Confirming a member concept is the ordinary confirm, in a signed commit the registrar's `provenance` job backs. It attests two things, and the note should say so: that this bundle belongs under the domain's admission rule, and that any claim the domain makes across bundles holds. It does not vouch for the member's own concepts; each member keeps its own trust labels, computed from its own events when the workspace is read.
+Confirming a member concept is the ordinary confirm, in a signed commit the registrar's `provenance` job backs. It attests two things, and the note should say so: that this bundle belongs under the domain's admission rule, and that any claim the domain makes across bundles holds. It does not vouch for the member's own concepts; each member keeps its own trust labels, computed from its own events when the workspace is read. It does admit the addresses the member claims: the build routes each explicit `id` outside the member's `base_iri` to that member, and lokf refuses one inside another member's namespace or LOKF's own.
 
 A confirmation belongs to the concept's `id`. A concept moved to a new id waits for a confirmation of its own, and the `provenance` job reads an event copied across as a new confirmation.
 

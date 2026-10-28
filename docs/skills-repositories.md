@@ -42,7 +42,7 @@ These are designs, not features. Each would extend KTL's checks from what the bu
 - **An `AgentSkill` domain schema.** A LinkML class for the six Agent Skills frontmatter fields would let `lokf validate` check a skill's concept against them, and let the docent tell a skill's concept from a how-to.
 - **OKF's attested computation for a skill's scripts.** LOKF's `AttestedComputation` is a sanctioned recipe whose run returns a receipt that an attester compares with it. A skill's deterministic scripts could be described that way.
 - **A place for a fault in the host's own text.** The docent found a guide that names a script without its file extension. Its feedback records gaps in the bundle, so it had nowhere to record a fault in a skill.
-- **The excerpt check.** The `sources[].excerpt` field proposed for LOKF 0.9.0 would let a program check the passage a concept relies on. Once it is released, the work list could tell an edit to that passage from an edit elsewhere in the skill's file.
+- **The excerpt check.** The `sources[].excerpt` field, from lokf 0.9.0, lets a program check the passage a concept relies on, as `lokf validate --check-excerpts` does. The work list could then tell an edit to that passage from an edit elsewhere in the skill's file.
 
 ## Sources
 

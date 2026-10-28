@@ -30,9 +30,9 @@
 #      URLs are never fetched.
 #   6. A commit-shaped `revision` on a `generated` or `verified` event names
 #      a commit in this repository that holds the concept's local `resource`.
-#      The field is proposed for lokf 0.9.0. The released 0.8.0 validator
-#      rejects it, so the skills write it only where `lokf validate` accepts
-#      it. ETags, digests and version labels pin URLs and are not checked.
+#      The field arrived in lokf 0.9.0, and the 0.8.0 validator rejects it,
+#      so the skills write it only where `lokf validate` accepts it. ETags,
+#      digests and version labels pin URLs and are not checked.
 #      The rule needs the full history, and reports a shallow clone.
 #   7. One file per `id`. A sync client's conflict copy (OneDrive, Dropbox,
 #      Drive, iCloud) or a pasted duplicate carries the same `id`, passes

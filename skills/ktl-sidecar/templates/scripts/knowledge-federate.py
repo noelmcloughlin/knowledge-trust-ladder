@@ -174,6 +174,7 @@ import email.utils
 import hashlib
 import functools
 import http.client
+import inspect
 import ipaddress
 import itertools
 import json
@@ -1535,6 +1536,8 @@ def union_elements(loaded: dict, records: list[dict], links: list[dict], vocab) 
     bundle's title, namespace, version and source. A node carries a
     concept's review date, `stale_after`, instead of the export's `stale`,
     so a page that draws the graph judges staleness on the day it draws it.
+    The toolkit gives it as a date up to lokf 0.8.0 and as a datetime from
+    0.9.0, and the page reads its first ten characters either way.
     """
     from lokf.export import to_cytoscape
 
@@ -1695,6 +1698,8 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     import pyoxigraph as ox
     from lokf.model import load_bundle
     from lokf.registry import REGISTRY_VERSION, Registry, entry_for_bundle
+    # lokf 0.8.0 has no allow_foreign_ids parameter, and indexes such ids anyway.
+    foreign_ids = {"allow_foreign_ids": True} if "allow_foreign_ids" in inspect.signature(entry_for_bundle).parameters else {}
     from lokf.schema import vocabulary
 
     root = find_root(args.root)
@@ -1950,7 +1955,12 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     bundles = [("domain", domain_copy, None)] + [(m.slug, kdir, m) for m, _, kdir, _ in resolved]
     for slug, kdir, member in sorted(bundles, key=lambda b: b[2].base_iri if b[2] else domain_base):
         source_base = member.source_base if member else ""
-        entry = entry_for_bundle(kdir, source_base or None)
+        # From lokf 0.9.0 the registry refuses an explicit id outside a
+        # member's base_iri unless the registrant allows it (SPEC 11.3, rule
+        # 3). A person's confirmation admits each member, so the build allows
+        # such ids, as lokf 0.8.0 did. lokf still refuses one in another
+        # member's namespace or LOKF's own.
+        entry = entry_for_bundle(kdir, source_base or None, **foreign_ids)
         entry.path = None
         # Section 11.2's harvest status: a member held at its last good state says so.
         entry.status = "last-good" if member and member.held else "ok"

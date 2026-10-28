@@ -21,7 +21,7 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
    cd .lokf && uv run python -c "from importlib.resources import files; print(files('lokf') / 'data' / 'lokf.yaml')" | xargs -I{} cp {} lokf.yaml
    ```
 
-   The copy does double duty. `convert`, `serve` and `query` take no `--schema` flag and resolve `lokf.yaml` from the current directory and its ancestors before the packaged copy. From `.lokf/`, this is therefore also the schema they read.
+   The copy has a second use. Run from `.lokf/` without `--schema`, `lokf validate` and `lokf vocab` read it as LOKF core, because lokf looks for `lokf.yaml` in the current directory and its ancestors before its packaged copy.
 
 2. **The domain schema**, `.lokf/<slug>.yaml`, with its namespace under the same authority as `base_iri` (Rule 2). A learning-programme bundle, for instance:
 
@@ -54,13 +54,11 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
    A class `is_a: Concept` joins the bundle's concept union automatically, and so does any descendant of it: the core classes become the core plus yours. Subclass a built-in whose meaning fits. Give a class of its own to what no built-in describes (a delivery pattern is not a `Policy`, however tempting the stretch). Never leave extra keys on a built-in unchanged.
 
-   A published vocabulary the domain schema needs does not go into `imports:` as it is. LinkML merges every imported name into one namespace without a warning, so the vocabulary's own `id`, `type` or `name` would merge with LOKF's. The `adapt` command, in lokf's main branch and not yet in 0.8.0, writes a copy that can sit beside `lokf.yaml`. It replaces the vocabulary's identifier and type slots with LOKF's, renames every other shared name while keeping its IRI, and re-roots the vocabulary's top classes on `Concept` ([adapt](https://lokf.nolan-nichols.com/toolkit/adapt/)).
-
-   A host that needs two published vocabularies, such as SLSA's and GitHub Actions', keeps one adapt copy of each beside `lokf.yaml`. A composite schema of a few lines imports `lokf` and both copies and declares nothing, and the schema variable of step 4 names it. LinkML merges the copies into one namespace as it merges any import, so a class, slot, enum or type may share a name across them, or with LOKF core, only where it means the same thing. The release attaches the composite as one file with the copies merged in, and stops on a name that two files define differently ([automation.md](../../ktl-sidecar/references/automation.md#the-domain-schema-beside-it)).
+   A published vocabulary the domain schema needs does not go into `imports:` as it is. Import the copy `lokf adapt` makes instead ([Importing a published vocabulary](#importing-a-published-vocabulary)).
 
 3. **Frontmatter names the class exactly.** A record with `type: Reference` and a `source_kind` key fails: `Reference` does not declare the key, and `SourceSnapshotReference` requires its own name. Write the subclass name. `is_a` still makes it `rdfs:subClassOf` its parent in the projected graph.
 
-4. **Name the schema.** In the sidecar's `justfile`, set the one variable: `schema := "<slug>.yaml"`. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, running from the schema's directory so a relative import in it resolves, and the three workflows (`knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`) run the recipes, so nothing else in the sidecar changes. A sidecar scaffolded before the variable existed runs `lokf validate` inline in its justfile and its workflows; ktl-sidecar's repair lays down the current copies of those four files. That one variable is also how the **librarian** learns the host's vocabulary. Rule 3 has it read the schema the justfile names and treat every `Concept` descendant there as a class it may choose. `lokf vocab` lists relations only and takes no `--schema`, so the file itself is the source.
+4. **Name the schema.** In the sidecar's `justfile`, set the one variable: `schema := "<slug>.yaml"`. The `lokf-validate` and `lokf-check-refs` recipes pass it as `--schema`, running from the schema's directory so a relative import in it resolves, and the three workflows (`knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`) run the recipes, so nothing else in the sidecar changes. A sidecar scaffolded before the variable existed runs `lokf validate` inline in its justfile and its workflows; ktl-sidecar's repair lays down the current copies of those four files. That one variable is also how the **librarian** learns the host's vocabulary. Rule 3 has it read the schema the justfile names and treat every `Concept` descendant there as a class it may choose. `lokf vocab` reads LOKF core alone and takes no `--schema`, so the file itself is the source.
 
    The schema need not sit beside the bundle. The variable takes any path relative to `.lokf/`, and the schema's own `imports:` entry names `lokf.yaml` relative to the schema file. Three layouts recur:
 
@@ -74,11 +72,39 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
 5. **Tell both plugins.** KTL Registrar and KTL Curator each have a *Known LOKF types* setting listing the built-in classes. Add your classes to both, the same list in each. Neither plugin can read the schema itself: the exhibition vault's root is `.lokf/knowledge`, and the schema sits outside it. Listed, a domain class stops opening with the **registrar**'s unknown-type warning and joins its autocomplete. It stops counting against the **curator**'s *vocabulary fit* line, and can carry a review interval of its own in `policies/knowledge-curation.md`. A list you have edited is yours to keep current when the core schema gains a class. Before KTL Curator gained the setting, its vocabulary-fit line counted against the built-ins only. Read that line on an older build as "concepts outside LOKF core", not as errors. The *skills* need no telling: the **curator** reads the same `schema` line Rule 3 does ([ktl-curator/references/trust-fields.md](../../ktl-curator/references/trust-fields.md)).
 
+## Importing a published vocabulary
+
+A domain schema can import an existing LinkML vocabulary instead of, or as well as, declaring classes of its own. Import a copy that `lokf adapt` makes, never the vocabulary itself. LinkML merges imported names into one namespace without a warning and keeps the last definition, so a vocabulary's own `id`, `type`, `name` or `Person` would replace LOKF's. `lokf adapt`, from lokf 0.9.0, replaces the vocabulary's identifier and type slots with LOKF's, renames every other shared name while keeping its IRI, and re-roots the vocabulary's top classes on `Concept`, so they become types a concept can name ([adapt](https://lokf.nolan-nichols.com/toolkit/adapt/)):
+
+```bash
+cd .lokf && uv run lokf adapt <vocabulary>.yaml --root <TopClass> ...   # writes <vocabulary>_lokf.yaml
+```
+
+List `<vocabulary>_lokf` under `imports:` with `lokf`. A vocabulary whose root class carries an identifier, such as biolink-model's `entity`, needs no `--root`: `adapt` finds it. `--root` re-roots a class on `Concept` only, never on a LOKF class such as `Service`. LOKF's [domain schemas guide](https://lokf.nolan-nichols.com/guide/domain-schemas/) walks through biolink-model. Two rules remain:
+
+- **Name the class in frontmatter.** `type: SlsaSourceRepository` projects as `a slsa:SlsaSourceRepository`.
+- **List its slots on a class of your own.** Every class is closed, and a vocabulary such as gist attaches few slots to its classes. Declare `GovernedRequirement: {is_a: Requirement, class_uri: gist:Requirement, slots: [is_governed_by]}` and write `type: GovernedRequirement`. A slot ranging over one of the vocabulary's classes takes a concept IRI that `--check-refs` checks. One ranging over `Any` takes an IRI that `--check-refs` leaves alone.
+
+[lmodel/slsa](https://github.com/lmodel/slsa), SLSA v1.2 in LinkML, is the tested case. Each release from v0.7.0 attaches the copy the released `adapt` makes, as `schema-<tag>-slsa.yaml`. Verify it and put it beside `lokf.yaml`:
+
+```bash
+gh release download <tag> -R lmodel/slsa -p 'schema-<tag>-slsa.yaml*' -D /tmp/slsa
+(cd /tmp/slsa && sha256sum -c schema-<tag>-slsa.yaml.sha256)
+gh attestation verify /tmp/slsa/schema-<tag>-slsa.yaml -R lmodel/slsa
+cp /tmp/slsa/schema-<tag>-slsa.yaml .lokf/slsa.yaml
+```
+
+Then set `schema := "slsa.yaml"`, and record the tag in the commit that adds the copy. `uv run lokf convert --schema slsa.yaml knowledge` gives `a slsa:SlsaSourceRepository ; slsa:hosted_by <…>`, and the rest of the bundle projects as before.
+
+A host that needs two published vocabularies, such as SLSA's and GitHub Actions', keeps one adapt copy of each beside `lokf.yaml`. A composite schema of a few lines imports `lokf` and both copies, declares nothing, and is the file the `schema :=` line names (step 4). LinkML merges the copies into one namespace as it merges any import, so two copies may share a class, slot, enum or type name only where it means the same thing. The release attaches the composite as one file with the copies merged in. It stops on a name that two files define differently, and on a name a copy shares with LOKF core ([automation.md](../../ktl-sidecar/references/automation.md#the-domain-schema-beside-it)).
+
+Which vocabulary to use, if any, is the team's call ([ktl-curator/references/domain-schemas.md](../../ktl-curator/references/domain-schemas.md)). LOKF's own classes already map onto schema.org, PROV, DCAT and SKOS.
+
 ## What a domain schema does not do
 
-- **The graph.** The core JSON-LD context declares `@vocab: https://w3id.org/lokf/`. So `convert`, `serve` and `query` already project undeclared keys, as `lokf:ects`, in LOKF's namespace rather than yours. Up to lokf 0.8.0 they project undeclared types the same way (`a lokf:Module`). From lokf 0.9.0 an undeclared type projects as `a lokf:Concept` with the name kept in `schema:additionalType "Module"`, so filter on that literal rather than on a generated class such as `lokf:Module`.
+- **The graph, unless the command is given the schema.** The core JSON-LD context declares `@vocab: https://w3id.org/lokf/`, so a key no schema declares projects in LOKF's namespace, as `lokf:ects`. Up to lokf 0.8.0 an undeclared type projects the same way (`a lokf:Module`). From lokf 0.9.0 it projects as `a lokf:Concept` with the name kept in `schema:additionalType "Module"`, so filter on that literal rather than on a generated class such as `lokf:Module`.
 
-  A domain schema does not change that: the three commands take no `--schema` or `--context`. A raw `gen-jsonld-context <slug>.yaml` output cannot simply replace the packaged context beside the bundle, because it lacks the packaged aliases `type` → `@type` and `id` → `@id`. In a test, every node became a blank node carrying a literal `lokf:type`. Read `lokf:<key>` in a query result as "declared to the validator, not yet to the graph". A domain context that keeps the core aliases and maps your terms to your prefix is a toolkit feature that does not exist yet.
+  From lokf 0.9.0, `convert`, `query`, `serve` and `export` take `--schema` as `validate` does, and project each class and slot the schema declares under its own IRI. The `lokf-convert` and `lokf-serve` recipes do not pass it yet, so run `uv run lokf convert --schema <slug>.yaml knowledge` from `.lokf/`. Without it, read `lokf:<key>` in a query result as "declared to the validator, not yet to the graph".
 - **Keeping the copy current.** Section 1's tooling-version step gains one line on such a host. When the `lokf` floor moves, refresh the pinned `lokf.yaml` to the new version in the same change and re-run `just lokf-validate`. A copy older than the toolkit validates against classes and slots the toolkit no longer means.
 - **A domain bundle.** A bundle whose concepts are other bundles has a ready-made schema, `templates/domain.yaml` in ktl-sidecar, and its own page: the **curator**'s [domain-bundle.md](../../ktl-curator/references/domain-bundle.md).
 - **Deciding whether to do it.** That is the **curator**'s conversation and the team's call: [ktl-curator/references/domain-schemas.md](../../ktl-curator/references/domain-schemas.md). Until a schema exists, a concept with a type or key of its own is still knowledge under Rule 7. It is also still outside what `lokf validate` checks, so the **registrar** gate stays red. The **librarian**'s choices are to fit the concept onto a built-in class with no extra keys, or to write the schema, never to loosen the validator.

@@ -70,7 +70,7 @@ The workspace is a materialised view of the top domain, built ahead of time and 
 | Part | Where |
 | --- | --- |
 | The release, with a domain schema beside the bundle | `knowledge-release.yaml` in the sidecar's templates |
-| The registry, offline, and the readers over one bundle | lokf 0.8.0: `lokf export`, `registry`, `serve`, `query`, `mcp` and `tables`; specification sections 11.1 to 11.3 |
+| The registry, offline, and the readers over one bundle | lokf 0.9.0: `lokf export`, `registry`, `serve`, `query`, `mcp` and `tables`; specification sections 11.1 to 11.3 |
 | Domains, their schema, and a person's confirmation of membership, which the registrar's gate ties to that person | `domain.yaml` in the sidecar's templates; the curator's [domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md); [the fifth role](architecture.md#the-fifth-role-which-is-not-a-skill); the first host, [ktl-federation](https://w3id.org/ktl/federation/) |
 | The build and its gate, and the proposals that move a member | `knowledge-federate.py build` and `members`, which `knowledge-federation.yaml` and the librarian's workflow run ([automation.md](../skills/ktl-sidecar/references/automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host)) |
 | The readers over the workspace: the `lokf-registry` MCP server of section 11.4, a SPARQL endpoint, a query, and what changed between two workspaces | `knowledge-federate.py mcp`, `serve`, `query` and `diff`; the Oxigraph server image ([domain-bundle.md](../skills/ktl-curator/references/domain-bundle.md#reading-the-workspace)) |
@@ -96,4 +96,4 @@ Of section 11, one part remains a design: fetching a member from a private repos
 - GitHub. Artifact attestations. GitHub Docs. <https://docs.github.com/en/actions/concepts/security/artifact-attestations>
 - Google Cloud (2026). Open Knowledge Format, specification version 0.2. <https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md>
 - Harris, S. and Seaborne, A. (2013). SPARQL 1.1 Query Language, section 13. W3C Recommendation. <https://www.w3.org/TR/sparql11-query/>
-- Nichols, N. (2026). LOKF specification, version 0.2, section 11: Federation, registries of bundles. <https://lokf.nolan-nichols.com/specification/#11-federation-registries-of-bundles>. The toolkit as released at 0.8.0: <https://github.com/nicholsn/lokf/blob/v0.8.0/SPEC.md>
+- Nichols, N. (2026). LOKF specification, version 0.2, section 11: Federation, registries of bundles. <https://lokf.nolan-nichols.com/specification/#11-federation-registries-of-bundles>. The toolkit as released at 0.9.0: <https://github.com/nicholsn/lokf/blob/v0.9.0/SPEC.md>

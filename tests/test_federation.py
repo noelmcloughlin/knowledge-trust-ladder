@@ -420,7 +420,7 @@ def test_the_workspace_graph_json_draws_every_bundle_and_the_links_between_them(
     graph = json.loads((host / "snapshot" / "graph.json").read_text(encoding="utf-8"))
     nodes = {n["data"]["id"]: n["data"] for n in graph["nodes"]}
     assert nodes[a_iri + "glossary/term"]["bundle"] == "a" and nodes[b_iri + "glossary/other"]["bundle"] == "b"
-    assert nodes[federation["d_iri"] + "members/a"]["bundle"] == "domain" and nodes[federation["d_iri"] + "domains/federation"]["stale_after"] == "2027-04-18"
+    assert nodes[federation["d_iri"] + "members/a"]["bundle"] == "domain" and nodes[federation["d_iri"] + "domains/federation"]["stale_after"][:10] == "2027-04-18"
     assert not any("stale" in n for n in nodes.values()), "staleness is judged where the graph is drawn, from stale_after"
     cross = [e["data"] for e in graph["edges"] if e["data"].get("cross")]
     assert cross == [{"id": f"{a_iri}glossary/term dcterms:relation {b_iri}glossary/other", "source": f"{a_iri}glossary/term", "target": f"{b_iri}glossary/other",
