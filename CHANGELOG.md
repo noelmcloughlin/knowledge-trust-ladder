@@ -4,16 +4,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **ktl-sidecar installs the ingest's example manifest as `.lokf/ingest.yaml.sample`**, for a host to copy to `.lokf/ingest.yaml`.
-
-### Fixed
-
-- **The pen, the conventions check and the ingest run behind a package mirror with no upload times.** They lift `exclude-newer` only for a pinned package that uv reports without an upload date, and the ingest pins typing-extensions too.
-- **A uv that cannot install a script's packages no longer reads as findings.** The conventions check exits 2, the pen falls back to python3 or exits 2, and the ingest falls back to a `.venv` without pypdf.
-
-## [0.58.0] - 2026-10-27
+## [0.58.0] - 2026-10-28
 
 ### Added
 
@@ -23,10 +14,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The curator's report lists each retired concept whose successor no person has confirmed.** An agent may propose a retirement, but the retired concept governs until a person confirms the successor.
 - **A curation policy may carry `Automation re-check: <n>`.** The curator's report then lists n concepts checked by automation only, picked by the same hash rule as `Independent re-check:`, for a person to check against their sources.
 
+### Changed
+
+- **ktl-sidecar installs the ingest's example manifest as `.lokf/ingest.yaml.sample`**, for a host to copy to `.lokf/ingest.yaml`.
+
 ### Fixed
 
 - **The sidecar's two example concepts carry a `resource`**, the placeholder endpoint they already name, so the skeleton keeps rule 15 before anyone edits it.
 - **A review date is read by its day.** `knowledge-report.sh` compared `stale_after` with today as whole strings, so a datetime, the type LOKF 0.9.0 gives the field, could read as not yet due on its own day, or as no date at all.
+- **The pen, the conventions check and the ingest run behind a package mirror with no upload times.** They lift `exclude-newer` only for a pinned package that uv reports without an upload date, and the ingest pins typing-extensions too.
+- **A uv that cannot install a script's packages no longer reads as findings.** The conventions check exits 2, the pen falls back to python3 or exits 2, and the ingest falls back to a `.venv` without pypdf.
 
 ## [0.57.0] - 2026-10-27
 
