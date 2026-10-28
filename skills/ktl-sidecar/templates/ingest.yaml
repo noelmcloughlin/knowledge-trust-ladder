@@ -3,7 +3,9 @@
 # under .lokf/mirror/<entry id>/; ingest.lock.yaml records what was fetched.
 # No token goes here: an auth block names environment variables starting
 # KNOWLEDGE_INGEST_, and the workflow hands over the secrets of those names.
-# Replace the examples with your own, or delete this file to mirror nothing.
+# The sidecar installs this file as .lokf/ingest.yaml.sample, which nothing
+# reads: copy it to .lokf/ingest.yaml and replace the examples with your own.
+# Delete .lokf/ingest.yaml to mirror nothing.
 # An entry taken out of this file loses its mirror folder on the next run.
 
 ingest_version: "1"

@@ -356,7 +356,7 @@ It runs weekly (Sundays 04:10 UTC) and on demand, in two jobs:
 
 ### Setting it up
 
-1. Copy `templates/ingest.yaml` to `.lokf/ingest.yaml` and replace its examples with your sources. Each `auth` block names environment variables, never a value.
+1. Copy `.lokf/ingest.yaml.sample` to `.lokf/ingest.yaml` and replace its examples with your sources. Each `auth` block names environment variables, never a value.
 2. Store each credential as a secret in the `knowledge-ingest` Environment ([above](#keep-each-secret-in-its-environment)), under the name the manifest gives, such as `KNOWLEDGE_INGEST_ATLASSIAN_TOKEN`. For Confluence Cloud that is an API token with read scopes and an expiry, used as HTTP Basic with the account's email in `KNOWLEDGE_INGEST_ATLASSIAN_USER`; for a repository, a fine-grained token with Contents read.
 3. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General, which the `publish` job needs to open the pull request with the job's own token.
 4. Start one run from the Actions tab and read its summary. An entry that says *failed* with a credential's name is a secret not yet set; the run shows each such line as a warning too.

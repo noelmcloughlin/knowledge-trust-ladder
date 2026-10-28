@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **ktl-sidecar installs the ingest's example manifest as `.lokf/ingest.yaml.sample`.** A host that mirrors sources outside its repository copies it to `.lokf/ingest.yaml`, instead of finding `templates/ingest.yaml` in the skill.
+
 ## [0.58.0] - 2026-10-27
 
 ### Added
