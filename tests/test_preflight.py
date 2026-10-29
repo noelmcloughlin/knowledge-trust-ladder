@@ -17,6 +17,7 @@ stay in the contract script: that is a fact about this repository's own pages.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 
 import pytest
@@ -254,6 +255,28 @@ def test_warns_when_the_floor_is_below_what_the_recipes_need(tmp_path):
     write(pyproject, (TEMPLATES / "pyproject.toml").read_text().replace("lokf[build]>=0.9.0", "lokf[build]>=0.10.0"))
     result = preflight(tmp_path)
     assert result and "the floor is" not in result.out, f"preflight read 0.10.0 as below 0.9.0: {result.out}"
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="the toolkit lines need uv")
+@pytest.mark.parametrize("copy, locked, stale", [
+    ("0.8.0", "0.9.0", True),
+    ("0.9.0", "0.9.0", False),
+    ("0.9.1", "0.9.1", False),
+    ("0.9.0", "0.9.1", True),
+    (None, "0.9.0", False),
+], ids=["an older copy", "the locked release's copy", "a lock above the floor", "a copy behind the lock", "no copy"])
+def test_warns_when_the_pinned_core_schema_is_not_the_locked_lokfs(tmp_path, copy, locked, stale):
+    """A domain schema imports .lokf/lokf.yaml, and the gate runs the lokf that uv.lock pins. Under lokf 0.9.0 a bare-date stale_after is a datetime, which 0.8.0's copy rejects.
+
+    The floor stays >=0.9.0 in every case, so a lock on 0.9.1 with a copy to match gives no warning.
+    """
+    write(tmp_path / ".lokf" / "pyproject.toml", (TEMPLATES / "pyproject.toml").read_text())
+    write(tmp_path / ".lokf" / "uv.lock", f'version = 1\n\n[[package]]\nname = "lokf"\nversion = "{locked}"\nsource = {{ registry = "https://pypi.org/simple" }}\n')
+    if copy:
+        write(tmp_path / ".lokf" / "lokf.yaml", f"id: https://w3id.org/lokf/schema\nname: lokf\nversion: {copy}\n")
+    result = preflight(tmp_path)
+    found = matches(result.out, rf"^warn    core +\.lokf/lokf\.yaml is lokf {re.escape(str(copy))}'s schema and the toolkit is lokf {re.escape(locked)} ")
+    assert result and found == stale, f"preflight {'did not warn' if stale else 'warned'} about a {copy} copy under a lock on {locked}: {result.out}"
 
 
 @pytest.mark.parametrize("line, table, warning", [

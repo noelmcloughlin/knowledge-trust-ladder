@@ -45,9 +45,14 @@
 #   that waits in that domain, the build takes the release the lock inside
 #   that zip records.
 #
-# ReleaseDistribution: LOKF's Distribution plus the `checksum` of the file
-#   it names, where DCAT puts a digest, so each further distribution, a
-#   schema or a workspace, carries a checksum of its own.
+# ReleaseDistribution: LOKF's Distribution with its `checksum` required, so
+#   each further distribution, a schema or a workspace, carries a checksum
+#   of its own.
+#
+# ReleaseChecksum: LOKF's Checksum, an spdx:Checksum, with sha256 as its
+#   only algorithm, since the build stores each file it fetches under its
+#   sha256 digest. A member concept writes it as
+#   `checksum: {algorithm: sha256, checksum_value: <64 hex digits>}`.
 id: https://w3id.org/ktl/schema/domain
 name: domain
 imports:
@@ -79,17 +84,17 @@ classes:
     class_uri: dcat:Catalog
   ReleaseDistribution:
     is_a: Distribution
-    slots: [checksum]
     slot_usage:
-      checksum: {required: true}
+      checksum: {range: ReleaseChecksum, required: true}
+  ReleaseChecksum:
+    is_a: Checksum
+    class_uri: spdx:Checksum
+    slot_usage:
+      algorithm: {range: ReleaseChecksumAlgorithm}
 slots:
   release:
     range: uri
     slot_uri: dcat:landingPage
-  checksum:
-    range: string
-    slot_uri: spdx:checksumValue
-    pattern: "^sha256:[0-9a-f]{64}$"
   unowned_targets:
     range: UnownedTargetPolicy
   max_depth:
@@ -110,6 +115,9 @@ enums:
       public: {description: anyone may read it; the default}
       internal: {description: the organisation may read it; it joins a workspace the domain clears for internal and builds in a private or internal repository}
       confidential: {description: it joins no workspace}
+  ReleaseChecksumAlgorithm:
+    permissible_values:
+      sha256: {meaning: spdx:checksumAlgorithm_sha256}
   PrivateAddressPolicy:
     permissible_values:
       refuse: {description: "a member at a private, loopback or link-local address is not fetched; the default"}

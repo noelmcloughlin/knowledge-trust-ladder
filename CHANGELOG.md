@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **A member's distribution names its checksum as LOKF core's `Checksum`, with `algorithm: sha256` and a `checksum_value`.** The domain schema's `sha256:<hex>` slot clashed with lokf 0.9.0's and broke `lokf export --schema` on a domain host, so the host rewrites its member concepts when it takes this release.
+- **The federation docs say the workspace exports every bundle under LOKF core**, so the named graphs share one vocabulary. The workspace index says each bundle's fit is checked against the schema released with it.
+
+### Fixed
+
+- **The preflight warns when `.lokf/lokf.yaml` is from another lokf release than the one `uv.lock` pins.** A domain schema imports that copy, and lokf 0.9.0 reads a bare-date `stale_after` as a datetime, which a 0.8.0 copy rejects.
+- **The federation check runs on a pull request that changes `.lokf/lokf.yaml` or `.lokf/justfile`.** The check validates the domain bundle against the schema the justfile names, which imports that copy of LOKF core.
+
 ## [0.60.0] - 2026-10-29
 
 ### Added

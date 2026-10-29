@@ -15,11 +15,13 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
 ## The recipe
 
-1. **A pinned copy of the core schema beside it.** LinkML resolves `imports:` relative to the importing file, so `.lokf/lokf.yaml` must exist, at the version the sidecar's `pyproject.toml` floors. Copy it out of the installed package:
+1. **A pinned copy of the core schema beside it.** LinkML resolves `imports:` relative to the importing file, so `.lokf/lokf.yaml` must exist, and it must come from the lokf release that `.lokf/uv.lock` pins. Copy it out of the installed package:
 
    ```bash
    cd .lokf && uv run python -c "from importlib.resources import files; print(files('lokf') / 'data' / 'lokf.yaml')" | xargs -I{} cp {} lokf.yaml
    ```
+
+   Copy it again whenever the lock pins another lokf release. A copy from another release can reject what the toolkit reads, and the preflight's `core` line warns when the copy and the lock differ.
 
    The copy has a second use. Run from `.lokf/` without `--schema`, `lokf validate` and `lokf vocab` read it as LOKF core, because lokf looks for `lokf.yaml` in the current directory and its ancestors before its packaged copy.
 
@@ -107,6 +109,6 @@ Which vocabulary to use, if any, is the team's call ([ktl-curator/references/dom
 - **The graph, unless the command is given the schema.** The core JSON-LD context declares `@vocab: https://w3id.org/lokf/`, so a key no schema declares projects in LOKF's namespace, as `lokf:ects`. Up to lokf 0.8.0 an undeclared type projects the same way (`a lokf:Module`). From lokf 0.9.0 it projects as `a lokf:Concept` with the name kept in `schema:additionalType "Module"`, so filter on that literal rather than on a generated class such as `lokf:Module`.
 
   From lokf 0.9.0, `convert`, `query`, `serve` and `export` take `--schema` as `validate` does, and project each class and slot the schema declares under its own IRI. The `lokf-convert` and `lokf-serve` recipes and the website's export pass it. A bare `lokf query` or `lokf export` takes `--schema <slug>.yaml`, or reads `[tool.lokf] schema`. Without it, read `lokf:<key>` in a query result as "declared to the validator, not yet to the graph".
-- **Keeping the copy current.** Section 1's tooling-version step gains one line on such a host. When the `lokf` floor moves, refresh the pinned `lokf.yaml` to the new version in the same change and re-run `just lokf-validate`. A copy older than the toolkit validates against classes and slots the toolkit no longer means.
+- **Keeping the copy current.** Section 1's tooling-version step gains one line on such a host. When the floor moves, or the lock otherwise pins another `lokf` release, copy the pinned `lokf.yaml` again from the installed package in the same change, and re-run `just lokf-validate`. A copy older than the toolkit validates against classes and slots the toolkit no longer means.
 - **A domain bundle.** A bundle whose concepts are other bundles has a ready-made schema, `templates/domain.yaml` in ktl-sidecar, and its own page: the **curator**'s [domain-bundle.md](../../ktl-curator/references/domain-bundle.md).
 - **Deciding whether to do it.** That is the **curator**'s conversation and the team's call: [ktl-curator/references/domain-schemas.md](../../ktl-curator/references/domain-schemas.md). Until a schema exists, a concept with a type or key of its own is still knowledge under Rule 7. It is also still outside what `lokf validate` checks, so the **registrar** gate stays red. The **librarian**'s choices are to fit the concept onto a built-in class with no extra keys, or to write the schema, never to loosen the validator.

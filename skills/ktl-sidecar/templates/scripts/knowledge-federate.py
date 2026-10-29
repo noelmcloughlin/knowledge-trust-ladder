@@ -249,6 +249,25 @@ GITHUB_RELEASE = re.compile(
 )
 
 
+def named_digest(checksum) -> str:
+    """The sha256 digest a distribution's checksum names, lowercase, or "" when it names none.
+
+    LOKF 0.9.0 writes a checksum as {algorithm: sha256, checksum_value:
+    <hex>}. A member domain released before then names the string
+    sha256:<hex> in its member concepts. The build still follows those
+    concepts, so it reads both forms.
+    """
+    if isinstance(checksum, dict):
+        checksum = f"{checksum.get('algorithm')}:{checksum.get('checksum_value')}"
+    checksum = str(checksum or "")
+    return checksum[7:].lower() if CHECKSUM.fullmatch(checksum) else ""
+
+
+def sha256_checksum(sha: str) -> dict:
+    """A distribution's checksum as LOKF 0.9.0 writes it."""
+    return {"algorithm": "sha256", "checksum_value": sha}
+
+
 class Failed(Exception):
     """A finding that stops the build; the message says what and where."""
 
@@ -358,10 +377,9 @@ class Member:
         # left out, since the check is there to fetch what a person is asked
         # to confirm.
         self.proposed = False
-        checksum = str(dist.get("checksum") or "")
-        if not CHECKSUM.fullmatch(checksum):
-            raise Failed(f"{concept_path}: distribution.checksum must be sha256:<64 hex digits>, not {checksum!r}")
-        self.sha256 = checksum[7:].lower()
+        self.sha256 = named_digest(dist.get("checksum"))
+        if not self.sha256:
+            raise Failed(f"{concept_path}: distribution.checksum must name a sha256 digest of 64 hex digits, not {dist.get('checksum')!r}")
         if not self.base_iri or not self.zip_url:
             raise Failed(f"{concept_path}: base_iri and distribution.access_url are required")
         # A further distribution ending .yaml is the bundle's own schema, as
@@ -405,11 +423,11 @@ class Member:
             self.repo = None
 
     def further_digest(self, dist: dict, what: str, name: str) -> str:
-        """The sha256 digest a further distribution's checksum gives, which must take the zip's form, sha256:<64 hex digits>."""
-        checksum = str(dist.get("checksum") or "")
-        if not CHECKSUM.fullmatch(checksum):
-            raise Failed(f"{self.concept_path}: the {what} distribution {name} needs checksum sha256:<64 hex digits>, not {checksum!r}")
-        return checksum[7:].lower()
+        """The sha256 digest a further distribution's checksum names. Like the zip's checksum, it must name one."""
+        sha = named_digest(dist.get("checksum"))
+        if not sha:
+            raise Failed(f"{self.concept_path}: the {what} distribution {name} needs a checksum naming a sha256 digest of 64 hex digits, not {dist.get('checksum')!r}")
+        return sha
 
     def lock_entry(self) -> dict:
         entry = {
@@ -579,13 +597,13 @@ def as_built(released: tuple[dict, str] | None, iri: str, concept: dict) -> tupl
 def entry_data(entry: dict, title) -> dict:
     """The frontmatter a member concept at a lock entry's release would hold, so the build fetches and checks that release as it does any member's."""
     url = str(entry.get("zip") or entry.get("served") or "")
-    dists = [{"name": pathlib.PurePosixPath(urllib.parse.urlparse(url).path).name, "access_url": url, "checksum": f"sha256:{entry.get('sha256')}"}]
+    dists = [{"name": pathlib.PurePosixPath(urllib.parse.urlparse(url).path).name, "access_url": url, "checksum": sha256_checksum(entry.get("sha256"))}]
     if entry.get("served"):
         dists[0]["media_type"] = SERVED_TYPE
     for extra in (entry.get("schema"), entry.get("workspace")):
         if isinstance(extra, dict):
             dists.append({"name": pathlib.PurePosixPath(urllib.parse.urlparse(str(extra.get("url") or "")).path).name,
-                          "access_url": extra.get("url"), "checksum": f"sha256:{extra.get('sha256')}"})
+                          "access_url": extra.get("url"), "checksum": sha256_checksum(extra.get("sha256"))})
     data = {"type": "MemberDomain" if entry.get("kind") == "domain" else "MemberBundle", "title": title,
             "base_iri": entry.get("base_iri"), "version": entry.get("version"), "release": entry.get("release"), "distribution": dists}
     if entry.get("sensitivity"):
@@ -2231,7 +2249,7 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
               "- `bundles/<slug>/.lokf/knowledge/`: each release, unpacked, or written out from the file its site serves, which lies beside it; read-only.",
               "- `queries/`: `labels.rq` (each concept's trust label, with its bundle), `moved.rq` (members edited since the domain's last confirmation), `unowned.rq` (the gate), `links.rq` (the links between members) and `members.rq` (the lock graph).",
               f"- `gate-report.md`: the gate's verdict under `unowned_targets: {policy}`, {len(unowned)} unowned target(s)"
-              + (f" and {dangling} that name no concept of the member whose namespace holds them" if dangling else "") + ", and each bundle's fit to LOKF core.",
+              + (f" and {dangling} that name no concept of the member whose namespace holds them" if dangling else "") + ", and each bundle's fit to the schema released with it, or to LOKF core when it releases none.",
               ""]
     lines += ["Read it with `knowledge-federate.py mcp`, the `lokf-registry` server of the LOKF specification's section 11.4 (resolve an IRI to its bundle, a bounded neighbourhood or subgraph, SPARQL over the union, a document by IRI), or with `knowledge-federate.py serve`, the toolkit's SPARQL endpoint and graph page.", ""]
     if public:
@@ -2566,7 +2584,7 @@ def further_distribution(release: dict, prefix: str, suffixes: tuple[str, ...], 
     if pair is None:
         return None
     asset, sums = pair
-    return {"name": asset["name"], "access_url": asset["browser_download_url"], "media_type": media_type, "checksum": f"sha256:{digest_of(sums, what)}"}
+    return {"name": asset["name"], "access_url": asset["browser_download_url"], "media_type": media_type, "checksum": sha256_checksum(digest_of(sums, what))}
 
 
 def release_distributions(release: dict, zip_asset: dict, sum_asset: dict, what: str, domain: bool = False) -> list[dict]:
@@ -2576,7 +2594,7 @@ def release_distributions(release: dict, zip_asset: dict, sum_asset: dict, what:
     domain host's knowledge-federation.yaml attaches the workspace-<tag>.zip.
     """
     dists = [{"name": zip_asset["name"], "access_url": zip_asset["browser_download_url"], "media_type": "application/zip",
-              "checksum": f"sha256:{digest_of(sum_asset, what)}"}]
+              "checksum": sha256_checksum(digest_of(sum_asset, what))}]
     schema = further_distribution(release, "schema-", (".yaml", ".yml"), "application/yaml", what)
     workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", what) if domain else None
     return dists + [d for d in (schema, workspace) if d]
@@ -2672,7 +2690,7 @@ def served_move(c, member: Member, cache: pathlib.Path, book: pathlib.Path, args
     renamed = base != member.base_iri
     if renamed:
         check_namespace(member.zip_url, base, taken, c.concept_id)
-    distribution = [{**c.data["distribution"][0], "checksum": f"sha256:{sha}"}, *c.data["distribution"][1:]]
+    distribution = [{**c.data["distribution"][0], "checksum": sha256_checksum(sha)}, *c.data["distribution"][1:]]
     count = served_count(path, Member(c.path, {**c.data, "base_iri": base, "distribution": distribution}, "", 1))
     version, where = day, c.concept_id + ".md"
     confirmed = confirmed_by_person(c.data)
@@ -2738,7 +2756,7 @@ def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathl
     if meta.get("base_iri") not in (None, base):
         meta = {}
     title = str(meta.get("title") or f"The bundle {folder} serves")
-    dist = {"name": url.rsplit("/", 1)[-1], "access_url": url, "media_type": SERVED_TYPE, "checksum": f"sha256:{sha}"}
+    dist = {"name": url.rsplit("/", 1)[-1], "access_url": url, "media_type": SERVED_TYPE, "checksum": sha256_checksum(sha)}
     probe = Member(knowledge / where, {"base_iri": base, "title": title, "version": day, "distribution": [dist]}, domain_iri, 1)
     with tempfile.TemporaryDirectory(prefix="federate-add-") as tmp:
         kdir = write_out(path, pathlib.Path(tmp), probe)
@@ -2792,7 +2810,7 @@ def move_member(c, cache: pathlib.Path, book: pathlib.Path, args, ops: list[dict
         # so the bytes change: then this proposes the new checksum, since
         # the build refuses the old one.
         workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", member.slug) if member.declared_domain else None
-        if workspace is None or workspace["checksum"] == f"sha256:{member.workspace_sha256}":
+        if workspace is None or named_digest(workspace["checksum"]) == member.workspace_sha256:
             current.append(f"{member.slug}: {tag} is current")
             return
         kept = [d for d in c.data["distribution"] if not (str(d.get("name") or "").startswith("workspace-") and str(d.get("name") or "").endswith(".zip"))]
