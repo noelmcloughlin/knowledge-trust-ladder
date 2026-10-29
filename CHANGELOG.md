@@ -4,6 +4,20 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`just lokf-check-refs` runs lokf's `--check-excerpts`.** The gate fails a `sources[].excerpt` that its local file no longer holds. The recipes need lokf 0.9.0, so a host raises its floor before it takes this release.
+
+### Changed
+
+- **`lokf-convert`, `lokf-serve` and the website's `lokf export` pass the domain schema too**, so the graph names its classes and slots under their own IRIs. No recipe changes into the schema's folder any more.
+- **The preflight warns on a `lokf` floor below 0.9.0**, and when `[tool.lokf] schema` names another file than the justfile's `schema :=` line.
+
+### Fixed
+
+- **`automation.md` gives the real reason the librarian's variables are repository variables.** Only the federation's `nudge` job reads one in a job's `if:`. The librarian reads them in steps, and they stay together so every switch sits in one place.
+- **The librarian's Snyk W012 note names the lokf 0.9.0 wheel**, whose schema matches the commit its URL names.
+
 ## [0.59.0] - 2026-10-28
 
 ### Added

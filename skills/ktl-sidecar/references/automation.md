@@ -117,7 +117,7 @@ The workflow is **inert until set up**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset
 | `AGENT_USE_JOB_TOKEN` | `true`: the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it, and so does a [domain host's](#knowledge-federationyaml-the-workspace-of-a-domain-host) members script; leave it unset for any other agent |
 | `KNOWLEDGE_RETRIEVAL` | optional. `true`: each run that changes the bundle makes one more agent call and the pull request carries a retrieval score ([below](#knowledge-reportsh-what-a-program-can-say-about-the-bundle)). Unset, nothing is scored |
 
-Set each one under **Repository variables** (Settings, Secrets and variables, Actions, Variables), or with `gh variable set <name> --body <value>`. A variable set on an Environment is never seen: a job's `if:` reads only repository and organization variables.
+Set each one under **Repository variables** (Settings, Secrets and variables, Actions, Variables), or with `gh variable set <name> --body <value>`. `KNOWLEDGE_LIBRARIAN_ENABLED` must be one, because `knowledge-federation.yaml`'s `nudge` job reads it in its own `if:`, and a job's `if:` reads only repository and organization variables. This workflow reads every variable in the table in steps of the `refresh` job, which runs in the `knowledge-librarian` Environment. Keep them beside the switch all the same, so that every switch sits in one place.
 
 | Secret, in the `knowledge-librarian` Environment ([above](#keep-each-secret-in-its-environment)) | Value |
 | --- | --- |
