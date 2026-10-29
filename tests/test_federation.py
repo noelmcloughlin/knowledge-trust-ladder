@@ -1198,13 +1198,18 @@ def test_the_domain_schema_clears_public_or_internal_alone(tmp_path):
 
 
 def test_the_domain_schema_takes_lokf_cores_checksum_and_exports(tmp_path):
-    """A member's distribution needs LOKF core's checksum, and the website's lokf export reads the domain schema, which once clashed with core's slot."""
+    """A member's distribution needs LOKF core's checksum, and the website's lokf export reads the domain schema, which once clashed with core's slot.
+
+    Core takes md5 and sha512 too; the domain schema takes sha256 alone, as the build does.
+    """
     found = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", "import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob('lokf.yaml')))"],
                 stdout_only=True)
     shutil.copy(found.out.strip(), tmp_path / "lokf.yaml")
     shutil.copy(TEMPLATES / "domain.yaml", tmp_path / "domain.yaml")
     sha = "a" * 64
-    for name, value, rc in (("core", checksum(sha), 0), ("string", f"sha256:{sha}", 1), ("none", None, 1)):
+    for name, value, rc in (("core", checksum(sha), 0), ("string", f"sha256:{sha}", 1), ("none", None, 1),
+                            ("md5", {"algorithm": "md5", "checksum_value": "a" * 32}, 1),
+                            ("sha512", {"algorithm": "sha512", "checksum_value": "a" * 128}, 1)):
         dist = {"name": "knowledge-v1.0.0-b.zip", "access_url": "https://example.test/knowledge-v1.0.0-b.zip", "media_type": "application/zip"}
         if value is not None:
             dist["checksum"] = value
@@ -1218,6 +1223,9 @@ def test_the_domain_schema_takes_lokf_cores_checksum_and_exports(tmp_path):
     assert r.rc == 0, r.out
     graph = (out / "graph.nt").read_text(encoding="utf-8")
     assert f'<http://spdx.org/rdf/terms#checksumValue> "{sha}"' in graph, graph
+    for triple in ("<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://spdx.org/rdf/terms#Checksum>",
+                   "<http://spdx.org/rdf/terms#algorithm> <http://spdx.org/rdf/terms#checksumAlgorithm_sha256>"):
+        assert triple in graph, "the domain's checksum exports as core's does\n" + graph
 
 
 def test_the_gate_names_a_member_that_waits_when_a_link_lies_in_its_namespace(federation):
