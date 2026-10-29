@@ -15,6 +15,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **`automation.md` gives the real reason the librarian's variables are repository variables.** Only the federation's `nudge` job reads one in a job's `if:`; the librarian reads them in steps, and they stay together so every switch sits in one place.
+- **The librarian's Snyk W012 note names the lokf 0.9.0 wheel**, whose schema matches the commit its URL names.
 
 ## [0.59.0] - 2026-10-28
 
