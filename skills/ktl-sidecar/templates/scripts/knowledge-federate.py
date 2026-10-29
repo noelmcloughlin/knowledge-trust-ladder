@@ -2231,7 +2231,7 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
               "- `bundles/<slug>/.lokf/knowledge/`: each release, unpacked, or written out from the file its site serves, which lies beside it; read-only.",
               "- `queries/`: `labels.rq` (each concept's trust label, with its bundle), `moved.rq` (members edited since the domain's last confirmation), `unowned.rq` (the gate), `links.rq` (the links between members) and `members.rq` (the lock graph).",
               f"- `gate-report.md`: the gate's verdict under `unowned_targets: {policy}`, {len(unowned)} unowned target(s)"
-              + (f" and {dangling} that name no concept of the member whose namespace holds them" if dangling else "") + ", and each bundle's fit to LOKF core.",
+              + (f" and {dangling} that name no concept of the member whose namespace holds them" if dangling else "") + ", and each bundle's fit to the schema released with it, or to LOKF core when it releases none.",
               ""]
     lines += ["Read it with `knowledge-federate.py mcp`, the `lokf-registry` server of the LOKF specification's section 11.4 (resolve an IRI to its bundle, a bounded neighbourhood or subgraph, SPARQL over the union, a document by IRI), or with `knowledge-federate.py serve`, the toolkit's SPARQL endpoint and graph page.", ""]
     if public:
