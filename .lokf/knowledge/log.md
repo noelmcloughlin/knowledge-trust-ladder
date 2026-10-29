@@ -2,6 +2,7 @@
 
 ## 2026-10-29
 
+* **Curation**: human:noelmcloughlin sent 2 back and released the text they wrote in both, the ktl-curator skill and Domain schemas, with the note "rewrite as needed", so the librarian may rewrite each from its sources.
 * **Curation**: human:noelmcloughlin rewrote sentences in 2 concepts, the ktl-curator skill and Domain schemas, confirmed neither, and cleared their "correct facts" notes on both. Both edits were to text the librarian re-derived the same day after a send-back.
 * **Changed**: ktl-sidecar splits its paragraph on the preflight's lines in two, the warnings and the skills installed for one user, with no fact changed.
 * **Changed**: ktl-sidecar names the preflight's new `core` line, which warns when `.lokf/lokf.yaml` is from another lokf release than `uv.lock` pins, as `references/prerequisites.md` lists it.

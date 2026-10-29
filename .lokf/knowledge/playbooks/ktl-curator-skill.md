@@ -6,7 +6,7 @@ description: "A human curator's assistant: a one-screen report of what needs a p
 genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-29T12:08:11Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
@@ -120,3 +120,7 @@ Accepting a member's move to a new release is the same confirm again. When the n
 
 [^ktl-curator-skill.md]: skills/ktl-curator/SKILL.md, Step 1, items 7 and 8
 [^review-session.md]: skills/ktl-curator/references/review-session.md, the curation policy template
+
+## Open questions
+
+- 2026-10-29, human:noelmcloughlin: rewrite as needed

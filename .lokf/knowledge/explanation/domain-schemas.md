@@ -11,7 +11,7 @@ sources:
   - resource: skills/ktl-sidecar/templates/justfile
   - resource: docs/architecture.md
 generated:
-  by: human:noelmcloughlin
+  by: process:ktl-curator
   at: "2026-10-29T12:15:10Z"
 about: []
 references:
@@ -70,3 +70,7 @@ The shape waits for the curator's write path.
 Where a domain schema binds a slot to an external code list (SNOMED CT, for example), neither LOKF's schema nor `lokf validate` checks that the term still exists. `linkml-term-validator` can, as an optional extra gate whose "service unreachable" counts as not passing.
 
 **Roles stay as they are.** The curator raises the question, as a report line and a conversation. The team decides whether a domain schema, a small piece of governed software, is worth owning. The librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge, since the spec says consumers MUST NOT reject unknown types. It is also still outside what `lokf validate` checks, so the registrar gate stays red.
+
+## Open questions
+
+- 2026-10-29, human:noelmcloughlin: rewrite as needed
