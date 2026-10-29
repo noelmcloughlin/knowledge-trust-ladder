@@ -109,7 +109,7 @@ bash scripts/knowledge-preflight.sh         # what this host can do: read its su
 bash scripts/knowledge-apply.sh --dry-run   # the patch you are about to apply: every operation checked, nothing written
 just lokf-install                           # uv sync, the first time
 just lokf-validate                          # JSON Schema on the frontmatter and the assembled bundle
-just lokf-check-refs                        # every typed-relation target resolves to a concept
+just lokf-check-refs                        # every typed-relation target resolves, every excerpt is in its file
 bash scripts/knowledge-conventions.sh       # the eighteen conventions lokf validate cannot see
 bash scripts/knowledge-report.sh            # every label and the health line: quote them, never work them out
 just lokf-convert                           # project to Turtle and read the triples

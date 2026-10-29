@@ -241,6 +241,11 @@ if have uv; then
   else
     info toolkit "uv $(uv --version 2>/dev/null | sed 's/^uv //') present; no .lokf/pyproject.toml yet"
   fi
+  # The recipes pass --check-excerpts, and --schema to convert and serve,
+  # which lokf 0.8.0 does not take.
+  case "${floor:-}" in
+    0.[0-8]|0.[0-8].*) warn toolkit "the floor is >=$floor and the justfile's recipes need lokf 0.9.0 - raise it to \"lokf[build]>=0.9.0\" in .lokf/pyproject.toml and run uv lock there" ;;
+  esac
   if have just; then ok just "just $(just --version 2>/dev/null | sed 's/^just //')"; else info just "just not installed - uvx --from rust-just just works the same"; fi
   # The workflows run the just uv.lock pins, checked by hash, where it pins one.
   if [ -f "$root/.lokf/uv.lock" ] && ! grep -qx 'name = "rust-just"' "$root/.lokf/uv.lock"; then
@@ -248,6 +253,21 @@ if have uv; then
   fi
 else
   miss toolkit "uv not installed - lokf validate, convert and query unavailable, and the conventions script skips its parser's half (rules 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18); only the manual schema cross-check remains" "lokf validate and thirteen of the eighteen conventions (every skill's audit)"
+fi
+
+# A bare lokf command reads `[tool.lokf] schema` in pyproject.toml, but only
+# where no --schema is passed. The recipes, the workflows and the release take
+# the justfile's `schema :=` line, so the two must name one file.
+jschema="$(sed -n 's/^schema := "\([^"]*\)"$/\1/p' "$root/.lokf/justfile" 2>/dev/null | head -n 1)"
+tschema="$(awk -v q="'" '
+  /^[[:space:]]*\[/ { intool = ($0 ~ /^[[:space:]]*\[tool\.lokf\][[:space:]]*(#.*)?$/); next }
+  intool && /^[[:space:]]*schema[[:space:]]*=/ {
+    v = $0; sub(/^[^=]*=[[:space:]]*/, "", v)
+    if (match(v, /^"[^"]*"/) || match(v, "^" q "[^" q "]*" q)) print substr(v, 2, RLENGTH - 2)
+    exit
+  }' "$root/.lokf/pyproject.toml" 2>/dev/null)"
+if [ -n "$tschema" ] && [ "$tschema" != "$jschema" ]; then
+  warn schema "[tool.lokf] schema in .lokf/pyproject.toml is $tschema and the justfile's schema line is ${jschema:-empty} - the recipes, the workflows and the release read the justfile; set both to one path"
 fi
 
 # The gate, the release and the scheduled librarian install the toolkit with
