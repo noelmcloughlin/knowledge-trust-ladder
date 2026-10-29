@@ -121,3 +121,7 @@ Accepting a member's move to a new release is the same confirm again. When the n
 
 [^ktl-curator-skill.md]: skills/ktl-curator/SKILL.md, Step 1, items 7 and 8
 [^review-session.md]: skills/ktl-curator/references/review-session.md, the curation policy template
+
+## Open questions
+
+- 2026-10-29, human:noelmcloughlin: correct facts
