@@ -47,9 +47,11 @@
 #
 # ReleaseDistribution: LOKF's Distribution with its `checksum` required, so
 #   each further distribution, a schema or a workspace, carries a checksum
-#   of its own. That checksum is a ReleaseChecksum: LOKF's spdx:Checksum
-#   with sha256 as its only algorithm, since the build stores each file
-#   under its sha256 digest. It is written
+#   of its own.
+#
+# ReleaseChecksum: LOKF's Checksum, an spdx:Checksum, with sha256 as its
+#   only algorithm, since the build stores each file it fetches under its
+#   sha256 digest. A member concept writes it as
 #   `checksum: {algorithm: sha256, checksum_value: <64 hex digits>}`.
 id: https://w3id.org/ktl/schema/domain
 name: domain

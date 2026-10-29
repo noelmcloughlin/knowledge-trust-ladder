@@ -266,9 +266,9 @@ def test_warns_when_the_floor_is_below_what_the_recipes_need(tmp_path):
     (None, "0.9.0", False),
 ], ids=["an older copy", "the locked release's copy", "a lock above the floor", "a copy behind the lock", "no copy"])
 def test_warns_when_the_pinned_core_schema_is_not_the_locked_lokfs(tmp_path, copy, locked, stale):
-    """A domain schema imports .lokf/lokf.yaml, and the gate runs the lokf uv.lock pins; lokf 0.9.0 reads a bare-date stale_after that 0.8.0's copy rejects.
+    """A domain schema imports .lokf/lokf.yaml, and the gate runs the lokf that uv.lock pins. Under lokf 0.9.0 a bare-date stale_after is a datetime, which 0.8.0's copy rejects.
 
-    The floor stays >=0.9.0 throughout, so a lock that resolves 0.9.1 with a copy to match warns of nothing.
+    The floor stays >=0.9.0 in every case, so a lock on 0.9.1 with a copy to match gives no warning.
     """
     write(tmp_path / ".lokf" / "pyproject.toml", (TEMPLATES / "pyproject.toml").read_text())
     write(tmp_path / ".lokf" / "uv.lock", f'version = 1\n\n[[package]]\nname = "lokf"\nversion = "{locked}"\nsource = {{ registry = "https://pypi.org/simple" }}\n')

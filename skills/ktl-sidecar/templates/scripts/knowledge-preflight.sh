@@ -248,8 +248,8 @@ if have uv; then
   esac
   # A domain schema imports the copy of LOKF core beside it, and the gate
   # runs the lokf that uv.lock pins, which may be newer than the floor. A
-  # copy from another release rejects what that lokf reads, such as 0.9.0's
-  # datetime for a bare-date stale_after.
+  # copy from another release can reject a concept that lokf reads: 0.9.0
+  # reads a bare-date stale_after as a datetime, which 0.8.0's copy rejects.
   copy="$(sed -n 's/^version: *\([0-9.]*\).*/\1/p' "$root/.lokf/lokf.yaml" 2>/dev/null | head -n 1)"
   pinned="$(awk '/^name = "lokf"$/ { hit = 1; next } hit { if (sub(/^version = "/, "")) { sub(/".*$/, ""); print } exit }' "$root/.lokf/uv.lock" 2>/dev/null)"
   pinned="${pinned:-${installed:-}}"

@@ -1200,7 +1200,7 @@ def test_the_domain_schema_clears_public_or_internal_alone(tmp_path):
 def test_the_domain_schema_takes_lokf_cores_checksum_and_exports(tmp_path):
     """A member's distribution needs LOKF core's checksum, and the website's lokf export reads the domain schema, which once clashed with core's slot.
 
-    Core takes md5 and sha512 too; the domain schema takes sha256 alone, as the build does.
+    Core also takes md5 and sha512. The domain schema takes sha256 alone, as the build does.
     """
     found = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", "import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob('lokf.yaml')))"],
                 stdout_only=True)
