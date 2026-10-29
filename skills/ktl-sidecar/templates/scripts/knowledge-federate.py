@@ -244,6 +244,9 @@ EXTERNAL_OK = {"definedBy", "source"}
 # file in the cache, so a checksum of any other form is refused before it
 # is used, or a path in it could reach outside the cache.
 CHECKSUM = re.compile(r"^sha256:[0-9a-fA-F]{64}$")
+GITHUB_RELEASE = re.compile(
+    r"^https://github\.com/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/releases/download/(?P<tag>[^/]+)/(?P<asset>[^/]+)$"
+)
 
 
 def named_digest(checksum) -> str:
@@ -263,9 +266,6 @@ def named_digest(checksum) -> str:
 def sha256_checksum(sha: str) -> dict:
     """A distribution's checksum as LOKF 0.9.0 writes it."""
     return {"algorithm": "sha256", "checksum_value": sha}
-GITHUB_RELEASE = re.compile(
-    r"^https://github\.com/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/releases/download/(?P<tag>[^/]+)/(?P<asset>[^/]+)$"
-)
 
 
 class Failed(Exception):
