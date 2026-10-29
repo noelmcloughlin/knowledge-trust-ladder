@@ -6,6 +6,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
+- **A member's distribution names its checksum as LOKF core's `Checksum`, `algorithm: sha256` and a `checksum_value`.** The domain schema's own `sha256:<hex>` slot clashed with lokf 0.9.0's, so `lokf export --schema` failed on a domain host, which now rewrites its member concepts when it takes this release.
 - **The federation docs say the workspace exports every bundle under LOKF core**, so the named graphs share one vocabulary. The gate report's vocabulary fit names the schema each bundle was validated against.
 
 ### Fixed

@@ -253,12 +253,17 @@ def zip_bundle(knowledge: Path, zip_path: Path, symlink: bool = False, extra: di
 CONFIRMED = [{"by": "human:noel", "at": "2026-01-02T00:00:00Z"}]
 
 
+def checksum(sha: str) -> dict:
+    """A distribution's checksum as LOKF 0.9.0 writes it."""
+    return {"algorithm": "sha256", "checksum_value": sha}
+
+
 def member(slug: str, base_iri: str, zip_path: Path, sha: str, domain_iri: str, version: str = "v1.0.0", kind: str = "MemberBundle", confirmed: bool = True) -> dict:
     """A member concept naming one zip; a person confirmed it unless `confirmed` is false, since a build takes only what a person confirmed."""
     concept = {
         "type": kind, "title": f"{slug} bundle", "description": f"The {slug} bundle at {version}.",
         "resource": zip_path.as_uri(), "base_iri": base_iri, "version": version,
-        "distribution": [{"name": zip_path.name, "access_url": zip_path.as_uri(), "media_type": "application/zip", "checksum": f"sha256:{sha}"}],
+        "distribution": [{"name": zip_path.name, "access_url": zip_path.as_uri(), "media_type": "application/zip", "checksum": checksum(sha)}],
         "isPartOf": [domain_iri],
     }
     if confirmed:
@@ -392,7 +397,7 @@ def test_a_reified_relation_is_gated_and_counted_as_a_named_one_is(federation, t
         sha = zip_bundle(a2, federation["a_zip"])
         concept = host / ".lokf" / "knowledge" / "members" / "a.md"
         text = concept.read_text(encoding="utf-8")
-        concept.write_text(re.sub(r"sha256:[0-9a-f]{64}", f"sha256:{sha}", text, count=1), encoding="utf-8")
+        concept.write_text(re.sub(r"checksum_value: [0-9a-f]{64}", f"checksum_value: {sha}", text, count=1), encoding="utf-8")
 
     a_relates(b_iri + "glossary/other")
     r = federate(host, "build", "--no-attestation")
@@ -498,7 +503,7 @@ def served_member(slug: str, base_iri: str, served: Path, domain_iri: str, versi
     return {"type": "MemberBundle", "title": f"{slug} bundle", "description": f"The {slug} bundle its site served on {version}.",
             "resource": served.parent.as_uri() + "/", "base_iri": base_iri, "version": version,
             "distribution": [{"name": served.name, "access_url": served.as_uri(), "media_type": "application/ld+json",
-                              "checksum": "sha256:" + hashlib.sha256(served.read_bytes()).hexdigest()}],
+                              "checksum": checksum(hashlib.sha256(served.read_bytes()).hexdigest())}],
             "isPartOf": [domain_iri], "verified": CONFIRMED}
 
 
@@ -719,8 +724,18 @@ def test_a_checksum_must_be_64_hex_digits(federation, tmp_path):
     climb = "../../" + "./" * 26 + "victim"
     rewrite(host, "b", member("b", b_iri, federation["b_zip"], climb, d_iri + "domains/federation"))
     r = federate(host, "build", "--verify-only", "--no-attestation", "--cache", str(cache))
-    assert r.rc == 1 and "distribution.checksum must be sha256:<64 hex digits>" in r.out, r.out
+    assert r.rc == 1 and "distribution.checksum must name a sha256 digest of 64 hex digits" in r.out, r.out
     assert victim.read_bytes() == b"kept"
+
+
+def test_a_checksum_written_before_lokf_0_9_0_is_still_read(federation):
+    """A member domain released before LOKF 0.9.0 names its members' checksums as sha256:<hex>, and the build follows those concepts."""
+    host = federation["host"]
+    b = member("b", federation["b_iri"], federation["b_zip"], federation["b_sha"], federation["d_iri"] + "domains/federation")
+    b["distribution"][0]["checksum"] = f"sha256:{federation['b_sha']}"
+    rewrite(host, "b", b)
+    r = federate(host, "build", "--verify-only", "--no-attestation")
+    assert r.rc == 0 and "b: v1.0.0 checksum matches" in r.out, r.out
 
 
 @pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate", "gitdir", "page", "name"])
@@ -731,7 +746,7 @@ def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_pat
     concept = host / ".lokf" / "knowledge" / "members" / "b.md"
     text = concept.read_text(encoding="utf-8")
     if fault == "checksum":
-        concept.write_text(text.replace(federation["b_sha"], "0" * 64), encoding="utf-8")
+        concept.write_text(text.replace(federation["b_sha"], "f" * 64), encoding="utf-8")
         expect = "has sha256"
     elif fault == "namespace":
         concept.write_text(text.replace("base_iri: https://b.example/knowledge/", "base_iri: https://b.example/other/"), encoding="utf-8")
@@ -1182,6 +1197,29 @@ def test_the_domain_schema_clears_public_or_internal_alone(tmp_path):
         assert r.rc == rc, (word, r.out)
 
 
+def test_the_domain_schema_takes_lokf_cores_checksum_and_exports(tmp_path):
+    """A member's distribution needs LOKF core's checksum, and the website's lokf export reads the domain schema, which once clashed with core's slot."""
+    found = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", "import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob('lokf.yaml')))"],
+                stdout_only=True)
+    shutil.copy(found.out.strip(), tmp_path / "lokf.yaml")
+    shutil.copy(TEMPLATES / "domain.yaml", tmp_path / "domain.yaml")
+    sha = "a" * 64
+    for name, value, rc in (("core", checksum(sha), 0), ("string", f"sha256:{sha}", 1), ("none", None, 1)):
+        dist = {"name": "knowledge-v1.0.0-b.zip", "access_url": "https://example.test/knowledge-v1.0.0-b.zip", "media_type": "application/zip"}
+        if value is not None:
+            dist["checksum"] = value
+        k = make_bundle(tmp_path / name, "https://d.example/federation/", "D", {"members/b.md": {
+            "type": "MemberBundle", "title": "B", "description": "A member.", "resource": "https://example.test/b",
+            "base_iri": "https://b.example/knowledge/", "version": "v1.0.0", "distribution": [dist]}})
+        r = run(["uv", "run", "--project", REPO / ".lokf", "lokf", "validate", "--schema", "domain.yaml", str(k)], cwd=tmp_path)
+        assert r.rc == rc, (name, r.out)
+    out = tmp_path / "export"
+    r = run(["uv", "run", "--project", REPO / ".lokf", "lokf", "export", str(tmp_path / "core" / "knowledge"), "--schema", str(tmp_path / "domain.yaml"), "--out-dir", str(out)], cwd=tmp_path)
+    assert r.rc == 0, r.out
+    graph = (out / "graph.nt").read_text(encoding="utf-8")
+    assert f'<http://spdx.org/rdf/terms#checksumValue> "{sha}"' in graph, graph
+
+
 def test_the_gate_names_a_member_that_waits_when_a_link_lies_in_its_namespace(federation):
     """a links into b's namespace; b is proposed and not yet confirmed, so the link is unowned, and the error says what admits it.
 
@@ -1255,11 +1293,11 @@ def test_a_member_that_waits_in_a_member_domain_joins_as_that_domain_built_it(fe
     s_zip = tmp_path / "s.zip"
     s_sha = zip_bundle(sub / ".lokf" / "knowledge", s_zip)
 
-    def build_with(lock: dict | None = None, checksum: str | None = None):
+    def build_with(lock: dict | None = None, digest: str | None = None):
         ws = tmp_path / "workspace-v1.zip"
         ws_sha = workspace_zip(sub / "snapshot", ws, lock)
         s = member("s", s_iri, s_zip, s_sha, top, kind="MemberDomain")
-        s["distribution"].append({"name": ws.name, "access_url": ws.as_uri(), "media_type": "application/zip", "checksum": f"sha256:{checksum or ws_sha}"})
+        s["distribution"].append({"name": ws.name, "access_url": ws.as_uri(), "media_type": "application/zip", "checksum": checksum(digest or ws_sha)})
         rewrite(host, "s", s)
         return federate(host, "build", "--no-attestation"), ws, ws_sha
 
@@ -1274,7 +1312,7 @@ def test_a_member_that_waits_in_a_member_domain_joins_as_that_domain_built_it(fe
     r = federate(host, "build", "--verify-only", "--no-attestation")
     assert r.rc == 0 and "c: v1.0.0 checksum matches" in r.out and "c: v2.0.0 checksum" not in r.out, "the check takes a member domain's members as the build does\n" + r.out
 
-    r, *_ = build_with(checksum="0" * 64)
+    r, *_ = build_with(digest="0" * 64)
     assert r.rc == 1 and "workspace-v1.zip has sha256" in r.out, r.out
     r, *_ = build_with({**s_lock, "domain": "https://t.example/federation/domains/t"})
     assert r.rc == 1 and "workspace-v1.zip is the workspace of <https://t.example/federation/domains/t>" in r.out, r.out
@@ -1327,7 +1365,7 @@ def test_a_schema_released_with_a_bundle_is_what_its_fit_is_checked_against(fede
     schema = write(tmp_path / "schema-v1.0.0-b.yaml", SCHEMA)
     schema_sha = hashlib.sha256(schema.read_bytes()).hexdigest()
     fm = yaml.safe_load(text.split("---\n")[1])
-    fm["distribution"].append({"name": schema.name, "access_url": schema.as_uri(), "media_type": "application/yaml", "checksum": f"sha256:{schema_sha}"})
+    fm["distribution"].append({"name": schema.name, "access_url": schema.as_uri(), "media_type": "application/yaml", "checksum": checksum(schema_sha)})
     concept.write_text(frontmatter(**fm) + "\n# Overview\n\nb bundle.\n", encoding="utf-8")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0, r.out
@@ -1893,7 +1931,7 @@ def github_member(slug: str, domain_iri: str, **extra) -> dict:
         "type": "MemberBundle", "title": f"{slug} bundle", "description": f"The {slug} bundle as released at {tag} on {day}.",
         "resource": page, "base_iri": f"https://{slug}.example/knowledge/", "version": tag, "release": page,
         "distribution": [{"name": name, "access_url": f"https://github.com/acme/{slug}/releases/download/{tag}/{name}",
-                          "media_type": "application/zip", "checksum": "sha256:" + "0" * 64}],
+                          "media_type": "application/zip", "checksum": checksum("0" * 64)}],
         "isPartOf": [domain_iri], **extra,
     }
 
@@ -2062,7 +2100,7 @@ def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(rele
     assert f"The domain first named it on {OLD[1][:10] if pruned else NEW[1][:10]}." in text.split("\n"), text
     fm = yaml.safe_load(text.split("---\n")[1])
     assert fm["version"] == "v1.1.0" and fm["release"] == fm["resource"] == "https://github.com/acme/a/releases/tag/v1.1.0"
-    assert fm["distribution"][0]["name"] == "knowledge-v1.1.0-a.zip" and fm["distribution"][0]["checksum"] == "sha256:" + released["sha"]
+    assert fm["distribution"][0]["name"] == "knowledge-v1.1.0-a.zip" and fm["distribution"][0]["checksum"] == checksum(released["sha"])
     assert fm["description"] == "The a bundle as released at v1.1.0 on 2026-10-20."
     for line in ("The a bundle as released at v1.1.0 on 2026-10-20, attached as `knowledge-v1.1.0-a.zip`.",
                  "Download it from https://github.com/acme/a/releases/download/v1.1.0/knowledge-v1.1.0-a.zip.",
@@ -2077,7 +2115,7 @@ def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(rele
         assert "version: v1.1.0" in moved and f"The {slug} bundle as released at v1.1.0 on 2026-10-20." in moved, moved
     b = yaml.safe_load(read(host / ".lokf" / "knowledge" / "members" / "b.md").split("---\n")[1])
     assert [d["name"] for d in b["distribution"]] == ["knowledge-v1.1.0-b.zip", "schema-v1.1.0-b.yaml"], "a schema released beside the zip is named as a second distribution"
-    assert b["distribution"][1]["media_type"] == "application/yaml" and b["distribution"][1]["checksum"] == "sha256:" + hashlib.sha256(SCHEMA.encode()).hexdigest()
+    assert b["distribution"][1]["media_type"] == "application/yaml" and b["distribution"][1]["checksum"] == checksum(hashlib.sha256(SCHEMA.encode()).hexdigest())
     person = read(host / ".lokf" / "knowledge" / "members" / "d.md")
     assert "version: v1.0.0" in person and "The d bundle as released at v1.0.0 on 2026-10-15." in person, "a concept a person wrote keeps its text"
     assert "A person wrote this concept, so this patch leaves its text and frontmatter as they are." in person, person
@@ -2230,13 +2268,13 @@ def test_members_names_the_workspace_a_member_domain_released(released):
     assert ops["question"]["text"].startswith("acme/f attached its workspace, `workspace-v1.1.0.zip`, to v1.1.0 after this member moved to it; does this member name it?"), ops
     # The workspace attached again with other bytes: the checksum the member
     # names is stale, and the patch replaces that distribution alone.
-    stale = {**current, "distribution": [*current["distribution"], {**ops["patch"]["set"]["distribution"][1], "checksum": "sha256:" + "1" * 64}]}
+    stale = {**current, "distribution": [*current["distribution"], {**ops["patch"]["set"]["distribution"][1], "checksum": checksum("1" * 64)}]}
     rewrite(host, "f", stale)
     r = members_run(released, "--dry-run", stdout_only=True)
     assert r.rc == 0, r.out
     ops = ops_for(yaml.safe_load(r.out), "f")
     dists = ops["patch"]["set"]["distribution"]
-    assert [d["name"] for d in dists] == ["knowledge-v1.1.0-f.zip", "workspace-v1.1.0.zip"] and dists[1]["checksum"] != "sha256:" + "1" * 64, dists
+    assert [d["name"] for d in dists] == ["knowledge-v1.1.0-f.zip", "workspace-v1.1.0.zip"] and dists[1]["checksum"] != checksum("1" * 64), dists
     assert "to v1.1.0 again, with other bytes, so the checksum this member names no longer matches" in ops["question"]["text"], ops
     rewrite(host, "f", {**current, "distribution": dists})
     r = members_run(released, "--dry-run")
@@ -2248,7 +2286,7 @@ def test_a_member_names_the_files_of_one_release(federation):
     host = federation["host"]
     fm = github_member("g", federation["d_iri"] + "domains/federation", type="MemberDomain", base_iri="https://g.example/federation/")
     fm["distribution"].append({"name": "workspace-v1.1.0.zip", "access_url": "https://github.com/acme/g/releases/download/v1.1.0/workspace-v1.1.0.zip",
-                               "media_type": "application/zip", "checksum": "sha256:" + "0" * 64})
+                               "media_type": "application/zip", "checksum": checksum("0" * 64)})
     rewrite(host, "g", fm)
     r = federate(host, "build", "--verify-only", "--no-attestation")
     assert r.rc == 1 and "the workspace distribution is from release v1.1.0 of acme/g, and the zip from v1.0.0 of acme/g; a member names the files of one release" in r.out, r.out
@@ -2305,7 +2343,7 @@ def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path)
     s = make_bundle(tmp_path / "s", s_iri, "S", {"glossary/s.md": {"type": "GlossaryTerm", "title": "S term", "description": "S's term.", "resource": "https://example.test/s"}})
     s_site = export_bundle(s, tmp_path / "s-site")
     concept = {"type": "MemberBundle", "title": "s bundle", "description": "The s bundle its site served on 2026-10-01.", "resource": s_iri, "base_iri": s_iri,
-               "version": "2026-10-01", "distribution": [{"name": "concepts.jsonld", "access_url": url, "media_type": "application/ld+json", "checksum": "sha256:" + "0" * 64}],
+               "version": "2026-10-01", "distribution": [{"name": "concepts.jsonld", "access_url": url, "media_type": "application/ld+json", "checksum": checksum("0" * 64)}],
                "isPartOf": [top], "generated": {"by": "process:knowledge-federate", "at": "2026-10-16T10:00:00Z"}, "verified": [{"by": "human:noel", "at": "2026-10-16T12:00:00Z"}]}
     host = make_domain(tmp_path / "host", d_iri, {"s": concept})
     t = make_bundle(tmp_path / "t", t_iri, "T", {"glossary/t.md": {"type": "GlossaryTerm", "title": "T term", "description": "T's term.", "resource": "https://example.test/t"}},
@@ -2322,7 +2360,7 @@ def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path)
     patch = yaml.safe_load(r.out)
     ops = ops_for(patch, "s")
     sha = hashlib.sha256((s_site / "concepts.jsonld").read_bytes()).hexdigest()
-    assert ops["patch"]["set"]["version"] == "2026-10-20" and ops["patch"]["set"]["distribution"][0]["checksum"] == f"sha256:{sha}", ops
+    assert ops["patch"]["set"]["version"] == "2026-10-20" and ops["patch"]["set"]["distribution"][0]["checksum"] == checksum(sha), ops
     assert ops["patch"]["set"]["description"] == "The s bundle its site served on 2026-10-20."
     assert f"{url} serves another file since the confirmed 2026-10-01, last changed on 2026-10-20; does this member move to it?" in ops["question"]["text"]
     assert any("served file read and written out, 1 concept(s)" in line for line in patch["handoff"]), patch["handoff"]
@@ -2337,7 +2375,7 @@ def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path)
     fm = created["frontmatter"]
     assert fm["type"] == "MemberBundle" and fm["base_iri"] == t_iri and fm["title"] == "T" and fm["version"] == today_utc(), fm
     assert fm["distribution"] == [{"name": "concepts.jsonld", "access_url": t_iri + "concepts.jsonld", "media_type": "application/ld+json",
-                                   "checksum": "sha256:" + hashlib.sha256((t_site / "concepts.jsonld").read_bytes()).hexdigest()}]
+                                   "checksum": checksum(hashlib.sha256((t_site / "concepts.jsonld").read_bytes()).hexdigest())}]
     assert 'The description in its own index reads "The T bundle". Its site served `concepts.jsonld`' in created["body"] and "which releases no zip" in created["body"]
     # The site now serves a file whose @base is another namespace, and the
     # patch moves the member to it.

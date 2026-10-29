@@ -45,9 +45,11 @@
 #   that waits in that domain, the build takes the release the lock inside
 #   that zip records.
 #
-# ReleaseDistribution: LOKF's Distribution plus the `checksum` of the file
-#   it names, where DCAT puts a digest, so each further distribution, a
-#   schema or a workspace, carries a checksum of its own.
+# ReleaseDistribution: LOKF's Distribution with its `checksum` required,
+#   LOKF's own spdx:Checksum of the file it names, so each further
+#   distribution, a schema or a workspace, carries a checksum of its own.
+#   The build reads a sha256 digest, written
+#   `checksum: {algorithm: sha256, checksum_value: <64 hex digits>}`.
 id: https://w3id.org/ktl/schema/domain
 name: domain
 imports:
@@ -60,7 +62,6 @@ prefixes:
   linkml: https://w3id.org/linkml/
   lokf: https://w3id.org/lokf/
   dcat: http://www.w3.org/ns/dcat#
-  spdx: http://spdx.org/rdf/terms#
 classes:
   Domain:
     is_a: Dataset
@@ -79,17 +80,12 @@ classes:
     class_uri: dcat:Catalog
   ReleaseDistribution:
     is_a: Distribution
-    slots: [checksum]
     slot_usage:
       checksum: {required: true}
 slots:
   release:
     range: uri
     slot_uri: dcat:landingPage
-  checksum:
-    range: string
-    slot_uri: spdx:checksumValue
-    pattern: "^sha256:[0-9a-f]{64}$"
   unowned_targets:
     range: UnownedTargetPolicy
   max_depth:
