@@ -246,6 +246,14 @@ if have uv; then
   case "${floor:-}" in
     0.[0-8]|0.[0-8].*) warn toolkit "the floor is >=$floor and the justfile's recipes need lokf 0.9.0 - raise it to \"lokf[build]>=0.9.0\" in .lokf/pyproject.toml and run uv lock there" ;;
   esac
+  # A domain schema imports the pinned copy of LOKF core beside it, which
+  # moves with the floor; a stale copy rejects what the newer toolkit reads,
+  # such as 0.9.0's datetime for a bare-date stale_after.
+  copy="$(sed -n 's/^version: *\([0-9.]*\).*/\1/p' "$root/.lokf/lokf.yaml" 2>/dev/null | head -n 1)"
+  case "$floor" in *.*.*) ;; ?*) floor="$floor.0" ;; esac
+  if [ -n "$copy" ] && [ -n "$floor" ] && [ "$copy" != "$floor" ]; then
+    warn core ".lokf/lokf.yaml is lokf $copy's schema and the floor is >=$floor - copy the installed package's lokf.yaml over it, as step 1 of ktl-librarian's domain-schema recipe shows"
+  fi
   if have just; then ok just "just $(just --version 2>/dev/null | sed 's/^just //')"; else info just "just not installed - uvx --from rust-just just works the same"; fi
   # The workflows run the just uv.lock pins, checked by hash, where it pins one.
   if [ -f "$root/.lokf/uv.lock" ] && ! grep -qx 'name = "rust-just"' "$root/.lokf/uv.lock"; then

@@ -21,6 +21,8 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
    cd .lokf && uv run python -c "from importlib.resources import files; print(files('lokf') / 'data' / 'lokf.yaml')" | xargs -I{} cp {} lokf.yaml
    ```
 
+   Copy it again whenever the floor moves, since an older copy can reject what the newer toolkit reads; the preflight's `core` line warns when the two differ.
+
    The copy has a second use. Run from `.lokf/` without `--schema`, `lokf validate` and `lokf vocab` read it as LOKF core, because lokf looks for `lokf.yaml` in the current directory and its ancestors before its packaged copy.
 
 2. **The domain schema**, `.lokf/<slug>.yaml`, with its namespace under the same authority as `base_iri` (Rule 2). A learning-programme bundle, for instance:
