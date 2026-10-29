@@ -2,6 +2,8 @@
 
 ## 2026-10-29
 
+* **Changed**: ktl-sidecar splits its paragraph on the preflight's lines in two, the warnings and the skills installed for one user, with no fact changed.
+* **Changed**: ktl-sidecar names the preflight's new `core` line, which warns when `.lokf/lokf.yaml` is from another lokf release than `uv.lock` pins, as `references/prerequisites.md` lists it.
 * **Changed**: Domain schemas splits its paragraph on a published vocabulary in two, how it is imported and what it lacks, with no fact changed. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-curator compares a served member's file with its `checksum_value` too, as `references/domain-bundle.md` says; the earlier change of the same day fixed only the release check. Sent back by a person; the note waits for the curator. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Domain schemas says LinkML keeps the last definition, so a published vocabulary's `id`, `type`, `name` or `Person` would replace LOKF's, and that the pinned `lokf.yaml` is copied again when the floor moves or the lock pins another release, as ktl-librarian's `references/domain-schema.md` says. The undeclared-type projection keeps its "from lokf 0.9.0". Sent back by a person; the note waits for the curator. Edited since a person confirmed it; the label says so until the curator looks again.
