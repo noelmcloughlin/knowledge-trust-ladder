@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **This repository's domain-bundle playbook names a commit that `main` holds.** It named a commit on #304's branch, which the squash merge left out, so the conventions check failed on `main`.
-
 ## [0.60.0] - 2026-10-29
 
 ### Added
@@ -27,6 +23,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The librarian's Snyk W012 note names the lokf 0.9.0 wheel**, whose schema matches the commit its URL names.
 - **The preflight warns when `.lokf/lokf.yaml` is from another lokf release than the one `uv.lock` pins.** A domain schema imports that copy, and lokf 0.9.0 reads a bare-date `stale_after` as a datetime, which a 0.8.0 copy rejects.
 - **The federation check runs on a pull request that changes `.lokf/lokf.yaml` or `.lokf/justfile`.** The check validates the domain bundle against the schema the justfile names, which imports that copy of LOKF core.
+- **This repository's domain-bundle playbook names a commit that `main` holds.** It named a commit on #304's branch, which the squash merge left out, so the conventions check failed on `main`.
 
 ## [0.59.0] - 2026-10-28
 
