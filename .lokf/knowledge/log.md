@@ -1,5 +1,23 @@
 # Change Log
 
+## 2026-10-29
+
+* **Changed**: ktl-sidecar: the release paragraph is split in two, and two long sentences are shortened, with no fact changed.
+* **Changed**: ktl-docent widens along fourteen typed relations, `isReplacedBy` among them, as `skills/ktl-docent/SKILL.md` lists since 0.59.0. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-curator counts reliance through fourteen relation fields, and `revision` is described as released in lokf 0.9.0, as `trust-fields.md` and `review-session.md` say. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the three-lines page describes `revision` as released in lokf 0.9.0, as `docs/three-lines.md` says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Trust label: `revision` is described as released in lokf 0.9.0, as `trust-fields.md` says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Skills repositories: the excerpt field is released in lokf 0.9.0, and `docs/skills-repositories.md` names `--check-excerpts`. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: What KTL took from SkillWiki: `isReplacedBy` and the excerpt check are released, as `CHANGELOG.md` says for 0.59.0 and Unreleased. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Domain schemas: the convert and serve recipes pass the schema too, `adapt` is released in lokf 0.9.0, and a composite of adapt copies is released as one file. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: LOKF toolkit: 0.9.0 is the latest release and the floor, `--schema` reaches convert, query, serve and export, and the check-refs recipe adds `--check-excerpts`; the cited `cli.py` and no-Python schema move to the v0.9.0 commit.
+* **Changed**: ktl-librarian: the check-refs recipe adds `--check-excerpts`, the W012 note names the v0.9.0 commit and wheel, `revision` is released, and coverage counts `exclusions` apart. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-sidecar: the variables paragraph gives `automation.md`'s corrected reasons, the conventions count is eighteen, the release merges a composite schema, and the preflight's floor and schema warnings are described.
+* **Resolved**: `automation.md` now gives the job-`if:` reason for `KNOWLEDGE_LIBRARIAN_ENABLED` alone, and one place for every switch for the rest.
+* **Changed**: Releasing: since 0.59.0 a schema-only change packs again, and a composite schema is released with its local imports merged in.
+* **Changed**: Knowledge outside the repository: the example manifest is `.lokf/ingest.yaml.sample`, as `docs/ingest.md` says.
+* **Changed**: Domain bundle: a confirmation admits a member's explicit ids outside its namespace, as the curator's `domain-bundle.md` says since 0.59.0.
+
 ## 2026-10-28
 
 * **Changed**: the threat model concept follows `docs/threat-model.md` as #292 and #294 left it: through a proxy the proxy resolves every name the federation build and the ingest fetch, and the ingest section gives the page's four findings, with the address rule for a `git` entry, the script's user and why a command is trusted, what the lock never records, what leaves the job, and the force-push. It drops the link-local wording and the 0.56.1 date the page does not give. Edited since a person confirmed it; the label says so until the curator looks again.

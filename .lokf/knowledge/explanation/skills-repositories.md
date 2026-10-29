@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-28T00:35:16Z"
+  at: "2026-10-29T00:48:33Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:02:36Z"
@@ -75,7 +75,7 @@ The page lists designs, not features. Each would extend KTL's checks from what t
 
 - a place for a fault in the host's own text;
 
-- the excerpt check, once the `sources[].excerpt` field proposed for LOKF 0.9.0 is released.
+- the excerpt check: `sources[].excerpt`, from lokf 0.9.0, lets `lokf validate --check-excerpts` check the passage a concept relies on, so the work list could tell an edit to that passage from an edit elsewhere in the skill's file.
 
 That is a condition check, the work a museum gives its conservator rather than its librarian. If KTL takes these on, they belong to a new role.
 

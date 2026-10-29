@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-20T23:23:33Z"
+  at: "2026-10-29T00:48:33Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -39,7 +39,7 @@ ktl-docent answers questions about a repository from its `.lokf/` knowledge bund
 ## The discipline
 
 1. Read `.lokf/knowledge/index.md`, its header and table of contents only, and open one to three candidate concepts chosen from the bullets and descriptions.
-2. Widen along the thirteen typed relations (`dependsOn`, `isPartOf`, `hasPart`, `about`, `references`, `derivedFrom`, `relatedTo`, `sameAs`, `definedBy`, `source`, `measures`, `memberOf`, `holder`) before grepping the repository.
+2. Widen along the fourteen typed relations (`dependsOn`, `isPartOf`, `hasPart`, `about`, `references`, `derivedFrom`, `relatedTo`, `sameAs`, `definedBy`, `source`, `measures`, `memberOf`, `holder`, `isReplacedBy`) before grepping the repository.
 3. Weigh each concept by its trust label.
 4. Verify exact values, such as versions, endpoints, numbers and paths, at the concept's `resource` before stating them, and say so.
 5. Answer with a footing: each concept by title and path with its label, and any source checked.

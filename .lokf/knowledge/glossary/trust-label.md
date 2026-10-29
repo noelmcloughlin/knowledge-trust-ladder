@@ -8,7 +8,7 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T13:18:24Z"
+  at: "2026-10-29T00:48:33Z"
 definedBy: []
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
@@ -38,7 +38,7 @@ The labels restate OKF v0.2 section 5's trust fields in words a non-specialist c
 
 It reads `.lokf/feedback.md` for the label *a reader disputed this*: a waiting `**Disagreement**` that names the concept, never on a retired concept. It reads the newest `**Deprecation**` line in `log.md` for the successor a retired concept names. It reads `derivedFrom` for the label *derived from a concept edited since its confirmation*.
 
-A `revision` on an event (proposed for lokf 0.9.0, not yet released) is shown beside that event's date but changes no label: its absence means unrecorded, never unchanged.
+A `revision` on an event (lokf 0.9.0 and later) is shown beside that event's date but changes no label: its absence means unrecorded, never unchanged.
 
 The labels overlap. A concept can be confirmed *and* past its review date, so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.
 

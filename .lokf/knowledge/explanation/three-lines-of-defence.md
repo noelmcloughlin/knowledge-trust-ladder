@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-10-29T00:48:33Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -48,7 +48,7 @@ An auditor's questions each have a fixed place to look:
 - Provenance: `resource`, `sources[].resource` and `derivedFrom`.
 - Who produced the current text, and when: `generated`.
 - Who confirmed it, and when: `verified[]`.
-- Which state of the source the check was made against: `revision`, a field proposed for lokf 0.9.0 and not yet released. For a file it is the commit hash, which the gate resolves against the tree. For a URL it is an ETag or a digest, which nothing checks. An absent `revision` means unrecorded, never unchanged. Until it is released, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
+- Which state of the source the check was made against: `revision`, a field from lokf 0.9.0. For a file it is the commit hash, which the gate resolves against the tree. For a URL it is an ETag or a digest, which nothing checks. An absent `revision` means unrecorded, never unchanged. With or without it, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
 - Whether the confirmed text is still the one the person saw: the `validate` job's log, where conventions rule 13 fails an edit that leaves `generated` older than the confirmation.
 - Whether that confirmation is really tied to the named person: the `provenance` job's log carries the forge's verdict on the approval or the signature. Locally, the curator's *Not tied to a signed commit* count does the same. Whether a person's record has been removed without them: the same job's log, since a confirmation struck out or gone with its concept needs that person's approval or signature, as an added one does. On the scheduled librarian's pull request, `knowledge-provenance.sh --unattended` checks it in the job that holds the write token.
 - When it must be looked at again, and by what rule: `stale_after`, proposed from `policies/knowledge-curation.md`.

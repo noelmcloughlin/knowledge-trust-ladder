@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-10-28T00:35:16Z"
+  at: "2026-10-29T00:48:33Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -46,7 +46,7 @@ There is no fetcher for Jira. Attachments and images are not fetched, and a link
 
 # The manifest, the mirror and the lock
 
-- **The manifest**, `.lokf/ingest.yaml`, lists for each entry a place, a selector, who answers for the source (`owner`) and why the repository mirrors it (`why`). It holds no token: an `auth` block names environment variables. The sidecar's `templates/ingest.yaml` is the example to copy.
+- **The manifest**, `.lokf/ingest.yaml`, lists for each entry a place, a selector, who answers for the source (`owner`) and why the repository mirrors it (`why`). It holds no token: an `auth` block names environment variables. The sidecar lays its example down as `.lokf/ingest.yaml.sample`, and the ingest reads only `.lokf/ingest.yaml`.
 
 - **The mirror**, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, never its title. The workflow publishes only a name of letters, digits and `._/@+-`, so a file named otherwise is spelled with those characters and a digest of its name added, and its header keeps the name.
 
@@ -63,7 +63,7 @@ A confidential entry's records go to `.lokf/.cache/ingest.lock.yaml`, beside its
 # Turn it on
 
 1. Install the ingest files with ktl-sidecar's Step 5, or its repair.
-2. Copy the sidecar's `templates/ingest.yaml` to `.lokf/ingest.yaml` and replace its examples.
+2. Copy `.lokf/ingest.yaml.sample` to `.lokf/ingest.yaml` and replace its examples. A sidecar installed before the sample existed gets it from the same repair.
 3. Store each credential as a secret in the `knowledge-ingest` Environment, limited to the default branch, under the name the manifest gives. Every name starts `KNOWLEDGE_INGEST_`.
 4. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and allow GitHub Actions to create and approve pull requests.
 5. Start one run from the Actions tab and read its summary.

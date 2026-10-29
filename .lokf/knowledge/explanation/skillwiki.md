@@ -2,7 +2,7 @@
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/skillwiki
 title: What KTL took from SkillWiki
-description: "What Knowledge Trust Ladder (KTL) took from the SkillWiki paper (Huang et al., 2026) and its code: the four changes the reading made to the skills, the excerpt check that waits for LOKF 0.9.0, and where the two designs part, such as who stands behind a decision."
+description: "What Knowledge Trust Ladder (KTL) took from the SkillWiki paper (Huang et al., 2026) and its code: the four changes the reading made to the skills, the excerpt check that arrived with LOKF 0.9.0, and where the two designs part, such as who stands behind a decision."
 genre: explanation
 resource: https://arxiv.org/abs/2606.16523
 sources:
@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-10-29T00:48:33Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T00:59:27Z"
@@ -42,11 +42,11 @@ SkillWiki turns trajectories, documents, API specifications, scripts, earlier sk
 Reading the paper in October 2026 changed the skills in four places, which `CHANGELOG.md` lists:
 
 - **A program counts reliance.** `knowledge-report.sh` prints how many other concepts rely on each one through a typed relation. It ranks the curator's queue, *Worth ten minutes today*, and `ktl-curator` quotes that queue.
-- **A retired concept names what replaced it.** A deprecated SkillWiki skill carries a `replacement_skill_id`. `ktl-curator` links the successor in the concept's `**Deprecation**` line in `log.md`, and the report's label reads *retired, replaced by* that path, and the docent opens the successor before it falls back to the repository. The log holds the link until LOKF has a relation type for a successor, which nicholsn/lokf#112 asks for.
+- **A retired concept names what replaced it.** A deprecated SkillWiki skill carries a `replacement_skill_id`. `ktl-curator` links the successor in the concept's `**Deprecation**` line in `log.md`, and the report's label reads *retired, replaced by* that path, and the docent opens the successor before it falls back to the repository. The log holds the link. lokf 0.9.0 adds `isReplacedBy`, the relation type for a successor that nicholsn/lokf#112 asked for, and the reliance count and the docent follow it.
 - **A reader's dispute shows on the concept.** SkillWiki defines a *Degraded* state for a released skill that keeps failing while it stays usable. Until the librarian handles a docent's Disagreement, the concept's label adds *a reader disputed this* and the day.
 - **A confirming commit records the verdict.** SkillWiki's structured diff sorts a change by what it touches before review. Conventions rule 14 reads each commit of a pull request. A commit that records a person's confirmation may change what the concept says only when `generated.by` names that person.
 
-One more change waits for LOKF 0.9.0. SkillWiki's verifier specs check an output by program, and LOKF 0.9.0's `sources[].excerpt` lets a program check the exact passage a concept relies on against its source.
+One more change came with LOKF 0.9.0. SkillWiki's verifier specs check an output by program, and LOKF 0.9.0's `sources[].excerpt` lets a program check the exact passage a concept relies on against its source. `just lokf-check-refs` runs that check, `lokf validate --check-excerpts`, so the gate fails a quote that drifted from its source.
 
 Since 0.53.0, `docs/for-the-curious.md` holds what KTL took from the paper, under *How readers and verdicts steer the next run*, and `docs/skillwiki.md` is gone. `CHANGELOG.md` says this concept stays the record of the paper.
 
