@@ -18,7 +18,8 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T00:48:33Z"
+  at: "2026-10-29T11:30:47Z"
+  revision: 6f183bc4cb647e56cb84f1d0686b87071d723268
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -31,12 +32,12 @@ A **domain host** is a repository whose bundle names other repositories' knowled
 
 # The four concept types
 
-ktl-sidecar's `templates/domain.yaml` is installed as `.lokf/domain.yaml`, with `schema := "domain.yaml"` in the justfile. It adds four classes over LOKF core, and `lokf validate` checks them like any other. Neither Obsidian plugin can read that file, so list `Domain`, `MemberBundle` and `MemberDomain` under *Known LOKF types* in both.
+ktl-sidecar's `templates/domain.yaml` is installed as `.lokf/domain.yaml`, with `schema := "domain.yaml"` in the justfile. It adds five classes over LOKF core, and `lokf validate` checks them like any other. Neither Obsidian plugin can read that file, so list `Domain`, `MemberBundle` and `MemberDomain` under *Known LOKF types* in both.
 
 - **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner, one concept under `domains/` named for the domain and never for its position. The build reads four settings as a person last confirmed them. Under `unowned_targets`, `fail` stops the build on a link into no member's namespace, or to no concept of the member whose namespace holds it, and `report` lists it. `max_depth` is how many tiers the build follows, 3 unless set. `sensitivity` is `public` unless set, and `internal` admits internal members, only in a private or internal repository. `private_addresses` is `refuse` unless set, and a person confirms `allow` to let the build fetch a member from a private, loopback or link-local address, for a forge on the host's own network.
 - **`MemberBundle`** (a `Dataset`): one admitted bundle, under `members/`. It names the bundle's `base_iri`, the release `version` it pins, the `release` page, and a `distribution` whose `access_url` is the release's zip and whose `checksum` is its digest. A bundle that releases no zip is named by the `concepts.jsonld` its site serves, with that file's checksum. A second distribution names a schema released beside the zip, and the build validates against it. `isPartOf` names the domain. Its `sensitivity` is `public` unless set, `internal`, or `confidential`, which joins no workspace.
 - **`MemberDomain`** (a `MemberBundle`, `dcat:Catalog`): a member whose bundle is a domain in turn. The build follows its members into the same workspace, as deep as `max_depth` allows, and follows a `MemberBundle` whose zip holds a `Domain` concept too.
-- **`ReleaseDistribution`** (a `Distribution`): the file with its `checksum`, `sha256:` and 64 hexadecimal digits.
+- **`ReleaseDistribution`** (a `Distribution`): the file with its `checksum`, a `ReleaseChecksum`. A `ReleaseChecksum` is LOKF's `Checksum` with `algorithm: sha256`, the one algorithm the build reads, and a `checksum_value` of 64 hexadecimal digits. A concept written before lokf 0.9.0 names the checksum as one string, `sha256:` and the digits. The domain schema refuses that form, so a domain host rewrites its member concepts when it takes this schema, and a person confirms each again. The build still reads the string in a member domain's earlier releases.
 
 A member names the newest release that carries a `knowledge-*.zip`. Nothing is copied into the domain, so a member's new release changes nothing until a person confirms a member concept that names it.
 
@@ -57,7 +58,9 @@ distribution:
   - name: knowledge-v0.43.0-knowledge-trust-ladder.zip
     access_url: https://github.com/noelmcloughlin/knowledge-trust-ladder/releases/download/v0.43.0/knowledge-v0.43.0-knowledge-trust-ladder.zip
     media_type: application/zip
-    checksum: sha256:a0a80fc411c23597968699716278d04918b795530f1fe55825709453eb6b8083
+    checksum:
+      algorithm: sha256
+      checksum_value: a0a80fc411c23597968699716278d04918b795530f1fe55825709453eb6b8083
 isPartOf:
   - https://w3id.org/ktl/federation/knowledge/domains/ktl-federation
 ```
@@ -66,7 +69,7 @@ isPartOf:
 
 Confirming a member concept is the curator's ordinary confirm, in a signed commit the registrar's `provenance` job backs. It attests that the bundle belongs under the domain's admission rule, and that any claim the domain makes across bundles holds. It does not vouch for the member's own concepts, whose labels come from their own events. It does admit the addresses the member claims: the build routes each explicit `id` outside the member's `base_iri` to that member, and lokf refuses one inside another member's namespace or LOKF's own. A claim across bundles is the domain owner's arbitration, so the librarian proposes it as a question. A confirmation belongs to the concept's `id`, so a concept moved to a new id waits for one of its own.
 
-Before confirming, open the release the concept names. Check that the zip and its `.sha256` are attached, that the digest is the concept's `checksum`, and that the release's repository is the one the `base_iri` belongs to. Check a `MemberDomain`'s `workspace-<tag>.zip` the same way, and a served member's file by its digest. When the bundle's subject is not public, set its `sensitivity` first. `knowledge-federate.py build --verify-only` checks the zip again and runs the gate before the merge.
+Before confirming, open the release the concept names. Check that the zip and its `.sha256` are attached, that the digest is the concept's `checksum_value`, and that the release's repository is the one the `base_iri` belongs to. Check a `MemberDomain`'s `workspace-<tag>.zip` the same way, and a served member's file by its digest. When the bundle's subject is not public, set its `sensitivity` first. `knowledge-federate.py build --verify-only` checks the zip again and runs the gate before the merge.
 
 The domain's policy concept states its admission rule. A member is released with the sidecar's release workflow, validates on LOKF core or on a schema it publishes, and has one accountable owner. Its `base_iri` is stable, under an authority its publisher controls, so that no two members' namespaces nest.
 

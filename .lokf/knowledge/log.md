@@ -2,6 +2,10 @@
 
 ## 2026-10-29
 
+* **Changed**: Domain schemas splits its paragraph on the recipe into three, on the schema's place, the plugins and the pinned copy, with no fact changed. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-curator compares a release's `.sha256` with a member's `checksum_value`, as `references/domain-bundle.md` says since the member checksum became LOKF core's `Checksum`. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Domain schemas says the pinned `lokf.yaml` follows the release `uv.lock` pins, not the floor, as ktl-librarian's `references/domain-schema.md` now says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Curating a domain bundle names a member's checksum as LOKF core's `Checksum`, sha256 alone, with a `checksum_value`, and counts the domain schema's new `ReleaseChecksum` among its five classes, as the curator's `references/domain-bundle.md` and the sidecar's `templates/domain.yaml` now say.
 * **Changed**: ktl-sidecar: the release paragraph is split in two, and two long sentences are shortened, with no fact changed.
 * **Changed**: ktl-docent widens along fourteen typed relations, `isReplacedBy` among them, as `skills/ktl-docent/SKILL.md` lists since 0.59.0. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-curator counts reliance through fourteen relation fields, and `revision` is described as released in lokf 0.9.0, as `trust-fields.md` and `review-session.md` say. Edited since a person confirmed it; the label says so until the curator looks again.

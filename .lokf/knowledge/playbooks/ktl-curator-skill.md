@@ -7,7 +7,8 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T00:48:33Z"
+  at: "2026-10-29T11:31:57Z"
+  revision: 45261027bd08dc6529cea99693e7d705ee2fa710
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -114,7 +115,7 @@ A domain host's bundle names other repositories' bundles, and `references/domain
 
 Confirming a `MemberDomain`, a member whose bundle is itself a domain, attests that the domain belongs under the admission rule and who answers for it: the owner of that domain, whose own confirmations cover its members. It does not vouch for the members below it. The `MemberDomain` names the domain's `workspace-<tag>.zip` with its checksum, so the confirmation covers that checksum too.
 
-Before confirming a member, the curator opens the release the concept names and checks three things: the zip and its `.sha256` are attached, the digest in `.sha256` is the concept's `checksum`, and the release's repository is the one the `base_iri` belongs to. The members script checked the zip's checksum and attestation when it wrote the change, and the pull request's hand-off lines say so. For a `MemberDomain`, the curator checks its `workspace-<tag>.zip` the same way. For a member its site serves, the curator compares the digest of the file the concept names with its `checksum`. When the bundle's subject is not public, the curator sets its `sensitivity` before confirming. A confirmation belongs to the concept's `id`, so a concept moved to a new id waits for a confirmation of its own.
+Before confirming a member, the curator opens the release the concept names and checks three things: the zip and its `.sha256` are attached, the digest in `.sha256` is the concept's `checksum_value`, and the release's repository is the one the `base_iri` belongs to. The members script checked the zip's checksum and attestation when it wrote the change, and the pull request's hand-off lines say so. For a `MemberDomain`, the curator checks its `workspace-<tag>.zip` the same way. For a member its site serves, the curator compares the digest of the file the concept names with its `checksum`. When the bundle's subject is not public, the curator sets its `sensitivity` before confirming. A confirmation belongs to the concept's `id`, so a concept moved to a new id waits for a confirmation of its own.
 
 Accepting a member's move to a new release is the same confirm again. When the new release names another namespace, the members script moves the member's `base_iri` too and its question says so, since each of the member's concepts then has a new IRI and a link into the old namespace counts as unowned; before confirming, the curator checks that the new namespace belongs to the member, as its repository or site shows (`references/domain-bundle.md`). Sending a member back keeps it at the release the person confirmed, and retiring its concept takes it out of the next build. In Obsidian, a person lists `Domain`, `MemberBundle` and `MemberDomain` under *Known LOKF types* in both KTL Curator and KTL Registrar.
 

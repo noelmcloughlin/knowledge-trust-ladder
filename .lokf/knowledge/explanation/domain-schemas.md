@@ -12,7 +12,8 @@ sources:
   - resource: docs/architecture.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T00:48:33Z"
+  at: "2026-10-29T11:32:54Z"
+  revision: 8682684682e731c5a4ebd7f29737290522ecaad1
 about: []
 references:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
@@ -42,7 +43,11 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 
 **The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly.
 
-The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle. The variable takes any path relative to `.lokf/`, and three layouts recur: a linkml-sidecar, which writes the schema under `.linkml/` and sets the variable itself; a schema project made with copier at the repository's root; and a schema the repository keeps anywhere else. In the last two, a `.lokf/` beside the schema is a bundle about the repository until its maintainers add the import and the variable. The two Obsidian plugins are told the new classes through their *Known LOKF types* setting. Neither plugin can read the schema itself, so the same list of classes goes into both. When the `lokf` floor moves, the pinned `lokf.yaml` is refreshed to the new version in the same change and `just lokf-validate` is run again.
+The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle. The variable takes any path relative to `.lokf/`, and three layouts recur: a linkml-sidecar, which writes the schema under `.linkml/` and sets the variable itself; a schema project made with copier at the repository's root; and a schema the repository keeps anywhere else. In the last two, a `.lokf/` beside the schema is a bundle about the repository until its maintainers add the import and the variable.
+
+The two Obsidian plugins are told the new classes through their *Known LOKF types* setting. Neither plugin can read the schema itself, so the same list of classes goes into both.
+
+Whenever `.lokf/uv.lock` pins another `lokf` release, the pinned `lokf.yaml` is copied again from that release in the same change, and `just lokf-validate` is run again. The preflight's `core` line warns when the copy and the lock differ.
 
 The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, with nothing new to install. A domain schema that grows past a few classes is worth a project of its own, with lint, tests and a docs site, which the linkml-sidecar skills install beside the bundle or around a schema the repository already holds; their linkml-author skill knows what `lokf validate` expects of a domain schema. From lokf 0.9.0, `convert`, `query`, `serve` and `export` take `--schema` as `validate` does, so the graph names each class and slot the schema declares under its own IRI. A key no schema declares still projects in LOKF's namespace, and an undeclared type projects as `lokf:Concept` with the name kept in `schema:additionalType`.
 
