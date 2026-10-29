@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **This repository's domain-bundle playbook names a commit that `main` holds.** It named a commit on #304's branch, which the squash merge left out, so the conventions check failed on `main`.
+
 ## [0.60.0] - 2026-10-29
 
 ### Added
