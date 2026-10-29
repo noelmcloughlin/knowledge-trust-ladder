@@ -2,6 +2,9 @@
 
 ## 2026-10-29
 
+* **Changed**: Domain schemas splits its paragraph on a published vocabulary in two, how it is imported and what it lacks, with no fact changed. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-curator compares a served member's file with its `checksum_value` too, as `references/domain-bundle.md` says; the earlier change of the same day fixed only the release check. Sent back by a person; the note waits for the curator. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Domain schemas says LinkML keeps the last definition, so a published vocabulary's `id`, `type`, `name` or `Person` would replace LOKF's, and that the pinned `lokf.yaml` is copied again when the floor moves or the lock pins another release, as ktl-librarian's `references/domain-schema.md` says. The undeclared-type projection keeps its "from lokf 0.9.0". Sent back by a person; the note waits for the curator. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Curation**: human:noelmcloughlin confirmed none and sent 2 back, the ktl-curator skill and Domain schemas, each with the note "correct facts" on the librarian's edits of the same day. The same send-back twice in one session points at the librarian's instructions, not only at these two concepts.
 * **Changed**: Domain schemas splits its paragraph on the recipe into three, on the schema's place, the plugins and the pinned copy, with no fact changed. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-curator compares a release's `.sha256` with a member's `checksum_value`, as `references/domain-bundle.md` says since the member checksum became LOKF core's `Checksum`. Edited since a person confirmed it; the label says so until the curator looks again.
