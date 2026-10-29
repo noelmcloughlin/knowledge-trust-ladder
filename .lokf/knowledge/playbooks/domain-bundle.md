@@ -19,7 +19,7 @@ about:
 generated:
   by: process:ktl-librarian
   at: "2026-10-29T11:30:47Z"
-  revision: 6f183bc4cb647e56cb84f1d0686b87071d723268
+  revision: d0d9b385998693e6cb7833a9263d5a13d3e3c4a9
 status: draft
 verified:
   - by: process:ktl-librarian
