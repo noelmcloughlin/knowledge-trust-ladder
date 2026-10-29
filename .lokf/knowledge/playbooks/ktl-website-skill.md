@@ -35,7 +35,7 @@ generated:
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-29T00:48:33Z"
+    at: "2026-10-29T12:26:25Z"
 ---
 
 # Overview

@@ -11,8 +11,9 @@ sources:
   - resource: skills/ktl-sidecar/templates/justfile
   - resource: docs/architecture.md
 generated:
-  by: process:ktl-curator
-  at: "2026-10-29T12:15:10Z"
+  by: process:ktl-librarian
+  at: "2026-10-29T12:26:25Z"
+  revision: 8682684682e731c5a4ebd7f29737290522ecaad1
 about: []
 references:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
@@ -46,7 +47,7 @@ The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain s
 
 The two Obsidian plugins are told the new classes through their *Known LOKF types* setting. Neither plugin can read the schema itself, so the same list of classes goes into both.
 
-When the `lokf` floor moves, or `.lokf/uv.lock` pins another `lokf` release, the pinned `lokf.yaml` is refreshed from the installed package in the same change, and run `just lokf-validate` again. The preflight's `core` line warns when the copy and the lock differ.
+When the `lokf` floor moves, or `.lokf/uv.lock` pins another `lokf` release, the pinned `lokf.yaml` is refreshed from the installed package in the same change, and `just lokf-validate` is run again. The preflight's `core` line warns when the copy and the lock differ.
 
 The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, with nothing new to install. A domain schema that grows past a few classes is worth a project of its own, with lint, tests and a docs site, which the linkml-sidecar skills install beside the bundle or around a schema the repository already holds; their linkml-author skill knows what `lokf validate` expects of a domain schema. From lokf 0.9.0, `convert`, `query`, `serve` and `export` take `--schema` as `validate` does, so the graph names each class and slot the schema declares under its own IRI. A key no schema declares still projects in LOKF's namespace, and from lokf 0.9.0 an undeclared type projects as `lokf:Concept` with the name kept in `schema:additionalType`.
 
@@ -54,7 +55,7 @@ One domain schema ships with the sidecar: `domain.yaml`, in ktl-sidecar's templa
 
 **When the domain already has a vocabulary**, reuse it rather than re-describe it. For AI governance, the curator's guidance names IBM AI Atlas Nexus's [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/), a LinkML vocabulary covering risks, controls, obligations, taxonomies, incidents and evaluations. It also names [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) as a reference implementation over it, with a LOKF sidecar beside it.
 
-Import a domain schema lokf adapted. A domain schema can bring that vocabulary in beside LOKF's, so a concept names a control or an obligation by the identifier the domain already uses. A published vocabulary does not go into `imports:` as it is, because LinkML merges every imported name into one namespace without a warning, and keeps the last definition, so the vocabulary's own `id`, `type`, `name` or `Person` would replace LOKF's. The `adapt` command, from lokf 0.9.0, writes a copy that sits beside `lokf.yaml`: it replaces the vocabulary's identifier and type slots with LOKF's, renames every other shared name while keeping its IRI, and re-roots the vocabulary's top classes on `Concept`. A host may import more than one such copy through a composite schema, which the `schema :=` line names and the release attaches as one file with the copies merged in.
+A domain schema imports the copy of a published vocabulary that `lokf adapt` makes, never the vocabulary itself. LinkML merges every imported name into one namespace without a warning and keeps the last definition, so the vocabulary's own `id`, `type`, `name` or `Person` would replace LOKF's. The copy brings the vocabulary in beside LOKF's, so a concept names a control or an obligation by the identifier the domain already uses. The `adapt` command, from lokf 0.9.0, writes a copy that sits beside `lokf.yaml`: it replaces the vocabulary's identifier and type slots with LOKF's, renames every other shared name while keeping its IRI, and re-roots the vocabulary's top classes on `Concept`. A host may import more than one such copy through a composite schema, which the `schema :=` line names and the release attaches as one file with the copies merged in.
 
 Such a vocabulary usually lacks the bundle's half: who encoded a record, from which edition, who confirmed it, and when to look again. Whether those fields belong on the domain's own records is left to the domain's owners and to OKF as it evolves.
 

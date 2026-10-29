@@ -2,6 +2,8 @@
 
 ## 2026-10-29
 
+* **Changed**: ktl-curator, released to the librarian by the person who wrote its served-member sentences, gives the digest commands as `references/domain-bundle.md` does, `shasum -a 256` on macOS, and says the curator sets `sensitivity` before confirming. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Domain schemas, released to the librarian by the person who wrote two of its sentences, opens its paragraph on a published vocabulary with the rule that a domain schema imports the copy `lokf adapt` makes, as ktl-librarian's `references/domain-schema.md` says, and its copy sentence reads in one voice. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Curation**: human:noelmcloughlin sent 2 back and released the text they wrote in both, the ktl-curator skill and Domain schemas, with the note "rewrite as needed", so the librarian may rewrite each from its sources.
 * **Curation**: human:noelmcloughlin rewrote sentences in 2 concepts, the ktl-curator skill and Domain schemas, confirmed neither, and cleared their "correct facts" notes on both. Both edits were to text the librarian re-derived the same day after a send-back.
 * **Changed**: ktl-sidecar splits its paragraph on the preflight's lines in two, the warnings and the skills installed for one user, with no fact changed.
