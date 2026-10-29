@@ -39,6 +39,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Full history: knowledge-conventions.sh resolves each `revision`
+          # against the tree, and reports a shallow clone instead of passing it.
+          fetch-depth: 0
 
       # The contract exercises knowledge-conventions.sh, whose parser's half
       # runs through `uv run`. Without uv it skips those rules and says so,
