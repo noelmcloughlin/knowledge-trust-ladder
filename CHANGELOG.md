@@ -12,6 +12,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **The preflight warns when `.lokf/lokf.yaml` is from another lokf release than the one `uv.lock` pins.** A domain schema imports that copy, and lokf 0.9.0 reads a bare-date `stale_after` as a datetime, which a 0.8.0 copy rejects.
+- **The federation check runs on a pull request that changes `.lokf/lokf.yaml` or `.lokf/justfile`.** The check validates the domain bundle against the schema the justfile names, which imports that copy of LOKF core.
 
 ## [0.60.0] - 2026-10-29
 

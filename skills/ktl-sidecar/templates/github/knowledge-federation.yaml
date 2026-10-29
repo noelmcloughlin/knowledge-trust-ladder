@@ -57,11 +57,15 @@ on:
   push:
     branches: [main]
   # The gate reads every concept of the domain bundle, not only its members,
-  # and the toolkit that uv.lock pins exports what the gate reads.
+  # and the toolkit that uv.lock pins exports what the gate reads. The check
+  # validates the bundle against the schema the justfile names, which
+  # imports the copy of LOKF core in .lokf/lokf.yaml.
   pull_request:
     paths:
       - ".lokf/knowledge/**"
       - ".lokf/domain.yaml"
+      - ".lokf/lokf.yaml"
+      - ".lokf/justfile"
       - ".lokf/pyproject.toml"
       - ".lokf/uv.lock"
       - ".lokf/scripts/knowledge-federate.py"
