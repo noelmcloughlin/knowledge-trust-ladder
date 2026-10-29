@@ -11,11 +11,11 @@ bundle := "knowledge"
 # folder: "<slug>.yaml" beside the bundle, or
 # "../.linkml/src/<slug>/schema/<slug>.yaml" in a linkml-sidecar project.
 # Leave it empty for the core vocabulary alone. The validate, convert and
-# serve recipes pass it as --schema, which needs lokf 0.9.0 or later. The three
-# workflows run these recipes, so a host sets its schema on this one line and
-# nowhere else. A bare `lokf` command reads `[tool.lokf] schema` in
-# pyproject.toml instead; a host that wants one sets it to the same path, and
-# the preflight warns when the two differ.
+# serve recipes pass it as --schema (lokf 0.9.0 or later), and the workflows,
+# the release and the website read this line, so a host names its schema here
+# and nowhere else. A lokf command given no --schema, a recipe included,
+# reads `[tool.lokf] schema` in pyproject.toml: set it to the same path or
+# leave it out. The preflight warns when the two differ.
 schema := ""
 _schema := if schema == "" { "" } else { "--schema " + quote(schema) }
 

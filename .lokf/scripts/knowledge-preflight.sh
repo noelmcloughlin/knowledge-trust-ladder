@@ -255,9 +255,10 @@ else
   miss toolkit "uv not installed - lokf validate, convert and query unavailable, and the conventions script skips its parser's half (rules 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18); only the manual schema cross-check remains" "lokf validate and thirteen of the eighteen conventions (every skill's audit)"
 fi
 
-# A bare lokf command reads `[tool.lokf] schema` in pyproject.toml, but only
-# where no --schema is passed. The recipes, the workflows and the release take
-# the justfile's `schema :=` line, so the two must name one file.
+# A lokf command given no --schema reads `[tool.lokf] schema` in
+# pyproject.toml. The recipes pass the justfile's `schema :=` line when it is
+# set, and the release, the website and the librarian read only that line, so
+# the two must name one file.
 jschema="$(sed -n 's/^schema := "\([^"]*\)"$/\1/p' "$root/.lokf/justfile" 2>/dev/null | head -n 1)"
 tschema="$(awk -v q="'" '
   /^[[:space:]]*\[/ { intool = ($0 ~ /^[[:space:]]*\[tool\.lokf\][[:space:]]*(#.*)?$/); next }
@@ -266,8 +267,12 @@ tschema="$(awk -v q="'" '
     if (match(v, /^"[^"]*"/) || match(v, "^" q "[^" q "]*" q)) print substr(v, 2, RLENGTH - 2)
     exit
   }' "$root/.lokf/pyproject.toml" 2>/dev/null)"
-if [ -n "$tschema" ] && [ "$tschema" != "$jschema" ]; then
-  warn schema "[tool.lokf] schema in .lokf/pyproject.toml is $tschema and the justfile's schema line is ${jschema:-empty} - the recipes, the workflows and the release read the justfile; set both to one path"
+jschema="${jschema#./}"
+tschema="${tschema#./}"
+if [ -n "$tschema" ] && [ -z "$jschema" ]; then
+  warn schema "[tool.lokf] schema in .lokf/pyproject.toml is $tschema and the justfile's schema line is empty - the recipes check against it, the release and the librarian do not; put the same path on the line"
+elif [ -n "$tschema" ] && [ "$tschema" != "$jschema" ]; then
+  warn schema "[tool.lokf] schema in .lokf/pyproject.toml is $tschema and the justfile's schema line is $jschema - the recipes check against the line, a bare lokf command against pyproject.toml; set both to one path"
 fi
 
 # The gate, the release and the scheduled librarian install the toolkit with

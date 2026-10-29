@@ -241,3 +241,34 @@ def test_warns_when_the_lock_was_made_against_another_index(tmp_path):
     write(tmp_path / "config" / "uv" / "uv.toml", '[[index]]\nname = "corp"\nurl = "https://pypi.org/simple"\ndefault = true\n')
     result = run(["bash", PREFLIGHT, host], env=config, **clean)
     assert result and not matches(result.out, r"^warn    lock"), f"preflight warned about a lock made against the index uv reads: {result.out}"
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="the toolkit lines need uv")
+def test_warns_when_the_floor_is_below_what_the_recipes_need(tmp_path):
+    """The recipes pass --check-excerpts, and --schema to convert and serve, which lokf 0.8.0 rejects."""
+    pyproject = write(tmp_path / ".lokf" / "pyproject.toml", (TEMPLATES / "pyproject.toml").read_text().replace("lokf[build]>=0.9.0", "lokf[build]>=0.8.0"))
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^warn    toolkit +the floor is >=0\.8\.0 and the justfile's recipes need lokf 0\.9\.0"), (
+        f"preflight did not warn about a 0.8.0 floor: {result.out}"
+    )
+    write(pyproject, (TEMPLATES / "pyproject.toml").read_text().replace("lokf[build]>=0.9.0", "lokf[build]>=0.10.0"))
+    result = preflight(tmp_path)
+    assert result and "the floor is" not in result.out, f"preflight read 0.10.0 as below 0.9.0: {result.out}"
+
+
+@pytest.mark.parametrize("line, table, warning", [
+    ("", 'schema = "acme.yaml"', r"the justfile's schema line is empty - the recipes check against it, the release and the librarian do not"),
+    ("other.yaml", "schema = 'acme.yaml'", r"the justfile's schema line is other\.yaml - the recipes check against the line"),
+    ("acme.yaml", 'schema = "./acme.yaml"  # beside the bundle', None),
+], ids=["the line is empty", "the two differ", "one file, spelt two ways"])
+def test_warns_when_tool_lokf_names_another_schema_than_the_justfile(tmp_path, line, table, warning):
+    """A lokf command given no --schema reads `[tool.lokf] schema`; the release and the librarian read only the justfile's line."""
+    write(tmp_path / ".lokf" / "justfile", f'bundle := "knowledge"\nschema := "{line}"\n')
+    write(tmp_path / ".lokf" / "pyproject.toml", f'[project]\nname = "x"\n\n[tool.lokf]\n{table}\n\n[tool.other]\nschema = "z.yaml"\n')
+    result = preflight(tmp_path)
+    if warning is None:
+        assert result and not matches(result.out, r"^warn    schema"), f"preflight warned about one schema file: {result.out}"
+    else:
+        assert result and matches(result.out, r"^warn    schema +\[tool\.lokf\] schema in \.lokf/pyproject\.toml is acme\.yaml and " + warning), (
+            f"preflight did not warn about the two schema settings: {result.out}"
+        )
