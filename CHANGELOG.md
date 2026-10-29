@@ -11,7 +11,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
-- **The preflight warns when `.lokf/lokf.yaml` is from another lokf version than the floor.** A domain schema imports that copy, and lokf 0.9.0's datetime `stale_after` fails against a 0.8.0 copy.
+- **The preflight warns when `.lokf/lokf.yaml` is from another lokf release than the one `uv.lock` pins.** A domain schema imports that copy, and lokf 0.9.0's datetime `stale_after` fails against a 0.8.0 copy.
 
 ## [0.60.0] - 2026-10-29
 

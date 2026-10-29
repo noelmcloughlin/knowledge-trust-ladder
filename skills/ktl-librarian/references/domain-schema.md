@@ -15,13 +15,13 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
 ## The recipe
 
-1. **A pinned copy of the core schema beside it.** LinkML resolves `imports:` relative to the importing file, so `.lokf/lokf.yaml` must exist, at the version the sidecar's `pyproject.toml` floors. Copy it out of the installed package:
+1. **A pinned copy of the core schema beside it.** LinkML resolves `imports:` relative to the importing file, so `.lokf/lokf.yaml` must exist, from the lokf release `.lokf/uv.lock` pins. Copy it out of the installed package:
 
    ```bash
    cd .lokf && uv run python -c "from importlib.resources import files; print(files('lokf') / 'data' / 'lokf.yaml')" | xargs -I{} cp {} lokf.yaml
    ```
 
-   Copy it again whenever the floor moves, since an older copy can reject what the newer toolkit reads; the preflight's `core` line warns when the two differ.
+   Copy it again whenever the lock moves to another lokf release. A copy from another release can reject what the toolkit reads, and the preflight's `core` line warns when the two differ.
 
    The copy has a second use. Run from `.lokf/` without `--schema`, `lokf validate` and `lokf vocab` read it as LOKF core, because lokf looks for `lokf.yaml` in the current directory and its ancestors before its packaged copy.
 
