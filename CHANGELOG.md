@@ -12,6 +12,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **`lokf-convert` and `lokf-serve` pass the domain schema too**, so the graph names its classes and slots under their own IRIs, and no recipe changes into the schema's folder any more. The preflight warns when `[tool.lokf] schema` names another file than the justfile, or the floor is below 0.9.0.
 
+### Fixed
+
+- **`automation.md` gives the real reason the librarian's variables are repository variables.** Only the federation's `nudge` job reads one in a job's `if:`; the librarian reads them in steps, and they stay together so every switch sits in one place.
+
 ## [0.59.0] - 2026-10-28
 
 ### Added
