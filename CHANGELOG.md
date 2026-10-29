@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.60.0] - 2026-10-29
+
 ### Added
 
 - **`just lokf-check-refs` runs lokf's `--check-excerpts`.** The gate fails a `sources[].excerpt` that its local file no longer holds. The recipes need lokf 0.9.0, so a host raises its floor before it takes this release.
