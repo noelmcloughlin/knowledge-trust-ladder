@@ -4,16 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **A member's distribution names its checksum as LOKF core's `Checksum`, with `algorithm: sha256` and a `checksum_value`.** The domain schema's `sha256:<hex>` slot clashed with lokf 0.9.0's and broke `lokf export --schema` on a domain host, so the host rewrites its member concepts when it takes this release.
-- **The federation docs say the workspace exports every bundle under LOKF core**, so the named graphs share one vocabulary. The workspace index says each bundle's fit is checked against the schema released with it.
-
-### Fixed
-
-- **The preflight warns when `.lokf/lokf.yaml` is from another lokf release than the one `uv.lock` pins.** A domain schema imports that copy, and lokf 0.9.0 reads a bare-date `stale_after` as a datetime, which a 0.8.0 copy rejects.
-- **The federation check runs on a pull request that changes `.lokf/lokf.yaml` or `.lokf/justfile`.** The check validates the domain bundle against the schema the justfile names, which imports that copy of LOKF core.
-
 ## [0.60.0] - 2026-10-29
 
 ### Added
@@ -24,11 +14,15 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **`lokf-convert`, `lokf-serve` and the website's `lokf export` pass the domain schema too**, so the graph names its classes and slots under their own IRIs. No recipe changes into the schema's folder any more.
 - **The preflight warns on a `lokf` floor below 0.9.0**, and when `[tool.lokf] schema` names another file than the justfile's `schema :=` line.
+- **A member's distribution names its checksum as LOKF core's `Checksum`, with `algorithm: sha256` and a `checksum_value`.** The domain schema's `sha256:<hex>` slot clashed with lokf 0.9.0's and broke `lokf export --schema` on a domain host, so the host rewrites its member concepts when it takes this release.
+- **The federation docs say the workspace exports every bundle under LOKF core**, so the named graphs share one vocabulary. The workspace index says each bundle's fit is checked against the schema released with it.
 
 ### Fixed
 
 - **`automation.md` gives the real reason the librarian's variables are repository variables.** Only the federation's `nudge` job reads one in a job's `if:`. The librarian reads them in steps, and they stay together so every switch sits in one place.
 - **The librarian's Snyk W012 note names the lokf 0.9.0 wheel**, whose schema matches the commit its URL names.
+- **The preflight warns when `.lokf/lokf.yaml` is from another lokf release than the one `uv.lock` pins.** A domain schema imports that copy, and lokf 0.9.0 reads a bare-date `stale_after` as a datetime, which a 0.8.0 copy rejects.
+- **The federation check runs on a pull request that changes `.lokf/lokf.yaml` or `.lokf/justfile`.** The check validates the domain bundle against the schema the justfile names, which imports that copy of LOKF core.
 
 ## [0.59.0] - 2026-10-28
 
