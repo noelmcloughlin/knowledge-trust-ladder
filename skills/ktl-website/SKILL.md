@@ -80,7 +80,7 @@ No match means every placeholder is resolved. Then `node website/scripts/config.
 cd website && npm ci --ignore-scripts && npm run build
 ```
 
-`npm ci --ignore-scripts` installs the pinned packages and runs none of their install scripts. `npm run build` runs the sync (`lokf export` from `.lokf/`'s own environment, the report script, the pages), the build, and a check of every link between the pages. A schema or data folder not built yet is built first, with its command. A first build can stop on any of several errors. Three of them, with what fixes each, are a docs page with no group (`DOCS.groups` is out of step), a home source with no `#` title (`HOME.source`), and a missing `knowledge-report.sh` (the sidecar repair).
+`npm ci --ignore-scripts` installs the pinned packages and runs none of their install scripts. `npm run build` runs the sync (`lokf export` from `.lokf/`'s own environment under the justfile's domain schema, the report script, the pages), the build, and a check of every link between the pages. A schema or data folder not built yet is built first, with its command. A first build can stop on any of several errors. Three of them, with what fixes each, are a docs page with no group (`DOCS.groups` is out of step), a home source with no `#` title (`HOME.source`), and a missing `knowledge-report.sh` (the sidecar repair).
 
 `npm run dev` serves the site at `http://localhost:4321<BASE>/`. Commit `website/`. Git ignores the generated folders. With no Node.js or uv, report the build as skipped: the workflow builds in CI. [references/inputs.md](references/inputs.md) says what each page is built from.
 

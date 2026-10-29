@@ -267,6 +267,15 @@ const prepare = (body) => picturesToThemedImages(alertsToAsides(body));
 // The bundle, as the toolkit and the report script see it.
 // ---------------------------------------------------------------------------
 
+// The domain schema the justfile's `schema :=` line names, relative to .lokf/
+// as the recipes read it, so the four files carry its classes and relations
+// as `just lokf-convert` does. An empty line leaves the choice to lokf.
+function schemaArgs() {
+  const justfile = resolve(REPO_ROOT, ".lokf", "justfile");
+  const m = existsSync(justfile) && read(justfile).match(/^schema := "([^"]*)"$/m);
+  return m && m[1] ? ["--schema", resolve(REPO_ROOT, ".lokf", m[1])] : [];
+}
+
 function lokfExport() {
   mkdirSync(PUBLIC_KNOWLEDGE, { recursive: true });
   execFileSync(
@@ -279,6 +288,7 @@ function lokfExport() {
       "--quiet",
       "lokf",
       "export",
+      ...schemaArgs(),
       BUNDLE_DIR,
       "--out-dir",
       PUBLIC_KNOWLEDGE,
