@@ -18,7 +18,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T19:01:33Z"
+  at: "2026-10-29T00:48:33Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -64,7 +64,7 @@ isPartOf:
 
 # What a confirmation attests
 
-Confirming a member concept is the curator's ordinary confirm, in a signed commit the registrar's `provenance` job backs. It attests that the bundle belongs under the domain's admission rule, and that any claim the domain makes across bundles holds. It does not vouch for the member's own concepts, whose labels come from their own events. A claim across bundles is the domain owner's arbitration, so the librarian proposes it as a question. A confirmation belongs to the concept's `id`, so a concept moved to a new id waits for one of its own.
+Confirming a member concept is the curator's ordinary confirm, in a signed commit the registrar's `provenance` job backs. It attests that the bundle belongs under the domain's admission rule, and that any claim the domain makes across bundles holds. It does not vouch for the member's own concepts, whose labels come from their own events. It does admit the addresses the member claims: the build routes each explicit `id` outside the member's `base_iri` to that member, and lokf refuses one inside another member's namespace or LOKF's own. A claim across bundles is the domain owner's arbitration, so the librarian proposes it as a question. A confirmation belongs to the concept's `id`, so a concept moved to a new id waits for one of its own.
 
 Before confirming, open the release the concept names. Check that the zip and its `.sha256` are attached, that the digest is the concept's `checksum`, and that the release's repository is the one the `base_iri` belongs to. Check a `MemberDomain`'s `workspace-<tag>.zip` the same way, and a served member's file by its digest. When the bundle's subject is not public, set its `sensitivity` first. `knowledge-federate.py build --verify-only` checks the zip again and runs the gate before the merge.
 

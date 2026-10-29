@@ -25,7 +25,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T23:50:44Z"
   - by: process:ktl-librarian
-    at: "2026-10-28T00:35:16Z"
+    at: "2026-10-29T00:48:33Z"
 stale_after: 2027-10-14
 status: draft
 ---

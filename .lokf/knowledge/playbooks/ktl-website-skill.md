@@ -31,11 +31,11 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-28T00:35:16Z"
+  at: "2026-10-29T01:31:51Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-18T17:45:03Z"
+    at: "2026-10-29T00:48:33Z"
 ---
 
 # Overview
@@ -52,7 +52,7 @@ It has eight steps, 0 to 6 with a 5b:
 - **Step 1.** Copy `templates/website` to `website/`, and substitute the placeholders in `site.config.mjs` and `README.md` as literal text through Python, never sed. Then set the logo, the branch, a custom domain or a user site's empty `BASE`, and leave the `"auto"` options alone unless the person wants a part left out or placed. When the site replaces an mkdocs site, write the `REDIRECTS` and `DOCS.exclude` entries Step 0 read. Set `BROWSE` only when the person wants the data published, since its databases become public.
 - **Step 2.** Add an exclusion for the generated folders, `website/(dist|public|src/content|src/generated|node_modules)/`, to each Markdown lint, link check or spell check configuration, and change nothing else at the root.
 - **Step 3.** Verify that no placeholder survives, and print what the sync will read with `node website/scripts/config.mjs`.
-- **Step 4.** Build with `npm ci --ignore-scripts && npm run build`. The first installs the pinned packages and runs none of their install scripts. The second runs the sync, the build and a check of every link between the pages. With no Node.js or uv, report the build as skipped.
+- **Step 4.** Build with `npm ci --ignore-scripts && npm run build`. The first installs the pinned packages and runs none of their install scripts. The second runs the sync, the build and a check of every link between the pages. The sync's `lokf export` runs under the domain schema the justfile names, so the four files carry its classes and slots. With no Node.js or uv, report the build as skipped.
 - **Step 5.** Optionally copy the deploy workflow, `knowledge-website.yaml`. Skip it when `.lokf/` is gitignored or the repository is not on GitHub.
 - **Step 5b.** When the preflight's `mkdocs` line found `mkdocs.yml`, give the maintainer the retirement list in `references/deploy.md`, and run none of its Pages or branch steps. In order, the list says to remove both publishers, remove what only mkdocs used, switch Pages to Actions, check the kept addresses, and delete the `gh-pages` branch last. With the maintainer's agreement, put the list's file changes on the site's branch, and say once that the pull request preview is lost (0.56.0).
 - **Step 6.** Hand off: the guessed values, the build's result, what the site shows and leaves out, the preflight's last line, and the site's `/knowledge/` address as a candidate `base_iri`.
