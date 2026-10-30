@@ -7,9 +7,9 @@ a CRLF file, counts a bundle reached through a link, and reads
 `commit.gpgsign = yes` with no signing key as signing on. It names a sidecar
 script that is missing beside its partner, and says when the gate would
 install from a lock git does not hold. It warns when git is too old for an
-ingest `git` entry, and when uv cannot install the packages the pen and the
-conventions script run on. Each sidecar script run under sh stops on one line
-that names bash.
+ingest `git` entry, and when neither uv nor python3 can start the pen or the
+conventions script, naming only the one that cannot. Each sidecar script run
+under sh stops on one line that names bash.
 
 The rows the sidecar's prerequisites page must carry for each preflight line
 stay in the contract script: that is a fact about this repository's own pages.
@@ -122,7 +122,6 @@ def test_names_a_missing_feedback_recorder_until_it_is_there(half_installed):
     )
 
 
-
 @pytest.fixture
 def scripted(tmp_path):
     """A host with a bundle, the pen and the conventions script, and no .venv."""
@@ -134,6 +133,14 @@ def scripted(tmp_path):
     return tmp_path
 
 
+def failing_uv(tmp_path, python3_has_yaml=False):
+    """A PATH whose uv prints its informational line, then an error, and whose python3 has pyyaml or not."""
+    fakebin = tmp_path / "fakebin"
+    write(fakebin / "uv", "#!/bin/sh\necho 'Using script environment at: /cache/env' >&2\necho 'x No solution found when resolving script dependencies:' >&2\nexit 1\n").chmod(0o755)
+    write(fakebin / "python3", f"#!/bin/sh\nexit {0 if python3_has_yaml else 1}\n").chmod(0o755)
+    return f"{fakebin}{os.pathsep}{os.environ['PATH']}"
+
+
 def test_says_when_uv_lifts_the_date_for_the_scripts_behind_a_mirror(scripted, tmp_path):
     """Behind an index with no upload times, the scripts still run, as their own uv_ready lifts the date; the line says so."""
     path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz")
@@ -143,15 +150,32 @@ def test_says_when_uv_lifts_the_date_for_the_scripts_behind_a_mirror(scripted, t
 
 
 def test_reports_scripts_uv_cannot_install_as_missing(scripted, tmp_path):
-    """A host whose index uv cannot install from looked ready while the pen and the gate could not start."""
-    fakebin = tmp_path / "fakebin"
-    write(fakebin / "uv", "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 1\n").chmod(0o755)
-    write(fakebin / "python3", "#!/bin/sh\nexit 1\n").chmod(0o755)
-    result = preflight(scripted, env={"PATH": f"{fakebin}{os.pathsep}{os.environ['PATH']}"})
+    """A host whose index uv cannot install from looked ready while the pen and the gate could not start. The line quotes uv's error, not the line before it."""
+    result = preflight(scripted, env={"PATH": failing_uv(tmp_path)})
     assert result and matches(result.out, r"^missing scripts .*knowledge-apply\.py and knowledge-conventions\.py \(x No solution found"), (
         f"preflight did not report the scripts uv could not install: {result.out}"
     )
+    assert "Using script environment" not in result.out, f"preflight quoted uv's informational line: {result.out}"
     assert matches(result.out, r"^Preflight: [1-9]"), f"preflight did not count the scripts as missing: {result.out}"
+
+
+def test_names_only_the_conventions_check_when_the_pen_runs_on_python3(scripted, tmp_path):
+    """The pen falls back to python3's pyyaml, so the line says the gate fails and not that ktl-librarian cannot write."""
+    result = preflight(scripted, env={"PATH": failing_uv(tmp_path, python3_has_yaml=True)})
+    assert result and matches(result.out, r"^missing scripts .*packages of knowledge-conventions\.py \(x No solution found.*the pen runs on python3"), (
+        f"preflight did not single out the conventions script: {result.out}"
+    )
+    assert "ktl-librarian writes nothing" not in result.out, f"preflight blamed the pen, which runs on python3: {result.out}"
+
+
+def test_reports_a_pen_with_no_python_to_start_on(scripted, tmp_path):
+    """No .venv, no uv and no python3 with pyyaml: the pen cannot start, and the preflight says so rather than nothing."""
+    fakebin = tmp_path / "fakebin"
+    write(fakebin / "python3", "#!/bin/sh\nexit 1\n").chmod(0o755)
+    dirs = [d for d in os.environ["PATH"].split(os.pathsep) if d and not os.access(os.path.join(d, "uv"), os.X_OK)]
+    result = preflight(scripted, env={"PATH": os.pathsep.join([str(fakebin), *dirs])})
+    assert result and matches(result.out, r"^missing scripts .*no uv, and no python3"), f"preflight said nothing of a pen that cannot start: {result.out}"
+
 
 def test_warns_when_the_gate_has_no_lock_in_git(tmp_path):
     """`uv sync --locked` fails when git holds no lock, so a host with the gate hears so before its next pull request does."""

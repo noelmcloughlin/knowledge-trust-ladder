@@ -429,18 +429,29 @@ if [ -d "$bundle" ] && [ -f "$root/.lokf/scripts/knowledge-apply.py" ] && [ -f "
   if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
     ok scripts "the pen and the conventions script run on .lokf/.venv"
   elif have uv; then
-    unready=""
+    unready=""; lost=""; pen=""
     for s in apply conventions; do
       uv_ready "$root/.lokf/scripts/knowledge-$s.py" 2>/dev/null && continue
-      [ "$s" = apply ] && have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1 && continue
+      if [ "$s" = apply ] && have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
+        pen="; the pen runs on python3's own pyyaml"; continue
+      fi
       unready="${unready}${unready:+ and }knowledge-$s.py"
+      case "$s" in
+        apply) lost="the pen (ktl-librarian writes nothing)" ;;
+        *) lost="${lost}${lost:+ and }the conventions check (the gate fails)" ;;
+      esac
     done
     if [ -z "$unready" ]; then
-      ok scripts "uv installs the pen's and the conventions script's packages${uvflags[0]+; the index serves no upload times, so exclude-newer is lifted for the pinned ones}"
+      ok scripts "uv installs the scripts' packages${uvflags[0]+; the index serves no upload times, so exclude-newer is lifted for the pinned ones}$pen"
     else
-      why="$(printf '%s\n' "$uverr" | grep -v '^[[:space:]]*$' | head -n 1)"
-      miss scripts "uv could not install the packages of $unready${why:+ ($why)} - run uv sync in .lokf/, and both scripts use that .venv" "the pen (ktl-librarian writes nothing) and the conventions check (the gate fails)"
+      # uv prints an informational line before its error, so the error line
+      # is named, or else the last line, which is the script's own reason.
+      why="$(printf '%s\n' "$uverr" | grep -E '^(error:|x |× )' | head -n 1)"
+      [ -n "$why" ] || why="$(printf '%s\n' "$uverr" | grep -v '^[[:space:]]*$' | tail -n 1)"
+      miss scripts "uv could not install the packages of $unready${why:+ ($why)}$pen - run uv sync in .lokf/, and both scripts use that .venv" "$lost"
     fi
+  elif ! { have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; }; then
+    miss scripts "no .lokf/.venv, no uv, and no python3 3.9 or later with pyyaml - the pen cannot start; install uv, or run uv sync in .lokf/" "the pen (ktl-librarian writes nothing)"
   fi
 fi
 
