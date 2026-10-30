@@ -80,7 +80,8 @@ export const PAGES = [];
 // The LinkML schema's pages, which gen-doc writes, under a Schema topic: a
 // folder, and the command that writes it, which the sync runs when the
 // folder is missing. "auto" takes the first of the root, a linkmo project
-// and .linkml/ whose justfile has a gen-doc recipe. null shows no schema.
+// and .linkml/ whose justfile has a gen-doc recipe, else the sidecar's
+// domain schema. null shows no schema.
 //   export const SCHEMA = { dir: "docs/elements", build: "just gen-doc" };
 export const SCHEMA = "auto";
 

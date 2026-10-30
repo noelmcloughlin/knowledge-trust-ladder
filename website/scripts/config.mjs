@@ -225,6 +225,23 @@ function linkmoDir() {
   return m && /^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$/.test(m[1]) && isDir(m[1]) ? m[1] : null;
 }
 
+/**
+ * The domain schema on the sidecar's `schema :=` line, which the release and
+ * the librarian read, as { dir, build }, or null. gen-doc runs in the
+ * sidecar's own environment, which the lokf toolkit's LinkML gives it, and
+ * renders the imports, since a host's composite declares nothing of its own.
+ * The pages go to .lokf/docs/elements/, which the sidecar's .gitignore keeps
+ * out of git. The name goes into a shell command, so only a plain YAML path
+ * inside .lokf/ is used.
+ */
+function sidecarSchema() {
+  if (!isFile(".lokf/justfile")) return null;
+  const m = readFileSync(resolve(REPO_ROOT, ".lokf/justfile"), "utf8").match(/^schema := "([^"]*)"\r?$/m);
+  const name = m ? m[1].replace(/^\.\//, "") : "";
+  if (!/^[A-Za-z0-9_][A-Za-z0-9._/-]*\.ya?ml$/.test(name) || name.includes("..") || !isFile(posix.join(".lokf", name))) return null;
+  return { dir: ".lokf/docs/elements", build: `cd .lokf && uv run --frozen gen-doc ${name} --directory docs/elements --render-imports` };
+}
+
 /** A { dir, build } option given in full or as a folder alone; build is the command that writes the folder, or null. */
 function folderOption(name, value) {
   const option = typeof value === "string" ? { dir: value } : value;
@@ -241,12 +258,13 @@ function folderOption(name, value) {
 // enumeration and type, which the site renders under a Schema topic. "auto"
 // takes the first of the repository's root, a linkmo project's folder and
 // the linkml-sidecar's .linkml/ whose justfile has a gen-doc recipe, which
-// writes the pages to docs/elements there.
+// writes the pages to docs/elements there. Failing those, it takes the KTL
+// sidecar's domain schema.
 export const SCHEMA = (() => {
   const value = given.SCHEMA === undefined ? "auto" : given.SCHEMA;
   if (value === null) return null;
   if (value !== "auto") return folderOption("SCHEMA", value);
-  return recipeIn([".", linkmoDir(), ".linkml"], "gen-doc", "docs/elements");
+  return recipeIn([".", linkmoDir(), ".linkml"], "gen-doc", "docs/elements") ?? sidecarSchema();
 })();
 
 // The data: a folder of SQLite databases, which the site serves under

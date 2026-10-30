@@ -252,7 +252,9 @@ fi
 
 # These lines find the schema's pages and the data as scripts/config.mjs
 # finds them. The schema's pages come from a justfile with a gen-doc recipe,
-# in the root, a linkmo project's folder or .linkml/. The data comes from a
+# in the root, a linkmo project's folder or .linkml/, else from the domain
+# schema on .lokf/justfile's schema line, a plain YAML path that gen-doc
+# reads in the sidecar's environment. The data comes from a
 # build-browse recipe, and its databases stay off the site until a person
 # sets BROWSE. A justfile goes by any name just reads, and a recipe line may
 # carry parameters and their defaults. An assignment such as
@@ -277,10 +279,25 @@ for d in . ${linkmo:+"$linkmo"} .linkml; do
     break
   fi
 done
+schema_from="a gen-doc recipe"
+if [ -z "$schema_cmd" ] && [ -f "$root/.lokf/justfile" ]; then
+  s="$(sed -n 's/^schema := "\([^"]*\)"\r\{0,1\}$/\1/p' "$root/.lokf/justfile" | head -n 1)"; s="${s#./}"
+  case "$s" in *..*) s="" ;; esac
+  if printf '%s\n' "$s" | grep -qE '^[A-Za-z0-9_][A-Za-z0-9._/-]*\.ya?ml$' && [ -f "$root/.lokf/$s" ]; then
+    schema_from="the sidecar's domain schema .lokf/$s"; schema_dir=".lokf/docs/elements"
+    schema_cmd="cd .lokf && uv run --frozen gen-doc $s --directory docs/elements --render-imports"
+  fi
+fi
 if [ -n "$schema_cmd" ]; then
-  ok schema "a gen-doc recipe: the Schema topic, from $schema_dir, which the sync builds with $schema_cmd (SCHEMA)"
+  ok schema "$schema_from: the Schema topic, from $schema_dir, which the sync builds with $schema_cmd (SCHEMA)"
+  # A sidecar installed before its .gitignore named docs/elements/ would
+  # show every page the sync builds there as a change to the bundle.
+  if [ "$schema_dir" = .lokf/docs/elements ] && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    && ! git -C "$root" check-ignore -q .lokf/docs/elements/index.md 2>/dev/null; then
+    warn schema "git does not ignore .lokf/docs/elements/, so the pages the sync builds there would show as changes - add docs/elements/ to .lokf/.gitignore, as the sidecar's template does"
+  fi
 else
-  info schema "no justfile with a gen-doc recipe in the root, a linkmo project or .linkml/ - no Schema topic (SCHEMA)"
+  info schema "no justfile with a gen-doc recipe in the root, a linkmo project or .linkml/, and no domain schema on .lokf/justfile's schema line - no Schema topic (SCHEMA)"
 fi
 browse_cmd=""
 if [ -n "$linkmo" ]; then

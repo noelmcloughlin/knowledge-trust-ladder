@@ -217,6 +217,26 @@ def test_config_takes_the_linkml_sidecar_s_schema_and_no_assignment_for_a_recipe
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_config_falls_back_to_the_sidecar_s_domain_schema_and_trusts_only_a_plain_path(tmp_path):
+    """A host whose only schema is the sidecar's composite shows it; a name a shell would read as more than a path shows none."""
+    bundle(tmp_path)
+    write(tmp_path / ".lokf" / "gh-workflows.yaml", "id: https://acme.example/schema\nname: acme\n")
+    write(tmp_path / ".lokf" / "justfile", 'schema := "gh-workflows.yaml"\n')
+    site = lay_down(tmp_path)
+    assert settle(site)["SCHEMA"] == {
+        "dir": ".lokf/docs/elements",
+        "build": "cd .lokf && uv run --frozen gen-doc gh-workflows.yaml --directory docs/elements --render-imports",
+    }
+    write(tmp_path / ".linkml" / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
+    assert settle(site)["SCHEMA"]["dir"] == ".linkml/docs/elements", "a gen-doc recipe comes before the sidecar's schema"
+    (tmp_path / ".linkml" / "justfile").unlink()
+    write(tmp_path / ".lokf" / "-d.yaml", "id: https://acme.example/schema\nname: acme\n")
+    for line in ('schema := "x.yaml; rm -rf ~"', 'schema := "../gh-workflows.yaml"', 'schema := ""', 'schema := "absent.yaml"', 'schema := "-d.yaml"'):
+        write(tmp_path / ".lokf" / "justfile", line + "\n")
+        assert settle(site)["SCHEMA"] is None, f"config took {line}"
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
 def test_config_trusts_no_linkmo_folder_a_shell_would_read_as_a_command(tmp_path):
     bundle(tmp_path)
     write(tmp_path / ".copier-answers.linkmo.yml", "linkmo_dir: 'x;touch pwned'\n")
