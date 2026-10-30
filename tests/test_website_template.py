@@ -230,7 +230,8 @@ def test_config_falls_back_to_the_sidecar_s_domain_schema_and_trusts_only_a_plai
     write(tmp_path / ".linkml" / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
     assert settle(site)["SCHEMA"]["dir"] == ".linkml/docs/elements", "a gen-doc recipe comes before the sidecar's schema"
     (tmp_path / ".linkml" / "justfile").unlink()
-    for line in ('schema := "x.yaml; rm -rf ~"', 'schema := "../gh-workflows.yaml"', 'schema := ""', 'schema := "absent.yaml"'):
+    write(tmp_path / ".lokf" / "-d.yaml", "id: https://acme.example/schema\nname: acme\n")
+    for line in ('schema := "x.yaml; rm -rf ~"', 'schema := "../gh-workflows.yaml"', 'schema := ""', 'schema := "absent.yaml"', 'schema := "-d.yaml"'):
         write(tmp_path / ".lokf" / "justfile", line + "\n")
         assert settle(site)["SCHEMA"] is None, f"config took {line}"
 

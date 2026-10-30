@@ -283,13 +283,19 @@ schema_from="a gen-doc recipe"
 if [ -z "$schema_cmd" ] && [ -f "$root/.lokf/justfile" ]; then
   s="$(sed -n 's/^schema := "\([^"]*\)"\r\{0,1\}$/\1/p' "$root/.lokf/justfile" | head -n 1)"; s="${s#./}"
   case "$s" in *..*) s="" ;; esac
-  if printf '%s\n' "$s" | grep -qE '^[A-Za-z0-9_-][A-Za-z0-9._/-]*\.ya?ml$' && [ -f "$root/.lokf/$s" ]; then
+  if printf '%s\n' "$s" | grep -qE '^[A-Za-z0-9_][A-Za-z0-9._/-]*\.ya?ml$' && [ -f "$root/.lokf/$s" ]; then
     schema_from="the sidecar's domain schema .lokf/$s"; schema_dir=".lokf/docs/elements"
     schema_cmd="cd .lokf && uv run --frozen gen-doc $s --directory docs/elements --render-imports"
   fi
 fi
 if [ -n "$schema_cmd" ]; then
   ok schema "$schema_from: the Schema topic, from $schema_dir, which the sync builds with $schema_cmd (SCHEMA)"
+  # A sidecar installed before its .gitignore named docs/elements/ would
+  # show every page the sync builds there as a change to the bundle.
+  if [ "$schema_dir" = .lokf/docs/elements ] && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    && ! git -C "$root" check-ignore -q .lokf/docs/elements/index.md 2>/dev/null; then
+    warn schema "git does not ignore .lokf/docs/elements/, so the pages the sync builds there would show as changes - add docs/elements/ to .lokf/.gitignore, as the sidecar's template does"
+  fi
 else
   info schema "no justfile with a gen-doc recipe in the root, a linkmo project or .linkml/, and no domain schema on .lokf/justfile's schema line - no Schema topic (SCHEMA)"
 fi

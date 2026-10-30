@@ -11,7 +11,8 @@ no site, where every section has to cope with absence rather than fail. It:
 - names the report script the sidecar must still install;
 - finds a linkmo project's gen-doc and build-browse recipes, in a justfile of
   any name just reads and with parameters, but not an assignment of the same
-  name, and else the sidecar's domain schema when its name is a plain path.
+  name, and else the sidecar's domain schema when its name is a plain path,
+  warning when git does not ignore the folder its pages go to.
 
 Run under sh it stops on one line that names bash.
 
@@ -118,9 +119,18 @@ def test_falls_back_to_the_sidecar_s_domain_schema(tmp_path):
     assert result and matches(
         result.out, r"^ok      schema +the sidecar's domain schema \.lokf/gh-workflows\.yaml: .*\.lokf/docs/elements.*cd \.lokf && uv run --frozen gen-doc gh-workflows\.yaml"
     ), f"preflight missed the sidecar's domain schema: {result.out}"
-    write(tmp_path / ".lokf" / "justfile", 'schema := "x.yaml; rm -rf ~"\n')
+    assert "warn    schema" not in result.out, f"preflight warned outside git: {result.out}"
+    Git(tmp_path).init()
     result = preflight(tmp_path)
-    assert result and matches(result.out, r"^info    schema +no justfile"), f"preflight took a schema name a shell would run: {result.out}"
+    assert result and matches(result.out, r"^warn    schema +git does not ignore \.lokf/docs/elements/"), f"preflight missed the unignored pages: {result.out}"
+    write(tmp_path / ".lokf" / ".gitignore", "docs/elements/\n")
+    result = preflight(tmp_path)
+    assert result and "warn    schema" not in result.out, f"preflight warned though git ignores the pages: {result.out}"
+    write(tmp_path / ".lokf" / "-d.yaml", "id: https://acme.example/schema\nname: acme\n")
+    for line in ('schema := "x.yaml; rm -rf ~"', 'schema := "-d.yaml"'):
+        write(tmp_path / ".lokf" / "justfile", line + "\n")
+        result = preflight(tmp_path)
+        assert result and matches(result.out, r"^info    schema +no justfile"), f"preflight took {line}, which a shell or gen-doc would read as more than a path: {result.out}"
 
 
 def test_finds_a_linkmo_project_s_schema_and_data_recipes(tmp_path):

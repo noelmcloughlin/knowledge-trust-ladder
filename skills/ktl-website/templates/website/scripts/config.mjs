@@ -238,7 +238,7 @@ function sidecarSchema() {
   if (!isFile(".lokf/justfile")) return null;
   const m = readFileSync(resolve(REPO_ROOT, ".lokf/justfile"), "utf8").match(/^schema := "([^"]*)"\r?$/m);
   const name = m ? m[1].replace(/^\.\//, "") : "";
-  if (!/^[A-Za-z0-9_-][A-Za-z0-9._/-]*\.ya?ml$/.test(name) || name.includes("..") || !isFile(posix.join(".lokf", name))) return null;
+  if (!/^[A-Za-z0-9_][A-Za-z0-9._/-]*\.ya?ml$/.test(name) || name.includes("..") || !isFile(posix.join(".lokf", name))) return null;
   return { dir: ".lokf/docs/elements", build: `cd .lokf && uv run --frozen gen-doc ${name} --directory docs/elements --render-imports` };
 }
 
