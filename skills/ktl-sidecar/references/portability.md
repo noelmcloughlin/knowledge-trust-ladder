@@ -115,7 +115,7 @@ A real folder inside the vault is indexed like any other, and so is a link whose
 
 ### The ingest on another host
 
-`knowledge-ingest.sh` is bash and Python, and runs wherever `uv` or `python3` with PyYAML does. Without git it runs by hand, with the credentials in the environment, and the lock is the record of what was fetched. The `command` kind then takes any file under the root, since no git can say whether it is tracked. On a forge other than GitHub, schedule the script in that CI with the secrets it names, pass `--visibility`, and open the merge request from the branch it leaves, as the sync's recipe above does for its workflow.
+`knowledge-ingest.sh` is bash and Python, and runs wherever `uv` or `python3` with PyYAML does. Without git it runs by hand, with the credentials in the environment, and the lock is the record of what was fetched. The `command` kind then takes any file under the root, since no git can say whether it is tracked. Its lock record, its mirror's header and the run's summary then carry `command_unchecked` with the reason, so a lock copied into a repository does not pass for a checked run's. On a forge other than GitHub, schedule the script in that CI with the secrets it names, pass `--visibility`, and open the merge request from the branch it leaves, as the sync's recipe above does for its workflow.
 
 ## The forge-free gate
 
