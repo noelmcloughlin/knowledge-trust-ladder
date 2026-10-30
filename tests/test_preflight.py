@@ -7,8 +7,9 @@ a CRLF file, counts a bundle reached through a link, and reads
 `commit.gpgsign = yes` with no signing key as signing on. It names a sidecar
 script that is missing beside its partner, and says when the gate would
 install from a lock git does not hold. It warns when git is too old for an
-ingest `git` entry. Each sidecar script run under sh stops on one line that
-names bash.
+ingest `git` entry, and when uv cannot install the packages the pen and the
+conventions script run on. Each sidecar script run under sh stops on one line
+that names bash.
 
 The rows the sidecar's prerequisites page must carry for each preflight line
 stay in the contract script: that is a fact about this repository's own pages.
@@ -22,7 +23,7 @@ import shutil
 
 import pytest
 
-from conftest import REPO, SCRIPTS, TEMPLATES, WORKFLOWS, Git, bash, matches, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, WORKFLOWS, Git, bash, matches, mirror_uv, run, write
 
 PREFLIGHT = SCRIPTS / "knowledge-preflight.sh"
 
@@ -120,6 +121,37 @@ def test_names_a_missing_feedback_recorder_until_it_is_there(half_installed):
         f"preflight still reports knowledge-feedback.sh as missing after it was laid down: {result.out}"
     )
 
+
+
+@pytest.fixture
+def scripted(tmp_path):
+    """A host with a bundle, the pen and the conventions script, and no .venv."""
+    write(tmp_path / ".lokf" / "knowledge" / "x" / "a.md", "---\ntype: Service\n---\n")
+    scripts = tmp_path / ".lokf" / "scripts"
+    scripts.mkdir(parents=True)
+    for name in ("knowledge-apply.sh", "knowledge-apply.py", "knowledge-conventions.sh", "knowledge-conventions.py"):
+        shutil.copy(SCRIPTS / name, scripts)
+    return tmp_path
+
+
+def test_says_when_uv_lifts_the_date_for_the_scripts_behind_a_mirror(scripted, tmp_path):
+    """Behind an index with no upload times, the scripts still run, as their own uv_ready lifts the date; the line says so."""
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz")
+    result = preflight(scripted, env={"PATH": path})
+    assert result and matches(result.out, r"^ok      scripts .*exclude-newer is lifted"), f"preflight did not report the lifted date: {result.out}"
+    assert "--exclude-newer-package pyyaml=false" in log.read_text(), f"preflight did not install as the scripts do: {log.read_text()}"
+
+
+def test_reports_scripts_uv_cannot_install_as_missing(scripted, tmp_path):
+    """A host whose index uv cannot install from looked ready while the pen and the gate could not start."""
+    fakebin = tmp_path / "fakebin"
+    write(fakebin / "uv", "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 1\n").chmod(0o755)
+    write(fakebin / "python3", "#!/bin/sh\nexit 1\n").chmod(0o755)
+    result = preflight(scripted, env={"PATH": f"{fakebin}{os.pathsep}{os.environ['PATH']}"})
+    assert result and matches(result.out, r"^missing scripts .*knowledge-apply\.py and knowledge-conventions\.py \(x No solution found"), (
+        f"preflight did not report the scripts uv could not install: {result.out}"
+    )
+    assert matches(result.out, r"^Preflight: [1-9]"), f"preflight did not count the scripts as missing: {result.out}"
 
 def test_warns_when_the_gate_has_no_lock_in_git(tmp_path):
     """`uv sync --locked` fails when git holds no lock, so a host with the gate hears so before its next pull request does."""

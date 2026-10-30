@@ -608,13 +608,14 @@ else
   err "knowledge-apply.py and knowledge-conventions.py must each carry 'dependencies = [\"pyyaml==<version>\"]' and an 'exclude-newer' date, the same in both - one is missing, unpinned or different"
 fi
 # The three shell halves that run a Python half through uv carry one
-# uv_ready function, which knowledge-apply.sh explains. A fix to one copy
-# must reach the other two.
-uv_ready_copies="$(for f in apply conventions ingest; do sed -n '/^uv_ready() {$/,/^}$/p' "$templates/scripts/knowledge-$f.sh" | cksum; done | sort -u)"
+# uv_ready function, which knowledge-apply.sh explains, and the preflight
+# carries it too to ask whether they can. A fix to one copy must reach the
+# other three.
+uv_ready_copies="$(for f in apply conventions ingest preflight; do sed -n '/^uv_ready() {$/,/^}$/p' "$templates/scripts/knowledge-$f.sh" | cksum; done | sort -u)"
 if [[ "$(printf '%s\n' "$uv_ready_copies" | wc -l | tr -d ' ')" == 1 && "$uv_ready_copies" != "4294967295 0" ]]; then
-  ok "knowledge-apply.sh, knowledge-conventions.sh and knowledge-ingest.sh carry the same uv_ready"
+  ok "knowledge-apply.sh, knowledge-conventions.sh, knowledge-ingest.sh and knowledge-preflight.sh carry the same uv_ready"
 else
-  err "knowledge-apply.sh, knowledge-conventions.sh and knowledge-ingest.sh must each carry the same uv_ready function - one is missing or differs"
+  err "knowledge-apply.sh, knowledge-conventions.sh, knowledge-ingest.sh and knowledge-preflight.sh must each carry the same uv_ready function - one is missing or differs"
 fi
 
 say ""

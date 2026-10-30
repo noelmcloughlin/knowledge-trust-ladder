@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The preflight installs the packages of the pen and the conventions script, and reports `missing` when uv cannot.** A host whose package index uv could not install from looked ready while ktl-librarian could not write and the gate could not check.
+
 ## [0.60.0] - 2026-10-29
 
 ### Added
