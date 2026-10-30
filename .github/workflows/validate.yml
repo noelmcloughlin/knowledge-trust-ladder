@@ -269,11 +269,30 @@ jobs:
         with:
           globs: '**/*.md'
 
+      # lychee retries a timeout or a 429, never a failed connection, so a
+      # minute in which the runner reaches no network fails every link it
+      # was checking ("Network unreachable" on 2026-10-30, between two
+      # passing runs). A failed first pass waits a minute and checks every
+      # link again; only the second pass fails the job, so a dead link still
+      # does.
       - name: Check links
+        id: links
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           # lychee excludes mailto: links by default (opt in with
           # --include-mail); no flag needed to exclude them.
+          args: --no-progress "**/*.md"
+          fail: false
+          jobSummary: false
+
+      - name: Wait before checking the links again
+        if: steps.links.outputs.exit_code != '0'
+        run: sleep 60
+
+      - name: Check links again
+        if: steps.links.outputs.exit_code != '0'
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
           args: --no-progress "**/*.md"
           fail: true
 
