@@ -30,7 +30,9 @@ and pin:
    ids gets the ref fetched whole;
 6. a command's output is mirrored, an untracked command is refused, and a
    command past its timeout fails the entry and nothing else. The timeout
-   stops every process the command started;
+   stops every process the command started. Outside a work tree a command
+   runs, and its record says git did not check it; in a repository git will
+   not read, it is refused;
 7. the manifest's refusals: an unknown key, a variable name outside the
    KNOWLEDGE_INGEST_ namespace, a value of the wrong type, an internal entry
    in a public repository, and a confidential entry where git would see its
@@ -993,6 +995,39 @@ def test_a_command_is_mirrored_only_once_tracked_and_fails_on_its_own(tmp_path, 
     write(root / ".lokf" / "ingest" / "schema.sh", read(root / ".lokf" / "ingest" / "schema.sh") + "echo edited\n")
     result = ingest(root)
     checks.ok(result and "refused, .lokf/ingest/schema.sh has changes git has not committed" in result.out, "a command edited since its commit is refused", result.out)
+
+
+def test_a_command_outside_a_work_tree_runs_and_its_record_says_it_was_not_checked(tmp_path, checks):
+    """Without a work tree no git can say the command was committed. It still runs, as portability.md says, and the lock, the mirror's
+    header and the summary say it ran unchecked, so a lock copied back into a repository cannot pass for a checked run's."""
+    root = host(tmp_path, manifest_for([{"id": "schema", "kind": "command", "command": ".lokf/ingest/schema.sh", "sensitivity": "public"}]), git=False)
+    write(root / ".lokf" / "ingest" / "schema.sh", "#!/bin/sh\necho \"# Schema\"\n").chmod(0o755)
+    result = ingest(root)
+    reason = "the root is not a git work tree, so nothing says whether the command is committed"
+    record = lock_of(root)["entries"]["schema"]["items"]["schema"]
+    checks.ok(result and "- schema (command, .lokf/ingest/schema.sh): 1 fetched" in result.out and f"  - schema: ran unchecked, {reason}" in result.out,
+              "the command runs, and the summary says git did not check it", result.out)
+    checks.ok(record.get("command_unchecked") == reason and record.get("command_sha256"), "the lock records the reason beside the command's digest", str(record))
+    checks.ok(f"command_unchecked: {reason}" in read(root / ".lokf" / "mirror" / "schema" / "schema.md"), "the mirror's header says so too")
+    result = ingest(root)
+    checks.ok(result and "1 unchanged" in result.out and "ran unchecked" in result.out, "an unchanged run still says so", result.out)
+    g = Git(root)
+    g.init()
+    g("add", "-A")
+    g("commit", "-q", "-m", "host", env=IDENT)
+    result = ingest(root)
+    record = lock_of(root)["entries"]["schema"]["items"]["schema"]
+    checks.ok(result and "1 fetched" in result.out and "ran unchecked" not in result.out and "command_unchecked" not in record,
+              "once the command is committed, a checked run writes its record again without the reason", result.out)
+
+
+def test_a_command_in_a_repository_git_will_not_read_is_refused(tmp_path, checks):
+    """git fails inside a repository another user owns as it does outside one. There the command is refused, not run unchecked."""
+    root = host(tmp_path, manifest_for([{"id": "schema", "kind": "command", "command": ".lokf/ingest/schema.sh", "sensitivity": "public"}]))
+    write(root / ".lokf" / "ingest" / "schema.sh", "#!/bin/sh\necho \"# Schema\"\n").chmod(0o755)
+    result = ingest(root, env={"GIT_TEST_ASSUME_DIFFERENT_OWNER": "1"})
+    checks.ok(result and "refused, git cannot read the repository the root is in" in result.out and "ran unchecked" not in result.out,
+              "an untracked command in a repository git refuses to read is refused", result.out)
 
 
 def alive(pid: int) -> bool:
