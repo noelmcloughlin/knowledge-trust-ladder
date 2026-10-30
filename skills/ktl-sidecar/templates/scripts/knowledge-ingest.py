@@ -1908,6 +1908,10 @@ def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[li
     if not shutil.which("git"):
         unchecked = "no git was found to say whether the command is committed"
     elif subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True).returncode != 0:
+        # git also fails inside a repository it will not read, one another
+        # user owns for instance. That is no reason to skip the check.
+        if any((d / ".git").exists() for d in (root, *root.parents)):
+            raise Refused("git cannot read the repository the root is in, so nothing says the command is committed; a command runs only once git can")
         unchecked = "the root is not a git work tree, so nothing says whether the command is committed"
     else:
         tracked = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", entry.command], capture_output=True)

@@ -6,7 +6,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
-- **A `command` entry run outside a git work tree says so in its lock record, its mirror's header and the summary.** The record carries `command_unchecked`, so a lock copied back into a repository no longer reads as a checked run's.
+- **A `command` entry run outside a git work tree says so in its lock record, its mirror's header and the summary.** The record carries `command_unchecked`, so a lock copied back into a repository no longer reads as a checked run's. In a repository git will not read, one another user owns for instance, the command is refused rather than run unchecked.
 
 ## [0.60.0] - 2026-10-29
 
