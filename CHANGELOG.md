@@ -4,15 +4,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **ktl-website's `SCHEMA: "auto"` falls back to the sidecar's domain schema.** With no other `gen-doc` recipe, the site shows the schema on `.lokf/justfile`'s `schema :=` line, built into the ignored `.lokf/docs/elements/`. The preflight reports the same, and warns when git does not ignore that folder.
-
 ## [0.60.0] - 2026-10-30
 
 ### Added
 
 - **`just lokf-check-refs` runs lokf's `--check-excerpts`.** The gate fails a `sources[].excerpt` that its local file no longer holds. The recipes need lokf 0.9.0, so a host raises its floor before it takes this release.
+- **ktl-website's `SCHEMA: "auto"` falls back to the sidecar's domain schema.** With no other `gen-doc` recipe, the site shows the schema on `.lokf/justfile`'s `schema :=` line, built into the ignored `.lokf/docs/elements/`. The preflight reports the same, and warns when git does not ignore that folder.
 
 ### Changed
 
