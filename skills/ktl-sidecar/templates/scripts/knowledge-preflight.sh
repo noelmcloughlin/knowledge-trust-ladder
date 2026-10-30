@@ -393,6 +393,68 @@ elif [ -n "$script_gaps" ]; then
   warn copies "$script_gaps - the ktl-sidecar repair lays it down"
 fi
 
+# ---- scripts ---------------------------------------------------------------
+# The pen and the conventions script each run a Python half: on the
+# sidecar's .venv when it holds pyyaml on Python 3.9 or later, else through
+# uv after uv_ready, the same function as theirs. Nothing above runs either,
+# so a host whose index uv cannot install from would look ready while
+# ktl-librarian cannot write and the gate cannot check. uv keeps one
+# environment per script, so both are installed here, into uv's cache and
+# never into the repository. The pen alone falls back to python3.
+uvflags=(); uverr=""; uvhint="Run uv sync in .lokf/ to pin them by hash."
+uv_ready() {
+  local err names name again unpinned lifted=""
+  command -v uv >/dev/null 2>&1 || return 1
+  uv sync --offline --quiet --script "$1" >/dev/null 2>&1 && return 0
+  until err="$(uv sync --color never --script "$1" ${uvflags[@]+"${uvflags[@]}"} 2>&1 >/dev/null)"; do
+    names="$(printf '%s\n' "$err" | sed -n 's/^warning: \([^ ]*\) is missing an upload date.*/\1/p' | tr -d '\140' | sed 's/-[0-9].*//' | tr '[:upper:]' '[:lower:]' | tr '_.' '--' | sort -u)"
+    again=""; unpinned=""
+    for name in $names; do
+      case " $lifted " in *" $name "*) again=1 ;; esac
+      case "$name" in *[!a-z0-9-]*) unpinned="$unpinned $name"; continue ;; esac
+      grep -qiE "^# dependencies = .*\"${name//-/[-_.]}==" "$1" || unpinned="$unpinned $name"
+    done
+    if [ -z "$names" ] || [ -n "$again$unpinned" ]; then
+      uverr="$(printf '%s\n' "$err" | grep -v ' is missing an upload date' || true)"
+      [ -z "$unpinned" ] || uverr+=$'\n'"${0##*/}: the package index serves no upload times for$unpinned, which the script's header does not pin with ==, so exclude-newer stays."
+      return 1
+    fi
+    for name in $names; do uvflags+=(--exclude-newer-package "$name=false"); lifted="$lifted $name"; done
+  done
+  [ -z "$lifted" ] || echo "${0##*/}: the package index serves no upload times, so exclude-newer is lifted for$lifted. The versions stay pinned. $uvhint" >&2
+  return 0
+}
+if [ -d "$bundle" ] && [ -f "$root/.lokf/scripts/knowledge-apply.py" ] && [ -f "$root/.lokf/scripts/knowledge-conventions.py" ]; then
+  venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
+  if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
+    ok scripts "the pen and the conventions script run on .lokf/.venv"
+  elif have uv; then
+    unready=""; lost=""; pen=""
+    for s in apply conventions; do
+      uv_ready "$root/.lokf/scripts/knowledge-$s.py" 2>/dev/null && continue
+      if [ "$s" = apply ] && have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
+        pen="; the pen runs on python3's own pyyaml"; continue
+      fi
+      unready="${unready}${unready:+ and }knowledge-$s.py"
+      case "$s" in
+        apply) lost="the pen (ktl-librarian writes nothing)" ;;
+        *) lost="${lost}${lost:+ and }the conventions check (the gate fails)" ;;
+      esac
+    done
+    if [ -z "$unready" ]; then
+      ok scripts "uv installs the scripts' packages${uvflags[0]+; the index serves no upload times, so exclude-newer is lifted for the pinned ones}$pen"
+    else
+      # uv prints an informational line before its error, so the error line
+      # is named, or else the last line, which is the script's own reason.
+      why="$(printf '%s\n' "$uverr" | grep -E '^(error:|x |× )' | head -n 1)"
+      [ -n "$why" ] || why="$(printf '%s\n' "$uverr" | grep -v '^[[:space:]]*$' | tail -n 1)"
+      miss scripts "uv could not install the packages of $unready${why:+ ($why)}$pen - run uv sync in .lokf/, and both scripts use that .venv" "$lost"
+    fi
+  elif ! { have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; }; then
+    miss scripts "no .lokf/.venv, no uv, and no python3 3.9 or later with pyyaml - the pen cannot start; install uv, or run uv sync in .lokf/" "the pen (ktl-librarian writes nothing)"
+  fi
+fi
+
 # ---- ingest ----------------------------------------------------------------
 # A host that mirrors sources from outside the repository has .lokf/ingest.yaml.
 # The script's own status line says how many entries, how many mirrored files
