@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **The preflight installs the packages of the pen and the conventions script, and reports `missing` when uv cannot.** A host whose package index uv could not install from looked ready while ktl-librarian could not write and the gate could not check.
-
 ## [0.60.0] - 2026-10-30
 
 ### Added
@@ -29,6 +25,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The federation check runs on a pull request that changes `.lokf/lokf.yaml` or `.lokf/justfile`.** The check validates the domain bundle against the schema the justfile names, which imports that copy of LOKF core.
 - **This repository's domain-bundle playbook names a commit that `main` holds.** It named a commit on #304's branch, which the squash merge left out, so the conventions check failed on `main`.
 - **A `command` entry run outside a git work tree says so in its lock record, its mirror's header and the summary.** The record carries `command_unchecked`, so a lock copied back into a repository no longer reads as a checked run's. In a repository git will not read, one another user owns for instance, the command is refused rather than run unchecked.
+- **The preflight installs the packages of the pen and the conventions script, and reports `missing` when uv cannot.** A host whose package index uv could not install from looked ready while ktl-librarian could not write and the gate could not check.
 
 ## [0.59.0] - 2026-10-28
 
