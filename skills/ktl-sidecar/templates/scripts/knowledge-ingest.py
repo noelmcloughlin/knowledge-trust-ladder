@@ -1373,6 +1373,7 @@ class Item:
     converted_by: str = ""
     sha256: str = ""
     command_sha256: str = ""
+    command_unchecked: str = ""  # why git could not say the command was committed, empty when it did
     refused: str = ""
     failed: str = ""
     skipped: str = ""
@@ -1900,7 +1901,19 @@ def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[li
     path = root / entry.command
     if not path.is_file():
         raise Refused(f"{entry.command} is not a file under the repository root")
-    if shutil.which("git") and subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True).returncode == 0:
+    # Without a work tree nothing can say the command was committed. It still
+    # runs, as portability.md says, and its record says so, so a lock copied
+    # back into a repository cannot pass for one written by a checked run.
+    unchecked = ""
+    if not shutil.which("git"):
+        unchecked = "no git was found to say whether the command is committed"
+    elif subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True).returncode != 0:
+        # git also fails inside a repository it will not read, one another
+        # user owns for instance. That is no reason to skip the check.
+        if any((d / ".git").exists() for d in (root, *root.parents)):
+            raise Refused("git cannot read the repository the root is in, so nothing says the command is committed; a command runs only once git can")
+        unchecked = "the root is not a git work tree, so nothing says whether the command is committed"
+    else:
         tracked = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", entry.command], capture_output=True)
         if tracked.returncode != 0:
             raise Refused(f"{entry.command} is not tracked by git; a command runs only once it is committed")
@@ -1942,11 +1955,12 @@ def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[li
         raise Refused(f"the output is over max_item_bytes ({entry.max_item_bytes})")
     digest = sha256_hex(data)
     was = prior.get(entry.id)
-    if was and was.get("status") == "ok" and was.get("sha256") == "sha256:" + digest and was.get("command_sha256") == command_digest:
+    if (was and was.get("status") == "ok" and was.get("sha256") == "sha256:" + digest and was.get("command_sha256") == command_digest
+            and was.get("command_unchecked", "") == unchecked):
         return [], {entry.id: was}
     text, title, how = convert(data, "text/plain", entry.convert or "text")
     return [Item(item=entry.id, origin=f"command:{entry.command}", title=title or entry.command, version=digest[:12],
-                 text=text, converted_by=how, sha256=digest, command_sha256=command_digest)], {}
+                 text=text, converted_by=how, sha256=digest, command_sha256=command_digest, command_unchecked=unchecked)], {}
 
 
 # ---- the run -------------------------------------------------------------------
@@ -1998,12 +2012,12 @@ def mirror_header(entry: Entry, record: dict, converted_by: str) -> str:
     """The header a mirror file opens with, from the item's lock record."""
     fm = {"origin": record.get("origin", ""), "title": record.get("title", ""), "ingest": entry.id, "kind": entry.kind,
           "version": str(record.get("version", "")), "sha256": record["sha256"], "retrieved_at": record["retrieved_at"], "converted_by": converted_by}
-    for key in ("last_modified", "author"):
+    for key in ("last_modified", "author", "command_unchecked"):
         if record.get(key):
             fm[key] = record[key]
     if entry.license:
         fm["license"] = entry.license
-    order = ["origin", "title", "ingest", "kind", "version", "last_modified", "author", "sha256", "retrieved_at", "converted_by", "license"]
+    order = ["origin", "title", "ingest", "kind", "version", "last_modified", "author", "sha256", "retrieved_at", "converted_by", "command_unchecked", "license"]
     lines = ["---"]
     for key in order:
         if key in fm:
@@ -2058,7 +2072,7 @@ def cited_paths(root: Path) -> set:
 
 COUNTS = ("fetched", "restored", "unchanged", "gone", "unlisted", "failed", "refused", "skipped", "not reached")
 # What each kind compares, beside the digest, to keep an item's record as it is.
-KEPT_BY = {"confluence": ("version",), "http": (), "git": (), "command": ("command_sha256",)}
+KEPT_BY = {"confluence": ("version",), "http": (), "git": (), "command": ("command_sha256", "command_unchecked")}
 
 
 def refresh(record: dict, fresh: dict) -> None:
@@ -2291,7 +2305,7 @@ class Run:
             else:
                 lock_item = {"path": self.rel(target), "origin": it.origin, "title": it.title, "version": str(it.version),
                              "sha256": "sha256:" + it.sha256, "bytes": written, "retrieved_at": self.now, "status": "ok"}
-                for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "command_sha256"):
+                for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "command_sha256", "command_unchecked"):
                     if getattr(it, key):
                         lock_item[key] = getattr(it, key)
             new_items[it.item] = lock_item
@@ -2309,6 +2323,9 @@ class Run:
             n = counts["not reached"]
             self.summary.append(f"  - {n} item{'s' if n != 1 else ''}: not reached, the run's time limit passed first, so "
                                 f"{'they wait' if n != 1 else 'it waits'} for the next run")
+        for item_id, it in sorted(new_items.items()):
+            if it.get("status") == "ok" and it.get("command_unchecked"):
+                self.summary.append(f"  - {item_id}: ran unchecked, {it['command_unchecked']}")
         problems = [(item_id, it) for item_id, it in sorted(new_items.items()) if it.get("status") in ("refused", "failed", "gone", "unlisted", "skipped")]
         if entry.local_lock:
             # The summary is the pull request's body, so a confidential
