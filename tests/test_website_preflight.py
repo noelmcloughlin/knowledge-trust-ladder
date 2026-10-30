@@ -11,7 +11,7 @@ no site, where every section has to cope with absence rather than fail. It:
 - names the report script the sidecar must still install;
 - finds a linkmo project's gen-doc and build-browse recipes, in a justfile of
   any name just reads and with parameters, but not an assignment of the same
-  name.
+  name, and else the sidecar's domain schema when its name is a plain path.
 
 Run under sh it stops on one line that names bash.
 
@@ -108,6 +108,19 @@ def test_reads_the_owner_and_the_name_from_the_remote(tmp_path):
     git("remote", "add", "origin", "git@github.com:acme/acme-platform.git")
     result = preflight(tmp_path)
     assert result and matches(result.out, r"^ok      git .*acme/acme-platform"), f"preflight misread the remote: {result.out}"
+
+
+def test_falls_back_to_the_sidecar_s_domain_schema(tmp_path):
+    skeleton(tmp_path)
+    write(tmp_path / ".lokf" / "gh-workflows.yaml", "id: https://acme.example/schema\nname: acme\n")
+    write(tmp_path / ".lokf" / "justfile", 'schema := "gh-workflows.yaml"\n')
+    result = preflight(tmp_path)
+    assert result and matches(
+        result.out, r"^ok      schema +the sidecar's domain schema \.lokf/gh-workflows\.yaml: .*\.lokf/docs/elements.*cd \.lokf && uv run --frozen gen-doc gh-workflows\.yaml"
+    ), f"preflight missed the sidecar's domain schema: {result.out}"
+    write(tmp_path / ".lokf" / "justfile", 'schema := "x.yaml; rm -rf ~"\n')
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^info    schema +no justfile"), f"preflight took a schema name a shell would run: {result.out}"
 
 
 def test_finds_a_linkmo_project_s_schema_and_data_recipes(tmp_path):
