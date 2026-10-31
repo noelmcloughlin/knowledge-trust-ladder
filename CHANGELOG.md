@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **Every job of the librarian, registrar, release and website workflows has a time limit.** A hung step, the librarian's agent among them, stopped only at GitHub's six hours; the agent's job now stops at 60 minutes and each other job at 10 to 30, as the sync, ingest and federation workflows already did.
+
 ## [0.60.0] - 2026-10-30
 
 ### Added
