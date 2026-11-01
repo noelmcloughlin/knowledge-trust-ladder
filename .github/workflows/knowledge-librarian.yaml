@@ -34,6 +34,7 @@ jobs:
   earlier:
     name: Read what became of the earlier pull requests (read-only, no agent)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       pull-requests: read # list this workflow's pull requests and their files
     outputs:
@@ -135,6 +136,8 @@ jobs:
     # propose that change again. A run a person starts goes ahead.
     if: github.event_name != 'schedule' || needs.earlier.outputs.open == ''
     runs-on: ubuntu-latest
+    # The agent sets no time limit of its own, so this stops a run that hangs.
+    timeout-minutes: 60
     # AGENT_API_KEY and AGENT_CLI, when it is a secret, belong in this
     # Environment, limited to the default branch, so a workflow on any other
     # branch cannot read them. It records no deployment.
@@ -425,6 +428,7 @@ jobs:
     needs: [earlier, refresh]
     if: needs.refresh.outputs.changed == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write # create/push the librarian branch
       pull-requests: write # open the review PR

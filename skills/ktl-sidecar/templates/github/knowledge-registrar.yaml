@@ -54,6 +54,7 @@ jobs:
   validate:
     name: Validate the LOKF bundle
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -171,6 +172,7 @@ jobs:
     #   - token scope is read-only and no credential is persisted.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: read
@@ -489,6 +491,7 @@ jobs:
     needs: provenance
     if: needs.provenance.outputs.verdict == 'unbacked'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions: {}
     environment: ${{ vars.KNOWLEDGE_CURATION_ENVIRONMENT }}
     steps:
