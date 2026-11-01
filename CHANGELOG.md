@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Security
+
+- **The ingest pins pypdf 6.21.4.** The header's pin and `exclude-newer` date move with the tests' pin, which Dependabot raised.
+
 ## [0.60.1] - 2026-11-01
 
 ### Fixed
