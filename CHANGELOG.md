@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The knowledge website rebuilds when a schema project's schema changes.** Its `paths` named `.linkml/**` but not `src/<package>/schema/`, where a linkml-project-copier project keeps its schema, so a schema change alone waited for the Monday run.
+
 ## [0.60.1] - 2026-11-01
 
 ### Fixed
