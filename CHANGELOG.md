@@ -4,15 +4,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **The knowledge website rebuilds when a schema project's schema changes.** Its `paths` named `.linkml/**` but not `src/<package>/schema/`, where a linkml-project-copier project keeps its schema, so a schema change alone waited for the Monday run.
-
 ## [0.60.1] - 2026-11-01
 
 ### Fixed
 
 - **Every job of the librarian, registrar, release and website workflows has a time limit.** A hung step, the librarian's agent among them, stopped only at GitHub's six hours; the agent's job now stops at 60 minutes and each other job at 10 to 30, as the sync, ingest and federation workflows already did.
+- **The knowledge website rebuilds when a schema project's schema changes.** Its `paths` named `.linkml/**` but not `src/<package>/schema/`, where a linkml-project-copier project keeps its schema, so a schema change alone waited for the Monday run.
 
 ## [0.60.0] - 2026-10-30
 
