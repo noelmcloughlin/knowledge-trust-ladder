@@ -32,6 +32,9 @@ A concept's own body counts as a source: one that differs from the body its
 stamp's commit held has been checked against nothing since, unless only its
 layout, its notes or the plugin's block changed.
 
+`isolated` names what no relation joins to the rest of the bundle. The work
+list shows ten of them, taking turns by month with nothing stamped.
+
 A retired concept's label names its successor from the newest **Deprecation**
 line in log.md, and only one the bundle holds. A waiting Disagreement that
 names its concept right after the kind marks that concept, from its newest
@@ -45,6 +48,7 @@ counts from the day it names.
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 from datetime import datetime, timedelta, timezone
@@ -1159,10 +1163,25 @@ def isolated_host(tmp_path):
     return kk
 
 
-def isolated(root, *args):
-    result = report(root, *(args or ("isolated",)))
+def isolated(root, *args, env=None):
+    result = report(root, *(args or ("isolated",)), env=env)
     assert result, f"report failed: {result.out}"
     return result.out
+
+
+def at_month(tmp_path, day):
+    """An environment in which the script's clock reads the given day."""
+    shim = tmp_path / "clock"
+    write(shim / "date", f"#!/bin/sh\necho {day}\n")
+    (shim / "date").chmod(0o755)
+    return {"PATH": f"{shim}{os.pathsep}{os.environ['PATH']}"}
+
+
+def many_apart(kk, count):
+    write(kk / "x" / "a.md", "---\ntype: Service\ntitle: A\ndependsOn:\n  - x/b.md\n---\n")
+    write(kk / "x" / "b.md", "---\ntype: Service\ntitle: B\n---\n")
+    for n in range(count):
+        write(kk / "y" / f"c{n:02}.md", f"---\ntype: Service\ntitle: C{n}\n---\n")
 
 
 def test_isolated_names_a_concept_no_relation_joins_and_a_group_joined_only_to_itself(tmp_path):
@@ -1176,10 +1195,36 @@ def test_isolated_names_a_concept_no_relation_joins_and_a_group_joined_only_to_i
     write(kk / "z" / "self.md", "---\ntype: Service\ntitle: Self\nabout:\n  - z/self.md\n---\n")
     write(kk / "z" / "out.md", "---\ntype: Service\ntitle: Out\nabout:\n  - https://elsewhere.example/thing\n---\n")
     out = isolated(tmp_path)
-    assert has_line(out, "Concepts no relation joins to another, the oldest stamp first: 2"), out
-    assert has_line(out, "- z/out.md (no stamp)") and has_line(out, "- z/self.md (no stamp)"), out
+    assert has_line(out, "Concepts no relation joins to another: 2"), out
+    assert has_line(out, "- z/out.md") and has_line(out, "- z/self.md"), out
     assert has_line(out, "Groups of concepts joined only to each other: 1") and has_line(out, "- y/d.md, y/e.md"), out
     assert "x/a.md" not in out and "x/b.md" not in out and "x/c.md" not in out, out
+
+
+@pytest.mark.parametrize(
+    "target",
+    ["/x/b.md", "/x/b", "x/b.md", "x/b", "b.md", "./b.md", "https://acme.example/knowledge/x/b.md", "https://acme.example/knowledge/x/b#part"],
+)
+def test_isolated_joins_each_spelling_of_a_target(tmp_path, target):
+    """A false listing sends the librarian after a relation that already exists, so the report reads what lokf and the plugin read."""
+    kk = isolated_host(tmp_path)
+    write(kk / "x" / "a.md", f"---\ntype: Service\ntitle: A\nreferences:\n  - {target}\n---\n")
+    write(kk / "x" / "b.md", "---\ntype: Service\ntitle: B\n---\n")
+    assert has_line(isolated(tmp_path), "Concepts no relation joins to another: none"), target
+
+
+def test_isolated_finds_a_concept_with_a_fragment_in_its_own_id(tmp_path):
+    kk = isolated_host(tmp_path)
+    write(kk / "x" / "a.md", "---\ntype: Service\ntitle: A\nreferences:\n  - https://other.example/vocab#B\n---\n")
+    write(kk / "x" / "b.md", "---\ntype: Service\ntitle: B\nid: https://other.example/vocab#B\n---\n")
+    assert has_line(isolated(tmp_path), "Concepts no relation joins to another: none")
+
+
+def test_a_hyphen_in_a_field_name_does_not_hide_its_value_under_the_field_before(tmp_path):
+    kk = isolated_host(tmp_path)
+    write(kk / "x" / "a.md", "---\ntype: Service\ntitle: A\nresource: x\nemitted-by: https://acme.example/knowledge/x/b\n---\n")
+    write(kk / "x" / "b.md", "---\ntype: Service\ntitle: B\n---\n")
+    assert has_line(isolated(tmp_path), "Concepts no relation joins to another: none")
 
 
 def test_isolated_leaves_out_what_cannot_join_and_a_retired_concept_joins_nothing(tmp_path):
@@ -1193,14 +1238,14 @@ def test_isolated_leaves_out_what_cannot_join_and_a_retired_concept_joins_nothin
     write(kk / "x" / "me.md", "---\ntype: Person\ntitle: Me\n---\n")
     write(kk / "playbooks" / "knowledge-sources.md", "---\ntype: Playbook\ntitle: Map\n---\n")
     out = isolated(tmp_path)
-    assert has_line(out, "Concepts no relation joins to another, the oldest stamp first: 1") and has_line(out, "- x/alone.md (no stamp)"), out
+    assert has_line(out, "Concepts no relation joins to another: 1") and has_line(out, "- x/alone.md"), out
 
 
 def test_isolated_reports_nothing_of_a_bundle_too_small_to_join(tmp_path):
     kk = isolated_host(tmp_path)
     write(kk / "x" / "only.md", "---\ntype: Service\ntitle: Only\n---\n")
     out = isolated(tmp_path)
-    assert has_line(out, "Concepts no relation joins to another, the oldest stamp first: none"), out
+    assert has_line(out, "Concepts no relation joins to another: none"), out
 
 
 def test_isolated_says_it_cannot_tell_without_a_base_iri(tmp_path):
@@ -1211,21 +1256,66 @@ def test_isolated_says_it_cannot_tell_without_a_base_iri(tmp_path):
     assert "not computed" in isolated(tmp_path)
 
 
-def test_the_work_list_shows_the_ten_oldest_stamps_so_a_stamp_moves_a_concept_back(tmp_path):
-    """A concept whose source states no relation stays listed, so a fixed order would hold the same ten at the top for good."""
+def test_the_work_list_shows_ten_and_the_isolated_command_shows_all(tmp_path):
     kk = isolated_host(tmp_path)
-    write(kk / "x" / "a.md", "---\ntype: Service\ntitle: A\ndependsOn:\n  - x/b.md\n---\n")
-    write(kk / "x" / "b.md", "---\ntype: Service\ntitle: B\n---\n")
-    for n in range(12):
-        write(kk / "y" / f"c{n:02}.md", f"---\ntype: Service\ntitle: C{n}\ngenerated:\n  by: process:ktl-librarian\n  at: 2026-01-{n + 1:02}T00:00:00Z\n---\n")
+    many_apart(kk, 12)
     out = isolated(tmp_path, "worklist")
-    assert has_line(out, "Concepts no relation joins to another, the oldest stamp first: 12"), out
-    assert has_line(out, "- y/c00.md (stamped 2026-01-01)") and has_line(out, "- y/c09.md (stamped 2026-01-10)"), out
-    assert "y/c10.md" not in out and has_line(out, "- and 2 more, which `knowledge-report.sh isolated` lists"), out
-    assert "y/c11.md" in isolated(tmp_path), "the isolated command should list every concept"
-    write(kk / "y" / "c00.md", "---\ntype: Service\ntitle: C0\ngenerated:\n  by: process:ktl-librarian\n  at: 2026-01-01T00:00:00Z\nverified:\n  - by: process:ktl-librarian\n    at: 2026-06-01T00:00:00Z\n---\n")
+    assert has_line(out, "Concepts no relation joins to another: 12"), out
+    assert len(re.findall(r"^- y/c\d\d\.md$", out, re.M)) == 10, out
+    assert "- and 2 more, whose turn comes in a later month" in out, out
+    assert len(re.findall(r"^- y/c\d\d\.md$", isolated(tmp_path), re.M)) == 12
+
+
+@pytest.mark.parametrize("count", [11, 20, 25, 30, 37])
+def test_every_concept_takes_a_turn_in_the_work_list_with_nothing_stamped(tmp_path, count):
+    """A concept whose source states no relation stays listed and takes no stamp, so a fixed order would hold the same ten at the top for good."""
+    kk = isolated_host(tmp_path)
+    many_apart(kk, count)
+    seen = set()
+    for month in range(1, 13):
+        env = at_month(tmp_path, f"2026-{month:02}-01")
+        seen |= set(re.findall(r"^- (y/c\d\d\.md)$", isolated(tmp_path, "worklist", env=env), re.M))
+    assert len(seen) == count, f"only {len(seen)} of {count} concepts took a turn in a year"
+
+
+def test_the_work_list_shows_the_same_ten_within_a_month(tmp_path):
+    """A busy week in the same month reads the sources a person may still be reviewing, and proposes the same concepts."""
+    kk = isolated_host(tmp_path)
+    many_apart(kk, 25)
+    shown = lambda day: re.findall(r"^- y/c\d\d\.md$", isolated(tmp_path, "worklist", env=at_month(tmp_path, day)), re.M)
+    assert shown("2026-03-01") == shown("2026-03-29")
+
+
+def test_the_work_list_cuts_a_long_group_short(tmp_path):
+    kk = isolated_host(tmp_path)
+    for n in range(10):
+        write(kk / "x" / f"main{n}.md", "---\ntype: Service\ntitle: M\nreferences:\n  - x/main0.md\n---\n")
+    for n in range(8):
+        write(kk / "y" / f"g{n}.md", "---\ntype: Service\ntitle: G\nreferences:\n  - y/g0.md\n---\n")
     out = isolated(tmp_path, "worklist")
-    assert "y/c00.md" not in out and "y/c10.md" in out, f"a recheck did not send the concept to the back: {out}"
+    assert has_line(out, "- y/g0.md, y/g1.md, y/g2.md, y/g3.md, y/g4.md, and 3 more"), out
+    assert "y/g7.md" in isolated(tmp_path)
+
+
+def test_the_work_list_leaves_out_a_concept_a_person_declined_until_it_changes(tmp_path):
+    """A person closed the pull request that touched it, so the same relation is not proposed again next month."""
+    kk = isolated_host(tmp_path)
+    many_apart(kk, 2)
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "start")
+    base = git("rev-parse", "HEAD").strip()
+    declined = tmp_path / "declined.txt"
+    write(declined, f"declined 7 2026-01-01 {base}\ntouched y/c00.md\n")
+    env = {"KNOWLEDGE_DECLINED": str(declined)}
+    out = isolated(tmp_path, "worklist", env=env)
+    assert not has_line(out, "- y/c00.md") and has_line(out, "- y/c01.md"), out
+    assert has_line(isolated(tmp_path, env=env), "- y/c00.md"), "the isolated command should list every concept"
+    write(kk / "y" / "c00.md", "---\ntype: Service\ntitle: C0 changed\n---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "it changes")
+    assert has_line(isolated(tmp_path, "worklist", env=env), "- y/c00.md"), "a change should bring the concept back"
 
 
 def test_a_concept_standing_apart_makes_no_scheduled_run_busy(tmp_path):
@@ -1238,7 +1328,7 @@ def test_a_concept_standing_apart_makes_no_scheduled_run_busy(tmp_path):
     git.init()
     git("add", "-A")
     git("commit", "-q", "-m", "start")
-    assert "2" in isolated(tmp_path), "both concepts should stand apart"
+    assert has_line(isolated(tmp_path), "Concepts no relation joins to another: 2"), "both concepts should stand apart"
     assert report(tmp_path, "quiet"), "a concept standing apart made the bundle busy"
 
 
@@ -1247,7 +1337,7 @@ def test_the_whole_report_counts_what_stands_apart_and_names_none_of_it(tmp_path
     write(kk / "x" / "a.md", "---\ntype: Service\ntitle: A\n---\n")
     write(kk / "x" / "b.md", "---\ntype: Service\ntitle: B\n---\n")
     out = isolated(tmp_path, "report")
-    assert has_line(out, "Concepts no relation joins to another: 2; groups joined only to each other: none"), out
+    assert has_line(out, "Concepts no relation joins to another: 2; groups joined only to each other: none; the librarian takes these from its work list"), out
 
 
 # ---- coverage ----------------------------------------------------------------

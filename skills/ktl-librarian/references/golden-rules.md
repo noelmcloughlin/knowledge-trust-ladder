@@ -62,7 +62,7 @@ For a predicate outside this set, use the generic `relations` list of reified ob
 
 **A relation is a fact, so write each one a source states.** The schema makes these fields optional, but a concept with no relation is one the graph cannot reach, and `knowledge-report.sh isolated` names it. Read the file the concept describes: a workflow names what it runs, builds and publishes, a policy names what it covers, and a playbook names the schema or script it drives. Write each such link in the field that says it.
 
-Never add a relation only to join two concepts. That rules out a hub concept that everything is part of, and a `relatedTo` that fills a gap. A concept whose source states no relation stays apart: `recheck` it, which moves it to the back of the list. A relation can be written from either end. When a person confirmed a concept, write the relation on the other concept if its field reads true that way, since a patch turns a confirmation into *edited since*.
+Never add a relation only to join two concepts. That rules out a hub concept that everything is part of, and a `relatedTo` that fills a gap. A concept whose source states no relation stays apart. Write nothing for it: the list moves on each month, and a stamp would only open a pull request. A relation can be written from either end. When a person confirmed a concept, write the relation on the other concept if its field reads true that way, since a patch turns a confirmation into *edited since*.
 
 ## Rule 5: core fields
 

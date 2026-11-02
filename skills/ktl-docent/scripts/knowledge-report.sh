@@ -107,10 +107,13 @@
 # apart is a gap to look at and not a defect, since its source may state no
 # relation, so it fails no check and makes no run busy.
 #
-# The oldest stamp comes first, and a patch or a recheck stamps a concept. So
-# one the librarian looked at and left goes to the back, and a run that handles
-# the ten at the top of the list reaches the rest in turn, however large the
-# bundle is. The work list shows those ten and says how many more wait.
+# The work list shows ten and says how many more wait, so a run reads ten
+# sources however large the bundle is. The ten take turns by month, since the
+# monthly run is the one that always goes ahead, and a window moved by its own
+# size reaches every concept. No record says whose turn it is, because a stamp
+# for each concept left alone would open a pull request every month that
+# changes nothing a reader sees. The work list also leaves out a concept a
+# person declined by closing a pull request that touched it, until it changes.
 #
 # `quiet` says whether a scheduled run has anything to do, so the wrapper can
 # skip the agent in a week when nothing happened. Work waits when:
@@ -363,7 +366,7 @@ NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm
 fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); inv = 0; fm = 0; body = 1; next }
 fm {
   if (inflow) { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
-  if ($0 ~ /^[A-Za-z_][A-Za-z0-9_]*:/) { top = $0; sub(/:.*/, "", top) }
+  if ($0 ~ /^[A-Za-z_][A-Za-z0-9_-]*:/) { top = $0; sub(/:.*/, "", top) }
   if ($0 ~ /^title:/) title = val($0)
   else if ($0 ~ /^status:/) status = val($0)
   else if ($0 ~ /^stale_after:/) stale = val($0)
@@ -489,6 +492,15 @@ declined_load() {
 declined_for() {  # <concept path> -> "<base> <number> <day>" of the closed pull request that touched it, or nothing
   [ -s "$tmp/touched" ] || return 0
   awk -F'\t' -v p="$1" '$1 == p { print $2, $3, $4; exit }' "$tmp/touched"
+}
+declined_held() {  # each concept a closed pull request touched, unchanged since -> one K line
+  local path base num day last
+  [ -s "$tmp/touched" ] || return 0
+  while IFS=$'\t' read -r path base num day; do
+    last="$(git -C "$kdir" log -1 --format=%H -- "$path" 2>/dev/null || true)"
+    [ -z "$(git -C "$kdir" status --porcelain -- "$path" 2>/dev/null | head -1)" ] || continue
+    if at_or_before "$last" "$base"; then printf 'K\t%s\n' "$path"; fi
+  done < "$tmp/touched"
 }
 at_or_before() {  # <commit> <base>: the commit is the base, or an ancestor of it
   [ -n "$1" ] && { [ "$1" = "$2" ] || git -C "$root" merge-base --is-ancestor "$1" "$2" 2>/dev/null; }
@@ -859,10 +871,11 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 # A concept's id is its `id`, or base_iri and its path without `.md`.
 # A relation is one of the fourteen fields, `relations`, or a whole IRI in a
 # domain schema's own slot. Each concept that names another counts once for
-# it, and a concept never counts for itself. Retired concepts are left out of every list here.
-# `queue` prints Worth ten minutes today, in the order ktl-curator's
-# references/trust-fields.md gives; `lists` prints the rest.
-ranked() {  # queue | lists
+# it, and a concept never counts for itself. Retired concepts are left out of
+# every list here. `queue` prints Worth ten minutes today, in the order ktl-curator's
+# references/trust-fields.md gives; `lists` prints the rest; the `isolated`
+# forms print what stands apart, whole, as ten for the work list or as counts.
+ranked() {  # queue | lists | isolated | isolated-worklist | isolated-count
   local base
   base="$(awk -v SQ="'" '{ sub(/\r$/, "") } NR == 1 { sub(/^\357\273\277/, "") } NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
     /^base_iri:/ { v = $0; sub(/^base_iri:[ \t]*/, "", v); sub(/[ \t\r]+$/, "", v)
@@ -873,12 +886,14 @@ ranked() {  # queue | lists
   function cut(v,  i) { i = index(v, "#"); return i ? substr(v, 1, i - 1) : v }
   function find(id) { return (id in byid) ? byid[id] : "" }
   function resolve(v, from,  d, r) {
+    if (v in byid) return byid[v]
     if (v ~ /^[A-Za-z][A-Za-z0-9+.-]*:/) {
-      if (base != "" && index(v, base) == 1) return find(base cut(substr(v, length(base) + 1)))
-      return find(v)
+      if (base == "" || index(v, base) != 1) return ""
+      v = cut(substr(v, length(base) + 1)); sub(/\.md$/, "", v)
+      return find(base v)
     }
     if (base == "") return ""
-    v = cut(v); sub(/\.md$/, "", v)
+    v = cut(v); sub(/^\//, "", v); sub(/\.md$/, "", v)
     r = find(base v); if (r != "") return r
     d = from; if (sub(/\/[^\/]*$/, "", d)) return find(base d "/" v)
     return ""
@@ -897,13 +912,14 @@ ranked() {  # queue | lists
   $1 == "I" { cid[$2] = $3; ctype[$2] = $4; csrc[$2] = $5 }
   $1 == "L" { nl++; lp[nl] = $2; lf[nl] = $3; lt[nl] = $4 }
   $1 == "M" && $2 == "c" { cmoved[$3] = 1 }
+  $1 == "K" { held_back[$2] = 1 }
   END {
     for (i = 1; i <= nc; i++) { p = order[i]; id = cid[p]; if (id == "") { id = p; sub(/\.md$/, "", id); id = base id }; byid[id] = p }
     for (i = 1; i <= nc; i++) {
       p = order[i]; $0 = row[p]
       if ($4 == "deprecated") continue
       live[p] = 1; gat[p] = $7; hat[p] = $8; conf[p] = ($9 > 0 && !edited())
-      up[p] = p; stamped[p] = ($7 > $11 ? $7 : $11)
+      up[p] = p
     }
     for (k = 1; k <= nl; k++) {
       t = resolve(lt[k], lp[k]); if (t == "" || t == lp[k] || !(t in live) || !(lp[k] in live)) continue
@@ -921,18 +937,24 @@ ranked() {  # queue | lists
         p = order[i]; if (!(p in live)) continue
         if (ctype[p] == "Organization" || ctype[p] == "Person" || p == "playbooks/knowledge-sources.md") continue
         seen++; g = group(p)
+        if (p in held_back) continue
         if (size[g] == 1) lst[++m] = p
-        else if (g != top) { if (g in held) held[g] = held[g] ", " p; else { gorder[++ng] = g; held[g] = p } }
+        else if (g != top) {
+          if (!(g in held)) { gorder[++ng] = g; held[g] = p; gn[g] = 1 }
+          else if (mode != "isolated-worklist" || gn[g] < 5) { held[g] = held[g] ", " p; gn[g]++ }
+        }
       }
       if (seen < 2) { m = 0; ng = 0 }
-      if (mode == "isolated-count") { print "Concepts no relation joins to another: " (m ? m : "none") "; groups joined only to each other: " (ng ? ng : "none"); exit }
-      for (i = 2; i <= m; i++) { p = lst[i]; j = i - 1; while (j > 0 && (stamped[p] < stamped[lst[j]] || (stamped[p] == stamped[lst[j]] && p < lst[j]))) { lst[j + 1] = lst[j]; j-- } lst[j + 1] = p }
+      if (mode == "isolated-count") { print "Concepts no relation joins to another: " (m ? m : "none") "; groups joined only to each other: " (ng ? ng : "none") "; the librarian takes these from its work list"; exit }
       cap = (mode == "isolated-worklist" ? 10 : m + ng)
-      for (i = 1; i <= m && i <= cap; i++) body = body "- " lst[i] " (" (stamped[lst[i]] == "" ? "no stamp" : "stamped " day(stamped[lst[i]])) ")\n"
-      if (m > cap) body = body "- and " (m - cap) " more, which `knowledge-report.sh isolated` lists\n"
-      section("Concepts no relation joins to another, the oldest stamp first", m, body)
-      for (i = 1; i <= ng && i <= cap; i++) gbody = gbody "- " held[gorder[i]] "\n"
-      if (ng > cap) gbody = gbody "- and " (ng - cap) " more, which `knowledge-report.sh isolated` lists\n"
+      month = substr(today, 1, 4) * 12 + substr(today, 6, 2)
+      from = (m > cap ? month * 10 % m : 0)
+      for (i = 0; i < m && i < cap; i++) body = body "- " lst[(from + i) % m + 1] "\n"
+      if (m > cap) body = body "- and " (m - cap) " more, whose turn comes in a later month; `knowledge-report.sh isolated` lists them\n"
+      section("Concepts no relation joins to another", m, body)
+      from = (ng > cap ? month * 10 % ng : 0)
+      for (i = 0; i < ng && i < cap; i++) { g = gorder[(from + i) % ng + 1]; gbody = gbody "- " held[g] (size[g] > gn[g] ? ", and " (size[g] - gn[g]) " more" : "") "\n" }
+      if (ng > cap) gbody = gbody "- and " (ng - cap) " more, whose turn comes in a later month; `knowledge-report.sh isolated` lists them\n"
       section("Groups of concepts joined only to each other", ng, gbody)
       exit
     }
@@ -1414,6 +1436,7 @@ case "$cmd" in
     lists worklist
     echo "Reader feedback waiting: $(waiting_feedback)"
     repeats
+    times="$times"$'\n'"$(declined_held)"
     ranked isolated-worklist
     ;;
   quiet)
