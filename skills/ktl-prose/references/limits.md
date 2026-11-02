@@ -4,7 +4,9 @@ A pass from `prose-check.py` says that what the script reads came through. It do
 
 ## What can still change unseen
 
-- **Plain words.** `enabled` can become `disabled`, and `at least` can become `at most`. A sentence with no number, link or code can go. A `must`, a `not` or a number written as a word gets a note at most.
+- **A reversal in other words.** The script compares each changed sentence with the new sentence closest to it. It stops when a word gives way to its opposite, as `enabled` to `disabled` or `at least` to `at most`, and when a negative comes or goes while every other word stays. Its list of opposites is fixed, and most of the sentence's words must stay. So `enabled` can become `turned off`, `at least 2` can become `2 or fewer`, and a sentence reworded throughout can say the reverse and pass.
+- **What gets a note at most.** A `must`, a `not` or a number written as a word that came or went. A sentence that has few of its words left. An opposite or a negative where the other words changed or moved. A note never stops the script, so say in the hand-off what you decided about each.
+- **A sentence that went.** One of fewer than three plain words can go with no note, and so can one whose words stand elsewhere on the page.
 - **A swap between claims.** The script counts numbers, links, tags and keywords across the page. So two numbers swapped between two sentences pass, and so do two link targets swapped between two links.
 - **Order and nesting.** It does not see the order of steps, which item a sentence sits under, or which cell of a table holds a value. A dropped list item or table cell is a finding, and a moved one is not.
 - **The noun after a number.** `20 files` can become `20 folders`. Only percent and the units of size, time, frequency, length and weight count as part of a number.
@@ -16,10 +18,15 @@ A pass from `prose-check.py` says that what the script reads came through. It do
 - **A rewording already committed.** `--against` knows only the revision you name. A rewording committed before the check passes against `HEAD`, so name the revision from before it.
 - **A retelling's sense.** A retelling's number passes if the adult text holds it anywhere, and a claim turned upside down passes.
 
+## A character no reader sees
+
+Never type the escape for such a character into a tool call: the call may decode it into the character itself.
+
 ## What it refuses although nothing is wrong
 
 - **A number said another way.** `<5` to `less than 5`, or `20 MB` to `twenty megabytes`, reads as a number gone. Keep the number as it was. A spelling of a listed unit is fine: `10 ms` and `10 milliseconds` are one number.
 - **A list number out of order.** A number in its list's order is a marker, which may change. Any other opens a fact, so renumbering a list that starts at 5 is a finding.
+- **A reversal that is not one.** `Add a bullet? No.` to `Do not add a bullet.` reads as a negative gained, since the negative moved in from the next sentence. Keep the earlier sentence, or the person reads the two and rewords it by hand. Replayed over 351 real rewordings, this happened in 2.
 - **Frontmatter it cannot place.** A `by:` under a key it does not know is unreadable, and so is a line of a folded description that opens with `by:`. It skips the concept and says so. The person spells it plainly, or rewords it by hand.
 
 ## Who vouched for a concept

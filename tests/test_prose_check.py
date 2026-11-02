@@ -234,7 +234,7 @@ STYLE = [
     (0, "OK", "laying a wrapped paragraph out on one line changes no fact", ["--before", "w-old.md", "w-flat.md"]),
     (
         0,
-        "OK: only the wording differs (1 file): 15 words, and the earlier text had 15",
+        "OK: nothing the script reads differs (1 file): 15 words, and the earlier text had 15",
         "a comparison that passes says how many words each version holds",
         ["--before", "p-old.md", "p-new.md"],
     ),
@@ -326,6 +326,40 @@ STYLE = [
 @pytest.mark.parametrize(("status", "text", "what", "args"), STYLE, ids=[w for _, _, w, _ in STYLE])
 def test_style_and_comparison(pc, status, text, what, args):
     expect(status, text, what, *[pc / a if a.endswith(".md") else a for a in args])
+
+
+TURNED = [
+    (1, 'opposite: "enabled" became "disabled"', "Pushes to main are enabled by the ruleset.", "Pushes to main are disabled by the ruleset."),
+    (1, 'opposite: "at least" became "at most"', "A pull request needs at least two reviewers.", "A pull request needs at most two reviewers."),
+    (1, 'opposite: "must" became "may"', "A person must sign the commit.", "A person may sign the commit."),
+    (1, 'opposite: "after" became "before"', "The sync runs after the release.", "The sync runs before the release."),
+    (1, 'opposite: "required" became "optional"', "The input is required.", "The input is optional."),
+    (1, "negative: a sentence that otherwise stayed lost its negative", "The agent does not push the tag.", "The agent does push the tag."),
+    (1, "negative: a sentence that otherwise stayed gained a negative", "The agent pushes the tag.", "The agent never pushes the tag."),
+    (0, 'new.md:1: opposite: "after" became "before"', "Run lint after the build step.", "Run the build step before lint."),
+    (0, "new.md:1: negative: a sentence that otherwise stayed lost its negative", "The gate does not read the old file.", "The gate skips the old file."),
+    (0, "sentence-gone: few words of this sentence came through", "The gate reads commits. A person must sign each confirmation.", "The gate reads commits."),
+    (0, "OK", "It does not change the file.", "It changes nothing in the file."),
+    (0, "OK", "A run with no token stops.", "A run without a token stops."),
+    (0, "OK", "It can't read the file.", "It cannot read the file."),
+    (0, "OK", "The gate reads every commit. It runs on merge.", "The gate runs on merge. It reads every commit."),
+]
+
+
+@pytest.mark.parametrize(("status", "text", "old", "new"), TURNED, ids=[f"{o} -> {n}" for _, _, o, n in TURNED])
+def test_a_sentence_that_turned_over(tmp_path, status, text, old, new):
+    """Nothing but the wording differs, so only comparing sentence with sentence can show that the claim reversed."""
+    write(tmp_path / "old.md", f"{old}\n")
+    write(tmp_path / "new.md", f"{new}\n")
+    expect(status, text, f"{old} -> {new}", "--before", tmp_path / "old.md", tmp_path / "new.md")
+
+
+def test_the_ok_line_claims_only_what_the_script_read(tmp_path):
+    """It once said that only the wording differs, of a text whose meaning it cannot read."""
+    write(tmp_path / "old.md", "The gate reads every commit.\n")
+    write(tmp_path / "new.md", "Every commit is read by the gate.\n")
+    result = prose("--before", tmp_path / "old.md", tmp_path / "new.md")
+    assert result.rc == 0 and "nothing the script reads differs" in result.out and "only the wording" not in result.out, result.out
 
 
 # --before on concepts: a body may change only where no person vouched for

@@ -56,7 +56,10 @@
 # to stderr and never changes the exit status.
 #
 # A pass says that what the script reads came through, and not that the meaning
-# held. references/limits.md lists what it cannot see.
+# held, so its OK line says no more than that. It stops a sentence that otherwise
+# stayed and turned over: one word given way to its opposite, or a negative
+# gained or lost with every other word in place. references/limits.md lists what
+# it cannot see.
 #
 # The script reads the files it is given, and the word book in the skill's
 # assets/ folder, and asks git for an earlier version. It writes nothing
@@ -350,6 +353,38 @@ DATE_WORD = re.compile(
 )
 STRENGTH = ("must", "never", "only", "always", "unless", "except")
 NEGATION = re.compile(r"\b(?:not|no|nor|neither|cannot|without)\b|n't\b", re.I)
+# What makes one sentence negative, which is more than the count above reads.
+NEGATIVE = re.compile(r"\b(?:not|no|nor|neither|never|none|nothing|nobody|nowhere|cannot|without|unless|except)\b|n't\b", re.I)
+# Pairs of words that say the opposite of each other. In one sentence that a
+# rewording otherwise kept, one word of a pair giving way to the other is how a
+# claim turns upside down, and no number, link or code span shows it.
+OPPOSITES = (
+    ("enable", "disable"), ("enables", "disables"), ("enabled", "disabled"), ("enabling", "disabling"),
+    ("at least", "at most"), ("minimum", "maximum"), ("more than", "less than"), ("more than", "fewer than"),
+    ("above", "below"), ("over", "under"), ("increase", "decrease"), ("increases", "decreases"),
+    ("higher", "lower"), ("highest", "lowest"), ("larger", "smaller"), ("largest", "smallest"),
+    ("older", "newer"), ("oldest", "newest"), ("earlier", "later"), ("earliest", "latest"),
+    ("before", "after"), ("first", "last"), ("always", "never"),
+    ("must", "may"), ("must", "should"), ("must", "can"), ("required", "optional"),
+    ("allow", "deny"), ("allows", "denies"), ("allowed", "denied"), ("allow", "block"), ("allows", "blocks"), ("allowed", "blocked"),
+    ("accept", "reject"), ("accepts", "rejects"), ("accepted", "rejected"),
+    ("accept", "refuse"), ("accepts", "refuses"), ("accepted", "refused"),
+    ("include", "exclude"), ("includes", "excludes"), ("included", "excluded"),
+    ("add", "remove"), ("adds", "removes"), ("added", "removed"),
+    ("pass", "fail"), ("passes", "fails"), ("passed", "failed"), ("success", "failure"), ("succeeds", "fails"),
+    ("true", "false"), ("public", "private"), ("internal", "external"), ("inside", "outside"), ("local", "remote"),
+    ("signed", "unsigned"), ("tracked", "untracked"), ("start", "stop"), ("starts", "stops"),
+)
+OPPOSITE_WORD = re.compile(
+    r"\b(?:" + "|".join(sorted({re.escape(w).replace(r"\ ", r"\s+") for pair in OPPOSITES for w in pair}, key=len, reverse=True)) + r")\b(?!['\u2019]t)", re.I
+)
+CONTENT_WORD = re.compile(r"[a-z]{3,}")
+COMMON_WORDS = frozenset(
+    "the and for are was were has had have but you your can may its out all any one two who how why this that these those "
+    "with from into onto than then them they their there here when where which while what whom whose been will would "
+    "could should must shall each every some such more most much many only also very just even both same does did doing done "
+    "about again once because through other another not nor neither never none nothing nobody nowhere cannot without unless except least".split()
+) | frozenset(part for pair in OPPOSITES for word in pair for part in word.split())
 
 # The KTL Registrar plugin writes each marker on a line of its own. Prose
 # that names a marker in a code span is prose, and opens no region.
@@ -1248,6 +1283,54 @@ def unseen(doc: Doc) -> list[tuple[int, str, str]]:
 # --- what a rewording must leave alone ----------------------------------------
 
 
+# One sentence, as `turned` compares it.
+Said = namedtuple("Said", "line text words opposites negatives")
+
+
+def content_words(text: str) -> list[str]:
+    """The words of a sentence that carry its subject, in order, each cut to five letters, so that `signs` and `signed` are one."""
+    return [word[:5] for word in CONTENT_WORD.findall(text.lower()) if word not in COMMON_WORDS]
+
+
+def turned(a: Kept, b: Kept):
+    """What a rewording did to each sentence that changed: findings and notes.
+
+    Each changed sentence is compared with the sentence of the new text that
+    shares most of its words. Three in five shared means the rewording kept it,
+    so a word that gave way to its opposite is what changed its sense. When the
+    shared words also moved, the sentence may say the same thing the other way
+    round, as `lint after build` and `build before lint` do, so that is a note.
+    A negative that came or went is a finding only when every other word stayed
+    in its place, since `does not change` and `changes nothing` agree. Any other
+    is a note. A sentence with too few of its words anywhere near it may have gone.
+    """
+    findings, notes = [], []
+    same = {said.text for said in b.said}
+    new = [(said, set(said.words)) for said in b.said if said.words]
+    for old in a.said:
+        words = set(old.words)
+        if old.text in same or not words or not new:
+            continue
+        ranked = sorted(new, key=lambda pair: len(words & pair[1]), reverse=True)
+        best, others = ranked[0]
+        if len(words & others) < 0.6 * len(words | others):
+            if len(words) >= 3 and sum(len(words & pair[1]) for pair in ranked[:2]) < 0.4 * len(words):
+                notes.append((old.line, "sentence-gone", f'few words of this sentence came through (line {old.line} of the earlier text): "{old.text[:90]}"'))
+            continue
+        shared = words & others
+        kept_order = [w for w in old.words if w in shared] == [w for w in best.words if w in shared]
+        where = (findings if kept_order else notes)
+        for one, other in OPPOSITES:
+            for gone, came in ((one, other), (other, one)):
+                if best.opposites[gone] < old.opposites[gone] and best.opposites[came] > old.opposites[came]:
+                    where.append((best.line, "opposite", f'"{gone}" became "{came}" in a sentence that otherwise stayed (line {old.line} of the earlier text): "{best.text[:90]}"'))
+        if (old.negatives > 0) != (best.negatives > 0):
+            how = "lost its" if old.negatives else "gained a"
+            literal = old.words == best.words
+            (findings if literal else notes).append((best.line, "negative", f'a sentence that otherwise stayed {how} negative (line {old.line} of the earlier text): "{best.text[:90]}"'))
+    return findings, notes
+
+
 class Kept:
     """What one version of a file holds besides its wording.
 
@@ -1265,6 +1348,7 @@ class Kept:
         self.questions: list[str] = []
         self.questions_at = 1
         self.headings: list[tuple[int, str]] = []
+        self.said: list[Said] = []
         self.list_items = 0
         self.ticked = 0
         self.table_rows = 0
@@ -1536,6 +1620,17 @@ class Kept:
         self.strength["a negation"] += len(NEGATION.findall(hidden))
         self.strength["should"] += len(re.findall(r"\bshould\b", lowered))
         self.words += len(hidden.split())
+        for start, end in sentences(hidden):
+            part = hidden[start:end]
+            self.said.append(
+                Said(
+                    block.line_at(start),
+                    " ".join(text[start:end].split()),
+                    content_words(part),
+                    Counter(" ".join(found.group().lower().split()) for found in OPPOSITE_WORD.finditer(part)),
+                    len(NEGATIVE.findall(part)),
+                )
+            )
 
 
 def times(count: int) -> str:
@@ -1656,6 +1751,9 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
 
     for line, rule, words, _ in differences("number-word", "the number word", a.number_words, b.number_words):
         notes.append((line, rule, words + "; digits cannot show whether a count changed"))
+    flips, doubts = turned(a, b)
+    findings.extend(flips)
+    notes.extend(doubts)
     for line, rule, words, _ in differences("date-word", "the day or month", a.date_words, b.date_words):
         notes.append((line, rule, words + "; digits cannot show whether a date changed"))
     for word in (*STRENGTH, "a negation"):
@@ -1791,7 +1889,7 @@ def counted(was: int, now: int) -> str:
 def check_before(old_path: Path, new_path: Path):
     in_bundle = bundle_root(new_path) is not None
     findings, notes, (was, now) = check_pair(new_path, read(old_path), read(new_path), in_bundle)
-    return findings, notes, f"only the wording differs (1 file): {counted(was, now)}"
+    return findings, notes, f"nothing the script reads differs (1 file): {counted(was, now)}"
 
 
 def check_against(ref: str, files: list[Path]):
@@ -1811,7 +1909,7 @@ def check_against(ref: str, files: list[Path]):
         findings.extend(found)
         notes.extend(noted)
         was, now = was + words[0], now + words[1]
-    return findings, notes, f"only the wording differs ({len(files)} file(s) against {ref}): {counted(was, now)}"
+    return findings, notes, f"nothing the script reads differs ({len(files)} file(s) against {ref}): {counted(was, now)}"
 
 
 def frontmatter_list(fm: list[str] | None, key: str) -> list[str]:

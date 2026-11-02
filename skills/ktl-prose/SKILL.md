@@ -137,7 +137,7 @@ Take the concepts the person asked for: every one the report marks `rewrite`, or
 3. **Change the wording only.** Add nothing. Remove nothing but words that carry no fact. Lay out what you reword the way the file's project does: in the bundle, one line for each paragraph and each list item, as ktl-librarian writes it. *Line breaks in the source*, in [references/rules.md](references/rules.md), gives the layout outside the bundle and the reasons.
 4. **Leave what you cannot fix.** A sentence you cannot parse, a vague quantity or a claim that looks wrong goes in the hand-off, unchanged. A wrong fact is ktl-librarian's to correct from the source.
 
-## Step 3: prove that only the wording changed
+## Step 3: check what a script can
 
 From the repository root:
 
@@ -146,9 +146,9 @@ uv run <skill>/scripts/prose-check.py --against HEAD <files>     # a file git al
 uv run <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied in Step 2
 ```
 
-A **finding** names something other than wording that differs: a number or its unit, a link, a code span, an HTML tag, a quotation, a code block, or a list or table cut short. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a new character no reader sees. Undo what it names. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
+A **finding** names something other than wording that differs: a number or its unit, a link, a code span, an HTML tag, a quotation, a code block, or a list or table cut short. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a new character no reader sees. It also stops a sentence that otherwise stayed and turned over: a word now its opposite, or a negative gained or lost. Undo what it names.
 
-A **note** asks you to look again: a number, day or month written as a word, a `must` or `not` that came or went, or a text that grew or lost over a fifth of its words. A pass proves less than it seems, because the script sees no plain word: read [references/limits.md](references/limits.md).
+A **note** asks you to look again: a number, day or month written as a word, or a `must` or `not` that came or went. So does a sentence with few of its words left, or a text that grew or lost over a fifth of its words. Read [references/limits.md](references/limits.md), then read each changed sentence beside the old one.
 
 Then run what every change to the bundle runs. From `.lokf/`:
 
@@ -164,7 +164,7 @@ Run the host's Markdown lint too, where it has one. With neither uv nor that pyt
 Add one bullet under today's heading in `.lokf/knowledge/log.md`. Take the day from `date -u +%Y-%m-%d`. Reuse today's `## YYYY-MM-DD` heading, or create it at the top: one bare date per day, newest first.
 
 ```markdown
-* **Prose**: reworded 12 concept bodies in plain English. No fact, link, number or frontmatter changed.
+* **Prose**: reworded 12 concept bodies in plain English. No link, number or frontmatter changed.
 ```
 
 Write no line for a run that changed nothing.
@@ -176,8 +176,9 @@ Hand the person a change scoped to `.lokf/`: a pull request where git tracks `.l
 - the counts and the words before and after, from the script's `OK` line;
 - each sentence you left alone, and why;
 - each concept you skipped, with its reason;
-- what no script proved: that the meaning held, and what [references/limits.md](references/limits.md) lists. The diff is theirs to read, and each concept stays unconfirmed until a curator confirms it against its source;
-- that a concept *checked by automation only* was checked before the rewording, and that the librarian's next run checks the new body against its source.
+- each note the script gave, and what you decided;
+- what no script proved: that the meaning held, and what [references/limits.md](references/limits.md) lists. Each concept stays unconfirmed until a curator confirms it against its source;
+- that a concept *checked by automation only* was checked before the rewording, and nothing rechecks it until its source moves.
 
 End with a short **For the CURATOR** section, as ktl-librarian does. Say which reworded concepts are ready to confirm, and name the **ktl-curator** skill. Then list each confirmed concept that reads badly, with the one route open to it. The person sends it back through the curator (*Wrong - send back*), ktl-librarian rewrites it from its source, and the person confirms the new text.
 
