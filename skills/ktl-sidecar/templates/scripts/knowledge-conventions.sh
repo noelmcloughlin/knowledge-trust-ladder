@@ -41,16 +41,22 @@
 #      paths that differ only by case collide on Windows, macOS and SharePoint,
 #      and a space, a parenthesis or an upper-case host name in a file name is
 #      how every sync client names a conflict copy.
-#   9. Every concept starts with a `---` frontmatter block that closes, with no
-#      byte order mark in front of it. A BOM from a web editor or Notepad, or a
-#      file with no block, would otherwise pass this script unread.
+#   9. Every concept is a file of its own, not a symbolic link, and starts with
+#      a `---` frontmatter block that closes, with no byte order mark in front
+#      of it and no `---` inside it. A BOM from a web editor or Notepad, or a
+#      file with no block, would otherwise pass this script unread. The toolkit
+#      reads a link as the file it points at, and ends the block at the first
+#      `---` it meets, so either one would have it read what the gates do not.
 #  10. The fields the provenance gates read line by line are spelt so a line
-#      reader and a parser see the same thing. They are `id`, and `by`, `at`
-#      and `revision` on an event, and they carry no tags, anchors, aliases,
-#      quoted keys, block scalars or values spanning lines, and no comment
-#      beside them. Each of those is valid YAML that `lokf validate` accepts
-#      and both gates cannot see, which makes a confirmation nobody has to
-#      stand behind. A comment is read as part of the value: the actor is
+#      reader and a parser see the same thing. They are `id`, `verified`,
+#      `generated`, and `by`, `at` and `revision` on an event, and they carry
+#      no tags, anchors, aliases, merge keys, quoted or explicit keys, space
+#      before the colon, escapes, block scalars or values spanning lines or
+#      below their key, and no comment beside them or inside a flow form. The
+#      block is not indented whole or one flow mapping, and holds no line
+#      break but a line feed. Each of those is valid YAML that `lokf validate`
+#      accepts and a line reader cannot follow, and both gates refuse an event
+#      they cannot read. A comment is read as part of the value: the actor is
 #      then a login nobody holds, and the time one no script can compare, so
 #      the concept never reads as edited since.
 #  11. No `at:` is later than the commit that first recorded it, or, before

@@ -73,6 +73,10 @@ INDEX_BULLET = re.compile(r"^\* \[([^\]]*)\]\(([^)]+)\) - (.*)$")
 # The fields the provenance gates read line by line: a concept's id, and the
 # actor, time and revision of each event.
 GATE_FIELDS = {"id", "by", "at", "revision"}
+# The keys those gates find an event under.
+EVENT_KEYS = {"verified", "generated"}
+# What a parser ends a line at and a line reader does not.
+UNSEEN_BREAK = re.compile("[\x85\u2028\u2029]")
 # Rule 2's one shape for a time: UTC to the second, as `date -u
 # +%Y-%m-%dT%H:%M:%SZ` writes it, and as every writer here does. In it the
 # federation build reads the moment knowledge-report.sh and rule 11 read, and
@@ -114,6 +118,10 @@ def plain_spellings(fm_text: str) -> list[str]:
     findings: list[str] = []
     stack: list[dict] = []  # one entry per open collection
     lines = fm_text.split("\n")
+    found = UNSEEN_BREAK.search(fm_text)
+    if found:
+        # A parser counts these as lines, so its marks no longer index `lines`.
+        return [f"a line break a line reader does not see (U+{ord(found.group()):04X})"]
     commented: set[int] = set()  # the lines already reported for a comment
 
     def at(ev) -> str:
@@ -142,16 +150,33 @@ def plain_spellings(fm_text: str) -> list[str]:
             if ev.tag is not None:
                 findings.append(f"a tag on '{ev.value}' at {at(ev)}")
             if top is not None and top["kind"] == "map" and top["expect_key"]:
-                if ev.style is not None and ev.value in GATE_FIELDS:
-                    findings.append(f"a quoted key ({ev.value}) at {at(ev)}")
+                row = ev.start_mark.line
+                if ev.value == "<<" and ev.style is None:
+                    findings.append(f"a merge key at {at(ev)}")
+                if ev.value in GATE_FIELDS | EVENT_KEYS:
+                    if ev.style is not None:
+                        findings.append(f"a quoted key ({ev.value}) at {at(ev)}")
+                    elif "?" in lines[row][: ev.start_mark.column]:
+                        findings.append(f"an explicit key (? {ev.value}) at {at(ev)}")
+                    elif not lines[row][ev.end_mark.column :].startswith(":"):
+                        findings.append(f"a space before the colon of {ev.value} at {at(ev)}")
+                if len(stack) == 1 and ev.start_mark.column != 0 and not top["indented"]:
+                    top["indented"] = True
+                    findings.append(f"a frontmatter block indented whole at {at(ev)}")
                 top["key"] = ev.value
+                top["key_row"] = row
                 top["expect_key"] = False
                 continue
             if field in GATE_FIELDS:
+                source = lines[ev.start_mark.line][ev.start_mark.column : ev.end_mark.column]
                 if ev.style in ("|", ">"):
                     findings.append(f"a block scalar for {field} at {at(ev)}")
                 elif ev.start_mark.line != ev.end_mark.line:
                     findings.append(f"a {field} spanning lines at {at(ev)}")
+                elif ev.start_mark.line != top["key_row"]:
+                    findings.append(f"a {field} on the line below its key at {at(ev)}")
+                elif (ev.style == '"' and "\\" in source) or (ev.style == "'" and "''" in source[1:-1]):
+                    findings.append(f"an escape in {field} at {at(ev)}")
                 elif comment_after(ev):
                     findings.append(f"a comment beside {field} at {at(ev)}")
         if isinstance(ev, (yaml.MappingStartEvent, yaml.SequenceStartEvent)):
@@ -159,10 +184,28 @@ def plain_spellings(fm_text: str) -> list[str]:
                 findings.append(f"a collection where {field} should be one scalar at {at(ev)}")
             if in_value:
                 top["expect_key"] = True
-            stack.append({"kind": "map" if isinstance(ev, yaml.MappingStartEvent) else "seq", "expect_key": True, "key": None})
+            if not stack and ev.flow_style:
+                findings.append(f"a flow mapping for the whole frontmatter at {at(ev)}")
+            stack.append(
+                {
+                    "kind": "map" if isinstance(ev, yaml.MappingStartEvent) else "seq",
+                    "expect_key": True,
+                    "key": None,
+                    "key_row": None,
+                    "indented": False,
+                    "flow_of": field if field in EVENT_KEYS and ev.flow_style else None,
+                    "row": ev.start_mark.line,
+                }
+            )
             continue
         if isinstance(ev, (yaml.MappingEndEvent, yaml.SequenceEndEvent)):
-            stack.pop()
+            closed = stack.pop()
+            # A comment can hide the closing bracket a line reader looks for.
+            if closed["flow_of"] and any(
+                re.search(r"(^|\s)#", re.sub(r"\"[^\"]*\"|'[^']*'", "", line))
+                for line in lines[closed["row"] : ev.end_mark.line + 1]
+            ):
+                findings.append(f"a comment inside the flow form of {closed['flow_of']} at {at(ev)}")
             continue
         if in_value:
             top["expect_key"] = True
@@ -619,7 +662,13 @@ def check_file(
     if raw.startswith(b"\xef\xbb\xbf"):
         findings.append(f"{path}: starts with a byte order mark - save as UTF-8 without BOM")
         raw = raw[3:]
-    text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    decoded = raw.decode("utf-8", errors="replace")
+    text = decoded.replace("\r\n", "\n").replace("\r", "\n")
+    # The toolkit reads a bare carriage return as a line break, and the gates
+    # do not, so rule 10 reads it before this script reads it as the toolkit does.
+    block = decoded.split("---", 2)
+    if len(block) == 3 and "\r" in block[1].replace("\r\n", ""):
+        findings.append(f"{path}: frontmatter uses a bare carriage return - write it plainly, so the gate reads the event a parser reads")
 
     split = split_frontmatter(text)
     if split is None:
@@ -628,6 +677,10 @@ def check_file(
         )
         return findings
     fm_text, body = split
+    # The toolkit ends the block at the first `---` it meets, in a line or not,
+    # so it would read less of this block than every script here reads.
+    if "---" in fm_text:
+        findings.append(f"{path}: frontmatter holds '---', where the toolkit ends the block - write the value another way")
 
     try:
         frontmatter = yaml.safe_load(fm_text)
@@ -759,7 +812,14 @@ def main(argv: list[str]) -> int:
     entries: dict[Path, tuple[str, str]] = {}
     titles: set[str] = set()
     source_ids: dict[str, dict[str, list[Path]]] = {}
+    # 9. the toolkit reads a link as the file it points at, and the gates read
+    #    it as the path it names, so its events would go unseen.
+    for path in sorted(bundle.rglob("*")):
+        if path.is_symlink() and (path.suffix == ".md" or ".obsidian" not in path.parts):
+            findings.append(f"{path}: is a symbolic link - a concept is a file of its own, which the gates can read")
     for path in sorted(bundle.rglob("*.md")):
+        if path.is_symlink():
+            continue
         if ".obsidian" in path.parts or path.name in RESERVED:
             continue
         findings.extend(check_file(path, bundle, ids, entries, titles, source_ids))
