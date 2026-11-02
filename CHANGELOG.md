@@ -4,25 +4,22 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.60.1] - 2026-11-02
+
 ### Added
 
 - **The gate page lists what the gates cannot see.** *What the gates cannot see* in `references/gate.md` says what a pass does not prove, and what is refused although nothing is wrong.
 
 ### Fixed
 
+- **Every job of the librarian, registrar, release and website workflows has a time limit.** A hung step, the librarian's agent among them, stopped only at GitHub's six hours; the agent's job now stops at 60 minutes and each other job at 10 to 30, as the sync, ingest and federation workflows already did.
+- **The knowledge website rebuilds when a schema project's schema changes.** Its `paths` named `.linkml/**` but not `src/<package>/schema/`, where a linkml-project-copier project keeps its schema, so a schema change alone waited for the Monday run.
 - **A symbolic link no longer carries a confirmation past the gates.** The toolkit follows a link and git does not, so a concept linked to a file outside the bundle, or a `.lokf` moved behind a link, passed unread. Both gates and rule 9 refuse one, apart from the bundle's two names.
 - **The gates refuse frontmatter they cannot read.** A `human:` event in a spelling a parser reads and the line reader does not read as no event: a quoted or explicit key, an alias, a merge, an escape, an indented block, text before the opener, or a line break only a parser sees. It now comes out as `(unreadable)`, which each gate refuses, and rule 10 names the spelling.
 - **An edit inside frontmatter the gates cannot read is refused.** Two revisions of an unreadable concept read the same, so a forged event in one already on the default branch passed. The marker now carries the frontmatter.
 - **A range that deletes `.lokf/curators/` is read, not skipped.** Only a base that never held the folder has opted out.
 - **Rule 9 reports a `---` inside a frontmatter value.** The toolkit ends the block there and reads the rest as body.
 - **The report and the gates read an event whose list dash stands alone.** They merged it with the event after it, which could lose a person's confirmation.
-
-## [0.60.1] - 2026-11-01
-
-### Fixed
-
-- **Every job of the librarian, registrar, release and website workflows has a time limit.** A hung step, the librarian's agent among them, stopped only at GitHub's six hours; the agent's job now stops at 60 minutes and each other job at 10 to 30, as the sync, ingest and federation workflows already did.
-- **The knowledge website rebuilds when a schema project's schema changes.** Its `paths` named `.linkml/**` but not `src/<package>/schema/`, where a linkml-project-copier project keeps its schema, so a schema change alone waited for the Monday run.
 
 ### Security
 
