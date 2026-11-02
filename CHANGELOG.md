@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The work list sends a body that changed after its stamp to the librarian.** A ktl-prose pass leaves the stamp alone, so a rewording that reversed a claim stayed labelled as checked, and nothing compared it with its source again. It now counts as a moved source, for `quiet` and for a person's confirmation too. A host's first run after this release checks each body reworded so far.
+
 ## [0.60.1] - 2026-11-02
 
 ### Added

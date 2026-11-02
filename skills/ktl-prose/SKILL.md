@@ -157,7 +157,7 @@ bash scripts/knowledge-conventions.sh
 just lokf-validate
 ```
 
-Run the host's Markdown lint too, where it has one. With neither uv nor that python3, the check cannot run: say so, and do not call the rewording proven.
+Run the host's Markdown lint too, where it has one. With neither uv nor that python3, the check cannot run: say so.
 
 ## Step 4: log the pass
 
@@ -167,7 +167,7 @@ Add one bullet under today's heading in `.lokf/knowledge/log.md`. Take the day f
 * **Prose**: reworded 12 concept bodies in plain English. No link, number or frontmatter changed.
 ```
 
-Write no line for a run that changed nothing.
+Write no line for a run that changed nothing. Commit the rewording apart from any librarian change.
 
 ## Step 5: hand off
 
@@ -176,9 +176,9 @@ Hand the person a change scoped to `.lokf/`: a pull request where git tracks `.l
 - the counts and the words before and after, from the script's `OK` line;
 - each sentence you left alone, and why;
 - each concept you skipped, with its reason;
-- each note the script gave, and what you decided;
+- each note the script gave, and your decision;
 - what no script proved: that the meaning held, and what [references/limits.md](references/limits.md) lists. Each concept stays unconfirmed until a curator confirms it against its source;
-- that a concept *checked by automation only* was checked before the rewording, and nothing rechecks it until its source moves.
+- that a concept *checked by automation only* was checked before the rewording, and the librarian's next run checks the new body.
 
 End with a short **For the CURATOR** section, as ktl-librarian does. Say which reworded concepts are ready to confirm, and name the **ktl-curator** skill. Then list each confirmed concept that reads badly, with the one route open to it. The person sends it back through the curator (*Wrong - send back*), ktl-librarian rewrites it from its source, and the person confirms the new text.
 

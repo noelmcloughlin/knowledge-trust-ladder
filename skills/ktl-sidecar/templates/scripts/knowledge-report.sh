@@ -78,6 +78,18 @@
 # changed no fact still counts, and only reading the source says which it
 # was.
 #
+# A concept's own body counts as a source too. The pen stamps every edit it
+# writes, so a body that differs from the one the stamp's commit held was changed
+# by something else: a ktl-prose pass, which leaves the stamp alone on purpose,
+# or a hand edit. Nothing has compared that text with its sources, so it goes to
+# the librarian as "its own body", and a `patch` or a `recheck` clears it. Spaces
+# and line breaks do not count, so a paragraph laid out afresh is no change. Nor
+# do the lokf:related block and `## Open questions`, which a plugin and the
+# notes write. A change made in the commit that recorded the stamp is not seen,
+# as with a source, so a rewording squashed into the librarian's change is
+# missed. An open question a process asked since covers it, as it covers a
+# source, except that it need name no path, since the body has none.
+#
 # An open question is "answered" here when a person confirmed the concept on
 # or after the day the question is dated, and the concept is no longer a
 # draft. The person looked again after it was asked. ktl-curator clears a
@@ -86,7 +98,7 @@
 #
 # `quiet` says whether a scheduled run has anything to do, so the wrapper can
 # skip the agent in a week when nothing happened. Work waits when:
-#   - a source moved after its concept's stamp;
+#   - a source moved after its concept's stamp, or its own body changed;
 #   - a person left a note after the librarian last wrote or checked that
 #     concept;
 #   - reader feedback waits;
@@ -461,6 +473,44 @@ left() {  # <kind> <what was left> <"base number day"> [<count>] -> one D line f
 # The open questions a process asked on a concept, one to a line: the commit
 # that first held it, or "new" for one not yet committed, then the unit
 # separator, then the question's text.
+# What a concept says, for comparing two versions of it: the body, with each run
+# of spaces and each line break as one space, and without the two regions the
+# header leaves out.
+said_by() {
+  awk '
+  { sub(/\r$/, "") }
+  NR == 1 { sub(/^\357\273\277/, ""); if ($0 == "---") { fm = 1; next } }
+  fm { if ($0 == "---") fm = 0; next }
+  /^[ \t]*<!-- lokf:related -->[ \t]*$/ { related = 1; next }
+  related { if ($0 ~ /^[ \t]*<!-- \/lokf:related -->[ \t]*$/) related = 0; next }
+  /^(```|~~~)/ { fence = !fence }
+  !fence && /^#+ / { inq = ($0 ~ /^## Open questions[ \t]*$/); if (inq) next }
+  inq { next }
+  { gsub(/[ \t]+/, " "); sub(/^ /, ""); sub(/ $/, ""); if ($0 != "") printf "%s ", $0 }
+  END { print "" }'
+}
+body_moved() {  # <the commit that recorded the event> <concept path> <1 for an edit not yet committed> -> "<hash> <day>" or "edited"; fails when it says the same
+  local last
+  git -C "$kdir" cat-file -e "$1:./$2" 2>/dev/null || return 1
+  if [ "$3" != 1 ]; then
+    last="$(TZ=UTC git -C "$kdir" log -1 --format='%H %cd' --date=format-local:%Y-%m-%d -- "$2" 2>/dev/null || true)"
+    [ -n "$last" ] && [ "${last%% *}" != "$1" ] && git -C "$root" merge-base --is-ancestor "$1" "${last%% *}" 2>/dev/null || return 1
+  fi
+  [ "$(git -C "$kdir" show "$1:./$2" 2>/dev/null | said_by)" != "$(said_by < "$kdir/$2")" ] || return 1
+  if [ "$3" = 1 ]; then echo edited; else printf '%s\n' "$last"; fi
+}
+asked_after() {  # <the commit that changed the body, or empty> <the questions>: a question a process asked at or after it
+  local us c text
+  us="$(printf '\037')"
+  while IFS="$us" read -r c text; do
+    case "$c" in
+      "") ;;
+      new) return 0 ;;
+      *)   if [ -n "$1" ] && { [ "$1" = "$c" ] || git -C "$root" merge-base --is-ancestor "$1" "$c" 2>/dev/null; }; then return 0; fi ;;
+    esac
+  done <<< "$2"
+  return 1
+}
 question_commits() {  # <concept path>
   local us day actor text c
   us="$(printf '\037')"
@@ -561,6 +611,17 @@ moved() {
         fi
         out="${out}${out:+, }$entry"
       done < <(printf '%s\n' "$all" | awk -F'\t' -v p="$path" '$1 == "R" && $2 == p { print $3 }' | LC_ALL=C sort -u)
+      if [ -n "$rec" ] && line="$(body_moved "$rec" "$path" "$cdirty")"; then
+        hash=""; entry="its own body (edited, not yet committed)"
+        if [ "$line" != edited ]; then hash="${line%% *}"; entry="its own body (${line##* })"; fi
+        if [ "$which" = c ]; then out="${out}${out:+, }$entry"
+        elif [ -n "$dec" ] && [ -n "$hash" ] && at_or_before "$hash" "${dec%% *}"; then aside="${aside}${aside:+, }$entry"
+        else
+          [ "$qdone" = 1 ] || { qc="$(question_commits "$path")"; qdone=1; }
+          if [ -n "$qc" ] && asked_after "$hash" "$qc"; then asked="${asked}${asked:+, }$entry"
+          else out="${out}${out:+, }$entry"; fi
+        fi
+      fi
       [ -z "$out" ] || printf 'M\t%s\t%s\t%s\n' "$which" "$path" "$out"
       [ -z "$asked" ] || printf 'M\ta\t%s\t%s\n' "$path" "$asked"
       [ -z "$aside" ] || left source "$path: $aside" "$dec"

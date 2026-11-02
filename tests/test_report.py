@@ -28,6 +28,10 @@ The whole report also ranks the curator's queue (check 20a):
 - a confirmed concept derived from one edited after that confirmation;
 - the five concepts worth ten minutes today, in trust-fields.md's order.
 
+A concept's own body counts as a source: one that differs from the body its
+stamp's commit held has been checked against nothing since, unless only its
+layout, its notes or the plugin's block changed.
+
 A retired concept's label names its successor from the newest **Deprecation**
 line in log.md, and only one the bundle holds. A waiting Disagreement that
 names its concept right after the kind marks that concept, from its newest
@@ -970,6 +974,141 @@ def test_reliance_counts_measures_member_of_and_holder(tmp_path):
     assert result and has_line(result.out, "- x/hub.md (2)"), (
         f"report script did not count measures, memberOf and holder as reliance: {result.out}"
     )
+
+
+# ---- a body that changed after its stamp --------------------------------------
+STAMP = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+
+
+def concept_text(body="# One\n\nThe feature is enabled by default for each run.\n", head="", stamp=STAMP):
+    return f"---\ntype: Service\ntitle: One\nresource: src/a.md\n{stamp}{head}---\n\n{body}"
+
+
+@pytest.fixture
+def stamped(tmp_path):
+    """A concept and its source, both committed, so nothing waits."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(tmp_path / "src" / "a.md", "a\n")
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "x" / "one.md", concept_text())
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "the concept and its source")
+    return tmp_path
+
+
+def commit_concept(root, text, message="an edit"):
+    write(root / ".lokf" / "knowledge" / "x" / "one.md", text)
+    git = Git(root)
+    git("add", "-A")
+    git("commit", "-q", "-m", message)
+
+
+def test_a_rewording_that_left_the_stamp_alone_goes_to_the_librarian(stamped):
+    """A ktl-prose pass leaves the stamp alone on purpose, so nothing else would ever compare the new text with its source."""
+    assert report(stamped, "quiet"), "nothing should wait before the rewording"
+    commit_concept(stamped, concept_text(body="# One\n\nThe feature is disabled by default for each run.\n"))
+    out = report(stamped, "worklist").out
+    assert matches(out, r"^- x/one\.md: its own body \(\d{4}-\d{2}-\d{2}\)$"), out
+    quiet = report(stamped, "quiet")
+    assert quiet.rc == 1 and "concepts whose source moved: 1" in quiet.out, quiet.out
+
+
+def test_a_rewording_not_yet_committed_is_named(stamped):
+    write(stamped / ".lokf" / "knowledge" / "x" / "one.md", concept_text(body="# One\n\nThe feature is off.\n"))
+    assert has_line(report(stamped, "worklist").out, "- x/one.md: its own body (edited, not yet committed)")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        concept_text(body="# One\n\nThe feature is enabled by default\nfor each   run.\n"),
+        concept_text(body="# One\n\nThe feature is enabled by default for each run.\n\n## Open questions\n\n- 2026-02-01, process:ktl-librarian: is this current?\n"),
+        concept_text(body="# One\n\nThe feature is enabled by default for each run.\n\n<!-- lokf:related -->\n- [[two]]\n<!-- /lokf:related -->\n"),
+        concept_text(head="stale_after: 2027-01-01\n"),
+    ],
+    ids=["laid out afresh", "a note", "the plugin's block", "frontmatter alone"],
+)
+def test_what_says_nothing_new_makes_no_work(stamped, text):
+    commit_concept(stamped, text)
+    assert "its own body" not in report(stamped, "worklist").out
+    assert report(stamped, "quiet"), "a change that claims nothing new made work"
+
+
+def test_a_stamp_after_the_rewording_clears_it(stamped):
+    reworded = "# One\n\nThe feature is disabled by default for each run.\n"
+    commit_concept(stamped, concept_text(body=reworded))
+    checked = 'verified:\n  - by: process:ktl-librarian\n    at: "2026-03-01T00:00:00Z"\n'
+    commit_concept(stamped, concept_text(body=reworded, head=checked), "the librarian checks it")
+    assert "its own body" not in report(stamped, "worklist").out
+    assert report(stamped, "quiet"), "the librarian's check should clear the rewording"
+
+
+def test_a_rewording_in_the_commit_that_recorded_the_stamp_is_not_seen(stamped):
+    """A squash merge leaves the two in one commit, as it does a source. limits.md says so."""
+    stamp = STAMP.replace("2026-01-01", "2026-04-01")
+    commit_concept(stamped, concept_text(body="# One\n\nThe feature is off.\n", stamp=stamp))
+    assert "its own body" not in report(stamped, "worklist").out
+
+
+def test_a_retired_concept_makes_no_work(stamped):
+    commit_concept(stamped, concept_text(body="# One\n\nGone.\n", head="status: deprecated\n"))
+    assert "its own body" not in report(stamped, "worklist").out
+
+
+def test_a_question_the_librarian_asked_since_sets_it_aside(stamped):
+    """Where the pen refuses the fix the librarian asks a person, and must not be sent back every week."""
+    reworded = "# One\n\nThe feature is off.\n"
+    commit_concept(stamped, concept_text(body=reworded))
+    asked = reworded + "\n## Open questions\n\n- 2026-03-01, process:ktl-librarian: the text says off and the source says on; which is it?\n"
+    commit_concept(stamped, concept_text(body=asked), "the librarian asks")
+    out = report(stamped, "worklist").out
+    assert matches(out, r"^Sources that moved, where your own question has waited for a person since: 1$"), out
+    assert report(stamped, "quiet"), "a question already asked should make no work"
+
+
+def test_a_person_who_declined_the_check_is_not_asked_again_until_it_changes(stamped):
+    commit_concept(stamped, concept_text(body="# One\n\nThe feature is off.\n"))
+    git = Git(stamped)
+    declined = stamped / "declined.txt"
+    write(declined, f"declined 7 2026-03-01 {git('rev-parse', 'HEAD').strip()}\ntouched x/one.md\n")
+    env = {"KNOWLEDGE_DECLINED": str(declined)}
+    out = report(stamped, "worklist", env=env).out
+    assert not matches(out, r"^- x/one\.md: its own body \([^)]*\)$") and "Declined, since a person closed" in out, out
+    assert report(stamped, "quiet", env=env), "what a person declined should make no work"
+    commit_concept(stamped, concept_text(body="# One\n\nThe feature is on.\n"))
+    assert matches(report(stamped, "worklist", env=env).out, r"^- x/one\.md: its own body \(\d")
+
+
+def test_a_body_changed_after_a_confirmation_is_on_the_curators_list(stamped):
+    """Conventions rule 13 refuses this where the gate runs. Where it does not, the curator still hears of it."""
+    confirmed = 'verified:\n  - by: human:ann\n    at: "2026-02-01T00:00:00Z"\n'
+    commit_concept(stamped, concept_text(head=confirmed), "ann confirms")
+    assert "its own body" not in report(stamped).out
+    commit_concept(stamped, concept_text(body="# One\n\nThe feature is off.\n", head=confirmed))
+    out = report(stamped).out
+    assert matches(out, r"^Confirmed by a person, and a source moved after that confirmation: 1$"), out
+    assert matches(out, r"^- x/one\.md: its own body \(\d"), out
+    assert "confirmed by a person, and a source moved since" in out, out
+
+
+def test_a_linked_bundle_is_read_as_any_other(tmp_path):
+    """The folder may be a link to knowledge_bundle, and git names the file by its real path."""
+    kb = tmp_path / "knowledge_bundle"
+    write(tmp_path / "src" / "a.md", "a\n")
+    write(kb / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kb / "x" / "one.md", concept_text())
+    (tmp_path / ".lokf").mkdir()
+    (tmp_path / ".lokf" / "knowledge").symlink_to("../knowledge_bundle")
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "start")
+    write(kb / "x" / "one.md", concept_text(body="# One\n\nThe feature is off.\n"))
+    git("add", "-A")
+    git("commit", "-q", "-m", "reworded")
+    assert matches(report(tmp_path, "worklist").out, r"^- x/one\.md: its own body \(\d")
 
 
 # ---- coverage ----------------------------------------------------------------
