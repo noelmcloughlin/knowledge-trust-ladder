@@ -707,10 +707,77 @@ def test_a_repaired_spelling_is_reported_as_a_removal_in_the_unattended_form(par
     assert result.rc != 0 and "could not read" in result.out, f"the gate let a process remove what it could not read: {result.out}"
 
 
+REWRITES = [
+    ('"verified": [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]', '"verified": [{ by: human:mallory, at: "2026-01-02T10:00:00Z" }]'),
+    ('verified:\n  - "by": human:ada', 'verified:\n  - "by": human:mallory'),
+    ("x: &a human:ada\nverified:\n  - by: *a", "x: &a human:mallory\nverified:\n  - by: *a"),
+]
+
+
+def forge_inside_the_unreadable(repo, before, after):
+    """Hold a spelling the reader cannot follow on the base, then change only what it says."""
+    path = repo / ".lokf" / "knowledge" / "x" / "c.md"
+    write(path, concept_with(before))
+    git = Git(repo)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a spelling already merged")
+    write(path, concept_with(after))
+    return git
+
+
+@pytest.mark.parametrize(("before", "after"), REWRITES, ids=["quoted key", "quoted by", "alias"])
+def test_an_edit_inside_unreadable_frontmatter_is_refused_unattended(parity, before, after):
+    forge_inside_the_unreadable(parity, before, after)
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "cannot read" in result.out, f"the gate passed an edit it could not read: {result.out}"
+
+
+@pytest.mark.parametrize(("before", "after"), REWRITES, ids=["quoted key", "quoted by", "alias"])
+def test_an_edit_inside_unreadable_frontmatter_is_refused_when_signed(parity, before, after):
+    write(parity / ".lokf" / "curators" / "someone.pub", "")
+    git = forge_inside_the_unreadable(parity, before, after)
+    base = git("rev-parse", "HEAD").strip()
+    git("add", "-A")
+    git("commit", "-q", "-m", "an edit inside it")
+    result = bash(PROVENANCE, base, "HEAD", cwd=parity)
+    assert result.rc != 0 and "cannot read" in result.out, f"the signed form passed an edit it could not read: {result.out}"
+
+
+@pytest.mark.parametrize(("before", "after"), REWRITES, ids=["quoted key", "quoted by", "alias"])
+def test_an_edit_inside_unreadable_frontmatter_is_refused_by_the_registrar(parity, tmp_path, before, after):
+    git = forge_inside_the_unreadable(parity, before, after)
+    git("add", "-A")
+    git("commit", "-q", "-m", "an edit inside it")
+    result, output = registrar_step(parity, tmp_path)
+    assert "frontmatter this gate cannot read" in result.out, f"the registrar job passed an edit it could not read: {result.out}"
+    assert "verdict=ok" not in output, f"the registrar job backed an edit it could not read: {output}"
+
+
+def test_a_body_edit_under_unreadable_frontmatter_passes(parity):
+    """Only what a parser could read as frontmatter is carried, so a wording change costs nothing."""
+    path = parity / ".lokf" / "knowledge" / "x" / "c.md"
+    forge_inside_the_unreadable(parity, REWRITES[0][0], REWRITES[0][0])
+    write(path, read(path) + "\nA further line of body.\n")
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc == 0, f"the gate refused a body edit: {result.out}"
+
+
+def test_a_tab_in_a_plain_event_is_still_read_as_a_space(parity):
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with('verified:\n  - by:\thuman:mallory\n    at: "2026-01-02T10:00:00Z"'))
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert "human:mallory" in result.out, f"the gate did not read a tabbed event: {result.out}"
+
+
+def test_a_readable_event_beside_an_unreadable_one_is_still_read(parity):
+    forge_inside_the_unreadable(parity, 'x: &a y\nverified:\n  - by: *a', 'x: &a y\nverified:\n  - by: *a\n  - by: human:mallory\n    at: "2026-01-02T10:00:00Z"')
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "human:mallory" in result.out, f"the gate lost a plain event: {result.out}"
+
+
 def program(text, start):
     """The awk program of human_events() in a file, a line each, with no indent and no comment line."""
     body = text[text.index(start) :]
-    body = body[: body.index("END {")]
+    body = body[: body.index("\n", body.index("END {"))]
     return [line.strip() for line in body.split("\n") if line.strip() and not line.strip().startswith("#")]
 
 

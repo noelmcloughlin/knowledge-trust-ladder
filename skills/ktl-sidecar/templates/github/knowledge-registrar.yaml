@@ -239,8 +239,13 @@ jobs:
             function kv(l,  k) { k = l; sub(/:.*/, "", k); sub(/^[[:space:]]+/, "", k)
               if (k == "by") by = val(l); else if (k == "at") at = val(l); else if (k == "revision") rev = val(l); else odd = 1 }
             function actor(a) { return a !~ /\\/ && (a ~ /^(human|process):[^[:space:]]+$/ || a ~ "^[^[:space:]/]+/[^[:space:]/]+$") }
-            function unread() { if (!said) out = out (cid ? cid : path) "\t(unreadable)\t\t\tverified\n"; said = 1 }
-            function emit() { if (inev && (odd || !actor(by))) by = "human:(unreadable)"
+            # Two revisions of a file must differ here whenever they differ in what a
+            # parser could read, or an edit inside an unreadable block passes unseen.
+            # So a file holds one unreadable line, and that line carries everything up
+            # to the closing delimiter, with control bytes YAML forbids in place of
+            # its tabs and line ends.
+            function unread() { bad = 1 }
+            function emit() { if (inev && (odd || !actor(by))) { bad = 1; by = "" }
               if (inev && by ~ /^human:/) { sub(/^human:/, "", by); out = out (cid ? cid : path) "\t" by "\t" at "\t" rev "\t" kind "\n" }
               inev = 0; odd = 0; by = ""; at = ""; rev = "" }
             function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ",")
@@ -256,8 +261,8 @@ jobs:
               sub(/^[[:space:]]+/, "", b); sub(/[[:space:]]+$/, "", b)
               if (b != "") { if (flowseq) { n = split(b, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) if (items[i] !~ /^[[:space:]]*$/) flow(items[i]) } else flow(b) }
               inflow = 0; flowbuf = "" }
-            BEGIN { fm = 0; inv = 0; inev = 0; inflow = 0; cid = ""; out = ""; odd = 0; said = 0; plain = 0; dashes = 0; seen = 0 }
-            { sub(/\r$/, "") }
+            BEGIN { fm = 0; inv = 0; inev = 0; inflow = 0; cid = ""; out = ""; odd = 0; bad = 0; plain = 0; dashes = 0; seen = 0 }
+            { sub(/\r$/, ""); line = $0; gsub(/\t/, "\002", line); raw[NR] = line }
             # A byte order mark or CRLF on the opener would make a block-only
             # reader see no "---", read no events, and wave a forged unsigned
             # event past the gate, though every YAML parser strips both and
@@ -290,7 +295,7 @@ jobs:
             inv && /^[[:space:]]*-[[:space:]]+/ { emit(); inev = 1; rest = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", rest); kv(rest); next }
             inv && /^[[:space:]]+[a-z_]+:/ { inev = 1; kv($0); next }
             inv && /^[[:space:]]+[^[:space:]#]/ { inev = 1; odd = 1; next }
-            END { if (plain && dashes >= 2 && path !~ /(^|\/)log\.md$/) unread(); emit(); printf "%s", out }'
+            END { if (plain && dashes >= 2 && path !~ /(^|\/)log\.md$/) unread(); emit(); printf "%s", out; if (bad) { printf "%s\t(unreadable)\t\t", cid ? cid : path; for (i = 1; i <= NR; i++) if (i in raw) printf "%s\001", raw[i]; printf "\tverified\n" } }'
           }
           paths="$(mktemp)"
           listed="$(mktemp)"  # every path git named under the bundle, quoted or not
