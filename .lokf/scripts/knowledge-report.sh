@@ -336,7 +336,12 @@ function rkv(l,  k, v) { k = l; sub(/:.*/, "", k); sub(/^[ \t]+/, "", k); v = l;
   if (k == "predicate") rp = unq(v); else if (k == "target") rt = v }
 function rflow(s,  n, parts, i) { rflush(); gsub(/[{}]/, "", s); n = split(s, parts, ","); for (i = 1; i <= n; i++) rkv(parts[i]); rflush() }
 function relend() { if (inrels) rflush(); inrels = 0; rel = "" }
-BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source measures memberOf holder isReplacedBy", relnames, " "); for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
+function mention(f, l,  n, items, i, w) { sub(/^[ \t]*(-[ \t]+)*/, "", l)
+  if (l ~ /^[A-Za-z_][A-Za-z0-9_-]*:$/) return
+  if (l ~ /^[A-Za-z_][A-Za-z0-9_-]*:[ \t]/) sub(/^[^:]*:[ \t]*/, "", l)
+  if (l ~ /^\[/) { sub(/^\[/, "", l); sub(/\][^]]*$/, "", l); n = split(l, items, ",") } else { n = 1; items[1] = l }
+  for (i = 1; i <= n; i++) { w = unq(items[i]); if (w ~ /^[A-Za-z][A-Za-z0-9+.-]*:[^ \t]+$/) link(f, w) } }
+BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source measures memberOf holder isReplacedBy", relnames, " "); split("id type title description resource sources exclusions distribution endpoint documentation license author publisher generated verified status base_iri context stale_after timestamp genre definition version", notlink, " "); for (j in notlink) NOTLINK[notlink[j]] = 1; for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
 { sub(/\r$/, "") }
 NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else exit }
 fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); inv = 0; fm = 0; body = 1; next }
@@ -367,7 +372,7 @@ fm {
   # each a block list, a one-line flow list or a bare value, and `relations`,
   # a list of { predicate, target } mappings, block or one-line flow. The
   # contract in the skills repository holds the list of fields to the schema.
-  # Out comes one L line per target.
+  # Out comes one L line per target, naming the field and the value as written.
   if (!inv) {
     if ($0 ~ /^[^ \t-]/) relend()
     if ($0 ~ /^[A-Za-z]+:/) {
@@ -388,6 +393,13 @@ fm {
     if (inrels && $0 ~ /^[ \t]*-[ \t]*\{/) { rest = $0; sub(/^[ \t]*-[ \t]*/, "", rest); rflow(rest); next }
     if (inrels && $0 ~ /^[ \t]*-[ \t]+/) { rflush(); rest = $0; sub(/^[ \t]*-[ \t]+/, "", rest); rkv(rest); next }
     if (inrels && $0 ~ /^[ \t]+[A-Za-z_]+:/) { rkv($0); next }
+    # The slots of a domain schema hold concepts too, and no list here can name
+    # them, since each host writes its own. So a value that is a whole IRI,
+    # under any field not read as something else, comes out as an L line, and
+    # `ranked` keeps it only when it names a concept. A prefixed name or a
+    # relative path in such a slot cannot be told from a plain value, and
+    # stays unread.
+    if (top != "" && rel == "" && !inrels && !(top in NOTLINK) && !(top in RELF) && top != "relations") mention(top, $0)
   }
   if (inv && $0 ~ /^[ \t]*-[ \t]*(#.*)?$/) { emit(); inev = 1; next }
   if (inv && $0 ~ /^[ \t]*-[ \t]*\{/) { rest = $0; sub(/^[ \t]*-[ \t]*/, "", rest); flow(rest); next }
@@ -829,8 +841,9 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 #   - a relative path, from the bundle's root and then from the citing
 #     concept's folder.
 # A concept's id is its `id`, or base_iri and its path without `.md`.
-# Each concept that names another counts once for it, and a concept never
-# counts for itself. Retired concepts are left out of every list here.
+# A relation is one of the fourteen fields, `relations`, or a whole IRI in a
+# domain schema's own slot. Each concept that names another counts once for
+# it, and a concept never counts for itself. Retired concepts are left out of every list here.
 # `queue` prints Worth ten minutes today, in the order ktl-curator's
 # references/trust-fields.md gives; `lists` prints the rest.
 ranked() {  # queue | lists

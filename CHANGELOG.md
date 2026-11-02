@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The curator's queue counts what a domain schema's own slots point at.** `knowledge-report.sh` read only LOKF's fourteen relation fields, so a host with its own slots undercounted what relies on a concept. A whole IRI in any other field now counts when it names a concept.
+
 ## [0.61.0] - 2026-11-02
 
 ### Added

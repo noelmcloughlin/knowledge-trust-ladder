@@ -1111,6 +1111,47 @@ def test_a_linked_bundle_is_read_as_any_other(tmp_path):
     assert matches(report(tmp_path, "worklist").out, r"^- x/one\.md: its own body \(\d")
 
 
+@pytest.mark.parametrize(
+    "slot",
+    [
+        "requires_check:\n  - https://acme.example/knowledge/x/hub\n",
+        "emitted_by: https://acme.example/knowledge/x/hub\n",
+        "emitted_by: 'https://acme.example/knowledge/x/hub'\n",
+        "requires_check: [https://acme.example/knowledge/x/other, https://acme.example/knowledge/x/hub]\n",
+        "rules:\n  - name: one\n    target_concept: https://acme.example/knowledge/x/hub\n",
+    ],
+)
+def test_reliance_counts_a_whole_iri_in_a_domain_schemas_own_slot(tmp_path, slot):
+    """A host's schema adds slots ranged over Concept, which no list in the script can name, and the curator's queue undercounted what relies on their targets."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "x" / "hub.md", "---\ntype: Dataset\ntitle: Hub\n---\n")
+    write(kk / "x" / "m.md", f"---\ntype: Service\ntitle: M\n{slot}---\n")
+    result = report(tmp_path)
+    assert result and has_line(result.out, "- x/hub.md (1)"), f"a domain slot's target was not counted as reliance: {result.out}"
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "description: https://acme.example/knowledge/x/hub\n",
+        "resource: https://acme.example/knowledge/x/hub\n",
+        "sources:\n  - resource: https://acme.example/knowledge/x/hub\n",
+        "summary: see https://acme.example/knowledge/x/hub for more\n",
+        "homepage: https://elsewhere.example/x/hub\n",
+        "genre: x/hub\n",
+    ],
+)
+def test_reliance_ignores_an_iri_a_field_holds_for_another_reason(tmp_path, field):
+    """A source, a resource, a description or a sentence that holds an address relates nothing, and a plain value is never read as a path."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "x" / "hub.md", "---\ntype: Dataset\ntitle: Hub\n---\n")
+    write(kk / "x" / "m.md", f"---\ntype: Service\ntitle: M\n{field}---\n")
+    result = report(tmp_path)
+    assert result and "- x/hub.md (" not in result.out, f"a field that relates nothing was counted as reliance: {result.out}"
+
+
 # ---- coverage ----------------------------------------------------------------
 @pytest.fixture
 def cov(tmp_path):
