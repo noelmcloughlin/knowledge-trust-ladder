@@ -767,10 +767,58 @@ def test_a_relation_to_a_concept_this_patch_creates_is_written(related):
     )
 
 
+def test_a_description_in_a_slot_that_also_takes_one_is_written(related):
+    """`measures` takes a description as well as an IRI, and --check-refs skips a value with a space."""
+    applies(related, set_relation('measures: ["orders per day"]'))
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "references: [/x/a.md]",
+        "references: [/x/a]",
+        "references: [https://acme.example/knowledge/x/a.md]",
+        "references: [gist:Thing]",
+    ],
+)
+def test_each_spelling_check_refs_accepts_is_written(related, value):
+    applies(related, set_relation(value))
+
+
+def test_a_concept_with_a_fragment_in_its_own_id_is_found(related):
+    kk = kb_of(related)
+    b = kk / "x" / "b.md"
+    write(b, read(b).replace("title: B\n", "title: B\nid: https://acme.example/knowledge/vocab#B\n"))
+    applies(related, lines("ops:", "  - op: patch", "    path: x/a.md", "    set: {references: ['https://acme.example/knowledge/vocab#B']}", '    log: "**Changed**: a relation."'))
+
+
+def test_deleting_a_concept_a_domain_slot_names_is_refused(related):
+    """The report reads a whole IRI in a host's own slot as a relation, so the pen has to see it too."""
+    kk = kb_of(related)
+    a = kk / "x" / "a.md"
+    write(a, read(a).replace("dependsOn:\n  - https://acme.example/knowledge/x/b\n", "emitted_by: https://acme.example/knowledge/x/b\n"))
+    refuses(related, lines("ops:", "  - op: delete", "    path: x/b.md", '    log: "**Removal**: B."'), "a delete a domain slot still names", "emitted_by still names x/b.md")
+
+
+def test_the_sidecars_two_examples_can_be_deleted_together_or_in_the_order_they_relate(tmp_path):
+    """Bootstrap deletes them, and the second example relates to the first."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = "generated:\n  by: process:ktl-librarian\n  at: 2026-01-01T00:00:00Z\nstatus: draft\n"
+    write(kk / "s" / "a.md", f"---\ntype: Service\ntitle: A\n{stamp}---\n\n# A\n")
+    write(kk / "s" / "b.md", f"---\ntype: Service\ntitle: B\ndependsOn:\n  - s/a.md\n{stamp}---\n\n# B\n")
+    log = '    log: "**Removal**: an example."'
+    refuses(tmp_path, lines("ops:", "  - op: delete", "    path: s/a.md", log), "the first example alone", "still names s/a.md")
+    applies(tmp_path, lines("ops:", "  - op: delete", "    path: s/a.md", log, "  - op: delete", "    path: s/b.md", log))
+
+
 def test_the_pen_and_the_report_read_the_same_relation_fields():
     pen = re.search(r"RELATION_FIELDS = \((.*?)\)", read(SCRIPTS / "knowledge-apply.py"), re.S).group(1)
     report = re.search(r'split\("([A-Za-z ]+)", relnames', read(SCRIPTS / "knowledge-report.sh")).group(1)
     assert sorted(re.findall(r'"(\w+)"', pen)) == sorted(report.split()), "the pen and knowledge-report.sh read different relation fields"
+    pen = re.search(r"NOT_LINKS = \{(.*?)\}", read(SCRIPTS / "knowledge-apply.py"), re.S).group(1)
+    report = re.search(r'split\("([a-z_ ]+)", notlink', read(SCRIPTS / "knowledge-report.sh")).group(1)
+    assert sorted(re.findall(r'"(\w+)"', pen)) == sorted(report.split()), "the pen and knowledge-report.sh leave out different fields"
 
 
 def test_a_relation_already_broken_does_not_stop_another_edit(related):

@@ -220,27 +220,64 @@ handoff:                         # optional; at most ten lines of 300 characters
 
 
 # The fields knowledge-report.sh reads as relations, which the schema ranges
-# over Concept. A domain schema's own slots are not here: only `--check-refs`
-# with the schema knows which of them hold a concept.
+# over Concept. A relation a patch adds is checked only in these: only
+# `--check-refs` with the schema knows which of a host's own slots hold a
+# concept. A delete is checked in those slots too, since a whole IRI that names
+# the deleted concept is stale whatever its slot holds.
 RELATION_FIELDS = (
     "isPartOf", "hasPart", "references", "dependsOn", "derivedFrom", "about", "sameAs",
     "relatedTo", "definedBy", "source", "measures", "memberOf", "holder", "isReplacedBy",
 )
+# The fields knowledge-report.sh never reads as a domain schema's own slot.
+NOT_LINKS = {
+    "id", "type", "title", "description", "resource", "sources", "exclusions", "distribution",
+    "endpoint", "documentation", "license", "author", "publisher", "generated", "verified", "status",
+    "base_iri", "context", "stale_after", "timestamp", "genre", "definition", "version",
+}
 NOT_CONCEPTS = {"index.md", "log.md", "diataxis.md"}
+SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
+WHOLE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:\S+")
 
 
 def relation_targets(fm: dict) -> set:
-    """Each (field, target) a concept's frontmatter relates it to, in any spelling the schema reads."""
+    """Each (field, target) a concept's frontmatter relates it to, in any spelling the schema reads.
+
+    A value holding a space is left out, as `--check-refs` leaves it: `measures` also takes a description.
+    """
+    def target(value) -> bool:
+        return isinstance(value, str) and bool(value.strip()) and not any(ch.isspace() for ch in value.strip())
+
     found = set()
     for field in RELATION_FIELDS:
         value = fm.get(field)
-        for target in value if isinstance(value, list) else [value]:
-            if isinstance(target, str) and target.strip():
-                found.add((field, target.strip()))
+        for item in value if isinstance(value, list) else [value]:
+            if target(item):
+                found.add((field, item.strip()))
     relations = fm.get("relations")
     for item in relations if isinstance(relations, list) else [relations]:
-        if isinstance(item, dict) and isinstance(item.get("target"), str) and item["target"].strip():
+        if isinstance(item, dict) and target(item.get("target")):
             found.add(("relations", item["target"].strip()))
+    return found
+
+
+def domain_iris(fm: dict) -> set:
+    """Each (field, whole IRI) under a field no list here names, which is how knowledge-report.sh reads a domain schema's own slots."""
+    found = set()
+
+    def walk(field: str, value) -> None:
+        if isinstance(value, str):
+            if WHOLE_IRI.fullmatch(value.strip()):
+                found.add((field, value.strip()))
+        elif isinstance(value, list):
+            for item in value:
+                walk(field, item)
+        elif isinstance(value, dict):
+            for item in value.values():
+                walk(field, item)
+
+    for field, value in fm.items():
+        if field not in NOT_LINKS and field not in RELATION_FIELDS and field != "relations":
+            walk(field, value)
     return found
 
 
@@ -781,10 +818,14 @@ class Bundle:
 
     def resolves(self, target: str, citing: str, ids: dict) -> str | None:
         """The concept's path a target names among ids, as knowledge-report.sh finds it. An IRI outside the bundle names none."""
+        if target in ids:
+            return ids[target]
         target = target.split("#", 1)[0]
-        if re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", target):
-            return ids.get(target)
-        target = target[2:] if target.startswith("./") else target
+        if SCHEME.match(target):
+            if not target.startswith(self.base_iri):
+                return None
+            target = target[len(self.base_iri):]
+        target = target[2:] if target.startswith("./") else target.lstrip("/")
         target = target[:-3] if target.endswith(".md") else target
         return ids.get(self.base_iri + target) or ids.get(self.base_iri + f"{citing.rsplit('/', 1)[0]}/{target}")
 
@@ -824,13 +865,14 @@ class Bundle:
         findings = []
         for path, found in sorted(added.items()):
             for field, target in sorted(found):
-                outside = re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", target) and not target.startswith(self.base_iri)
+                outside = SCHEME.match(target) and not target.startswith(self.base_iri)
                 if not outside and not self.resolves(target, path, after):
                     findings.append(f"{path}: {field} names {shown(target)}, and no concept of the bundle has that id; name a concept that exists, or create it in this patch")
         for path, fm in sorted(standing.items()):
-            for field, target in sorted(relation_targets(fm)):
-                if self.resolves(target, path, before) in gone and not self.resolves(target, path, after):
-                    findings.append(f"{path}: {field} still names {self.resolves(target, path, before)}, which this patch deletes; drop or repoint the relation in this patch")
+            for field, target in sorted(relation_targets(fm) | domain_iris(fm)):
+                named = self.resolves(target, path, before)
+                if named in gone and not self.resolves(target, path, after):
+                    findings.append(f"{path}: {field} still names {named}, which this patch deletes; drop or repoint the relation in this patch, or add a question to the concept if a person wrote it")
         return findings
 
     # ---- index, log, feedback -------------------------------------------
