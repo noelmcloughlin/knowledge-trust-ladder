@@ -55,6 +55,9 @@
 # none it prints one `OK` line and exits 0. A usage error exits 2. A note goes
 # to stderr and never changes the exit status.
 #
+# A pass says that what the script reads came through, and not that the meaning
+# held. references/limits.md lists what it cannot see.
+#
 # The script reads the files it is given, and the word book in the skill's
 # assets/ folder, and asks git for an earlier version. It writes nothing
 # and opens no network connection. It needs python3 3.9 or later and
@@ -64,6 +67,7 @@ from __future__ import annotations
 
 import argparse
 import bisect
+import html
 import re
 import subprocess
 import sys
@@ -207,7 +211,7 @@ DIRECTIVE = re.compile(r"^#(?:!|\s*(?:shellcheck|noqa|type:|fmt:|ruff:|pylint:|m
 # The `# /// script` block of PEP 723, which names a script's packages.
 SCRIPT_BLOCK = re.compile(r"^#\s*///\s*\w+\s*$")
 SCRIPT_BLOCK_END = re.compile(r"^#\s*///\s*$")
-HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_]\w*)\1")
+HEREDOC = re.compile(r"(?<!<)<<(?!<)-?\s*(['\"]?)([A-Za-z_]\w*)\1")
 DOCSTRING = re.compile(r"^(\s*)[rRuUbB]{0,2}(\"\"\"|''')(.*)$")
 # A comment's columns: two spaces or more between words. Two spaces after a
 # full stop are a sentence's own spacing, and three or more are a column.
@@ -235,31 +239,104 @@ SENTENCE_END = re.compile(
 )
 ABBREVIATION = re.compile(r"\b(?:e\.g|i\.e|vs|cf)\.$", re.I)
 
-FENCE = re.compile(r"^\s*(?:>\s?)*(`{3,}|~{3,})")
+# A fence may open a list item. A backtick fence's info string holds no backtick,
+# so a line that opens with a long code span is prose.
+FENCE = re.compile(r"^\s*(?:>\s?)*(?:(?:[-*+]|\d+[.)])\s+)*(`{3,}(?=[^`]*$)|~{3,})")
 HEADING = re.compile(r"^ {0,3}#{1,6}(?:\s|$)")
+# What ends `## Open questions`, which may hold lower headings of its own.
+SECTION_END = re.compile(r"^ {0,3}#{1,2}(?:\s|$)")
+# The line under a Setext heading. One dash alone opens an empty list item.
+SETEXT = re.compile(r"^ {0,3}(=+|-{2,})\s*$")
 RULE_LINE = re.compile(r"^ {0,3}([-*_=])(?:\s*\1){2,}\s*$")
 TABLE_ROW = re.compile(r"^\s*\|")
-RULE_CELL = re.compile(r"^\s*:?-{3,}:?\s*$")
+RULE_CELL = re.compile(r"^\s*:?-+:?\s*$")
+# A table's rule, which with a pipe in it makes a table of a row with no leading pipe.
+TABLE_RULE = re.compile(r"^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$")
 HTML_LINE = re.compile(r"^\s*</?(?!https?:|mailto:)[A-Za-z!]")
 # Four spaces or a tab of indent, where a block begins: an indented code block.
 INDENT_CODE = re.compile(r"^(?: {4}|\t)")
 # A hard line break: two or more spaces, or a backslash, at a line's end.
 HARD_BREAK = re.compile(r"(?:  +|\\)$")
-LINK_DEF = re.compile(r"^ {0,3}\[[^\]]+\]:\s*(\S+)")
+LINK_DEF = re.compile(r"^ {0,3}\[([^\]]+)\]:\s*(\S+)")
 QUOTE_MARK = re.compile(r"^\s*(?:>\s?)+")
 LIST_MARK = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?")
 ORDERED_MARK = re.compile(r"^(\s*(?:>\s*)*)(\d+)([.)]\s)")
+ORDERED_VALUE = re.compile(r"^\s*(\d+)[.)]\s+")
+ITEM_TEXT = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
+TICKED = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+\[[xX]\]\s")
+# The date and actor that open a person's or a process's question.
+QUESTION_MARK = re.compile(r"^(\s*[-*+]\s+)\d{4}-\d{2}-\d{2},\s*\S+?:\s")
 CODE_SPAN = re.compile(r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)")
 COMMENT = re.compile(r"<!--.*?-->")
-INLINE_LINK = re.compile(r"\]\(([^)]*)\)")
+INLINE_LINK = re.compile(r"\]\(((?:[^()]|\([^()]*\))*)\)")
+IMAGE = re.compile(r"!\[[^\]]*\]\(((?:[^()]|\([^()]*\))*)\)")
 WIKILINK = re.compile(r"\[\[([^\]]*)\]\]")
-AUTOLINK = re.compile(r"<((?:https?://|mailto:)[^>\s]*)>")
+REFERENCE = re.compile(r"\]\[([^\]\[]+)\]")
+FOOTNOTE = re.compile(r"\[\^[^\]\s]+\]")
+AUTOLINK = re.compile(r"<((?:[A-Za-z][A-Za-z0-9+.-]{1,31}:|[^\s<>@]+@)[^>\s]*)>")
+# The text inside a tag that shows code, which a rewording keeps as code.
+HTML_CODE = re.compile(r"<(code|kbd|pre|samp|tt|var)\b[^>]*>(.*?)</\1\s*>", re.I)
 HTML_ATTR = re.compile(r"\b(?:href|src|srcset)=\"([^\"]*)\"")
 HTML_TAG = re.compile(r"</?[A-Za-z][^>]*>")
-BARE_URL = re.compile(r"https?://[^\s)>\]\"']+")
+TAG_WORDS = re.compile(r"""\b(alt|title|aria-label)=(?:"([^"]*)"|'([^']*)')""", re.I)
+# A bare address, a `www.` one or an email address. It holds brackets that close,
+# and stops short of the punctuation that ends a sentence.
+BARE_URL = re.compile(
+    r"(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*://|\bwww\.)"
+    r"(?:[^\s()<>\]\"']|\([^\s()<>]*\))*(?:[^\s()<>\]\"'.,;:!?*_]|\([^\s()<>]*\))"
+    r"|(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+"
+)
 QUOTED = re.compile(r"\"([^\"]+)\"|“([^”]+)”")
 LABEL = re.compile(r"(?<![\w*])(\*{1,2})(?=\S)([^*]+?)(?<=\S)\1(?![\w*])")
-NUMBER = re.compile(r"\d+(?:[.,:/-]\d+)*")
+# The units a number's meaning hangs on, each spelling with the name it counts
+# as, so that a rewording may spell one out and may not swap it for another.
+UNITS = {
+    "%": ("%", "percent"),
+    "byte": ("B", "byte", "bytes"),
+    "kilobyte": ("KB", "kB", "kilobyte", "kilobytes"),
+    "kibibyte": ("KiB", "kibibyte", "kibibytes"),
+    "megabyte": ("MB", "megabyte", "megabytes"),
+    "mebibyte": ("MiB", "mebibyte", "mebibytes"),
+    "gigabyte": ("GB", "gigabyte", "gigabytes"),
+    "gibibyte": ("GiB", "gibibyte", "gibibytes"),
+    "terabyte": ("TB", "terabyte", "terabytes"),
+    "tebibyte": ("TiB", "tebibyte", "tebibytes"),
+    "bit": ("bit", "bits"),
+    "nanosecond": ("ns", "nanosecond", "nanoseconds"),
+    "microsecond": ("us", "\u00b5s", "\u03bcs", "microsecond", "microseconds"),
+    "millisecond": ("ms", "millisecond", "milliseconds"),
+    "second": ("s", "sec", "secs", "second", "seconds"),
+    "minute": ("min", "mins", "minute", "minutes"),
+    "hour": ("h", "hr", "hrs", "hour", "hours"),
+    "day": ("day", "days"),
+    "week": ("week", "weeks"),
+    "month": ("month", "months"),
+    "year": ("year", "years"),
+    "hertz": ("Hz", "hertz"),
+    "kilohertz": ("kHz", "kilohertz"),
+    "megahertz": ("MHz", "megahertz"),
+    "gigahertz": ("GHz", "gigahertz"),
+    "pixel": ("px", "pixel", "pixels"),
+    "metre": ("m", "metre", "metres", "meter", "meters"),
+    "kilometre": ("km", "kilometre", "kilometres", "kilometer", "kilometers"),
+    "centimetre": ("cm", "centimetre", "centimetres", "centimeter", "centimeters"),
+    "millimetre": ("mm", "millimetre", "millimetres", "millimeter", "millimeters"),
+    "gram": ("g", "gram", "grams"),
+    "kilogram": ("kg", "kilogram", "kilograms"),
+}
+UNIT_NAME = {spelling: name for name, spellings in UNITS.items() for spelling in spellings}
+UNIT_WORDS = "|".join(sorted((re.escape(word) for word in UNIT_NAME if word != "%"), key=len, reverse=True))
+SIGNS = {"\u2265": ">=", "\u2264": "<=", "\u2248": "~", "\u2212": "-"}
+# A number with what changes its meaning: a comparison or a sign in front, and a
+# power or a unit behind. A sign counts where it touches the number and follows
+# no word, so `- 5` is a list item and `pages-5` a name.
+NUMBER = re.compile(
+    r"(?:(?P<compare>[<>]=?|[=!~]=|[\u2265\u2264\u2248\u00b1~^])\s*)?"
+    r"(?P<sign>(?<![\w.)\]])[-+\u2212](?=[\d.]))?"
+    r"(?P<value>(?<![\w.])\.\d+|\d+(?:[.,:/-]\d+)*[\u2070\u00b9\u00b2\u00b3\u2074-\u2079\u2080-\u2089]*"
+    r"|[\u2070\u00b9\u00b2\u00b3\u2074-\u2079\u2080-\u2089\u00bc-\u00be\u2150-\u215e]+)"
+    r"(?:[ \u00a0-]?(?P<unit>%|(?:" + UNIT_WORDS + r")\b))?"
+)
 RFC_WORD = re.compile(r"\b(?:MUST NOT|SHALL NOT|SHOULD NOT|MUST|SHALL|SHOULD|REQUIRED|RECOMMENDED|MAY|OPTIONAL)\b")
 NUMBER_WORD = re.compile(
     r"\b(?:two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|hundred|thousand)\b",
@@ -280,11 +357,28 @@ RELATED_OPEN = "<!-- lokf:related -->"
 RELATED_CLOSE = "<!-- /lokf:related -->"
 OPEN_QUESTIONS = "## Open questions"
 
+# Letters and marks that print nothing: a joiner, variation selectors, fillers
+# and a blank Braille pattern.
+BLANKS = frozenset(
+    chr(code)
+    for code in (0x34F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x180B, 0x180C, 0x180D, 0x180F, 0x2800, 0x3164, 0xFFA0)
+) | frozenset(map(chr, (*range(0xFE00, 0xFE10), *range(0xE0100, 0xE01F0))))
+
 # The actor shapes the LOKF schema allows for `by`. Anything else is a value
-# this script cannot read, and it must not guess.
-ACTOR = re.compile(r"^(?:(?:human|process):\S+|[^\s/]+/[^\s/]+)$")
-BY_LINE = re.compile(r"^\s*(?:-\s*)?(?:\{\s*)?[\"']?by[\"']?\s*:")
-BY_FLOW = re.compile(r"[{,\[]\s*[\"']?by[\"']?\s*:")
+# this script cannot read, and it must not guess. A backslash is an escape a
+# parser would read as something else.
+ACTOR = re.compile(r"^(?:(?:human|process):[^\s\\]+|[^\s/\\]+/[^\s/\\]+)$")
+# An event no reader here can follow comes out with this actor, which is none.
+UNREADABLE = "(unreadable)"
+# What a parser ends a line at and this script does not. It reads \r as a line
+# break already, as the toolkit does.
+UNSEEN_BREAK = re.compile("[\x85\u2028\u2029]")
+# A top-level key no plain `key:` spells: a quoted key, `? key`, `<<:` or a flow
+# mapping. Each can hold an event.
+ODD_KEY = re.compile(r"""^["'?{\[<!&*:|>]|^(?:verified|generated|revised|refuted)\s+:""")
+# A `by` key at the start of a line or of a flow item. The events are counted
+# against these, so a `by` the readers cannot place is never taken for no event.
+BY_KEY = re.compile(r"""(?:^[\s?:-]*|[\[{,]\s*)["']?by["']?\s*:""")
 
 
 class Usage(Exception):
@@ -292,10 +386,10 @@ class Usage(Exception):
 
 
 def normalise(raw: bytes) -> str:
-    """Read bytes as CI reads them: no byte order mark, and LF line endings."""
+    """Read bytes as CI reads them: no byte order mark, and LF line endings. A byte that is not UTF-8 stays itself, so two different ones still differ."""
     if raw.startswith(b"\xef\xbb\xbf"):
         raw = raw[3:]
-    return raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    return raw.decode("utf-8", errors="surrogateescape").replace("\r\n", "\n").replace("\r", "\n")
 
 
 def read(path: Path) -> str:
@@ -361,33 +455,64 @@ def html_only(content: str) -> bool:
     return not HTML_TAG.sub("", content).strip()
 
 
-def tag_name(tag: str) -> str:
-    """An inline HTML tag reduced to what a rewording must not change: its name, and a leading slash where it closes. Attributes are left out, since a link's target is kept on its own."""
-    found = re.match(r"</?\s*([A-Za-z][A-Za-z0-9-]*)", tag)
-    return ("/" if tag.lstrip().startswith("</") else "") + (found.group(1).lower() if found else "")
+def number_token(found: re.Match) -> str:
+    """A number as the text means it: `5 percent` and `5%` are one number, and `10 ms` and `10 s` are two."""
+    compare = found.group("compare") or ""
+    sign = found.group("sign") or ""
+    unit = found.group("unit")
+    name = UNIT_NAME.get(unit, unit.lower()) if unit else ""
+    behind = name if name == "%" or not name else f" {UNIT_NAME.get(name, name)}"
+    return f"{SIGNS.get(compare, compare)}{SIGNS.get(sign, sign)}{found.group('value')}{behind}"
+
+
+def table_row(content: str) -> list[str]:
+    """The cells of a table row: its outer pipes make no cell, and an empty cell inside it is one."""
+    cells = re.split(r"(?<!\\)\|", content.strip())
+    if cells and not cells[0].strip():
+        cells = cells[1:]
+    if cells and not cells[-1].strip():
+        cells = cells[:-1]
+    return cells
+
+
+def open_comment(line: str) -> int | None:
+    """Where a comment opens that this line does not close, a code span aside."""
+    hidden = CODE_SPAN.sub(lambda found: MASK * len(found.group()), line)
+    start = hidden.rfind("<!--")
+    return start if start >= 0 and "-->" not in hidden[start:] else None
 
 
 # --- who vouched for a concept -------------------------------------------------
 
 
 def events(fm: list[str]) -> list[tuple[str, str, str, str]]:
-    """The `generated` record and each `verified` event, as (key, by, at, revision).
+    """The event records of a concept's frontmatter, as (key, by, at, revision).
 
-    This is a port of human_events() in knowledge-provenance.sh, and it keeps
-    to that reading on purpose: the script must see an event exactly where the
-    gates see one. It reads a block list at any indent, a flow item, a flow
-    sequence and a bare mapping. The gates keep only human actors, and this
-    keeps every actor.
+    The keys are `generated`, `verified`, `revised` and `refuted`. This is a
+    port of human_events() in knowledge-provenance.sh, and it keeps to that
+    reading on purpose: the script must see an event exactly where the gates
+    see one. It reads a block list at any indent, a flow item, a flow sequence
+    across lines and a bare mapping. The gates keep only human actors, and this
+    keeps every actor. A shape it cannot follow comes out as the actor
+    UNREADABLE, never as no event.
     """
     out: list[tuple[str, str, str, str]] = []
     key: str | None = None
     cur: dict[str, str] | None = None
+    held = ""  # a flow form still open, from its bracket on
+    fields = ("by", "at", "revision")
 
     def emit() -> None:
         nonlocal cur
-        if cur is not None and cur.get("by"):
-            out.append((cur["key"], cur["by"], cur.get("at", ""), cur.get("revision", "")))
+        if cur is not None:
+            by = cur.get("by", "")
+            if "odd" in cur or not ACTOR.match(by):
+                by = UNREADABLE
+            out.append((cur["key"], by, cur.get("at", ""), cur.get("revision", "")))
         cur = None
+
+    def unread() -> None:
+        out.append(("verified", UNREADABLE, "", ""))
 
     def value(text: str) -> str:
         text = re.sub(r"^[^:]*:\s*", "", text, count=1)
@@ -395,35 +520,72 @@ def events(fm: list[str]) -> list[tuple[str, str, str, str]]:
 
     def pair(text: str) -> None:
         name = text.split(":", 1)[0].lstrip()
-        if cur is not None and name in ("by", "at", "revision"):
+        if cur is None:
+            return
+        if name in fields:
             cur[name] = value(text)
+        elif not (name == "reason" and cur["key"] == "refuted"):
+            cur["odd"] = ""
 
     def flow(text: str) -> None:
         nonlocal cur
         emit()
         cur = {"key": key or ""}
         for part in text.replace("{", "").replace("}", "").split(","):
-            pair(part)
+            if part.strip():
+                pair(part)
         emit()
 
+    def flush() -> None:
+        nonlocal held, key
+        text, held = held, ""
+        if re.search(r"(?:^|\s)#", text):
+            unread()
+        if text.startswith("["):
+            for item in re.split(r"\}\s*,", text[1:].split("]", 1)[0]):
+                if item.strip():
+                    flow(item)
+        else:
+            inner = text[1:].split("}", 1)[0]
+            if inner.strip():
+                flow(inner)
+        key = None
+
+    if any(UNSEEN_BREAK.search(line) for line in fm):
+        unread()
+    first = next((line for line in fm if line.strip() and not line.lstrip().startswith("#")), "")
+    if first[:1].isspace():
+        unread()
     for line in fm:
-        opened = re.match(r"^(verified|generated):\s*(.*)$", line)
+        if held:
+            held += " " + line
+            if ("]" if held.startswith("[") else "}") in line:
+                flush()
+            continue
+        if ODD_KEY.match(line):
+            emit()
+            key = None
+            unread()
+            continue
+        opened = re.match(r"^(verified|generated|revised|refuted):\s*(.*?)\s*$", line)
         if opened:
             emit()
             key, rest = opened.group(1), opened.group(2)
-            if rest.startswith("{"):
-                flow(rest)
-                key = None
-            elif rest.startswith("["):
-                for item in re.split(r"\}\s*,", rest.replace("[", "").replace("]", "")):
-                    flow(item)
-                key = None
+            if rest[:1] in ("{", "["):
+                held = rest
+                if ("]" if rest.startswith("[") else "}") in rest:
+                    flush()
+            elif rest and not rest.startswith("#") and rest not in ("null", "~"):
+                unread()
             continue
         if key is None:
             continue
         if re.match(r"^[^\s-]", line):
             emit()
             key = None
+        elif re.match(r"^\s*-\s*(?:#.*)?$", line):
+            emit()
+            cur = {"key": key}
         elif re.match(r"^\s*-\s*\{", line):
             flow(re.sub(r"^\s*-\s*", "", line, count=1))
         elif re.match(r"^\s*-\s+", line):
@@ -434,24 +596,35 @@ def events(fm: list[str]) -> list[tuple[str, str, str, str]]:
             if cur is None:
                 cur = {"key": key}
             pair(line)
+        elif re.match(r"^\s+[^\s#]", line):
+            if cur is None:
+                cur = {"key": key}
+            cur["odd"] = ""
+    if held:
+        flush()
     emit()
     return out
 
 
 def by_keys(fm: list[str]) -> int:
-    """How many events the frontmatter spells out, whether or not events() saw them."""
+    """How many events the frontmatter spells out, whether or not events() saw them.
+
+    The `by` of an `exclusions` entry names who left a material out. It says
+    nothing about who wrote or confirmed the concept, so it is not counted.
+    """
     count = 0
+    excluded = False
     for line in fm:
-        if BY_LINE.match(line):
-            count += 1
-        elif re.match(r"^(?:verified|generated)\s*:", line):
-            count += len(BY_FLOW.findall(line))
+        if re.match(r"^[^\s#-]", line):
+            excluded = re.match(r"^exclusions\s*:", line) is not None
+        if not excluded:
+            count += len(BY_KEY.findall(line))
     return count
 
 
 def top_value(fm: list[str], key: str) -> str | None:
     for line in fm:
-        found = re.match(rf"^{key}\s*:\s*(.*)$", line)
+        found = re.match(rf"^[\"']?{key}[\"']?\s*:\s*(.*)$", line)
         if found:
             return found.group(1).split(" #")[0].strip().strip("\"'")
     return None
@@ -473,11 +646,17 @@ def standing(doc: Doc, expect_concept: bool = False) -> tuple[str, str]:
         if key == "generated" and by.startswith("human:"):
             return "person", f"written by a person ({by})"
     for key, by, _, _ in found:
+        if key == "revised" and by.startswith("human:"):
+            return "edited", f"edited by a person ({by})"
+    for key, by, _, _ in found:
         if key == "verified" and by.startswith("human:"):
             return "confirmed", f"confirmed by a person ({by})"
     if top_value(doc.fm, "status") == "deprecated":
         return "retired", "retired"
-    if by_keys(doc.fm) != len(found) or any(not ACTOR.match(by) for _, by, _, _ in found):
+    for key, by, _, _ in found:
+        if key == "refuted":
+            return "refuted", f"refuted ({by})"
+    if by_keys(doc.fm) != len(found) or any(by == UNREADABLE for _, by, _, _ in found):
         return unreadable
     if top_value(doc.fm, "type") is None:
         return unreadable if expect_concept else ("plain", "not a concept")
@@ -604,8 +783,9 @@ def script_doc(text: str, python: bool = False) -> Doc:
             seen_code = True
             previous = ""
             continue
-        heredoc = HEREDOC.search(line)
-        if heredoc:
+        # In Python `<<` is a shift, as it is in a shell's `((`.
+        heredoc = HEREDOC.search(line) if not python else None
+        if heredoc and "((" not in line[: heredoc.start()]:
             terminator = heredoc.group(2)
         out.append("")
         if stripped:
@@ -713,7 +893,8 @@ def prose_blocks(doc: Doc):
                 prev_blank = False
                 continue
             line, comment = " " * (end + 3) + line[end + 3 :], False
-        line = COMMENT.sub(lambda found: " " * len(found.group()), line)
+        if "-->" in line:
+            line = COMMENT.sub(lambda found: " " * len(found.group()), line)
         if "<!--" in line:
             line, comment = line[: line.index("<!--")], True
 
@@ -874,12 +1055,15 @@ def style(
                 shown = excerpt(block.text, at, start + dash.end())
                 findings.append((block.line_at(at), "dash", f'a dash used as punctuation: "{shown}"'))
             for word in WORD.finditer(sentence):
-                advice = WORDS[" ".join(word.group().lower().split())]
-                findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
+                # Case folding lets a dotless i match an i, and it lists no word.
+                advice = WORDS.get(" ".join(word.group().lower().split()))
+                if advice:
+                    findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
             for word in BAND_WORD.finditer(sentence) if band_words else ():
                 found = word.group().lower()
-                advice = BAND_WORDS.get(found) or BAND_WORDS.get(found.rstrip(".")) or BAND_WORDS[found.rstrip(".") + "."]
-                findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
+                advice = BAND_WORDS.get(found) or BAND_WORDS.get(found.rstrip(".")) or BAND_WORDS.get(found.rstrip(".") + ".")
+                if advice:
+                    findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
     return findings
 
 
@@ -1036,9 +1220,14 @@ def lemma(word: str, seen) -> str:
 
 
 def unseen_char(char: str) -> bool:
-    """A character no reader sees: a format character, or a control character other than a tab."""
+    """A character no reader sees: a format character, a control character other than a tab, or one of the blanks Unicode classes as a letter or a mark."""
     kind = unicodedata.category(char)
-    return kind == "Cf" or (kind == "Cc" and char not in "\t\n")
+    return kind == "Cf" or (kind == "Cc" and char not in "\t\n") or char in BLANKS
+
+
+def unseen_in(line: str) -> list[str]:
+    """Each character no reader sees in a line, an HTML entity read as the character it writes."""
+    return [char for char in html.unescape(line) if unseen_char(char)]
 
 
 def described(char: str) -> str:
@@ -1049,7 +1238,7 @@ def unseen(doc: Doc) -> list[tuple[int, str, str]]:
     """Each line that holds a character no reader sees, frontmatter and code included."""
     findings: list[tuple[int, str, str]] = []
     for number, line in enumerate(doc.lines, start=1):
-        chars = sorted({char for char in line if unseen_char(char)})
+        chars = sorted(set(unseen_in(line)))
         if chars:
             names = ", ".join(described(char) for char in chars)
             findings.append((number, "unseen", f"{names}: a character no reader sees; delete it, or write it as an escape in code"))
@@ -1060,22 +1249,34 @@ def unseen(doc: Doc) -> list[tuple[int, str, str]]:
 
 
 class Kept:
-    """What one version of a file holds besides its wording."""
+    """What one version of a file holds besides its wording.
 
-    def __init__(self, doc: Doc):
+    A rewording keeps `## Open questions` and the lokf:related region whole, so
+    they are compared whole. A retelling may hold neither, and may add nothing
+    in them, so `whole=True` reads them as it reads the rest of the page.
+    """
+
+    def __init__(self, doc: Doc, whole: bool = False):
+        self.whole = whole
         self.fences: list[tuple[int, str]] = []
+        self.indented: list[tuple[str, int]] = []
         self.related: list[str] = []
         self.related_at = 1
         self.questions: list[str] = []
         self.questions_at = 1
         self.headings: list[tuple[int, str]] = []
         self.list_items = 0
+        self.ticked = 0
         self.table_rows = 0
+        self.table_cells = 0
         self.breaks = 0
         self.codes: list[tuple[str, int]] = []
         self.html: list[tuple[str, int]] = []
         self.links: list[tuple[str, int]] = []
         self.wikilinks: list[tuple[str, int]] = []
+        self.images: list[tuple[str, int]] = []
+        self.labels: list[tuple[str, int]] = []
+        self.definitions: dict[str, str] = {}
         self.numbers: list[tuple[str, int]] = []
         self.quotes: list[tuple[str, int]] = []
         self.rfc: list[tuple[str, int]] = []
@@ -1093,6 +1294,12 @@ class Kept:
         related = questions = False
         block_is_list = block_is_table = False
         prev_in_block = ""
+        code: list[str] = []
+        code_at = 0
+        comment: list[str] = []
+        comment_at = 0
+        in_list = False
+        lists: list[tuple[int, int, int]] = []
 
         def flush() -> None:
             nonlocal block, block_is_list, block_is_table, prev_in_block
@@ -1102,7 +1309,20 @@ class Kept:
             block_is_list = block_is_table = False
             prev_in_block = ""
 
-        for number, line in doc.numbered_body():
+        def flush_code() -> None:
+            nonlocal code
+            if code:
+                self.indented.append((textwrap.dedent("\n".join(code)), code_at))
+            code = []
+
+        def count_row(content: str) -> None:
+            row = table_row(content)
+            if not all(RULE_CELL.match(cell) for cell in row):
+                self.table_rows += 1
+                self.table_cells += len(row)
+
+        body = list(doc.numbered_body())
+        for index, (number, line) in enumerate(body):
             if fence:
                 fenced.append(line)
                 if closes(fence, line):
@@ -1112,66 +1332,142 @@ class Kept:
             opening = FENCE.match(line)
             if opening:
                 flush()
+                flush_code()
                 fence, fenced, fence_at = opening.group(1), [line], number
                 continue
-            if line.strip() == RELATED_OPEN and not related:
-                flush()
-                related, self.related_at = True, number
-            if related:
-                self.related.append(line)
-                related = line.strip() != RELATED_CLOSE
-                continue
-            if line.rstrip() == OPEN_QUESTIONS:
-                flush()
-                questions, self.questions_at = True, number
-                self.questions.append(line.rstrip())
-                continue
-            if questions:
-                if not HEADING.match(line):
+            if self.whole:
+                # A retelling's own markers and question stamps are no facts.
+                if line.strip() in (RELATED_OPEN, RELATED_CLOSE):
+                    flush()
+                    continue
+                if line.rstrip() == OPEN_QUESTIONS:
+                    questions = True
+                elif SECTION_END.match(line):
+                    questions = False
+                if questions:
+                    line = QUESTION_MARK.sub(lambda found: found.group(1), line)
+            else:
+                if line.strip() == RELATED_OPEN and not related:
+                    flush()
+                    related, self.related_at = True, number
+                if related:
+                    self.related.append(line)
+                    related = line.strip() != RELATED_CLOSE
+                    continue
+                if line.rstrip() == OPEN_QUESTIONS:
+                    flush()
+                    questions, self.questions_at = True, number
                     self.questions.append(line.rstrip())
                     continue
-                questions = False
+                if questions:
+                    underlined = index + 1 < len(body) and line.strip() and SETEXT.match(body[index + 1][1])
+                    if not SECTION_END.match(line) and not underlined:
+                        self.questions.append(line.rstrip())
+                        continue
+                    questions = False
+            # A comment holds no fact a reader sees, so what it holds is kept
+            # whole and a number moved into one is gone from the text.
+            if comment:
+                comment.append(line)
+                if "-->" in line:
+                    self.html.append((" ".join(" ".join(comment).split()), comment_at))
+                    comment = []
+                continue
+            start = open_comment(line)
+            if start is not None:
+                comment, comment_at = [line[start:]], number
+                line = line[:start]
+            content = QUOTE_MARK.sub("", line, count=1)
+            # An indented code block, read as prose_blocks reads one.
+            if code:
+                if line.strip() and INDENT_CODE.match(content):
+                    code.append(line)
+                    continue
+                flush_code()
+            if block is None and not in_list and line.strip() and INDENT_CODE.match(content):
+                code, code_at = [line], number
+                continue
             if not line.strip():
                 flush()
                 continue
             definition = LINK_DEF.match(line)
-            if definition:
-                self.links.append((definition.group(1), number))
-            content = QUOTE_MARK.sub("", line, count=1)
+            if definition and not definition.group(1).startswith("^"):
+                label, target = definition.group(1), definition.group(2)
+                self.links.append((target, number))
+                self.labels.append((f"[{label}]: {target}", number))
+                self.definitions[label.lower()] = target
+            underline = SETEXT.match(content)
+            if underline and block is not None and not block_is_list and not block_is_table:
+                level = "#" if underline.group(1).startswith("=") else "##"
+                self.headings.append((block.numbers[0], f"{level} {' '.join(block.text.split())}"))
+                flush()
+                continue
             if HEADING.match(content):
                 flush()
+                lists.clear()
+                in_list = False
                 self.headings.append((number, " ".join(content.split())))
-            # A list, ordered or table marker counts only where it opens a
-            # block or continues one of its own kind. On a wrapped prose line it
-            # is text, and a number that starts such a line is a fact, not an
-            # item number. So re-laying a paragraph out does not seem to change
-            # a list or lose a year.
+            # A bullet opens a list wherever it stands. A number opens one where
+            # a block begins, where it is 1, or where it lines up with an open
+            # numbered list, as the next item of it. On any other line it is text,
+            # and a fact: `2024.` on a wrapped line is a year. Only a number in
+            # its list's order is a marker and not a fact.
             at_start = block is None
-            is_item = bool(LIST_MARK.match(content)) and (at_start or block_is_list)
+            marker = LIST_MARK.match(content)
+            ordered = ORDERED_VALUE.match(content) if marker else None
+            value = int(ordered.group(1)) if ordered else None
+            indent = len(content) - len(content.lstrip())
+            # The open lists, outermost first, as (marker's indent, text's indent,
+            # last number). The deepest whose marker this line lines up with is its own.
+            level = next((i for i in range(len(lists) - 1, -1, -1) if lists[i][0] <= indent < lists[i][1]), None)
+            previous = lists[level][2] if level is not None else 0
+            sibling = in_list and previous > 0
+            in_order = value == 1 or (value == previous + 1 and (at_start or block_is_list or sibling))
+            is_item = bool(marker) and (ordered is None or at_start or in_order or sibling)
             if is_item:
                 self.list_items += 1
+                in_list = True
+                while lists and (level is not None and len(lists) > level or level is None and lists[-1][1] > indent):
+                    lists.pop()
+                lists.append((indent, ITEM_TEXT.match(content).end(), value or 0))
+                if TICKED.match(content):
+                    self.ticked += 1
+            elif at_start:
+                # A new block left of an item's text closes that item's list.
+                while lists and indent < lists[-1][1]:
+                    lists.pop()
+                in_list = bool(lists)
             is_row = False
-            if (at_start or block_is_table) and TABLE_ROW.match(content):
-                row = [cell for cell in re.split(r"(?<!\\)\|", content) if cell.strip()]
-                if not all(RULE_CELL.match(cell) for cell in row):
-                    self.table_rows += 1
+            if (at_start or block_is_table) and (TABLE_ROW.match(content) or (block_is_table and "|" in content)):
+                count_row(content)
                 is_row = True
-            if is_item:  # the number of an ordered list item is a marker, not a fact
+            elif block is not None and len(block.numbers) == 1 and "|" in content and TABLE_RULE.match(content):
+                # The row above this rule is a table's header, with no leading pipe.
+                header = QUOTE_MARK.sub("", prev_in_block, count=1)
+                if "|" in header:
+                    count_row(header)
+                    block_is_table = is_row = True
+            if is_item and in_order:
                 line = ORDERED_MARK.sub(lambda found: found.group(1) + " " * len(found.group(2)) + found.group(3), line)
             # A hard line break joins two lines of one block, so it is the kind
             # of layout a rewording leaves alone; count one where the line before
-            # this one in the block ended with it.
+            # this one in the block ended with it. Before a new item it breaks nothing.
             if block is None:
                 block = Block()
                 block_is_list, block_is_table = is_item, is_row
-            elif HARD_BREAK.search(prev_in_block):
-                self.breaks += 1
+            else:
+                if HARD_BREAK.search(prev_in_block) and not is_item:
+                    self.breaks += 1
+                block_is_list = block_is_list or is_item
             prev_in_block = line
-            block.add(number, line)
+            block.add(number, QUOTE_MARK.sub("", line, count=1).strip())
             if HEADING.match(content):
                 flush()
         if fence:
             self.fences.append((fence_at, textwrap.dedent("\n".join(fenced))))
+        if comment:
+            self.html.append((" ".join(" ".join(comment).split()), comment_at))
+        flush_code()
         flush()
         while self.questions and not self.questions[-1]:
             self.questions.pop()
@@ -1180,40 +1476,56 @@ class Kept:
         text = block.text
         hidden = text
 
-        def take(pattern: re.Pattern, into: list[tuple[str, int]], group: int = 1, whole: bool = False) -> None:
+        def take(pattern: re.Pattern, into: list[tuple[str, int]], group: int = 1, whole: bool = False, exact: bool = False) -> None:
             """Record each match, read from the unmasked text, then mask it."""
             nonlocal hidden
             for found in pattern.finditer(hidden):
-                token = " ".join(text[found.start(group) : found.end(group)].split())
-                into.append((token, block.line_at(found.start())))
+                token = text[found.start(group) : found.end(group)]
+                into.append((token if exact else " ".join(token.split()), block.line_at(found.start())))
             for found in list(pattern.finditer(hidden)):
                 a, b = (found.start(), found.end()) if whole else (found.start(group), found.end(group))
                 hidden = hidden[:a] + MASK * (b - a) + hidden[b:]
 
-        take(CODE_SPAN, self.codes, group=2)
-        for found in WIKILINK.finditer(hidden):
-            target = text[found.start(1) : found.end(1)].split("|")[0].strip()
-            self.links.append((target, block.line_at(found.start())))
-            self.wikilinks.append((target, block.line_at(found.start())))
-        take(WIKILINK, [])
+        # Inside a code span every space counts. Block.add joins wrapped lines with one.
+        take(CODE_SPAN, self.codes, group=2, exact=True)
+        if "-->" in hidden:
+            take(COMMENT, self.html, group=0, whole=True)
+        take(HTML_CODE, self.codes, group=2, exact=True)
+        # A wikilink's target is a link. Its alias is what a reader reads.
+        for found in list(WIKILINK.finditer(hidden)):
+            target = text[found.start(1) : found.end(1)].split("|")[0]
+            self.links.append((target.strip(), block.line_at(found.start())))
+            self.wikilinks.append((target.strip(), block.line_at(found.start())))
+            at = found.start(1)
+            hidden = hidden[:at] + MASK * len(target) + hidden[at + len(target) :]
+        for found in IMAGE.finditer(hidden):
+            self.images.append((" ".join(text[found.start(1) : found.end(1)].split()), block.line_at(found.start())))
         take(INLINE_LINK, self.links)
+        take(REFERENCE, self.labels)
+        take(FOOTNOTE, self.labels, group=0)
         take(AUTOLINK, self.links)
         take(HTML_ATTR, self.links)
         # An inline HTML tag carries meaning a rewording must not drop: a <br>, a
-        # <sub>, a <kbd>. Record its name (its target is already a link above),
-        # then mask it so it counts as neither a word nor anything else.
+        # <sub>, a colspan. Record it whole, then mask it so it counts as neither
+        # a word nor anything else.
+        # What a reader hears of a tag is wording, and a rewording may change it,
+        # all but the numbers in it.
         for found in HTML_TAG.finditer(hidden):
-            self.html.append((tag_name(found.group()), block.line_at(found.start())))
-        for found in list(HTML_TAG.finditer(hidden)):
-            hidden = hidden[: found.start()] + MASK * len(found.group()) + hidden[found.end() :]
+            tag = text[found.start() : found.end()]
+            self.html.append((" ".join(TAG_WORDS.sub(r"\1", tag).split()), block.line_at(found.start())))
+            for said in TAG_WORDS.finditer(tag):
+                for number in NUMBER.finditer(said.group(2) or said.group(3) or ""):
+                    self.numbers.append((number_token(number), block.line_at(found.start())))
+        take(HTML_TAG, [], group=0)
         take(BARE_URL, self.links, group=0)
         for found in QUOTED.finditer(hidden):
             group = 1 if found.group(1) is not None else 2
             quoted = " ".join(text[found.start(group) : found.end(group)].split())
             self.quotes.append((quoted, block.line_at(found.start())))
-        for pattern, into in ((NUMBER, self.numbers), (RFC_WORD, self.rfc)):
-            for found in pattern.finditer(hidden):
-                into.append((found.group(), block.line_at(found.start())))
+        for found in NUMBER.finditer(hidden):
+            self.numbers.append((number_token(found), block.line_at(found.start())))
+        for found in RFC_WORD.finditer(hidden):
+            self.rfc.append((found.group(), block.line_at(found.start())))
         for found in NUMBER_WORD.finditer(hidden):
             self.number_words.append((found.group().lower(), block.line_at(found.start())))
         for found in DATE_WORD.finditer(hidden):
@@ -1273,17 +1585,19 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
 
     # A character no reader sees, which no rewording has cause to add.
     whole_old, whole_new = raw or (old, new)
-    had = Counter(char for line in whole_old.lines for char in line if unseen_char(char))
-    has = Counter(char for line in whole_new.lines for char in line if unseen_char(char))
+    had = Counter(char for line in whole_old.lines for char in unseen_in(line))
+    has = Counter(char for line in whole_new.lines for char in unseen_in(line))
     for char in sorted(has):
         if has[char] > had[char]:
-            line = next(number for number, text in enumerate(whole_new.lines, start=1) if char in text)
+            line = next(number for number, text in enumerate(whole_new.lines, start=1) if char in unseen_in(text))
             findings.append((line, "unseen", f"{described(char)} is new, and a rewording adds no character a reader cannot see"))
 
     # A concept somebody vouched for keeps its body. No flag turns this off.
     if concept and old.body != new.body:
         said = {
             "person": "a person wrote this concept ({}), so its body must stay as it was",
+            "edited": "a person edited this concept ({}), so its body must stay as it was",
+            "refuted": "this concept is refuted ({}), so its body must stay as it was until someone corrects it",
             "confirmed": "a person confirmed this concept ({}), so its body must stay as it was; send it back through ktl-curator to have it reworded",
             "retired": "this concept is retired, so its body must stay as it was",
             "unreadable": "the script cannot read this frontmatter, so it cannot tell who vouched for the concept",
@@ -1306,10 +1620,13 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
 
     for rule, what, list_a, list_b in (
         ("link", "the link target", a.links, b.links),
+        ("link", "the link label", a.labels, b.labels),
+        ("image", "the image", a.images, b.images),
+        ("fence", "the indented code block", a.indented, b.indented),
         ("digits", "the number", a.numbers, b.numbers),
         ("quote", "the quoted text", a.quotes, b.quotes),
         ("rfc2119", "the keyword", a.rfc, b.rfc),
-        ("html", "the inline HTML tag", a.html, b.html),
+        ("html", "the inline HTML tag or comment", a.html, b.html),
     ):
         findings.extend((line, rule, words) for line, rule, words, _ in differences(rule, what, list_a, list_b))
     for line, rule, words, how in differences("code", "the code span", a.codes, b.codes):
@@ -1321,8 +1638,12 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
         findings.append((b.questions_at, "open-questions", f'the "{OPEN_QUESTIONS}" section differs from the earlier text'))
     if b.list_items < a.list_items:
         findings.append((1, "list", f"{b.list_items} list items, and the earlier text had {a.list_items}"))
+    if a.ticked != b.ticked:
+        findings.append((1, "list", f"{b.ticked} ticked items, and the earlier text had {a.ticked}"))
     if b.table_rows < a.table_rows:
         findings.append((1, "table", f"{b.table_rows} table rows, and the earlier text had {a.table_rows}"))
+    if b.table_cells < a.table_cells:
+        findings.append((1, "table", f"{b.table_cells} table cells, and the earlier text had {a.table_cells}"))
     if a.breaks != b.breaks:
         findings.append((1, "hard-break", f"{b.breaks} hard line breaks, and the earlier text had {a.breaks}; a rewording keeps the breaks a reader sees"))
 
@@ -1362,20 +1683,23 @@ def earlier(path: Path, ref: str) -> str | None:
     and cannot show a file through it.
     """
     real = path.resolve()
-    top = subprocess.run(
-        ["git", "-C", str(real.parent), "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=False
-    )
-    if top.returncode != 0:
-        raise Usage(f"{path} is not inside a git work tree, so there is no earlier version; keep a copy and use --before")
-    root = Path(top.stdout.strip()).resolve()
-    known = subprocess.run(
-        ["git", "-C", str(root), "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"], capture_output=True, check=False
-    )
-    if known.returncode != 0:
-        raise Usage(f"{ref} names no commit in {root}")
-    shown = subprocess.run(
-        ["git", "-C", str(root), "show", f"{ref}:{real.relative_to(root).as_posix()}"], capture_output=True, check=False
-    )
+    try:
+        top = subprocess.run(
+            ["git", "-C", str(real.parent), "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=False
+        )
+        if top.returncode != 0:
+            raise Usage(f"{path} is not inside a git work tree, so there is no earlier version; keep a copy and use --before")
+        root = Path(top.stdout.strip()).resolve()
+        known = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"], capture_output=True, check=False
+        )
+        if known.returncode != 0:
+            raise Usage(f"{ref} names no commit in {root}")
+        shown = subprocess.run(
+            ["git", "-C", str(root), "show", f"{ref}:{real.relative_to(root).as_posix()}"], capture_output=True, check=False
+        )
+    except OSError as exc:
+        raise Usage(f"cannot run git: {exc.strerror}; keep a copy and use --before") from exc
     return normalise(shown.stdout) if shown.returncode == 0 else None
 
 
@@ -1438,6 +1762,11 @@ def check_pair(label: Path, old_text: str, new_text: str, in_bundle: bool):
     reads every line.
     """
     if in_bundle and label.name == "log.md":
+        # A line of the earlier log must still be there, and in its order.
+        rest = iter(new_text.split("\n"))
+        lost = next((line for line in old_text.split("\n") if line.strip() and line not in rest), None)
+        if lost is not None:
+            return [(label, 1, "reserved", f'ktl-prose adds one line to the log and takes none away: "{lost}" is gone')], [], (0, 0)
         return [], [(label, 1, "reserved", "the bundle's log is not compared; ktl-prose adds one line to it")], (0, 0)
     old, new = Doc(old_text), Doc(new_text)
     if is_script(label):
@@ -1528,9 +1857,27 @@ def link_keys(kept: Kept, path: Path) -> list[tuple[str, int, str]]:
             keys.append((written, line, target))
             continue
         where, _, fragment = written.partition("#")
-        key = str((path.parent / unquote(where)).resolve()) if where else ""
+        try:
+            key = str((path.parent / unquote(where)).resolve()) if where else ""
+        except (OSError, ValueError):  # a null byte or a name too long is no path
+            key = where
         keys.append((key + (f"#{fragment}" if fragment else ""), line, target))
     return keys
+
+
+def told_in_frontmatter(kept: Kept, doc: Doc) -> None:
+    """Add what a page's title and description say: a retelling states facts there too."""
+    told, inside = [], False
+    for line in doc.fm or []:
+        if not line[:1].isspace():
+            inside = re.match(r"^(?:title|description)\s*:\s*(.*)$", line) is not None
+            line = re.sub(r"^[^:]*:\s*", "", line, count=1).strip().strip("\"'") if inside else ""
+            line = "" if re.fullmatch(r"[>|][+-]?\d?", line) else line
+        if inside and line.strip():
+            told.append(line.strip())
+    said = Kept(Doc("\n".join(["---", "---", " ".join(told)])))
+    for name in ("numbers", "links", "wikilinks", "codes", "quotes"):
+        getattr(kept, name).extend((token, 1) for token, _ in getattr(said, name))
 
 
 def check_derived(adult_path: Path, young_path: Path):
@@ -1546,7 +1893,9 @@ def check_derived(adult_path: Path, young_path: Path):
     """
     adult, young = Doc(read(adult_path)), Doc(read(young_path))
     root = bundle_root(young_path)
-    a, y = Kept(adult), Kept(young)
+    a, y = Kept(adult, whole=True), Kept(young, whole=True)
+    told_in_frontmatter(a, adult)
+    told_in_frontmatter(y, young)
     findings: list[tuple[int, str, str]] = []
     notes: list[tuple[int, str, str]] = []
     back = {str(adult_path.resolve()), f"[[{adult_path.stem.lower()}]]"}
@@ -1562,7 +1911,10 @@ def check_derived(adult_path: Path, young_path: Path):
     first = next(iter(prose_blocks(young)), None)
     opening = []
     if first is not None and first.kind == "paragraph":
-        opening_doc = Kept(Doc("\n".join(["---", "---", first.text])))
+        # A link back by reference: its definition stands apart, further down.
+        used = {label.lower() for label in re.findall(r"\[([^\]\[]+)\]", first.text)}
+        defined = [f"[{label}]: {target}" for label, target in y.definitions.items() if label in used]
+        opening_doc = Kept(Doc("\n".join(["---", "---", first.text, "", *defined])))
         opening = [key for key, _, _ in link_keys(opening_doc, young_path)]
     if not any(links_back(key) for key in opening):
         line = first.line_at(0) if first is not None else 1
@@ -1574,13 +1926,13 @@ def check_derived(adult_path: Path, young_path: Path):
         if said and said[0] and f"audience-{said[0]}" not in frontmatter_list(young.fm, "tags"):
             notes.append((1, "audience", f"the tags hold no audience-{said[0]}, the band the first paragraph names"))
     rule, words = standing(young, expect_concept=root is not None)
-    if rule in ("person", "confirmed", "retired"):
+    if rule in ("person", "edited", "confirmed", "retired", "refuted"):
         notes.append((1, rule, f"{words}; this check changes nothing, and only a person changes that body"))
 
     # A character no reader sees, which the adult text did not hold either.
-    had = {char for line in adult.lines for char in line if unseen_char(char)}
-    for char in sorted({char for line in young.lines for char in line if unseen_char(char)} - had):
-        line = next(number for number, text in enumerate(young.lines, start=1) if char in text)
+    had = {char for line in adult.lines for char in unseen_in(line)}
+    for char in sorted({char for line in young.lines for char in unseen_in(line)} - had):
+        line = next(number for number, text in enumerate(young.lines, start=1) if char in unseen_in(text))
         findings.append((line, "unseen", f"{described(char)} is not in the adult text, and a retelling adds no character a reader cannot see"))
 
     # Links: the link back, and in a bundle a link to another concept, are allowed.
@@ -1598,22 +1950,25 @@ def check_derived(adult_path: Path, young_path: Path):
     if left_out:
         notes.append((1, "link", f"{counted_as(len(left_out), 'link target', 'link targets')} of the adult text left out"))
 
-    # Numbers, code, quotations and HTML, one way. The ages a retelling's
-    # first paragraph names are its own.
+    # Numbers, code, quotations and HTML, one way. The ages a retelling's first
+    # paragraph names are its own, wherever it says them. A number the adult text
+    # gives only in its code is still a number it gives.
+    in_code = [text for text, _ in (*a.codes, *a.indented)] + [text for _, text in a.fences]
+    coded = {number_token(found) for text in in_code for found in NUMBER.finditer(text)}
     for rule, what, (one, many), old, new in (
         ("digits", "the number", ("number", "numbers"), a.numbers, y.numbers),
         ("code", "the code span", ("code span", "code spans"), a.codes, y.codes),
         ("quote", "the quoted text", ("quotation", "quotations"), a.quotes, y.quotes),
         ("html", "the inline HTML tag", ("inline HTML tag", "inline HTML tags"), a.html, y.html),
+        ("image", "the image", ("image", "images"), a.images, y.images),
+        ("fence", "the indented code block", ("indented code block", "indented code blocks"), a.indented, y.indented),
     ):
         holds = {token for token, _ in old}
-        spare = Counter(ages) if rule == "digits" else Counter()
         reported = set()
         for token, line in new:
             if token in holds or token in reported:
                 continue
-            if spare[token] > 0:
-                spare[token] -= 1
+            if rule == "digits" and (token in ages or token in coded):
                 continue
             reported.add(token)
             findings.append((line, rule, f'{what} "{token}" is not in the adult text, and a retelling adds none'))
@@ -1707,7 +2062,9 @@ def list_bundle(directory: Path) -> int:
         for rule, name in (
             ("confirmed", "confirmed by a person"),
             ("person", "written by a person"),
+            ("edited", "edited by a person"),
             ("retired", "retired"),
+            ("refuted", "refuted"),
             ("unreadable", "unreadable"),
             ("unrecorded", "with no record of who wrote them"),
             ("reserved", "reserved"),
@@ -1758,7 +2115,7 @@ def main(argv: list[str]) -> int:
             findings, notes, fine = check_before(*args.before)
         elif args.derived_from:
             findings, notes, fine = check_derived_files(*args.derived_from)
-        elif args.against:
+        elif args.against is not None:
             findings, notes, fine = check_against(args.against, args.files)
         else:
             findings, notes, fine = check_style(args.files, args.max_words, args.max_paragraph, args.audience, args.max_sentences)
