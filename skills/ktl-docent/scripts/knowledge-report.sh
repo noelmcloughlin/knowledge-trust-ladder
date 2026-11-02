@@ -377,6 +377,7 @@ fm {
     if (inrels && $0 ~ /^[ \t]*-[ \t]+/) { rflush(); rest = $0; sub(/^[ \t]*-[ \t]+/, "", rest); rkv(rest); next }
     if (inrels && $0 ~ /^[ \t]+[A-Za-z_]+:/) { rkv($0); next }
   }
+  if (inv && $0 ~ /^[ \t]*-[ \t]*(#.*)?$/) { emit(); inev = 1; next }
   if (inv && $0 ~ /^[ \t]*-[ \t]*\{/) { rest = $0; sub(/^[ \t]*-[ \t]*/, "", rest); flow(rest); next }
   if (inv && $0 ~ /^[ \t]*-[ \t]+/) { emit(); inev = 1; rest = $0; sub(/^[ \t]*-[ \t]+/, "", rest); kv(rest); next }
   if (inv && $0 ~ /^[ \t]+[a-z_]+:/) { inev = 1; kv($0); next }

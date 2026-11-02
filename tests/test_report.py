@@ -308,6 +308,21 @@ def test_changes_says_what_a_change_does_to_each_confirmed_concepts_label(change
     assert has_line(out, want), f"report script's changes lacks '{want}': {out}"
 
 
+def test_an_item_whose_dash_stands_alone_is_an_event_of_its_own(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(
+        kk / "x" / "alone.md",
+        '---\ntype: Service\ntitle: Alone\nverified:\n  -\n    by: human:ada\n    at: "2026-01-02T10:00:00Z"\n  -\n    by: process:ktl-librarian\n    at: "2026-01-03T00:00:00Z"\n---\n',
+    )
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "an event in an item whose dash stands alone")
+    out = report(tmp_path, "labels", "x/alone.md").out
+    assert "confirmed by a person, 2026-01-02" in out, f"the report lost a person's event: {out}"
+
+
 def test_changes_reads_a_sidecar_in_a_subfolder_from_the_top(tmp_path):
     """git names each changed path from the top of the work tree; the concept is named bundle-relative, and the feedback delta reads HEAD from the subfolder."""
     pkg = tmp_path / "pkg"

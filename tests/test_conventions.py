@@ -210,6 +210,40 @@ def findings(tmp_path_factory) -> str:
         x / "t-tag.md",
         '---\ntype: Service\nid: https://example.invalid/k/x/t\nverified: [{ by: !!str human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n',
     )
+    write(
+        x / "q2-quotedevent.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/q2-quotedevent\n"verified":\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n',
+    )
+    write(
+        x / "q3-explicit.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/q3-explicit\n? verified\n: - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n',
+    )
+    write(
+        x / "q4-space.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/q4-space\nverified :\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n',
+    )
+    write(
+        x / "q5-merge.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/q5-merge\n<<: { note: x }\n---\n',
+    )
+    write(
+        x / "q6-below.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/q6-below\nverified:\n  - by:\n      human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n',
+    )
+    write(
+        x / "q7-escape.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/q7-escape\nverified:\n  - by: "hum\\x61n:contract"\n    at: "2026-09-17T00:00:00Z"\n---\n',
+    )
+    write(
+        x / "q8-flowcomment.md",
+        '---\ntype: Service\nid: https://example.invalid/k/x/q8-flowcomment\nverified: [ # ]\n  { by: process:x, at: "2026-09-17T00:00:00Z" }\n]\n---\n',
+    )
+    write(x / "q9-indented.md", "---\n  type: Service\n  id: https://example.invalid/k/x/q9\n---\n")
+    write(x / "qa-rootflow.md", '---\n{type: Service, id: "https://example.invalid/k/x/qa"}\n---\n')
+    write(x / "qb-break.md", f"---\ntype: Service\nid: https://example.invalid/k/x/qb\nnote: x{chr(0x2028)}other: y\n---\n")
+    write(x / "qd-dashes.md", "---\ntype: Service\nid: https://example.invalid/k/x/qd\ndescription: a---b\n---\n")
+    os.symlink("qd-dashes.md", x / "qe-link.md")
+    write(x / "qc-cr.md", "---\ntype: Service\nid: https://example.invalid/k/x/qc\nnote: x\rother: y\n---\n")
     # A comment beside such a field is valid YAML that a parser drops and a
     # line reader takes for part of the value. A comment on a line of its own,
     # and a `#` inside a quoted value, must pass.
@@ -323,6 +357,19 @@ REPORTED = [
     "conflicted copy 2026-09-17).md: path is not lowercase",
     "Upper/j.md: path is not lowercase",
     "q-quotedkey.md: frontmatter uses a quoted key (by)",
+    "q2-quotedevent.md: frontmatter uses a quoted key (verified)",
+    "q3-explicit.md: frontmatter uses an explicit key (? verified)",
+    "q4-space.md: frontmatter uses a space before the colon of verified",
+    "q5-merge.md: frontmatter uses a merge key",
+    "q6-below.md: frontmatter uses a by on the line below its key",
+    "q7-escape.md: frontmatter uses an escape in by",
+    "q8-flowcomment.md: frontmatter uses a comment inside the flow form of verified",
+    "q9-indented.md: frontmatter uses a frontmatter block indented whole",
+    "qa-rootflow.md: frontmatter uses a flow mapping for the whole frontmatter",
+    "qb-break.md: frontmatter uses a line break a line reader does not see (U+2028)",
+    "qc-cr.md: frontmatter uses a bare carriage return",
+    "qd-dashes.md: frontmatter holds '---'",
+    "qe-link.md: is a symbolic link",
     "t-tag.md: frontmatter uses a tag on",
     "cm-comment.md: frontmatter uses a comment beside at",
     'r11-late.md: at "2026-09-17T01:00:00Z" is later than the commit that recorded it (2026-09-17T00:00:00Z)',

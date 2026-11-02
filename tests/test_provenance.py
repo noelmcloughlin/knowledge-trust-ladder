@@ -33,12 +33,13 @@ endings, which a bare-"---" first-line reader skipped.
 
 from __future__ import annotations
 
+import os
 import shutil
 
 import pytest
 import yaml
 
-from conftest import BOM, SCRIPTS, Git, bash, have, matches, read, replace_in, run, write
+from conftest import BOM, SCRIPTS, WORKFLOWS, Git, bash, have, matches, read, replace_in, run, write
 
 PROVENANCE = SCRIPTS / "knowledge-provenance.sh"
 
@@ -328,6 +329,8 @@ def test_signed_confirmations(tmp_path, checks):
     )
     git("rm", "-rq", ".lokf/curators")
     git("commit", "-q", "-S", "-m", "nokeys")
+    expect("HEAD~1", 0, r"^OK - 0 confirmation", "read a range that deletes the keys and records nobody, and pass it")
+    git("commit", "-q", "-S", "--allow-empty", "-m", "still no keys")
     expect("HEAD~1", 0, r"^skipped", "say so and pass with no .lokf/curators/")
 
 
@@ -506,6 +509,34 @@ LAYOUTS = [
     "verified:\n  - by: human:ada\n    at: 2026-01-02T10:00:00+00:00",
     "verified: [ ]",
     'verified:\n  - by: process:ktl-librarian\n    at: "2026-01-01T00:00:00Z"',
+    'verified:\n  -\n    by: human:ada\n    at: "2026-01-02T10:00:00Z"\n  -\n    by: process:x\n    at: "2026-01-02T10:00:00Z"',
+    'verified: [\n  { at: "2026-01-02T10:00:00Z", by: human:ada }\n]',
+    'verified:\n  - # a comment line opens the item\n    by: human:ada\n    at: "2026-01-02T10:00:00Z"',
+    '"verified": [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]',
+    "'verified':\n  - by: human:ada\n    at: \"2026-01-02T10:00:00Z\"",
+    '"verifie\\x64":\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"',
+    'verified : [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]',
+    '? verified\n: - by: human:ada\n    at: "2026-01-02T10:00:00Z"',
+    '<<: { verified: [{ by: human:ada, at: "2026-01-02T10:00:00Z" }] }',
+    'revised: &who { by: human:ada, at: "2026-01-02T10:00:00Z" }\nverified:\n  - *who',
+    'revised: &who { by: human:ada, at: "2026-01-02T10:00:00Z" }\nverified:\n  - <<: *who',
+    'verified:\n  - "by": human:ada\n    at: "2026-01-02T10:00:00Z"',
+    'verified:\n  - "b\\x79": human:ada\n    at: "2026-01-02T10:00:00Z"',
+    'verified:\n  - by : human:ada\n    at: "2026-01-02T10:00:00Z"',
+    'verified:\n  - by: !!str human:ada\n    at: "2026-01-02T10:00:00Z"',
+    'verified:\n  - !!str by: human:ada\n    at: "2026-01-02T10:00:00Z"',
+    'verified:\n  - by:\n      human:ada\n    at: "2026-01-02T10:00:00Z"',
+    'verified:\n  - by: >-\n      human:ada\n    at: "2026-01-02T10:00:00Z"',
+    'verified:\n  - by: "hum\\x61n:ada"\n    at: "2026-01-02T10:00:00Z"',
+    'verified:\n  - by: "\\x68uman:ada/x"\n    at: "2026-01-02T10:00:00Z"',
+    'verified: [ # ]\n  { by: human:ada, at: "2026-01-02T10:00:00Z" }\n]',
+    'verified:\n  - &e { by: human:ada, at: "2026-01-02T10:00:00Z" }',
+    '"generated": { by: human:ada, at: "2026-01-02T10:00:00Z" }',
+    'verified: null',
+    'verified: [{ by: process:x, at: "2026-01-02T10:00:00Z" },]',
+    'verified:\n  - # a comment line opens the item\n    by: process:x\n    at: "2026-01-02T10:00:00Z"',
+    'exclusions:\n  - resource: a\n    reason: b\n    by: human:ada',
+    'revised:\n  by: human:ada\n  at: "2026-01-02T10:00:00Z"',
 ]
 
 
@@ -523,6 +554,239 @@ def test_the_gate_agrees_with_a_yaml_parser(parity, layout):
 
 HUMAN = 'verified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"'
 
+# Shapes the toolkit reads as frontmatter and a line reader cannot follow, each
+# holding a person's event. They do not fit concept_with, and a parser run on
+# the text between two bare "---" lines would not see them either, as the
+# toolkit does.
+BLOCK = 'type: Service\nid: https://acme.example/knowledge/x/c\ntitle: C\nstatus: draft\n'
+EVENT = 'verified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n'
+WHOLE_FILES = {
+    "the block indented whole": '---\n  type: Service\n  verified:\n    - by: human:ada\n      at: "2026-01-02T10:00:00Z"\n---\n\n# C\n',
+    "one flow mapping": '---\n{type: Service, verified: [{by: human:ada, at: "2026-01-02T10:00:00Z"}]}\n---\n\n# C\n',
+    "a bare carriage return": f"---\n{BLOCK}note: x\rverified:\r  - by: human:ada\n---\n\n# C\n",
+    "U+2028": f"---\n{BLOCK}note: x{chr(0x2028)}verified:{chr(0x2028)}  - by: human:ada\n---\n\n# C\n",
+    "U+0085": f"---\n{BLOCK}note: x{chr(0x85)}verified:{chr(0x85)}  - by: human:ada\n---\n\n# C\n",
+    "a space after the opener": f"--- \n{BLOCK}{EVENT}---\n\n# C\n",
+    "a blank line before the opener": f"\n---\n{BLOCK}{EVENT}---\n\n# C\n",
+    "an indented opener": f"  ---\n{BLOCK}{EVENT}---\n\n# C\n",
+    "text before the opener": f"note\n---\n{BLOCK}{EVENT}---\n\n# C\n",
+    "carriage returns alone": f"---\n{BLOCK}{EVENT}---\n\n# C\n".replace("\n", "\r"),
+}
+
+
+@pytest.mark.parametrize("shape", WHOLE_FILES)
+def test_the_gate_refuses_frontmatter_it_cannot_read(parity, shape):
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", WHOLE_FILES[shape].encode("utf-8"))
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "cannot read" in result.out, f"the gate passed {shape}: {result.out}"
+
+
+def test_a_log_with_rules_is_not_refused_as_frontmatter_it_cannot_read(parity):
+    write(parity / ".lokf" / "knowledge" / "log.md", "# Change Log\n\n---\n\n## 2026-01-02\n\n---\n")
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc == 0, f"the gate refused a log that holds two rules: {result.out}"
+
+
+def test_the_signed_form_refuses_frontmatter_it_cannot_read(parity):
+    """A commit needs no key to be refused here, so the test needs no gpg."""
+    write(parity / ".lokf" / "curators" / ".gitkeep", "")
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "the curators folder")
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with('"verified": [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]'))
+    git("add", "-A")
+    git("commit", "-q", "-m", "an event in a quoted key")
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc != 0 and "cannot read" in result.out, f"the signed form passed a quoted key: {result.out}"
+
+
+FORGED = '---\ntype: Service\nid: https://acme.example/knowledge/x/f\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"\n---\n'
+
+
+def test_a_concept_that_is_a_link_is_refused_in_the_signed_form(parity):
+    """The toolkit reads the link's target, a plain confirmation no reader here would see."""
+    write(parity / ".lokf" / "curators" / ".gitkeep", "")
+    write(parity / "docs" / "forged.md", FORGED)
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a file outside the bundle")
+    os.symlink("../../../docs/forged.md", parity / ".lokf" / "knowledge" / "x" / "f.md")
+    git("add", "-A")
+    git("commit", "-q", "-m", "a concept that is a link onto it")
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc != 0 and "symbolic link" in result.out, f"the signed form passed a link: {result.out}"
+
+
+def test_a_concept_that_is_a_link_is_refused_in_the_unattended_form(parity):
+    write(parity / "docs" / "plain.md", "plain\n")
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a file outside the bundle")
+    os.symlink("../../../docs/plain.md", parity / ".lokf" / "knowledge" / "x" / "f.md")
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "symbolic link" in result.out, f"the unattended form passed a link: {result.out}"
+
+
+def test_the_doorway_link_is_no_link_the_gate_refuses(parity):
+    os.symlink(".lokf/knowledge", parity / "knowledge_bundle")
+    assert bash(PROVENANCE, "--unattended", cwd=parity).rc == 0
+    write(parity / ".lokf" / "curators" / ".gitkeep", "")
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "the doorway")
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc == 0, f"the signed form refused the doorway: {result.out}"
+
+
+def test_a_doorway_pointed_elsewhere_is_refused(parity):
+    os.symlink("docs", parity / "knowledge_bundle")
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "symbolic link" in result.out, f"the gate passed a doorway that leaves the bundle: {result.out}"
+
+
+def test_a_sidecar_moved_behind_a_link_is_refused(parity):
+    """A link at `.lokf` takes every path under it out of what the script lists."""
+    write(parity / ".lokf" / "curators" / ".gitkeep", "")
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "the curators folder")
+    write(parity / "elsewhere" / "knowledge" / "x" / "f.md", FORGED)
+    shutil.rmtree(parity / ".lokf")
+    os.symlink("elsewhere", parity / ".lokf")
+    git("add", "-A")
+    git("commit", "-q", "-m", "the sidecar behind a link")
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc != 0 and "symbolic link" in result.out, f"the signed form passed a moved sidecar: {result.out}"
+
+
+def test_a_bundle_pointed_elsewhere_is_refused(parity):
+    write(parity / ".lokf" / "curators" / ".gitkeep", "")
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "the curators folder")
+    write(parity / "docs" / "x" / "f.md", FORGED)
+    shutil.rmtree(parity / ".lokf" / "knowledge")
+    os.symlink("../docs", parity / ".lokf" / "knowledge")
+    git("add", "-A")
+    git("commit", "-q", "-m", "the bundle behind a link")
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc != 0 and "symbolic link" in result.out, f"the signed form passed a moved bundle: {result.out}"
+
+
+def test_a_range_that_deletes_the_keys_has_not_opted_out(parity):
+    write(parity / ".lokf" / "curators" / "ada.pub", "ssh-ed25519 AAAA ada\n")
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a curator's key")
+    shutil.rmtree(parity / ".lokf" / "curators")
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with(HUMAN))
+    git("add", "-A")
+    git("commit", "-q", "-m", "no keys, and a confirmation")
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc != 0, f"the signed form skipped a range that deletes the keys: {result.out}"
+
+
+def test_a_repository_that_never_had_keys_is_still_a_stated_skip(parity):
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with(HUMAN))
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a confirmation, with no curators folder")
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc == 0 and "skipped" in result.out, f"the signed form did not skip: {result.out}"
+
+
+def test_a_repaired_spelling_is_reported_as_a_removal_in_the_unattended_form(parity):
+    """A process may not repair it: only a person can say what the block held."""
+    path = parity / ".lokf" / "knowledge" / "x" / "c.md"
+    write(path, concept_with('"verified": [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]'))
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "an event in a quoted key")
+    write(path, concept_with(""))
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "could not read" in result.out, f"the gate let a process remove what it could not read: {result.out}"
+
+
+REWRITES = [
+    ('"verified": [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]', '"verified": [{ by: human:mallory, at: "2026-01-02T10:00:00Z" }]'),
+    ('verified:\n  - "by": human:ada', 'verified:\n  - "by": human:mallory'),
+    ("x: &a human:ada\nverified:\n  - by: *a", "x: &a human:mallory\nverified:\n  - by: *a"),
+]
+
+
+def forge_inside_the_unreadable(repo, before, after):
+    """Hold a spelling the reader cannot follow on the base, then change only what it says."""
+    path = repo / ".lokf" / "knowledge" / "x" / "c.md"
+    write(path, concept_with(before))
+    git = Git(repo)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a spelling already merged")
+    write(path, concept_with(after))
+    return git
+
+
+@pytest.mark.parametrize(("before", "after"), REWRITES, ids=["quoted key", "quoted by", "alias"])
+def test_an_edit_inside_unreadable_frontmatter_is_refused_unattended(parity, before, after):
+    forge_inside_the_unreadable(parity, before, after)
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "cannot read" in result.out, f"the gate passed an edit it could not read: {result.out}"
+
+
+@pytest.mark.parametrize(("before", "after"), REWRITES, ids=["quoted key", "quoted by", "alias"])
+def test_an_edit_inside_unreadable_frontmatter_is_refused_when_signed(parity, before, after):
+    write(parity / ".lokf" / "curators" / "someone.pub", "")
+    git = forge_inside_the_unreadable(parity, before, after)
+    base = git("rev-parse", "HEAD").strip()
+    git("add", "-A")
+    git("commit", "-q", "-m", "an edit inside it")
+    result = bash(PROVENANCE, base, "HEAD", cwd=parity)
+    assert result.rc != 0 and "cannot read" in result.out, f"the signed form passed an edit it could not read: {result.out}"
+
+
+@pytest.mark.parametrize(("before", "after"), REWRITES, ids=["quoted key", "quoted by", "alias"])
+def test_an_edit_inside_unreadable_frontmatter_is_refused_by_the_registrar(parity, tmp_path, before, after):
+    git = forge_inside_the_unreadable(parity, before, after)
+    git("add", "-A")
+    git("commit", "-q", "-m", "an edit inside it")
+    result, output = registrar_step(parity, tmp_path)
+    assert "frontmatter this gate cannot read" in result.out, f"the registrar job passed an edit it could not read: {result.out}"
+    assert "verdict=ok" not in output, f"the registrar job backed an edit it could not read: {output}"
+
+
+def test_a_body_edit_under_unreadable_frontmatter_passes(parity):
+    """Only what a parser could read as frontmatter is carried, so a wording change costs nothing."""
+    path = parity / ".lokf" / "knowledge" / "x" / "c.md"
+    forge_inside_the_unreadable(parity, REWRITES[0][0], REWRITES[0][0])
+    write(path, read(path) + "\nA further line of body.\n")
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc == 0, f"the gate refused a body edit: {result.out}"
+
+
+def test_a_tab_in_a_plain_event_is_still_read_as_a_space(parity):
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with('verified:\n  - by:\thuman:mallory\n    at: "2026-01-02T10:00:00Z"'))
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert "human:mallory" in result.out, f"the gate did not read a tabbed event: {result.out}"
+
+
+def test_a_readable_event_beside_an_unreadable_one_is_still_read(parity):
+    forge_inside_the_unreadable(parity, 'x: &a y\nverified:\n  - by: *a', 'x: &a y\nverified:\n  - by: *a\n  - by: human:mallory\n    at: "2026-01-02T10:00:00Z"')
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "human:mallory" in result.out, f"the gate lost a plain event: {result.out}"
+
+
+def program(text, start):
+    """The awk program of human_events() in a file, a line each, with no indent and no comment line."""
+    body = text[text.index(start) :]
+    body = body[: body.index("\n", body.index("END {"))]
+    return [line.strip() for line in body.split("\n") if line.strip() and not line.strip().startswith("#")]
+
+
+def test_the_registrar_reads_events_as_the_forge_free_gate_does():
+    """The two copies are one reader: a shape one of them refuses and the other reads would be a way past the gate."""
+    gate = program(read(PROVENANCE), 'awk -v path="$1"')
+    job = program(read(WORKFLOWS / "knowledge-registrar.yaml"), 'awk -v path="$1"')
+    assert gate == job, "knowledge-registrar.yaml and knowledge-provenance.sh read events differently"
+
 
 def test_the_gate_flags_an_unsigned_human_event_behind_a_byte_order_mark(parity):
     """A reader that keys on a bare "---" first line sees neither the frontmatter nor the event, though every YAML parser strips the mark."""
@@ -537,3 +801,58 @@ def test_the_gate_flags_an_unsigned_human_event_in_crlf_line_endings(parity):
     write(path, concept_with(HUMAN).replace("\n", "\r\n"))
     result = bash(PROVENANCE, "--unattended", cwd=parity)
     assert result.rc != 0, f"the gate missed an unsigned human event in CRLF line endings: {result.out}"
+
+
+def registrar_step(repo, tmp_path):
+    """Run the provenance job's own check on HEAD~1..HEAD, with a gh that finds no approval and no commits."""
+    jobs = yaml.safe_load(read(WORKFLOWS / "knowledge-registrar.yaml"))["jobs"]
+    step = next(s for s in jobs["provenance"]["steps"] if s.get("id") == "check")
+    bin_dir = tmp_path / "stub-bin"
+    write(bin_dir / "gh", "#!/bin/sh\nexit 0\n")
+    (bin_dir / "gh").chmod(0o755)
+    script = write(tmp_path / "step.sh", "set -euo pipefail\n" + step["run"])
+    output = tmp_path / "github-output"
+    git = Git(repo)
+    env = {
+        "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        "BASE_SHA": git("rev-parse", "HEAD~1").strip(),
+        "HEAD_SHA": git("rev-parse", "HEAD").strip(),
+        "PR_NUMBER": "1",
+        "ATTEST_ENV": "",
+        "GITHUB_REPOSITORY": "acme/repo",
+        "GITHUB_OUTPUT": str(output),
+        "GITHUB_STEP_SUMMARY": str(tmp_path / "github-summary"),
+    }
+    result = bash(script, cwd=repo, env=env)
+    return result, read(output) if output.exists() else ""
+
+
+def test_the_registrar_job_refuses_a_concept_that_is_a_link(parity, tmp_path):
+    write(parity / "docs" / "forged.md", FORGED)
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a file outside the bundle")
+    os.symlink("../../../docs/forged.md", parity / ".lokf" / "knowledge" / "x" / "f.md")
+    git("add", "-A")
+    git("commit", "-q", "-m", "a concept that is a link onto it")
+    result, _ = registrar_step(parity, tmp_path)
+    assert result.rc != 0 and "symbolic links" in result.out, f"the registrar job passed a link: {result.out}"
+
+
+def test_the_registrar_job_does_not_back_frontmatter_it_cannot_read(parity, tmp_path):
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with('"verified": [{ by: human:ada, at: "2026-01-02T10:00:00Z" }]'))
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "an event in a quoted key")
+    result, output = registrar_step(parity, tmp_path)
+    assert "frontmatter this gate cannot read" in result.out, f"the registrar job read past a quoted key: {result.out}"
+    assert "verdict=ok" not in output, f"the registrar job backed what it could not read: {output}"
+
+
+def test_the_registrar_job_passes_a_change_with_no_person_in_it(parity, tmp_path):
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with('verified:\n  - by: process:ktl-librarian\n    at: "2026-01-02T10:00:00Z"'))
+    git = Git(parity)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a process's event")
+    result, output = registrar_step(parity, tmp_path)
+    assert result.rc == 0 and "verdict=ok" in output, f"the registrar job refused a process's event: {result.out}"
