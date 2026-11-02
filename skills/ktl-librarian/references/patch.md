@@ -115,6 +115,7 @@ Any one of these refuses the whole file, and nothing is written:
 - `patch`, `rewrite`, `set` or `delete` on a concept whose `generated.by` starts with `human:` (a person wrote that text; add a `question` instead);
 - `delete` on a concept with a `human:` event under `verified`, or with a person's note under `## Open questions` (add a `question` saying the source is gone; the curator retires it);
 - `delete` on a concept that an `index.md` links in a sentence, or anywhere but in its own bullet or a comma-separated list of links (a person takes that link out, and the delete can then run);
+- a relation the patch adds that names no concept of the bundle, or a `delete` that leaves another concept's relation pointing at the deleted one (drop or repoint it in the same patch). An IRI outside the bundle, and a relation that was already broken, are left alone. So is a domain schema's own slot, which only `--check-refs` can read;
 - a `replace` target that occurs zero or several times, an `insert_after` target on zero or several lines, or either inside the `lokf:related` block or under `## Open questions`;
 - a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
 - a `patch`, `rewrite`, `delete` or `resolve` with no `log` line, its own or the patch's; a `title` with square brackets;

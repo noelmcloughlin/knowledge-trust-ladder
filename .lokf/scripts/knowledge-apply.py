@@ -20,6 +20,8 @@
 #     and into the ledger of questions readers asked, ten to a patch at most;
 #   - refuses an operation that would write a `human:` actor, rewrite text a
 #     person wrote, or delete a concept a person confirmed or left a note on;
+#   - refuses a relation this patch adds that names no concept of the bundle,
+#     and the deletion of a concept another still relates to;
 #   - refuses a patch whose concepts `lokf validate` rejects, with --dry-run
 #     too, when the sidecar's .venv holds the toolkit, and says when it could
 #     not check them.
@@ -215,6 +217,68 @@ handoff:                         # optional; at most ten lines of 300 characters
   - "datasets/orders-db.md and playbooks/release.md came back for the same misread date; the skill's rule on dates needs a look."
   - "https://acme.example/spec did not answer, so references/acme-spec.md was not rechecked."
 '''
+
+
+# The fields knowledge-report.sh reads as relations, which the schema ranges
+# over Concept. A relation a patch adds is checked only in these: only
+# `--check-refs` with the schema knows which of a host's own slots hold a
+# concept. A delete is checked in those slots too, since a whole IRI that names
+# the deleted concept is stale whatever its slot holds.
+RELATION_FIELDS = (
+    "isPartOf", "hasPart", "references", "dependsOn", "derivedFrom", "about", "sameAs",
+    "relatedTo", "definedBy", "source", "measures", "memberOf", "holder", "isReplacedBy",
+)
+# The fields knowledge-report.sh never reads as a domain schema's own slot.
+NOT_LINKS = {
+    "id", "type", "title", "description", "resource", "sources", "exclusions", "distribution",
+    "endpoint", "documentation", "license", "author", "publisher", "generated", "verified", "status",
+    "base_iri", "context", "stale_after", "timestamp", "genre", "definition", "version",
+}
+NOT_CONCEPTS = {"index.md", "log.md", "diataxis.md"}
+SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
+WHOLE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:\S+")
+
+
+def relation_targets(fm: dict) -> set:
+    """Each (field, target) a concept's frontmatter relates it to, in any spelling the schema reads.
+
+    A value holding a space is left out, as `--check-refs` leaves it: `measures` also takes a description.
+    """
+    def target(value) -> bool:
+        return isinstance(value, str) and bool(value.strip()) and not any(ch.isspace() for ch in value.strip())
+
+    found = set()
+    for field in RELATION_FIELDS:
+        value = fm.get(field)
+        for item in value if isinstance(value, list) else [value]:
+            if target(item):
+                found.add((field, item.strip()))
+    relations = fm.get("relations")
+    for item in relations if isinstance(relations, list) else [relations]:
+        if isinstance(item, dict) and target(item.get("target")):
+            found.add(("relations", item["target"].strip()))
+    return found
+
+
+def domain_iris(fm: dict) -> set:
+    """Each (field, whole IRI) under a field no list here names, which is how knowledge-report.sh reads a domain schema's own slots."""
+    found = set()
+
+    def walk(field: str, value) -> None:
+        if isinstance(value, str):
+            if WHOLE_IRI.fullmatch(value.strip()):
+                found.add((field, value.strip()))
+        elif isinstance(value, list):
+            for item in value:
+                walk(field, item)
+        elif isinstance(value, dict):
+            for item in value.values():
+                walk(field, item)
+
+    for field, value in fm.items():
+        if field not in NOT_LINKS and field not in RELATION_FIELDS and field != "relations":
+            walk(field, value)
+    return found
 
 
 class Refused(Exception):
@@ -419,6 +483,7 @@ class Concept:
         self.deleted = False
         self.touched = False
         self.record = person_record(text)  # what the file holds in a person's name, before any operation
+        self.targets_before: set = set()
         if text is None:
             self.fm, self.body = {}, ""
             return
@@ -433,6 +498,7 @@ class Concept:
         if not isinstance(fm, dict):
             raise Refused(f"{path}: frontmatter is not a mapping")
         self.fm, self.body = fm, body
+        self.targets_before = relation_targets(fm)
 
     def events(self) -> list:
         v = self.fm.get("verified")
@@ -744,6 +810,70 @@ class Bundle:
         c.deleted, c.touched = True, True
         self.index_set(path, None, None)
         self.log(op, f"**Removal**: {c.title()}.")
+
+    # ---- relations ------------------------------------------------------
+    def concept_id(self, path: str, fm: dict) -> str:
+        own = fm.get("id")
+        return own if isinstance(own, str) and own else self.base_iri + path[:-3]
+
+    def resolves(self, target: str, citing: str, ids: dict) -> str | None:
+        """The concept's path a target names among ids, as knowledge-report.sh finds it. An IRI outside the bundle names none."""
+        if target in ids:
+            return ids[target]
+        target = target.split("#", 1)[0]
+        if SCHEME.match(target):
+            if not target.startswith(self.base_iri):
+                return None
+            target = target[len(self.base_iri):]
+        target = target[2:] if target.startswith("./") else target.lstrip("/")
+        target = target[:-3] if target.endswith(".md") else target
+        return ids.get(self.base_iri + target) or ids.get(self.base_iri + f"{citing.rsplit('/', 1)[0]}/{target}")
+
+    def relation_findings(self) -> list:
+        """What this patch breaks in the graph: a relation it adds to nothing, and a relation left pointing at a concept it deletes.
+
+        Only `--check-refs` would catch either, after the patch is written, and a
+        relation that was already broken is no fault of this patch. The whole
+        bundle is read only when a patch adds a relation or deletes a concept,
+        so a patch of bodies costs no more on a large bundle.
+        """
+        added = {path: relation_targets(c.fm) - c.targets_before for path, c in self.concepts.items() if c.touched and not c.deleted}
+        added = {path: found for path, found in added.items() if found}
+        gone = [path for path, c in self.concepts.items() if c.touched and c.deleted and (self.knowledge / path).is_file()]
+        if not added and not gone:
+            return []
+        before, after, standing = {}, {}, {}
+        for file in sorted(self.knowledge.rglob("*.md")):
+            path = file.relative_to(self.knowledge).as_posix()
+            if file.name in NOT_CONCEPTS or ".obsidian" in path.split("/"):
+                continue
+            try:
+                split = split_frontmatter(file.read_text(encoding="utf-8"))
+                fm = read_yaml(split[0]) if split else None
+            except (OSError, UnicodeDecodeError, yaml.YAMLError):
+                continue  # a concept this script cannot read is refused when an operation names it
+            if not isinstance(fm, dict):
+                continue
+            before[self.concept_id(path, fm)] = path
+            if path not in self.concepts:
+                after[self.concept_id(path, fm)] = path
+                standing[path] = fm
+        for path, c in self.concepts.items():
+            if not c.deleted:
+                after[self.concept_id(path, c.fm)] = path
+                standing[path] = c.fm
+        findings = []
+        for path, found in sorted(added.items()):
+            for field, target in sorted(found):
+                outside = SCHEME.match(target) and not target.startswith(self.base_iri)
+                if not outside and not self.resolves(target, path, after):
+                    findings.append(f"{path}: {field} names {shown(target)}, and no concept of the bundle has that id; name a concept that exists, or create it in this patch")
+        for path, fm in sorted(standing.items()):
+            for field, target in sorted(relation_targets(fm) | domain_iris(fm)):
+                named = self.resolves(target, path, before)
+                if named in gone and not self.resolves(target, path, after):
+                    findings.append(f"{path}: {field} still names {named}, which this patch deletes; drop or repoint the relation in this patch, or add a question to the concept if a person wrote it")
+        return findings
 
     # ---- index, log, feedback -------------------------------------------
     def index_text(self, file: Path, default: str) -> str:
@@ -1155,6 +1285,7 @@ def main(argv: list[str]) -> int:
             for path, c in bundle.concepts.items():
                 if c.touched:
                     findings.extend(record_findings(path, c.record, Counter() if c.deleted else person_record(dump(c.fm, c.body))))
+            findings.extend(bundle.relation_findings())
     for line in findings:
         print(line)
     if findings:

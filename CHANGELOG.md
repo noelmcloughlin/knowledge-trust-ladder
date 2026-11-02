@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-report.sh isolated` names the concepts no relation joins to the rest of the bundle**, and the small groups joined only to each other. The work list shows ten, which take turns by month with nothing stamped. They fail no check and make no run busy.
+
+### Changed
+
+- **The librarian writes each relation a source states.** Rule 4, bootstrap and the refresh now ask for them, and forbid a relation added only to join two concepts. The refresh's file sweep no longer calls unnamed files orphans.
+
+### Fixed
+
+- **The pen refuses a relation to nothing.** A relation a patch adds must name a concept of the bundle, and a `delete` must not leave a relation pointing at the deleted concept. Only `--check-refs` caught either, after the patch was written.
+- **The curator's queue counts what a domain schema's own slots point at.** `knowledge-report.sh` read only LOKF's fourteen relation fields, so a host with its own slots undercounted what relies on a concept. A whole IRI in any other field now counts when it names a concept. So does a target written as `/x/y` or as an IRI ending in `.md`, which lokf accepts.
+
 ## [0.61.0] - 2026-11-02
 
 ### Added

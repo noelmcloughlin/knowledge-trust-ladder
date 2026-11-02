@@ -702,6 +702,139 @@ def test_resolve_never_clears_a_persons_note(noted):
     )
 
 
+@pytest.fixture
+def related(tmp_path):
+    """A bundle of two concepts, the first relating to the second."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = "generated:\n  by: process:ktl-librarian\n  at: 2026-01-01T00:00:00Z\nstatus: draft\n"
+    write(kk / "x" / "a.md", f"---\ntype: Service\ntitle: A\ndependsOn:\n  - https://acme.example/knowledge/x/b\n{stamp}---\n\n# A\n")
+    write(kk / "x" / "b.md", f"---\ntype: Service\ntitle: B\n{stamp}---\n\n# B\n")
+    return tmp_path
+
+
+def set_relation(field_and_value: str) -> str:
+    return lines("ops:", "  - op: patch", "    path: x/b.md", "    set:", f"      {field_and_value}", '    log: "**Changed**: a relation."')
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "references: [https://acme.example/knowledge/x/none]",
+        "references: [x/none.md]",
+        "references: [none]",
+        "relations: [{predicate: joinsWith, target: https://acme.example/knowledge/x/none}]",
+        "isReplacedBy: https://acme.example/knowledge/x/none",
+    ],
+)
+def test_a_relation_that_names_no_concept_is_refused(related, value):
+    """Schema validation passes it as a well-formed value, and only --check-refs would catch it, after the patch is written."""
+    refuses(related, set_relation(value), "a relation to nothing", "no concept of the bundle has that id")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "references: [https://acme.example/knowledge/x/a]",
+        "references: [x/a.md]",
+        "references: [x/a]",
+        "references: [a.md]",
+        "references: ['https://acme.example/knowledge/x/a#part']",
+        "relations: [{predicate: joinsWith, target: x/a}]",
+        "references: [https://elsewhere.example/thing]",
+    ],
+)
+def test_a_relation_to_a_concept_or_outside_the_bundle_is_written(related, value):
+    applies(related, set_relation(value))
+
+
+def test_a_relation_to_a_concept_this_patch_creates_is_written(related):
+    applies(
+        related,
+        lines(
+            "ops:",
+            "  - op: create",
+            "    path: x/new.md",
+            "    frontmatter: {type: Service, title: New, description: New.}",
+            "    body: |",
+            "      # New",
+            '    log: "**Added**: New."',
+            "  - op: patch",
+            "    path: x/b.md",
+            "    set: {references: [x/new.md]}",
+            '    log: "**Changed**: a relation."',
+        ),
+    )
+
+
+def test_a_description_in_a_slot_that_also_takes_one_is_written(related):
+    """`measures` takes a description as well as an IRI, and --check-refs skips a value with a space."""
+    applies(related, set_relation('measures: ["orders per day"]'))
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "references: [/x/a.md]",
+        "references: [/x/a]",
+        "references: [https://acme.example/knowledge/x/a.md]",
+        "references: [gist:Thing]",
+    ],
+)
+def test_each_spelling_check_refs_accepts_is_written(related, value):
+    applies(related, set_relation(value))
+
+
+def test_a_concept_with_a_fragment_in_its_own_id_is_found(related):
+    kk = kb_of(related)
+    b = kk / "x" / "b.md"
+    write(b, read(b).replace("title: B\n", "title: B\nid: https://acme.example/knowledge/vocab#B\n"))
+    applies(related, lines("ops:", "  - op: patch", "    path: x/a.md", "    set: {references: ['https://acme.example/knowledge/vocab#B']}", '    log: "**Changed**: a relation."'))
+
+
+def test_deleting_a_concept_a_domain_slot_names_is_refused(related):
+    """The report reads a whole IRI in a host's own slot as a relation, so the pen has to see it too."""
+    kk = kb_of(related)
+    a = kk / "x" / "a.md"
+    write(a, read(a).replace("dependsOn:\n  - https://acme.example/knowledge/x/b\n", "emitted_by: https://acme.example/knowledge/x/b\n"))
+    refuses(related, lines("ops:", "  - op: delete", "    path: x/b.md", '    log: "**Removal**: B."'), "a delete a domain slot still names", "emitted_by still names x/b.md")
+
+
+def test_the_sidecars_two_examples_can_be_deleted_together_or_in_the_order_they_relate(tmp_path):
+    """Bootstrap deletes them, and the second example relates to the first."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = "generated:\n  by: process:ktl-librarian\n  at: 2026-01-01T00:00:00Z\nstatus: draft\n"
+    write(kk / "s" / "a.md", f"---\ntype: Service\ntitle: A\n{stamp}---\n\n# A\n")
+    write(kk / "s" / "b.md", f"---\ntype: Service\ntitle: B\ndependsOn:\n  - s/a.md\n{stamp}---\n\n# B\n")
+    log = '    log: "**Removal**: an example."'
+    refuses(tmp_path, lines("ops:", "  - op: delete", "    path: s/a.md", log), "the first example alone", "still names s/a.md")
+    applies(tmp_path, lines("ops:", "  - op: delete", "    path: s/a.md", log, "  - op: delete", "    path: s/b.md", log))
+
+
+def test_the_pen_and_the_report_read_the_same_relation_fields():
+    pen = re.search(r"RELATION_FIELDS = \((.*?)\)", read(SCRIPTS / "knowledge-apply.py"), re.S).group(1)
+    report = re.search(r'split\("([A-Za-z ]+)", relnames', read(SCRIPTS / "knowledge-report.sh")).group(1)
+    assert sorted(re.findall(r'"(\w+)"', pen)) == sorted(report.split()), "the pen and knowledge-report.sh read different relation fields"
+    pen = re.search(r"NOT_LINKS = \{(.*?)\}", read(SCRIPTS / "knowledge-apply.py"), re.S).group(1)
+    report = re.search(r'split\("([a-z_ ]+)", notlink', read(SCRIPTS / "knowledge-report.sh")).group(1)
+    assert sorted(re.findall(r'"(\w+)"', pen)) == sorted(report.split()), "the pen and knowledge-report.sh leave out different fields"
+
+
+def test_a_relation_already_broken_does_not_stop_another_edit(related):
+    """The patch did not break it, and a person's old typo must not hold up an unrelated change."""
+    kk = kb_of(related)
+    a = kk / "x" / "a.md"
+    write(a, read(a).replace("x/b\n", "x/missing\n"))
+    applies(related, lines("ops:", "  - op: patch", "    path: x/a.md", "    set: {description: New words.}", '    log: "**Changed**: words."'))
+
+
+def test_deleting_a_concept_another_relates_to_is_refused_until_the_patch_drops_the_relation(related):
+    delete = ["  - op: delete", "    path: x/b.md", '    log: "**Removal**: B; its source is gone."']
+    refuses(related, lines("ops:", *delete), "a delete that leaves a relation behind", "still names x/b.md")
+    applies(related, lines("ops:", "  - op: patch", "    path: x/a.md", "    set: {dependsOn: []}", '    log: "**Changed**: drop it."', *delete))
+
+
 def test_delete_never_removes_a_concept_a_person_left_a_note_on(noted):
     refuses(
         noted,
