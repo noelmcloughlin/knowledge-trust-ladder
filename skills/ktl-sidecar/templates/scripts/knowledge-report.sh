@@ -17,6 +17,7 @@
 #   knowledge-report.sh changes            what the working tree does to the record, against HEAD
 #   knowledge-report.sh retrieval --prompt the index-only question an agent is asked
 #   knowledge-report.sh retrieval <reply>  that agent's reply, scored
+#   knowledge-report.sh isolated           the concepts no relation joins to the rest of the bundle
 #   knowledge-report.sh coverage [<dir>..] the tracked files no concept names: a count per folder, or the list under <dir>
 #   knowledge-report.sh coverage --why <path>..  which concept names each path, or a folder above it
 #
@@ -95,6 +96,21 @@
 # draft. The person looked again after it was asked. ktl-curator clears a
 # person's note on that person's word, and ktl-librarian withdraws its own
 # with the pen's `resolve`.
+#
+# `isolated` reads the bundle as a graph, the way its knowledge graph page
+# draws it: which concepts no relation joins to another, and which small
+# groups join only each other. Direction does not matter, a retired concept
+# joins nothing, and a relation to another bundle joins nothing here. An
+# Organization or a Person is left out, since only `author` and `publisher`
+# reach one, and neither is a relation. So is the sources map, which describes
+# the bundle and has no source to state a relation from. A concept that stands
+# apart is a gap to look at and not a defect, since its source may state no
+# relation, so it fails no check and makes no run busy.
+#
+# The oldest stamp comes first, and a patch or a recheck stamps a concept. So
+# one the librarian looked at and left goes to the back, and a run that handles
+# the ten at the top of the list reaches the rest in turn, however large the
+# bundle is. The work list shows those ten and says how many more wait.
 #
 # `quiet` says whether a scheduled run has anything to do, so the wrapper can
 # skip the agent in a week when nothing happened. Work waits when:
@@ -211,7 +227,7 @@ set -u
 export LC_ALL=C
 
 usage() {
-  echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | coverage [--strict] [<dir>...] | coverage --why <path>...]" >&2
+  echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | isolated | coverage [--strict] [<dir>...] | coverage --why <path>...]" >&2
   exit 2
 }
 
@@ -868,6 +884,7 @@ ranked() {  # queue | lists
     return ""
   }
   function also(s, t) { return s == "" ? t : s "; " t }
+  function group(x) { while (up[x] != x) { up[x] = up[up[x]]; x = up[x] } return x }
   function relies(n) { return n == 1 ? "1 other concept relies on this" : n " other concepts rely on this" }
   function before(a, b) {  # a ranks ahead of b in the queue
     if (grp[a] != grp[b]) return grp[a] < grp[b]
@@ -886,11 +903,38 @@ ranked() {  # queue | lists
       p = order[i]; $0 = row[p]
       if ($4 == "deprecated") continue
       live[p] = 1; gat[p] = $7; hat[p] = $8; conf[p] = ($9 > 0 && !edited())
+      up[p] = p; stamped[p] = ($7 > $11 ? $7 : $11)
     }
     for (k = 1; k <= nl; k++) {
       t = resolve(lt[k], lp[k]); if (t == "" || t == lp[k] || !(t in live) || !(lp[k] in live)) continue
+      up[group(t)] = group(lp[k])
       if (!((t, lp[k]) in pair)) { pair[t, lp[k]] = 1; relied[t]++ }
       if (lf[k] == "derivedFrom" && !((lp[k], t) in dpair)) { dpair[lp[k], t] = 1; nd++; dfrom[nd] = lp[k]; dto[nd] = t }
+    }
+    if (mode ~ /^isolated/) {
+      if (base == "") { print "Concepts no relation joins to another: not computed, since the root index.md carries no base_iri"; exit }
+      for (i = 1; i <= nc; i++) { p = order[i]; if (p in live) size[group(p)]++ }
+      top = ""
+      for (i = 1; i <= nc; i++) { p = order[i]; if (!(p in live)) continue; g = group(p); if (size[g] > 1 && (top == "" || size[g] > size[top])) top = g }
+      m = 0; seen = 0
+      for (i = 1; i <= nc; i++) {
+        p = order[i]; if (!(p in live)) continue
+        if (ctype[p] == "Organization" || ctype[p] == "Person" || p == "playbooks/knowledge-sources.md") continue
+        seen++; g = group(p)
+        if (size[g] == 1) lst[++m] = p
+        else if (g != top) { if (g in held) held[g] = held[g] ", " p; else { gorder[++ng] = g; held[g] = p } }
+      }
+      if (seen < 2) { m = 0; ng = 0 }
+      if (mode == "isolated-count") { print "Concepts no relation joins to another: " (m ? m : "none") "; groups joined only to each other: " (ng ? ng : "none"); exit }
+      for (i = 2; i <= m; i++) { p = lst[i]; j = i - 1; while (j > 0 && (stamped[p] < stamped[lst[j]] || (stamped[p] == stamped[lst[j]] && p < lst[j]))) { lst[j + 1] = lst[j]; j-- } lst[j + 1] = p }
+      cap = (mode == "isolated-worklist" ? 10 : m + ng)
+      for (i = 1; i <= m && i <= cap; i++) body = body "- " lst[i] " (" (stamped[lst[i]] == "" ? "no stamp" : "stamped " day(stamped[lst[i]])) ")\n"
+      if (m > cap) body = body "- and " (m - cap) " more, which `knowledge-report.sh isolated` lists\n"
+      section("Concepts no relation joins to another, the oldest stamp first", m, body)
+      for (i = 1; i <= ng && i <= cap; i++) gbody = gbody "- " held[gorder[i]] "\n"
+      if (ng > cap) gbody = gbody "- and " (ng - cap) " more, which `knowledge-report.sh isolated` lists\n"
+      section("Groups of concepts joined only to each other", ng, gbody)
+      exit
     }
     if (mode == "lists") {
       td = jdn(today)
@@ -1356,6 +1400,7 @@ case "$cmd" in
   health)   [ $# -eq 0 ] || usage; health ;;
   labels)   labels "$@" ;;
   coverage) coverage "$@"; exit $? ;;
+  isolated) [ $# -eq 0 ] || usage; ranked isolated ;;
   worklist)
     [ $# -eq 0 ] || usage
     declined_load
@@ -1369,6 +1414,7 @@ case "$cmd" in
     lists worklist
     echo "Reader feedback waiting: $(waiting_feedback)"
     repeats
+    ranked isolated-worklist
     ;;
   quiet)
     [ $# -eq 0 ] || usage
@@ -1392,6 +1438,7 @@ case "$cmd" in
     lists confirmed-moved
     echo ""
     ranked lists
+    ranked isolated-count
     echo ""
     unconfirmed_successors
     echo ""

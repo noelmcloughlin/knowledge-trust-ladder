@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-report.sh isolated` names the concepts no relation joins to the rest of the bundle**, and the small groups joined only to each other. The work list shows the ten oldest stamps, so a stamp moves a concept back and every one is reached in turn. They fail no check and make no run busy.
+
 ### Fixed
 
 - **The curator's queue counts what a domain schema's own slots point at.** `knowledge-report.sh` read only LOKF's fourteen relation fields, so a host with its own slots undercounted what relies on a concept. A whole IRI in any other field now counts when it names a concept.
