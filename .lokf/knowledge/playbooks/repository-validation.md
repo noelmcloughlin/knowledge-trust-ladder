@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-10-28T00:35:16Z"
+  at: "2026-11-02T13:29:19Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -33,6 +33,8 @@ sources:
   - resource: skills/ktl-sidecar/templates/knowledge-sync.manifest
   - resource: tests/test_docent_holdout.py
     id: test_docent_holdout.py
+  - resource: lychee.toml
+    id: lychee.toml
 verified:
   - by: process:ktl-librarian
     at: "2026-10-29T12:26:25Z"
@@ -126,12 +128,13 @@ Every subprocess runs under an isolated git config, so a global `commit.gpgsign=
 - `lint-workflows` runs `actionlint`, pointed by path at this repository's workflows and at the workflow templates that get copied into other repositories: the sidecar's `knowledge-librarian.yaml`, `knowledge-registrar.yaml`, `knowledge-release.yaml`, `knowledge-federation.yaml` (since 0.44.0), `knowledge-sync.yaml` and, since 0.56.1, `knowledge-ingest.yaml`, and ktl-website's `knowledge-website.yaml`. It would otherwise look only under `.github/workflows/`. It ignores the `copilot-requests` permission, which actionlint 1.7.12 predates. The job also checks that every `uses:` in this repository's workflows and those templates names a commit SHA or image digest rather than a floating tag or branch.
 - `smoke-test` installs the skills from the checkout into a throwaway consumer repository through `scripts/smoke-test-install.sh`. It checks that ktl-docent's two scripts come with the install. It also checks that, run from where the installer put them, they label a concept and record a gap in a reader's repository.
 - `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, twice. One build has a README, a docs page, a changelog, the schema's pages and the data, and since 0.56.0 the redirects a retired mkdocs site needs and a folder `DOCS.exclude` keeps off the site. The other has none of them. Since 0.57.0 the fuller build's home page offers the schema's pages as a button, and the other's offers none.[^smoke-test-website.sh] This repository's own site, which `knowledge-website.yaml` builds, proves the fuller configuration.
-- `validate-markdown` runs markdownlint, lychee, and codespell. Codespell skips `knowledge_bundle`, the link to `.lokf/knowledge`, which it already checks at its real path.
+- `validate-markdown` runs markdownlint, lychee, and codespell. Since 2026-10-30 a failed lychee pass waits a minute and checks every link again, since lychee itself retries a timeout or a 429 but never a failed connection, and only the second pass fails the job.[^lychee.toml] Codespell skips `knowledge_bundle`, the link to `.lokf/knowledge`, which it already checks at its real path.
 
 The schedule runs weekly because otherwise link rot, an upstream `gh skill` change or drift in the install path would show up only on the next pull request that happens to run.
 
 [^changelog.md]: CHANGELOG.md, 0.57.0 and 0.58.0
 [^test_docent_holdout.py]: tests/test_docent_holdout.py, the module's docstring
+[^lychee.toml]: lychee.toml, the comment above max_retries, and .github/workflows/validate.yml's Check links step
 [^test_federation.py]: tests/test_federation.py, the private-address and proxy tests
 [^test_ingest.py]: tests/test_ingest.py, the tests added in 0.57.0
 [^test_website_template.py]: tests/test_website_template.py, the home page's buttons

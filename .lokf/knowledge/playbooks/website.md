@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-11-02T13:29:19Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -46,7 +46,7 @@ The folder `website/` builds the project's site with Astro Starlight. The Knowle
 
 - Each release page links the repository, the docs and the bundle at the release's tag, so a reader can see them as they stood. The commit that promotes a release's changelog skips CI, so its page appears with the next build: the workflow's weekly run at the latest, or a run by hand.
 
-- The LinkML schema's pages, which `gen-doc` writes, become a page each under `schema/`, with their class diagrams drawn in the browser.
+- The LinkML schema's pages, which `gen-doc` writes, become a page each under `schema/`, with their class diagrams drawn in the browser. Failing a `gen-doc` recipe, the schema page instead shows the sidecar's own domain schema, built into `.lokf/docs/elements/` with `gen-doc --render-imports` in the sidecar's environment.
 
 - SQLite databases, when `site.config.mjs` names their folder, are served under `browse/` with a page that opens each in Datasette Lite. Neither the data's folder nor the schema's is committed, so the sync runs the command that builds each when it is missing.
 
@@ -79,7 +79,7 @@ Both commands run `npm run sync` first. The sync runs `lokf export` from the sid
 
 # How it is published
 
-`knowledge-website.yaml` runs on a push and on a pull request that touch `website/`, `.lokf/`, `knowledge_bundle/`, `README.md`, `docs/`, `.assets/`, `CHANGELOG.md`, `llms.txt`, `.linkml/`, a justfile, a `pyproject.toml`, a `uv.lock` or the workflow itself. It also runs every Monday at 05:23 UTC, and it can be run by hand. A push builds on the default branch only. A pull request gets the same build, link check included, and no deployment.
+`knowledge-website.yaml` runs on a push and on a pull request that touch `website/`, `.lokf/`, `knowledge_bundle/`, `README.md`, `docs/`, `.assets/`, `CHANGELOG.md`, `llms.txt`, `.linkml/`, a schema project's `src/<package>/schema/`, a justfile, a `pyproject.toml`, a `uv.lock` or the workflow itself. It also runs every Monday at 05:23 UTC, and it can be run by hand. A push builds on the default branch only. A pull request gets the same build, link check included, and no deployment.
 
 The workflow has two jobs, for least privilege. `build` installs the lokf toolkit the sidecar pins with `uv sync --locked`, runs the `just` that `.lokf/uv.lock` pins where it pins one, with that command alone linked onto PATH (0.56.1), and runs npm's and the toolkit's packages, and the repository's own site code, under a read-only token. It installs the site's packages with `npm ci --ignore-scripts` and builds with Astro's telemetry off. `deploy` runs harden-runner and GitHub's own deploy-pages action and nothing else, and holds the Pages scopes. It runs for the default branch only, and the scheduled run deploys too, once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Before setting the variable, a maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.
 

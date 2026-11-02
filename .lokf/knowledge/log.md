@@ -1,5 +1,15 @@
 # Change Log
 
+## 2026-11-02
+
+* **Changed**: The ingest's command entry runs unchecked outside a git work tree, recording `command_unchecked` in its lock record, and is refused in a repository git cannot read, as `docs/threat-model.md` has said since #309. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: The preflight's new `scripts` line, which checks that the pen and the conventions script can install their own Python packages, joins the lines ktl-sidecar-skill already named, as #308 added it.
+* **Changed**: ktl-website-skill now says the Step 0 preflight falls back to the sidecar's own domain schema when no `gen-doc` recipe builds one, as #307 added, and warns when its folder is not gitignored.
+* **Changed**: Website says the schema page falls back to the sidecar's domain schema with no `gen-doc` recipe (#307), and that a schema project's own `src/<package>/schema/` now triggers a rebuild too (#311). Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Since #310, a failed lychee pass is checked again after a minute before the job fails, since lychee itself never retries a failed connection; repository-validation now says so and cites lychee.toml.
+* **Changed**: Since 0.60.1 (#312) every job of the registrar, librarian, release and website workflows has a time limit instead of GitHub's own six hours; the security policy's surface table now says so. Edited since a person confirmed it; the label says so until the curator looks again.
+* **From reader feedback**: Releasing now says the released schema asset is identified by the release tag and the schema's own file name, never by a `version:` field inside the schema, since knowledge-release.yaml's packing step never reads or writes one.
+
 ## 2026-10-29
 
 * **Changed**: ktl-curator, released to the librarian by the person who wrote its served-member sentences, gives the digest commands as `references/domain-bundle.md` does, `shasum -a 256` on macOS, and says the curator sets `sensitivity` before confirming. Edited since a person confirmed it; the label says so until the curator looks again.

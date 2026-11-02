@@ -29,7 +29,7 @@ sources:
   - resource: skills/ktl-curator/references/queries.md
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-20T23:23:33Z"
+    at: "2026-11-02T13:29:19Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:13:17Z"
 status: draft

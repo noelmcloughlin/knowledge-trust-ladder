@@ -31,7 +31,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T01:31:51Z"
+  at: "2026-11-02T13:29:19Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -48,7 +48,7 @@ Three files are the repository's own once written, and a repair never replaces t
 
 It has eight steps, 0 to 6 with a 5b:
 
-- **Step 0.** Run `scripts/website-preflight.sh`, which runs the sidecar's own preflight inside it and says whether another publisher already holds the repository's Pages. It also says whether a `justfile` has the `gen-doc` and `build-browse` recipes that write the schema's pages and the data, and whether `just` is installed to run them. Its `mkdocs` line says whether `mkdocs.yml` is at the root: an mkdocs site, which the knowledge site replaces (0.56.0). The skill then reads `mkdocs.yml` once, by eye, to find a `REDIRECTS` entry for each page its `nav` names, the two entries that follow the schema's `/elements/` addresses, and the folders `exclude_docs` names for `DOCS.exclude`. Resolve four placeholders: `<REPO_OWNER>` and `<REPO_NAME>` from the origin remote, never from a person's name, and `<PROJ_NAME>` and `<PROJ_DESC>`, the site's title and description.
+- **Step 0.** Run `scripts/website-preflight.sh`, which runs the sidecar's own preflight inside it and says whether another publisher already holds the repository's Pages. It also says whether a `justfile` has the `gen-doc` and `build-browse` recipes that write the schema's pages and the data, and whether `just` is installed to run them. Failing a `gen-doc` recipe, it falls back to the sidecar's own domain schema on `.lokf/justfile`'s `schema :=` line, built into `.lokf/docs/elements/`, and warns when git does not ignore that folder. Its `mkdocs` line says whether `mkdocs.yml` is at the root: an mkdocs site, which the knowledge site replaces (0.56.0). The skill then reads `mkdocs.yml` once, by eye, to find a `REDIRECTS` entry for each page its `nav` names, the two entries that follow the schema's `/elements/` addresses, and the folders `exclude_docs` names for `DOCS.exclude`. Resolve four placeholders: `<REPO_OWNER>` and `<REPO_NAME>` from the origin remote, never from a person's name, and `<PROJ_NAME>` and `<PROJ_DESC>`, the site's title and description.
 - **Step 1.** Copy `templates/website` to `website/`, and substitute the placeholders in `site.config.mjs` and `README.md` as literal text through Python, never sed. Then set the logo, the branch, a custom domain or a user site's empty `BASE`, and leave the `"auto"` options alone unless the person wants a part left out or placed. When the site replaces an mkdocs site, write the `REDIRECTS` and `DOCS.exclude` entries Step 0 read. Set `BROWSE` only when the person wants the data published, since its databases become public.
 - **Step 2.** Add an exclusion for the generated folders, `website/(dist|public|src/content|src/generated|node_modules)/`, to each Markdown lint, link check or spell check configuration, and change nothing else at the root.
 - **Step 3.** Verify that no placeholder survives, and print what the sync will read with `node website/scripts/config.mjs`.
