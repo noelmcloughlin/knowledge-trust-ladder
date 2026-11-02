@@ -13,7 +13,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | Reopened | `status: draft` on a concept with a `human:` `verified` event: the pen's `question` and the curator's *send back* set it. The label gives the earliest open question asked on or after the confirmation's day, its asker, and how many wait. The confirmation still counts as one, so the rung stays | `status`, `verified`, `## Open questions` | same |
 | Retired | `status: deprecated`; names its successor when the newest `**Deprecation**` line in `log.md` links one | `status`, `log.md` | same |
 | Edited since a person last confirmed it | `generated.at` later than the latest `human:` `verified[].at` | `generated`, `verified` | `prov:wasGeneratedBy` -> `prov:endedAtTime` |
-| A source moved since the confirmation | the source's last commit comes after the commit that recorded the latest `human:` event, or the source carries an uncommitted edit and the concept does not | `resource`, `sources[].resource` + git history | - |
+| A source moved since the confirmation | the source's last commit comes after the commit that recorded the latest `human:` event, or the source carries an uncommitted edit and the concept does not. The concept's own body counts too, as *its own body*, when it says something other than the commit of that event held | `resource`, `sources[].resource` + git history | - |
 | Past its review date | `stale_after` <= today | `stale_after` | `schema:expires` |
 | A reader disputed this | a waiting `**Disagreement**` in `.lokf/feedback.md` names the concept right after the kind; the newest day is shown. Never on a retired concept | `.lokf/feedback.md` | - |
 | Due soon | today < `stale_after` <= today + 30 days | `stale_after` | same |

@@ -17,6 +17,7 @@ The script changes nothing. You reword the text, and you can slip. Each item bel
 - **HTML across a blank line.** It reads the text of `<code>` or `<pre>` as code only within one block. After a blank line it reads the rest as prose.
 - **Code in a script.** In a script it reads the comments and docstrings. It never reads code, a string or a comment at the end of a line of code.
 - **Line endings.** It reads files as CI does, with CRLF as LF, so a change of line endings alone is no finding. A byte order mark at the start goes the same way.
+- **A rewording committed with the stamp.** The librarian's work list names a body that changed after the commit that recorded its stamp. A rewording in that same commit goes unseen, and so does one squashed into it, so keep the rewording in a pull request of its own.
 - **A rewording already committed.** `--against` knows only the revision you name. A rewording committed before the check passes against `HEAD`, so name the revision from before it.
 - **A retelling's sense.** A retelling's number passes if the adult text holds it anywhere, and a claim turned upside down passes.
 
