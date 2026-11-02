@@ -4,19 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **`knowledge-report.sh isolated` names the concepts no relation joins to the rest of the bundle**, and the small groups joined only to each other. The work list shows ten, which take turns by month with nothing stamped. They fail no check and make no run busy.
-
-### Changed
-
-- **The librarian writes each relation a source states.** Rule 4, bootstrap and the refresh now ask for them, and forbid a relation added only to join two concepts. The refresh's file sweep no longer calls unnamed files orphans.
-
-### Fixed
-
-- **The pen refuses a relation to nothing.** A relation a patch adds must name a concept of the bundle, and a `delete` must not leave a relation pointing at the deleted concept. Only `--check-refs` caught either, after the patch was written.
-- **The curator's queue counts what a domain schema's own slots point at.** `knowledge-report.sh` read only LOKF's fourteen relation fields, so a host with its own slots undercounted what relies on a concept. A whole IRI in any other field now counts when it names a concept. So does a target written as `/x/y` or as an IRI ending in `.md`, which lokf accepts.
-
 ## [0.61.0] - 2026-11-02
 
 ### Added
@@ -24,6 +11,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The gate page lists what the gates cannot see.** *What the gates cannot see* in `references/gate.md` says what a pass does not prove, and what is refused although nothing is wrong.
 - **`ktl-prose` lists what its check cannot see.** `references/limits.md` says what a pass does not prove, and what is refused although nothing is wrong.
 - **The work list sends a body that changed after its stamp to the librarian.** A ktl-prose pass leaves the stamp alone, so a rewording that reversed a claim stayed labelled as checked, and nothing compared it with its source again. It now counts as a moved source, for `quiet` and for a person's confirmation too. A host's first run after this release checks each body reworded so far.
+- **`knowledge-report.sh isolated` names the concepts no relation joins to the rest of the bundle**, and the small groups joined only to each other. The work list shows ten, which take turns by month with nothing stamped. They fail no check and make no run busy.
+
+### Changed
+
+- **The librarian writes each relation a source states.** Rule 4, bootstrap and the refresh now ask for them, and forbid a relation added only to join two concepts. The refresh's file sweep no longer calls unnamed files orphans.
 
 ### Fixed
 
@@ -41,6 +33,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The prose check stops a sentence that turned over.** A word given way to its opposite, such as `enabled` to `disabled`, or a negative gained or lost with every other word in place, passed in silence. Softer cases and a sentence that went get a note on their line.
 - **The prose check and its skill stop claiming what they cannot know.** The `OK` line said "only the wording differs", the log line "no fact changed", and the hand-off that the librarian's next run checks a reworded body, which it does only once a source moves.
 - **The prose check stops refusing and crashing on ordinary input.** A year that opens a wrapped line, a footnote's wording, spaces at a list item's end and a short table rule are no longer refused, and a letter that case-folds, a null in a link or no git no longer stops it with a traceback.
+- **The pen refuses a relation to nothing.** A relation a patch adds must name a concept of the bundle, and a `delete` must not leave a relation pointing at the deleted concept. Only `--check-refs` caught either, after the patch was written.
+- **The curator's queue counts what a domain schema's own slots point at.** `knowledge-report.sh` read only LOKF's fourteen relation fields, so a host with its own slots undercounted what relies on a concept. A whole IRI in any other field now counts when it names a concept. So does a target written as `/x/y` or as an IRI ending in `.md`, which lokf accepts.
 
 ### Security
 
