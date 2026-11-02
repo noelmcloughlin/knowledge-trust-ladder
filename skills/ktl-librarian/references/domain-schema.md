@@ -6,6 +6,8 @@ LOKF's core vocabulary is small: its classes and its typed relations. Rule 7 kee
 
 ## What the validator expects
 
+Write a domain slot that holds a concept as the concept's whole IRI. `knowledge-report.sh` needs no schema to read it as a relation, and it cannot tell a prefixed name or a relative path from a plain value.
+
 `lokf validate` checks a bundle against the classes and slots a schema declares, and nothing else. Two consequences shape the recipe:
 
 - **Every class is closed.** A concept fails its class on any key the class does not declare, so a built-in class plus one key of your own is not valid. Subclass it and declare the key.

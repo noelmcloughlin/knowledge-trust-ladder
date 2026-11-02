@@ -60,6 +60,10 @@ Typed relations are LOKF's core upgrade over plain OKF. Each maps to a fixed RDF
 
 For a predicate outside this set, use the generic `relations` list of reified objects: a `predicate` from the `RelationType` vocabulary, such as `joinsWith`, and a `target`. Markdown links in the body stay valid and welcome beside the typed fields.
 
+**A relation is a fact, so write each one a source states.** The schema makes these fields optional, but a concept with no relation is one the graph cannot reach, and `knowledge-report.sh isolated` names it. Read the file the concept describes: a workflow names what it runs, builds and publishes, a policy names what it covers, and a playbook names the schema or script it drives. Write each such link in the field that says it.
+
+Never add a relation only to join two concepts. That rules out a hub concept that everything is part of, and a `relatedTo` that fills a gap. A concept whose source states no relation stays apart: `recheck` it, which moves it to the back of the list. A relation can be written from either end. When a person confirmed a concept, write the relation on the other concept if its field reads true that way, since a patch turns a confirmation into *edited since*.
+
 ## Rule 5: core fields
 
 `title` maps to `schema:name`, `description` to `schema:description`, `resource` to `schema:url`, `tags` to `schema:keywords`, `timestamp` to `schema:dateModified`, and the body, the Markdown after the frontmatter, to `schema:text`. The optional `id`, `created`, `version`, `license`, `author`, `genre` (`schema:genre`, Rule 3) and `citations` complete the set. Two JSON-LD aliases let plain OKF frontmatter behave as Linked Data: `type` becomes `@type`, the concept's class, and `id` becomes `@id`, the subject IRI.

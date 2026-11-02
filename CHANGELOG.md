@@ -8,6 +8,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **`knowledge-report.sh isolated` names the concepts no relation joins to the rest of the bundle**, and the small groups joined only to each other. The work list shows the ten oldest stamps, so a stamp moves a concept back and every one is reached in turn. They fail no check and make no run busy.
 
+### Changed
+
+- **The librarian writes each relation a source states.** Rule 4, bootstrap and the refresh now ask for them and forbid a relation added only to join two concepts, since nothing asked before and 29% of the concepts in the 26 bundles checked had no relation at all. The refresh's file sweep no longer calls unnamed files orphans.
+
 ### Fixed
 
 - **The pen refuses a relation to nothing.** A relation a patch adds must name a concept of the bundle, and a `delete` must not leave a relation pointing at the deleted concept. Only `--check-refs` caught either, after the patch was written.
