@@ -4,16 +4,13 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **The work list sends a body that changed after its stamp to the librarian.** A ktl-prose pass leaves the stamp alone, so a rewording that reversed a claim stayed labelled as checked, and nothing compared it with its source again. It now counts as a moved source, for `quiet` and for a person's confirmation too. A host's first run after this release checks each body reworded so far.
-
-## [0.60.1] - 2026-11-02
+## [0.61.0] - 2026-11-02
 
 ### Added
 
 - **The gate page lists what the gates cannot see.** *What the gates cannot see* in `references/gate.md` says what a pass does not prove, and what is refused although nothing is wrong.
 - **`ktl-prose` lists what its check cannot see.** `references/limits.md` says what a pass does not prove, and what is refused although nothing is wrong.
+- **The work list sends a body that changed after its stamp to the librarian.** A ktl-prose pass leaves the stamp alone, so a rewording that reversed a claim stayed labelled as checked, and nothing compared it with its source again. It now counts as a moved source, for `quiet` and for a person's confirmation too. A host's first run after this release checks each body reworded so far.
 
 ### Fixed
 
