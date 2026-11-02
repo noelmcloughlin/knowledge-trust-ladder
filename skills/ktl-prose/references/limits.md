@@ -2,14 +2,16 @@
 
 A pass from `prose-check.py` says that what the script reads came through. It does not say that the meaning held, which only a reader can check. This page lists what the script cannot see, so that you read for it and say so in the hand-off.
 
-## What can still change unseen
+## Mistakes it can miss
 
-- **A reversal in other words.** The script compares each changed sentence with the new sentence closest to it. It stops when a word gives way to its opposite, as `enabled` to `disabled` or `at least` to `at most`, and when a negative comes or goes while every other word stays. Its list of opposites is fixed, and most of the sentence's words must stay. So `enabled` can become `turned off`, `at least 2` can become `2 or fewer`, and a sentence reworded throughout can say the reverse and pass.
+The script changes nothing. You reword the text, and you can slip. Each item below is a slip that the script would pass, so read for it.
+
+- **A reversal in other words.** The script compares each changed sentence with the new sentence closest to it. It stops when a word gives way to its opposite, as `enabled` to `disabled` or `at least` to `at most`, and when a negative comes or goes while every other word stays. Its list of opposites is fixed, and most of the sentence's words must stay. So it misses a slip in other words. `turned on` is a fair rewording of `enabled` and `turned off` is a mistake, but the script passes both, because the only opposite it holds for `enabled` is `disabled`. It also passes `2 or fewer` written for `at least 2`, and a sentence reworded throughout that now says the reverse.
 - **What gets a note at most.** A `must`, a `not` or a number written as a word that came or went. A sentence that has few of its words left. An opposite or a negative where the other words changed or moved. A note never stops the script, so say in the hand-off what you decided about each.
-- **A sentence that went.** One of fewer than three plain words can go with no note, and so can one whose words stand elsewhere on the page.
+- **A sentence that went.** A dropped sentence of fewer than three plain words gets no note, and nor does one whose words stand elsewhere on the page.
 - **A swap between claims.** The script counts numbers, links, tags and keywords across the page. So two numbers swapped between two sentences pass, and so do two link targets swapped between two links.
 - **Order and nesting.** It does not see the order of steps, which item a sentence sits under, or which cell of a table holds a value. A dropped list item or table cell is a finding, and a moved one is not.
-- **The noun after a number.** `20 files` can become `20 folders`. Only percent and the units of size, time, frequency, length and weight count as part of a number.
+- **The noun after a number.** `20 folders` written for `20 files` passes. Only percent and the units of size, time, frequency, length and weight count as part of a number.
 - **Wording the script does not hold still.** That is a table cell's words, single-quoted text, a blockquote, the type of a callout, and a letter swapped for one that looks the same.
 - **Whether a link works.** It compares each target as written and opens none. It tracks `[text][label]` and each definition, and it does not see a `[label]` used alone.
 - **HTML across a blank line.** It reads the text of `<code>` or `<pre>` as code only within one block. After a blank line it reads the rest as prose.
