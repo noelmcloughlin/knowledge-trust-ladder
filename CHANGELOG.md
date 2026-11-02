@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`ktl-prose` lists what its check cannot see.** `references/limits.md` says what a pass does not prove, and what is refused although nothing is wrong.
+
+### Fixed
+
+- **The prose check reads a concept whose `exclusions` entries name who decided.** It counted their `by` as events it could not read, so it skipped a valid lokf 0.9.0 concept as unreadable.
+- **The prose check no longer rewords a confirmation it cannot see.** Its reader refuses what the gates refuse. A person's `revised` and any `refuted` event now leave a concept alone, each under its own name, and a quoted `status: deprecated` reads as retired.
+- **The prose check holds more of what a rewording must keep.** It now sees the unit, sign, comparison or power on a number, indented code, a fence in a list item, reference labels, footnotes, Setext headings, whole HTML tags and comments, images, more bare addresses, table cells, ticked boxes and the log's earlier lines. A retelling adds nothing in its title, description, open questions or related region either.
+- **The prose check stops a sentence that turned over.** A word given way to its opposite, such as `enabled` to `disabled`, or a negative gained or lost with every other word in place, passed in silence. Softer cases and a sentence that went get a note on their line.
+- **The prose check and its skill stop claiming what they cannot know.** The `OK` line said "only the wording differs", the log line "no fact changed", and the hand-off that the librarian's next run checks a reworded body, which it does only once a source moves.
+- **The prose check stops refusing and crashing on ordinary input.** A year that opens a wrapped line, a footnote's wording, spaces at a list item's end and a short table rule are no longer refused, and a letter that case-folds, a null in a link or no git no longer stops it with a traceback.
+
 ## [0.60.1] - 2026-11-02
 
 ### Added

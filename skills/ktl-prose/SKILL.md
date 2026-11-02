@@ -17,7 +17,7 @@ A museum edits its labels before the exhibition opens. This skill does that for 
 
 The **librarian** derives a concept from its source. This skill rewords the body. Then a **curator**, who is always a person, confirms the concept against the source. The order matters, because this skill never touches a concept once a person has vouched for it.
 
-It is a copy editor, not an author. The librarian stays the maker of every concept it derived, so `generated` keeps naming it and keeps its `revision`. The bundle's `log.md` and git record the rewording.
+It is a copy editor, not an author. The librarian stays the maker of every concept it derived, so `generated` keeps naming it and keeps its `revision`.
 
 ## Younger readers
 
@@ -43,14 +43,16 @@ A text for a younger reader is a retelling, not a rewording: it leaves detail ou
 
 ## Which concepts you may reword
 
-Apply the first row that fits. Naming a concept unlocks only the sixth row.
+Apply the first row that fits. Naming a concept unlocks only the eighth row.
 
 | The file | What to do |
 | --- | --- |
 | `index.md`, `log.md`, `diataxis.md` | Never reword them. `log.md` gains one line in Step 4. |
 | A concept whose `generated.by` starts `human:` | Never reword it. List it as written by a person. This is ktl-librarian's own rule. |
+| A concept with a `human:` event under `revised` | Never reword it. List it as edited by a person. |
 | A concept with a `human:` event under `verified` | Never reword it. List it as confirmed by a person, with what the check found, for the curator. |
 | A concept with `status: deprecated` | Never reword it. |
+| A concept with a `refuted` event | Never reword it. List it as refuted. |
 | A concept whose frontmatter the script cannot read | Skip it and say so. |
 | A concept with no `generated.by` | Skip it and list it, because nobody recorded who wrote it. Reword it only when the person names it. |
 | Any other concept | Reword the body. |
@@ -80,7 +82,7 @@ bash scripts/knowledge-conventions.sh     # the bundle keeps its conventions bef
 
 No `.lokf/knowledge/index.md`? Then there is no bundle to work on. Say so, mention that ktl-sidecar can create one, and work only on a file the person names.
 
-The check script is `scripts/prose-check.py` in this skill's directory, which the commands below write as `<skill>`. Run it with `uv run`, as they do, or with a `python3` of 3.9 or later, never bare `python`. An older Python stops at the script's `__future__` line.
+The check script is `scripts/prose-check.py` in this skill's directory, which the commands below write as `<skill>`. Run it with `uv run`, as they do, or with a `python3` of 3.9 or later, never bare `python`.
 
 ## Step 1: report (always, read-only)
 
@@ -104,7 +106,7 @@ Then print the report, and keep it to one screen:
 
 ```text
 Plain prose: <bundle title>, <YYYY-MM-DD>
-To reword: <n> concepts. Left alone: <a> confirmed by a person, <b> written by a person, <c> retired, <d> unreadable, <e> with no record of who wrote them.
+To reword: <n> concepts. Left alone: <a> confirmed by a person, <b> written or edited by a person, <c> retired or refuted, <d> unreadable, <e> with no record of who wrote them.
 
 <path>: <n> dashes, <n> sentences over 40 words, <n> paragraphs over 150 words, <n> listed words. <what a reader saw, in one line>
 (one line per concept to reword)
@@ -135,7 +137,7 @@ Take the concepts the person asked for: every one the report marks `rewrite`, or
 3. **Change the wording only.** Add nothing. Remove nothing but words that carry no fact. Lay out what you reword the way the file's project does: in the bundle, one line for each paragraph and each list item, as ktl-librarian writes it. *Line breaks in the source*, in [references/rules.md](references/rules.md), gives the layout outside the bundle and the reasons.
 4. **Leave what you cannot fix.** A sentence you cannot parse, a vague quantity or a claim that looks wrong goes in the hand-off, unchanged. A wrong fact is ktl-librarian's to correct from the source.
 
-## Step 3: prove that only the wording changed
+## Step 3: check what a script can
 
 From the repository root:
 
@@ -144,9 +146,9 @@ uv run <skill>/scripts/prose-check.py --against HEAD <files>     # a file git al
 uv run <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied in Step 2
 ```
 
-A **finding** names something other than wording that differs: a number, a link, a code span, an inline HTML tag, a quotation, or a fenced block. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a character no reader sees that the rewording added. Undo what it names. Never type the escape for such a character into a tool call: the call may decode it into the character itself.
+A **finding** names something other than wording that differs: a number or its unit, a link, a code span, an HTML tag, a quotation, a code block, or a list or table cut short. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a new character no reader sees. It also stops a sentence that otherwise stayed and turned over: a word now its opposite, or a negative gained or lost. Undo what it names.
 
-A **note** asks you to look again. It names a number, a day or a month written as a word, a `must` or a `not` that came or went, or a text that grew or lost more than a fifth of its words. When nothing but the wording differs, the `OK` line gives the words before and after.
+A **note** asks you to look again: a number, day or month written as a word, or a `must` or `not` that came or went. So does a sentence with few of its words left, or a text that grew or lost over a fifth of its words. Read [references/limits.md](references/limits.md), then read each changed sentence beside the old one.
 
 Then run what every change to the bundle runs. From `.lokf/`:
 
@@ -155,14 +157,14 @@ bash scripts/knowledge-conventions.sh
 just lokf-validate
 ```
 
-Run the host's Markdown lint too, where it has one. With neither uv nor a python3 of 3.9 or later, the check cannot run. Say so in the hand-off, and do not call the rewording proven.
+Run the host's Markdown lint too, where it has one. With neither uv nor that python3, the check cannot run: say so, and do not call the rewording proven.
 
 ## Step 4: log the pass
 
-Add one bullet under today's heading in `.lokf/knowledge/log.md`. Take the day from `date -u +%Y-%m-%d`. Reuse today's `## YYYY-MM-DD` heading if it exists, and create it at the top only if it does not. ktl-librarian's rule holds here too: one bare date per day, newest first.
+Add one bullet under today's heading in `.lokf/knowledge/log.md`. Take the day from `date -u +%Y-%m-%d`. Reuse today's `## YYYY-MM-DD` heading, or create it at the top: one bare date per day, newest first.
 
 ```markdown
-* **Prose**: reworded 12 concept bodies in plain English. No fact, link, number or frontmatter changed.
+* **Prose**: reworded 12 concept bodies in plain English. No link, number or frontmatter changed.
 ```
 
 Write no line for a run that changed nothing.
@@ -171,11 +173,12 @@ Write no line for a run that changed nothing.
 
 Hand the person a change scoped to `.lokf/`: a pull request where git tracks `.lokf/`, and the list of changed files where it does not. Give them:
 
-- the counts before and after, and the words before and after as the script's `OK` line gives them;
+- the counts and the words before and after, from the script's `OK` line;
 - each sentence you left alone, and why;
 - each concept you skipped, with its reason;
-- what no script proved: that the meaning held. The diff is theirs to read, and each concept stays unconfirmed until a curator confirms it against its source;
-- that a concept *checked by automation only* was checked before the rewording, and that the librarian's next run checks the new body against its source.
+- each note the script gave, and what you decided;
+- what no script proved: that the meaning held, and what [references/limits.md](references/limits.md) lists. Each concept stays unconfirmed until a curator confirms it against its source;
+- that a concept *checked by automation only* was checked before the rewording, and nothing rechecks it until its source moves.
 
 End with a short **For the CURATOR** section, as ktl-librarian does. Say which reworded concepts are ready to confirm, and name the **ktl-curator** skill. Then list each confirmed concept that reads badly, with the one route open to it. The person sends it back through the curator (*Wrong - send back*), ktl-librarian rewrites it from its source, and the person confirms the new text.
 

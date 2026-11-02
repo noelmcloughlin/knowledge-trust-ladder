@@ -13,6 +13,7 @@ pass the style rules they state.
 from __future__ import annotations
 
 import sys
+import time
 
 import pytest
 
@@ -233,7 +234,7 @@ STYLE = [
     (0, "OK", "laying a wrapped paragraph out on one line changes no fact", ["--before", "w-old.md", "w-flat.md"]),
     (
         0,
-        "OK: only the wording differs (1 file): 15 words, and the earlier text had 15",
+        "OK: nothing the script reads differs (1 file): 15 words, and the earlier text had 15",
         "a comparison that passes says how many words each version holds",
         ["--before", "p-old.md", "p-new.md"],
     ),
@@ -327,6 +328,40 @@ def test_style_and_comparison(pc, status, text, what, args):
     expect(status, text, what, *[pc / a if a.endswith(".md") else a for a in args])
 
 
+TURNED = [
+    (1, 'opposite: "enabled" became "disabled"', "Pushes to main are enabled by the ruleset.", "Pushes to main are disabled by the ruleset."),
+    (1, 'opposite: "at least" became "at most"', "A pull request needs at least two reviewers.", "A pull request needs at most two reviewers."),
+    (1, 'opposite: "must" became "may"', "A person must sign the commit.", "A person may sign the commit."),
+    (1, 'opposite: "after" became "before"', "The sync runs after the release.", "The sync runs before the release."),
+    (1, 'opposite: "required" became "optional"', "The input is required.", "The input is optional."),
+    (1, "negative: a sentence that otherwise stayed lost its negative", "The agent does not push the tag.", "The agent does push the tag."),
+    (1, "negative: a sentence that otherwise stayed gained a negative", "The agent pushes the tag.", "The agent never pushes the tag."),
+    (0, 'new.md:1: opposite: "after" became "before"', "Run lint after the build step.", "Run the build step before lint."),
+    (0, "new.md:1: negative: a sentence that otherwise stayed lost its negative", "The gate does not read the old file.", "The gate skips the old file."),
+    (0, "sentence-gone: few words of this sentence came through", "The gate reads commits. A person must sign each confirmation.", "The gate reads commits."),
+    (0, "OK", "It does not change the file.", "It changes nothing in the file."),
+    (0, "OK", "A run with no token stops.", "A run without a token stops."),
+    (0, "OK", "It can't read the file.", "It cannot read the file."),
+    (0, "OK", "The gate reads every commit. It runs on merge.", "The gate runs on merge. It reads every commit."),
+]
+
+
+@pytest.mark.parametrize(("status", "text", "old", "new"), TURNED, ids=[f"{o} -> {n}" for _, _, o, n in TURNED])
+def test_a_sentence_that_turned_over(tmp_path, status, text, old, new):
+    """Nothing but the wording differs, so only comparing sentence with sentence can show that the claim reversed."""
+    write(tmp_path / "old.md", f"{old}\n")
+    write(tmp_path / "new.md", f"{new}\n")
+    expect(status, text, f"{old} -> {new}", "--before", tmp_path / "old.md", tmp_path / "new.md")
+
+
+def test_the_ok_line_claims_only_what_the_script_read(tmp_path):
+    """It once said that only the wording differs, of a text whose meaning it cannot read."""
+    write(tmp_path / "old.md", "The gate reads every commit.\n")
+    write(tmp_path / "new.md", "Every commit is read by the gate.\n")
+    result = prose("--before", tmp_path / "old.md", tmp_path / "new.md")
+    assert result.rc == 0 and "nothing the script reads differs" in result.out and "only the wording" not in result.out, result.out
+
+
 # --before on concepts: a body may change only where no person vouched for
 # it, and the frontmatter never. The confirmation is staged in each form the
 # provenance gates read, and in one they cannot, which must fail closed.
@@ -373,6 +408,174 @@ CONCEPTS = [
         "unreadable:",
         "a reworded concept is refused when its confirmation is spelt so the gates cannot read it",
         LIB + 'verified:\n  - by: !!str human:ada\n    at: "2026-09-08T14:00:00Z"\n',
+        None,
+    ),
+    (
+        0,
+        "OK",
+        "a reworded concept passes when an exclusions entry says who left a material out",
+        LIB + "exclusions:\n  - resource: a\n    reason: b\n    by: process:ktl-librarian\n",
+        None,
+    ),
+    (
+        0,
+        "OK",
+        "a reworded concept passes when an exclusions list at column zero is followed by another key",
+        LIB + "exclusions:\n- by: human:ada\n  resource: a\n  reason: b\nstatus: draft\n",
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused when a by below the exclusions list is no event the script can read",
+        LIB + "exclusions:\n  - resource: a\n    reason: b\nother:\n  by: human:ada\n",
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused under a confirmation under an alias of another event",
+        LIB + 'revised: &who { by: human:ada, at: "2026-09-08T14:00:00Z" }\nverified:\n  - *who\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused under a confirmation that merges in another event",
+        LIB + 'revised: &who { by: human:ada, at: "2026-09-08T14:00:00Z" }\nverified:\n  - <<: *who\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused under a confirmation under a quoted key",
+        LIB + '"verified": [{ at: "2026-09-08T14:00:00Z", by: human:ada }]\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused under a confirmation under a quoted key in a block list",
+        LIB + '"verified":\n  - { at: "2026-09-08T14:00:00Z", by: human:ada }\n',
+        None,
+    ),
+    (
+        1,
+        "confirmed:",
+        "a reworded concept is refused under a confirmation in a flow sequence across lines, with by second",
+        LIB + 'verified: [\n  { at: "2026-09-08T14:00:00Z", by: human:ada }\n]\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused under a confirmation under an explicit key",
+        LIB + '? verified\n: - by: human:ada\n    at: "2026-09-08T14:00:00Z"\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused under a confirmation whose by key is escaped",
+        LIB + 'verified:\n  - "b\\x79": human:ada\n    at: "2026-09-08T14:00:00Z"\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused when an escaped actor would read as a person",
+        LIB + 'verified:\n  - by: "\\x68uman:ada/x"\n    at: "2026-09-08T14:00:00Z"\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused under a merge key at the top level",
+        LIB + '<<: { verified: [{ at: "2026-09-08T14:00:00Z", by: human:ada }] }\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused when a comment hides the bracket a reader looks for",
+        LIB + 'verified: [ # ]\n  { by: human:ada, at: "2026-09-08T14:00:00Z" }\n]\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused when a line break no reader sees holds an event",
+        LIB + 'note: x' + chr(0x2028) + 'verified:' + chr(0x2028) + '  - by: human:ada\n',
+        None,
+    ),
+    (
+        1,
+        "confirmed:",
+        "a reworded concept is refused under a confirmation in an item whose dash stands alone",
+        LIB + 'verified:\n  -\n    by: human:ada\n    at: "2026-09-08T14:00:00Z"\n  -\n    by: process:x\n    at: "2026-09-08T14:00:00Z"\n',
+        None,
+    ),
+    (
+        1,
+        "edited:",
+        "a reworded concept is refused when a person revised it",
+        LIB + 'revised:\n  by: human:ada\n  at: "2026-09-08T14:00:00Z"\n',
+        None,
+    ),
+    (
+        0,
+        "OK",
+        "a reworded concept passes when a process revised it",
+        LIB + 'revised:\n  by: process:ktl-librarian\n  at: "2026-09-08T14:00:00Z"\n',
+        None,
+    ),
+    (
+        1,
+        "refuted:",
+        "a reworded concept is refused when it stands refuted",
+        LIB + 'refuted:\n  - by: process:x\n    at: "2026-09-08T14:00:00Z"\n    reason: wrong\n',
+        None,
+    ),
+    (
+        1,
+        "unreadable:",
+        "a reworded concept is refused when a by sits under a key no reader knows",
+        LIB + 'x_extra:\n  by: human:ada\n',
+        None,
+    ),
+    (
+        0,
+        "OK",
+        "a reworded concept passes when a glob in a description looks like an alias",
+        LIB + 'description: checks *.md, *.py\n',
+        None,
+    ),
+    (
+        0,
+        "OK",
+        "a reworded concept passes when a comment item opens an event",
+        LIB + 'verified:\n  - # the librarian\n    by: process:x\n    at: "2026-09-08T14:00:00Z"\n',
+        None,
+    ),
+    (
+        0,
+        "OK",
+        "a reworded concept passes when verified is null",
+        LIB + 'verified: null\n',
+        None,
+    ),
+    (
+        0,
+        "OK",
+        "a reworded concept passes when an exclusions reason holds an ampersand",
+        LIB + "exclusions:\n  - resource: a\n    reason: the &amp; entity\n    by: process:ktl-librarian\n",
+        None,
+    ),
+    (
+        1,
+        "retired:",
+        "a reworded retired concept is refused when its status key is quoted",
+        LIB + '"status": deprecated\n',
         None,
     ),
     (1, "retired:", "a reworded retired concept is refused", LIB + "status: deprecated\n", None),
@@ -452,6 +655,10 @@ def bundle(tmp_path_factory):
     write(k / "x" / "d-unreadable.md", "---\ntype: Service\n\nThe block above never closes.\n")
     write(k / "x" / "e-unrecorded.md", concept("", BODY_A))
     write(k / "x" / "f-rewrite.md", concept(LIB, BODY_A))
+    write(k / "x" / "g-edited.md", concept(LIB + 'revised:\n  by: human:ada\n  at: "2026-09-08T14:00:00Z"\n', BODY_A))
+    write(k / "x" / "h-refuted.md", concept(LIB + 'refuted:\n  - by: human:ada\n    at: "2026-09-08T14:00:00Z"\n    reason: wrong\n', BODY_A))
+    write(k / "x" / "i-indented.md", "---\n  type: Service\n  verified:\n    - by: human:ada\n---\n\nBody.\n")
+    write(k / "x" / "j-prefixed.md", "note\n---\ntype: Service\n---\n\nBody.\n")
     return k
 
 
@@ -466,6 +673,10 @@ def bundle(tmp_path_factory):
         "d-unreadable.md: skip: frontmatter the script cannot read",
         "e-unrecorded.md: skip: no record of who wrote it",
         "f-rewrite.md: rewrite",
+        "g-edited.md: skip: edited by a person",
+        "h-refuted.md: skip: refuted",
+        "i-indented.md: skip: frontmatter the script cannot read",
+        "j-prefixed.md: skip: frontmatter the script cannot read",
     ],
 )
 def test_bundle_verdicts(bundle, want):
@@ -834,3 +1045,221 @@ def test_a_script_is_compared_as_its_comments_against_head(script_repo):
 def test_a_character_no_reader_sees_in_a_script_s_code_is_reported_against_head(script_repo):
     write(script_repo / "tool.py", (script_repo / "tool.py").read_text().replace('"a - b"', f'"a{ZWSP} - b"'))
     expect(1, "tool.py:4: unseen:", "a character no reader sees added to a script's code is reported", "--against", "HEAD", script_repo / "tool.py")
+
+
+# --- what a rewording must not change, in the shapes that hid it ---------------
+
+
+CONCEPT_HEAD = "---\ntype: Service\ngenerated:\n  by: process:ktl-librarian\n  at: \"2026-09-01T05:00:00Z\"\n---\n\n"
+
+REFUSED = [
+    ("an indented code block", "fence", "Intro.\n\n    rm -rf foo\n", "Intro.\n\n    rm -rf bar\n"),
+    ("a fence that opens a list item", "fence", "- ```sh\n  rm -rf foo\n  ```\n", "- ```sh\n  rm -rf bar\n  ```\n"),
+    ("a fence after a line that only looks like one", "digits", "```x``` runs.\n\nIt reads 20 files.\n", "```x``` runs.\n\nIt reads 21 files.\n"),
+    ("a question under a lower heading", "open-questions", "## Open questions\n\n### Build\n\n- Do we keep it?\n", "## Open questions\n\n### Build\n\n- Do we drop it?\n"),
+    ("a unit", "digits", "It holds 20 MB.\n", "It holds 20 GB.\n"),
+    ("a unit attached to its number", "digits", "It takes 10ms.\n", "It takes 10s.\n"),
+    ("a unit written out", "digits", "It takes 3 days.\n", "It takes 3 weeks.\n"),
+    ("a minus sign", "digits", "The offset is -5.\n", "The offset is 5.\n"),
+    ("a decimal point in front", "digits", "The ratio is .5 here.\n", "The ratio is 5 here.\n"),
+    ("a comparison", "digits", "It needs >=3.9 to run.\n", "It needs <=3.9 to run.\n"),
+    ("a percent sign", "digits", "It uses 5% of them.\n", "It uses 5 of them.\n"),
+    ("a superscript", "digits", "It holds 10² rows.\n", "It holds 10³ rows.\n"),
+    ("a year that opens a wrapped line in a list item", "digits", "- It came out in\n  2024. It was small.\n", "- It came out in\n  2023. It was small.\n"),
+    ("a list number that is out of step", "digits", "5. It was first.\n", "6. It was first.\n"),
+    ("code after a list a paragraph closed", "fence", "- A one.\n\nText.\n\n    rm -rf foo\n", "- A one.\n\nText.\n\n    rm -rf bar\n"),
+    ("a reference link's label", "link", "[guide][a] and [spec][b]\n\n[a]: x.md\n[b]: y.md\n", "[guide][b] and [spec][b]\n\n[a]: x.md\n[b]: y.md\n"),
+    ("a footnote's use", "link", "A claim[^src].\n\n[^src]: The source.\n", "A claim.\n\n[^src]: The source.\n"),
+    ("the targets of two link definitions swapped", "link", "[guide][a]\n\n[a]: x.md\n[b]: y.md\n", "[guide][a]\n\n[a]: y.md\n[b]: x.md\n"),
+    ("a Setext heading", "heading", CONCEPT_HEAD + "Install\n=======\n\nBody.\n", CONCEPT_HEAD + "Setup\n=====\n\nBody.\n"),
+    ("the text of an inline code tag", "code", "Run <code>foo</code> now.\n", "Run <code>bar</code> now.\n"),
+    ("a single-quoted link target", "html", "See <a href='a.html'>it</a>.\n", "See <a href='b.html'>it</a>.\n"),
+    ("an attribute of a tag", "html", '<td colspan="2">x</td>\n', '<td colspan="3">x</td>\n'),
+    ("a number in an image's alt text", "digits", '<img src="a.png" alt="It reads 20 files">\n', '<img src="a.png" alt="It reads 21 files">\n'),
+    ("the source of an image in a tag", "html", '<img src="a.png" alt="A plan">\n', '<img src="b.png" alt="A plan">\n'),
+    ("an email autolink", "link", "Write to <ops@a.example>.\n", "Write to <ops@b.example>.\n"),
+    ("a bare email address", "link", "Write to ops@a.example.\n", "Write to ops@b.example.\n"),
+    ("a number moved into a comment", "digits", "It reads 20 files.\n", "It reads unknown files. <!-- 20 -->\n"),
+    ("a comment across blocks", "html", "Text.\n\n<!-- it reads\n\n20 files\n\n-->\n", "Text.\n\n<!-- it reads\n\n21 files\n\n-->\n"),
+    ("an image made a link", "image", "![D](a.png)\n", "[D](a.png)\n"),
+    ("a link target with brackets", "link", "[a](https://x.example/f(1)/g)\n", "[a](https://x.example/f(1)/h)\n"),
+    ("a bare www address", "link", "See www.a.example now.\n", "See www.b.example now.\n"),
+    ("a bare address on another scheme", "link", "See ftp://a.example/x now.\n", "See ftp://b.example/x now.\n"),
+    ("a number in a wikilink's alias", "digits", "See [[a|20 files]] now.\n", "See [[a|21 files]] now.\n"),
+    ("a table column", "table", "| a | b |\n| - | - |\n| 1 | 2 |\n", "| a |\n| - |\n| 1 |\n"),
+    ("a table row with no leading pipe", "table", "a | b\n--|--\n1 | 2\n3 | 4\n", "a | b\n--|--\n1 | 2\n"),
+    ("a bullet directly under a paragraph", "list", "It reads:\n- a\n- b\n", "It reads:\n- a\n"),
+    ("a ticked box", "list", "- [x] Done.\n", "- [ ] Done.\n"),
+    ("the spaces inside a code span", "code", "Run `a  b` now.\n", "Run `a b` now.\n"),
+    ("a joiner a reader cannot see", "unseen", "A word.\n", f"A{chr(0x34F)} word.\n"),
+    ("a variation selector", "unseen", "A word.\n", f"A{chr(0xFE0F)} word.\n"),
+    ("a Hangul filler", "unseen", "A word.\n", f"A{chr(0x3164)} word.\n"),
+    ("a blank Braille pattern", "unseen", "A word.\n", f"A{chr(0x2800)} word.\n"),
+    ("a zero-width space as an entity", "unseen", "A word.\n", "A&ZeroWidthSpace; word.\n"),
+    ("a zero-width space as a numeric entity", "unseen", "A word.\n", "A&#8203; word.\n"),
+]
+
+
+@pytest.mark.parametrize(("what", "rule", "old", "new"), REFUSED, ids=[case[0] for case in REFUSED])
+def test_a_rewording_may_not_change(tmp_path, what, rule, old, new):
+    before, after = write(tmp_path / "old.md", old), write(tmp_path / "new.md", new)
+    result = prose("--before", before, after)
+    assert result.rc == 1 and f"{rule}:" in result.out, f"prose-check.py let this through: {what} (exit {result.rc}: {result.out})"
+
+
+ALLOWED = [
+    ("a full stop after a bare address", "See https://x.example/a.\n", "See https://x.example/a for more.\n"),
+    ("the wording of a footnote", "A claim[^x].\n\n[^x]: The source.\n", "A claim[^x].\n\n[^x]: This source.\n"),
+    ("the spaces at the end of a list item", "- alpha  \n- beta\n", "- alpha\n- beta\n"),
+    ("the length of a table's rule", "| a |\n|--|\n| 1 |\n", "| a |\n|---|\n| 1 |\n"),
+    ("a list item laid on one line", "- It came out in\n  2024. It was small.\n", "- It came out in 2024. It was small.\n"),
+    ("a unit's spelling", "It takes 10 ms.\n", "It takes 10 milliseconds.\n"),
+    ("a unit's plural", "A 3-second wait.\n", "A wait of 3 seconds.\n"),
+    ("the word for a percent sign", "It uses 5% of them.\n", "It uses 5 percent of them.\n"),
+    ("a quotation rewrapped", "> There are\n> 20 files.\n", "> There are 20 files.\n"),
+    ("a code span rewrapped in a list item", "- Run `a\n  b` now.\n", "- Run `a b` now.\n"),
+    ("a Setext heading written with hashes", CONCEPT_HEAD + "Install\n=======\n\nBody.\n", CONCEPT_HEAD + "# Install\n\nBody.\n"),
+    ("a rule under a blank line, which is no heading", "A word.\n\n---\n\nAnother.\n", "A word.\n\n---\n\nOne more.\n"),
+    ("a loose ordered list", "1. First one.\n\n2. Second one.\n", "1. The first.\n\n2. The second.\n"),
+    ("a wikilink's alias", "See [[a|the page]] now.\n", "See [[a|that page]] now.\n"),
+    (
+        "a list nested under a numbered item that follows an indented paragraph",
+        "13. A rule.\n\n    A paragraph of it.\n14. Another.\n15. One more:\n\n    - a nested item\n",
+        "13. A rule.\n\n    A paragraph of it.\n14. Another.\n15. One more:\n\n    - the nested item\n",
+    ),
+    ("a numbered list with bullets under an item", "5. Do it.\n   - a one\n   - b one\n6. Then this.\n7. And this.\n", "5. Do it.\n   - a one\n   - b one\n6. Then that.\n7. And that.\n"),
+    ("two items merged under a nested list", "1. Do it.\n   - a one\n2. Then this.\n", "1. Do it.\n   - a one\n2. Then that.\n"),
+    ("a paragraph of an item, between two numbered items", "3. Do it.\n\n   Its text.\n\n4. Then this.\n", "3. Do it.\n\n   Its words.\n\n4. Then that.\n"),
+    ("a list after a line that continues an item", "1. Do it\nthis way.\n2. Then this.\n", "1. Do it\nthat way.\n2. Then that.\n"),
+    ("a word in a list after a number out of step", "1. A rule.\n7. Another.\n\n    Its text.\n", "1. A rule.\n7. One more.\n\n    Its words.\n"),
+    ("an image's alt text", '<img src="a.png" alt="A plan of it">\n', '<img src="a.png" alt="The plan of it">\n'),
+]
+
+
+@pytest.mark.parametrize(("what", "old", "new"), ALLOWED, ids=[case[0] for case in ALLOWED])
+def test_a_rewording_may_change(tmp_path, what, old, new):
+    before, after = write(tmp_path / "old.md", old), write(tmp_path / "new.md", new)
+    result = prose("--before", before, after)
+    assert result.rc == 0, f"prose-check.py refused a change that is only wording: {what} (exit {result.rc}: {result.out})"
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["1." * 50000, "a." * 50000, "<!-- " * 20000, "[a](" * 20000, "~ " * 50000, "|" * 50000],
+    ids=["dotted numbers", "dotted words", "comments left open", "links left open", "tildes", "pipes"],
+)
+def test_a_long_hostile_line_takes_seconds_at_most(tmp_path, line):
+    before, after = write(tmp_path / "old.md", line + "\n"), write(tmp_path / "new.md", line + " x\n")
+    started = time.monotonic()
+    prose("--before", before, after)
+    assert time.monotonic() - started < 30, "a long line of one repeated shape took too long"
+
+
+def test_a_byte_that_is_not_utf8_is_compared_as_itself(tmp_path):
+    before = write(tmp_path / "old.md", b"```\ncaf\xe9\n```\n")
+    after = write(tmp_path / "new.md", b"```\ncaf\xe8\n```\n")
+    result = prose("--before", before, after)
+    assert result.rc == 1 and "fence:" in result.out, f"two different bytes read as one character: {result.out}"
+
+
+def test_an_empty_ref_is_a_usage_error_and_not_a_style_run(tmp_path):
+    result = prose("--against", "", write(tmp_path / "a.md", "A word.\n"))
+    assert result.rc == 2, f"--against with an empty ref compared nothing and passed: exit {result.rc}: {result.out}"
+
+
+def test_no_git_is_a_usage_error(tmp_path):
+    path = write(tmp_path / "a.md", "A word.\n")
+    result = run([sys.executable, PROSE, "--against", "HEAD", path], env={"PATH": str(tmp_path)})
+    assert result.rc == 2 and "Traceback" not in result.out, f"no git on the PATH: exit {result.rc}: {result.out}"
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["The wıre holds.\n", "Keep ſome of it.\n", "A Kind of it.\n"],
+    ids=["a dotless i", "a long s", "a Kelvin sign"],
+)
+def test_a_letter_that_folds_to_a_listed_word_stops_nothing(tmp_path, text):
+    result = prose(write(tmp_path / "a.md", text))
+    assert "Traceback" not in result.out, f"a letter that case-folds stopped the style run: {result.out}"
+
+
+def test_a_band_word_that_folds_stops_nothing(tmp_path):
+    result = prose("--audience", "8-12", write(tmp_path / "a.md", "So ı.e. this.\n"))
+    assert "Traceback" not in result.out, f"a letter that case-folds stopped the band's words: {result.out}"
+
+
+def test_a_shift_in_python_is_no_heredoc(tmp_path):
+    before = write(tmp_path / "old.py", "x = 1 << bits\n# checks 20 files\n")
+    after = write(tmp_path / "new.py", "x = 1 << bits\n# checks 21 files\n")
+    result = prose("--before", before, after)
+    assert result.rc == 1 and "digits:" in result.out, f"a shift hid the comments below it: {result.out}"
+
+
+@pytest.mark.parametrize("line", ["(( x = 1 << bits ))", 'read a <<< "$b"'], ids=["a shell shift", "a here-string"])
+def test_no_heredoc_opens_in_shell(tmp_path, line):
+    before = write(tmp_path / "old.sh", f"{line}\n# checks 20 files\n")
+    after = write(tmp_path / "new.sh", f"{line}\n# checks 21 files\n")
+    result = prose("--before", before, after)
+    assert result.rc == 1 and "digits:" in result.out, f"{line} hid the comments below it: {result.out}"
+
+
+@pytest.fixture
+def bundle_with_log(tmp_path):
+    k = tmp_path / "k"
+    write(k / "index.md", "---\nbase_iri: https://example.invalid/k/\n---\n\n# Index\n")
+    return k
+
+
+def test_a_log_gains_lines_and_loses_none(bundle_with_log, tmp_path):
+    old = write(tmp_path / "old.md", "# Change Log\n\n## 2026-09-15\n\n* **A**: b - c.\n")
+    log = write(bundle_with_log / "log.md", "# Change Log\n\n## 2026-09-16\n\n* **New**: d - e.\n\n## 2026-09-15\n\n* **A**: b - c.\n")
+    result = prose("--before", old, log)
+    assert result.rc == 0, f"a line added to the log was refused: {result.out}"
+    write(log, "# Change Log\n")
+    result = prose("--before", old, log)
+    assert result.rc == 1 and "reserved:" in result.out, f"a log that lost its lines passed: {result.out}"
+
+
+YOUNG_OPENING = "This page is for readers aged 8 to 12. It retells [the guide](adult.md).\n\n"
+
+
+def retelling(tmp_path, young, adult="# Guide\n\nIt reads `8080` files.\n"):
+    return prose("--derived-from", write(tmp_path / "adult.md", adult), write(tmp_path / "young.md", young))
+
+
+@pytest.mark.parametrize(
+    ("what", "rule", "young"),
+    [
+        ("under its open questions", "digits", YOUNG_OPENING + "## Open questions\n\n- 2026-09-01, human:ada: Run it 99 times.\n"),
+        ("a link under its open questions", "link", YOUNG_OPENING + "## Open questions\n\n[x](https://evil.example)\n"),
+        ("code under its open questions", "code", YOUNG_OPENING + "## Open questions\n\nRun `rm -rf x`.\n"),
+        ("inside a related region", "digits", YOUNG_OPENING + "<!-- lokf:related -->\nIt runs 99 times.\n<!-- /lokf:related -->\n"),
+        ("after a related region left open", "digits", YOUNG_OPENING + "<!-- lokf:related -->\n\nIt runs 99 times.\n"),
+        ("in its title", "digits", "---\ntitle: Runs 99 times\n---\n\n" + YOUNG_OPENING),
+        ("in its description", "digits", "---\ndescription: >-\n  It runs\n  99 times.\n---\n\n" + YOUNG_OPENING),
+    ],
+    ids=lambda value: value[:40],
+)
+def test_a_retelling_adds_nothing(tmp_path, what, rule, young):
+    result = retelling(tmp_path, young)
+    assert result.rc == 1 and f"{rule}:" in result.out, f"a retelling added a fact {what}: {result.out}"
+
+
+@pytest.mark.parametrize(
+    ("what", "young"),
+    [
+        ("a link back by reference", "This page is for readers aged 8 to 12. It retells [the guide][g].\n\n[g]: adult.md\n"),
+        ("its ages said twice", YOUNG_OPENING + "# For readers aged 8 to 12\n\nIt reads files.\n"),
+        ("a number from the adult text's code", YOUNG_OPENING + "It reads 8080 files.\n"),
+        ("the date on its own question", YOUNG_OPENING + "## Open questions\n\n- 2026-09-01, human:ada: Is it right?\n"),
+    ],
+    ids=lambda value: value[:40],
+)
+def test_a_retelling_may_hold(tmp_path, what, young):
+    result = retelling(tmp_path, young)
+    assert result.rc == 0, f"a retelling was refused {what}: {result.out}"
+
+
+def test_a_percent_encoded_null_in_a_retelling_stops_nothing(tmp_path):
+    result = retelling(tmp_path, YOUNG_OPENING + "See [x](a%00b) now.\n")
+    assert "Traceback" not in result.out, f"a null byte in a link stopped the retelling check: {result.out}"
