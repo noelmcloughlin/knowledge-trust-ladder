@@ -31,7 +31,8 @@
 #     blob id the change signal, so a file is downloaded only when it
 #     changed; a file that is not Markdown is fenced.
 #   - `command`: a tracked command's output; the command's own digest is
-#     recorded too.
+#     recorded too. Where git ignores both the manifest and the command, it
+#     runs and its record says it ran unchecked.
 #
 # Listing comes before fetching, so an unchanged source costs a listing and no body. The
 # mirror and the lock change only when content changes. An entry that leaves
@@ -1897,6 +1898,13 @@ def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, u
     return items, unchanged
 
 
+def kept_out_of_git(root: Path, path: str) -> bool:
+    """Whether git ignores a path and tracks nothing there."""
+    ignored = subprocess.run(["git", "-C", str(root), "check-ignore", "-q", "--no-index", "--", path], capture_output=True)
+    tracked = subprocess.run(["git", "-C", str(root), "ls-files", "--", path], capture_output=True, text=True)
+    return ignored.returncode == 0 and not tracked.stdout.strip()
+
+
 def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[list[Item], dict]:
     path = root / entry.command
     if not path.is_file():
@@ -1915,11 +1923,17 @@ def run_command(ctx: Context, entry: Entry, prior: dict, root: Path) -> tuple[li
         unchecked = "the root is not a git work tree, so nothing says whether the command is committed"
     else:
         tracked = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", entry.command], capture_output=True)
-        if tracked.returncode != 0:
+        if tracked.returncode == 0:
+            edited = subprocess.run(["git", "-C", str(root), "status", "--porcelain", "--", entry.command], capture_output=True, text=True)
+            if edited.stdout.strip():
+                raise Refused(f"{entry.command} has changes git has not committed; a command runs only as committed")
+        elif kept_out_of_git(root, ".lokf/ingest.yaml") and kept_out_of_git(root, entry.command):
+            # A sidecar kept out of git has no commit to wait for, and the
+            # manifest that names the command is as unreviewed as the command.
+            # A tracked manifest still needs a tracked command.
+            unchecked = "git ignores both the manifest and the command, so nothing says whether the command is committed"
+        else:
             raise Refused(f"{entry.command} is not tracked by git; a command runs only once it is committed")
-        edited = subprocess.run(["git", "-C", str(root), "status", "--porcelain", "--", entry.command], capture_output=True, text=True)
-        if edited.stdout.strip():
-            raise Refused(f"{entry.command} has changes git has not committed; a command runs only as committed")
     command_digest = sha256_hex(path.read_bytes())
     env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "/"), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
                           "TMPDIR": os.environ.get("TMPDIR", tempfile.gettempdir()), "KNOWLEDGE_INGEST_ENTRY": entry.id})

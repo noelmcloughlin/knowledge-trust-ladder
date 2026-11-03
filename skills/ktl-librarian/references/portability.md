@@ -7,7 +7,7 @@ Run `.lokf/scripts/knowledge-preflight.sh` first. Its summary line says which of
 | Host | Lost | Substitute |
 | --- | --- | --- |
 | No git (a synced or shared folder, a plain directory) | `revision` on `generated`, the gate, pull requests, the scheduled loop, conventions rule 6 | leave `revision` out; hand over the validate output and the changed files; the platform's version history is the record of who changed what |
-| `.lokf/` gitignored | the gate, pull requests, the scheduled loop | the same hand-off; the bundle is still validated locally |
+| `.lokf/` gitignored | the gate, pull requests, the scheduled loop | the same hand-off; the bundle is still validated locally. An ingest `command` that git ignores too runs, and its record says it ran unchecked |
 | GitLab, Codeberg, Forgejo, Gitea | the two GitHub Actions workflows | the wrapper script is plain bash: schedule it in that CI and open the merge request there. The recipe is in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md) |
 | Windows | nothing, from Git for Windows' bash | from PowerShell, run every command here through that bash (launch line in the same page); write `uv run python` where this skill says `python3` |
 | macOS | `sha256sum` | `shasum -a 256` |
