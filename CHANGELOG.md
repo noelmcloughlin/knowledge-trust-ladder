@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.61.1] - 2026-11-03
+
 ### Fixed
 
 - **An ingest `command` runs in a sidecar kept out of git.** It was refused as untracked on every run, though such a host has no commit to make. Where git ignores both the manifest and the command, it now runs and its record says it ran unchecked; a tracked manifest still needs a tracked command.
