@@ -1021,6 +1021,27 @@ def test_a_command_outside_a_work_tree_runs_and_its_record_says_it_was_not_check
               "once the command is committed, a checked run writes its record again without the reason", result.out)
 
 
+def test_a_command_in_a_sidecar_kept_out_of_git_runs_and_its_record_says_it_was_not_checked(tmp_path, checks):
+    """A gitignored sidecar has no commit to wait for, so the command runs unchecked. A tracked manifest, or a command git merely has not been told about, is still refused."""
+    entries = [{"id": "export", "kind": "command", "command": "scripts/export.sh", "sensitivity": "public"}]
+    root = host(tmp_path, manifest_for(entries))
+    write(root / "scripts" / "export.sh", "#!/bin/sh\necho \"# Export\"\n").chmod(0o755)
+    write(root / ".gitignore", "scripts/\n")
+    result = ingest(root)
+    checks.ok(result and "refused, scripts/export.sh is not tracked by git" in result.out, "a tracked manifest still needs a tracked command", result.out)
+    g = Git(root)
+    g("rm", "-r", "-q", "--cached", ".lokf")
+    write(root / ".gitignore", ".lokf/\n")
+    result = ingest(root)
+    checks.ok(result and "refused, scripts/export.sh is not tracked by git" in result.out, "a command git does not ignore is still refused", result.out)
+    write(root / ".gitignore", ".lokf/\nscripts/\n")
+    result = ingest(root)
+    reason = "git ignores both the manifest and the command, so nothing says whether the command is committed"
+    record = lock_of(root)["entries"]["export"]["items"]["export"]
+    checks.ok(result and "1 fetched" in result.out and f"  - export: ran unchecked, {reason}" in result.out, "the command runs, and the summary says git did not check it", result.out)
+    checks.ok(record.get("command_unchecked") == reason, "the lock records the reason", str(record))
+
+
 def test_a_command_in_a_repository_git_will_not_read_is_refused(tmp_path, checks):
     """git fails inside a repository another user owns as it does outside one. There the command is refused, not run unchecked."""
     root = host(tmp_path, manifest_for([{"id": "schema", "kind": "command", "command": ".lokf/ingest/schema.sh", "sensitivity": "public"}]))
