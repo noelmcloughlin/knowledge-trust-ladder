@@ -15,8 +15,8 @@ These tests pin that for the template files that do so, and for the
      name of the bundle or outside it, and applies the one file the agent may
      write, .lokf/patch.yaml, with knowledge-apply.sh, which refuses a bad
      patch;
-   - puts .git/config and .git/hooks/ back when the agent fails or the job is
-     cancelled;
+   - puts .git/config, .git/hooks/ and .git/info/ back when the agent fails
+     or the job is cancelled;
    - hands AGENT_API_KEY to the agent under AGENT_API_KEY_ENV's name only;
    - refuses a change that touches a person's record even when the pen let it
      through;
@@ -33,8 +33,8 @@ These tests pin that for the template files that do so, and for the
    - a scheduled run waits while an earlier pull request is open, and the step
      that reads those pull requests hands on what a person declined;
    - the install step installs the skill from the pinned tag only while that
-     tag names the pinned commit, and stops when git does not ignore the
-     folder it installs into;
+     tag names the pinned commit, hides it from git in .git/info/exclude when
+     the host's .gitignore does not, and stops when git still sees it;
 3. the registrar workflow triggers on, and diffs, both names, and installs
    the sidecar from its lock. Its provenance step asks the person behind a
    confirmation that is added, changed or removed, and nobody when only a
@@ -141,12 +141,13 @@ printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
 uv run --quiet .lokf/scripts/knowledge-apply.py --root . >/dev/null 2>&1 || true
 """,
         ),
-        # Rewrites .git/config and .git/hooks/, then fails or gets the job cancelled.
+        # Rewrites .git/config, .git/hooks/ and .git/info/exclude, then fails or gets the job cancelled.
         "poison": executable(
             d / "poison-agent.sh",
             r"""#!/usr/bin/env bash
 git config core.hooksPath /nonexistent/hooks
 printf '#!/bin/sh\necho hooked\n' > .git/hooks/pre-commit
+mkdir -p .git/info && printf '/poison/\n' >> .git/info/exclude
 case "${POISON_THEN:-fail}" in
   fail) exit 7 ;;
   term) kill -TERM "$PPID"; exit 0 ;;
@@ -302,7 +303,7 @@ def test_an_agent_that_applies_its_own_patch_leaves_it_for_the_wrapper(host, age
 
 @pytest.mark.parametrize(("way", "want"), [("fail", 7), ("term", 143)])
 def test_the_wrapper_restores_git_config_and_hooks_on_every_way_out(host, agents, way, want):
-    """An agent that rewrites both and then exits non-zero, or gets the job cancelled, must leave neither behind, and the wrapper's status is the agent's or the signal's."""
+    """An agent that rewrites all three and then exits non-zero, or gets the job cancelled, must leave none behind, and the wrapper's status is the agent's or the signal's."""
     status = wrapper(host, {"AGENT_CLI": agents["poison"], "POISON_THEN": way})
     assert status == want, f"poison/{way}: the wrapper exited {status}, expected {want}"
     assert run(["git", "-C", host, "config", "core.hooksPath"]).rc != 0, (
@@ -310,6 +311,10 @@ def test_the_wrapper_restores_git_config_and_hooks_on_every_way_out(host, agents
     )
     assert not (host / ".git" / "hooks" / "pre-commit").exists(), (
         f"poison/{way}: the dropped hook survived the agent's exit"
+    )
+    exclude = host / ".git" / "info" / "exclude"
+    assert not exclude.exists() or "/poison/" not in read(exclude), (
+        f"poison/{way}: the agent's exclude rule survived the agent's exit"
     )
 
 
@@ -925,6 +930,7 @@ def install_step(tmp_path):
     )
     skills_repo = tmp_path / "skills-repo"
     write(skills_repo / "skills" / "ktl-librarian" / "SKILL.md", "# the skill as it was reviewed\n")
+    write(skills_repo / "skills" / "ktl-librarian" / "references" / "guide.md", "# a reference\n")
     run(["git", "init", "-q", "-b", "main", "."], cwd=skills_repo)
     git(skills_repo, "config", "user.email", "layout-test@example.invalid")
     git(skills_repo, "config", "user.name", "layout test")
@@ -934,12 +940,18 @@ def install_step(tmp_path):
     return step, skills_repo, git(skills_repo, "rev-parse", "HEAD"), tmp_path
 
 
-def install_run(step, skills_repo, pinned, into, ignored=True):
-    """Run the step as Actions does, in a checkout whose root .gitignore leaves .agents/ out unless ignored is False."""
+def install_run(step, skills_repo, pinned, into, gitignore=".agents/\n", committed=None):
+    """Run the step as Actions does, in a checkout whose root .gitignore holds gitignore, or none when it is None.
+
+    committed, when given, is a SKILL.md the host commits under .agents/skills/ktl-librarian/.
+    """
     into.mkdir(parents=True, exist_ok=True)
     run(["git", "init", "-q", "-b", "main", "."], cwd=into)
-    if ignored:
-        write(into / ".gitignore", ".agents/\n")
+    if gitignore is not None:
+        write(into / ".gitignore", gitignore)
+    if committed is not None:
+        write(into / ".agents" / "skills" / "ktl-librarian" / "SKILL.md", committed)
+        git(into, "add", "-f", ".agents")
     return run(
         ["bash", step],
         cwd=into,
@@ -960,11 +972,42 @@ def test_the_skill_is_installed_from_the_pinned_tag_while_it_names_the_pinned_co
     )
 
 
-def test_an_install_git_would_see_stops_before_any_agent_runs(install_step):
+def test_a_host_whose_gitignore_leaves_agents_out_gets_a_local_exclude(install_step):
     step, skills_repo, pinned, work = install_step
-    result = install_run(step, skills_repo, pinned, work / "install-seen", ignored=False)
-    assert result.rc == 1 and "git does not ignore .agents/" in result.out, (
-        f"install: exit {result.rc} where git does not ignore .agents/: {result.out}"
+    into = work / "install-local"
+    result = install_run(step, skills_repo, pinned, into, gitignore=None)
+    exclude = into / ".git" / "info" / "exclude"
+    assert (
+        result.rc == 0
+        and "/.agents/skills/ktl-librarian/" in read(exclude)
+        and not (into / ".gitignore").exists()
+        and git(into, "status", "--porcelain") == ""
+    ), f"install: exit {result.rc} where the host's .gitignore does not ignore .agents/: {result.out}"
+
+
+def test_a_host_that_ignores_only_skill_md_gets_a_local_exclude_for_the_rest(install_step):
+    """Checking SKILL.md alone would pass here, and the write-scope check would then fail on the skill's other files."""
+    step, skills_repo, pinned, work = install_step
+    into = work / "install-partial"
+    result = install_run(step, skills_repo, pinned, into, gitignore="/.agents/skills/ktl-librarian/SKILL.md\n")
+    assert result.rc == 0 and git(into, "status", "--porcelain", "--untracked-files=all", "--", ".agents") == "", (
+        f"install: exit {result.rc}, or git still sees the skill, where the host ignores only SKILL.md: {result.out}"
+    )
+
+
+def test_an_install_over_a_copy_the_host_commits_stops_and_names_the_commit(install_step):
+    step, skills_repo, pinned, work = install_step
+    result = install_run(step, skills_repo, pinned, work / "install-committed", committed="# an older copy\n")
+    assert result.rc == 1 and "The host commits .agents/skills/ktl-librarian/" in result.out, (
+        f"install: exit {result.rc} where the host commits an older copy of the skill: {result.out}"
+    )
+
+
+def test_an_install_a_host_rule_brings_back_stops_before_any_agent_runs(install_step):
+    step, skills_repo, pinned, work = install_step
+    result = install_run(step, skills_repo, pinned, work / "install-seen", gitignore="!/.agents/skills/ktl-librarian/\n")
+    assert result.rc == 1 and "makes git see .agents/skills/ktl-librarian/" in result.out, (
+        f"install: exit {result.rc} where the host's .gitignore brings .agents/ back: {result.out}"
     )
 
 

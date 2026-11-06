@@ -187,28 +187,28 @@ jobs:
         run: uv sync --locked
         working-directory: .lokf
 
-      # ktl-librarian is runtime state here, not source (Step 5's own hygiene
-      # note: .agents/ and .claude/ are gitignored), so a scheduled run cannot
-      # rely on it already being present in the checkout. Install it fresh,
-      # pinned to one release, on every run. A plain clone of the tagged
-      # public repo needs no `gh` flags and no token. The install target must
-      # be gitignored, so that it is invisible both to "Enforce the agent's
-      # write scope" below and to "Detect changes", and the step stops before
-      # any agent runs when it is not.
+      # Install ktl-librarian fresh on every run, pinned to one release: it is
+      # runtime state, not source, so the checkout does not carry it. A plain
+      # clone of the public tag needs no token.
       #
-      # The pin is a tag and the commit that tag named when the pin was set. A
-      # tag can be moved, and what it names here is the instructions an agent
-      # follows unattended. So the step installs nothing unless the tag still
-      # names that commit. Move the two together, as the skills repository's
+      # Hide the install from git, so that neither "Enforce the agent's write
+      # scope" nor "Detect changes" sees it. Use .git/info/exclude when the
+      # host's .gitignore does not cover it: that file is never committed, so a
+      # fork whose upstream owns the root .gitignore needs no edit there. Stop
+      # before any agent runs when git still sees the install: the host commits
+      # another copy, or a rule of its own brings the path back.
+      #
+      # Install nothing unless the tag still names the pinned commit. A tag can
+      # move, and it names the instructions an agent follows unattended. Move
+      # the two pins together, as the skills repository's
       # scripts/sync-sidecar.sh does.
       #
-      # The one repository that skips this step is the one it clones from,
-      # named again in the `if`. There the skill is source under bare skills/.
-      # An install would go to .agents/skills/, which the wrapper searches
-      # first, so the pinned release would run instead of the current one. Repository identity is
-      # the switch, not a file in the tree, so nothing a host commits can
-      # change which instructions its scheduled agent runs. A fork that
-      # develops the skills changes the name in both places.
+      # Skip this step in the repository the skill comes from, named again in
+      # the `if`. There the skill is source under bare skills/, and an install
+      # under .agents/skills/, which the wrapper searches first, would shadow
+      # it. The switch is the repository's name, not a file in the tree, so
+      # nothing a host commits changes what its scheduled agent runs. A fork
+      # that develops the skills changes the name in both places.
       - name: Install the pinned ktl-librarian skill
         if: github.repository != 'noelmcloughlin/knowledge-trust-ladder'
         env:
@@ -228,8 +228,19 @@ jobs:
           rm -rf .agents/skills/ktl-librarian
           cp -R "$tmp/skills/ktl-librarian" .agents/skills/
           test -f .agents/skills/ktl-librarian/SKILL.md
-          if ! git check-ignore -q .agents/skills/ktl-librarian/SKILL.md; then
-            echo "::error::git does not ignore .agents/, where the skill was installed, so the write-scope check would fail the run. Add .agents/, .claude/ and skills-lock.json to the root .gitignore, as ktl-sidecar's repo hygiene note says."
+          seen() { git status --porcelain --untracked-files=all -- .agents/skills/ktl-librarian; }
+          tracked="$(git ls-files -- .agents/skills/ktl-librarian)"
+          if [ -n "$(seen)" ] && [ -z "$tracked" ]; then
+            exclude="$(git rev-parse --git-path info/exclude)"
+            mkdir -p "$(dirname "$exclude")"
+            printf '%s\n' /.agents/skills/ktl-librarian/ >> "$exclude"
+            echo "::notice::The host's .gitignore does not cover .agents/skills/ktl-librarian/, so this checkout's .git/info/exclude does."
+          fi
+          if [ -n "$(seen)" ] && [ -n "$tracked" ]; then
+            echo "::error::The host commits .agents/skills/ktl-librarian/, and the pinned install changes it, so the write-scope check would fail the run. Untrack it with git rm -r --cached and keep it ignored."
+            exit 1
+          elif [ -n "$(seen)" ]; then
+            echo "::error::A rule in the host's .gitignore makes git see .agents/skills/ktl-librarian/, where the skill is installed, so the write-scope check would fail the run. Remove the rule that brings that path back."
             exit 1
           fi
           echo "Installed ktl-librarian@$TRUST_LADDER_SKILLS_REF ($TRUST_LADDER_SKILLS_SHA)"
@@ -325,10 +336,11 @@ jobs:
           bash .lokf/scripts/knowledge-librarian.sh
 
       # The wrapper enforces this same boundary itself, immediately after the
-      # agent returns. It also restores .git/config and .git/hooks around the
-      # call, from an EXIT trap, so a failing agent or a cancelled job restores
-      # too. That keeps a tampered core.fsmonitor or hooksPath from defeating
-      # either check (see the wrapper's own comments). This is the second,
+      # agent returns. It also restores .git/config, .git/hooks and .git/info
+      # around the call, from an EXIT trap, so a failing agent or a cancelled
+      # job restores too. That keeps a tampered core.fsmonitor or hooksPath, or
+      # an exclude rule the agent added, from defeating either check (see the
+      # wrapper's own comments). This is the second,
       # independent layer: it runs even when the wrapper did not get to (agent
       # disarmed, early exit), so no path outside the bundle can reach
       # `publish` in the patch.

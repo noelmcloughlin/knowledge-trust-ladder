@@ -258,19 +258,22 @@ changed_paths() {
   git status --porcelain -- '.' ':(exclude).lokf/patch.yaml' | cut -c4- | sort -u
 }
 
-# Snapshots of .git/config and .git/hooks/ taken before each agent call.
-# File-scope, not local, so the EXIT trap below can reach them.
+# Snapshots of .git/config, .git/hooks/ and .git/info/ taken before each agent
+# call. File-scope, not local, so the EXIT trap below can reach them.
 config_snapshot=""
 hooks_snapshot=""
+info_snapshot=""
 snapshot_git_state() {
   config_snapshot="$(mktemp)"
   hooks_snapshot="$(mktemp -d)"
+  info_snapshot="$(mktemp -d)"
   cp .git/config "$config_snapshot"
   cp -a .git/hooks/. "$hooks_snapshot/"
+  if [ -d .git/info ]; then cp -a .git/info/. "$info_snapshot/"; fi
 }
 
-# Put .git/config and .git/hooks/ back as they were before the agent ran, then
-# forget the snapshot so a second call is a no-op. main() calls it right after
+# Put .git/config, .git/hooks/ and .git/info/ back as they were before the
+# agent ran, then forget the snapshot so a second call is a no-op. main() calls it right after
 # the agent returns, and the EXIT trap calls it for every other way out:
 # - the agent exiting non-zero, which `set -e` turns into this script's exit;
 # - the job being cancelled, the runner's SIGINT or SIGTERM, which the traps
@@ -284,9 +287,13 @@ restore_git_state() {
   rm -rf .git/hooks
   mkdir .git/hooks
   cp -a "$hooks_snapshot/." .git/hooks/
-  rm -rf "$config_snapshot" "$hooks_snapshot"
+  rm -rf .git/info
+  mkdir .git/info
+  cp -a "$info_snapshot/." .git/info/
+  rm -rf "$config_snapshot" "$hooks_snapshot" "$info_snapshot"
   config_snapshot=""
   hooks_snapshot=""
+  info_snapshot=""
 }
 
 # Everything git can see of the working tree, as one checksum: which paths
@@ -306,8 +313,8 @@ tree_state() {
 # answers one prompt, holding the table of contents and the questions readers
 # asked, from an empty directory, so the index is all it has. A program scores
 # its reply as one line, "n of m". The prompt carries readers' words. So
-# the reply is read for concept paths and for nothing else, the same
-# snapshot guards .git/config and .git/hooks/, and a call that changed
+# the reply is read for concept paths and for nothing else, the same snapshot
+# guards .git/config, .git/hooks/ and .git/info/, and a call that changed
 # anything in the checkout refuses the run like any other stray write.
 # The hand-off file sits outside the checkout, where this call could write
 # too. So the lines the pen put there are held across the call and written
@@ -379,11 +386,12 @@ main() {
   # this job's checkout, which is what the check above is for. But that check
   # is only as good as the `git status` it reads. An agent that sets
   # core.fsmonitor or core.hooksPath in .git/config, or drops a file in
-  # .git/hooks/, gets it run by *this script's own* later git commands. The
-  # workflow's detect and package steps share this job's checkout and run it
-  # too, after this script exits.
+  # .git/hooks/, gets it run by *this script's own* later git commands. An
+  # agent that adds a rule to .git/info/exclude hides its own writes from
+  # them. The workflow's detect and package steps share this job's checkout
+  # and read it too, after this script exits.
   #
-  # So snapshot both around the agent call and restore them on every exit
+  # So snapshot all three around the agent call and restore them on every exit
   # (success, agent failure, cancellation), and neither this check nor
   # anything the workflow does afterwards can be defeated or taken over that
   # way. Only SIGKILL escapes this, and a runner that kills the step with it

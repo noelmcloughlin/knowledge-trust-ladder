@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The scheduled librarian runs in a fork whose upstream owns the root `.gitignore`.** The install step refused any host whose `.gitignore` left `.agents/` out. It now ignores its own install in the checkout's `.git/info/exclude`, and stops only when a host rule brings the path back or the host commits another copy. It checks every installed file, not `SKILL.md` alone.
+
+### Security
+
+- **The librarian wrapper restores `.git/info/` after the agent runs**, as it restores `.git/config` and `.git/hooks/`. An exclude rule the agent added could hide its own writes from the write-scope check.
+
 ## [0.62.0] - 2026-11-06
 
 ### Changed
