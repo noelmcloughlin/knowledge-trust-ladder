@@ -65,7 +65,7 @@ This is unrelated to `.lokf/.gitignore` below, which only excludes tool build no
 
 **One layout, every host.** `.lokf/knowledge/` is the real folder wherever the sidecar is installed (a code repository, a notes vault, a shared folder), and it is the name every skill, the toolkit, CI and `llms.txt` address. Step 2 adds `knowledge_bundle` beside it: a link, so people and folder pickers have an ordinary name to open. Never place the bundle as a *real* folder inside an Obsidian vault: the vault indexes it like any other folder, and the exhibition's notes show up in the workshop's link suggestions, graph and search. A shared folder that is not a vault is covered in [references/portability.md](references/portability.md).
 
-> Repo hygiene note: if the host repo installs AI skills locally, the generated runtime directories `.agents/`, `.claude/`, and the lockfile `skills-lock.json` are not source content and should be excluded from the root `.gitignore` rather than committed as project changes.
+> Repo hygiene note: if the host repo installs AI skills locally, `.agents/`, `.claude/` and `skills-lock.json` are runtime state, not source. List them in the root `.gitignore`, or in `.git/info/exclude` in a fork whose upstream owns that file, rather than commit them.
 
 ## Step 1: create the skeleton and copy the templates
 

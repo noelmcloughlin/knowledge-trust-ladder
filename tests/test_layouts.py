@@ -934,12 +934,12 @@ def install_step(tmp_path):
     return step, skills_repo, git(skills_repo, "rev-parse", "HEAD"), tmp_path
 
 
-def install_run(step, skills_repo, pinned, into, ignored=True):
-    """Run the step as Actions does, in a checkout whose root .gitignore leaves .agents/ out unless ignored is False."""
+def install_run(step, skills_repo, pinned, into, gitignore=".agents/\n"):
+    """Run the step as Actions does, in a checkout whose root .gitignore holds gitignore, or none when it is None."""
     into.mkdir(parents=True, exist_ok=True)
     run(["git", "init", "-q", "-b", "main", "."], cwd=into)
-    if ignored:
-        write(into / ".gitignore", ".agents/\n")
+    if gitignore is not None:
+        write(into / ".gitignore", gitignore)
     return run(
         ["bash", step],
         cwd=into,
@@ -960,11 +960,24 @@ def test_the_skill_is_installed_from_the_pinned_tag_while_it_names_the_pinned_co
     )
 
 
-def test_an_install_git_would_see_stops_before_any_agent_runs(install_step):
+def test_a_host_whose_gitignore_leaves_agents_out_gets_a_local_exclude(install_step):
     step, skills_repo, pinned, work = install_step
-    result = install_run(step, skills_repo, pinned, work / "install-seen", ignored=False)
-    assert result.rc == 1 and "git does not ignore .agents/" in result.out, (
-        f"install: exit {result.rc} where git does not ignore .agents/: {result.out}"
+    into = work / "install-local"
+    result = install_run(step, skills_repo, pinned, into, gitignore=None)
+    exclude = into / ".git" / "info" / "exclude"
+    assert (
+        result.rc == 0
+        and "/.agents/skills/ktl-librarian/" in read(exclude)
+        and not (into / ".gitignore").exists()
+        and git(into, "status", "--porcelain") == ""
+    ), f"install: exit {result.rc} where the host's .gitignore does not ignore .agents/: {result.out}"
+
+
+def test_an_install_a_host_rule_brings_back_stops_before_any_agent_runs(install_step):
+    step, skills_repo, pinned, work = install_step
+    result = install_run(step, skills_repo, pinned, work / "install-seen", gitignore="!/.agents/skills/ktl-librarian/\n")
+    assert result.rc == 1 and "makes git see .agents/skills/ktl-librarian/" in result.out, (
+        f"install: exit {result.rc} where the host's .gitignore brings .agents/ back: {result.out}"
     )
 
 
