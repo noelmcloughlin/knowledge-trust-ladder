@@ -97,12 +97,13 @@ Each declined item makes work again once it changes after that pull request: its
 
 The guardrails:
 
-- Only `publish` holds `contents: write` and `pull-requests: write`. The agent runs in a `contents: read` job with no persisted credentials.
+- Only `publish` holds `contents: write` and `pull-requests: write`, and only its push step holds the token. The agent runs in a `contents: read` job with no persisted credentials.
+- The agent's job saves no uv or npm cache, and the release's `pack` and the registrar's gate restore no uv cache. setup-uv's cache key names no job, so a cache the agent's job saved could be what the release packs.
 - It never pushes to the default branch and never auto-merges.
 - It opens no pull request when nothing changed, and runs no agent in a scheduled week when nothing waits or while a pull request of its own is still open.
 - `earlier` holds `pull-requests: read` alone. It passes on numbers, dates, commits, concept paths and hashes, each matched against a pattern, and reads no title, body or comment.
 - What runs is the reviewed `.lokf/scripts/knowledge-librarian.sh`, at a fixed path, not an arbitrary command string.
-- `publish` refuses a patch that touches a path outside the bundle, the feedback file and the ledger, and one that touches a person's record. It reads that off the patched tree with `knowledge-provenance.sh --unattended`, so a `human:` event in any YAML layout, a person's note and text a person wrote are all covered.
+- `publish` refuses a patch that touches a path outside the bundle, the feedback file and the ledger, that renames, copies or links a file or changes its mode, or that touches a person's record. It reads the record off the patched tree with `knowledge-provenance.sh --unattended`, so a `human:` event in any YAML layout, a person's note and text a person wrote are all covered. A host with no copy of that script fails the run.
 
 ### Setting it up
 
