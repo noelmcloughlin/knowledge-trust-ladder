@@ -481,3 +481,27 @@ def test_the_markdown_plugin_checks_raw_html_on_every_page():
     assert 'if (!source) return { name: "ktl-raw-html", html:' in plugin, "a page the sync did not write still gets the raw HTML check"
     assert "cleanHtmlNode(node, ctx, source, rewriteHtml(source, node.value))" in plugin
     assert "cleanHtmlNode" in read(SITE_TEMPLATES / "scripts" / "sync.mjs"), "the feed's HTML gets the same check"
+
+
+PLAIN_CASES = {
+    "states `<>` as a `none_of`": "states <> as a none_of",
+    "a < b and c > d": "a < b and c > d",
+    "**bold** <em>x</em> <!-- note --> [link](u)": "bold x link",
+    "<<b>script>alert(1)<</b>/script>": "alert(1)",
+    "<scr<i>ipt>x": "x",
+    "<img src=x onerror=alert(1)": "<img src=x onerror=alert(1)",
+}
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_plain_text_keeps_no_tag_after_one_pass(tmp_path):
+    """plain() removes tags until none is left, so a tag split by another comes out too, and keeps a bracket that opens no tag."""
+    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
+    start, end = source.index("function plain("), source.index("/** The first sentence")
+    cases = write(tmp_path / "cases.json", json.dumps(list(PLAIN_CASES)))
+    script = write(tmp_path / "check.mjs",
+                   "import { readFileSync } from 'node:fs';\n" + source[start:end] +
+                   f"\nconsole.log(JSON.stringify(JSON.parse(readFileSync({json.dumps(str(cases))}, 'utf8')).map(plain)));\n")
+    got = dict(zip(PLAIN_CASES, json.loads(run(["node", script], stdout_only=True).out)))
+    for text, want in PLAIN_CASES.items():
+        assert got[text] == want, (text, got[text])

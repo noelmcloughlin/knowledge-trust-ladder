@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Security
+
+- **ktl-website strips a page title's tags until none is left.** One pass over `<<b>script>` left `<script>`, which CodeQL reported as incomplete sanitisation; a bracket that opens no tag, such as `<>`, still stays.
+
 ## [0.62.0] - 2026-11-06
 
 ### Changed
