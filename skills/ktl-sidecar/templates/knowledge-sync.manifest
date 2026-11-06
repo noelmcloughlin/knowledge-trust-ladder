@@ -50,7 +50,7 @@ copy   github/knowledge-ingest.yaml            .github/workflows/knowledge-inges
 copy   github/knowledge-ingest-pull-request.md .github/PULL_REQUEST_TEMPLATE/knowledge-ingest.md
 copy   scripts/knowledge-ingest.sh             .lokf/scripts/knowledge-ingest.sh
 copy   scripts/knowledge-ingest.py             .lokf/scripts/knowledge-ingest.py
-copy   domain.yaml                             .lokf/domain.yaml
+copy   domain.yaml                             .lokf/schema/domain.yaml
 copy   m365/knowledge-m365.sh                  .lokf/m365/knowledge-m365.sh
 copy   m365/ktl-docent-m365.md                 .lokf/m365/ktl-docent-m365.md
 copy   gitattributes                           .lokf/.gitattributes

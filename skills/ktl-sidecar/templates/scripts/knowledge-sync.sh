@@ -162,7 +162,7 @@ add_entry() {
 # pin and the changelog. The three site files the host owns are refused by
 # name, and so is a path with a character outside the plain set the
 # templates use, or a .git segment.
-sync_paths='^(\.github/workflows/knowledge-[a-z]+\.yaml|\.github/PULL_REQUEST_TEMPLATE/knowledge-[a-z]+\.md|\.lokf/scripts/knowledge-[a-z]+\.(sh|py)|\.lokf/m365/[A-Za-z0-9._-]+|\.lokf/domain\.yaml|\.lokf/\.gitattributes|\.lokf/\.gitignore|\.lokf/justfile|website/.+|CHANGELOG\.md)$'
+sync_paths='^(\.github/workflows/knowledge-[a-z]+\.yaml|\.github/PULL_REQUEST_TEMPLATE/knowledge-[a-z]+\.md|\.lokf/scripts/knowledge-[a-z]+\.(sh|py)|\.lokf/m365/[A-Za-z0-9._-]+|\.lokf/(schema/)?domain\.yaml|\.lokf/\.gitattributes|\.lokf/\.gitignore|\.lokf/justfile|website/.+|CHANGELOG\.md)$'
 owned_paths='^website/(site\.config\.mjs|README\.md|src/styles/custom\.css)$'
 plain_path='^[]A-Za-z0-9._/@+[-]+$'
 

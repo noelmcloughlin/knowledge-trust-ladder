@@ -1390,24 +1390,25 @@ def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
     assert r.rc == 1 and "imports parts.yaml, which is not a LinkML schema file" in r.out and not list(out.iterdir()), r.out
 
 
-def pack_schema(tmp_path, files, core="id: https://w3id.org/lokf\nclasses:\n  Concept: {}\n"):
-    """Run the template's "Pack the domain schema" lines in a host holding these .lokf/ files and a justfile naming acme.yaml."""
+def pack_schema(tmp_path, files, core="id: https://w3id.org/lokf\nclasses:\n  Concept: {}\n", where=""):
+    """Run the template's "Pack the domain schema" lines in a host holding these files and lokf.yaml in .lokf/<where>, and a justfile naming acme.yaml there."""
     script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]"))
     host = tmp_path / "host"
-    write(host / ".lokf" / "justfile", 'schema := "acme.yaml"\n')
-    write(host / ".lokf" / "lokf.yaml", core)
+    write(host / ".lokf" / "justfile", f'schema := "{where}acme.yaml"\n')
+    write(host / ".lokf" / where / "lokf.yaml", core)
     write(host / ".lokf" / ".venv" / "bin" / "python", f'#!/bin/sh\nexec "{sys.executable}" "$@"\n').chmod(0o755)
     for rel, text in files.items():
-        write(host / ".lokf" / rel, text)
+        write(host / ".lokf" / where / rel, text)
     (host / "temp" / "release").mkdir(parents=True)
     r = run(["bash", script], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v1", "NAME": "host"})
     asset = host / "temp" / "release" / "schema-v1-host.yaml"
     return r, (yaml.safe_load(read(asset)) if asset.is_file() else None)
 
 
-def test_the_release_merges_the_adapted_copies_a_composite_imports(tmp_path):
+@pytest.mark.parametrize("where", ["schema/", ""], ids=["in the schema folder", "at the root of .lokf"])
+def test_the_release_merges_the_adapted_copies_a_composite_imports(tmp_path, where):
     """A host composite that imports two `lokf adapt` copies is released as one file: each copy merged with what it imports in turn, every IRI written out as LinkML derives it, and LOKF core still imported by name."""
-    r, doc = pack_schema(tmp_path, {
+    r, doc = pack_schema(tmp_path, where=where, files={
         "acme.yaml": "id: https://x.example/acme\nname: acme\nprefixes:\n  linkml: https://w3id.org/linkml/\nimports: [linkml:types, lokf, slsa, 'gha']\n",
         "slsa.yaml": (
             "id: https://x.example/slsa-lokf\nname: slsa\ndefault_prefix: slsa\nprefixes:\n  slsa: https://x.example/slsa/\n"
@@ -1462,24 +1463,46 @@ def test_the_release_refuses_a_merge_that_would_lose_a_definition(tmp_path, file
     assert r.rc == 1 and why in r.out and doc is None, r.out
 
 
-def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path):
+def test_the_release_reads_lokf_core_from_the_schema_folder(tmp_path):
+    """With the copy of LOKF core in .lokf/schema/, a merged file that redefines a core class still stops the release, and a schema elsewhere that imports the copy by its path is released importing `lokf`."""
+    r, doc = pack_schema(tmp_path, where="schema/", files={
+        "acme.yaml": "id: https://x.example/acme\nimports:\n  - lokf\n  - a\n",
+        "a.yaml": "id: https://x.example/a\nclasses:\n  Concept:\n    description: mine\n",
+    })
+    assert r.rc == 1 and "a.yaml defines the class Concept, which LOKF core defines too" in r.out and doc is None, r.out
+    linkml = "id: https://x.example/acme\nname: acme\nimports:\n  - linkml:types\n  - ../../../../.lokf/schema/lokf\n"
+    host = tmp_path / "host"
+    write(host / ".linkml" / "src" / "acme" / "schema" / "acme.yaml", linkml)
+    write(host / ".lokf" / "justfile", 'schema := "../.linkml/src/acme/schema/acme.yaml"\n')
+    r = run(["bash", tmp_path / "schema.sh"], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v2", "NAME": "host"})
+    assert r.rc == 0 and read(host / "temp" / "release" / "schema-v2-host.yaml") == linkml.replace("../../../../.lokf/schema/lokf", "lokf"), r.out
+    # A linkml-sidecar imports the copy at the root of .lokf/ by its path,
+    # and a copy in .lokf/schema/ beside it does not make that a local file.
+    write(host / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf\nclasses:\n  Concept: {}\n")
+    write(host / ".linkml" / "src" / "acme" / "schema" / "acme.yaml", linkml.replace(".lokf/schema/lokf", ".lokf/lokf.yaml"))
+    r = run(["bash", tmp_path / "schema.sh"], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v3", "NAME": "host"})
+    assert r.rc == 0 and read(host / "temp" / "release" / "schema-v3-host.yaml") == linkml.replace("../../../../.lokf/schema/lokf", "lokf"), r.out
+
+
+@pytest.mark.parametrize("where", ["schema/", ""], ids=["in the schema folder", "at the root of .lokf"])
+def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path, where):
     """The compare step's own lines, at six tags: a README edit, an edit to each copy the composite imports in a flow list over two lines, a refreshed lokf.yaml, and a justfile that names another schema already there. Only the README edit and the refreshed lokf.yaml leave an otherwise unchanged bundle without a zip."""
     body = step_body(RELEASE_YAML, "Compare with the last released bundle", r"^      [#-]")
     script = write(tmp_path / "compare.sh", "#!/usr/bin/env bash\n" + body)
     gh = write(tmp_path / "bin" / "gh", '#!/bin/sh\n[ "$1 $2" = "release view" ] && { echo "$3"; exit 0; }\n[ "$1" = api ] && { echo "$PREV"; exit 0; }\nexit 1\n')
     gh.chmod(0o755)
     h = make_host(tmp_path / "host", "default")
-    write(h / ".lokf" / "justfile", re.sub(r'(?m)^schema := ""$', 'schema := "acme.yaml"', read(h / ".lokf" / "justfile")))
-    write(h / ".lokf" / "acme.yaml", "id: https://x.example/acme\nimports: [linkml:types, lokf,  # core\n  'slsa', gha]  # two copies\n")
-    write(h / ".lokf" / "slsa.yaml", "id: https://x.example/slsa\nimports:\n  # LOKF core by name\n  - lokf\n  - lokf.yaml\n")
-    write(h / ".lokf" / "gha.yaml", "id: https://x.example/gha\n")
-    write(h / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf\n")
+    write(h / ".lokf" / "justfile", re.sub(r'(?m)^schema := ""$', f'schema := "{where}acme.yaml"', read(h / ".lokf" / "justfile")))
+    write(h / ".lokf" / where / "acme.yaml", "id: https://x.example/acme\nimports: [linkml:types, lokf,  # core\n  'slsa', gha]  # two copies\n")
+    write(h / ".lokf" / where / "slsa.yaml", "id: https://x.example/slsa\nimports:\n  # LOKF core by name\n  - lokf\n  - lokf.yaml\n")
+    write(h / ".lokf" / where / "gha.yaml", "id: https://x.example/gha\n")
+    write(h / ".lokf" / where / "lokf.yaml", "id: https://w3id.org/lokf\n")
     edits = {
         "v2": ("README.md", lambda text: text + "more\n"),
-        "v3": (".lokf/slsa.yaml", lambda text: text + "classes: {}\n"),
-        "v4": (".lokf/lokf.yaml", lambda text: text + "title: refreshed\n"),
-        "v5": (".lokf/gha.yaml", lambda text: text + "classes: {}\n"),
-        "v6": (".lokf/justfile", lambda text: text.replace('schema := "acme.yaml"', 'schema := "slsa.yaml"')),
+        "v3": (f".lokf/{where}slsa.yaml", lambda text: text + "classes: {}\n"),
+        "v4": (f".lokf/{where}lokf.yaml", lambda text: text + "title: refreshed\n"),
+        "v5": (f".lokf/{where}gha.yaml", lambda text: text + "classes: {}\n"),
+        "v6": (".lokf/justfile", lambda text: text.replace(f'schema := "{where}acme.yaml"', f'schema := "{where}slsa.yaml"')),
     }
     git(h, "add", "-A")
     git(h, "commit", "-q", "-m", "schema")
@@ -1499,4 +1522,4 @@ def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path):
     assert "changed=true" in outputs["v3"][0] and "its domain schema changed" in outputs["v3"][1], outputs["v3"]
     assert "changed=false" in outputs["v4"][0], "a refreshed lokf.yaml, which the released copy imports by name, released the bundle again"
     assert "changed=true" in outputs["v5"][0] and "its domain schema changed" in outputs["v5"][1], "a copy on a flow list's second line was not compared"
-    assert "changed=true" in outputs["v6"][0] and "now names slsa.yaml" in outputs["v6"][1], outputs["v6"]
+    assert "changed=true" in outputs["v6"][0] and f"now names {where}slsa.yaml" in outputs["v6"][1], outputs["v6"]

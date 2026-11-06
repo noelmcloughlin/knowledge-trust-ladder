@@ -250,12 +250,16 @@ if have uv; then
   # runs the lokf that uv.lock pins, which may be newer than the floor. A
   # copy from another release can reject a concept that lokf reads: 0.9.0
   # reads a bare-date stale_after as a datetime, which 0.8.0's copy rejects.
-  copy="$(sed -n 's/^version: *\([0-9.]*\).*/\1/p' "$root/.lokf/lokf.yaml" 2>/dev/null | head -n 1)"
+  # Each copy is checked: the one in .lokf/schema/, and the one at the root
+  # of .lokf/, where an older sidecar or a linkml-sidecar keeps it.
   pinned="$(awk '/^name = "lokf"$/ { hit = 1; next } hit { if (sub(/^version = "/, "")) { sub(/".*$/, ""); print } exit }' "$root/.lokf/uv.lock" 2>/dev/null)"
   pinned="${pinned:-${installed:-}}"
-  if [ -n "$copy" ] && [ -n "$pinned" ] && [ "$copy" != "$pinned" ]; then
-    warn core ".lokf/lokf.yaml is lokf $copy's schema and the toolkit is lokf $pinned - copy the installed package's lokf.yaml over it, as step 1 of ktl-librarian's domain-schema recipe shows"
-  fi
+  for core in .lokf/schema/lokf.yaml .lokf/lokf.yaml; do
+    copy="$(sed -n 's/^version: *\([0-9.]*\).*/\1/p' "$root/$core" 2>/dev/null | head -n 1)"
+    if [ -n "$copy" ] && [ -n "$pinned" ] && [ "$copy" != "$pinned" ]; then
+      warn core "$core is lokf $copy's schema and the toolkit is lokf $pinned - copy the installed package's lokf.yaml over it, as step 1 of ktl-librarian's domain-schema recipe shows"
+    fi
+  done
   if have just; then ok just "just $(just --version 2>/dev/null | sed 's/^just //')"; else info just "just not installed - uvx --from rust-just just works the same"; fi
   # The workflows run the just uv.lock pins, checked by hash, where it pins one.
   if [ -f "$root/.lokf/uv.lock" ] && ! grep -qx 'name = "rust-just"' "$root/.lokf/uv.lock"; then
@@ -283,6 +287,24 @@ if [ -n "$tschema" ] && [ -z "$jschema" ]; then
   warn schema "[tool.lokf] schema in .lokf/pyproject.toml is $tschema and the justfile's schema line is empty - the recipes check against it, the release and the librarian do not; put the same path on the line"
 elif [ -n "$tschema" ] && [ "$tschema" != "$jschema" ]; then
   warn schema "[tool.lokf] schema in .lokf/pyproject.toml is $tschema and the justfile's schema line is $jschema - the recipes check against the line, a bare lokf command against pyproject.toml; set both to one path"
+fi
+# Schema files belong in .lokf/schema/: the domain schema, the copy of LOKF
+# core and each file the schema imports. A sidecar laid out before the
+# folder keeps them at the root of .lokf/. A root file with a namesake in
+# schema/ is a copy left behind, since the sync keeps only the one in
+# schema/ current. A linkml-sidecar schema, outside .lokf/, imports the
+# root copy of LOKF core by its path, so that copy is left where it is.
+loose="" twice=""
+for f in "$root"/.lokf/*.yaml "$root"/.lokf/*.yml; do
+  if [ ! -f "$f" ] || ! grep -q '^id:' "$f" || ! grep -qE '^(imports|classes|slots|prefixes):' "$f"; then continue; fi
+  case "$jschema:${f##*/}" in ../*:lokf.yaml) continue ;; esac
+  if [ -f "$root/.lokf/schema/${f##*/}" ]; then twice="$twice${twice:+ }${f##*/}"; else loose="$loose${loose:+ }${f##*/}"; fi
+done
+if [ -n "$twice" ]; then
+  warn schema "both .lokf/ and .lokf/schema/ hold $twice - keep the copy in schema/, git rm the other, and point the schema line and [tool.lokf] schema into schema/"
+fi
+if [ -n "$loose" ]; then
+  info schema "schema files at the root of .lokf/: $loose - git mv them into .lokf/schema/ and point the schema line and [tool.lokf] schema into schema/"
 fi
 
 # The gate, the release and the scheduled librarian install the toolkit with

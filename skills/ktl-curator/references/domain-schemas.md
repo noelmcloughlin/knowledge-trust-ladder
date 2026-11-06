@@ -16,7 +16,7 @@ Keep the OKF/LOKF mechanics: one Markdown file per concept, frontmatter, the tru
 
 ## You already have the tooling
 
-The scaffolded sidecar depends on `lokf[build]`. That `[build]` extra pulls in the `linkml` package: the full generator suite, not just the runtime. So a domain schema costs no new installation. From `.lokf/`:
+The scaffolded sidecar depends on `lokf[build]`. That `[build]` extra pulls in the `linkml` package: the full generator suite, not just the runtime. So a domain schema costs no new installation. From `.lokf/schema/`, where the schema files sit:
 
 ```bash
 uv run gen-json-schema domain.yaml > domain.schema.json   # what validators check

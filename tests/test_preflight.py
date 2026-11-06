@@ -321,18 +321,56 @@ def test_warns_when_the_floor_is_below_what_the_recipes_need(tmp_path):
     ("0.9.0", "0.9.1", True),
     (None, "0.9.0", False),
 ], ids=["an older copy", "the locked release's copy", "a lock above the floor", "a copy behind the lock", "no copy"])
-def test_warns_when_the_pinned_core_schema_is_not_the_locked_lokfs(tmp_path, copy, locked, stale):
-    """A domain schema imports .lokf/lokf.yaml, and the gate runs the lokf that uv.lock pins. Under lokf 0.9.0 a bare-date stale_after is a datetime, which 0.8.0's copy rejects.
+@pytest.mark.parametrize("where", [".lokf/schema", ".lokf"], ids=["in the schema folder", "at the root of .lokf"])
+def test_warns_when_the_pinned_core_schema_is_not_the_locked_lokfs(tmp_path, copy, locked, stale, where):
+    """A domain schema imports the copy of lokf.yaml beside it, and the gate runs the lokf that uv.lock pins. Under lokf 0.9.0 a bare-date stale_after is a datetime, which 0.8.0's copy rejects.
 
     The floor stays >=0.9.0 in every case, so a lock on 0.9.1 with a copy to match gives no warning.
     """
     write(tmp_path / ".lokf" / "pyproject.toml", (TEMPLATES / "pyproject.toml").read_text())
     write(tmp_path / ".lokf" / "uv.lock", f'version = 1\n\n[[package]]\nname = "lokf"\nversion = "{locked}"\nsource = {{ registry = "https://pypi.org/simple" }}\n')
     if copy:
-        write(tmp_path / ".lokf" / "lokf.yaml", f"id: https://w3id.org/lokf/schema\nname: lokf\nversion: {copy}\n")
+        write(tmp_path / where / "lokf.yaml", f"id: https://w3id.org/lokf/schema\nname: lokf\nversion: {copy}\n")
     result = preflight(tmp_path)
-    found = matches(result.out, rf"^warn    core +\.lokf/lokf\.yaml is lokf {re.escape(str(copy))}'s schema and the toolkit is lokf {re.escape(locked)} ")
+    found = matches(result.out, rf"^warn    core +{re.escape(where)}/lokf\.yaml is lokf {re.escape(str(copy))}'s schema and the toolkit is lokf {re.escape(locked)} ")
     assert result and found == stale, f"preflight {'did not warn' if stale else 'warned'} about a {copy} copy under a lock on {locked}: {result.out}"
+
+
+def test_checks_each_copy_of_the_core_schema(tmp_path):
+    """A linkml-sidecar imports the copy at the root of .lokf/ by its path, so a current copy in .lokf/schema/ does not stand for it."""
+    write(tmp_path / ".lokf" / "pyproject.toml", (TEMPLATES / "pyproject.toml").read_text())
+    write(tmp_path / ".lokf" / "uv.lock", 'version = 1\n\n[[package]]\nname = "lokf"\nversion = "0.9.1"\nsource = { registry = "https://pypi.org/simple" }\n')
+    write(tmp_path / ".lokf" / "schema" / "lokf.yaml", "id: https://w3id.org/lokf/schema\nname: lokf\nversion: 0.9.1\n")
+    write(tmp_path / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf/schema\nname: lokf\nversion: 0.8.0\n")
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^warn    core +\.lokf/lokf\.yaml is lokf 0\.8\.0's schema"), f"preflight checked only one copy: {result.out}"
+    assert not matches(result.out, r"^warn    core +\.lokf/schema/"), f"preflight warned about the current copy: {result.out}"
+
+
+SCHEMA_FILE = "id: https://acme.example/schema/{0}\nname: {0}\nimports:\n  - linkml:types\n  - lokf\n"
+
+
+@pytest.mark.parametrize("files, line, want", [
+    ({".lokf/acme.yaml": "acme", ".lokf/lokf.yaml": "lokf"}, "acme.yaml", r"^info    schema +schema files at the root of \.lokf/: acme\.yaml lokf\.yaml - git mv them into \.lokf/schema/"),
+    ({".lokf/schema/acme.yaml": "acme", ".lokf/schema/lokf.yaml": "lokf"}, "schema/acme.yaml", None),
+    ({".lokf/schema/domain.yaml": "domain", ".lokf/domain.yaml": "domain"}, "domain.yaml", r"^warn    schema +both \.lokf/ and \.lokf/schema/ hold domain\.yaml - keep the copy in schema/, git rm the other"),
+    ({".lokf/schema/domain.yaml": "domain", ".lokf/domain.yaml": "domain", ".lokf/acme.yaml": "acme"}, "schema/domain.yaml", r"^info    schema +schema files at the root of \.lokf/: acme\.yaml - git mv"),
+    ({".lokf/lokf.yaml": "lokf"}, "../.linkml/src/acme/schema/acme.yaml", None),
+    ({".lokf/lokf.yaml": "lokf", ".lokf/schema/lokf.yaml": "lokf"}, "../.linkml/src/acme/schema/acme.yaml", None),
+], ids=["at the root", "in the folder", "a copy left behind", "a stray file beside a copy left behind", "a linkml-sidecar schema", "a linkml-sidecar schema beside a copy in the folder"])
+def test_names_schema_files_outside_the_schema_folder(tmp_path, files, line, want):
+    """Schema files belong in .lokf/schema/. One left at the root beside a namesake there is the copy the sync no longer keeps current; a linkml-sidecar schema imports the root copy by its path, so its move is not suggested."""
+    write(tmp_path / ".lokf" / "justfile", f'bundle := "knowledge"\nschema := "{line}"\n')
+    write(tmp_path / ".lokf" / "ingest.yaml", "entries: []\n")
+    for path, name in files.items():
+        write(tmp_path / path, SCHEMA_FILE.format(name))
+    result = preflight(tmp_path)
+    lines = [l for l in result.out.split("\n") if re.match(r"^(info|warn) +schema ", l)]
+    if want is None:
+        assert result and not lines, f"preflight named schema files it should leave alone: {lines}"
+    else:
+        assert result and matches(result.out, want), f"preflight did not say {want}: {lines}"
+        assert not any("ingest.yaml" in l for l in lines), f"preflight read the ingest manifest as a schema file: {lines}"
 
 
 @pytest.mark.parametrize("line, table, warning", [

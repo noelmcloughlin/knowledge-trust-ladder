@@ -3,7 +3,7 @@
 # A domain is a thin LOKF bundle whose concepts are other bundles. Each is a
 # `MemberBundle`, or a `MemberDomain` when that bundle is a domain in turn,
 # and names one released zip and that zip's checksum. The schema is
-# .lokf/domain.yaml, laid down by ktl-sidecar for a domain host.
+# .lokf/schema/domain.yaml, laid down by ktl-sidecar for a domain host.
 # A bundle that releases no zip names instead the concepts.jsonld its site
 # serves, with that file's checksum. Section 11.1 of the LOKF specification
 # has a producer publish that file. The build writes it out as the bundle it
