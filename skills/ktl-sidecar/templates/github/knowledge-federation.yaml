@@ -59,10 +59,12 @@ on:
   # The gate reads every concept of the domain bundle, not only its members,
   # and the toolkit that uv.lock pins exports what the gate reads. The check
   # validates the bundle against the schema the justfile names, which
-  # imports the copy of LOKF core in .lokf/lokf.yaml.
+  # imports the copy of LOKF core beside it in .lokf/schema/, or at the root
+  # of .lokf/ in a sidecar laid out before the folder existed.
   pull_request:
     paths:
       - ".lokf/knowledge/**"
+      - ".lokf/schema/**"
       - ".lokf/domain.yaml"
       - ".lokf/lokf.yaml"
       - ".lokf/justfile"

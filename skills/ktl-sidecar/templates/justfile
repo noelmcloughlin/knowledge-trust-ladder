@@ -8,8 +8,9 @@ bundle := "knowledge"
 # A domain schema the validator checks beside LOKF's: a LinkML file that
 # imports the pinned lokf.yaml and adds the host's own classes
 # (ktl-librarian/references/domain-schema.md), as a path relative to this
-# folder: "<slug>.yaml" beside the bundle, or
-# "../.linkml/src/<slug>/schema/<slug>.yaml" in a linkml-sidecar project.
+# folder: "schema/<slug>.yaml", with lokf.yaml and every file it imports
+# beside it in schema/, or "../.linkml/src/<slug>/schema/<slug>.yaml" in a
+# linkml-sidecar project.
 # Leave it empty for the core vocabulary alone. The validate, convert and
 # serve recipes pass it as --schema (lokf 0.9.0 or later), and the workflows,
 # the release and the website read this line, so a host names its schema here

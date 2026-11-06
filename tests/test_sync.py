@@ -161,7 +161,7 @@ def test_a_sync_copies_adds_reports_pins_and_writes_the_entry(tmp_path, skills, 
     checks.ok(has_line(out, "   copied   .lokf/scripts/knowledge-sync.sh"), "the sync script's own copy is copied", out)
     checks.ok(matches(out, r"^   added    \.github/workflows/knowledge-sync\.yaml \(\.github/workflows/knowledge-librarian\.yaml pins"), "the sync workflow is added beside a pinned librarian", out)
     checks.ok(matches(out, r"^   added    \.github/PULL_REQUEST_TEMPLATE/knowledge-sync\.md \(\.github/workflows/knowledge-sync\.yaml opens"), "the pull request template is added beside the workflow", out)
-    checks.ok(matches(out, r"^   absent   \.lokf/domain\.yaml \(never installed here"), "a domain host's file is reported, not added", out)
+    checks.ok(matches(out, r"^   absent   \.lokf/schema/domain\.yaml \(never installed here"), "a domain host's file is reported, not added", out)
     checks.ok(matches(out, r"^   unknown  mirror docs/example\.md: a manifest rule this copy of knowledge-sync\.sh does not know"), "a rule the script does not know is reported", out)
     checks.ok(not (host / ".lokf" / "example.md").exists(), "and nothing is done for it")
     checks.ok(has_line(out, "   same     .github/workflows/knowledge-registrar.yaml"), "an unchanged copy is left alone", out)
@@ -587,6 +587,35 @@ def test_apply_refuses_what_a_sync_never_does(tmp_path, skills, checks, change, 
     result = apply(host, patch, tmp_path / "workflows.patch", "v1.1.0", "0" * 40)
     checks.ok(result.rc == 2 and says in result.out, f"refused: {says}", result.out)
     checks.ok(not Git(host)("status", "--porcelain"), "the checkout is untouched")
+
+
+def _domain_in_folder(host, git):
+    write(host / ".lokf" / "schema" / "domain.yaml", "id: https://w3id.org/ktl/domain\n")
+
+
+def _domain_at_root(host, git):
+    write(host / ".lokf" / "domain.yaml", "id: https://w3id.org/ktl/domain\n")
+
+
+def _other_schema(host, git):
+    write(host / ".lokf" / "schema" / "acme.yaml", "id: https://acme.example/schema\n")
+
+
+@pytest.mark.parametrize(
+    "change, path",
+    [(_domain_in_folder, ".lokf/schema/domain.yaml"), (_domain_at_root, ".lokf/domain.yaml"), (_other_schema, None)],
+    ids=["the schema folder", "the root of .lokf", "a host's own schema"],
+)
+def test_apply_takes_the_domain_schema_in_either_place_and_no_other(tmp_path, skills, checks, change, path):
+    """The sync keeps domain.yaml in .lokf/schema/, and a host's script from before the folder keeps it at the root. A schema the host wrote is its own."""
+    host = make_host(tmp_path, skills)
+    patch = tmp_path / "domain.patch"
+    patch.write_text(hand_patch(host, change))
+    result = apply(host, patch, tmp_path / "workflows.patch", "v1.1.0", "0" * 40)
+    if path:
+        checks.ok(result.rc == 0 and has_line(result.out, f"   staged   {path}"), f"{path} is staged", result.out)
+    else:
+        checks.ok(result.rc == 2 and "paths a sync may not" in result.out, "a host's own schema is refused", result.out)
 
 
 def test_apply_refuses_a_git_folder_and_a_librarian_the_host_lacks(tmp_path, skills, checks):
