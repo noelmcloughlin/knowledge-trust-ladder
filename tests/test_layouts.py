@@ -1476,6 +1476,12 @@ def test_the_release_reads_lokf_core_from_the_schema_folder(tmp_path):
     write(host / ".lokf" / "justfile", 'schema := "../.linkml/src/acme/schema/acme.yaml"\n')
     r = run(["bash", tmp_path / "schema.sh"], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v2", "NAME": "host"})
     assert r.rc == 0 and read(host / "temp" / "release" / "schema-v2-host.yaml") == linkml.replace("../../../../.lokf/schema/lokf", "lokf"), r.out
+    # A linkml-sidecar imports the copy at the root of .lokf/ by its path,
+    # and a copy in .lokf/schema/ beside it does not make that a local file.
+    write(host / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf\nclasses:\n  Concept: {}\n")
+    write(host / ".linkml" / "src" / "acme" / "schema" / "acme.yaml", linkml.replace(".lokf/schema/lokf", ".lokf/lokf.yaml"))
+    r = run(["bash", tmp_path / "schema.sh"], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v3", "NAME": "host"})
+    assert r.rc == 0 and read(host / "temp" / "release" / "schema-v3-host.yaml") == linkml.replace("../../../../.lokf/schema/lokf", "lokf"), r.out
 
 
 @pytest.mark.parametrize("where", ["schema/", ""], ids=["in the schema folder", "at the root of .lokf"])

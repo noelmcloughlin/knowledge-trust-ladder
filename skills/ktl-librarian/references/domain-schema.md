@@ -77,15 +77,15 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
 ## Moving the schema files into the folder
 
-A sidecar laid out before `.lokf/schema/` existed keeps its schema files at the root of `.lokf/`, and the preflight's `schema` line lists them. They still work there. To move them, take every schema file together, so that each import still resolves beside it:
+A sidecar laid out before `.lokf/schema/` existed keeps its schema files at the root of `.lokf/`, where they still work, and the preflight's `schema` line lists them. Move them together, so that each import still resolves beside it:
 
 ```bash
 cd .lokf && mkdir -p schema && git mv lokf.yaml <slug>.yaml schema/   # and each file <slug>.yaml imports
 ```
 
-Then set `schema := "schema/<slug>.yaml"` in the justfile, and `[tool.lokf] schema` in `pyproject.toml` to the same path where it is set. Leave `.lokf/lokf.yaml` where it is when a schema outside `.lokf/` imports it by its path, as a linkml-sidecar project does.
+Then set `schema := "schema/<slug>.yaml"` in the justfile, and `[tool.lokf] schema` in `pyproject.toml` to the same path if it is set. Leave `.lokf/lokf.yaml` where it is when a schema outside `.lokf/`, such as a linkml-sidecar project's, imports it by its path.
 
-A domain host moves `domain.yaml` and `lokf.yaml` the same way, before its first sync to a release that keeps `domain.yaml` in the folder. The host's own copy of the sync script allows `.lokf/domain.yaml` alone, so it refuses that sync until the file is in place.
+A domain host moves `domain.yaml` and `lokf.yaml` the same way before its first sync to a release that keeps `domain.yaml` in the folder. Until then, the host's own sync script, which allows only `.lokf/domain.yaml`, refuses that sync.
 
 ## Importing a published vocabulary
 
