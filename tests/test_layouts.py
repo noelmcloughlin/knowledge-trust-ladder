@@ -1151,6 +1151,15 @@ def test_the_agent_and_the_jobs_whose_result_is_trusted_share_no_uv_cache(yaml_p
     )
 
 
+def test_the_agent_s_job_saves_no_npm_cache():
+    """setup-node caches npm by itself when package.json names npm, and that cache holds the agent's npx folder, which the next run would start from."""
+    steps = yaml.safe_load(read(LIBRARIAN_YAML))["jobs"]["refresh"]["steps"]
+    node = [s for s in steps if "actions/setup-node" in str(s.get("uses", ""))]
+    assert node and all(s.get("with", {}).get("package-manager-cache") is False for s in node), (
+        "the librarian's refresh job sets up Node with npm's automatic cache on"
+    )
+
+
 # 3. The registrar workflow.
 
 

@@ -90,6 +90,7 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
+          package-manager-cache: false # no npm cache either, so nothing this job saves reaches another run
 
       # Pinned, as the sidecar's automation page pins the agent commands, so
       # a run executes the code that was tried. `claude plugin eval` needs
