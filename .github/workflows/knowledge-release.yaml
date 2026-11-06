@@ -217,11 +217,16 @@ jobs:
             echo "::notice::The bundle and domain schema at $TAG are identical to the ones released with $prev (tree ${tree:0:12}), so no zip is attached."
           fi
 
+      # No uv cache, so the zip is built from files checked against
+      # .lokf/uv.lock. A cache is shared by every job on the default branch,
+      # the librarian's agent job among them, and uv trusts the wheels it
+      # unpacked there without hashing them again.
       - name: Set up uv
         if: steps.compare.outputs.changed == 'true'
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.12"
+          enable-cache: false
 
       # --locked, as the registrar's gate installs it: what .lokf/uv.lock
       # names, each file checked against its recorded hash.

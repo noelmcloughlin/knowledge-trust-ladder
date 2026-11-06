@@ -1043,6 +1043,114 @@ def test_the_publish_path_check(host, tmp_path, where, path):
     assert (where == "outside") == bool(bad), f"publish path check got {path} wrong (refused: {bad or 'nothing'})"
 
 
+def move_the_gate_into_the_bundle(h):
+    git(h, "mv", ".lokf/scripts/knowledge-provenance.sh", ".lokf/knowledge/gate.md")
+
+
+def link_a_concept(h):
+    os.symlink("../../README.md", h / ".lokf" / "knowledge" / "linked.md")
+
+
+def make_a_concept_executable(h):
+    (h / ".lokf" / "knowledge" / "a.md").chmod(0o755)
+
+
+def edit_a_concept(h):
+    write(h / ".lokf" / "knowledge" / "a.md", read(h / ".lokf" / "knowledge" / "a.md") + "\nEdited.\n")
+
+
+def publish_check(h, tmp_path, change, renames=False):
+    """Make the change in the host, package it with the template's own step, put the host back, and run the template's publish check on the patch."""
+    temp = tmp_path / "runner-temp"
+    temp.mkdir(exist_ok=True)
+    env = {"RUNNER_TEMP": temp, "GITHUB_OUTPUT": tmp_path / "output", "GITHUB_RUN_ID": "1"}
+    change(h)
+    package = write(tmp_path / "package.sh", step_body(LIBRARIAN_YAML, "Package the bundle change", r"^      [#-]"))
+    if renames:
+        # A patch built some other way than the template builds it, as a
+        # `refresh` job the agent defeated could hand on.
+        run(["bash", "-c", f'git add -A && git diff --cached --binary -M > "{temp}/librarian.patch"'], cwd=h)
+    else:
+        assert run(["bash", package], cwd=h, env=env).rc == 0, "the template's packaging step failed"
+    git(h, "reset", "-q", "--hard")
+    git(h, "clean", "-qfd")
+    check = write(tmp_path / "check.sh", step_body(LIBRARIAN_YAML, "Check and commit the bundle patch", r"^      [#-]"))
+    assert "apply --summary" in read(check) and run(["bash", "-n", check]).rc == 0, (
+        "could not extract the check step from knowledge-librarian.yaml's publish job"
+    )
+    return run(["bash", check], cwd=h, env=env)
+
+
+@pytest.mark.parametrize(
+    ("label", "change", "renames", "line"),
+    [
+        ("moved-in", move_the_gate_into_the_bundle, False, ".lokf/scripts/knowledge-provenance.sh"),
+        ("renamed-in", move_the_gate_into_the_bundle, True, "rename .lokf/{scripts/knowledge-provenance.sh => knowledge/gate.md}"),
+        ("linked", link_a_concept, False, "create mode 120000 .lokf/knowledge/linked.md"),
+        ("mode", make_a_concept_executable, False, "mode change 100644 => 100755 .lokf/knowledge/a.md"),
+    ],
+    ids=["moved-in", "renamed-in", "linked", "mode"],
+)
+def test_publish_refuses_a_patch_that_moves_links_or_changes_a_mode(host, tmp_path, label, change, renames, line):
+    """--numstat names a rename by its new path alone, so a file moved into the bundle passed as a bundle change, and with it the gate that reads a person's record."""
+    result = publish_check(host, tmp_path, change, renames)
+    assert result.rc == 1 and line in result.out, f"{label}: publish check exit {result.rc}: {result.out}"
+    assert (host / ".lokf" / "scripts" / "knowledge-provenance.sh").is_file(), f"{label}: the patch reached the checkout"
+
+
+def test_publish_commits_a_plain_bundle_edit(host, tmp_path):
+    result = publish_check(host, tmp_path, edit_a_concept)
+    assert result.rc == 0 and "branch=knowledge-librarian/" in read(tmp_path / "output"), (
+        f"publish check exit {result.rc} on a plain edit: {result.out}"
+    )
+    assert "Edited." in git(host, "show", "HEAD:.lokf/knowledge/a.md"), "the edit was not committed"
+
+
+def test_publish_fails_when_the_gate_is_missing(host, tmp_path):
+    git(host, "rm", "-q", ".lokf/scripts/knowledge-provenance.sh")
+    git(host, "commit", "-q", "-m", "a host with no gate")
+    result = publish_check(host, tmp_path, edit_a_concept)
+    assert result.rc == 1 and "knowledge-provenance.sh is missing" in result.out, (
+        f"publish check exit {result.rc} with no gate: {result.out}"
+    )
+
+
+def test_publish_keeps_its_token_off_disk_and_out_of_the_scripts_steps():
+    publish = yaml.safe_load(read(LIBRARIAN_YAML))["jobs"]["publish"]["steps"]
+    checkout = next(s for s in publish if s.get("name") == "Checkout")
+    assert checkout.get("with", {}).get("persist-credentials") is False, "publish's checkout leaves the token on disk"
+    holders = [s["name"] for s in publish if "github.token" in str(s.get("env", {}))]
+    assert holders == ["Push the librarian branch"], f"steps of publish that hold the token: {holders}"
+    push = next(s for s in publish if s.get("name") == "Push the librarian branch")
+    assert push["run"].startswith("git push ") and "\n" not in push["run"].strip(), (
+        f"the push step runs more than git push: {push['run']}"
+    )
+
+
+SIDECAR_WORKFLOWS = sorted(WORKFLOWS.glob("*.yaml"))
+
+
+@pytest.mark.parametrize("yaml_path", SIDECAR_WORKFLOWS, ids=lambda p: p.name)
+def test_every_job_of_each_template_starts_by_hardening_the_runner(yaml_path):
+    jobs = yaml.safe_load(read(yaml_path))["jobs"]
+    bare = [name for name, job in jobs.items() if "harden-runner" not in str(job["steps"][0].get("uses", ""))]
+    assert not bare, f"{yaml_path.name}: jobs whose first step is not harden-runner: {bare}"
+
+
+@pytest.mark.parametrize(
+    ("yaml_path", "job"),
+    [(LIBRARIAN_YAML, "refresh"), (RELEASE_YAML, "pack"), (REGISTRAR_YAML, "validate")],
+    ids=lambda v: v.name if hasattr(v, "name") else v,
+)
+def test_the_agent_and_the_jobs_whose_result_is_trusted_share_no_uv_cache(yaml_path, job):
+    """setup-uv's cache key names no job, so a cache the agent's job saved on the default branch would be what the release restores."""
+    steps = yaml.safe_load(read(yaml_path))["jobs"][job]["steps"]
+    uv = [s for s in steps if "astral-sh/setup-uv" in str(s.get("uses", ""))]
+    assert uv and all(s.get("with", {}).get("enable-cache") is False for s in uv), (
+        f"{yaml_path.name}'s {job} job sets up uv with its cache on"
+    )
+
+
 # 3. The registrar workflow.
 
 

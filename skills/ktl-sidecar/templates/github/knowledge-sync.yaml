@@ -587,6 +587,11 @@ jobs:
       name: ${{ vars.KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT }}
       deployment: false
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        with:
+          egress-policy: audit
+
       - name: Record the approval
         env:
           REVIEW_ENV: ${{ vars.KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT }}

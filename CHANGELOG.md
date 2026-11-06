@@ -4,6 +4,13 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Security
+
+- **The librarian's agent job no longer saves a uv cache the release restores.** setup-uv's cache key names no job, and uv trusts the wheels it unpacked there. The agent's job, the release's `pack` and the registrar's gate now set up uv with the cache off. This repository's `docent-eval.yml` and `publish.yml` do the same.
+- **The librarian's `publish` job refuses a rename.** `--numstat` named a file moved into the bundle by its new path alone, so it passed as a bundle change, and moving the gate script skipped the gate. The patch is built with `--no-renames`, `publish` refuses a rename, a copy, a link or a mode change, and a missing gate fails the run.
+- **The librarian's `publish` job keeps its token off disk.** Its push step alone holds it, in the push address, as the sync's does.
+- **Every job of the registrar and sync workflows runs harden-runner**, the `provenance`, `attestation` and `review` jobs among them.
+
 ## [0.62.0] - 2026-11-06
 
 ### Changed
