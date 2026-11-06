@@ -168,15 +168,26 @@ function openQuestions(body) {
 
 /** Markdown inline syntax stripped to its words, for titles and descriptions. */
 function plain(md) {
-  return md
+  const text = md
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/`([^`]*)`/g, "$1")
     .replace(/(\*\*|__)(.*?)\1/g, "$2")
-    .replace(/(^|[^\w*])[*_]([^*_]+)[*_](?=[^\w*]|$)/g, "$1$2")
-    .replace(/<[^>]+>/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/(^|[^\w*])[*_]([^*_]+)[*_](?=[^\w*]|$)/g, "$1$2");
+  return withoutTags(text).replace(/\s+/g, " ").trim();
+}
+
+/** Text with its HTML tags and comments removed until none is left: one pass
+ *  over `<<b>script>` would leave `<script>`. A bracket that opens no tag, as
+ *  in `<>` or `a < b and c > d`, stays, and Markdown renders no unclosed tag
+ *  as HTML. */
+function withoutTags(text) {
+  let out = text;
+  for (let previous = ""; out !== previous; ) {
+    previous = out;
+    out = out.replace(/<!--[\s\S]*?-->|<\/?[A-Za-z][^<>]*>/g, "");
+  }
+  return out;
 }
 
 /** The first sentence of the first paragraph, or of the first note, as a page description. */
