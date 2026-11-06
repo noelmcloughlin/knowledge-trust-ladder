@@ -4,12 +4,12 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.62.0] - 2026-11-06
+
 ### Changed
 
 - **Schema files go in `.lokf/schema/`.** The copy of LOKF core, the domain schema and each file it imports sit together there, named as `schema := "schema/<slug>.yaml"`, and the sync keeps a domain host's `domain.yaml` there. The release and the preflight read either layout, and the preflight lists schema files left at the root of `.lokf/`.
 - **A domain host moves `domain.yaml` and `lokf.yaml` into `.lokf/schema/` before its next sync.** Until then, its own sync script, which allows only `.lokf/domain.yaml`, refuses the sync; ktl-librarian's `references/domain-schema.md` gives the move.
-
-## [0.61.1] - 2026-11-03
 
 ### Fixed
 
