@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Security
-
-- **ktl-website strips a page title's tags until none is left.** One pass over `<<b>script>` left `<script>`, which CodeQL reported as incomplete sanitisation; a bracket that opens no tag, such as `<>`, still stays.
-
 ## [0.62.0] - 2026-11-06
 
 ### Changed
@@ -27,6 +23,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The librarian's `publish` job keeps its token off disk.** Its push step alone holds it, in the push address, as the sync's does.
 - **Every job of the registrar and sync workflows runs harden-runner**, the `provenance`, `attestation` and `review` jobs among them.
 - **The librarian wrapper restores `.git/info/` after the agent runs**, as it restores `.git/config` and `.git/hooks/`. An exclude rule the agent added could hide its own writes from the write-scope check.
+- **ktl-website strips a page title's tags until none is left.** One pass over `<<b>script>` left `<script>`, which CodeQL reported as incomplete sanitisation; a bracket that opens no tag, such as `<>`, still stays.
 
 ## [0.61.0] - 2026-11-02
 
