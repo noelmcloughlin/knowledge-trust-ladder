@@ -4,14 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **The scheduled librarian runs in a fork whose upstream owns the root `.gitignore`.** The install step refused any host whose `.gitignore` left `.agents/` out. It now ignores its own install in the checkout's `.git/info/exclude`, and stops only when a host rule brings the path back or the host commits another copy. It checks every installed file, not `SKILL.md` alone.
-
-### Security
-
-- **The librarian wrapper restores `.git/info/` after the agent runs**, as it restores `.git/config` and `.git/hooks/`. An exclude rule the agent added could hide its own writes from the write-scope check.
-
 ## [0.62.0] - 2026-11-06
 
 ### Changed
@@ -22,6 +14,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **An ingest `command` runs in a sidecar kept out of git.** It was refused as untracked on every run, though such a host has no commit to make. Where git ignores both the manifest and the command, it now runs and its record says it ran unchecked; a tracked manifest still needs a tracked command.
+- **The scheduled librarian runs in a fork whose upstream owns the root `.gitignore`.** The install step refused any host whose `.gitignore` left `.agents/` out. It now ignores its own install in the checkout's `.git/info/exclude`, and stops only when a host rule brings the path back or the host commits another copy. It checks every installed file, not `SKILL.md` alone.
 
 ### Security
 
@@ -29,6 +22,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The librarian's `publish` job refuses a rename.** `--numstat` named a moved file by its new path alone, so a file moved into the bundle passed as a bundle change, and moving the gate script there skipped the gate. The patch is built with `--no-renames`, `publish` refuses a rename, a copy, a link or a mode change, and a missing gate fails the run.
 - **The librarian's `publish` job keeps its token off disk.** Its push step alone holds it, in the push address, as the sync's does.
 - **Every job of the registrar and sync workflows runs harden-runner**, the `provenance`, `attestation` and `review` jobs among them.
+- **The librarian wrapper restores `.git/info/` after the agent runs**, as it restores `.git/config` and `.git/hooks/`. An exclude rule the agent added could hide its own writes from the write-scope check.
 
 ## [0.61.0] - 2026-11-02
 
