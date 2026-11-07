@@ -1513,7 +1513,7 @@ def test_the_federation_check_holds_a_member_as_the_release_build_would():
 
 
 def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
-    """The step's own lines, run against six justfiles. They name a schema beside the bundle, none, one in a linkml-sidecar project, one outside the repository, a missing file, and a schema that imports a local file that is not there."""
+    """The step's own lines, run against six justfiles. They name a schema beside the bundle, none, one in an older linkml-sidecar project, one outside the repository, a missing file, and a schema that imports a local file that is not there."""
     body = step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]")
     assert 'asset="schema-${TAG//\\//-}-$NAME.yaml"' in body, "knowledge-release.yaml no longer packs the schema as schema-<tag>-<name>.yaml"
     script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + body)
@@ -1636,8 +1636,9 @@ def test_the_release_reads_lokf_core_from_the_schema_folder(tmp_path):
     write(host / ".lokf" / "justfile", 'schema := "../.linkml/src/acme/schema/acme.yaml"\n')
     r = run(["bash", tmp_path / "schema.sh"], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v2", "NAME": "host"})
     assert r.rc == 0 and read(host / "temp" / "release" / "schema-v2-host.yaml") == linkml.replace("../../../../.lokf/schema/lokf", "lokf"), r.out
-    # A linkml-sidecar imports the copy at the root of .lokf/ by its path,
-    # and a copy in .lokf/schema/ beside it does not make that a local file.
+    # An older linkml-sidecar imports the copy at the root of .lokf/ by its
+    # path, and a copy in .lokf/schema/ beside it does not make that a local
+    # file.
     write(host / ".lokf" / "lokf.yaml", "id: https://w3id.org/lokf\nclasses:\n  Concept: {}\n")
     write(host / ".linkml" / "src" / "acme" / "schema" / "acme.yaml", linkml.replace(".lokf/schema/lokf", ".lokf/lokf.yaml"))
     r = run(["bash", tmp_path / "schema.sh"], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "v3", "NAME": "host"})

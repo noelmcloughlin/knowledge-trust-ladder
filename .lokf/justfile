@@ -9,8 +9,8 @@ bundle := "knowledge"
 # imports the pinned lokf.yaml and adds the host's own classes
 # (ktl-librarian/references/domain-schema.md), as a path relative to this
 # folder: "schema/<slug>.yaml", with lokf.yaml and every file it imports
-# beside it in schema/, or "../.linkml/src/<slug>/schema/<slug>.yaml" in a
-# linkml-sidecar project.
+# beside it in schema/. A LinkML project's own schema, in this repository or
+# another, is copied there first, through `lokf adapt` where it must be.
 # Leave it empty for the core vocabulary alone. The validate, convert and
 # serve recipes pass it as --schema (lokf 0.9.0 or later), and the workflows,
 # the release and the website read this line, so a host names its schema here

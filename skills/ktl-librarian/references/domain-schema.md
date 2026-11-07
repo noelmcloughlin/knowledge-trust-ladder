@@ -63,15 +63,9 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
    A `lokf` command given no `--schema` reads `[tool.lokf] schema` in `.lokf/pyproject.toml`, and so does a recipe when the variable is empty. Set it to the same path or leave it out; the preflight warns when the two differ.
 
-   The schema need not sit in `.lokf/schema/`. The variable takes any path relative to `.lokf/`, and the schema's own `imports:` entry names `lokf.yaml` relative to the schema file. Three layouts recur:
+   The line names a file in `.lokf/schema/`. A schema that a LinkML project owns stays in that project, in this repository or another. In this repository it is `.linkml/src/<slug>/schema/<slug>.yaml`, which the [linkml-sidecar](https://github.com/noelmcloughlin/linkml-sidecar#install) skill installs, or `src/<slug>/schema/<slug>.yaml` in a project made with copier at the root. Copy the project's schema into `.lokf/schema/` and adapt the copy with `lokf adapt` ([Importing a published vocabulary](#importing-a-published-vocabulary)), or copy a release that is adapted already. The line names the copy, never the project's own file. Copy it again when the project's schema changes. linkml-sidecar's [ktl.md](https://github.com/noelmcloughlin/linkml-sidecar/blob/main/skills/linkml-sidecar/references/ktl.md) and its linkml-author skill cover the project's side.
 
-   - **A linkml-sidecar.** A host that wants the full LinkML toolchain for the schema (lint, generators, docs, tests, `copier update`) installs the [linkml-sidecar](https://github.com/noelmcloughlin/linkml-sidecar#install) skill. It writes the schema as `.linkml/src/<slug>/schema/<slug>.yaml`, imports `.lokf/lokf.yaml` from there, and sets `schema := "../.linkml/src/<slug>/schema/<slug>.yaml"` itself.
-   - **A schema project at the root.** A repository that is itself a LinkML schema project, made with copier at its root, sets `schema := "../src/<slug>/schema/<slug>.yaml"`.
-   - **A schema anywhere else.** A schema the repository keeps elsewhere sets the path to that file.
-
-   In the last two layouts, a `.lokf/` beside the schema is a bundle *about* the repository until its maintainers add the import and this variable. The bundle's presence alone connects nothing.
-
-   linkml-sidecar's [ktl.md](https://github.com/noelmcloughlin/linkml-sidecar/blob/main/skills/linkml-sidecar/references/ktl.md) and its linkml-author skill cover the authoring side. Every class the bundle may use is `is_a: Concept`, the linter is told to excuse LOKF's camelCase slot names, and a valid example is kept where the example runner does not compile LOKF's `from` slot.
+   Until the copy is there and the line names it, a `.lokf/` beside a schema project is a bundle *about* the repository. The bundle's presence alone connects nothing.
 
 5. **Tell both plugins.** KTL Registrar and KTL Curator each have a *Known LOKF types* setting listing the built-in classes. Add your classes to both, the same list in each. Neither plugin can read the schema itself: the exhibition vault's root is `.lokf/knowledge`, and the schema sits outside it. Listed, a domain class stops opening with the **registrar**'s unknown-type warning and joins its autocomplete. It stops counting against the **curator**'s *vocabulary fit* line, and can carry a review interval of its own in `policies/knowledge-curation.md`. A list you have edited is yours to keep current when the core schema gains a class. Before KTL Curator gained the setting, its vocabulary-fit line counted against the built-ins only. Read that line on an older build as "concepts outside LOKF core", not as errors. The *skills* need no telling: the **curator** reads the same `schema` line Rule 3 does ([ktl-curator/references/trust-fields.md](../../ktl-curator/references/trust-fields.md)).
 
@@ -83,7 +77,9 @@ A sidecar laid out before `.lokf/schema/` existed keeps its schema files at the 
 cd .lokf && mkdir -p schema && git mv lokf.yaml <slug>.yaml schema/   # and each file <slug>.yaml imports
 ```
 
-Then set `schema := "schema/<slug>.yaml"` in the justfile, and `[tool.lokf] schema` in `pyproject.toml` to the same path if it is set. Leave `.lokf/lokf.yaml` where it is when a schema outside `.lokf/`, such as a linkml-sidecar project's, imports it by its path.
+Then set `schema := "schema/<slug>.yaml"` in the justfile, and `[tool.lokf] schema` in `pyproject.toml` to the same path if it is set.
+
+An older linkml-sidecar names its project's own schema on the line, such as `../.linkml/src/<slug>/schema/<slug>.yaml`, and that schema imports `.lokf/lokf.yaml` by its path. Put a copy in `.lokf/schema/` as step 4 says, and point the line and `[tool.lokf] schema` at it. Until then, leave `.lokf/lokf.yaml` where it is.
 
 A domain host moves `domain.yaml` and `lokf.yaml` the same way before its first sync to a release that keeps `domain.yaml` in the folder. Until then, the host's own sync script, which allows only `.lokf/domain.yaml`, refuses that sync.
 
