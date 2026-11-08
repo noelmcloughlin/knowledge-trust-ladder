@@ -59,9 +59,26 @@ A concept outside the declared vocabulary reports as `is not valid under any of 
 
 3. **Frontmatter names the class exactly.** A record with `type: Reference` and a `source_kind` key fails: `Reference` does not declare the key, and `SourceSnapshotReference` requires its own name. Write the subclass name. `is_a` still makes it `rdfs:subClassOf` its parent in the projected graph.
 
-4. **Name the schema.** In the sidecar's `justfile`, set the one variable: `schema := "schema/<slug>.yaml"`. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the three workflows (`knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`) run the recipes, so nothing else in the sidecar changes. A sidecar scaffolded before the variable existed runs `lokf validate` inline in its justfile and its workflows; ktl-sidecar's repair lays down the current copies of those four files. That one variable is also how the **librarian** learns the host's vocabulary. Rule 3 has it read the schema the justfile names and treat every `Concept` descendant there as a class it may choose. `lokf vocab` reads LOKF core alone and takes no `--schema`, so the file itself is the source.
+4. **Name the schema.** In the sidecar's `justfile`, set the one variable: `schema := "schema/<slug>.yaml"`. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the three workflows (`knowledge-registrar.yaml`, `knowledge-librarian.yaml`, `knowledge-release.yaml`) run the recipes, so nothing else in the sidecar changes. A sidecar scaffolded before the variable existed runs `lokf validate` inline in its justfile and its workflows; ktl-sidecar's repair lays down the current copies of those four files. That one variable is also how the **librarian** learns the host's vocabulary. Rule 3 has it read the schema the justfile names, and every file that schema imports in turn, and treat each `Concept` descendant there as a class it may choose. `lokf vocab` reads LOKF core alone and takes no `--schema`, so the file itself is the source.
 
    A `lokf` command given no `--schema` reads `[tool.lokf] schema` in `.lokf/pyproject.toml`, and so does a recipe when the variable is empty. Set it to the same path or leave it out; the preflight warns when the two differ.
+
+   The folder may hold several schema files, in subfolders too:
+
+   ```text
+   .lokf/schema/
+   |-- lokf.yaml            # the pinned copy of LOKF core
+   |-- <slug>.yaml          # the root: imports lokf and foo
+   |-- foo.yaml             # imports bar/bar_module
+   |-- bar/bar_module.yaml  # imports ../baz
+   |-- baz.yaml
+   ```
+
+   The line names the root: the file whose imports reach `lokf` and every other file, directly or in turn. Usually the root alone imports `lokf`, and the other files import each other without a cycle. A copy that `lokf adapt` wrote imports `lokf` too, by that bare name, so it sits beside `lokf.yaml`. LinkML resolves an import from the importing file's folder and adds `.yaml` to the name, so:
+
+   - write each import without the suffix, as `foo` or `bar/bar_module`;
+   - give every file that another file imports the `.yaml` ending; the root, which nothing imports, may end in `.yml`;
+   - from a subfolder, name a file above it with `../`, as `../baz` or `../lokf`.
 
    The line names a file in `.lokf/schema/`. A schema that a LinkML project owns stays in that project, in this repository or another. In this repository it is `.linkml/src/<slug>/schema/<slug>.yaml`, which the [linkml-sidecar](https://github.com/noelmcloughlin/linkml-sidecar#install) skill installs, or `src/<slug>/schema/<slug>.yaml` in a project made with copier at the root. Copy the project's schema into `.lokf/schema/` and adapt the copy with `lokf adapt` ([Importing a published vocabulary](#importing-a-published-vocabulary)), or copy a release that is adapted already. The line names the copy, never the project's own file. Copy it again when the project's schema changes. linkml-sidecar's [ktl.md](https://github.com/noelmcloughlin/linkml-sidecar/blob/main/skills/linkml-sidecar/references/ktl.md) and its linkml-author skill cover the project's side.
 
