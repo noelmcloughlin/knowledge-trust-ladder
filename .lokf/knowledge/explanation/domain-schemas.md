@@ -12,7 +12,7 @@ sources:
   - resource: docs/architecture.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-07T23:57:11Z"
+  at: "2026-11-08T00:18:14Z"
 about: []
 references:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
@@ -42,7 +42,7 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 
 **The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly.
 
-The recipe keeps every schema file in `.lokf/schema/`: a pinned copy of `lokf.yaml`, the domain schema and each file the domain schema imports. One variable, `schema`, in the sidecar's justfile names the domain schema there. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes.
+The recipe keeps every schema file in `.lokf/schema/`: a pinned copy of `lokf.yaml`, the domain schema and each file the domain schema imports. The folder may hold several files, in subfolders too. One variable, `schema`, in the sidecar's justfile names the root: the file whose imports reach `lokf` and every other file, directly or in turn. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes.
 
 A schema that a LinkML project owns stays in that project. In this repository that is `.linkml/src/<slug>/schema/`, which the linkml-sidecar skill installs, or `src/<slug>/schema/` for a project made with copier at the root; the project may also sit in another repository. Its copy goes into `.lokf/schema/`, adapted with `lokf adapt` or taken from a release that is adapted already, and the variable names the copy, never the project's own file. Until it does, a `.lokf/` beside a schema project is a bundle about the repository.
 

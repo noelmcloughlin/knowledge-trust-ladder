@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-11-08
+
+* **Changed**: Domain schemas says `.lokf/schema/` may hold several schema files, in subfolders too, and the `schema` variable names the root, whose imports reach `lokf` and the rest (`skills/ktl-librarian/references/domain-schema.md`). Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-librarian skill says Rule 3 follows the named schema's imports in turn, and the `schema` variable names the root of the files in `.lokf/schema/` (`skills/ktl-librarian/SKILL.md`, `references/domain-schema.md`). Edited since a person confirmed it; the label says so until the curator looks again.
+
 ## 2026-11-07
 
 * **Changed**: Domain schemas keeps every schema file in `.lokf/schema/` and says a LinkML project's own schema, in `.linkml/src/`, `src/` or another repository, is copied in there for the `schema` variable to name. The three layouts that let the variable point outside `.lokf/` are gone (`skills/ktl-librarian/references/domain-schema.md`). Edited since a person confirmed it; the label says so until the curator looks again.
