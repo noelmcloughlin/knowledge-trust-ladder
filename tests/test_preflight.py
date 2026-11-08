@@ -337,7 +337,7 @@ def test_warns_when_the_pinned_core_schema_is_not_the_locked_lokfs(tmp_path, cop
 
 
 def test_checks_each_copy_of_the_core_schema(tmp_path):
-    """A linkml-sidecar imports the copy at the root of .lokf/ by its path, so a current copy in .lokf/schema/ does not stand for it."""
+    """An older linkml-sidecar imports the copy at the root of .lokf/ by its path, so a current copy in .lokf/schema/ does not stand for it."""
     write(tmp_path / ".lokf" / "pyproject.toml", (TEMPLATES / "pyproject.toml").read_text())
     write(tmp_path / ".lokf" / "uv.lock", 'version = 1\n\n[[package]]\nname = "lokf"\nversion = "0.9.1"\nsource = { registry = "https://pypi.org/simple" }\n')
     write(tmp_path / ".lokf" / "schema" / "lokf.yaml", "id: https://w3id.org/lokf/schema\nname: lokf\nversion: 0.9.1\n")
@@ -359,7 +359,7 @@ SCHEMA_FILE = "id: https://acme.example/schema/{0}\nname: {0}\nimports:\n  - lin
     ({".lokf/lokf.yaml": "lokf", ".lokf/schema/lokf.yaml": "lokf"}, "../.linkml/src/acme/schema/acme.yaml", None),
 ], ids=["at the root", "in the folder", "a copy left behind", "a stray file beside a copy left behind", "a linkml-sidecar schema", "a linkml-sidecar schema beside a copy in the folder"])
 def test_names_schema_files_outside_the_schema_folder(tmp_path, files, line, want):
-    """Schema files belong in .lokf/schema/. One left at the root beside a namesake there is the copy the sync no longer keeps current; a linkml-sidecar schema imports the root copy by its path, so its move is not suggested."""
+    """Schema files belong in .lokf/schema/. One left at the root beside a namesake there is the copy the sync no longer keeps current; an older linkml-sidecar schema imports the root copy by its path, so its move is not suggested."""
     write(tmp_path / ".lokf" / "justfile", f'bundle := "knowledge"\nschema := "{line}"\n')
     write(tmp_path / ".lokf" / "ingest.yaml", "entries: []\n")
     for path, name in files.items():

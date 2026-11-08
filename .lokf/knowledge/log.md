@@ -1,5 +1,15 @@
 # Change Log
 
+## 2026-11-08
+
+* **Changed**: Domain schemas says `.lokf/schema/` may hold several schema files, in subfolders too, and the `schema` variable names the root, whose imports reach `lokf` and the rest (`skills/ktl-librarian/references/domain-schema.md`). Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-librarian skill says Rule 3 follows the named schema's imports in turn, and the `schema` variable names the root of the files in `.lokf/schema/` (`skills/ktl-librarian/SKILL.md`, `references/domain-schema.md`). Edited since a person confirmed it; the label says so until the curator looks again.
+
+## 2026-11-07
+
+* **Changed**: Domain schemas keeps every schema file in `.lokf/schema/` and says a LinkML project's own schema, in `.linkml/src/`, `src/` or another repository, is copied in there for the `schema` variable to name. The three layouts that let the variable point outside `.lokf/` are gone (`skills/ktl-librarian/references/domain-schema.md`). Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-librarian skill carries 0.61.0 and 0.62.0: a body reworded after its stamp and the concepts no relation joins now reach the work list, the install step ignores its own install in `.git/info/exclude`, `publish` refuses a rename, and the wrapper restores `.git/info/`. A domain schema is named as a copy in `.lokf/schema/`, while a LinkML project keeps its own schema (`skills/ktl-librarian/references/domain-schema.md`). Edited since a person confirmed it; the label says so until the curator looks again.
+
 ## 2026-11-02
 
 * **Changed**: The ingest's command entry runs unchecked outside a git work tree, recording `command_unchecked` in its lock record, and is refused in a repository git cannot read, as `docs/threat-model.md` has said since #309. Edited since a person confirmed it; the label says so until the curator looks again.

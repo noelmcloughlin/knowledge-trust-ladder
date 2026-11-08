@@ -251,7 +251,7 @@ if have uv; then
   # copy from another release can reject a concept that lokf reads: 0.9.0
   # reads a bare-date stale_after as a datetime, which 0.8.0's copy rejects.
   # Each copy is checked: the one in .lokf/schema/, and the one at the root
-  # of .lokf/, where an older sidecar or a linkml-sidecar keeps it.
+  # of .lokf/, where an older sidecar or linkml-sidecar keeps it.
   pinned="$(awk '/^name = "lokf"$/ { hit = 1; next } hit { if (sub(/^version = "/, "")) { sub(/".*$/, ""); print } exit }' "$root/.lokf/uv.lock" 2>/dev/null)"
   pinned="${pinned:-${installed:-}}"
   for core in .lokf/schema/lokf.yaml .lokf/lokf.yaml; do
@@ -292,8 +292,9 @@ fi
 # core and each file the schema imports. A sidecar laid out before the
 # folder keeps them at the root of .lokf/. A root file with a namesake in
 # schema/ is a copy left behind, since the sync keeps only the one in
-# schema/ current. A linkml-sidecar schema, outside .lokf/, imports the
-# root copy of LOKF core by its path, so that copy is left where it is.
+# schema/ current. A schema outside .lokf/, which an older linkml-sidecar
+# names on the schema line, imports the root copy of LOKF core by its
+# path, so that copy is left where it is.
 loose="" twice=""
 for f in "$root"/.lokf/*.yaml "$root"/.lokf/*.yml; do
   if [ ! -f "$f" ] || ! grep -q '^id:' "$f" || ! grep -qE '^(imports|classes|slots|prefixes):' "$f"; then continue; fi

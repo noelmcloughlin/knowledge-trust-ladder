@@ -2,7 +2,7 @@
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/domain-schemas
 title: "When the built-in vocabulary stops fitting: domain schemas"
-description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's, named by one `schema` variable in the sidecar's justfile and checked with `lokf validate --schema`, the three layouts that variable allows, the `domain.yaml` the sidecar ships for a bundle that federates other bundles, reusing a domain's own vocabulary such as the AI Risk Ontology through `lokf adapt`, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
+description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's, kept in `.lokf/schema/`, named by one `schema` variable in the sidecar's justfile and checked with `lokf validate --schema`, a LinkML project's own schema copied in there, the `domain.yaml` the sidecar ships for a bundle that federates other bundles, reusing a domain's own vocabulary such as the AI Risk Ontology through `lokf adapt`, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
 genre: explanation
 resource: skills/ktl-curator/references/domain-schemas.md
 sources:
@@ -12,8 +12,7 @@ sources:
   - resource: docs/architecture.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T12:26:25Z"
-  revision: 8682684682e731c5a4ebd7f29737290522ecaad1
+  at: "2026-11-08T00:18:14Z"
 about: []
 references:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
@@ -43,7 +42,9 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 
 **The mechanism.** Keep the OKF/LOKF mechanics and give the domain a LinkML schema of its own that imports LOKF's, validated with `lokf validate --schema <slug>.yaml`. Every class is closed, so a built-in class plus an extra key fails. Subclass it (`is_a: Reference`) or add a class of its own (`is_a: Concept`), and have frontmatter name the subclass exactly.
 
-The recipe keeps a pinned copy of `lokf.yaml` in `.lokf/` and names the domain schema in one variable, `schema`, in the sidecar's justfile. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. The schema need not sit beside the bundle. The variable takes any path relative to `.lokf/`, and three layouts recur: a linkml-sidecar, which writes the schema under `.linkml/` and sets the variable itself; a schema project made with copier at the repository's root; and a schema the repository keeps anywhere else. In the last two, a `.lokf/` beside the schema is a bundle about the repository until its maintainers add the import and the variable.
+The recipe keeps every schema file in `.lokf/schema/`: a pinned copy of `lokf.yaml`, the domain schema and each file the domain schema imports. The folder may hold several files, in subfolders too. One variable, `schema`, in the sidecar's justfile names the root: the file whose imports reach `lokf` and every other file, directly or in turn. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes.
+
+A schema that a LinkML project owns stays in that project. In this repository that is `.linkml/src/<slug>/schema/`, which the linkml-sidecar skill installs, or `src/<slug>/schema/` for a project made with copier at the root; the project may also sit in another repository. Its copy goes into `.lokf/schema/`, adapted with `lokf adapt` or taken from a release that is adapted already, and the variable names the copy, never the project's own file. Until it does, a `.lokf/` beside a schema project is a bundle about the repository.
 
 The two Obsidian plugins are told the new classes through their *Known LOKF types* setting. Neither plugin can read the schema itself, so the same list of classes goes into both.
 
