@@ -147,21 +147,36 @@ jobs:
             echo "::warning::Could not take the workspace of $tag, so a member whose release cannot be fetched fails the check."
           fi
 
-      # The token is read-only: gh reads the attestation store, and the
-      # repository's visibility, which decides whether an internal member
-      # may join. The zips come from the public release URLs the member
-      # concepts name. The release page lets the build check the previous
-      # workspace's attestation before it holds a member from it, as the
-      # release build does.
+      # The repository's visibility decides whether an internal member may
+      # join. The job's own token reads it, since a token stored for the
+      # members need not read this repository.
+      - name: Read this repository's visibility
+        id: visibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "visibility=$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)" >> "$GITHUB_OUTPUT"
+
+      # The token is read-only. The zips come from the release addresses the
+      # member concepts name, asked with no credential. gh reads the
+      # attestation store with the token, and fetches the release of a
+      # member in a private or internal repository, which answers nothing
+      # without one. The job's own token reads this repository alone, so
+      # such a member needs the repository secret KNOWLEDGE_FEDERATE_TOKEN:
+      # a token that reads the member repositories' contents and
+      # attestations, and nothing else, because a pull request's check runs
+      # the pull request's own copy of the script. Without it the check
+      # fails on that member and says so. The release page lets the build
+      # check the previous workspace's attestation before it holds a member
+      # from it, as the release build does.
       - name: Fetch and verify every member's zip, and gate as the next release would
         env:
           # Under the name the script takes it by and removes from its own
           # environment, so it reaches gh alone, never lokf or git.
-          KNOWLEDGE_FEDERATE_TOKEN: ${{ github.token }}
+          KNOWLEDGE_FEDERATE_TOKEN: ${{ secrets.KNOWLEDGE_FEDERATE_TOKEN || github.token }}
           PREVIOUS: ${{ steps.previous.outputs.zip }}
+          VISIBILITY: ${{ steps.visibility.outputs.visibility }}
         run: |
-          visibility="$(GH_TOKEN="$KNOWLEDGE_FEDERATE_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
-          uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "$visibility" \
+          uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "${VISIBILITY:-unknown}" \
             --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" ${PREVIOUS:+--previous "$PREVIOUS"}
 
   build:
@@ -173,6 +188,14 @@ jobs:
               || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch))))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # KNOWLEDGE_FEDERATE_TOKEN, when members are in private or internal
+    # repositories, belongs in this Environment. A release build runs on
+    # the release's tag, so the Environment's rule names the release tags
+    # beside the default branch, and a tag ruleset says who may create
+    # them. It records no deployment.
+    environment:
+      name: knowledge-federation
+      deployment: false
     permissions:
       contents: read
     outputs:
@@ -273,23 +296,34 @@ jobs:
             echo "::warning::Could not take the workspace of $prev, so its notes say nothing of the workspace and no member is held at its last good state."
           fi
 
-      # The token is read-only: gh reads the attestation store, and the
-      # repository's visibility. Everything the build downloads is a
-      # file a member concept names, checked against the checksum a person
-      # confirmed, or a zip that a member domain's released lock names,
-      # checked against the checksum in that lock. The build checks the
-      # previous workspace's attestation before it holds a member from it.
+      # The job's own token reads the repository's visibility, since a token
+      # stored for the members need not read this repository.
+      - name: Read this repository's visibility
+        id: visibility
+        if: steps.what.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "visibility=$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)" >> "$GITHUB_OUTPUT"
+
+      # The token is read-only: gh reads the attestation store, and fetches
+      # the release of a member in a private or internal repository, which
+      # the job's own token cannot read. Everything the build downloads is
+      # a file a member concept names, checked against the checksum a
+      # person confirmed, or a zip that a member domain's released lock
+      # names, checked against the checksum in that lock. The build checks
+      # the previous workspace's attestation before it holds a member from
+      # it.
       - name: Build the workspace from the tag
         if: steps.what.outputs.release == 'true'
         env:
           # Under the name the script takes it by and removes from its own
           # environment, so it reaches gh alone, never lokf or git.
-          KNOWLEDGE_FEDERATE_TOKEN: ${{ github.token }}
+          KNOWLEDGE_FEDERATE_TOKEN: ${{ secrets.KNOWLEDGE_FEDERATE_TOKEN || github.token }}
           PREVIOUS: ${{ steps.previous.outputs.zip }}
+          VISIBILITY: ${{ steps.visibility.outputs.visibility }}
         run: |
-          visibility="$(GH_TOKEN="$KNOWLEDGE_FEDERATE_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
           uv run --project .lokf .lokf/scripts/knowledge-federate.py build \
-            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "$visibility" \
+            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "${VISIBILITY:-unknown}" \
             ${PREVIOUS:+--previous "$PREVIOUS"}
 
       # The same bundle of files always gives the same bytes: names sorted,
@@ -417,8 +451,10 @@ jobs:
 
       # A signed record of which workflow run, commit and repository built the
       # zip; anyone checks it with `gh attestation verify <file> -R <owner>/<repo>`.
+      # A private repository needs GitHub Enterprise Cloud for it, so the step
+      # skips itself there unless KNOWLEDGE_ATTEST_PRIVATE is "true".
       - name: Attest build provenance
-        if: needs.build.outputs.release == 'true' && !github.event.repository.private
+        if: needs.build.outputs.release == 'true' && (!github.event.repository.private || vars.KNOWLEDGE_ATTEST_PRIVATE == 'true')
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: ${{ runner.temp }}/release/*.zip

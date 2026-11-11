@@ -164,6 +164,16 @@
 # variables AGENT_USE_JOB_TOKEN to true and AGENT_API_KEY_ENV to
 # KNOWLEDGE_FEDERATE_TOKEN. The refresh job's read-only token then arrives
 # under that name, and this script hands it to gh alone, as GH_TOKEN.
+#
+# A member in a private or internal GitHub repository is read through gh
+# too. GitHub answers 404 to every request that carries no credential for
+# such a repository, so the address the member concept names gives nothing.
+# The build asks that address first, as it does for a public member. When
+# it does not give the file a person confirmed, and it is a GitHub release
+# asset, and gh holds a credential, gh fetches the asset from the GitHub
+# API. The job's own token reads its own repository alone, so the host
+# gives the build a token that can read the member, under the same name.
+# This script sends no credential in any request of its own.
 """The federation build, the domain's librarian, and a reader over the snapshot."""
 
 from __future__ import annotations
@@ -247,6 +257,11 @@ CHECKSUM = re.compile(r"^sha256:[0-9a-fA-F]{64}$")
 GITHUB_RELEASE = re.compile(
     r"^https://github\.com/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/releases/download/(?P<tag>[^/]+)/(?P<asset>[^/]+)$"
 )
+# An owner and a repository as gh is given them. GITHUB_RELEASE takes a
+# dot in an owner and the names . and .. for a repository, and either
+# would make a path of the GitHub API name another resource.
+GITHUB_OWNER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
+GITHUB_REPO = re.compile(r"(?!\.{1,2}$)[A-Za-z0-9_.-]+")
 
 
 def named_digest(checksum) -> str:
@@ -280,12 +295,15 @@ class Unobtainable(Failed):
     matches, a zip that reaches outside its root, a failed attestation)
     stops the build as any other finding does. `other_bytes` is true when
     the address answered with bytes other than the ones a person confirmed,
-    and false when it did not answer.
+    and false when it did not answer. `access` is true when the address
+    refused the request, or gave a page in the file's place, so that a
+    credential might be given the file.
     """
 
-    def __init__(self, msg: str, other_bytes: bool = False):
+    def __init__(self, msg: str, other_bytes: bool = False, access: bool = False):
         super().__init__(msg)
         self.other_bytes = other_bytes
+        self.access = access
 
 
 def say(msg: str) -> None:
@@ -872,8 +890,12 @@ def http_get(url: str, accept: str | None = None, timeout: int = 60, max_bytes: 
     return http_fetch(url, accept=accept, timeout=timeout, max_bytes=max_bytes, member=member)[2]
 
 
-def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> None:
-    """Copy a local path or file:// URL, or download an http(s) URL, to dest, refusing one of more than max_bytes before it is all read."""
+def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> tuple[str, str]:
+    """Copy a local path or file:// URL, or download an http(s) URL, to dest, refusing one of more than max_bytes before it is all read.
+
+    Returns the address that answered, after any redirect, and the media
+    type it gave, each empty for a local file.
+    """
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme in ("", "file"):
         if not ALLOW_LOCAL:
@@ -884,7 +906,7 @@ def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> N
         if src.stat().st_size > max_bytes:
             raise Failed(f"{url}: more than {max_bytes} bytes, which --max-bytes refuses")
         shutil.copyfile(src, dest)
-        return
+        return "", ""
     if parsed.scheme not in ("http", "https"):
         raise Failed(f"{url}: only http(s), file:// and local paths are fetched")
     refuse_private(url)
@@ -895,11 +917,14 @@ def fetch(url: str, dest: pathlib.Path, max_bytes: int = DEFAULT_MAX_BYTES) -> N
     last: Exception | None = None
     for attempt in range(3):
         try:
-            dest.write_bytes(http_get(url, max_bytes=max_bytes, member=True))
-            return
+            _, headers, body = http_fetch(url, max_bytes=max_bytes, member=True)
+            dest.write_bytes(body)
+            return str(headers.get(":url") or url), str(headers.get("content-type") or "")
         except urllib.error.HTTPError as e:
+            if e.code in (401, 403):
+                raise Unobtainable(f"{url}: could not be fetched, because access was refused ({e})", access=True) from e
             if e.code < 500 and e.code != 429:
-                raise Unobtainable(f"{url}: could not be fetched ({e})") from e
+                raise Unobtainable(f"{url}: could not be fetched ({e})", access=e.code == 404) from e
             last = e
         except (OSError, http.client.HTTPException) as e:  # URLError, a timeout and a dropped connection are each an OSError
             last = e
@@ -987,9 +1012,203 @@ def verify_attestation(path: pathlib.Path, owner: str, repo: str, workflow: str 
     done = subprocess.run([gh, "attestation", "verify", str(path), "--repo", f"{owner}/{repo}", "--signer-workflow", signer],
                           capture_output=True, text=True, env=gh_env())
     if done.returncode != 0:
-        raise Failed(f"{path.name}: gh attestation verify failed for {signer}: {(done.stderr or done.stdout).strip()[:300]}")
+        # A private repository's release workflow attests nothing unless it is told to.
+        private = (f". The release of {owner}/{repo} was read through gh, as a private repository's is, and such a repository's release workflow attests "
+                   "only where its variable KNOWLEDGE_ATTEST_PRIVATE is true, which needs GitHub Enterprise Cloud") if (owner, repo) in THROUGH_GH else ""
+        raise Failed(f"{path.name}: gh attestation verify failed for {signer}: {(done.stderr or done.stdout).strip()[:300]}{private}")
     loose = "" if version >= GH_EXACT_SIGNER else f", matched loosely by gh {'.'.join(map(str, version))}; 2.102.0 matches it exactly"
     return f"attested by {workflow.rsplit('/', 1)[-1]} of {owner}/{repo}{loose}"
+
+
+# ---------------------------------------------------------------------------
+# a release asset of a private repository, through gh
+# ---------------------------------------------------------------------------
+# The status gh api ends a refusal with, as in "gh: Not Found (HTTP 404)".
+GH_STATUS = re.compile(r"\(HTTP (\d{3})\)\s*$")
+# The repositories whose release gh had to fetch in this run. Their other
+# files are asked of gh at once, since the address a member concept names
+# answers the same way for every file of one repository.
+THROUGH_GH: set[tuple[str, str]] = set()
+# What a host does for a member in a private or internal repository.
+PRIVATE_HINT = ("a member in a private or internal repository is read through gh, with a credential that can read that repository: run gh auth login, "
+                "or in a workflow store such a token as the secret KNOWLEDGE_FEDERATE_TOKEN, since the job's own token reads its own repository alone")
+
+
+def release_asset(url: str) -> tuple[str, str, str, str] | None:
+    """The owner, repository, tag and asset a GitHub release download address names, or None for any other address.
+
+    The four become a path of the GitHub API that gh asks with a
+    credential, so an address whose parts could name another resource
+    there is no release address: one with a query or a fragment, an owner
+    or a repository GitHub would not name, or a tag of dots or with a slash.
+    """
+    m = GITHUB_RELEASE.match(url)
+    if not m or "?" in url or "#" in url:
+        return None
+    owner, repo = m.group("owner"), m.group("repo")
+    tag, asset = urllib.parse.unquote(m.group("tag")), urllib.parse.unquote(m.group("asset"))
+    if not GITHUB_OWNER.fullmatch(owner) or not GITHUB_REPO.fullmatch(repo):
+        return None
+    if tag in (".", "..") or "/" in tag or "/" in asset or not tag.isprintable() or not asset.isprintable():
+        return None
+    return owner, repo, tag, asset
+
+
+def gh_ready() -> str | None:
+    """gh, when it is installed and holds a credential, else None."""
+    gh = shutil.which("gh")
+    return gh if gh and gh_has_credential(gh) else None
+
+
+def gh_api(gh: str, endpoint: str, accept: str, dest: pathlib.Path | None = None, timeout: int = 60) -> tuple[int, bytes, str]:
+    """One request to the GitHub API through gh: the status, the answer, and what gh said of a refusal.
+
+    gh alone holds the credential. It is told the host by name, so the
+    credential goes to github.com whatever host gh is set up to ask first,
+    and gh sends it to no other host a redirect leads to. An asset's
+    address redirects to the host that stores it. The answer is written to
+    dest when one is given. The status is 0 when gh gave none: it could
+    not connect, or it ran out of time.
+    """
+    args = [gh, "api", endpoint, "--hostname", "github.com", "-H", f"Accept: {accept}"]
+    try:
+        if dest is None:
+            done = subprocess.run(args, capture_output=True, env=gh_env(), timeout=timeout)
+        else:
+            with dest.open("wb") as out:
+                done = subprocess.run(args, stdout=out, stderr=subprocess.PIPE, env=gh_env(), timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return 0, b"", f"gh gave no answer in {timeout} seconds"
+    if done.returncode == 0:
+        return 200, done.stdout or b"", ""
+    said = " ".join((done.stderr or b"").decode("utf-8", "replace").split())[:300]
+    m = GH_STATUS.search(said)
+    return (int(m.group(1)) if m else 0), b"", said or "gh said nothing"
+
+
+def gh_api_patient(gh: str, endpoint: str, accept: str, dest: pathlib.Path | None = None, timeout: int = 60) -> tuple[int, bytes, str]:
+    """gh_api, tried again twice after a server error, a rate limit or no answer, as fetch tries a download again."""
+    answer = 0, b"", ""
+    for attempt in range(3):
+        answer = gh_api(gh, endpoint, accept, dest, timeout)
+        if answer[0] and answer[0] < 500 and answer[0] != 429:
+            break
+        if attempt < 2:
+            time.sleep(1 << attempt)
+    return answer
+
+
+@functools.cache
+def gh_release(gh: str, owner: str, repo: str, tag: str) -> tuple[int, dict, str]:
+    """A release as the GitHub API gives it, asked through gh once in a run: the status, the release, and what gh said of a refusal."""
+    status, body, said = gh_api_patient(gh, f"repos/{owner}/{repo}/releases/tags/{urllib.parse.quote(tag, safe='')}", "application/vnd.github+json")
+    if status != 200:
+        return status, {}, said
+    try:
+        release = json.loads(body)
+    except ValueError:
+        release = None
+    if not isinstance(release, dict):
+        return 0, {}, "the answer is no release"
+    return 200, release, ""
+
+
+def refused_credential(what: str, owner: str, repo: str, said: str) -> Failed:
+    """The finding for a credential GitHub refused. It stops the build, since no member that needs the credential can be fetched until the host renews it."""
+    return Failed(f"{what}: GitHub refused the credential gh holds, asked for {owner}/{repo} ({said}); renew the token the build is given as "
+                  "KNOWLEDGE_FEDERATE_TOKEN, or run gh auth login")
+
+
+def fetch_through_gh(gh: str, url: str, asset: tuple[str, str, str, str], sha256: str, dest: pathlib.Path, max_bytes: int, what: str, first: str) -> None:
+    """Fetch a GitHub release asset through gh to dest and check it against sha256.
+
+    `first` says what the address itself answered, for the finding. The
+    release's own record is read before the file: it refuses an asset
+    larger than max_bytes, and one whose recorded digest is not the one
+    named, with nothing downloaded.
+    """
+    owner, repo, tag, name = asset
+    before = f"{first}; " if first else f"{url}: "
+    status, release, said = gh_release(gh, owner, repo, tag)
+    if status == 401:
+        raise refused_credential(what, owner, repo, said)
+    if status != 200:
+        hint = ""
+        if status == 404:
+            hint = f". GitHub answers 404 both for a release that is not there and for a repository the credential may not read, and {PRIVATE_HINT}"
+        raise Unobtainable(f"{before}gh could not read release {tag} of {owner}/{repo} ({said}){hint}")
+    found = next((a for a in release.get("assets") or [] if isinstance(a, dict) and a.get("name") == name), None)
+    if found is None or not isinstance(found.get("id"), int):
+        raise Unobtainable(f"{before}release {tag} of {owner}/{repo} carries no file named {name}")
+    if isinstance(found.get("size"), int) and found["size"] > max_bytes:
+        raise Failed(f"{url}: more than {max_bytes} bytes, which --max-bytes refuses")
+    recorded = named_digest(found.get("digest"))
+    if recorded and recorded != sha256:
+        raise Unobtainable(f"{what}: {url} has sha256 {recorded} in GitHub's record of the release, not the {sha256} the member concept names", other_bytes=True)
+    status, _, said = gh_api_patient(gh, f"repos/{owner}/{repo}/releases/assets/{found['id']}", "application/octet-stream", dest, timeout=600)
+    if status == 401:
+        raise refused_credential(what, owner, repo, said)
+    if status != 200:
+        raise Unobtainable(f"{before}gh could not fetch {name} from release {tag} of {owner}/{repo} ({said})")
+    if dest.stat().st_size > max_bytes:
+        raise Failed(f"{url}: more than {max_bytes} bytes, which --max-bytes refuses")
+    got = digest(dest)
+    if got != sha256:
+        raise Unobtainable(f"{what}: {url} has sha256 {got}, not the {sha256} the member concept names", other_bytes=True)
+    THROUGH_GH.add((owner, repo))
+
+
+def other_file(url: str, dest: pathlib.Path, got: str, sha256: str, answered: tuple[str, str], what: str, zipped: bool) -> Unobtainable:
+    """The finding for a file whose digest is not the one named.
+
+    An address that answers with a page, where a sign-in, a proxy or an
+    error stands in for the file, did not give the file at all. That is
+    said as it is, with the address and the media type that answered, and
+    it is no wrong checksum and no replaced asset.
+    """
+    final, media = answered
+    with dest.open("rb") as f:
+        start = f.read(4)
+    page = media.split(";", 1)[0].strip().lower() in ("text/html", "application/xhtml+xml")
+    if page or (zipped and start not in (b"PK\x03\x04", b"PK\x05\x06")):
+        where = f" from {final}" if final and final != url else ""
+        return Unobtainable(f"{what}: {url} answered with {media or 'no media type'}{where}, which is not the {'zip' if zipped else 'file'} the member concept names: "
+                            "a sign-in, proxy or error page stands in for it", access=True)
+    return Unobtainable(f"{what}: {url} has sha256 {got}, not the {sha256} the member concept names", other_bytes=True)
+
+
+def fetch_checked(url: str, sha256: str, dest: pathlib.Path, max_bytes: int, what: str, zipped: bool) -> None:
+    """Fetch a file a member concept names to dest, and check it against the checksum the concept names.
+
+    The address is asked first, with no credential, as any reader would
+    ask it. A release asset of a private or internal GitHub repository is
+    not given there. So when the address does not give the file a person
+    confirmed, and it is a GitHub release asset, and gh holds a
+    credential, gh fetches it from the GitHub API. The checksum decides
+    either way. A public member never meets the credential.
+    """
+    asset = release_asset(url)
+    try:
+        first: Unobtainable | None = None
+        if asset is None or asset[:2] not in THROUGH_GH:
+            try:
+                answered = fetch(url, dest, max_bytes)
+                got = digest(dest)
+                if got == sha256:
+                    return
+                first = other_file(url, dest, got, sha256, answered, what, zipped)
+            except Unobtainable as e:
+                first = e
+        gh = gh_ready() if asset else None
+        if gh:
+            fetch_through_gh(gh, url, asset, sha256, dest, max_bytes, what, str(first or ""))
+            return
+        if asset and first is not None and first.access:
+            raise Unobtainable(f"{first}. If {asset[0]}/{asset[1]} is private or internal: {PRIVATE_HINT}") from first
+        raise first if first is not None else Unobtainable(f"{url}: could not be fetched")
+    except Failed:
+        dest.unlink(missing_ok=True)
+        raise
 
 
 def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) -> tuple[pathlib.Path, str]:
@@ -998,15 +1217,7 @@ def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) ->
     cached = cache / f"{member.sha256}{'.jsonld' if member.served else '.zip'}"
     if not cached.is_file():
         tmp = cache / f"{member.sha256}.part"
-        try:
-            fetch(member.zip_url, tmp, max_bytes)
-        except Failed:
-            tmp.unlink(missing_ok=True)
-            raise
-        got = digest(tmp)
-        if got != member.sha256:
-            tmp.unlink(missing_ok=True)
-            raise Unobtainable(f"{member.slug}: {member.zip_url} has sha256 {got}, not the {member.sha256} the member concept names", other_bytes=True)
+        fetch_checked(member.zip_url, member.sha256, tmp, max_bytes, member.slug, zipped=not member.served)
         tmp.replace(cached)
     elif digest(cached) != member.sha256:
         cached.unlink()
@@ -1186,15 +1397,7 @@ def obtain_file(url: str, sha256: str, cache: pathlib.Path, what: str, max_bytes
     if cached.is_file() and digest(cached) == sha256:
         return cached
     tmp = cache / f"{sha256}.part"
-    try:
-        fetch(url, tmp, max_bytes)
-    except Failed:
-        tmp.unlink(missing_ok=True)
-        raise
-    got = digest(tmp)
-    if got != sha256:
-        tmp.unlink(missing_ok=True)
-        raise Unobtainable(f"{what}: {url} has sha256 {got}, not the {sha256} the member concept names", other_bytes=True)
+    fetch_checked(url, sha256, tmp, max_bytes, what, zipped=suffix == ".zip")
     tmp.replace(cached)
     return cached
 
@@ -2286,23 +2489,38 @@ def github_releases(owner: str, repo: str) -> list[dict]:
     """A repository's releases, newest first, as the GitHub API lists them.
 
     The API answers sixty requests an hour without a credential, a limit the
-    runners of a hosted CI service share. When it refuses one for that, gh
-    asks again with the job's token, which reaches gh alone.
+    runners of a hosted CI service share, and it answers 404 for a private
+    or internal repository. When it refuses a request for either, or a
+    proxy answers in its place with what is no release list, gh asks again
+    with its credential, which reaches gh alone.
     """
+    if not GITHUB_OWNER.fullmatch(owner) or not GITHUB_REPO.fullmatch(repo):
+        raise Failed(f"{owner}/{repo}: not an owner and a repository as GitHub names them")
     path = f"repos/{owner}/{repo}/releases?per_page=100"
+    why = "the answer is no release list"
     try:
-        raw = http_get(f"https://api.github.com/{path}", accept="application/vnd.github+json")
+        listed = json.loads(http_get(f"https://api.github.com/{path}", accept="application/vnd.github+json"))
+        if isinstance(listed, list):
+            return listed
     except urllib.error.HTTPError as e:
-        gh = shutil.which("gh")
-        if e.code not in (403, 429) or not gh or not gh_has_credential(gh):
+        if e.code not in (403, 404, 429):
             raise Failed(f"{owner}/{repo}: the release list could not be read ({e})") from e
-        done = subprocess.run([gh, "api", path], capture_output=True, text=True, env=gh_env())
-        if done.returncode != 0:
-            raise Failed(f"{owner}/{repo}: the release list could not be read ({e}), nor with gh ({(done.stderr or done.stdout).strip()[:200]})") from e
-        raw = done.stdout.encode("utf-8")
+        why = str(e)
     except (urllib.error.URLError, TimeoutError) as e:
         raise Failed(f"{owner}/{repo}: the release list could not be read ({e})") from e
-    return json.loads(raw)
+    except ValueError:
+        pass
+    gh = gh_ready()
+    if not gh:
+        raise Failed(f"{owner}/{repo}: the release list could not be read ({why}). If {owner}/{repo} is private or internal: {PRIVATE_HINT}")
+    status, body, said = gh_api_patient(gh, path, "application/vnd.github+json")
+    try:
+        listed = json.loads(body) if status == 200 else None
+    except ValueError:
+        listed, said = None, "the answer is no release list"
+    if not isinstance(listed, list):
+        raise Failed(f"{owner}/{repo}: the release list could not be read ({why}), nor with gh ({said or 'the answer is no release list'})")
+    return listed
 
 
 def newest_bundle_release(releases: list[dict]) -> tuple[dict, dict, dict] | None:
@@ -2562,11 +2780,41 @@ def served_base(path: pathlib.Path, url: str) -> str:
 
 
 def digest_of(sum_asset: dict, what: str) -> str:
-    """The digest a release's .sha256 asset starts with."""
-    text = http_get(sum_asset["browser_download_url"]).decode("utf-8", "replace").split()
-    if not text or not re.fullmatch(r"[0-9a-f]{64}", text[0]):
-        raise Failed(f"{what}: {sum_asset['name']} does not start with a sha256 digest")
-    return text[0]
+    """The digest a release's .sha256 asset starts with.
+
+    The asset's address is asked first. A private or internal repository
+    gives nothing there, so when the address refuses the request, or
+    answers with what is no digest, gh fetches the asset from the GitHub
+    API, as fetch_checked has it fetch a member's zip.
+    """
+    url = str(sum_asset.get("browser_download_url") or "")
+
+    def leading(raw: bytes) -> str:
+        words = raw.decode("utf-8", "replace").split()
+        return words[0] if words and re.fullmatch(r"[0-9a-f]{64}", words[0]) else ""
+
+    why = "does not start with a sha256 digest"
+    try:
+        found = leading(http_get(url, max_bytes=1_000_000))
+    except urllib.error.HTTPError as e:
+        found, why = "", f"could not be read ({e})"
+    except (urllib.error.URLError, TimeoutError) as e:
+        raise Failed(f"{what}: {sum_asset['name']} could not be read ({e})") from e
+    if found:
+        return found
+    asset, gh = release_asset(url), gh_ready()
+    if asset and gh and isinstance(sum_asset.get("id"), int):
+        status, body, said = gh_api_patient(gh, f"repos/{asset[0]}/{asset[1]}/releases/assets/{sum_asset['id']}", "application/octet-stream")
+        if status == 401:
+            raise refused_credential(what, asset[0], asset[1], said)
+        found = leading(body) if status == 200 else ""
+        if not found:
+            why += f", nor with gh ({said})" if said else ", nor as gh fetched it"
+    elif asset and not gh:
+        why += f". If {asset[0]}/{asset[1]} is private or internal: {PRIVATE_HINT}"
+    if not found:
+        raise Failed(f"{what}: {sum_asset['name']} {why}")
+    return found
 
 
 def asset_pair(release: dict, prefix: str, suffixes: tuple[str, ...]) -> tuple[dict, dict] | None:
