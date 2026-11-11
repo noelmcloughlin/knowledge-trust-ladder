@@ -9,7 +9,7 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { satteri } from "@astrojs/markdown-satteri";
-import markdownKtl from "./scripts/markdown-ktl.mjs";
+import markdownKtl, { codeLanguage } from "./scripts/markdown-ktl.mjs";
 import starlightChangelogs, { makeChangelogsSidebarLinks } from "starlight-changelogs";
 import starlightImageZoom from "starlight-image-zoom";
 import starlightSidebarTopics from "starlight-sidebar-topics";
@@ -140,7 +140,7 @@ export default defineConfig({
   // to a page of this site, so a w3id rule or an old link still reaches it.
   redirects: redirects(),
   markdown: {
-    processor: satteri({ mdastPlugins: [markdownKtl({ conceptIds: conceptIds() })] }),
+    processor: satteri({ mdastPlugins: [markdownKtl({ conceptIds: conceptIds() })], hastPlugins: [codeLanguage()] }),
   },
   integrations: [
     starlight({
