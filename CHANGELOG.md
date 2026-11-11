@@ -11,8 +11,20 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A host can install the skills from its organisation's private copy.** A sync keeps the host's `TRUST_LADDER_SKILLS_REPO`, and the secret `KNOWLEDGE_SKILLS_TOKEN` reads that copy.
 - **The website and federation workflows warn when a private repository's Pages site is public.**
 - **`KNOWLEDGE_ATTEST_PRIVATE` attests a private repository's release.** The release and federation workflows skipped the attestation there, and a domain's build refuses a member without one. It needs GitHub Enterprise Cloud.
+- **ktl-prose lists every sentence it would cut, and the person answers once.** Its report quoted five sentences at most. The check now lets a sentence go that repeats a link, a number or a quotation the page still holds, and notes the words a page lost or gained.
+- **ktl-prose reads a concept's `genre`**, and names a page that left it for ktl-librarian. `references/rules.md` gives the order to read a sentence in, and names the dropped "that", "alone" for "only" and the comment with no verb.
+
+### Changed
+
+- **ktl-prose's check stops more of what turns a claim over.** It reads a list item and a table row as a sentence each. It stops `confirmed` to `unconfirmed`, one count in words for another, two things that changed places, and a number, link or code span swapped between two sentences or rows. `references/limits.md` lists every finding and note.
+- **A pass over a script's comments may change no other line.** `--against` and `--before` report the first line of code, command in a comment or name of a row that differs, as `not-prose`.
+- **ktl-prose's notes give the line** of a word of strength that came or went, and one note lists the new code spans where each had its own.
+- **The sources of ktl-prose's rules are in `references/sources.md`**, with what the sources say about line breaks. `references/rules.md` keeps the rules.
 
 ### Fixed
+
+- **ktl-prose's check missed a reversed sentence when an earlier sentence shared as many of its words.** It now takes the sentence that shares the largest part.
+- **ktl-prose's check prints a control character as its code point**, so no file can write to a terminal or a CI log through a finding or a file name.
 
 - **A sign-in or proxy page in a zip's place is no longer reported as a wrong checksum.** The finding names the media type and the address that answered, and a refused request says so.
 - **`members --add` reads a private repository's release list.** The API answers 404 for one, and the script asked `gh` only when rate limited.
