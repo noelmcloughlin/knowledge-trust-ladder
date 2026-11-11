@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.63.0] - 2026-11-11
+
 ### Added
 
 - **A domain host builds members from private and internal GitHub repositories.** The build and the members script ask a release's address first, and when it does not give the file a person confirmed, `gh` fetches it from the GitHub API with the host's credential: the secret `KNOWLEDGE_FEDERATE_TOKEN` in a workflow, `gh auth login` by hand. A public member never meets the credential.
