@@ -1907,14 +1907,28 @@ finally:
 # Answers `gh pr list` with the pull requests FAKE_GH_PRS names, and
 # `gh api repos/<owner>/<repo>/releases...` from <repo>.json in FAKE_GH_API
 # when that is set, and fails every other command, so the script never asks
-# a real repository.
+# a real repository. A release by its tag and an asset by its id are
+# answered from <repo>/tags/<tag> and <repo>/assets/<id> in FAKE_GH_ASSETS,
+# as the GitHub API answers a credential that can read the repository, and
+# with 404 when the file is not there, as it answers one that cannot.
+# FAKE_GH_REFUSES makes every such request answer 401, and FAKE_GH_LOG
+# keeps each one with the credentials gh was run with.
 FAKE_GH = """\
 #!/bin/sh
 [ "$1" = --version ] && { echo "gh version ${FAKE_GH_VERSION:-2.102.0} (2026-09-30)"; exit 0; }
 [ "$1 $2" = "pr list" ] && { printf '%s\\n' "${FAKE_GH_PRS:-[]}"; exit 0; }
-if [ "$1" = api ] && [ -n "${FAKE_GH_API:-}" ]; then
+if [ "$1" = api ]; then
+  [ -n "${FAKE_GH_LOG:-}" ] && printf '%s GH_TOKEN=%s KNOWLEDGE_FEDERATE_TOKEN=%s\\n' "$*" "${GH_TOKEN:-none}" "${KNOWLEDGE_FEDERATE_TOKEN:-none}" >> "$FAKE_GH_LOG"
+  [ -n "${FAKE_GH_REFUSES:-}" ] && { echo "gh: Bad credentials (HTTP 401)" >&2; exit 1; }
   repo=$(printf '%s' "$2" | cut -d/ -f3)
-  cat "$FAKE_GH_API/$repo.json" && exit 0
+  case "$2" in
+    repos/*/*/releases/tags/*|repos/*/*/releases/assets/*)
+      file="${FAKE_GH_ASSETS:-/nowhere}/$repo/$(printf '%s' "$2" | cut -d/ -f5-6)"
+      [ -f "$file" ] && { cat "$file"; exit 0; }
+      echo "gh: Not Found (HTTP 404)" >&2
+      exit 1 ;;
+  esac
+  [ -n "${FAKE_GH_API:-}" ] && cat "$FAKE_GH_API/$repo.json" && exit 0
 fi
 if [ "$1 $2" = "attestation verify" ]; then
   case "$*" in
@@ -2334,6 +2348,155 @@ def test_members_hands_the_job_token_to_gh_alone(released):
     assert r.rc == 0 and "matched loosely by gh 2.90.0" in r.out, r.out
     r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token", "FAKE_GH_VERSION": "2.40.0"})
     assert "cannot pin the workflow that signed an attestation" in r.out, r.out
+
+
+@pytest.fixture
+def private_b(federation, tmp_path):
+    """The federation with b named at a GitHub release address, and stand-ins for that address and for gh.
+
+    `build(answer, **env)` builds with the address answering as `answer`
+    says, a path to serve or a status to refuse with, and returns the
+    result and the requests gh was asked. The stand-in gh holds b's
+    release as a credential that can read acme/b is given it, and
+    `record(**changes)` writes that release's record again.
+    """
+    host, sha = federation["host"], federation["b_sha"]
+    url = "https://github.com/acme/b/releases/download/v1.0.0/b.zip"
+    fm = member("b", federation["b_iri"], federation["b_zip"], sha, federation["d_iri"] + "domains/federation")
+    fm["distribution"][0]["access_url"] = url
+    rewrite(host, "b", fm)
+    write(tmp_path / "runner.py", RUNNER)
+    write(tmp_path / "bin" / "gh", FAKE_GH).chmod(0o755)
+    held = tmp_path / "gh" / "b"
+    (held / "assets").mkdir(parents=True)
+    shutil.copy(federation["b_zip"], held / "assets" / "7")
+
+    def record(**changes) -> None:
+        asset = {"id": 7, "name": "b.zip", "size": federation["b_zip"].stat().st_size, "digest": "sha256:" + sha, **changes}
+        write(held / "tags" / "v1.0.0", json.dumps({"tag_name": "v1.0.0", "assets": [asset]}))
+
+    record()
+    runs = iter(range(100))
+
+    def build(answer, address: str = url, **env):
+        n = next(runs)
+        write(tmp_path / "served.json", json.dumps({address: answer}))
+        log = tmp_path / f"gh-{n}.log"
+        r = run(["uv", "run", "--project", REPO / ".lokf", tmp_path / "runner.py", SCRIPT, tmp_path / "served.json", "--root", host, "--allow-local",
+                 "build", "--no-attestation", "--cache", tmp_path / f"cache-{n}"], cwd=host,
+                env={"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "FAKE_GH_ASSETS": tmp_path / "gh", "FAKE_GH_LOG": log, **env},
+                unset=("GH_TOKEN", "GITHUB_TOKEN", "KNOWLEDGE_FEDERATE_TOKEN"))
+        return r, (read(log) if log.is_file() else "")
+
+    return {"build": build, "record": record, "url": url, "host": host, "fm": fm, "zip": federation["b_zip"]}
+
+
+TOKEN = {"KNOWLEDGE_FEDERATE_TOKEN": "job-token"}
+
+
+def test_a_member_in_a_private_repository_is_fetched_through_gh(private_b):
+    """GitHub answers 404 for b's release address, as it does for a private repository asked without a credential.
+
+    With the job's token, gh reads the release and fetches the zip by its
+    id, and the token reaches gh alone. With no credential the finding
+    says what a private member needs, and no request goes to gh.
+    """
+    build = private_b["build"]
+    r, asked = build({"status": 404}, **TOKEN)
+    assert r.rc == 0, r.out
+    assert asked.splitlines() == [
+        "api repos/acme/b/releases/tags/v1.0.0 --hostname github.com -H Accept: application/vnd.github+json GH_TOKEN=job-token KNOWLEDGE_FEDERATE_TOKEN=none",
+        "api repos/acme/b/releases/assets/7 --hostname github.com -H Accept: application/octet-stream GH_TOKEN=job-token KNOWLEDGE_FEDERATE_TOKEN=none",
+    ], asked
+    r, asked = build({"status": 404})
+    assert r.rc == 1 and "could not be fetched (HTTP Error 404" in r.out and "has sha256" not in r.out, r.out
+    assert "If acme/b is private or internal" in r.out and "KNOWLEDGE_FEDERATE_TOKEN" in r.out and not asked, r.out
+
+
+def test_a_credential_that_cannot_read_a_member_is_said_so(private_b, tmp_path):
+    """gh's credential cannot read acme/b, or GitHub refuses it: the finding names the release, what gh said, and what the host does about it."""
+    build = private_b["build"]
+    (tmp_path / "gh" / "b" / "tags" / "v1.0.0").unlink()
+    r, _ = build({"status": 404}, **TOKEN)
+    assert r.rc == 1 and "gh could not read release v1.0.0 of acme/b (gh: Not Found (HTTP 404))" in r.out, r.out
+    assert "the job's own token reads its own repository alone" in r.out and "has sha256" not in r.out, r.out
+    r, _ = build({"status": 404}, **TOKEN, FAKE_GH_REFUSES="1")
+    assert r.rc == 1 and "GitHub refused the credential gh holds, asked for acme/b (gh: Bad credentials (HTTP 401))" in r.out, r.out
+
+
+def test_a_page_in_a_zip_s_place_is_no_wrong_checksum(private_b, tmp_path):
+    """A proxy answers b's release address with a sign-in page and 200.
+
+    Without a credential the finding says a page answered, with its media
+    type, and names no checksum. With one, gh fetches the zip.
+    """
+    build = private_b["build"]
+    page = {"path": str(write(tmp_path / "sign-in.html", "<!doctype html><title>Sign in</title>")), "headers": {"content-type": "text/html; charset=utf-8"}}
+    r, asked = build(page)
+    assert r.rc == 1 and "answered with text/html; charset=utf-8, which is not the zip the member concept names" in r.out, r.out
+    assert "has sha256" not in r.out and "If acme/b is private or internal" in r.out and not asked, r.out
+    r, asked = build(page, **TOKEN)
+    assert r.rc == 0 and "releases/assets/7" in asked, r.out
+
+
+def test_a_release_whose_record_names_another_digest_is_not_downloaded(private_b):
+    """GitHub's record of the asset names a digest the member concept does not: the finding gives that digest, and gh fetches no file. An asset over --max-bytes is refused the same way."""
+    build, record = private_b["build"], private_b["record"]
+    record(digest="sha256:" + "1" * 64)
+    r, asked = build({"status": 404}, **TOKEN)
+    assert r.rc == 1 and f"has sha256 {'1' * 64} in GitHub's record of the release, not the" in r.out, r.out
+    assert "releases/tags/v1.0.0" in asked and "releases/assets" not in asked, asked
+    record(size=10**12)
+    r, asked = build({"status": 404}, **TOKEN)
+    assert r.rc == 1 and "which --max-bytes refuses" in r.out and "releases/assets" not in asked, r.out
+
+
+def test_a_public_member_and_an_address_elsewhere_never_meet_the_credential(private_b):
+    """A public release address gives the zip, so gh is asked nothing. An address that only looks like GitHub's, or names another resource of its API, is never asked of gh."""
+    build, host, fm = private_b["build"], private_b["host"], private_b["fm"]
+    r, asked = build(str(private_b["zip"]), **TOKEN)
+    assert r.rc == 0 and not asked, r.out + asked
+    for address in ("https://github.com.example.test/acme/b/releases/download/v1.0.0/b.zip",
+                    "https://example.test/github.com/acme/b/releases/download/v1.0.0/b.zip",
+                    "https://github.com/acme/../releases/download/v1.0.0/b.zip",
+                    "https://github.com/ac.me/b/releases/download/v1.0.0/b.zip",
+                    "https://github.com/acme/b/releases/download/../b.zip",
+                    "https://github.com/acme/b/releases/download/v1.0.0%2Fx/b.zip",
+                    "https://github.com/acme/b/releases/download/v1.0.0/b.zip?x=1"):
+        fm["distribution"][0]["access_url"] = address
+        rewrite(host, "b", fm)
+        r, asked = build({"status": 404}, address=address, **TOKEN)
+        assert r.rc == 1 and "could not be fetched" in r.out and not asked, f"{address}: {r.out}{asked}"
+
+
+def test_members_add_reads_a_private_repository_through_gh(released):
+    """acme/e is private: its release list, its .sha256 files, its zip and its schema each answer 404 without a credential.
+
+    gh, holding one that can read acme/e, gives each in turn, and the
+    member is drafted as a public one is. Without a credential the
+    finding says what a private repository needs.
+    """
+    tmp = released["tmp"]
+    served = json.loads(read(tmp / "served.json"))
+    release = json.loads(read(tmp / "api" / "e.json"))[0]
+    for n, asset in enumerate(release["assets"], start=1):
+        asset["id"] = n
+        shutil.copy(served[asset["browser_download_url"]], write(tmp / "gh" / "e" / "assets" / str(n), ""))
+        served[asset["browser_download_url"]] = {"status": 404}
+    served["https://api.github.com/repos/acme/e/releases?per_page=100"] = {"status": 404}
+    write(tmp / "served.json", json.dumps(served))
+    write(tmp / "api" / "e.json", json.dumps([release]))
+    write(tmp / "gh" / "e" / "tags" / release["tag_name"], json.dumps(release))
+    r = members_run(released, "--add", "acme/e", "--dry-run")
+    assert r.rc == 1 and "acme/e: the release list could not be read (HTTP Error 404" in r.out and "If acme/e is private or internal" in r.out, r.out
+    log = tmp / "gh.log"
+    r = members_run(released, "--add", "acme/e", env={**TOKEN, "FAKE_GH_API": tmp / "api", "FAKE_GH_ASSETS": tmp / "gh", "FAKE_GH_LOG": log})
+    assert r.rc == 0 and "5 member(s) moved or proposed" in r.out, r.out
+    asked = read(log)
+    assert "api repos/acme/e/releases?per_page=100 --hostname github.com" in asked and "KNOWLEDGE_FEDERATE_TOKEN=job-token" not in asked, asked
+    # The zip, its .sha256 and the schema's .sha256. The schema is the file
+    # b's release carries, which this run fetched already for b.
+    assert all(f"releases/assets/{n} " in asked for n in (1, 2, 4)) and "releases/assets/3 " not in asked, asked
 
 
 def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path):

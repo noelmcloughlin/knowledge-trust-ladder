@@ -23,7 +23,7 @@ concurrency:
 jobs:
   publish:
     name: Publish the skills
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     environment: release
     permissions:
       contents: write

@@ -42,7 +42,7 @@ concurrency:
 jobs:
   plan:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -60,13 +60,13 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install semantic-release (pinned, not a project dependency)
+      # .github/release/package-lock.json pins every package, each checked
+      # by its hash, so a company registry can be given the exact list. The
+      # link lets the release tool and its preset load from the root.
+      - name: Install semantic-release from its lockfile
         run: |
-          npm install --no-save --no-audit --no-fund --ignore-scripts \
-            semantic-release@25.0.9 \
-            @semantic-release/commit-analyzer@13.0.1 \
-            conventional-changelog-conventionalcommits@8.0.0 \
-            @semantic-release/exec@7.1.0
+          npm ci --prefix .github/release --no-audit --no-fund --ignore-scripts
+          ln -s .github/release/node_modules node_modules
 
       # Would these commits release? The types are .releaserc.json's: the
       # Conventional Commits preset's feat/fix plus this repository's
@@ -131,7 +131,7 @@ jobs:
 
   release:
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     environment: release
     permissions:
       contents: write
@@ -154,13 +154,13 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install semantic-release (pinned, not a project dependency)
+      # .github/release/package-lock.json pins every package, each checked
+      # by its hash, so a company registry can be given the exact list. The
+      # link lets the release tool and its preset load from the root.
+      - name: Install semantic-release from its lockfile
         run: |
-          npm install --no-save --no-audit --no-fund --ignore-scripts \
-            semantic-release@25.0.9 \
-            @semantic-release/commit-analyzer@13.0.1 \
-            conventional-changelog-conventionalcommits@8.0.0 \
-            @semantic-release/exec@7.1.0
+          npm ci --prefix .github/release --no-audit --no-fund --ignore-scripts
+          ln -s .github/release/node_modules node_modules
 
       # Always --dry-run: semantic-release computes the next version and
       # this repository's Unreleased notes but writes nothing and creates no

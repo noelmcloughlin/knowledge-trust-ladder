@@ -50,7 +50,7 @@ For dyslexic readers there is no second file. Reword the original in place, at t
 
 ## Line breaks
 
-Lay out each paragraph you reword the way the host does, and leave the others as they are. Look for the layout in the host's tooling first: a markdownlint configuration that leaves MD013 on (as markdownlint does by default, at 80 columns), Prettier's `proseWrap`, or an `.editorconfig` `max_line_length` for Markdown. Otherwise follow the file: one line per paragraph, one sentence per line, or a fixed column. Change the file's layout only when the person asks. [rules.md](rules.md) gives the reasons under *Line breaks in the source*.
+Lay out each paragraph you reword the way the host does, and leave the others as they are. Look for the layout in the host's tooling first: a markdownlint configuration that leaves MD013 on (as markdownlint does by default, at 80 columns), Prettier's `proseWrap`, or an `.editorconfig` `max_line_length` for Markdown. Otherwise follow the file: one line per paragraph, one sentence per line, or a fixed column. Change the file's layout only when the person asks. [sources.md](sources.md#line-breaks-what-the-sources-say) gives the reasons.
 
 ## Proving the change
 
@@ -74,10 +74,10 @@ Never touch either of these:
 - a directive: `#!`, `# shellcheck`, a `# ///` block, or the version comment after a pinned `uses:`;
 - a `#` line inside a heredoc, which is data.
 
-Then show that only comments changed:
+`--against` and `--before` compare a script as its comments and docstrings, and hold every other line as it was. A `not-prose` finding names the first such line that differs:
 
-```sh
-git diff -U0 -- <file> | grep -E '^[+-]' | grep -vE '^(\+\+\+|---) ' | grep -vE '^[+-][[:space:]]*(#|//|$)'
-```
+- a line of code, with any comment at its end;
+- a directive, or a line of a heredoc;
+- a command in a comment, or the name that opens a row of a table.
 
-That prints every changed line that is not a whole-line comment. Each line it prints must differ only after its comment mark. `--against` and `--before` compare a script as its comments and docstrings, and read every line for a character no reader sees, so only this command shows that the code did not change.
+Undo what it names. Both also read every line for a character no reader sees. No script says whether a comment still describes its code, so read each reworded comment beside the code under it.

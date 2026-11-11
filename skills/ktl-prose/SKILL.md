@@ -15,7 +15,7 @@ A museum edits its labels before the exhibition opens. This skill does that for 
 
 ## Where this skill sits
 
-The **librarian** derives a concept from its source. This skill rewords the body. Then a **curator**, who is always a person, confirms the concept against the source. The order matters, because this skill never touches a concept once a person has vouched for it.
+The **librarian** derives a concept from its source, this skill rewords the body, and a **curator**, who is always a person, confirms it against the source. The order matters: this skill never touches a concept once a person has vouched for it.
 
 It is a copy editor, not an author. The librarian stays the maker of every concept it derived, so `generated` keeps naming it and keeps its `revision`.
 
@@ -98,25 +98,27 @@ The check script is `scripts/prose-check.py` in this skill's directory, which th
    uv run <skill>/scripts/prose-check.py <files>
    ```
 
-3. Read every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows.
+3. Read every one of those files, cleared or not. Ask the questions of [Reading a sentence](references/rules.md#reading-a-sentence) of each sentence. Only a reader sees a late verb, a second name for one thing, or a sentence the page already says. A concept's `genre` says what its page is for: [What the genre asks](references/rules.md#what-the-genre-asks).
 
-An `unseen` finding is a character no reader sees, such as a zero-width space or a right-to-left override. Delete it in Step 2 where you may reword. In code, in a quotation or in a concept you may not touch, report it with its line and leave it.
+An `unseen` finding is a character no reader sees: [rules.md](references/rules.md#four-things-to-know-about-the-rules) says what to do with one.
 
-Then print the report, and keep it to one screen:
+Then print the report, with every sentence you would cut, so that the person answers once:
 
 ```text
 Plain prose: <bundle title>, <YYYY-MM-DD>
 To reword: <n> concepts. Left alone: <a> confirmed by a person, <b> written or edited by a person, <c> retired or refuted, <d> unreadable, <e> with no record of who wrote them.
 
-<path>: <n> dashes, <n> sentences over 40 words, <n> paragraphs over 150 words, <n> listed words. <what a reader saw, in one line>
+<path>: <n> dashes, <n> sentences over 40 words, <n> paragraphs over 150 words, <n> listed words. A reader found <n> late verbs, <n> sentences with no verb, <n> second names.
 (one line per concept to reword)
 
-Worth a look first (up to five sentences, each quoted in full):
-1. <path>:<line>: "<sentence>"
+Sentences to cut, each quoted in full:
+1. <path>:<line>: "<sentence>" (line <n> says it)   | or: (the reader can work it out)
+For the author, each quoted in full: <path>:<line>: "<sentence>" (<what is vague or cannot be parsed>)   | or: none
+For ktl-librarian, not wording: <path>: a <genre> page that <what it does>   | or: none
 
 Confirmed by a person, and hard to read: <path> (<what the check found>)   | or: none
 Characters no reader sees: <path>:<line> (<code point>)   | or: none
-Reword these <n> concepts now?
+Reword these <n> concepts now? Cut which sentences: all, none, or which numbers?
 ```
 
 Stop here when the person asked for an audit, or when no person is there to answer (Step 2).
@@ -134,8 +136,9 @@ Take the concepts the person asked for: every one the report marks `rewrite`, or
 
 1. **Keep the earlier text.** Git holds it for a file with no uncommitted change. Copy any other file to a scratch directory before you touch it: a concept ktl-librarian wrote or changed in this session has no earlier version in git.
 2. **Work one file at a time.** Note the name the file uses for each thing before you change a word, and keep to it.
-3. **Change the wording only.** Add nothing. Remove nothing but words that carry no fact. Lay out what you reword the way the file's project does: in the bundle, one line for each paragraph and each list item, as ktl-librarian writes it. *Line breaks in the source*, in [references/rules.md](references/rules.md), gives the layout outside the bundle and the reasons.
+3. **Change the wording only.** Add nothing. Remove words that carry no fact, and the sentences the person agreed to cut, and nothing else. Lay out what you reword the way the file's project does: in the bundle, one line for each paragraph and each list item, as ktl-librarian writes it. *Line breaks in the source*, in [references/rules.md](references/rules.md), gives the layout outside the bundle.
 4. **Leave what you cannot fix.** A sentence you cannot parse, a vague quantity or a claim that looks wrong goes in the hand-off, unchanged. A wrong fact is ktl-librarian's to correct from the source.
+5. **Read each reworded paragraph again**, with the same questions.
 
 ## Step 3: check what a script can
 
@@ -146,9 +149,9 @@ uv run <skill>/scripts/prose-check.py --against HEAD <files>     # a file git al
 uv run <skill>/scripts/prose-check.py --before <copy> <file>     # a file you copied in Step 2
 ```
 
-A **finding** names something other than wording that differs: a number or its unit, a link, a code span, an HTML tag, a quotation, a code block, or a list or table cut short. It also names a hard line break, a frontmatter byte, a body a person vouched for, or a new character no reader sees. It also stops a sentence that otherwise stayed and turned over: a word now its opposite, or a negative gained or lost. Undo what it names.
+A **finding** names something a rewording never changes, such as a number, a link, a code span, or a claim that turned over. Undo what it names.
 
-A **note** asks you to look again: a number, day or month written as a word, or a `must` or `not` that came or went. So does a sentence with few of its words left, or a text that grew or lost over a fifth of its words. Read [references/limits.md](references/limits.md), then read each changed sentence beside the old one.
+A **note** asks you to look again, and most give the line: a word of strength such as `only` that came or went, one word that gave way to another, or the words the page lost and gained. [references/limits.md](references/limits.md) lists every finding and note, and what no script sees. Read it, then read each changed sentence beside the old one.
 
 Then run what every change to the bundle runs. From `.lokf/`:
 
@@ -174,7 +177,7 @@ Write no line for a run that changed nothing. Commit the rewording apart from an
 Hand the person a change scoped to `.lokf/`: a pull request where git tracks `.lokf/`, and the list of changed files where it does not. Give them:
 
 - the counts and the words before and after, from the script's `OK` line;
-- each sentence you left alone, and why;
+- each sentence you cut, and each you left alone, with why;
 - each concept you skipped, with its reason;
 - each note the script gave, and your decision;
 - what no script proved: that the meaning held, and what [references/limits.md](references/limits.md) lists. Each concept stays unconfirmed until a curator confirms it against its source;

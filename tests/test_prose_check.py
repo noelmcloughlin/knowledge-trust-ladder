@@ -343,6 +343,36 @@ TURNED = [
     (0, "OK", "A run with no token stops.", "A run without a token stops."),
     (0, "OK", "It can't read the file.", "It cannot read the file."),
     (0, "OK", "The gate reads every commit. It runs on merge.", "The gate runs on merge. It reads every commit."),
+    # A negating prefix, a count in words, and two runs of words that changed places.
+    (1, 'opposite: "confirmed" became "unconfirmed"', "The report lists each confirmed concept.", "The report lists each unconfirmed concept."),
+    (1, 'opposite: "valid" became "invalid"', "The pen writes the patch when the frontmatter is valid.", "The pen writes the patch when the frontmatter is invalid."),
+    (1, 'number-word: "three" became "four"', "The sidecar installs three workflows.", "The sidecar installs four workflows."),
+    (1, 'order: "librarian" and "curator" changed places', "The librarian hands the change to the curator.", "The curator hands the change to the librarian."),
+    (1, 'order: "build fails" and "lock is stale" changed places', "The build fails because the lock is stale.", "The lock is stale because the build fails."),
+    (1, 'order: "template" and "host" changed places', "The script copies each file from the template to the host.", "The script copies each file from the host to the template."),
+    # A number or a code span that changed places with one in another sentence.
+    (1, "swap: the number 40 and the number 150 changed places", "Split a sentence past 40 words. Split a paragraph past 150 words.", "Split a sentence past 150 words. Split a paragraph past 40 words."),
+    (1, "swap: the code span uv and the code span npm changed places", "`uv` installs the packages. `npm` builds the site.", "`npm` installs the packages. `uv` builds the site."),
+    # A list item is a sentence of its own, so a swap between two items shows.
+    (1, 'opposite: "required" became "optional"', "- `A_TOKEN` is required.\n- `B_TOKEN` is optional.", "- `A_TOKEN` is optional.\n- `B_TOKEN` is required."),
+    # An earlier sentence that shares as many words must not take the changed one's place.
+    (
+        1,
+        'opposite: "enabled" became "disabled"',
+        "The release workflow turns signing on after the gate checks each confirmation. Signing is enabled in the release workflow.",
+        "The release workflow turns signing on after the gate checks each confirmation. Signing is disabled in the release workflow.",
+    ),
+    # Notes, each with its line: a reader decides.
+    (0, 'new.md:1: strength: "may" left a sentence that otherwise stayed', "The check may fail behind a proxy.", "The check fails behind a proxy."),
+    (0, 'new.md:1: strength: "only" left a sentence that otherwise stayed', "The token reads only this repository.", "The token reads this repository."),
+    (0, 'new.md:1: strength: "all" left a sentence that otherwise stayed', "All workflows read the runner variable.", "Some workflows read the runner variable."),
+    (0, 'new.md:1: word: "curator" became "librarian" once', "The curator confirms each concept against its source.", "The librarian confirms each concept against its source."),
+    (0, 'new.md:1: word: "weekly" became "daily" once', "The librarian workflow runs weekly on the default branch.", "The librarian workflow runs daily on the default branch."),
+    (0, "new.md:1: negative: a sentence that otherwise stayed has 1 negative, and had 2", "The job never runs without a token.", "The job never runs with a token."),
+    (0, "new.md:1: order: the same words stand in a new order", "The gate only checks signed commits.", "Only the gate checks signed commits."),
+    (0, "new.md:1: order: the same words stand in a new order", "The README and the docs name it.", "The docs and the README name it."),
+    (0, "page-words: words gone from the page: logs, account; words new on the page: none", "The gate refuses a push with no signature, and it logs the account that pushed.", "The gate refuses a push with no signature."),
+    (0, "code: code spans new on the page: `npm`", "Run uv, then build the site.", "Run uv, then build the site with `npm`."),
 ]
 
 
@@ -360,6 +390,28 @@ def test_the_ok_line_claims_only_what_the_script_read(tmp_path):
     write(tmp_path / "new.md", "Every commit is read by the gate.\n")
     result = prose("--before", tmp_path / "old.md", tmp_path / "new.md")
     assert result.rc == 0 and "nothing the script reads differs" in result.out and "only the wording" not in result.out, result.out
+
+
+def test_a_word_cut_by_rule_10_gives_no_note(tmp_path):
+    """`at all` is on the list of words to cut, so its `all` is no word of strength."""
+    write(tmp_path / "old.md", "The gate reads no file at all.\n")
+    write(tmp_path / "new.md", "The gate reads no file.\n")
+    result = prose("--before", tmp_path / "old.md", tmp_path / "new.md")
+    assert result.rc == 0 and "strength" not in result.out and "page-words" not in result.out, result.out
+
+
+def test_a_word_of_strength_is_noted_on_the_page_only_where_no_sentence_places_it(tmp_path):
+    write(tmp_path / "old.md", "The token reads only this repository.\n\nThe gate runs on each pull request.\n")
+    write(tmp_path / "new.md", "The token reads this repository.\n\nThe gate runs on each pull request.\n")
+    result = prose("--before", tmp_path / "old.md", tmp_path / "new.md")
+    assert result.rc == 0 and 'new.md:1: strength: "only" left' in result.out and '"only" appears' not in result.out, result.out
+
+
+def test_no_control_character_reaches_the_terminal(tmp_path):
+    """A finding quotes the text, and an escape sequence in it could redraw a terminal or forge a line of a CI log."""
+    write(tmp_path / "page.md", f"The gate {chr(0x1B)}[31mfailed{chr(0x1B)}[0m - it stops the merge here.\n")
+    result = prose(tmp_path / "page.md")
+    assert result.rc == 1 and "<U+001B>[31mfailed" in result.out and chr(0x1B) not in result.out, result.out
 
 
 # --before on concepts: a body may change only where no person vouched for
@@ -1037,9 +1089,36 @@ def script_repo(tmp_path):
 def test_a_script_is_compared_as_its_comments_against_head(script_repo):
     write(
         script_repo / "tool.py",
-        '"""Read the bundle, and report."""\n\n# The gate reads each file it is given.\nNAME = "a - c"\nprint("it reads", NAME, 3)\n',
+        '"""Read the bundle, and report."""\n\n# The gate reads each file it is given.\n#\n# It reads no other.\nNAME = "a - b"\nprint("it reads", NAME)\n',
     )
-    expect(0, "OK", "a script's code may change while its comments are reworded", "--against", "HEAD", script_repo / "tool.py")
+    expect(0, "OK", "a script's comments may be reworded, and split by an empty comment line, while its code stays", "--against", "HEAD", script_repo / "tool.py")
+
+
+def test_a_change_to_a_script_s_code_is_reported_against_head(script_repo):
+    """A rewording of comments changes no code, so the pass that reworded them must not have."""
+    write(
+        script_repo / "tool.py",
+        '"""Read the bundle, and report."""\n\n# The gate reads each file it is given.\nNAME = "a - c"\nprint("it reads", NAME)\n',
+    )
+    expect(1, 'tool.py:4: not-prose: this line is not prose, and it differs from the earlier text', "a changed line of code is reported", "--against", "HEAD", script_repo / "tool.py")
+
+
+USAGE = "#!/usr/bin/env bash\n# Check the bundle.\n#\n# Usage:\n#   check.sh {command} OLD NEW\n#\n# Options:\n#   {option}   stop at the first finding,\n#              and print {it}\n#   --quiet    print nothing but findings\necho done{tail}\n"
+NOT_PROSE = [
+    (1, "new.sh:5: not-prose:", "a command in a comment", {"command": "--after"}),
+    (1, "new.sh:8: not-prose:", "the name that opens a row of options", {"option": "--loose "}),
+    (1, "new.sh:11: not-prose:", "a comment at the end of a line of code", {"tail": "  # and say more"}),
+    (0, "OK", "the words of a row, on the line under its name too", {"it": "the line"}),
+]
+
+
+@pytest.mark.parametrize(("status", "text", "what", "change"), NOT_PROSE, ids=[case[2] for case in NOT_PROSE])
+def test_what_is_not_prose_in_a_script_stays(tmp_path, status, text, what, change):
+    """The style rules leave a command, a name and a line of code unread, so the comparison must hold each still."""
+    parts = {"command": "--before", "option": "--strict", "it": "it", "tail": "  # and say so"}
+    write(tmp_path / "old.sh", USAGE.format(**parts))
+    write(tmp_path / "new.sh", USAGE.format(**{**parts, **change}))
+    expect(status, text, what, "--before", tmp_path / "old.sh", tmp_path / "new.sh")
 
 
 def test_a_character_no_reader_sees_in_a_script_s_code_is_reported_against_head(script_repo):
@@ -1097,6 +1176,12 @@ REFUSED = [
     ("a blank Braille pattern", "unseen", "A word.\n", f"A{chr(0x2800)} word.\n"),
     ("a zero-width space as an entity", "unseen", "A word.\n", "A&ZeroWidthSpace; word.\n"),
     ("a zero-width space as a numeric entity", "unseen", "A word.\n", "A&#8203; word.\n"),
+    ("two values swapped between the rows of a table", "table", "| Band | Words |\n| --- | --- |\n| 8-12 | 15 |\n| 13-18 | 20 |\n", "| Band | Words |\n| --- | --- |\n| 8-12 | 20 |\n| 13-18 | 15 |\n"),
+    ("two words swapped between the rows of a table", "opposite", "| Secret | Needed |\n| --- | --- |\n| `A_TOKEN` | required |\n| `B_TOKEN` | optional |\n", "| Secret | Needed |\n| --- | --- |\n| `A_TOKEN` | optional |\n| `B_TOKEN` | required |\n"),
+    ("the steps of a numbered list in a new order", "list", "1. Export the key.\n2. Open a pull request.\n3. Confirm the concept.\n", "1. Open a pull request.\n2. Export the key.\n3. Confirm the concept.\n"),
+    ("a paragraph cut in two in the middle of a sentence", "broken", "The pen writes the bundle, and it refuses a human actor.\n", "The pen writes the bundle,\n\nand it refuses a human actor.\n"),
+    ("the words of two links swapped", "link", "See [the gate](gate.md) and [the pen](pen.md).\n", "See [the pen](gate.md) and [the gate](pen.md).\n"),
+    ("a number cut with the thing it counted", "digits", "The job retries 3 times. It starts 3 workers.\n", "The job retries 3 times. It starts workers.\n"),
 ]
 
 
@@ -1133,6 +1218,14 @@ ALLOWED = [
     ("a list after a line that continues an item", "1. Do it\nthis way.\n2. Then this.\n", "1. Do it\nthat way.\n2. Then that.\n"),
     ("a word in a list after a number out of step", "1. A rule.\n7. Another.\n\n    Its text.\n", "1. A rule.\n7. One more.\n\n    Its words.\n"),
     ("an image's alt text", '<img src="a.png" alt="A plan of it">\n', '<img src="a.png" alt="The plan of it">\n'),
+    # Rule 10 lets a sentence go when the page states each of its facts elsewhere.
+    ("a sentence cut that repeats a link the page still holds", "The gate checks each one ([gate.md](gate.md)).\n\nAs said, [gate.md](gate.md) has the detail.\n", "The gate checks each one ([gate.md](gate.md)).\n"),
+    ("a sentence cut that repeats a number with the thing it counts", "Split a sentence past 40 words.\n\nRemember that the limit is 40 words.\n", "Split a sentence past 40 words.\n"),
+    ("a sentence cut that repeats a quotation", 'The label reads "Confirmed by a person".\n\nAs noted, it reads "Confirmed by a person".\n', 'The label reads "Confirmed by a person".\n'),
+    ("the items of a series in a new order", "The README and the docs name it.\n", "The docs and the README name it.\n"),
+    ("a paragraph split where its topic turns", "The gate reads commits. The pen writes the bundle.\n", "The gate reads commits.\n\nThe pen writes the bundle.\n"),
+    ("the words of a link", "Read [the policy](SECURITY.md) first.\n", "Read [the security policy](SECURITY.md) first.\n"),
+    ("the items of a bulleted list in a new order", "- the README\n- the docs\n", "- the docs\n- the README\n"),
 ]
 
 

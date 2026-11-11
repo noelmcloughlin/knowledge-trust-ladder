@@ -104,7 +104,7 @@ jobs:
     # librarian workflow's install step. A fork that develops the skills
     # changes the name in both places.
     if: github.repository != 'noelmcloughlin/knowledge-trust-ladder'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
       contents: read # read the pin out of the librarian workflow, here and on the sync branch
@@ -148,6 +148,9 @@ jobs:
         id: read
         env:
           GH_TOKEN: ${{ github.token }}
+          # Optional: a read-only token for a private skills repository,
+          # such as an organisation's own copy of the public one.
+          SKILLS_TOKEN: ${{ secrets.KNOWLEDGE_SKILLS_TOKEN }}
           WANTED: ${{ inputs.tag }}
         run: |
           set -euo pipefail
@@ -170,8 +173,8 @@ jobs:
             fi
             tag="$WANTED"
           else
-            if ! tag="$(gh api "repos/$slug/releases/latest" --jq .tag_name 2>/dev/null)"; then
-              echo "::error::The newest release of $slug could not be read. A private skills repository is not readable with the job's token."
+            if ! tag="$(GH_TOKEN="${SKILLS_TOKEN:-$GH_TOKEN}" gh api "repos/$slug/releases/latest" --jq .tag_name 2>"$RUNNER_TEMP/latest.err")"; then
+              echo "::error::The newest release of $slug could not be read ($(tr '\n' ' ' < "$RUNNER_TEMP/latest.err" | cut -c1-200)). The job's token reads this repository alone, so a private skills repository needs the secret KNOWLEDGE_SKILLS_TOKEN, a token that reads it."
               exit 1
             fi
             if ! printf '%s\n' "$tag" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
@@ -271,7 +274,7 @@ jobs:
     name: Sync the copies and the pin (read-only)
     needs: earlier
     if: needs.earlier.outputs.tag != ''
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15
     permissions:
       contents: read # read the repository only; no write token near the clone of the release
@@ -298,6 +301,7 @@ jobs:
         id: run
         env:
           TAG: ${{ needs.earlier.outputs.tag }}
+          KNOWLEDGE_SKILLS_TOKEN: ${{ secrets.KNOWLEDGE_SKILLS_TOKEN }}
         run: |
           set -euo pipefail
           script=.lokf/scripts/knowledge-sync.sh
@@ -343,7 +347,7 @@ jobs:
     name: Open or refresh the review pull request (privileged)
     needs: [earlier, sync]
     if: needs.sync.outputs.changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     # KNOWLEDGE_SYNC_TOKEN belongs in this Environment, limited to the
     # default branch, so a workflow on any other branch cannot read it. It
@@ -385,10 +389,27 @@ jobs:
         env:
           TAG: ${{ needs.earlier.outputs.tag }}
           REPO: ${{ needs.earlier.outputs.repo }}
+          KNOWLEDGE_SKILLS_TOKEN: ${{ secrets.KNOWLEDGE_SKILLS_TOKEN }}
         run: |
           set -euo pipefail
+          # git with the read token of a private skills repository, when one is
+          # given, sent as a header to that repository's address alone.
+          skills_git() {
+            local repo="$1"; shift
+            if [ -n "${KNOWLEDGE_SKILLS_TOKEN:-}" ]; then
+              local n="${GIT_CONFIG_COUNT:-0}" auth
+              auth="$(printf 'x-access-token:%s' "$KNOWLEDGE_SKILLS_TOKEN" | base64 | tr -d '\n')"
+              env GIT_CONFIG_COUNT="$((n + 1))" "GIT_CONFIG_KEY_$n=http.${repo%/}.extraheader" "GIT_CONFIG_VALUE_$n=AUTHORIZATION: basic $auth" git "$@"
+            else
+              git "$@"
+            fi
+          }
           # An annotated tag lists its commit on a second, peeled line.
-          sha="$(git ls-remote --tags "$REPO" "refs/tags/$TAG" "refs/tags/$TAG^{}" | tail -n 1 | cut -f1)"
+          if ! listed="$(skills_git "$REPO" ls-remote --tags "$REPO" "refs/tags/$TAG" "refs/tags/$TAG^{}" 2>"$RUNNER_TEMP/ls-remote.err")"; then
+            echo "::error::$REPO could not be read ($(tr '\n' ' ' < "$RUNNER_TEMP/ls-remote.err" | cut -c1-200))."
+            exit 1
+          fi
+          sha="$(printf '%s\n' "$listed" | tail -n 1 | cut -f1)"
           if ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{40}$'; then
             echo "::error::$TAG names no commit at $REPO."
             exit 1
@@ -580,7 +601,7 @@ jobs:
     name: Approve the held workflow changes
     needs: [publish]
     if: needs.publish.outputs.held == 'true' && needs.publish.outputs.commit != '' && vars.KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT != ''
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     permissions: {}
     environment:
@@ -600,7 +621,7 @@ jobs:
   push-workflows:
     name: Push the approved workflow changes (privileged)
     needs: [earlier, publish, review]
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     environment:
       name: knowledge-sync

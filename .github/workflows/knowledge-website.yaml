@@ -77,7 +77,7 @@ jobs:
     name: Build the site (read-only)
     # A push builds on the default branch only. A pull request or a dispatch always builds.
     if: github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -155,7 +155,7 @@ jobs:
     # no repository to compare the branch with, so it is let through by name.
     if: vars.KNOWLEDGE_WEBSITE_ENABLED == 'true' && (github.event_name == 'schedule' || (github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)))
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
       pages: write
@@ -168,6 +168,18 @@ jobs:
         uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
+
+      # GitHub Pages can serve a private repository's site to anyone, and
+      # does on every plan but Enterprise Cloud, which can make it private.
+      - name: Say when a private repository's site is public
+        if: github.event.repository.private
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [ "$(gh api "repos/$GH_REPO/pages" --jq .public 2>/dev/null)" != false ]; then
+            echo "::warning::This repository is private, and its Pages site is public or of unknown visibility, so anyone may read what the site shows. On GitHub Enterprise Cloud, set the site's visibility to private under Settings, Pages."
+          fi
 
       - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         id: deployment

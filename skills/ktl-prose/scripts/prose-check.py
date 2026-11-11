@@ -56,10 +56,20 @@
 # to stderr and never changes the exit status.
 #
 # A pass says that what the script reads came through, and not that the meaning
-# held, so its OK line says no more than that. It stops a sentence that otherwise
-# stayed and turned over: one word given way to its opposite, or a negative
-# gained or lost with every other word in place. references/limits.md lists what
+# held, so its OK line says no more than that. references/limits.md lists what
 # it cannot see.
+#
+# A comparison reads a list item and a table row as a sentence each. In a
+# sentence that otherwise stayed it stops a word given way to its opposite, and
+# a negative gained or lost with every other word in place. It stops one number
+# word given way to another, and two runs of words that changed places. It
+# stops a number, a link or a code span that changed places with one in another
+# sentence or row. It stops the steps of a numbered list in a new order, and a
+# paragraph cut in two inside a sentence. In a script it stops a change to any
+# line that is not prose.
+#
+# A comparison notes, with the line, a word of strength that came or went and
+# one word that gave way to another. It notes the words a page lost or gained.
 #
 # The script reads the files it is given, and the word book in the skill's
 # assets/ folder, and asks git for an earlier version. It writes nothing
@@ -70,6 +80,8 @@ from __future__ import annotations
 
 import argparse
 import bisect
+import difflib
+import heapq
 import html
 import re
 import subprocess
@@ -379,6 +391,25 @@ OPPOSITE_WORD = re.compile(
     r"\b(?:" + "|".join(sorted({re.escape(w).replace(r"\ ", r"\s+") for pair in OPPOSITES for w in pair}, key=len, reverse=True)) + r")\b(?!['\u2019]t)", re.I
 )
 CONTENT_WORD = re.compile(r"[a-z]{3,}")
+# Every word of a sentence as written, a hyphen or an apostrophe inside it kept.
+RAW_WORD = re.compile(r"[a-z]+(?:[-'\u2019][a-z]+)*")
+# A prefix that turns a word into its opposite: `confirmed` and `unconfirmed`.
+NEGATING = ("un", "in", "im", "ir", "il", "non", "non-", "dis", "mis")
+# The words that join the items of a series. Two items that change places
+# around one of them claim the same.
+JOINERS = frozenset(("and", "or", "nor", "plus"))
+# The words a claim's strength hangs on: how sure it is, and how much it
+# covers. The `all` of `at all` covers nothing, and rule 10 cuts it.
+WEIGHT = re.compile(
+    r"\b(?:must|never|only|always|unless|except|should|may|might|usually|often|sometimes|rarely"
+    r"|(?<!\bat )all|every|most|some|many|few|several|none)\b"
+)
+# A link with the words a reader sees for it.
+LINK_TEXT = re.compile(r"(?<!!)\[([^\]\[]+)\]\(((?:[^()]|\([^()]*\))*)\)")
+# How a paragraph ends when its last sentence is whole.
+WHOLE_END = re.compile(r"[.!?:;\u2026)\]\"'\u201d\u2019*_`|>" + MASK + r"]$")
+# A comment line that holds nothing, which splits a block of comments.
+EMPTY_COMMENT = re.compile(r"^\s*#\s*$")
 COMMON_WORDS = frozenset(
     "the and for are was were has had have but you your can may its out all any one two who how why this that these those "
     "with from into onto than then them they their there here when where which while what whom whose been will would "
@@ -451,6 +482,8 @@ class Doc:
             else:
                 self.unclosed = True
         self.body = self.lines[self.body_at :]
+        # For a script: each line that is not read as prose, with its number.
+        self.apart: list[tuple[int, str]] = []
 
     def numbered_body(self):
         return enumerate(self.body, start=self.body_at + 1)
@@ -467,6 +500,8 @@ class Block:
         self.text = ""
         self.starts: list[int] = []
         self.numbers: list[int] = []
+        # Where each list item or table row after the first begins.
+        self.units: list[int] = []
 
     def add(self, number: int, text: str) -> None:
         if self.text:
@@ -763,6 +798,11 @@ def script_doc(text: str, python: bool = False) -> Doc:
     module or follows a line that ends with a colon, so a quoted block
     assigned to a name is data too. Each block of comments and each docstring
     is then read for its layout, as `laid_out` says.
+
+    The result also holds, as `apart`, what a rewording of the comments must
+    leave as it was: each line that is not read as prose, and the name that
+    opens each row of a table. That is code, a directive, a heredoc and a
+    command in a comment. An empty comment line is layout, and is left out.
     """
     out: list[str] = []
     blocks: list[list[int]] = []
@@ -826,13 +866,25 @@ def script_doc(text: str, python: bool = False) -> Doc:
         if stripped:
             seen_code = True
             previous = line
+    names: list[tuple[int, str]] = []
+    moved: set[int] = set()
     for numbers in blocks:
-        laid_out(out, numbers)
-    return Doc("\n".join(out))
+        laid_out(out, numbers, names, moved)
+    doc = Doc("\n".join(out))
+    for n, (raw, read_as) in enumerate(zip(text.split("\n"), out)):
+        if raw.strip() and not read_as.strip() and n not in moved and not EMPTY_COMMENT.match(raw):
+            doc.apart.append((n + 1, raw.rstrip()))
+    doc.apart.extend((n + 1, name) for n, name in names)
+    doc.apart.sort()
+    return doc
 
 
-def laid_out(lines: list[str], numbers: list[int]) -> None:
+def laid_out(lines: list[str], numbers: list[int], names: list[tuple[int, str]], moved: set[int]) -> None:
     """Read one block of comments, or one docstring, for its layout, in place.
+
+    NAMES gains the name that opens each row, with its line, and MOVED the
+    lines whose prose went into a row's cell. The caller needs both to tell a
+    line that is not prose from one that was read elsewhere.
 
     Indent is measured from the block's own text. A line indented further is
     prose when it is a list item, continues one (an empty line between does
@@ -876,14 +928,18 @@ def laid_out(lines: list[str], numbers: list[int]) -> None:
             rest = " ".join(re.split(r"\s{2,}", text.strip())[1:])
             if state == "row" and indent > edge:
                 row, lines[n] = f"{row} {rest}", ""
+                moved.add(n)
             else:
                 row_at, row, state, edge = n, rest, "row", indent
+                names.append((n, re.split(r"\s{2,}", text.strip())[0]))
             lines[row_at] = cell(row)
         elif inner and state == "row" and indent > edge:
             row, lines[n] = f"{row} {text.strip()}", ""
+            moved.add(n)
             lines[row_at] = cell(row)
         elif inner and state == "row" and indent == edge:
             row_at, row = n, (text.split(None, 1) + [""])[1]
+            names.append((n, text.split(None, 1)[0]))
             lines[n] = cell(row)
         elif inner and (opens or state == "command") and not SENTENCE_START.match(text):
             lines[n], state = "", "command"
@@ -1283,52 +1339,201 @@ def unseen(doc: Doc) -> list[tuple[int, str, str]]:
 # --- what a rewording must leave alone ----------------------------------------
 
 
-# One sentence, as `turned` compares it.
-Said = namedtuple("Said", "line text words opposites negatives")
+# One sentence, list item or table row, as `turned` compares it. `words` is
+# what it is matched by. `raw` is every word as written, `tokens` its code
+# spans, link targets and numbers, and `weight` the words its strength hangs on.
+Said = namedtuple("Said", "line text words opposites negatives raw tokens number_words weight")
+ROOT_ENDINGS = (("ies", "y"), ("ied", "y"), ("ing", ""), ("ed", ""), ("es", ""), ("s", ""))
+
+
+def root(word: str) -> str:
+    """A word less its plural or verb ending and a last `e`, cut to six letters.
+
+    It makes `file` and `files` one, and `sign`, `signs`, `signed` and
+    `signing`. It is a rough key for matching two texts, and no reader sees it.
+    """
+    if not word.endswith("ss"):
+        for ending, put in ROOT_ENDINGS:
+            if word.endswith(ending) and len(word) - len(ending) >= 2:
+                word = word[: -len(ending)] + put
+                break
+    return (word[:-1] if len(word) >= 3 and word.endswith("e") else word)[:6]
 
 
 def content_words(text: str) -> list[str]:
-    """The words of a sentence that carry its subject, in order, each cut to five letters, so that `signs` and `signed` are one."""
-    return [word[:5] for word in CONTENT_WORD.findall(text.lower()) if word not in COMMON_WORDS]
+    """The words of a sentence that carry its subject, in order, each as its root."""
+    return [root(word) for word in CONTENT_WORD.findall(text.lower()) if word not in COMMON_WORDS]
+
+
+def transposed(x: list[str], y: list[str]):
+    """Two runs of up to three words that changed places around words that stayed, with those words, or None.
+
+    `the librarian hands the change to the curator` and `the curator hands
+    the change to the librarian` give `librarian`, `curator` and the five
+    words between them.
+    """
+    if len(x) != len(y) or x == y:
+        return None
+    i, j = 0, len(x)
+    while x[i] == y[i]:
+        i += 1
+    while x[j - 1] == y[j - 1]:
+        j -= 1
+    xs, ys = x[i:j], y[i:j]
+    for la in range(1, 4):
+        for lb in range(1, 4):
+            between = len(xs) - la - lb
+            if between >= 1 and xs[:la] == ys[len(ys) - la :] and xs[len(xs) - lb :] == ys[:lb] and xs[la : la + between] == ys[lb : lb + between]:
+                return " ".join(xs[:la]), " ".join(xs[len(xs) - lb :]), xs[la : la + between]
+    return None
+
+
+def replaced(old: Said, new: Said):
+    """The one run of words that gave way to another while every other word stayed, as two lists, or None."""
+    changes = [op for op in difflib.SequenceMatcher(a=old.raw, b=new.raw, autojunk=False).get_opcodes() if op[0] != "equal"]
+    if len(changes) != 1 or changes[0][0] != "replace":
+        return None
+    _, a1, a2, b1, b2 = changes[0]
+    return (old.raw[a1:a2], new.raw[b1:b2]) if a2 - a1 <= 2 and b2 - b1 <= 3 else None
 
 
 def turned(a: Kept, b: Kept):
-    """What a rewording did to each sentence that changed: findings and notes.
+    """What a rewording did to each sentence that changed: findings, notes, and the words of strength the notes placed.
 
     Each changed sentence is compared with the sentence of the new text that
-    shares most of its words. Three in five shared means the rewording kept it,
-    so a word that gave way to its opposite is what changed its sense. When the
-    shared words also moved, the sentence may say the same thing the other way
-    round, as `lint after build` and `build before lint` do, so that is a note.
-    A negative that came or went is a finding only when every other word stayed
-    in its place, since `does not change` and `changes nothing` agree. Any other
-    is a note. A sentence with too few of its words anywhere near it may have gone.
+    shares the largest part of its words. A list item and a table row count as
+    a sentence each. Three in five shared means the rewording kept it.
+
+    In a kept sentence these are findings. A word gave way to its opposite, or
+    to itself behind a negating prefix, as `confirmed` to `unconfirmed`. One
+    number word gave way to another. Two runs of words changed places around
+    words that stayed, as an actor and what it acts on do. A number, a link or
+    a code span changed places with one in another kept sentence. When the
+    shared words also moved, an opposite is a note, since `lint after build`
+    and `build before lint` agree. A negative that came or went is a finding
+    only when every other word stayed in its place, since `does not change`
+    and `changes nothing` agree.
+
+    The rest are notes, each with its line: the same words in a new order, a
+    word of strength that came or went, and one word that gave way to another.
+    A sentence with too few of its words anywhere near it may have gone. The
+    third value counts each word of strength the notes placed, so that the
+    caller reports only the rest for the page.
     """
     findings, notes = [], []
+    placed: Counter = Counter()
     same = {said.text for said in b.said}
-    new = [(said, set(said.words)) for said in b.said if said.words]
+
+    def anchors(said: Said) -> set:
+        """What a sentence is matched by: its words, or what it names when it has none, as a table row may."""
+        return set(said.words) or set(said.tokens)
+
+    new = [(said, anchors(said)) for said in b.said if anchors(said)]
+    sizes = [len(other) for _, other in new]
+    named = [set(said.tokens) for said, _ in new]
+    kept: list[tuple[Said, Said]] = []
+    swaps: Counter = Counter()
+    first: dict[tuple[str, str], int] = {}
     for old in a.said:
-        words = set(old.words)
+        words = anchors(old)
         if old.text in same or not words or not new:
             continue
-        ranked = sorted(new, key=lambda pair: len(words & pair[1]), reverse=True)
-        best, others = ranked[0]
-        if len(words & others) < 0.6 * len(words | others):
-            if len(words) >= 3 and sum(len(words & pair[1]) for pair in ranked[:2]) < 0.4 * len(words):
+        shared = [len(words & other) for _, other in new]
+        scores = [(count / (len(words) + size - count), count) for count, size in zip(shared, sizes)]
+        top = max(scores)
+        # Of the sentences that share as much, take the one that names the
+        # same code, links and numbers, and then the nearest.
+        ties = [n for n, score in enumerate(scores) if score == top]
+        mine = set(old.tokens)
+        at = ties[0] if len(ties) == 1 else max(ties, key=lambda n: (len(mine & named[n]), -abs(new[n][0].line - old.line)))
+        best, others = new[at]
+        if shared[at] < 0.6 * (len(words) + sizes[at] - shared[at]):
+            if len(words) >= 3 and sum(heapq.nlargest(2, shared)) < 0.4 * len(words):
                 notes.append((old.line, "sentence-gone", f'few words of this sentence came through (line {old.line} of the earlier text): "{old.text[:90]}"'))
             continue
-        shared = words & others
-        kept_order = [w for w in old.words if w in shared] == [w for w in best.words if w in shared]
-        where = (findings if kept_order else notes)
+        kept.append((old, best))
+        tail = f'(line {old.line} of the earlier text): "{best.text[:90]}"'
+        common = words & others
+        kept_order = [w for w in old.words if w in common] == [w for w in best.words if w in common]
+        where = findings if kept_order else notes
+        # The words a check below has already answered for.
+        answered: set[str] = set()
+
         for one, other in OPPOSITES:
             for gone, came in ((one, other), (other, one)):
                 if best.opposites[gone] < old.opposites[gone] and best.opposites[came] > old.opposites[came]:
-                    where.append((best.line, "opposite", f'"{gone}" became "{came}" in a sentence that otherwise stayed (line {old.line} of the earlier text): "{best.text[:90]}"'))
+                    where.append((best.line, "opposite", f'"{gone}" became "{came}" in a sentence that otherwise stayed {tail}'))
+                    answered.update((*gone.split(), *came.split()))
+        went, arrived = set(old.raw) - set(best.raw), set(best.raw) - set(old.raw)
+        for gone in sorted(went):
+            for came in sorted(arrived):
+                if min(len(gone), len(came)) >= 4 and any(came == prefix + gone or gone == prefix + came for prefix in NEGATING):
+                    where.append((best.line, "opposite", f'"{gone}" became "{came}" in a sentence that otherwise stayed {tail}'))
+                    answered.update((gone, came))
+
+        counts_gone, counts_came = old.number_words - best.number_words, best.number_words - old.number_words
+        if counts_gone and counts_came:
+            gone, came = ", ".join(sorted(counts_gone)), ", ".join(sorted(counts_came))
+            findings.append((best.line, "number-word", f'"{gone}" became "{came}" in a sentence that otherwise stayed {tail}'))
+            answered.update((*counts_gone, *counts_came))
+
+        literal = old.words == best.words
         if (old.negatives > 0) != (best.negatives > 0):
             how = "lost its" if old.negatives else "gained a"
-            literal = old.words == best.words
-            (findings if literal else notes).append((best.line, "negative", f'a sentence that otherwise stayed {how} negative (line {old.line} of the earlier text): "{best.text[:90]}"'))
-    return findings, notes
+            (findings if literal else notes).append((best.line, "negative", f"a sentence that otherwise stayed {how} negative {tail}"))
+        elif literal and old.negatives != best.negatives:
+            notes.append((best.line, "negative", f"a sentence that otherwise stayed has {counted_as(best.negatives, 'negative', 'negatives')}, and had {old.negatives} {tail}"))
+
+        if old.raw != best.raw and Counter(old.raw) == Counter(best.raw):
+            moved = transposed(old.raw, best.raw)
+            # The items of a series may change places and claim the same.
+            if moved and not JOINERS.intersection(moved[2]):
+                findings.append((best.line, "order", f'"{moved[0]}" and "{moved[1]}" changed places in a sentence that otherwise stayed {tail}'))
+            else:
+                notes.append((best.line, "order", f"the same words stand in a new order {tail}"))
+
+        for word in sorted(set(old.weight) | set(best.weight)):
+            change = best.weight[word] - old.weight[word]
+            if change:
+                placed[word] += change
+                if word not in answered:
+                    notes.append((best.line, "strength", f'"{word}" {"came into" if change > 0 else "left"} a sentence that otherwise stayed {tail}'))
+
+        change = replaced(old, best)
+        if change:
+            gone, came = change
+            # No note for a word the style rules list, a contraction spelt
+            # out, one word in two forms, or a word answered for above.
+            listed = any(word in WORDS for word in (*gone, " ".join(gone)))
+            spelt = any("'" in word or "’" in word for word in gone) or "".join(gone).replace("-", "") == "".join(came).replace("-", "")
+            one_word = len(gone) == 1 and len(came) == 1 and root(gone[0]) == root(came[0])
+            weighed = any(WEIGHT.fullmatch(word) for word in (*gone, *came))
+            if not (listed or spelt or one_word or weighed or answered.intersection((*gone, *came))):
+                pair = (" ".join(gone), " ".join(came))
+                swaps[pair] += 1
+                first.setdefault(pair, best.line)
+
+    for (gone, came), count in swaps.items():
+        notes.append((first[(gone, came)], "word", f'"{gone}" became "{came}" {times(count)} in a sentence that otherwise stayed; check that both name the same thing'))
+
+    # A number, a link or a code span that changed places with one in another
+    # kept sentence. Each sentence is looked up by what it gained, so the
+    # search does not compare every pair.
+    moves = [(old, best, old.tokens - best.tokens, best.tokens - old.tokens) for old, best in kept]
+    moves = [move for move in moves if move[2] and move[3]]
+    gained_by: dict[str, list[int]] = {}
+    for at, move in enumerate(moves):
+        for token in move[3]:
+            gained_by.setdefault(token, []).append(at)
+    reported: set[int] = set()
+    for at, (old, best, lost, gained) in enumerate(moves):
+        for other in sorted({n for token in lost for n in gained_by.get(token, ()) if n != at}):
+            other_old, other_best, other_lost, other_gained = moves[other]
+            there, back = lost & other_gained, gained & other_lost
+            if there and back and at not in reported:
+                reported.update((at, other))
+                findings.append((best.line, "swap", f"{', '.join(sorted(there))} and {', '.join(sorted(back))} changed places between this sentence and the one on line {other_best.line} (lines {old.line} and {other_old.line} of the earlier text)"))
+    return findings, notes, placed
 
 
 class Kept:
@@ -1367,6 +1572,16 @@ class Kept:
         self.number_words: list[tuple[str, int]] = []
         self.date_words: list[tuple[str, int]] = []
         self.strength: Counter = Counter()
+        # Each number with the word after it, as `3 workers`: what it counts.
+        self.claims: Counter = Counter()
+        # Each link's target with the words a reader sees for it.
+        self.link_texts: list[tuple[str, str]] = []
+        # Each table row as (line, first cell, the code, links and numbers of the other cells).
+        self.rows: list[tuple[int, str, Counter]] = []
+        # The first line of each item of a numbered list, in order.
+        self.steps: list[str] = []
+        # The words of the page, each under its root, as first written.
+        self.page_words: dict[str, str] = {}
         self.words = 0
         self._read(doc)
 
@@ -1399,11 +1614,18 @@ class Kept:
                 self.indented.append((textwrap.dedent("\n".join(code)), code_at))
             code = []
 
-        def count_row(content: str) -> None:
+        def count_row(content: str, number: int) -> None:
             row = table_row(content)
             if not all(RULE_CELL.match(cell) for cell in row):
                 self.table_rows += 1
                 self.table_cells += len(row)
+                rest = " | ".join(row[1:])
+                held = Counter(f"`{found.group(2).strip()}`" for found in CODE_SPAN.finditer(rest))
+                rest = CODE_SPAN.sub(lambda found: MASK * len(found.group()), rest)
+                held.update(found.group(1).strip() for found in INLINE_LINK.finditer(rest))
+                rest = INLINE_LINK.sub(lambda found: MASK * len(found.group()), rest)
+                held.update(number_token(found) for found in NUMBER.finditer(rest))
+                self.rows.append((number, " ".join(row[0].split()) if row else "", held))
 
         body = list(doc.numbered_body())
         for index, (number, line) in enumerate(body):
@@ -1523,14 +1745,16 @@ class Kept:
                 in_list = bool(lists)
             is_row = False
             if (at_start or block_is_table) and (TABLE_ROW.match(content) or (block_is_table and "|" in content)):
-                count_row(content)
+                count_row(content, number)
                 is_row = True
             elif block is not None and len(block.numbers) == 1 and "|" in content and TABLE_RULE.match(content):
                 # The row above this rule is a table's header, with no leading pipe.
                 header = QUOTE_MARK.sub("", prev_in_block, count=1)
                 if "|" in header:
-                    count_row(header)
+                    count_row(header, number - 1)
                     block_is_table = is_row = True
+            if is_item and ordered:
+                self.steps.append(" ".join(ITEM_TEXT.sub("", content, count=1).split()))
             if is_item and in_order:
                 line = ORDERED_MARK.sub(lambda found: found.group(1) + " " * len(found.group(2)) + found.group(3), line)
             # A hard line break joins two lines of one block, so it is the kind
@@ -1545,6 +1769,8 @@ class Kept:
                 block_is_list = block_is_list or is_item
             prev_in_block = line
             block.add(number, QUOTE_MARK.sub("", line, count=1).strip())
+            if (is_item or is_row) and len(block.numbers) > 1:
+                block.units.append(block.starts[-1])
             if HEADING.match(content):
                 flush()
         if fence:
@@ -1559,19 +1785,26 @@ class Kept:
     def _tokens(self, block: Block) -> None:
         text = block.text
         hidden = text
+        # Where each code span, link target and number stands, for the sentence that holds it.
+        marks: list[tuple[int, str]] = []
+        for found in LINK_TEXT.finditer(CODE_SPAN.sub(lambda span: MASK * len(span.group()), text)):
+            target, shown = text[found.start(2) : found.end(2)], text[found.start(1) : found.end(1)]
+            self.link_texts.append((" ".join(target.split()), " ".join(shown.split())))
 
-        def take(pattern: re.Pattern, into: list[tuple[str, int]], group: int = 1, whole: bool = False, exact: bool = False) -> None:
+        def take(pattern: re.Pattern, into: list[tuple[str, int]], group: int = 1, whole: bool = False, exact: bool = False, mark: str = "") -> None:
             """Record each match, read from the unmasked text, then mask it."""
             nonlocal hidden
             for found in pattern.finditer(hidden):
                 token = text[found.start(group) : found.end(group)]
                 into.append((token if exact else " ".join(token.split()), block.line_at(found.start())))
+                if mark:
+                    marks.append((found.start(), f"{mark} {' '.join(token.split())}"))
             for found in list(pattern.finditer(hidden)):
                 a, b = (found.start(), found.end()) if whole else (found.start(group), found.end(group))
                 hidden = hidden[:a] + MASK * (b - a) + hidden[b:]
 
         # Inside a code span every space counts. Block.add joins wrapped lines with one.
-        take(CODE_SPAN, self.codes, group=2, exact=True)
+        take(CODE_SPAN, self.codes, group=2, exact=True, mark="the code span")
         if "-->" in hidden:
             take(COMMENT, self.html, group=0, whole=True)
         take(HTML_CODE, self.codes, group=2, exact=True)
@@ -1584,7 +1817,7 @@ class Kept:
             hidden = hidden[:at] + MASK * len(target) + hidden[at + len(target) :]
         for found in IMAGE.finditer(hidden):
             self.images.append((" ".join(text[found.start(1) : found.end(1)].split()), block.line_at(found.start())))
-        take(INLINE_LINK, self.links)
+        take(INLINE_LINK, self.links, mark="the link target")
         take(REFERENCE, self.labels)
         take(FOOTNOTE, self.labels, group=0)
         take(AUTOLINK, self.links)
@@ -1607,7 +1840,11 @@ class Kept:
             quoted = " ".join(text[found.start(group) : found.end(group)].split())
             self.quotes.append((quoted, block.line_at(found.start())))
         for found in NUMBER.finditer(hidden):
-            self.numbers.append((number_token(found), block.line_at(found.start())))
+            token = number_token(found)
+            self.numbers.append((token, block.line_at(found.start())))
+            marks.append((found.start(), f"the number {token}"))
+            after = RAW_WORD.search(hidden.lower(), found.end())
+            self.claims[(token, after.group() if after and after.start() - found.end() <= 2 else "")] += 1
         for found in RFC_WORD.finditer(hidden):
             self.rfc.append((found.group(), block.line_at(found.start())))
         for found in NUMBER_WORD.finditer(hidden):
@@ -1620,17 +1857,30 @@ class Kept:
         self.strength["a negation"] += len(NEGATION.findall(hidden))
         self.strength["should"] += len(re.findall(r"\bshould\b", lowered))
         self.words += len(hidden.split())
-        for start, end in sentences(hidden):
-            part = hidden[start:end]
-            self.said.append(
-                Said(
-                    block.line_at(start),
-                    " ".join(text[start:end].split()),
-                    content_words(part),
-                    Counter(" ".join(found.group().lower().split()) for found in OPPOSITE_WORD.finditer(part)),
-                    len(NEGATIVE.findall(part)),
+        for word in RAW_WORD.findall(hidden.lower()):
+            if len(word) >= 4 and word not in COMMON_WORDS and word not in WORDS:
+                self.page_words.setdefault(root(word.replace("-", "")), word)
+        # A list item and a table row are each read apart, so that a change in
+        # one cannot hide behind the others.
+        edges = [0, *block.units, len(hidden)]
+        for unit, unit_end in zip(edges, edges[1:]):
+            for start, end in sentences(hidden[unit:unit_end]):
+                start, end = start + unit, end + unit
+                part = hidden[start:end]
+                lowered = part.lower()
+                self.said.append(
+                    Said(
+                        block.line_at(start),
+                        " ".join(text[start:end].split()),
+                        content_words(part),
+                        Counter(" ".join(found.group().lower().split()) for found in OPPOSITE_WORD.finditer(part)),
+                        len(NEGATIVE.findall(part)),
+                        RAW_WORD.findall(lowered),
+                        Counter(token for at, token in marks if start <= at < end),
+                        Counter(NUMBER_WORD.findall(lowered)),
+                        Counter(WEIGHT.findall(lowered)),
+                    )
                 )
-            )
 
 
 def times(count: int) -> str:
@@ -1641,8 +1891,121 @@ def counted_as(count: int, one: str, many: str) -> str:
     return f"{count} {one if count == 1 else many}"
 
 
+def some(items: list[str], limit: int = 12) -> str:
+    """Up to LIMIT items on one line, with the count of the rest."""
+    return ", ".join(items[:limit]) + (f", and {len(items) - limit} more" if len(items) > limit else "")
+
+
+def shown(text: object) -> str:
+    """Text for a terminal or a CI log: a character no reader sees, a line break among them, is written as its code point."""
+    return "".join(f"<U+{ord(char):04X}>" if unseen_char(char) or char in "\n\r" else char for char in str(text))
+
+
+def moved_in_table(a: Kept, b: Kept) -> list[tuple[int, str, str]]:
+    """Each row of a table that now holds what another row held.
+
+    A value moved from one row to another changes two claims and no count on
+    the page. Rows are matched by their first cell, so this reads a table
+    only where the first cells came through and each names one row.
+    """
+    names_a, names_b = Counter(name for _, name, _ in a.rows), Counter(name for _, name, _ in b.rows)
+    if names_a != names_b:
+        return []
+    earlier = {name: held for _, name, held in a.rows if names_a[name] == 1}
+    later = {name: held for _, name, held in b.rows if names_b[name] == 1}
+    findings = []
+    for line, name, held in b.rows:
+        if name not in earlier:
+            continue
+        lost, gained = earlier[name] - held, held - earlier[name]
+        if any(gained & (earlier[other] - later[other]) for other in earlier if other != name):
+            was = f"held {some(sorted(lost))}, and now holds" if lost else "now holds"
+            findings.append((line, "table", f'the row "{name[:40]}" {was} {some(sorted(gained))}, which another row held'))
+    return findings
+
+
+def reordered_steps(a: Kept, b: Kept, new: Doc) -> list[tuple[int, str, str]]:
+    """The items of a numbered list in a new order, which changes what a reader does first."""
+    if a.steps == b.steps or Counter(a.steps) != Counter(b.steps):
+        return []
+    moved = next(step for step, other in zip(b.steps, a.steps) if step != other)
+    line = next((number for number, text in new.numbered_body() if moved[:40] in text), 1)
+    return [(line, "list", f'the items of a numbered list stand in a new order, from "{moved[:70]}"')]
+
+
+def renamed_links(a: Kept, b: Kept, new: Doc):
+    """Each link whose words changed while its target stayed: findings and notes.
+
+    The words a reader sees for a link name its target. Two links that changed
+    their words with each other are a finding, as two targets swapped are. Any
+    other change of a link's words is a note.
+    """
+    findings, notes = [], []
+    read: list[dict[str, Counter]] = [{}, {}]
+    for texts, kept in zip(read, (a, b)):
+        for target, words in kept.link_texts:
+            texts.setdefault(target, Counter())[words] += 1
+    was, now = read
+    renamed = {
+        target: (was[target] - now[target], now[target] - was[target])
+        for target in was
+        if target in now and sum(was[target].values()) == sum(now[target].values()) and was[target] != now[target]
+    }
+    for target, (words_gone, words_new) in renamed.items():
+        line = next((number for number, text in new.numbered_body() if target in text), 1)
+        crossed = next((other for other in renamed if other != target and renamed[other][0] & words_new and renamed[other][1] & words_gone), None)
+        if crossed:
+            findings.append((line, "link", f'the links to "{target}" and "{crossed}" changed their words with each other'))
+        else:
+            notes.append((line, "link-text", f'the link to "{target}" read "{some(sorted(words_gone))}", and now reads "{some(sorted(words_new))}"; check that the words still name that page'))
+    return findings, notes
+
+
+def broken(old: Doc, new: Doc) -> list[tuple[int, str, str]]:
+    """A paragraph that now stops in the middle of a sentence, as one cut in two by accident does."""
+
+    def open_ended(doc: Doc) -> list[tuple[int, str]]:
+        return [(block.line_at(0), block.text) for block in prose_blocks(doc) if block.kind == "paragraph" and not WHOLE_END.search(mask(block.text).rstrip())]
+
+    before, after = open_ended(old), open_ended(new)
+    if len(after) <= len(before):
+        return []
+    earlier = {text for _, text in before}
+    line, text = next(((line, text) for line, text in after if text not in earlier), after[0])
+    return [(line, "broken", f'a paragraph ends in the middle of a sentence, and the earlier text had {len(before)} that did: "...{text[-60:]}"')]
+
+
+def page_words(a: Kept, b: Kept) -> str | None:
+    """The note on the words a rewording took from the page and brought to it, or None.
+
+    A sentence may go when the page states each of its facts elsewhere, and
+    then no word goes with it. So a word that is gone from the whole page is
+    where a cut may have taken a fact, and a new word is where one may have
+    come in. A plainer word for the same thing shows here too, and a reader
+    tells the two apart.
+    """
+    gone = [word for key, word in a.page_words.items() if key not in b.page_words]
+    came = [word for key, word in b.page_words.items() if key not in a.page_words]
+    if not gone and not came:
+        return None
+    return f"words gone from the page: {some(gone) or 'none'}; words new on the page: {some(came) or 'none'}; check that no fact went or came with them"
+
+
+def not_prose(old: Doc, new: Doc) -> list[tuple[int, str, str]]:
+    """The first line of a script that is not prose and differs: code, a directive, a command in a comment, or the name that opens a row."""
+    was, now = [text for _, text in old.apart], [text for _, text in new.apart]
+    if was == now:
+        return []
+    at = next((n for n, (x, y) in enumerate(zip(was, now)) if x != y), min(len(was), len(now)))
+    if at < len(now):
+        line, text = new.apart[at]
+        return [(line, "not-prose", f'this line is not prose, and it differs from the earlier text; a rewording of comments changes no code, command or name: "{text.strip()[:80]}"')]
+    line, text = old.apart[at]
+    return [(1, "not-prose", f'a line that is not prose is gone (line {line} of the earlier text): "{text.strip()[:80]}"')]
+
+
 def differences(rule: str, what: str, old: list[tuple[str, int]], new: list[tuple[str, int]]):
-    """Each token whose count changed, as (line, rule, message, how)."""
+    """Each token whose count changed, as (line, rule, message, how, token)."""
     before, after = Counter(token for token, _ in old), Counter(token for token, _ in new)
     old_line = {token: line for token, line in reversed(old)}
     new_line = {token: line for token, line in reversed(new)}
@@ -1651,12 +2014,12 @@ def differences(rule: str, what: str, old: list[tuple[str, int]], new: list[tupl
         if was == now:
             continue
         if now == 0:
-            yield old_line[token], rule, f'{what} "{token}" is gone (line {old_line[token]} of the earlier text)', "gone"
+            yield old_line[token], rule, f'{what} "{token}" is gone (line {old_line[token]} of the earlier text)', "gone", token
         elif was == 0:
-            yield new_line[token], rule, f'{what} "{token}" is new', "new"
+            yield new_line[token], rule, f'{what} "{token}" is new', "new", token
         else:
             how = "fewer" if now < was else "more"
-            yield new_line[token], rule, f'{what} "{token}" appears {times(now)}, and the earlier text had it {times(was)}', how
+            yield new_line[token], rule, f'{what} "{token}" appears {times(now)}, and the earlier text had it {times(was)}', how, token
 
 
 def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc, Doc] | None = None):
@@ -1664,6 +2027,10 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
 
     For a script, OLD and NEW are its prose, and RAW is the whole file twice,
     which the search for a character no reader sees reads, code included.
+
+    A finding is something a rewording never changes. A note is something a
+    rewording may change and a reader should look at, such as a link target,
+    a quotation or a number that a cut sentence held and the page still holds.
     """
     findings: list[tuple[int, str, str]] = []
     notes: list[tuple[int, str, str]] = []
@@ -1714,18 +2081,39 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
             findings.append((line, "fence", f"fenced block {index} differs from the earlier text"))
 
     for rule, what, list_a, list_b in (
-        ("link", "the link target", a.links, b.links),
         ("link", "the link label", a.labels, b.labels),
         ("image", "the image", a.images, b.images),
         ("fence", "the indented code block", a.indented, b.indented),
-        ("digits", "the number", a.numbers, b.numbers),
-        ("quote", "the quoted text", a.quotes, b.quotes),
         ("rfc2119", "the keyword", a.rfc, b.rfc),
         ("html", "the inline HTML tag or comment", a.html, b.html),
     ):
-        findings.extend((line, rule, words) for line, rule, words, _ in differences(rule, what, list_a, list_b))
-    for line, rule, words, how in differences("code", "the code span", a.codes, b.codes):
-        (findings if how == "gone" else notes).append((line, rule, words))
+        findings.extend((line, rule, words) for line, rule, words, _, _ in differences(rule, what, list_a, list_b))
+
+    # A sentence that repeats what the page already says may go (rule 10). So a
+    # link target or a quotation that the page still holds is a note. A number
+    # is a note only when each thing it counted still stands: cut `3 workers`
+    # from a page that also says `3 times`, and a fact is gone.
+    still = "; the page still holds it, so check that what was cut said nothing more"
+    for rule, what, list_a, list_b in (("link", "the link target", a.links, b.links), ("quote", "the quoted text", a.quotes, b.quotes)):
+        for line, rule, words, how, _ in differences(rule, what, list_a, list_b):
+            (notes if how == "fewer" else findings).append((line, rule, words + (still if how == "fewer" else "")))
+    for line, rule, words, how, token in differences("digits", "the number", a.numbers, b.numbers):
+        stands = how == "fewer" and all(b.claims[claim] for claim in a.claims if claim[0] == token)
+        (notes if stands else findings).append((line, rule, words + (still if stands else "")))
+
+    # A code span that is gone is a finding. One that came, or that appears
+    # more or less often, is a note, since a rewording may name a thing in
+    # code. One note lists each kind, so that a long page gives two lines.
+    fresh: list[tuple[int, str]] = []
+    recounted: list[tuple[int, str]] = []
+    for line, rule, words, how, token in differences("code", "the code span", a.codes, b.codes):
+        if how == "gone":
+            findings.append((line, rule, words))
+        else:
+            (fresh if how == "new" else recounted).append((line, f"`{token}`"))
+    for spans, what in ((fresh, "code spans new on the page"), (recounted, "code spans that appear more or less often than in the earlier text")):
+        if spans:
+            notes.append((spans[0][0], "code", f"{what}: {some([span for _, span in spans])}"))
 
     if a.related != b.related:
         findings.append((b.related_at, "related", "the lokf:related region differs from the earlier text"))
@@ -1749,17 +2137,31 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
         words = f'a heading differs from the earlier text: "{after}" was "{before}"'
         (findings if concept else notes).append((line, "heading", words + ("" if concept else "; links may point at it")))
 
-    for line, rule, words, _ in differences("number-word", "the number word", a.number_words, b.number_words):
+    findings.extend(moved_in_table(a, b))
+    findings.extend(reordered_steps(a, b, new))
+    findings.extend(broken(old, new))
+    renamed, reworded = renamed_links(a, b, new)
+    findings.extend(renamed)
+    notes.extend(reworded)
+
+    for line, rule, words, _, _ in differences("number-word", "the number word", a.number_words, b.number_words):
         notes.append((line, rule, words + "; digits cannot show whether a count changed"))
-    flips, doubts = turned(a, b)
+    flips, doubts, placed = turned(a, b)
     findings.extend(flips)
     notes.extend(doubts)
-    for line, rule, words, _ in differences("date-word", "the day or month", a.date_words, b.date_words):
+    for line, rule, words, _, _ in differences("date-word", "the day or month", a.date_words, b.date_words):
         notes.append((line, rule, words + "; digits cannot show whether a date changed"))
+    # A word of strength is noted on the page only for what no sentence above
+    # accounts for, since a note with a line is the one a reader can act on.
     for word in (*STRENGTH, "a negation"):
-        if a.strength[word] != b.strength[word]:
+        change = b.strength[word] - a.strength[word]
+        if change and change != placed[word]:
             name = word if word == "a negation" else f'"{word}"'
-            notes.append((1, "strength", f"{name} appears {times(b.strength[word])}, and the earlier text had it {times(a.strength[word])}"))
+            beyond = ", beyond the sentences noted" if placed[word] else ""
+            notes.append((1, "strength", f"{name} appears {times(b.strength[word])}, and the earlier text had it {times(a.strength[word])}{beyond}"))
+    lost_or_gained = page_words(a, b)
+    if lost_or_gained:
+        notes.append((1, "page-words", lost_or_gained))
     # A fifth either way, as SKILL.md says: more than a fifth more words, or
     # fewer than four fifths of them. The earlier 8% growth floor, and the
     # 40-word floor that hid a third cut of a short text, are gone.
@@ -1855,9 +2257,9 @@ def check_style(
 def check_pair(label: Path, old_text: str, new_text: str, in_bundle: bool):
     """Compare two versions of one file, with the bundle's reserved files set apart. The third value is the words before and after, which a reserved file does not count towards.
 
-    A script is compared as its comments and docstrings, so a change to its
-    code is no finding here; the search for a character no reader sees still
-    reads every line.
+    A script is compared as its comments and docstrings. Every other line
+    must stay as it was, since a rewording of comments changes no code. The
+    search for a character no reader sees reads every line.
     """
     if in_bundle and label.name == "log.md":
         # A line of the earlier log must still be there, and in its order.
@@ -1869,9 +2271,9 @@ def check_pair(label: Path, old_text: str, new_text: str, in_bundle: bool):
     old, new = Doc(old_text), Doc(new_text)
     if is_script(label):
         python = label.suffix.lower() == ".py"
-        found, noted, words = compare(
-            label, script_doc(old_text, python), script_doc(new_text, python), expect_concept=False, raw=(old, new)
-        )
+        old_prose, new_prose = script_doc(old_text, python), script_doc(new_text, python)
+        found, noted, words = compare(label, old_prose, new_prose, expect_concept=False, raw=(old, new))
+        found.extend(not_prose(old_prose, new_prose))
         return [(label, *f) for f in found], [(label, *n) for n in noted], words
     if in_bundle and label.name in RESERVED:
         if old.lines != new.lines:
@@ -2154,7 +2556,7 @@ def list_bundle(directory: Path) -> int:
         else:
             rule, words = standing(Doc(read(path)), expect_concept=True)
         tally[rule] += 1
-        print(f"{path}: {words if rule == 'rewrite' else 'skip: ' + words}")
+        print(f"{shown(path)}: {words if rule == 'rewrite' else 'skip: ' + words}")
     left = ", ".join(
         f"{tally[rule]} {name}"
         for rule, name in (
@@ -2222,9 +2624,9 @@ def main(argv: list[str]) -> int:
         return 2
 
     for path, line, rule, words in notes:
-        print(f"note: {path}:{line}: {rule}: {words}", file=sys.stderr)
+        print(f"note: {shown(path)}:{line}: {rule}: {shown(words)}", file=sys.stderr)
     for path, line, rule, words in findings:
-        print(f"{path}:{line}: {rule}: {words}")
+        print(f"{shown(path)}:{line}: {rule}: {shown(words)}")
     if findings:
         return 1
     print(f"OK: {fine}")

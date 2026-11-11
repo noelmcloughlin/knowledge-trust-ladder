@@ -31,6 +31,17 @@ updates:
     commit-message:
       prefix: "chore(actions)"
 
+  # The release tools semantic-release.yml installs with npm ci.
+  - package-ecosystem: "npm"
+    directory: "/.github/release"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(release-tools)"
+    groups:
+      release-tools:
+        patterns: ["*"]
+
   # The website's build dependencies (website/package.json). One weekly pull
   # request for all of them, so a Starlight or Astro release arrives with
   # what it needs; the website workflow builds it and checks every link.

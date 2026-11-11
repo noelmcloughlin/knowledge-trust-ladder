@@ -4,6 +4,35 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **A domain host builds members from private and internal GitHub repositories.** The build and the members script ask a release's address first, and when it does not give the file a person confirmed, `gh` fetches it from the GitHub API with the host's credential: the secret `KNOWLEDGE_FEDERATE_TOKEN` in a workflow, `gh auth login` by hand. A public member never meets the credential.
+- **`KNOWLEDGE_RUNNER` names the runner every job runs on**, `ubuntu-latest` unless set, so a host with self-hosted runners needs no edit a sync would undo. automation.md's Customising section lists what a locked-down organisation sets.
+- **A host can install the skills from its organisation's private copy.** A sync keeps the host's `TRUST_LADDER_SKILLS_REPO`, and the secret `KNOWLEDGE_SKILLS_TOKEN` reads that copy.
+- **The website and federation workflows warn when a private repository's Pages site is public.**
+- **`KNOWLEDGE_ATTEST_PRIVATE` attests a private repository's release.** The release and federation workflows skipped the attestation there, and a domain's build refuses a member without one. It needs GitHub Enterprise Cloud.
+- **ktl-prose lists every sentence it would cut, and the person answers once.** Its report quoted five sentences at most. The check now lets a sentence go that repeats a link, a number or a quotation the page still holds, and notes the words a page lost or gained.
+- **ktl-prose reads a concept's `genre`**, and names a page that left it for ktl-librarian. `references/rules.md` gives the order to read a sentence in, and names the dropped "that", "alone" for "only" and the comment with no verb.
+
+### Changed
+
+- **ktl-prose's check stops more of what turns a claim over.** It reads a list item and a table row as a sentence each. It stops `confirmed` to `unconfirmed`, one count in words for another, two things that changed places, and a number, link or code span swapped between two sentences or rows. `references/limits.md` lists every finding and note.
+- **A pass over a script's comments may change no other line.** `--against` and `--before` report the first line of code, command in a comment or name of a row that differs, as `not-prose`.
+- **ktl-prose's notes give the line** of a word of strength that came or went, and one note lists the new code spans where each had its own.
+- **The sources of ktl-prose's rules are in `references/sources.md`**, with what the sources say about line breaks. `references/rules.md` keeps the rules.
+
+### Fixed
+
+- **ktl-prose's check missed a reversed sentence when an earlier sentence shared as many of its words.** It now takes the sentence that shares the largest part.
+- **ktl-prose's check prints a control character as its code point**, so no file can write to a terminal or a CI log through a finding or a file name.
+
+- **A sign-in or proxy page in a zip's place is no longer reported as a wrong checksum.** The finding names the media type and the address that answered, and a refused request says so.
+- **`members --add` reads a private repository's release list.** The API answers 404 for one, and the script asked `gh` only when rate limited.
+- **A workflow that cannot read GitHub says what `gh` or git said.** The release, sync, ingest and federation workflows reported any failure as a missing release, a private repository or an unknown visibility.
+- **The federation build deploys no site without its workspace when the release list cannot be read**, installs `just` for a site that builds with it, and turns Astro's telemetry off, as the website workflow does.
+- **semantic-release installs from a lockfile.** `.github/release/package-lock.json` pins every package the release tools need, so a company registry can be given the exact list, and Dependabot bumps them.
+- **The ingest installs the packages `uv.lock` pins, checked by hash**, in the job that holds its secrets. The registrar says when `gh` is missing, and the release when python3 is older than 3.9.
+
 ## [0.62.0] - 2026-11-06
 
 ### Changed

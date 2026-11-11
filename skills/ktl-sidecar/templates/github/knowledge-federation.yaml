@@ -94,7 +94,7 @@ jobs:
   check:
     name: Verify the members and gate the links a pull request proposes (read-only)
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -147,21 +147,41 @@ jobs:
             echo "::warning::Could not take the workspace of $tag, so a member whose release cannot be fetched fails the check."
           fi
 
-      # The token is read-only: gh reads the attestation store, and the
-      # repository's visibility, which decides whether an internal member
-      # may join. The zips come from the public release URLs the member
-      # concepts name. The release page lets the build check the previous
-      # workspace's attestation before it holds a member from it, as the
-      # release build does.
+      # The repository's visibility decides whether an internal member may
+      # join. The job's own token reads it, since a token stored for the
+      # members need not read this repository.
+      - name: Read this repository's visibility
+        id: visibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>"$RUNNER_TEMP/visibility.err")"; then
+            echo "::warning::The repository's visibility could not be read ($(tr '\n' ' ' < "$RUNNER_TEMP/visibility.err" | cut -c1-200)), so it counts as public and no internal member joins."
+            visibility=unknown
+          fi
+          echo "visibility=$visibility" >> "$GITHUB_OUTPUT"
+
+      # The token is read-only. The zips come from the release addresses the
+      # member concepts name, asked with no credential. gh reads the
+      # attestation store with the token, and fetches the release of a
+      # member in a private or internal repository, which answers nothing
+      # without one. The job's own token reads this repository alone, so
+      # such a member needs the repository secret KNOWLEDGE_FEDERATE_TOKEN:
+      # a token that reads the member repositories' contents and
+      # attestations, and nothing else, because a pull request's check runs
+      # the pull request's own copy of the script. Without it the check
+      # fails on that member and says so. The release page lets the build
+      # check the previous workspace's attestation before it holds a member
+      # from it, as the release build does.
       - name: Fetch and verify every member's zip, and gate as the next release would
         env:
           # Under the name the script takes it by and removes from its own
           # environment, so it reaches gh alone, never lokf or git.
-          KNOWLEDGE_FEDERATE_TOKEN: ${{ github.token }}
+          KNOWLEDGE_FEDERATE_TOKEN: ${{ secrets.KNOWLEDGE_FEDERATE_TOKEN || github.token }}
           PREVIOUS: ${{ steps.previous.outputs.zip }}
+          VISIBILITY: ${{ steps.visibility.outputs.visibility }}
         run: |
-          visibility="$(GH_TOKEN="$KNOWLEDGE_FEDERATE_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
-          uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "$visibility" \
+          uv run --project .lokf .lokf/scripts/knowledge-federate.py build --verify-only --visibility "${VISIBILITY:-unknown}" \
             --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" ${PREVIOUS:+--previous "$PREVIOUS"}
 
   build:
@@ -171,8 +191,16 @@ jobs:
       || (vars.KNOWLEDGE_FEDERATION_ENABLED == 'true'
           && (github.event_name == 'release'
               || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch))))
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 60
+    # KNOWLEDGE_FEDERATE_TOKEN, when members are in private or internal
+    # repositories, belongs in this Environment. A release build runs on
+    # the release's tag, so the Environment's rule names the release tags
+    # beside the default branch, and a tag ruleset says who may create
+    # them. It records no deployment.
+    environment:
+      name: knowledge-federation
+      deployment: false
     permissions:
       contents: read
     outputs:
@@ -231,11 +259,30 @@ jobs:
           cache: npm
           cache-dependency-path: website/package-lock.json
 
+      # As the website workflow does: a schema or a data folder the site
+      # shows is built with just, which the runner image lacks. The copy
+      # .lokf/uv.lock pins is linked alone, else the same version is
+      # installed by name.
+      - name: Install just, when the site builds a folder with it
+        if: hashFiles('website/package-lock.json') != ''
+        run: |
+          if node website/scripts/config.mjs | grep -q '"build": "just '; then
+            if grep -qx 'name = "rust-just"' .lokf/uv.lock; then
+              mkdir -p "$HOME/.local/bin"
+              ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
+            else
+              uv tool install rust-just==1.47.0
+            fi
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          fi
+
       # The same two commands the website workflow runs; this workflow
       # deploys in its place on a domain host.
       - name: Build the site, when the host has one
         if: hashFiles('website/package-lock.json') != ''
         working-directory: website
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
         run: |
           npm ci --ignore-scripts
           npm run build
@@ -273,23 +320,39 @@ jobs:
             echo "::warning::Could not take the workspace of $prev, so its notes say nothing of the workspace and no member is held at its last good state."
           fi
 
-      # The token is read-only: gh reads the attestation store, and the
-      # repository's visibility. Everything the build downloads is a
-      # file a member concept names, checked against the checksum a person
-      # confirmed, or a zip that a member domain's released lock names,
-      # checked against the checksum in that lock. The build checks the
-      # previous workspace's attestation before it holds a member from it.
+      # The job's own token reads the repository's visibility, since a token
+      # stored for the members need not read this repository.
+      - name: Read this repository's visibility
+        id: visibility
+        if: steps.what.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>"$RUNNER_TEMP/visibility.err")"; then
+            echo "::warning::The repository's visibility could not be read ($(tr '\n' ' ' < "$RUNNER_TEMP/visibility.err" | cut -c1-200)), so it counts as public and no internal member joins."
+            visibility=unknown
+          fi
+          echo "visibility=$visibility" >> "$GITHUB_OUTPUT"
+
+      # The token is read-only: gh reads the attestation store, and fetches
+      # the release of a member in a private or internal repository, which
+      # the job's own token cannot read. Everything the build downloads is
+      # a file a member concept names, checked against the checksum a
+      # person confirmed, or a zip that a member domain's released lock
+      # names, checked against the checksum in that lock. The build checks
+      # the previous workspace's attestation before it holds a member from
+      # it.
       - name: Build the workspace from the tag
         if: steps.what.outputs.release == 'true'
         env:
           # Under the name the script takes it by and removes from its own
           # environment, so it reaches gh alone, never lokf or git.
-          KNOWLEDGE_FEDERATE_TOKEN: ${{ github.token }}
+          KNOWLEDGE_FEDERATE_TOKEN: ${{ secrets.KNOWLEDGE_FEDERATE_TOKEN || github.token }}
           PREVIOUS: ${{ steps.previous.outputs.zip }}
+          VISIBILITY: ${{ steps.visibility.outputs.visibility }}
         run: |
-          visibility="$(GH_TOKEN="$KNOWLEDGE_FEDERATE_TOKEN" gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
           uv run --project .lokf .lokf/scripts/knowledge-federate.py build \
-            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "$visibility" \
+            --tag "$TAG" --release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag" --visibility "${VISIBILITY:-unknown}" \
             ${PREVIOUS:+--previous "$PREVIOUS"}
 
       # The same bundle of files always gives the same bytes: names sorted,
@@ -337,8 +400,12 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          tag="$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
-            --jq '.[] | select(.draft | not) | select(any(.assets[]; .name | startswith("workspace-") and endswith(".zip"))) | .tag_name' | sed -n 1p || true)"
+          # Listed first and picked after, so a refused list stops the step
+          # instead of reading as no workspace at all.
+          tags="$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | select(.draft | not) | select(any(.assets[]; .name | startswith("workspace-") and endswith(".zip"))) | .tag_name')" \
+            || { echo "::error::The releases could not be listed, so the site would lose its workspace; nothing is deployed."; exit 1; }
+          tag="$(printf '%s\n' "$tags" | sed -n 1p)"
           if [ -z "$tag" ]; then
             echo "::notice::No release carries a workspace yet, so the site is deployed without one."
             exit 0
@@ -385,7 +452,7 @@ jobs:
   publish:
     name: Attach the workspace to the release and deploy the site (privileged)
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     permissions:
       contents: write # upload release assets
@@ -417,8 +484,10 @@ jobs:
 
       # A signed record of which workflow run, commit and repository built the
       # zip; anyone checks it with `gh attestation verify <file> -R <owner>/<repo>`.
+      # A private repository needs GitHub Enterprise Cloud for it, so the step
+      # skips itself there unless KNOWLEDGE_ATTEST_PRIVATE is "true".
       - name: Attest build provenance
-        if: needs.build.outputs.release == 'true' && !github.event.repository.private
+        if: needs.build.outputs.release == 'true' && (!github.event.repository.private || vars.KNOWLEDGE_ATTEST_PRIVATE == 'true')
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: ${{ runner.temp }}/release/*.zip
@@ -455,13 +524,25 @@ jobs:
           gh release edit "$TAG" --notes-file body.md
         working-directory: ${{ runner.temp }}/release
 
+      # GitHub Pages can serve a private repository's site to anyone, and
+      # does on every plan but Enterprise Cloud, which can make it private.
+      - name: Say when a private repository's site is public
+        if: github.event.repository.private
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [ "$(gh api "repos/$GH_REPO/pages" --jq .public 2>/dev/null)" != false ]; then
+            echo "::warning::This repository is private, and its Pages site is public or of unknown visibility, so anyone may read what the site shows. On GitHub Enterprise Cloud, set the site's visibility to private under Settings, Pages."
+          fi
+
       - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         id: deployment
 
   nudge:
     name: Dispatch the librarian, whose schedule finds this bundle quiet
     if: github.event_name == 'schedule' && vars.KNOWLEDGE_FEDERATION_ENABLED == 'true' && vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     permissions:
       actions: write # start knowledge-librarian.yaml

@@ -33,7 +33,7 @@ concurrency:
 jobs:
   earlier:
     name: Read what became of the earlier pull requests (read-only, no agent)
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
       pull-requests: read # list this workflow's pull requests and their files
@@ -135,7 +135,7 @@ jobs:
     # for review. The default branch is where it was, so the agent would
     # propose that change again. A run a person starts goes ahead.
     if: github.event_name != 'schedule' || needs.earlier.outputs.open == ''
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     # The agent sets no time limit of its own, so this stops a run that hangs.
     timeout-minutes: 60
     # AGENT_API_KEY and AGENT_CLI, when it is a secret, belong in this
@@ -189,7 +189,10 @@ jobs:
 
       # Install ktl-librarian fresh on every run, pinned to one release: it is
       # runtime state, not source, so the checkout does not carry it. A plain
-      # clone of the public tag needs no token.
+      # clone of the public tag needs no token. A host that installs from a
+      # private copy of the skills repository names it in
+      # TRUST_LADDER_SKILLS_REPO, which a sync keeps, and stores a read-only
+      # token for it as the secret KNOWLEDGE_SKILLS_TOKEN.
       #
       # Hide the install from git, so that neither "Enforce the agent's write
       # scope" nor "Detect changes" sees it. Use .git/info/exclude when the
@@ -215,10 +218,23 @@ jobs:
           TRUST_LADDER_SKILLS_REPO: https://github.com/noelmcloughlin/knowledge-trust-ladder
           TRUST_LADDER_SKILLS_REF: v0.61.0 # the one pin; point your docs here instead of repeating it
           TRUST_LADDER_SKILLS_SHA: 86403e6d5d927da9edfb3ab54921297103dcd0c2 # the commit that tag names
+          KNOWLEDGE_SKILLS_TOKEN: ${{ secrets.KNOWLEDGE_SKILLS_TOKEN }}
         run: |
           set -euo pipefail
+          # git with the read token of a private skills repository, when one is
+          # given, sent as a header to that repository's address alone.
+          skills_git() {
+            local repo="$1"; shift
+            if [ -n "${KNOWLEDGE_SKILLS_TOKEN:-}" ]; then
+              local n="${GIT_CONFIG_COUNT:-0}" auth
+              auth="$(printf 'x-access-token:%s' "$KNOWLEDGE_SKILLS_TOKEN" | base64 | tr -d '\n')"
+              env GIT_CONFIG_COUNT="$((n + 1))" "GIT_CONFIG_KEY_$n=http.${repo%/}.extraheader" "GIT_CONFIG_VALUE_$n=AUTHORIZATION: basic $auth" git "$@"
+            else
+              git "$@"
+            fi
+          }
           tmp="$(mktemp -d)"
-          git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$TRUST_LADDER_SKILLS_REF" "$TRUST_LADDER_SKILLS_REPO" "$tmp"
+          skills_git "$TRUST_LADDER_SKILLS_REPO" -c advice.detachedHead=false clone --quiet --depth 1 --branch "$TRUST_LADDER_SKILLS_REF" "$TRUST_LADDER_SKILLS_REPO" "$tmp"
           got="$(git -C "$tmp" rev-parse HEAD)"
           if [ "$got" != "$TRUST_LADDER_SKILLS_SHA" ]; then
             echo "::error::$TRUST_LADDER_SKILLS_REF names commit $got, and this workflow pins $TRUST_LADDER_SKILLS_SHA. Either the tag moved or one pin was edited without the other, so nothing was installed."
@@ -451,7 +467,7 @@ jobs:
     name: Open the review PR (privileged, no agent)
     needs: [earlier, refresh]
     if: needs.refresh.outputs.changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
       contents: write # create/push the librarian branch

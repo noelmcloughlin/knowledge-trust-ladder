@@ -1,8 +1,20 @@
 # The rules: plain English for a knowledge bundle
 
-This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from, and from a fourth over three sibling bundles. A script checks parts of four of the rules, and a reader checks the rest. A last section, apart from the thirteen, says where a line ends in the source.
+This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from, and from a fourth over three sibling bundles. A script checks parts of four of the rules, and a reader checks the rest, in the order *Reading a sentence* gives. Two sections apart from the thirteen say what a concept's genre asks, and where a line ends in the source. [sources.md](sources.md) names the books and pages the rules come from.
 
 One rule stands above the thirteen: a rewording changes the wording and never a fact. When a rule and a fact pull apart, the fact wins and the sentence stays as it was.
+
+## Reading a sentence
+
+No script reads for rules 1, 2, 8 and 10, and a reader who looks for every fault at once finds few. Ask these questions of each sentence, in this order. The first asks whether the sentence should be there, so that you reword none that goes.
+
+1. **Does the page need it?** A sentence that the page already says, or one that says nothing, is a sentence to cut (rule 10).
+2. **Has it a verb, and does it say who acts?** A fragment needs its verb (rule 2), and the actor comes first (rule 1).
+3. **How many words come before the verb?** Past about eight, restructure (rule 1).
+4. **Is each thing called what the page calls it?** That includes "it", "this" and "here" (rule 8).
+5. **Does each word carry something?** Cut the words that do not (rule 10), and write the plain word for the rest (rule 9).
+
+Then read the paragraph: it holds one topic (rule 3), and each step comes before its reason (rule 4). After you reword, ask the same questions of what you wrote.
 
 ## 1. Put the actor first and the verb early
 
@@ -15,6 +27,18 @@ After:  [docs/repository-layout.md](docs/repository-layout.md) shows the whole t
 
 No script finds a late verb, so here is a method. Find the main verb, count the words before it, and restructure when there are more than about eight. An opening that dangles is the same fault: "Running on a schedule, the bundle is refreshed" says that the bundle runs.
 
+A long aside between a subject and its verb delays the verb as a long opening does. Move the aside to the end, after a colon.
+
+```text
+Before: Two things KTL already did, the paper's results support.
+After:  The paper's results support two things KTL already did.
+
+Before: Screenshots of each door - the API starting, the web UI and its record viewer, curate mode, the CLI, a crosswalk, and the graph in Neo4j - are in [byo/images/](byo/images/).
+After:  Screenshots of each door are in [byo/images/](byo/images/): the API starting, the web UI and its record viewer, curate mode, the CLI, a crosswalk, and the graph in Neo4j.
+```
+
+Both pairs come from passes over this repository's docs and a sibling's README.
+
 It gives way to a passive when the actor does not matter or is not known, as in "the key was revoked".
 
 ## 2. Give every sentence a verb, and start an instruction with it
@@ -25,6 +49,15 @@ A fragment leaves the reader to supply the verb, and an agent supplies the wrong
 Before: One **Curation** line with the counts, plus one **Deprecation** line per retired concept, prepended to `.lokf/knowledge/log.md` under today's date.
 After:  Prepend one **Curation** line with the counts, plus one **Deprecation** line per retired concept, to `.lokf/knowledge/log.md` under today's date.
 ```
+
+A comment in a script is where a fragment most often stands, since a comment starts as a label. A label of a few words may stay one. A comment that explains needs its subject and its verb, and Microsoft's guidance for a worldwide audience gives one more reason: "Sentence fragments can be hard to translate."
+
+```text
+Before: # The packages the lock pins, checked by hash, so the script runs in the job that holds the secrets.
+After:  # Install the packages that the lock pins, and check each by hash. The script then runs in the job that holds the secrets.
+```
+
+That pair was made for this page.
 
 Spell out `do not` in an instruction. The second pass cut contractions from 49 to 9, and kept the rest in prose written for people.
 
@@ -173,6 +206,15 @@ The third pass replaced the figures below. The script reports the words of the f
 | "door", "through one door" | the way in, by its name, or "in one way only" |
 | "where it lies", "where it stands", "untouched where it lies" | "in place", "in the same file", or name the folder; for a thing neither moved nor changed, say both |
 
+Keep the small words that show how a sentence is built. English lets a writer drop "that" from "the copy that the lock pins". A reader whose first language is not English then has to find the clause without its mark, and so does a translation tool. Microsoft's guidance says "Include that and who. They help to clarify the sentence structure." Write "only" for "alone" where the word limits a claim, and put it next to what it limits: the same guidance says "Pay particular attention to the placement of only".
+
+```text
+Before: The copy `uv.lock` pins is linked, so a host needs no edit a sync would undo. The job's token reads this repository alone.
+After:  The copy that `uv.lock` pins is linked, so a host needs no edit that a sync would undo. The job's token reads only this repository.
+```
+
+That pair was made for this page. No script lists "alone", since a file "left alone" is a literal use.
+
 The quiet figures are the ones a writer does not see. A rule "goes to" a half, a key "comes first", a script "hands" a file to another. Each makes the program a place and its parts things that travel, and asks the reader to turn the journey back into the action. Rule 1 is the test and the repair: name the actor and the literal verb, as in "the Python half checks rule 4" and "the .venv is tried first". Most of these are phrasal verbs, which Thrush's study found a non-native reader can misread, and Microsoft's guidance for a worldwide audience asks writers to avoid such idioms. The script lists none of them: "go", "come" and "hand" are literal too often.
 
 It gives way to an abbreviation that is the thing's own name: CI, YAML, IRI. A term the page has defined needs no second definition. A figure gives way to a name the project defines, such as *the pen* or *the doorway*, once its page has defined it. It gives way to a word of the analogy the project names its roles by, such as the librarian's *desk*, once the project's glossary defines it. It gives way too to a term of art the reader's own field uses in that exact sense, such as pinning a version.
@@ -201,12 +243,27 @@ A later reading added two words to the list. "Outright" is an intensifier, and P
 
 That pass also measured what a rewording does to length. It cleared 305 of the script's 312 findings, and the text went from 15,526 words to 15,688. A fragment given its verb, and "pull request" written for "PR", cost more words than the cuts saved. The 7 findings left sit under `## Open questions`, which a rewording never touches.
 
-A sentence can carry nothing too. One kind repeats what the page already says. An install page that follows its commands with "The commands above install for your user." has said so in the commands, and a README that names a doorway once and then narrates it ("open the link itself, never the host root") has told the reader twice. Another kind gives a reason the reader can supply. Cut a sentence only when every fact in it is stated elsewhere on the same page, in words you can point at. When a fact is merely something the reader could work out, keep the sentence and report it under rule 13, since whether a newcomer could work it out is the author's call. The opening sentence of a page is never the one cut (rule 12), and in the bundle a body that repeats its `description` is doing what rule 12 asks.
+A sentence can carry nothing too. Five kinds recur:
+
+| The sentence | As in | What to do |
+| --- | --- | --- |
+| It repeats what the page already says | "The commands above install for your user.", under the commands | Cut it |
+| It narrates a pointer the page has given | "Open the link itself, never the host root." | Cut it |
+| It announces the sentence after it | "The reverse trap is the common one." | Join the two |
+| It says where a fact is not written, or defends its section | "No single specification backs this schema." | Cut it, or state the fact |
+| It gives a reason the reader can supply | "because the link is what points at the bundle" | Cut it |
 
 ```text
 Before: Open the `knowledge_bundle` link as a vault. Open the link itself, never the host root, because the link is what points at the bundle.
 After:  Open the `knowledge_bundle` link as a vault.
+
+Before: The reverse trap is the common one. A squash merge leaves the pin naming a commit that the branch never held.
+After:  The reverse trap is a squash merge, which leaves the pin naming a commit that the branch never held.
 ```
+
+The second pair was made for this page, after a sentence a person joined in a sibling repository.
+
+The person decides each cut, and decides them all at once. List every such sentence in the report, quoted in full, with the line that already says it or the words "the reader can work it out" (SKILL.md, Step 1). Then cut the ones the person agreed to. Whether a newcomer could work a fact out is the author's call, and the list puts that call to them before the pass. The script's `page-words` note then names each word a cut took from the page. The opening sentence of a page is never the one cut (rule 12), and in the bundle a body that repeats its `description` is doing what rule 12 asks.
 
 A pass that cuts sentences still adds words elsewhere, as the fourth pass's figures show, so a shorter page is not the aim. A page that says each thing once is.
 
@@ -251,6 +308,21 @@ Two more cases go in the report, because only the author can settle them. One is
 
 Plain wording is no proof of a true claim. Paul Graham argues that writing which sounds good is more likely to be right, because the writer who repairs a clumsy sentence often has to repair the idea in it. He limits that to writing used to develop ideas. A copy editor who smooths another's sentence gets the sound without the repair.
 
+## What the genre asks
+
+A concept's `genre` says what its page is for: `tutorial`, `how-to`, `reference` or `explanation`. ktl-librarian sets it, and a page has one. The thirteen rules hold for each genre, and the genre says which of them the page leans on:
+
+| Genre | The page | What that asks of the wording |
+| --- | --- | --- |
+| `how-to` | takes a reader through a task | Steps in a numbered list, each starting with its verb (rules 2 and 7). A reason comes after its step and stays short (rule 4). |
+| `tutorial` | teaches a newcomer by doing | Steps as in a how-to. |
+| `reference` | states what a thing is | Statements, in the same form from one entry to the next (rule 8). It names no reader (rule 12). |
+| `explanation` | says why | Connected reasoning, which a list would cut apart (rule 7's exception). |
+
+Diátaxis, where the four come from, makes a how-to guide "a sequence" with "no digression, explanation, teaching", and says of reference: "It should be austere."
+
+A page that has left its genre is not a matter of wording. A how-to that explains at length is one, and so is a reference that instructs. Reword what is there, change no page's shape, and name the page in the report for ktl-librarian, whose rule is to split a concept that drifts. Outside the bundle a page has no `genre`, and its title and its place in the docs say what it is for.
+
 ## Line breaks in the source
 
 This section is about layout, not wording, so it stands apart from the thirteen rules. It says where a line ends in the source of a text you reword. Keep the layout the file's project uses. In the bundle, that is one line for each paragraph and each list item.
@@ -262,20 +334,7 @@ Before: The pen is the librarian's only way to write the bundle, and the bundle
 After:  The pen is the librarian's only way to write the bundle, and the bundle has other writers: a person writes the curator's verdicts through ktl-curator or the KTL Curator plugin.
 ```
 
-No Markdown specification asks for a wrapped line. CommonMark reads a line ending inside a paragraph as a soft line break, which a browser shows as a space, so a standard renderer draws every layout alike. The choice concerns only the source, and three layouts are in wide use:
-
-- **One line per paragraph.** The editor wraps each line on screen. The Plone documentation guide asks for it.
-- **One sentence per line.** A line ends where a sentence ends. Brian Kernighan advised it in 1974, Semantic Line Breaks specifies it, Asciidoctor recommends it, and GitLab asks for each new sentence on a new line.
-- **A fixed column.** Lines break near a set width. Google's Markdown style guide sets 80 characters, and Microsoft's PowerShell documentation sets 100.
-
-Each layout has a benefit and a cost:
-
-- **A line break gives line-based tools a finer grain.** A diff, `git blame`, a review comment, a suggested change and a merge each work line by line, so they reach one sentence only when it has a line of its own. Google keeps its column partly because "Code Search doesn't soft wrap". Microsoft keeps its column because it "improves the readability of git diffs and history".
-- **A fixed column reflows.** Reword one sentence and every later line of the paragraph moves, so the diff marks lines whose words did not change. Kernighan, Semantic Line Breaks and Asciidoctor each give this as the reason to break at sentences instead.
-- **One sentence per line keeps line-level review without reflow.** A changed sentence is a changed line, and a long sentence shows as a long line.
-- **One line per paragraph is the cheapest to write, and it reads the same wherever a line break shows.** GitHub shows a single line break as a break in issues, pull requests and discussions, and Obsidian's Live Preview shows each source line as a line. No phrase spans two lines, so `grep`, the pen's `replace` and an agent's exact edit find it. No wrapped line can start a list, a heading or a block quote by accident (rule 5). Its cost is the coarse diff: one changed word marks the whole paragraph. GitHub's rendered prose diff and `git diff --word-diff` mark the changed words.
-
-The sources agree on no single layout. They agree that a project picks one and keeps every file to it, and that a tool keeps the project's choice: Prettier leaves a file's wrapping as it is unless told otherwise. So:
+A standard renderer draws every layout alike, so the choice concerns only the source. Projects use one of three: one line per paragraph, one sentence per line, or a fixed column. [sources.md](sources.md#line-breaks-what-the-sources-say) gives the case for each. The sources agree that a project picks one and keeps every file to it. So:
 
 - **In the bundle**, use ktl-librarian's layout: one line for each paragraph and each list item. ktl-librarian writes it in every bundle, and the repository these skills are published from turns off markdownlint's line-length rule, MD013, for its own pages too. In a concept you reword, give the whole body this layout, so no concept is left in two. Leave the `## Open questions` section, the region between the `<!-- lokf:related -->` markers and every fenced block as they are.
 - **Outside the bundle**, use the host's layout. Its tooling may set one: a markdownlint configuration that leaves MD013 on (as markdownlint does by default, at 80 columns), Prettier's `proseWrap`, or an `.editorconfig` `max_line_length` for Markdown. Otherwise the file shows it. Lay out each paragraph you reword to match, and leave the others as they are.
@@ -289,86 +348,3 @@ It gives way in a table, frontmatter and a heading, which keep their own lines, 
 - **Rules 4, 5 and 6 are house rules, stricter than the books.** The conventions the gate checks are stricter than OKF in the same way. The reason is the same: an agent told a rule in prose breaks it, and a strict rule is one a script can check.
 - **A script sees part of four rules.** `scripts/prose-check.py` reports `long`, `paragraph` and `sentences` for rule 3, `dash` for rule 5, and `words` for rules 9 and 10. Each finding is a candidate, not a verdict. It skips frontmatter, fenced and indented code blocks, code spans, link targets, headings, quotations and a short emphasised label, and reads a prose line that opens with an inline HTML tag. Given a script (`.sh`, `.py`, `.yaml`, `.yml`, `.toml` or a justfile), it reads each `#` comment block as a paragraph, and in Python each docstring. It leaves out a shebang, a directive, a `# /// script` block and the body of a heredoc. The other nine rules need a reader, and so does every figure of speech it does not list.
 - **The script also reports a character no reader sees, as `unseen`.** That is no rule of style but a hazard. A zero-width space or a byte order mark renders as nothing. A right-to-left override reorders what a reader sees: the "Trojan Source" attack (CVE-2021-42574) uses it to make code read differently from how it runs. An agent that types such a character's escape into a tool call can write the character itself. Delete one from prose you may reword, and report one in code, in a quotation or in a concept you may not touch.
-
-## What was left out, and why
-
-- **Fiction craft**: voice, the senses, dialogue tags. A bundle states facts.
-- **Advice to vary your words.** It is rule 8 reversed.
-- **Praise of the sentence that holds its main clause back.** It is rule 1 reversed.
-- **Orwell's rule against the passive.** Rule 1 puts the actor first already, and gives way to a passive when the actor does not matter.
-- **Varying the length of paragraphs for interest.** The Federal Plain Language Guidelines advise it. A bundle splits where the topic turns, and lets the lengths fall where they fall.
-- **Hart's taste for the long form.** He writes "If you must choose between elegance and perfect clarity [...] always choose elegance", and "more is more and less is less". A bundle chooses clarity. He also makes the best case against rules 3 and 5: "A writer who disdains the semicolon is a fool", and of the dash, "Use it with abandon".
-- **Contractions as a blanket rule.** The sources split, and the two passes kept them in prose written for people.
-
-## Sources, and how each was read
-
-The addresses sit in a fenced block so that a link checker does not fetch sites that refuse automated clients.
-
-| Source | How it was read | What it gave |
-| --- | --- | --- |
-| NBS, "Five essential tips for writing effective specifications" | In full | Rules 8, 9, 10 and 13. Its seven Cs include clear, concise and consistent, and the spare tiles are its example. |
-| Paul Graham, "Good Writing" (2025) | In full | Rule 13, and the limit on what a rewording can promise. |
-| David Bentley Hart's "How to Write English Prose" | In full | Rules 8 and 9: "Do not use a thesaurus", and "Know the names of things and the names of places". He argues against rules 3, 5 and 10. |
-| Strunk and White, *The Elements of Style*, fourth edition | The table of contents, and Strunk's text of 1918 | Rules 1, 2, 3, 5, 7, 9, 10, 11 and 12. Rule 1 is its "Keep related words together", rule 3's paragraph its "Make the paragraph the unit of composition", rule 7 its "Express coordinate ideas in similar form", rule 10 its "Omit needless words", and rule 11 its "Put statements in positive form". |
-| William Zinsser, *On Writing Well* | Secondary pages that quote the book | Rules 3, 4, 8, 9, 10 and 12: clutter, unity, short paragraphs and the first sentence. |
-| GOV.UK style guide, "A to Z", its words to avoid | The entry in full | Rule 9's figures of speech: "land (unless you're talking about aircraft)", and the advice to replace a metaphor "by breaking the term into what you're actually doing". |
-| Federal Plain Language Guidelines, March 2011, revised May 2011 | The sections on jargon, short paragraphs, topic sentences, and double negatives and exceptions to exceptions | Rule 3's paragraph and sentence limits, rule 4's rule before its exception, and rule 9's warning about terms a team knows well. |
-| Joseph Williams and Joseph Bizup, *Style: Lessons in Clarity and Grace* | Secondary pages that summarise the lessons | Rule 3's method: the topic string, a passage's run of sentence subjects, as the test of coherence. |
-| George Gopen and Judith Swan, "The Science of Scientific Writing" (1990) | A transcription of the article | Rule 4's rule before its exception, and rule 1: readers want the known before the new, and the verb close to the subject. |
-| Steven Pinker, *The Sense of Style* | Secondary pages that quote the book | Rule 10: an intensifier reads as a hedge, because an unmodified word is read as absolute. |
-| Emily Thrush, "Plain English? A study of plain English vocabulary and international audiences" (2001) | The abstract | Rule 9's quiet figures: a non-native reader can misread a phrasal verb. |
-| Microsoft Writing Style Guide, "Writing tips" for global communications | In full | Rule 9: avoid idioms for a worldwide audience. |
-| George Lakoff and Mark Johnson, *Metaphors We Live By* | Not read for this page; the term is theirs | Rule 9's quiet figures: a program as a place, and its parts as things that travel. |
-| ASD-STE100, Simplified Technical English | The standard's FAQ, and secondary summaries of its rules | Rules 3 and 8: one topic to a paragraph, at most six sentences, and one meaning to a word. The counts come from the summaries, not the standard. |
-| George Orwell, "Politics and the English Language" (1946) | Its six rules, and its passage on dying metaphors | Rule 9: "Never use a metaphor, simile or other figure of speech which you are used to seeing in print". |
-| Writer's Digest, on basic writing principles | In full | Rules 3 and 7. |
-| Grammarly, on words to cut | In full | Rule 3, and the list behind rule 10. |
-| The Write Practice, on Strunk and White | In full | The habit behind the check: keep the original beside what you have rewritten. |
-| NowNovel, GrammarHow, The Novelry | In full | The dangling opening in rule 1, and "in order to" in rule 9. The rest is fiction craft or synonym lists. |
-| CommonMark Spec, version 0.31.2 | The sections on paragraphs, soft line breaks and list items | Line breaks: a line ending inside a paragraph shows as a space, and a list item or a heading can interrupt a paragraph. |
-| Brian Kernighan, "UNIX for Beginners" (1974), as Brandon Rhodes quotes it in "Semantic Linefeeds" (2012), and Semantic Line Breaks | Both pages in full | Line breaks: "Start each sentence on a new line", and the reflow that a break at a sentence avoids. |
-| Asciidoctor, "AsciiDoc Recommended Practices", and GitLab's "Documentation Style Guide" | The sections on line length and on one sentence per line | Line breaks: one sentence per line instead of a fixed column, and GitLab's "Start each new sentence on a new line". |
-| Google's Markdown style guide, and Microsoft's PowerShell "Markdown best practices" | The sections on line length | Line breaks: the case for a column, from tools built for code and from the readability of diffs. |
-| Plone Documentation Guide, "Whitespace" | In full | Line breaks: no character limit for flowing text. |
-| Ciro Santilli's "Markdown Style Guide", and markdownlint's rule MD013 | The guide's section on line wrapping, which the rule cites, and the rule in full | Line breaks: the cost of each layout, and MD013's 80-column default. |
-| Prettier, "Options" | The `proseWrap` option | Line breaks: the default keeps a file's wrapping, because "some services use a linebreak-sensitive renderer". |
-| GitHub Docs, on formatting syntax and on non-code files | The sections on line breaks and on rendered prose diffs | Line breaks: issues, pull requests and discussions show a single line break, and a pull request can show a rendered prose diff. |
-| Obsidian Help, "Basic formatting syntax", and a forum request of January 2026 | The section on line breaks, and the request | Line breaks: Reading view joins a paragraph's lines, and Live Preview shows each source line. |
-| One page each from GitHub Docs, MDN, Azure, PowerShell, Kubernetes, GitLab, the Rust book, VS Code, Google's style guide, react.dev, Docker and Astro (October 2026) | Line breaks counted by a script | Line breaks: five pages put each paragraph on one line, five wrap at a column, MDN puts each sentence on its own line, and GitLab mixes them. |
-
-```text
-https://www.thenbs.com/knowledge/five-essential-tips-for-writing-effective-specifications
-https://www.paulgraham.com/goodwriting.html
-https://thelampmagazine.com/blog/how-to-write-english-prose
-https://www.goodreads.com/book/show/51478748-the-elements-of-style-fourth-edition
-https://www.goodreads.com/book/show/53343.On_Writing_Well
-https://www.gutenberg.org/ebooks/37134
-https://www.advicetowriters.com/advice/2015/3/1/short-paragraphs.html
-https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/style-guides/a-to-z-style-guide/
-https://www.fai.gov/sites/fai/files/2016-12-22-Federal-Rulemaking-VAAR-FederalPLGuidelines.pdf
-https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/
-https://www.thenovelry.com/blog/good-writing
-https://spec.commonmark.org/0.31.2/
-https://rhodesmill.org/brandon/2012/one-sentence-per-line/
-https://sembr.org/
-https://asciidoctor.org/docs/asciidoc-recommended-practices/
-https://docs.gitlab.com/development/documentation/styleguide/
-https://google.github.io/styleguide/docguide/style.html
-https://learn.microsoft.com/en-us/powershell/scripting/community/contributing/general-markdown
-https://docs-guide.plone.org/markdown/whitespace
-https://cirosantilli.com/markdown-style-guide
-https://github.com/DavidAnson/markdownlint/blob/main/doc/md013.md
-https://prettier.io/docs/options
-https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
-https://docs.github.com/en/repositories/working-with-files/using-files/working-with-non-code-files
-https://obsidian.md/help/syntax
-https://forum.obsidian.md/t/strict-line-breaks-in-live-preview/109696
-https://www.antoinebuteau.com/lessons-from-joseph-m-williams-joseph-bizup/
-https://www.win.tue.nl/~wstomv/quotes/science-of-scientific-writing.html
-https://www.stafforini.com/quotes/?p=2300
-https://newrepublic.com/article/119687/steven-pinker-language-interview-jesse-singal
-https://digitalcommons.memphis.edu/facpubs/3866
-https://learn.microsoft.com/en-us/style-guide/global-communications/writing-tips
-https://asd-ste100.org/STE_faq.html
-https://plainlanguage.gov/guidelines/concise/use-positive-language/
-```

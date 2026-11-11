@@ -412,6 +412,30 @@ def test_a_sync_to_an_older_release_says_so(tmp_path, skills, checks):
     checks.ok(matches(result.out, r"^   pin      v1\.2\.0 back to v1\.1\.0 \([0-9a-f]{40}\): an older release than the host had$"), "the backwards move is named", result.out)
 
 
+def test_a_host_s_own_skills_repository_survives_a_sync(tmp_path, skills, checks):
+    """A host that installs the skill from its organisation's copy of the repository names it in its librarian workflow, and a sync keeps that line."""
+    host = make_host(tmp_path, skills)
+    fork = "https://github.com/acme/knowledge-trust-ladder"
+    librarian = host / LIBRARIAN
+    write(librarian, re.sub(r"TRUST_LADDER_SKILLS_REPO: *\S+", f"TRUST_LADDER_SKILLS_REPO: {fork}", read(librarian)))
+    Git(host)("commit", "-qam", "install from the organisation's copy")
+    result = sync(host, skills)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(f"TRUST_LADDER_SKILLS_REPO: {fork}" in read(librarian) and "TRUST_LADDER_SKILLS_REF: v1.1.0" in read(librarian), "the address stays and the pin moves", read(librarian))
+
+
+def test_a_skills_repository_that_cannot_be_read_is_not_called_a_missing_release(tmp_path, skills, checks):
+    """git's own words say why the repository could not be read; a missing tag is still called one. A read token, when given, leaves a clone that needs none working."""
+    host = make_host(tmp_path, skills)
+    result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--repo", f"file://{tmp_path}/nowhere", "--no-checks", "v1.1.0"], cwd=host, env=IDENT)
+    checks.ok(result.rc != 0 and f"file://{tmp_path}/nowhere could not be read (" in result.out and "KNOWLEDGE_SKILLS_TOKEN" in result.out, "the failure is git's", result.out)
+    checks.ok("publish the release first" not in result.out, "and not a missing tag", result.out)
+    result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--repo", f"file://{skills}", "--no-checks", "v9.9.9"], cwd=host, env=IDENT)
+    checks.ok(result.rc != 0 and "no release tag v9.9.9" in result.out, "a missing tag is named", result.out)
+    result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--repo", f"file://{skills}", "--no-checks", "v1.1.0"], cwd=host, env={**IDENT, "KNOWLEDGE_SKILLS_TOKEN": "read-token"})
+    checks.ok(result.rc == 0 and has_line(result.out, f"   cloning v1.1.0 from file://{skills}"), "a token changes nothing a clone needs no token for", result.out)
+
+
 def test_a_copy_bumped_by_dependabot_is_reported(tmp_path, skills, checks):
     host = make_host(tmp_path, skills)
     copy = host / ".github" / "workflows" / "knowledge-release.yaml"
