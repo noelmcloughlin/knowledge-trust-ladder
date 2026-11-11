@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **The website colours code blocks again after the satteri 0.11 update.** starlight-image-zoom lost each block's language there, so a hast plugin in `markdown-ktl.mjs` puts it back.
+
 ## [0.63.0] - 2026-11-11
 
 ### Added

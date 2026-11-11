@@ -92,3 +92,31 @@ export default function markdownKtl({ conceptIds = [] } = {}) {
     };
   };
 }
+
+/**
+ * Gives each fenced code block its language back after starlight-image-zoom.
+ * That plugin copies the language and meta of every fence into properties
+ * and restores them from the <pre>, but satteri 0.11 puts them on the
+ * <code>, so Expressive Code would see no language and draw plain text.
+ * This puts them back where Expressive Code reads them.
+ */
+export function codeLanguage() {
+  return {
+    name: "ktl-code-language",
+    element: {
+      filter: ["code"],
+      visit(node, ctx) {
+        const lang = node.properties?.dataStarlightImageZoomLang;
+        const meta = node.properties?.dataStarlightImageZoomMeta;
+        if (typeof lang !== "string" && typeof meta !== "string") return;
+        ctx.setProperty(node, "dataStarlightImageZoomLang", null);
+        ctx.setProperty(node, "dataStarlightImageZoomMeta", null);
+        ctx.setProperty(node, "data", {
+          ...node.data,
+          ...(typeof lang === "string" && { lang }),
+          ...(typeof meta === "string" && { meta }),
+        });
+      },
+    },
+  };
+}
