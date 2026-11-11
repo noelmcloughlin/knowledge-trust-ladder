@@ -56,7 +56,7 @@ jobs:
   ingest:
     name: Mirror the sources the manifest names (read-only)
     if: vars.KNOWLEDGE_INGEST_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     # The script starts no work after 25 minutes, its --time-limit, so what
     # it fetched is written and handed on before the job is stopped here.
     timeout-minutes: 30
@@ -85,6 +85,15 @@ jobs:
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.12"
+
+      # The packages uv.lock pins, checked by hash, so the script runs from
+      # .lokf/.venv in the job that holds the secrets. Behind a mirror the
+      # lock was not made against, this fails, and the script installs its
+      # own pinned packages through uv instead.
+      - name: Install the lokf sidecar
+        continue-on-error: true
+        run: uv sync --locked
+        working-directory: .lokf
 
       # The secrets whose names start KNOWLEDGE_INGEST_, from the
       # knowledge-ingest Environment or the repository, and no other, reach
@@ -119,7 +128,10 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>/dev/null || echo unknown)"
+          if ! visibility="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .visibility 2>"$RUNNER_TEMP/visibility.err")"; then
+            echo "::warning::The repository's visibility could not be read ($(tr '\n' ' ' < "$RUNNER_TEMP/visibility.err" | cut -c1-200)), so it counts as unknown and an internal entry is not committed."
+            visibility=unknown
+          fi
           args=(--visibility "$visibility" --summary "$RUNNER_TEMP/summary.md")
           if [ -n "$ONLY" ]; then
             if ! printf '%s\n' "$ONLY" | grep -qE '^[a-z0-9][a-z0-9-]*$'; then
@@ -168,7 +180,7 @@ jobs:
     name: Open or refresh the review pull request (privileged, no secret)
     needs: ingest
     if: needs.ingest.outputs.changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
       contents: write # push the knowledge-ingest branch

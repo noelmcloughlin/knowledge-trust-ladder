@@ -43,7 +43,7 @@ jobs:
     # job's `if:` sees only repository and organization variables. Anything
     # but `true`, or unset, skips the job and spends nothing.
     if: vars.KNOWLEDGE_DOCENT_EVAL_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     # Eight runs of five minutes at most, after the install steps.
     timeout-minutes: 60
     # AGENT_API_KEY belongs in this Environment, limited to the default

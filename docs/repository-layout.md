@@ -16,6 +16,8 @@ skills/
 .claude-plugin/
   plugin.json           the six skills as one Claude Code plugin, with catalogue keywords
   marketplace.json      lets `/plugin marketplace add` find that plugin
+.github/release/
+  package.json, package-lock.json  the release tools semantic-release.yml installs with npm ci, every package pinned
 .github/workflows/
   validate.yml               repository contract, Agent Skills spec, Markdown and links (every PR)
   knowledge-registrar.yaml   the sidecar's schema and provenance gate (PRs touching the bundle)

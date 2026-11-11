@@ -53,7 +53,7 @@ concurrency:
 jobs:
   validate:
     name: Validate the LOKF bundle
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15
     permissions:
       contents: read
@@ -174,7 +174,7 @@ jobs:
     #     compared by fixed string only;
     #   - token scope is read-only and no credential is persisted.
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
       contents: read
@@ -396,6 +396,10 @@ jobs:
             exit 0
           fi
 
+          if ! command -v gh >/dev/null; then
+            echo "unreadable: gh is not installed on this runner, and a person's confirmation is checked against GitHub's reviews and signatures with it."
+            exit 1
+          fi
           approvers="$(
             gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" --paginate \
               --jq '.[] | select(.state == "APPROVED") | .user.login'
@@ -553,7 +557,7 @@ jobs:
     # reviewers silently disables the whole gate.
     needs: provenance
     if: needs.provenance.outputs.verdict == 'unbacked'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions: {}
     environment: ${{ vars.KNOWLEDGE_CURATION_ENVIRONMENT }}

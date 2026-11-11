@@ -101,7 +101,22 @@ usage() {
 die() { echo "knowledge-sync: $*" >&2; exit 2; }
 
 # The pin lines are each host's own to move, so they are not drift.
-unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/'; }
+# The skills repository's address is the host's own, as the pin is, so a
+# host that installs from its own copy of the repository keeps it.
+unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/' \
+                -e 's/(TRUST_LADDER_SKILLS_REPO: *)[^ ]+/\1REPO/'; }
+# git with the read token of a private skills repository, when one is
+# given, sent as a header to that repository's address alone.
+skills_git() {
+  local repo="$1"; shift
+  if [ -n "${KNOWLEDGE_SKILLS_TOKEN:-}" ]; then
+    local n="${GIT_CONFIG_COUNT:-0}" auth
+    auth="$(printf 'x-access-token:%s' "$KNOWLEDGE_SKILLS_TOKEN" | base64 | tr -d '\n')"
+    env GIT_CONFIG_COUNT="$((n + 1))" "GIT_CONFIG_KEY_$n=http.${repo%/}.extraheader" "GIT_CONFIG_VALUE_$n=AUTHORIZATION: basic $auth" git "$@"
+  else
+    git "$@"
+  fi
+}
 
 # The repository's web address, from a clone URL: no trailing .git, and
 # an ssh address written as https, so the links in the entry open.
@@ -291,10 +306,12 @@ main() {
   done
 
   # The repository to read the tag from: the clone given, or one made here.
-  local repo_url tmp_clone=""
-  if [[ -z "$repo" && -f "$host/$librarian_copy" ]]; then
-    repo="$(grep -oE 'TRUST_LADDER_SKILLS_REPO: *[^ ]+' "$host/$librarian_copy" | head -1 | sed -E 's/^TRUST_LADDER_SKILLS_REPO: *//' || true)"
+  local repo_url tmp_clone="" host_repo="" rc=0 said
+  if [[ -f "$host/$librarian_copy" ]]; then
+    host_repo="$(grep -oE 'TRUST_LADDER_SKILLS_REPO: *[^ ]+' "$host/$librarian_copy" | head -1 | sed -E 's/^TRUST_LADDER_SKILLS_REPO: *//' || true)"
+    [[ "$host_repo" =~ ^https://[A-Za-z0-9._/-]+$ ]] || host_repo=""
   fi
+  [[ -n "$repo" ]] || repo="$host_repo"
   [[ -n "$repo" ]] || repo="$default_repo"
   [[ "$repo" != -* ]] || die "'$repo' is not an address to clone from"
   if [[ -n "$source" ]]; then
@@ -305,12 +322,16 @@ main() {
     fi
     repo_url="$(web_url "$(git -C "$source" remote get-url origin 2>/dev/null || printf '%s' "$repo")")"
   else
-    if ! git ls-remote --exit-code --tags "$repo" "refs/tags/$tag" >/dev/null 2>&1; then
+    # ls-remote exits 2 when the repository answers and has no such tag.
+    said="$(skills_git "$repo" ls-remote --exit-code --tags "$repo" "refs/tags/$tag" 2>&1 >/dev/null)" || rc=$?
+    if [[ $rc -eq 2 ]]; then
       die "no release tag $tag at $repo: publish the release first, then sync (that order is the point)"
+    elif [[ $rc -ne 0 ]]; then
+      die "$repo could not be read ($(printf '%s' "$said" | tr '\n' ' ' | cut -c1-300)). A private skills repository needs a token that reads it: the secret KNOWLEDGE_SKILLS_TOKEN in the workflow, or your own git credential by hand"
     fi
     tmp_clone="$(mktemp -d)"
     echo "   cloning $tag from $repo"
-    git -c advice.detachedHead=false clone --quiet --no-checkout --depth 1 --branch "$tag" -- "$repo" "$tmp_clone"
+    skills_git "$repo" -c advice.detachedHead=false clone --quiet --no-checkout --depth 1 --branch "$tag" -- "$repo" "$tmp_clone"
     source="$tmp_clone"
     repo_url="$(web_url "$repo")"
   fi
@@ -479,6 +500,8 @@ main() {
   if [[ -f "$wf" ]]; then
     sed -i.sync-bak -E -e "s/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1$tag/" \
                        -e "s/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1$tag_sha/" "$wf"
+    # The address the host installs the skill from stays the host's.
+    [[ -z "$host_repo" ]] || sed -i.sync-bak -E -e "s#(TRUST_LADDER_SKILLS_REPO: *)[^ ]+#\1$host_repo#" "$wf"
     rm -f "$wf.sync-bak"
     [[ "$old_pin" == "$tag" ]] || pin_moved=1
   fi

@@ -66,7 +66,7 @@ jobs:
   pack:
     name: Validate and pack the bundle (read-only)
     if: github.event_name == 'workflow_dispatch' || vars.KNOWLEDGE_RELEASE_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     permissions:
       contents: read
@@ -135,6 +135,10 @@ jobs:
           # text, whether a block list or a flow list.
           schema_files() {
             [ -n "$1" ] || return 0
+            if ! python3 -c 'import sys; sys.exit(sys.version_info < (3, 9))' 2>/dev/null; then
+              echo "::error::Reading the imports of the domain schema needs python3 3.9 or later on the runner." >&2
+              return 1
+            fi
             python3 -I - "$1" <<'PY'
           import pathlib
           import re
@@ -175,8 +179,10 @@ jobs:
           }
           # Both tags are spelt in full, so a name is never read as an option
           # or as a branch of the same name.
-          gh release view "$TAG" --json tagName --jq .tagName >/dev/null \
-            || { echo "::error::No release exists for tag $TAG. Create the release first, then run this workflow again."; exit 1; }
+          if ! said="$(gh release view "$TAG" --json tagName --jq .tagName 2>&1 >/dev/null)"; then
+            echo "::error::The release for tag $TAG could not be read (${said:-gh said nothing}). If there is none, create it first, then run this workflow again."
+            exit 1
+          fi
           read -r tree path < <(bundle_tree "$TAG") || { echo "::error::No bundle folder at $TAG"; exit 1; }
           # A command substitution stops the step when schema_files fails,
           # where a process substitution would hide the failure.
@@ -524,7 +530,7 @@ jobs:
     name: Attach the zip to the release (privileged)
     needs: pack
     if: needs.pack.outputs.changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
       contents: write # upload release assets

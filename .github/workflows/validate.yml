@@ -23,7 +23,7 @@ concurrency:
 jobs:
   validate-skills:
     name: Validate repository contract & Agent Skills spec
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -68,7 +68,7 @@ jobs:
   # share its CPUs; a second runner adds its own.
   test-scripts:
     name: Test the sidecar scripts (${{ matrix.part }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     strategy:
@@ -126,7 +126,7 @@ jobs:
 
   lint-scripts:
     name: Lint shell scripts
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -146,7 +146,7 @@ jobs:
 
   lint-workflows:
     name: Lint GitHub Actions workflows
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -189,7 +189,7 @@ jobs:
 
   smoke-test:
     name: Smoke-test the install path
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -216,7 +216,7 @@ jobs:
 
   smoke-test-website:
     name: Build the website template on a dummy host
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -251,7 +251,7 @@ jobs:
 
   validate-markdown:
     name: Lint Markdown & check links
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:

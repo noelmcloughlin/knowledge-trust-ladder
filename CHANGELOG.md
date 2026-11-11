@@ -7,12 +7,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Added
 
 - **A domain host builds members from private and internal GitHub repositories.** The build and the members script ask a release's address first, and when it does not give the file a person confirmed, `gh` fetches it from the GitHub API with the host's credential: the secret `KNOWLEDGE_FEDERATE_TOKEN` in a workflow, `gh auth login` by hand. A public member never meets the credential.
+- **`KNOWLEDGE_RUNNER` names the runner every job runs on**, `ubuntu-latest` unless set, so a host with self-hosted runners needs no edit a sync would undo. automation.md's Customising section lists what a locked-down organisation sets.
+- **A host can install the skills from its organisation's private copy.** A sync keeps the host's `TRUST_LADDER_SKILLS_REPO`, and the secret `KNOWLEDGE_SKILLS_TOKEN` reads that copy.
+- **The website and federation workflows warn when a private repository's Pages site is public.**
 - **`KNOWLEDGE_ATTEST_PRIVATE` attests a private repository's release.** The release and federation workflows skipped the attestation there, and a domain's build refuses a member without one. It needs GitHub Enterprise Cloud.
 
 ### Fixed
 
 - **A sign-in or proxy page in a zip's place is no longer reported as a wrong checksum.** The finding names the media type and the address that answered, and a refused request says so.
 - **`members --add` reads a private repository's release list.** The API answers 404 for one, and the script asked `gh` only when rate limited.
+- **A workflow that cannot read GitHub says what `gh` or git said.** The release, sync, ingest and federation workflows reported any failure as a missing release, a private repository or an unknown visibility.
+- **The federation build deploys no site without its workspace when the release list cannot be read**, installs `just` for a site that builds with it, and turns Astro's telemetry off, as the website workflow does.
+- **semantic-release installs from a lockfile.** `.github/release/package-lock.json` pins every package the release tools need, so a company registry can be given the exact list, and Dependabot bumps them.
+- **The ingest installs the packages `uv.lock` pins, checked by hash**, in the job that holds its secrets. The registrar says when `gh` is missing, and the release when python3 is older than 3.9.
 
 ## [0.62.0] - 2026-11-06
 

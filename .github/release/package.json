@@ -1,0 +1,11 @@
+{
+  "name": "knowledge-trust-ladder-release-tools",
+  "private": true,
+  "description": "The release tools the semantic-release workflow installs with npm ci, each package and every dependency pinned by this folder's lockfile.",
+  "dependencies": {
+    "@semantic-release/commit-analyzer": "13.0.1",
+    "@semantic-release/exec": "7.1.0",
+    "conventional-changelog-conventionalcommits": "8.0.0",
+    "semantic-release": "25.0.9"
+  }
+}
