@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-12T18:04:41Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -42,7 +42,7 @@ The skill writes four frontmatter keys and one body heading: `verified` (a perso
 
 ## Step 1: the report
 
-Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-preflight.sh` first, then `knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. The skill works out three items by hand, as `references/trust-fields.md` says: the vocabulary fit, the confirmations git cannot back, and the samples the curation policy asks for. The report prints, in this order:
+Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-preflight.sh` first, then `knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. The skill works out two items by hand, as `references/trust-fields.md` says: the vocabulary fit and the confirmations git cannot back. The report prints, in this order:
 
 1. a health line, which counts among others the concepts reopened and the confirmations not tied to a signed commit;
 2. at most five items *worth ten minutes today*, ranked in groups and, within a group, by how many other concepts rely on each through the fourteen relation fields and `relations[].target`;
@@ -51,7 +51,7 @@ Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-pref
 5. the vocabulary fit;
 6. the confirmations git cannot back, only when there are any;
 7. the confirmed concepts whose source has a commit after the one that recorded the confirmation, each confirmed concept derived from one edited after that confirmation, and each retired concept whose successor no person has confirmed, only when the script lists any: an agent may propose a retirement, but the retired concept governs until a person confirms the successor;[^ktl-curator-skill.md]
-8. the samples the curation policy asks for, only when it sets `Independent re-check: <n>` or `Automation re-check: <n>` above zero: n concepts confirmed by a person, for someone other than the person who confirmed them to re-check, and n concepts checked by automation only, for a person to check against their sources, both picked by a rule the curator cannot steer;[^ktl-curator-skill.md]
+8. the samples the curation policy asks for, only when it sets `Independent re-check: <n>` or `Automation re-check: <n>` above zero: n concepts confirmed by a person, for someone other than the person who confirmed them to re-check, and n concepts checked by automation only, for a person to check against their sources, both drawn by the script, which orders the concepts by the SHA-256 of a seed and the path, so the curator cannot steer the pick, and an auditor passes `knowledge-report.sh sample --seed` for a sample nobody could foresee;[^ktl-curator-skill.md]
 9. a *Ready to record* line from the preflight: the id a confirmation would carry and where it came from, signing on or off, and attended or not.
 10. how many more concepts wait, not yet checked, with the reminder that every confirmation counts;
 11. the report's last line, with nothing after it: when Step 2 can run, it offers it, naming only the verbs the readiness line allows; when Step 2 will not run, or not until the person replies, it instead states in one bold line that nothing is being recorded, the reason in words the person can check, and the one thing that would change it. A stop stated anywhere else in the report is missed.
