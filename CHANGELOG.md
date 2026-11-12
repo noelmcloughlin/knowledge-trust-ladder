@@ -4,16 +4,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
-- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
-
-### Fixed
-
-- **A concept's `exclusions` entry no longer reads as a reader's dispute.** `knowledge-report.sh` gave both lines one letter, so such a concept's label said *a reader disputed this*.
-
-## [0.63.1] - 2026-11-12
+## [0.64.0] - 2026-11-12
 
 ### Added
 
@@ -21,10 +12,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`docs/for-the-curious.md` is now `docs/how-it-works.md`, and its old address on the site redirects.** The ingest page is split into a how-to, `docs/ingest.md`, and a reference, `docs/ingest-reference.md`.
 - **`docs/young-readers.md` says how a bundle retells adult knowledge for readers aged 8 to 18.** It sits beside the three-lines page, at the other end of the range.
 - **`docs/examples/first-bundle.md` holds a captured first run of the four roles on a small repository.** The first-bundle page links it.
+- **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
+- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
 
 ### Changed
 
 - **The file a bundle's `schema :=` line names is now called its *domain vocabulary*.** A *domain schema* is a LinkML project's own schema, which never imports `lokf`. The skills, docs, sidecar templates and scripts, workflow messages and this repository's own bundle use the two names. The librarian's recipe is now `references/domain-vocabulary.md`, which defines them, and the curator's page is `references/domain-vocabularies.md`. The `schema` variable and `--schema` are unchanged.
+
+### Fixed
+
+- **A concept's `exclusions` entry no longer reads as a reader's dispute.** `knowledge-report.sh` gave both lines one letter, so such a concept's label said *a reader disputed this*.
 
 ## [0.63.0] - 2026-11-12
 
