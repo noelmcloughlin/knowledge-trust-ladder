@@ -24,7 +24,7 @@ The table sets Unblocked's four properties, and the two that the others add, aga
 | Cross-source conflict resolution | The **curator**, a named person, records the verdict: confirm, correct, retire or send back. A reader's disagreement goes to `feedback.md` | One bundle. Between bundles, a domain's owner arbitrates ([who arbitrates](federation.md#decisions-an-adopter-must-make)) |
 | Per-query permission enforcement | None of its own. The repository's access control is the bundle's | Nothing finer than the repository |
 | Provenance and trust | `generated` and `verified` events on every concept, and each label computed on read, never stored ([Trust stays visible](architecture.md#trust-stays-visible), [four levels of checking](for-the-curious.md#four-levels-of-checking)) | Who checked and when, not that the source is right |
-| Format, not platform | LOKF, a semantic profile of OKF: Markdown a person reads, a LinkML schema that checks it, a graph any SPARQL store loads | A domain outside LOKF's vocabulary needs a [domain schema](for-the-curious.md#when-the-vocabulary-stops-fitting) |
+| Format, not platform | LOKF, a semantic profile of OKF: Markdown a person reads, a LinkML schema that checks it, a graph any SPARQL store loads | A domain outside LOKF's vocabulary needs a [domain vocabulary](for-the-curious.md#when-the-vocabulary-stops-fitting) |
 
 ## Many bundles federated into one context layer: the design
 

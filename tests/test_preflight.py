@@ -323,7 +323,7 @@ def test_warns_when_the_floor_is_below_what_the_recipes_need(tmp_path):
 ], ids=["an older copy", "the locked release's copy", "a lock above the floor", "a copy behind the lock", "no copy"])
 @pytest.mark.parametrize("where", [".lokf/schema", ".lokf"], ids=["in the schema folder", "at the root of .lokf"])
 def test_warns_when_the_pinned_core_schema_is_not_the_locked_lokfs(tmp_path, copy, locked, stale, where):
-    """A domain schema imports the copy of lokf.yaml beside it, and the gate runs the lokf that uv.lock pins. Under lokf 0.9.0 a bare-date stale_after is a datetime, which 0.8.0's copy rejects.
+    """A domain vocabulary imports the copy of lokf.yaml beside it, and the gate runs the lokf that uv.lock pins. Under lokf 0.9.0 a bare-date stale_after is a datetime, which 0.8.0's copy rejects.
 
     The floor stays >=0.9.0 in every case, so a lock on 0.9.1 with a copy to match gives no warning.
     """

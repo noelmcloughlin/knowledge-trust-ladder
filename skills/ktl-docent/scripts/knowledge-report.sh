@@ -412,7 +412,7 @@ fm {
     if (inrels && $0 ~ /^[ \t]*-[ \t]*\{/) { rest = $0; sub(/^[ \t]*-[ \t]*/, "", rest); rflow(rest); next }
     if (inrels && $0 ~ /^[ \t]*-[ \t]+/) { rflush(); rest = $0; sub(/^[ \t]*-[ \t]+/, "", rest); rkv(rest); next }
     if (inrels && $0 ~ /^[ \t]+[A-Za-z_]+:/) { rkv($0); next }
-    # The slots of a domain schema hold concepts too, and no list here can name
+    # The slots of a domain vocabulary hold concepts too, and no list here can name
     # them, since each host writes its own. So a value that is a whole IRI,
     # under any field not read as something else, comes out as an L line, and
     # `ranked` keeps it only when it names a concept. A prefixed name or a
@@ -870,7 +870,7 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 #     concept's folder.
 # A concept's id is its `id`, or base_iri and its path without `.md`.
 # A relation is one of the fourteen fields, `relations`, or a whole IRI in a
-# domain schema's own slot. Each concept that names another counts once for
+# domain vocabulary's own slot. Each concept that names another counts once for
 # it, and a concept never counts for itself. Retired concepts are left out of
 # every list here. `queue` prints Worth ten minutes today, in the order ktl-curator's
 # references/trust-fields.md gives; `lists` prints the rest; the `isolated`

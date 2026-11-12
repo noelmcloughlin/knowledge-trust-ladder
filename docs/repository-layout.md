@@ -31,7 +31,7 @@ docs/
   architecture.md       the architecture the poem, LOKF and LinkML inspired: the catalogue, the five roles and the trust ladder
   architecture.en-simple.md  the architecture page retold for readers aged 13 to 18
   install.md            the quick start, every way to install the six skills, and pinning to one release
-  for-the-curious.md    the architecture's mechanics: four levels of checking, domain schemas
+  for-the-curious.md    the architecture's mechanics: four levels of checking, domain vocabularies
   context-layer.md      the context layer: what it is, one bundle as one, and why bundles federate
   federation.md         a federation of bundles: domains, tiers, the workspace and the decisions
   context-layer-technology.md  the products a workspace can use: artifact repositories, stores, catalogues, agents

@@ -236,11 +236,11 @@ GitHub starts no workflow for a release made with the default `GITHUB_TOKEN`, so
 
 ### An unchanged bundle gets no zip
 
-The `pack` job compares the bundle's git tree at the tag with its tree at the newest other published release that carries a knowledge bundle, as a zip or as the tarball earlier releases attached. The tree changes only when a tracked file in the bundle does, so a release that touched only code or docs compares as unchanged. The job compares the domain schema too: the `schema :=` line, the file it names and the local files that file imports in turn, but not `lokf.yaml`, which the released copy imports by name. So a release that changed only the schema packs again.
+The `pack` job compares the bundle's git tree at the tag with its tree at the newest other published release that carries a knowledge bundle, as a zip or as the tarball earlier releases attached. The tree changes only when a tracked file in the bundle does, so a release that touched only code or docs compares as unchanged. The job compares the domain vocabulary too: the `schema :=` line, the file it names and the local files that file imports in turn, but not `lokf.yaml`, which the released copy imports by name. So a release that changed only the schema packs again.
 
 When the bundle and the schema both match, the run ends green with a notice naming that release, and nothing is uploaded. A reader who wants the bundle for such a release takes it from the release the notice names. To attach a zip anyway, for example to repair a release's assets, start the workflow by hand with `force` ticked.
 
-### The domain schema beside it
+### The domain vocabulary beside it
 
 When the host's `.lokf/justfile` names a schema on its `schema :=` line, the release carries that file too, as `schema-<tag>-<name>.yaml` with its own `.sha256` and attestation. A domain that admits the bundle names it as a second distribution of the member concept and validates the bundle against it, rather than against LOKF core alone. The line is read as text, relative to `.lokf/`, and names a copy in `.lokf/schema/`. The release also takes a file elsewhere in the repository, as an older linkml-sidecar names its project's schema, but never one outside it. A domain puts the released schema beside the bundle with LOKF's own `lokf.yaml`, so the released copy imports LOKF core as `lokf`. A relative import of `.lokf/lokf.yaml`, as an older linkml-sidecar writes it, or of `.lokf/schema/lokf.yaml` is rewritten to `lokf` in the copy.
 
@@ -259,7 +259,7 @@ The `attach` job holds `contents: write`, runs no third-party packages, checks t
 
 ## `knowledge-federation.yaml`: the workspace of a domain host
 
-A domain host is one whose bundle names other bundles. Each `MemberBundle` concept (or `MemberDomain`, when that bundle is a domain in turn) names one released zip and its checksum. A person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. The design is the skills repository's `docs/federation.md`, and `templates/domain.yaml` is the schema. Three files make it run, and nothing in them runs a model.
+A domain host is one whose bundle names other bundles. Each `MemberBundle` concept (or `MemberDomain`, when that bundle is a domain in turn) names one released zip and its checksum. A person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. The design is the skills repository's `docs/federation.md`, and `templates/domain.yaml` is its domain vocabulary. Three files make it run, and nothing in them runs a model.
 
 - **The build.** `uv run --project .lokf .lokf/scripts/knowledge-federate.py build --tag <tag>` resolves the members into `snapshot/workspace.lock.yaml`. It fetches each zip into a temporary folder and removes the folder when the run ends, as the members script does, unless `--cache <folder>` names a folder to keep the files in by digest. It fetches over http or https from a public address only: a local path or `file://` address needs `--allow-local`, and a private address a person's `private_addresses: allow` on the top Domain concept, for a forge on the host's own network.
 

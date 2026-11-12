@@ -161,7 +161,7 @@ rule3_line="$(grep -m1 '^3\. \*\*Use a class from the LOKF type vocabulary' skil
 if [[ -z "$rule3_line" ]]; then
   err "could not find Rule 3's class list in skills/ktl-librarian/SKILL.md"
 else
-  # The list ends where the domain-schema sentence begins; that sentence names
+  # The list ends where the sentence on a host's own classes begins; it names
   # `Concept` and a sample parent class, neither of which is part of the list.
   rule3_list="${rule3_line%%\*\*A host may have extended*}"
   # shellcheck disable=SC2016 # literal backticks for grep to match (markdown
@@ -273,7 +273,7 @@ fi
 #    Moving or renaming one of these paths passes every check in this repo,
 #    and breaks the build in the sibling that links to it: the two Obsidian
 #    plugins, ktl-federation, ai-linkmo or gist. (The mirror image
-#    happened on 2026-09-14: the curator referenced domain-schema.md while it
+#    happened on 2026-09-14: the curator referenced domain-vocabulary.md while it
 #    was still on a branch here, and its build failed with a 404 until this
 #    side merged. CONTRIBUTING.md carries the ordering rule; this check carries
 #    the paths.) An entry that names a heading, as path#anchor, also needs that
@@ -315,7 +315,7 @@ sibling_paths=(
   "docs/threat-model.md#the-sync-workflow"
   "docs/threat-model.md#the-website"
   "docs/three-lines.md"
-  "skills/ktl-librarian/references/domain-schema.md"
+  "skills/ktl-librarian/references/domain-vocabulary.md"
   "skills/ktl-curator/references/review-session.md"
   "skills/ktl-curator/references/trust-fields.md"
 )

@@ -226,7 +226,7 @@ function linkmoDir() {
 }
 
 /**
- * The domain schema on the sidecar's `schema :=` line, which the release and
+ * The domain vocabulary on the sidecar's `schema :=` line, which the release and
  * the librarian read, as { dir, build }, or null. gen-doc runs in the
  * sidecar's own environment, which the lokf toolkit's LinkML gives it, and
  * renders the imports, since a host's composite declares nothing of its own.
@@ -259,7 +259,7 @@ function folderOption(name, value) {
 // takes the first of the repository's root, a linkmo project's folder and
 // the linkml-sidecar's .linkml/ whose justfile has a gen-doc recipe, which
 // writes the pages to docs/elements there. Failing those, it takes the KTL
-// sidecar's domain schema.
+// sidecar's domain vocabulary.
 export const SCHEMA = (() => {
   const value = given.SCHEMA === undefined ? "auto" : given.SCHEMA;
   if (value === null) return null;

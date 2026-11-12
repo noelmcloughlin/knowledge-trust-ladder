@@ -630,7 +630,7 @@ def _other_schema(host, git):
     [(_domain_in_folder, ".lokf/schema/domain.yaml"), (_domain_at_root, ".lokf/domain.yaml"), (_other_schema, None)],
     ids=["the schema folder", "the root of .lokf", "a host's own schema"],
 )
-def test_apply_takes_the_domain_schema_in_either_place_and_no_other(tmp_path, skills, checks, change, path):
+def test_apply_takes_the_domain_vocabulary_in_either_place_and_no_other(tmp_path, skills, checks, change, path):
     """The sync keeps domain.yaml in .lokf/schema/, and a host's script from before the folder keeps it at the root. A schema the host wrote is its own."""
     host = make_host(tmp_path, skills)
     patch = tmp_path / "domain.patch"

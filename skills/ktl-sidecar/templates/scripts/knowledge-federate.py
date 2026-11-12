@@ -1416,7 +1416,7 @@ def member_schema_file(member: Member, cache: pathlib.Path, attest: bool, bundle
     """The schema released with a member's bundle, verified and placed beside the unpacked bundle with the toolkit's lokf.yaml, or None.
 
     A host's schema imports `lokf` by that name and keeps a pinned copy
-    beside it (the librarian's domain-schema recipe), so the released schema
+    beside it (the librarian's domain-vocabulary.md), so the released schema
     is given the same neighbour here and validates as it does at home.
     """
     if not member.schema_url:
@@ -1529,7 +1529,7 @@ def public_url(root: pathlib.Path, given: str | None) -> str:
 
 
 def host_schema(root: pathlib.Path) -> pathlib.Path | None:
-    """The domain schema the host's justfile names on its `schema :=` line, as a path, or None."""
+    """The domain vocabulary the host's justfile names on its `schema :=` line, as a path, or None."""
     justfile = root / ".lokf" / "justfile"
     if not justfile.is_file():
         return None
@@ -2207,11 +2207,11 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
         schema = host_schema(root) if member is None else member_schema_file(member, cache, not args.no_attestation, kdir.parent.parent, args.max_bytes)
         if schema:
             check = run_lokf(["validate", "--schema", schema.name, str(kdir)], cwd=schema.parent)
-            whose = "its domain schema" if member is None else "the schema released with it,"
+            whose = "its domain vocabulary" if member is None else "the vocabulary released with it,"
             fit.append(f"- `{slug}`: " + (f"validates against {whose} `{schema.name}`" if check.returncode == 0 else f"does not validate against `{schema.name}`: " + (check.stderr or check.stdout).strip().splitlines()[-1][:200]))
         else:
             check = run_lokf(["validate", str(kdir)])
-            fit.append(f"- `{slug}`: " + ("validates against LOKF core" if check.returncode == 0 else "does not validate against LOKF core alone (a schema of its own, or a vocabulary outside LOKF): " + (check.stderr or check.stdout).strip().splitlines()[-1][:200]))
+            fit.append(f"- `{slug}`: " + ("validates against LOKF core" if check.returncode == 0 else "does not validate against LOKF core alone (a domain vocabulary of its own, or types outside LOKF): " + (check.stderr or check.stdout).strip().splitlines()[-1][:200]))
         meta = read_frontmatter(kdir / "index.md") if (kdir / "index.md").read_text(encoding="utf-8").startswith("---") else {}
         pub = meta.get("publisher") or {}
         records.append({

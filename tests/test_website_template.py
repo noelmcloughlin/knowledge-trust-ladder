@@ -217,7 +217,7 @@ def test_config_takes_the_linkml_sidecar_s_schema_and_no_assignment_for_a_recipe
 
 
 @pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_falls_back_to_the_sidecar_s_domain_schema_and_trusts_only_a_plain_path(tmp_path):
+def test_config_falls_back_to_the_sidecar_s_domain_vocabulary_and_trusts_only_a_plain_path(tmp_path):
     """A host whose only schema is the sidecar's composite shows it; a name a shell would read as more than a path shows none."""
     bundle(tmp_path)
     write(tmp_path / ".lokf" / "gh-workflows.yaml", "id: https://acme.example/schema\nname: acme\n")

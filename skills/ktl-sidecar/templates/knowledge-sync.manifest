@@ -16,7 +16,7 @@
 #       host.
 #   titled <template> <copy>
 #       As copy, but the host keeps its own first line, which names the
-#       host, and its own `schema :=` line, which names its domain schema.
+#       host, and its own `schema :=` line, which names its domain vocabulary.
 #   always <template> <step>
 #       ktl-sidecar's <step> installs the template on every host, whatever
 #       else the host chose, so a host that lacks the copy gets it.

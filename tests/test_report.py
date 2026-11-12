@@ -1125,7 +1125,7 @@ def test_a_linked_bundle_is_read_as_any_other(tmp_path):
         "rules:\n  - name: one\n    target_concept: https://acme.example/knowledge/x/hub\n",
     ],
 )
-def test_reliance_counts_a_whole_iri_in_a_domain_schemas_own_slot(tmp_path, slot):
+def test_reliance_counts_a_whole_iri_in_a_domain_vocabularys_own_slot(tmp_path, slot):
     """A host's schema adds slots ranged over Concept, which no list in the script can name, and the curator's queue undercounted what relies on their targets."""
     kk = tmp_path / ".lokf" / "knowledge"
     write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")

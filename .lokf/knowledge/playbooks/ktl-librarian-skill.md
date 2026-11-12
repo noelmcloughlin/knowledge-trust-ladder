@@ -15,7 +15,7 @@ sources:
   - resource: skills/ktl-librarian/references/patch.md
   - resource: skills/ktl-librarian/references/ingest.md
     id: references-ingest.md
-  - resource: skills/ktl-librarian/references/domain-schema.md
+  - resource: skills/ktl-librarian/references/domain-vocabulary.md
   - resource: skills/ktl-librarian/references/agent-skills.md
   - resource: skills/ktl-librarian/references/retellings.md
   - resource: skills/ktl-librarian/references/portability.md
@@ -30,7 +30,7 @@ sources:
   - resource: .lokf/justfile
 generated:
   by: process:ktl-librarian
-  at: "2026-11-08T00:18:14Z"
+  at: "2026-11-12T14:46:38Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -121,9 +121,9 @@ The tooling-version check, step 7 of a refresh, runs **only in interactive sessi
 
 ## Reference pages
 
-**Extending the vocabulary.** Rule 3's classes are few and portable. A domain needing more of its own gets a LinkML schema that imports LOKF's and validates with `lokf validate --schema <file>`. `references/domain-schema.md` is the recipe: a pinned copy of the core schema in `.lokf/schema/`, the domain schema beside it, frontmatter naming the class exactly, and one `schema` variable in the sidecar's justfile. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass that variable as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. Rule 3 reads that variable back: where it names a file, every `Concept` descendant in that file or any file it imports in turn is part of the vocabulary, and a record names the subclass. The tooling-version step refreshes the pinned copy.
+**Extending the vocabulary.** Rule 3's classes are few and portable. A domain needing more of its own gets a domain vocabulary, a LinkML file that imports LOKF's and validates with `lokf validate --schema <file>`. `references/domain-vocabulary.md` is the recipe: a pinned copy of the core schema in `.lokf/schema/`, the domain vocabulary beside it, frontmatter naming the class exactly, and one `schema` variable in the sidecar's justfile. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass that variable as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes. Rule 3 reads that variable back: where it names a file, every `Concept` descendant in that file or any file it imports in turn is part of the vocabulary, and a record names the subclass. The tooling-version step refreshes the pinned copy.
 
-The variable names the root file in `.lokf/schema/` (0.62.0), whose imports reach `lokf` and the folder's other files, in subfolders too. A schema that a LinkML project owns stays in that project: in `.linkml/src/<slug>/schema/` from the linkml-sidecar skill, in `src/<slug>/schema/` at the repository's root, or in another repository. Its copy goes into `.lokf/schema/`, adapted with `lokf adapt` or taken from a release that is adapted already, and the variable names the copy. A published vocabulary the domain schema needs does not go into `imports:` as it is, since LinkML merges every imported name into one namespace; `lokf adapt`, released in lokf 0.9.0, writes a copy that sits beside `lokf.yaml` (0.55.1). `ktl-curator/references/domain-schemas.md` covers when; this covers how.
+The variable names the root file in `.lokf/schema/` (0.62.0), whose imports reach `lokf` and the folder's other files, in subfolders too. A domain schema, which a LinkML project owns, stays in that project: in `.linkml/src/<slug>/schema/` from the linkml-sidecar skill, in `src/<slug>/schema/` at the repository's root, or in another repository. Its copy goes into `.lokf/schema/`, adapted with `lokf adapt` or taken from a release that is adapted already, and the variable names the copy. A published schema the domain vocabulary needs does not go into `imports:` as it is, since LinkML merges every imported name into one namespace; `lokf adapt`, released in lokf 0.9.0, writes a copy that sits beside `lokf.yaml` (0.55.1). `ktl-curator/references/domain-vocabularies.md` covers when; this covers how.
 
 **A host of Agent Skills.** `references/agent-skills.md` is for a repository whose content is Agent Skills. The librarian derives one `Playbook` concept, with `genre: how-to`, for each skill the host authors, and leaves out installed and vendored skills. A skill template gets no concept of its own. The procedure stays in `SKILL.md`, and the concept holds what the skill is for, what it needs and how it relates to the host's other skills. A skill the repository deprecates stays a fact in the concept, apart from the curator's `status: deprecated`. A miss that a skill's own `description` should have prevented goes to the reviewer in a hand-off line, since only a person changes that description.
 

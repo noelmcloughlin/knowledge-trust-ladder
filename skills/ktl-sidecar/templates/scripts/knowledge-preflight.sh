@@ -246,7 +246,7 @@ if have uv; then
   case "${floor:-}" in
     0.[0-8]|0.[0-8].*) warn toolkit "the floor is >=$floor and the justfile's recipes need lokf 0.9.0 - raise it to \"lokf[build]>=0.9.0\" in .lokf/pyproject.toml and run uv lock there" ;;
   esac
-  # A domain schema imports the copy of LOKF core beside it, and the gate
+  # A domain vocabulary imports the copy of LOKF core beside it, and the gate
   # runs the lokf that uv.lock pins, which may be newer than the floor. A
   # copy from another release can reject a concept that lokf reads: 0.9.0
   # reads a bare-date stale_after as a datetime, which 0.8.0's copy rejects.
@@ -257,7 +257,7 @@ if have uv; then
   for core in .lokf/schema/lokf.yaml .lokf/lokf.yaml; do
     copy="$(sed -n 's/^version: *\([0-9.]*\).*/\1/p' "$root/$core" 2>/dev/null | head -n 1)"
     if [ -n "$copy" ] && [ -n "$pinned" ] && [ "$copy" != "$pinned" ]; then
-      warn core "$core is lokf $copy's schema and the toolkit is lokf $pinned - copy the installed package's lokf.yaml over it, as step 1 of ktl-librarian's domain-schema recipe shows"
+      warn core "$core is lokf $copy's schema and the toolkit is lokf $pinned - copy the installed package's lokf.yaml over it, as step 1 of ktl-librarian's domain-vocabulary.md shows"
     fi
   done
   if have just; then ok just "just $(just --version 2>/dev/null | sed 's/^just //')"; else info just "just not installed - uvx --from rust-just just works the same"; fi
@@ -288,7 +288,7 @@ if [ -n "$tschema" ] && [ -z "$jschema" ]; then
 elif [ -n "$tschema" ] && [ "$tschema" != "$jschema" ]; then
   warn schema "[tool.lokf] schema in .lokf/pyproject.toml is $tschema and the justfile's schema line is $jschema - the recipes check against the line, a bare lokf command against pyproject.toml; set both to one path"
 fi
-# Schema files belong in .lokf/schema/: the domain schema, the copy of LOKF
+# Schema files belong in .lokf/schema/: the domain vocabulary, the copy of LOKF
 # core and each file the schema imports. A sidecar laid out before the
 # folder keeps them at the root of .lokf/. A root file with a namesake in
 # schema/ is a copy left behind, since the sync keeps only the one in

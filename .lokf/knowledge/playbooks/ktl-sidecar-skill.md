@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-02T13:29:19Z"
+  at: "2026-11-12T14:46:38Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -152,13 +152,13 @@ Since 0.55.2 the preflight asks the package index uv reads: PyPI, or the mirror 
 
 Since 0.56.1 the sidecar's `pyproject.toml` names `rust-just==1.47.0`, so the workflows run the `just` that `uv.lock` pins, checked by hash. A host that has not added it gets the same version fetched by name, and the preflight's `just-pin` line says to run `uv add rust-just==1.47.0` in `.lokf/`. `references/automation.md` lists the recipe runner as a fourth pin no update tool moves, kept in step with the workflows' `uvx --from rust-just==` fallback.
 
-The preflight warns on its `python` line when python3 is older than 3.9, and on its `root` line when it screened the skill's own folder rather than the repository. Its `scripts` line warns when uv, or `.lokf/.venv`, cannot install the pen's and the conventions script's own packages, which stops ktl-librarian writing and the gate's conventions check running. Its `toolkit` line warns when the floor in `.lokf/pyproject.toml` is below 0.9.0, which the recipes need. Its `core` line warns when `.lokf/lokf.yaml`, the copy of LOKF core a domain schema imports, is from another `lokf` release than the one `.lokf/uv.lock` pins.[^ktl-sidecar-prerequisites.md] Its `schema` line warns when `[tool.lokf] schema` names another file than the justfile's `schema :=` line. A `lokf` command given no `--schema` reads the first, and so does a recipe when the line is empty, while the release, the website and the librarian read only the second.[^ktl-sidecar-prerequisites.md]
+The preflight warns on its `python` line when python3 is older than 3.9, and on its `root` line when it screened the skill's own folder rather than the repository. Its `scripts` line warns when uv, or `.lokf/.venv`, cannot install the pen's and the conventions script's own packages, which stops ktl-librarian writing and the gate's conventions check running. Its `toolkit` line warns when the floor in `.lokf/pyproject.toml` is below 0.9.0, which the recipes need. Its `core` line warns when a copy of LOKF core that a domain vocabulary imports, `.lokf/schema/lokf.yaml` or `.lokf/lokf.yaml`, is from another `lokf` release than the one `.lokf/uv.lock` pins.[^ktl-sidecar-prerequisites.md] Its `schema` line warns when `[tool.lokf] schema` names another file than the justfile's `schema :=` line. A `lokf` command given no `--schema` reads the first, and so does a recipe when the line is empty, while the release, the website and the librarian read only the second.[^ktl-sidecar-prerequisites.md]
 
 The preflight also lists KTL skills installed for one user, under `~/.copilot/skills/`, `~/.claude/skills/` or `~/.agents/skills/`. Those serve that user's live sessions, but the scheduled librarian runs on a fresh runner and needs a copy in the repository (`references/prerequisites.md`).
 
 [^gate.md]: skills/ktl-sidecar/references/gate.md, "The eighteen conventions"
 [^changelog.md]: CHANGELOG.md, 0.57.0 to 0.59.0
-[^automation.md]: skills/ktl-sidecar/references/automation.md, the librarian's variables, the domain schema beside the release, and the `ingest` job
+[^automation.md]: skills/ktl-sidecar/references/automation.md, the librarian's variables, the domain vocabulary beside the release, and the `ingest` job
 [^knowledge-federation.yaml]: skills/ktl-sidecar/templates/github/knowledge-federation.yaml, the `nudge` job
 [^ktl-sidecar-prerequisites.md]: skills/ktl-sidecar/references/prerequisites.md, the `ingest`, `toolkit` and `schema` rows
 

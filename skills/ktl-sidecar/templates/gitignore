@@ -26,7 +26,7 @@ patch.yaml
 # .cache/mirror/, which is never committed.
 .cache/
 
-# The knowledge website's sync writes the domain schema's pages here with
+# The knowledge website's sync writes the domain vocabulary's pages here with
 # gen-doc when no other gen-doc recipe exists. They are built, not written.
 docs/elements/
 

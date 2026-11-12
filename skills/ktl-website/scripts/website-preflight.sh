@@ -253,7 +253,7 @@ fi
 # These lines find the schema's pages and the data as scripts/config.mjs
 # finds them. The schema's pages come from a justfile with a gen-doc recipe,
 # in the root, a linkmo project's folder or .linkml/, else from the domain
-# schema on .lokf/justfile's schema line, a plain YAML path that gen-doc
+# vocabulary on .lokf/justfile's schema line, a plain YAML path that gen-doc
 # reads in the sidecar's environment. The data comes from a
 # build-browse recipe, and its databases stay off the site until a person
 # sets BROWSE. A justfile goes by any name just reads, and a recipe line may
@@ -284,7 +284,7 @@ if [ -z "$schema_cmd" ] && [ -f "$root/.lokf/justfile" ]; then
   s="$(sed -n 's/^schema := "\([^"]*\)"\r\{0,1\}$/\1/p' "$root/.lokf/justfile" | head -n 1)"; s="${s#./}"
   case "$s" in *..*) s="" ;; esac
   if printf '%s\n' "$s" | grep -qE '^[A-Za-z0-9_][A-Za-z0-9._/-]*\.ya?ml$' && [ -f "$root/.lokf/$s" ]; then
-    schema_from="the sidecar's domain schema .lokf/$s"; schema_dir=".lokf/docs/elements"
+    schema_from="the sidecar's domain vocabulary .lokf/$s"; schema_dir=".lokf/docs/elements"
     schema_cmd="cd .lokf && uv run --frozen gen-doc $s --directory docs/elements --render-imports"
   fi
 fi
@@ -297,7 +297,7 @@ if [ -n "$schema_cmd" ]; then
     warn schema "git does not ignore .lokf/docs/elements/, so the pages the sync builds there would show as changes - add docs/elements/ to .lokf/.gitignore, as the sidecar's template does"
   fi
 else
-  info schema "no justfile with a gen-doc recipe in the root, a linkmo project or .linkml/, and no domain schema on .lokf/justfile's schema line - no Schema topic (SCHEMA)"
+  info schema "no justfile with a gen-doc recipe in the root, a linkmo project or .linkml/, and no domain vocabulary on .lokf/justfile's schema line - no Schema topic (SCHEMA)"
 fi
 browse_cmd=""
 if [ -n "$linkmo" ]; then

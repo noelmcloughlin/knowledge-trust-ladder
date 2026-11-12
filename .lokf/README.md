@@ -54,7 +54,7 @@ uv run lokf serve knowledge
 uv run lokf convert knowledge --format ttl
 ```
 
-When the justfile's `schema` line names a domain schema, run the recipes instead: `uv run just lokf-validate` needs no other install, and passes the schema.
+When the justfile's `schema` line names a domain vocabulary, run the recipes instead: `uv run just lokf-validate` needs no other install, and passes it.
 
 ## Add or edit a concept
 

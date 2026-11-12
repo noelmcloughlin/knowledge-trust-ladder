@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-11-02T13:29:19Z"
+  at: "2026-11-12T14:46:38Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -46,7 +46,7 @@ The folder `website/` builds the project's site with Astro Starlight. The Knowle
 
 - Each release page links the repository, the docs and the bundle at the release's tag, so a reader can see them as they stood. The commit that promotes a release's changelog skips CI, so its page appears with the next build: the workflow's weekly run at the latest, or a run by hand.
 
-- The LinkML schema's pages, which `gen-doc` writes, become a page each under `schema/`, with their class diagrams drawn in the browser. Failing a `gen-doc` recipe, the schema page instead shows the sidecar's own domain schema, built into `.lokf/docs/elements/` with `gen-doc --render-imports` in the sidecar's environment.
+- The LinkML schema's pages, which `gen-doc` writes, become a page each under `schema/`, with their class diagrams drawn in the browser. Failing a `gen-doc` recipe, the schema page instead shows the sidecar's own domain vocabulary, built into `.lokf/docs/elements/` with `gen-doc --render-imports` in the sidecar's environment.
 
 - SQLite databases, when `site.config.mjs` names their folder, are served under `browse/` with a page that opens each in Datasette Lite. Neither the data's folder nor the schema's is committed, so the sync runs the command that builds each when it is missing.
 
