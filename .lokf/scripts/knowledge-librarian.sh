@@ -69,13 +69,17 @@ cd "$repo_root"
 # publishes the skills it also uses. If this repo uses a different one, add it
 # here. A candidate list that does not match the repo fails this whole script
 # at run time, not when the sidecar is installed.
+#
+# .agents/skills/ comes first: the scheduled workflow installs the pinned
+# skill there, and a copy the host committed under another folder, perhaps an
+# older one, must not be what the unattended agent is handed in its place.
 skill=""
-for candidate in .claude/skills/ktl-librarian/SKILL.md .github/skills/ktl-librarian/SKILL.md \
-                 .agents/skills/ktl-librarian/SKILL.md skills/ktl-librarian/SKILL.md; do
+for candidate in .agents/skills/ktl-librarian/SKILL.md .claude/skills/ktl-librarian/SKILL.md \
+                 .github/skills/ktl-librarian/SKILL.md skills/ktl-librarian/SKILL.md; do
   if [ -f "$candidate" ]; then skill="$candidate"; break; fi
 done
 [ -n "$skill" ] || {
-  echo "knowledge-librarian: ktl-librarian SKILL.md not found in .claude/skills/, .github/skills/, .agents/skills/, or skills/" >&2
+  echo "knowledge-librarian: ktl-librarian SKILL.md not found in .agents/skills/, .claude/skills/, .github/skills/, or skills/" >&2
   exit 2
 }
 
@@ -414,9 +418,15 @@ main() {
   trap 'exit 130' INT
   trap 'exit 143' TERM
 
-  local before_outside before_all
+  local before_outside before_all before_flags
   before_outside="$(outside_bundle)"
   before_all="$(changed_paths)"
+  # The checks below read `git status`, which says nothing of a file whose
+  # index entry is flagged skip-worktree or assume-unchanged. An agent that
+  # set a flag on a script here could replace it unseen, so the flags are
+  # read before and after. A sparse checkout has such entries of its own,
+  # and only a change to them is refused.
+  before_flags="$(git ls-files -v | grep -v '^H ' || true)"
 
   echo "knowledge-librarian: refreshing the .lokf/ bundle via AGENT_CLI"
   # The subshell exports the key under the agent's own name and then becomes
@@ -430,6 +440,13 @@ main() {
   # Restore before the checks below read git, not only at exit.
   restore_git_state
   clear_outputs
+
+  if [ "$(git ls-files -v | grep -v '^H ' || true)" != "$before_flags" ]; then
+    echo "knowledge-librarian: the agent changed which files git watches (a skip-worktree or assume-unchanged flag) - refusing:" >&2
+    comm -13 <(printf '%s\n' "$before_flags" | sort) <(git ls-files -v | grep -v '^H ' | sort) | sed '/^$/d; s/^/  /' >&2
+    rm -f .lokf/patch.yaml
+    exit 3
+  fi
 
   # The agent's one output is .lokf/patch.yaml. Anything else it changed,
   # inside the bundle or out, is refused before the file is applied: the

@@ -156,6 +156,22 @@ case "${POISON_THEN:-fail}" in
 esac
 """,
         ),
+        # Tells git to stop watching the pen, then replaces it.
+        "unwatch": executable(
+            d / "unwatch-agent.sh",
+            r"""#!/usr/bin/env bash
+git update-index --skip-worktree .lokf/scripts/knowledge-apply.sh
+printf '#!/usr/bin/env bash\nprintf planted > .lokf/knowledge/planted.txt\n' > .lokf/scripts/knowledge-apply.sh
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+""",
+        ),
+        # Writes the whole prompt it was handed to PROMPT_OUT.
+        "prompt": executable(
+            d / "prompt-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$@" > "$PROMPT_OUT"
+""",
+        ),
         # Records how many arguments it got, and the first line of the first and of the last.
         "argv": executable(
             d / "argv-agent.sh",
@@ -308,6 +324,29 @@ def test_the_wrapper_runs_where_git_keeps_its_folder_elsewhere_or_holds_no_hooks
     assert (status, wrote) == (0, True), f"{where}: the wrapper did not run the patch (exit {status}, wrote {wrote})"
     if where == "no hooks folder":
         assert not (h / ".git" / "hooks").exists(), "the wrapper made a hooks folder the clone did not have"
+
+
+def test_an_agent_that_tells_git_to_stop_watching_a_file_is_refused(host, agents):
+    """`git status` says nothing of a file flagged skip-worktree, so the pen replaced under that flag once ran as the pen."""
+    status = wrapper(host, {"AGENT_CLI": agents["unwatch"], "PATCH_TEXT": CREATE_OP})
+    planted = (host / ".lokf" / "knowledge" / "planted.txt").exists()
+    assert (status, planted) == (3, False), f"an agent that hid its edit behind an index flag was not refused (exit {status}, planted {planted})"
+
+
+def test_the_skill_the_workflow_installed_is_the_one_the_agent_is_handed(tmp_path, agents):
+    """A copy the host committed under .claude/skills/ once came first, so the pinned install was not what ran."""
+    h = make_host(tmp_path / "host", "default")
+    shutil.rmtree(h / "skills")
+    write(h / ".claude" / "skills" / "ktl-librarian" / "SKILL.md", "# an older copy the host committed\n")
+    git(h, "add", "-A", ".")
+    git(h, "commit", "-q", "-m", "a committed copy of the skill")
+    write(h / ".agents" / "skills" / "ktl-librarian" / "SKILL.md", "# the pinned install\n")
+    write(h / ".git" / "info" / "exclude", ".agents/\n")
+    out = tmp_path / "prompt.txt"
+    status = wrapper(h, {"AGENT_CLI": agents["prompt"], "PROMPT_OUT": out})
+    assert status == 0 and ".agents/skills/ktl-librarian/SKILL.md" in read(out) and ".claude/skills/ktl-librarian" not in read(out), (
+        f"the agent was not handed the installed skill (exit {status}): {read(out)[:400] if out.exists() else 'no prompt'}"
+    )
 
 
 @pytest.mark.parametrize("agent", ["self-apply-sh", "self-apply-py"])

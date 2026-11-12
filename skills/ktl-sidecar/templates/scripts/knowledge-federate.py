@@ -1817,6 +1817,8 @@ def link_counts(links: list[dict]) -> list[dict]:
 QUERIES = {
     "labels.rq": """# Each concept's trust label, with the bundle that asserted it (GRAPH ?g binds its base_iri).
 # The same rules as knowledge-report.sh, against the clock at the moment of the query.
+# Two times are compared as times, so one written with an offset sorts by its
+# moment. Where an engine cannot compare them, the spellings are compared.
 PREFIX lokf: <https://w3id.org/lokf/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX schema: <http://schema.org/>
@@ -1825,7 +1827,7 @@ SELECT ?g ?c ?title ?label WHERE {
   OPTIONAL { GRAPH ?g { ?c lokf:verified ?h . ?h prov:wasAssociatedWith ?by ; prov:endedAtTime ?at . FILTER(STRSTARTS(STR(?by), "human:")) } }
   OPTIONAL { GRAPH ?g { ?c lokf:verified ?any . } }
   OPTIONAL { GRAPH ?g { ?c prov:wasGeneratedBy ?gen . ?gen prov:endedAtTime ?edited . } }
-  BIND(IF(BOUND(?at) && BOUND(?edited) && STR(?edited) > STR(?at), "edited since a person confirmed it",
+  BIND(IF(BOUND(?at) && BOUND(?edited) && COALESCE(?edited > ?at, STR(?edited) > STR(?at)), "edited since a person confirmed it",
        IF(BOUND(?at), "confirmed by a person",
        IF(BOUND(?any), "checked by automation only", "nobody has checked this yet"))) AS ?label)
 }
@@ -1845,7 +1847,7 @@ SELECT ?member ?title ?edited (MAX(?at) AS ?lastConfirmed) WHERE {
   }
 }
 GROUP BY ?member ?title ?edited
-HAVING (!BOUND(?lastConfirmed) || STR(?edited) > STR(MAX(?at)))
+HAVING (!BOUND(?lastConfirmed) || COALESCE(?edited > MAX(?at), STR(?edited) > STR(MAX(?at))))
 ORDER BY ?member
 """,
     "unowned.rq": """# Typed-relation targets that lie in no member's namespace: the first half of the gate, as SPARQL over the lock graph's void:uriSpace list.
