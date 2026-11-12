@@ -12,7 +12,7 @@ sources:
   - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-12T18:10:56Z"
 status: draft
 isPartOf:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
@@ -23,7 +23,7 @@ references:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
-  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/explanation/domain-vocabularies
 verified:
   - by: process:ktl-librarian
     at: "2026-10-29T00:48:33Z"
@@ -97,7 +97,7 @@ The snapshot does not update itself. After each release that changes the bundle,
 
 # Which roles go to Copilot
 
-`.lokf/m365/` holds one instructions file per read-only role, named after the skill it becomes: `ktl-docent-m365.md`, not `SKILL.md`, so no installer lists it. The builder packs each file into its own zip. An auditor, the third line, would be `ktl-auditor-m365.md` beside it, with no change to the builder, workflow or checks. The sidecar and librarian need a repository and a shell, so they have no Copilot form. The curator has none yet. It needs a write action the agent can call and an identity that is not a forge login. The curator's `references/domain-vocabularies.md` holds the shape of that identity record (see [domain vocabularies](../explanation/domain-schemas.md)).
+`.lokf/m365/` holds one instructions file per read-only role, named after the skill it becomes: `ktl-docent-m365.md`, not `SKILL.md`, so no installer lists it. The builder packs each file into its own zip. An auditor, the third line, would be `ktl-auditor-m365.md` beside it, with no change to the builder, workflow or checks. The sidecar and librarian need a repository and a shell, so they have no Copilot form. The curator has none yet. It needs a write action the agent can call and an identity that is not a forge login. The curator's `references/domain-vocabularies.md` holds the shape of that identity record (see [domain vocabularies](../explanation/domain-vocabularies.md)).
 
 A host's copy under `.lokf/m365/` is what its releases pack, so a host that edits it changes what its readers' Copilot follows. Its trust labels must match ktl-docent's, and the repository checks enforce that.
 

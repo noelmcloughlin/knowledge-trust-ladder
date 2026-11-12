@@ -2,6 +2,9 @@
 
 ## 2026-11-12
 
+* **Added**: When the built-in vocabulary stops fitting: domain vocabularies, the explanation `explanation/domain-schemas.md` held, now at a path that names its term. The old concept stays until a person retires it and names this one as its successor.
+* **Changed**: concepts that linked the domain-vocabulary explanation link `explanation/domain-vocabularies.md`, its new path.
+* **Changed**: concepts that linked the domain-vocabulary explanation link `explanation/domain-vocabularies.md`, its new path. `playbooks/knowledge-sources.md` was edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the release, threat-model, sidecar and curator concepts name the evidence table a release attaches, and the samples `knowledge-report.sh sample` draws.
 * **Changed**: the release, threat-model, sidecar and curator concepts name the evidence table a release attaches, and the samples `knowledge-report.sh sample` draws. `policies/threat-model.md` was edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the release, threat-model, sidecar and curator concepts name the evidence table a release attaches, and the samples `knowledge-report.sh sample` draws. `playbooks/ktl-curator-skill.md` was edited since a person confirmed it; the label says so until the curator looks again.
