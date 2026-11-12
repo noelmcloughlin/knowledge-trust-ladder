@@ -330,8 +330,21 @@ trap 'rm -rf "$tmp"' EXIT
 # shellcheck disable=SC2016 # awk's own $0, not the shell's
 extract='
 function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
-function unq(s,  a, z) {
-  s = trim(s); a = substr(s, 1, 1); z = substr(s, length(s), 1)
+# Where a quoted value closes: the quote that matches its first character,
+# past an escaped one. Zero when it never closes.
+function endq(s, q,  i, c) {
+  for (i = 2; i <= length(s); i++) { c = substr(s, i, 1)
+    if (q == "\"" && c == "\\") { i++; continue }
+    if (c == q) { if (q == SQ && substr(s, i + 1, 1) == SQ) { i++; continue } return i } }
+  return 0
+}
+function unq(s,  a, z, k) {
+  s = trim(s); a = substr(s, 1, 1)
+  # A comment may follow a quoted value, as it may a plain one. Without this
+  # a quoted status or review date with a comment beside it kept its quotes,
+  # and the concept read as neither retired nor past its date.
+  if (a == "\"" || a == SQ) { k = endq(s, a); if (k > 1 && substr(s, k + 1) ~ /^[ \t]+#/) s = substr(s, 1, k) }
+  z = substr(s, length(s), 1)
   if (length(s) >= 2 && a == "\"" && z == "\"") { s = substr(s, 2, length(s) - 2); gsub(/\\"/, "\"", s) }
   else if (length(s) >= 2 && a == SQ && z == SQ) { s = substr(s, 2, length(s) - 2); gsub(SQ SQ, SQ, s) }
   else sub(/[ \t]+#.*$/, "", s)
@@ -362,8 +375,10 @@ function norm(v,   off, sign, oh, om, s) {
   # Z, so a time that is really UTC is not dropped and read as no stamp.
   # Seconds default to 00 when the time omits them, per trust-fields.md.
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9](:[0-9][0-9])?(\.[0-9]+)?[+-][0-9][0-9]:?[0-9][0-9]$/) {
+    # The last six characters are a colon offset whole. A compact one is
+    # five, so the six begin with a digit of the time.
     off = substr(v, length(v) - 5)
-    if (off ~ /^[+-][0-9][0-9][0-9][0-9]$/) off = substr(v, length(v) - 4)
+    if (off !~ /^[+-]/) off = substr(v, length(v) - 4)
     sign = (substr(off, 1, 1) == "-") ? -1 : 1
     oh = substr(off, 2, 2) + 0
     om = substr(off, length(off) - 1, 2) + 0
@@ -435,6 +450,9 @@ fm {
     else if (rest ~ /^\[/) { flowseq = 1; flowbuf = rest; inv = 0; if (index(rest, "]")) flushflow(); else inflow = 1 }
     next
   }
+  # A comment line inside an event block is no part of it and does not end
+  # it, as the provenance gate reads one.
+  if (inv && $0 ~ /^[ \t]*#/) next
   if (inv && $0 ~ /^[^ \t-]/) { emit(); inv = 0 }
   # The typed relations: the fourteen fields the schema ranges over Concept,
   # each a block list, a one-line flow list or a bare value, and `relations`,
@@ -515,7 +533,7 @@ END {
 facts() {  # every concept in the bundle -> its C, R and Q lines, and its V lines when `rows` is 1
   local f rel
   while IFS= read -r f; do
-    rel="${f#"$bundle"/}"
+    rel="${f#"$bundle"/}"; rel="${rel#/}"  # BSD find prints the start point's slash, then its own
     case "${rel##*/}" in index.md|log.md|diataxis.md) continue ;; esac
     awk -v path="$rel" -v SQ="'" -v rows="${rows:-0}" "$extract" "$f"
   done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort)
@@ -669,13 +687,22 @@ asked_since() {  # <gone|clean> <the source's last commit, or empty> <the source
 # URL is never fetched.
 moved() {
   [ "$tracked" = 1 ] || return 0
-  local src="$tmp/sources" res p line path ref human hn cdirty which at rec out state hash day entry asked aside dec qc qdone
+  local src="$tmp/sources" res p line path ref human hn cdirty which at rec out state hash day entry asked aside dec qc qdone spec
   printf '%s\n' "$all" | awk -F'\t' '$1 == "R" { print $3 }' | LC_ALL=C sort -u | while IFS= read -r res; do
     case "$res" in ""|*://*|/*) continue ;; esac
+    # An identifier with a scheme and no slashes after it, such as
+    # urn:ietf:rfc:9110 or doi:10.1000/182, names no file either. Two
+    # characters at least, so a Windows drive letter is still a path.
+    [[ "$res" =~ ^[A-Za-z][A-Za-z0-9+.-]+: ]] && continue
     p="${res%%#*}"
+    # The root itself, as a source map names it, holds the bundle too. Its
+    # own commits are the librarian's and move no source, so they are left
+    # out; without that, the work list was never quiet after the first run.
+    spec=("$p")
+    case "$p" in .|./) spec=(. ':(exclude).lokf' ':(exclude)knowledge_bundle') ;; esac
     if [ ! -e "$root/$p" ]; then printf '%s|gone|%s|-\n' "$res" "$(git -C "$root" log -1 --format=%H -- "$p" 2>/dev/null || true)"; continue; fi
-    if [ -n "$(git -C "$root" status --porcelain -- "$p" 2>/dev/null | head -1)" ]; then printf '%s|edited|-|-\n' "$res"; continue; fi
-    line="$(TZ=UTC git -C "$root" log -1 --format='%H %cd' --date=format-local:%Y-%m-%d -- "$p" 2>/dev/null || true)"
+    if [ -n "$(git -C "$root" status --porcelain -- "${spec[@]}" 2>/dev/null | head -1)" ]; then printf '%s|edited|-|-\n' "$res"; continue; fi
+    line="$(TZ=UTC git -C "$root" log -1 --format='%H %cd' --date=format-local:%Y-%m-%d -- "${spec[@]}" 2>/dev/null || true)"
     [ -n "$line" ] && printf '%s|clean|%s|%s\n' "$res" "${line%% *}" "${line##* }"
   done > "$src"
   printf '%s\n' "$all" | awk -F'\t' '$1 == "C" && $4 != "deprecated" { print $2 "|" $14 "|" $13 "|" $9 "|" (($9 > 0 && $7 != "" && $8 != "" && $7 > $8) ? 1 : 0) }' | while IFS='|' read -r path ref human hn wasedited; do
@@ -874,7 +901,8 @@ unconfirmed_successors() {
 lists() {  # mode
   { printf '%s\n' "$all"; printf '%s\n' "$times"; } | awk -F'\t' -v mode="$1" -v today="$today" -v git="$tracked" '
   function day(t) { return substr(t, 1, 10) }
-  $1 == "C" { order[++nc] = $2; status[$2] = $4; human[$2] = $8 }
+  $1 == "C" { order[++nc] = $2; status[$2] = $4; human[$2] = $8; if ($4 != "deprecated" && $7 == "" && $11 == "") bare_stamp[$2] = 1 }
+  $1 == "D" && $2 == "stamp" { k = $3; sub(/: no stamp yet$/, "", k); left_stamp[k] = 1 }
   $1 == "M" { moved[$2, $3] = $4 }
   $1 == "D" { declined[++ndec] = "- " $3 "; pull request #" $4 ", closed " $5 }
   $1 == "Q" { q[++nq] = $0 }
@@ -905,6 +933,10 @@ lists() {  # mode
       else print "Sources: not compared here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/); re-verify each concept against its source"
       for (i = 1; i <= nc; i++) { p = order[i]; if (("a", p) in moved) { n2++; body2 = body2 "- " p ": " moved["a", p] "\n" } }
       if (git == 1) section("Sources that moved, where your own question has waited for a person since", n2, body2)
+      # The concepts `quiet` counts as carrying no stamp, so a run it starts
+      # is told which they are.
+      for (i = 1; i <= nc; i++) { p = order[i]; if ((p in bare_stamp) && !(p in left_stamp)) { ns++; sbody = sbody "- " p ": no stamp\n" } }
+      section("Concepts with no stamp, neither derived by the pen nor checked", ns, sbody)
       section("Notes a person left that still wait", nw, w)
       section("Your own open questions", no, o)
       section("Open questions older than a person'"'"'s later confirmation", na, a)
@@ -1322,7 +1354,7 @@ EOF
 # absolute path and `.`, the root itself, name no file here.
 named_pairs() {
   printf '%s\n' "$all" | awk -F'\t' '$1 == "R" || $1 == "X" { p = $3; sub(/#.*/, "", p); sub(/^\.\//, "", p); sub(/\/+$/, "", p)
-    if (p != "" && p != "." && p !~ /:\/\// && p !~ /^\//) print $2 "\t" p "\t" ($1 == "R" ? "N" : "X") }' | LC_ALL=C sort -u
+    if (p != "" && p != "." && p !~ /:\/\// && p !~ /^[A-Za-z][A-Za-z0-9+.-]+:/ && p !~ /^\//) print $2 "\t" p "\t" ($1 == "R" ? "N" : "X") }' | LC_ALL=C sort -u
 }
 # A path argument, under the root: each leading ./, repeated /, /./ and
 # trailing / or /. removed, and `.` for the root itself. It runs in a command

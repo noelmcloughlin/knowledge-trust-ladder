@@ -2049,3 +2049,88 @@ def test_the_evidence_table_leaves_out_index_md_and_log_md(audit):
     assert paths == sorted([*CONFIRMED, *AUTOMATION, "x/autodraft.md", "x/edited.md", "x/retired.md", "x/unchecked.md"]), (
         f"report script's evidence table holds a reserved file, or lacks a concept: {paths}"
     )
+
+
+# ---- what an audit of the report found, 2026-11-12 ---------------------------
+
+
+def labelled(tmp_path, name, frontmatter):
+    kk = tmp_path / ".lokf" / "knowledge"
+    if not (kk / "index.md").exists():
+        write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "t" / f"{name}.md", f"---\ntype: Service\ntitle: {name}\n{frontmatter}---\n")
+    return report(tmp_path, "labels", f"t/{name}.md").out
+
+
+CONFIRMED_AT_NOON = 'verified:\n  - by: human:ada\n    at: "2026-11-12T12:00:00Z"\n'
+
+
+@pytest.mark.parametrize("edited", ["2026-11-12T10:00:00-0500", "2026-11-12T10:00:00-05:00", "2026-11-12T16:00:00+0100"])
+def test_a_compact_offset_is_read_as_the_offset_it_is(tmp_path, edited):
+    """`date +%z` writes -0500. Read as UTC, an edit at 15:00Z hid behind a confirmation at noon."""
+    out = labelled(tmp_path, "m", f'generated:\n  by: process:ktl-librarian\n  at: "{edited}"\n{CONFIRMED_AT_NOON}')
+    assert "edited since a person last confirmed it (confirmed 2026-11-12T12:00:00Z, edited 2026-11-12T15:00:00Z)" in out, out
+
+
+def test_a_comment_beside_a_quoted_value_is_no_part_of_the_value(tmp_path):
+    out = labelled(tmp_path, "a", f'status: "deprecated"  # superseded in March\n{CONFIRMED_AT_NOON}')
+    assert out.rstrip().endswith("- retired"), f"a quoted status with a comment beside it was not read: {out}"
+    out = labelled(tmp_path, "b", "status: 'draft' # wip\nstale_after: \"2020-01-01\"  # quarterly\n")
+    assert "still a draft" in out and "past its review date (2020-01-01)" in out, f"a quoted review date with a comment beside it was not read: {out}"
+
+
+def test_a_comment_line_among_the_events_ends_no_event_block(tmp_path):
+    out = labelled(tmp_path, "c", 'verified:\n  - by: process:ktl-librarian\n    at: "2026-11-01T00:00:00Z"\n# a note in the first column\n  - by: human:ada\n    at: "2026-11-12T12:00:00Z"\n')
+    assert "confirmed by a person, 2026-11-12" in out, f"the event below a comment line went unread: {out}"
+
+
+def test_an_identifier_with_a_scheme_is_no_file_that_can_be_gone(tmp_path):
+    """A urn or a doi names no file, as the toolkit reads it. Listed as gone on every run, it kept the work list from ever being quiet."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "references" / "rfc.md", '---\ntype: Reference\ntitle: RFC\nresource: urn:ietf:rfc:9110\nsources:\n  - resource: doi:10.1000/182\n  - resource: "urn:isbn:0451450523"\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n---\n')
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    out = report(tmp_path, "worklist").out
+    assert has_line(out, "Sources that moved since the concept was derived or last checked: none") and "(gone)" not in out, out
+    assert report(tmp_path, "quiet").rc == 0, report(tmp_path, "quiet").out
+    assert "urn:" not in report(tmp_path, "coverage").out
+
+
+def test_the_root_as_a_source_moves_with_the_repository_and_not_with_the_bundle(tmp_path):
+    """A source map names `.`, which holds the bundle too: the librarian's own commit once moved it, so no later week was quiet."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(kk / "playbooks" / "map.md", f"---\ntype: Playbook\ntitle: Map\nresource: .\n{stamp}---\n")
+    write(kk / "glossary" / "a.md", f"---\ntype: GlossaryTerm\ntitle: A\nresource: README.md\n{stamp}---\n")
+    write(tmp_path / "README.md", "# Acme\n")
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    write(kk / "glossary" / "b.md", f"---\ntype: GlossaryTerm\ntitle: B\nresource: README.md\n{stamp}---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "a commit that touches the bundle alone")
+    quiet = report(tmp_path, "quiet")
+    assert quiet.rc == 0 and quiet.out.startswith("Quiet"), f"a bundle-only commit moved the root: {quiet.out}"
+    append(tmp_path / "README.md", "more\n")
+    git("commit", "-q", "-am", "a source moves")
+    out = report(tmp_path, "worklist").out
+    assert matches(out, r"^- playbooks/map\.md: \. \(\d{4}-\d\d-\d\d\)$"), f"a commit outside the bundle did not move the root: {out}"
+
+
+def test_the_work_list_names_each_concept_quiet_counts_as_having_no_stamp(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "glossary" / "a.md", "---\ntype: GlossaryTerm\ntitle: A\n---\n")
+    write(kk / "glossary" / "b.md", '---\ntype: GlossaryTerm\ntitle: B\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n---\n')
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    quiet, out = report(tmp_path, "quiet"), report(tmp_path, "worklist").out
+    assert quiet.rc == 1 and "concepts with no stamp: 1" in quiet.out, quiet.out
+    assert has_line(out, "Concepts with no stamp, neither derived by the pen nor checked: 1") and has_line(out, "- glossary/a.md: no stamp") and "glossary/b.md: no stamp" not in out, out
