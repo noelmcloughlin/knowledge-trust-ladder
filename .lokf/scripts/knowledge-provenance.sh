@@ -85,9 +85,35 @@ else
 fi
 [ -n "$base" ] || { echo "usage: knowledge-provenance.sh <base-ref> [head-ref] [bundle-dir] | --unattended [bundle-dir]" >&2; exit 2; }
 command -v git >/dev/null 2>&1 || { echo "git is required" >&2; exit 2; }
+# Every finding below comes out of one of these. With one missing the script
+# would find nothing, and a gate that could not look must not say OK.
+for tool in awk comm sort cut sed grep mktemp; do
+  command -v "$tool" >/dev/null 2>&1 || { echo "$tool is required, and this gate passes nothing it could not check" >&2; exit 2; }
+done
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not inside a git work tree" >&2; exit 2; }
 cd "$root" || exit 2
 curators=".lokf/curators"
+# The bundle is looked for in the repository's top folder. A sidecar kept in
+# a subfolder is one this gate does not read yet, and saying so is the
+# honest answer: "skipped" or "OK" there would pass whatever changed.
+if [ ! -d "$bundle" ] && [ -z "$(git ls-tree "$base" -- "$bundle" 2>/dev/null)" ]; then
+  echo "no bundle at $bundle in the repository's top folder ($root), so this gate has nothing it can read; a sidecar in a subfolder is not checked by it" >&2
+  exit 2
+fi
+if [ "$unattended" -eq 0 ]; then
+  # In a shallow clone the oldest commit fetched has no parent on disk, so
+  # everything it holds would read as its own change.
+  if [ "$(git rev-parse --is-shallow-repository 2>/dev/null || echo false)" = true ]; then
+    echo "this clone is shallow, so the commits of $base..$head cannot each be compared with a parent; fetch the full history (git fetch --unshallow)" >&2
+    exit 2
+  fi
+  # The keys are read from the files on disk. As a link, the folder could
+  # name keys the same change brings in under another path.
+  if [ -L "$curators" ]; then
+    echo "$curators is a symbolic link, so the keys in it are not this repository's own files - keep it a folder of key files"
+    exit 1
+  fi
+fi
 # A range that deletes the folder has not opted out: its confirmations then
 # name someone with no key on file. Only a base that never held it has.
 if [ "$unattended" -eq 0 ] && [ ! -d "$curators" ] && [ -z "$(git ls-tree "$base" -- "$curators" 2>/dev/null)" ]; then
@@ -188,8 +214,16 @@ human_events() {  # path -> events, reading the concept on stdin
   # reader skips, which would let a forged confirmation past the gate.
   # Accumulate from the opener to its closing bracket, then parse: a sequence
   # into its events, a mapping as one event.
-  function flushflow(  b, n, items, i) { b = flowbuf
+  # A bracket or a quote inside a quoted value would end the form early for
+  # this reader and not for a parser, and what follows the closing bracket
+  # is read by no rule. Either makes the block one this gate cannot read.
+  function flushflow(  b, n, items, i, q, tail) { b = flowbuf
     if (b ~ /(^|[[:space:]])#/) unread()
+    q = b; gsub(/"[^"]*"/, "", q); gsub(/'"'"'[^'"'"']*'"'"'/, "", q)
+    if (q ~ /["'"'"']/) unread()
+    tail = b; while (match(tail, /"[^"]*"|'"'"'[^'"'"']*'"'"'/)) { if (substr(tail, RSTART, RLENGTH) ~ /[][{}]/) unread(); tail = substr(tail, RSTART + RLENGTH) }
+    tail = q; if (flowseq) sub(/^[^]]*\]/, "", tail); else sub(/^[^}]*\}/, "", tail)
+    if (tail !~ /^[[:space:]]*$/) unread()
     if (flowseq) { sub(/^\[/, "", b); sub(/\].*/, "", b) } else { sub(/^\{/, "", b); sub(/\}.*/, "", b) }
     sub(/^[[:space:]]+/, "", b); sub(/[[:space:]]+$/, "", b)
     if (b != "") { if (flowseq) { n = split(b, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) if (items[i] !~ /^[[:space:]]*$/) flow(items[i]) } else flow(b) }
@@ -221,6 +255,9 @@ human_events() {  # path -> events, reading the concept on stdin
     else if (rest ~ /^\[/) { flowseq = 1; flowbuf = rest; inv = 0; if (index(rest, "]")) flushflow(); else inflow = 1 }
     else if (rest != "" && rest !~ /^#/ && rest !~ /^(null|~)$/) unread()
     next }
+  # A comment line inside the block is no part of it and does not end it:
+  # an event below a comment in the first column is still read.
+  inv && /^[[:space:]]*#/ { next }
   inv && /^[^[:space:]-]/ { emit(); inv = 0 }
   inv && /^[[:space:]]*-[[:space:]]*(#.*)?$/ { emit(); inev = 1; next }
   inv && /^[[:space:]]*-[[:space:]]*\{/ { rest = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", rest); flow(rest); next }
@@ -240,7 +277,9 @@ events_in() {  # ref, paths on stdin -> the human events of those paths at that 
 # is off. Git still quotes `"`, `\` and control characters, and the caller
 # refuses those.
 changed_paths() {  # commit, pathspecs... -> paths, one per line
-  git -c core.quotePath=false diff-tree --no-commit-id --name-only -r -m "$@" 2>/dev/null | sort -u
+  # --root: a commit with no parent, as a history merged in from elsewhere
+  # starts with, is compared with the empty tree, so what it adds is read.
+  git -c core.quotePath=false diff-tree --root --no-commit-id --name-only -r -m "$@" 2>/dev/null | sort -u
 }
 
 # The events a commit removes: those every parent held that it no longer
@@ -362,11 +401,12 @@ fi
 # removes: a confirmation by one of them in the same range fails before its
 # signature is checked.
 commits="$(git rev-list --reverse "$base..$head" 2>/dev/null)" || { echo "cannot resolve $base..$head" >&2; exit 2; }
+# The two ends are compared, not each commit with each parent: a merge of the
+# default branch, where a key was added in a reviewed change of its own,
+# differs from one parent and brings nothing the base does not hold.
 rekeyed=""
-for sha in $commits; do
-  for f in $(changed_paths "$sha" -- "$curators"); do
-    f="${f##*/}"; rekeyed="$rekeyed ${f%.*}"
-  done
+for f in $(git -c core.quotePath=false diff --no-renames --name-only "$base" "$head" -- "$curators" 2>/dev/null); do
+  f="${f##*/}"; rekeyed="$rekeyed ${f%.*}"
 done
 rekeyed_said=""
 
@@ -425,6 +465,10 @@ for sha in $commits; do
         say "$short $does a confirmation by human:$id, which is not a login this gate can check (letters, digits, . _ - only)"
         continue ;;
     esac
+    if [ -L "$curators/$id.asc" ] || [ -L "$curators/$id.pub" ]; then
+      say "$short $does a confirmation by human:$id, whose key on file is a symbolic link - a key is a file of its own"
+      continue
+    fi
     has_asc=0; has_pub=0
     [ -f "$curators/$id.asc" ] && has_asc=1
     [ -f "$curators/$id.pub" ] && has_pub=1

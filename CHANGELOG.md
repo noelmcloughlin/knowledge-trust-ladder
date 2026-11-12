@@ -20,6 +20,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run.** A dropped connection left a cut page mirrored as whole. A body that UTF-8 cannot write no longer fails its whole entry, and an exclude pattern with no slash leaves a file out of every folder.
 - **The librarian's wrapper runs in a linked work tree and in a clone with no hooks folder, and a sync leaves a clone given as `--source` whole.** The sync fetched the host's old tag into that clone with `--depth 1`.
 - **The website preflight prints no credential that the remote's address carries.**
+- **The provenance gate reads five confirmations it once passed unseen.** An event below a comment line, one after a bracket inside a quoted value, one in a commit with no parent, one vouched for by a key behind a link, and any in a sidecar it could not find. It stops on a shallow clone and on a missing tool, and no longer refuses a merge of a branch where a key was added in a change of its own. `knowledge-registrar.yaml` carries the same reader.
 
 ## [0.64.0] - 2026-11-12
 
