@@ -259,7 +259,7 @@ The `attach` job holds `contents: write`, runs no third-party packages, checks t
 
 ## `knowledge-federation.yaml`: the workspace of a domain host
 
-A domain host is one whose bundle names other bundles. Each `MemberBundle` concept (or `MemberDomain`, when that bundle is a domain in turn) names one released zip and its checksum. A person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. The design is the skills repository's `docs/federation.md`, and `templates/domain.yaml` is the schema. Three files make it run, and nothing in them runs a model.
+A domain host is one whose bundle names other bundles. Each `MemberBundle` concept (or `MemberDomain`, when that bundle is a domain in turn) names one released zip and its checksum. A person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. The design is the skills repository's `docs/federation.md`, and `templates/domain.yaml` is its domain vocabulary. Three files make it run, and nothing in them runs a model.
 
 - **The build.** `uv run --project .lokf .lokf/scripts/knowledge-federate.py build --tag <tag>` resolves the members into `snapshot/workspace.lock.yaml`. It fetches each zip into a temporary folder and removes the folder when the run ends, as the members script does, unless `--cache <folder>` names a folder to keep the files in by digest. It fetches over http or https from a public address only: a local path or `file://` address needs `--allow-local`, and a private address a person's `private_addresses: allow` on the top Domain concept, for a forge on the host's own network.
 
