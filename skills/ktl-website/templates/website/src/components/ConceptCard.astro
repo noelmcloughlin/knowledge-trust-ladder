@@ -122,8 +122,11 @@ const checker = lastCheck && actor(lastCheck.by);
           <dt>Sources</dt>
           <dd>
             <ul>
-              {concept.sources.map((s: { text: string; href: string }) => (
-                <li><a href={s.href}><code>{s.text}</code></a></li>
+              {concept.sources.map((s: { text: string; href: string; quote?: string }) => (
+                <li>
+                  <a href={s.href}><code>{s.text}</code></a>
+                  {s.quote && <blockquote class="quote" title="The passage this concept quotes from the source">{s.quote}</blockquote>}
+                </li>
               ))}
             </ul>
           </dd>

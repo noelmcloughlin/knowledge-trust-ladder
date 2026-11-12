@@ -37,7 +37,9 @@ const concept = z.object({
   // The open questions under the concept's `## Open questions` heading, shown
   // on the card beside a reopened label.
   questions: z.array(z.object({ date: z.string(), by: z.string(), text: z.string() })).default([]),
-  sources: z.array(link).default([]),
+  // `quote` is the passage the concept's entry for this source carries as its
+  // `excerpt`, which the registrar's gate finds in the file.
+  sources: z.array(link.extend({ quote: z.string().optional() })).default([]),
   relations: z.array(z.object({ name: z.string(), targets: z.array(link) })).default([]),
   incoming: z.array(z.object({ name: z.string(), from: link })).default([]),
   licence: z.object({ text: z.string(), href: z.string().optional() }).optional(),

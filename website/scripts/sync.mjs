@@ -478,11 +478,17 @@ function buildConcepts(exported, labels) {
       if (!out.has(name)) out.set(name, []);
       out.get(name).push(linkTo(e.target));
     }
+    // Each source with the passage the concept quotes from it, when its entry
+    // carries an `excerpt`. The card shows the passage under the source.
     const sources = (Array.isArray(c.data.sources) ? c.data.sources : [])
-      .map((s) => (typeof s === "string" ? s : s.resource ?? s.url ?? s.id))
-      .filter(Boolean)
-      .map(String);
-    if (sources.length === 0 && c.data.resource) sources.push(String(c.data.resource));
+      .map((s) =>
+        typeof s === "string"
+          ? { at: s, quote: "" }
+          : { at: s?.resource ?? s?.url ?? s?.id, quote: typeof s?.excerpt === "string" ? s.excerpt.replace(/\s+/g, " ").trim() : "" },
+      )
+      .filter((s) => s.at)
+      .map((s) => ({ at: String(s.at), quote: s.quote }));
+    if (sources.length === 0 && c.data.resource) sources.push({ at: String(c.data.resource), quote: "" });
     const event = (e) => ({ by: String(e.by ?? ""), at: String(e.at ?? ""), ...(e.note ? { note: String(e.note) } : {}) });
     // A concept takes the bundle's licence unless it declares its own.
     const licence = c.data.license ?? root.license;
@@ -503,14 +509,15 @@ function buildConcepts(exported, labels) {
       ...(c.data.generated ? { generated: event(c.data.generated) } : {}),
       verified: (Array.isArray(c.data.verified) ? c.data.verified : []).map(event),
       questions: openQuestions(c.body),
-      sources: sources.map((s) => {
-        if (/^https?:/.test(s)) return { text: s, href: s };
+      sources: sources.map(({ at: s, quote }) => {
+        const quoted = quote ? { quote } : {};
+        if (/^https?:/.test(s)) return { text: s, href: s, ...quoted };
         const path = s.replace(/^\.(?:\/|$)/, "").replace(/\/$/, "");
         if (path === "") return { text: "the whole repository", href: `${REPO_URL}/tree/${REF}` };
         // The schema's pages are built, never committed, so a source among
         // them links its page on this site.
-        if (SCHEMA && (path === SCHEMA.dir || path.startsWith(`${SCHEMA.dir}/`))) return { text: s, href: route(path) };
-        return { text: s, href: githubFile(path) };
+        if (SCHEMA && (path === SCHEMA.dir || path.startsWith(`${SCHEMA.dir}/`))) return { text: s, href: route(path), ...quoted };
+        return { text: s, href: githubFile(path), ...quoted };
       }),
       relations: [...out].map(([name, targets]) => ({
         name,
