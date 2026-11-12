@@ -801,11 +801,13 @@ successors() {
 }
 
 # A reader's Disagreement that names its concept and still waits, as
-# X<TAB>path<TAB>day, newest first. knowledge-feedback.sh writes the name right
+# G<TAB>path<TAB>day, newest first. knowledge-feedback.sh writes the name right
 # after the kind, `- **Disagreement** (on `<path>`) -`, where no reader's text
 # can stand, and this reads that name and nothing else of the entry. A path
 # counts only in the bundle's own spelling and only while it names a concept,
 # so a line filed by hand meets the same test.
+# G is a letter of its own: an X line is a concept's exclusion, which no
+# label reads.
 disputed() {
   [ -f "$root/.lokf/feedback.md" ] || return 0
   awk -v dir="$bundle" '
@@ -816,7 +818,7 @@ disputed() {
   /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ { day = substr($0, 4, 10); next }
   /^- \*\*Disagreement\*\* \(on `[^`]*`\) - / {
     p = $0; sub(/^- \*\*Disagreement\*\* \(on `/, "", p); sub(/`.*$/, "", p)
-    if (day != "" && held(p) && !(p in seen)) { seen[p] = 1; print "X\t" p "\t" day }
+    if (day != "" && held(p) && !(p in seen)) { seen[p] = 1; print "G\t" p "\t" day }
   }' "$root/.lokf/feedback.md"
 }
 
@@ -828,7 +830,7 @@ labels() {  # [<path>...]
   }
   BEGIN { nw = split(want, w, " "); for (i = 1; i <= nw; i++) pick[w[i]] = 1 }
   $1 == "S" { if (!($2 in after)) after[$2] = $3; next }
-  $1 == "X" { if (!($2 in disp)) disp[$2] = $3; next }
+  $1 == "G" { if (!($2 in disp)) disp[$2] = $3; next }
   $1 != "C" { next }
   nw && !($2 in pick) { next }
   { s = label(); if ($4 == "deprecated" && ($2 in after) && after[$2] != $2 && held(after[$2])) s = s ", replaced by " after[$2]
@@ -855,7 +857,7 @@ unconfirmed_successors() {
     return s
   }
   $1 == "S" { if (!($2 in after)) after[$2] = $3; next }
-  $1 == "X" { if (!($2 in disp)) disp[$2] = $3; next }
+  $1 == "G" { if (!($2 in disp)) disp[$2] = $3; next }
   $1 == "C" { nc++; order[nc] = $2; row[$2] = $0; human[$2] = $9 }
   END {
     for (i = 1; i <= nc; i++) {
