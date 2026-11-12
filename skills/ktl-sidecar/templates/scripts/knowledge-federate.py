@@ -197,6 +197,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -217,7 +218,23 @@ MAX_ENTRIES = 100_000
 PLAIN_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]*")
 # Files a browser runs when the workspace's site serves them. A bundle is
 # Markdown; one of these in a member's zip would run on the host's site.
-ACTIVE_SUFFIXES = {".html", ".htm", ".xhtml", ".shtml", ".svg", ".svgz", ".js", ".mjs", ".xml", ".xsl", ".xslt"}
+# The XML family is whole: a site serves each of these under an XML type, in
+# which a browser runs a script element in the XHTML namespace.
+ACTIVE_SUFFIXES = {
+    ".html", ".htm", ".xhtml", ".xht", ".shtml", ".svg", ".svgz", ".js", ".mjs",
+    ".xml", ".xsl", ".xslt", ".rdf", ".xsd", ".mml", ".mathml", ".rss", ".atom", ".wsdl", ".xbl", ".rng",
+}
+
+
+def plain(text, limit: int = 200) -> str:
+    """Text a member's own files supply, as one line of what a reader sees: each run of white space one space, no control or format character, and no more than `limit` characters. A member's index title and its licence go into the workspace's index, which the MCP server hands a reader as its own instructions, so neither may bring a line of its own."""
+    seen = "".join(ch for ch in str(text or "") if unicodedata.category(ch) not in ("Cc", "Cf", "Zl", "Zp") or ch in "\t\n\r ")
+    return " ".join(seen.split())[:limit]
+
+
+def cell(text) -> str:
+    """`plain` text for a cell of a Markdown table or the words of a link: a pipe, a bracket and a backtick lose their meaning."""
+    return re.sub(r"([|\[\]`<>\\])", r"\\\1", plain(text))
 # The librarian wrapper refuses to pass a credential under a name gh reads,
 # so the job's token arrives under this one. It leaves this process's
 # environment here and reaches gh alone, never lokf or anything else run.
@@ -2215,8 +2232,8 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
         meta = read_frontmatter(kdir / "index.md") if (kdir / "index.md").read_text(encoding="utf-8").startswith("---") else {}
         pub = meta.get("publisher") or {}
         records.append({
-            "slug": slug, "base_iri": entry.base_iri, "title": entry.title, "version": member.version if member else tag,
-            "license": meta.get("license"), "publisher": pub.get("id") if isinstance(pub, dict) else None,
+            "slug": slug, "base_iri": entry.base_iri, "title": plain(entry.title) or slug, "version": member.version if member else tag,
+            "license": plain(meta.get("license")) or None, "publisher": pub.get("id") if isinstance(pub, dict) else None,
             "member_of": sorted(member.parents) if member else [], "kind": "domain" if member is None or member.is_domain else "bundle",
             "triples": entry.void.get("triples", 0),
             "zip": member.zip_url if member else None, "sha256": member.sha256 if member else None,
@@ -2236,7 +2253,10 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     terms: dict[str, tuple[list[str], set[str], set[str]]] = {}
     for graph_iri, ds in [*((b, canonical_quads(nt, b)) for b, nt in graphs), (snapshot_iri, lock_graph(snapshot_iri, domain_iri, domain_title, records))]:
         store.extend(ds)
-        per_graph[graph_iri] = sorted(set(ox.serialize(ds, format=ox.RdfFormat.N_QUADS).decode("utf-8").splitlines()))
+        # Split at the line feed alone. N-Quads writes a line separator such
+        # as U+2028 raw inside a literal, and str.splitlines would cut the
+        # quad in two there, leaving a file no reader can load.
+        per_graph[graph_iri] = sorted({line for line in ox.serialize(ds, format=ox.RdfFormat.N_QUADS).decode("utf-8").split("\n") if line})
         terms[graph_iri] = graph_terms(ds, graph_iri, registry)
     # The lock's `graphs` says where each graph's quads lie in graph.nq, with
     # their digest, and which other bundles' namespaces they name, so a
@@ -2415,13 +2435,13 @@ def write_index(new: pathlib.Path, domain_title: str, domain_iri: str, snapshot_
             continue
         # A licence given as an address is linked; one given as text, such as MIT, is written as it is.
         licence = str(r.get("license") or "")
-        licence = f"<{licence}>" if licence.startswith(("http://", "https://")) else licence
-        title = r["title"] + (" (a domain)" if r.get("kind") == "domain" else "")
-        lines.append(f"| [{title}](bundles/{r['slug']}/.lokf/knowledge/index.md) | {r['version']} | `{r['base_iri']}` | {named_by(r)} | {licence} | {r['health']} |")
+        licence = f"<{licence}>" if re.fullmatch(r"https?://[^\s<>|]+", licence) else cell(licence)
+        title = cell(r["title"]) + (" (a domain)" if r.get("kind") == "domain" else "")
+        lines.append(f"| [{title}](bundles/{r['slug']}/.lokf/knowledge/index.md) | {cell(r['version'])} | `{r['base_iri']}` | {named_by(r)} | {licence} | {cell(r['health'])} |")
     dom = next((r for r in records if r["slug"] == "domain"), None)
     if dom:
-        lines += ["", f"The domain bundle itself: [{dom['title']}](bundles/domain/.lokf/knowledge/index.md) at `{dom['base_iri']}`, {dom['triples']} triples; its health line: {dom['health']}."]
-    titles = {r["base_iri"]: r["title"] for r in records}
+        lines += ["", f"The domain bundle itself: [{cell(dom['title'])}](bundles/domain/.lokf/knowledge/index.md) at `{dom['base_iri']}`, {dom['triples']} triples; its health line: {cell(dom['health'])}."]
+    titles = {r["base_iri"]: cell(r["title"]) for r in records}
     lines += ["", "## Links between members", ""]
     if links:
         lines += ["Typed relations in one bundle whose target is a concept of another, counted by slot. `queries/links.rq` counts them over the graph.", "",
@@ -3680,7 +3700,7 @@ class Workspace:
                  "| Bundle | Version | Namespace |", "| --- | --- | --- |"]
         for b in sorted(self.members):
             m = self.members[b]
-            lines.append(f"| {m.get('title') or m.get('slug')} | {m.get('version') or ''} | `{b}` |")
+            lines.append(f"| {cell(m.get('title') or m.get('slug'))} | {cell(m.get('version') or '')} | `{b}` |")
         return "\n".join(lines) + "\n"
 
     def scope_note(self) -> str:
