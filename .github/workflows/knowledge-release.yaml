@@ -8,8 +8,11 @@ name: Knowledge Release
 # upload to Agent Builder. When the host's .lokf/justfile names a domain
 # vocabulary on its `schema :=` line, that file goes beside the bundle too, as
 # schema-<tag>-<name>.yaml with its own .sha256, so a federation that admits
-# this bundle can validate it on its own terms. It runs no LLM or agent, and
-# it never commits or pushes.
+# this bundle can validate it on its own terms. An evidence table goes beside
+# the bundle as well, as evidence-<tag>-<name>.tsv with its own .sha256: one
+# row for each concept's `generated` record and each `verified` event, for an
+# auditor's spreadsheet. It runs no LLM or agent, and it never commits or
+# pushes.
 #
 # Two ways to start it:
 #
@@ -487,6 +490,38 @@ jobs:
           (cd "$RUNNER_TEMP/release" && sha256sum "$asset" > "$asset.sha256")
           echo "Packed $schema into $asset"
 
+      # The record behind every trust label, as one table for an auditor's
+      # spreadsheet: a row for each concept's `generated` record and one for
+      # each `verified` event, which says whether a second person made it.
+      # The host's own knowledge-report.sh prints the table from frontmatter
+      # alone, with no git and no clock, so the same bundle always gives the
+      # same bytes. A sidecar whose script predates the `evidence` form prints
+      # its usage and exits 2. The step then posts a notice, and the release
+      # carries no table.
+      - name: Pack the evidence table
+        if: steps.compare.outputs.changed == 'true'
+        env:
+          NAME: ${{ steps.pack.outputs.name }}
+        run: |
+          set -euo pipefail
+          asset="evidence-${TAG//\//-}-$NAME.tsv"
+          rc=2
+          if [ -f .lokf/scripts/knowledge-report.sh ]; then
+            rc=0
+            bash .lokf/scripts/knowledge-report.sh evidence > "$RUNNER_TEMP/release/$asset" || rc=$?
+          fi
+          if [ "$rc" -ne 0 ]; then
+            rm -f "$RUNNER_TEMP/release/$asset"
+            if [ "$rc" -ne 2 ]; then
+              echo "::error::knowledge-report.sh evidence failed with status $rc (its output above says why), so the evidence table was not written."
+              exit 1
+            fi
+            echo "::notice::No .lokf/scripts/knowledge-report.sh with an evidence form is laid down here, so no evidence table is attached; a newer sidecar's script has one."
+            exit 0
+          fi
+          (cd "$RUNNER_TEMP/release" && sha256sum "$asset" > "$asset.sha256")
+          echo "Packed $(($(wc -l < "$RUNNER_TEMP/release/$asset") - 1)) rows into $asset"
+
       # Build one Copilot skill per .lokf/m365/*.md with the host's
       # knowledge-m365.sh, dated at the bundle's commit so each zip is
       # reproducible. If the builder is missing or refuses the bundle, the
@@ -550,8 +585,8 @@ jobs:
           name: knowledge-release
           path: ${{ runner.temp }}/release
 
-      # Every .sha256 the pack job wrote: the bundle's, the schema's and the
-      # Copilot skill's when they were packed.
+      # Every .sha256 the pack job wrote: the bundle's, and the schema's, the
+      # evidence table's and the Copilot skill's when they were packed.
       - name: Check each file against its checksum
         run: sha256sum -c -- *.sha256
         working-directory: ${{ runner.temp }}/release
@@ -571,15 +606,17 @@ jobs:
           subject-path: |
             ${{ runner.temp }}/release/*.zip
             ${{ runner.temp }}/release/*.yaml
+            ${{ runner.temp }}/release/*.tsv
 
       # `--clobber` replaces an earlier upload of the same name, so running the
       # workflow again for one tag repairs its assets instead of failing. With
-      # nullglob, a pattern no file matches (no schema) is dropped, not passed.
+      # nullglob, a pattern no file matches (no schema, no evidence table) is
+      # dropped, not passed.
       - name: Upload to the release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           shopt -s nullglob
-          gh release upload "$TAG" ./*.zip ./*.yaml ./*.sha256 --clobber
+          gh release upload "$TAG" ./*.zip ./*.yaml ./*.tsv ./*.sha256 --clobber
         working-directory: ${{ runner.temp }}/release

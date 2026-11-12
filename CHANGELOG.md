@@ -7,7 +7,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Added
 
 - **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
-- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.**
+- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
 
 ## [0.63.1] - 2026-11-12
 

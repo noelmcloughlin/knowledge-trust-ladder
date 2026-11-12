@@ -47,7 +47,7 @@ Every trust label is computed from the frontmatter on each read and never stored
 | Did a second person re-check it? | the `check` column of `knowledge-report.sh evidence`: `second-person` marks a `human:` event by anyone but the first person to confirm |
 | Is the checker independent of the checked? | the JSON Schema is generated from the upstream `lokf.yaml`, not written by the bundle's authors; the toolkit also generates SHACL shapes, which no KTL check runs yet; the bundle projects to RDF and answers [SPARQL](../skills/ktl-curator/references/queries.md) |
 
-`knowledge-report.sh evidence` prints every `generated` record and `verified` event as one tab-separated table.
+`knowledge-report.sh evidence` prints every `generated` record and `verified` event as one tab-separated table. `knowledge-release.yaml` attaches that table beside the bundle's zip as `evidence-<tag>-<name>.tsv`, with a checksum and a signed build provenance.
 
 Four limits on what that evidence shows:
 

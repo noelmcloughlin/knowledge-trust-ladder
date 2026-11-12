@@ -246,6 +246,10 @@ When the host's `.lokf/justfile` names a schema on its `schema :=` line, the rel
 
 Any other local file the schema imports would not resolve beside the bundle, so it is merged into the released copy, with the files it imports in turn. A host's composite that imports two `lokf adapt` copies is released this way as one file. The merge writes out each merged element's IRI as LinkML derives it, and carries each file's settings and CURIE maps, so the copy validates and projects as the composite does. It stops the release on a name that two files define differently, whether an element, a prefix or a setting, and on an element a merged file shares with LOKF core. LinkML would keep the last definition and say nothing. The merge also stops on an import from outside the repository. A merged copy is written out as plain YAML, without its comments.
 
+### The evidence table beside it
+
+The release carries `evidence-<tag>-<name>.tsv` too, with its own `.sha256` and attestation. `pack` writes it with the host's `knowledge-report.sh evidence`: one row for each concept's `generated` record and one for each `verified` event, for an auditor's spreadsheet. A sidecar whose script predates the `evidence` form gets a notice and no table.
+
 ### What the zip holds
 
 When the bundle changed, `pack` runs the registrar's two checks, so a release never carries a bundle its own gate would fail. It then packs the bundle under a read-only token:
@@ -255,7 +259,7 @@ When the bundle changed, `pack` runs the registrar's two checks, so a release ne
 - A link inside the bundle is stored as a link and never followed, so the zip can hold nothing from outside the bundle. A bundle normally carries none; the `knowledge_bundle` doorway sits at the repository root, outside it.
 - It is built with `zip` and checked with `unzip`, which GitHub's hosted Ubuntu runners carry. A self-hosted runner needs both installed.
 
-The `attach` job holds `contents: write`, runs no third-party packages, checks the zip against its checksum and uploads both files, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
+The `attach` job holds `contents: write`, runs no third-party packages, checks each file against its checksum and uploads them all, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
 
 ## `knowledge-federation.yaml`: the workspace of a domain host
 
