@@ -12,7 +12,7 @@ LOKF has a small vocabulary: a short list of classes, the typed relations, and a
 
 ## What to do about it (loose guidance)
 
-Keep the OKF/LOKF mechanics: one Markdown file per concept, frontmatter, the trust fields, the bundle-root header. Give the bundle a *domain vocabulary*: the classes and keys it needs beyond LOKF's, declared in a file of its own. LOKF's schema is written in [LinkML](https://linkml.io/linkml/), and a LinkML file can import another and add classes and slots. The same LinkML tooling then generates the JSON Schema, JSON-LD context, and SHACL shapes for the extended vocabulary. Check the [linkml](https://linkml.io) and [`lokf` project](https://github.com/nicholsn/lokf) for the supported extension path before designing one. Don't invent a mechanism. The path that exists today is `lokf validate --schema <file>` with a LinkML file that imports LOKF's. The recipe is the **librarian**'s [domain-schema.md](../../ktl-librarian/references/domain-schema.md).
+Keep the OKF/LOKF mechanics: one Markdown file per concept, frontmatter, the trust fields, the bundle-root header. Give the bundle a *domain vocabulary*: the classes and keys it needs beyond LOKF's, declared in a file of its own. LOKF's schema is written in [LinkML](https://linkml.io/linkml/), and a LinkML file can import another and add classes and slots. The same LinkML tooling then generates the JSON Schema, JSON-LD context, and SHACL shapes for the extended vocabulary. Check the [linkml](https://linkml.io) and [`lokf` project](https://github.com/nicholsn/lokf) for the supported extension path before designing one. Don't invent a mechanism. The path that exists today is `lokf validate --schema <file>` with a LinkML file that imports LOKF's. The recipe is the **librarian**'s [domain-vocabulary.md](../../ktl-librarian/references/domain-vocabulary.md).
 
 ## You already have the tooling
 
@@ -31,7 +31,7 @@ The same file serves the people who think in JSON, Python, or docs pages and the
 
 Some regulated domains already have a domain schema, a LinkML model of their own. AI governance has the [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/) from IBM AI Atlas Nexus, written independently of LOKF and with its own generated tooling. It covers risks, controls, obligations, taxonomies, incidents and evaluations. [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) is a reference implementation over it, with a LOKF sidecar beside it. Where that is the case, do not re-describe the domain in classes of your own.
 
-A domain vocabulary can bring that schema's classes in beside LOKF's and let a concept name a control or an obligation by the identifier the domain already uses. It imports the copy `lokf adapt` makes, never the schema itself, and a host may import more than one such copy. The **librarian**'s [Adapting a published schema](../../ktl-librarian/references/domain-schema.md#adapting-a-published-schema) shows how, and the two rules that still apply because every class is closed.
+A domain vocabulary can bring that schema's classes in beside LOKF's and let a concept name a control or an obligation by the identifier the domain already uses. It imports the copy `lokf adapt` makes, never the schema itself, and a host may import more than one such copy. The **librarian**'s [Adapting a published schema](../../ktl-librarian/references/domain-vocabulary.md#adapting-a-published-schema) shows how, and the two rules that still apply because every class is closed.
 
 Each copy is pinned to one release of its schema. Moving to a newer release is a change for a person to review, as moving the `lokf` floor is. Take the new release's copy, check it, and re-run `just lokf-validate`, since a renamed slot or class fails the concepts that use it.
 
@@ -55,6 +55,6 @@ Roles stay as they are:
 
 - **The curator raises it.** A rising vocabulary-fit count, or a critical domain, is a report line and a conversation with the team. It is not something this skill fixes.
 - **The team decides** whether a domain vocabulary is worth owning (it is a small piece of governed software).
-- **The librarian applies it**, validating concepts against the extended vocabulary through the same `lokf` toolkit: [how](../../ktl-librarian/references/domain-schema.md).
+- **The librarian applies it**, validating concepts against the extended vocabulary through the same `lokf` toolkit: [how](../../ktl-librarian/references/domain-vocabulary.md).
 
 Until then, tolerate the misfits: the spec says consumers MUST NOT reject unknown types. A misfit concept is still knowledge. It just isn't yet *checkable* knowledge.

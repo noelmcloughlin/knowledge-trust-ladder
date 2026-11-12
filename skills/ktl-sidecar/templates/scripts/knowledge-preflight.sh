@@ -257,7 +257,7 @@ if have uv; then
   for core in .lokf/schema/lokf.yaml .lokf/lokf.yaml; do
     copy="$(sed -n 's/^version: *\([0-9.]*\).*/\1/p' "$root/$core" 2>/dev/null | head -n 1)"
     if [ -n "$copy" ] && [ -n "$pinned" ] && [ "$copy" != "$pinned" ]; then
-      warn core "$core is lokf $copy's schema and the toolkit is lokf $pinned - copy the installed package's lokf.yaml over it, as step 1 of ktl-librarian's domain-schema.md shows"
+      warn core "$core is lokf $copy's schema and the toolkit is lokf $pinned - copy the installed package's lokf.yaml over it, as step 1 of ktl-librarian's domain-vocabulary.md shows"
     fi
   done
   if have just; then ok just "just $(just --version 2>/dev/null | sed 's/^just //')"; else info just "just not installed - uvx --from rust-just just works the same"; fi

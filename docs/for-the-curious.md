@@ -47,6 +47,6 @@ LOKF's vocabulary is a short list of classes and typed relations, kept small so 
 
 A *domain schema* is a different file. It is a LinkML schema that models the domain, and a LinkML project owns it. A bundle borrows its classes through a copy that `lokf adapt` writes into `.lokf/schema/`, and the schema itself never imports LOKF.
 
-[`ktl-curator/references/domain-schemas.md`](../skills/ktl-curator/references/domain-schemas.md) says what it costs (no new tooling) and how to write one. It also says what to do when the domain already has a schema of its own, and how to validate values it binds to an external domain ontology. [`ktl-librarian/references/domain-schema.md`](../skills/ktl-librarian/references/domain-schema.md) gives the recipe that writes one and validates against it with the toolkit you already have.
+[`ktl-curator/references/domain-vocabularies.md`](../skills/ktl-curator/references/domain-vocabularies.md) says what it costs (no new tooling) and how to write one. It also says what to do when the domain already has a schema of its own, and how to validate values it binds to an external domain ontology. [`ktl-librarian/references/domain-vocabulary.md`](../skills/ktl-librarian/references/domain-vocabulary.md) gives the recipe that writes one and validates against it with the toolkit you already have.
 
 When bundles are federated into one context layer, each domain vocabulary is released with its bundle and a domain admits a bundle when its vocabulary fits ([A federation of bundles](federation.md)).

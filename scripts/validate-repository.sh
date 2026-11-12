@@ -273,7 +273,7 @@ fi
 #    Moving or renaming one of these paths passes every check in this repo,
 #    and breaks the build in the sibling that links to it: the two Obsidian
 #    plugins, ktl-federation, ai-linkmo or gist. (The mirror image
-#    happened on 2026-09-14: the curator referenced domain-schema.md while it
+#    happened on 2026-09-14: the curator referenced domain-vocabulary.md while it
 #    was still on a branch here, and its build failed with a 404 until this
 #    side merged. CONTRIBUTING.md carries the ordering rule; this check carries
 #    the paths.) An entry that names a heading, as path#anchor, also needs that
@@ -315,7 +315,7 @@ sibling_paths=(
   "docs/threat-model.md#the-sync-workflow"
   "docs/threat-model.md#the-website"
   "docs/three-lines.md"
-  "skills/ktl-librarian/references/domain-schema.md"
+  "skills/ktl-librarian/references/domain-vocabulary.md"
   "skills/ktl-curator/references/review-session.md"
   "skills/ktl-curator/references/trust-fields.md"
 )

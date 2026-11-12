@@ -102,4 +102,4 @@ In the body, write `[^id]` after the claim, and one definition line `[^id]: <res
 
 ## Rule 7: stay permissive
 
-Missing optional fields, an unknown `type`, unknown keys and broken cross-links MUST NOT cause rejection. That rule binds consumers: readers, converters, `lokf serve`. `lokf validate` checks against the declared vocabulary, so a bundle that extends it declares its classes and keys in a domain vocabulary and validates with `--schema`: [domain-schema.md](domain-schema.md).
+Missing optional fields, an unknown `type`, unknown keys and broken cross-links MUST NOT cause rejection. That rule binds consumers: readers, converters, `lokf serve`. `lokf validate` checks against the declared vocabulary, so a bundle that extends it declares its classes and keys in a domain vocabulary and validates with `--schema`: [domain-vocabulary.md](domain-vocabulary.md).

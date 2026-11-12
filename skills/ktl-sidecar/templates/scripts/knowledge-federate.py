@@ -1416,7 +1416,7 @@ def member_schema_file(member: Member, cache: pathlib.Path, attest: bool, bundle
     """The schema released with a member's bundle, verified and placed beside the unpacked bundle with the toolkit's lokf.yaml, or None.
 
     A host's schema imports `lokf` by that name and keeps a pinned copy
-    beside it (the librarian's domain-schema.md), so the released schema
+    beside it (the librarian's domain-vocabulary.md), so the released schema
     is given the same neighbour here and validates as it does at home.
     """
     if not member.schema_url:

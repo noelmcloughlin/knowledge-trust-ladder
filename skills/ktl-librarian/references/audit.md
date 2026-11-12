@@ -4,7 +4,7 @@ This page is for the **librarian**: it backs SKILL.md section 2 with what each t
 
 ## What the tools prove
 
-- **`just lokf-validate`** checks frontmatter and the assembled bundle against the declared vocabulary with the generated JSON Schema. A bundle that extends the vocabulary validates with `--schema` ([domain-schema.md](domain-schema.md)). It reads a body as an opaque string and never opens `log.md`.
+- **`just lokf-validate`** checks frontmatter and the assembled bundle against the declared vocabulary with the generated JSON Schema. A bundle that extends the vocabulary validates with `--schema` ([domain-vocabulary.md](domain-vocabulary.md)). It reads a body as an opaque string and never opens `log.md`.
 - **`just lokf-check-refs`** runs `lokf validate --check-refs`. It takes the relation slots from the schema and resolves every target inside `base_iri` to a concept in the bundle. JSON Schema alone passes a fabricated or stale IRI in `dependsOn` and the other slots, since it is still a valid IRI, and this closes that gap. It cannot tell you a target is *wrong*, only that it is *missing*: a `dependsOn` pointed at the right concept's evil twin still passes.
 - **The same recipe passes `--check-excerpts`.** Each `sources[].excerpt` must be found in its local `resource`, with whitespace and case ignored, punctuation kept, and at most one `...` gap inside one heading section. A quote that no longer matches its file fails. An excerpt on a URL is counted, never fetched.
 - **The SHACL shapes** the toolkit generates for the projected graph run nowhere in this sidecar. A check only the shapes express, such as a relation target being a Concept rather than a Person, is therefore not made.

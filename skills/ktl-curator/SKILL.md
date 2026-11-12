@@ -42,7 +42,7 @@ Say these to the human. Do not say RDF, IRI, SPARQL, predicate, or tier. The fie
 | Retired | kept for links and history; no longer current |
 | Not tied to a signed commit | recorded as confirmed, but git holds no signature behind it, so something other than that person may have written it |
 | *N* other concepts rely on this | how many concepts link to it; the more, the further a mistake spreads |
-| Doesn't fit the known vocabulary | its type is neither one of LOKF's core classes nor a class of the host's own domain vocabulary, where it has one; see [references/domain-schemas.md](references/domain-schemas.md) |
+| Doesn't fit the known vocabulary | its type is neither one of LOKF's core classes nor a class of the host's own domain vocabulary, where it has one; see [references/domain-vocabularies.md](references/domain-vocabularies.md) |
 
 ## Step 1: report (always; read-only; one screen)
 
@@ -113,5 +113,5 @@ Two of these write `human:<id>` into a concept (the curation policy, and a gap p
 
 - **Curation policy**: create or refresh `policies/knowledge-curation.md` (review cadence per kind of concept, who curates, and the four optional switches `Independent re-check:`, `Automation re-check:`, `Evidence first:` and `Younger readers:`), in plain words with defaults the person edits. The template is in [references/review-session.md](references/review-session.md).
 - **Something missing**: record a `draft` placeholder (type, title, one open question) for the librarian to fill, from the same reference. (Gaps that *readers* hit arrive separately, via ktl-docent in `.lokf/feedback.md`; the librarian handles those.)
-- **Vocabulary drifting** into a deep or safety-critical domain: [references/domain-schemas.md](references/domain-schemas.md).
+- **Vocabulary drifting** into a deep or safety-critical domain: [references/domain-vocabularies.md](references/domain-vocabularies.md).
 - **Graph-savvy users**: the same labels as SPARQL for `lokf serve`: [references/queries.md](references/queries.md).
