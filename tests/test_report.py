@@ -44,10 +44,21 @@ A retired concept whose successor no person has confirmed is listed with that
 successor's label, and only when the bundle holds the successor: exclusion
 follows affirmation. A review date is read by its day, so a datetime value
 counts from the day it names.
+
+`sample` draws the lists the curation policy asks for, so that no model sorts
+one: each population in the order of the SHA-256 of the seed, a space and the
+path. The seed is stated, the sizes come from the policy or from a flag, and
+the whole report prints the same section. Among a person's events the
+earliest is the first confirmation, and a later one by another id is a second
+person's re-check, which the sample counts.
+
+`evidence` prints every `generated` record and `verified` event as a
+tab-separated table, the same bytes on every run.
 """
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import shutil
@@ -55,7 +66,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from conftest import BOM, SCRIPTS, Git, bash, has_line, matches, read, replace_in, run, write
+from conftest import BOM, SCRIPTS, Git, bash, has_line, have, matches, read, replace_in, run, today_utc, write
 
 REPORT = SCRIPTS / "knowledge-report.sh"
 
@@ -967,6 +978,20 @@ def test_a_retired_concept_names_its_successor_and_a_disputed_one_its_newest_day
     assert has_line(out, want), f"report script did not print '{want}': {out}"
 
 
+def test_an_exclusion_is_not_read_as_a_readers_dispute(tmp_path):
+    """A concept's `exclusions` entry names a material left out on purpose. Its line once shared a letter with a reader's Disagreement, so the label named the excluded path as the day of a dispute."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "x" / "map.md", "---\ntype: Playbook\ntitle: Map\nexclusions:\n  - resource: docs/old\n    reason: superseded\n---\n")
+    write(kk / "x" / "hub.md", "---\ntype: Dataset\ntitle: Hub\n---\n")
+    write(tmp_path / ".lokf" / "feedback.md", "# Feedback\n\n## 2026-03-04\n\n- **Disagreement** (on `x/hub.md`) - the hub is gone. - docent\n")
+    out = report(tmp_path, "labels").out
+    assert has_line(out, "- Map (x/map.md) - nobody has checked this yet"), f"an exclusion read as a dispute: {out}"
+    assert has_line(out, "- Hub (x/hub.md) - nobody has checked this yet, a reader disputed this on 2026-03-04"), f"a reader's dispute was lost: {out}"
+    whole = report(tmp_path).out
+    assert "x/map.md (docs/old)" not in whole and has_line(whole, "- x/hub.md (2026-03-04)"), f"the whole report listed an exclusion as a dispute: {whole}"
+
+
 def test_reliance_counts_measures_member_of_and_holder(tmp_path):
     """The schema ranges the three over Concept, as it does the ten generic relation fields, so a Metric relies on what it measures and a Role on its organization and its holder."""
     kk = tmp_path / ".lokf" / "knowledge"
@@ -1574,3 +1599,453 @@ def test_coverage_reads_a_sidecar_in_a_subfolder_from_its_own_root(tmp_path):
     assert has_line(r.out, COUNT + "1 of 2 · under none: 1")
     assert has_line(r.out, "- docs/: 1")
     assert "elsewhere" not in r.out and "outside" not in r.out
+
+
+# ---- the sample, and the evidence table ----------------------------------------
+ADA = '- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n'
+GRACE_LATER = '- by: human:grace\n  at: "2026-01-05T10:00:00Z"\n'
+AUTO = 'resource: src/b.md\nverified:\n- by: process:ktl-librarian\n  at: "2026-01-03T00:00:00Z"\n'
+CONFIRMED = ["x/one.md", "x/reopened.md", "x/second.md", "x/three.md", "x/twice.md", "x/two.md"]
+AUTOMATION = ["x/auto1.md", "x/auto2.md", "x/auto3.md"]
+SECOND = "For a second person to re-check"
+PASSED = "For a person to check what automation passed"
+NO_DIGEST = "Sample: not drawn here, since the pick needs sha256sum or shasum and this host has neither"
+HEADER = "path\ttype\tstatus\tstale_after\tresource\tevent\tby\tat\trevision\tcheck"
+
+
+@pytest.fixture
+def audit(tmp_path):
+    """A bundle to sample and to table.
+
+    Six concepts read as confirmed by a person: one of them twice by the same
+    person, one by a second person, and one reopened. Three are checked by
+    automation only, and a fourth such is a draft. An edited concept and a
+    retired one each carry a second person's re-check, and neither reads as
+    confirmed. One concept carries no event. The reserved files carry
+    frontmatter a concept could, and are no concepts.
+    """
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "log.md", "---\ntype: Service\ntitle: The log\nverified:\n" + ADA + "---\n\n# Change Log\n")
+    write(kk / "x" / "index.md", "---\ntype: Service\ntitle: A folder index\nverified:\n" + ADA + "---\n")
+
+    def concept(name, head, body=""):
+        write(kk / "x" / f"{name}.md", f"---\ntype: Service\ntitle: {name.capitalize()}\n{head}---\n{body}")
+
+    concept(
+        "one",
+        'resource: src/a.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n  revision: "1111111111111111111111111111111111111111"\n'
+        'verified:\n- by: process:ktl-librarian\n  at: "2026-01-01T12:00:00Z"\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n  revision: "3f9c2a1b7e0d4c6a8f5e2d1c9b8a7f6e5d4c3b2a"\n'
+        "stale_after: 2030-06-01T00:00:00Z\n",
+    )
+    concept("two", 'verified:\n  by: human:ada\n  at: "2026-01-03T10:00:00Z"\n')
+    concept("three", 'verified: [{ by: human:grace, at: "2026-01-04T10:00:00Z" }]\n')
+    concept("twice", "verified:\n" + ADA + '- by: human:ada\n  at: "2026-02-02T10:00:00Z"\n')
+    # second.md lists its later event first, and with an offset: the time
+    # decides who was first, never the place in the file.
+    concept("second", 'resource: src/a.md\nverified:\n- by: human:grace\n  at: "2026-03-01T09:00:00+02:00"\n' + ADA)
+    concept("reopened", "status: draft\nverified:\n" + ADA, "\n## Open questions\n\n- 2026-01-06, process:ktl-librarian: still so?\n")
+    for n in (1, 2, 3):
+        concept(f"auto{n}", AUTO)
+    concept("autodraft", "status: draft\n" + AUTO)
+    concept("edited", 'generated:\n  by: process:ktl-librarian\n  at: "2026-02-01T00:00:00Z"\nverified:\n' + ADA + GRACE_LATER)
+    concept("retired", "status: deprecated\nverified:\n" + ADA + GRACE_LATER)
+    concept("unchecked", "")
+    return tmp_path
+
+
+def policy(root, body):
+    """The curation policy concept, with these lines in its body. Nobody has checked it, so it is on no list."""
+    write(
+        root / ".lokf" / "knowledge" / "policies" / "knowledge-curation.md",
+        f"---\ntype: Policy\ntitle: Knowledge curation policy\n---\n\n# Samples\n\n{body}\n",
+    )
+
+
+def by_digest(seed, paths):
+    """The documented order: the SHA-256 of the seed, one space and the path, as hex, lowest first."""
+    return sorted(paths, key=lambda path: hashlib.sha256(f"{seed} {path}".encode()).hexdigest())
+
+
+def listed(out, heading):
+    """The paths of the list under the heading that starts so, in the order printed."""
+    paths, on = [], False
+    for line in out.split("\n"):
+        if line.startswith(heading + " ("):
+            on = True
+        elif on and line.startswith("- "):
+            paths.append(re.search(r" \(([^()]+\.md)\) - ", line).group(1))
+        elif on:
+            break
+    return paths
+
+
+def path_without(tmp_path, *tools):
+    """A PATH that holds every program on this one but the tools named."""
+    folder = tmp_path / "bin-without"
+    folder.mkdir()
+    for source in reversed(os.environ["PATH"].split(os.pathsep)):
+        if not os.path.isdir(source):
+            continue
+        for name in os.listdir(source):
+            link = folder / name
+            if name in tools:
+                continue
+            if link.is_symlink():
+                link.unlink()
+            os.symlink(os.path.join(source, name), link)
+    return str(folder)
+
+
+def test_each_list_is_its_population_in_the_order_of_the_digest_of_seed_and_path(audit):
+    out = report(audit, "sample", "--seed", "s1", "--independent", "3", "--automation", "2").out
+    assert listed(out, SECOND) == by_digest("s1", CONFIRMED)[:3] and listed(out, PASSED) == by_digest("s1", AUTOMATION)[:2], (
+        f"report script's sample is not the first of each population by the digest of 's1 <path>': {out}"
+    )
+
+
+def test_the_sample_states_its_seed_and_the_same_seed_draws_the_same_lists(audit):
+    first = report(audit, "sample", "--seed", "audit 7", "--independent", "2", "--automation", "2")
+    again = report(audit, "sample", "--seed", "audit 7", "--independent", "2", "--automation", "2")
+    assert first and first.out.split("\n")[0].startswith('Sample - seed "audit 7" (computed by knowledge-report.sh'), (
+        f"report script's sample does not state its seed first: {first.out}"
+    )
+    assert first.out == again.out and listed(first.out, SECOND) == by_digest("audit 7", CONFIRMED)[:2], (
+        f"report script drew two samples from one seed: {first.out} and then {again.out}"
+    )
+
+
+def test_two_seeds_draw_two_samples(audit):
+    assert by_digest("s1", CONFIRMED)[:2] != by_digest("s2", CONFIRMED)[:2], "the two seeds of this test must order the fixture differently"
+    one = listed(report(audit, "sample", "--seed", "s1", "--independent", "2").out, SECOND)
+    two = listed(report(audit, "sample", "--seed", "s2", "--independent", "2").out, SECOND)
+    assert one == by_digest("s1", CONFIRMED)[:2] and two == by_digest("s2", CONFIRMED)[:2], (
+        f"report script's sample does not follow its seed: {one} for s1 and {two} for s2"
+    )
+
+
+def test_a_seed_is_hashed_as_written_with_its_spaces_and_backslashes(audit):
+    seed = r"a\tb  \n 100%s"
+    out = report(audit, "sample", "--seed", seed, "--independent", "3").out
+    assert out.split("\n")[0].startswith(f'Sample - seed "{seed}" (') and listed(out, SECOND) == by_digest(seed, CONFIRMED)[:3], (
+        f"report script read an escape or a format in a seed: {out}"
+    )
+
+
+def test_with_no_seed_given_the_seed_is_todays_date_in_utc(audit):
+    before = today_utc()
+    out = report(audit, "sample", "--independent", "3").out
+    assert any(
+        out.split("\n")[0].startswith(f'Sample - seed "{day}" (') and listed(out, SECOND) == by_digest(day, CONFIRMED)[:3]
+        for day in {before, today_utc()}
+    ), f"report script's sample is not seeded by today's date in UTC: {out}"
+
+
+@pytest.mark.parametrize(
+    ("line", "size"),
+    [
+        ("Independent re-check: 2", 2),
+        ("- **Independent re-check:** 2", 2),
+        ("  * Independent re-check : `2`  ", 2),
+        ("> 1. **independent re-check**: 2 each month", 2),
+        ("Independent re-check: 002", 2),
+        ("Independent re-check: 0", 0),
+        ("Independent re-check: 00", 0),
+        ("Independent re-check: two", 0),
+        ("Independent re-check: 2nd", 0),
+        ("An independent re-check: 2", 0),
+        ("```text\nIndependent re-check: 2\n```", 0),
+    ],
+)
+def test_a_list_takes_its_size_from_its_line_in_the_curation_policy(audit, line, size):
+    policy(audit, line)
+    result = report(audit, "sample", "--seed", "s")
+    if size:
+        assert result and listed(result.out, SECOND) == by_digest("s", CONFIRMED)[:size], (
+            f"report script did not read the size {size} from the policy line {line!r}: {result.out}"
+        )
+    else:
+        assert result and result.out == "Sample: none drawn, since the curation policy asks for none", (
+            f"report script read a size from the policy line {line!r}: {result.out}"
+        )
+
+
+def test_each_list_has_a_line_of_its_own_in_the_policy(audit):
+    policy(audit, "Independent re-check: 2\n\nAutomation re-check: 1")
+    out = report(audit, "sample", "--seed", "s").out
+    assert has_line(out, f"{SECOND} (2, picked by a rule the curator cannot steer):") and has_line(
+        out, f"{PASSED} (1, picked by the same rule):"
+    ), f"report script did not draw each list at the size its policy line gives: {out}"
+    assert listed(out, PASSED) == by_digest("s", AUTOMATION)[:1], f"report script drew the wrong automation list: {out}"
+
+
+def test_a_policy_line_for_one_list_draws_that_list_only(audit):
+    policy(audit, "Automation re-check: 2")
+    out = report(audit, "sample", "--seed", "s").out
+    assert listed(out, PASSED) == by_digest("s", AUTOMATION)[:2] and SECOND not in out, (
+        f"report script drew a list the policy does not ask for: {out}"
+    )
+
+
+def test_a_size_given_as_a_flag_decides_over_the_policy(audit):
+    policy(audit, "Independent re-check: 2\n\nAutomation re-check: 1")
+    out = report(audit, "sample", "--seed", "s", "--independent", "4", "--automation", "0").out
+    assert listed(out, SECOND) == by_digest("s", CONFIRMED)[:4] and PASSED not in out, (
+        f"report script let the policy decide over --independent 4 and --automation 0: {out}"
+    )
+
+
+def test_a_population_smaller_than_the_size_is_listed_whole_and_the_sample_says_so(audit):
+    out = report(audit, "sample", "--seed", "s", "--independent", "9", "--automation", "9").out
+    assert listed(out, SECOND) == by_digest("s", CONFIRMED) and listed(out, PASSED) == by_digest("s", AUTOMATION), (
+        f"report script did not list a short population whole: {out}"
+    )
+    for want in [
+        f"{SECOND} (6, picked by a rule the curator cannot steer):",
+        "Asked for 9: the bundle holds 6 confirmed by a person, so the list holds every one.",
+        f"{PASSED} (3, picked by the same rule):",
+        "Asked for 9: the bundle holds 3 checked by automation only, drafts apart, so the list holds every one.",
+    ]:
+        assert has_line(out, want), f"report script's sample lacks '{want}': {out}"
+
+
+def test_a_population_as_large_as_the_size_is_listed_with_no_such_line(audit):
+    out = report(audit, "sample", "--seed", "s", "--independent", "6").out
+    assert len(listed(out, SECOND)) == 6 and "Asked for" not in out, f"report script called a full list short: {out}"
+
+
+def test_a_list_with_nothing_to_draw_from_says_it_is_empty(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n")
+    write(kk / "x" / "a.md", "---\ntype: Service\ntitle: A\n---\n")
+    result = report(tmp_path, "sample", "--seed", "s", "--independent", "2")
+    assert result and result.out.split("\n")[1:] == [
+        f"{SECOND} (0, picked by a rule the curator cannot steer):",
+        "Asked for 2: the bundle holds none confirmed by a person, so the list is empty.",
+        "Re-checked by a second person: 0 of 0 confirmed",
+    ], f"report script's sample of an unconfirmed bundle is not as expected: {result.out}"
+
+
+@pytest.mark.parametrize("flags", [[], ["--independent", "0", "--automation", "00"]], ids=["no policy", "two sizes of 0"])
+def test_with_no_list_asked_for_the_sample_is_one_line_that_says_so(audit, flags):
+    result = report(audit, "sample", *flags)
+    want = "Sample: none drawn, since " + ("no size above 0 was given" if flags else "the curation policy asks for none")
+    assert result and result.out == want, f"report script's sample, with no list asked for, is not the one line '{want}': {result.out}"
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["sample", "--independent", "x"],
+        ["sample", "--automation", "-1"],
+        ["sample", "--independent"],
+        ["sample", "--seed"],
+        ["sample", "--size", "2"],
+        ["sample", "--seed", ""],
+        ["sample", "--seed", "two\nlines"],
+        ["evidence", "x/one.md"],
+    ],
+    ids=lambda args: " ".join(args).replace("\n", " "),
+)
+def test_a_call_the_sample_or_the_table_cannot_read_is_refused(audit, args):
+    result = report(audit, *args)
+    assert result.rc == 2 and "Sample - seed" not in result.out and HEADER not in result.out, (
+        f"report script accepted {args}: {result.out}"
+    )
+
+
+def test_with_no_digest_tool_the_sample_says_which_it_needs_and_exits_2(audit, tmp_path):
+    result = report(audit, "sample", "--independent", "1", env={"PATH": path_without(tmp_path, "sha256sum", "shasum")})
+    assert result.rc == 2 and result.out == NO_DIGEST, f"report script's sample, with no digest tool, did not say so and exit 2: {result.out}"
+
+
+def test_with_no_digest_tool_the_whole_report_says_so_and_goes_on(audit, tmp_path):
+    policy(audit, "Independent re-check: 2")
+    result = report(audit, env={"PATH": path_without(tmp_path, "sha256sum", "shasum")})
+    assert result.rc == 0 and result.out.split("\n")[-2:] == ["", NO_DIGEST] and "Confirmed by a person: 6 of 14" in result.out, (
+        f"report script's whole report, with no digest tool, is not the report and then one line: {result.out}"
+    )
+
+
+def test_where_there_is_no_sha256sum_the_sample_uses_shasum(audit, tmp_path):
+    if not (have("shasum") and have("sha256sum")):
+        pytest.skip("this test compares the two digest tools, and one is not installed")
+    args = ["sample", "--seed", "s", "--independent", "3", "--automation", "2"]
+    result = report(audit, *args, env={"PATH": path_without(tmp_path, "sha256sum")})
+    assert result and result.out == report(audit, *args).out and listed(result.out, SECOND) == by_digest("s", CONFIRMED)[:3], (
+        f"report script drew another sample with shasum: {result.out}"
+    )
+
+
+def test_the_automation_list_leaves_out_a_draft_and_whatever_a_person_confirmed(audit):
+    """one.md carries automation's event and a person's, autodraft.md is a draft, and edited.md and retired.md read as neither."""
+    out = report(audit, "sample", "--seed", "s", "--automation", "99").out
+    assert sorted(listed(out, PASSED)) == AUTOMATION, f"report script's automation list is not the three concepts checked by automation only: {out}"
+
+
+def test_the_list_for_a_second_person_is_what_reads_as_confirmed_by_a_person(audit):
+    """A reopened concept reads as confirmed, as the health line counts it. An edited one and a retired one do not."""
+    out = report(audit, "sample", "--seed", "s", "--independent", "99").out
+    assert sorted(listed(out, SECOND)) == CONFIRMED and "Confirmed by a person: 6 of 13" in report(audit, "health").out, (
+        f"report script's list for a second person is not the six concepts the health line counts as confirmed: {out}"
+    )
+
+
+@pytest.mark.parametrize(
+    "want",
+    [
+        "- One (x/one.md) - src/a.md - confirmed by ada",
+        "- Second (x/second.md) - src/a.md - confirmed by ada, grace",
+        "- Twice (x/twice.md) - no source recorded - confirmed by ada",
+        "- Three (x/three.md) - no source recorded - confirmed by grace",
+    ],
+)
+def test_the_list_for_a_second_person_names_each_person_who_confirmed_the_concept_once(audit, want):
+    out = report(audit, "sample", "--seed", "s", "--independent", "99").out
+    assert has_line(out, want), f"report script's list for a second person lacks '{want}': {out}"
+
+
+def test_the_automation_list_names_the_concept_and_its_source_and_nobody(audit):
+    out = report(audit, "sample", "--seed", "s", "--automation", "99").out
+    assert has_line(out, "- Auto1 (x/auto1.md) - src/b.md"), f"report script's automation list lacks '- Auto1 (x/auto1.md) - src/b.md': {out}"
+
+
+def test_a_second_persons_re_check_is_counted_and_the_same_persons_is_not(audit):
+    """second.md is counted. twice.md is one person twice. edited.md and retired.md carry a second person's re-check and do not read as confirmed."""
+    out = report(audit, "sample", "--seed", "s", "--independent", "1").out
+    assert out.split("\n")[-1] == "Re-checked by a second person: 1 of 6 confirmed", (
+        f"report script miscounted the second-person re-checks: {out}"
+    )
+
+
+def test_the_whole_report_ends_with_the_sample_the_policy_asks_for(audit):
+    policy(audit, "Independent re-check: 2\n\nAutomation re-check: 1")
+    before = today_utc()
+    whole = report(audit).out
+    assert any(
+        whole.endswith("\n\n" + report(audit, "sample", "--seed", day).out) and f'Sample - seed "{day}" (' in whole
+        for day in {before, today_utc()}
+    ), f"report script's whole report does not end with today's sample: {whole}"
+
+
+def test_the_whole_report_says_nothing_of_a_sample_the_policy_does_not_ask_for(audit):
+    policy(audit, "Independent re-check: 0")
+    result = report(audit)
+    assert result and "Sample" not in result.out and "re-check" not in result.out, (
+        f"report script's whole report names a sample no policy asks for: {result.out}"
+    )
+
+
+def table(root):
+    """The evidence table as its lines, and the same split into columns."""
+    result = bash(REPORT, "evidence", cwd=root, stdout_only=True)
+    assert result, f"report script's evidence form failed: {result.out}"
+    rows = result.out.split("\n")
+    return rows, [row.split("\t") for row in rows]
+
+
+def test_the_evidence_table_starts_with_its_header_and_every_row_has_ten_columns(audit):
+    rows, cells = table(audit)
+    assert rows[0] == HEADER and len(rows) == 21 and all(len(row) == 10 for row in cells), (
+        f"report script's evidence table is not a header and 20 rows of ten columns: {rows}"
+    )
+
+
+def test_a_concept_has_a_row_for_its_generated_record_and_one_for_each_verified_event(audit):
+    rows, _ = table(audit)
+    head = "x/one.md\tService\t\t2030-06-01\tsrc/a.md\t"
+    assert [row for row in rows if row.startswith("x/one.md\t")] == [
+        head + "generated\tprocess:ktl-librarian\t2026-01-01T00:00:00Z\t1111111111111111111111111111111111111111\t",
+        head + "verified\tprocess:ktl-librarian\t2026-01-01T12:00:00Z\t\t",
+        head + "verified\thuman:ada\t2026-01-02T10:00:00Z\t3f9c2a1b7e0d4c6a8f5e2d1c9b8a7f6e5d4c3b2a\tfirst",
+    ], f"report script's evidence rows for x/one.md are not its three events: {rows}"
+
+
+def test_a_concept_with_no_event_has_one_row_with_the_event_columns_empty(audit):
+    rows, _ = table(audit)
+    assert [row for row in rows if row.startswith("x/unchecked.md\t")] == ["x/unchecked.md\tService\t\t\t\t\t\t\t\t"], (
+        f"report script's evidence table does not give an unchecked concept one row with no event: {rows}"
+    )
+
+
+def test_the_evidence_rows_go_by_path_then_generated_before_verified_then_time(audit):
+    """edited.md was generated after both its confirmations, and second.md lists its later event first."""
+    _, cells = table(audit)
+    got = [(row[0], row[5], row[7]) for row in cells[1:]]
+    assert got == sorted(got, key=lambda row: (row[0], row[1] != "generated", row[2])), (
+        f"report script's evidence rows are not in the order of path, event and time: {got}"
+    )
+    assert [row for row in got if row[0] == "x/edited.md"] == [
+        ("x/edited.md", "generated", "2026-02-01T00:00:00Z"),
+        ("x/edited.md", "verified", "2026-01-02T10:00:00Z"),
+        ("x/edited.md", "verified", "2026-01-05T10:00:00Z"),
+    ] and [row[2] for row in got if row[0] == "x/second.md"] == ["2026-01-02T10:00:00Z", "2026-03-01T07:00:00Z"], (
+        f"report script's evidence rows put a later event first: {got}"
+    )
+
+
+CHECKS = [
+    ("x/twice.md", [("human:ada", "first"), ("human:ada", "same-person")]),
+    ("x/second.md", [("human:ada", "first"), ("human:grace", "second-person")]),
+    ("x/retired.md", [("human:ada", "first"), ("human:grace", "second-person")]),
+    ("x/one.md", [("process:ktl-librarian", ""), ("process:ktl-librarian", ""), ("human:ada", "first")]),
+    ("x/auto1.md", [("process:ktl-librarian", "")]),
+]
+
+
+@pytest.mark.parametrize(("path", "want"), CHECKS, ids=[path for path, _ in CHECKS])
+def test_the_check_column_says_first_same_person_or_second_person_for_a_persons_event_only(audit, path, want):
+    _, cells = table(audit)
+    got = [(row[6], row[9]) for row in cells if row[0] == path]
+    assert got == want, f"report script's check column for {path} is {got}, not {want}"
+
+
+def test_an_event_whose_time_cannot_be_read_is_given_as_written_and_takes_no_place(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n")
+    write(
+        kk / "x" / "a.md",
+        '---\ntype: Service\ntitle: A\nstale_after: next spring\nverified:\n- by: human:zed\n  at: sometime\n' + ADA + GRACE_LATER + "---\n",
+    )
+    _, cells = table(tmp_path)
+    assert [(row[3], row[6], row[7], row[9]) for row in cells[1:]] == [
+        ("next spring", "human:ada", "2026-01-02T10:00:00Z", "first"),
+        ("next spring", "human:grace", "2026-01-05T10:00:00Z", "second-person"),
+        ("next spring", "human:zed", "sometime", ""),
+    ], f"report script gave an undated event a place among the dated ones: {cells}"
+
+
+def test_a_tab_or_a_line_break_inside_a_value_is_one_space(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n")
+    write(
+        kk / "x" / "a.md",
+        '---\ntype: "Ser\tvice"\ntitle: A\nstatus: "dra\rft"\nresource: "src/a\tb.md"\nverified:\n- by: "process:two\twords"\n  at: "2026-01-03T00:00:00Z"\n  revision: "W/\tetag"\n---\n',
+    )
+    result = bash(REPORT, "evidence", cwd=tmp_path, stdout_only=True)
+    assert result.out.split("\n")[1:] == ["x/a.md\tSer vice\tdra ft\t\tsrc/a b.md\tverified\tprocess:two words\t2026-01-03T00:00:00Z\tW/ etag\t"], (
+        f"report script let a tab or a line break inside a value through: {result.out!r}"
+    )
+
+
+def test_the_evidence_table_is_the_same_bytes_on_every_run_with_git_or_without(audit, tmp_path):
+    def once(root, **env):
+        return run(["bash", REPORT, "evidence"], cwd=root, env=env, stdout_only=True).out
+
+    first = once(audit)
+    git = Git(audit)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "the bundle")
+    write(audit / "src" / "a.md", "an edit nobody committed\n")
+    assert first.split("\n")[0] == HEADER and first == once(audit) == once(audit, TZ="Asia/Tokyo"), (
+        "report script's evidence table changed with git history, an uncommitted source or the time zone"
+    )
+
+
+def test_the_evidence_table_leaves_out_index_md_and_log_md(audit):
+    _, cells = table(audit)
+    paths = sorted({row[0] for row in cells[1:]})
+    assert paths == sorted([*CONFIRMED, *AUTOMATION, "x/autodraft.md", "x/edited.md", "x/retired.md", "x/unchecked.md"]), (
+        f"report script's evidence table holds a reserved file, or lacks a concept: {paths}"
+    )

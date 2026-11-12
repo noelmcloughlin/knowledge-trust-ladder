@@ -44,7 +44,9 @@ These tests pin that for the template files that do so, and for the
    `.lokf/knowledge` is itself a link;
 5. the release workflow compares an unchanged bundle as unchanged and an
    edited one as changed in each shape, and its pack step gives the same bytes
-   for the same bundle.
+   for the same bundle. It writes the evidence table beside the zip with a
+   checksum, attests and uploads it, and attaches none where the host's
+   report script has no `evidence` form.
 
 `just`, `jq`, `node`, `zip` and `unzip` are optional: a test that needs one
 skips and says so.
@@ -1684,3 +1686,61 @@ def test_the_release_packs_again_when_only_the_domain_vocabulary_changed(tmp_pat
     assert "changed=false" in outputs["v4"][0], "a refreshed lokf.yaml, which the released copy imports by name, released the bundle again"
     assert "changed=true" in outputs["v5"][0] and "its domain vocabulary changed" in outputs["v5"][1], "a copy on a flow list's second line was not compared"
     assert "changed=true" in outputs["v6"][0] and f"now names {where}slsa.yaml" in outputs["v6"][1], outputs["v6"]
+
+
+def pack_evidence(tmp_path, script=None):
+    """Run the template's "Pack the evidence table" lines in a host whose knowledge-report.sh is the template's, the text given, or absent when that text is empty."""
+    step = write(tmp_path / "evidence.sh", "#!/usr/bin/env bash\n" + step_body(RELEASE_YAML, "Pack the evidence table", r"^      [#-]"))
+    host = tmp_path / "host"
+    write(host / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(host / ".lokf" / "knowledge" / "x" / "a.md", '---\ntype: Service\ntitle: A\nverified:\n- by: human:ada\n  at: "2026-01-02T10:00:00Z"\n---\n')
+    if script is None:
+        shutil.copy(SCRIPTS / "knowledge-report.sh", write(host / ".lokf" / "scripts" / "knowledge-report.sh", ""))
+    elif script:
+        write(host / ".lokf" / "scripts" / "knowledge-report.sh", script)
+    (host / "temp" / "release").mkdir(parents=True)
+    r = run(["bash", step], cwd=host, env={"RUNNER_TEMP": host / "temp", "TAG": "release/v1.2.3", "NAME": "host"})
+    return r, host / "temp" / "release"
+
+
+def test_the_release_writes_the_evidence_table_beside_the_zip_with_its_checksum(tmp_path):
+    """The step's own lines: the table is what the host's knowledge-report.sh prints, under a name that carries the tag and the host."""
+    r, out = pack_evidence(tmp_path)
+    assert r.rc == 0 and sorted(p.name for p in out.iterdir()) == ["evidence-release-v1.2.3-host.tsv", "evidence-release-v1.2.3-host.tsv.sha256"], r.out
+    assert read(out / "evidence-release-v1.2.3-host.tsv") == (
+        "path\ttype\tstatus\tstale_after\tresource\tevent\tby\tat\trevision\tcheck\n"
+        "x/a.md\tService\t\t\t\tverified\thuman:ada\t2026-01-02T10:00:00Z\t\tfirst\n"
+    ), "the release's evidence table is not the one knowledge-report.sh prints"
+    assert run(["sha256sum", "-c", "evidence-release-v1.2.3-host.tsv.sha256"], cwd=out).rc == 0 and "Packed 1 rows into evidence-release-v1.2.3-host.tsv" in r.out, r.out
+
+
+USAGE_ONLY = '#!/usr/bin/env bash\necho "usage: knowledge-report.sh [--root <dir>] [health | labels [<path>...]]" >&2\nexit 2\n'
+
+
+@pytest.mark.parametrize("script", [USAGE_ONLY, ""], ids=["a script that predates the form", "no script"])
+def test_the_release_attaches_no_evidence_table_where_the_script_has_no_such_form(tmp_path, script):
+    """An older sidecar's knowledge-report.sh prints its usage and exits 2: the step posts one notice and leaves no file, so the release carries its other assets."""
+    r, out = pack_evidence(tmp_path, script)
+    assert r.rc == 0 and count_notices(r.out) == 1 and "so no evidence table is attached" in r.out and not list(out.iterdir()), r.out
+
+
+def count_notices(text):
+    return sum(1 for line in text.split("\n") if line.startswith("::notice::"))
+
+
+def test_the_release_stops_when_the_evidence_form_fails(tmp_path):
+    """A script that has the form and fails is no reason to release without the table, and half a table is never attached."""
+    r, out = pack_evidence(tmp_path, "#!/usr/bin/env bash\necho half a table\nexit 1\n")
+    assert r.rc == 1 and "::error::knowledge-report.sh evidence failed with status 1" in r.out and not list(out.iterdir()), r.out
+
+
+def test_the_attach_job_attests_and_uploads_the_evidence_table():
+    text = read(RELEASE_YAML)
+    attach = section(text, r"^  attach:$")
+    assert "${{ runner.temp }}/release/*.tsv" in section(attach, r"^          subject-path: \|$", r"^$"), (
+        "knowledge-release.yaml no longer names the evidence table among the attestation's subjects"
+    )
+    assert 'gh release upload "$TAG" ./*.zip ./*.yaml ./*.tsv ./*.sha256 --clobber' in attach, (
+        "knowledge-release.yaml no longer uploads the evidence table"
+    )
+    assert has_line(attach, "        run: sha256sum -c -- *.sha256"), "knowledge-release.yaml no longer checks every checksum before it uploads"

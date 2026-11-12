@@ -44,7 +44,10 @@ Every trust label is computed from the frontmatter on each read and never stored
 | When must it be looked at again, and by what rule? | `stale_after`, proposed from `policies/knowledge-curation.md` |
 | Has a person's record been removed? | the `provenance` job's log: a confirmation struck out, or gone with its concept, needs that person's approval or signature as an added one does. On the scheduled librarian's pull request, `knowledge-provenance.sh --unattended` in the job that holds the write token |
 | What changed, and why? | `log.md`, and git |
+| Did a second person re-check it? | the `check` column of `knowledge-report.sh evidence`: `second-person` marks a `human:` event by anyone but the first person to confirm |
 | Is the checker independent of the checked? | the JSON Schema is generated from the upstream `lokf.yaml`, not written by the bundle's authors; the toolkit also generates SHACL shapes, which no KTL check runs yet; the bundle projects to RDF and answers [SPARQL](../skills/ktl-curator/references/queries.md) |
+
+`knowledge-report.sh evidence` prints every `generated` record and `verified` event as one tab-separated table. `knowledge-release.yaml` attaches that table beside the bundle's zip as `evidence-<tag>-<name>.tsv`, with a checksum and a signed build provenance.
 
 Four limits on what that evidence shows:
 
@@ -155,14 +158,14 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **The criticism.** Davies and Zhivitskaya find the model's origins opaque and its effectiveness untested. Schuett notes that "the model has been criticized and there is not much empirical evidence for its effectiveness", and concludes that within its limits it "can plausibly contribute to a reduction of risks from AI".
 
-**What KTL does.** It claims nothing about the model. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a sample of confirmed concepts when the policy names a size. A rule the curator cannot steer picks the sample.
+**What KTL does.** It claims nothing about the model. Whether the arrangement reduces risk is for a third line to test. `knowledge-report.sh sample` draws a sample of confirmed concepts for that test, from a seed the auditor supplies. The curator's report prints such a sample, drawn from the day's date, when the policy names a size.
 
 **Verdict: not KTL's role.**
 
 ## What remains to do, and who does it
 
 - **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and LOKF releasing it in 0.9.0.
-- **KTL.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, of which the curator's sampling step is the first half, and [its Copilot form](m365.md#how-it-is-put-together). Fetching a federation member from a private repository ([federation.md](federation.md#what-exists-and-what-remains-a-design)).
+- **KTL.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, and [its Copilot form](m365.md#how-it-is-put-together). `knowledge-report.sh` draws the sample and prints the table of events that such a skill starts from. Fetching a federation member from a private repository ([federation.md](federation.md#what-exists-and-what-remains-a-design)).
 - **The organisation's.** Naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
 
 ## Sources

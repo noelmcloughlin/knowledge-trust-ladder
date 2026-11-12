@@ -80,11 +80,12 @@ Sources that moved since a confirmation: <Title> - <source> (<date>). Confirmed 
 
 Retired, with a successor no person has confirmed: <Title> - <successor title> (<successor path>), <the successor's label>. An agent may propose a retirement; the retired concept governs until a person confirms the successor.   | omit this line entirely when the script lists none
 
+Sample - seed "<YYYY-MM-DD>" (computed by knowledge-report.sh ...)   | this line and the three blocks under it as the script prints them; omit them all when it prints no sample
 For a second person to re-check (<n>, picked by a rule the curator cannot steer):
-- <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Independent re-check:` line above 0
-
+- <Title> (<path>) - <resource> - confirmed by <ids>   | omit this block when the curation policy has no `Independent re-check:` line above 0
 For a person to check what automation passed (<n>, picked by the same rule):
 - <Title> (<path>) - <resource>   | omit this block when the curation policy has no `Automation re-check:` line above 0
+Re-checked by a second person: <k> of <a> confirmed
 
 Ready to record: human:<id> via gh · signing on · attended   | or what is missing and which verbs that removes, from the preflight and your own instructions, for example:
 Ready to record: this machine isn't signed in to GitHub, so I can't record a confirmation in your name; I can still send back, retire or mark for later. Signing in is `gh auth login`, or one of the routes in references/portability.md.
@@ -99,7 +100,19 @@ The health line is the one number to watch over time: "confirmed by a person: *a
 
 ## Sample for a second person
 
-When the curation policy carries `Independent re-check: <n>` above zero, Step 1 lists n concepts confirmed by a person, for someone else to re-check. When it carries `Automation re-check: <n>` above zero, Step 1 lists n concepts checked by automation only (a `verified` list with events, none by a `human:` actor, and no `status: draft`), for a person to check against their sources. Each list is picked the same way: sort the paths by the `sha256sum` (`shasum -a 256` where there is none, as on macOS) of path plus today's date, and take the first n. Nobody chooses the hash and the date moves the order daily, so the curator cannot steer the pick. A verdict on either list goes through the ordinary verbs.
+`knowledge-report.sh` draws both samples, and Step 1 quotes them. When the curation policy carries `Independent re-check: <n>` above zero, the report lists n concepts confirmed by a person, for someone else to re-check. Each line names the people who confirmed the concept, and none of them is the one to re-check it. When the policy carries `Automation re-check: <n>` above zero, the report lists n concepts checked by automation only (a `verified` list with events, none by a `human:` actor, and no `status: draft`), for a person to check against their sources. A verdict on either list goes through the ordinary verbs.
+
+The script picks each list the same way. It orders the list's concepts by the SHA-256 of the seed, one space and the concept's path, lowest first, and takes the first n. The seed is today's date in UTC, and the sample's first line states it, so anyone can draw the same lists again. Nobody chooses the hash and the date moves the order daily, so the curator cannot steer the pick.
+
+Anyone can work out a later day's sample ahead of that day. An auditor who wants a sample nobody could foresee passes a seed of their own, and may set both sizes:
+
+```sh
+bash .lokf/scripts/knowledge-report.sh sample --seed <text> --independent <n> --automation <n>
+```
+
+The sample ends with a count: how many confirmed concepts a second person has re-checked. The script reads a concept's `human:` `verified` events in the order of `at`. The earliest is the first confirmation. A later event by the same id is that person confirming again, and a later event by any other id is a second person's re-check. `knowledge-report.sh evidence` prints every event as a tab-separated table for an auditor, and its `check` column says which of the three an event is.
+
+On a sidecar whose script predates `sample`, sort the paths by the `sha256sum` (`shasum -a 256` where there is none, as on macOS) of today's date, one space and the path, and take the first n.
 
 ## Checking a confirmation against git
 

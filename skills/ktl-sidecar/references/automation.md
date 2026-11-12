@@ -12,7 +12,7 @@ Each file has a section on one of the two pages. Read the one you are setting up
 | `knowledge-librarian.yaml` | Runs the librarian agent weekly when work waits for it, and opens a review pull request | Repository variables, and a secret for the agent's key in the `knowledge-librarian` Environment | below |
 | `knowledge-librarian.sh` | The wrapper the librarian workflow runs | Nothing, unless the skills live in an unusual directory | below |
 | `knowledge-apply.sh`, `knowledge-apply.py` | The librarian's only pen: applies `.lokf/patch.yaml` to the bundle; the wrapper runs it after the agent | Nothing | ktl-librarian's `references/patch.md`, or `--format` |
-| `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, whether any work waits, what a change does to the record, the retrieval score, and the tracked files no concept names | Nothing, or one variable for the retrieval score | below |
+| `knowledge-report.sh` | What a program can say about the bundle: each trust label, the health line, the librarian's work list, whether any work waits, what a change does to the record, the retrieval score, and the tracked files no concept names. It also draws the curator's sample and prints the evidence table | Nothing, or one variable for the retrieval score | below |
 | `knowledge-release.yaml` | Attaches the bundle to a GitHub release as a zip file | One variable to turn it on, or run it by hand | below |
 | `knowledge-feedback.sh` | Records a reader's gap without reading the file | Nothing. It never runs in CI | below |
 | `knowledge-federation.yaml` and `knowledge-federate.py` *(a domain host only)* | Build the workspace of a domain host from the released bundles its member concepts name, publish it, and keep the members current | One variable to turn it on, Pages taken from Actions, and `AGENT_CLI` set to the script | below |
@@ -246,6 +246,10 @@ When the host's `.lokf/justfile` names a schema on its `schema :=` line, the rel
 
 Any other local file the schema imports would not resolve beside the bundle, so it is merged into the released copy, with the files it imports in turn. A host's composite that imports two `lokf adapt` copies is released this way as one file. The merge writes out each merged element's IRI as LinkML derives it, and carries each file's settings and CURIE maps, so the copy validates and projects as the composite does. It stops the release on a name that two files define differently, whether an element, a prefix or a setting, and on an element a merged file shares with LOKF core. LinkML would keep the last definition and say nothing. The merge also stops on an import from outside the repository. A merged copy is written out as plain YAML, without its comments.
 
+### The evidence table beside it
+
+The release carries `evidence-<tag>-<name>.tsv` too, with its own `.sha256` and attestation. `pack` writes it with the host's `knowledge-report.sh evidence`: one row for each concept's `generated` record and one for each `verified` event, for an auditor's spreadsheet. A sidecar whose script predates the `evidence` form gets a notice and no table.
+
 ### What the zip holds
 
 When the bundle changed, `pack` runs the registrar's two checks, so a release never carries a bundle its own gate would fail. It then packs the bundle under a read-only token:
@@ -255,7 +259,7 @@ When the bundle changed, `pack` runs the registrar's two checks, so a release ne
 - A link inside the bundle is stored as a link and never followed, so the zip can hold nothing from outside the bundle. A bundle normally carries none; the `knowledge_bundle` doorway sits at the repository root, outside it.
 - It is built with `zip` and checked with `unzip`, which GitHub's hosted Ubuntu runners carry. A self-hosted runner needs both installed.
 
-The `attach` job holds `contents: write`, runs no third-party packages, checks the zip against its checksum and uploads both files, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
+The `attach` job holds `contents: write`, runs no third-party packages, checks each file against its checksum and uploads them all, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
 
 ## `knowledge-federation.yaml`: the workspace of a domain host
 
@@ -435,7 +439,7 @@ Four more pins decide what a run installs, and no update tool moves them:
 It has no placeholders and writes nothing. A trust label, the health line and the librarian's work list are arithmetic over frontmatter and git history, and this script does that arithmetic so that no model has to:
 
 ```sh
-bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | isolated | coverage [--strict] [<dir>...] | coverage --why <path>...]
+bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | isolated | coverage [--strict] [<dir>...] | coverage --why <path>... | sample [--seed <text>] [--independent <n>] [--automation <n>] | evidence]
 ```
 
 - With no command it prints the whole report ktl-curator's Step 1 starts from: the health line, every concept's label, the open questions, and the confirmed concepts whose source moved after the confirmation.
@@ -446,6 +450,8 @@ bash .lokf/scripts/knowledge-report.sh [--root <dir>] [health | labels [<path>..
 - `retrieval` measures what the index promises, and the next section covers it.
 - `isolated` reads the bundle as a graph, and names each concept no relation joins to another and each small group joined only to itself. It leaves out retired concepts, an `Organization`, a `Person` and the sources map. The work list shows ten, which take turns by month, and leaves out a concept a person declined until it changes. The whole report shows the counts. A concept that stands apart fails no check, takes no stamp and never makes `quiet` busy, since its source may state no relation.
 - `coverage` counts, per top-level folder, the tracked files under no path a concept names in its `resource` or `sources`. It lists them under a folder you name, or under `.` for the whole tree. A file git would add but does not track yet is counted apart, since a concept names only a path git tracks. `coverage --why <path>` names each concept that names the path or a folder above it, and each that leaves it out. A file only a concept's `exclusions` account for (lokf 0.9.0 and later) is counted apart, as left out on purpose, and never fails `--strict`. `--strict` exits 1 when a tracked file in scope is named by nobody, when a folder you name holds no tracked file, and when it cannot count, so a check built on it never passes by default. It is ktl-librarian's sweep for orphans, and it makes no scheduled run busy.
+- `sample` draws the lists the curation policy asks for: concepts confirmed by a person, for a second person to re-check, and concepts checked by automation only, for a person to check. It orders each list's concepts by the SHA-256 of a seed, one space and the path, lowest first, and takes the first n. The seed is `--seed`, or today's date in UTC, and the first line states it. The sizes are `--independent` and `--automation`, or the policy's `Independent re-check:` and `Automation re-check:` lines. It also counts the confirmed concepts a second person has re-checked. The whole report prints the same lists when the policy asks for one. It needs `sha256sum` or `shasum`, and exits 2 on a host with neither.
+- `evidence` prints a tab-separated table for an auditor's spreadsheet: one row for each concept's `generated` record and one for each `verified` event. Its `check` column marks a person's event as `first`, `same-person` or `second-person`. It reads frontmatter only, so the same bundle always gives the same bytes.
 
 A source has moved when its last commit comes after the commit that recorded the event it is compared with, or when it carries an edit not yet committed and the concept does not. History orders the two, never a clock, so a source changed in that same commit has not moved. That is the file's history and not its meaning: only reading the source says whether a fact changed. Without git, or with a shallow clone or a gitignored `.lokf/`, the script says the sources were not compared.
 
