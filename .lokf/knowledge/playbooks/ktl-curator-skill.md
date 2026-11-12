@@ -123,4 +123,4 @@ Accepting a member's move to a new release is the same confirm again. When the n
 
 ## Open questions
 
-- 2026-10-29, human:noelmcloughlin: rewrite as needed
+- 2026-11-12, human:noelmcloughlin: add excerpt to the footnoted sources

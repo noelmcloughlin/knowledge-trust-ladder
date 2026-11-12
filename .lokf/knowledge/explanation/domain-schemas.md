@@ -27,7 +27,7 @@ verified:
     at: "2026-10-20T23:23:33Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:19:37Z"
-status: draft
+status: deprecated
 ---
 
 # Overview
@@ -72,7 +72,3 @@ The shape waits for the curator's write path.
 Where a domain vocabulary binds a slot to an external code list (SNOMED CT, for example), neither LOKF's schema nor `lokf validate` checks that the term still exists. `linkml-term-validator` can, as an optional extra gate whose "service unreachable" counts as not passing.
 
 **Roles stay as they are.** The curator raises the question, as a report line and a conversation. The team decides whether a domain vocabulary, a small piece of governed software, is worth owning. The librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge, since the spec says consumers MUST NOT reject unknown types. It is also still outside what `lokf validate` checks, so the registrar gate stays red.
-
-## Open questions
-
-- 2026-10-29, human:noelmcloughlin: rewrite as needed
