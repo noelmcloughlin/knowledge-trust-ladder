@@ -104,13 +104,13 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 - People accept a machine's output even when it is wrong, and this "cannot be prevented by training or instructions" ([Parasuraman and Manzey, Human Factors, 2010](https://doi.org/10.1177/0018720810376055)).
 - An explanation makes acceptance more likely "regardless of its correctness" ([Bansal et al., CHI 2021](https://doi.org/10.1145/3411764.3445717)).
 - Policies that require a human to oversee an algorithm rest on people who "are unable to perform the desired oversight functions" ([Green, Computer Law & Security Review, 2022](https://doi.org/10.1016/j.clsr.2022.105681)).
-- People relied less blindly on a machine's suggestion when the screen forced a pause before showing it, and not when it merely added an explanation. The pauses were asking for their own answer first, showing the suggestion only when they clicked for it, or making them wait for it ([Buçinca et al., CSCW 2021](https://doi.org/10.1145/3449287)).
+- People relied less blindly on a machine's suggestion when the screen forced a pause before showing it, and not when it merely added an explanation. The pause took one of these forms: asking for their own answer first, showing the suggestion only when they clicked for it, or making them wait for it ([Buçinca et al., CSCW 2021](https://doi.org/10.1145/3449287)).
 
 **What KTL does.** Four things:
 
 - The curator records only what the person says and confirms nothing itself.
 - The review session shows the source before the claim, the pause Buçinca describes.
-- Who confirms what, and how often, is a reviewed policy rather than a habit, the direction Green points.
+- Who confirms what, and how often, is a reviewed policy rather than a habit, the direction that Green points to.
 - The docent's evidence-first mode quotes the source before any answer that rests on an unconfirmed concept. It is off by default, because Buçinca found such designs cost goodwill.
 
 **Verdict: answered in part.** Left open:

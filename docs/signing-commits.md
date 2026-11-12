@@ -101,5 +101,5 @@ Keep one kind of key per login. When the key changes, replace the file in its ow
 ## If signing fails
 
 - `could not load public key`: `gpg.format` does not match the key `user.signingkey` points at. Check the file is what its name implies: a GPG export begins `-----BEGIN PGP PUBLIC KEY BLOCK-----`, an SSH key begins `ssh-ed25519`.
-- **No prompt appears and the commit fails**: GPG has nowhere to ask for your passphrase, common over SSH or in a terminal-less session. Add `export GPG_TTY=$(tty)` to your shell profile and open a new shell.
+- **No prompt appears and the commit fails**: GPG has nowhere to ask for your passphrase, which is common over SSH or in a terminal-less session. Add `export GPG_TTY=$(tty)` to your shell profile and open a new shell.
 - **Signed locally but GitHub says `Unverified`**: the commit email is not a verified address on your account, or the key was added to the wrong list (authentication instead of signing).
