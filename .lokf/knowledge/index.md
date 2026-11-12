@@ -78,6 +78,7 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 * [Threat model](policies/threat-model.md) - The security design shared by every lmodel repository and seven noelmcloughlin repositories, the three KTL ones among them, which each SECURITY.md links to: repository hardening, schema builds and releases, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author.
 * [Versioning policy](policies/versioning.md) - One repository-level semantic version covering all six skills, released together under a single tag, with patch, minor and major decided by Conventional Commits.
 * [Code of conduct](policies/code-of-conduct.md) - Contributor Covenant v2.1: its scope over issues, pull requests and discussions, and how to report unacceptable behaviour.
+* [Knowledge curation policy](policies/knowledge-curation.md) - How often each kind of concept in this bundle is re-confirmed by a person, and who does it.
 
 # Explanation
 
