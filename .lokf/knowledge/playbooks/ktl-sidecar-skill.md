@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-12T18:04:41Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -113,7 +113,7 @@ With an optional variable, `KNOWLEDGE_RETRIEVAL`, each run that changes the bund
 
 A first job, `earlier`, reads what became of the pull requests the workflow opened before. While one is still open, every scheduled run stops before the agent, in the first seven days too. On a scheduled run, the quiet check counts none of what a person declined by closing one without merging, and the librarian proposes none of it again until it changes. The librarian's hand-off, its own words for the reviewer, goes with the patch, and `publish` shows it under *From the librarian*, in a code block (2026-10-04).
 
-The third workflow, `knowledge-release.yaml` (since 2026-09-24), needs no agent. It attaches the bundle to a GitHub release as `knowledge-<tag>-<repository>.zip` with a checksum. Since the `m365/` folder was added, it also attaches one Copilot skill zip per instructions file under `.lokf/m365/` beside it, built by `.lokf/m365/knowledge-m365.sh`. It skips a release whose bundle matches the last one released.
+The third workflow, `knowledge-release.yaml` (since 2026-09-24), needs no agent. It attaches the bundle to a GitHub release as `knowledge-<tag>-<repository>.zip` with a checksum. Since the `m365/` folder was added, it also attaches one Copilot skill zip per instructions file under `.lokf/m365/` beside it, built by `.lokf/m365/knowledge-m365.sh`. Since 0.64.0 it attaches an evidence table beside the bundle, `evidence-<tag>-<name>.tsv`, with its checksum: one row for each concept's `generated` record and each `verified` event, for an auditor's spreadsheet. It skips a release whose bundle matches the last one released.
 
 When `.lokf/justfile` names a schema on its `schema :=` line, the release attaches that file too, as `schema-<tag>-<name>.yaml`. Since 0.55.0 the line may name any file in the repository, such as a linkml-sidecar schema, but never one outside it, and the released copy imports LOKF core as `lokf`. Since 0.59.0 a release whose only change is the schema packs again, and any other local file the schema imports is merged into the released copy, so a composite of two `lokf adapt` copies is released as one file. The merge stops the release on a name two files define differently.[^automation.md] The workflow runs when dispatched by hand or, once the `KNOWLEDGE_RELEASE_ENABLED` repository variable is `true`, on each published release.
 

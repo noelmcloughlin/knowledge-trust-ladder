@@ -2,12 +2,12 @@
 type: Playbook
 id: https://w3id.org/ktl/knowledge/playbooks/releasing
 title: Releasing
-description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, dispatches `knowledge-release.yaml` to attach the bundle's zip, its domain vocabulary and the Copilot zips, and asks the sibling hosts to sync."
+description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, dispatches `knowledge-release.yaml` to attach the bundle's zip, its domain vocabulary, its evidence table and the Copilot zips, and asks the sibling hosts to sync."
 genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-12T18:04:41Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -69,6 +69,8 @@ It then sets up `uv` and re-runs the repository contract, the sidecar scripts' t
 Since 2026-09-24 it then dispatches `knowledge-release.yaml` for the new tag. That workflow attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle changed since the last release that carries one. The zip is named after the repository, or after the name its `KNOWLEDGE_RELEASE_NAME` variable sets. Beside it (since 2026-09-24) it attaches the docent as a Microsoft 365 Copilot skill, `ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`. It attaches one zip per instructions file under `.lokf/m365/`, each with its own checksum and attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release carries the bundle zip alone.
 
 Since 0.46.0, when the host's `.lokf/justfile` names a domain vocabulary on its `schema :=` line, the workflow also attaches that file as `schema-<tag>-<name>.yaml`, with its own `.sha256` and attestation. A federation that admits the bundle can then validate it on its own terms. Since 0.55.0 the line may name any file in the repository, such as a linkml-sidecar schema, but never one outside it, and the released copy imports LOKF core as `lokf`. Since 0.59.0 a release whose only change is the schema packs again, and any other local file the schema imports is merged into the released copy, so a composite of two `lokf adapt` copies is released as one file. The merge stops the release on a name two files define differently. The release identifies that file by the tag and the schema's own file name alone, in the asset name and its `.sha256`, never by a `version:` slot inside the schema, so the schema's own `version:` can read the same across several releases that change its content.[^knowledge-release.yaml]
+
+Since 0.64.0, when the bundle changed, the workflow also attaches its evidence table as `evidence-<tag>-<name>.tsv`, with its own `.sha256` and attestation. The host's `knowledge-report.sh evidence` writes it from frontmatter alone: one row for each concept's `generated` record and one for each `verified` event, with a `check` column that says whether a person's event is a first confirmation, the same person confirming again or a second person's re-check. A sidecar whose script has no `evidence` form gets a notice, and its release carries no table.
 
 The dispatch is needed because GitHub starts no workflow from a release made with `GITHUB_TOKEN`, so that workflow's own release trigger never fires here. If the dispatch fails, the job fails and names the manual run to make.
 
