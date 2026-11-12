@@ -53,7 +53,12 @@ export const ASSETS = ".assets";
 export const DOCS = {
   dir: "docs",
   groups: [
-    { label: "Guides", pages: ["install", "obsidian", "m365", "ingest", "skills-repositories"] },
+    { label: "Start here", pages: ["first-bundle", "install"] },
+    {
+      label: "The cast",
+      pages: ["cast/sidecar", "cast/librarian", "cast/registrar", "cast/curator", "cast/docent", "cast/prose", "cast/website"],
+    },
+    { label: "Guides", pages: ["obsidian", "m365", "ingest", "skills-repositories"] },
     {
       label: "Architecture",
       pages: [

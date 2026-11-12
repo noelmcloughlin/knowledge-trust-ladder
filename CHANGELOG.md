@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **Each role has a docs page of its own under `docs/cast/`, and `docs/first-bundle.md` walks through a first run.** The README gains a get-started section and the cast as a table, and the architecture page links each role's page.
+
 ## [0.63.1] - 2026-11-12
 
 ### Changed
