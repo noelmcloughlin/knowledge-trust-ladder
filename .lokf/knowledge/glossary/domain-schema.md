@@ -11,17 +11,17 @@ sources:
   - resource: skills/ktl-librarian/references/domain-vocabulary.md
   - resource: skills/ktl-curator/references/domain-vocabularies.md
 relatedTo:
-  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/explanation/domain-vocabularies
   - https://w3id.org/ktl/knowledge/glossary/domain-vocabulary
   - https://w3id.org/ktl/knowledge/glossary/linkml
   - https://w3id.org/ktl/knowledge/glossary/lokf
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-12T18:10:56Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-12T18:05:07Z"
+    at: "2026-11-12T18:10:56Z"
 ---
 
 # Overview

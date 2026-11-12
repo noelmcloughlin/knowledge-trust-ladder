@@ -12,12 +12,12 @@ sources:
   - resource: docs/context-layer.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-12T18:10:56Z"
 status: draft
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
   - https://w3id.org/ktl/knowledge/policies/threat-model
-  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/explanation/domain-vocabularies
   - https://w3id.org/ktl/knowledge/explanation/context-layer
 verified:
   - by: process:ktl-librarian
@@ -32,7 +32,7 @@ The architecture page frames it around one question: who is responsible for the 
 
 One page now answers this for one kind of repository. `docs/skills-repositories.md` says that in a repository whose content is Agent Skills, KTL helps with the knowledge around the skills and leaves the skills as they are. It leaves whether a skill works to an evaluation, since KTL's checks cover the form and the provenance of what the bundle says.
 
-No source says in general which kinds of use KTL fits and which it does not. Two neighbouring concepts cover parts of the ground: [three lines of defence](three-lines-of-defence.md) places the roles in a governance model, and [domain vocabularies](domain-schemas.md) covers modelling a regulated domain (AI governance among them). Neither states intended uses or non-goals.
+No source says in general which kinds of use KTL fits and which it does not. Two neighbouring concepts cover parts of the ground: [three lines of defence](three-lines-of-defence.md) places the roles in a governance model, and [domain vocabularies](domain-vocabularies.md) covers modelling a regulated domain (AI governance among them). Neither states intended uses or non-goals.
 
 ## Open questions
 

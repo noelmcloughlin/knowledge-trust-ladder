@@ -15,7 +15,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/intended-uses
-  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/explanation/domain-vocabularies
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
 references:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -23,7 +23,7 @@ references:
   - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-12T18:10:56Z"
 status: draft
 verified:
   - by: process:ktl-librarian

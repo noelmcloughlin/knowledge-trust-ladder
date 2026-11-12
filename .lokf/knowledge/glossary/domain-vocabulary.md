@@ -13,22 +13,22 @@ sources:
   - resource: docs/architecture.md
   - resource: CHANGELOG.md
 relatedTo:
-  - https://w3id.org/ktl/knowledge/explanation/domain-schemas
+  - https://w3id.org/ktl/knowledge/explanation/domain-vocabularies
   - https://w3id.org/ktl/knowledge/glossary/domain-schema
   - https://w3id.org/ktl/knowledge/glossary/linkml
   - https://w3id.org/ktl/knowledge/glossary/lokf
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:55:35Z"
+  at: "2026-11-12T18:10:56Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-12T18:05:07Z"
+    at: "2026-11-12T18:10:56Z"
 ---
 
 # Overview
 
-LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. Concepts typically stop fitting it in a deep or safety-critical domain, such as medicine, law, finance or safety engineering. The answer is then a **domain vocabulary**: a file written in [LinkML](linkml.md) that imports [LOKF](lokf.md)'s schema and declares the classes and keys the bundle needs, so the domain's own types are checked rather than tolerated ([when the built-in vocabulary stops fitting](../explanation/domain-schemas.md)). The [curator](curator.md) flags concepts that no longer fit, the team decides, and the [librarian](librarian.md) applies it.
+LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. Concepts typically stop fitting it in a deep or safety-critical domain, such as medicine, law, finance or safety engineering. The answer is then a **domain vocabulary**: a file written in [LinkML](linkml.md) that imports [LOKF](lokf.md)'s schema and declares the classes and keys the bundle needs, so the domain's own types are checked rather than tolerated ([when the built-in vocabulary stops fitting](../explanation/domain-vocabularies.md)). The [curator](curator.md) flags concepts that no longer fit, the team decides, and the [librarian](librarian.md) applies it.
 
 It sits in `.lokf/schema/`, beside a pinned copy of LOKF's `lokf.yaml`. The `schema :=` line in `.lokf/justfile` names it, and the recipes pass it to `lokf validate` as `--schema`. A file that imports `lokf` belongs in `.lokf/schema/`.
 
