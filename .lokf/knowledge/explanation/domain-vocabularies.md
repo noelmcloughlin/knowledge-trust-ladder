@@ -19,14 +19,18 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
-  by: process:ktl-librarian
-  at: "2026-11-12T18:10:56Z"
-status: draft
+  by: human:noelmcloughlin
+  at: "2026-11-12T20:37:20Z"
+verified:
+  - by: human:noelmcloughlin
+    at: "2026-11-12T20:37:20Z"
+    revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
+stale_after: 2028-11-12
 ---
 
 # Overview
 
-LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. `docs/architecture.md` says that LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. It also says that a domain whose concepts stop fitting it extends the schema, so its own types are checked rather than tolerated.
+LOKF has a small vocabulary: a short list of classes, the typed relations and a handful of trust fields, which keeps bundles portable. `docs/architecture.md` says that LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. It also says that a domain whose concepts stop fitting it extends the vocabulary, so its own types are checked rather than tolerated.
 
 **The signs.** A domain vocabulary is due when any of these holds:
 

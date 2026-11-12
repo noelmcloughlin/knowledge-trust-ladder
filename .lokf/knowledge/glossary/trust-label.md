@@ -19,7 +19,10 @@ verified:
     at: "2026-10-13T01:06:43Z"
   - by: human:noelmcloughlin
     at: "2026-10-19T20:36:44Z"
-stale_after: 2027-10-19
+  - by: human:noelmcloughlin
+    at: "2026-11-12T20:48:50Z"
+    revision: "7339a7009322e249bf9b04e485cef7e94747a39b"
+stale_after: 2028-11-12
 references:
   - https://w3id.org/ktl/knowledge/references/okf-specification
 ---

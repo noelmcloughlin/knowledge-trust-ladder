@@ -2,6 +2,8 @@
 
 ## 2026-11-12
 
+* **Curation**: human:noelmcloughlin confirmed 3 concepts, corrected 1, sent 2 back, retired 1 and left 1 for later. They cleared their "rewrite as needed" notes on Domain schemas and the ktl-curator skill.
+* **Deprecation**: [When the built-in vocabulary stops fitting: domain vocabularies](../explanation/domain-schemas.md) retired - replaced by [When the built-in vocabulary stops fitting: domain vocabularies](../explanation/domain-vocabularies.md).
 * **Added**: When the built-in vocabulary stops fitting: domain vocabularies, the explanation `explanation/domain-schemas.md` held, now at a path that names its term. The old concept stays until a person retires it and names this one as its successor.
 * **Changed**: concepts that linked the domain-vocabulary explanation link `explanation/domain-vocabularies.md`, its new path.
 * **Changed**: concepts that linked the domain-vocabulary explanation link `explanation/domain-vocabularies.md`, its new path. `playbooks/knowledge-sources.md` was edited since a person confirmed it; the label says so until the curator looks again.

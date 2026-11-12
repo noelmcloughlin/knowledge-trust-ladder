@@ -10,6 +10,11 @@ sources:
 generated:
   by: human:noelmcloughlin
   at: "2026-11-12T18:17:09Z"
+verified:
+  - by: human:noelmcloughlin
+    at: "2026-11-12T20:38:32Z"
+    revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
+stale_after: 2027-11-12
 ---
 
 # Who curates

@@ -23,6 +23,7 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-19T20:41:59Z"
 stale_after: 2027-10-19
+status: draft
 sources:
   - resource: docs/three-lines.md
   - resource: CHANGELOG.md
@@ -87,3 +88,7 @@ The page then lists what remains and who owns it, in three lines:
 - upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
 - this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The page links the auditor skill's Microsoft 365 Copilot form to `docs/m365.md`, which holds one instructions file per read-only role under `.lokf/m365/`. The list also names fetching a federation member from a private repository, which `docs/federation.md` says remains a design.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
+
+## Open questions
+
+- 2026-11-12, human:noelmcloughlin: remove stale information from docs/three-lines.md

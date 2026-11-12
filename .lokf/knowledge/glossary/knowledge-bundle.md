@@ -30,8 +30,10 @@ verified:
     at: "2026-10-13T00:16:44Z"
   - by: human:noelmcloughlin
     at: "2026-10-18T18:20:55Z"
-stale_after: 2028-09-24
-status: draft
+  - by: human:noelmcloughlin
+    at: "2026-11-12T20:41:51Z"
+    revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
+stale_after: 2028-11-12
 ---
 
 # Overview
