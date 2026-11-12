@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-11-12
+
+* **Changed**: Threat model follows the page's restructure in 2bb72b5: it covers every lmodel repository and seven noelmcloughlin repositories, adds schema builds and releases, signed build provenance and the cache rule, and runs harden-runner first in every job. Edited since a person confirmed it; the label says so until the curator looks again.
+
 ## 2026-11-08
 
 * **Changed**: Domain schemas says `.lokf/schema/` may hold several schema files, in subfolders too, and the `schema` variable names the root, whose imports reach `lokf` and the rest (`skills/ktl-librarian/references/domain-schema.md`). Edited since a person confirmed it; the label says so until the curator looks again.

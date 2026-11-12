@@ -3,7 +3,7 @@
 > [!NOTE]
 > This page is for anyone choosing the artifact repository, the store and the agent surface for the workspace that [A federation of bundles](federation.md) describes.
 
-Below, *the toolkit* is `lokf` at 0.8.0, the floor the sidecar pins. The toolkit writes a bundle out in three forms:
+Below, *the toolkit* is `lokf` at 0.9.0, the floor the sidecar pins. The toolkit writes a bundle out in three forms:
 
 - Markdown files;
 - RDF, as Turtle, N-Triples, JSON-LD or TriG from `lokf convert`, and as the four files `lokf export` writes;

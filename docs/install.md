@@ -43,7 +43,7 @@ In PowerShell or cmd, type the command on one line without the `\` continuations
 
 ## Install for your user, not into the repository
 
-A user install keeps the instructions an agent follows under your control ([threat-model.md](threat-model.md)). The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. Install into the repository only when a team wants every member on one version: leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
+A user install keeps the instructions that an agent follows under your control ([threat-model.md](threat-model.md)). The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. Install into the repository only when a team wants every member on one version: leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
 
 ## Turn on the workflows
 
@@ -71,4 +71,4 @@ Every skill runs from a POSIX shell (on Windows, the bash of Git for Windows, as
 | `ktl-prose` | `python3` 3.9 or newer, or `uv`, for its check script, and git to compare a file with its earlier version |
 | `ktl-website` | a sidecar from 0.30.0 or later, `uv`, and Node.js 22.12 or newer with npm to build the site on this machine; GitHub Actions and Pages to publish it, or the same build in another forge's CI ([deploy.md](../skills/ktl-website/references/deploy.md#another-forge)) |
 
-Someone who cannot act on a line the preflight prints, such as a **curator** who knows the subject but not the repository, gets a request note for whoever set the repository up. The note comes from the **sidecar**'s [prerequisites page](../skills/ktl-sidecar/references/prerequisites.md).
+Someone who cannot act on a line that the preflight prints, such as a **curator** who knows the subject but not the repository, gets a request note for whoever set the repository up. The note comes from the **sidecar**'s [prerequisites page](../skills/ktl-sidecar/references/prerequisites.md).

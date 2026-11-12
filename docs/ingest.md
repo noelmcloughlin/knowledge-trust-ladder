@@ -19,7 +19,7 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
 
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
 - **Pages and documents at an address**: HTML, Markdown, plain text and PDF. Most PDFs work, meaning any whose text can be selected and copied in a viewer. A scan of paper holds pictures of pages and no text, and is refused.
-- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. A run downloads the file list, then only the files that changed. Every such entry needs git 2.31 or later. Git follows no redirect with a credential, or where the manifest refuses private addresses. There an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
+- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. A run downloads the file list, then only the files that changed. Every such entry needs git 2.31 or later. Git follows no redirect with a credential, or where the manifest refuses private addresses. Where the manifest refuses private addresses, an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
 - **The output of a command** this repository holds: a client for a service the ingest has no fetcher for, a schema dump, an export.
 
 There is no fetcher for Jira, since issues are unsuitable as knowledge sources. Attachments and images are not fetched, and a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only through a command that prints it.
@@ -143,7 +143,11 @@ bash .lokf/scripts/knowledge-ingest.sh --prune                   # remove gone a
 bash .lokf/scripts/knowledge-ingest.sh --patch                   # Reference concepts for the entries that ask
 ```
 
-Set the same variable names in the environment. The librarian runs the first command itself at the start of a live session. Commit the mirror and the lock with the bundle change. A host with no git runs the script the same way, and the lock is its record. The preflight's `ingest` line counts files the lock names that are missing, files the lock does not name, and files waiting for a prune. The confidential cache under `.lokf/.cache/` may be deleted at any time, and the next run fetches it again. A run starts no more work after 25 minutes, so it ends inside the workflow's 30, and the next run takes up what it did not reach. `--time-limit 0` lifts the limit for a long first run by hand.
+Set the same variable names in the environment. The librarian runs the first command itself at the start of a live session. Commit the mirror and the lock with the bundle change. A host with no git runs the script the same way, and the lock is its record.
+
+The preflight's `ingest` line counts files the lock names that are missing, files the lock does not name, and files waiting for a prune. The confidential cache under `.lokf/.cache/` may be deleted at any time, and the next run fetches it again.
+
+A run starts no more work after 25 minutes, so it ends inside the workflow's 30, and the next run takes up what it did not reach. `--time-limit 0` lifts the limit for a long first run by hand.
 
 ## The pull request
 
