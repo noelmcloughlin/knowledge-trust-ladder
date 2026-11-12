@@ -33,15 +33,17 @@ docs/
   first-bundle.md       a first run: from no bundle to a confirmed concept and an answer
   install.md            the quick start, every way to install the six skills, and pinning to one release
   cast/                 a page for each role and each optional skill: what it does, how to ask it, what checks it
-  for-the-curious.md    the architecture's mechanics: four levels of checking, domain vocabularies
+  how-it-works.md       the architecture's mechanics: who writes the bundle, four levels of checking, domain vocabularies
   context-layer.md      the context layer: what it is, one bundle as one, and why bundles federate
   federation.md         a federation of bundles: domains, tiers, the workspace and the decisions
   context-layer-technology.md  the products a workspace can use: artifact repositories, stores, catalogues, agents
   obsidian.md           the bundle as a vault of its own, and the two plugins
   m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first
-  ingest.md             knowledge outside the repository: the manifest, the mirror and the ingest pull request
+  ingest.md             how to mirror knowledge from outside the repository, and review the ingest pull request
+  ingest-reference.md   the ingest's sources, manifest, mirror and lock, and how sensitivity bounds them
   three-lines.md        the roles in the three lines of defence, what an auditor can check, and the critics
   skills-repositories.md  KTL in a repository whose content is Agent Skills, and what remains to do
+  young-readers.md      knowledge retold for readers aged 8 to 18: what a retelling is, and who does what
   releasing.md          how the three repositories release, and the settings it needs
   signing-commits.md    signing commits, which the provenance gate reads
   threat-model.md       shared security design: what an agent can reach, and what guards it

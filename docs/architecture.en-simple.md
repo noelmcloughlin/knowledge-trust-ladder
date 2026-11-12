@@ -59,7 +59,7 @@ The labels are worked out from each entry every time it is read, and never store
 ## Where can I read more?
 
 - [install.md](install.md): how to install the skills, and which ones to start with.
-- [for-the-curious.md](for-the-curious.md): who writes the bundle and what checks it.
+- [how-it-works.md](how-it-works.md): who writes the bundle and what checks it.
 - [The bundle's glossary](../.lokf/knowledge/glossary/index.md): what the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen*.
 - [obsidian.md](obsidian.md): the bundle in [Obsidian](https://obsidian.md/), and the two plugins.
 - [CONTRIBUTING.md](../CONTRIBUTING.md) and [SECURITY.md](../SECURITY.md): how to help, and how to report a security issue.

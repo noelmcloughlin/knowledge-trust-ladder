@@ -106,12 +106,13 @@ The labels are computed from the frontmatter on every read, never stored, so the
 | What each role does, how to ask it, and what checks it | [sidecar](cast/sidecar.md), [librarian](cast/librarian.md), [registrar](cast/registrar.md), [curator](cast/curator.md), [docent](cast/docent.md), [`ktl-prose`](cast/prose.md), [`ktl-website`](cast/website.md) |
 | The context layer: what it is, how one bundle already is one, and why bundles federate through domains | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
 | A federation of bundles: domains as manifests, tiers of domains, the workspace built ahead of time, what exists and what remains a design, and the decisions an adopter must make | [federation.md](federation.md) |
-| Knowledge outside the repository: wiki pages, documents and files in other repositories, mirrored by the ingest so the bundle can cite them | [ingest.md](ingest.md) |
-| The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, how readers and verdicts steer the next run, and what to do when a bundle outgrows LOKF's vocabulary | [for-the-curious.md](for-the-curious.md) |
+| Knowledge outside the repository: wiki pages, documents and files in other repositories, mirrored by the ingest so the bundle can cite them | [ingest.md](ingest.md), and [its reference](ingest-reference.md) |
+| The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, how readers and verdicts steer the next run, and what to do when a bundle outgrows LOKF's vocabulary | [how-it-works.md](how-it-works.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [obsidian.md](obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](three-lines.md#what-the-critics-say) | [three-lines.md](three-lines.md) |
 | Whether KTL helps a repository whose content is Agent Skills, and what remains to do there | [skills-repositories.md](skills-repositories.md) |
+| Knowledge retold for readers aged 8 to 18, for a school or a youth group | [young-readers.md](young-readers.md) |
 | Versioning: all six skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [releasing.md](releasing.md), [CHANGELOG.md](../CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](../CONTRIBUTING.md), [repository-layout.md](repository-layout.md), [SECURITY.md](../SECURITY.md) |
 

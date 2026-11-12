@@ -7,6 +7,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Added
 
 - **Each role has a docs page of its own under `docs/cast/`, and `docs/first-bundle.md` walks through a first run.** The README gains a get-started section and the cast as a table, and the architecture page links each role's page.
+- **`docs/for-the-curious.md` is now `docs/how-it-works.md`, and its old address on the site redirects.** The ingest page is split into a how-to, `docs/ingest.md`, and a reference, `docs/ingest-reference.md`.
+- **`docs/young-readers.md` says how a bundle retells adult knowledge for readers aged 8 to 18.** It sits beside the three-lines page, at the other end of the range.
 
 ## [0.63.1] - 2026-11-12
 

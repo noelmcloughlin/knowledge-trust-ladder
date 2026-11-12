@@ -31,6 +31,6 @@ The **librarian** *binds it into order*. It derives the bundle's concepts from t
 ## Where the rest is written
 
 - **What it needs installed**: [install.md](../install.md#what-each-skill-needs).
-- **How verdicts and readers steer its next run**: [for-the-curious.md](../for-the-curious.md#how-readers-and-verdicts-steer-the-next-run).
+- **How verdicts and readers steer its next run**: [how-it-works.md](../how-it-works.md#how-readers-and-verdicts-steer-the-next-run).
 - **Knowledge that sits outside the repository**: [ingest.md](../ingest.md).
 - **Its copy editor**: [`ktl-prose`](prose.md).

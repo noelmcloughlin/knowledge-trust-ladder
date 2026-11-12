@@ -33,7 +33,7 @@ The second command runs from the repository's root and prints one line, such as 
 
 ## Where the rest is written
 
-- **Who writes the bundle, and what checks each write**: [for-the-curious.md](../for-the-curious.md#who-writes-the-bundle-and-what-checks-it).
-- **What each check proves, and what it cannot**: [Four levels of checking](../for-the-curious.md#four-levels-of-checking).
+- **Who writes the bundle, and what checks each write**: [how-it-works.md](../how-it-works.md#who-writes-the-bundle-and-what-checks-it).
+- **What each check proves, and what it cannot**: [Four levels of checking](../how-it-works.md#four-levels-of-checking).
 - **How the gate ties a confirmation to a person**: the sidecar's [gate page](../../skills/ktl-sidecar/references/gate.md) and [signing-commits.md](../signing-commits.md).
 - **What the guards defend against**: [threat-model.md](../threat-model.md).

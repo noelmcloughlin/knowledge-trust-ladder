@@ -58,22 +58,22 @@ export const DOCS = {
       label: "The cast",
       pages: ["cast/sidecar", "cast/librarian", "cast/registrar", "cast/curator", "cast/docent", "cast/prose", "cast/website"],
     },
-    { label: "Guides", pages: ["obsidian", "m365", "ingest", "skills-repositories"] },
+    { label: "Guides", pages: ["obsidian", "m365", "ingest"] },
+    { label: "Where it fits", pages: ["young-readers", "skills-repositories", "three-lines"] },
     {
       label: "Architecture",
-      pages: [
-        "architecture",
-        "for-the-curious",
-        "context-layer",
-        "federation",
-        "context-layer-technology",
-        "three-lines",
-      ],
+      pages: ["architecture", "how-it-works", "context-layer", "federation"],
     },
+    { label: "Reference", pages: ["ingest-reference", "context-layer-technology"] },
     { label: "Maintaining", pages: ["releasing", "signing-commits", "threat-model", "repository-layout"] },
     { label: "Captured sessions", pages: ["examples/docent", "examples/curator", "examples/prose"] },
   ],
 };
+
+// Old addresses under BASE, each redirected to a page of the site: the
+// address docs/how-it-works.md had while it was docs/for-the-curious.md,
+// which other repositories and older releases still link.
+export const REDIRECTS = { "/docs/for-the-curious": "/docs/how-it-works/" };
 
 // A Keep a Changelog file, read as a page per release. "auto" takes
 // CHANGELOG.md when it holds a released version.

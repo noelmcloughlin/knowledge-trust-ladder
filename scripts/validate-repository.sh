@@ -301,7 +301,7 @@ sibling_paths=(
   "docs/federation.md#decisions-an-adopter-must-make"
   "docs/federation.md#how-the-workspace-stays-current"
   "docs/federation.md#what-exists-and-what-remains-a-design"
-  "docs/for-the-curious.md#four-levels-of-checking"
+  "docs/how-it-works.md#four-levels-of-checking"
   "docs/install.md"
   "docs/obsidian.md"
   "docs/obsidian.md#where-the-bundle-lives-host-by-host"
