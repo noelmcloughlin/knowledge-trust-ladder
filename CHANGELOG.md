@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`docs/examples/curator.md` holds a captured `ktl-curator` session on this repository's own bundle.** It shows the report, nine verdicts given one per turn, and the log lines and checks that followed. The nine docent answers asked after it, under `Evidence first: yes`, move to `docs/examples/docent-after-curation.md`.
+
 ## [0.64.0] - 2026-11-12
 
 ### Added
