@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **`docs/examples/curator.md` holds a captured `ktl-curator` session on this repository's own bundle.** It shows the report, nine verdicts given one per turn, and the log lines and checks that followed. The nine docent answers asked after it, under `Evidence first: yes`, move to `docs/examples/docent-after-curation.md`.
-
 ## [0.64.0] - 2026-11-12
 
 ### Added
@@ -18,6 +14,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`docs/examples/first-bundle.md` holds a captured first run of the four roles on a small repository.** The first-bundle page links it.
 - **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
 - **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
+- **`docs/examples/curator.md` holds a captured `ktl-curator` session on this repository's own bundle.** It shows the report, nine verdicts given one per turn, and the log lines and checks that followed. The nine docent answers asked after it, under `Evidence first: yes`, move to `docs/examples/docent-after-curation.md`.
 
 ### Changed
 
