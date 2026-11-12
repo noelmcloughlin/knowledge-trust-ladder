@@ -4,11 +4,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **The website colours code blocks again after the satteri 0.11 update.** starlight-image-zoom lost each block's language there, so a hast plugin in `markdown-ktl.mjs` puts it back.
-
-## [0.63.0] - 2026-11-11
+## [0.63.0] - 2026-11-12
 
 ### Added
 
@@ -38,6 +34,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The federation build deploys no site without its workspace when the release list cannot be read**, installs `just` for a site that builds with it, and turns Astro's telemetry off, as the website workflow does.
 - **semantic-release installs from a lockfile.** `.github/release/package-lock.json` pins every package the release tools need, so a company registry can be given the exact list, and Dependabot bumps them.
 - **The ingest installs the packages `uv.lock` pins, checked by hash**, in the job that holds its secrets. The registrar says when `gh` is missing, and the release when python3 is older than 3.9.
+- **The website colours code blocks again after the satteri 0.11 update.** starlight-image-zoom lost each block's language there, so a hast plugin in `markdown-ktl.mjs` puts it back.
 
 ## [0.62.0] - 2026-11-06
 
