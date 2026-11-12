@@ -1663,7 +1663,7 @@ def test_a_toolkit_that_cannot_validate_does_not_refuse_the_patch(ka):
     )
 
 
-def test_the_pen_validates_with_the_domain_schema_the_justfile_names(ka):
+def test_the_pen_validates_with_the_domain_vocabulary_the_justfile_names(ka):
     write(ka / ".lokf" / "justfile", 'bundle := "knowledge"\nschema := "schemas/acme.yaml"\n')
     write(ka / ".lokf" / "schemas" / "acme.yaml", "id: https://acme.example/schema\n")
     calls = recording_lokf(ka, "echo OK", 0)

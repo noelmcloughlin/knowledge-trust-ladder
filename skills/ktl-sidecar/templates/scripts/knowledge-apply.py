@@ -228,7 +228,7 @@ RELATION_FIELDS = (
     "isPartOf", "hasPart", "references", "dependsOn", "derivedFrom", "about", "sameAs",
     "relatedTo", "definedBy", "source", "measures", "memberOf", "holder", "isReplacedBy",
 )
-# The fields knowledge-report.sh never reads as a domain schema's own slot.
+# The fields knowledge-report.sh never reads as a domain vocabulary's own slot.
 NOT_LINKS = {
     "id", "type", "title", "description", "resource", "sources", "exclusions", "distribution",
     "endpoint", "documentation", "license", "author", "publisher", "generated", "verified", "status",
@@ -261,7 +261,7 @@ def relation_targets(fm: dict) -> set:
 
 
 def domain_iris(fm: dict) -> set:
-    """Each (field, whole IRI) under a field no list here names, which is how knowledge-report.sh reads a domain schema's own slots."""
+    """Each (field, whole IRI) under a field no list here names, which is how knowledge-report.sh reads a domain vocabulary's own slots."""
     found = set()
 
     def walk(field: str, value) -> None:
@@ -1127,7 +1127,7 @@ def check_keys(op: dict) -> None:
         raise Refused(f"{op['path']}: {op['op']} does not take {', '.join(unknown)}; it takes {', '.join(known)}")
 
 
-# The justfile line that names a domain schema, as the sidecar's template
+# The justfile line that names a domain vocabulary, as the sidecar's template
 # writes it: `schema := "<path relative to .lokf/>"`, empty for none. The
 # release workflow and knowledge-federate.py read only this form. A `schema`
 # line in any other form is reported, not read as no schema: validating a
@@ -1148,7 +1148,7 @@ def schema_findings(root: Path, files: dict) -> tuple:
     pass them and fail the validator after the write. The concepts are staged
     in a folder inside .lokf/, so the validator finds the sidecar's
     pyproject.toml as it does for the bundle. The validator runs with the
-    domain schema the justfile names, from that schema's folder, as the
+    domain vocabulary the justfile names, from that file's folder, as the
     justfile's recipes run it. The toolkit is the sidecar's .venv, which needs
     no network. The check is skipped, and the note says why, when the .venv
     holds no toolkit, when the toolkit cannot run, or when the justfile's

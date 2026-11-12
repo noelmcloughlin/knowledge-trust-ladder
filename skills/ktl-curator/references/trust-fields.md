@@ -19,7 +19,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 | Due soon | today < `stale_after` <= today + 30 days | `stale_after` | same |
 | *N* other concepts rely on this | count of other concepts whose typed relations target this concept's `id`, each counted once; a retired concept counts for none and is counted for none | the fourteen relation fields + `relations[].target` | various |
 | Derived from a concept edited since its confirmation | a `derivedFrom` target, in the field or in `relations[]`, has a `generated.at` later than this concept's latest `human:` event | `derivedFrom`, `relations`, `generated`, `verified` | `prov:wasDerivedFrom` |
-| Doesn't fit the known vocabulary | `type` not one of the core classes below, nor a class of the host's domain schema | `type` | `@type` |
+| Doesn't fit the known vocabulary | `type` not one of the core classes below, nor a class of the host's domain vocabulary | `type` | `@type` |
 | Not tied to a signed commit | a `human:` `verified` event whose introducing commit carries no good signature | `verified` + git history | - |
 
 ## Parsing notes

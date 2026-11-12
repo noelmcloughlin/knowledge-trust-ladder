@@ -1512,9 +1512,9 @@ def test_the_federation_check_holds_a_member_as_the_release_build_would():
     assert '--release-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag"' in body and '${PREVIOUS:+--previous "$PREVIOUS"}' in body, body
 
 
-def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
+def test_the_release_packs_the_domain_vocabulary_the_justfile_names(tmp_path):
     """The step's own lines, run against six justfiles. They name a schema beside the bundle, none, one in an older linkml-sidecar project, one outside the repository, a missing file, and a schema that imports a local file that is not there."""
-    body = step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]")
+    body = step_body(RELEASE_YAML, "Pack the domain vocabulary", r"^      [#-]")
     assert 'asset="schema-${TAG//\\//-}-$NAME.yaml"' in body, "knowledge-release.yaml no longer packs the schema as schema-<tag>-<name>.yaml"
     script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + body)
     write(tmp_path / "outside.yaml", "id: https://x.example/outside\n")
@@ -1551,8 +1551,8 @@ def test_the_release_packs_the_domain_schema_the_justfile_names(tmp_path):
 
 
 def pack_schema(tmp_path, files, core="id: https://w3id.org/lokf\nclasses:\n  Concept: {}\n", where=""):
-    """Run the template's "Pack the domain schema" lines in a host holding these files and lokf.yaml in .lokf/<where>, and a justfile naming acme.yaml there."""
-    script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + step_body(RELEASE_YAML, "Pack the domain schema", r"^      [#-]"))
+    """Run the template's "Pack the domain vocabulary" lines in a host holding these files and lokf.yaml in .lokf/<where>, and a justfile naming acme.yaml there."""
+    script = write(tmp_path / "schema.sh", "#!/usr/bin/env bash\n" + step_body(RELEASE_YAML, "Pack the domain vocabulary", r"^      [#-]"))
     host = tmp_path / "host"
     write(host / ".lokf" / "justfile", f'schema := "{where}acme.yaml"\n')
     write(host / ".lokf" / where / "lokf.yaml", core)
@@ -1646,7 +1646,7 @@ def test_the_release_reads_lokf_core_from_the_schema_folder(tmp_path):
 
 
 @pytest.mark.parametrize("where", ["schema/", ""], ids=["in the schema folder", "at the root of .lokf"])
-def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path, where):
+def test_the_release_packs_again_when_only_the_domain_vocabulary_changed(tmp_path, where):
     """The compare step's own lines, at six tags: a README edit, an edit to each copy the composite imports in a flow list over two lines, a refreshed lokf.yaml, and a justfile that names another schema already there. Only the README edit and the refreshed lokf.yaml leave an otherwise unchanged bundle without a zip."""
     body = step_body(RELEASE_YAML, "Compare with the last released bundle", r"^      [#-]")
     script = write(tmp_path / "compare.sh", "#!/usr/bin/env bash\n" + body)
@@ -1680,7 +1680,7 @@ def test_the_release_packs_again_when_only_the_domain_schema_changed(tmp_path, w
         assert r.rc == 0, r.out
         outputs[tag] = (read(out), r.out)
     assert "changed=false" in outputs["v2"][0], outputs["v2"]
-    assert "changed=true" in outputs["v3"][0] and "its domain schema changed" in outputs["v3"][1], outputs["v3"]
+    assert "changed=true" in outputs["v3"][0] and "its domain vocabulary changed" in outputs["v3"][1], outputs["v3"]
     assert "changed=false" in outputs["v4"][0], "a refreshed lokf.yaml, which the released copy imports by name, released the bundle again"
-    assert "changed=true" in outputs["v5"][0] and "its domain schema changed" in outputs["v5"][1], "a copy on a flow list's second line was not compared"
+    assert "changed=true" in outputs["v5"][0] and "its domain vocabulary changed" in outputs["v5"][1], "a copy on a flow list's second line was not compared"
     assert "changed=true" in outputs["v6"][0] and f"now names {where}slsa.yaml" in outputs["v6"][1], outputs["v6"]

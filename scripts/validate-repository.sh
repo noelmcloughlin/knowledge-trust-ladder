@@ -161,7 +161,7 @@ rule3_line="$(grep -m1 '^3\. \*\*Use a class from the LOKF type vocabulary' skil
 if [[ -z "$rule3_line" ]]; then
   err "could not find Rule 3's class list in skills/ktl-librarian/SKILL.md"
 else
-  # The list ends where the domain-schema sentence begins; that sentence names
+  # The list ends where the sentence on a host's own classes begins; it names
   # `Concept` and a sample parent class, neither of which is part of the list.
   rule3_list="${rule3_line%%\*\*A host may have extended*}"
   # shellcheck disable=SC2016 # literal backticks for grep to match (markdown

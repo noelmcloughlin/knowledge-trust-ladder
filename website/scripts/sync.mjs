@@ -278,7 +278,7 @@ const prepare = (body) => picturesToThemedImages(alertsToAsides(body));
 // The bundle, as the toolkit and the report script see it.
 // ---------------------------------------------------------------------------
 
-// The domain schema the justfile's `schema :=` line names, relative to .lokf/
+// The domain vocabulary the justfile's `schema :=` line names, relative to .lokf/
 // as the recipes read it, so the four files carry its classes and relations
 // as `just lokf-convert` does. An empty line leaves the choice to lokf.
 function schemaArgs() {

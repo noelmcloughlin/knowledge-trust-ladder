@@ -5,7 +5,7 @@
 
 bundle := "knowledge"
 
-# A domain schema the validator checks beside LOKF's: a LinkML file that
+# A domain vocabulary the validator checks beside LOKF's: a LinkML file that
 # imports the pinned lokf.yaml and adds the host's own classes
 # (ktl-librarian/references/domain-schema.md), as a path relative to this
 # folder: "schema/<slug>.yaml", with lokf.yaml and every file it imports
@@ -28,7 +28,7 @@ default:
 lokf-install:
     uv sync
 
-# Assemble and validate the knowledge bundle against the LOKF schema (and the domain schema `schema` names)
+# Assemble and validate the knowledge bundle against the LOKF schema (and the domain vocabulary `schema` names)
 lokf-validate:
     uv run lokf validate {{ _schema }} {{ bundle }}
 
@@ -43,7 +43,7 @@ lokf-serve:
 # Audit: every typed-relation target must resolve to a concept in the bundle.
 # Schema validation alone reads a fabricated or stale IRI as a valid string.
 # --check-refs (lokf 0.8.0+) takes the relation slots from the schema, so
-# reified `relations` entries and a domain schema's own slots are covered too.
+# reified `relations` entries and a domain vocabulary's own slots are covered too.
 # Targets outside base_iri are left alone: `source` and `definedBy` are
 # documented as taking an external resource. --check-excerpts (lokf 0.9.0+)
 # finds each `sources[].excerpt` in its local file, so a quote that drifted

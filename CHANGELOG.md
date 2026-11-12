@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The file a bundle's `schema :=` line names is now called its *domain vocabulary*.** A *domain schema* is a LinkML project's own schema, which never imports `lokf`. The skills, docs, sidecar scripts and workflow messages use the two names, and `domain-schema.md` defines them. File names and the `schema` variable are unchanged.
+
 ## [0.63.0] - 2026-11-12
 
 ### Added

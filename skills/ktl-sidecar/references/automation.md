@@ -236,11 +236,11 @@ GitHub starts no workflow for a release made with the default `GITHUB_TOKEN`, so
 
 ### An unchanged bundle gets no zip
 
-The `pack` job compares the bundle's git tree at the tag with its tree at the newest other published release that carries a knowledge bundle, as a zip or as the tarball earlier releases attached. The tree changes only when a tracked file in the bundle does, so a release that touched only code or docs compares as unchanged. The job compares the domain schema too: the `schema :=` line, the file it names and the local files that file imports in turn, but not `lokf.yaml`, which the released copy imports by name. So a release that changed only the schema packs again.
+The `pack` job compares the bundle's git tree at the tag with its tree at the newest other published release that carries a knowledge bundle, as a zip or as the tarball earlier releases attached. The tree changes only when a tracked file in the bundle does, so a release that touched only code or docs compares as unchanged. The job compares the domain vocabulary too: the `schema :=` line, the file it names and the local files that file imports in turn, but not `lokf.yaml`, which the released copy imports by name. So a release that changed only the schema packs again.
 
 When the bundle and the schema both match, the run ends green with a notice naming that release, and nothing is uploaded. A reader who wants the bundle for such a release takes it from the release the notice names. To attach a zip anyway, for example to repair a release's assets, start the workflow by hand with `force` ticked.
 
-### The domain schema beside it
+### The domain vocabulary beside it
 
 When the host's `.lokf/justfile` names a schema on its `schema :=` line, the release carries that file too, as `schema-<tag>-<name>.yaml` with its own `.sha256` and attestation. A domain that admits the bundle names it as a second distribution of the member concept and validates the bundle against it, rather than against LOKF core alone. The line is read as text, relative to `.lokf/`, and names a copy in `.lokf/schema/`. The release also takes a file elsewhere in the repository, as an older linkml-sidecar names its project's schema, but never one outside it. A domain puts the released schema beside the bundle with LOKF's own `lokf.yaml`, so the released copy imports LOKF core as `lokf`. A relative import of `.lokf/lokf.yaml`, as an older linkml-sidecar writes it, or of `.lokf/schema/lokf.yaml` is rewritten to `lokf` in the copy.
 

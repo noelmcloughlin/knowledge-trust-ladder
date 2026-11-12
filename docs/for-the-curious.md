@@ -43,8 +43,10 @@ Programs decide what each role looks at next, and each verdict changes what the 
 
 ## When the vocabulary stops fitting
 
-LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. When concepts stop fitting those classes, typically in a deep or safety-critical domain such as medicine, law, finance or safety engineering, the answer is a domain schema written in [LinkML](https://linkml.io) that extends LOKF's. The **curator** flags concepts that no longer fit, the team decides, and the **librarian** applies it.
+LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. When concepts stop fitting those classes, typically in a deep or safety-critical domain such as medicine, law, finance or safety engineering, the answer is a *domain vocabulary*: a file written in [LinkML](https://linkml.io) that extends LOKF's with the classes and keys the bundle needs. The **curator** flags concepts that no longer fit, the team decides, and the **librarian** applies it.
 
-[`ktl-curator/references/domain-schemas.md`](../skills/ktl-curator/references/domain-schemas.md) says what it costs (no new tooling) and how to write one. It also says what to do when the domain already has a LinkML vocabulary of its own, and how to validate values it binds to an external domain ontology. [`ktl-librarian/references/domain-schema.md`](../skills/ktl-librarian/references/domain-schema.md) gives the recipe that writes one and validates against it with the toolkit you already have.
+A *domain schema* is a different file. It is a LinkML schema that models the domain, and a LinkML project owns it. A bundle borrows its classes through a copy that `lokf adapt` writes into `.lokf/schema/`, and the schema itself never imports LOKF.
 
-When bundles are federated into one context layer, each domain schema is released with its bundle and a domain admits a bundle when its vocabulary fits ([A federation of bundles](federation.md)).
+[`ktl-curator/references/domain-schemas.md`](../skills/ktl-curator/references/domain-schemas.md) says what it costs (no new tooling) and how to write one. It also says what to do when the domain already has a schema of its own, and how to validate values it binds to an external domain ontology. [`ktl-librarian/references/domain-schema.md`](../skills/ktl-librarian/references/domain-schema.md) gives the recipe that writes one and validates against it with the toolkit you already have.
+
+When bundles are federated into one context layer, each domain vocabulary is released with its bundle and a domain admits a bundle when its vocabulary fits ([A federation of bundles](federation.md)).

@@ -1185,7 +1185,7 @@ def test_a_sensitivity_raised_as_it_stands_counts_before_a_person_confirms_it(fe
     assert r.rc == 1 and "its sensitivity as it stands, public, clears less than the internal a person confirmed" in r.out, r.out
 
 
-def test_the_domain_schema_clears_public_or_internal_alone(tmp_path):
+def test_the_domain_vocabulary_clears_public_or_internal_alone(tmp_path):
     """domain.yaml lets a member say confidential, and a Domain concept clear public or internal alone, as the build reads them."""
     found = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", "import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob('lokf.yaml')))"],
                 stdout_only=True)
@@ -1197,10 +1197,10 @@ def test_the_domain_schema_clears_public_or_internal_alone(tmp_path):
         assert r.rc == rc, (word, r.out)
 
 
-def test_the_domain_schema_takes_lokf_cores_checksum_and_exports(tmp_path):
-    """A member's distribution needs LOKF core's checksum, and the website's lokf export reads the domain schema, which once clashed with core's slot.
+def test_the_domain_vocabulary_takes_lokf_cores_checksum_and_exports(tmp_path):
+    """A member's distribution needs LOKF core's checksum, and the website's lokf export reads the domain vocabulary, which once clashed with core's slot.
 
-    Core also takes md5 and sha512. The domain schema takes sha256 alone, as the build does.
+    Core also takes md5 and sha512. The domain vocabulary takes sha256 alone, as the build does.
     """
     found = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", "import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob('lokf.yaml')))"],
                 stdout_only=True)
@@ -1377,7 +1377,7 @@ def test_a_schema_released_with_a_bundle_is_what_its_fit_is_checked_against(fede
     concept.write_text(frontmatter(**fm) + "\n# Overview\n\nb bundle.\n", encoding="utf-8")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 0, r.out
-    assert "`b`: validates against the schema released with it, `schema-v1.0.0-b.yaml`" in (host / "snapshot" / "gate-report.md").read_text(encoding="utf-8")
+    assert "`b`: validates against the vocabulary released with it, `schema-v1.0.0-b.yaml`" in (host / "snapshot" / "gate-report.md").read_text(encoding="utf-8")
     lock = yaml.safe_load((host / "snapshot" / "workspace.lock.yaml").read_text(encoding="utf-8"))
     assert next(m for m in lock["members"] if m["slug"] == "b")["schema"] == {"url": schema.as_uri(), "sha256": schema_sha}
     concept.write_text(concept.read_text(encoding="utf-8").replace(schema_sha, "1" * 64), encoding="utf-8")

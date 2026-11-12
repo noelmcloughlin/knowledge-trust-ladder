@@ -226,7 +226,7 @@ Set to a band of age, 8-12 or 13-18, or to both with a comma between, and ktl-li
 
 Step 1's report reads the `Independent re-check:` and `Automation re-check:` lines, ktl-docent reads `Evidence first:`, and ktl-librarian and ktl-prose read `Younger readers:`. All four are optional, and absent means off.
 
-Derive `stale_after` as *confirmation date + the row's interval*, and always show the date before writing it. Read the table tolerantly. A row names its classes in prose, so match ignoring spaces and plural form: "Glossary terms" is `GlossaryTerm`, "attested computations" is `AttestedComputation`, "Policies" is `Policy`, "people" is `Person`. A row naming a class you do not know binds nothing. A host that extends the vocabulary with a domain schema may set an interval for its own classes the same way.
+Derive `stale_after` as *confirmation date + the row's interval*, and always show the date before writing it. Read the table tolerantly. A row names its classes in prose, so match ignoring spaces and plural form: "Glossary terms" is `GlossaryTerm`, "attested computations" is `AttestedComputation`, "Policies" is `Policy`, "people" is `Person`. A row naming a class you do not know binds nothing. A host that extends the vocabulary with a domain vocabulary may set an interval for its own classes the same way.
 
 ## Recording something missing
 
