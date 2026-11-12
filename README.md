@@ -51,6 +51,8 @@ Two optional skills work beside them. [`ktl-prose`](https://w3id.org/ktl/docs/ca
 
 [The architecture](https://w3id.org/ktl/docs/architecture/) says how the roles fit together and what checks their work.
 
+The same ladder serves both ends of a range: [a school or a youth group](https://w3id.org/ktl/docs/young-readers/) that retells adult knowledge for younger readers, and [a regulated team](https://w3id.org/ktl/docs/three-lines/) that must show who vouched for each claim.
+
 ## Exhibitions
 
 ### Knowledge Bundles
