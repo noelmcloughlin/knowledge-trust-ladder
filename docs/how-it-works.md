@@ -1,4 +1,4 @@
-# For the curious
+# How it works
 
 This page is for anyone who wants the mechanics behind [the architecture](architecture.md).
 
@@ -43,7 +43,7 @@ Programs decide what each role looks at next, and each verdict changes what the 
 
 ## When the vocabulary stops fitting
 
-LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. When concepts stop fitting those classes, typically in a deep or safety-critical domain such as medicine, law, finance or safety engineering, the answer is a *domain vocabulary*: a file written in [LinkML](https://linkml.io) that extends LOKF's with the classes and keys the bundle needs. The **curator** flags concepts that no longer fit, the team decides, and the **librarian** applies it.
+LOKF's vocabulary is a short list of classes and typed relations, kept small so that bundles stay portable. When concepts stop fitting those classes, typically in a deep or safety-critical domain such as medicine, law, finance or safety engineering, the answer is a *domain vocabulary*. It is a file written in [LinkML](https://linkml.io) that extends LOKF's with the classes and keys the bundle needs. The **curator** flags concepts that no longer fit, the team decides, and the **librarian** applies it.
 
 A *domain schema* is a different file. It is a LinkML schema that models the domain, and a LinkML project owns it. A bundle borrows its classes through a copy that `lokf adapt` writes into `.lokf/schema/`, and the schema itself never imports LOKF.
 

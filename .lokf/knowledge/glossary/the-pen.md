@@ -8,7 +8,7 @@ genre: reference
 resource: skills/ktl-sidecar/templates/scripts/knowledge-apply.sh
 sources:
   - resource: docs/architecture.md
-  - resource: docs/for-the-curious.md
+  - resource: docs/how-it-works.md
   - resource: skills/ktl-librarian/references/patch.md
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
-  at: "2026-10-20T23:23:33Z"
+  at: "2026-11-12T13:38:49Z"
 status: draft
 verified:
   - by: process:ktl-librarian

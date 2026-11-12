@@ -10,7 +10,7 @@ sources:
   - resource: https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
   - resource: CHANGELOG.md
   - resource: docs/architecture.md
-  - resource: docs/for-the-curious.md
+  - resource: docs/how-it-works.md
   - resource: skills/ktl-docent/SKILL.md
   - resource: skills/ktl-librarian/SKILL.md
   - resource: skills/ktl-librarian/references/patch.md
@@ -26,7 +26,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/skillwiki
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-11-12T13:38:49Z"
 status: draft
 verified:
   - by: process:ktl-librarian

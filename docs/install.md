@@ -4,7 +4,7 @@ This page is for anyone installing the six skills. Already have a healthy `.lokf
 
 ## Quick start
 
-**Start with the sidecar and the librarian.** The curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing.
+**Start with the sidecar and the librarian.** The curator matters once there is a bundle worth trusting, and the website skill once there is one worth showing. [Your first bundle](first-bundle.md) walks through a first run.
 
 > **Only want to ask?** Install the docent skill into any agent you already use and ask it about this project. It answers from this repository's own bundle and says how far each answer has been checked. See [eight captured answers](examples/docent.md).
 

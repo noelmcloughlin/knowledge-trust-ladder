@@ -35,21 +35,18 @@ A bundle is prose a person reads, structure a schema checks, meaning a graph can
 
 ## Four skills, three lines of the poem
 
-| Skill | Role | Runs |
-| --- | --- | --- |
-| [`ktl-sidecar`](../skills/ktl-sidecar/SKILL.md) | **Sidecar**, *lays the network*. Installs the sidecar from bundled templates: `.lokf/`, a dot-folder beside the code like `.git/`, kept out of the project's build. It holds tooling, docs, a dummy skeleton at `.lokf/knowledge/`, and a `knowledge_bundle` link for folder pickers that hide dot-folders. Repairs a broken sidecar file. Its [portability page](../skills/ktl-sidecar/references/portability.md) covers Windows, macOS, other forges, no git and synced folders. | once |
-| [`ktl-librarian`](../skills/ktl-librarian/SKILL.md) | **Librarian**, *binds it into order*. Scrapes the repository, derives concepts with their sources, classifies them, links them with typed relationships, audits, and hands off for review. Like a real librarian it catalogues without vouching: *facts about the repository*, never verdicts about truth. | often, including on a schedule |
-| [`ktl-curator`](../skills/ktl-curator/SKILL.md) | **Curator**, *holds the scales*. A person's assistant. It shows what needs a look, puts the source next to the claim, and records the verdict (confirm, correct, retire, send back) in the bundle's own frontmatter. *Judgements a person made*, never facts it derived. | a little, regularly |
-| [`ktl-docent`](../skills/ktl-docent/SKILL.md) ([examples](examples/docent.md)) | **Docent**, *guides the visitors*, the role the poem leaves implicit, because the collection exists for them. Answers from the bundle and labels how far each concept has been trusted. Checks exact values at the source. When the bundle has no answer it explores the repository and records the miss, which becomes the librarian's next task. Like a real docent it explains the exhibition without moving anything on the shelves: read-only on the bundle. | whenever anyone asks |
+Each line of the poem is one role's work, and each role has a page of its own.
+
+| The poem | Role | Skill | Runs |
+| --- | --- | --- | --- |
+| "We lasso the world with networks…" | [**Sidecar**](cast/sidecar.md), *lays the network* | [`ktl-sidecar`](../skills/ktl-sidecar/SKILL.md) | once |
+| "We bind down the world into some sort of order" | [**Librarian**](cast/librarian.md), *binds it into order* | [`ktl-librarian`](../skills/ktl-librarian/SKILL.md) | often, including on a schedule |
+| "We balance the earth in a pair of scales…" | [**Curator**](cast/curator.md), *holds the scales* | [`ktl-curator`](../skills/ktl-curator/SKILL.md) | a little, regularly |
+| the role the poem leaves implicit, because the collection exists for its visitors | [**Docent**](cast/docent.md), *guides the visitors* | [`ktl-docent`](../skills/ktl-docent/SKILL.md) ([examples](examples/docent.md)) | whenever anyone asks |
+
+The **sidecar** installs `.lokf/`, a dot-folder beside the code like `.git/`, kept out of the project's build. The **librarian** records *facts about the repository*, never verdicts about truth. The **curator** records *judgements a person made*, never facts it derived. The **docent** is read-only on the bundle.
 
 **Curator** is the museum sense, the one who authenticates, weighs provenance and decides what goes on exhibit. It is not the data-management sense, which is the **librarian**'s job. The curator is always a person, and the skill and the plugin that carry the name reach no verdict of their own.
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-review-session-dark.svg">
-    <img src="../.assets/ktl-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
-  </picture>
-</p>
 
 On a fresh repository they run in order: **sidecar**, then **librarian** filling the bundle with drafts, then **curator**, where a person turns drafts into confirmed knowledge. After that it is a loop: the **librarian** refreshes on a schedule, readers report what the bundle missed, and the **curator** reviews what is new or changed.
 
@@ -57,7 +54,7 @@ On a fresh repository they run in order: **sidecar**, then **librarian** filling
 
 The **registrar** keeps the records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. No human has to do this: the `lokf` toolkit checks every change, and CI's [`knowledge-registrar.yaml`](../.github/workflows/knowledge-registrar.yaml) checks every pull request that touches the bundle. It also ties each confirmation that is added or removed to the confirming person's approval or signed commit.
 
-At the librarian's [desk](../.lokf/knowledge/glossary/desk.md) the registrar is `knowledge-apply.sh`, *the pen*: the only way the librarian writes the bundle. It refuses a change that would fake or remove a confirmation ([who writes the bundle](for-the-curious.md#who-writes-the-bundle-and-what-checks-it)). At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic. These are the deterministic tools of the summary at the top of this page: a check gives the same answer every time, which neither the librarian nor the curator can promise.
+[The registrar's page](cast/registrar.md) lists its parts: `knowledge-apply.sh`, *the pen*, at the librarian's [desk](../.lokf/knowledge/glossary/desk.md), `knowledge-report.sh` at the reader's desk and the curator's, and the gate on each pull request. These are the deterministic tools of the summary at the top of this page: a check gives the same answer every time, which neither the librarian nor the curator can promise.
 
 <p align="center">
   <picture>
@@ -74,11 +71,11 @@ In the **three lines of defence** that regulated industries use, the librarian a
 
 ### The fifth skill, which is not a role
 
-[`ktl-prose`](../skills/ktl-prose/SKILL.md) is the **librarian**'s copy editor. It rewords what an agent wrote, in plain English, before a person confirms it. It changes the wording and never a fact, it leaves every byte of frontmatter alone, and it never touches a concept a person wrote or confirmed. It is optional.
+[`ktl-prose`](../skills/ktl-prose/SKILL.md) is the **librarian**'s copy editor. It rewords what an agent wrote, in plain English, before a person confirms it. It changes the wording and never a fact, and it is optional ([its page](cast/prose.md)).
 
 ### The sixth skill, which publishes the bundle
 
-[`ktl-website`](../skills/ktl-website/SKILL.md) builds a website for the bundle. It has a page per concept with its trust label, the health page, the knowledge graph and search by trust and type, and it serves the four files `lokf export` writes beside the pages. The repository's README, docs, changelog and LinkML schema pages join them when it has them. Its data joins them as SQLite databases to open in Datasette Lite, once a person turns that on. A workflow publishes the site to GitHub Pages. This repository's [site](https://w3id.org/ktl/) is the template's first copy. The website skill is optional, like `ktl-prose`.
+[`ktl-website`](../skills/ktl-website/SKILL.md) builds a website for the bundle, with a page per concept and its trust label ([its page](cast/website.md)). This repository's [site](https://w3id.org/ktl/) is the template's first copy. The website skill is optional, like `ktl-prose`.
 
 ## Trust stays visible
 
@@ -104,15 +101,18 @@ The labels are computed from the frontmatter on every read, never stored, so the
 
 | | |
 | --- | --- |
+| A first run, from no bundle to a confirmed concept and an answer | [first-bundle.md](first-bundle.md) |
 | How to install the six skills, which ones to start with, and how to pin them to one release | [install.md](install.md) |
+| What each role does, how to ask it, and what checks it | [sidecar](cast/sidecar.md), [librarian](cast/librarian.md), [registrar](cast/registrar.md), [curator](cast/curator.md), [docent](cast/docent.md), [`ktl-prose`](cast/prose.md), [`ktl-website`](cast/website.md) |
 | The context layer: what it is, how one bundle already is one, and why bundles federate through domains | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
 | A federation of bundles: domains as manifests, tiers of domains, the workspace built ahead of time, what exists and what remains a design, and the decisions an adopter must make | [federation.md](federation.md) |
-| Knowledge outside the repository: wiki pages, documents and files in other repositories, mirrored by the ingest so the bundle can cite them | [ingest.md](ingest.md) |
-| The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, how readers and verdicts steer the next run, and what to do when a bundle outgrows LOKF's vocabulary | [for-the-curious.md](for-the-curious.md) |
+| Knowledge outside the repository: wiki pages, documents and files in other repositories, mirrored by the ingest so the bundle can cite them | [ingest.md](ingest.md), and [its reference](ingest-reference.md) |
+| The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, how readers and verdicts steer the next run, and what to do when a bundle outgrows LOKF's vocabulary | [how-it-works.md](how-it-works.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [obsidian.md](obsidian.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](three-lines.md#what-the-critics-say) | [three-lines.md](three-lines.md) |
 | Whether KTL helps a repository whose content is Agent Skills, and what remains to do there | [skills-repositories.md](skills-repositories.md) |
+| Knowledge retold for readers aged 8 to 18, for a school or a youth group | [young-readers.md](young-readers.md) |
 | Versioning: all six skills are released under one `vMAJOR.MINOR.PATCH`, so a set pinned to one tag agrees with itself | [releasing.md](releasing.md), [CHANGELOG.md](../CHANGELOG.md) |
 | Contributing, the repository tree, and reporting a security issue | [CONTRIBUTING.md](../CONTRIBUTING.md), [repository-layout.md](repository-layout.md), [SECURITY.md](../SECURITY.md) |
 

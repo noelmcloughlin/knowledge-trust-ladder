@@ -21,7 +21,7 @@ KTL was not built to it, but each of its roles fits. Every control named on this
 
 The **docent** sits outside the lines, where the reader does, and reports what it could not answer to the librarian, as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: it rewords what the librarian wrote before a person confirms it. A copy editor is not the author, so it writes no `generated` record, and `log.md` and git record the pass.
 
-Above the lines sits a governing body: for a bundle, the owners of the repository that holds it. Their two instruments are the organisation's rules for AI-assisted work (this project's are its [AI covenant](../AI_COVENANT.md)) and the curation policy. The policy is a concept in the bundle that says who curates and how often each kind of concept is re-confirmed, and it is reviewed like any other concept. The [four levels of checking](for-the-curious.md#four-levels-of-checking) are these same checks ordered by when they happen.
+Above the lines sits a governing body: for a bundle, the owners of the repository that holds it. Their two instruments are the organisation's rules for AI-assisted work (this project's are its [AI covenant](../AI_COVENANT.md)) and the curation policy. The policy is a concept in the bundle that says who curates and how often each kind of concept is re-confirmed, and it is reviewed like any other concept. The [four levels of checking](how-it-works.md#four-levels-of-checking) are these same checks ordered by when they happen.
 
 ## Lines are roles, not people
 
@@ -155,7 +155,7 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **The criticism.** Davies and Zhivitskaya find the model's origins opaque and its effectiveness untested. Schuett notes that "the model has been criticized and there is not much empirical evidence for its effectiveness", and concludes that within its limits it "can plausibly contribute to a reduction of risks from AI".
 
-**What KTL does.** It claims nothing about the model. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a random sample of confirmed concepts when the policy names a size.
+**What KTL does.** It claims nothing about the model. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a sample of confirmed concepts when the policy names a size. A rule the curator cannot steer picks the sample.
 
 **Verdict: not KTL's role.**
 
