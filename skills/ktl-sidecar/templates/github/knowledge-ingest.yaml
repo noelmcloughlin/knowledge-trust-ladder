@@ -163,7 +163,9 @@ jobs:
         run: |
           set -euo pipefail
           git add -A -- .lokf/mirror .lokf/ingest.lock.yaml
-          git diff --cached --binary > "$RUNNER_TEMP/ingest.patch"
+          # --no-renames: a page that moved is written as a file removed and
+          # a file added, since `publish` refuses a patch that renames one.
+          git diff --cached --binary --no-renames > "$RUNNER_TEMP/ingest.patch"
 
       - name: Upload the patch
         if: steps.run.outputs.changed == 'true'
@@ -217,6 +219,21 @@ jobs:
           if [ -n "${bad//[$'\n\t ']/}" ] || [ -n "${odd//[$'\n\t ']/}" ]; then
             echo "::error::The patch touches paths an ingest may not:"
             printf '%s\n%s\n' "$bad" "$odd" | sed '/^$/d; s/^/  /'
+            exit 1
+          fi
+          # --numstat names a rename or a copy by its new path alone, so a
+          # file moved into the mirror from outside it would pass the check
+          # above, and the move would remove it where it was. A mirror change
+          # only adds, edits and deletes plain files that nothing runs, so a
+          # rename, a copy, a mode change, a link, a submodule or a file
+          # marked to run is refused, as the librarian's `publish` and
+          # knowledge-sync.sh refuse them.
+          summary="$(git -c core.quotePath=false apply --summary "$RUNNER_TEMP/ingest.patch")"
+          bad="$(printf '%s\n' "$summary" | grep -E '^ (rename|copy|mode change) ' || true)"
+          bad+=$'\n'"$(printf '%s\n' "$summary" | grep -E '^ (create|delete) mode ' | grep -vE '^ (create|delete) mode 100644 ' || true)"
+          if [ -n "${bad//[$'\n\t ']/}" ]; then
+            echo "::error::The patch does more than add, edit and delete plain files:"
+            printf '%s\n' "$bad" | sed '/^$/d; s/^ */  /'
             exit 1
           fi
           branch="knowledge-ingest"

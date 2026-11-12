@@ -17,6 +17,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The pen holds a person's record against nine more spellings.** It refuses `revised` and `refuted`, a `human:` actor under any key, a note in a looser Markdown spelling, a second heading or an open fence that hides a note from the report, a key given twice, the curator's own actor, a path or actor that ends in a line break, a link that leaves the bundle, and a delete of a concept the same patch creates.
 - **The pen keeps a file's mode, and writes back an unchanged frontmatter block as it found it.** A file it wrote became readable by its owner alone, and a `resolve` dropped the block's comments.
 - **A federation build keeps each quad whole, and a member's own words out of the workspace index.** A line separator inside a literal cut `graph.nq` where no reader could load it. A member's index title could add lines to the index that the MCP server serves as its instructions. The build also refuses the rest of the XML family as files a browser runs.
+- **The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run.** A dropped connection left a cut page mirrored as whole. A body that UTF-8 cannot write no longer fails its whole entry, and an exclude pattern with no slash leaves a file out of every folder.
 
 ## [0.64.0] - 2026-11-12
 

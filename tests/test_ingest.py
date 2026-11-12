@@ -855,6 +855,7 @@ def test_a_git_path_at_a_ref_is_mirrored_by_its_commit(tmp_path, checks):
     write(upstream / "runbooks" / "deploy.md", "# Deploy\n\nPush the button.\n")
     write(upstream / "runbooks" / "limits.yaml", "cpu: 2\n")
     write(upstream / "runbooks" / "draft-notes.md", "secret draft\n")
+    write(upstream / "runbooks" / "incident" / "draft-postmortem.md", "secret draft in a folder\n")
     write(upstream / "README.md", "# Not mirrored\n")
     g("add", "-A")
     g("commit", "-q", "-m", "one", env=IDENT)
@@ -863,6 +864,7 @@ def test_a_git_path_at_a_ref_is_mirrored_by_its_commit(tmp_path, checks):
                                          "include": ["*.md", "*.yaml"], "exclude": ["draft-*"], "sensitivity": "public"}]))
     result = ingest(root)
     checks.ok(result and "2 fetched" in result.out, "two files mirrored", result.out)
+    checks.ok(not (root / ".lokf" / "mirror" / "wiki" / "incident").exists(), "a pattern with no slash leaves a file out of every folder, as the include `*.md` takes one from every folder")
     deploy = read(root / ".lokf" / "mirror" / "wiki" / "deploy.md")
     checks.ok(f"version: {sha}\n" in deploy and "kind: git\n" in deploy and "Push the button." in deploy, "the commit is the version", deploy)
     limits = read(root / ".lokf" / "mirror" / "wiki" / "limits.yaml.md")
@@ -1688,6 +1690,39 @@ def test_a_body_sent_a_byte_at_a_time_fails_at_its_deadline(checks, monkeypatch)
     checks.ok(time.monotonic() - started < 6, "and met, not the body's ten seconds", f"{time.monotonic() - started:.1f} s")
 
 
+def test_a_body_cut_short_of_its_length_is_tried_again_and_never_mirrored(checks, monkeypatch):
+    """read1 returns what arrived and raises nothing, so a dropped connection once left a cut page mirrored as whole, with the validators that kept it."""
+    m = load_module()
+    listener = socket.create_server(("127.0.0.1", 0))
+    whole = b"# Runbook\n\n" + b"Step: do the next thing.\n" * 40
+
+    def cut_once():
+        with contextlib.suppress(OSError):
+            for answer in (whole[:60], whole):
+                conn, _ = listener.accept()
+                with conn:
+                    conn.recv(65536)
+                    conn.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/markdown\r\nConnection: close\r\nContent-Length: " + str(len(whole)).encode() + b"\r\n\r\n" + answer)
+
+    threading.Thread(target=cut_once, daemon=True).start()
+    monkeypatch.setattr(m.time, "sleep", lambda seconds: None)
+    try:
+        got = m.http_get(f"http://127.0.0.1:{listener.getsockname()[1]}/runbook.md", {}, True, 10_000, timeout=5)
+        checks.ok(got.data == whole, "the first, cut answer is dropped and the second is the page", f"{len(got.data)} of {len(whole)} bytes")
+    finally:
+        listener.close()
+
+
+def test_a_confluence_body_that_utf_8_cannot_write_is_mirrored_and_fails_no_other_page(checks):
+    """A server that cuts a string inside an emoji sends half a character pair."""
+    m = load_module()
+    raw = "<p>Deploy \ud83d on Friday.</p>".encode("utf-8", "replace")
+    text, _title, _how = m.convert(raw, "text/html", "html-markdown", base="https://acme.example/wiki/x")
+    checks.ok("Deploy ? on Friday." in text, "the half pair becomes a question mark", text)
+    source = read(INGEST_PY)
+    checks.ok('storage.encode("utf-8", "replace")' in source and 'storage.encode("utf-8")' not in source, "the entry encodes each page's body once, with a replacement")
+
+
 # 13. a paged Confluence listing, one page gone, an answer of the wrong shape
 
 
@@ -1968,6 +2003,43 @@ def test_the_workflow_hands_over_the_ingest_secrets_and_no_other(checks):
                "knowledge_ingest_lower": "no", "OTHER_SECRET": "z", "KNOWLEDGE_INGEST_GITHUB_TOKEN": "ghp_y"}
     done = subprocess.run(["jq", "-r", m.group(1)], input=json.dumps(secrets), capture_output=True, text=True)
     checks.ok(done.returncode == 0 and done.stdout == "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN=tok=en\nKNOWLEDGE_INGEST_GITHUB_TOKEN=ghp_y\n", "two names, a value with an equals sign kept whole, a multi-line value left out", done.stdout + done.stderr)
+
+
+def test_the_privileged_job_refuses_a_patch_that_renames_links_or_marks_a_file_to_run(tmp_path, checks):
+    """The job that holds the write token trusts nothing the ingest job decided. Its path check reads --numstat, which names a rename by its new path alone."""
+    workflow = read(TEMPLATES / "github" / "knowledge-ingest.yaml")
+    checks.ok("git diff --cached --binary --no-renames" in workflow, "the ingest job writes a moved page as a removal and an addition")
+    step = workflow[workflow.index("- name: Check the patch, then commit, push and open or refresh the pull request"):]
+    check = step[step.index('summary="$(git'):step.index('branch="knowledge-ingest"')]
+    # The step's own lines, run on a patch that moves a file into the mirror, adds a link out of it and adds a file marked to run.
+    repo = tmp_path / "host"
+    g = Git(repo)
+    repo.mkdir()
+    g.init()
+    write(repo / "SECURITY.md", "# Security\n\n" + "A line of the policy.\n" * 20)
+    write(repo / ".lokf" / "mirror" / "wiki" / "a.md", "a\n")
+    g("add", "-A")
+    g("commit", "-q", "-m", "one", env=IDENT)
+    g("mv", "SECURITY.md", ".lokf/mirror/security.md")
+    os.symlink("../../.github/CODEOWNERS", repo / ".lokf" / "mirror" / "owners.md")
+    write(repo / ".lokf" / "mirror" / "run.md", "#!/bin/sh\n").chmod(0o755)
+    write(repo / ".lokf" / "mirror" / "wiki" / "b.md", "b\n")
+    g("add", "-A")
+    patch = tmp_path / "ingest.patch"
+    patch.write_text(g("diff", "--cached", "--binary") + "\n", encoding="utf-8")
+    g("reset", "-q", "--hard")
+    script = tmp_path / "check.sh"
+    write(script, "set -euo pipefail\n" + "\n".join(line[10:] if line.startswith(" " * 10) else line for line in check.split("\n")) + "\necho passed\n")
+    result = run(["bash", str(script)], cwd=repo, env={"RUNNER_TEMP": str(tmp_path)})
+    checks.ok(result.rc == 1 and "rename SECURITY.md" in result.out and "mode 120000" in result.out and "mode 100755" in result.out and "passed" not in result.out,
+              "a rename, a link and a file marked to run are each refused", result.out)
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    write(repo / ".lokf" / "mirror" / "wiki" / "b.md", "b\n")
+    g("add", "-A")
+    (plain / "ingest.patch").write_text(g("diff", "--cached", "--binary", "--no-renames") + "\n", encoding="utf-8")
+    result = run(["bash", str(script)], cwd=repo, env={"RUNNER_TEMP": str(plain)})
+    checks.ok(result.rc == 0 and "passed" in result.out, "a patch that adds a plain file passes", result.out)
 
 
 def test_the_workflow_warns_of_a_source_not_fetched_and_of_the_time_limit(checks):
