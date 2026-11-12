@@ -23,7 +23,7 @@ references:
   - https://w3id.org/ktl/knowledge/references/lokf-toolkit
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-11-12T14:46:38Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -44,7 +44,7 @@ A table on the page sets those properties against a bundle. The librarian derive
 
 OKF says nothing about one bundle naming another, a catalogue of bundles, or what a reader may see across a trust boundary, and its trackers ask for all three. Section 11 of the LOKF specification answers with a registry of bundles keyed by `base_iri`, through which any IRI resolves to the bundle that owns it by the longest match. The toolkit's `lokf registry` commands keep the registry offline, and the sidecar's `knowledge-federate.py` supplies the federated store of section 11.4. KTL adds who answers for the set:
 
-- **A domain** is a thin LOKF bundle in a repository of its own, whose concepts are its member bundles. Each member names one release by its zip and checksum, or by the `concepts.jsonld` its site serves. A one-file domain schema defines `Domain`, `MemberBundle` and `MemberDomain`. Nothing is copied upward, and a person's confirmation of a member attests that it belongs and that the domain's claims across bundles hold.
+- **A domain** is a thin LOKF bundle in a repository of its own, whose concepts are its member bundles. Each member names one release by its zip and checksum, or by the `concepts.jsonld` its site serves. A one-file domain vocabulary defines `Domain`, `MemberBundle` and `MemberDomain`. Nothing is copied upward, and a person's confirmation of a member attests that it belongs and that the domain's claims across bundles hold.
 - **Tiers.** A member that is itself a domain is followed into the same workspace. Every domain bounds a workspace of its own, and confirming a domain member attests the delegation, not what its members say. Under the diamond rule, a bundle that two domains name at one release joins once, and at different releases the build stops. `max_depth` on the top domain sets how many tiers the build follows, 3 unless set.
 - **The workspace** is a materialised view of the top domain, rebuilt on each release by `knowledge-federate.py build`, and no agent runs. The build locks each release and fetches it over http or https from a public address. It checks each zip against its checksum and, on GitHub, against an attestation signed by the member's own release workflow, and refuses a zip holding a link, a hidden file or a file a browser runs. It then loads one named graph per bundle, gates every link between bundles against the registry, and swaps the graphs in one atomic step. A member whose file cannot be fetched is held at its last good state. A reader opens the index first and traverses on demand over the `lokf-registry` MCP server or a SPARQL endpoint, and trust labels are computed when the query runs.
 

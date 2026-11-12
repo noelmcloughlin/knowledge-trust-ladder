@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T13:27:24Z"
+  at: "2026-11-12T14:46:38Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -58,7 +58,7 @@ Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-pref
 
 When something is missing, the skill says what it means in plain words before any command, and which verbs it removes. The curator is often the person who knows the subject and not the repository. A curator who cannot fix it themselves gets a request note for whoever set the repository up, written from ktl-sidecar's `references/prerequisites.md`.
 
-**Vocabulary fit counts against the host's vocabulary, not only LOKF's.** Where the `schema` line in `.lokf/justfile` names a file, the skill reads that file and any schema it imports besides LOKF's, and counts every class descending from `Concept` as known. That is the same widening the librarian's Golden Rule 3 applies. The Obsidian plugins cannot read a schema outside the vault, so a person lists those classes by hand in their *Known LOKF types* setting. One domain schema ships with the sidecar: `domain.yaml`, for a bundle that federates other bundles.
+**Vocabulary fit counts against the host's vocabulary, not only LOKF's.** Where the `schema` line in `.lokf/justfile` names a file, the skill reads that file and any schema it imports besides LOKF's, and counts every class descending from `Concept` as known. That is the same widening the librarian's Golden Rule 3 applies. The Obsidian plugins cannot read a schema outside the vault, so a person lists those classes by hand in their *Known LOKF types* setting. One domain vocabulary ships with the sidecar: `domain.yaml`, for a bundle that federates other bundles.
 
 ## Step 2: the review session
 
@@ -104,7 +104,7 @@ The skill speaks in plain labels, never RDF, IRI, SPARQL, predicate or tier. *St
 
 ## Step 3: dig deeper
 
-Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain schema when the vocabulary drifts into a deep or safety-critical domain, and for the linkml-sidecar skills once a schema grows past a few classes (`references/domain-vocabularies.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder write `human:<id>`, so they need the same authenticated id as *Confirm*.
+Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain vocabulary when the vocabulary drifts into a deep or safety-critical domain, and for the linkml-sidecar skills once its classes amount to a model of the domain, a domain schema (`references/domain-vocabularies.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder write `human:<id>`, so they need the same authenticated id as *Confirm*.
 
 The skill reads the curation policy's table of review intervals tolerantly. Rows name classes in prose, so the match ignores spaces and plural form: "Glossary terms" is `GlossaryTerm`, and "people" is `Person`. A row naming a class the skill does not know binds nothing. The policy carries four optional switches: `Independent re-check:`, `Automation re-check:`, `Evidence first:` and `Younger readers:`.[^review-session.md] The last names a band of age, 8-12 or 13-18, or both, and ktl-librarian may then write retellings of confirmed concepts for those readers on its scheduled runs. Each retelling is a new concept, which a person confirms against the concept it retells.
 

@@ -2,6 +2,16 @@
 
 ## 2026-11-12
 
+* **Added**: Domain vocabulary, the bundle's own LinkML file in `.lokf/schema/`, told apart from a domain schema.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `explanation/domain-schemas.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `explanation/hosts-and-doorways.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `explanation/skills-repositories.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `playbooks/knowledge-sources.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `playbooks/ktl-curator-skill.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `playbooks/ktl-librarian-skill.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `playbooks/website.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `policies/threat-model.md` was edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the librarian's and the curator's reference pages are now `domain-vocabulary.md` and `domain-vocabularies.md`, and each concept that cites them names the new path. `explanation/domain-schemas.md` was edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the librarian's and the curator's reference pages are now `domain-vocabulary.md` and `domain-vocabularies.md`, and each concept that cites them names the new path.
 * **Changed**: the librarian's and the curator's reference pages are now `domain-vocabulary.md` and `domain-vocabularies.md`, and each concept that cites them names the new path. `playbooks/ktl-librarian-skill.md` was edited since a person confirmed it; the label says so until the curator looks again.

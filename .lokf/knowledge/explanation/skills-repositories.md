@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T00:48:33Z"
+  at: "2026-11-12T14:46:38Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:02:36Z"
@@ -47,7 +47,7 @@ The page reports two runs. This repository has kept a bundle since 9 September 2
 
 The second run used a clone of `anthropics/skills` at commit `683bc88` of 5 October 2026. The librarian derived 27 draft concepts: one `Playbook` for each of the 19 skills, and eight more. Every check passed on the first apply. The docent then named the expected skill for each of ten questions, in five and a half minutes. Every concept read *nobody has checked this yet, still a draft*, so the docent opened each skill's `SKILL.md` before it answered, as its rules say for an unchecked concept. A control agent given only the skills' `name` and `description` answered the same ten correctly in 28 seconds. So on that collection the bundle did not route better than the descriptions do, and what it added was the detail the descriptions leave out. On a collection whose descriptions were weaker, or a project whose concepts carry relations the frontmatter cannot hold, the bundle has more to add.
 
-The run found gaps in KTL's own pages. ktl-librarian's `references/agent-skills.md` now covers a skill template, needs stated outside the frontmatter, and project skills under `.claude/skills/`. The docent's rules still have no row for "which skill should I use?", and a skill's concept and a how-to share the `Playbook` class, which the `AgentSkill` domain schema would settle.
+The run found gaps in KTL's own pages. ktl-librarian's `references/agent-skills.md` now covers a skill template, needs stated outside the frontmatter, and project skills under `.claude/skills/`. The docent's rules still have no row for "which skill should I use?", and a skill's concept and a how-to share the `Playbook` class, which an `AgentSkill` class in a domain vocabulary would settle.
 
 # How KTL handles a skills repository
 
@@ -69,7 +69,7 @@ The page lists designs, not features. Each would extend KTL's checks from what t
 
 - a trigger test over skill descriptions;
 
-- an `AgentSkill` domain schema;
+- an `AgentSkill` class in a domain vocabulary;
 
 - OKF's attested computation for a skill's scripts;
 
