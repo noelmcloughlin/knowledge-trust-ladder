@@ -8,7 +8,7 @@ genre: reference
 resource: docs/architecture.md
 sources:
   - resource: docs/architecture.md
-  - resource: docs/for-the-curious.md
+  - resource: docs/how-it-works.md
   - resource: skills/ktl-librarian/SKILL.md
   - resource: skills/ktl-curator/references/domain-vocabularies.md
 definedBy:

@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T00:48:33Z"
+  at: "2026-11-12T13:38:49Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -37,7 +37,7 @@ The architecture page's section on the fifth role, the registrar, points at this
 - **Second line**: the **registrar**, which keeps records well-formed: `lokf validate` on every change and in CI, `knowledge-apply.sh` as the librarian's only pen, `knowledge-report.sh` computing every trust label, and the KTL Registrar Obsidian plugin. The gate ties a `human:` verdict that is added or removed to that person's approval or signature, and the pen refuses to write a `human:` actor at all. Neither judges truth.
 - **Third line**: the bundle holds the evidence an independent reviewer needs, not the review.
 
-The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: a copy editor that writes no `generated` record, although `log.md` and git record the pass. The governing body sits above the lines: the owners of the repository that holds the bundle, with the organisation's rules for AI-assisted work and the curation policy. The curation policy is itself a concept, reviewed like any other. The [four levels of checking](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/for-the-curious.md#four-levels-of-checking) are these same checks ordered by when they happen. This project's rules for AI-assisted work are its AI covenant.
+The **docent** sits outside the lines, where the reader does, and reports what it could not answer back to the librarian as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: a copy editor that writes no `generated` record, although `log.md` and git record the pass. The governing body sits above the lines: the owners of the repository that holds the bundle, with the organisation's rules for AI-assisted work and the curation policy. The curation policy is itself a concept, reviewed like any other. The [four levels of checking](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/docs/how-it-works.md#four-levels-of-checking) are these same checks ordered by when they happen. This project's rules for AI-assisted work are its AI covenant.
 
 Lines are roles, not headcount: the IIA's text says the lines "are not intended to denote structural elements but a useful differentiation in roles" and "may overlap in practice" given "clear accountability, transparency, and safeguards". The adopting organisation decides who plays each line, and the tooling holds the lines apart either way.
 

@@ -5,9 +5,9 @@ title: Domain schema
 description: "A LinkML schema that models a domain, owned by a LinkML project in `src/<slug>/schema/` or `.linkml/src/<slug>/schema/`. It never imports LOKF's schema: a bundle borrows its classes through the domain vocabulary that `lokf adapt` writes from it into `.lokf/schema/`."
 definition: A LinkML schema that models a domain; a LinkML project owns it, and it never imports LOKF's schema.
 genre: reference
-resource: docs/for-the-curious.md
+resource: docs/how-it-works.md
 sources:
-  - resource: docs/for-the-curious.md
+  - resource: docs/how-it-works.md
   - resource: skills/ktl-librarian/references/domain-vocabulary.md
   - resource: skills/ktl-curator/references/domain-vocabularies.md
 relatedTo:

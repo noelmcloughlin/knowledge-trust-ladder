@@ -2,6 +2,10 @@
 
 ## 2026-11-12
 
+* **Changed**: `docs/for-the-curious.md` is now `docs/how-it-works.md`, and each concept that cites it names the new path. `explanation/skillwiki.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: `docs/for-the-curious.md` is now `docs/how-it-works.md`, and each concept that cites it names the new path. `explanation/three-lines-of-defence.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: `docs/for-the-curious.md` is now `docs/how-it-works.md`, and each concept that cites it names the new path.
+* **Changed**: `docs/for-the-curious.md` is now `docs/how-it-works.md`, and each concept that cites it names the new path. `playbooks/knowledge-sources.md` was edited since a person confirmed it; the label says so until the curator looks again.
 * **Added**: Domain vocabulary, the bundle's own LinkML file in `.lokf/schema/`, told apart from a domain schema.
 * **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain.
 * **Changed**: concepts call the bundle's file in `.lokf/schema/` a domain vocabulary, and keep *domain schema* for a LinkML project's model of a domain. `explanation/domain-schemas.md` was edited since a person confirmed it; the label says so until the curator looks again.

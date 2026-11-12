@@ -8,7 +8,7 @@ genre: reference
 resource: docs/architecture.md
 sources:
   - resource: docs/architecture.md
-  - resource: docs/for-the-curious.md
+  - resource: docs/how-it-works.md
   - resource: docs/obsidian.md
   - resource: skills/ktl-curator/SKILL.md
 about:
@@ -20,7 +20,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/health-line
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-11-12T13:38:49Z"
 status: draft
 verified:
   - by: process:ktl-librarian

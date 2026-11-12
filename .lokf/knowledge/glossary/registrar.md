@@ -8,7 +8,7 @@ genre: reference
 resource: docs/architecture.md
 sources:
   - resource: docs/architecture.md
-  - resource: docs/for-the-curious.md
+  - resource: docs/how-it-works.md
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 relatedTo:
@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/desk
 generated:
   by: process:ktl-librarian
-  at: "2026-10-18T10:22:18Z"
+  at: "2026-11-12T13:38:49Z"
 status: draft
 verified:
   - by: process:ktl-librarian
