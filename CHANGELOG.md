@@ -12,6 +12,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **`docs/three-lines.md` lists only what remains.** LOKF 0.9.0 and private federation members are built, and an auditor skill waits for a host with a third line.
 
+### Fixed
+
+- **The pen holds a person's record against nine more spellings.** It refuses `revised` and `refuted`, a `human:` actor under any key, a note in a looser Markdown spelling, a second heading or an open fence that hides a note from the report, a key given twice, the curator's own actor, a path or actor that ends in a line break, a link that leaves the bundle, and a delete of a concept the same patch creates.
+- **The pen keeps a file's mode, and writes back an unchanged frontmatter block as it found it.** A file it wrote became readable by its owner alone, and a `resolve` dropped the block's comments.
+
 ## [0.64.0] - 2026-11-12
 
 ### Added
