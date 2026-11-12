@@ -38,7 +38,7 @@ Every trust label is computed from the frontmatter on each read and never stored
 | Where did this come from? | `resource`, `sources[].resource`, `derivedFrom` |
 | Who produced the current text, and when? | `generated.by`, `generated.at` |
 | Who confirmed it, and when? | `verified[].by`, `verified[].at` |
-| Which state of the source was the check made against? | `verified[].revision` and `generated.revision`, from lokf 0.9.0: the commit hash of a file, which the gate resolves against the tree, or an ETag or digest for a URL, which nothing checks. Absent means unrecorded, never unchanged. With or without it, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation |
+| Which state of the source was the check made against? | `verified[].revision` and `generated.revision`: the commit hash of a file, which the gate resolves against the tree, or an ETag or digest for a URL, which nothing checks. Absent means unrecorded, never unchanged. With or without it, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation |
 | Is the confirmed text the text they saw? | the `validate` job's log: conventions rule 13 fails a change to a confirmed concept's content that leaves `generated` older than the confirmation, so an edited concept reads *edited since* and never as confirmed |
 | Was that really them? | the `provenance` job's log on the pull request: the forge's verdict on the approval or the signature, not the runner's. Locally, the curator skill's *Not tied to a signed commit* count |
 | When must it be looked at again, and by what rule? | `stale_after`, proposed from `policies/knowledge-curation.md` |
@@ -126,7 +126,7 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **The criticism.** Text generation produces content "unfaithful to the provided source content" ([Ji et al., ACM Computing Surveys, 2023](https://doi.org/10.1145/3571730)).
 
-**What KTL does.** Every record names the source it was derived from, so faithfulness can be checked against something. What the librarian cannot settle is marked `status: draft` with an open question until a person decides. The registrar checks what needs no judgement: a local `resource` that no longer exists, and a `revision` naming no commit that holds it. It fetches no URL.
+**What KTL does.** Every record names the source it was derived from, so faithfulness can be checked against something. What the librarian cannot settle is marked `status: draft` with an open question until a person decides. The registrar checks what needs no judgement: a local `resource` that no longer exists, a `revision` naming no commit that holds it, and a quoted `sources[].excerpt` that its file no longer holds. It fetches no URL.
 
 **Verdict: answered in part.** Left open: the registrar never judges truth, and the librarian's scheduled re-check is the same kind of tool that wrote the text, so it is self-review. The independent judgement is the curator's.
 
@@ -152,7 +152,7 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **What KTL does.** It provides the evidence a third line needs, and not the review. A fourth line is the organisation's to add.
 
-**Verdict: not KTL's role.** An auditor skill for the third line is [still to do](#what-remains-to-do-and-who-does-it).
+**Verdict: not KTL's role.** KTL has no auditor skill, and [what remains](#what-remains-to-do-and-who-does-it) says what one waits for.
 
 ### The model's effectiveness is untested
 
@@ -164,8 +164,9 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 ## What remains to do, and who does it
 
-- **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)), and LOKF releasing it in 0.9.0.
-- **KTL.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo. An auditor skill for the third line, and [its Copilot form](m365.md#how-it-is-put-together). `knowledge-report.sh` draws the sample and prints the table of events that such a skill starts from. Fetching a federation member from a private repository ([federation.md](federation.md#what-exists-and-what-remains-a-design)).
+- **Upstream.** OKF adopting `revision` ([knowledge-catalog#437](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/437)) and `excerpt` ([knowledge-catalog#438](https://github.com/GoogleCloudPlatform/knowledge-catalog/issues/438)). LOKF carries both as its own fields until then.
+- **KTL.** `revision` written by the KTL Curator plugin. An entitlement check by kind of concept. The approval half of the gate on GitLab and Forgejo.
+- **An auditor skill.** It waits for a host with a third line: a person who audits the bundle and neither derives nor confirms it. Until then that person's tools are `knowledge-report.sh sample` and `evidence`, the `provenance` job's log, and the docent, which reads and never writes. A skill would add a record of the auditor's finding on each sampled concept, kept outside the bundle, and [its Copilot form](m365.md#how-it-is-put-together).
 - **The organisation's.** Naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
 
 ## Sources
