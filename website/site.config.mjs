@@ -66,7 +66,7 @@ export const DOCS = {
     },
     { label: "Reference", pages: ["ingest-reference", "context-layer-technology"] },
     { label: "Maintaining", pages: ["releasing", "signing-commits", "threat-model", "repository-layout"] },
-    { label: "Captured sessions", pages: ["examples/first-bundle", "examples/docent", "examples/curator", "examples/prose"] },
+    { label: "Captured sessions", pages: ["examples/first-bundle", "examples/docent", "examples/curator", "examples/docent-after-curation", "examples/prose"] },
   ],
 };
 
