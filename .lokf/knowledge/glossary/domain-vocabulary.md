@@ -9,7 +9,7 @@ resource: skills/ktl-librarian/references/domain-vocabulary.md
 sources:
   - resource: skills/ktl-librarian/references/domain-vocabulary.md
   - resource: skills/ktl-curator/references/domain-vocabularies.md
-  - resource: docs/for-the-curious.md
+  - resource: docs/how-it-works.md
   - resource: docs/architecture.md
   - resource: CHANGELOG.md
 relatedTo:
@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/lokf
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-12T14:55:35Z"
 status: draft
 ---
 

@@ -2,6 +2,7 @@
 
 ## 2026-11-12
 
+* **Changed**: Domain vocabulary cites `docs/how-it-works.md`, the new name of `docs/for-the-curious.md`.
 * **Changed**: `docs/for-the-curious.md` is now `docs/how-it-works.md`, and each concept that cites it names the new path. `explanation/skillwiki.md` was edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: `docs/for-the-curious.md` is now `docs/how-it-works.md`, and each concept that cites it names the new path. `explanation/three-lines-of-defence.md` was edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: `docs/for-the-curious.md` is now `docs/how-it-works.md`, and each concept that cites it names the new path.
