@@ -41,6 +41,7 @@ docs/
   m365.md               read-only roles as Microsoft 365 Copilot skills, the docent first
   ingest.md             how to mirror knowledge from outside the repository, and review the ingest pull request
   ingest-reference.md   the ingest's sources, manifest, mirror and lock, and how sensitivity bounds them
+  uses.md               what KTL is for, what it is not, and how to judge a use this page does not list
   three-lines.md        the roles in the three lines of defence, what an auditor can check, and the critics
   skills-repositories.md  KTL in a repository whose content is Agent Skills, and what remains to do
   young-readers.md      knowledge retold for readers aged 8 to 18: what a retelling is, and who does what

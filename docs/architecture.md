@@ -110,6 +110,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, how readers and verdicts steer the next run, and what to do when a bundle outgrows LOKF's vocabulary | [how-it-works.md](how-it-works.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [obsidian.md](obsidian.md) |
+| Which uses KTL fits, which it does not, and how to judge one this project never listed | [uses.md](uses.md) |
 | Where each role sits in the three lines of defence, and [the model's critics](three-lines.md#what-the-critics-say) | [three-lines.md](three-lines.md) |
 | Whether KTL helps a repository whose content is Agent Skills, and what remains to do there | [skills-repositories.md](skills-repositories.md) |
 | Knowledge retold for readers aged 8 to 18, for a school or a youth group | [young-readers.md](young-readers.md) |

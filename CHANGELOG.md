@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`docs/uses.md` says what KTL is for, and what it is not.** It lists the uses the skills were built for, answers the two that readers asked about, DevSecOps and technology governance, and gives three questions for judging any other.
+
+### Changed
+
+- **`docs/three-lines.md` lists only what remains.** LOKF 0.9.0 and private federation members are built, and an auditor skill waits for a host with a third line.
+
 ## [0.64.0] - 2026-11-12
 
 ### Added
