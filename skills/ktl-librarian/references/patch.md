@@ -2,7 +2,7 @@
 
 The librarian never edits a file under `.lokf/knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, checks the file with `bash .lokf/scripts/knowledge-apply.sh --dry-run`, and applies it with the same script. The script, not the agent, writes the files. It stamps `generated` from the clock, keeps a concept's `description` equal to its bullet in the folder's `index.md` and in the root `index.md`, and files each log line under the day's heading in `log.md`. It moves a feedback entry an operation says it handled into the ledger of questions readers asked, and it writes nothing unless every operation passes.
 
-It also runs `lokf validate` on every concept it would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit. When it cannot run that check, it says `schema not checked`. That happens when `.lokf/.venv` holds no toolkit, when the toolkit fails before it validates anything, or when the justfile's `schema :=` line is not in the form `schema := "<file>"`.
+It also runs `lokf validate` on every concept it would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit. In the same run the toolkit looks for each `sources[].excerpt` in its local file, so a quote the file does not hold is refused before it is written ([excerpts.md](excerpts.md)). When it cannot run that check, it says `schema not checked`. That happens when `.lokf/.venv` holds no toolkit, when the toolkit fails before it validates anything, or when the justfile's `schema :=` line is not in the form `schema := "<file>"`.
 
 In the scheduled run the wrapper applies the file after the agent has finished and refuses a run that changed anything else. The file is deleted once applied, and `.lokf/.gitignore` keeps it out of git. When `.lokf/scripts/knowledge-apply.sh` is missing, run ktl-sidecar's repair, which installs it, before you write anything.
 
@@ -21,12 +21,19 @@ ops:
       title: Orders API
       description: REST API serving order data to the CLI and web UI.
       resource: services/orders/openapi.yaml
+      sources:
+        - resource: services/orders/openapi.yaml
+          id: openapi.yaml       # the label of the footnote that cites this entry
+          excerpt: "x-rate-limit: 600 requests per minute"   # the passage the footnoted claim rests on, copied from the file; refused when the file does not hold it
       dependsOn:
         - https://acme.example/knowledge/datasets/orders-db
     body: |
       # Overview
 
       The **Orders API** generates its endpoints from `services/orders/openapi.yaml`...
+      It serves at most 600 requests a minute.[^openapi.yaml]
+
+      [^openapi.yaml]: services/orders/openapi.yaml, the `x-rate-limit` line
     log: "**Added**: Orders API, from `services/orders/openapi.yaml`."   # optional on create
     from_feedback: "- **Miss** - Q: \"Which API serves orders?\" Answered from `services/orders/openapi.yaml`. Nothing relevant in index.md. - docent"   # the exact entry, which the script moves out of feedback.md; ten to a patch at most
     asked: "Which API serves orders?"   # the reader's question from that entry, for the ledger in .lokf/questions.md
@@ -121,6 +128,7 @@ Any one of these refuses the whole file, and nothing is written:
 - a `replace` target that occurs zero or several times, an `insert_after` target on zero or several lines, or either inside the `lokf:related` block or under `## Open questions`;
 - a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
 - a `patch`, `rewrite`, `delete` or `resolve` with no `log` line, its own or the patch's; a `title` with square brackets;
+- a `sources` entry whose `excerpt` is empty, is longer than 500 characters, or is not in its local file;
 - a `from_feedback` line the feedback file does not hold, or more than ten of them in one file; `asked` on an operation with no `from_feedback`, or with no printable text;
 - a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once the characters no reader sees are gone. Those are the controls, the format characters, such as a zero-width space, a bidirectional mark or a tag character, and the other characters Unicode calls default ignorable, such as a variation selector. The script takes them out of a reader's question too.
 

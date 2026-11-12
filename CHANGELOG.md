@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **The skills use `sources[].excerpt`.** The librarian copies the passage a footnoted claim rests on, the curator shows it where it sits in the file before the claim, and the docent gives it as what the bundle quotes. The librarian's `references/excerpts.md` says when to write one, how to copy it, and what to do when its file no longer holds it.
+- **The pen looks for each excerpt in its file before it writes.** A quote the file does not hold is refused, with `--dry-run` too, and so is one that is empty or longer than 500 characters.
+- **The work list tells a moved file from a moved passage.** `knowledge-report.sh worklist` lists first each excerpt its file no longer holds, marks each moved source a concept quotes as *the quoted passage holds* or *is gone*, and counts the footnoted sources that carry no excerpt. The lokf toolkit in `.lokf/.venv` finds the passages.
+
+### Fixed
+
+- **A line of a block scalar under `sources` no longer reads as a source.** `knowledge-report.sh` took a quoted line that began `resource:` for an entry's own key.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added

@@ -45,6 +45,26 @@ What to say, and what not to do:
 - A committed `.gitconfig` is not an option, and it is worth saying so when someone suggests it: git reads only `.git/config`, `~/.gitconfig`, and system config, never a file in the working tree. Git refuses this because a config file arriving with a clone could otherwise run commands. A tracked one sits there doing nothing.
 - Then carry on regardless. It is their call. *Retire*, *Later* and a send-back without a release record no `human:` actor, so they pass the gate untouched. A release removes the person's `generated` record, so it needs their signature, as a confirmation does.
 
+## Showing the evidence
+
+Show the source before the claim, on every item. Start with each `excerpt` a `sources` entry carries. The librarian copied that passage from the entry's `resource` for the claim its footnote marks, and the registrar's gate found it in the file when the concept last changed.
+
+For each entry that carries one:
+
+1. **Find the passage in the file as it stands now.** Search the `resource` for the excerpt's first words, such as `grep -n -i -F 'first few words' <resource>`. Line breaks, runs of spaces and letter case may differ, and `...` joins two passages of one section.
+2. **Show it where it sits**: the file, the heading above it, and the passage with the two or three lines around it. Quote the file, not the frontmatter.
+3. **Then show the sentence that carries the footnote** `[^id]`, where `id` is the entry's, and ask whether the passage says that.
+
+Say which of these holds, in plain words:
+
+- **The file no longer holds the passage.** Show the excerpt as the bundle has it, and what the file says near there now. That is usually a send-back: the source changed under the claim. `just lokf-check-refs`, run from `.lokf/` once at the start of a session where `uv` is present, names every such excerpt.
+- **The `resource` is a URL.** No program checked the excerpt. Say it is the passage as the librarian copied it on the day of `generated.at`, and offer the link.
+- **The entry carries no excerpt.** Quote the lines that matter yourself, and say that you chose them.
+
+The excerpt is the librarian's choice of passage, so it is where the reading starts. Show the lines around it, and open the whole source when the person asks. A passage can be in the file and still not carry the claim: a condition left out, or a number from another row. That judgement is the person's, and a passed check is never an answer to "does the source still say this?".
+
+When the person wants a quote the concept lacks, send it back with a note that names the claim, such as "quote the passage for the retention period". The librarian adds the excerpt on its next run. An excerpt is part of what a confirmation covers: a later change to one makes the concept read *edited since a person last confirmed it*.
+
 ## The verbs
 
 Every example starts from this librarian-written frontmatter:

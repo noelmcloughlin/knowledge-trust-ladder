@@ -24,7 +24,9 @@
 #     and the deletion of a concept another still relates to;
 #   - refuses a patch whose concepts `lokf validate` rejects, with --dry-run
 #     too, when the sidecar's .venv holds the toolkit, and says when it could
-#     not check them.
+#     not check them. A `sources[].excerpt` is looked for in its local file
+#     in the same run, so a quote the file does not hold is never written;
+#   - refuses an excerpt that is empty or longer than 500 characters.
 # Nothing is written unless every operation passes.
 #
 # Two things hold for every concept it writes, whatever the operations were.
@@ -120,6 +122,12 @@ DENIED_SET = {"id", "type", "generated", "verified", "revised", "refuted", "stat
 DENIED_CREATE = {"generated", "verified", "revised", "refuted", "status", "stale_after", "timestamp", "by", "at", "revision"}
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
+# The longest `sources[].excerpt` the pen writes, counted with each run of
+# white space as one character. An excerpt is the passage a claim rests on: a
+# sentence, a table row or a line of configuration. The toolkit sets no
+# limit, so a page copied whole would pass its check, break on every edit to
+# the file, and reproduce the source inside a bundle that may be published.
+EXCERPT_MAX = 500
 BULLET_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, (\S+?): ")  # an open question's actor, in the shape the curator writes
 # A web address that is not already an autolink, a link's target or a link's
 # text: no `<`, `](` or `[` before it. A pair of parentheses inside it stays
@@ -178,12 +186,19 @@ ops:
       title: Orders API
       description: REST API serving order data to the CLI and web UI.
       resource: services/orders/openapi.yaml
+      sources:
+        - resource: services/orders/openapi.yaml
+          id: openapi.yaml       # the label of the footnote that cites this entry
+          excerpt: "x-rate-limit: 600 requests per minute"   # the passage the footnoted claim rests on, copied from the file; refused when the file does not hold it
       dependsOn:
         - https://acme.example/knowledge/datasets/orders-db
     body: |
       # Overview
 
       The **Orders API** generates its endpoints from `services/orders/openapi.yaml`...
+      It serves at most 600 requests a minute.[^openapi.yaml]
+
+      [^openapi.yaml]: services/orders/openapi.yaml, the `x-rate-limit` line
     log: "**Added**: Orders API, from `services/orders/openapi.yaml`."   # optional on create
     from_feedback: "- **Miss** - Q: \"Which API serves orders?\" Answered from `services/orders/openapi.yaml`. Nothing relevant in index.md. - docent"   # the exact entry, which the script moves out of feedback.md; ten to a patch at most
     asked: "Which API serves orders?"   # the reader's question from that entry, for the ledger in .lokf/questions.md
@@ -679,6 +694,7 @@ class Bundle:
         given = fm_in.get("id")
         if given is not None and given != minted:
             raise Refused(f"{path}: id must be {minted} (base_iri plus the path), not {given}")
+        self.check_excerpts(path, fm_in.get("sources") or [])
         fm: dict = {"type": fm_in["type"], "id": minted}
         for k, v in fm_in.items():
             if k not in ("type", "id"):
@@ -724,6 +740,22 @@ class Bundle:
         self.index_set(path, c.title(), c.description())
         self.log(op, None, c)
 
+    @staticmethod
+    def check_excerpts(path: str, sources) -> None:
+        """Refuses a `sources` value holding an excerpt that is empty or longer than EXCERPT_MAX. Whether the file holds the passage is the toolkit's to say, in schema_findings."""
+        for i, entry in enumerate(sources if isinstance(sources, list) else [sources]):
+            if not isinstance(entry, dict) or "excerpt" not in entry:
+                continue
+            quoted = entry["excerpt"]
+            size = len(" ".join(quoted.split())) if isinstance(quoted, str) else 0
+            if size == 0:
+                raise Refused(f"{path}: sources[{i}].excerpt holds no text; copy the passage from the file, or leave the key out")
+            if size > EXCERPT_MAX:
+                raise Refused(
+                    f"{path}: sources[{i}].excerpt is {size} characters and the pen writes at most {EXCERPT_MAX}; "
+                    "quote the sentence, the row or the line the claim rests on, and join two passages of one section with ..."
+                )
+
     def set_frontmatter(self, c: Concept, sets) -> None:
         """Sets the frontmatter keys an operation's `set` names. `patch` and `rewrite` both call it, so the two refuse the same keys and check a title and a description the same way. Each calls it before it stamps `generated` and rewrites the index bullets, so the bullets carry a changed title or description."""
         if not isinstance(sets, dict):
@@ -736,6 +768,8 @@ class Bundle:
                 v = one_line(v, f"{c.path}: {k}")
                 if k == "title" and ("[" in v or "]" in v):
                     raise Refused(f"{c.path}: a title may not contain square brackets")
+            if k == "sources":
+                self.check_excerpts(c.path, v)
             c.fm[k] = v
 
     def apply_edit(self, c: Concept, edit) -> None:
@@ -1226,6 +1260,16 @@ ANY_SCHEMA_LINE = re.compile(r"^(export\s+)?schema\s*:=", re.M)
 # with neither, such as a toolkit without LinkML or a schema file that is not
 # there, is the toolkit's, and says nothing about the patch.
 FAILING = ("[ERROR]", "[FATAL]")
+# A `sources` entry's excerpt, as a line of the frontmatter this script dumps.
+EXCERPT_LINE = re.compile(r"^[ \t]+(?:- )?excerpt:", re.M)
+# What the toolkit's verdict line says of the excerpts it looked for.
+EXCERPT_VERDICT = re.compile(r"(?:Every local excerpt|No local excerpt|\d+ local excerpts? checked)[^\n]*")
+
+
+def resource_root(lokf_dir: Path) -> Path:
+    """Where the toolkit looks for a local `resource` of the bundle in .lokf/knowledge: the nearest folder above the bundle that holds `.git`, else .lokf/ itself. The staged copy sits one folder deeper, so the check below names this root."""
+    bundle = (lokf_dir / "knowledge").resolve()
+    return next((p for p in (bundle, *bundle.parents) if (p / ".git").exists()), bundle.parent)
 
 
 def schema_findings(root: Path, files: dict) -> tuple:
@@ -1243,6 +1287,13 @@ def schema_findings(root: Path, files: dict) -> tuple:
     schema line is not in the form the release reads. Returns the findings
     and a note.
 
+    When a concept about to be written carries a `sources[].excerpt`, the
+    validator also looks for each one in its local file, as the gate's
+    `just lokf-check-refs` does, so a quote the file does not hold is refused
+    here and never reaches the bundle. An excerpt on a URL is counted and
+    not fetched. The flag is passed only then: a toolkit before lokf 0.9.0
+    knows neither the flag nor the key.
+
     """
     lokf_dir = root / ".lokf"
     exe = next((p for p in (lokf_dir / ".venv" / "bin" / "lokf", lokf_dir / ".venv" / "Scripts" / "lokf.exe") if p.is_file()), None)
@@ -1257,6 +1308,9 @@ def schema_findings(root: Path, files: dict) -> tuple:
     if named and named.group(1):
         schema = (lokf_dir / named.group(1)).resolve()
         cmd, cwd = cmd + ["--schema", schema.name], schema.parent
+    quoting = any(EXCERPT_LINE.search((split_frontmatter(text) or ("", ""))[0]) for text in files.values())
+    if quoting:
+        cmd += ["--check-excerpts", "--root", str(resource_root(lokf_dir))]
     stage = Path(tempfile.mkdtemp(dir=str(lokf_dir), prefix=".pen-check-"))
     staged = stage / "knowledge"
     try:
@@ -1272,9 +1326,16 @@ def schema_findings(root: Path, files: dict) -> tuple:
     finally:
         shutil.rmtree(stage, ignore_errors=True)
     if done.returncode == 0:
-        return [], "schema checked: lokf validate accepts every concept this patch writes"
+        note = "schema checked: lokf validate accepts every concept this patch writes"
+        said = EXCERPT_VERDICT.search(done.stdout) if quoting else None
+        if quoting:
+            note += f". {said.group(0).rstrip('.')}" if said else ", and finds each local excerpt in its file"
+        return [], note
     out = (done.stdout + done.stderr).replace(str(staged), ".lokf/knowledge")
     lines = [shown(line) for line in out.splitlines() if line.strip()]
+    if quoting and not any(line.startswith(FAILING) for line in lines) and "--check-excerpts" in out:
+        return ["schema: the toolkit in .lokf/.venv does not take --check-excerpts, so it is older than lokf 0.9.0, "
+                "whose schema first holds `excerpt`; raise the floor in .lokf/pyproject.toml and run uv sync, or leave the excerpt out"], ""
     if not any(line.startswith(FAILING) for line in lines):
         return [], f"schema not checked: lokf validate could not run ({lines[0][:200] if lines else f'exit {done.returncode}'})"
     # The validator echoes a rejected concept whole on one line, and gives the

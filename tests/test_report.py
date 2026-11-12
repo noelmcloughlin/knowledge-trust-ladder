@@ -2134,3 +2134,132 @@ def test_the_work_list_names_each_concept_quiet_counts_as_having_no_stamp(tmp_pa
     quiet, out = report(tmp_path, "quiet"), report(tmp_path, "worklist").out
     assert quiet.rc == 1 and "concepts with no stamp: 1" in quiet.out, quiet.out
     assert has_line(out, "Concepts with no stamp, neither derived by the pen nor checked: 1") and has_line(out, "- glossary/a.md: no stamp") and "glossary/b.md: no stamp" not in out, out
+
+
+@pytest.fixture
+def quoting(tmp_path):
+    """Two concepts quote one file and a third cites it by footnote alone; the file then moves in a later commit."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(tmp_path / "docs" / "limits.md", "# Limits\n\nThe API serves 600 requests a minute.\n\nRows are kept 13 months.\n")
+    write(tmp_path / "docs" / "other.md", "other\n")
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    # rate.md quotes in its second entry, and names its own id.
+    write(
+        kk / "x" / "rate.md",
+        "---\ntype: Service\nid: https://acme.example/knowledge/x/rate\ntitle: Rate\nsources:\n  - resource: docs/other.md\n  - resource: docs/limits.md\n"
+        f'    id: limits.md\n    excerpt: "The API serves 600 requests a minute."\n{stamp}---\n\nIt serves 600.[^limits.md]\n\n[^limits.md]: docs/limits.md, the first line\n',
+    )
+    # kept.md has no id, and its excerpt is a block scalar whose lines look like keys and items.
+    write(
+        kk / "x" / "kept.md",
+        f"---\ntype: Service\ntitle: Kept\nsources:\n  - excerpt: >-\n      resource: not/a/key.md\n      - Rows are kept 13 months.\n    resource: docs/limits.md\n{stamp}---\n",
+    )
+    write(
+        kk / "x" / "cited.md",
+        f"---\ntype: Service\ntitle: Cited\nsources:\n  - resource: docs/limits.md\n    id: limits.md\n{stamp}---\n\nRows.[^limits.md]\n\n[^limits.md]: docs/limits.md\n",
+    )
+    write(kk / "log.md", "# Change Log\n")
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "sources and concepts in one commit")
+    append(tmp_path / "docs" / "limits.md", "\nA new section.\n")
+    git("commit", "-q", "-am", "the file moves on")
+    return tmp_path
+
+
+def toolkit(root, say, rc):
+    """A toolkit in .lokf/.venv that notes the folder it ran in and its arguments, says `say` and exits `rc`."""
+    calls = root.parent / f"{root.name}-lokf-calls.txt"
+    write(root / ".lokf" / ".venv" / "bin" / "lokf", f'#!/bin/sh\necho "$(pwd -P) $*" >> "{calls}"\n{say}\nexit {rc}\n').chmod(0o755)
+    return calls
+
+
+HOLDS = "echo 'OK - 3 concepts in knowledge validate against KnowledgeBundle. Every local excerpt is in its resource.'"
+
+
+def test_the_work_list_says_a_moved_source_still_holds_the_passage_a_concept_quotes(quoting):
+    """Most edits to a file leave the quoted passage alone, and the list says so of each concept that quotes it."""
+    calls = toolkit(quoting, HOLDS, 0)
+    out = report(quoting, "worklist").out
+    assert (
+        has_line(out, "Excerpts their file no longer holds, each a claim whose ground changed: none")
+        and matches(out, r"^- x/rate\.md: docs/limits\.md \(\d{4}-\d\d-\d\d, the quoted passage holds\)$")
+        and matches(out, r"^- x/kept\.md: docs/limits\.md \(\d{4}-\d\d-\d\d, the quoted passage holds\)$")
+        and matches(out, r"^- x/cited\.md: docs/limits\.md \(\d{4}-\d\d-\d\d\)$")
+        and read(calls).count("validate") == 1
+    ), f"the work list did not say the quoted passages hold, or ran the toolkit more than once: {out}"
+
+
+def test_the_work_list_puts_first_an_excerpt_its_file_no_longer_holds(quoting):
+    """The toolkit names the concept by its IRI and the entry by its place: one concept is found by its id, the other by its path."""
+    toolkit(
+        quoting,
+        "echo \"[ERROR] https://acme.example/knowledge/x/rate: \\`sources[1].excerpt\\` ('The API serves 600') is not in 'docs/limits.md'\" >&2\n"
+        "echo \"[ERROR] https://acme.example/knowledge/x/kept: \\`sources[0].excerpt\\` ('resource: not') is not in 'docs/limits.md'\" >&2",
+        1,
+    )
+    out = report(quoting, "worklist").out
+    first = out.split("\n")[1:4]
+    assert first == [
+        "Excerpts their file no longer holds, each a claim whose ground changed: 2",
+        "- x/kept.md: docs/limits.md",
+        "- x/rate.md: docs/limits.md",
+    ] and matches(out, r"^- x/rate\.md: docs/limits\.md \(\d{4}-\d\d-\d\d, the quoted passage is gone\)$"), (
+        f"the work list did not name each excerpt its file no longer holds: {out}"
+    )
+
+
+def test_the_work_list_counts_the_footnoted_sources_that_quote_nothing(quoting):
+    toolkit(quoting, HOLDS, 0)
+    out = report(quoting, "worklist").out
+    assert has_line(out, "Footnoted sources that carry no excerpt: 1") and has_line(out, "- x/cited.md: docs/limits.md"), (
+        f"the work list did not list the footnoted source with no excerpt: {out}"
+    )
+
+
+@pytest.mark.parametrize(
+    "say, rc, want",
+    [
+        (None, 0, "Excerpts: not checked here, since .lokf/.venv holds no lokf toolkit"),
+        ("echo 'No such option: --check-excerpts' >&2", 2, "Excerpts: not checked here, since lokf validate gave no verdict on them"),
+        ("echo '[ERROR] x/rate.md: type is required' >&2", 1, "Excerpts: not checked here, since lokf validate gave no verdict on them"),
+    ],
+    ids=["no toolkit", "a toolkit before lokf 0.9.0", "a bundle the schema rejects"],
+)
+def test_without_a_verdict_on_the_excerpts_the_work_list_says_none_holds(quoting, say, rc, want):
+    """Nothing is said to hold unless the toolkit said so of the excerpts."""
+    if say is not None:
+        toolkit(quoting, say, rc)
+    out = report(quoting, "worklist").out
+    assert want in out and "the quoted passage" not in out and "Excerpts their file" not in out, (
+        f"the work list gave a verdict the toolkit did not give: {out}"
+    )
+
+
+def test_the_toolkit_checks_excerpts_with_the_domain_vocabulary_the_justfile_names(quoting):
+    write(quoting / ".lokf" / "justfile", 'bundle := "knowledge"\nschema := "schema/domain.yaml"\n')
+    write(quoting / ".lokf" / "schema" / "domain.yaml", "id: https://acme.example/schema\n")
+    calls = toolkit(quoting, HOLDS, 0)
+    report(quoting, "worklist")
+    folder, _, args = read(calls).strip().partition(" ")
+    assert folder == str((quoting / ".lokf" / "schema").resolve()) and args.startswith("validate --schema domain.yaml --check-excerpts "), (
+        f"the toolkit was not run from the schema's folder with --schema: {read(calls)}"
+    )
+
+
+def test_a_bundle_that_quotes_nothing_never_runs_the_toolkit(moved):
+    """Only the work list runs it, and only when a concept carries an excerpt."""
+    calls = toolkit(moved, HOLDS, 0)
+    out = report(moved, "worklist").out
+    assert not calls.exists() and "Excerpts" not in out and has_line(out, "Footnoted sources that carry no excerpt: none"), (
+        f"the work list ran the toolkit, or spoke of excerpts, with none in the bundle: {out}"
+    )
+
+
+def test_no_other_form_runs_the_toolkit(quoting):
+    calls = toolkit(quoting, HOLDS, 0)
+    for form in ([], ["health"], ["labels"], ["quiet"], ["evidence"]):
+        report(quoting, *form)
+    assert not calls.exists(), f"a form other than the work list ran the toolkit: {read(calls)}"

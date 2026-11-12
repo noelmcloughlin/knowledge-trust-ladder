@@ -22,7 +22,7 @@ The **curator** *holds the scales*. The curator is always a person: the one who 
 
 ## What a session looks like
 
-The skill prints a one-screen report first: the health line, what is worth ten minutes today, and the questions that wait. A review session follows only when you say yes. It takes one concept at a time, shows the source before the claim, and records one verb.
+The skill prints a one-screen report first: the health line, what is worth ten minutes today, and the questions that wait. A review session follows only when you say yes. It takes one concept at a time, shows the source before the claim, and records one verb. Where the librarian quoted the passage a claim rests on, the session shows that passage where it sits in the file.
 
 | Verb | What it records |
 | --- | --- |

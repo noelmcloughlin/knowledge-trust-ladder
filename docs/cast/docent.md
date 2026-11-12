@@ -22,6 +22,7 @@ Ask anything about the project: what a service does, who owns it, which policy a
 - It answers from the bundle first, and goes to the repository only when the bundle has no answer.
 - It names each concept the answer rests on, with its trust label, such as *confirmed by a person* or *still a draft*.
 - It opens the source before it states a version, a number or a path.
+- It gives the passage a concept quotes from its source, and says that the bundle quotes it.
 - It records a miss, or a disagreement between the bundle and a source. The librarian handles that record on its next run.
 
 ## Where the rest is written

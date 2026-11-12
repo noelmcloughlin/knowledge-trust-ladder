@@ -24,8 +24,9 @@ The **librarian** *binds it into order*. It derives the bundle's concepts from t
 
 - It derives each concept from a source it names, gives it a LOKF class, and links it to other concepts with typed relations.
 - It writes the bundle only through the pen. The pen marks each new concept `status: draft` and stamps who generated it, and when.
+- It quotes the passage a footnoted claim rests on, as an excerpt that the registrar finds in the source file on every change.
 - It leaves an open question on what it cannot settle, for a person to decide.
-- It starts each later run from a work list a script computes, and reads the curator's verdicts before it derives anything.
+- It starts each later run from a work list a script computes, which says of each source that moved whether the quoted passage still holds. It reads the curator's verdicts before it derives anything.
 - On a schedule it opens a pull request with whatever changed. In most weeks in which nothing waits, no agent runs.
 
 ## Where the rest is written
