@@ -129,7 +129,9 @@ if [ "$ingit" = 1 ]; then
       slug="$(printf '%s' "$remote" | sed -E 's#^(https?://[^/]+/|git@[^:]+:|ssh://git@[^/]+/)##; s#\.git$##; s#/$##')"
       ok git "github.com, $slug, default branch ${branch:-unknown}: REPO, SITE and BASE follow from it" ;;
     "") info git "no origin remote - the site builds; the workflow and the links to files need one" ;;
-    *) info git "origin is not github.com ($remote) - the site builds; Step 5's workflow is GitHub Actions, and links to files name github.com" ;;
+    # The address may carry a token, as https://user:token@host/ does, and
+    # this line goes to the agent and to any job log.
+    *) info git "origin is not github.com ($(printf '%s' "$remote" | sed -E 's#(://)[^/@]*@#\1#')) - the site builds; Step 5's workflow is GitHub Actions, and links to files name github.com" ;;
   esac
   if git -C "$root" check-ignore -q .lokf 2>/dev/null; then
     warn git ".lokf/ is gitignored - the workflow builds from the checkout, which lacks the bundle; build the site locally and skip Step 5"

@@ -111,6 +111,18 @@ def test_reads_the_owner_and_the_name_from_the_remote(tmp_path):
     assert result and matches(result.out, r"^ok      git .*acme/acme-platform"), f"preflight misread the remote: {result.out}"
 
 
+def test_prints_no_credential_a_remote_address_carries(tmp_path):
+    """The line goes to the agent and to any job log."""
+    skeleton(tmp_path)
+    git = Git(tmp_path)
+    git.init()
+    git("remote", "add", "origin", "https://oauth2:glpat-SECRETTOKEN1234567890@gitlab.example.com/acme/platform.git")
+    result = preflight(tmp_path)
+    assert result and "gitlab.example.com/acme/platform.git" in result.out and "SECRETTOKEN" not in result.out and "oauth2" not in result.out, (
+        f"preflight printed the credential in the remote's address: {result.out}"
+    )
+
+
 def test_falls_back_to_the_sidecar_s_domain_vocabulary(tmp_path):
     skeleton(tmp_path)
     write(tmp_path / ".lokf" / "gh-workflows.yaml", "id: https://acme.example/schema\nname: acme\n")
