@@ -10,7 +10,7 @@ sources:
   - resource: docs/architecture.md
   - resource: docs/for-the-curious.md
   - resource: skills/ktl-librarian/SKILL.md
-  - resource: skills/ktl-curator/references/domain-schemas.md
+  - resource: skills/ktl-curator/references/domain-vocabularies.md
 definedBy:
   - https://w3id.org/ktl/knowledge/references/linkml
 relatedTo:
@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/domain-schema
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-11-12T13:27:24Z"
 status: draft
 verified:
   - by: process:ktl-librarian

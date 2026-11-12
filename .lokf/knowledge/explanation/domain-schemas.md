@@ -4,15 +4,15 @@ id: https://w3id.org/ktl/knowledge/explanation/domain-schemas
 title: "When the built-in vocabulary stops fitting: domain schemas"
 description: "How a bundle in a specialised or regulated domain goes beyond LOKF's core classes: the signs a domain schema is due, a LinkML schema importing LOKF's, kept in `.lokf/schema/`, named by one `schema` variable in the sidecar's justfile and checked with `lokf validate --schema`, a LinkML project's own schema copied in there, the `domain.yaml` the sidecar ships for a bundle that federates other bundles, reusing a domain's own vocabulary such as the AI Risk Ontology through `lokf adapt`, the Microsoft 365 identity shape held in reserve, and who raises, decides and applies it."
 genre: explanation
-resource: skills/ktl-curator/references/domain-schemas.md
+resource: skills/ktl-curator/references/domain-vocabularies.md
 sources:
-  - resource: skills/ktl-curator/references/domain-schemas.md
-  - resource: skills/ktl-librarian/references/domain-schema.md
+  - resource: skills/ktl-curator/references/domain-vocabularies.md
+  - resource: skills/ktl-librarian/references/domain-vocabulary.md
   - resource: skills/ktl-sidecar/templates/justfile
   - resource: docs/architecture.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-08T00:18:14Z"
+  at: "2026-11-12T13:27:24Z"
 about: []
 references:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
@@ -52,7 +52,7 @@ When the `lokf` floor moves, or `.lokf/uv.lock` pins another `lokf` release, the
 
 The sidecar already depends on `lokf[build]`, so the LinkML generators are installed and a domain schema costs one file, with nothing new to install. A domain schema that grows past a few classes is worth a project of its own, with lint, tests and a docs site, which the linkml-sidecar skills install beside the bundle or around a schema the repository already holds; their linkml-author skill knows what `lokf validate` expects of a domain schema. From lokf 0.9.0, `convert`, `query`, `serve` and `export` take `--schema` as `validate` does, so the graph names each class and slot the schema declares under its own IRI. A key no schema declares still projects in LOKF's namespace, and from lokf 0.9.0 an undeclared type projects as `lokf:Concept` with the name kept in `schema:additionalType`.
 
-One domain schema ships with the sidecar: `domain.yaml`, in ktl-sidecar's templates, for a bundle whose concepts are other bundles. The curator's `domain-bundle.md` is its page, and ktl-librarian's `references/domain-schema.md` points a domain bundle at both.
+One domain schema ships with the sidecar: `domain.yaml`, in ktl-sidecar's templates, for a bundle whose concepts are other bundles. The curator's `domain-bundle.md` is its page, and ktl-librarian's `references/domain-vocabulary.md` points a domain bundle at both.
 
 **When the domain already has a vocabulary**, reuse it rather than re-describe it. For AI governance, the curator's guidance names IBM AI Atlas Nexus's [AI Risk Ontology](https://ibm.github.io/ai-atlas-nexus/ontology/), a LinkML vocabulary covering risks, controls, obligations, taxonomies, incidents and evaluations. It also names [ai-linkmo](https://github.com/noelmcloughlin/ai-linkmo) as a reference implementation over it, with a LOKF sidecar beside it.
 

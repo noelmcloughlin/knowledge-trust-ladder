@@ -2,6 +2,11 @@
 
 ## 2026-11-12
 
+* **Changed**: the librarian's and the curator's reference pages are now `domain-vocabulary.md` and `domain-vocabularies.md`, and each concept that cites them names the new path. `explanation/domain-schemas.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the librarian's and the curator's reference pages are now `domain-vocabulary.md` and `domain-vocabularies.md`, and each concept that cites them names the new path.
+* **Changed**: the librarian's and the curator's reference pages are now `domain-vocabulary.md` and `domain-vocabularies.md`, and each concept that cites them names the new path. `playbooks/ktl-librarian-skill.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the librarian's and the curator's reference pages are now `domain-vocabulary.md` and `domain-vocabularies.md`, and each concept that cites them names the new path. `playbooks/ktl-curator-skill.md` was edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the librarian's and the curator's reference pages are now `domain-vocabulary.md` and `domain-vocabularies.md`, and each concept that cites them names the new path. `playbooks/knowledge-sources.md` was edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Threat model follows the page's restructure in 2bb72b5: it covers every lmodel repository and seven noelmcloughlin repositories, adds schema builds and releases, signed build provenance and the cache rule, and runs harden-runner first in every job. Edited since a person confirmed it; the label says so until the curator looks again.
 
 ## 2026-11-08

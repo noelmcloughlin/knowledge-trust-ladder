@@ -7,8 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T12:26:25Z"
-  revision: 45261027bd08dc6529cea99693e7d705ee2fa710
+  at: "2026-11-12T13:27:24Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -23,7 +22,7 @@ sources:
   - resource: skills/ktl-curator/references/trust-fields.md
   - resource: skills/ktl-curator/references/portability.md
   - resource: skills/ktl-curator/references/domain-bundle.md
-  - resource: skills/ktl-curator/references/domain-schemas.md
+  - resource: skills/ktl-curator/references/domain-vocabularies.md
   - resource: docs/architecture.md
   - resource: CHANGELOG.md
   - resource: skills/ktl-curator/references/queries.md
@@ -105,7 +104,7 @@ The skill speaks in plain labels, never RDF, IRI, SPARQL, predicate or tier. *St
 
 ## Step 3: dig deeper
 
-Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain schema when the vocabulary drifts into a deep or safety-critical domain, and for the linkml-sidecar skills once a schema grows past a few classes (`references/domain-schemas.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder write `human:<id>`, so they need the same authenticated id as *Confirm*.
+Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain schema when the vocabulary drifts into a deep or safety-critical domain, and for the linkml-sidecar skills once a schema grows past a few classes (`references/domain-vocabularies.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder write `human:<id>`, so they need the same authenticated id as *Confirm*.
 
 The skill reads the curation policy's table of review intervals tolerantly. Rows name classes in prose, so the match ignores spaces and plural form: "Glossary terms" is `GlossaryTerm`, and "people" is `Person`. A row naming a class the skill does not know binds nothing. The policy carries four optional switches: `Independent re-check:`, `Automation re-check:`, `Evidence first:` and `Younger readers:`.[^review-session.md] The last names a band of age, 8-12 or 13-18, or both, and ktl-librarian may then write retellings of confirmed concepts for those readers on its scheduled runs. Each retelling is a new concept, which a person confirms against the concept it retells.
 

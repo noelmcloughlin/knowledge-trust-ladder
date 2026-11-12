@@ -7,15 +7,15 @@ genre: reference
 resource: https://linkml.io/linkml/
 generated:
   by: process:ktl-librarian
-  at: "2026-10-13T15:08:54Z"
+  at: "2026-11-12T13:27:24Z"
 status: draft
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  - by: process:ktl-librarian
+    at: "2026-10-12T03:11:32Z"
 ---
 
 # Overview
 
 LOKF is defined as a LinkML schema, which is why its JSON Schema, JSON-LD context, SHACL shapes, and OWL ontology are all generated artifacts rather than hand-maintained files.
 
-LinkML matters to a bundle owner at exactly one moment: when LOKF's vocabulary stops fitting a deep or safety-critical domain. The answer is a LinkML domain schema that imports LOKF's and validates with `lokf validate --schema <file>`. The recipe is the librarian skill's `references/domain-schema.md`. The same schema also yields Pydantic models, JSON Schema and rendered documentation, for people who think in JSON or Python rather than in RDF.
+LinkML matters to a bundle owner at exactly one moment: when LOKF's vocabulary stops fitting a deep or safety-critical domain. The answer is a LinkML domain schema that imports LOKF's and validates with `lokf validate --schema <file>`. The recipe is the librarian skill's `references/domain-vocabulary.md`. The same schema also yields Pydantic models, JSON Schema and rendered documentation, for people who think in JSON or Python rather than in RDF.
