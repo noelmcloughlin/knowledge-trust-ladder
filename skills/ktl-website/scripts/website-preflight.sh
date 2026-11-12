@@ -253,7 +253,7 @@ fi
 # These lines find the schema's pages and the data as scripts/config.mjs
 # finds them. The schema's pages come from a justfile with a gen-doc recipe,
 # in the root, a linkmo project's folder or .linkml/, else from the domain
-# schema on .lokf/justfile's schema line, a plain YAML path that gen-doc
+# vocabulary on .lokf/justfile's schema line, a plain YAML path that gen-doc
 # reads in the sidecar's environment. The data comes from a
 # build-browse recipe, and its databases stay off the site until a person
 # sets BROWSE. A justfile goes by any name just reads, and a recipe line may

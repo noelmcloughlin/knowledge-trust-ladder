@@ -6,7 +6,7 @@ name: Knowledge Release
 # when the host has installed .lokf/m365/, one Microsoft 365 Copilot skill
 # zip per instructions file there, for a person with nothing installed to
 # upload to Agent Builder. When the host's .lokf/justfile names a domain
-# schema on its `schema :=` line, that file goes beside the bundle too, as
+# vocabulary on its `schema :=` line, that file goes beside the bundle too, as
 # schema-<tag>-<name>.yaml with its own .sha256, so a federation that admits
 # this bundle can validate it on its own terms. It runs no LLM or agent, and
 # it never commits or pushes.
