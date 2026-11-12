@@ -9,13 +9,6 @@ max_retries = 3
 retry_wait_time = 5
 
 exclude = [
-  # LOKF's published JSON-LD context. Every LOKF bundle's index.md declares
-  # this exact URI (see skills/ktl-sidecar/templates/knowledge/index.md
-  # and ktl-librarian/SKILL.md Golden Rule 2). It is the upstream lokf
-  # project's identifier, not this repository's, and currently answers 404
-  # (checked 2026-09-08). Re-check periodically and drop this line once the
-  # w3id.org redirect is registered.
-  '^https://w3id\.org/lokf/context\.jsonld$',
   # Publisher DOI resolvers (Wiley, ACM, SAGE, Elsevier) and parliament.uk
   # answer automated clients with 403 while serving the same pages to a
   # browser; docs/three-lines.md cites them and each was opened
