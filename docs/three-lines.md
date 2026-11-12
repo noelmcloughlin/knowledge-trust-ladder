@@ -155,7 +155,7 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **The criticism.** Davies and Zhivitskaya find the model's origins opaque and its effectiveness untested. Schuett notes that "the model has been criticized and there is not much empirical evidence for its effectiveness", and concludes that within its limits it "can plausibly contribute to a reduction of risks from AI".
 
-**What KTL does.** It claims nothing about the model. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a random sample of confirmed concepts when the policy names a size.
+**What KTL does.** It claims nothing about the model. Whether the arrangement reduces risk is for a third line to test, and the curator's report hands over a sample of confirmed concepts when the policy names a size. A rule the curator cannot steer picks the sample.
 
 **Verdict: not KTL's role.**
 
