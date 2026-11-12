@@ -20,6 +20,9 @@
 #   knowledge-report.sh isolated           the concepts no relation joins to the rest of the bundle
 #   knowledge-report.sh coverage [<dir>..] the tracked files no concept names: a count per folder, or the list under <dir>
 #   knowledge-report.sh coverage --why <path>..  which concept names each path, or a folder above it
+#   knowledge-report.sh sample [--seed <text>] [--independent <n>] [--automation <n>]
+#                                          the concepts a second person looks at, picked by a digest
+#   knowledge-report.sh evidence           every `generated` record and `verified` event, as a tab-separated table
 #
 # Every form takes `--root <dir>` first: the repository root, by default the
 # nearest ancestor of the current directory holding .lokf/. A <path> is a
@@ -214,13 +217,54 @@
 #
 # Without git it says it cannot count. It never makes a scheduled run busy.
 #
+# `sample` draws the lists the curation policy asks for, so that no model
+# sorts one and nobody chooses what is looked at. There are two lists, each
+# drawn from its own concepts:
+#   - for a second person to re-check: the concepts that read as confirmed by
+#     a person. Each line names the people who confirmed the concept, since
+#     none of them is the one to re-check it;
+#   - for a person to check: the concepts checked by automation only, drafts
+#     apart.
+# A list is its concepts in the order of a digest, lowest first, cut at the
+# list's size. The digest is the SHA-256, as hex, of the seed, one space and
+# the concept's path. The seed is `--seed`, where an auditor gives a value the
+# authors could not know beforehand, or else today's date in UTC. The first
+# line states the seed, so anyone can draw the same lists again. A size is
+# `--independent` or `--automation`, or else the number on the policy's
+# `Independent re-check: <n>` or `Automation re-check: <n>` line, in
+# policies/knowledge-curation.md. No line, or 0, draws no list. The whole
+# report prints the same lists, by today's date, when the policy asks for
+# one. The digest needs sha256sum, or shasum where there is none, as on macOS.
+#
+# What counts as a second person's re-check is decided here, once. Take a
+# concept's `verified` events by a human: actor, in the order of `at`. The
+# earliest is the first confirmation. A later one by the same id is that
+# person confirming again, and a later one by any other id is a second
+# person's re-check. An event whose time cannot be read takes no place in
+# that order. The sample counts the confirmed concepts that carry such a
+# re-check. It does not say the re-check came after the concept's last edit.
+#
+# `evidence` prints the record behind every label as a table, for an
+# auditor's spreadsheet: a header row, then one row for a concept's
+# `generated` record and one for each `verified` event. A concept with
+# neither has one row, with no event. Tabs part the columns, which are path,
+# type, status, stale_after, resource, event, by, at, revision and check.
+# `check` says which a person's `verified` event is, by the rule above:
+# first, same-person or second-person. A time is given in UTC, as the labels
+# compare it, and a review date by its day. A value in a shape the script
+# cannot read is given as written. A tab or a line break inside a value is
+# one space, and nothing is quoted. The rows are in the order of path, then
+# `generated` before `verified`, then `at`. It reads frontmatter only, with no
+# git and no clock, so one bundle always gives the same bytes.
+#
 # Bash 3.2, POSIX awk and git only, so it runs wherever the other sidecar
 # scripts do, and in a workflow job that installs nothing.
 #
 # Exit 0, or 2 when the call is wrong or there is no bundle to report on;
 # `quiet` exits 1 when work waits, and `coverage --strict` when a file is
-# named by nobody or the count could not be made.
-[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|worklist|quiet|changes|retrieval|coverage] [...]" >&2; exit 2; }
+# named by nobody or the count could not be made. `sample` exits 2 on a host
+# with no tool to compute a digest.
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|worklist|quiet|changes|retrieval|coverage|sample|evidence] [...]" >&2; exit 2; }
 set -u
 # Byte-oriented awk and sort, so the byte order mark strip, the CRLF strip and
 # every comparison read raw bytes on any awk and in any locale. A gawk under a
@@ -230,7 +274,7 @@ set -u
 export LC_ALL=C
 
 usage() {
-  echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | isolated | coverage [--strict] [<dir>...] | coverage --why <path>...]" >&2
+  echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | isolated | coverage [--strict] [<dir>...] | coverage --why <path>... | sample [--seed <text>] [--independent <n>] [--automation <n>] | evidence]" >&2
   exit 2
 }
 
@@ -279,6 +323,8 @@ trap 'rm -rf "$tmp"' EXIT
 #   R  path  resource            one per `resource:` line, the concept's own and each source's
 #   X  path  resource            one per exclusion's `resource:` line, which no R line repeats
 #   Q  path  date  actor  text   one per bullet under ## Open questions
+#   V  path  type  status  stale_after  resource  event  by  at  revision  check
+#                                one per row of `evidence`, and only when `rows` is set
 # Times are normalised to one UTC shape, as conventions rule 11 does, so they
 # compare as strings; a time in any other shape is left out, never guessed.
 # shellcheck disable=SC2016 # awk's own $0, not the shell's
@@ -332,12 +378,15 @@ function kv(l,  k) { k = l; sub(/:.*/, "", k); sub(/^[ \t]+/, "", k)
 function emit(  n) {
   if (inev) {
     n = norm(at)
-    if (kind == "generated") { gen_by = by; gen_at = n; gen_raw = at }
-    else { vn++; if (n > check_at) { check_at = n; check_raw = at }
+    if (kind == "generated") { gen_by = by; gen_at = n; gen_raw = at; gen_rev = rev; hasgen = 1 }
+    else { vn++; eby[vn] = by; eat[vn] = n; eraw[vn] = at; erev[vn] = rev
+           if (n > check_at) { check_at = n; check_raw = at }
            if (by ~ /^human:/) { hn++; if (n > human_at) { human_at = n; human_raw = at; human_rev = rev } } }
   }
   inev = 0; by = ""; at = ""; rev = ""
 }
+# One value of an evidence row: a tab or a line break inside it is one space.
+function cell(s) { gsub(/[\t\r\n]/, " ", s); return s }
 function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ","); for (i = 1; i <= n; i++) kv(parts[i]); emit() }
 # A flow verified/generated may span lines, and an empty one (verified: [ ])
 # names no event. Accumulate from the opener to its closing bracket, then
@@ -448,14 +497,27 @@ END {
   if (human_rev ~ /^[0-9a-f]+$/ && length(human_rev) > 7) human_rev = substr(human_rev, 1, 7)
   printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev
   printf "I\t%s\t%s\t%s\t%s\n", path, cid, ctype, (topres != "" ? topres : firstres)
+  if (!rows) exit
+  # The evidence rows. The events by a human: actor whose time can be read are
+  # put in the order of that time, then of the file. The earliest is the first
+  # confirmation, and each later one is by the same person or by a second.
+  # The `verified` rows come out in the order of the time each one shows.
+  for (i = 1; i <= vn; i++) { ord[i] = i; shown[i] = (eat[i] != "" ? eat[i] : eraw[i]) ""; if (eby[i] ~ /^human:/ && eat[i] != "") hum[++hm] = i }
+  for (i = 2; i <= hm; i++) { k = hum[i]; j = i - 1; while (j > 0 && eat[hum[j]] > eat[k]) { hum[j + 1] = hum[j]; j-- } hum[j + 1] = k }
+  for (i = 1; i <= hm; i++) chk[hum[i]] = (i == 1 ? "first" : (eby[hum[i]] == eby[hum[1]] ? "same-person" : "second-person"))
+  for (i = 2; i <= vn; i++) { k = ord[i]; j = i - 1; while (j > 0 && shown[ord[j]] > shown[k]) { ord[j + 1] = ord[j]; j-- } ord[j + 1] = k }
+  head = "V\t" cell(path) "\t" cell(ctype) "\t" cell(status) "\t" cell(st != "" ? st : stale) "\t" cell(topres != "" ? topres : firstres) "\t"
+  if (hasgen) print head "generated\t" cell(gen_by) "\t" cell(gen_at != "" ? gen_at : gen_raw) "\t" cell(gen_rev) "\t"
+  for (i = 1; i <= vn; i++) { k = ord[i]; print head "verified\t" cell(eby[k]) "\t" cell(shown[k]) "\t" cell(erev[k]) "\t" chk[k] }
+  if (!hasgen && vn == 0) print head "\t\t\t\t"
 }'
 
-facts() {  # every concept in the bundle -> its C, R and Q lines
+facts() {  # every concept in the bundle -> its C, R and Q lines, and its V lines when `rows` is 1
   local f rel
   while IFS= read -r f; do
     rel="${f#"$bundle"/}"
     case "${rel##*/}" in index.md|log.md|diataxis.md) continue ;; esac
-    awk -v path="$rel" -v SQ="'" "$extract" "$f"
+    awk -v path="$rel" -v SQ="'" -v rows="${rows:-0}" "$extract" "$f"
   done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort)
 }
 
@@ -680,6 +742,8 @@ waiting_feedback() {  # the count ktl-curator and knowledge-feedback.sh use; no 
 label_fn='
 function day(t) { return substr(t, 1, 10) }
 function edited() { return $9 > 0 && $7 != "" && $8 != "" && $7 > $8 }
+# The rung a concept stands on, which every label, count and sample starts from.
+function rung() { if ($4 == "deprecated") return "retired"; if (edited()) return "edited"; if ($9 > 0) return "person"; if ($10 > 0) return "automation"; return "none" }
 function who(a) { if (a == "process:ktl-librarian") return "the librarian"; if (a == "process:ktl-curator") return "the curator"; sub(/^(human|process):/, "", a); return a }
 function waits(n) { return n " question" (n == 1 ? " waits" : "s wait") }
 # The reopening: the earliest open question asked on or after the day of the
@@ -692,11 +756,12 @@ function reopened(p, n, since,  k, m, f, d, w, i) {
   return "reopened " d " by " who(w) ": " waits(n)
 }
 $1 == "Q" { qlist[$2] = qlist[$2] $3 "\t" $4 "\n" }
-function label(  s) {
-  if ($4 == "deprecated") return "retired"
-  if (edited()) s = "edited since a person last confirmed it (confirmed " (day($7) == day($8) ? $8 : day($8)) ", edited " (day($7) == day($8) ? $7 : day($7)) ")"
-  else if ($9 > 0) s = "confirmed by a person" ($8 != "" ? ", " day($8) : "") ($15 != "" ? ", against " $15 : "")
-  else if ($10 > 0) s = "checked by automation only"
+function label(  s, r) {
+  r = rung()
+  if (r == "retired") return "retired"
+  if (r == "edited") s = "edited since a person last confirmed it (confirmed " (day($7) == day($8) ? $8 : day($8)) ", edited " (day($7) == day($8) ? $7 : day($7)) ")"
+  else if (r == "person") s = "confirmed by a person" ($8 != "" ? ", " day($8) : "") ($15 != "" ? ", against " $15 : "")
+  else if (r == "automation") s = "checked by automation only"
   else s = "nobody has checked this yet"
   if ($4 == "draft") s = s ", " ($9 > 0 ? reopened($2, $12, day($8)) : "still a draft")
   if ($5 != "" && $5 <= today) s = s ", past its review date (" $5 ")"
@@ -706,9 +771,9 @@ function label(  s) {
 health() {
   printf '%s\n' "$all" | awk -F'\t' -v today="$today" "$label_fn"'
   $1 != "C" { next }
-  { n++ }
-  $4 == "deprecated" { retired++; next }
-  { if (edited()) was++; else if ($9 > 0) confirmed++; else if ($10 > 0) auto++; else none++
+  { n++; r = rung() }
+  r == "retired" { retired++; next }
+  { if (r == "edited") was++; else if (r == "person") confirmed++; else if (r == "automation") auto++; else none++
     if ($4 == "draft") { if ($9 > 0) reop++; else drafts++ }
     if ($5 != "" && $5 <= today) past++ }
   END { printf "Confirmed by a person: %d of %d · Checked by automation only: %d · Nobody has checked: %d · Drafts: %d · Reopened: %d · Past review date: %d · Edited since confirmed: %d · Retired: %d\n", confirmed, n, auto, none, drafts, reop, past, was, retired }'
@@ -1409,12 +1474,81 @@ coverage() {  # [--strict] [<dir>...] | --why <path>...
   return 0
 }
 
+# ---- the sample --------------------------------------------------------------
+# The size the curation policy gives a list: the number on the line of that
+# name, such as `Independent re-check: 3`, outside the frontmatter and any
+# fenced example. The name is read in any case, behind a list marker or a
+# quote mark, and with or without emphasis. The first line that gives a
+# number decides, and with no policy or no such line the size is 0.
+policy_size() {  # <the line's name, in lower case>
+  local n=""
+  [ ! -f "$bundle/policies/knowledge-curation.md" ] || n="$(awk -v want="$1" '
+  { sub(/\r$/, "") }
+  NR == 1 { sub(/^\357\273\277/, ""); if ($0 == "---") { fm = 1; next } }
+  fm { if ($0 == "---") fm = 0; next }
+  /^[ \t]*(```|~~~)/ { fence = !fence; next }
+  fence { next }
+  { l = tolower($0); gsub(/[*_`]/, "", l); sub(/^[ \t>]*([-+][ \t]+|[0-9]+[.)][ \t]+)?/, "", l)
+    if (index(l, want) != 1) next
+    l = substr(l, length(want) + 1)
+    if (l !~ /^[ \t]*:[ \t]*[0-9]+([^0-9a-z].*)?$/) next
+    sub(/^[ \t]*:[ \t]*/, "", l); sub(/[^0-9].*$/, "", l); print l; exit }' "$bundle/policies/knowledge-curation.md")"
+  as_number "${n:-0}"
+}
+as_number() {  # <digits> -> the number without its leading zeros, which bash and awk both read whole
+  local n="${1#"${1%%[!0]*}"}"
+  printf '%s\n' "${n:-0}"
+}
+can_digest() { command -v sha256sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1; }
+no_digest="Sample: not drawn here, since the pick needs sha256sum or shasum and this host has neither"
+sha256() {  # standard input -> its SHA-256 as hex, then what the tool prints after it
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum; else shasum -a 256; fi
+}
+# The section itself (the header gives the rule). The seed reaches printf and
+# the digest as it was given, and never awk, which would read a backslash in
+# it as an escape. A list whose size is 0 is not drawn, and its concepts are
+# not hashed.
+sample() {  # <seed> <size of the list for a second person> <size of the list of what automation passed>
+  local seed="$1" kind path h
+  printf '%s\n' "$all" | awk -F'\t' -v n1="$2" -v n2="$3" "$label_fn"'
+  $1 == "C" { r = rung(); if (r == "person" && n1 > 0) print "1\t" $2; else if (r == "automation" && $4 != "draft" && n2 > 0) print "2\t" $2 }' \
+  | while IFS=$'\t' read -r kind path; do
+      h="$(printf '%s %s' "$seed" "$path" | sha256)"
+      printf 'P\t%s\t%s\t%s\n' "$kind" "${h%% *}" "$path"
+    done | LC_ALL=C sort > "$tmp/picks"
+  printf 'Sample - seed "%s" (computed by knowledge-report.sh from frontmatter; each list is the first n concepts by the SHA-256 of "<seed> <path>", lowest first)\n' "$seed"
+  { printf '%s\n' "$all"; cat "$tmp/picks"; } | awk -F'\t' -v n1="$2" -v n2="$3" "$label_fn"'
+  function drawn(kind, n, head, such,   c, i, p) {
+    c = (held[kind] < n ? held[kind] + 0 : n)
+    print head " (" c ", picked by " (kind == 1 ? "a rule the curator cannot steer" : "the same rule") "):"
+    for (i = 1; i <= c; i++) { p = pick[kind, i]; print "- " ttl[p] " (" p ") - " (src[p] != "" ? src[p] : "no source recorded") (kind == 1 && who_by[p] != "" ? " - confirmed by " who_by[p] : "") }
+    if (held[kind] + 0 < n) print "Asked for " n ": the bundle holds " (held[kind] ? held[kind] : "none") " " such ", so the list " (held[kind] ? "holds every one." : "is empty.")
+  }
+  $1 == "C" { ttl[$2] = $3; if (rung() == "person") { conf[$2] = 1; m++ } }
+  $1 == "I" { src[$2] = $5 }
+  $1 == "V" && $7 == "verified" && $8 ~ /^human:/ {
+    id = $8; sub(/^human:/, "", id)
+    if (!(($2, id) in named)) { named[$2, id] = 1; who_by[$2] = who_by[$2] (who_by[$2] == "" ? "" : ", ") id }
+    if ($11 == "second-person") second[$2] = 1
+  }
+  $1 == "P" { held[$2]++; pick[$2, held[$2]] = $4 }
+  END {
+    if (n1 > 0) drawn(1, n1, "For a second person to re-check", "confirmed by a person")
+    if (n2 > 0) drawn(2, n2, "For a person to check what automation passed", "checked by automation only, drafts apart")
+    for (p in second) if (p in conf) k++
+    print "Re-checked by a second person: " (k + 0) " of " (m + 0) " confirmed"
+  }'
+}
+
 # ---- the commands ------------------------------------------------------------
 case "$cmd" in
   retrieval) retrieval "$@"; exit 0 ;;
   changes)   [ $# -eq 0 ] || usage; changes; exit 0 ;;
 esac
 
+# The evidence rows are read only for the forms that print or count them.
+rows=0
+case "$cmd" in report|sample|evidence) rows=1 ;; esac
 all="$(facts)"
 times=""
 
@@ -1468,6 +1602,37 @@ case "$cmd" in
     echo "Reader feedback waiting: $(waiting_feedback)"
     disputed | awk -F'\t' '{ n++; body = body "- " $2 " (" $3 ")\n" } END { print "Disputed by a reader, waiting for the librarian: " (n ? n : "none"); if (n) printf "%s", body }'
     repeats
+    # The sample, only when the curation policy asks for one.
+    ni="$(policy_size "independent re-check")"; na="$(policy_size "automation re-check")"
+    if [ "$ni" != 0 ] || [ "$na" != 0 ]; then
+      echo ""
+      if can_digest; then sample "$today" "$ni" "$na"; else echo "$no_digest"; fi
+    fi
+    ;;
+  sample)
+    seed="$today"; ni=""; na=""
+    while [ $# -gt 0 ]; do
+      [ $# -ge 2 ] || usage
+      case "$1" in
+        --seed) seed="$2" ;;
+        --independent) case "$2" in ""|*[!0-9]*) usage ;; esac; ni="$(as_number "$2")" ;;
+        --automation)  case "$2" in ""|*[!0-9]*) usage ;; esac; na="$(as_number "$2")" ;;
+        *) usage ;;
+      esac
+      shift 2
+    done
+    case "$seed" in ""|*[[:cntrl:]]*) echo "a seed is one line of text, such as a date or a number drawn at the audit" >&2; exit 2 ;; esac
+    if [ -z "$ni$na" ]; then asked="the curation policy asks for none"; else asked="no size above 0 was given"; fi
+    [ -n "$ni" ] || ni="$(policy_size "independent re-check")"
+    [ -n "$na" ] || na="$(policy_size "automation re-check")"
+    if [ "$ni" = 0 ] && [ "$na" = 0 ]; then echo "Sample: none drawn, since $asked"
+    elif can_digest; then sample "$seed" "$ni" "$na"
+    else echo "$no_digest" >&2; exit 2; fi
+    ;;
+  evidence)
+    [ $# -eq 0 ] || usage
+    printf 'path\ttype\tstatus\tstale_after\tresource\tevent\tby\tat\trevision\tcheck\n'
+    printf '%s\n' "$all" | awk -F'\t' '$1 == "V" { print substr($0, 3) }'
     ;;
   *) usage ;;
 esac

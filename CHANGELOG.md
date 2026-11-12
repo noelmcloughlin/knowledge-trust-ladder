@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
+- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.**
+
 ## [0.63.1] - 2026-11-12
 
 ### Added

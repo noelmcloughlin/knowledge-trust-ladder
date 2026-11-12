@@ -6,7 +6,7 @@ When a person cannot act on a `missing` or `warn` line, write them a short reque
 
 | Line | It means | It stops | Who | What to send them |
 | --- | --- | --- | --- | --- |
-| `host` | The computer, its shell, and whether it can compute a digest or run Python. | Only the curator's sampling step, when there is no digest tool. | you | "On a Mac, `shasum -a 256` stands in for `sha256sum`." |
+| `host` | The computer, its shell, and whether it can compute a digest or run Python. | Only the sample in the curator's report, when there is no digest tool. | you | "`knowledge-report.sh` draws the sample with `sha256sum`, or with `shasum` as on a Mac. Please install one of them." |
 | `python` | python3 is older than 3.9, the oldest the skills' scripts run on. Enterprise hosts often keep an old system Python. | Nothing, when each script runs through `uv run` or `.lokf/.venv`. A script run with python3 stops at its first line. | you | Nothing. Run the scripts as the skills' pages show, through `uv run` or `.lokf/.venv`. |
 | `root` | The preflight screened the ktl-sidecar skill's own folder, not your repository. | Every other line on the screen is about the wrong folder. | you | Nothing. Run it again from the repository's root, or pass that root. |
 | `bundle` | Whether the knowledge folder exists and how many concepts it holds. | Missing: every skill but the sidecar. | the maintainer | "There is no `.lokf/knowledge` here. Please run the ktl-sidecar skill once, or tell me which folder holds the bundle." |
