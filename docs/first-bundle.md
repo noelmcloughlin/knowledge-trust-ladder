@@ -2,7 +2,7 @@
 
 This page is for anyone who has not yet run Knowledge Trust Ladder (KTL). It takes one repository from no bundle to a first confirmed concept and a first answer.
 
-You need a git repository, an agent that runs Agent Skills, such as Claude Code or GitHub Copilot, and [`uv`](https://docs.astral.sh/uv/).
+You need a git repository, an agent that runs Agent Skills, such as Claude Code or GitHub Copilot, and [`uv`](https://docs.astral.sh/uv/). [A captured run](examples/first-bundle.md) shows what each step printed on a small repository.
 
 ## 1. Install the skills
 
@@ -18,7 +18,7 @@ Open your agent in the repository and say:
 
 > Add a LOKF knowledge bundle to this repository.
 
-The [sidecar](cast/sidecar.md) creates `.lokf/`, a folder beside the code, and a `knowledge_bundle` link to the bundle inside it. The bundle holds only a dummy skeleton so far.
+The [sidecar](cast/sidecar.md) creates `.lokf/`, a folder beside the code, and a `knowledge_bundle` link to the bundle inside it. The bundle holds only two dummy concepts so far.
 
 ## 3. Fill the bundle
 
@@ -40,7 +40,7 @@ Ask for the report again, and its first line reads `Confirmed by a person: 1 of 
 
 Ask about something the bundle covers, such as what a part of the project does.
 
-The [docent](cast/docent.md) answers from the bundle and names each concept it used, with a trust label. The concept you confirmed reads *confirmed by a person*. The others still read as drafts.
+The [docent](cast/docent.md) answers from the bundle and names each concept it used, with a trust label. The concept you confirmed reads *confirmed by a person*. The others read *nobody has checked this yet, still a draft*.
 
 ## What to do next
 

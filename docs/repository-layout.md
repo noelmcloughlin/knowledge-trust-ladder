@@ -49,6 +49,7 @@ docs/
   threat-model.md       shared security design: what an agent can reach, and what guards it
   repository-layout.md  this page
   examples/
+    first-bundle.md     one captured run of the four roles on a repository that had no bundle
     docent.md           eight captured docent answers against this repository's own bundle
     curator.md          placeholder: the curator sessions still to capture
     prose.md            captured ktl-prose runs that write for younger readers
