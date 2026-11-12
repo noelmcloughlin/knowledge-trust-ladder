@@ -294,6 +294,22 @@ def test_a_patch_file_is_applied_by_the_pen_and_a_refused_one_writes_nothing(tmp
 
 
 
+@pytest.mark.parametrize("where", ["no hooks folder", "a linked work tree"])
+def test_the_wrapper_runs_where_git_keeps_its_folder_elsewhere_or_holds_no_hooks(tmp_path, agents, where):
+    """In a linked work tree `.git` is a file, and a clone made without templates has no hooks folder: the wrapper once stopped on a bare cp error."""
+    h = make_host(tmp_path / "host", "default")
+    if where == "no hooks folder":
+        shutil.rmtree(h / ".git" / "hooks", ignore_errors=True)
+    else:
+        git(h, "worktree", "add", "-q", "-b", "linked", str(tmp_path / "linked"))
+        h = tmp_path / "linked"
+    status = wrapper(h, {"AGENT_CLI": agents["patch"], "PATCH_TEXT": CREATE_OP})
+    wrote = (h / ".lokf" / "knowledge" / "playbooks" / "b.md").is_file()
+    assert (status, wrote) == (0, True), f"{where}: the wrapper did not run the patch (exit {status}, wrote {wrote})"
+    if where == "no hooks folder":
+        assert not (h / ".git" / "hooks").exists(), "the wrapper made a hooks folder the clone did not have"
+
+
 @pytest.mark.parametrize("agent", ["self-apply-sh", "self-apply-py"])
 def test_an_agent_that_applies_its_own_patch_leaves_it_for_the_wrapper(host, agents, agent):
     status = wrapper(host, {"AGENT_CLI": agents[agent], "PATCH_TEXT": CREATE_OP, "KNOWLEDGE_PEN_DRY_RUN_ONLY": "1"})

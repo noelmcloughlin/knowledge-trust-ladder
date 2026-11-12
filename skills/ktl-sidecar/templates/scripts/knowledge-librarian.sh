@@ -260,16 +260,25 @@ changed_paths() {
 
 # Snapshots of .git/config, .git/hooks/ and .git/info/ taken before each agent
 # call. File-scope, not local, so the EXIT trap below can reach them.
+# The three live in the folder every work tree of the repository shares. In
+# a linked work tree `.git` is a file that points there, and a clone made
+# without templates has no hooks/ or info/ folder: each is put back as it
+# was, absent when it was absent.
 config_snapshot=""
 hooks_snapshot=""
 info_snapshot=""
+git_dir=""
+had_hooks=0
+had_info=0
 snapshot_git_state() {
+  git_dir="$(git rev-parse --git-common-dir)"
   config_snapshot="$(mktemp)"
   hooks_snapshot="$(mktemp -d)"
   info_snapshot="$(mktemp -d)"
-  cp .git/config "$config_snapshot"
-  cp -a .git/hooks/. "$hooks_snapshot/"
-  if [ -d .git/info ]; then cp -a .git/info/. "$info_snapshot/"; fi
+  cp "$git_dir/config" "$config_snapshot"
+  had_hooks=0; had_info=0
+  if [ -d "$git_dir/hooks" ]; then had_hooks=1; cp -a "$git_dir/hooks/." "$hooks_snapshot/"; fi
+  if [ -d "$git_dir/info" ]; then had_info=1; cp -a "$git_dir/info/." "$info_snapshot/"; fi
 }
 
 # Put .git/config, .git/hooks/ and .git/info/ back as they were before the
@@ -283,13 +292,11 @@ snapshot_git_state() {
 # checkout, for the workflow's next steps to read.
 restore_git_state() {
   [ -n "$config_snapshot" ] || return 0
-  cp "$config_snapshot" .git/config
-  rm -rf .git/hooks
-  mkdir .git/hooks
-  cp -a "$hooks_snapshot/." .git/hooks/
-  rm -rf .git/info
-  mkdir .git/info
-  cp -a "$info_snapshot/." .git/info/
+  cp "$config_snapshot" "$git_dir/config"
+  rm -rf "$git_dir/hooks"
+  if [ "$had_hooks" = 1 ]; then mkdir "$git_dir/hooks"; cp -a "$hooks_snapshot/." "$git_dir/hooks/"; fi
+  rm -rf "$git_dir/info"
+  if [ "$had_info" = 1 ]; then mkdir "$git_dir/info"; cp -a "$info_snapshot/." "$git_dir/info/"; fi
   rm -rf "$config_snapshot" "$hooks_snapshot" "$info_snapshot"
   config_snapshot=""
   hooks_snapshot=""

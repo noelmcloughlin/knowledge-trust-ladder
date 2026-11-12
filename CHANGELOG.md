@@ -18,6 +18,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The pen keeps a file's mode, and writes back an unchanged frontmatter block as it found it.** A file it wrote became readable by its owner alone, and a `resolve` dropped the block's comments.
 - **A federation build keeps each quad whole, and a member's own words out of the workspace index.** A line separator inside a literal cut `graph.nq` where no reader could load it. A member's index title could add lines to the index that the MCP server serves as its instructions. The build also refuses the rest of the XML family as files a browser runs.
 - **The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run.** A dropped connection left a cut page mirrored as whole. A body that UTF-8 cannot write no longer fails its whole entry, and an exclude pattern with no slash leaves a file out of every folder.
+- **The librarian's wrapper runs in a linked work tree and in a clone with no hooks folder, and a sync leaves a clone given as `--source` whole.** The sync fetched the host's old tag into that clone with `--depth 1`.
 
 ## [0.64.0] - 2026-11-12
 
