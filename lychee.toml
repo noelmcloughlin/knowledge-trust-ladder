@@ -48,12 +48,6 @@ exclude = [
   # link through GitHub's API with the job's own token instead, so a deleted
   # or moved issue still fails and a page GitHub fails to render does not.
   '^https://github\.com/[^/]+/[^/]+/(issues|pull)/[0-9]+',
-  # docs/cast/, docs/first-bundle.md and docs/young-readers.md are new, and
-  # the site publishes a docs page only on a release, so their w3id
-  # addresses answer 404 until the release after they merge (added
-  # 2026-11-12). Drop this line once https://w3id.org/ktl/docs/first-bundle/
-  # answers 200.
-  '^https://w3id\.org/ktl/docs/(cast/[a-z]+|first-bundle|young-readers)/$',
 ]
 
 # knowledge_bundle is a symlink to .lokf/knowledge (the Obsidian vault entry
