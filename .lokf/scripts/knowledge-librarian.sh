@@ -313,16 +313,17 @@ restore_git_state() {
   info_snapshot=""
 }
 
-# Everything git can see of the working tree, as one checksum: which paths
+# Everything git can see of the working tree, as one digest: which paths
 # differ from HEAD, how the tracked ones differ, and what the untracked ones
 # hold. Two readings that agree mean nothing in the checkout changed between
-# them.
+# them. Git object ids, not cksum's checksum, which a changed file of the
+# same length can be made to match.
 tree_state() {
   {
     git status --porcelain --untracked-files=all
     git diff HEAD
-    git ls-files --others --exclude-standard | while IFS= read -r f; do cksum "$f"; done
-  } 2>/dev/null | cksum
+    git ls-files --others --exclude-standard | while IFS= read -r f; do printf '%s %s\n' "$(git hash-object --no-filters -- "$f")" "$f"; done
+  } 2>/dev/null | git hash-object --stdin
 }
 
 # The index-only retrieval test (knowledge-report.sh's `retrieval`), run only
@@ -371,16 +372,17 @@ score_retrieval() {
 }
 
 # The pen and the provenance gate this script runs once the agent returns.
-# They are copied out of HEAD before the agent runs, and their checksums are
+# They are copied out of HEAD before the agent runs, and their digests are
 # held in this script's memory, so a script the agent rewrote, or a commit it
 # made to move HEAD, is never what checks its work. File-scope, so the EXIT
 # trap can remove them.
 tools_dir=""
 tools_sum=""
+tools=(knowledge-apply.sh knowledge-apply.py knowledge-provenance.sh)
 take_tools() {
   local name
   tools_dir="$(mktemp -d)"
-  for name in knowledge-apply.sh knowledge-apply.py knowledge-provenance.sh; do
+  for name in "${tools[@]}"; do
     if ! git show "HEAD:./.lokf/scripts/$name" > "$tools_dir/$name" 2>/dev/null; then
       rm -f "$tools_dir/$name"
     fi
@@ -389,9 +391,24 @@ take_tools() {
     echo "knowledge-librarian: HEAD holds no .lokf/scripts/knowledge-apply.sh and knowledge-apply.py, and the patch is applied with HEAD's copies; commit them first" >&2
     exit 2
   fi
-  tools_sum="$(cd "$tools_dir" && cksum ./*)"
+  tools_sum="$(tools_digest)"
 }
-tools_intact() { [ -n "$tools_dir" ] && [ "$(cd "$tools_dir" && cksum ./* 2>/dev/null)" = "$tools_sum" ]; }
+# Each copy's git object id, worked out from its bytes alone. A checksum such
+# as cksum's can be matched by a rewritten file of the same length, which an
+# object id cannot. Git runs from the repository, whose settings the wrapper
+# has put back by then, and never from the copies' folder, where the agent
+# could have left a .git of its own.
+tools_digest() {
+  local name
+  for name in "${tools[@]}"; do
+    if [ -f "$tools_dir/$name" ] && [ ! -L "$tools_dir/$name" ]; then
+      printf '%s %s\n' "$(git hash-object --no-filters -- "$tools_dir/$name" 2>/dev/null)" "$name"
+    else
+      printf 'none %s\n' "$name"
+    fi
+  done
+}
+tools_intact() { [ -n "$tools_dir" ] && [ -n "$tools_sum" ] && [ "$(tools_digest)" = "$tools_sum" ]; }
 on_exit() {
   restore_git_state
   [ -z "$tools_dir" ] || rm -rf "$tools_dir"

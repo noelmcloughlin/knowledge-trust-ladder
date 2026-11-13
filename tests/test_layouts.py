@@ -182,6 +182,55 @@ printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
 for f in "$TMPDIR"/*/knowledge-apply.py; do printf 'raise SystemExit(0)\n' > "$f"; done
 """,
         ),
+        # Writes the patch, then rewrites every copy of the gate it finds
+        # under TMPDIR to pass, keeping its length and its cksum checksum: a
+        # CRC is linear, so four free bytes after the new first line settle it.
+        "forge": executable(
+            d / "forge-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+for f in "$TMPDIR"/*/knowledge-provenance.sh; do python3 -I - "$f" <<'PY'
+import sys
+TABLE = []
+for n in range(256):
+    c = n << 24
+    for _ in range(8):
+        c = ((c << 1) ^ 0x04C11DB7) & 0xFFFFFFFF if c & 0x80000000 else (c << 1) & 0xFFFFFFFF
+    TABLE.append(c)
+def cksum(data):
+    c = 0
+    for b in data + len(data).to_bytes((len(data).bit_length() + 7) // 8, "little"):
+        c = ((c << 8) & 0xFFFFFFFF) ^ TABLE[(c >> 24) ^ b]
+    return ~c & 0xFFFFFFFF
+path = sys.argv[1]
+old = open(path, "rb").read()
+head = b"exit 0\n#"
+base = bytearray(head + bytes(4) + old[len(head) + 4:])
+c0 = cksum(bytes(base))
+pivots = {}
+for i in range(32):
+    flipped = bytearray(base)
+    flipped[len(head) + i // 8] ^= 1 << (i % 8)
+    v, combo = cksum(bytes(flipped)) ^ c0, 1 << i
+    for bit in range(31, -1, -1):
+        if (v >> bit) & 1:
+            if bit not in pivots:
+                pivots[bit] = (v, combo)
+                break
+            v, combo = v ^ pivots[bit][0], combo ^ pivots[bit][1]
+want, x = cksum(old) ^ c0, 0
+for bit in range(31, -1, -1):
+    if (want >> bit) & 1:
+        want, x = want ^ pivots[bit][0], x ^ pivots[bit][1]
+for i in range(32):
+    if (x >> i) & 1:
+        base[len(head) + i // 8] ^= 1 << (i % 8)
+assert cksum(bytes(base)) == cksum(old) and len(base) == len(old)
+open(path, "wb").write(bytes(base))
+PY
+done
+""",
+        ),
         # Writes the whole prompt it was handed to PROMPT_OUT.
         "prompt": executable(
             d / "prompt-agent.sh",
@@ -360,6 +409,9 @@ def test_an_agent_that_moves_head_or_rewrites_the_pen_s_copies_is_refused(host, 
     status = wrapper(host, {"AGENT_CLI": agents["retool"], "PATCH_TEXT": CREATE_OP, "TMPDIR": private})
     assert status == 3 and not (host / ".lokf" / "knowledge" / "playbooks" / "b.md").exists(), f"an agent that rewrote the pen's copy was not refused (exit {status})"
     assert not any(private.iterdir()), f"the copies were left behind: {list(private.iterdir())}"
+    # A copy rewritten to keep its cksum checksum passed a check by checksum.
+    status = wrapper(host, {"AGENT_CLI": agents["forge"], "PATCH_TEXT": CREATE_OP, "TMPDIR": private})
+    assert status == 3 and not (host / ".lokf" / "knowledge" / "playbooks" / "b.md").exists(), f"an agent that forged the gate's checksum was not refused (exit {status})"
 
 
 def test_the_skill_the_workflow_installed_is_the_one_the_agent_is_handed(tmp_path, agents):
