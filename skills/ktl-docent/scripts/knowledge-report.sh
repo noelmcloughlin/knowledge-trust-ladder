@@ -2001,13 +2001,15 @@ sample() {  # <seed> <size of the list for a second person> <size of the list of
 # `verified` event by a human: actor whose commit carries no signature. The
 # commit is the one that first wrote the time of that event in the concept,
 # from the history `moved` read. An event not yet committed has no commit to
-# ask about, and is left out. One that git cannot find, since it predates the
-# history of the file, counts: git holds no signature behind it. A signature
+# ask about, and is left out. One that git cannot find, as one a merge commit
+# wrote while resolving a conflict, counts, and its line says so: git holds
+# no signature behind it. A signature
 # here is a `gpgsig` header on the commit, which a checkout can always see. It
 # does not say whose key signed, or that the signature is valid; the gate
 # checks that against the forge. Out comes one path to a line, in the order of
-# the bundle, in $tmp/unsigned, and the function fails when git holds no full
-# history of the bundle.
+# the bundle, in $tmp/unsigned, with the note after a tab where git holds no
+# commit that added the confirmation, and the function fails when git holds
+# no full history of the bundle.
 unsigned_load() {
   : > "$tmp/unsigned"
   [ "$tracked" = 1 ] && [ -f "$tmp/hist" ] || return 1
@@ -2047,7 +2049,9 @@ unsigned_load() {
         if (got == size) getline l < objects
       }
     }
-    $1 == "N" || ($1 == "S" && !($3 in signed)) { if (!seen[$2]++) print $2 }' "$tmp/events" > "$tmp/unsigned"
+    $1 == "N" && !($2 in why) { order[++n] = $2; why[$2] = "N" }
+    $1 == "S" && !($3 in signed) { if (!($2 in why)) order[++n] = $2; why[$2] = "S" }
+    END { for (i = 1; i <= n; i++) print order[i] "\t" (why[order[i]] == "N" ? "git holds no commit that added this confirmation" : "") }' "$tmp/events" > "$tmp/unsigned"
 }
 unsigned_section() {  # after unsigned_load, whose exit status is in unsigned_ok
   if [ "${unsigned_ok:-1}" != 0 ]; then
@@ -2055,7 +2059,7 @@ unsigned_section() {  # after unsigned_load, whose exit status is in unsigned_ok
     return 0
   fi
   awk 'END { print "Not tied to a signed commit: " (NR ? NR : "none") }' "$tmp/unsigned"
-  sed 's/^/- /' "$tmp/unsigned"
+  awk -F'\t' '{ print "- " $1 ($2 != "" ? " (" $2 ")" : "") }' "$tmp/unsigned"
 }
 
 # Vocabulary fit: each concept that is not retired whose `type` is not one of

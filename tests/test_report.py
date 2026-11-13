@@ -2508,6 +2508,32 @@ def test_the_whole_report_names_each_confirmation_no_signed_commit_stands_behind
     assert not matches(report(tmp_path, "health").out, "signed"), "the health form gained a field the curator alone reads"
 
 
+def test_a_confirmation_only_a_merge_commit_added_is_listed_with_a_note(tmp_path):
+    """The walk reads no line a merge commit added of its own, so git holds no commit that added such a confirmation: it counts, and its line says so."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    plain = '---\ntype: Service\ntitle: Merged\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(kk / "x" / "merged.md", plain + "---\n")
+    write(tmp_path / "a.txt", "a\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "base")
+    git("checkout", "-q", "-b", "side")
+    write(tmp_path / "b.txt", "b\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "side")
+    git("checkout", "-q", "main")
+    write(tmp_path / "a.txt", "a, again\n")
+    git("commit", "-q", "-am", "main")
+    git("merge", "-q", "--no-ff", "--no-commit", "side")
+    write(kk / "x" / "merged.md", plain + 'verified:\n  - by: human:ada\n    at: "2026-01-05T00:00:00Z"\n---\n')
+    git("add", "-A")
+    git("commit", "-q", "-m", "merge, with a confirmation written in it")
+    out = report(tmp_path).out
+    assert has_line(out, "Not tied to a signed commit: 1") and has_line(out, "- x/merged.md (git holds no commit that added this confirmation)"), out
+
+
 def test_without_git_the_whole_report_says_it_did_not_check_signatures(moved, tmp_path):
     bare = tmp_path / "bare"
     shutil.copytree(moved / ".lokf", bare / ".lokf")
