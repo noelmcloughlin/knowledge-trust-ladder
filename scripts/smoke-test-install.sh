@@ -32,6 +32,7 @@ trap 'rm -rf "$test_root"' EXIT
 # included: .gitignore ignores all three paths, so a plain status never sees
 # them. The last assertion compares this with the state after the install.
 metadata() { git -C "$repo_root" status --porcelain --ignored --untracked-files=all -- .agents .claude skills-lock.json 2>/dev/null; }
+# shellcheck disable=SC2034 # read by the last assert, inside an eval
 metadata_before="$(metadata)"
 
 echo "Source:    $source_arg"
