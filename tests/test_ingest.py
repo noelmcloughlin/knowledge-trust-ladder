@@ -1552,6 +1552,36 @@ def test_the_converter_grows_in_step_with_the_page(checks):
     checks.ok(text == "- one\n  - two\n\n> > q\n", "nesting within the depth keeps its shape", text)
 
 
+def test_a_table_keeps_what_its_cells_hold(checks):
+    """A code block, a panel, a list or a table in a cell was written outside the table, a nested table dropped the rows before it, and spans, a <br> in <pre> and a block left open at the end were lost."""
+    m = load_module()
+    code = '<ac:structured-macro ac:name="code"><ac:plain-text-body><![CDATA[kubectl drain node-1]]></ac:plain-text-body></ac:structured-macro>'
+    panel = '<ac:structured-macro ac:name="warning"><ac:rich-text-body><p>Never on Friday</p></ac:rich-text-body></ac:structured-macro>'
+    text, _ = m.html_to_markdown(f"<table><tr><th>Step</th><th>How</th></tr><tr><td>Drain</td><td>{code}</td></tr>"
+                                 f"<tr><td><ul><li>gateway</li><li>billing</li></ul></td><td>{panel}</td></tr></table>")
+    checks.ok(text == "| Step | How |\n| --- | --- |\n| Drain | `kubectl drain node-1` |\n| - gateway<br>- billing | **Warning**<br>Never on Friday |\n",
+              "a code block, a list and a panel stay in their cells", text)
+    text, _ = m.html_to_markdown("<table><tr><td>A1</td><td>B1</td></tr><tr><td>A2</td><td><table><tr><td>x|y</td><td>z</td></tr><tr><td>w</td></tr></table></td></tr>"
+                                 "<tr><td>A3</td><td>B3</td></tr></table><p>after</p>")
+    checks.ok(text == "| A1 | B1 |\n| --- | --- |\n| A2 | x\\|y; z<br>w |\n| A3 | B3 |\n\nafter\n", "a nested table is written into its cell, a row to a line", text)
+    text, _ = m.html_to_markdown('<table><tr><th>Owner</th><th>Service</th><th>Port</th></tr><tr><td rowspan="2">platform</td><td>gateway</td><td>443</td></tr>'
+                                 '<tr><td>billing</td><td>8443</td></tr><tr><td colspan="2">total</td><td>2</td></tr></table>')
+    checks.ok(text == "| Owner | Service | Port |\n| --- | --- | --- |\n| platform | gateway | 443 |\n|  | billing | 8443 |\n| total |  | 2 |\n",
+              "rowspan and colspan keep each cell in its column", text)
+    text, _ = m.html_to_markdown("<pre>one<br>two<br/>three</pre>")
+    checks.ok(text == "```\none\ntwo\nthree\n```\n", "a <br> in <pre> breaks the line", text)
+    text, _ = m.html_to_markdown("<p>before</p><table><tr><td>kept<pre>open")
+    checks.ok(text == "before\n\n| kept<br>`open` |\n| --- |\n", "a table and a <pre> left open close at the end of the page", text)
+    text, _ = m.html_to_markdown("<ul><li>item<table><tr><td><ul><li>x</li></ul></td></tr></table></li><li>two</li></ul>")
+    checks.ok(text == "- item\n  | - x |\n  | --- |\n- two\n", "a list in a cell of a table in a list item stays in the cell", text)
+    for name, page in (("nested tables", "<table><tr><td>x" * 4000),
+                       ("spans", "<table><tr>" + '<td rowspan="9999" colspan="999">a</td>' * 2000 + "</tr>" + "<tr><td>b</td></tr>" * 4000 + "</table>")):
+        started = time.monotonic()
+        text, _ = m.html_to_markdown(page)
+        took = time.monotonic() - started
+        checks.ok(len(text) < 16 * len(page) and took < 5, f"{name}: the Markdown stays in step with the page", f"{len(page)} bytes in, {len(text)} out, {took:.1f} s")
+
+
 # 11. the shell half
 
 

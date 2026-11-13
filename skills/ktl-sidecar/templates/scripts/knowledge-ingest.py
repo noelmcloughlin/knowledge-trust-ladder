@@ -893,7 +893,7 @@ def charset_of(headers: dict) -> str:
 
 HEADINGS = {"h1": 1, "h2": 2, "h3": 3, "h4": 4, "h5": 5, "h6": 6}
 PARAGRAPHS = {"p", "div", "section", "article", "header", "footer", "main", "aside", "nav", "figure", "figcaption",
-              "details", "summary", "center", "address", "dl", "dt", "dd", "ac:layout", "ac:layout-section",
+              "details", "summary", "caption", "center", "address", "dl", "dt", "dd", "ac:layout", "ac:layout-section",
               "ac:layout-cell", "ac:adf-content", "ac:adf-extension", "ac:adf-node", "ac:adf-node-group", "body", "html"}
 # Not <head>: HTML lets a page leave out </head>, and the skip would then
 # cover the body. A head holds no text a reader sees anyway: its title is
@@ -906,6 +906,10 @@ CDATA = re.compile(r"<!\[CDATA\[(.*?)\]\]>", re.S)
 # line below it again, so the Markdown of a page nested thousands deep would
 # grow with the square of the page. A deeper list or quote stays at this depth.
 DEPTH = 8
+# The most columns one cell spans, and the most rows. HTML allows 1,000 and
+# 65,534; a cell asking for more is held to these.
+COLSPAN = 50
+ROWSPAN = 1000
 
 
 class Markdowner(HTMLParser):
@@ -927,8 +931,10 @@ class Markdowner(HTMLParser):
         self.pre_buf: list[str] = []
         self.skip = 0
         self.quote = 0
-        self.table = None
-        self.cell = None
+        # The open tables, innermost last. A table inside a cell opens a frame
+        # of its own and closes into that cell.
+        self.tables: list[dict] = []
+        self.flat_tables = 0  # tables opened past DEPTH, whose cells join the deepest cell
         self.title_buf = None
         self.title = ""
         self.macros: list[dict] = []
@@ -947,24 +953,37 @@ class Markdowner(HTMLParser):
         lines = [" ".join(line.split()) for line in raw.split("\n")]
         return "\n".join(line for line in lines if line)
 
+    def cell(self) -> list | None:
+        """The open cell of the innermost table, or None."""
+        return self.tables[-1]["cell"] if self.tables else None
+
+    def floor(self) -> int:
+        """How many lists were open when the innermost table opened. A list above this one is inside the table."""
+        return self.tables[-1]["lists"] if self.tables else 0
+
+    def in_cell(self) -> bool:
+        """Whether a block goes into a table cell: a cell is open and no list inside it is."""
+        return self.cell() is not None and len(self.lists) <= self.floor()
+
     def emit(self, block: str) -> None:
+        """Add a block where the page has it: in the open list item, in the open table cell, or on the page."""
         if not block:
             return
-        if self.lists and self.lists[-1][2] is not None:
+        if self.lists and self.lists[-1][2] is not None and not self.in_cell():
             self.lists[-1][2].append(block)
+            return
+        if self.in_cell():
+            self.cell().append(block)
             return
         self.blocks.append("\n".join(self.prefix() + line for line in block.split("\n")))
 
     def flush(self) -> None:
-        if self.cell is not None:
-            self.cell.append(self.text())
-            return
         if self.title_buf is not None:
             return
         t = self.text()
         if not t:
             return
-        if self.heading:
+        if self.heading and not self.in_cell():
             self.emit("#" * self.heading + " " + " ".join(t.split()))
         else:
             self.emit(t)
@@ -1002,6 +1021,9 @@ class Markdowner(HTMLParser):
                 self.macros[-1]["params"][a.get("ac:name", "")] = ""
             self.skip += 1
             return
+        if self.pre and tag == "br":
+            self.pre_buf.append("\n")
+            return
         if self.skip or self.pre:
             return
         if tag in HEADINGS:
@@ -1022,7 +1044,7 @@ class Markdowner(HTMLParser):
                 self.flat += 1
         elif tag == "li":
             self.flush()
-            if not self.lists:
+            if len(self.lists) <= self.floor():
                 self.lists.append(["ul", 0, None])
             if self.lists[-1][2] is not None:
                 self.end_item()
@@ -1037,14 +1059,31 @@ class Markdowner(HTMLParser):
             self.quote += 1
         elif tag == "table":
             self.flush()
-            self.table = []
-        elif tag == "tr" and self.table is not None:
-            self.table.append([])
-        elif tag in ("td", "th") and self.table is not None:
-            if not self.table:
-                self.table.append([])
-            self.cell = []
-            self.buf = []
+            if len(self.tables) < DEPTH:
+                self.tables.append({"rows": [], "cell": None, "lists": len(self.lists), "spans": {}, "colspan": 1, "room": 0})
+            else:
+                self.flat_tables += 1
+        elif tag == "tr" and self.tables and not self.flat_tables:
+            self.close_cell()
+            self.fill_spans()
+            self.tables[-1]["rows"].append([])
+        elif tag in ("td", "th") and self.tables:
+            if self.flat_tables:
+                self.buf.append(" ")
+                return
+            self.close_cell()
+            self.flush()  # text between cells is written before the table
+            frame = self.tables[-1]
+            if not frame["rows"]:
+                frame["rows"].append([])
+            self.fill_spans()
+            frame["colspan"] = span(a.get("colspan"), COLSPAN)
+            rows = span(a.get("rowspan"), ROWSPAN)
+            if rows > 1:
+                start = len(frame["rows"][-1])
+                for column in range(start, start + frame["colspan"]):
+                    frame["spans"][column] = rows - 1
+            frame["cell"] = []
         elif tag == "a":
             self.links.append((self.href(a.get("href", "")), len(self.buf)))
         elif tag == "img":
@@ -1116,8 +1155,7 @@ class Markdowner(HTMLParser):
             return
         if self.pre:
             if tag == "pre":
-                self.pre = 0
-                self.emit(fence("".join(self.pre_buf), ""))
+                self.close_pre()
             return
         if tag in HEADINGS:
             self.flush()
@@ -1128,36 +1166,23 @@ class Markdowner(HTMLParser):
             self.flush()
             if self.flat:
                 self.flat -= 1
-            elif self.lists:
-                self.end_item()
-                lst = self.lists.pop()
-                block = "\n".join(lst[3:]) if len(lst) > 3 else ""
-                self.emit(block)
+            elif len(self.lists) > self.floor():
+                self.close_list()
         elif tag == "li":
             self.flush()
-            if self.lists:  # an end tag with no list open is the page's error
+            if len(self.lists) > self.floor():  # an end tag with no list open is the page's error
                 self.end_item()
         elif tag == "blockquote":
             self.flush()
             self.quote = max(0, self.quote - 1)
-        elif tag in ("td", "th") and self.cell is not None:
-            self.cell.append(self.text())
-            self.table[-1].append(" ".join(" ".join(self.cell).split()).replace("|", "\\|"))
-            self.cell = None
-        elif tag == "table" and self.table is not None:
-            if self.cell is not None:  # a cell left open closes with its table
-                self.handle_endtag("td")
-            rows = [r for r in self.table if r]
-            self.table = None
-            if rows:
-                # Only the header row is padded to the widest row: a renderer
-                # fills a shorter row itself, and padding every row would let a
-                # table grow with the square of its size.
-                width = max(len(r) for r in rows)
-                header = rows[0] + [""] * (width - len(rows[0]))
-                lines = ["| " + " | ".join(header) + " |", "| " + " | ".join("---" for _ in range(width)) + " |"]
-                lines += ["| " + " | ".join(r) + " |" for r in rows[1:]]
-                self.emit("\n".join(lines))
+        elif tag in ("td", "th"):
+            if not self.flat_tables:
+                self.close_cell()
+        elif tag == "table":
+            if self.flat_tables:
+                self.flat_tables -= 1
+            elif self.tables:
+                self.close_table()
         elif tag == "a" and self.links:
             href, start = self.links.pop()
             text = "".join(self.buf[start:]).strip()
@@ -1263,13 +1288,118 @@ class Markdowner(HTMLParser):
             lines += ["  " + line for line in part.split("\n")]
         lst.append("\n".join(lines))
 
-    def result(self) -> str:
+    def close_list(self) -> None:
+        self.end_item()
+        lst = self.lists.pop()
+        self.emit("\n".join(lst[3:]) if len(lst) > 3 else "")
+
+    # -- tables
+    def fill_spans(self) -> None:
+        """Put an empty cell where a cell of an earlier row spans down into this one."""
+        frame = self.tables[-1]
+        if not frame["rows"]:
+            return
+        row = frame["rows"][-1]
+        while frame["spans"].get(len(row), 0) > 0 and frame["room"] > 0:
+            frame["spans"][len(row)] -= 1
+            frame["room"] -= 1
+            row.append("")
+
+    def close_cell(self) -> None:
+        """Close the open cell of the innermost table, with any list left open inside it."""
+        frame = self.tables[-1] if self.tables else None
+        if frame is None or frame["cell"] is None:
+            return
         self.flush()
-        while self.lists:
-            self.end_item()
-            lst = self.lists.pop()
-            self.emit("\n".join(lst[3:]) if len(lst) > 3 else "")
+        while len(self.lists) > frame["lists"]:
+            self.close_list()
+        self.flush()
+        row = frame["rows"][-1]
+        row.append(cell_text(frame["cell"]))
+        frame["cell"] = None
+        # Each cell lets the table hold so many empty cells more, so that the
+        # spans of a page cannot make a table grow with the square of its size.
+        frame["room"] += COLSPAN
+        extra = min(frame["colspan"] - 1, frame["room"])
+        row.extend([""] * extra)
+        frame["room"] -= extra
+
+    def close_table(self) -> None:
+        self.close_cell()
+        self.fill_spans()
+        frame = self.tables.pop()
+        rows = [r for r in frame["rows"] if r]
+        if not rows:
+            return
+        if self.in_cell():
+            # A table inside a cell is written into the cell, a row to a line.
+            self.emit("\n".join("; ".join(c for c in r if c) for r in rows))
+            return
+        # Only the header row is padded to the widest row: a renderer
+        # fills a shorter row itself, and padding every row would let a
+        # table grow with the square of its size.
+        rows = [[c.replace("|", "\\|") for c in r] for r in rows]
+        width = max(len(r) for r in rows)
+        header = rows[0] + [""] * (width - len(rows[0]))
+        lines = ["| " + " | ".join(header) + " |", "| " + " | ".join("---" for _ in range(width)) + " |"]
+        lines += ["| " + " | ".join(r) + " |" for r in rows[1:]]
+        self.emit("\n".join(lines))
+
+    def close_pre(self) -> None:
+        self.pre = 0
+        self.emit(fence("".join(self.pre_buf), ""))
+
+    def result(self) -> str:
+        # A block the page leaves open closes at its end, innermost first.
+        if self.pre:
+            self.close_pre()
+        self.flush()
+        while self.tables or self.lists:
+            if self.tables and len(self.lists) <= self.floor():
+                self.close_table()
+            else:
+                self.close_list()
         return "\n\n".join(b for b in self.blocks if b.strip()).strip() + "\n"
+
+
+def span(value, most: int) -> int:
+    """A colspan or rowspan as a count from 1 to most."""
+    try:
+        return min(max(int(str(value).strip()), 1), most)
+    except ValueError:
+        return 1
+
+
+def inline_code(text: str) -> str:
+    ticks = "`" * (max((len(run) for run in re.findall(r"`+", text)), default=0) + 1)
+    pad = " " if text.startswith("`") or text.endswith("`") else ""
+    return f"{ticks}{pad}{text}{pad}{ticks}"
+
+
+def cell_text(blocks: list) -> str:
+    """The blocks of a table cell on one line, as a Markdown table needs them.
+
+    A line break becomes <br>, which GitHub's Markdown shows as a break in a
+    cell. A line of a code block becomes inline code, and the fence lines go.
+    """
+    out = []
+    ticks = ""
+    for line in "\n".join(blocks).split("\n"):
+        bare = line.strip()
+        if ticks:
+            if bare == ticks:
+                ticks = ""
+            elif bare:
+                out.append(inline_code(bare))
+            continue
+        run = re.match(r"`{3,}", bare)
+        if run:
+            ticks = run.group(0)
+            continue
+        words = " ".join(bare.split())
+        if words:
+            out.append(words)
+    return "<br>".join(out)
 
 
 def fence(text: str, language: str) -> str:
