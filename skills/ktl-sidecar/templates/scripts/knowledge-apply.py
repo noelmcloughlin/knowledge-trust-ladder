@@ -74,7 +74,7 @@
 # An operation may carry only the keys it reads, which KEYS below lists. Any
 # other key is refused by name, so no key is dropped without a word.
 #
-# Usage: knowledge-apply.py [--dry-run] [--keep] [--handoff <file>] --root <repo-root> [<patch-file>]
+# Usage: knowledge-apply.py [--dry-run [--diff]] [--keep] [--handoff <file>] --root <repo-root> [<patch-file>]
 #        knowledge-apply.py --format
 #   exit 0  applied, or with --dry-run would apply; or the format was printed
 #   exit 1  findings; nothing written
@@ -85,6 +85,7 @@ from __future__ import annotations
 import argparse
 import copy
 import datetime as dt
+import difflib
 import os
 import re
 import shutil
@@ -1266,6 +1267,20 @@ def log_line(text, what: str, label: str = "Changed") -> str:
     return text if text.startswith("**") else f"**{label}**: {text}"
 
 
+def print_diff(file: Path, rel: Path, text: str | None) -> None:
+    """The change to one file as a unified diff, the way git shows it, so a reviewer reads it before it is written."""
+    try:
+        before = file.read_text(encoding="utf-8") if file.is_file() else ""
+    except (OSError, UnicodeDecodeError):
+        before = ""
+    after = text or ""
+    old = "/dev/null" if not file.is_file() else f"a/{rel}"
+    new = "/dev/null" if text is None else f"b/{rel}"
+    sys.stdout.writelines(difflib.unified_diff(before.splitlines(keepends=True), after.splitlines(keepends=True), old, new))
+    if after and not after.endswith("\n"):
+        print()
+
+
 def check_keys(op: dict) -> None:
     """Refuses a key the operation does not read, and names it, along with the keys the operation does read."""
     known = ("op", "path", *KEYS[op["op"]])
@@ -1373,6 +1388,7 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="knowledge-apply.py", add_help=True)
     ap.add_argument("--root")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--diff", action="store_true", help="with --dry-run, also print each change as a unified diff")
     ap.add_argument("--keep", action="store_true", help="keep the patch file after applying it")
     ap.add_argument("--format", action="store_true", help="print the patch file's shape and exit")
     ap.add_argument("--handoff", metavar="FILE", help="after applying, write the patch's hand-off lines to FILE, or empty it")
@@ -1388,6 +1404,9 @@ def main(argv: list[str]) -> int:
     # the patch file itself once the agent has finished. A write here would
     # delete the file and leave a bundle the wrapper refuses, so the pen only
     # checks, and says so.
+    if a.diff and not a.dry_run:
+        print("--diff goes with --dry-run: it shows a change before it is written", file=sys.stderr)
+        return 2
     deferred = os.environ.get("KNOWLEDGE_PEN_DRY_RUN_ONLY") == "1"
     if deferred and not a.dry_run:
         print("refused: this is the agent's step of a scheduled run, where the pen only checks the patch file (--dry-run). "
@@ -1515,7 +1534,10 @@ def main(argv: list[str]) -> int:
             return 2
     if a.dry_run:
         for file, text in writes:
-            print(f"{'would delete' if text is None else 'would write'} {file.relative_to(root)}")
+            rel = file.relative_to(root)
+            print(f"{'would delete' if text is None else 'would write'} {rel}")
+            if a.diff:
+                print_diff(file, rel, text)
     else:
         # Write every changed file to a temporary file beside it first. Only
         # once all of them are written does the run put them in place, so a

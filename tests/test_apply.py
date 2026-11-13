@@ -563,6 +563,30 @@ def test_one_feedback_entry_named_by_two_operations_is_refused_as_such(applied):
     )
 
 
+def test_a_dry_run_with_diff_shows_each_change_and_writes_nothing(applied):
+    write(
+        patch_file(applied),
+        lines(
+            "ops:",
+            '  - {op: patch, path: playbooks/draft.md, edits: [{replace: {target: "The new text.", content: "Diffed text."}}], log: x}',
+        ),
+    )
+    before = tree_digest(applied)
+    result = apply(applied, "--dry-run", "--diff", patch_file(applied))
+    assert (
+        result
+        and has_line(result.out, "--- a/.lokf/knowledge/playbooks/draft.md")
+        and has_line(result.out, "+++ b/.lokf/knowledge/playbooks/draft.md")
+        and has_line(result.out, "-The new text.")
+        and has_line(result.out, "+Diffed text.")
+        and tree_digest(applied) == before
+    ), f"the dry run did not show the diff or wrote something: {result.out}"
+    result = apply(applied, "--diff", patch_file(applied))
+    assert result.rc == 2 and "--diff goes with --dry-run" in result.out and tree_digest(applied) == before, (
+        f"--diff without --dry-run was not refused: {result.out}"
+    )
+
+
 def test_a_refused_file_applies_none_of_its_operations(applied):
     refuses(
         applied,
