@@ -42,7 +42,8 @@ and pin:
    no title, address or author, unless the entry sets lock_details. A lock of
    another shape stops the run by name;
 8. --patch writes a Reference concept per mirrored item of an entry that asks,
-   and a later patch keeps the sources a person added;
+   and a later patch keeps the sources a person added and the concept that
+   names the item's copy;
 9. --status prints one line with the token names and no value, and names
    each git entry a git older than 2.31 or 2.37 would refuse;
 10. the converter turns Confluence storage format into Markdown blocks, keeps
@@ -1420,6 +1421,32 @@ def test_patch_writes_a_reference_concept_per_mirrored_item_of_an_entry_that_ask
     op2 = yaml.safe_load(read(root / ".lokf" / "patch.yaml"))["ops"][0]
     checks.ok(op2["op"] == "patch" and op2["path"] == op["path"] and "version spec-2 " in op2["set"]["description"], "a patch of the same concept", str(op2))
     checks.ok([s["resource"] for s in op2["set"]["sources"]] == ["docs/notes.md", op["frontmatter"]["sources"][0]["resource"]], "the person's source stays, the ingest's is replaced", str(op2))
+
+
+def test_patch_keeps_each_item_on_the_concept_that_names_its_copy(tmp_path, checks):
+    """Concepts were named by the item's slug, with a digest for the second of two alike in sorted order, so a new item sorting first took an existing concept."""
+    m = load_module()
+    root = tmp_path / "host"
+    (root / ".lokf" / "knowledge" / "references").mkdir(parents=True)
+    entry = m.Entry(id="wiki", kind="git", url="https://example.org/x.git", ref="main", reference=True, sensitivity="public")
+    manifest = m.Manifest(m.MIRROR, 10**7, False, [entry])
+
+    def item(name, version):
+        return {"status": "ok", "path": f".lokf/mirror/wiki/{name}", "origin": f"https://example.org/x.git@{version}:{name}", "title": name,
+                "version": version, "retrieved_at": "2026-11-01T00:00:00Z"}
+
+    lock = {"entries": {"wiki": {"status": "ok", "items": {"runbooks-deploy.md": item("runbooks-deploy.md", "aaa111")}}}}
+    m.write_patch(root, manifest, lock, root / "p1.yaml")
+    op = yaml.safe_load(read(root / "p1.yaml"))["ops"][0]
+    write(root / ".lokf" / "knowledge" / op["path"], "---\n" + yaml.safe_dump(op["frontmatter"]) + "---\n" + op["body"])
+    lock["entries"]["wiki"]["items"]["Runbooks/Deploy.md"] = item("Runbooks/Deploy.md", "bbb222")
+    lock["entries"]["wiki"]["items"]["runbooks-deploy.md"] = item("runbooks-deploy.md", "ccc333")
+    ops = {o["path"]: o for o in yaml.safe_load(read(root / "p2.yaml") if m.write_patch(root, manifest, lock, root / "p2.yaml") else "ops: []")["ops"]}
+    new = [o for o in ops.values() if o["op"] == "create"]
+    checks.ok(ops.get(op["path"], {}).get("op") == "patch" and ops[op["path"]]["set"]["sources"][-1]["resource"] == ".lokf/mirror/wiki/runbooks-deploy.md",
+              "the existing concept is patched for the item it names", str(ops))
+    checks.ok(len(new) == 1 and new[0]["path"] != op["path"] and new[0]["frontmatter"]["sources"][0]["resource"] == ".lokf/mirror/wiki/Runbooks/Deploy.md",
+              "the new item gets a concept of its own", str(new))
 
 
 # 9. --status

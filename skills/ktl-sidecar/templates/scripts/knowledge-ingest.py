@@ -2698,6 +2698,24 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     return "ingest: " + "; ".join(parts)
 
 
+def reference_owners(folder: Path) -> dict:
+    """The Reference concepts a patch wrote before, by the mirror path of the ingest's source entry and by the origin each names as its resource."""
+    owners: dict = {}
+    if not folder.is_dir():
+        return owners
+    for path in sorted(folder.glob("*.md")):
+        fm = frontmatter_of(path)
+        if fm.get("type") != "Reference":
+            continue
+        name = f"references/{path.name}"
+        for source in fm.get("sources") or []:
+            if isinstance(source, dict) and str(source.get("title", "")).endswith(", mirrored by the ingest") and source.get("resource"):
+                owners.setdefault(str(source["resource"]), name)
+        if fm.get("resource"):
+            owners.setdefault(str(fm["resource"]), name)
+    return owners
+
+
 def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, cache_lock: dict | None = None) -> int:
     """Reference concepts for the entries that ask for them, as operations for the pen; how many."""
     if patch_path.exists():
@@ -2705,6 +2723,8 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
     index = root / ".lokf" / "knowledge" / "index.md"
     base_iri = str(frontmatter_of(index).get("base_iri") or "") if index.is_file() else ""
     ops, used = [], set()
+    owners = reference_owners(root / ".lokf" / "knowledge" / "references")
+    claimed = set(owners.values())
     for entry in manifest.entries:
         if not entry.reference:
             continue
@@ -2715,10 +2735,15 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
         for item_id, it in sorted(record.get("items", {}).items()):
             if it.get("status") != "ok":
                 continue
-            stem = item_id[:-3] if item_id.endswith(".md") else item_id
-            concept = f"references/{entry.id}-{slug(stem)}.md"
-            if concept in used:  # two items whose names slug alike
-                concept = f"references/{entry.id}-{slug(stem)[:50]}-{sha256_hex(item_id.encode())[:8]}.md"
+            # An item keeps the concept that already names its copy or its
+            # origin. A new item takes the name its own slugs to, unless
+            # another item has that concept or takes it in this patch.
+            concept = owners.get(str(it.get("path", ""))) or owners.get(str(it.get("origin", "")))
+            if not concept or concept in used:
+                stem = item_id[:-3] if item_id.endswith(".md") else item_id
+                concept = f"references/{entry.id}-{slug(stem)}.md"
+                if concept in used or concept in claimed:  # two items whose names slug alike
+                    concept = f"references/{entry.id}-{slug(stem)[:50]}-{sha256_hex(item_id.encode())[:8]}.md"
             used.add(concept)
             title = str(it.get("title") or item_id)
             version = str(it.get("version", ""))
