@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **A domain vocabulary takes a published release of a LinkML project's schema, not its working copy.** linkml-sidecar no longer writes in `.lokf/`, so the librarian adapts the release, such as the file a sidecar's `just merged` writes.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added
