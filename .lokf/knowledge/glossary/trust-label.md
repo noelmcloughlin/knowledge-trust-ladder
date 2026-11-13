@@ -8,7 +8,7 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T00:48:33Z"
+  at: "2026-11-13T14:41:35Z"
 definedBy: []
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
@@ -21,7 +21,7 @@ verified:
     at: "2026-10-19T20:36:44Z"
   - by: human:noelmcloughlin
     at: "2026-11-12T20:48:50Z"
-    revision: "7339a7009322e249bf9b04e485cef7e94747a39b"
+    revision: 7339a7009322e249bf9b04e485cef7e94747a39b
 stale_after: 2028-11-12
 references:
   - https://w3id.org/ktl/knowledge/references/okf-specification
@@ -29,7 +29,7 @@ references:
 
 # Overview
 
-The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at` and `stale_after`. It also uses the relation fields for reliance. It computes each label except two, which are both worked out by hand: *doesn't fit the known vocabulary* and *not tied to a signed commit*.
+The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at` and `stale_after`. It also uses the relation fields for reliance. It computes each one from frontmatter and git history, *doesn't fit the known vocabulary* and *not tied to a signed commit* among them.
 
 - Any `verified` actor prefixed `human:` means confirmed by a person.
 - Events by non-human actors alone mean checked by automation.
@@ -41,7 +41,7 @@ The labels restate OKF v0.2 section 5's trust fields in words a non-specialist c
 
 It reads `.lokf/feedback.md` for the label *a reader disputed this*: a waiting `**Disagreement**` that names the concept, never on a retired concept. It reads the newest `**Deprecation**` line in `log.md` for the successor a retired concept names. It reads `derivedFrom` for the label *derived from a concept edited since its confirmation*.
 
-A `revision` on an event (lokf 0.9.0 and later) is shown beside that event's date but changes no label: its absence means unrecorded, never unchanged.
+A `revision` on an event (lokf 0.9.0 and later) is shown beside that event's date. Its absence means unrecorded, never unchanged, so it changes no label. When a confirmation carries a `revision` that names a commit this history holds, the script compares each source with that commit for the label *a source moved since the confirmation*.
 
 The labels overlap. A concept can be confirmed *and* past its review date, so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.
 

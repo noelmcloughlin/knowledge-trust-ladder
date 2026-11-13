@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-02T13:29:19Z"
+    at: "2026-11-13T14:41:35Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:11:23Z"
   - by: human:noelmcloughlin

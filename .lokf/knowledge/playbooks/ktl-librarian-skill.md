@@ -8,13 +8,16 @@ resource: skills/ktl-librarian/SKILL.md
 sources:
   - resource: skills/ktl-librarian/SKILL.md
     id: ktl-librarian-skill.md
+    excerpt: Give a `sources` entry an `id` and cite it with a footnote wherever a claim rests on a number, a name or a qualifier, and copy that passage into its `excerpt`
   - resource: skills/ktl-librarian/references/golden-rules.md
   - resource: skills/ktl-librarian/references/bootstrap.md
   - resource: skills/ktl-librarian/references/audit.md
   - resource: skills/ktl-librarian/references/scheduled-task.md
   - resource: skills/ktl-librarian/references/patch.md
+  - resource: skills/ktl-librarian/references/excerpts.md
   - resource: skills/ktl-librarian/references/ingest.md
     id: references-ingest.md
+    excerpt: "A confidential entry's items are recorded in `.lokf/.cache/ingest.lock.yaml` instead, beside its copies, unless the entry sets `lock_details: true`."
   - resource: skills/ktl-librarian/references/domain-vocabulary.md
   - resource: skills/ktl-librarian/references/agent-skills.md
   - resource: skills/ktl-librarian/references/retellings.md
@@ -27,10 +30,11 @@ sources:
   - resource: .lokf/scripts/knowledge-conventions.sh
   - resource: CHANGELOG.md
     id: changelog.md
+    excerpt: Every concept names where it came from, as `resource` or a `sources` entry.
   - resource: .lokf/justfile
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-13T14:41:35Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -65,11 +69,11 @@ The librarian runs **often**, including on a schedule. It carries the seven LOKF
 
 It deals in **facts about the repository, never verdicts about truth**. It may record that it re-checked a concept against its source (`verified` by `process:ktl-librarian`), but only [ktl-curator](ktl-curator-skill.md) writes a `human:` confirmation. Concepts it creates start as `status: draft`, and a claim it cannot settle gets an `## Open questions` section instead of a guess.
 
-Each concept the librarian derives names where it came from, as a `resource` or a `sources` entry, and conventions rule 15 fails a concept that names neither (0.58.0)[^changelog.md]. Wherever a claim rests on a number, a name or a qualifier, the librarian gives the source's entry an `id` and cites it with a footnote, and conventions rule 16 checks the join[^ktl-librarian-skill.md]. `references/golden-rules.md` says how to choose the id and write the footnote.
+Each concept the librarian derives names where it came from, as a `resource` or a `sources` entry, and conventions rule 15 fails a concept that names neither (0.58.0)[^changelog.md]. Wherever a claim rests on a number, a name or a qualifier, the librarian gives the source's entry an `id` and cites it with a footnote, and copies the passage the claim rests on into the entry's `excerpt`. Conventions rule 16 checks the join[^ktl-librarian-skill.md]. Since 0.64.0 `references/excerpts.md` says when to write an excerpt, how to copy it, and what to do when its file no longer holds it. `references/golden-rules.md` says how to choose the id and write the footnote.
 
 ## A steady-state run
 
-Each steady-state run starts from the work list that `knowledge-report.sh worklist` computes. It names the concepts whose sources moved since they were derived or last checked, ordered by git history and never by clock, the notes a person left, and how much reader feedback waits. A local source that has not moved is not read again. A body someone else changed after the librarian's stamp, by a ktl-prose pass or by hand, is listed as *its own body* and counts as a moved source, since nothing has compared the new text with its sources (0.61.0).
+Each steady-state run starts from the work list that `knowledge-report.sh worklist` computes. It names the concepts whose sources moved since they were derived or last checked, ordered by git history and never by clock, the notes a person left, and how much reader feedback waits. A local source that has not moved is not read again. A body someone else changed after the librarian's stamp, by a ktl-prose pass or by hand, is listed as *its own body* and counts as a moved source, since nothing has compared the new text with its sources (0.61.0). Since 0.64.0 the list first names each excerpt its file no longer holds, marks each moved source a concept quotes as *the quoted passage holds* or *is gone*, and counts the footnoted sources that carry no excerpt. It also names the sources git holds no history of, such as an ignored file or one inside a submodule, which it cannot compare (`CHANGELOG.md`).
 
 The list also names two kinds of item the run leaves alone: a source where the librarian's own question has waited for a person since, and an item under *Declined*, from a pull request a person closed without merging. The list ends with up to ten concepts that no relation joins to another, and any small group apart, from `knowledge-report.sh isolated`. They take turns by month, fail no check and make no run busy (0.61.0).
 
@@ -85,7 +89,7 @@ It sweeps for unnamed files with `knowledge-report.sh coverage`, which counts, p
 
 The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script called the pen, checks every operation and writes the files. The pen stamps `generated` from the clock, keeps a `description` equal to its two index bullets, and files each log line under the day's heading. It refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed or left a note on. It also refuses a patch that would add, change or remove a `human:` event or a person's note, however its operations spell it, and one that handles more than ten feedback entries. Since 0.61.0 it refuses a relation the patch adds that names no concept of the bundle, and a `delete` that leaves another concept's relation pointing at the deleted one.
 
-Since 0.55.0 it also runs `lokf validate` on every concept it would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit, and says `schema not checked` when it cannot run that check. `references/patch.md` gives the eight operations, and `knowledge-apply.sh --format` prints the same block, so the scheduled wrapper's prompt names no file of the skill.
+Since 0.55.0 it also runs `lokf validate` on every concept it would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit, and says `schema not checked` when it cannot run that check. Since 0.64.0 it looks for each `sources[].excerpt` in its file before it writes, with `--dry-run` too. It refuses an excerpt the file does not hold, and one that is empty or longer than 500 characters. `--dry-run --diff` shows each change as a unified diff before anything is written (`CHANGELOG.md`). `references/patch.md` gives the eight operations, and `knowledge-apply.sh --format` prints the same block, so the scheduled wrapper's prompt names no file of the skill.
 
 A patch may carry one `log` line for every operation that gives none, and the pen writes that line once (0.45.1). It may also carry `handoff`, up to ten lines for the reviewer in the agent's own words. The pen holds each to one line of printable text and writes none of it to the bundle, and the scheduled pull request shows them under *From the librarian*, in a code block (0.32.0). `reindex` re-derives a concept's two index bullets without touching the concept, and `resolve` withdraws an open question the librarian itself asked.
 
@@ -97,21 +101,21 @@ The wrapper hands the agent one credential, under the name the `AGENT_API_KEY_EN
 
 The prompt follows `-p`, or the flag the `AGENT_PROMPT_FLAG` variable names, or comes last when that variable is `arg` (0.40.0). The prompt tells the agent to create and edit `.lokf/patch.yaml` with its own file-writing tool, never with a shell redirect, a heredoc or a script, since an unattended run may deny a shell write (0.40.0). The sidecar's `automation.md` says the same for every agent, and its documented Claude Code command scopes the agent's file tool to the patch file with `Edit(.lokf/patch.yaml)`.
 
-In the agent's step the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`, so the pen there only checks the patch file and leaves it for the wrapper. A run of the pen without `--dry-run` in that step exits 2 and writes nothing (0.53.0). The wrapper applies the file after the agent has finished. It refuses a run that changed anything else, and one whose result touches a person's record, which `knowledge-provenance.sh --unattended` reads off the tree.
+In the agent's step the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`, so the pen there only checks the patch file and leaves it for the wrapper. A run of the pen without `--dry-run` in that step exits 2 and writes nothing (0.53.0). The wrapper applies the file after the agent has finished. It refuses a run that changed anything else, and one whose result touches a person's record, which `knowledge-provenance.sh --unattended` reads off the tree. Before it applies the file, the wrapper copies it, as the agent wrote it, to the file `KNOWLEDGE_PATCH_OUT` names, and `refresh` uploads that copy alone. A read-only `apply` job, on a runner the agent never shared, then writes the patch file with the default branch's pen and the toolkit `uv.lock` pins, and hands `publish` the patch (0.64.0).
 
-The `refresh` job validates with `just lokf-check-refs`, which runs `lokf validate --check-refs --check-excerpts`, as the registrar gate does, through the `just` that `.lokf/uv.lock` pins where the sidecar's `pyproject.toml` names `rust-just`, else the same version fetched by name (0.56.1). It runs `knowledge-conventions.sh` the same way. Both steps continue on error, so a dangling relation target or a convention finding is reported in the pull request body rather than stopping the pull request. The `publish` job opens that pull request with the job's own token, which GitHub refuses while the repository setting *Allow GitHub Actions to create and approve pull requests* is off.
+The `apply` job validates with `just lokf-check-refs`, which runs `lokf validate --check-refs --check-excerpts`, as the registrar gate does, through the `just` that `.lokf/uv.lock` pins where the sidecar's `pyproject.toml` names `rust-just`, else the same version fetched by name (0.56.1). It runs `knowledge-conventions.sh --strict` the same way, which fails when the script could not check a rule. Both steps continue on error, so a dangling relation target or a convention finding is reported in the pull request body rather than stopping the pull request. The `publish` job opens that pull request with the job's own token, which GitHub refuses while the repository setting *Allow GitHub Actions to create and approve pull requests* is off.
 
 A scheduled week with nothing waiting runs no agent. `knowledge-report.sh quiet` finds no moved source, no note a person left since the librarian's last stamp, no concept without a stamp and no reader feedback. A moved source does not count once an open question of the librarian's that names it was committed no earlier than the source's last change. A scheduled run in a month's first seven days, and a run a person starts, always go ahead (0.32.0). The one exception is a scheduled run while a pull request the workflow opened is still open: it stops before the agent. On a scheduled run, the quiet check counts none of what a person declined by closing one of those pull requests without merging, and the librarian proposes none of it again until it changes.
 
 ## Guards around the agent
 
-**Reading feedback, the Snyk W011 finding (acknowledged).** The librarian is the one skill that reads what a reader wrote, because consuming an entry is what `.lokf/feedback.md` is for. So the scanner's finding is acknowledged rather than designed away. An unattended run has no write credential in `refresh`. `publish`, which runs no agent, re-derives the touched paths from the patch on a clean checkout. It refuses a patch touching any path outside `.lokf/knowledge`, `knowledge_bundle`, `.lokf/feedback.md` and `.lokf/questions.md`, and one that touches a person's record in any YAML layout, so an entry can neither add a confirmation nor remove one.
+**Reading feedback, the Snyk W011 finding (acknowledged).** The librarian is the one skill that reads what a reader wrote, because consuming an entry is what `.lokf/feedback.md` is for. So the scanner's finding is acknowledged rather than designed away. An unattended run has no write credential in `refresh`. Two jobs that run no agent, `apply` and `publish`, write the patch file with the pen and re-derive the touched paths, on clean checkouts. `publish` refuses a patch touching any path outside `.lokf/knowledge`, `knowledge_bundle`, `.lokf/feedback.md` and `.lokf/questions.md`, and one that touches a person's record in any YAML layout, so an entry can neither add a confirmation nor remove one.
 
 The patch is built with `--no-renames`, `publish` refuses a rename, a copy, a link or a mode change, and a missing gate script fails the run (0.62.0). What comes out is a pull request a person merges. On the way in, `knowledge-feedback.sh` holds each entry to one line and one of two kinds.
 
 **The no-Python schema, the Snyk W012 finding (addressed).** An audit without Python reads LOKF's schema from GitHub, at a URL that names the commit tagged `v0.9.0`, never a tag or `main`, so the file it serves cannot change. That file is byte-identical to the schema inside the `lokf` 0.9.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present. A check in this repository fails a tag or a branch in the URL. The skill reads the schema as data to compare against, never as instructions.
 
-Each job of the workflow hardens its runner with harden-runner, and the agent's job stops after 60 minutes (0.61.0). The agent's job saves no uv or npm cache, since the release would restore it and uv trusts the wheels it unpacked there, and the `publish` job holds its token in its push step alone (0.62.0). The wrapper snapshots `.git/config`, `.git/hooks/` and `.git/info/` before the agent call and puts them back afterwards, from an `EXIT` trap for every other way out. So a failing agent or a cancelled job leaves no rewritten config in the checkout for the workflow's next steps, and no exclude rule the agent added hides its writes from the write-scope check (0.62.0). `policies/security.md` has the detail.
+Each job of the workflow hardens its runner with harden-runner, and the agent's job stops after 60 minutes (0.61.0). The agent's job saves no uv or npm cache, since the release would restore it and uv trusts the wheels it unpacked there, and the `publish` job holds its token in its push step alone (0.62.0). The wrapper snapshots `.git/config`, `.git/hooks/` and `.git/info/` before the agent call and puts them back afterwards, from an `EXIT` trap for every other way out. So a failing agent or a cancelled job leaves no rewritten config in the checkout for the workflow's next steps, and no exclude rule the agent added hides its writes from the write-scope check (0.62.0). Since 0.64.0 the wrapper applies and checks the patch with copies of the pen and the gate taken from HEAD before the agent ran, and refuses a run in which the agent moved HEAD or changed those copies. It also refuses an agent that tells git to stop watching a file, and compares files by git object id (`CHANGELOG.md`). `policies/security.md` has the detail.
 
 ## What it leaves alone
 

@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T00:00:06Z"
+  at: "2026-11-13T14:41:35Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -44,7 +44,7 @@ The skill writes four frontmatter keys and one body heading: `verified` (a perso
 
 ## Step 1: the report
 
-Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-preflight.sh` first, then `knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. The skill works out two items by hand, as `references/trust-fields.md` says: the vocabulary fit and the confirmations git cannot back. The report prints, in this order:
+Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-preflight.sh` first, then `knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. Since 0.64.0 the script also prints the vocabulary fit and the confirmations not tied to a signed commit (`CHANGELOG.md`). Where it prints neither, the skill works both out by hand, as `references/trust-fields.md` says. The report prints, in this order:
 
 1. a health line, which counts among others the concepts reopened and the confirmations not tied to a signed commit;
 2. at most five items *worth ten minutes today*, ranked in groups and, within a group, by how many other concepts rely on each through the fourteen relation fields and `relations[].target`;
@@ -94,7 +94,7 @@ On a host with no forge, the id is the account the platform's version history sh
 
 There is no "confirm everything". After the session the skill prepends one `**Curation**` line with the counts to `log.md`, and prepares a pull request scoped to `.lokf/` that it opens only when the person says so. It commits the verdicts in a signed commit of their own, on top of the commit that changed the concepts and never amended into it, because conventions rule 14 reads each commit of the pull request and fails one that records a person's confirmation and also changes what the concept says; the squash merge afterwards is fine. Before the push it runs the conventions check as the gate does, with `--since` naming the merge-base with the pull request's base branch, since without `--since` the script skips rule 14 (0.55.1, `references/review-session.md`). Each named person must have approved that pull request or, when the pull request is their own, have signed its commits.
 
-**Revision.** Where the toolkit accepts it, a confirmation event also carries `revision`, the state of the source the person was shown. For a committed path it is the full commit hash of the last commit that touched the file. For a URL it is the ETag, else a `sha256:` digest. The field arrived in lokf 0.9.0, so the skill leaves it out on an older toolkit, when the file has uncommitted changes, and where the host has no version control.
+**Revision.** Where the toolkit accepts it, a confirmation event also carries `revision`, the state of the source the person was shown. For a committed path it is the full commit hash of the last commit that touched the file. For a URL it is the ETag, else a `sha256:` digest. The field arrived in lokf 0.9.0, so the skill leaves it out on an older toolkit, when the file has uncommitted changes, and where the host has no version control. When a confirmation carries a `revision` that names a commit the history holds, the report compares each source with that commit, so a source changed while the pull request waited reads as moved (`references/trust-fields.md`).
 
 **A mirror.** A `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or document outside the repository. The skill quotes it as any source and shows the header above it: the origin, the version and the retrieval date. It offers the origin link to a person with access to it. The confirmation attests the concept against the copy as retrieved, and `revision` pins that state.
 

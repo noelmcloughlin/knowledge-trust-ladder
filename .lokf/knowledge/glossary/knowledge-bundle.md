@@ -25,14 +25,14 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-09-26T20:36:11Z"
   - by: process:ktl-librarian
-    at: "2026-10-29T00:48:33Z"
+    at: "2026-11-13T14:41:35Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T00:16:44Z"
   - by: human:noelmcloughlin
     at: "2026-10-18T18:20:55Z"
   - by: human:noelmcloughlin
     at: "2026-11-12T20:41:51Z"
-    revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
+    revision: 12d91cac03649375c1a0a547cfb4d5987f20c558
 stale_after: 2028-11-12
 ---
 

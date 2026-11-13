@@ -8,6 +8,10 @@ resource: docs/ingest.md
 sources:
   - resource: docs/ingest.md
     id: docs-ingest.md
+    excerpt: A run starts no more work after 25 minutes, so it ends inside the workflow's 30, and the next run takes up what it did not reach.
+  - resource: docs/ingest-reference.md
+    id: ingest-reference.md
+    excerpt: Where the manifest refuses private addresses, an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name.
   - resource: skills/ktl-librarian/references/ingest.md
   - resource: skills/ktl-sidecar/templates/ingest.yaml
   - resource: CHANGELOG.md
@@ -19,7 +23,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T00:48:33Z"
+  at: "2026-11-13T14:41:35Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -28,7 +32,7 @@ verified:
 
 # Overview
 
-Much of what a team knows lives outside the repository: a wiki space, a document at an intranet address, a file in another repository, the output of a command. The **ingest** brings a copy in, as `docs/ingest.md` says. A manifest names each source, a script writes it as Markdown under `.lokf/mirror/`, and a pull request shows what changed. The librarian then derives concepts from the copy as from any tracked file, citing both the copy and its origin. Nothing in the trust ladder changes: a concept derived from a wiki page is agent-derived until a person confirms it.
+Much of what a team knows lives outside the repository: a wiki space, a document at an intranet address, a file in another repository, the output of a command. The **ingest** brings a copy in, as `docs/ingest.md` says, and `docs/ingest-reference.md` lists what can be mirrored, every key of the manifest, and what the mirror and the lock record. A manifest names each source, a script writes it as Markdown under `.lokf/mirror/`, and a pull request shows what changed. The librarian then derives concepts from the copy as from any tracked file, citing both the copy and its origin. Nothing in the trust ladder changes: a concept derived from a wiki page is agent-derived until a person confirms it.
 
 The ingest was released in 0.49.0, and 0.50.0 added the restore of lost mirror files and the scheduled prune (`CHANGELOG.md`).
 
@@ -38,7 +42,7 @@ The ingest was released in 0.49.0, and 0.50.0 added the restore of lost mirror f
 
 - **Pages and documents at an address**: HTML, Markdown, plain text and PDF. A PDF with no text layer, such as a scan, is refused.
 
-- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. A run downloads the file list, then only the files that changed. Every such entry needs git 2.31 or later. Git follows no redirect with a credential. Where the manifest refuses private addresses, git follows no redirect, and an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name.[^docs-ingest.md] So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. An address that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
+- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. A run downloads the file list, then only the files that changed. Every such entry needs git 2.31 or later. Git follows no redirect with a credential. Where the manifest refuses private addresses, git follows no redirect, and an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name.[^ingest-reference.md] So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. An address that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
 
 - **The output of a command** the repository holds.
 
@@ -48,11 +52,11 @@ There is no fetcher for Jira. Attachments and images are not fetched, and a link
 
 - **The manifest**, `.lokf/ingest.yaml`, lists for each entry a place, a selector, who answers for the source (`owner`) and why the repository mirrors it (`why`). It holds no token: an `auth` block names environment variables. The sidecar lays its example down as `.lokf/ingest.yaml.sample`, and the ingest reads only `.lokf/ingest.yaml`.
 
-- **The mirror**, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, never its title. The workflow publishes only a name of letters, digits and `._/@+-`, so a file named otherwise is spelled with those characters and a digest of its name added, and its header keeps the name.
+- **The mirror**, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, never its title. The workflow publishes only a name of letters, digits and `._/@+-`, so a file named otherwise is spelled with those characters and a digest of its name added, and its header keeps the name. After a redirect, the header names the address the page was served from, without its query, as `redirected_to`. A redirect from https to http is refused.
 
-- **The lock**, `.lokf/ingest.lock.yaml`, records each item with a status: `ok`, `gone`, `unlisted`, `failed`, `refused` or `skipped`, the last for a binary file that a `git` entry's include matches.
+- **The lock**, `.lokf/ingest.lock.yaml`, records each item with a status: `ok`, `gone`, `unlisted`, `failed`, `refused` or `skipped`, the last for a binary file that a `git` entry's include matches. Each item's record keeps `mirror_sha256`, the digest of its file as written, so a run writes a file edited by hand again, as it does one the disk has lost.
 
-The mirror is tracked, so the work list, the gate and coverage read it as repository content. Never clear it before a run: refresh it, since a run fetches only what moved and restores any file the disk has lost.
+The mirror is tracked, so the work list, the gate and coverage read it as repository content. Never clear it before a run: refresh it, since a run fetches only what moved and restores any file the disk has lost or a hand edit changed.
 
 # Sensitivity
 
@@ -76,8 +80,9 @@ The workflow runs on Sundays and keeps one pull request open on the branch `know
 
 # Security
 
-The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. Since 0.56.1 it checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing, unless the manifest allows private addresses (`CHANGELOG.md`). `docs/threat-model.md` covers the ingest workflow.
+The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. Since 0.56.1 it checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing, unless the manifest allows private addresses (`CHANGELOG.md`). Since 0.64.0 the ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run (`CHANGELOG.md`). `docs/threat-model.md` covers the ingest workflow.
 
 Behind a proxy, the proxy resolves each name. The script still refuses a name that resolves locally to a private address, but it cannot check a name that resolves only at the proxy, so the proxy must refuse private addresses itself. Where the manifest refuses private addresses, git uses the proxy that `https_proxy` or `all_proxy` names for a `git` entry, and ignores any proxy in git's own configuration.
 
-[^docs-ingest.md]: docs/ingest.md, What can be mirrored and By hand
+[^docs-ingest.md]: docs/ingest.md, Run it by hand
+[^ingest-reference.md]: docs/ingest-reference.md, What can be mirrored
