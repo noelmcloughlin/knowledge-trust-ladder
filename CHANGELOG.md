@@ -4,11 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **The pen writes a `revision` in double quotes.** It dropped the quotes a person had put round one, and a short hash such as `1234e56` then reads as a number to a YAML 1.2 reader. A value written unquoted that YAML reads as a number still goes back as it was.
-- **`knowledge-provenance.sh` counts the concepts a range confirms.** It counted each curator once per commit, so a commit confirming six concepts read as one.
-
 ## [0.64.0] - 2026-11-13
 
 ### Added
@@ -82,6 +77,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The sync's check no longer reports a pass for the conventions it could not run without `uv`.**
 - **The librarian wrapper compares files by git object id.** A rewritten file of the same length can match a `cksum` checksum.
 - **A confirmation's `revision` is compared with its concept's `resource` alone.** The curator pins the last commit of the resource, so every other source changed after that commit read as moved, even one the person was shown. Each other source is compared with the commit that recorded the confirmation again.
+- **The pen writes a `revision` in double quotes.** It dropped the quotes a person had put round one, and a short hash such as `1234e56` then reads as a number to a YAML 1.2 reader. A value written unquoted that YAML reads as a number still goes back as it was.
+- **`knowledge-provenance.sh` counts the concepts a range confirms.** It counted each curator once per commit, so a commit confirming six concepts read as one.
 
 ### Security
 
