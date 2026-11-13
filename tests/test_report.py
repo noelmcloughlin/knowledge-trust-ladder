@@ -2314,9 +2314,9 @@ def grown(root, n):
     return root
 
 
-@pytest.mark.parametrize(("form", "tool"), [(["labels"], "awk"), (["labels", "x/c1.md"], "awk"), (["evidence"], "awk")])
+@pytest.mark.parametrize(("form", "tool"), [(["labels"], "awk"), (["labels", "x/c1.md"], "awk"), (["evidence"], "awk"), (["worklist"], "git"), (["quiet"], "git"), ([], "git")])
 def test_a_larger_bundle_starts_no_more_processes(tmp_path, form, tool):
-    """Each mode once started an awk for each concept: 3.5 seconds for one label at 2,000 concepts."""
+    """Each mode once started an awk for each concept, 3.5 seconds for one label at 2,000 concepts, and the work list asked git about each source of each concept, one question at a time, 208 seconds."""
     calls = []
     for n in (3, 12):
         root = grown(tmp_path / str(n), n)
@@ -2335,3 +2335,4 @@ def test_a_link_that_points_nowhere_hides_no_other_concept(tmp_path):
     os.symlink("nowhere.md", kk / "t" / "dangling.md")
     out = report(tmp_path, "labels").out
     assert has_line(out, "- A (t/zz.md) - nobody has checked this yet"), f"a dangling link hid a concept: {out}"
+
