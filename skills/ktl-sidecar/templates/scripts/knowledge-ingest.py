@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pyyaml==6.0.3", "pypdf==6.21.4"]
+# dependencies = ["pyyaml==6.0.3", "pypdf==7.0.1"]
 # [tool.uv]
-# exclude-newer = "2026-10-29T00:00:00Z"
+# exclude-newer = "2026-11-11T00:00:00Z"
 # ///
 # The ingest: knowledge outside the repository, mirrored into it.
 #
