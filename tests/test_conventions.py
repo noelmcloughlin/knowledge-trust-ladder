@@ -800,3 +800,28 @@ def test_rule_16_reads_one_resource_written_two_ways_as_one(tmp_path):
     k = bundle_of(root, {"one.md": concept("one", "docs/a.md"), "two.md": concept("two", "./docs/a.md")})
     result = bash(CONVENTIONS, k)
     assert "names more than one resource" not in result.out, f"rule 16 read ./docs/a.md and docs/a.md as two resources: {result.out}"
+
+
+def test_a_larger_bundle_asks_git_no_more_often(tmp_path):
+    """The shell half once started about 24 processes a concept, a `git log -p` among them: 63 seconds at 2,000 concepts."""
+    calls = []
+    for n in (3, 12):
+        root = tmp_path / str(n)
+        root.mkdir()
+        git = Git(root)
+        git.init()
+        write(root / "docs" / "a.md", "a\n")
+        git("add", "-A")
+        git("commit", "-q", "-m", "docs")
+        head = git("rev-parse", "HEAD")
+        k = bundle_of(root, {f"c{i}.md": f"---\ntype: Service\nid: https://example.invalid/k/x/c{i}\nresource: docs/a.md\n{STAMP}verified:\n  - by: human:ada\n    at: \"2026-09-02T00:00:00Z\"\n    revision: {head}\n---\n" for i in range(n)})
+        git("add", "-A")
+        git("commit", "-q", "-m", "concepts", env={"GIT_COMMITTER_DATE": "2026-09-17T00:00:00Z"})
+        shim = tmp_path / f"shim{n}"
+        real = shutil.which("git")
+        write(shim / "git", f'#!/bin/sh\necho git >> "{shim}/calls"\nexec "{real}" "$@"\n')
+        (shim / "git").chmod(0o755)
+        result = bash(CONVENTIONS, k, env={"PATH": f"{shim}{os.pathsep}/usr/bin:/bin"})
+        assert "not checked" in result.out or result, result.out
+        calls.append(read(shim / "calls").count("\n"))
+    assert calls[0] == calls[1], f"the shell half ran git {calls[0]} times for 3 concepts and {calls[1]} for 12"
