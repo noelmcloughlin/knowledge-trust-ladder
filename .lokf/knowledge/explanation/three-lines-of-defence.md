@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-02T13:29:19Z"
+    at: "2026-11-13T14:41:35Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:11:23Z"
   - by: human:noelmcloughlin
@@ -94,3 +94,4 @@ The page then lists what remains and who owns it, in four lines:
 ## Open questions
 
 - 2026-11-12, human:noelmcloughlin: remove stale information from docs/three-lines.md
+- 2026-11-13, human:noelmcloughlin: check if <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/45> and <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/46> are required for What remains to do

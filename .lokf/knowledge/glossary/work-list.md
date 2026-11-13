@@ -9,12 +9,14 @@ resource: skills/ktl-librarian/SKILL.md
 sources:
   - resource: skills/ktl-librarian/SKILL.md
   - resource: docs/how-it-works.md
+    id: how-it-works.md
+    excerpt: the concepts whose sources or bodies moved since their last stamp, ordered by history and never by a clock
 relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
   - https://w3id.org/ktl/knowledge/glossary/librarian
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T13:38:49Z"
+  at: "2026-11-13T14:41:35Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -25,4 +27,6 @@ verified:
 
 ktl-librarian starts every refresh from the **work list**, which `bash .lokf/scripts/knowledge-report.sh worklist` prints. A program has already found which concepts' sources moved since they were derived or last checked, which notes a person left, and which of those a later confirmation answered. It counts the reader entries that wait and names the concepts readers keep asking about, in paths and dates and nobody's words.
 
-A source moved when its last commit comes after the commit that recorded the [librarian](librarian.md)'s stamp or the latest check, so history orders the two. `docs/how-it-works.md` says a run is bounded: the librarian starts from the work list, which lists the concepts whose sources moved since their last stamp, ordered by history and never by a clock. The same script computes each trust label from the frontmatter on every read, for the docent's answers, the curator's report and the librarian's work list (`docs/how-it-works.md`).
+A source moved when its last commit comes after the commit that recorded the [librarian](librarian.md)'s stamp or the latest check, so history orders the two. `docs/how-it-works.md` says a run is bounded: the librarian starts from the work list, which lists the concepts whose sources or bodies moved since their last stamp, ordered by history and never by a clock.[^how-it-works.md] Its table of checks says each scheduled refresh starts from the excerpts their files no longer hold and the sources `knowledge-report.sh` finds have moved. The same script computes each trust label from the frontmatter on every read, for the docent's answers, the curator's report and the librarian's work list (`docs/how-it-works.md`).
+
+[^how-it-works.md]: docs/how-it-works.md, *A run is bounded*, and the table under *Four levels of checking*

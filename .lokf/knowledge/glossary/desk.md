@@ -13,15 +13,22 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-11-13T14:41:35Z"
 status: draft
 verified:
   - by: process:ktl-librarian
     at: "2026-10-29T00:48:33Z"
+sources:
+  - resource: docs/architecture.md
+  - resource: docs/cast/registrar.md
+    id: cast-registrar.md
+    excerpt: at the librarian's desk | Applies the librarian's patch, and is the only way the librarian writes the bundle. It refuses an operation that would fake or change a person's record, and an excerpt its file does not hold ... at the reader's desk and the curator's | Computes every trust label and the bundle's health line, so that neither is a model's arithmetic
 ---
 
 # Overview
 
-The architecture page uses *desk* in its library and museum terms, for the place where a role does its work with the bundle. It says which program is the registrar at each one. At the librarian's desk the registrar is `knowledge-apply.sh`, *the pen*, the only way the librarian writes the bundle, and it refuses a change that would fake or remove a confirmation. At the reader's desk and the curator's it is `knowledge-report.sh`, which computes each trust label and the bundle's health line, so that neither is a model's arithmetic.
+The architecture page uses *desk* in its library and museum terms, for the place where a role does its work with the bundle. It names a part of the registrar at each one: `knowledge-apply.sh`, *the pen*, at the librarian's desk, and `knowledge-report.sh` at the reader's desk and the curator's. The registrar's own page says what each part does there.[^cast-registrar.md] The pen applies the librarian's patch, and is the only way the librarian writes the bundle. It refuses an operation that would fake or change a person's record, and an excerpt its file does not hold. `knowledge-report.sh` computes every trust label and the bundle's health line, so that neither is a model's arithmetic.
 
 In Obsidian there is no CI, so KTL Registrar does the registrar's work inside the editor, checking each record as it is typed. KTL Curator, the other optional plugin, is the curator's assistant.
+
+[^cast-registrar.md]: docs/cast/registrar.md, the table under *Its parts*

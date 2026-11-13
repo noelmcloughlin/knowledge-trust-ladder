@@ -2,20 +2,23 @@
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/intended-uses
 title: What Knowledge Trust Ladder is for, and what it is not
-description: "Which uses Knowledge Trust Ladder (KTL) fits and which it does not, as `docs/uses.md` says: the nine uses the skills were built for, DevSecOps and technology governance, what KTL is not (a scanner, a judge of truth, a vector store, a live system), and three questions for judging any other use."
+description: "Which uses Knowledge Trust Ladder (KTL) fits and which it does not, as `docs/uses.md` says: the nine uses the skills were built for, among them knowledge retold for readers aged 8 to 18 in a school or a youth group, DevSecOps and technology governance, what KTL is not (a scanner, a judge of truth, a vector store, a live system), and three questions for judging any other use."
 genre: explanation
 resource: docs/uses.md
 sources:
   - resource: docs/uses.md
     id: uses.md
     excerpt: KTL keeps knowledge about systems. It does not scan, enforce or run them.
+  - resource: docs/young-readers.md
+    id: docs-young-readers.md
+    excerpt: We know of no school or youth group that has built a bundle this way.
   - resource: README.md
   - resource: docs/architecture.md
   - resource: docs/skills-repositories.md
   - resource: docs/context-layer.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T00:00:06Z"
+  at: "2026-11-13T14:41:35Z"
 status: draft
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
@@ -47,6 +50,8 @@ The page lists nine, each with what carries it:
 - a site and a release that anyone can read, from the website skill and the release workflow;
 - the same knowledge retold for a younger reader.
 
+`docs/young-readers.md` covers that last use. It is for a teacher, a youth leader, or anyone who wants knowledge that adults wrote retold for readers aged 8 to 18, in two bands: 8 to 12, and 13 to 18. The README names a school or a youth group as the place for it. This repository has tried retellings on its own pages only, and knows of no school or youth group that has built a bundle this way.[^docs-young-readers.md]
+
 The bundles that the README lists come from three kinds of repository: a repository of Agent Skills, an application, and a domain of bundles.
 
 ## The two uses readers asked about
@@ -63,3 +68,4 @@ The page names six things: the source of truth, a judge of truth, a vector store
 Three questions settle most uses the page does not list. Is there a source to point at? Does it matter who vouched for it? Does it change slowly enough for a person to confirm? A use that passes all three still needs someone to play the curator, a little and regularly.
 
 [^uses.md]: docs/uses.md, the second paragraph
+[^docs-young-readers.md]: docs/young-readers.md, the note at the top and *What exists today*

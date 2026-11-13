@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-29T00:48:33Z"
+  at: "2026-11-13T14:41:35Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -42,7 +42,7 @@ ktl-docent answers questions about a repository from its `.lokf/` knowledge bund
 2. Widen along the fourteen typed relations (`dependsOn`, `isPartOf`, `hasPart`, `about`, `references`, `derivedFrom`, `relatedTo`, `sameAs`, `definedBy`, `source`, `measures`, `memberOf`, `holder`, `isReplacedBy`) before grepping the repository.
 3. Weigh each concept by its trust label.
 4. Verify exact values, such as versions, endpoints, numbers and paths, at the concept's `resource` before stating them, and say so.
-5. Answer with a footing: each concept by title and path with its label, and any source checked.
+5. Answer with a footing: each concept by title and path with its label, and any source checked. Where the concept quotes its source in an `excerpt`, the docent gives that passage as the source's words. It writes "the bundle quotes" unless it opened the file for this answer and found the passage there, and when the file no longer holds the passage it answers from the file and records a Disagreement (`references/answering.md`).
 6. Fall back to the repository deliberately, when no concept is relevant or the only one is retired or stale and the question hinges on being current, and say the bundle did not cover it.
 7. Record the miss or the disagreement.
 
@@ -79,7 +79,7 @@ The docent is **read-only on `.lokf/knowledge/`**. Its single write is `.lokf/fe
 - a **Miss**: a question the bundle could not answer, where the answer was found, and whether a concept looked relevant from `index.md` but did not answer;
 - a **Disagreement**: a concept and what its source says instead, with `--concept <path>` naming that concept so its label shows the dispute.
 
-The script inserts the entry newest first and prints only a kind, a date and a count, so the docent never opens the file and other readers' reports never enter the session. The librarian consumes the entries on its next run, and its apply script moves each one into `.lokf/questions.md`, a ledger only programs read. Where `.lokf/` is read-only, the docent says the gap in its answer instead. In a gitignored `.lokf/` it still records the entry, and says the scheduled librarian does not run there, so someone has to run ktl-librarian by hand. With no bundle at all, it answers from the repository, mentions once that ktl-sidecar can create a bundle, and creates no feedback file.
+The script refuses entry text that reads as an attribution (0.64.0, `CHANGELOG.md`). It inserts the entry newest first and prints only a kind, a date and a count, so the docent never opens the file and other readers' reports never enter the session. The librarian consumes the entries on its next run, and its apply script moves each one into `.lokf/questions.md`, a ledger only programs read. Where `.lokf/` is read-only, the docent says the gap in its answer instead. In a gitignored `.lokf/` it still records the entry, and says the scheduled librarian does not run there, so someone has to run ktl-librarian by hand. With no bundle at all, it answers from the repository, mentions once that ktl-sidecar can create a bundle, and creates no feedback file.
 
 An entry names the asker only when the asker agrees, and only by an authenticated login: `gh api user --jq .login`, `glab api user` filtered to its `username`, or the signing-key route in ktl-curator's `references/portability.md`. The once-per-session question names that login, because the scheduled workflow commits `feedback.md`, often into a public pull request, and git history keeps an entry after the librarian clears it. Without a login, or without the asker's agreement, the entry is attributed to `docent` alone.
 
@@ -92,3 +92,7 @@ The docent never carries a secret, credential, token or connection string into a
 **The Snyk W011 findings.** The first, on `.lokf/feedback.md`, is addressed: the docent never reads the file. The second, on the repository fallback, is acknowledged and contained by what the docent cannot do. It never edits `.lokf/knowledge/`, and its one write is a feedback entry through the script, which accepts only one line of one of the two kinds. The Copilot variant cannot write the file at all and hands the reader the line to paste. The [threat model](../policies/threat-model.md) lists this surface and what it does not cover.
 
 **The Gen Agent Trust Hub audit of 2026-10-04, addressed.** For command and dynamic execution, a trust label and a feedback entry each come from a script in the skill's own `scripts/` folder, so no label depends on the model's arithmetic and the model never opens `.lokf/feedback.md`. The scripts treat bundle and reader text as data only. For data exposure, the skill keeps only the asker's login from `gh` or `glab`, and an entry carries it only when the asker agreed. The threat model says where that stops: a repository that holds its own copy of the skill supplies the scripts as well.
+
+## Open questions
+
+- 2026-11-13, human:noelmcloughlin: remove words mentioning 0.64.0 as unnecessary details from sources
