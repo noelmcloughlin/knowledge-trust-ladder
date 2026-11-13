@@ -66,3 +66,16 @@ updates:
     groups:
       tests:
         patterns: ["*"]
+
+  # The toolkit this repository's own bundle runs (.lokf/uv.lock). It ships
+  # to no host, so a bump releases nothing. The limit of 0 turns off version
+  # updates; security updates still come, and without this entry Dependabot
+  # took their prefix from main's recent fix commits, which the release gate
+  # reads as needing a changelog entry.
+  - package-ecosystem: "uv"
+    directory: "/.lokf"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+    commit-message:
+      prefix: "chore(deps)"
