@@ -924,7 +924,8 @@ successors() {
 # after the kind, `- **Disagreement** (on `<path>`) -`, where no reader's text
 # can stand, and this reads that name and nothing else of the entry. A path
 # counts only in the bundle's own spelling and only while it names a concept,
-# so a line filed by hand meets the same test.
+# and never an index, a log or diataxis.md, so a line filed by hand meets the
+# same test.
 # G is a letter of its own: an X line is a concept's exclusion, which no
 # label reads.
 disputed() {
@@ -932,6 +933,7 @@ disputed() {
   awk -v dir="$bundle" '
   function held(p,  line, there) {
     if (p !~ /^[a-z0-9][a-z0-9._\/-]*\.md$/ || p ~ /\.\./) return 0
+    if (p ~ /(^|\/)(index|log|diataxis)\.md$/) return 0
     there = (getline line < (dir "/" p)); close(dir "/" p); return there >= 0
   }
   /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ { day = substr($0, 4, 10); next }

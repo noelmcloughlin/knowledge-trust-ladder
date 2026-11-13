@@ -992,6 +992,20 @@ def test_an_exclusion_is_not_read_as_a_readers_dispute(tmp_path):
     assert "x/map.md (docs/old)" not in whole and has_line(whole, "- x/hub.md (2026-03-04)"), f"the whole report listed an exclusion as a dispute: {whole}"
 
 
+def test_a_dispute_filed_on_a_reserved_file_names_no_concept(tmp_path):
+    """index.md, log.md and diataxis.md are files of the bundle and no concept, so a Disagreement filed by hand on one is not listed as a dispute."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "diataxis.md", "# Diataxis\n")
+    write(kk / "x" / "hub.md", "---\ntype: Dataset\ntitle: Hub\n---\n")
+    write(
+        tmp_path / ".lokf" / "feedback.md",
+        "# Feedback\n\n## 2026-03-04\n\n- **Disagreement** (on `diataxis.md`) - x - docent\n- **Disagreement** (on `index.md`) - x - docent\n",
+    )
+    whole = report(tmp_path).out
+    assert has_line(whole, "Disputed by a reader, waiting for the librarian: none"), f"a reserved file was listed as disputed: {whole}"
+
+
 def test_reliance_counts_measures_member_of_and_holder(tmp_path):
     """The schema ranges the three over Concept, as it does the ten generic relation fields, so a Metric relies on what it measures and a Role on its organization and its holder."""
     kk = tmp_path / ".lokf" / "knowledge"
