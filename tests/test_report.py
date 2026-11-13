@@ -2372,6 +2372,34 @@ def test_a_source_changed_while_the_pull_request_waited_has_moved_when_the_event
     assert report(tmp_path, "quiet").rc == 1
 
 
+def test_a_revision_pins_the_resource_alone_and_the_recording_commit_decides_the_other_sources(tmp_path):
+    """A curator pins the last commit of the resource, so a source changed after that commit but before the confirmation read as moved."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / "docs" / "a.md", "one\n")
+    write(tmp_path / "docs" / "c.md", "one\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "init")
+    pin = git("rev-parse", "HEAD")
+    append(tmp_path / "docs" / "c.md", "two, which the curator was shown\n")
+    git("commit", "-q", "-am", "docs: c.md changes before the confirmation")
+    write(
+        kk / "t" / "a.md",
+        "---\ntype: GlossaryTerm\ntitle: A\nresource: docs/a.md\nsources:\n  - resource: docs/c.md\n"
+        f'verified:\n  - by: human:ada\n    at: "2026-11-01T00:00:00Z"\n    revision: "{pin}"\n---\n\nSays what docs/a.md and docs/c.md say.\n',
+    )
+    git("add", "-A")
+    git("commit", "-q", "-m", "the curation pull request, squash-merged")
+    out = report(tmp_path).out
+    assert "docs/c.md (" not in out, f"a source that changed before the confirmation read as moved: {out}"
+    append(tmp_path / "docs" / "c.md", "three\n")
+    git("commit", "-q", "-am", "docs: c.md changes after the confirmation")
+    out = report(tmp_path).out
+    assert matches(out, r"^- t/a\.md: docs/c\.md \(\d{4}-\d\d-\d\d\)$"), f"a source that changed after the confirmation did not move: {out}"
+
+
 @pytest.mark.parametrize("revision", ["none", "unknown"])
 def test_without_a_revision_this_history_holds_the_recording_commit_decides(tmp_path, revision):
     out = report(waited(tmp_path, revision), "worklist").out
