@@ -1055,6 +1055,33 @@ RECORD_REFUSED = [
         ),
         "playbooks/new.md: this patch would remove a note a person left (human:ada, 2026-03-03)",
     ),
+    (
+        "a second heading and an open fence above a person's note, which the report then no longer lists",
+        lines(
+            "ops:",
+            '  - {op: patch, path: playbooks/new.md, edits: [{append: {content: "## Open questions'
+            + r"\n\n- 2026-03-04, process:ktl-librarian: is this right?\n\n```text"
+            + '"}}], log: x}',
+        ),
+        "playbooks/new.md: this patch would hide a note a person left (human:ada, 2026-03-03) from the report",
+    ),
+    (
+        "a person's event in a flow mapping under a key the gates do not read",
+        lines(
+            "ops:",
+            '  - {op: patch, path: playbooks/draft.md, set: {exclusions: [{resource: docs/a.md, reason: left out, by: "human:ada"}]}, log: x}',
+        ),
+        "playbooks/draft.md: this patch would add a person's exclusions event (human:ada, no time)",
+    ),
+] + [
+    (
+        f"a person's note spelt {spelling!r}, which a Markdown reader shows as one",
+        'ops:\n  - op: create\n    path: playbooks/planted.md\n    frontmatter: {type: Playbook, title: Planted, description: planted.}\n    body: "# Overview'
+        + r"\n\nText.\n\n## Open questions\n\n" + spelling + r" looks right to me\n"
+        + '"\n',
+        "playbooks/planted.md: this patch would add a note in a person's name",
+    )
+    for spelling in (" - 2026-03-04, human:ada:", "-  2026-03-04, human:ada:", "* 2026-03-04, human:ada:", "+ 2026-03-04, human:ada:", r"- 2026-03-04,\thuman:ada:")
 ]
 
 
@@ -1683,3 +1710,124 @@ def test_an_unreadable_schema_line_is_reported_not_read_as_no_schema(ka):
     assert 'schema line is not in the form schema := "<file>"' in result.out and not calls.exists(), (
         f"the pen read an unreadable schema line as no schema: {result.out}"
     )
+
+
+# ---- what an audit of the pen found, 2026-11-12 ------------------------------
+# Each of these wrote, or deleted, what the rules above say the pen never
+# does, by a spelling the rule did not read.
+
+
+@pytest.mark.parametrize("slot", ["revised", "refuted"])
+def test_the_event_slots_lokf_0_9_0_added_are_not_the_librarians_to_write(ka, slot):
+    event = '{by: "process:ktl-librarian", at: "2026-03-04T00:00:00Z", reason: wrong}'
+    refuses(ka, lines("ops:", f"  - {{op: patch, path: playbooks/draft.md, set: {{{slot}: {event}}}, log: x}}"), f"a set of {slot}", f"set may not touch {slot}")
+    refuses(
+        ka,
+        lines("ops:", "  - op: create", "    path: playbooks/fresh.md", f"    frontmatter: {{type: Playbook, title: Fresh, description: fresh., {slot}: {event}}}", '    body: "# Overview"'),
+        f"a create with {slot}",
+        f"create may not set {slot}",
+    )
+
+
+def test_a_concept_that_spells_a_key_twice_is_not_read_as_its_last_spelling(ka):
+    """A clean merge of a confirmation and a re-check leaves `verified` twice; PyYAML alone would show the pen the second block only."""
+    path = kb_of(ka) / "playbooks" / "twice.md"
+    write(
+        path,
+        lines(
+            "---", "type: Playbook", "id: https://acme.example/knowledge/playbooks/twice", "title: Twice", "description: twice.",
+            "verified:", "  - by: human:ada", '    at: "2026-02-02T00:00:00Z"',
+            "verified:", "  - by: process:ktl-librarian", '    at: "2026-02-03T00:00:00Z"',
+            "---", "", "# Overview",
+        ),
+    )
+    refuses(ka, lines("ops:", "  - {op: delete, path: playbooks/twice.md, log: gone}"), "a delete of a concept that spells verified twice", "the key 'verified' is given twice")
+
+
+def test_an_operation_that_gives_a_key_twice_is_refused_not_half_applied(ka):
+    write(patch_file(ka), lines("ops:", "  - op: patch", "    path: playbooks/draft.md", "    set: {title: One}", "    set: {description: two.}", "    log: x"))
+    before = tree_digest(ka)
+    result = apply(ka, patch_file(ka))
+    assert result.rc == 2 and "the key 'set' is given twice" in result.out and tree_digest(ka) == before, f"the pen applied half of a doubled key: {result.out}"
+
+
+def test_a_concept_created_and_deleted_in_one_patch_is_refused_before_anything_is_written(ka):
+    refuses(
+        ka,
+        lines(
+            "ops:",
+            "  - {op: patch, path: playbooks/draft.md, edits: [{replace: {target: The old text., content: The new text.}}], log: x}",
+            '  - {op: create, path: playbooks/tmp.md, frontmatter: {type: Playbook, title: Tmp, description: tmp.}, body: "# Overview"}',
+            "  - {op: delete, path: playbooks/tmp.md, log: gone}",
+        ),
+        "a create and a delete of one path",
+        "this patch creates the concept, so there is no file to delete",
+    )
+    assert not list(kb_of(ka).rglob("*.tmp")), "the pen left a temporary file in the bundle"
+
+
+def test_a_path_or_an_actor_that_ends_in_a_line_break_is_refused(ka):
+    refuses(
+        ka,
+        'ops:\n  - op: create\n    path: "playbooks/index.md\\n"\n    frontmatter: {type: Playbook, title: Sneaky, description: sneaky.}\n    body: "# Overview"\n',
+        "a path ending in a line break",
+        "is not a concept path",
+    )
+    refuses(ka, 'by: "process:x\\n"\nops:\n  - {op: question, path: playbooks/draft.md, text: "is this right?"}\n', "an actor ending in a line break", "by must be a process:<id> actor")
+
+
+def test_a_patch_never_writes_under_the_curators_own_actor(ka):
+    """`process:ktl-curator` stands for a person who could not sign in; the pen protects that line from the librarian."""
+    refuses(ka, lines("by: process:ktl-curator", "ops:", '  - {op: question, path: playbooks/draft.md, text: "Sent back: wrong."}'), "a patch by the curator's actor", "by may not be process:ktl-curator")
+
+
+def test_the_pen_writes_nothing_through_a_link_that_leaves_the_bundle(ka):
+    outside = ka / "docs"
+    write(outside / "index.md", "# Docs\n")
+    (kb_of(ka) / "guides").symlink_to(outside, target_is_directory=True)
+    refuses(
+        ka,
+        lines("ops:", '  - {op: create, path: guides/setup.md, frontmatter: {type: Playbook, title: Setup, description: setup.}, body: "# Overview"}'),
+        "a create through a folder that links out of the bundle",
+        "a link on this path leads out of the bundle",
+    )
+    assert not (outside / "setup.md").exists(), "the pen wrote outside the bundle"
+
+
+def test_a_file_the_pen_writes_keeps_its_mode_and_a_new_one_takes_the_umasks(ka):
+    draft = kb_of(ka) / "playbooks" / "draft.md"
+    draft.chmod(0o644)
+    applies(ka, lines("ops:", "  - {op: recheck, path: playbooks/draft.md}", '  - {op: create, path: playbooks/fresh.md, frontmatter: {type: Playbook, title: Fresh, description: fresh.}, body: "# Overview"}'))
+    umask = os.umask(0)
+    os.umask(umask)
+    fresh = (kb_of(ka) / "playbooks" / "fresh.md").stat().st_mode & 0o777
+    assert draft.stat().st_mode & 0o777 == 0o644 and fresh == 0o666 & ~umask, f"the pen changed a mode: {oct(draft.stat().st_mode & 0o777)}, {oct(fresh)}"
+
+
+def test_an_operation_that_leaves_the_frontmatter_alone_writes_it_back_as_it_was(ka):
+    """A comment and a folded line in the block survive a `resolve`, which changes the body only."""
+    path = kb_of(ka) / "playbooks" / "folded.md"
+    block = lines(
+        "---", "type: Playbook", "id: https://acme.example/knowledge/playbooks/folded", "title: Folded",
+        "# keep this wording", "description: >-", "  a folded", "  description.", "status: draft", "---",
+    )
+    write(path, block + lines("", "# Overview", "", "## Open questions", "", "- 2026-03-01, process:ktl-librarian: is it so?"))
+    applies(ka, lines("ops:", '  - {op: resolve, path: playbooks/folded.md, target: "is it so?", log: "**Resolved**: the source settles it."}'))
+    assert read(path).startswith(block) and "is it so?" not in read(path), f"the pen rewrote a frontmatter block it did not change: {read(path)}"
+
+
+def test_a_root_index_or_a_log_the_pen_cannot_read_is_a_finding_not_a_traceback(ka):
+    index = kb_of(ka) / "index.md"
+    kept = read(index)
+    write(index, "---\nbase_iri: [unclosed\n---\n\n# Acme\n")
+    result = applies_not(ka, DRAFT_EDIT)
+    assert result.rc == 1 and "index.md: the bundle's root index.md cannot be read" in result.out and "Traceback" not in result.out, result.out
+    write(index, kept)
+    (kb_of(ka) / "log.md").write_bytes(b"# Change Log\n\n\xff\xfe not utf-8\n")
+    result = applies_not(ka, DRAFT_EDIT)
+    assert result.rc == 1 and "log.md: the log cannot be read" in result.out and "Traceback" not in result.out, result.out
+
+
+def applies_not(root, text):
+    write(patch_file(root), text)
+    return apply(root, patch_file(root))

@@ -566,11 +566,13 @@ main() {
   fi
   echo "   pin      $pin_line"
   # Whether the skill the librarian runs changed between the two pins. The
-  # old tag is fetched when the clone is shallow, and the line is left out
-  # when neither tag can be read.
+  # old tag is fetched into the clone this script made, which is shallow.
+  # A clone given as --source is read and never fetched into: a fetch with
+  # --depth would cut a full clone's history. The line is left out when
+  # neither tag can be read.
   local skill_line=""
   if [[ -n "$old_pin" && "$old_pin" != "$tag" ]]; then
-    if ! git -C "$source" rev-parse -q --verify "refs/tags/$old_pin^{commit}" >/dev/null; then
+    if [[ -n "${tmp_clone:-}" ]] && ! git -C "$source" rev-parse -q --verify "refs/tags/$old_pin^{commit}" >/dev/null; then
       git -C "$source" fetch --quiet --depth 1 origin "refs/tags/$old_pin:refs/tags/$old_pin" 2>/dev/null || true
     fi
     if git -C "$source" rev-parse -q --verify "refs/tags/$old_pin^{commit}" >/dev/null; then

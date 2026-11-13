@@ -30,6 +30,10 @@ function safeAddress(value) {
   // A character reference can spell a scheme a browser reads, so any but
   // &amp; makes the address refused rather than decoded here.
   if (/&(?!amp;)/i.test(value)) return false;
+  // A browser drops a tab, a line break and every other control character
+  // from an address before it reads the scheme, so `java<tab>script:` runs
+  // as a script there and shows no scheme here. No address needs one.
+  if (/[\u0000-\u001F\u007F]/.test(value)) return false;
   const v = value.replace(/&amp;/gi, "&").trim();
   const scheme = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(v);
   return !scheme || ["http", "https", "mailto"].includes(scheme[1].toLowerCase());

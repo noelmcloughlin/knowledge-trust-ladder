@@ -263,8 +263,13 @@ jobs:
             # past the gate. Accumulate to the closing bracket, then parse: a
             # sequence into its events, a mapping as one. Matches
             # knowledge-provenance.sh.
-            function flushflow(  b, n, items, i) { b = flowbuf
+            function flushflow(  b, n, items, i, q, tail) { b = flowbuf
               if (b ~ /(^|[[:space:]])#/) unread()
+              q = b; gsub(/"[^"]*"/, "", q); gsub(/'"'"'[^'"'"']*'"'"'/, "", q)
+              if (q ~ /["'"'"']/) unread()
+              tail = b; while (match(tail, /"[^"]*"|'"'"'[^'"'"']*'"'"'/)) { if (substr(tail, RSTART, RLENGTH) ~ /[][{}]/) unread(); tail = substr(tail, RSTART + RLENGTH) }
+              tail = q; if (flowseq) sub(/^[^]]*\]/, "", tail); else sub(/^[^}]*\}/, "", tail)
+              if (tail !~ /^[[:space:]]*$/) unread()
               if (flowseq) { sub(/^\[/, "", b); sub(/\].*/, "", b) } else { sub(/^\{/, "", b); sub(/\}.*/, "", b) }
               sub(/^[[:space:]]+/, "", b); sub(/[[:space:]]+$/, "", b)
               if (b != "") { if (flowseq) { n = split(b, items, /\}[[:space:]]*,/); for (i = 1; i <= n; i++) if (items[i] !~ /^[[:space:]]*$/) flow(items[i]) } else flow(b) }
@@ -297,6 +302,7 @@ jobs:
               else if (rest ~ /^\[/) { flowseq = 1; flowbuf = rest; inv = 0; if (index(rest, "]")) flushflow(); else inflow = 1 }
               else if (rest != "" && rest !~ /^#/ && rest !~ /^(null|~)$/) unread()
               next }
+            inv && /^[[:space:]]*#/ { next }
             inv && /^[^[:space:]-]/ { emit(); inv = 0 }
             inv && /^[[:space:]]*-[[:space:]]*(#.*)?$/ { emit(); inev = 1; next }
             inv && /^[[:space:]]*-[[:space:]]*\{/ { rest = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", rest); flow(rest); next }

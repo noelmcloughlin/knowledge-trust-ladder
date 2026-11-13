@@ -537,6 +537,11 @@ LAYOUTS = [
     'verified:\n  - # a comment line opens the item\n    by: process:x\n    at: "2026-01-02T10:00:00Z"',
     'exclusions:\n  - resource: a\n    reason: b\n    by: human:ada',
     'revised:\n  by: human:ada\n  at: "2026-01-02T10:00:00Z"',
+    # A comment in the first column once ended the block for the gate, and the event below it went unread.
+    'verified:\n  - by: process:ktl-librarian\n    at: "2026-01-01T00:00:00Z"\n# a note in the first column\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"',
+    # A bracket inside a quoted value once closed the flow list for the gate, and the next line was read by no rule.
+    'verified: [ { by: "process:ktl-librarian", at: "2026-01-01T00:00:00Z", revision: "W/]" },\n  { by: "human:ada", at: "2026-01-02T10:00:00Z" } ]',
+    'generated: { by: "process:x", at: "2026-01-01T00:00:00Z", revision: "a}b" }\nverified:\n  - by: human:ada\n    at: "2026-01-02T10:00:00Z"',
 ]
 
 
@@ -684,6 +689,79 @@ def test_a_range_that_deletes_the_keys_has_not_opted_out(parity):
     git("commit", "-q", "-m", "no keys, and a confirmation")
     result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
     assert result.rc != 0, f"the signed form skipped a range that deletes the keys: {result.out}"
+
+
+def keyed(repo):
+    """The repository with one curator's key on file, committed, so the signed form checks and does not skip."""
+    write(repo / ".lokf" / "curators" / "ada.pub", "ssh-ed25519 AAAA ada\n")
+    git = Git(repo)
+    git("add", "-A")
+    git("commit", "-q", "-m", "a curator's key")
+    return git
+
+
+def test_a_commit_with_no_parent_is_read_like_any_other(parity):
+    """A history merged in from elsewhere starts at a commit with no parent, which git lists nothing for unless asked."""
+    git = keyed(parity)
+    base = git("rev-parse", "HEAD")
+    git("checkout", "-q", "--orphan", "elsewhere")
+    git("rm", "-rqf", ".")
+    write(parity / ".lokf" / "knowledge" / "x" / "d.md", concept_with(HUMAN).replace("/x/c", "/x/d"))
+    git("add", "-A")
+    git("commit", "-q", "-m", "a root commit that types a confirmation")
+    git("checkout", "-q", "main")
+    git("merge", "-q", "--allow-unrelated-histories", "--no-edit", "elsewhere")
+    result = bash(PROVENANCE, base, "HEAD", cwd=parity)
+    assert result.rc == 1 and "confirmation by human:ada" in result.out, f"the gate did not read a commit with no parent: {result.out}"
+
+
+def test_a_shallow_clone_is_not_checked_as_if_it_were_whole(parity, tmp_path_factory):
+    git = keyed(parity)
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with(HUMAN))
+    git("add", "-A")
+    git("commit", "-q", "-m", "a confirmation")
+    shallow = tmp_path_factory.mktemp("shallow") / "clone"
+    assert run(["git", "clone", "-q", "--depth", "1", f"file://{parity}", str(shallow)]).rc == 0
+    result = bash(PROVENANCE, "HEAD", "HEAD", cwd=shallow)
+    assert result.rc == 2 and "shallow" in result.out, f"the gate checked a shallow clone: {result.out}"
+
+
+def test_keys_behind_a_link_are_not_the_repository_s_own(parity):
+    """A range that makes the keys folder a link onto a folder it adds would supply a key and vouch with it in one step."""
+    git = keyed(parity)
+    base = git("rev-parse", "HEAD")
+    write(parity / "docs" / "keys" / "eve.pub", "ssh-ed25519 BBBB eve\n")
+    shutil.rmtree(parity / ".lokf" / "curators")
+    os.symlink("../docs/keys", parity / ".lokf" / "curators")
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with(HUMAN.replace("human:ada", "human:eve")))
+    git("add", "-A")
+    git("commit", "-q", "-m", "keys behind a link, and a confirmation")
+    result = bash(PROVENANCE, base, "HEAD", cwd=parity)
+    assert result.rc == 1 and "is a symbolic link" in result.out, f"the gate took keys from behind a link: {result.out}"
+
+
+def test_a_sidecar_the_gate_cannot_find_is_not_passed(tmp_path):
+    """The gate reads a sidecar in the repository's top folder. One in a subfolder was once skipped, or passed, whatever changed."""
+    side = tmp_path / "svc"
+    write(side / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n")
+    write(side / ".lokf" / "curators" / "ada.pub", "ssh-ed25519 AAAA ada\n")
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "a sidecar in a subfolder")
+    write(side / ".lokf" / "knowledge" / "x" / "c.md", concept_with(HUMAN))
+    for form in (["--unattended"], ["HEAD", "HEAD"]):
+        result = bash(PROVENANCE, *form, cwd=side)
+        assert result.rc == 2 and "no bundle at" in result.out, f"the gate passed a sidecar it cannot read ({form}): {result.out}"
+
+
+def test_the_gate_passes_nothing_when_a_tool_it_reads_with_is_missing(parity, tmp_path_factory):
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", concept_with(HUMAN))
+    tools = tmp_path_factory.mktemp("tools")
+    for name in ("bash", "git", "awk", "sort", "cut", "sed", "grep", "mktemp"):
+        os.symlink(shutil.which(name), tools / name)
+    result = bash(PROVENANCE, "--unattended", cwd=parity, env={"PATH": str(tools)})
+    assert result.rc == 2 and "comm is required" in result.out, f"the gate ran without comm: {result.out}"
 
 
 def test_a_repository_that_never_had_keys_is_still_a_stated_skip(parity):

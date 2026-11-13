@@ -389,3 +389,22 @@ def test_warns_when_tool_lokf_names_another_schema_than_the_justfile(tmp_path, l
         assert result and matches(result.out, r"^warn    schema +\[tool\.lokf\] schema in \.lokf/pyproject\.toml is acme\.yaml and " + warning), (
             f"preflight did not warn about the two schema settings: {result.out}"
         )
+
+
+@pytest.mark.parametrize("form", ["key::", "~/"])
+def test_an_ssh_signing_key_given_as_the_key_or_under_the_home_folder_is_found_on_file(tmp_path, form):
+    """git documents both forms. Read as a file name, each made the preflight warn that the key was not on file."""
+    key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPreflightFixtureKeyAda0000000000000000000000 ada"
+    home = tmp_path / "home"
+    repo = tmp_path / "repo"
+    (home / ".ssh").mkdir(parents=True)
+    (home / ".ssh" / "ada.pub").write_text(key + "\n", encoding="utf-8")
+    (repo / ".lokf" / "curators").mkdir(parents=True)
+    (repo / ".lokf" / "curators" / "ada.pub").write_text(key + "\n", encoding="utf-8")
+    (repo / ".lokf" / "knowledge").mkdir()
+    (repo / ".lokf" / "knowledge" / "index.md").write_text("# Acme\n", encoding="utf-8")
+    run(["git", "init", "-q", repo])
+    for name, value in (("gpg.format", "ssh"), ("commit.gpgsign", "true"), ("user.signingkey", f"key::{key}" if form == "key::" else "~/.ssh/ada.pub")):
+        run(["git", "-C", repo, "config", name, value])
+    result = preflight(".", cwd=repo, env={"HOME": str(home)})
+    assert matches(result.out, r"^ok +curators .*yours is on file"), f"preflight did not find a key given as {form}: {result.out}"

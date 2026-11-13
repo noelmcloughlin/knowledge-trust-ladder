@@ -723,3 +723,58 @@ def test_rule_17_reads_an_older_day_only_since_a_base(rule17):
     """A slip under the day before the newest is new since the base, and out of scope without one."""
     assert "Yesterday's slip" in rule17_out(rule17, True), "conventions rule 17 missed a bullet the commits after the base added under an older day"
     assert "Yesterday's slip" not in rule17_out(rule17, False), "conventions rule 17 read past the newest day with no base"
+
+
+# ---- what an audit of the gate found, 2026-11-12 -----------------------------
+
+
+def bundle_of(tmp_path, concepts):
+    k = tmp_path / "k"
+    write(k / "log.md", "# Change Log\n\n## 2026-09-15\n\n* **A**: b.\n")
+    for name, text in concepts.items():
+        write(k / "x" / name, text)
+    return k
+
+
+STAMP = 'generated:\n  by: process:ktl-librarian\n  at: "2026-09-01T00:00:00Z"\n'
+
+
+def test_rule_10_refuses_a_comment_line_among_the_events(tmp_path):
+    """A line reader once took a comment in the first column for the end of the block, and never read the event below it."""
+    events = 'verified:\n  - by: process:ktl-librarian\n    at: "2026-09-02T00:00:00Z"\n# a note\n  - by: process:x\n    at: "2026-09-03T00:00:00Z"\n'
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: https://example.invalid/a\n{STAMP}{events}---\n"})
+    result = bash(CONVENTIONS, k)
+    assert result.rc == 1 and "a comment line inside verified at line" in result.out, result.out
+    after = events.replace("# a note\n", "") + "# a note after the last event\n"
+    k = bundle_of(tmp_path / "after", {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: https://example.invalid/a\n{STAMP}{after}status: draft\n---\n"})
+    result = bash(CONVENTIONS, k)
+    assert result, f"a comment after the last event was refused: {result.out}"
+
+
+def test_rule_5_takes_an_identifier_with_a_scheme_for_no_file(tmp_path):
+    k = bundle_of(tmp_path, {"a.md": f'---\ntype: Reference\nid: https://example.invalid/k/x/a\nresource: urn:ietf:rfc:9110\nsources:\n  - resource: doi:10.1000/182\n  - resource: "urn:isbn:0451450523"\n{STAMP}---\n'})
+    result = bash(CONVENTIONS, k)
+    assert result, f"rule 5 looked for a file named by a urn or a doi: {result.out}"
+
+
+def test_a_concept_that_is_a_dangling_link_is_reported_and_stops_no_other_rule(tmp_path):
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: https://example.invalid/a\n{STAMP}---\n"})
+    os.symlink("nowhere.md", k / "x" / "dangling.md")
+    result = bash(CONVENTIONS, k)
+    assert result.rc == 1 and "dangling.md" in result.out and "cannot open" not in result.out and "No such file" not in result.out, (
+        f"a dangling link stopped the script before the rule that reports it: {result.out}"
+    )
+
+
+def test_rule_16_reads_one_resource_written_two_ways_as_one(tmp_path):
+    def concept(name, resource):
+        return (
+            f"---\ntype: Service\nid: https://example.invalid/k/x/{name}\nresource: https://example.invalid/{name}\n"
+            f"sources:\n  - resource: {resource}\n    id: a.md\n{STAMP}---\n\nA claim.[^a.md]\n\n[^a.md]: {resource}, the first line\n"
+        )
+
+    root = tmp_path
+    write(root / "docs" / "a.md", "a\n")
+    k = bundle_of(root, {"one.md": concept("one", "docs/a.md"), "two.md": concept("two", "./docs/a.md")})
+    result = bash(CONVENTIONS, k)
+    assert "names more than one resource" not in result.out, f"rule 16 read ./docs/a.md and docs/a.md as two resources: {result.out}"

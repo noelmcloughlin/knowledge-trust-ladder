@@ -106,12 +106,14 @@ Each operation takes `op`, `path` and the keys below, and the script refuses any
 Any one of these refuses the whole file, and nothing is written:
 
 - a line anywhere in the file that would read as a person's event (`by: human:...`) or a person's note (`- <date>, human:...`); prose may mention the actor prefix, but only ktl-curator writes one, in a live session;
-- a patch after which any concept it writes would hold a person's record other than the one the file held: a `human:` event or a person's note added, changed or removed, however the operations spelt it;
-- `by` that is not `process:<id>`;
-- a path that is not lowercase a-z, 0-9 and hyphens under a folder, or that is `index.md`, `log.md` or `diataxis.md`;
+- a patch after which any concept it writes would hold a person's record other than the one the file held, however the operations spelt it. The record is each `human:` event under any key, and each person's note in any spelling a Markdown reader shows as one;
+- a patch after which the report would no longer list a note a person left, as a second `## Open questions` heading or a code fence left open above it does;
+- `by` that is not `process:<id>`, or that is `process:ktl-curator`, the actor that stands for a person in a curator's session;
+- a path that is not lowercase a-z, 0-9 and hyphens under a folder, or that is `index.md`, `log.md` or `diataxis.md`, or that a link leads out of the bundle;
+- a key given twice in one mapping, in the patch file or in a concept's frontmatter, since YAML would keep the last and say nothing;
 - a key the operation does not take, such as `edits` on a `rewrite` or `log` on a `recheck`;
-- `create` on a path that exists, or any other operation on one that does not;
-- `create` or `set` carrying `generated`, `verified`, `status`, `stale_after` or `timestamp`; `set` carrying `id` or `type`; an `id` that is not `base_iri` plus the path;
+- `create` on a path that exists, or any other operation on one that does not, a `delete` of a concept the same patch creates among them;
+- `create` or `set` carrying `generated`, `verified`, `revised`, `refuted`, `status`, `stale_after` or `timestamp`; `set` carrying `id` or `type`; an `id` that is not `base_iri` plus the path;
 - `patch`, `rewrite`, `set` or `delete` on a concept whose `generated.by` starts with `human:` (a person wrote that text; add a `question` instead);
 - `delete` on a concept with a `human:` event under `verified`, or with a person's note under `## Open questions` (add a `question` saying the source is gone; the curator retires it);
 - `delete` on a concept that an `index.md` links in a sentence, or anywhere but in its own bullet or a comma-separated list of links (a person takes that link out, and the delete can then run);
@@ -128,4 +130,6 @@ Any one of these refuses the whole file, and nothing is written:
 - `1`: findings, one per line, and nothing written. Fix the file and run again.
 - `2`: no bundle, no patch file, a file that is not YAML, a `--handoff` file that cannot be written, or no runner: no `.lokf/.venv`, no `uv`, and no `python3` of 3.9 or later with `pyyaml`. Also a run without `--dry-run` in the agent's step of a scheduled run, where the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`: the pen writes nothing and leaves the patch file for the wrapper. The sidecar's prerequisites page says who installs `uv`.
 
-In a live session, then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. In a scheduled run the workflow runs them after the wrapper applies the file. The script writes a touched concept's frontmatter back with double quotes where a value needs quoting and keeps the blank line after the closing `---` as it found it, so the diff shows the change and not the rewrite. A value YAML would read as a number, a boolean or a time goes back as the text the file held: `1.10` stays `1.10`, and an unquoted time on a person's event stays as that person's commit wrote it. The script keeps the conventions it knows, and checks the schema of what it writes when `.lokf/.venv` holds the toolkit. The relation targets are the toolkit's to check.
+In a live session, then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. In a scheduled run the workflow runs them after the wrapper applies the file.
+
+The script writes a touched concept's frontmatter back with double quotes where a value needs quoting and keeps the blank line after the closing `---` as it found it, so the diff shows the change and not the rewrite. An operation that changes no frontmatter key, such as `resolve`, writes the block back as the file held it, comments and folded lines too. A value YAML would read as a number, a boolean or a time goes back as the text the file held: `1.10` stays `1.10`, and an unquoted time on a person's event stays as that person's commit wrote it. The script keeps the conventions it knows, and checks the schema of what it writes when `.lokf/.venv` holds the toolkit. The relation targets are the toolkit's to check.

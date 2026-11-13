@@ -4,6 +4,28 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`docs/uses.md` says what KTL is for, and what it is not.** It lists the uses the skills were built for, answers the two that readers asked about, DevSecOps and technology governance, and gives three questions for judging any other.
+
+### Changed
+
+- **`docs/three-lines.md` lists only what remains.** LOKF 0.9.0 and private federation members are built, and an auditor skill waits for a host with a third line.
+
+### Fixed
+
+- **The pen holds a person's record against nine more spellings.** It refuses `revised` and `refuted`, a `human:` actor under any key, a note in a looser Markdown spelling, a second heading or an open fence that hides a note from the report, a key given twice, the curator's own actor, a path or actor that ends in a line break, a link that leaves the bundle, and a delete of a concept the same patch creates.
+- **The pen keeps a file's mode, and writes back an unchanged frontmatter block as it found it.** A file it wrote became readable by its owner alone, and a `resolve` dropped the block's comments.
+- **A federation build keeps each quad whole, and a member's own words out of the workspace index.** A line separator inside a literal cut `graph.nq` where no reader could load it. A member's index title could add lines to the index that the MCP server serves as its instructions. The build also refuses the rest of the XML family as files a browser runs.
+- **The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run.** A dropped connection left a cut page mirrored as whole. A body that UTF-8 cannot write no longer fails its whole entry, and an exclude pattern with no slash leaves a file out of every folder.
+- **The librarian's wrapper runs in a linked work tree and in a clone with no hooks folder, and a sync leaves a clone given as `--source` whole.** The sync fetched the host's old tag into that clone with `--depth 1`.
+- **The website preflight prints no credential that the remote's address carries.**
+- **The provenance gate reads five confirmations it once passed unseen.** An event below a comment line, one after a bracket inside a quoted value, one in a commit with no parent, one vouched for by a key behind a link, and any in a sidecar it could not find. It stops on a shallow clone and on a missing tool, and no longer refuses a merge of a branch where a key was added in a change of its own. `knowledge-registrar.yaml` carries the same reader.
+- **`knowledge-report.sh` reads a compact offset, a comment beside a quoted value and an identifier with a scheme as a parser does.** An edit written `-0500` hid behind a confirmation, a quoted `status` with a comment was not read, and a `urn:` or `doi:` source was listed as gone. A source map that names `.` no longer moves with the bundle's own commits, and the work list names each concept with no stamp. Conventions rule 10 refuses a comment line among the events, rule 5 takes a `urn:` for no file, and rule 16 reads `./docs/a.md` and `docs/a.md` as one resource.
+- **The preflight counts CRLF files with any `grep`, and finds an SSH signing key given as `key::` or under `~`.**
+- **The librarian's wrapper hands the agent the skill the workflow installed, and refuses an agent that tells git to stop watching a file.** A copy of the skill a host committed under `.claude/skills/` came first, and a `skip-worktree` flag hid a replaced script from the write-scope check. The federation's `labels.rq` and `moved.rq` compare two times as times.
+- **The website refuses a raw-HTML address that holds a control character.** A browser drops a tab from `java<tab>script:` and runs it, and the check saw no scheme there.
+
 ## [0.64.0] - 2026-11-12
 
 ### Added

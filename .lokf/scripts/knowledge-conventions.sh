@@ -266,11 +266,15 @@ function value(line) {
 '
 while IFS= read -r f; do
   # 8. path shape, checked on every Markdown file, reserved ones included
-  rel="${f#"$bundle"/}"
+  rel="${f#"$bundle"/}"; rel="${rel#/}"  # BSD find prints the start point's slash, then its own
   if ! printf '%s\n' "$rel" | grep -qE '^([a-z0-9][a-z0-9._-]*/)*[a-z0-9][a-z0-9._-]*$'; then
     say "$f: path is not lowercase a-z, 0-9, '.', '_', '-' - case-insensitive hosts and sync conflict copies are why"
   fi
   case "$(basename "$f")" in index.md|log.md|diataxis.md) continue ;; esac
+  # A concept that is a link is rule 9's to report, in the Python half. One
+  # that points nowhere cannot be read, and reading it here would stop this
+  # script before that half ran.
+  [ -L "$f" ] && continue
   # Frontmatter only, best effort, for 5 and 6: the text between the first two
   # `---` lines. A missing or malformed block yields nothing here and is
   # rules 2-4, 7 and 9's job below to report, not this loop's. The awk reads
@@ -282,6 +286,11 @@ while IFS= read -r f; do
   while IFS= read -r res; do
     [ -z "$res" ] && continue
     case "$res" in *://*) continue ;; esac
+    res="${res#\"}"; res="${res#\'}"
+    # An identifier with a scheme, such as urn:ietf:rfc:9110 or
+    # doi:10.1000/182, names no file, as the toolkit reads it. Two characters
+    # at least, so a Windows drive letter is still a path.
+    [[ "$res" =~ ^[A-Za-z][A-Za-z0-9+.-]+: ]] && continue
     res="${res%%#*}"
     res="${res#\"}"; res="${res%\"}"; res="${res#\'}"; res="${res%\'}"
     res="${res%"${res##*[![:space:]]}"}"
@@ -299,6 +308,7 @@ while IFS= read -r f; do
   res="${res#\"}"; res="${res%\"}"; res="${res#\'}"; res="${res%\'}"
   res="${res%"${res##*[![:space:]]}"}"
   case "$res" in ""|*://*|/*) res="" ;; esac
+  [[ "$res" =~ ^[A-Za-z][A-Za-z0-9+.-]+: ]] && res=""
   while IFS= read -r rev; do
     rev="${rev#\"}"; rev="${rev%\"}"; rev="${rev#\'}"; rev="${rev%\'}"
     case "$rev" in ""|*[!0-9a-f]*) continue ;; esac

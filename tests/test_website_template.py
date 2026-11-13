@@ -451,6 +451,8 @@ RAW_HTML_CASES = {
     '<img src="badge.svg" style="height:20px" onerror="alert(1)">': '<img src="badge.svg">',
     '<a href="javascript:alert(1)">x</a>': "<a>x</a>",
     '<a href="jav&#x09;ascript:alert(1)">x</a>': "<a>x</a>",
+    '<a href="java\tscript:alert(1)">x</a>': "<a>x</a>",
+    '<a href="\x01javascript:alert(1)">x</a>': "<a>x</a>",
     '<img srcset="ok.png 1x, data:image/svg+xml,x 2x">': "<img>",
     # Shown as text.
     "<script>alert(1)</script>": None,

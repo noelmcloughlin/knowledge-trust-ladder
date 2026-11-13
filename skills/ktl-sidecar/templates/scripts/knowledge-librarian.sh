@@ -69,13 +69,17 @@ cd "$repo_root"
 # publishes the skills it also uses. If this repo uses a different one, add it
 # here. A candidate list that does not match the repo fails this whole script
 # at run time, not when the sidecar is installed.
+#
+# .agents/skills/ comes first: the scheduled workflow installs the pinned
+# skill there, and a copy the host committed under another folder, perhaps an
+# older one, must not be what the unattended agent is handed in its place.
 skill=""
-for candidate in .claude/skills/ktl-librarian/SKILL.md .github/skills/ktl-librarian/SKILL.md \
-                 .agents/skills/ktl-librarian/SKILL.md skills/ktl-librarian/SKILL.md; do
+for candidate in .agents/skills/ktl-librarian/SKILL.md .claude/skills/ktl-librarian/SKILL.md \
+                 .github/skills/ktl-librarian/SKILL.md skills/ktl-librarian/SKILL.md; do
   if [ -f "$candidate" ]; then skill="$candidate"; break; fi
 done
 [ -n "$skill" ] || {
-  echo "knowledge-librarian: ktl-librarian SKILL.md not found in .claude/skills/, .github/skills/, .agents/skills/, or skills/" >&2
+  echo "knowledge-librarian: ktl-librarian SKILL.md not found in .agents/skills/, .claude/skills/, .github/skills/, or skills/" >&2
   exit 2
 }
 
@@ -260,16 +264,25 @@ changed_paths() {
 
 # Snapshots of .git/config, .git/hooks/ and .git/info/ taken before each agent
 # call. File-scope, not local, so the EXIT trap below can reach them.
+# The three live in the folder every work tree of the repository shares. In
+# a linked work tree `.git` is a file that points there, and a clone made
+# without templates has no hooks/ or info/ folder: each is put back as it
+# was, absent when it was absent.
 config_snapshot=""
 hooks_snapshot=""
 info_snapshot=""
+git_dir=""
+had_hooks=0
+had_info=0
 snapshot_git_state() {
+  git_dir="$(git rev-parse --git-common-dir)"
   config_snapshot="$(mktemp)"
   hooks_snapshot="$(mktemp -d)"
   info_snapshot="$(mktemp -d)"
-  cp .git/config "$config_snapshot"
-  cp -a .git/hooks/. "$hooks_snapshot/"
-  if [ -d .git/info ]; then cp -a .git/info/. "$info_snapshot/"; fi
+  cp "$git_dir/config" "$config_snapshot"
+  had_hooks=0; had_info=0
+  if [ -d "$git_dir/hooks" ]; then had_hooks=1; cp -a "$git_dir/hooks/." "$hooks_snapshot/"; fi
+  if [ -d "$git_dir/info" ]; then had_info=1; cp -a "$git_dir/info/." "$info_snapshot/"; fi
 }
 
 # Put .git/config, .git/hooks/ and .git/info/ back as they were before the
@@ -283,13 +296,11 @@ snapshot_git_state() {
 # checkout, for the workflow's next steps to read.
 restore_git_state() {
   [ -n "$config_snapshot" ] || return 0
-  cp "$config_snapshot" .git/config
-  rm -rf .git/hooks
-  mkdir .git/hooks
-  cp -a "$hooks_snapshot/." .git/hooks/
-  rm -rf .git/info
-  mkdir .git/info
-  cp -a "$info_snapshot/." .git/info/
+  cp "$config_snapshot" "$git_dir/config"
+  rm -rf "$git_dir/hooks"
+  if [ "$had_hooks" = 1 ]; then mkdir "$git_dir/hooks"; cp -a "$hooks_snapshot/." "$git_dir/hooks/"; fi
+  rm -rf "$git_dir/info"
+  if [ "$had_info" = 1 ]; then mkdir "$git_dir/info"; cp -a "$info_snapshot/." "$git_dir/info/"; fi
   rm -rf "$config_snapshot" "$hooks_snapshot" "$info_snapshot"
   config_snapshot=""
   hooks_snapshot=""
@@ -407,9 +418,15 @@ main() {
   trap 'exit 130' INT
   trap 'exit 143' TERM
 
-  local before_outside before_all
+  local before_outside before_all before_flags
   before_outside="$(outside_bundle)"
   before_all="$(changed_paths)"
+  # The checks below read `git status`, which says nothing of a file whose
+  # index entry is flagged skip-worktree or assume-unchanged. An agent that
+  # set a flag on a script here could replace it unseen, so the flags are
+  # read before and after. A sparse checkout has such entries of its own,
+  # and only a change to them is refused.
+  before_flags="$(git ls-files -v | grep -v '^H ' || true)"
 
   echo "knowledge-librarian: refreshing the .lokf/ bundle via AGENT_CLI"
   # The subshell exports the key under the agent's own name and then becomes
@@ -423,6 +440,13 @@ main() {
   # Restore before the checks below read git, not only at exit.
   restore_git_state
   clear_outputs
+
+  if [ "$(git ls-files -v | grep -v '^H ' || true)" != "$before_flags" ]; then
+    echo "knowledge-librarian: the agent changed which files git watches (a skip-worktree or assume-unchanged flag) - refusing:" >&2
+    comm -13 <(printf '%s\n' "$before_flags" | sort) <(git ls-files -v | grep -v '^H ' | sort) | sed '/^$/d; s/^/  /' >&2
+    rm -f .lokf/patch.yaml
+    exit 3
+  fi
 
   # The agent's one output is .lokf/patch.yaml. Anything else it changed,
   # inside the bundle or out, is refused before the file is applied: the

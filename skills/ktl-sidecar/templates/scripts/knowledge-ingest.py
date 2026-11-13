@@ -846,6 +846,12 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
                         raise FetchFailed(f"the body took more than {timeout * BODY_TIMEOUTS} seconds")
                 if len(data) > max_bytes:
                     raise Refused(f"over max_item_bytes ({max_bytes})")
+                # read1 returns what arrived and never says the body was cut
+                # short. `length` counts what the Content-Length still
+                # promises, so a number left there is a broken response: it
+                # is tried again, and never mirrored as the whole page.
+                if getattr(resp, "length", None):
+                    raise http.client.IncompleteRead(bytes(data), resp.length)
                 return Response(resp.status, {k.lower(): v for k, v in resp.headers.items()}, bytes(data))
         except urllib.error.HTTPError as e:
             if e.code == 304 and accept_304:
@@ -1529,9 +1535,14 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
             ctx.leave(entry, pid, was)
             continue
         origin = c.origin(r["webui"], pid)
+        raw = b""
         try:
             storage, _page = c.body(pid)
-            text, title, _how = convert(storage.encode("utf-8"), "text/html", "html-markdown", base=origin)
+            # A body cut inside an emoji holds half a character pair, which
+            # UTF-8 cannot write. It becomes a question mark, so one such page
+            # does not fail every page of the entry.
+            raw = storage.encode("utf-8", "replace")
+            text, title, _how = convert(raw, "text/html", "html-markdown", base=origin)
         except OutOfTime:
             ctx.leave(entry, pid, was)
             continue
@@ -1544,7 +1555,6 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
         except FetchFailed as e:
             items.append(Item(item=pid, origin=origin, title=r["title"], failed=str(e)))
             continue
-        raw = storage.encode("utf-8")
         items.append(Item(
             item=pid, origin=origin, title=r["title"] or title, version=r["version"], last_modified=r["when"],
             author=r["author"] if entry.authors else "", text=text, converted_by="confluence-storage-markdown/1",
@@ -1770,6 +1780,11 @@ class FilesRefused(Exception):
     """The server sent a commit's trees and refused its files by their ids."""
 
 
+def named(rel: str, pattern: str) -> bool:
+    """Whether an include or exclude pattern names a file. The pattern is matched against the whole path, where `*` crosses a folder. A pattern with no slash is also matched against the file's own name, as a line of .gitignore is, so `draft-*` leaves a draft out of every folder. Letter case counts on every platform."""
+    return fnmatch.fnmatchcase(rel, pattern) or ("/" not in pattern and fnmatch.fnmatchcase(rel.rsplit("/", 1)[-1], pattern))
+
+
 def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, url: str, partial: bool) -> tuple[list[Item], dict]:
     """The items of a git entry, fetched into repo: with partial, the commit's trees alone at first, and then only the files that changed."""
     repo.mkdir()
@@ -1826,7 +1841,7 @@ def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, u
     chosen = []
     for f, oid in blobs.items():
         rel = f[len(entry.path) + 1:] if entry.path and f.startswith(entry.path + "/") else f
-        if any(fnmatch.fnmatch(rel, g) for g in include) and not any(fnmatch.fnmatch(rel, g) for g in entry.exclude):
+        if any(named(rel, g) for g in include) and not any(named(rel, g) for g in entry.exclude):
             chosen.append((f, rel, oid))
     if len(chosen) > entry.max_items:
         raise Refused(f"the path holds more than max_items ({entry.max_items}) matching files; narrow include or raise the cap")

@@ -194,6 +194,7 @@ def plain_spellings(fm_text: str) -> list[str]:
                     "key_row": None,
                     "indented": False,
                     "flow_of": field if field in EVENT_KEYS and ev.flow_style else None,
+                    "block_of": field if field in EVENT_KEYS and not ev.flow_style and len(stack) == 1 else None,
                     "row": ev.start_mark.line,
                 }
             )
@@ -206,6 +207,16 @@ def plain_spellings(fm_text: str) -> list[str]:
                 for line in lines[closed["row"] : ev.end_mark.line + 1]
             ):
                 findings.append(f"a comment inside the flow form of {closed['flow_of']} at {at(ev)}")
+            # A comment line among the events once ended the block for a line
+            # reader, which then never read the event below it. One after
+            # the last event is outside the block and harms nothing.
+            if closed["block_of"]:
+                rows = list(range(closed["row"], min(ev.end_mark.line + 1, len(lines))))
+                while rows and (not lines[rows[-1]].strip() or lines[rows[-1]].lstrip().startswith("#") or rows[-1] >= ev.end_mark.line):
+                    rows.pop()
+                for row in rows:
+                    if lines[row].lstrip().startswith("#"):
+                        findings.append(f"a comment line inside {closed['block_of']} at line {row + 2}")
             continue
         if in_value:
             top["expect_key"] = True
@@ -501,7 +512,9 @@ def footnotes(path: Path, frontmatter: dict, body: str, source_ids: dict[str, di
                 "the id mints the source's node under the bundle base, so write it as rule 8 has a path written"
             )
         ids.setdefault(label, resource)
-        source_ids.setdefault(label, {}).setdefault(resource, []).append(path)
+        # One material however it is written: `./docs/a.md` and `docs/a.md`
+        # are one resource, as rule 18 reads them.
+        source_ids.setdefault(label, {}).setdefault(same_material(resource) or resource, []).append(path)
     referenced: set[str] = set()
     defined: dict[str, str] = {}
     fenced = False

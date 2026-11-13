@@ -126,12 +126,14 @@ else
   info git "no git: gate, pull requests and signed-commit checks do not apply; the host's own version history is the record"
 fi
 if [ -d "$bundle" ]; then
-  crlf_files="$(grep -rl "$(printf '\r')" "$bundle" --include='*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  [ "${crlf_files:-0}" -gt 0 ] && warn endings "$crlf_files file(s) use CRLF - the conventions script reads them; other tools may not"
-  bom_files=0
+  # Each file is asked here, in the one walk. `grep -r --include` is GNU's,
+  # and a grep without it failed in silence, so the warning never showed.
+  crlf_files=0; bom_files=0; cr="$(printf '\r')"
   while IFS= read -r f; do
     [ "$(head -c 3 "$f" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ] && bom_files=$((bom_files + 1))
+    grep -q "$cr" "$f" 2>/dev/null && crlf_files=$((crlf_files + 1))
   done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*')
+  [ "$crlf_files" -gt 0 ] && warn endings "$crlf_files file(s) use CRLF - the conventions script reads them; other tools may not"
   [ "$bom_files" -gt 0 ] && warn endings "$bom_files file(s) start with a byte order mark - conventions rule 9 reports them"
 fi
 
@@ -165,8 +167,11 @@ if [ "$ingit" -eq 1 ]; then
   # --bool reads yes/on/1 as git does; no user.signingkey means git picks the
   # key by the committer's email, which is signing, not its absence.
   sign="$(git -C "$root" config --bool --get commit.gpgsign 2>/dev/null || echo false)"
-  key="$(git -C "$root" config --get user.signingkey 2>/dev/null || true)"
   fmt="$(git -C "$root" config --get gpg.format 2>/dev/null || echo openpgp)"
+  key="$(git -C "$root" config --get user.signingkey 2>/dev/null || true)"
+  # An SSH key may be named by a path that starts with ~, which git expands
+  # and a shell reading the value does not.
+  if [ "$fmt" = ssh ] && [ -n "$key" ]; then key="$(git -C "$root" config --type=path --get user.signingkey 2>/dev/null || printf '%s' "$key")"; fi
   headsig="unsigned"; git -C "$root" cat-file commit HEAD 2>/dev/null | grep -qE '^gpgsig' && headsig="signed"
   if [ "$sign" = true ]; then
     if [ -n "$key" ]; then keyshow="${key##*/}"; else keyshow="by committer email"; fi
@@ -186,7 +191,7 @@ if [ -d "$root/.lokf/curators" ]; then
     onfile=0
     if [ "$fmt" = ssh ]; then
       # user.signingkey is a public key file, the private key beside one, or the key itself
-      case "$key" in ssh-*|ecdsa-*|sk-*) pub="$key" ;; *.pub) pub="$(cat "$key" 2>/dev/null)" ;; *) pub="$(cat "$key.pub" 2>/dev/null)" ;; esac
+      case "$key" in ssh-*|ecdsa-*|sk-*) pub="$key" ;; key::*) pub="${key#key::}" ;; *.pub) pub="$(cat "$key" 2>/dev/null)" ;; *) pub="$(cat "$key.pub" 2>/dev/null)" ;; esac
       blob="$(printf '%s\n' "$pub" | awk 'NR==1 {print $2}')"
       [ -n "$blob" ] && grep -qsF -- "$blob" "$root/.lokf/curators"/*.pub && onfile=1
     elif have gpg; then

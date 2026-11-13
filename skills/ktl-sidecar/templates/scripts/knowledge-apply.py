@@ -81,6 +81,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import datetime as dt
 import os
 import re
@@ -95,18 +96,28 @@ from pathlib import Path
 import yaml
 
 RESERVED = {"index.md", "log.md", "diataxis.md"}
-PATH_RE = re.compile(r"^[a-z0-9][a-z0-9-]*(/[a-z0-9][a-z0-9-]*)+\.md$")
+PATH_RE = re.compile(r"[a-z0-9][a-z0-9-]*(/[a-z0-9][a-z0-9-]*)+\.md")  # matched whole, so no line break can follow it
 EVENT_RE = re.compile(r"^\s*-?\s*by:\s*human:")  # a line the provenance gates read as a person's event
 NOTE_RE = re.compile(r"^\s*-\s*\d{4}-\d{2}-\d{2},\s*human:")  # a line the curator reads as a person's note
 KEPT_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *human:")  # a person's note as knowledge-provenance.sh --unattended reads one
 CURATOR_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *process:ktl-curator:")  # a curator's send-back recorded with no authenticated login (review-session.md)
-ACTOR_RE = re.compile(r"^process:\S+$")
-LOGIN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+# A person's note in any spelling a Markdown reader shows as one: another
+# bullet mark, an indent, a tab or two spaces after the comma. The gates read
+# the strict shape above, so no program counts these, and a person does.
+LOOSE_NOTE_RE = re.compile(r"^\s*[-*+]\s+\d{4}-\d{2}-\d{2}\s*,\s*human:")
+# A person's note as knowledge-report.sh lists one, under an open-questions heading outside a code fence.
+SEEN_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, human:[^ ]*: ")
+ACTOR_RE = re.compile(r"process:\S+")
+# The curator's own actor, which stands for a person who could not sign in. A
+# patch under it would write that person's send-back and events.
+CURATOR_ACTOR = "process:ktl-curator"
 # Matched case-insensitively, and including the event-internal keys, so a
 # patch cannot write a top-level `by: human:...` or a `Verified:` that a line
 # reader would skip but a person, or another parser, could read as provenance.
-DENIED_SET = {"id", "type", "generated", "verified", "status", "stale_after", "timestamp", "by", "at", "revision"}
-DENIED_CREATE = {"generated", "verified", "status", "stale_after", "timestamp", "by", "at", "revision"}
+# `revised` and `refuted` are the event slots LOKF 0.9.0 added, each with an
+# actor of its own, so they are the script's and the curator's like the rest.
+DENIED_SET = {"id", "type", "generated", "verified", "revised", "refuted", "status", "stale_after", "timestamp", "by", "at", "revision"}
+DENIED_CREATE = {"generated", "verified", "revised", "refuted", "status", "stale_after", "timestamp", "by", "at", "revision"}
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
 BULLET_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, (\S+?): ")  # an open question's actor, in the shape the curator writes
@@ -120,6 +131,9 @@ HEADING_RE = re.compile(r"^(#{1,6})[ \t]+(.*\S)[ \t]*$")  # a Markdown heading: 
 OWN_BULLET_RE = re.compile(r"^\* \[[^\]]*\]\([^)]+\)(?: - .*)?$")  # any concept's own index bullet: its link alone, then its description
 FEEDBACK_KIND_RE = re.compile(r"^- \*\*(Miss|Disagreement)\*\* ")
 HANDOFF_LINES, HANDOFF_CHARS = 10, 300
+# What a new file's mode loses, read once: os.umask can only be read by setting it.
+UMASK = os.umask(0)
+os.umask(UMASK)
 FEEDBACK_ENTRIES = 10  # the reader entries one patch may handle; the rest wait for the next run
 # The characters Unicode calls default ignorable, which a renderer draws as
 # nothing, beyond the format and control characters: variation selectors,
@@ -295,6 +309,20 @@ class KeepLoader(yaml.SafeLoader):
     """A safe loader, which builds plain data and no object, that keeps each number, boolean and time as the text it was written in. So a value this script was not asked to change is written back as it was read."""
 
 
+def unique_keys(loader, node, deep=False):
+    """A mapping whose keys are each given once. PyYAML keeps the last of two alike and says nothing, so a concept that spells `verified` twice, as a clean merge of a confirmation and a re-check leaves it, would show this script one block where the gates read both. A patch that gives an operation a key twice would lose the first the same way."""
+    seen = set()
+    for key_node, _ in node.value:
+        key = key_node.value if isinstance(key_node, yaml.ScalarNode) else None
+        if key is not None and key in seen:
+            raise yaml.constructor.ConstructorError(None, None, f"the key {key!r} is given twice in one mapping", key_node.start_mark)
+        seen.add(key)
+    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+
+
+KeepLoader.construct_mapping = unique_keys
+
+
 def keep_text(loader, node):
     text = Plain(node.value)
     text.tag = node.tag
@@ -359,8 +387,36 @@ def shown(text: str) -> str:
     return " ".join("".join(char for char in text if unicodedata.category(char) not in ("Cc", "Cf") and not IGNORABLE.match(char)).split())
 
 
+def human_events(value, slot: str):
+    """Each mapping under one frontmatter key whose `by` names a person, at any depth, as (slot, by, at, revision)."""
+    if isinstance(value, dict):
+        if str(value.get("by", "")).startswith("human:"):
+            yield (slot, str(value.get("by")), str(value.get("at", "")), str(value.get("revision", "")))
+        for inner in value.values():
+            yield from human_events(inner, slot)
+    elif isinstance(value, list):
+        for inner in value:
+            yield from human_events(inner, slot)
+
+
+def seen_notes(body: str) -> list:
+    """The notes in a person's name that knowledge-report.sh lists, read as it reads a body: a line of three backticks or tildes opens or closes a fence, a heading starts or ends the open questions, and a note counts under that heading outside a fence."""
+    notes, fence, inq = [], False, False
+    for line in body.split("\n"):
+        line = line.rstrip("\r")
+        if line.startswith("```") or line.startswith("~~~"):
+            fence = not fence
+        elif fence:
+            continue
+        elif re.match(r"#+ ", line):
+            inq = re.fullmatch(r"## Open questions[ \t]*", line) is not None
+        elif inq and SEEN_NOTE_RE.match(line):
+            notes.append(line.rstrip())
+    return notes
+
+
 def person_record(text: str | None) -> Counter:
-    """What a concept holds in a person's name: each `human:` event in its frontmatter, and each line a person's note would be, read over the whole file as knowledge-provenance.sh --unattended reads it. A concept this script writes holds the same record after as before."""
+    """What a concept holds in a person's name. Each mapping in its frontmatter whose `by` names a person, under any key: `generated` and `verified`, the `revised` and `refuted` of LOKF 0.9.0, an exclusion a person decided, and a key spelt to look like one of them. Each line a person's note would be, read over the whole file as knowledge-provenance.sh --unattended reads it, and in the looser spellings a Markdown reader shows the same way. And each note the report lists, so a note that is still in the file and no longer listed counts as gone. A concept this script cannot read as a mapping still has its notes counted."""
     record: Counter = Counter()
     if text is None:
         return record
@@ -370,22 +426,33 @@ def person_record(text: str | None) -> Counter:
     except yaml.YAMLError:
         fm = None
     if isinstance(fm, dict):
-        for kind in ("generated", "verified"):
-            value = fm.get(kind)
-            for event in [value] if isinstance(value, dict) else value if isinstance(value, list) else []:
-                if isinstance(event, dict) and str(event.get("by", "")).startswith("human:"):
-                    record[(kind, str(event.get("by")), str(event.get("at", "")), str(event.get("revision", "")))] += 1
+        for key, value in fm.items():
+            for event in human_events(value, str(key)):
+                record[event] += 1
     for line in text.split("\n"):
-        if KEPT_NOTE_RE.match(line):
+        if KEPT_NOTE_RE.match(line) or LOOSE_NOTE_RE.match(line):
             record[("note", line.rstrip())] += 1
+    for line in seen_notes(split[1] if split else text):
+        record[("seen", line)] += 1
     return record
 
 
 def record_findings(path: str, was: Counter, now: Counter) -> list:
     """One line for each way a patch would change a person's record in one concept, naming the actor and the day and never the words."""
     findings = []
+    gone = {e[1] for e in was - now if e[0] == "note"}
     for what, entry in [("remove", e) for e in sorted(was - now)] + [("add", e) for e in sorted(now - was)]:
-        if entry[0] == "note":
+        if entry[0] == "seen":
+            # A note that left the file is reported as removed. One still in
+            # the file that the report no longer lists was hidden: a second
+            # heading above it, or a fence opened and never closed.
+            if what == "remove" and entry[1] not in gone:
+                who = re.match(r"^- (\d{4}-\d{2}-\d{2}), *(human:[^ :]*)", entry[1])
+                findings.append(
+                    f"{path}: this patch would hide a note a person left ({who.group(2)}, {who.group(1)}) from the report; "
+                    f"add no second {OPEN_Q} heading, and close every code fence the new text opens"
+                )
+        elif entry[0] == "note":
             who = re.match(r"^- (\d{4}-\d{2}-\d{2}), *(human:[^ :]*)", entry[1])
             name = f"{who.group(2)}, {who.group(1)}" if who else "a person"
             if what == "remove":
@@ -498,7 +565,17 @@ class Concept:
         if not isinstance(fm, dict):
             raise Refused(f"{path}: frontmatter is not a mapping")
         self.fm, self.body = fm, body
+        # The block as the file holds it, and what it parsed to. An operation
+        # that leaves the frontmatter as it was, such as `resolve`, writes
+        # this text back, so a comment or a folded line a person wrote stays.
+        self.fm_text, self.fm_read = fm_text, copy.deepcopy(fm)
         self.targets_before = relation_targets(fm)
+
+    def text(self) -> str:
+        """The concept as it would be written: the frontmatter re-dumped only when an operation changed it."""
+        if getattr(self, "fm_text", None) is not None and self.fm == self.fm_read:
+            return "---\n" + self.fm_text + "\n---\n" + self.body.rstrip("\n") + "\n"
+        return dump(self.fm, self.body)
 
     def events(self) -> list:
         v = self.fm.get("verified")
@@ -553,8 +630,11 @@ class Bundle:
         self.base_iri = self.read_base_iri()
 
     def read_base_iri(self) -> str:
-        split = split_frontmatter((self.knowledge / "index.md").read_text(encoding="utf-8"))
-        fm = read_yaml(split[0]) if split else None
+        try:
+            split = split_frontmatter((self.knowledge / "index.md").read_text(encoding="utf-8"))
+            fm = read_yaml(split[0]) if split else None
+        except (yaml.YAMLError, UnicodeDecodeError) as exc:
+            raise Refused(f"index.md: the bundle's root index.md cannot be read ({' '.join(str(exc).split())[:80]})")
         base = fm.get("base_iri") if isinstance(fm, dict) else None
         if not isinstance(base, str) or not base:
             raise Refused("index.md: the bundle's root index.md carries no base_iri, so no id can be minted")
@@ -563,6 +643,12 @@ class Bundle:
     def concept(self, path: str, must_exist: bool) -> Concept:
         if path not in self.concepts:
             file = self.knowledge / path
+            # A folder of the bundle that is a link to one outside it would
+            # have this script write there, under a path that reads as the
+            # bundle's. Conventions rule 9 refuses a concept that is a link.
+            inside = self.knowledge.resolve()
+            if file.is_symlink() or inside not in (file.parent.resolve(), *file.parent.resolve().parents):
+                raise Refused(f"{path}: a link on this path leads out of the bundle, so nothing is read or written through it")
             self.concepts[path] = Concept(path, file.read_text(encoding="utf-8") if file.is_file() else None)
             if not file.is_file():
                 self.concepts[path].deleted = True  # absent until created
@@ -798,6 +884,8 @@ class Bundle:
     def delete(self, op: dict) -> None:
         path = op["path"]
         c = self.concept(path, must_exist=True)
+        if not (self.knowledge / path).is_file():
+            raise Refused(f"{path}: this patch creates the concept, so there is no file to delete; drop both operations")
         if c.confirmed_by_person():
             raise Refused(f"{path}: a person confirmed this concept, so delete is refused; add a question saying the source is gone, and the curator retires it")
         if c.noted_by_person():
@@ -1104,7 +1192,7 @@ class Bundle:
 
 
 def check_path(path) -> str:
-    if not isinstance(path, str) or not PATH_RE.match(path) or ".." in path or path.rsplit("/", 1)[-1] in RESERVED:
+    if not isinstance(path, str) or not PATH_RE.fullmatch(path) or ".." in path or path.rsplit("/", 1)[-1] in RESERVED:
         raise Refused(f"path {path!r} is not a concept path: lowercase a-z, 0-9 and hyphens, at least one folder, .md, and not a reserved name")
     if path.startswith("knowledge/"):
         raise Refused(f"path {path!r} starts with knowledge/; paths are relative to .lokf/knowledge/")
@@ -1244,8 +1332,10 @@ def main(argv: list[str]) -> int:
     by = doc.get("by", "process:ktl-librarian")
     now = dt.datetime.now(dt.timezone.utc)
     findings: list[str] = []
-    if not isinstance(by, str) or not ACTOR_RE.match(by):
+    if not isinstance(by, str) or not ACTOR_RE.fullmatch(by):
         findings.append(f"by must be a process:<id> actor, not {by!r}")
+    elif by == CURATOR_ACTOR:
+        findings.append(f"by may not be {CURATOR_ACTOR}: that actor stands for a person in a curator's session, and only ktl-curator writes under it")
     handoff: list = []
     try:
         handoff = handoff_lines(doc.get("handoff"))
@@ -1284,7 +1374,7 @@ def main(argv: list[str]) -> int:
         if not findings:
             for path, c in bundle.concepts.items():
                 if c.touched:
-                    findings.extend(record_findings(path, c.record, Counter() if c.deleted else person_record(dump(c.fm, c.body))))
+                    findings.extend(record_findings(path, c.record, Counter() if c.deleted else person_record(c.text())))
             findings.extend(bundle.relation_findings())
     for line in findings:
         print(line)
@@ -1295,10 +1385,15 @@ def main(argv: list[str]) -> int:
     for path, c in bundle.concepts.items():
         if not c.touched:
             continue
-        writes.append((bundle.knowledge / path, None if c.deleted else dump(c.fm, c.body)))
+        writes.append((bundle.knowledge / path, None if c.deleted else c.text()))
     for file, text in bundle.indexes.items():
         writes.append((file, text))
-    log_text = bundle.log_text()
+    try:
+        log_text = bundle.log_text()
+    except (OSError, UnicodeDecodeError) as exc:
+        print(f"log.md: the log cannot be read ({' '.join(str(exc).split())[:80]})")
+        print("refused: 1 finding(s); nothing was written")
+        return 1
     if log_text is not None:
         writes.append((bundle.knowledge / "log.md", log_text))
     try:
@@ -1312,7 +1407,7 @@ def main(argv: list[str]) -> int:
     ledger_text = bundle.ledger_text()
     if ledger_text is not None:
         writes.append((bundle.ledger, ledger_text))
-    concepts = {path: dump(c.fm, c.body) for path, c in bundle.concepts.items() if c.touched and not c.deleted}
+    concepts = {path: c.text() for path, c in bundle.concepts.items() if c.touched and not c.deleted}
     schema_note = ""
     if concepts:
         top = bundle.knowledge / "index.md"
@@ -1350,6 +1445,9 @@ def main(argv: list[str]) -> int:
                 with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
                     f.write(text)
                 staged[file] = tmp
+                # mkstemp makes a file only its owner reads. The file keeps
+                # the mode it had, and a new one takes what the umask leaves.
+                os.chmod(tmp, file.stat().st_mode & 0o777 if file.is_file() else 0o666 & ~UMASK)
         except OSError as exc:
             for tmp in staged.values():
                 try:
@@ -1358,14 +1456,24 @@ def main(argv: list[str]) -> int:
                     pass
             print(f"a file could not be written ({exc}); nothing was changed")
             return 2
-        for file, text in writes:
-            rel = file.relative_to(root)
-            if text is None:
-                file.unlink()
-                print(f"deleted {rel}")
-            else:
-                os.replace(staged[file], file)
-                print(f"wrote {rel}")
+        try:
+            for file, text in writes:
+                rel = file.relative_to(root)
+                if text is None:
+                    if file.exists():
+                        file.unlink()
+                    print(f"deleted {rel}")
+                else:
+                    os.replace(staged.pop(file), file)
+                    print(f"wrote {rel}")
+        except OSError as exc:
+            for tmp in staged.values():
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+            print(f"a file could not be put in place ({exc}); the files named above were written and the rest were not. Check the bundle with git status before you run the patch again")
+            return 2
     if not a.dry_run and not a.keep:
         patch_file.unlink()
     if handoff:

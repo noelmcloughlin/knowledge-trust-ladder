@@ -210,7 +210,7 @@ Whichever agent, run the workflow once by hand from the Actions tab before turni
 
 ## `knowledge-librarian.sh`: the agent wrapper
 
-It is generic, with no placeholders. It resolves the repository root from its own location and finds `ktl-librarian/SKILL.md` under `.claude/skills/`, `.github/skills/`, `.agents/skills/` or `skills/`. If your repository uses another directory, extend the `candidate` list and run the script once to confirm. It then builds a prompt telling the agent to follow that skill, and calls `$AGENT_CLI -p`.
+It is generic, with no placeholders. It resolves the repository root from its own location and finds `ktl-librarian/SKILL.md` under `.agents/skills/`, where the scheduled workflow installs the pinned skill, then `.claude/skills/`, `.github/skills/` or `skills/`. If your repository uses another directory, extend the `candidate` list and run the script once to confirm. It then builds a prompt telling the agent to follow that skill, and calls `$AGENT_CLI -p`.
 
 The workflow relies on this contract:
 

@@ -59,7 +59,7 @@ export const DOCS = {
       pages: ["cast/sidecar", "cast/librarian", "cast/registrar", "cast/curator", "cast/docent", "cast/prose", "cast/website"],
     },
     { label: "Guides", pages: ["obsidian", "m365", "ingest"] },
-    { label: "Where it fits", pages: ["young-readers", "skills-repositories", "three-lines"] },
+    { label: "Where it fits", pages: ["uses", "young-readers", "skills-repositories", "three-lines"] },
     {
       label: "Architecture",
       pages: ["architecture", "how-it-works", "context-layer", "federation"],

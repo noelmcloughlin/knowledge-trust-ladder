@@ -186,6 +186,18 @@ def test_a_sync_copies_adds_reports_pins_and_writes_the_entry(tmp_path, skills, 
     checks.ok((host / ".lokf" / "scripts" / "knowledge-sync.sh").stat().st_mode & 0o111, "an added script is executable")
 
 
+def test_a_clone_given_as_the_source_keeps_its_whole_history(tmp_path, skills, checks):
+    """A source that lacks the host's old tag was once fetched into with --depth 1, which cut a full clone to one commit."""
+    host = make_host(tmp_path, skills)
+    src = Git(skills)
+    src("tag", "-d", "v1.0.0")
+    before = src("rev-list", "--count", "HEAD")
+    result = sync(host, skills)
+    checks.ok(result, "the sync runs from a source without the old tag", result.out)
+    checks.ok(src("rev-parse", "--is-shallow-repository").strip() == "false" and src("rev-list", "--count", "HEAD") == before,
+              "the source clone is read and never fetched into", f'{src("rev-parse", "--is-shallow-repository")} {src("rev-list", "--count", "HEAD")}')
+
+
 def test_a_host_at_the_release_has_nothing_to_sync(tmp_path, skills, checks):
     host = make_host(tmp_path, skills)
     sync(host, skills)
