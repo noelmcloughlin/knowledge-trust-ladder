@@ -4,16 +4,27 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-11-13
+
 ### Added
 
+- **Each role has a docs page of its own under `docs/cast/`, and `docs/first-bundle.md` walks through a first run.** The README gains a get-started section and the cast as a table, and the architecture page links each role's page.
+- **`docs/for-the-curious.md` is now `docs/how-it-works.md`, and its old address on the site redirects.** The ingest page is split into a how-to, `docs/ingest.md`, and a reference, `docs/ingest-reference.md`.
+- **`docs/young-readers.md` says how a bundle retells adult knowledge for readers aged 8 to 18.** It sits beside the three-lines page, at the other end of the range.
+- **`docs/examples/first-bundle.md` holds a captured first run of the four roles on a small repository.** The first-bundle page links it.
+- **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
+- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
+- **`docs/examples/curator.md` holds a captured `ktl-curator` session on this repository's own bundle.** It shows the report, nine verdicts given one per turn, and the log lines and checks that followed. The nine docent answers asked after it, under `Evidence first: yes`, move to `docs/examples/docent-after-curation.md`.
 - **`docs/uses.md` says what KTL is for, and what it is not.** It lists the uses the skills were built for, answers the two that readers asked about, DevSecOps and technology governance, and gives three questions for judging any other.
 
 ### Changed
 
+- **The file a bundle's `schema :=` line names is now called its *domain vocabulary*.** A *domain schema* is a LinkML project's own schema, which never imports `lokf`. The skills, docs, sidecar templates and scripts, workflow messages and this repository's own bundle use the two names. The librarian's recipe is now `references/domain-vocabulary.md`, which defines them, and the curator's page is `references/domain-vocabularies.md`. The `schema` variable and `--schema` are unchanged.
 - **`docs/three-lines.md` lists only what remains.** LOKF 0.9.0 and private federation members are built, and an auditor skill waits for a host with a third line.
 
 ### Fixed
 
+- **A concept's `exclusions` entry no longer reads as a reader's dispute.** `knowledge-report.sh` gave both lines one letter, so such a concept's label said *a reader disputed this*.
 - **The pen holds a person's record against nine more spellings.** It refuses `revised` and `refuted`, a `human:` actor under any key, a note in a looser Markdown spelling, a second heading or an open fence that hides a note from the report, a key given twice, the curator's own actor, a path or actor that ends in a line break, a link that leaves the bundle, and a delete of a concept the same patch creates.
 - **The pen keeps a file's mode, and writes back an unchanged frontmatter block as it found it.** A file it wrote became readable by its owner alone, and a `resolve` dropped the block's comments.
 - **A federation build keeps each quad whole, and a member's own words out of the workspace index.** A line separator inside a literal cut `graph.nq` where no reader could load it. A member's index title could add lines to the index that the MCP server serves as its instructions. The build also refuses the rest of the XML family as files a browser runs.
@@ -25,26 +36,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The preflight counts CRLF files with any `grep`, and finds an SSH signing key given as `key::` or under `~`.**
 - **The librarian's wrapper hands the agent the skill the workflow installed, and refuses an agent that tells git to stop watching a file.** A copy of the skill a host committed under `.claude/skills/` came first, and a `skip-worktree` flag hid a replaced script from the write-scope check. The federation's `labels.rq` and `moved.rq` compare two times as times.
 - **The website refuses a raw-HTML address that holds a control character.** A browser drops a tab from `java<tab>script:` and runs it, and the check saw no scheme there.
-
-## [0.64.0] - 2026-11-12
-
-### Added
-
-- **Each role has a docs page of its own under `docs/cast/`, and `docs/first-bundle.md` walks through a first run.** The README gains a get-started section and the cast as a table, and the architecture page links each role's page.
-- **`docs/for-the-curious.md` is now `docs/how-it-works.md`, and its old address on the site redirects.** The ingest page is split into a how-to, `docs/ingest.md`, and a reference, `docs/ingest-reference.md`.
-- **`docs/young-readers.md` says how a bundle retells adult knowledge for readers aged 8 to 18.** It sits beside the three-lines page, at the other end of the range.
-- **`docs/examples/first-bundle.md` holds a captured first run of the four roles on a small repository.** The first-bundle page links it.
-- **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
-- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
-- **`docs/examples/curator.md` holds a captured `ktl-curator` session on this repository's own bundle.** It shows the report, nine verdicts given one per turn, and the log lines and checks that followed. The nine docent answers asked after it, under `Evidence first: yes`, move to `docs/examples/docent-after-curation.md`.
-
-### Changed
-
-- **The file a bundle's `schema :=` line names is now called its *domain vocabulary*.** A *domain schema* is a LinkML project's own schema, which never imports `lokf`. The skills, docs, sidecar templates and scripts, workflow messages and this repository's own bundle use the two names. The librarian's recipe is now `references/domain-vocabulary.md`, which defines them, and the curator's page is `references/domain-vocabularies.md`. The `schema` variable and `--schema` are unchanged.
-
-### Fixed
-
-- **A concept's `exclusions` entry no longer reads as a reader's dispute.** `knowledge-report.sh` gave both lines one letter, so such a concept's label said *a reader disputed this*.
 
 ## [0.63.0] - 2026-11-12
 
