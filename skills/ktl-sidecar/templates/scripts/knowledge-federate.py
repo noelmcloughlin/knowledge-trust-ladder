@@ -1228,14 +1228,24 @@ def fetch_checked(url: str, sha256: str, dest: pathlib.Path, max_bytes: int, wha
         raise
 
 
+def part_file(cache: pathlib.Path, sha256: str) -> pathlib.Path:
+    """A new file in the cache for one download, so that two runs sharing the cache never write the same one. The finished file is renamed into place."""
+    fd, name = tempfile.mkstemp(dir=cache, prefix=f"{sha256}.", suffix=".part")
+    os.close(fd)
+    return pathlib.Path(name)
+
+
 def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) -> tuple[pathlib.Path, str]:
     """The member's zip or served file, in the cache under its digest, checked against the checksum, the zip rules and the attestation."""
     cache.mkdir(parents=True, exist_ok=True)
     cached = cache / f"{member.sha256}{'.jsonld' if member.served else '.zip'}"
     if not cached.is_file():
-        tmp = cache / f"{member.sha256}.part"
-        fetch_checked(member.zip_url, member.sha256, tmp, max_bytes, member.slug, zipped=not member.served)
-        tmp.replace(cached)
+        tmp = part_file(cache, member.sha256)
+        try:
+            fetch_checked(member.zip_url, member.sha256, tmp, max_bytes, member.slug, zipped=not member.served)
+            tmp.replace(cached)
+        finally:
+            tmp.unlink(missing_ok=True)
     elif digest(cached) != member.sha256:
         cached.unlink()
         raise Failed(f"{member.slug}: the cached copy no longer matches its digest; removed, run again")
@@ -1413,9 +1423,12 @@ def obtain_file(url: str, sha256: str, cache: pathlib.Path, what: str, max_bytes
     cached = cache / f"{sha256}{suffix}"
     if cached.is_file() and digest(cached) == sha256:
         return cached
-    tmp = cache / f"{sha256}.part"
-    fetch_checked(url, sha256, tmp, max_bytes, what, zipped=suffix == ".zip")
-    tmp.replace(cached)
+    tmp = part_file(cache, sha256)
+    try:
+        fetch_checked(url, sha256, tmp, max_bytes, what, zipped=suffix == ".zip")
+        tmp.replace(cached)
+    finally:
+        tmp.unlink(missing_ok=True)
     return cached
 
 
@@ -1936,7 +1949,6 @@ def downloads(args, tmp: pathlib.Path) -> pathlib.Path:
 
 def _build(args, tmp: pathlib.Path, note_new) -> int:
     import pyoxigraph as ox
-    from lokf.model import load_bundle
     from lokf.registry import REGISTRY_VERSION, Registry, entry_for_bundle
     # lokf 0.8.0 has no allow_foreign_ids parameter, and indexes such ids anyway.
     foreign_ids = {"allow_foreign_ids": True} if "allow_foreign_ids" in inspect.signature(entry_for_bundle).parameters else {}
@@ -2031,6 +2043,9 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     seen: dict[str, Member] = {}  # base_iri -> the member it joined as
     slugs = {"domain"}  # the folder names under bundles/ and export/; "domain" is this bundle's own
     resolved: list[tuple[Member, int | None, pathlib.Path, str]] = []  # member, the size of its file, knowledge dir, verdict
+    # Each bundle as read here, by its folder, so the links between bundles
+    # are found without reading it again.
+    parsed: dict = {}
     while queue:
         member, depth = queue.pop(0)
         if member.base_iri in member.ancestors:
@@ -2120,6 +2135,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
         else:
             kdir = write_out(zip_path, bundle_dir, member) if member.served else unpack(zip_path, bundle_dir)
         sub_bundle, sub_domains, sub_members = read_domain(kdir)
+        parsed[kdir] = sub_bundle
         if sub_bundle.base_iri != member.base_iri:
             raise Failed(f"{member.slug}: the {'served file' if member.served else 'zip'}'s index.md says base_iri {sub_bundle.base_iri!r}, the member concept says {member.base_iri!r}")
         say(f"{member.slug}: {member.version} {verdict}; base_iri checked")
@@ -2192,6 +2208,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     fit: list[str] = []
     domain_copy = work / "domain" / ".lokf" / "knowledge"
     shutil.copytree(knowledge, domain_copy, ignore=shutil.ignore_patterns(".obsidian"))
+    parsed[domain_copy] = bundle
     bundles = [("domain", domain_copy, None)] + [(m.slug, kdir, m) for m, _, kdir, _ in resolved]
     for slug, kdir, member in sorted(bundles, key=lambda b: b[2].base_iri if b[2] else domain_base):
         source_base = member.source_base if member else ""
@@ -2244,7 +2261,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
             "health": "" if args.verify_only else health_line(root, kdir.parent.parent), "kdir": kdir,
         })
         graphs.append((entry.base_iri, out_dir / "graph.nt"))
-        loaded[entry.base_iri] = load_bundle(kdir)
+        loaded[entry.base_iri] = parsed[kdir]
         say(f"{slug}: registered {entry.base_iri} ({entry.void.get('triples', 0)} triples) and exported")
     registry.save()
 

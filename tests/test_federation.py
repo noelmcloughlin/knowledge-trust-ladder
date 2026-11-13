@@ -6,7 +6,9 @@ repository's own sidecar environment (`uv run --project .lokf`), so the lokf
 toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 
 1. a build resolves the members into a lock, loads one named graph per
-   bundle plus the lock graph, gates clean, and writes the same bytes twice;
+   bundle plus the lock graph, gates clean, and writes the same bytes twice.
+   The script reads each bundle once itself, and two downloads that share a
+   cache write a file each;
 
 2. each of these stops the build and leaves the previous snapshot in place:
    - a tampered checksum;
@@ -172,6 +174,7 @@ GitHub API and the release files from fixture files, and put a stand-in
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import hashlib
 import json
@@ -828,6 +831,31 @@ def test_the_report_on_a_member_reads_no_git_configuration_from_it(tmp_path):
     r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", code], cwd=tmp_path)
     assert r.rc == 0 and "Confirmed by a person" in r.out, r.out
     assert not marker.exists(), "git ran the member's fsmonitor command"
+
+
+def test_a_build_reads_each_bundle_once_itself(federation, tmp_path):
+    """The script read each bundle for the domain walk and again for the links between bundles. The toolkit's own export and checks read it apart from these."""
+    host = federation["host"]
+    code = (
+        "import collections, importlib.util, pathlib, sys\n"
+        "import lokf.model\n"
+        f"script = {str(SCRIPT)!r}\n"
+        "counts = collections.Counter()\n"
+        "real = lokf.model.load_bundle\n"
+        "def counting(path, *args, **kwargs):\n"
+        "    if sys._getframe(1).f_code.co_filename == script:\n"
+        "        counts[pathlib.Path(path).resolve().parent.parent.name] += 1\n"
+        "    return real(path, *args, **kwargs)\n"
+        "lokf.model.load_bundle = counting\n"
+        "spec = importlib.util.spec_from_file_location('kf', script)\n"
+        "kf = importlib.util.module_from_spec(spec); spec.loader.exec_module(kf)\n"
+        f"rc = kf.main(['--root', {str(host)!r}, '--allow-local', 'build', '--no-attestation'])\n"
+        "print('COUNTS', rc, sorted(counts.items()))\n"
+    )
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", code], cwd=tmp_path)
+    assert r.rc == 0 and "COUNTS 0 " in r.out, r.out
+    counts = dict(ast.literal_eval(r.out.split("COUNTS 0 ", 1)[1].splitlines()[0]))
+    assert counts == {"host": 1, "a": 1, "b": 1}, counts
 
 
 def test_a_member_that_is_a_domain_is_followed(federation, tmp_path):
@@ -1737,6 +1765,31 @@ def test_a_name_that_turns_private_after_the_check_is_refused_at_the_connection(
         monkeypatch.setattr(kf, "private_address", lambda address: False)
         kf.fetch(url, tmp_path / "got.zip")
         assert read(tmp_path / "got.zip") == "zip"
+
+
+def test_two_downloads_sharing_a_cache_write_a_file_each(tmp_path, monkeypatch):
+    """Two runs that share --cache wrote one <sha256>.part, so the second rename found the file gone or the first took the other's bytes."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("knowledge_federate_cache", SCRIPT)
+    kf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kf)
+    sha = hashlib.sha256(b"schema").hexdigest()
+    cache = tmp_path / "cache"
+    parts = []
+
+    def fetched(url, sha256, dest, max_bytes, what, zipped):
+        parts.append(dest)
+        if len(parts) == 1:
+            # A second run asks for the same file while the first downloads it.
+            assert kf.obtain_file(url, sha256, cache, what) == cache / f"{sha}.yaml"
+        dest.write_bytes(b"schema")
+
+    monkeypatch.setattr(kf, "fetch_checked", fetched)
+    got = kf.obtain_file("https://example.org/schema.yaml", sha, cache, "m")
+    assert got == cache / f"{sha}.yaml" and got.read_bytes() == b"schema"
+    assert len(set(parts)) == 2 and all(p.name.endswith(".part") for p in parts), parts
+    assert sorted(p.name for p in cache.iterdir()) == [f"{sha}.yaml"], list(cache.iterdir())
 
 
 @pytest.mark.parametrize(("address", "refused"), [
