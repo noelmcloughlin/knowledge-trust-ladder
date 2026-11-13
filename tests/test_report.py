@@ -2377,3 +2377,24 @@ def test_without_a_revision_this_history_holds_the_recording_commit_decides(tmp_
     out = report(waited(tmp_path, revision), "worklist").out
     assert has_line(out, "Sources that moved since the concept was derived or last checked: none"), out
 
+
+def test_a_source_git_holds_no_history_of_is_named_and_makes_no_run_busy(tmp_path):
+    """An ignored file never moved, and nothing said it was never compared."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / ".gitignore", "build/\n")
+    write(tmp_path / "build" / "api.md", "generated\n")
+    write(tmp_path / "docs" / "a.md", "a\n")
+    stamp = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(kk / "t" / "ign.md", f"---\ntype: GlossaryTerm\ntitle: Ign\nresource: build/api.md\n{stamp}---\n")
+    write(kk / "t" / "doc.md", f"---\ntype: GlossaryTerm\ntitle: Doc\nresource: docs/a.md\n{stamp}---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    out = report(tmp_path, "worklist").out
+    assert has_line(out, "Sources git holds no history of, so not compared (an ignored file, or one inside a submodule): 1") and has_line(
+        out, "- t/ign.md: build/api.md"
+    ), f"the work list did not name a source git holds no history of: {out}"
+    quiet = report(tmp_path, "quiet")
+    assert quiet.rc == 0, f"a source git holds no history of made a run busy: {quiet.out}"

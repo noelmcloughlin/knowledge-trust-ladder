@@ -99,7 +99,10 @@
 # while the pull request that carried the event waited has moved, though the
 # squash merge recorded the event after it. A change in the recording commit
 # itself still has not.
-
+#
+# A source git holds no history of, an ignored file or one inside a
+# submodule, cannot be compared at all. The work list names it apart, and it
+# never makes a run busy.
 #
 # A concept's own body counts as a source too. The pen stamps every edit it
 # writes, so a body that differs from the one the stamp's commit held was changed
@@ -712,9 +715,9 @@ quotes_load() {
 # says how). Out come `M w path list` for the work list, against the later of
 # generated.at and the newest verified event, and `M c path list` for the
 # report, against the newest confirmation by a person. For the work list a
-# source the librarian's own question covers goes to `M a path list`, and one
-# a closed pull request had before it to a `D` line, as the header says. A
-# URL is never fetched.
+# source the librarian's own question covers goes to `M a path list`, one a
+# closed pull request had before it to a `D` line, as the header says, and one
+# git holds no history of to `M u path list`. A URL is never fetched.
 #
 # Git is asked a few questions for the whole bundle, never one for each
 # concept or source, so the cost grows with the history and not with the
@@ -774,8 +777,9 @@ git_status() {
 #   gone     no file or folder there, with the last commit that touched it,
 #            if git held it;
 #   edited   it carries a change not yet committed;
-#   clean    with the day and the hash of its last commit.
-# A source that is there and that git holds no history of gets no line.
+#   clean    with the day and the hash of its last commit;
+#   nohist   it is there, and git holds no history of it: an ignored file, or
+#            one inside a submodule. Nothing can say whether it moved.
 # A URL, an absolute path and an identifier with a scheme name no file. Two
 # characters at least before the colon, so a Windows drive letter is still a
 # path. The root itself, as a source map names it, holds the bundle too. Its
@@ -854,6 +858,7 @@ sources_load() {
       if (!there) print "ZW\t" res "\tgone\t" cd[1] "\t-"
       else if (d) print "ZW\t" res "\tedited\t-\t-"
       else if (c != "") print "ZW\t" res "\tclean\t" cd[1] "\t" cd[2]
+      else print "ZW\t" res "\tnohist\t-\t-"
     }' > "$tmp/sources"
 }
 
@@ -1072,7 +1077,7 @@ END {
       # history holds it: a source changed after it moved, even when the
       # stamp reached this branch later, in a squash merge.
       base = ""; if ((rv in VALID) && anc(VALID[rv], head)) base = VALID[rv]
-      out = ""; asked = ""; aside = ""
+      out = ""; asked = ""; aside = ""; nohist = ""
       for (i = 1; i <= m; i++) {
         r = srt[i]; if (!(r in STATE)) continue
         st = STATE[r]; h = HASH[r]; entry = ""
@@ -1082,6 +1087,7 @@ END {
           if (base != "") { if (h != rec && h != base && anc(base, h)) entry = r " (" DAY[r] quoted(p, r) ")" }
           else if (rec != "" && h != rec && anc(rec, h)) entry = r " (" DAY[r] quoted(p, r) ")"
         }
+        else if (st == "nohist" && which == "w") nohist = add(nohist, r)
         if (entry == "") continue
         if (which == "w") {
           if (dec != "" && upto(h, dd[1])) { aside = add(aside, entry); continue }
@@ -1108,6 +1114,7 @@ END {
       if (out != "") print "M\t" which "\t" p "\t" out
       if (asked != "") print "M\ta\t" p "\t" asked
       if (aside != "") print "D\tsource\t" p ": " aside "\t" dd[2] "\t" dd[3] "\t1"
+      if (nohist != "") print "M\tu\t" p "\t" nohist
     }
   }
   # The notes a person left, not answered by a later confirmation, whose
@@ -1319,6 +1326,10 @@ lists() {  # mode
       else print "Sources: not compared here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/); re-verify each concept against its source"
       for (i = 1; i <= nc; i++) { p = order[i]; if (("a", p) in moved) { n2++; body2 = body2 "- " p ": " moved["a", p] "\n" } }
       if (git == 1) section("Sources that moved, where your own question has waited for a person since", n2, body2)
+      # A source git holds no history of, an ignored file or one inside a
+      # submodule, was never compared, and says so.
+      for (i = 1; i <= nc; i++) { p = order[i]; if (("u", p) in moved) { n3++; body3 = body3 "- " p ": " moved["u", p] "\n" } }
+      if (git == 1) section("Sources git holds no history of, so not compared (an ignored file, or one inside a submodule)", n3, body3)
       # The concepts `quiet` counts as carrying no stamp, so a run it starts
       # is told which they are.
       for (i = 1; i <= nc; i++) { p = order[i]; if ((p in bare_stamp) && !(p in left_stamp)) { ns++; sbody = sbody "- " p ": no stamp\n" } }
