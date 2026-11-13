@@ -92,7 +92,13 @@
 # invents one. It is the file's history, not its meaning: an edit that
 # changed no fact still counts, and only reading the source says which it
 # was.
-
+#
+# An event may name the state of the source it checked: a `revision` that is
+# a commit. When this history holds that commit, the source is compared with
+# it rather than with the commit that recorded the event, so a source changed
+# while the pull request that carried the event waited has moved, though the
+# squash merge recorded the event after it. A change in the recording commit
+# itself still has not.
 
 #
 # A concept's own body counts as a source too. The pen stamps every edit it
@@ -333,6 +339,7 @@ trap 'rm -rf "$tmp"' EXIT
 #      latest human verified.at  human events  verified events  latest verified.at  open questions
 #      that human time as written  the later of generated.at and verified.at as written
 #      the revision that human event carries, a commit hash cut to seven characters
+#      the revision of the event the work list compares with, and that of the human event, whole
 #   R  path  resource            one per `resource:` line, the concept's own and each source's
 #   X  path  resource            one per exclusion's `resource:` line, which no R line repeats
 #   E  path  index  resource     one per `sources` entry that carries an `excerpt`, with its place in the list from 0
@@ -410,7 +417,7 @@ function emit(  n) {
     n = norm(at)
     if (kind == "generated") { gen_by = by; gen_at = n; gen_raw = at; gen_rev = rev; hasgen = 1 }
     else { vn++; eby[vn] = by; eat[vn] = n; eraw[vn] = at; erev[vn] = rev
-           if (n > check_at) { check_at = n; check_raw = at }
+           if (n > check_at) { check_at = n; check_raw = at; check_rev = rev }
            if (by ~ /^human:/) { hn++; if (n > human_at) { human_at = n; human_raw = at; human_rev = rev } } }
   }
   inev = 0; by = ""; at = ""; rev = ""
@@ -465,7 +472,7 @@ function reset() {
   title = ""; status = ""; stale = ""; tstamp = ""; cid = ""; ctype = ""; topres = ""; firstres = ""
   fm = 0; body = 0; started = 0; skip = 0; top = ""; inv = 0; inev = 0; kind = ""; by = ""; at = ""; rev = ""
   gen_by = ""; gen_at = ""; gen_raw = ""; gen_rev = ""; hasgen = 0; vn = 0; hn = 0; hm = 0
-  check_at = ""; check_raw = ""; human_at = ""; human_raw = ""; human_rev = ""
+  check_at = ""; check_raw = ""; check_rev = ""; human_at = ""; human_raw = ""; human_rev = ""; human_full = ""
   inflow = 0; flowbuf = ""; flowseq = 0; sidx = -1; kcol = 0; sres = ""; shas = 0; sid = 0; skey = 0
   rel = ""; rp = ""; rt = ""; inrels = 0; fence = 0; inq = 0; qn = 0
   split("", eby); split("", eat); split("", eraw); split("", erev); split("", ord); split("", shown); split("", hum); split("", chk)
@@ -577,8 +584,9 @@ function finish() {
   # reads it. The specification makes a concept stale from that instant on,
   # and LOKF 0.9.0 types stale_after as a datetime.
   st = norm(stale); if (st != "") st = substr(st, 1, 10); else if (stale ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) st = substr(stale, 1, 10)
+  human_full = human_rev
   if (human_rev ~ /^[0-9a-f]+$/ && length(human_rev) > 7) human_rev = substr(human_rev, 1, 7)
-  printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev
+  printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev, (gen_at > check_at ? gen_rev : check_rev), human_full
   printf "I\t%s\t%s\t%s\t%s\n", path, cid, ctype, (topres != "" ? topres : firstres)
   if (!rows) return
   # The evidence rows. The events by a human: actor whose time can be read are
@@ -715,8 +723,8 @@ quotes_load() {
 #   - one `git log --name-only` over every source, for the last commit of each;
 #   - one `git log -p` over the bundle, for the last commit of each concept and
 #     the commit that first wrote each stamp time and each open question;
-#   - one `git cat-file` for the texts the stamps recorded, where a body may
-#     have changed;
+#   - one `git cat-file` for the revisions events carry, and one for the texts
+#     the stamps recorded, where a body may have changed;
 #   - one `git log --ancestry-path` or `git merge-base` for each commit that
 #     history has to order against others.
 # The decisions are made in awk, by `moved_fn` below. It asks for what it
@@ -724,26 +732,27 @@ quotes_load() {
 # run again once git has answered, at most six times.
 moved() {
   [ "$tracked" = 1 ] || return 0
-  local top rpfx kpfx n round
+  local top rpfx kpfx head n round
   top="$(git -C "$root" rev-parse --show-toplevel 2>/dev/null)" || return 0
   rpfx="$(git -C "$root" rev-parse --show-prefix 2>/dev/null || true)"
   kpfx="$(git -C "$kdir" rev-parse --show-prefix 2>/dev/null || true)"
-  git -C "$root" rev-parse -q --verify HEAD >/dev/null 2>&1 || return 0
+  head="$(git -C "$root" rev-parse -q --verify HEAD 2>/dev/null)" || return 0
   : > "$tmp/anc"; : > "$tmp/bodies"; : > "$tmp/notes"
   [ -f "$tmp/quoted" ] || : > "$tmp/quoted"
   [ -f "$tmp/quote_gone" ] || : > "$tmp/quote_gone"
   git_status
   sources_load
   history_load
+  revisions_load
   round=0
   while :; do
     round=$((round + 1))
     : > "$tmp/need"; : > "$tmp/notes.next"
-    { printf '%s\n' "$all"; cat "$tmp/sources" "$tmp/hist" "$tmp/anc" "$tmp/bodies"
+    { printf '%s\n' "$all"; cat "$tmp/sources" "$tmp/hist" "$tmp/revs" "$tmp/anc" "$tmp/bodies"
       awk -F'\t' '{ print "ZT\t" $1 "\t" $2 " " $3 " " $4 }' "$tmp/touched" 2>/dev/null
       awk -F'\t' '{ print "ZQ\t" $1 "\t" $3 }' "$tmp/quoted"
       awk -F'\t' '{ print "ZG\t" $1 "\t" $2 }' "$tmp/quote_gone"
-    } | awk -F'\t' -v SQ="'" -v qstate="$quote_state" -v needfile="$tmp/need" -v notefile="$tmp/notes.next" "$moved_fn" > "$tmp/moved.next"
+    } | awk -F'\t' -v SQ="'" -v head="$head" -v qstate="$quote_state" -v needfile="$tmp/need" -v notefile="$tmp/notes.next" "$moved_fn" > "$tmp/moved.next"
     [ -s "$tmp/need" ] && [ "$round" -lt 6 ] || break
     ancestry_run
     bodies_run
@@ -881,6 +890,19 @@ history_load() {
     }' > "$tmp/hist"
 }
 
+# The revisions events carry that may name a commit, each as `ZV revision
+# commit` when git holds it as one. The work list compares a source with the
+# commit the event names, when that commit is in this history.
+revisions_load() {
+  printf '%s\n' "$all" | awk -F'\t' '$1 == "C" { if ($16 ~ /^[0-9a-f]+$/ && length($16) >= 7 && !seen[$16]++) print $16; if ($17 ~ /^[0-9a-f]+$/ && length($17) >= 7 && !seen[$17]++) print $17 }' > "$tmp/revq"
+  if [ -s "$tmp/revq" ]; then
+    sed 's/$/^{commit}/' "$tmp/revq" | git -C "$root" cat-file --batch-check='%(objectname) %(objecttype)' 2>/dev/null \
+      | paste "$tmp/revq" - | awk -F'\t' '$2 ~ / commit$/ { split($2, a, " "); print "ZV\t" $1 "\t" a[1] }' > "$tmp/revs"
+  else
+    : > "$tmp/revs"
+  fi
+}
+
 # Whether one commit comes before another in history, for each pair moved_fn
 # asked about, as `ZA first second 1` or `... 0`. A commit with several pairs
 # asks git once for every commit after it; one with a single pair asks
@@ -947,6 +969,7 @@ bodies_run() {
 #   ZW  each source: its state, hash and day (sources_load)
 #   ZH  each concept: its last commit and day; ZF the commit that first wrote
 #       a text in it; ZY a concept not yet committed (history_load)
+#   ZV  a revision that names a commit (revisions_load)
 #   ZA  the order of two commits (ancestry_run); ZB whether a body changed
 #       (bodies_run)
 #   ZT  the closed pull request that touched a concept; ZQ a passage a
@@ -1021,6 +1044,7 @@ $1 == "ZW" { STATE[$2] = $3; HASH[$2] = ($4 == "-" ? "" : $4); DAY[$2] = $5; nex
 $1 == "ZH" { LAST[$2] = $3; LDAY[$2] = $4; next }
 $1 == "ZF" { FIRST[$2, $4] = $3; next }
 $1 == "ZY" { DIRTY[$2] = 1; next }
+$1 == "ZV" { VALID[$2] = $3; next }
 $1 == "ZA" { ANC[$2, $3] = $4; next }
 $1 == "ZB" { BODY[$2, $3] = $4; next }
 $1 == "ZT" { if (!($2 in DEC)) DEC[$2] = $3; next }
@@ -1031,18 +1055,23 @@ END {
     p = order[ci]; $0 = C[p]
     if ($4 == "deprecated") continue
     ref = $14; human = $13; hn = $9 + 0; wasedited = (hn > 0 && $7 != "" && $8 != "" && $7 > $8)
+    wrev = $16; hrev = $17
     dirty = (p in DIRTY)
     dec = (p in DEC) ? DEC[p] : ""; split(dec, dd, " ")
     # The sources, each once, in byte order.
     m = nr[p]; for (i = 1; i <= m; i++) srt[i] = rs[p, i]
     for (i = 2; i <= m; i++) { v = srt[i]; j = i - 1; while (j > 0 && srt[j] > v) { srt[j + 1] = srt[j]; j-- } srt[j + 1] = v }
     for (wi = 1; wi <= 2; wi++) {
-      which = (wi == 1 ? "w" : "c"); at = ref
+      which = (wi == 1 ? "w" : "c"); at = ref; rv = wrev
       # The confirmed-source-moved list is for a standing confirmation. A
       # concept edited since that confirmation is already on the work list
       # under its own derivation, so it is counted there, not here as well.
-      if (which == "c") { if (hn == 0 || wasedited) continue; at = human }
+      if (which == "c") { if (hn == 0 || wasedited) continue; at = human; rv = hrev }
       rec = (at != "" ? first(p, at) : "")
+      # The commit the event names as the state it checked, when this
+      # history holds it: a source changed after it moved, even when the
+      # stamp reached this branch later, in a squash merge.
+      base = ""; if ((rv in VALID) && anc(VALID[rv], head)) base = VALID[rv]
       out = ""; asked = ""; aside = ""
       for (i = 1; i <= m; i++) {
         r = srt[i]; if (!(r in STATE)) continue
@@ -1050,7 +1079,8 @@ END {
         if (st == "gone") entry = r " (gone)"
         else if (st == "edited") { if (!dirty) out = add(out, r " (edited, not yet committed" quoted(p, r) ")") }
         else if (st == "clean") {
-          if (rec != "" && h != rec && anc(rec, h)) entry = r " (" DAY[r] quoted(p, r) ")"
+          if (base != "") { if (h != rec && h != base && anc(base, h)) entry = r " (" DAY[r] quoted(p, r) ")" }
+          else if (rec != "" && h != rec && anc(rec, h)) entry = r " (" DAY[r] quoted(p, r) ")"
         }
         if (entry == "") continue
         if (which == "w") {

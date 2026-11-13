@@ -2336,3 +2336,44 @@ def test_a_link_that_points_nowhere_hides_no_other_concept(tmp_path):
     out = report(tmp_path, "labels").out
     assert has_line(out, "- A (t/zz.md) - nobody has checked this yet"), f"a dangling link hid a concept: {out}"
 
+
+# ---- what the comparison could not see ----------------------------------------
+
+
+def waited(tmp_path, revision):
+    """A source changed on the default branch while the pull request that stamps its concept waited, then the squash merge."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / "docs" / "a.md", "one\n")
+    write(tmp_path / "docs" / "b.md", "one\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "init")
+    base = git("rev-parse", "HEAD")
+    append(tmp_path / "docs" / "a.md", "two\n")
+    git("commit", "-q", "-am", "docs: a.md changes while the pull request waits")
+    rev = {"base": f"\n  revision: {base}", "none": "", "unknown": "\n  revision: " + "0" * 40}[revision]
+    write(
+        kk / "t" / "a.md",
+        f'---\ntype: GlossaryTerm\ntitle: A\nresource: docs/a.md\nsources:\n  - resource: docs/b.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-11-01T00:00:00Z"{rev}\n---\n\nSays what docs/a.md said.\n',
+    )
+    append(tmp_path / "docs" / "b.md", "changed in the pull request\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "the librarian pull request, squash-merged")
+    return tmp_path
+
+
+def test_a_source_changed_while_the_pull_request_waited_has_moved_when_the_event_names_its_revision(tmp_path):
+    """The squash merge records the stamp after the change, so the commit that recorded it once hid the move."""
+    out = report(waited(tmp_path, "base"), "worklist").out
+    assert matches(out, r"^- t/a\.md: docs/a\.md \(\d{4}-\d\d-\d\d\)$"), f"a source that changed while the pull request waited did not move: {out}"
+    assert "docs/b.md (" not in out, f"a source changed in the recording commit itself moved: {out}"
+    assert report(tmp_path, "quiet").rc == 1
+
+
+@pytest.mark.parametrize("revision", ["none", "unknown"])
+def test_without_a_revision_this_history_holds_the_recording_commit_decides(tmp_path, revision):
+    out = report(waited(tmp_path, revision), "worklist").out
+    assert has_line(out, "Sources that moved since the concept was derived or last checked: none"), out
+
