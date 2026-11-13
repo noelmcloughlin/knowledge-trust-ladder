@@ -458,9 +458,33 @@ function mention(f, l,  n, items, i, w) { sub(/^[ \t]*(-[ \t]+)*/, "", l)
   if (l ~ /^[A-Za-z_][A-Za-z0-9_-]*:[ \t]/) sub(/^[^:]*:[ \t]*/, "", l)
   if (l ~ /^\[/) { sub(/^\[/, "", l); sub(/\][^]]*$/, "", l); n = split(l, items, ",") } else { n = 1; items[1] = l }
   for (i = 1; i <= n; i++) { w = unq(items[i]); if (w ~ /^[A-Za-z][A-Za-z0-9+.-]*:[^ \t]+$/) link(f, w) } }
-BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source measures memberOf holder isReplacedBy", relnames, " "); split("id type title description resource sources exclusions distribution endpoint documentation license author publisher generated verified status base_iri context stale_after timestamp genre definition version", notlink, " "); for (j in notlink) NOTLINK[notlink[j]] = 1; for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
+# Every value one concept leaves behind, cleared before the next file.
+function reset() {
+  title = ""; status = ""; stale = ""; tstamp = ""; cid = ""; ctype = ""; topres = ""; firstres = ""
+  fm = 0; body = 0; started = 0; skip = 0; top = ""; inv = 0; inev = 0; kind = ""; by = ""; at = ""; rev = ""
+  gen_by = ""; gen_at = ""; gen_raw = ""; gen_rev = ""; hasgen = 0; vn = 0; hn = 0; hm = 0
+  check_at = ""; check_raw = ""; human_at = ""; human_raw = ""; human_rev = ""
+  inflow = 0; flowbuf = ""; flowseq = 0; sidx = -1; kcol = 0; sres = ""; shas = 0; sid = 0; skey = 0
+  rel = ""; rp = ""; rt = ""; inrels = 0; fence = 0; inq = 0; qn = 0
+  split("", eby); split("", eat); split("", eraw); split("", erev); split("", ord); split("", shown); split("", hum); split("", chk)
+}
+BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source measures memberOf holder isReplacedBy", relnames, " "); split("id type title description resource sources exclusions distribution endpoint documentation license author publisher generated verified status base_iri context stale_after timestamp genre definition version", notlink, " "); for (j in notlink) NOTLINK[notlink[j]] = 1; for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191)
+  # Many files at once: the list KR_LIST names, one path to a line, each
+  # read in turn, with its path in the bundle taken from its name. A file
+  # that cannot be opened, such as a link that points nowhere, is left out,
+  # since awk would stop at it.
+  if (ENVIRON["KR_LIST"] != "") { many = 1; prefix = ENVIRON["KR_BUNDLE"] "/"
+    while ((getline l < ENVIRON["KR_LIST"]) > 0) { if ((getline x < l) >= 0) ARGV[ARGC++] = l; close(l) }
+    close(ENVIRON["KR_LIST"]) }
+}
+FNR == 1 {
+  if (NR > 1) finish()
+  reset()
+  if (many) { path = FILENAME; if (substr(path, 1, length(prefix)) == prefix) path = substr(path, length(prefix) + 1); sub(/^\//, "", path) }
+}
 { sub(/\r$/, "") }
-NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else exit }
+FNR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else { skip = 1; next } }
+skip { next }
 fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); if (top == "sources") sflush(); inv = 0; fm = 0; body = 1; next }
 fm {
   if (inflow) { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
@@ -539,8 +563,10 @@ body {
     print "Q\t" path "\t" d "\t" actor "\t" text; qn++
   }
 }
-END {
-  if (!started) exit
+END { if (NR > 0) finish() }
+# One concept ends: its C and I lines, and its V lines when `rows` is set.
+function finish() {
+  if (!started) return
   relend()
   emit()
   if (gen_at == "" && tstamp != "") { gen_at = norm(tstamp); gen_raw = tstamp }
@@ -552,7 +578,7 @@ END {
   if (human_rev ~ /^[0-9a-f]+$/ && length(human_rev) > 7) human_rev = substr(human_rev, 1, 7)
   printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev
   printf "I\t%s\t%s\t%s\t%s\n", path, cid, ctype, (topres != "" ? topres : firstres)
-  if (!rows) exit
+  if (!rows) return
   # The evidence rows. The events by a human: actor whose time can be read are
   # put in the order of that time, then of the file. The earliest is the first
   # confirmation, and each later one is by the same person or by a second.
@@ -568,12 +594,12 @@ END {
 }'
 
 facts() {  # every concept in the bundle -> its C, R and Q lines, and its V lines when `rows` is 1
-  local f rel
-  while IFS= read -r f; do
-    rel="${f#"$bundle"/}"; rel="${rel#/}"  # BSD find prints the start point's slash, then its own
-    case "${rel##*/}" in index.md|log.md|diataxis.md) continue ;; esac
-    awk -v path="$rel" -v SQ="'" -v rows="${rows:-0}" "$extract" "$f"
-  done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort)
+  # One awk reads them all. A path from find starts with the bundle, which
+  # is absolute, so awk never takes a file name for an assignment.
+  find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort \
+    | awk '{ n = $0; sub(/.*\//, "", n) } n != "index.md" && n != "log.md" && n != "diataxis.md"' > "$tmp/files"
+  [ -s "$tmp/files" ] || return 0
+  KR_LIST="$tmp/files" KR_BUNDLE="$bundle" awk -v SQ="'" -v rows="${rows:-0}" "$extract" < /dev/null
 }
 
 # ---- what a person declined ------------------------------------------------------

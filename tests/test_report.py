@@ -2277,3 +2277,61 @@ def test_no_other_form_runs_the_toolkit(quoting):
     for form in ([], ["health"], ["labels"], ["quiet"], ["evidence"]):
         report(quoting, *form)
     assert not calls.exists(), f"a form other than the work list ran the toolkit: {read(calls)}"
+
+
+# ---- what it costs, as the bundle grows --------------------------------------
+
+
+def counting(tmp_path, *tools):
+    """A PATH on which each of these tools logs one line a call, then runs the real one."""
+    shim = tmp_path / "counting"
+    for tool in tools:
+        real = shutil.which(tool)
+        write(shim / tool, f'#!/bin/sh\necho {tool} >> "{shim}/calls"\nexec "{real}" "$@"\n')
+        (shim / tool).chmod(0o755)
+    return shim, {"PATH": f"{shim}{os.pathsep}{os.environ['PATH']}"}
+
+
+def grown(root, n):
+    """A committed bundle of n concepts, each stamped against a source of its own that moved since."""
+    root.mkdir(parents=True)
+    git = Git(root)
+    git.init()
+    kk = root / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    for i in range(n):
+        write(root / "src" / f"s{i}.md", "one\n")
+        write(
+            kk / "x" / f"c{i}.md",
+            f'---\ntype: Service\ntitle: C{i}\nresource: src/s{i}.md\nsources:\n  - resource: src\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:{i % 60:02d}Z"\n'
+            f'verified:\n  - by: human:ada\n    at: "2026-01-02T00:00:{i % 60:02d}Z"\n---\n\nBody {i}.\n\n## Open questions\n\n- 2026-01-03, process:ktl-librarian: is src/s{i}.md still right?\n',
+        )
+    git("add", "-A")
+    git("commit", "-q", "-m", "concepts")
+    for i in range(0, n, 2):
+        write(root / "src" / f"s{i}.md", "two\n")
+    git("commit", "-q", "-am", "sources")
+    return root
+
+
+@pytest.mark.parametrize(("form", "tool"), [(["labels"], "awk"), (["labels", "x/c1.md"], "awk"), (["evidence"], "awk")])
+def test_a_larger_bundle_starts_no_more_processes(tmp_path, form, tool):
+    """Each mode once started an awk for each concept: 3.5 seconds for one label at 2,000 concepts."""
+    calls = []
+    for n in (3, 12):
+        root = grown(tmp_path / str(n), n)
+        shim, env = counting(tmp_path / f"shim{n}", tool)
+        result = report(root, *form, env=env)
+        assert result.rc in (0, 1), result.out
+        calls.append(read(shim / "calls").count("\n") if (shim / "calls").exists() else 0)
+    assert calls[0] == calls[1], f"{' '.join(form) or 'the whole report'} ran {tool} {calls[0]} times for 3 concepts and {calls[1]} for 12"
+
+
+def test_a_link_that_points_nowhere_hides_no_other_concept(tmp_path):
+    """One awk reads every concept, and awk stops at a file it cannot open."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "t" / "zz.md", "---\ntype: GlossaryTerm\ntitle: A\n---\n")
+    os.symlink("nowhere.md", kk / "t" / "dangling.md")
+    out = report(tmp_path, "labels").out
+    assert has_line(out, "- A (t/zz.md) - nobody has checked this yet"), f"a dangling link hid a concept: {out}"
