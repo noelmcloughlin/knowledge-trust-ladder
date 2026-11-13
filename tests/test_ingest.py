@@ -1720,6 +1720,14 @@ def test_a_redirected_page_keeps_its_links_and_names_where_it_was_served(tmp_pat
     checks.ok(result and f"[Install]({server}/docs/install.html) ![a]({server}/docs/img/a.png)" in text, "the links are read from where the page was served", text)
     checks.ok(item["origin"] == f"{server}/docs" and item["redirected_to"] == f"{server}/docs/" and f"redirected_to: {server}/docs/\n" in text,
               "the origin stays the address the manifest names, and the header and the lock name the redirect", str(item))
+    # A redirect that carries a token in its query is recorded without it.
+    Stub.routes["/docs"] = (301, {"Location": "/docs/?X-Amz-Signature=secret-token-value"}, b"")
+    shutil.rmtree(root / ".lokf" / "mirror")
+    result = ingest(root)
+    item = next(iter(lock_of(root)["entries"]["d"]["items"].values()))
+    text = read(root / item["path"])
+    checks.ok(item["redirected_to"] == f"{server}/docs/" and "secret-token-value" not in read(root / ".lokf" / "ingest.lock.yaml") + text,
+              "a redirect's query is left out of the lock and the header", str(item))
     m = load_module()
     request = urllib.request.Request("https://93.184.216.34/a", headers={"User-Agent": "x"})
     try:

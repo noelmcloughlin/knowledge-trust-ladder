@@ -261,6 +261,12 @@ def one_line(text: str) -> str:
     return " ".join(shown(text).split())
 
 
+def bare_address(url: str) -> str:
+    """An address as the lock and the header record where a redirect led: no user name, query or fragment, where a server may put a short-lived token."""
+    parts = urllib.parse.urlsplit(url)
+    return urllib.parse.urlunsplit((parts.scheme, parts.netloc.rpartition("@")[2], parts.path, "", ""))
+
+
 def discreet(reason: str) -> str:
     """A reason as the summary and the committed lock give it for a confidential entry: each address cut to its site, and no line a command printed."""
     reason = re.sub(r"\b([a-z][a-z0-9+.-]*://[^/\s?#'\")]*)[^\s'\")]*", r"\1", reason)
@@ -1753,7 +1759,7 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]
         version = one_line(re.sub(r"^W/", "", etag).strip('"')) if etag else (utc(lm) if lm else digest[:12])
         items.append(Item(item=item_id, origin=url, title=title or name, version=version, last_modified=utc(lm) if lm else "",
                           etag=etag, last_modified_header=lm, text=text, converted_by=how, sha256=digest,
-                          redirected_to=served if served != url else ""))
+                          redirected_to=bare_address(served) if bare_address(served) != bare_address(url) else ""))
     return items, unchanged
 
 
