@@ -102,7 +102,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import REPO, SCRIPTS, TEMPLATES, Git, has_line, matches, mirror_uv, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, Git, bash, has_line, matches, mirror_uv, read, run, write
 
 INGEST = SCRIPTS / "knowledge-ingest.sh"
 INGEST_PY = SCRIPTS / "knowledge-ingest.py"
@@ -1499,6 +1499,37 @@ def test_patch_finds_a_confidential_items_concept_after_its_commit_moves(tmp_pat
         ops = yaml.safe_load(read(root / "p2.yaml"))["ops"]
         second = {o["path"]: o["set"]["description"].split(",")[0].removeprefix("A copy of ") for o in ops if o["op"] == "patch"}
         checks.ok(len(first) == 2 and len(ops) == 2 and second == first, f"{url}: each item's concept is patched, and none is drafted again", str(ops))
+
+
+def test_patch_moves_a_reference_concept_to_its_items_new_commit(tmp_path, checks):
+    """A Reference concept kept the address of the commit it was drafted at, while its description named each newer version."""
+    m = load_module()
+    root = tmp_path / "host"
+    kb = root / ".lokf" / "knowledge"
+    write(kb / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kb / "log.md", "# Change Log\n")
+    entry = m.Entry(id="wiki", kind="git", url="https://github.com/o/r.git", ref="main", reference=True, sensitivity="public")
+    manifest = m.Manifest(m.MIRROR, 10**7, False, [entry])
+
+    def lock(sha):
+        return {"entries": {"wiki": {"status": "ok", "items": {
+            name: {"status": "ok", "path": f".lokf/mirror/wiki/{name}", "origin": m.git_origin(entry, sha, name), "title": name,
+                   "version": sha, "retrieved_at": "2026-11-01T00:00:00Z"} for name in ("deploy.md", "own.md")}}}}
+
+    for name in ("deploy.md", "own.md"):
+        write(root / ".lokf" / "mirror" / "wiki" / name, "x\n")
+    m.write_patch(root, manifest, lock("a" * 40), root / ".lokf" / "p1.yaml")
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--root", root, root / ".lokf" / "p1.yaml")
+    checks.ok(result, "the pen applies the drafts", result.out)
+    own = kb / "references" / "wiki-own.md"
+    write(own, read(own).replace(f"resource: {m.git_origin(entry, 'a' * 40, 'own.md')}", "resource: https://docs.acme.example/own"))
+    m.write_patch(root, manifest, lock("b" * 40), root / ".lokf" / "p2.yaml")
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--root", root, root / ".lokf" / "p2.yaml")
+    deploy = read(kb / "references" / "wiki-deploy.md")
+    new, old = m.git_origin(entry, "b" * 40, "deploy.md"), m.git_origin(entry, "a" * 40, "deploy.md")
+    checks.ok(result and f"resource: {new}" in deploy and f"A copy of <{new}>" in deploy and old not in deploy,
+              "the concept's resource and body name the new commit", result.out + deploy)
+    checks.ok("resource: https://docs.acme.example/own" in read(own), "a resource a person set stays", read(own))
 
 
 # 9. --status

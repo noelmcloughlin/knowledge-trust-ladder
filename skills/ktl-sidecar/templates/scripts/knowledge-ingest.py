@@ -2824,8 +2824,20 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
                 sets = {"description": description}
                 if committed:
                     sets["sources"] = sources + [source]
-                ops.append({"op": "patch", "path": concept, "set": sets,
-                            "log": f"**Changed**: the ingest mirrored a newer version of {title} ({version})."})
+                op = {"op": "patch", "path": concept, "set": sets,
+                      "log": f"**Changed**: the ingest mirrored a newer version of {title} ({version})."}
+                # A git origin names a commit. The concept and its body follow
+                # the newer one, unless a person gave it a resource of their own.
+                was = str(fm.get("resource") or "")
+                if was != it["origin"] and origin_key(was) == origin_key(it["origin"]):
+                    sets["resource"] = it["origin"]
+                    try:
+                        text = path.read_text(encoding="utf-8")
+                    except (OSError, UnicodeDecodeError):
+                        text = ""
+                    if text.count(f"<{was}>") == 1:
+                        op["edits"] = [{"replace": {"target": f"<{was}>", "content": f"<{it['origin']}>"}}]
+                ops.append(op)
                 continue
             fm = {"type": "Reference", "title": title, "description": description, "resource": it["origin"], "tags": ["ingest", entry.id]}
             if committed:
