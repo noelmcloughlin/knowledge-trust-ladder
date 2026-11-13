@@ -507,3 +507,30 @@ def test_plain_text_keeps_no_tag_after_one_pass(tmp_path):
     got = dict(zip(PLAIN_CASES, json.loads(run(["node", script], stdout_only=True).out)))
     for text, want in PLAIN_CASES.items():
         assert got[text] == want, (text, got[text])
+
+
+def sliced(source, start, end):
+    """The part of a script from one marker up to the next, to run on its own."""
+    return source[source.index(start) : source.index(end)]
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_a_concept_page_s_address_is_its_id_whatever_its_name_holds(tmp_path):
+    """Astro made a page's address from its file name, in lower case and without dots, and skipped a name starting with "_". The slug carries the id, and the file name only has to be one Astro reads."""
+    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
+    assert "slug: `knowledge/${c.id}`," in source and "slug: `knowledge/${group}`," in source
+    assert 'resolve(CONTENT, "knowledge", contentName(c.id))' in source and 'resolve(CONTENT, "knowledge", contentPath(group), "index.md")' in source
+    cases = {"services/_hidden": "services/%5Fhidden.md", "_drafts/a": "%5Fdrafts/a.md", "Releases/v1.2": "Releases/v1.2.md", "a/b_c": "a/b_c.md"}
+    script = write(tmp_path / "check.mjs", sliced(source, "const contentPath", "function writeConceptPages")
+                   + f"\nconsole.log(JSON.stringify({json.dumps(list(cases))}.map(contentName)));\n")
+    got = dict(zip(cases, json.loads(run(["node", script], stdout_only=True).out)))
+    assert got == cases, got
+    card = read(SITE_TEMPLATES / "src" / "pages" / "og" / "[...route].ts")
+    assert "getSlug: (path) => `${path}.png`," in card, "a concept with a dot in its id loses its social card"
+
+
+def test_a_check_written_as_one_mapping_is_read_from_the_concept_s_json_ld():
+    """OKF lets `verified` be one mapping, and the card said "Checks: none recorded" for it."""
+    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
+    assert "const verified = Array.isArray(doc?.verified) ? doc.verified : [].concat(c.data.verified ?? []);" in source
+    assert 'verified: verified.filter((e) => e && typeof e === "object").map(event),' in source

@@ -31,6 +31,10 @@ const typeLine = ({ typeName, genre }: { typeName: string; genre?: string }) =>
 export const { getStaticPaths, GET } = await OGImageRoute({
   param: "route",
   pages: CARD_PAGES,
+  // The card is named after the page's id. The default naming takes the id
+  // for a file name and drops what follows its last dot, so a concept such
+  // as releases/v1.2 lost its card.
+  getSlug: (path) => `${path}.png`,
   getImageOptions: (_path, page: (typeof CARD_PAGES)[string]) => ({
     title: page.title,
     description: page.lokf
