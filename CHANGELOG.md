@@ -4,8 +4,22 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-11-13
+
 ### Added
 
+- **Each role has a docs page of its own under `docs/cast/`, and `docs/first-bundle.md` walks through a first run.** The README gains a get-started section and the cast as a table, and the architecture page links each role's page.
+- **`docs/for-the-curious.md` is now `docs/how-it-works.md`, and its old address on the site redirects.** The ingest page is split into a how-to, `docs/ingest.md`, and a reference, `docs/ingest-reference.md`.
+- **`docs/young-readers.md` says how a bundle retells adult knowledge for readers aged 8 to 18.** It sits beside the three-lines page, at the other end of the range.
+- **`docs/examples/first-bundle.md` holds a captured first run of the four roles on a small repository.** The first-bundle page links it.
+- **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
+- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
+- **`docs/examples/curator.md` holds a captured `ktl-curator` session on this repository's own bundle.** It shows the report, nine verdicts given one per turn, and the log lines and checks that followed. The nine docent answers asked after it, under `Evidence first: yes`, move to `docs/examples/docent-after-curation.md`.
+- **`docs/uses.md` says what KTL is for, and what it is not.** It lists the uses the skills were built for, answers the two that readers asked about, DevSecOps and technology governance, and gives three questions for judging any other.
+- **The skills use `sources[].excerpt`.** The librarian copies the passage a footnoted claim rests on, the curator shows it where it sits in the file before the claim, and the docent gives it as what the bundle quotes. The librarian's `references/excerpts.md` says when to write one, how to copy it, and what to do when its file no longer holds it.
+- **The pen looks for each excerpt in its file before it writes.** A quote the file does not hold is refused, with `--dry-run` too, and so is one that is empty or longer than 500 characters.
+- **A concept's page on the website shows the passage it quotes under each source.**
+- **The work list tells a moved file from a moved passage.** `knowledge-report.sh worklist` lists first each excerpt its file no longer holds, marks each moved source a concept quotes as *the quoted passage holds* or *is gone*, and counts the footnoted sources that carry no excerpt. The lokf toolkit in `.lokf/.venv` finds the passages.
 - **`knowledge-apply.sh --dry-run --diff` shows each change as a unified diff before anything is written.**
 - **The whole report prints vocabulary fit and the confirmations not tied to a signed commit.** The curator reads both lines from the report instead of working them out by hand. A confirmation no commit added, as one a merge wrote, is listed with a note.
 - **`knowledge-conventions.sh --strict` fails when it could not check a rule.** Every workflow passes it.
@@ -14,6 +28,8 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Changed
 
+- **The file a bundle's `schema :=` line names is now called its *domain vocabulary*.** A *domain schema* is a LinkML project's own schema, which never imports `lokf`. The skills, docs, sidecar templates and scripts, workflow messages and this repository's own bundle use the two names. The librarian's recipe is now `references/domain-vocabulary.md`, which defines them, and the curator's page is `references/domain-vocabularies.md`. The `schema` variable and `--schema` are unchanged.
+- **`docs/three-lines.md` lists only what remains.** LOKF 0.9.0 and private federation members are built, and an auditor skill waits for a host with a third line.
 - **Rule 10 keeps `sources`, `exclusions` and `resource` in block form, and rules 6 and 11 read flow-form events.** A flow-form source slipped past rule 5, coverage and the moved check. A bundle that writes `sources` in flow form now fails the gate.
 - **The work list, `quiet` and the conventions shell half ask git a few batched questions, and every report form reads the concepts in one awk.** At 2,000 concepts the work list went from 234 s to 0.9 s, and the conventions shell half from 51 s to 1.4 s.
 - **A concept page carries only its own folder's sidebar.** The site grew with the square of the bundle.
@@ -24,6 +40,19 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ### Fixed
 
+- **A concept's `exclusions` entry no longer reads as a reader's dispute.** `knowledge-report.sh` gave both lines one letter, so such a concept's label said *a reader disputed this*.
+- **The pen holds a person's record against nine more spellings.** It refuses `revised` and `refuted`, a `human:` actor under any key, a note in a looser Markdown spelling, a second heading or an open fence that hides a note from the report, a key given twice, the curator's own actor, a path or actor that ends in a line break, a link that leaves the bundle, and a delete of a concept the same patch creates.
+- **The pen keeps a file's mode, and writes back an unchanged frontmatter block as it found it.** A file it wrote became readable by its owner alone, and a `resolve` dropped the block's comments.
+- **A federation build keeps each quad whole, and a member's own words out of the workspace index.** A line separator inside a literal cut `graph.nq` where no reader could load it. A member's index title could add lines to the index that the MCP server serves as its instructions. The build also refuses the rest of the XML family as files a browser runs.
+- **The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run.** A dropped connection left a cut page mirrored as whole. A body that UTF-8 cannot write no longer fails its whole entry, and an exclude pattern with no slash leaves a file out of every folder.
+- **The librarian's wrapper runs in a linked work tree and in a clone with no hooks folder, and a sync leaves a clone given as `--source` whole.** The sync fetched the host's old tag into that clone with `--depth 1`.
+- **The website preflight prints no credential that the remote's address carries.**
+- **The provenance gate reads five confirmations it once passed unseen.** An event below a comment line, one after a bracket inside a quoted value, one in a commit with no parent, one vouched for by a key behind a link, and any in a sidecar it could not find. It stops on a shallow clone and on a missing tool, and no longer refuses a merge of a branch where a key was added in a change of its own. `knowledge-registrar.yaml` carries the same reader.
+- **`knowledge-report.sh` reads a compact offset, a comment beside a quoted value and an identifier with a scheme as a parser does.** An edit written `-0500` hid behind a confirmation, a quoted `status` with a comment was not read, and a `urn:` or `doi:` source was listed as gone. A source map that names `.` no longer moves with the bundle's own commits, and the work list names each concept with no stamp. Conventions rule 10 refuses a comment line among the events, rule 5 takes a `urn:` for no file, and rule 16 reads `./docs/a.md` and `docs/a.md` as one resource.
+- **The preflight counts CRLF files with any `grep`, and finds an SSH signing key given as `key::` or under `~`.**
+- **The librarian's wrapper hands the agent the skill the workflow installed, and refuses an agent that tells git to stop watching a file.** A copy of the skill a host committed under `.claude/skills/` came first, and a `skip-worktree` flag hid a replaced script from the write-scope check. The federation's `labels.rq` and `moved.rq` compare two times as times.
+- **The website refuses a raw-HTML address that holds a control character.** A browser drops a tab from `java<tab>script:` and runs it, and the check saw no scheme there.
+- **A line of a block scalar under `sources` no longer reads as a source.** `knowledge-report.sh` took a quoted line that began `resource:` for an entry's own key.
 - **The ingest keeps a table cell's code block, list, panel or nested table in the cell.** Spans, a `<br>` in `<pre>`, and a table or `<pre>` left open are kept too.
 - **A changed `authors`, `license` or `convert` setting, or a new converter version, reaches every mirrored page.** Before, it reached a page only when that page next changed. A page that left the selection gets its header written again.
 - **A redirected page's links are resolved against where it was served.** The header names it, without its query, as `redirected_to`, and a redirect from https to http is refused, naming the address to put in the manifest if plain http is meant.
@@ -43,44 +72,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The gate and the report skip a folder whose name ends in `.md`.** They printed read errors or a traceback over it.
 - **The sync's check no longer reports a pass for the conventions it could not run without `uv`.**
 - **The librarian wrapper compares files by git object id.** A rewritten file of the same length can match a `cksum` checksum.
-
-## [0.64.0] - 2026-11-13
-
-### Added
-
-- **Each role has a docs page of its own under `docs/cast/`, and `docs/first-bundle.md` walks through a first run.** The README gains a get-started section and the cast as a table, and the architecture page links each role's page.
-- **`docs/for-the-curious.md` is now `docs/how-it-works.md`, and its old address on the site redirects.** The ingest page is split into a how-to, `docs/ingest.md`, and a reference, `docs/ingest-reference.md`.
-- **`docs/young-readers.md` says how a bundle retells adult knowledge for readers aged 8 to 18.** It sits beside the three-lines page, at the other end of the range.
-- **`docs/examples/first-bundle.md` holds a captured first run of the four roles on a small repository.** The first-bundle page links it.
-- **`knowledge-report.sh sample` draws the curator's samples, and the whole report prints them.** It orders concepts by the SHA-256 of a seed and the path, and an auditor passes `--seed` for a sample nobody could foresee.
-- **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
-- **`docs/examples/curator.md` holds a captured `ktl-curator` session on this repository's own bundle.** It shows the report, nine verdicts given one per turn, and the log lines and checks that followed. The nine docent answers asked after it, under `Evidence first: yes`, move to `docs/examples/docent-after-curation.md`.
-- **`docs/uses.md` says what KTL is for, and what it is not.** It lists the uses the skills were built for, answers the two that readers asked about, DevSecOps and technology governance, and gives three questions for judging any other.
-- **The skills use `sources[].excerpt`.** The librarian copies the passage a footnoted claim rests on, the curator shows it where it sits in the file before the claim, and the docent gives it as what the bundle quotes. The librarian's `references/excerpts.md` says when to write one, how to copy it, and what to do when its file no longer holds it.
-- **The pen looks for each excerpt in its file before it writes.** A quote the file does not hold is refused, with `--dry-run` too, and so is one that is empty or longer than 500 characters.
-- **A concept's page on the website shows the passage it quotes under each source.**
-- **The work list tells a moved file from a moved passage.** `knowledge-report.sh worklist` lists first each excerpt its file no longer holds, marks each moved source a concept quotes as *the quoted passage holds* or *is gone*, and counts the footnoted sources that carry no excerpt. The lokf toolkit in `.lokf/.venv` finds the passages.
-
-### Changed
-
-- **The file a bundle's `schema :=` line names is now called its *domain vocabulary*.** A *domain schema* is a LinkML project's own schema, which never imports `lokf`. The skills, docs, sidecar templates and scripts, workflow messages and this repository's own bundle use the two names. The librarian's recipe is now `references/domain-vocabulary.md`, which defines them, and the curator's page is `references/domain-vocabularies.md`. The `schema` variable and `--schema` are unchanged.
-- **`docs/three-lines.md` lists only what remains.** LOKF 0.9.0 and private federation members are built, and an auditor skill waits for a host with a third line.
-
-### Fixed
-
-- **A concept's `exclusions` entry no longer reads as a reader's dispute.** `knowledge-report.sh` gave both lines one letter, so such a concept's label said *a reader disputed this*.
-- **The pen holds a person's record against nine more spellings.** It refuses `revised` and `refuted`, a `human:` actor under any key, a note in a looser Markdown spelling, a second heading or an open fence that hides a note from the report, a key given twice, the curator's own actor, a path or actor that ends in a line break, a link that leaves the bundle, and a delete of a concept the same patch creates.
-- **The pen keeps a file's mode, and writes back an unchanged frontmatter block as it found it.** A file it wrote became readable by its owner alone, and a `resolve` dropped the block's comments.
-- **A federation build keeps each quad whole, and a member's own words out of the workspace index.** A line separator inside a literal cut `graph.nq` where no reader could load it. A member's index title could add lines to the index that the MCP server serves as its instructions. The build also refuses the rest of the XML family as files a browser runs.
-- **The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run.** A dropped connection left a cut page mirrored as whole. A body that UTF-8 cannot write no longer fails its whole entry, and an exclude pattern with no slash leaves a file out of every folder.
-- **The librarian's wrapper runs in a linked work tree and in a clone with no hooks folder, and a sync leaves a clone given as `--source` whole.** The sync fetched the host's old tag into that clone with `--depth 1`.
-- **The website preflight prints no credential that the remote's address carries.**
-- **The provenance gate reads five confirmations it once passed unseen.** An event below a comment line, one after a bracket inside a quoted value, one in a commit with no parent, one vouched for by a key behind a link, and any in a sidecar it could not find. It stops on a shallow clone and on a missing tool, and no longer refuses a merge of a branch where a key was added in a change of its own. `knowledge-registrar.yaml` carries the same reader.
-- **`knowledge-report.sh` reads a compact offset, a comment beside a quoted value and an identifier with a scheme as a parser does.** An edit written `-0500` hid behind a confirmation, a quoted `status` with a comment was not read, and a `urn:` or `doi:` source was listed as gone. A source map that names `.` no longer moves with the bundle's own commits, and the work list names each concept with no stamp. Conventions rule 10 refuses a comment line among the events, rule 5 takes a `urn:` for no file, and rule 16 reads `./docs/a.md` and `docs/a.md` as one resource.
-- **The preflight counts CRLF files with any `grep`, and finds an SSH signing key given as `key::` or under `~`.**
-- **The librarian's wrapper hands the agent the skill the workflow installed, and refuses an agent that tells git to stop watching a file.** A copy of the skill a host committed under `.claude/skills/` came first, and a `skip-worktree` flag hid a replaced script from the write-scope check. The federation's `labels.rq` and `moved.rq` compare two times as times.
-- **The website refuses a raw-HTML address that holds a control character.** A browser drops a tab from `java<tab>script:` and runs it, and the check saw no scheme there.
-- **A line of a block scalar under `sources` no longer reads as a source.** `knowledge-report.sh` took a quoted line that began `resource:` for an entry's own key.
 
 ## [0.63.0] - 2026-11-12
 
