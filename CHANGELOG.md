@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Fixed
-
-- **A confirmation's `revision` is compared with its concept's `resource` alone.** The curator pins the last commit of the resource, so every other source changed after that commit read as moved, even one the person was shown. Each other source is compared with the commit that recorded the confirmation again.
-
 ## [0.64.0] - 2026-11-13
 
 ### Added
@@ -78,6 +74,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The gate and the report skip a folder whose name ends in `.md`.** They printed read errors or a traceback over it.
 - **The sync's check no longer reports a pass for the conventions it could not run without `uv`.**
 - **The librarian wrapper compares files by git object id.** A rewritten file of the same length can match a `cksum` checksum.
+- **A confirmation's `revision` is compared with its concept's `resource` alone.** The curator pins the last commit of the resource, so every other source changed after that commit read as moved, even one the person was shown. Each other source is compared with the commit that recorded the confirmation again.
 
 ### Security
 
