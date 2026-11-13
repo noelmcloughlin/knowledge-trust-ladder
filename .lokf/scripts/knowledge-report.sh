@@ -59,6 +59,11 @@
 #   - Worth ten minutes today, the queue itself.
 # "The curator's queue" below says how a relation's target is found.
 #
+# It also prints the two lines ktl-curator once worked out by hand, each
+# defined where it is computed below: Vocabulary fit, and Not tied to a
+# signed commit, which the health line ends with too when git holds the
+# history of the bundle.
+#
 # It also lists each retired concept whose successor no person has confirmed:
 # the concept the newest **Deprecation** line in log.md links after "replaced
 # by", when the bundle holds it, carrying no `verified` event by a human:
@@ -348,6 +353,7 @@ trap 'rm -rf "$tmp"' EXIT
 #   E  path  index  resource     one per `sources` entry that carries an `excerpt`, with its place in the list from 0
 #   F  path  resource            one per `sources` entry that carries an `id`, a footnote's label, and no `excerpt`
 #   Q  path  date  actor  text   one per bullet under ## Open questions
+#   H  path  at                  one per `verified` event by a human: actor, its time as written
 #   V  path  type  status  stale_after  resource  event  by  at  revision  check
 #                                one per row of `evidence`, and only when `rows` is set
 # Times are normalised to one UTC shape, as conventions rule 11 does, so they
@@ -591,6 +597,7 @@ function finish() {
   if (human_rev ~ /^[0-9a-f]+$/ && length(human_rev) > 7) human_rev = substr(human_rev, 1, 7)
   printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev, (gen_at > check_at ? gen_rev : check_rev), human_full
   printf "I\t%s\t%s\t%s\t%s\n", path, cid, ctype, (topres != "" ? topres : firstres)
+  for (i = 1; i <= vn; i++) if (eby[i] ~ /^human:/ && eraw[i] != "") print "H\t" path "\t" eraw[i]
   if (!rows) return
   # The evidence rows. The events by a human: actor whose time can be read are
   # put in the order of that time, then of the file. The earliest is the first
@@ -864,8 +871,8 @@ sources_load() {
 
 # The bundle, from one `git log -p`: `ZH path commit day` for the last commit
 # that touched each concept, `ZF path commit text` for the commit that first
-# added a line holding each stamp time and each open question a concept
-# carries, as `git log -S` once found them one at a time, and `ZY path` for
+# added a line holding each stamp time, each time a person confirmed it and
+# each open question a concept carries, as `git log -S` once found them one at a time, and `ZY path` for
 # each concept that carries a change not yet committed. A merge counts as
 # touching a concept it changed from every parent, as `git log -- <path>`
 # shows one, and adds no line of its own.
@@ -873,7 +880,8 @@ history_load() {
   {
     printf '%s\n' "$all" | awk -F'\t' -v pfx="$kpfx" '
       $1 == "C" { print "W\t" pfx $2 "\t" $2 "\t" $14; if ($13 != "") print "W\t" pfx $2 "\t" $2 "\t" $13 }
-      $1 == "Q" { print "W\t" pfx $2 "\t" $2 "\t- " $3 ", " $4 ": " $5 }'
+      $1 == "Q" { print "W\t" pfx $2 "\t" $2 "\t- " $3 ", " $4 ": " $5 }
+      $1 == "H" { print "W\t" pfx $2 "\t" $2 "\t" $3 }'
     sed 's/^/X	/' "$tmp/status"
     TZ=UTC git -C "$kdir" -c core.quotePath=false log -p -c --no-renames --unified=0 --no-color --no-ext-diff \
       --format='%x01%H %cd' --date=format-local:%Y-%m-%d -- . 2>/dev/null
@@ -1176,15 +1184,15 @@ function label(  s, r) {
   return s
 }'
 
-health() {
-  printf '%s\n' "$all" | awk -F'\t' -v today="$today" "$label_fn"'
+health() {  # [<the count of concepts not tied to a signed commit>]
+  printf '%s\n' "$all" | awk -F'\t' -v today="$today" -v unsigned="${1:-}" "$label_fn"'
   $1 != "C" { next }
   { n++; r = rung() }
   r == "retired" { retired++; next }
   { if (r == "edited") was++; else if (r == "person") confirmed++; else if (r == "automation") auto++; else none++
     if ($4 == "draft") { if ($9 > 0) reop++; else drafts++ }
     if ($5 != "" && $5 <= today) past++ }
-  END { printf "Confirmed by a person: %d of %d · Checked by automation only: %d · Nobody has checked: %d · Drafts: %d · Reopened: %d · Past review date: %d · Edited since confirmed: %d · Retired: %d\n", confirmed, n, auto, none, drafts, reop, past, was, retired }'
+  END { printf "Confirmed by a person: %d of %d · Checked by automation only: %d · Nobody has checked: %d · Drafts: %d · Reopened: %d · Past review date: %d · Edited since confirmed: %d · Retired: %d%s\n", confirmed, n, auto, none, drafts, reop, past, was, retired, (unsigned != "" ? " · Not tied to a signed commit: " unsigned : "") }'
 }
 
 # The concept that replaced a retired one, from the newest **Deprecation**
@@ -1950,6 +1958,148 @@ sample() {  # <seed> <size of the list for a second person> <size of the list of
   }'
 }
 
+# ---- the two lines the curator once worked out by hand ------------------------
+# Not tied to a signed commit: each concept that is not retired and carries a
+# `verified` event by a human: actor whose commit carries no signature. The
+# commit is the one that first wrote the time of that event in the concept,
+# from the history `moved` read. An event not yet committed has no commit to
+# ask about, and is left out. One that git cannot find, since it predates the
+# history of the file, counts: git holds no signature behind it. A signature
+# here is a `gpgsig` header on the commit, which a checkout can always see. It
+# does not say whose key signed, or that the signature is valid; the gate
+# checks that against the forge. Out comes one path to a line, in the order of
+# the bundle, in $tmp/unsigned, and the function fails when git holds no full
+# history of the bundle.
+unsigned_load() {
+  : > "$tmp/unsigned"
+  [ "$tracked" = 1 ] && [ -f "$tmp/hist" ] || return 1
+  { printf '%s\n' "$all"; cat "$tmp/hist"; } | awk -F'\t' '
+    $1 == "C" { order[++n] = $2; st[$2] = $4; next }
+    $1 == "H" { k = ++ne[$2]; ev[$2, k] = $3; next }
+    $1 == "ZF" { first[$2, $4] = $3; next }
+    $1 == "ZY" { dirty[$2] = 1; next }
+    END {
+      for (i = 1; i <= n; i++) {
+        p = order[i]; if (st[p] == "deprecated") continue
+        for (k = 1; k <= ne[p]; k++) {
+          c = ((p, ev[p, k]) in first) ? first[p, ev[p, k]] : ""
+          if (c != "") print "S\t" p "\t" c
+          else if (!(p in dirty)) print "N\t" p
+        }
+      }
+    }' > "$tmp/events"
+  awk -F'\t' '$1 == "S" && !seen[$3]++ { print $3 }' "$tmp/events" > "$tmp/commits"
+  if [ -s "$tmp/commits" ]; then
+    git -C "$root" cat-file --batch < "$tmp/commits" > "$tmp/commit.objects" 2>/dev/null || : > "$tmp/commit.objects"
+  else
+    : > "$tmp/commit.objects"
+  fi
+  # Each commit object comes as a header line that gives its size, then that
+  # many bytes and a line feed. Its own headers end at the first empty line.
+  awk -F'\t' -v objects="$tmp/commit.objects" '
+    BEGIN {
+      while ((getline l < objects) > 0) {
+        if (l !~ / commit [0-9]+$/) continue
+        sha = l; sub(/ .*/, "", sha); size = l; sub(/.* /, "", size); size += 0; got = 0; head = 1
+        while (got < size && (getline l < objects) > 0) {
+          got += length(l) + 1
+          if (l == "") head = 0
+          else if (head && l ~ /^gpgsig(-sha256)? /) signed[sha] = 1
+        }
+        if (got == size) getline l < objects
+      }
+    }
+    $1 == "N" || ($1 == "S" && !($3 in signed)) { if (!seen[$2]++) print $2 }' "$tmp/events" > "$tmp/unsigned"
+}
+unsigned_section() {  # after unsigned_load, whose exit status is in unsigned_ok
+  if [ "${unsigned_ok:-1}" != 0 ]; then
+    echo "Not tied to a signed commit: not checked here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/)"
+    return 0
+  fi
+  awk 'END { print "Not tied to a signed commit: " (NR ? NR : "none") }' "$tmp/unsigned"
+  sed 's/^/- /' "$tmp/unsigned"
+}
+
+# Vocabulary fit: each concept that is not retired whose `type` is not one of
+# the core classes, nor a class of the domain vocabulary the justfile names,
+# or whose `status` is not draft, stable or deprecated. A type is compared
+# with its spaces removed. The domain vocabulary is the file the `schema`
+# line of .lokf/justfile names, relative to .lokf/, and every schema it
+# imports by a path, but LOKF itself. Its classes count when they descend
+# from Concept or from a core class, through `is_a`, in any of those files.
+# The files are read by awk, as LinkML writes them: a block of classes, each
+# with its `is_a` one level below it.
+core_classes="Dataset Table Metric Service Playbook Tutorial Explanation Policy GlossaryTerm Reference Document Role Person Organization AttestedComputation"
+domain_classes() {
+  local schema="" f dir queue seen=" " line
+  [ -f "$root/.lokf/justfile" ] || return 0
+  IFS= read -r schema < <(sed -n 's/^schema := "\(.*\)"$/\1/p' "$root/.lokf/justfile") || true
+  [ -n "$schema" ] || return 0
+  queue="$root/.lokf/$schema"
+  : > "$tmp/isa"
+  while [ -n "$queue" ]; do
+    f="${queue%%$'\n'*}"; queue="${queue#"$f"}"; queue="${queue#$'\n'}"
+    case "$seen" in *" $f "*) continue ;; esac
+    seen="$seen$f "
+    [ -f "$f" ] || continue
+    dir="${f%/*}"
+    while IFS=$'\t' read -r kind a b; do
+      case "$kind" in
+        C) printf '%s\t%s\n' "$a" "$b" >> "$tmp/isa" ;;
+        I)
+          case "$a" in *:*|lokf|lokf.yaml|*/lokf|*/lokf.yaml) continue ;; esac
+          case "$a" in *.yaml|*.yml) ;; *) a="$a.yaml" ;; esac
+          queue="$queue${queue:+$'\n'}$dir/$a" ;;
+      esac
+    done < <(awk '
+      { sub(/\r$/, "") }
+      /^[^ \t#-]/ { top = $0; sub(/:.*/, "", top); cin = 0; pin = 0; cls = ""; next }
+      /^[ \t]*(#|$)/ { next }
+      { match($0, /^ */); ind = RLENGTH }
+      top == "imports" && /^[ \t]*- / { v = $0; sub(/^[ \t]*- [ \t]*/, "", v); sub(/[ \t]+#.*$/, "", v); gsub(/["\047]/, "", v); print "I\t" v; next }
+      top != "classes" { next }
+      cin == 0 { cin = ind }
+      ind == cin { cls = $0; sub(/^ */, "", cls); sub(/:.*/, "", cls); gsub(/["\047]/, "", cls); pin = 0; print "C\t" cls "\t"; next }
+      ind > cin && pin == 0 { pin = ind }
+      ind == pin && /^ *is_a:/ { v = $0; sub(/^ *is_a:[ \t]*/, "", v); sub(/[ \t]+#.*$/, "", v); gsub(/["\047]/, "", v); print "C\t" cls "\t" v }
+    ' "$f")
+  done
+  # A class fits when its chain of is_a reaches Concept or a core class.
+  awk -F'\t' -v core="$core_classes" '
+    function norm(s) { gsub(/ /, "", s); return s }
+    function fits(c,  d, guard) {
+      for (guard = 0; c != "" && guard < 50; guard++) { if (c == "Concept" || (c in CORE)) return 1; c = (c in parent) ? parent[c] : "" }
+      return 0
+    }
+    BEGIN { n = split(core, a, " "); for (i = 1; i <= n; i++) CORE[a[i]] = 1 }
+    { c = norm($1); if (!(c in parent) || $2 != "") parent[c] = norm($2); cls[c] = 1 }
+    END { for (c in cls) if (fits(c)) print c }' "$tmp/isa"
+}
+vocabulary_fit() {
+  domain_classes > "$tmp/classes"
+  printf '%s\n' "$all" | awk -F'\t' -v core="$core_classes" -v known="$tmp/classes" '
+    function kind(k) { if (!(k in seen)) { seen[k] = 1; kinds = kinds (kinds == "" ? "" : ", ") k } }
+    BEGIN { n = split(core, a, " "); for (i = 1; i <= n; i++) K[a[i]] = 1; while ((getline c < known) > 0) K[c] = 1 }
+    $1 == "C" { st[$2] = $4; next }
+    $1 == "I" { order[++m] = $2; ty[$2] = $4 }
+    END {
+      for (i = 1; i <= m; i++) {
+        p = order[i]; s = st[p]; t = ty[p]; gsub(/ /, "", t)
+        if (s == "deprecated") continue
+        why = ""
+        if (t == "") why = "no type"; else if (!(t in K)) why = "type " ty[p]
+        if (s != "" && s != "draft" && s != "stable") why = why (why == "" ? "" : ", ") "status " s
+        if (why == "") continue
+        nf++; body = body "- " p ": " why "\n"
+        if (t == "") kind("no type"); else if (!(t in K)) kind(ty[p])
+        if (s != "" && s != "draft" && s != "stable") kind("status " s)
+      }
+      if (!nf) { print "Vocabulary fit: fine"; exit }
+      print "Vocabulary fit: " nf " concept" (nf == 1 ? " does" : "s do") " not fit the known vocabulary (" kinds ")"
+      printf "%s", body
+    }'
+}
+
 # ---- the commands ------------------------------------------------------------
 case "$cmd" in
   retrieval) retrieval "$@"; exit 0 ;;
@@ -1994,8 +2144,10 @@ case "$cmd" in
   report)
     [ $# -eq 0 ] || usage
     times="$(moved)"
+    unsigned=""; unsigned_ok=0; unsigned_load || unsigned_ok=1
+    [ "$unsigned_ok" != 0 ] || unsigned="$(awk 'END { print NR }' "$tmp/unsigned")"
     echo "Knowledge bundle report - $today (computed by knowledge-report.sh; nothing here is stored)"
-    health
+    health "$unsigned"
     echo ""
     ranked queue
     echo ""
@@ -2005,6 +2157,9 @@ case "$cmd" in
     lists questions
     echo ""
     lists confirmed-moved
+    echo ""
+    vocabulary_fit
+    unsigned_section
     echo ""
     ranked lists
     ranked isolated-count

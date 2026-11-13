@@ -2398,3 +2398,71 @@ def test_a_source_git_holds_no_history_of_is_named_and_makes_no_run_busy(tmp_pat
     ), f"the work list did not name a source git holds no history of: {out}"
     quiet = report(tmp_path, "quiet")
     assert quiet.rc == 0, f"a source git holds no history of made a run busy: {quiet.out}"
+
+
+# ---- the two lines the curator once worked out by hand ------------------------
+
+
+def test_the_whole_report_names_each_confirmation_no_signed_commit_stands_behind(tmp_path):
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+
+    def confirmed(name, at):
+        return f'---\ntype: Service\ntitle: {name}\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "{at}"\n---\n'
+
+    write(kk / "x" / "unsigned.md", confirmed("Unsigned", "2026-01-02T00:00:00Z"))
+    write(kk / "x" / "auto.md", '---\ntype: Service\ntitle: Auto\nverified:\n  - by: process:ktl-librarian\n    at: "2026-01-02T00:00:00Z"\n---\n')
+    git("add", "-A")
+    git("commit", "-q", "-m", "unsigned")
+    # A signed commit, as git writes one: a gpgsig header before the message.
+    write(kk / "x" / "signed.md", confirmed("Signed", "2026-01-03T00:00:00Z"))
+    git("add", "-A")
+    tree = git("write-tree")
+    parent = git("rev-parse", "HEAD")
+    obj = f"tree {tree}\nparent {parent}\nauthor a <a@example.invalid> 1767225600 +0000\ncommitter a <a@example.invalid> 1767225600 +0000\ngpgsig -----BEGIN SSH SIGNATURE-----\n U1NIU0lH\n -----END SSH SIGNATURE-----\n\nsigned\n"
+    sha = run(["git", "-C", tmp_path, "hash-object", "-t", "commit", "-w", "--stdin"], stdin=obj).out
+    git("update-ref", "HEAD", sha)
+    # A confirmation not yet committed has no commit to ask about.
+    write(kk / "x" / "new.md", confirmed("New", "2026-01-04T00:00:00Z"))
+    out = report(tmp_path).out
+    assert matches(out, r"^Confirmed by a person: .* · Not tied to a signed commit: 1$"), f"the health line did not end with the count: {out}"
+    assert has_line(out, "Not tied to a signed commit: 1") and has_line(out, "- x/unsigned.md") and "- x/signed.md" not in out and "- x/new.md" not in out, out
+    assert not matches(report(tmp_path, "health").out, "signed"), "the health form gained a field the curator alone reads"
+
+
+def test_without_git_the_whole_report_says_it_did_not_check_signatures(moved, tmp_path):
+    bare = tmp_path / "bare"
+    shutil.copytree(moved / ".lokf", bare / ".lokf")
+    out = report(bare).out
+    assert has_line(out, "Not tied to a signed commit: not checked here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/)"), out
+    assert "· Not tied to a signed commit" not in out, out
+
+
+def test_vocabulary_fit_counts_a_type_and_a_status_outside_core_and_the_domain_vocabulary(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / ".lokf" / "justfile", 'bundle := "knowledge"\nschema := "schema/acme.yaml"\n')
+    write(
+        tmp_path / ".lokf" / "schema" / "acme.yaml",
+        "id: https://acme.example/schema\nimports:\n  - linkml:types\n  - lokf\n  - ./more\nclasses:\n  Widget:\n    is_a: Concept\n    slot_usage:\n      part:\n        is_a: Gadget\n  Gizmo:\n    is_a: Widget\n  Note:\n    description: no parent\n",
+    )
+    write(tmp_path / ".lokf" / "schema" / "more.yaml", "id: https://acme.example/more\nclasses:\n  Runbook:\n    is_a: Playbook\n")
+    for name, kind, status in [
+        ("a", "Service", ""),
+        ("b", "Widget", ""),
+        ("c", "Gizmo", "status: stable\n"),
+        ("d", "Runbook", ""),
+        ("e", "Attested Computation", ""),
+        ("f", "Note", ""),
+        ("g", "Service", "status: wip\n"),
+        ("h", "Gadget", "status: deprecated\n"),
+    ]:
+        write(kk / "x" / f"{name}.md", f"---\ntype: {kind}\ntitle: {name}\n{status}---\n")
+    out = report(tmp_path).out
+    assert has_line(out, "Vocabulary fit: 2 concepts do not fit the known vocabulary (Note, status wip)"), out
+    assert has_line(out, "- x/f.md: type Note") and has_line(out, "- x/g.md: status wip") and "x/h.md:" not in out, out
+    write(tmp_path / ".lokf" / "justfile", 'bundle := "knowledge"\nschema := ""\n')
+    out = report(tmp_path).out
+    assert has_line(out, "Vocabulary fit: 5 concepts do not fit the known vocabulary (Widget, Gizmo, Runbook, Note, status wip)"), out

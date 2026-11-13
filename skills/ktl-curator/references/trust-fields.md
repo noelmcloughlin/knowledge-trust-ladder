@@ -2,7 +2,7 @@
 
 This page is for the **curator** and for anyone reading its report: it defines each trust label by the frontmatter fields behind it.
 
-The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 fields. `.lokf/scripts/knowledge-report.sh` computes each one but the last two from frontmatter with bash and awk: no toolkit, no graph. The rules below are what it applies, and what to apply by hand on a sidecar that predates it. For the curious, the last column is the RDF predicate the LOKF toolkit projects each field to. It is never needed here.
+The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 fields. `.lokf/scripts/knowledge-report.sh` computes each one from frontmatter and git history with bash and awk: no toolkit, no graph. The rules below are what it applies, and what to apply by hand on a sidecar that predates it. For the curious, the last column is the RDF predicate the LOKF toolkit projects each field to. It is never needed here.
 
 | Label | Rule | Field(s) | RDF (optional) |
 | --- | --- | --- | --- |
@@ -32,7 +32,7 @@ The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden Rule 6 f
 - **Missing `generated.at`**: fall back to the v0.1 `timestamp`. If neither exists, the concept cannot be "edited since confirmed". Leave it out of that label rather than guessing.
 - **Relation targets** may be full IRIs or bundle-relative ids. Normalise by resolving relative values against `base_iri` in `knowledge/index.md` before counting. The script resolves a target as the KTL Curator plugin does: an IRI under `base_iri` by the path after it, any other IRI as written, and a relative path from the bundle's root and then from the citing concept's folder. A concept with no `id` has `base_iri` and its path without `.md`. The script reads each of the fourteen fields as a block list, a one-line flow list or a bare value, and `relations` as block or one-line flow mappings. It counts no relation spelt any other way. The fourteen relation fields, every slot the schema ranges over `Concept`: `isPartOf`, `hasPart`, `references`, `dependsOn`, `derivedFrom`, `about`, `sameAs`, `relatedTo`, `definedBy`, `source`, `measures`, `memberOf`, `holder`, `isReplacedBy`; plus each `relations[].target`. Contract check 7d holds the script's list to the schema.
 - **The core classes**: `Dataset`, `Table`, `Metric`, `Service`, `Playbook`, `Tutorial`, `Explanation`, `Policy`, `GlossaryTerm`, `Reference`, `Document`, `Role`, `Person`, `Organization`, `AttestedComputation`. Compare after removing spaces (`Attested Computation` normalises to `AttestedComputation`).
-- **A host may have extended that list**, and the vocabulary line must respect it or it reports every domain class as a misfit for good. Read `.lokf/justfile`: where its `schema` line names a file (a path relative to `.lokf/`), open that file and every schema it imports besides LOKF's, following each import in turn. Add every class descending from `Concept`, directly or through a built-in (`is_a: Concept`, `is_a: Reference`, ...). Reading the file is enough: no toolkit, as everywhere else in Step 1. This is the same widening the **librarian**'s Golden Rule 3 applies when it chooses a class. The Obsidian plugins cannot read a schema outside the vault, so they are told the list by hand in their *Known LOKF types* setting.
+- **A host may have extended that list**, and the vocabulary line must respect it or it reports every domain class as a misfit for good. Read `.lokf/justfile`: where its `schema` line names a file (a path relative to `.lokf/`), open that file and every schema it imports besides LOKF's, following each import in turn. Add every class descending from `Concept`, directly or through a built-in (`is_a: Concept`, `is_a: Reference`, ...). Reading the file is enough: no toolkit, as everywhere else in Step 1, and the script reads it this way. This is the same widening the **librarian**'s Golden Rule 3 applies when it chooses a class. The Obsidian plugins cannot read a schema outside the vault, so they are told the list by hand in their *Known LOKF types* setting.
 - Skip `index.md` and `log.md` at every level; they are reserved files, not concepts.
 - **`## Open questions` is a heading, not a substring.** Match a line that *is* the heading (start of line, nothing else on it), never a mention of it anywhere in the text. Concept bodies legitimately quote the string in prose. A bundle describing these very skills does it repeatedly. A substring match then invents open questions that don't exist and pushes those concepts up the queue. The same applies when extracting the first bullet: read the lines *after* that heading, not around the match.
 - **Retired concepts** carry `status: deprecated`. They are counted once, under *Retired*, and excluded from every other label and from the queue: nobody needs to re-check something that is no longer current. `N` in "*a* of *N*" counts every concept, retired ones included.
@@ -72,7 +72,7 @@ Open questions
 
 Feedback from readers: <k> entries waiting in .lokf/feedback.md   | or: none
 
-Vocabulary fit: <n> concept(s) don't fit the known vocabulary (<types>)   | or: fine
+Vocabulary fit: <n> concepts do not fit the known vocabulary (<types and statuses>)   | as the script prints it, or: fine
 
 Not tied to a signed commit: <h> - <titles>. Recorded as confirmed by a person, but no signed commit stands behind it.   | omit this line entirely when h is 0, or when .lokf/ isn't git-tracked
 
@@ -118,7 +118,7 @@ On a sidecar whose script predates `sample`, sort the paths by the `sha256sum` (
 
 A `human:<id>` event is a **claim typed by whoever wrote it**, not a credential. Any writer can produce a perfectly well-formed one: an agent steered by another agent, a script, a bad merge. `lokf validate` will pass it. The only evidence that binds such a claim to a person lives outside the bundle, in git: a signature, and (in CI) a pull-request approval.
 
-Step 1 runs the local half of that check. For each concept carrying a `human:<id>` event, find the commit that introduced it, then ask whether that commit is signed:
+The whole report runs the local half of that check and prints the *Not tied to a signed commit* count and the concepts behind it. It takes each concept that is not retired and carries a `human:` event, finds the commit that first wrote that event's time in the concept, and asks whether that commit carries a signature. The recipe below is the same check by hand, for a sidecar whose script predates it. For each concept carrying a `human:<id>` event, find the commit that introduced it, then ask whether that commit is signed:
 
 ```sh
 sha="$(git log --format='%H' --pickaxe-regex -S "by:.*human:<id>" -- <path to concept> | tail -1)"
