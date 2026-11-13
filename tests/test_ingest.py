@@ -22,7 +22,7 @@ and pin:
    Cloud and v1 on Data Center. An unchanged page costs no body, and a page
    that leaves the selection is unlisted. --prune removes an uncited file,
    one a concept only lists among its exclusions included, and keeps a cited
-   one;
+   one. A changed authors or license setting writes every page again;
 5. a git path at a ref is mirrored by its commit, with a file that is not
    Markdown kept in a fence. A git older than 2.31 is refused, git reads no
    ~/.netrc, and with a credential git follows no redirect. Only the files
@@ -49,14 +49,17 @@ and pin:
     the body after head metadata and macro parameters, resolves links,
     honours a declared charset and keeps the joiners. It reads a head left
     open, keeps a link to an http, https or mailto address only, makes a
-    line break in the text a space, and writes no lone surrogate;
+    line break in the text a space, and writes no lone surrogate. A table
+    keeps a code block, a list, a panel or a table in its cell, and its
+    spans; a block left open closes at the end of the page;
 11. the shell half refuses to run under sh;
 12. a redirect to another host, port or scheme drops the credential, of any
     header name, a 503 is retried, and a weak ETag is the version without
     its prefix. A new ETag for the same bytes is recorded only by a run that
     changes the lock anyway. A secret's trailing line break is trimmed, one
     inside it is refused by name, and a body sent a byte at a time fails at
-    a deadline;
+    a deadline. A redirected page's links are read from where it was served,
+    and a redirect from https to http is refused;
 13. a Confluence listing is paged, one page's missing body is that page's
     alone, and an answer of the wrong shape fails the entry and nothing else.
     A title arrives as one clean line, and a listing without end is cut off;
@@ -88,6 +91,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -1672,6 +1676,26 @@ def test_a_redirect_to_another_host_drops_the_credential_and_a_503_is_retried(tm
     checks.ok(len(calls) == 2, "the 503 was retried once", str(calls))
     item = next(iter(lock_of(root)["entries"]["r"]["items"].values()))
     checks.ok(item["version"] == "Wv1" and item["etag"] == 'W/"Wv1"' and "# B" in read(root / item["path"]), "the redirect target is the mirror, and a weak ETag is the version", str(item))
+
+
+def test_a_redirected_page_keeps_its_links_and_names_where_it_was_served(tmp_path, server, checks):
+    """After /docs redirected to /docs/, the page's relative links were read against /docs, and a redirect from https to http was followed."""
+    Stub.routes["/docs"] = (301, {"Location": "/docs/"}, b"")
+    Stub.routes["/docs/"] = (200, {"Content-Type": "text/html"}, b'<p><a href="install.html">Install</a> <img src="img/a.png" alt="a"></p>')
+    root = host(tmp_path, manifest_for([{"id": "d", "kind": "http", "urls": [f"{server}/docs"], "sensitivity": "public"}]))
+    result = ingest(root)
+    item = next(iter(lock_of(root)["entries"]["d"]["items"].values()))
+    text = read(root / item["path"])
+    checks.ok(result and f"[Install]({server}/docs/install.html) ![a]({server}/docs/img/a.png)" in text, "the links are read from where the page was served", text)
+    checks.ok(item["origin"] == f"{server}/docs" and item["redirected_to"] == f"{server}/docs/" and f"redirected_to: {server}/docs/\n" in text,
+              "the origin stays the address the manifest names, and the header and the lock name the redirect", str(item))
+    m = load_module()
+    request = urllib.request.Request("https://93.184.216.34/a", headers={"User-Agent": "x"})
+    try:
+        m.Redirects(allow_private=True).redirect_request(request, None, 302, "Found", {}, "http://93.184.216.34/a")
+        checks.ok(False, "a redirect from https to http is refused")
+    except m.FetchFailed as e:
+        checks.ok("redirected from https to http" in str(e), "a redirect from https to http is refused", str(e))
 
 
 def test_a_credential_reaches_only_its_own_origin_and_never_the_lock(tmp_path, server, checks):

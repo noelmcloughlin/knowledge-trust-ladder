@@ -787,6 +787,10 @@ class Redirects(urllib.request.HTTPRedirectHandler):
             raise FetchFailed(f"redirected to an address this script does not fetch: {new.scheme}://{new.netloc}")
         if not self.allow_private and address_is_private(newurl):
             raise FetchFailed(f"redirected to a private address: {new.hostname}")
+        # A page asked for over https is not taken over plain http. The
+        # manifest can name an http address where that is meant.
+        if urllib.parse.urlsplit(req.full_url).scheme == "https" and new.scheme == "http":
+            raise FetchFailed(f"redirected from https to http: {new.netloc}")
         nxt = super().redirect_request(req, fp, code, msg, headers, newurl)
         # Another origin gets only the headers any address may see. The
         # credential is a header of whatever name the manifest gives, and a
@@ -803,6 +807,7 @@ class Response:
     status: int
     headers: dict
     data: bytes
+    url: str = ""  # the address the body came from, after any redirect
 
 
 def capped(seconds: float, until: float) -> float:
@@ -852,7 +857,7 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
                 # is tried again, and never mirrored as the whole page.
                 if getattr(resp, "length", None):
                     raise http.client.IncompleteRead(bytes(data), resp.length)
-                return Response(resp.status, {k.lower(): v for k, v in resp.headers.items()}, bytes(data))
+                return Response(resp.status, {k.lower(): v for k, v in resp.headers.items()}, bytes(data), resp.geturl())
         except urllib.error.HTTPError as e:
             if e.code == 304 and accept_304:
                 return Response(304, {k.lower(): v for k, v in e.headers.items()}, b"")
@@ -1505,6 +1510,7 @@ class Item:
     author: str = ""
     etag: str = ""
     last_modified_header: str = ""  # as served, for If-Modified-Since
+    redirected_to: str = ""  # the address a redirect led to, when not the origin
     blob: str = ""
     text: str = ""
     converted_by: str = ""
@@ -1723,7 +1729,10 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]
                     ctx.fresher[(entry.id, item_id)] = fresh
                 unchanged[item_id] = was
                 continue
-            text, title, how = convert(resp.data, content_type_of(resp.headers), entry.convert, charset_of(resp.headers), base=url)
+            # A redirect moves the page, so its relative links are read from
+            # where it was served, as a browser reads them.
+            served = resp.url or url
+            text, title, how = convert(resp.data, content_type_of(resp.headers), entry.convert, charset_of(resp.headers), base=served)
         except OutOfTime:
             ctx.leave(entry, item_id, was or None)
             continue
@@ -1742,7 +1751,8 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]
         # the quotes. The lock keeps the ETag as served, for If-None-Match.
         version = one_line(re.sub(r"^W/", "", etag).strip('"')) if etag else (utc(lm) if lm else digest[:12])
         items.append(Item(item=item_id, origin=url, title=title or name, version=version, last_modified=utc(lm) if lm else "",
-                          etag=etag, last_modified_header=lm, text=text, converted_by=how, sha256=digest))
+                          etag=etag, last_modified_header=lm, text=text, converted_by=how, sha256=digest,
+                          redirected_to=served if served != url else ""))
     return items, unchanged
 
 
@@ -2177,12 +2187,12 @@ def mirror_header(entry: Entry, record: dict, converted_by: str) -> str:
     """The header a mirror file opens with, from the item's lock record."""
     fm = {"origin": record.get("origin", ""), "title": record.get("title", ""), "ingest": entry.id, "kind": entry.kind,
           "version": str(record.get("version", "")), "sha256": record["sha256"], "retrieved_at": record["retrieved_at"], "converted_by": converted_by}
-    for key in ("last_modified", "author", "command_unchecked"):
+    for key in ("redirected_to", "last_modified", "author", "command_unchecked"):
         if record.get(key):
             fm[key] = record[key]
     if entry.license:
         fm["license"] = entry.license
-    order = ["origin", "title", "ingest", "kind", "version", "last_modified", "author", "sha256", "retrieved_at", "converted_by", "command_unchecked", "license"]
+    order = ["origin", "redirected_to", "title", "ingest", "kind", "version", "last_modified", "author", "sha256", "retrieved_at", "converted_by", "command_unchecked", "license"]
     lines = ["---"]
     for key in order:
         if key in fm:
@@ -2483,7 +2493,7 @@ class Run:
             else:
                 lock_item = {"path": self.rel(target), "origin": it.origin, "title": it.title, "version": str(it.version),
                              "sha256": "sha256:" + it.sha256, "bytes": written, "retrieved_at": self.now, "status": "ok"}
-                for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "command_sha256", "command_unchecked"):
+                for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "redirected_to", "command_sha256", "command_unchecked"):
                     if getattr(it, key):
                         lock_item[key] = getattr(it, key)
             new_items[it.item] = lock_item
