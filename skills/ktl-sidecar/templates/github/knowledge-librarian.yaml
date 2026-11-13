@@ -33,6 +33,9 @@ concurrency:
 jobs:
   earlier:
     name: Read what became of the earlier pull requests (read-only, no agent)
+    # A librarian that is not switched on runs nothing at all: `refresh` and
+    # `publish` need this job, so they are skipped with it.
+    if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
     runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:

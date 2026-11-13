@@ -38,7 +38,7 @@ The workflow invokes `.lokf/scripts/knowledge-librarian.sh` directly, a fixed, r
 5. Turn on *Allow GitHub Actions to create and approve pull requests* under Settings, Actions, General. The `publish` job opens its pull request with the job's own token, which GitHub refuses while that setting is off.
 6. Optionally set `KNOWLEDGE_RETRIEVAL` to `true`. Each run that changes the bundle then makes one more agent call, which scores whether the index leads to the concept behind each question readers asked, and the pull request carries the score.
 
-The sidecar's automation.md gives the full settings for Copilot CLI and Claude Code, and the five conditions any other agent must meet. If `KNOWLEDGE_LIBRARIAN_ENABLED` is not `true`, the workflow's agent step is skipped, so the workflow does nothing until you set the agent up.
+The sidecar's automation.md gives the full settings for Copilot CLI and Claude Code, and the five conditions any other agent must meet. If `KNOWLEDGE_LIBRARIAN_ENABLED` is not `true`, every job of the workflow is skipped, so it does nothing until you set the agent up.
 
 The script selects the ktl-librarian skill, builds a prompt telling the agent to follow it and re-scrape the repository, then calls `AGENT_CLI`. On a scheduled run it first asks `knowledge-report.sh quiet`, and calls no agent when nothing waits. The prompt takes the patch file's format from `knowledge-apply.sh --format`, so it holds for whichever release of this skill the pin installs.
 

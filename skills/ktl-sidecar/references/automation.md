@@ -111,18 +111,18 @@ The guardrails:
 
 ### Setting it up
 
-The workflow is **inert until set up**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset (or not `true`) the agent step is skipped, so the workflow does nothing until you set these:
+The workflow is **inert until set up**. With `KNOWLEDGE_LIBRARIAN_ENABLED` unset (or not `true`) every job is skipped, so the workflow checks nothing out and installs nothing until you set these:
 
 | Repository variable | Value |
 | --- | --- |
-| `KNOWLEDGE_LIBRARIAN_ENABLED` | `true`: turns on the scheduled run; anything else (or unset) leaves the agent step skipped |
+| `KNOWLEDGE_LIBRARIAN_ENABLED` | `true`: turns on the scheduled run; anything else (or unset) leaves every job skipped |
 | `AGENT_CLI` | your non-interactive agent command; the wrapper appends `-p "<prompt>"`. The two commands below are the ones this file vouches for, and [any other agent](#any-other-agent) says what a third must do. Keep the credential out of it; if it must embed one, make it a *secret* named `AGENT_CLI` instead, which the workflow also reads |
 | `AGENT_PROMPT_FLAG` | optional. The flag the prompt follows, `-p` unless set, or `arg` for an agent that takes the prompt as its bare last argument. Leave it unset for the two commands below |
 | `AGENT_API_KEY_ENV` | the environment variable the agent reads its credential from: `COPILOT_GITHUB_TOKEN` for Copilot CLI, `ANTHROPIC_API_KEY` for Claude Code |
 | `AGENT_USE_JOB_TOKEN` | `true`: the job's own `GITHUB_TOKEN` is the credential, passed under that name. Copilot CLI accepts it, and so does a [domain host's](#knowledge-federationyaml-the-workspace-of-a-domain-host) members script; leave it unset for any other agent |
 | `KNOWLEDGE_RETRIEVAL` | optional. `true`: each run that changes the bundle makes one more agent call and the pull request carries a retrieval score ([below](#knowledge-reportsh-what-a-program-can-say-about-the-bundle)). Unset, nothing is scored |
 
-Set each one under **Repository variables** (Settings, Secrets and variables, Actions, Variables), or with `gh variable set <name> --body <value>`. `KNOWLEDGE_LIBRARIAN_ENABLED` must be one, because `knowledge-federation.yaml`'s `nudge` job reads it in its own `if:`, and a job's `if:` reads only repository and organization variables. This workflow reads every variable in the table in steps of the `refresh` job, which runs in the `knowledge-librarian` Environment. Keep them beside the switch all the same, so that every switch sits in one place.
+Set each one under **Repository variables** (Settings, Secrets and variables, Actions, Variables), or with `gh variable set <name> --body <value>`. `KNOWLEDGE_LIBRARIAN_ENABLED` must be one, because this workflow's `earlier` job and `knowledge-federation.yaml`'s `nudge` job read it in their own `if:`, and a job's `if:` reads only repository and organization variables. This workflow reads every other variable in the table in steps of the `refresh` job, which runs in the `knowledge-librarian` Environment. Keep them beside the switch all the same, so that every switch sits in one place.
 
 | Secret, in the `knowledge-librarian` Environment ([above](#keep-each-secret-in-its-environment)) | Value |
 | --- | --- |

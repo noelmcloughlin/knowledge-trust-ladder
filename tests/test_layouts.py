@@ -716,6 +716,19 @@ def test_the_librarian_template_still_holds(what, needles):
     assert not missing, f"knowledge-librarian.yaml no longer contains: {missing} ({what})"
 
 
+def test_a_librarian_that_is_not_switched_on_runs_no_job():
+    """The first job carries the switch, and every other job needs it, so a disabled librarian checks nothing out and installs nothing each week."""
+    jobs = yaml.safe_load(read(LIBRARIAN_YAML))["jobs"]
+    assert jobs["earlier"]["if"] == "vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'", jobs["earlier"].get("if")
+    for name, job in jobs.items():
+        if name == "earlier":
+            continue
+        needs = job["needs"] if isinstance(job["needs"], list) else [job["needs"]]
+        condition = str(job.get("if", ""))
+        assert "earlier" in needs, f"{name} does not need earlier, so it runs when the librarian is off"
+        assert not re.search(r"always\(\)|failure\(\)|cancelled\(\)", condition), f"{name} runs after a skipped earlier: {condition}"
+
+
 @pytest.mark.parametrize("yaml_path", [LIBRARIAN_YAML, WORKFLOWS / "knowledge-sync.yaml"], ids=["librarian", "sync"])
 def test_each_push_goes_to_the_server_the_workflow_runs_on(yaml_path):
     """A push address that names github.com fails on GitHub Enterprise Server."""
