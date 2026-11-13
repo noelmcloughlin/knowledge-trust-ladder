@@ -975,7 +975,7 @@ def scripts(tmp_path_factory):
     write(d / "flow.yaml", "name: x\n# The job - runs.\njobs:\n  a:\n    run: |\n      # inside - a comment\n      python - <<'PY'\n      # data - not read\n      PY\n")
     write(d / "justfile", '# Recipes - for the bundle.\nbundle := "knowledge"\n\nlokf-validate:\n    #!/usr/bin/env bash\n    uv run lokf validate\n')
     write(d / "sentences.md", "# A page\n\n" + "It reads. " * 9 + "\n\n- " + "It reads. " * 9 + "\n")
-    write(d / "words.md", "# A page\n\nThe pen refuses it outright. Nothing in the bundle changes at all.\n")
+    write(d / "words.md", "# A page\n\nThe pen refuses it outright. Nothing in the bundle changes at all. The build stops without gh.\n")
     # A comment's layout: a usage line, a command under it, and a table of
     # options whose rows run to 60 words together and to 25 each.
     write(
@@ -1023,7 +1023,7 @@ def scripts(tmp_path_factory):
     write(
         d / "spans.md",
         "# A page\n\nThe grade is 4.71 x letters - 21.43, and `run` ends its options as in cmd -- <args> here."
-        " The gate stops at all of them, and at all times.\n",
+        " The gate stops at all of them, and at all times. The copy stops without failing, and a service can stop without notice.\n",
     )
     return d
 
@@ -1044,6 +1044,7 @@ SCRIPTS = [
     (0, "OK", "a higher --max-sentences lets it pass, and a list item has no count", ["--max-sentences", "12", "sentences.md"]),
     (1, 'words.md:3: words: "outright"', "an intensifier that names no comparison is reported", ["words.md"]),
     (1, 'words.md:3: words: "at all"', "and so is the tail of a negative", ["words.md"]),
+    (1, 'words.md:3: words: "stops without"', "and so is a need stated as what happens without the thing", ["words.md"]),
     (0, "OK", "a usage line, a command under it and a table of options are not one long sentence", ["table.sh"]),
     (1, "rows.sh:2: dash:", "a row's own text is still read", ["rows.sh"]),
     (1, 'rows.sh:3: words: "lands"', "and so is a row whose name leaves no gap", ["rows.sh"]),
@@ -1051,7 +1052,7 @@ SCRIPTS = [
     (1, 'items.py:5: words: "lands"', "a list item's paragraph after an empty line is read", ["items.py"]),
     (1, "items.py:7: dash:", "and so is the continuation of an item numbered with a letter", ["items.py"]),
     (1, 'names.md:3: words: "at all"', "a sentence that starts with a lowercase name is a sentence of its own", ["names.md"]),
-    (0, "OK", "a minus, an end of options and \"at all\" before a noun are not reported", ["spans.md"]),
+    (0, "OK", "a minus, an end of options, \"at all\" before a noun and \"stops without\" before a manner are not reported", ["spans.md"]),
 ]
 
 

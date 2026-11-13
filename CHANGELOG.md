@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **`ktl-prose` reports "stops without" under rule 11.** "The build stops without `gh`" says that the build needs `gh`, and the reader has to turn the sentence round to find that out.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added
