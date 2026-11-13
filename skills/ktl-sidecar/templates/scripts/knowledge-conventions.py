@@ -846,8 +846,9 @@ def main(argv: list[str]) -> int:
     for path in sorted(bundle.rglob("*")):
         if path.is_symlink() and (path.suffix == ".md" or ".obsidian" not in path.parts):
             findings.append(f"{path}: is a symbolic link - a concept is a file of its own, which the gates can read")
+    # A folder whose name ends in .md is no concept, and is not read.
     for path in sorted(bundle.rglob("*.md")):
-        if path.is_symlink():
+        if path.is_symlink() or not path.is_file():
             continue
         if ".obsidian" in path.parts or path.name in RESERVED:
             continue

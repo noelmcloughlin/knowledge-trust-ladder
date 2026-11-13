@@ -386,10 +386,16 @@ BEGIN {
   r = local(top); if (r ~ /^\//) r = ""
   for (j = 1; j <= nr; j++) if (r != "" && rev[j] ~ /^[0-9a-f]+$/ && length(rev[j]) >= 7) print "W\t" k "\t" f "\t" rev[j] "\t" r
 }
+END { print "Z" }
 '
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' -type l > "$tmp/links"
+# The awk below reads files and links only: a folder whose name ends in .md
+# is no concept. It ends with a line of its own. Without that line, the awk
+# stopped early, as mawk does on a file it cannot read, and the rules it
+# feeds were not checked.
+read_all=0
 # Where git names each concept: the bundle's real folder from the top of the
 # work tree, then the path inside it.
 kpfx=""
@@ -415,9 +421,14 @@ while IFS=$'\t' read -r kind n f val res; do
         asks="$asks$val:./$res"$'\n'; askers="$askers$n"$'\t'"$f"$'\t'"$val"$'\t'"$res"$'\n'
       fi
       ;;
+    Z) read_all=1 ;;
   esac
-done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort \
+done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' \( -type f -o -type l \) | sort \
   | KC_BUNDLE="$bundle" KC_ROOT="$root" KC_PREFIX="$kpfx" KC_LINKS="$tmp/links" KC_ATS="$tmp/ats" LC_ALL=C awk "$fields")
+if [ "$read_all" != 1 ]; then
+  echo "the bundle could not be read to its end, so rules 5, 6, 8 and 11 were not checked - the error above names the file" >&2
+  exit 2
+fi
 # Rule 6's answers, from one git call: a line for each question, in order,
 # that ends in "missing" when the commit or the path in it is not there.
 if [ -n "$asks" ]; then

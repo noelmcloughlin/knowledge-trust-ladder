@@ -167,6 +167,27 @@ def replace_in(path: Path, old: str, new: str) -> None:
     write(path, read(path).replace(old, new))
 
 
+def mawk_path(tmp_path: Path) -> dict | None:
+    """An environment whose awk is mawk, the default awk on Debian and Ubuntu, which stops at a folder it is handed as a file. None where mawk is not installed."""
+    mawk = shutil.which("mawk")
+    if mawk is None:
+        return None
+    link = tmp_path / "mawkbin" / "awk"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to(mawk)
+    return {"PATH": f"{link.parent}{os.pathsep}{os.environ['PATH']}"}
+
+
+def stopping_awk(tmp_path: Path, marker: str) -> dict:
+    """An environment whose awk stops at once, as mawk does at a file it cannot read, when its program holds the marker. Any other program runs."""
+    fake = write(
+        tmp_path / "stopbin" / "awk",
+        f'#!/bin/sh\ncase "$*" in *{marker}*) echo "awk: read error" >&2; exit 2 ;; esac\nexec {shutil.which("awk")} "$@"\n',
+    )
+    fake.chmod(0o755)
+    return {"PATH": f"{fake.parent}{os.pathsep}{os.environ['PATH']}"}
+
+
 def mirror_uv(tmp_path: Path, *missing: str, ready=False, ignores_lift=False, ticks=False) -> tuple[str, Path]:
     """A PATH whose uv behaves as on an index with no upload times, and the file that logs its calls.
 

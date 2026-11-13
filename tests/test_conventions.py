@@ -24,7 +24,7 @@ import sys
 
 import pytest
 
-from conftest import BOM, SCRIPTS, Git, bash, count_lines, have, matches, mirror_uv, read, write
+from conftest import BOM, SCRIPTS, Git, bash, count_lines, have, matches, mawk_path, mirror_uv, read, stopping_awk, write
 
 CONVENTIONS = SCRIPTS / "knowledge-conventions.sh"
 
@@ -489,6 +489,25 @@ def test_without_uv_strict_fails_rather_than_pass_rules_it_did_not_check(good):
     result = bash(CONVENTIONS, "--strict", good, env={"PATH": path})
     assert result.rc == 1 and "heading is not a bare ISO date" in result.out, (
         f"conventions script --strict hid a finding behind the skipped rules (exit {result.rc}): {result.out}"
+    )
+
+
+def test_a_folder_named_like_a_concept_hides_no_finding(good, tmp_path):
+    """mawk stopped at a folder named x.md, and the gate said OK for every rule the shell half reads."""
+    write(good / "x" / "dir.md" / "keep", "")
+    (good / "x" / "linked.md").symlink_to(good / "x" / "dir.md")
+    write(good / "x" / "Upper.md", "---\ntype: Service\ntitle: U\nresource: https://example.invalid/u\n---\n")
+    result = bash(CONVENTIONS, good, env=mawk_path(tmp_path))
+    assert result.rc == 1 and "x/Upper.md: path is not lowercase" in result.out, (
+        f"a folder named like a concept hid a finding (exit {result.rc}): {result.out}"
+    )
+    assert "Traceback" not in result.out and "read error" not in result.out, f"a folder named like a concept was read as one: {result.out}"
+
+
+def test_an_awk_that_stops_early_is_no_pass(good, tmp_path):
+    result = bash(CONVENTIONS, good, env=stopping_awk(tmp_path, "KC_LINKS"))
+    assert result.rc == 2 and "could not be read to its end" in result.out and "OK -" not in result.out, (
+        f"the gate passed rules its awk never finished reading (exit {result.rc}): {result.out}"
     )
 
 
