@@ -1192,15 +1192,20 @@ fi
 #     control character other than a tab or a line's closing carriage return,
 #     or a format character, such as a zero-width space, a byte order mark or
 #     the right-to-left override that the "Trojan Source" attack
-#     (CVE-2021-42574) hides code behind. A diff shows none of them, and GitHub warns of only
-#     some. An agent that types such a character's escape into a tool call
-#     can write the character itself, which once put three of them into a
-#     sanitizer here. Code that needs one spells it as an escape.
+#     (CVE-2021-42574) hides code behind. It is also a line or paragraph
+#     separator, or one of the other characters the pen's IGNORABLE class
+#     names, such as a Hangul filler or a variation selector. The class below
+#     is the pen's, and tests/test_apply.py holds the two equal. A diff shows
+#     none of them, and GitHub warns of only some. An agent that types such a
+#     character's escape into a tool call can write the character itself,
+#     which once put three of them into a sanitizer here. Code that needs one
+#     spells it as an escape.
 say ""
 say "Searching tracked files for characters a reader cannot see..."
 read -r -d '' unseen_py <<'PY' || true
-import sys, unicodedata
+import re, sys, unicodedata
 hits = 0
+IGNORABLE = re.compile("[\u034f\u115f\u1160\u17b4\u17b5\u180b-\u180f\u2065\u3164\ufe00-\ufe0f\uffa0\ufff0-\ufff8\U000e0000-\U000e0fff]")
 for raw in sys.stdin.buffer.read().split(b"\0"):
     try:
         with open(raw, "rb") as handle:
@@ -1216,7 +1221,7 @@ for raw in sys.stdin.buffer.read().split(b"\0"):
     for number, line in enumerate(text.split("\n"), start=1):
         for char in sorted(set(line[:-1] if line.endswith("\r") else line)):
             kind = unicodedata.category(char)
-            if kind == "Cf" or (kind == "Cc" and char != "\t"):
+            if kind in ("Cf", "Zl", "Zp") or (kind == "Cc" and char != "\t") or IGNORABLE.match(char):
                 hits += 1
                 print(f"{raw.decode('utf-8', 'replace')}:{number}: U+{ord(char):04X} {unicodedata.name(char, '')}".rstrip())
 sys.exit(1 if hits else 0)

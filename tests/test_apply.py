@@ -41,7 +41,7 @@ import sys
 
 import pytest
 
-from conftest import SCRIPTS, bash, esc, has_line, matches, mirror_uv, read, today_utc, tree_digest, write
+from conftest import REPO, SCRIPTS, bash, esc, has_line, matches, mirror_uv, read, run, today_utc, tree_digest, write
 
 APPLY = SCRIPTS / "knowledge-apply.sh"
 
@@ -1987,3 +1987,21 @@ def test_create_refuses_an_excerpt_past_the_limit(ka):
         "a new concept whose excerpt is past the limit",
         "the pen writes at most 500",
     )
+
+
+CONTRACT = REPO / "scripts" / "validate-repository.sh"
+
+
+def test_the_contracts_unseen_character_check_is_as_wide_as_the_pen(tmp_path):
+    """Check 21 of validate-repository.sh carries the pen's IGNORABLE class and also refuses a line or paragraph separator."""
+    pen = re.search(r'^IGNORABLE = re\.compile\("([^"]+)"\)$', read(SCRIPTS / "knowledge-apply.py"), re.M).group(1)
+    contract = read(CONTRACT)
+    assert f'IGNORABLE = re.compile("{pen}")' in contract, "check 21's class differs from the pen's IGNORABLE"
+    snippet = re.search(r"unseen_py <<'PY' \|\| true\n(.*?)\nPY\n", contract, re.S).group(1)
+    for code in (0x34F, 0x3164, 0xFE0F, 0x2028, 0x2029, 0x200B):
+        write(tmp_path / f"u{code:04x}.md", f"A{chr(code)} word.\n")
+    write(tmp_path / "clean.md", "A word.\n")
+    names = "\0".join(sorted(p.name for p in tmp_path.iterdir()))
+    result = run([sys.executable, "-c", snippet], cwd=tmp_path, stdin=names)
+    found = {line.split(":")[0] for line in result.out.split("\n") if line}
+    assert result.rc == 1 and found == {p.name for p in tmp_path.iterdir()} - {"clean.md"}, result.out
