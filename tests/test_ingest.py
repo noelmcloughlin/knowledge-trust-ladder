@@ -1453,6 +1453,32 @@ def test_patch_keeps_each_item_on_the_concept_that_names_its_copy(tmp_path, chec
               "the new item gets a concept of its own", str(new))
 
 
+def test_patch_finds_a_confidential_items_concept_after_its_commit_moves(tmp_path, checks):
+    """A confidential entry's concept names no mirror path and a git origin names the commit, so each new commit drafted a second concept."""
+    m = load_module()
+    for n, url in enumerate(("https://example.org/x.git", "https://github.com/o/r.git")):
+        root = tmp_path / f"host{n}"
+        (root / ".lokf" / "knowledge" / "references").mkdir(parents=True)
+        entry = m.Entry(id="wiki", kind="git", url=url, ref="main", reference=True, sensitivity="confidential")
+        manifest = m.Manifest(m.MIRROR, 10**7, False, [entry])
+        lock = {"entries": {"wiki": {"status": "ok"}}}
+
+        def items(sha):
+            return {"entries": {"wiki": {"status": "ok", "items": {
+                name: {"status": "ok", "path": f".lokf/.cache/mirror/wiki/{name}", "origin": m.git_origin(entry, sha, name), "title": name,
+                       "version": sha, "retrieved_at": "2026-11-01T00:00:00Z"} for name in ("Deploy.md", "deploy.md")}}}}
+
+        m.write_patch(root, manifest, lock, root / "p1.yaml", items("a" * 40))
+        first = {}
+        for op in yaml.safe_load(read(root / "p1.yaml"))["ops"]:
+            write(root / ".lokf" / "knowledge" / op["path"], "---\n" + yaml.safe_dump(op["frontmatter"]) + "---\n" + op["body"])
+            first[op["path"]] = op["frontmatter"]["title"]
+        m.write_patch(root, manifest, lock, root / "p2.yaml", items("b" * 40))
+        ops = yaml.safe_load(read(root / "p2.yaml"))["ops"]
+        second = {o["path"]: o["set"]["description"].split(",")[0].removeprefix("A copy of ") for o in ops if o["op"] == "patch"}
+        checks.ok(len(first) == 2 and len(ops) == 2 and second == first, f"{url}: each item's concept is patched, and none is drafted again", str(ops))
+
+
 # 9. --status
 
 

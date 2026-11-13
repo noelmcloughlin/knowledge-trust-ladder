@@ -2732,8 +2732,20 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     return "ingest: " + "; ".join(parts)
 
 
+COMMIT_IN_ORIGIN = re.compile(r"(/blob/|@)[0-9a-f]{40}(?:[0-9a-f]{24})?(?=[/:])")
+
+
+def origin_key(origin) -> str:
+    """An origin without the commit git_origin puts in it, which moves with every commit to the ref."""
+    return COMMIT_IN_ORIGIN.sub(r"\1", str(origin), count=1)
+
+
 def reference_owners(folder: Path) -> dict:
-    """The Reference concepts a patch wrote before, by the mirror path of the ingest's source entry and by the origin each names as its resource."""
+    """The Reference concepts a patch wrote before, by the mirror path of the ingest's source entry and by the origin each names as its resource.
+
+    A confidential entry's concept names no mirror path, so it is found by its
+    origin alone, and a git origin is compared without its commit.
+    """
     owners: dict = {}
     if not folder.is_dir():
         return owners
@@ -2746,7 +2758,7 @@ def reference_owners(folder: Path) -> dict:
             if isinstance(source, dict) and str(source.get("title", "")).endswith(", mirrored by the ingest") and source.get("resource"):
                 owners.setdefault(str(source["resource"]), name)
         if fm.get("resource"):
-            owners.setdefault(str(fm["resource"]), name)
+            owners.setdefault(origin_key(fm["resource"]), name)
     return owners
 
 
@@ -2772,7 +2784,7 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
             # An item keeps the concept that already names its copy or its
             # origin. A new item takes the name its own slugs to, unless
             # another item has that concept or takes it in this patch.
-            concept = owners.get(str(it.get("path", ""))) or owners.get(str(it.get("origin", "")))
+            concept = owners.get(str(it.get("path", ""))) or owners.get(origin_key(it.get("origin", "")))
             if not concept or concept in used:
                 stem = item_id[:-3] if item_id.endswith(".md") else item_id
                 concept = f"references/{entry.id}-{slug(stem)}.md"
