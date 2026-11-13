@@ -34,7 +34,10 @@ verified:
     at: "2026-10-29T00:48:33Z"
   - by: human:noelmcloughlin
     at: "2026-10-19T20:46:38Z"
-stale_after: 2027-10-19
+  - by: human:noelmcloughlin
+    at: "2026-11-13T14:56:10Z"
+    revision: "38892f8d2d5af8495e2b17d503f1f6dba9fd45ba"
+stale_after: 2027-11-13
 ---
 
 # Overview

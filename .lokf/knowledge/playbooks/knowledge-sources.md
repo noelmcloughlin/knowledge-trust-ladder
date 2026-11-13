@@ -15,8 +15,9 @@ verified:
     at: "2026-11-02T13:29:19Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T00:43:23Z"
-stale_after: 2027-09-10
-status: draft
+  - by: human:noelmcloughlin
+    at: "2026-11-13T14:50:55Z"
+stale_after: 2027-11-13
 sources:
   - resource: README.md
   - resource: docs/federation.md
@@ -130,7 +131,3 @@ sources:
 [^changelog.md]: CHANGELOG.md, 0.58.0, Added
 [^repository-layout.md]: docs/repository-layout.md, the lines for `.github/workflows/docent-eval.yml`, `tests/`, `evals/` and `justfile`
 [^docs-threat-model.md]: docs/threat-model.md, The docent eval
-
-## Open questions
-
-- 2026-10-27, human:noelmcloughlin: exclude all of `src/`, in `website/` and in ktl-website's template: its pages, `assets/`, `content.config.ts`, `routeData.ts`, `socialCards.ts` and `trust.ts` are site code like the components and styles, so both website rows should say the whole of `src/` is consciously excluded as concepts. `playbooks/website.md` cites the files it names through `website/README.md`.

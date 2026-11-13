@@ -25,7 +25,10 @@ verified:
     at: "2026-10-13T01:02:36Z"
   - by: process:ktl-librarian
     at: "2026-10-26T20:05:58Z"
-status: draft
+  - by: human:noelmcloughlin
+    at: "2026-11-13T14:54:36Z"
+    revision: "8db202c1065973c5c126d9860142d19de43b9f79"
+stale_after: 2027-11-13
 ---
 
 # Overview

@@ -6,8 +6,8 @@ description: "A human curator's assistant: a one-screen report of what needs a p
 genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
-  by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  by: human:noelmcloughlin
+  at: "2026-11-13T14:49:03Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -33,7 +33,10 @@ verified:
     at: "2026-11-02T13:29:19Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:13:17Z"
-status: draft
+  - by: human:noelmcloughlin
+    at: "2026-11-13T14:49:03Z"
+    revision: "d412ad09085764fa70d26e5eb4fd254602b560f2"
+stale_after: 2027-11-13
 ---
 
 # Overview
@@ -44,7 +47,7 @@ The skill writes four frontmatter keys and one body heading: `verified` (a perso
 
 ## Step 1: the report
 
-Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-preflight.sh` first, then `knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. Since 0.64.0 the script also prints the vocabulary fit and the confirmations not tied to a signed commit (`CHANGELOG.md`). Where it prints neither, the skill works both out by hand, as `references/trust-fields.md` says. The report prints, in this order:
+Step 1 always runs, is read-only and fits on one screen. It runs `knowledge-preflight.sh` first, then `knowledge-report.sh`. That script computes every label, the health line, the queue, the open questions and the sources that moved, from frontmatter and git history. The script also prints the vocabulary fit and the confirmations not tied to a signed commit (`CHANGELOG.md`). Where it prints neither, the skill works both out by hand, as `references/trust-fields.md` says. The report prints, in this order:
 
 1. a health line, which counts among others the concepts reopened and the confirmations not tied to a signed commit;
 2. at most five items *worth ten minutes today*, ranked in groups and, within a group, by how many other concepts rely on each through the fourteen relation fields and `relations[].target`;
@@ -122,7 +125,3 @@ Accepting a member's move to a new release is the same confirm again. When the n
 
 [^ktl-curator-skill.md]: skills/ktl-curator/SKILL.md, Step 1, items 7 and 8
 [^review-session.md]: skills/ktl-curator/references/review-session.md, the curation policy template
-
-## Open questions
-
-- 2026-11-12, human:noelmcloughlin: add excerpt to the footnoted sources

@@ -138,3 +138,7 @@ The lines travel inside the patch file, and the pen in `apply` takes them out of
 **A skills repository.** A skills repository is the case where the content the librarian scrapes is all instructions, since every `SKILL.md` is written for an agent to follow. The same guards hold there. The librarian reads each source as data, writes only `patch.yaml` through the pen, and holds `contents: read` in a scheduled run. An instruction in a source can still shape what a concept says. Only the person reviewing the pull request catches that, since the pen checks a patch's form and never its truth.
 
 [^docs-threat-model.md]: docs/threat-model.md, the opening, Repository hardening, Schema builds and releases, The ingest workflow and The docent eval
+
+## Open questions
+
+- 2026-11-13, human:noelmcloughlin: ask the maintainer to review with a view of reducing document size

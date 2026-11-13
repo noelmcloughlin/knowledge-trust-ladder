@@ -144,3 +144,7 @@ The variable names the root file in `.lokf/schema/` (0.62.0), whose imports reac
 [^changelog.md]: CHANGELOG.md, 0.58.0, Added
 [^ktl-librarian-skill.md]: skills/ktl-librarian/SKILL.md, Writing a concept
 [^references-ingest.md]: skills/ktl-librarian/references/ingest.md, When a source goes away
+
+## Open questions
+
+- 2026-11-13, human:noelmcloughlin: remove those versions (at least eight release numbers: 0.53.0, 0.55.0, 0.56.1, 0.58.0, 0.61.0, 0.62.0 and 0.64.0 (twice))

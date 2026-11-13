@@ -11,7 +11,6 @@ generated:
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
-status: draft
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 definedBy:
@@ -50,6 +49,10 @@ sources:
 verified:
   - by: process:ktl-librarian
     at: "2026-10-27T01:03:06Z"
+  - by: human:noelmcloughlin
+    at: "2026-11-13T14:52:01Z"
+    revision: "38892f8d2d5af8495e2b17d503f1f6dba9fd45ba"
+stale_after: 2027-11-13
 ---
 # Overview
 
@@ -170,7 +173,3 @@ The preflight also lists KTL skills installed for one user, under `~/.copilot/sk
 [^knowledge-federation.yaml]: skills/ktl-sidecar/templates/github/knowledge-federation.yaml, the `nudge` job
 [^ktl-sidecar-prerequisites.md]: skills/ktl-sidecar/references/prerequisites.md, the `ingest`, `toolkit` and `schema` rows
 [^knowledge-sync.yaml]: skills/ktl-sidecar/templates/github/knowledge-sync.yaml, the `push-workflows` job's check of the review Environment
-
-## Open questions
-
-- 2026-10-27, human:noelmcloughlin: the reason holds for `KNOWLEDGE_LIBRARIAN_ENABLED`: `knowledge-federation.yaml`'s `nudge` job reads it in its own `if:`, outside any Environment. For the three variables read only in a `refresh` step, the page should give its real reason (one place for every switch) rather than the job-`if:` one.

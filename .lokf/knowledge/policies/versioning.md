@@ -32,8 +32,10 @@ verified:
     at: "2026-09-26T20:08:48Z"
   - by: human:noelmcloughlin
     at: "2026-10-03T09:44:34Z"
-stale_after: 2027-10-03
-status: draft
+  - by: human:noelmcloughlin
+    at: "2026-11-13T14:57:53Z"
+    revision: "e5826e759a160b3dfb53cece4481eb5b1ba78046"
+stale_after: 2027-11-13
 relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/releasing
 ---
