@@ -26,7 +26,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The ingest keeps a table cell's code block, list, panel or nested table in the cell.** Spans, a `<br>` in `<pre>`, and a table or `<pre>` left open are kept too.
 - **A changed `authors`, `license` or `convert` setting reaches every mirrored page.** Before, it reached a page only when that page next changed.
-- **A redirected page's links are resolved against where it was served.** The header names it, without its query, as `redirected_to`, and a redirect from https to http is refused.
+- **A redirected page's links are resolved against where it was served.** The header names it, without its query, as `redirected_to`, and a redirect from https to http is refused, naming the address to put in the manifest if plain http is meant.
 - **`--patch` keeps each item on the Reference concept that names its copy.**
 - **The ingest workflow's push is leased to the commit it read.** A branch a person committed to is left alone.
 - **`labels.rq` shows a passed review date, a retired concept and a draft, one row per concept.** The latest confirmation by a person counts.

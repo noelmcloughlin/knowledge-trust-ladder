@@ -794,10 +794,12 @@ class Redirects(urllib.request.HTTPRedirectHandler):
             raise FetchFailed(f"redirected to an address this script does not fetch: {new.scheme}://{new.netloc}")
         if not self.allow_private and address_is_private(newurl):
             raise FetchFailed(f"redirected to a private address: {new.hostname}")
-        # A page asked for over https is not taken over plain http. The
-        # manifest can name an http address where that is meant.
+        # A page asked for over https is not taken over plain http, whatever
+        # the manifest allows: it names an http address itself where that is
+        # meant, so the step down is a choice a person made and can read.
         if urllib.parse.urlsplit(req.full_url).scheme == "https" and new.scheme == "http":
-            raise FetchFailed(f"redirected from https to http: {new.netloc}")
+            raise FetchFailed(f"redirected from https to http://{new.netloc}{new.path} - name that address in the manifest, "
+                              "with allow_private_addresses: true, if plain http is meant")
         nxt = super().redirect_request(req, fp, code, msg, headers, newurl)
         # Another origin gets only the headers any address may see. The
         # credential is a header of whatever name the manifest gives, and a
