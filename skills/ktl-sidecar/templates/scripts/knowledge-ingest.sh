@@ -5,7 +5,7 @@
 #   - `uv run` after uv_ready, since the script's header names both;
 #   - the .venv or python3 with pyyaml alone, which reads every source but a
 #     PDF.
-# knowledge-apply.sh explains the order, the Python 3.9 floor and uv_ready.
+# knowledge-apply.sh explains the order, the Python 3.11 floor and uv_ready.
 # `uv add pypdf` in .lokf/ puts pypdf in the .venv, so no run needs `uv run`.
 #
 # The script reads .lokf/ingest.yaml, mirrors
@@ -39,7 +39,7 @@ done
 [ -n "$root" ] || root="$(cd "$here/../.." && pwd)"
 py="$here/knowledge-ingest.py"
 [ -f "$py" ] || { echo "knowledge-ingest: $py is missing beside this script; run ktl-sidecar's repair path" >&2; exit 2; }
-usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c "import sys; assert sys.version_info >= (3, 9); import $2" >/dev/null 2>&1; }
+usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c "import sys; assert sys.version_info >= (3, 11); import $2" >/dev/null 2>&1; }
 uvflags=(); uverr=""; uvhint="Run uv add pypdf in .lokf/ to pin them by hash."
 uv_ready() {
   local err names name again unpinned lifted=""
@@ -84,5 +84,5 @@ for p in "$venv" python3; do
   fi
 done
 [ -z "$uverr" ] || printf '%s\n' "$uverr" >&2
-echo "knowledge-ingest: needs the sidecar's .venv (uv sync in .lokf/), uv, which installs pyyaml and pypdf for the script, or python3 3.9 or later with pyyaml; nothing was written. The sidecar's references/prerequisites.md says who installs uv." >&2
+echo "knowledge-ingest: needs the sidecar's .venv (uv sync in .lokf/), uv, which installs pyyaml and pypdf for the script, or python3 3.11 or later with pyyaml; nothing was written. The sidecar's references/prerequisites.md says who installs uv." >&2
 exit 2

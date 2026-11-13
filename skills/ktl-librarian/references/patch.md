@@ -136,7 +136,7 @@ Any one of these refuses the whole file, and nothing is written:
 
 - `0`: applied, or with `--dry-run` would apply, or `--format` printed the block above. The patch file is removed after an apply unless `--keep` is passed.
 - `1`: findings, one per line, and nothing written. Fix the file and run again.
-- `2`: no bundle, no patch file, a file that is not YAML, a `--handoff` file that cannot be written, or no runner: no `.lokf/.venv`, no `uv`, and no `python3` of 3.9 or later with `pyyaml`. Also a run without `--dry-run` in the agent's step of a scheduled run, where the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`: the pen writes nothing and leaves the patch file for the wrapper. The sidecar's prerequisites page says who installs `uv`.
+- `2`: no bundle, no patch file, a file that is not YAML, a `--handoff` file that cannot be written, or no runner: no `.lokf/.venv`, no `uv`, and no `python3` of 3.11 or later with `pyyaml`. Also a run without `--dry-run` in the agent's step of a scheduled run, where the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`: the pen writes nothing and leaves the patch file for the wrapper. The sidecar's prerequisites page says who installs `uv`.
 
 In a live session, then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. In a scheduled run the workflow runs them after the wrapper applies the file.
 

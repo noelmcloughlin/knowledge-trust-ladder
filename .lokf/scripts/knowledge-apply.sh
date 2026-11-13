@@ -10,7 +10,7 @@
 # through `uv run` (the script's own header names pyyaml), then through
 # python3 where pyyaml is installed. The .venv comes first because `uv sync`
 # installed it from uv.lock, so a run needs no package index and each file is
-# checked by hash. Each interpreter must be Python 3.9 or later. On an
+# checked by hash. Each interpreter must be Python 3.11 or later. On an
 # enterprise host python3 is often older, and the script would stop at its
 # first line.
 #
@@ -57,7 +57,7 @@ done
 [ -n "$root" ] || root="$(cd "$here/../.." && pwd)"
 py="$here/knowledge-apply.py"
 [ -f "$py" ] || { echo "knowledge-apply: $py is missing beside this script; run ktl-sidecar's repair path" >&2; exit 2; }
-usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; }
+usable() { command -v "$1" >/dev/null 2>&1 && "$1" -c 'import sys; assert sys.version_info >= (3, 11); import yaml' >/dev/null 2>&1; }
 uvflags=(); uverr=""; uvhint="Run uv sync in .lokf/ to pin them by hash."
 uv_ready() {
   local err names name again unpinned lifted=""
@@ -91,5 +91,5 @@ elif usable python3; then
   exec python3 "$py" --root "$root" ${args[@]+"${args[@]}"}
 fi
 [ -z "$uverr" ] || printf '%s\n' "$uverr" >&2
-echo "knowledge-apply: needs the sidecar's .venv (uv sync in .lokf/), uv that can install pyyaml, or python3 3.9 or later with pyyaml; nothing was written. The sidecar's references/prerequisites.md says who installs uv." >&2
+echo "knowledge-apply: needs the sidecar's .venv (uv sync in .lokf/), uv that can install pyyaml, or python3 3.11 or later with pyyaml; nothing was written. The sidecar's references/prerequisites.md says who installs uv." >&2
 exit 2

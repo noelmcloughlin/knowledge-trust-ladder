@@ -68,7 +68,7 @@ Every skill runs from a POSIX shell (on Windows, the bash of Git for Windows, as
 | `ktl-sidecar`, `ktl-librarian` | [`uv`](https://docs.astral.sh/uv/), for the `lokf` toolkit |
 | `ktl-curator` | this machine signed in to the forge (`gh` or `glab`) to record a confirmation in your name, and signed commits when you open your own curation pull requests ([signing-commits.md](signing-commits.md)) |
 | `ktl-docent` | nothing |
-| `ktl-prose` | `python3` 3.9 or newer, or `uv`, for its check script, and git to compare a file with its earlier version |
+| `ktl-prose` | `python3` 3.11 or newer, or `uv`, for its check script, and git to compare a file with its earlier version |
 | `ktl-website` | a sidecar from 0.30.0 or later, `uv`, and Node.js 22.12 or newer with npm to build the site on this machine; GitHub Actions and Pages to publish it, or the same build in another forge's CI ([deploy.md](../skills/ktl-website/references/deploy.md#another-forge)) |
 
 Someone who cannot act on a line that the preflight prints, such as a **curator** who knows the subject but not the repository, gets a request note for whoever set the repository up. The note comes from the **sidecar**'s [prerequisites page](../skills/ktl-sidecar/references/prerequisites.md).

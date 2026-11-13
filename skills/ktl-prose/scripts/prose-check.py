@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.9"
+# requires-python = ">=3.11"
 # dependencies = []
 # ///
 # The check ktl-prose runs before and after it rewords a file. A script can
@@ -73,7 +73,7 @@
 #
 # The script reads the files it is given, and the word book in the skill's
 # assets/ folder, and asks git for an earlier version. It writes nothing
-# and opens no network connection. It needs python3 3.9 or later and
+# and opens no network connection. It needs python3 3.11 or later and
 # nothing else. `uv run` reads the empty dependency block above.
 
 from __future__ import annotations

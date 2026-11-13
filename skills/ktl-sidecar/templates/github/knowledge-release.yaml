@@ -138,8 +138,8 @@ jobs:
           # text, whether a block list or a flow list.
           schema_files() {
             [ -n "$1" ] || return 0
-            if ! python3 -c 'import sys; sys.exit(sys.version_info < (3, 9))' 2>/dev/null; then
-              echo "::error::Reading the imports of the domain vocabulary needs python3 3.9 or later on the runner." >&2
+            if ! python3 -c 'import sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null; then
+              echo "::error::Reading the imports of the domain vocabulary needs python3 3.11 or later on the runner." >&2
               return 1
             fi
             python3 -I - "$1" <<'PY'

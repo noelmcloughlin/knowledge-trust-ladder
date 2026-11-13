@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **The skills' scripts need Python 3.11 or later.** The headers, the shell halves' interpreter checks, the preflight and the release workflow drop 3.9 and 3.10, and so does the sidecar's `pyproject.toml`. RHEL 9's and Ubuntu 22.04's python3 now run the scripts only through `uv run` or `.lokf/.venv`. The ingest no longer pins typing-extensions.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added

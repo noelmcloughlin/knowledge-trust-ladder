@@ -163,7 +163,7 @@
 # frontmatter to a body and to log.md, so the Python half checks them too.
 #
 # This script runs the Python half with the sidecar's .venv when the .venv
-# holds pyyaml and is Python 3.9 or later, and otherwise through `uv run`
+# holds pyyaml and is Python 3.11 or later, and otherwise through `uv run`
 # after uv_ready. knowledge-apply.sh explains both. Without uv, the shell
 # half still runs and says so, and exits 0 when it finds nothing. With
 # `--strict` it exits 2 there instead, so a gate never passes rules it did
@@ -509,7 +509,7 @@ uv_ready() {
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
 runner=""
 skipped=""; unrun=0
-if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
+if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 11); import yaml' >/dev/null 2>&1; then
   runner="$venv"
 elif uv_ready "$py"; then
   runner=uv
@@ -538,7 +538,7 @@ if [ -n "$runner" ]; then
   esac
 elif [ "$unrun" -eq 0 ]; then
   skipped="$rules not checked: uv not found"
-  echo "$skipped - install uv, or run $py directly with python3 3.9 or later and pyyaml" >&2
+  echo "$skipped - install uv, or run $py directly with python3 3.11 or later and pyyaml" >&2
   # Under --strict a rule not checked is no pass.
   if [ "$strict" = 1 ]; then unrun=1; skipped=""; fi
 fi

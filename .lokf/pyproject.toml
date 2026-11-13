@@ -10,7 +10,7 @@ name = "knowledge-trust-ladder-knowledge"
 version = "0.1.0"
 description = "LOKF knowledge-bundle tooling for Knowledge Trust Ladder."
 # Keep in sync with the `lokf` toolkit's own requires-python floor.
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "lokf[build]>=0.9.0",
     # The recipe runner the workflows use, pinned here so uv.lock checks it

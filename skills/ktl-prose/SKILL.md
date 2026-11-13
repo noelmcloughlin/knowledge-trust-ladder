@@ -2,7 +2,7 @@
 name: ktl-prose
 description: 'Reword the concept bodies of a `.lokf/` knowledge bundle into plain English, changing the wording and never a fact. Use when: someone asks for a plain-prose or plain-English pass, a restyle, shorter sentences or paragraphs, plainer words in place of jargon, or a style audit of the bundle; or says its concepts read as if an agent wrote them; or asks for a version for younger or dyslexic readers ("for ages 8 to 12", "for teens", "explain like I''m five"). Works between ktl-librarian and ktl-curator: it rewords only a body an agent wrote and no person confirmed, and checks by script that code, links and numbers came through unchanged. Applies the same rules to another Markdown file only when a person names it. Not for deriving, correcting or confirming what a concept claims; that is ktl-librarian / ktl-curator. Keywords: plain English, plain language, readability, style guide, technical writing, copy editing, OKF, LOKF, WikiSkill, trust ladder.'
 license: Apache-2.0
-compatibility: 'Works on a `.lokf/` bundle installed by ktl-sidecar. The check script needs python3 3.9 or later, or uv; without either, apply the rules by hand and say in the hand-off that no script ran. git supplies the earlier version of a file to compare against; without git, keep a copy before rewriting.'
+compatibility: 'Works on a `.lokf/` bundle installed by ktl-sidecar. The check script needs python3 3.11 or later, or uv; without either, apply the rules by hand and say in the hand-off that no script ran. git supplies the earlier version of a file to compare against; without git, keep a copy before rewriting.'
 ---
 
 # ktl-prose
@@ -82,7 +82,7 @@ bash scripts/knowledge-conventions.sh     # the bundle keeps its conventions bef
 
 No `.lokf/knowledge/index.md`? Then there is no bundle to work on. Say so, mention that ktl-sidecar can create one, and work only on a file the person names.
 
-The check script is `scripts/prose-check.py` in this skill's directory, which the commands below write as `<skill>`. Run it with `uv run`, as they do, or with a `python3` of 3.9 or later, never bare `python`.
+The check script is `scripts/prose-check.py` in this skill's directory, which the commands below write as `<skill>`. Run it with `uv run`, as they do, or with a `python3` of 3.11 or later, never bare `python`.
 
 ## Step 1: report (always, read-only)
 
