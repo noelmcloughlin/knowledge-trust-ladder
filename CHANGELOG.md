@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Security
-
-- **The ingest pins pypdf 7.0.1.** The header's pin and `exclude-newer` date move with the tests' pin, which Dependabot raised.
-
 ## [0.64.0] - 2026-11-13
 
 ### Added
@@ -84,6 +80,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Security
 
 - **The scheduled librarian writes the bundle on a runner the agent never shared.** A new `apply` job in `knowledge-librarian.yaml` runs the default branch's pen on the agent's patch file, with the toolkit `uv.lock` pins, validates the result and hands `publish` the patch. `refresh` hands on the patch file alone, since the agent could replace its `.venv` and change its checkout, and `knowledge-librarian.sh` copies the file out through `KNOWLEDGE_PATCH_OUT`.
+- **The ingest pins pypdf 7.0.1.** The header's pin and `exclude-newer` date move with the tests' pin, which Dependabot raised.
 
 ## [0.63.0] - 2026-11-12
 
