@@ -833,6 +833,40 @@ def test_the_report_on_a_member_reads_no_git_configuration_from_it(tmp_path):
     assert not marker.exists(), "git ran the member's fsmonitor command"
 
 
+def test_labels_rq_reads_review_dates_status_and_the_latest_confirmation(tmp_path):
+    """labels.rq knew no review date and no status, so a retired concept read as confirmed, and it gave a row for each event."""
+    a_iri, d_iri = "https://a.example/knowledge/", "https://d.example/federation/"
+    made = {"by": "process:librarian", "at": "2026-01-01T00:00:00Z"}
+    base = {"type": "GlossaryTerm", "description": "A term.", "resource": "https://example.test/a", "generated": made, "verified": CONFIRMED}
+    a = make_bundle(tmp_path / "a", a_iri, "A", {
+        "glossary/stale.md": {**base, "title": "Past review", "stale_after": "2026-02-01"},
+        "glossary/later.md": {**base, "title": "Review later", "stale_after": "2999-01-01"},
+        "glossary/retired.md": {**base, "title": "Retired", "status": "deprecated"},
+        "glossary/draft.md": {**base, "title": "Draft", "status": "draft", "verified": [{"by": "process:registrar", "at": "2026-01-02T00:00:00Z"}]},
+        "glossary/twice.md": {**base, "title": "Twice", "generated": {"by": "process:librarian", "at": "2026-01-03T00:00:00Z"},
+                              "verified": [*CONFIRMED, {"by": "human:ann", "at": "2026-01-04T00:00:00Z"}]},
+        "glossary/offset.md": {**base, "title": "Offset", "generated": {"by": "process:librarian", "at": "2026-01-01T23:45:00Z"},
+                               "verified": [{"by": "human:ann", "at": "2026-01-02T00:30:00+01:00"}]},
+        "glossary/none.md": {k: v for k, v in base.items() if k != "verified"} | {"title": "Unchecked"},
+    })
+    a_zip = tmp_path / "a.zip"
+    host = make_domain(tmp_path / "host", d_iri, {"a": member("a", a_iri, a_zip, zip_bundle(a, a_zip), d_iri + "domains/federation")})
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    r = federate(host, "query", "labels.rq")
+    assert r.rc == 0, r.out
+    rows = [line.split("\t")[2:] for line in r.out.splitlines() if "a.example/knowledge/glossary/" in line]
+    assert sorted(rows) == sorted([
+        ["Past review", "confirmed by a person, 2026-01-02, past its review date (2026-02-01)"],
+        ["Review later", "confirmed by a person, 2026-01-02"],
+        ["Retired", "retired"],
+        ["Draft", "checked by automation only, still a draft"],
+        ["Twice", "confirmed by a person, 2026-01-04"],
+        ["Offset", "edited since a person last confirmed it (confirmed 2026-01-02, edited 2026-01-01)"],
+        ["Unchecked", "nobody has checked this yet"],
+    ]), r.out
+
+
 def test_a_build_reads_each_bundle_once_itself(federation, tmp_path):
     """The script read each bundle for the domain walk and again for the links between bundles. The toolkit's own export and checks read it apart from these."""
     host = federation["host"]

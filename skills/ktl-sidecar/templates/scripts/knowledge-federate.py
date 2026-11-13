@@ -1829,20 +1829,33 @@ def link_counts(links: list[dict]) -> list[dict]:
 
 QUERIES = {
     "labels.rq": """# Each concept's trust label, with the bundle that asserted it (GRAPH ?g binds its base_iri).
-# The same rules as knowledge-report.sh, against the clock at the moment of the query.
+# The same rules as knowledge-report.sh, against the clock at the moment of the query:
+# the latest confirmation by a person counts, a retired concept reads as retired,
+# a draft says so, and a review date of today or earlier is named. One row per concept.
 # Two times are compared as times, so one written with an offset sorts by its
 # moment. Where an engine cannot compare them, the spellings are compared.
+# Open questions and a reader's disputes are body text and feedback, not graph
+# data, so a reopened draft reads only as reopened, and a dispute does not show.
 PREFIX lokf: <https://w3id.org/lokf/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX schema: <http://schema.org/>
 SELECT ?g ?c ?title ?label WHERE {
-  GRAPH ?g { ?c schema:name ?title . }
-  OPTIONAL { GRAPH ?g { ?c lokf:verified ?h . ?h prov:wasAssociatedWith ?by ; prov:endedAtTime ?at . FILTER(STRSTARTS(STR(?by), "human:")) } }
-  OPTIONAL { GRAPH ?g { ?c lokf:verified ?any . } }
-  OPTIONAL { GRAPH ?g { ?c prov:wasGeneratedBy ?gen . ?gen prov:endedAtTime ?edited . } }
-  BIND(IF(BOUND(?at) && BOUND(?edited) && COALESCE(?edited > ?at, STR(?edited) > STR(?at)), "edited since a person confirmed it",
-       IF(BOUND(?at), "confirmed by a person",
-       IF(BOUND(?any), "checked by automation only", "nobody has checked this yet"))) AS ?label)
+  { SELECT ?g ?c (SAMPLE(?name) AS ?title) WHERE { GRAPH ?g { ?c schema:name ?name . } } GROUP BY ?g ?c }
+  OPTIONAL { SELECT ?g ?c (MAX(?at) AS ?confirmed) WHERE {
+    GRAPH ?g { ?c lokf:verified ?h . ?h prov:wasAssociatedWith ?by ; prov:endedAtTime ?at . FILTER(STRSTARTS(STR(?by), "human:")) }
+  } GROUP BY ?g ?c }
+  OPTIONAL { SELECT ?g ?c (MAX(?at) AS ?edited) WHERE { GRAPH ?g { ?c prov:wasGeneratedBy ?gen . ?gen prov:endedAtTime ?at . } } GROUP BY ?g ?c }
+  OPTIONAL { SELECT ?g ?c (MIN(SUBSTR(STR(?due), 1, 10)) AS ?review) WHERE { GRAPH ?g { ?c schema:expires ?due . } } GROUP BY ?g ?c }
+  OPTIONAL { SELECT ?g ?c (SAMPLE(STR(?s)) AS ?status) WHERE { GRAPH ?g { ?c schema:creativeWorkStatus ?s . } } GROUP BY ?g ?c }
+  BIND(EXISTS { GRAPH ?g { ?c lokf:verified ?any . } } AS ?checked)
+  BIND(COALESCE(?status, "") AS ?state)
+  BIND(COALESCE(BOUND(?confirmed) && BOUND(?edited) && COALESCE(?edited > ?confirmed, STR(?edited) > STR(?confirmed)), false) AS ?changed)
+  BIND(IF(?state = "deprecated", "retired", CONCAT(
+         IF(?changed, CONCAT("edited since a person last confirmed it (confirmed ", SUBSTR(STR(?confirmed), 1, 10), ", edited ", SUBSTR(STR(?edited), 1, 10), ")"),
+         IF(BOUND(?confirmed), CONCAT("confirmed by a person, ", SUBSTR(STR(?confirmed), 1, 10)),
+         IF(?checked, "checked by automation only", "nobody has checked this yet"))),
+         IF(?state = "draft", IF(BOUND(?confirmed), ", reopened", ", still a draft"), ""),
+         IF(COALESCE(?review <= SUBSTR(STR(NOW()), 1, 10), false), CONCAT(", past its review date (", ?review, ")"), ""))) AS ?label)
 }
 ORDER BY ?g ?c
 """,
