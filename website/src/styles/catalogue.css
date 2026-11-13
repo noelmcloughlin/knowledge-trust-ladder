@@ -200,7 +200,8 @@ h1#_top,
   font-size: var(--sl-text-xs);
   overflow-wrap: anywhere;
 }
-/* The passage a concept quotes from a source, under that source. */
+
+/* Where the ingest fetched a mirrored source, under that source. */
 .ktl-card__more p.mirror {
   margin: 0.1rem 0 0.3rem;
   color: var(--sl-color-gray-2);
@@ -215,6 +216,7 @@ h1#_top,
   font-weight: 400;
 }
 
+/* The passage a concept quotes from a source, under that source. */
 .ktl-card__more blockquote.quote {
   margin: 0.15rem 0 0.4rem;
   padding: 0 0 0 0.7rem;
