@@ -1,0 +1,7 @@
+# The packages the tests import, pinned by version. tests/requirements.txt
+# is compiled from this file with every package it pulls in and every hash,
+# by the command in its header; the workflows install it with --require-hashes.
+pytest==9.1.1
+pytest-xdist==3.8.0
+pyyaml==6.0.3
+pypdf==6.21.4

@@ -84,11 +84,15 @@ jobs:
         run: bash scripts/validate-repository.sh
 
       # The behavioural tests of the sidecar scripts ran inside the contract
-      # until 2026-10-07; a release still runs them. The test requirements
-      # are pinned by version, not by hash: `uv run --with-requirements`
-      # does not check a hash, and this job holds no token that can write.
+      # until 2026-10-07; a release still runs them. The test packages come
+      # from tests/requirements.txt, each file checked against its hash
+      # there: `uv run --with-requirements` checks none, so they go into an
+      # environment of their own first.
       - name: Test the sidecar scripts
-        run: uv run --no-project --with-requirements tests/requirements.txt pytest
+        run: |
+          uv venv -q "$RUNNER_TEMP/tests"
+          uv pip install -q --python "$RUNNER_TEMP/tests/bin/python" --require-hashes -r tests/requirements.txt
+          "$RUNNER_TEMP/tests/bin/python" -m pytest
 
   publish:
     name: Publish the skills

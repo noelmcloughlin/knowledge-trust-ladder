@@ -18,7 +18,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The work list, `quiet` and the conventions shell half ask git a few batched questions, and every report form reads the concepts in one awk.** At 2,000 concepts the work list went from 234 s to 0.9 s, and the conventions shell half from 51 s to 1.4 s.
 - **A concept page carries only its own folder's sidebar.** The site grew with the square of the bundle.
 - **A scheduled run applies and checks the patch with copies of the pen and the gate taken from HEAD before the agent ran.** A run in which the agent moved HEAD or changed those copies is refused. The threat model names the two routes this cannot close.
-- **The skills release runs the contract and the tests in a read-only `verify` job.** The job that holds the write token runs neither.
+- **The skills release runs the contract and the tests in a read-only `verify` job.** The job that holds the write token runs neither. That job and `validate.yml` install the test packages by hash from `tests/requirements.txt`, compiled from `tests/requirements.in`.
 - **A librarian that is switched off skips every job, with no checkout or install each week.**
 - **A sync names a local edit it overwrote, rather than blaming the release, and names a host script no manifest line lists.**
 

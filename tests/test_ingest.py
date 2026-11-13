@@ -757,7 +757,7 @@ def test_a_pdf_text_layer_is_mirrored_and_a_blank_pdf_is_refused(tmp_path, serve
 def test_the_header_pins_the_pypdf_the_tests_install(checks):
     """pypdf reads PDFs from outside the repository, and Dependabot raises it in tests/requirements.txt but cannot read the script's header."""
     header = re.search(r'"pypdf==([^"]+)"', read(INGEST_PY))
-    tests = re.search(r"^pypdf==(\S+)$", read(REPO / "tests" / "requirements.txt"), re.M)
+    tests = re.search(r"^pypdf==([^\s\\]+)", read(REPO / "tests" / "requirements.txt"), re.M)
     checks.ok(header and tests and header.group(1) == tests.group(1),
               "the script's header pins the pypdf the tests run; move exclude-newer past its upload with it",
               f"header {header and header.group(1)}, tests {tests and tests.group(1)}")

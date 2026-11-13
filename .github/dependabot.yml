@@ -54,3 +54,15 @@ updates:
     groups:
       website:
         patterns: ["*"]
+
+  # The packages the tests install, pinned by hash in tests/requirements.txt,
+  # which is compiled from tests/requirements.in; its header says how.
+  - package-ecosystem: "pip"
+    directory: "/tests"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(tests)"
+    groups:
+      tests:
+        patterns: ["*"]

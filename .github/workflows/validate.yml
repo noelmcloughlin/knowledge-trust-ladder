@@ -116,13 +116,18 @@ jobs:
         with:
           node-version: 22
 
-      # One worker per CPU on each runner. Each test keeps to its own tmp_path.
+      # The test packages come from tests/requirements.txt, each file checked
+      # against its hash there: `uv run --with-requirements` checks none, so
+      # they go into an environment of their own first. One worker per CPU
+      # on each runner. Each test keeps to its own tmp_path.
       - name: Run the tests
         env:
           TESTS: ${{ matrix.tests }}
         run: |
           read -r -a paths <<< "$TESTS"
-          uv run --no-project --with-requirements tests/requirements.txt pytest -n auto "${paths[@]}"
+          uv venv -q "$RUNNER_TEMP/tests"
+          uv pip install -q --python "$RUNNER_TEMP/tests/bin/python" --require-hashes -r tests/requirements.txt
+          "$RUNNER_TEMP/tests/bin/python" -m pytest -n auto "${paths[@]}"
 
   lint-scripts:
     name: Lint shell scripts
