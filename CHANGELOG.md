@@ -27,7 +27,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The ingest keeps a table cell's code block, list, panel or nested table in the cell.** Spans, a `<br>` in `<pre>`, and a table or `<pre>` left open are kept too.
 - **A changed `authors`, `license` or `convert` setting, or a new converter version, reaches every mirrored page.** Before, it reached a page only when that page next changed. A page that left the selection gets its header written again.
 - **A redirected page's links are resolved against where it was served.** The header names it, without its query, as `redirected_to`, and a redirect from https to http is refused, naming the address to put in the manifest if plain http is meant.
-- **`--patch` keeps each item on the Reference concept that names its copy.**
+- **`--patch` keeps each item on the Reference concept that names its copy.** The concept's `resource` follows a git item to its newer commit.
 - **The ingest workflow's push is leased to the commit it read.** A branch a person committed to is left alone.
 - **`labels.rq` shows a passed review date, a retired concept and a draft, one row per concept.** The latest confirmation by a person counts.
 - **Two federation builds sharing a cache write a download file each, a build reads each bundle once, and an unreadable zip is a finding instead of a traceback.** The docs now say the snapshot swap is two renames.
