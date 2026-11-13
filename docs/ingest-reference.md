@@ -85,7 +85,7 @@ A command is code the repository runs in a job that holds secrets, so commit one
 
 ## The mirror
 
-The mirror, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, a page id or a path, never its title, so a retitled page is the same file. The workflow publishes a name of letters, digits and `._/@+-` only, so a file named otherwise is spelled with those characters, with a digest of its name added: `Release Notes.md` becomes `Release-Notes-2040e8c7.md`, and its header keeps the name. Links are made absolute, and a PDF carries a comment before each page so a concept can cite the page.
+The mirror, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, a page id or a path, never its title, so a retitled page is the same file. The workflow publishes a name of letters, digits and `._/@+-` only, so a file named otherwise is spelled with those characters, with a digest of its name added: `Release Notes.md` becomes `Release-Notes-2040e8c7.md`, and its header keeps the name. Links are made absolute against the address the page was served from: after a redirect the header names that address, without its query, as `redirected_to`. A redirect from https to http is refused, whatever `allow_private_addresses` says: a manifest names the http address itself where plain http is meant. A PDF carries a comment before each page so a concept can cite the page.
 
 The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian holds no secret with which to fetch. Never clear it before a run. Refresh it instead, since a run fetches only what moved and restores any file missing from the disk. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
 
@@ -100,7 +100,9 @@ The lock, `.lokf/ingest.lock.yaml`, records the same per item, with one of these
 - `refused`, with the reason;
 - `skipped` for a binary file that a `git` entry's include matches.
 
-The mirror and the lock change only when content changes.
+The mirror and the lock change only when content changes, or when the entry's `authors`, `license` or `convert` changes, or the version of a converter, which each header names as `converted_by`. The entry's record keeps a digest of those, and when it differs the next run fetches and writes every item again. A file it cannot fetch, such as one whose page left the selection, gets only its header written again.
+
+Each item's record keeps `mirror_sha256`, the digest of its file as written. A file edited by hand, like one the disk has lost, is fetched and written again, and `--status` counts both. A record from before the digest was kept is treated the same way, so the first runs after that upgrade write the mirror again, as many items a run as the time limit allows.
 
 ## Sensitivity
 

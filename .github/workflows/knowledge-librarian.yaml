@@ -33,6 +33,9 @@ concurrency:
 jobs:
   earlier:
     name: Read what became of the earlier pull requests (read-only, no agent)
+    # A librarian that is not switched on runs nothing at all: `refresh` and
+    # `publish` need this job, so they are skipped with it.
+    if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
     runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
@@ -390,7 +393,7 @@ jobs:
       - name: Check the conventions lokf validate cannot see
         id: conventions
         continue-on-error: true
-        run: bash scripts/knowledge-conventions.sh knowledge
+        run: bash scripts/knowledge-conventions.sh knowledge --strict
         working-directory: .lokf
 
       - name: Detect changes
@@ -573,12 +576,14 @@ jobs:
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
 
       # The job's token reaches this step alone, in the push address, as in
-      # knowledge-sync.yaml. It runs nothing the repository holds.
+      # knowledge-sync.yaml. It runs nothing the repository holds. The address
+      # names the server the workflow runs on, so GitHub Enterprise Server
+      # works too.
       - name: Push the librarian branch
         env:
           PUSH_TOKEN: ${{ github.token }}
           BRANCH: ${{ steps.check.outputs.branch }}
-        run: git push --quiet "https://x-access-token:${PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
+        run: git push --quiet "https://x-access-token:${PUSH_TOKEN}@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
 
       - name: Open the review PR
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

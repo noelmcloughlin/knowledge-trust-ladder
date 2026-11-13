@@ -37,7 +37,8 @@
 # Listing comes before fetching, so an unchanged source costs a listing and no body. The
 # mirror and the lock change only when content changes. An entry that leaves
 # the manifest takes its folder with it. A file the lock names and the disk
-# has lost is fetched again and reported as restored. A name the workflow
+# has lost, or that was edited by hand or written before the lock kept its
+# digest, is fetched again and reported as restored. A name the workflow
 # would not publish, such as one with a space, is spelled in plain
 # characters, with a digest of the name so no two meet. At its time limit
 # the run starts no more work and writes what it has, and what it did not
@@ -258,6 +259,12 @@ def shown(text: str) -> str:
 def one_line(text: str) -> str:
     """A title or a name as the mirror header and the lock record it: one line, with no character a reader cannot see."""
     return " ".join(shown(text).split())
+
+
+def bare_address(url: str) -> str:
+    """An address as the lock and the header record where a redirect led: no user name, query or fragment, where a server may put a short-lived token."""
+    parts = urllib.parse.urlsplit(url)
+    return urllib.parse.urlunsplit((parts.scheme, parts.netloc.rpartition("@")[2], parts.path, "", ""))
 
 
 def discreet(reason: str) -> str:
@@ -787,6 +794,12 @@ class Redirects(urllib.request.HTTPRedirectHandler):
             raise FetchFailed(f"redirected to an address this script does not fetch: {new.scheme}://{new.netloc}")
         if not self.allow_private and address_is_private(newurl):
             raise FetchFailed(f"redirected to a private address: {new.hostname}")
+        # A page asked for over https is not taken over plain http, whatever
+        # the manifest allows: it names an http address itself where that is
+        # meant, so the step down is a choice a person made and can read.
+        if urllib.parse.urlsplit(req.full_url).scheme == "https" and new.scheme == "http":
+            raise FetchFailed(f"redirected from https to http://{new.netloc}{new.path} - name that address in the manifest, "
+                              "with allow_private_addresses: true, if plain http is meant")
         nxt = super().redirect_request(req, fp, code, msg, headers, newurl)
         # Another origin gets only the headers any address may see. The
         # credential is a header of whatever name the manifest gives, and a
@@ -803,6 +816,7 @@ class Response:
     status: int
     headers: dict
     data: bytes
+    url: str = ""  # the address the body came from, after any redirect
 
 
 def capped(seconds: float, until: float) -> float:
@@ -852,7 +866,7 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
                 # is tried again, and never mirrored as the whole page.
                 if getattr(resp, "length", None):
                     raise http.client.IncompleteRead(bytes(data), resp.length)
-                return Response(resp.status, {k.lower(): v for k, v in resp.headers.items()}, bytes(data))
+                return Response(resp.status, {k.lower(): v for k, v in resp.headers.items()}, bytes(data), resp.geturl())
         except urllib.error.HTTPError as e:
             if e.code == 304 and accept_304:
                 return Response(304, {k.lower(): v for k, v in e.headers.items()}, b"")
@@ -893,7 +907,7 @@ def charset_of(headers: dict) -> str:
 
 HEADINGS = {"h1": 1, "h2": 2, "h3": 3, "h4": 4, "h5": 5, "h6": 6}
 PARAGRAPHS = {"p", "div", "section", "article", "header", "footer", "main", "aside", "nav", "figure", "figcaption",
-              "details", "summary", "center", "address", "dl", "dt", "dd", "ac:layout", "ac:layout-section",
+              "details", "summary", "caption", "center", "address", "dl", "dt", "dd", "ac:layout", "ac:layout-section",
               "ac:layout-cell", "ac:adf-content", "ac:adf-extension", "ac:adf-node", "ac:adf-node-group", "body", "html"}
 # Not <head>: HTML lets a page leave out </head>, and the skip would then
 # cover the body. A head holds no text a reader sees anyway: its title is
@@ -906,6 +920,10 @@ CDATA = re.compile(r"<!\[CDATA\[(.*?)\]\]>", re.S)
 # line below it again, so the Markdown of a page nested thousands deep would
 # grow with the square of the page. A deeper list or quote stays at this depth.
 DEPTH = 8
+# The most columns one cell spans, and the most rows. HTML allows 1,000 and
+# 65,534; a cell asking for more is held to these.
+COLSPAN = 50
+ROWSPAN = 1000
 
 
 class Markdowner(HTMLParser):
@@ -927,8 +945,10 @@ class Markdowner(HTMLParser):
         self.pre_buf: list[str] = []
         self.skip = 0
         self.quote = 0
-        self.table = None
-        self.cell = None
+        # The open tables, innermost last. A table inside a cell opens a frame
+        # of its own and closes into that cell.
+        self.tables: list[dict] = []
+        self.flat_tables = 0  # tables opened past DEPTH, whose cells join the deepest cell
         self.title_buf = None
         self.title = ""
         self.macros: list[dict] = []
@@ -947,24 +967,38 @@ class Markdowner(HTMLParser):
         lines = [" ".join(line.split()) for line in raw.split("\n")]
         return "\n".join(line for line in lines if line)
 
+    def cell(self) -> list | None:
+        """The open cell of the innermost table, or None."""
+        return self.tables[-1]["cell"] if self.tables else None
+
+    def floor(self) -> int:
+        """How many lists were open when the innermost table opened. A list above this one is inside the table."""
+        return self.tables[-1]["lists"] if self.tables else 0
+
+    def in_cell(self) -> bool:
+        """Whether a block goes into a table cell: a cell is open and no list inside it is."""
+        return self.cell() is not None and len(self.lists) <= self.floor()
+
     def emit(self, block: str) -> None:
+        """Add a block where the page has it: in the open list item, in the open table cell, or on the page."""
         if not block:
             return
-        if self.lists and self.lists[-1][2] is not None:
+        if self.lists and self.lists[-1][2] is not None and not self.in_cell():
             self.lists[-1][2].append(block)
+            return
+        # A cell holds what a list inside it holds outside an item, too.
+        if self.cell() is not None:
+            self.cell().append(block)
             return
         self.blocks.append("\n".join(self.prefix() + line for line in block.split("\n")))
 
     def flush(self) -> None:
-        if self.cell is not None:
-            self.cell.append(self.text())
-            return
         if self.title_buf is not None:
             return
         t = self.text()
         if not t:
             return
-        if self.heading:
+        if self.heading and self.cell() is None:  # a cell, or a list in one, holds no heading
             self.emit("#" * self.heading + " " + " ".join(t.split()))
         else:
             self.emit(t)
@@ -1002,6 +1036,9 @@ class Markdowner(HTMLParser):
                 self.macros[-1]["params"][a.get("ac:name", "")] = ""
             self.skip += 1
             return
+        if self.pre and tag == "br":
+            self.pre_buf.append("\n")
+            return
         if self.skip or self.pre:
             return
         if tag in HEADINGS:
@@ -1022,7 +1059,7 @@ class Markdowner(HTMLParser):
                 self.flat += 1
         elif tag == "li":
             self.flush()
-            if not self.lists:
+            if len(self.lists) <= self.floor():
                 self.lists.append(["ul", 0, None])
             if self.lists[-1][2] is not None:
                 self.end_item()
@@ -1037,14 +1074,31 @@ class Markdowner(HTMLParser):
             self.quote += 1
         elif tag == "table":
             self.flush()
-            self.table = []
-        elif tag == "tr" and self.table is not None:
-            self.table.append([])
-        elif tag in ("td", "th") and self.table is not None:
-            if not self.table:
-                self.table.append([])
-            self.cell = []
-            self.buf = []
+            if len(self.tables) < DEPTH:
+                self.tables.append({"rows": [], "cell": None, "lists": len(self.lists), "spans": {}, "colspan": 1, "room": 0})
+            else:
+                self.flat_tables += 1
+        elif tag == "tr" and self.tables and not self.flat_tables:
+            self.close_cell()
+            self.fill_spans()
+            self.tables[-1]["rows"].append([])
+        elif tag in ("td", "th") and self.tables:
+            if self.flat_tables:
+                self.buf.append(" ")
+                return
+            self.close_cell()
+            self.flush()  # text between cells is written before the table
+            frame = self.tables[-1]
+            if not frame["rows"]:
+                frame["rows"].append([])
+            self.fill_spans()
+            frame["colspan"] = span(a.get("colspan"), COLSPAN)
+            rows = span(a.get("rowspan"), ROWSPAN)
+            if rows > 1:
+                start = len(frame["rows"][-1])
+                for column in range(start, start + frame["colspan"]):
+                    frame["spans"][column] = rows - 1
+            frame["cell"] = []
         elif tag == "a":
             self.links.append((self.href(a.get("href", "")), len(self.buf)))
         elif tag == "img":
@@ -1116,8 +1170,7 @@ class Markdowner(HTMLParser):
             return
         if self.pre:
             if tag == "pre":
-                self.pre = 0
-                self.emit(fence("".join(self.pre_buf), ""))
+                self.close_pre()
             return
         if tag in HEADINGS:
             self.flush()
@@ -1128,36 +1181,23 @@ class Markdowner(HTMLParser):
             self.flush()
             if self.flat:
                 self.flat -= 1
-            elif self.lists:
-                self.end_item()
-                lst = self.lists.pop()
-                block = "\n".join(lst[3:]) if len(lst) > 3 else ""
-                self.emit(block)
+            elif len(self.lists) > self.floor():
+                self.close_list()
         elif tag == "li":
             self.flush()
-            if self.lists:  # an end tag with no list open is the page's error
+            if len(self.lists) > self.floor():  # an end tag with no list open is the page's error
                 self.end_item()
         elif tag == "blockquote":
             self.flush()
             self.quote = max(0, self.quote - 1)
-        elif tag in ("td", "th") and self.cell is not None:
-            self.cell.append(self.text())
-            self.table[-1].append(" ".join(" ".join(self.cell).split()).replace("|", "\\|"))
-            self.cell = None
-        elif tag == "table" and self.table is not None:
-            if self.cell is not None:  # a cell left open closes with its table
-                self.handle_endtag("td")
-            rows = [r for r in self.table if r]
-            self.table = None
-            if rows:
-                # Only the header row is padded to the widest row: a renderer
-                # fills a shorter row itself, and padding every row would let a
-                # table grow with the square of its size.
-                width = max(len(r) for r in rows)
-                header = rows[0] + [""] * (width - len(rows[0]))
-                lines = ["| " + " | ".join(header) + " |", "| " + " | ".join("---" for _ in range(width)) + " |"]
-                lines += ["| " + " | ".join(r) + " |" for r in rows[1:]]
-                self.emit("\n".join(lines))
+        elif tag in ("td", "th"):
+            if not self.flat_tables:
+                self.close_cell()
+        elif tag == "table":
+            if self.flat_tables:
+                self.flat_tables -= 1
+            elif self.tables:
+                self.close_table()
         elif tag == "a" and self.links:
             href, start = self.links.pop()
             text = "".join(self.buf[start:]).strip()
@@ -1263,13 +1303,120 @@ class Markdowner(HTMLParser):
             lines += ["  " + line for line in part.split("\n")]
         lst.append("\n".join(lines))
 
-    def result(self) -> str:
+    def close_list(self) -> None:
+        self.end_item()
+        lst = self.lists.pop()
+        self.emit("\n".join(lst[3:]) if len(lst) > 3 else "")
+
+    # -- tables
+    def fill_spans(self) -> None:
+        """Put an empty cell where a cell of an earlier row spans down into this one."""
+        frame = self.tables[-1]
+        if not frame["rows"]:
+            return
+        row = frame["rows"][-1]
+        while frame["spans"].get(len(row), 0) > 0 and frame["room"] > 0:
+            frame["spans"][len(row)] -= 1
+            frame["room"] -= 1
+            row.append("")
+
+    def close_cell(self) -> None:
+        """Close the open cell of the innermost table, with any list left open inside it."""
+        frame = self.tables[-1] if self.tables else None
+        if frame is None or frame["cell"] is None:
+            return
         self.flush()
-        while self.lists:
-            self.end_item()
-            lst = self.lists.pop()
-            self.emit("\n".join(lst[3:]) if len(lst) > 3 else "")
+        while len(self.lists) > frame["lists"]:
+            self.close_list()
+        self.flush()
+        row = frame["rows"][-1]
+        row.append(cell_text(frame["cell"]))
+        frame["cell"] = None
+        # Each cell lets the table hold so many empty cells more, so that the
+        # spans of a page cannot make a table grow with the square of its size.
+        frame["room"] += COLSPAN
+        extra = min(frame["colspan"] - 1, frame["room"])
+        row.extend([""] * extra)
+        frame["room"] -= extra
+
+    def close_table(self) -> None:
+        self.close_cell()
+        self.fill_spans()
+        frame = self.tables.pop()
+        rows = [r for r in frame["rows"] if r]
+        if not rows:
+            return
+        if self.cell() is not None:
+            # A table inside a cell, or in a list in one, is written into it, a row to a line.
+            self.emit("\n".join("; ".join(c for c in r if c) for r in rows))
+            return
+        # Only the header row is padded to the widest row: a renderer
+        # fills a shorter row itself, and padding every row would let a
+        # table grow with the square of its size.
+        rows = [[c.replace("|", "\\|") for c in r] for r in rows]
+        width = max(len(r) for r in rows)
+        header = rows[0] + [""] * (width - len(rows[0]))
+        lines = ["| " + " | ".join(header) + " |", "| " + " | ".join("---" for _ in range(width)) + " |"]
+        lines += ["| " + " | ".join(r) + " |" for r in rows[1:]]
+        self.emit("\n".join(lines))
+
+    def close_pre(self) -> None:
+        self.pre = 0
+        self.emit(fence("".join(self.pre_buf), ""))
+
+    def result(self) -> str:
+        # A block the page leaves open closes at its end, innermost first.
+        if self.pre:
+            self.close_pre()
+        self.flush()
+        while self.tables or self.lists:
+            if self.tables and len(self.lists) <= self.floor():
+                self.close_table()
+            else:
+                self.close_list()
         return "\n\n".join(b for b in self.blocks if b.strip()).strip() + "\n"
+
+
+def span(value, most: int) -> int:
+    """A colspan or rowspan as a count from 1 to most."""
+    try:
+        return min(max(int(str(value).strip()), 1), most)
+    except ValueError:
+        return 1
+
+
+def inline_code(text: str) -> str:
+    ticks = "`" * (max((len(run) for run in re.findall(r"`+", text)), default=0) + 1)
+    pad = " " if text.startswith("`") or text.endswith("`") else ""
+    return f"{ticks}{pad}{text}{pad}{ticks}"
+
+
+def cell_text(blocks: list) -> str:
+    """The blocks of a table cell on one line, as a Markdown table needs them.
+
+    A line break becomes <br>, which GitHub's Markdown shows as a break in a
+    cell. A line of a code block becomes inline code, and the fence lines go.
+    A line of text that starts with backticks no later line closes is text.
+    """
+    out = []
+    ticks = ""
+    lines = [line.strip() for line in "\n".join(blocks).split("\n")]
+    last = {bare: i for i, bare in enumerate(lines)}
+    for i, bare in enumerate(lines):
+        if ticks:
+            if bare == ticks:
+                ticks = ""
+            elif bare:
+                out.append(inline_code(bare))
+            continue
+        run = re.match(r"`{3,}", bare)
+        if run and last.get(run.group(0), -1) > i:
+            ticks = run.group(0)
+            continue
+        words = " ".join(bare.split())
+        if words:
+            out.append(words)
+    return "<br>".join(out)
 
 
 def fence(text: str, language: str) -> str:
@@ -1340,6 +1487,17 @@ def decode(data: bytes, charset: str = "", html_page: bool = False) -> str:
     return data.decode("latin-1")
 
 
+# The version of each converter, which a mirror file's header names. Raise a
+# number when that converter writes different Markdown from the same source:
+# the settings digest holds these, so the next run writes every file again.
+CONVERTERS = {"confluence-storage-markdown": 2, "git": 1, "html-markdown": 2, "pdf-text": 1, "text": 1}
+
+
+def converter(name: str) -> str:
+    """A converter's name and version, as a header's converted_by names them."""
+    return f"{name}/{CONVERTERS[name]}"
+
+
 def convert(data: bytes, content_type: str, how: str, charset: str = "", base: str = "") -> tuple[str, str, str]:
     """The Markdown, the title it carried and the converter's name, or a Refused."""
     how = how or TEXT_TYPES.get(content_type, "")
@@ -1347,17 +1505,17 @@ def convert(data: bytes, content_type: str, how: str, charset: str = "", base: s
         raise Refused(f"content type {content_type or 'unknown'} is not text; convert: text takes it as text, convert: html-markdown or pdf-text converts it")
     if how == "pdf-text":
         text, title = pdf_to_text(data)
-        return shown(text), one_line(title), "pdf-text/1"
+        return shown(text), one_line(title), converter("pdf-text")
     if how == "html-markdown":
         try:
             text, title = html_to_markdown(decode(data, charset, html_page=True), base)
         except Exception as e:  # noqa: BLE001 - a page the converter cannot read is refused alone, as a broken PDF is, not its whole entry
             raise Refused(f"the page could not be converted ({type(e).__name__})") from e
-        return shown(text), one_line(title), "html-markdown/1"
+        return shown(text), one_line(title), converter("html-markdown")
     text = decode(data, charset).replace("\r\n", "\n")
     if "\x00" in text:
         raise Refused("the content is binary, not text")
-    return shown(text).rstrip("\n") + "\n", "", "text/1"
+    return shown(text).rstrip("\n") + "\n", "", converter("text")
 
 
 # ---- the kinds -----------------------------------------------------------------
@@ -1375,6 +1533,7 @@ class Item:
     author: str = ""
     etag: str = ""
     last_modified_header: str = ""  # as served, for If-Modified-Since
+    redirected_to: str = ""  # the address a redirect led to, when not the origin
     blob: str = ""
     text: str = ""
     converted_by: str = ""
@@ -1557,7 +1716,7 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
             continue
         items.append(Item(
             item=pid, origin=origin, title=r["title"] or title, version=r["version"], last_modified=r["when"],
-            author=r["author"] if entry.authors else "", text=text, converted_by="confluence-storage-markdown/1",
+            author=r["author"] if entry.authors else "", text=text, converted_by=converter("confluence-storage-markdown"),
             sha256=sha256_hex(raw),
         ))
     return items, unchanged
@@ -1593,7 +1752,10 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]
                     ctx.fresher[(entry.id, item_id)] = fresh
                 unchanged[item_id] = was
                 continue
-            text, title, how = convert(resp.data, content_type_of(resp.headers), entry.convert, charset_of(resp.headers), base=url)
+            # A redirect moves the page, so its relative links are read from
+            # where it was served, as a browser reads them.
+            served = resp.url or url
+            text, title, how = convert(resp.data, content_type_of(resp.headers), entry.convert, charset_of(resp.headers), base=served)
         except OutOfTime:
             ctx.leave(entry, item_id, was or None)
             continue
@@ -1612,7 +1774,8 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]
         # the quotes. The lock keeps the ETag as served, for If-None-Match.
         version = one_line(re.sub(r"^W/", "", etag).strip('"')) if etag else (utc(lm) if lm else digest[:12])
         items.append(Item(item=item_id, origin=url, title=title or name, version=version, last_modified=utc(lm) if lm else "",
-                          etag=etag, last_modified_header=lm, text=text, converted_by=how, sha256=digest))
+                          etag=etag, last_modified_header=lm, text=text, converted_by=how, sha256=digest,
+                          redirected_to=bare_address(served) if bare_address(served) != bare_address(url) else ""))
     return items, unchanged
 
 
@@ -1909,7 +2072,7 @@ def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, u
             if not rel.endswith(".md"):
                 text = fence(text, PurePosixPath(rel).suffix.lstrip(".")) + "\n"
             items.append(Item(item=item_id, origin=git_origin(entry, sha, f), title=rel, version=sha, last_modified=when,
-                              blob=oid, text=text, converted_by="git/1", sha256=digest))
+                              blob=oid, text=text, converted_by=converter("git"), sha256=digest))
     return items, unchanged
 
 
@@ -2037,16 +2200,42 @@ def cache_exposed(root: Path) -> str:
     return ""
 
 
+def settings_digest(entry: Entry) -> str:
+    """A digest of what shapes a mirror file besides its source: the entry's settings for its header and its conversion, and the converters' versions."""
+    shaping = {"authors": entry.authors, "license": entry.license, "convert": entry.convert, "converters": CONVERTERS}
+    return "sha256:" + sha256_hex(json.dumps(shaping, sort_keys=True).encode("utf-8"))[:16]
+
+
+def mirror_file_digest(path: Path) -> str:
+    """The digest of a mirror file's bytes, or "" when it cannot be read."""
+    try:
+        return "sha256:" + sha256_hex(path.read_bytes())
+    except OSError:
+        return ""
+
+
+def mirrored_as_written(root: Path, record: dict) -> bool:
+    """Whether the file an item's record names is there, as the ingest wrote it. A record from before the digest was kept cannot say, so its file is written again, with the digest."""
+    path = root / str(record.get("path", ""))
+    if not path.is_file() or not record.get("mirror_sha256"):
+        return False
+    return mirror_file_digest(path) == record["mirror_sha256"]
+
+
+# The header mirror_header writes, up to the text: its frontmatter, then the comment and a blank line.
+MIRROR_HEADER = re.compile(r"\A---\n(.*?)\n---\n<!-- A mirror of [^\n]* -->\n\n", re.S)
+
+
 def mirror_header(entry: Entry, record: dict, converted_by: str) -> str:
     """The header a mirror file opens with, from the item's lock record."""
     fm = {"origin": record.get("origin", ""), "title": record.get("title", ""), "ingest": entry.id, "kind": entry.kind,
           "version": str(record.get("version", "")), "sha256": record["sha256"], "retrieved_at": record["retrieved_at"], "converted_by": converted_by}
-    for key in ("last_modified", "author", "command_unchecked"):
+    for key in ("redirected_to", "last_modified", "author", "command_unchecked"):
         if record.get(key):
             fm[key] = record[key]
     if entry.license:
         fm["license"] = entry.license
-    order = ["origin", "title", "ingest", "kind", "version", "last_modified", "author", "sha256", "retrieved_at", "converted_by", "command_unchecked", "license"]
+    order = ["origin", "redirected_to", "title", "ingest", "kind", "version", "last_modified", "author", "sha256", "retrieved_at", "converted_by", "command_unchecked", "license"]
     lines = ["---"]
     for key in order:
         if key in fm:
@@ -2203,10 +2392,25 @@ class Run:
         elsewhere = [self.root / str(prior[i]["path"]) for i in moved if self.removable(str(prior[i]["path"]))]
         for i in moved:
             del prior[i]
-        # A file the lock calls current and the disk has lost is handed to the
-        # kind as if new, so it is fetched again instead of skipped as unchanged.
-        lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not (self.root / was["path"]).is_file()}
+        # A file the lock calls current and the disk has lost, or that was
+        # edited by hand or written before the lock kept its digest, is handed
+        # to the kind as if new, so it is fetched and written again instead of
+        # skipped as unchanged. So an upgrade writes the mirror again, as many
+        # items a run as its time limit allows, each with its digest.
+        lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not mirrored_as_written(self.root, was)}
         present = {i: was for i, was in prior.items() if i not in lost}
+        # A file's header and its Markdown follow the entry's settings and the
+        # converters too. When they changed since the files were written, every
+        # item is fetched and written again, so that authors: false, say, or a
+        # new converter reaches a page that has not changed. A file whose
+        # source is gone or unlisted gets its header written again below.
+        # A record from before this digest was kept takes it as it
+        # is: its items carry no file digest, so they are written again anyway.
+        settings = settings_digest(entry)
+        stored = [(lock["entries"].get(entry.id) or {}).get("settings") for lock in (book, other)]
+        stored = next((d for d in stored if d), "")
+        if stored and stored != settings:
+            present = {}
         failure = None
         try:
             if entry.kind == "confluence":
@@ -2229,6 +2433,10 @@ class Run:
             failure = ("failed", f"an error this script did not expect, {type(e).__name__}: {' '.join(str(e).split())[:200]}")
         record = book["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
         other["entries"].pop(entry.id, None)
+        # The digest moves with the records, so that a failure, or a stop at
+        # the time limit, still leaves the next run to write every item again.
+        if stored:
+            record.setdefault("settings", stored)
         self.removals += elsewhere
         if book is self.cache_lock:
             self.settled.add(entry.id)
@@ -2244,6 +2452,10 @@ class Run:
             return
         record["status"] = "ok"
         record.pop("reason", None)
+        # Items the time limit left were written under the old settings, so
+        # the old digest stays until a run reaches every item.
+        if not self.ctx.left.get(entry.id):
+            record["settings"] = settings
         new_items: dict = {}
         skipped: list[tuple[str, str]] = []
         total = self.total_mirror_size() - self.entry_mirror_size(self.records(entry))
@@ -2334,17 +2546,21 @@ class Run:
             else:
                 lock_item = {"path": self.rel(target), "origin": it.origin, "title": it.title, "version": str(it.version),
                              "sha256": "sha256:" + it.sha256, "bytes": written, "retrieved_at": self.now, "status": "ok"}
-                for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "command_sha256", "command_unchecked"):
+                for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "redirected_to", "command_sha256", "command_unchecked"):
                     if getattr(it, key):
                         lock_item[key] = getattr(it, key)
+            text = mirror_header(entry, lock_item, it.converted_by) + it.text
+            # The digest of the file as written, so that a hand edit is noticed.
+            lock_item["mirror_sha256"] = "sha256:" + sha256_hex(text.encode("utf-8"))
             new_items[it.item] = lock_item
             counts["restored" if it.item in lost else "fetched"] += 1
-            self.writes.append((target, mirror_header(entry, lock_item, it.converted_by) + it.text))
+            self.writes.append((target, text))
         for item_id, was in prior.items():
             # A file no longer listed is unlisted, and one that was skipped needs its record no more.
             if item_id not in new_items and was.get("status") != "skipped":
                 new_items[item_id] = dict(was, status="unlisted", since=self.away_since(was))
                 counts["unlisted"] += 1
+        rewritten = self.rewrite_headers(entry, new_items, folder) if stored and stored != settings else 0
         record["items"] = new_items
         parts = [f"{v} {k}" for k, v in counts.items() if v]
         self.summary.append(f"- {entry.id} ({entry.describe()}): " + (", ".join(parts) if parts else "nothing listed"))
@@ -2352,6 +2568,9 @@ class Run:
             n = counts["not reached"]
             self.summary.append(f"  - {n} item{'s' if n != 1 else ''}: not reached, the run's time limit passed first, so "
                                 f"{'they wait' if n != 1 else 'it waits'} for the next run")
+        if rewritten:
+            self.summary.append(f"  - {rewritten} item{'s' if rewritten != 1 else ''}: not fetched, so only "
+                                f"{'their headers were' if rewritten != 1 else 'its header was'} written again for the entry's new settings")
         for item_id, it in sorted(new_items.items()):
             if it.get("status") == "ok" and it.get("command_unchecked"):
                 self.summary.append(f"  - {item_id}: ran unchecked, {it['command_unchecked']}")
@@ -2372,6 +2591,40 @@ class Run:
             self.summary.extend(f"  - {item_id}: skipped, {reason}" for item_id, reason in skipped)
         if counts["failed"] or counts["refused"]:
             self.failed += 1
+
+    def rewrite_headers(self, entry: Entry, items: dict, folder: Path) -> int:
+        """Write the header again, from its record and the entry's settings, of each file whose item this run did not fetch; how many.
+
+        A source that is gone or unlisted cannot be fetched, and one refused
+        or failed may stay so, so after a change of settings only the header
+        follows: authors: false takes the author out of the record and the
+        file, and a new license goes in. The body stays as its converter wrote
+        it, and so does the converter the header names.
+        """
+        n = 0
+        for was in items.values():
+            if was.get("status") == "ok":
+                continue
+            if not entry.authors:
+                was.pop("author", None)
+            path = str(was.get("path") or "")
+            if not path or not was.get("sha256") or not was.get("retrieved_at") or not self.within(path, folder):
+                continue
+            target = self.root / path
+            try:
+                old = target.read_text(encoding="utf-8")
+                m = MIRROR_HEADER.match(old)
+                head = yaml.safe_load(m.group(1)) if m else None
+            except (OSError, UnicodeDecodeError, yaml.YAMLError):
+                continue
+            if not isinstance(head, dict):
+                continue
+            text = mirror_header(entry, was, str(head.get("converted_by") or "")) + old[m.end():]
+            if text != old:
+                was["mirror_sha256"] = "sha256:" + sha256_hex(text.encode("utf-8"))
+                self.writes.append((target, text))
+                n += 1
+        return n
 
     def away_since(self, was: dict) -> str:
         """When the item first went gone or unlisted: kept from the lock while it stays away, else this run."""
@@ -2492,7 +2745,7 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     names = sorted({n for e in manifest.entries for n in e.auth.names()})
     present = [n for n in names if environ.get(n)]
     absent = [n for n in names if not environ.get(n)]
-    files, newest, missing, away, named = 0, "", 0, 0, set()
+    files, newest, missing, older, edited, away, named = 0, "", 0, 0, 0, 0, set()
     try:
         books = [read_lock(lock_path), read_cache_lock(root / CACHE_LOCK)]
     except Stop:
@@ -2507,6 +2760,10 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
                     newest = max(newest, str(it.get("retrieved_at", "")))
                     if path and not (root / path).is_file():
                         missing += 1
+                    elif path and not it.get("mirror_sha256"):
+                        older += 1
+                    elif path and not mirrored_as_written(root, it):
+                        edited += 1
                 elif it.get("status") in ("gone", "unlisted"):
                     away += 1
     mirror = root / MIRROR
@@ -2514,6 +2771,10 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     parts = [f"{len(manifest.entries)} entries in .lokf/ingest.yaml", f"{files} mirrored files" + (f", newest {newest[:10]}" if newest else ", no lock yet")]
     if missing:
         parts.append(f"{missing} missing from the mirror, which a run restores")
+    if older:
+        parts.append(f"{older} written before the lock kept their digest, which a run writes again")
+    if edited:
+        parts.append(f"{edited} edited since the ingest wrote them, which a run writes again")
     if stray:
         parts.append(f"{stray} files in the mirror the lock does not name")
     if away:
@@ -2539,6 +2800,36 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     return "ingest: " + "; ".join(parts)
 
 
+COMMIT_IN_ORIGIN = re.compile(r"(/blob/|@)[0-9a-f]{40}(?:[0-9a-f]{24})?(?=[/:])")
+
+
+def origin_key(origin) -> str:
+    """An origin without the commit git_origin puts in it, which moves with every commit to the ref."""
+    return COMMIT_IN_ORIGIN.sub(r"\1", str(origin), count=1)
+
+
+def reference_owners(folder: Path) -> dict:
+    """The Reference concepts a patch wrote before, by the mirror path of the ingest's source entry and by the origin each names as its resource.
+
+    A confidential entry's concept names no mirror path, so it is found by its
+    origin alone, and a git origin is compared without its commit.
+    """
+    owners: dict = {}
+    if not folder.is_dir():
+        return owners
+    for path in sorted(folder.glob("*.md")):
+        fm = frontmatter_of(path)
+        if fm.get("type") != "Reference":
+            continue
+        name = f"references/{path.name}"
+        for source in fm.get("sources") or []:
+            if isinstance(source, dict) and str(source.get("title", "")).endswith(", mirrored by the ingest") and source.get("resource"):
+                owners.setdefault(str(source["resource"]), name)
+        if fm.get("resource"):
+            owners.setdefault(origin_key(fm["resource"]), name)
+    return owners
+
+
 def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, cache_lock: dict | None = None) -> int:
     """Reference concepts for the entries that ask for them, as operations for the pen; how many."""
     if patch_path.exists():
@@ -2546,6 +2837,8 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
     index = root / ".lokf" / "knowledge" / "index.md"
     base_iri = str(frontmatter_of(index).get("base_iri") or "") if index.is_file() else ""
     ops, used = [], set()
+    owners = reference_owners(root / ".lokf" / "knowledge" / "references")
+    claimed = set(owners.values())
     for entry in manifest.entries:
         if not entry.reference:
             continue
@@ -2556,10 +2849,15 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
         for item_id, it in sorted(record.get("items", {}).items()):
             if it.get("status") != "ok":
                 continue
-            stem = item_id[:-3] if item_id.endswith(".md") else item_id
-            concept = f"references/{entry.id}-{slug(stem)}.md"
-            if concept in used:  # two items whose names slug alike
-                concept = f"references/{entry.id}-{slug(stem)[:50]}-{sha256_hex(item_id.encode())[:8]}.md"
+            # An item keeps the concept that already names its copy or its
+            # origin. A new item takes the name its own slugs to, unless
+            # another item has that concept or takes it in this patch.
+            concept = owners.get(str(it.get("path", ""))) or owners.get(origin_key(it.get("origin", "")))
+            if not concept or concept in used:
+                stem = item_id[:-3] if item_id.endswith(".md") else item_id
+                concept = f"references/{entry.id}-{slug(stem)}.md"
+                if concept in used or concept in claimed:  # two items whose names slug alike
+                    concept = f"references/{entry.id}-{slug(stem)[:50]}-{sha256_hex(item_id.encode())[:8]}.md"
             used.add(concept)
             title = str(it.get("title") or item_id)
             version = str(it.get("version", ""))
@@ -2581,8 +2879,20 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
                 sets = {"description": description}
                 if committed:
                     sets["sources"] = sources + [source]
-                ops.append({"op": "patch", "path": concept, "set": sets,
-                            "log": f"**Changed**: the ingest mirrored a newer version of {title} ({version})."})
+                op = {"op": "patch", "path": concept, "set": sets,
+                      "log": f"**Changed**: the ingest mirrored a newer version of {title} ({version})."}
+                # A git origin names a commit. The concept and its body follow
+                # the newer one, unless a person gave it a resource of their own.
+                was = str(fm.get("resource") or "")
+                if was != it["origin"] and origin_key(was) == origin_key(it["origin"]):
+                    sets["resource"] = it["origin"]
+                    try:
+                        text = path.read_text(encoding="utf-8")
+                    except (OSError, UnicodeDecodeError):
+                        text = ""
+                    if text.count(f"<{was}>") == 1:
+                        op["edits"] = [{"replace": {"target": f"<{was}>", "content": f"<{it['origin']}>"}}]
+                ops.append(op)
                 continue
             fm = {"type": "Reference", "title": title, "description": description, "resource": it["origin"], "tags": ["ingest", entry.id]}
             if committed:

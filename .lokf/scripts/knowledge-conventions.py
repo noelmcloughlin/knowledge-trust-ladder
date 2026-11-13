@@ -17,8 +17,9 @@
 # regex used to guess wrong.
 #
 # Rule 4 is a body rule, checked with them. Rule 10 exists because the
-# provenance gates do read the frontmatter line by line: it keeps the fields
-# they read to spellings a line reader and a parser agree on. Rule 12 compares
+# provenance gates, knowledge-report.sh and the shell half do read the
+# frontmatter line by line: it keeps the fields they read to spellings a line
+# reader and a parser agree on. Rule 12 compares
 # a concept's title and description, which only a parser reads whole, with
 # the index bullets that copy them. Rule 13 asks git for the text a person
 # confirmed and compares it with today's as parsed values, since
@@ -71,10 +72,16 @@ OPEN_QUESTION = re.compile(r"^- \d{4}-\d{2}-\d{2}, (human|process):[^ :]+: ")
 # neither one's bullet, so the title holds no closing bracket.
 INDEX_BULLET = re.compile(r"^\* \[([^\]]*)\]\(([^)]+)\) - (.*)$")
 # The fields the provenance gates read line by line: a concept's id, and the
-# actor, time and revision of each event.
-GATE_FIELDS = {"id", "by", "at", "revision"}
+# actor, time and revision of each event. knowledge-report.sh and the shell
+# half read `resource` line by line too, the concept's own and each source's
+# and exclusion's.
+GATE_FIELDS = {"id", "by", "at", "revision", "resource"}
 # The keys those gates find an event under.
 EVENT_KEYS = {"verified", "generated"}
+# The lists those line readers read entry by entry, which must stay in block
+# form: a flow form hides each `resource:` from them, so a source that is
+# gone fails no rule 5 and never moves, and coverage counts nothing for it.
+BLOCK_LISTS = {"sources", "exclusions"}
 # What a parser ends a line at and a line reader does not.
 UNSEEN_BREAK = re.compile("[\x85\u2028\u2029]")
 # Rule 2's one shape for a time: UTC to the second, as `date -u
@@ -177,11 +184,19 @@ def plain_spellings(fm_text: str) -> list[str]:
                     findings.append(f"a {field} on the line below its key at {at(ev)}")
                 elif (ev.style == '"' and "\\" in source) or (ev.style == "'" and "''" in source[1:-1]):
                     findings.append(f"an escape in {field} at {at(ev)}")
-                elif comment_after(ev):
+                elif field != "resource" and comment_after(ev):
                     findings.append(f"a comment beside {field} at {at(ev)}")
         if isinstance(ev, (yaml.MappingStartEvent, yaml.SequenceStartEvent)):
             if field in GATE_FIELDS:
                 findings.append(f"a collection where {field} should be one scalar at {at(ev)}")
+            if (
+                ev.flow_style
+                and stack
+                and stack[0]["key"] in BLOCK_LISTS
+                and (len(stack) > 1 or not stack[0]["expect_key"])
+                and not any(entry["flow"] for entry in stack)
+            ):
+                findings.append(f"a flow form inside {stack[0]['key']} at {at(ev)}")
             if in_value:
                 top["expect_key"] = True
             if not stack and ev.flow_style:
@@ -196,6 +211,7 @@ def plain_spellings(fm_text: str) -> list[str]:
                     "flow_of": field if field in EVENT_KEYS and ev.flow_style else None,
                     "block_of": field if field in EVENT_KEYS and not ev.flow_style and len(stack) == 1 else None,
                     "row": ev.start_mark.line,
+                    "flow": ev.flow_style,
                 }
             )
             continue
@@ -681,7 +697,7 @@ def check_file(
     # do not, so rule 10 reads it before this script reads it as the toolkit does.
     block = decoded.split("---", 2)
     if len(block) == 3 and "\r" in block[1].replace("\r\n", ""):
-        findings.append(f"{path}: frontmatter uses a bare carriage return - write it plainly, so the gate reads the event a parser reads")
+        findings.append(f"{path}: frontmatter uses a bare carriage return - write it plainly, so a line reader reads what a parser reads")
 
     split = split_frontmatter(text)
     if split is None:
@@ -707,10 +723,10 @@ def check_file(
         findings.append(f"{path}: frontmatter is not a mapping")
         return findings
 
-    # 10. the fields the provenance gates read line by line are spelt so a
-    #     line reader and a parser see the same event.
+    # 10. the fields the provenance gates and the report read line by line
+    #     are spelt so a line reader and a parser see the same thing.
     for what in plain_spellings(fm_text):
-        findings.append(f"{path}: frontmatter uses {what} - write it plainly, so the gate reads the event a parser reads")
+        findings.append(f"{path}: frontmatter uses {what} - write it plainly, so a line reader reads what a parser reads")
 
     # 2. every `at:` a quoted time in one shape: unquoted, YAML resolves it to
     #    a datetime, a date or a number, and only a string reaches every
@@ -830,8 +846,9 @@ def main(argv: list[str]) -> int:
     for path in sorted(bundle.rglob("*")):
         if path.is_symlink() and (path.suffix == ".md" or ".obsidian" not in path.parts):
             findings.append(f"{path}: is a symbolic link - a concept is a file of its own, which the gates can read")
+    # A folder whose name ends in .md is no concept, and is not read.
     for path in sorted(bundle.rglob("*.md")):
-        if path.is_symlink():
+        if path.is_symlink() or not path.is_file():
             continue
         if ".obsidian" in path.parts or path.name in RESERVED:
             continue

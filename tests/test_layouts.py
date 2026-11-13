@@ -165,6 +165,72 @@ printf '#!/usr/bin/env bash\nprintf planted > .lokf/knowledge/planted.txt\n' > .
 printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
 """,
         ),
+        # Writes the patch, then commits a change of its own, which moves HEAD.
+        "commit": executable(
+            d / "commit-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+printf 'committed by the agent\n' >> README.md
+git -c user.name=agent -c user.email=agent@example.invalid commit -qam "agent commit"
+""",
+        ),
+        # Writes the patch, then rewrites every copy of the pen it finds under TMPDIR.
+        "retool": executable(
+            d / "retool-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+for f in "$TMPDIR"/*/knowledge-apply.py; do printf 'raise SystemExit(0)\n' > "$f"; done
+""",
+        ),
+        # Writes the patch, then rewrites every copy of the gate it finds
+        # under TMPDIR to pass, keeping its length and its cksum checksum: a
+        # CRC is linear, so four free bytes after the new first line settle it.
+        "forge": executable(
+            d / "forge-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+for f in "$TMPDIR"/*/knowledge-provenance.sh; do python3 -I - "$f" <<'PY'
+import sys
+TABLE = []
+for n in range(256):
+    c = n << 24
+    for _ in range(8):
+        c = ((c << 1) ^ 0x04C11DB7) & 0xFFFFFFFF if c & 0x80000000 else (c << 1) & 0xFFFFFFFF
+    TABLE.append(c)
+def cksum(data):
+    c = 0
+    for b in data + len(data).to_bytes((len(data).bit_length() + 7) // 8, "little"):
+        c = ((c << 8) & 0xFFFFFFFF) ^ TABLE[(c >> 24) ^ b]
+    return ~c & 0xFFFFFFFF
+path = sys.argv[1]
+old = open(path, "rb").read()
+head = b"exit 0\n#"
+base = bytearray(head + bytes(4) + old[len(head) + 4:])
+c0 = cksum(bytes(base))
+pivots = {}
+for i in range(32):
+    flipped = bytearray(base)
+    flipped[len(head) + i // 8] ^= 1 << (i % 8)
+    v, combo = cksum(bytes(flipped)) ^ c0, 1 << i
+    for bit in range(31, -1, -1):
+        if (v >> bit) & 1:
+            if bit not in pivots:
+                pivots[bit] = (v, combo)
+                break
+            v, combo = v ^ pivots[bit][0], combo ^ pivots[bit][1]
+want, x = cksum(old) ^ c0, 0
+for bit in range(31, -1, -1):
+    if (want >> bit) & 1:
+        want, x = want ^ pivots[bit][0], x ^ pivots[bit][1]
+for i in range(32):
+    if (x >> i) & 1:
+        base[len(head) + i // 8] ^= 1 << (i % 8)
+assert cksum(bytes(base)) == cksum(old) and len(base) == len(old)
+open(path, "wb").write(bytes(base))
+PY
+done
+""",
+        ),
         # Writes the whole prompt it was handed to PROMPT_OUT.
         "prompt": executable(
             d / "prompt-agent.sh",
@@ -331,6 +397,21 @@ def test_an_agent_that_tells_git_to_stop_watching_a_file_is_refused(host, agents
     status = wrapper(host, {"AGENT_CLI": agents["unwatch"], "PATCH_TEXT": CREATE_OP})
     planted = (host / ".lokf" / "knowledge" / "planted.txt").exists()
     assert (status, planted) == (3, False), f"an agent that hid its edit behind an index flag was not refused (exit {status}, planted {planted})"
+
+
+def test_an_agent_that_moves_head_or_rewrites_the_pen_s_copies_is_refused(host, agents, tmp_path):
+    """The pen and the gate run from copies of HEAD taken before the agent ran, so neither a commit nor a rewritten copy decides what checks the agent's work."""
+    status = wrapper(host, {"AGENT_CLI": agents["commit"], "PATCH_TEXT": CREATE_OP})
+    assert status == 3 and not (host / ".lokf" / "knowledge" / "playbooks" / "b.md").exists(), f"an agent that moved HEAD was not refused (exit {status})"
+    git(host, "reset", "-q", "--hard", "HEAD~1")
+    private = tmp_path / "private-tmp"
+    private.mkdir()
+    status = wrapper(host, {"AGENT_CLI": agents["retool"], "PATCH_TEXT": CREATE_OP, "TMPDIR": private})
+    assert status == 3 and not (host / ".lokf" / "knowledge" / "playbooks" / "b.md").exists(), f"an agent that rewrote the pen's copy was not refused (exit {status})"
+    assert not any(private.iterdir()), f"the copies were left behind: {list(private.iterdir())}"
+    # A copy rewritten to keep its cksum checksum passed a check by checksum.
+    status = wrapper(host, {"AGENT_CLI": agents["forge"], "PATCH_TEXT": CREATE_OP, "TMPDIR": private})
+    assert status == 3 and not (host / ".lokf" / "knowledge" / "playbooks" / "b.md").exists(), f"an agent that forged the gate's checksum was not refused (exit {status})"
 
 
 def test_the_skill_the_workflow_installed_is_the_one_the_agent_is_handed(tmp_path, agents):
@@ -714,6 +795,33 @@ def test_the_librarian_template_still_holds(what, needles):
     text = read(LIBRARIAN_YAML)
     missing = [n for n in needles if n not in text]
     assert not missing, f"knowledge-librarian.yaml no longer contains: {missing} ({what})"
+
+
+def test_a_librarian_that_is_not_switched_on_runs_no_job():
+    """The first job carries the switch, and every other job needs it, so a disabled librarian checks nothing out and installs nothing each week."""
+    jobs = yaml.safe_load(read(LIBRARIAN_YAML))["jobs"]
+    assert jobs["earlier"]["if"] == "vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'", jobs["earlier"].get("if")
+    for name, job in jobs.items():
+        if name == "earlier":
+            continue
+        needs = job["needs"] if isinstance(job["needs"], list) else [job["needs"]]
+        condition = str(job.get("if", ""))
+        assert "earlier" in needs, f"{name} does not need earlier, so it runs when the librarian is off"
+        assert not re.search(r"always\(\)|failure\(\)|cancelled\(\)", condition), f"{name} runs after a skipped earlier: {condition}"
+
+
+@pytest.mark.parametrize("yaml_path", [LIBRARIAN_YAML, WORKFLOWS / "knowledge-sync.yaml"], ids=["librarian", "sync"])
+def test_each_push_goes_to_the_server_the_workflow_runs_on(yaml_path):
+    """A push address that names github.com fails on GitHub Enterprise Server."""
+    pushes = [line for line in read(yaml_path).split("\n") if "git push" in line and "x-access-token" in line]
+    assert pushes, f"{yaml_path.name} has no push with the job token"
+    for line in pushes:
+        assert "@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git" in line and "github.com" not in line, line
+    url = run(
+        ["bash", "-c", 'echo "https://x-access-token:${PUSH_TOKEN}@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git"'],
+        env={"PUSH_TOKEN": "t", "GITHUB_SERVER_URL": "https://ghe.example.com", "GITHUB_REPOSITORY": "acme/app"},
+    )
+    assert url.out == "https://x-access-token:t@ghe.example.com/acme/app.git", url.out
 
 
 def test_the_hand_off_travels_from_the_pen_through_the_artifact_to_the_pull_request():

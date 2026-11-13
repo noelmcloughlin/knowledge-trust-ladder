@@ -39,7 +39,16 @@ const concept = z.object({
   questions: z.array(z.object({ date: z.string(), by: z.string(), text: z.string() })).default([]),
   // `quote` is the passage the concept's entry for this source carries as its
   // `excerpt`, which the registrar's gate finds in the file.
-  sources: z.array(link.extend({ quote: z.string().optional() })).default([]),
+  // `mirror` is what the ingest's lock records of a copy under .lokf/mirror/:
+  // where it came from, the source's version and the day it was fetched.
+  sources: z
+    .array(
+      link.extend({
+        quote: z.string().optional(),
+        mirror: z.object({ origin: z.string(), href: z.string().optional(), version: z.string().optional(), retrieved: z.string().optional() }).optional(),
+      }),
+    )
+    .default([]),
   relations: z.array(z.object({ name: z.string(), targets: z.array(link) })).default([]),
   incoming: z.array(z.object({ name: z.string(), from: link })).default([]),
   licence: z.object({ text: z.string(), href: z.string().optional() }).optional(),

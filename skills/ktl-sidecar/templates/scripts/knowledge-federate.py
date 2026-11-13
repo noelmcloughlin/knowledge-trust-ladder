@@ -57,9 +57,11 @@
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py mcp
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py diff OLD NEW
 #
-# `build` writes snapshot.new/ and renames it to snapshot/ in one step, so a
-# reader never sees half a federation; a failed build leaves the previous
-# snapshot in place. Given `--previous`, the workspace the release before
+# `build` writes snapshot.new/, then moves snapshot/ aside and renames
+# snapshot.new/ to snapshot/. These are two renames, not one atomic step, so
+# a reader that opens the workspace in the moment between them finds none and
+# must try again. It never sees half a federation. A failed build leaves the
+# previous snapshot in place. Given `--previous`, the workspace the release before
 # built, a member whose confirmed bytes cannot be fetched (its address does
 # not answer, or serves other bytes now) is held as that workspace holds it.
 # This follows section 11.5, which has an unreachable member degrade to its
@@ -202,6 +204,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+import zlib
 
 import yaml
 
@@ -1228,14 +1231,24 @@ def fetch_checked(url: str, sha256: str, dest: pathlib.Path, max_bytes: int, wha
         raise
 
 
+def part_file(cache: pathlib.Path, sha256: str) -> pathlib.Path:
+    """A new file in the cache for one download, so that two runs sharing the cache never write the same one. The finished file is renamed into place."""
+    fd, name = tempfile.mkstemp(dir=cache, prefix=f"{sha256}.", suffix=".part")
+    os.close(fd)
+    return pathlib.Path(name)
+
+
 def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) -> tuple[pathlib.Path, str]:
     """The member's zip or served file, in the cache under its digest, checked against the checksum, the zip rules and the attestation."""
     cache.mkdir(parents=True, exist_ok=True)
     cached = cache / f"{member.sha256}{'.jsonld' if member.served else '.zip'}"
     if not cached.is_file():
-        tmp = cache / f"{member.sha256}.part"
-        fetch_checked(member.zip_url, member.sha256, tmp, max_bytes, member.slug, zipped=not member.served)
-        tmp.replace(cached)
+        tmp = part_file(cache, member.sha256)
+        try:
+            fetch_checked(member.zip_url, member.sha256, tmp, max_bytes, member.slug, zipped=not member.served)
+            tmp.replace(cached)
+        finally:
+            tmp.unlink(missing_ok=True)
     elif digest(cached) != member.sha256:
         cached.unlink()
         raise Failed(f"{member.slug}: the cached copy no longer matches its digest; removed, run again")
@@ -1253,6 +1266,12 @@ def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) ->
     return cached, verdict
 
 
+# What unpacking a zip that passed check_zip may still raise: a corrupt or
+# cut entry, a compression method or an encryption Python cannot read, or a
+# disk that is full or refuses a name.
+UNREADABLE_ZIP = (zipfile.BadZipFile, zipfile.LargeZipFile, zlib.error, EOFError, NotImplementedError, RuntimeError, ValueError, OSError)
+
+
 def unpack(zip_path: pathlib.Path, into: pathlib.Path) -> pathlib.Path:
     """Unpack knowledge/ to into/.lokf/knowledge, the layout the sidecar's scripts read, and return that folder."""
     target = into / ".lokf"
@@ -1260,8 +1279,8 @@ def unpack(zip_path: pathlib.Path, into: pathlib.Path) -> pathlib.Path:
     try:
         with zipfile.ZipFile(zip_path) as zf:
             zf.extractall(target)
-    except zipfile.BadZipFile as e:
-        raise Failed(f"{zip_path.name}: could not be unpacked ({e})") from e
+    except UNREADABLE_ZIP as e:
+        raise Failed(f"{zip_path.name}: could not be unpacked ({type(e).__name__}: {e})") from e
     knowledge = target / "knowledge"
     if not (knowledge / "index.md").is_file():
         raise Failed(f"{zip_path.name}: no knowledge/index.md inside")
@@ -1413,9 +1432,12 @@ def obtain_file(url: str, sha256: str, cache: pathlib.Path, what: str, max_bytes
     cached = cache / f"{sha256}{suffix}"
     if cached.is_file() and digest(cached) == sha256:
         return cached
-    tmp = cache / f"{sha256}.part"
-    fetch_checked(url, sha256, tmp, max_bytes, what, zipped=suffix == ".zip")
-    tmp.replace(cached)
+    tmp = part_file(cache, sha256)
+    try:
+        fetch_checked(url, sha256, tmp, max_bytes, what, zipped=suffix == ".zip")
+        tmp.replace(cached)
+    finally:
+        tmp.unlink(missing_ok=True)
     return cached
 
 
@@ -1816,20 +1838,33 @@ def link_counts(links: list[dict]) -> list[dict]:
 
 QUERIES = {
     "labels.rq": """# Each concept's trust label, with the bundle that asserted it (GRAPH ?g binds its base_iri).
-# The same rules as knowledge-report.sh, against the clock at the moment of the query.
+# The same rules as knowledge-report.sh, against the clock at the moment of the query:
+# the latest confirmation by a person counts, a retired concept reads as retired,
+# a draft says so, and a review date of today or earlier is named. One row per concept.
 # Two times are compared as times, so one written with an offset sorts by its
 # moment. Where an engine cannot compare them, the spellings are compared.
+# Open questions and a reader's disputes are body text and feedback, not graph
+# data, so a reopened draft reads only as reopened, and a dispute does not show.
 PREFIX lokf: <https://w3id.org/lokf/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX schema: <http://schema.org/>
 SELECT ?g ?c ?title ?label WHERE {
-  GRAPH ?g { ?c schema:name ?title . }
-  OPTIONAL { GRAPH ?g { ?c lokf:verified ?h . ?h prov:wasAssociatedWith ?by ; prov:endedAtTime ?at . FILTER(STRSTARTS(STR(?by), "human:")) } }
-  OPTIONAL { GRAPH ?g { ?c lokf:verified ?any . } }
-  OPTIONAL { GRAPH ?g { ?c prov:wasGeneratedBy ?gen . ?gen prov:endedAtTime ?edited . } }
-  BIND(IF(BOUND(?at) && BOUND(?edited) && COALESCE(?edited > ?at, STR(?edited) > STR(?at)), "edited since a person confirmed it",
-       IF(BOUND(?at), "confirmed by a person",
-       IF(BOUND(?any), "checked by automation only", "nobody has checked this yet"))) AS ?label)
+  { SELECT ?g ?c (SAMPLE(?name) AS ?title) WHERE { GRAPH ?g { ?c schema:name ?name . } } GROUP BY ?g ?c }
+  OPTIONAL { SELECT ?g ?c (MAX(?at) AS ?confirmed) WHERE {
+    GRAPH ?g { ?c lokf:verified ?h . ?h prov:wasAssociatedWith ?by ; prov:endedAtTime ?at . FILTER(STRSTARTS(STR(?by), "human:")) }
+  } GROUP BY ?g ?c }
+  OPTIONAL { SELECT ?g ?c (MAX(?at) AS ?edited) WHERE { GRAPH ?g { ?c prov:wasGeneratedBy ?gen . ?gen prov:endedAtTime ?at . } } GROUP BY ?g ?c }
+  OPTIONAL { SELECT ?g ?c (MIN(SUBSTR(STR(?due), 1, 10)) AS ?review) WHERE { GRAPH ?g { ?c schema:expires ?due . } } GROUP BY ?g ?c }
+  OPTIONAL { SELECT ?g ?c (SAMPLE(STR(?s)) AS ?status) WHERE { GRAPH ?g { ?c schema:creativeWorkStatus ?s . } } GROUP BY ?g ?c }
+  BIND(EXISTS { GRAPH ?g { ?c lokf:verified ?any . } } AS ?checked)
+  BIND(COALESCE(?status, "") AS ?state)
+  BIND(COALESCE(BOUND(?confirmed) && BOUND(?edited) && COALESCE(?edited > ?confirmed, STR(?edited) > STR(?confirmed)), false) AS ?changed)
+  BIND(IF(?state = "deprecated", "retired", CONCAT(
+         IF(?changed, CONCAT("edited since a person last confirmed it (confirmed ", SUBSTR(STR(?confirmed), 1, 10), ", edited ", SUBSTR(STR(?edited), 1, 10), ")"),
+         IF(BOUND(?confirmed), CONCAT("confirmed by a person, ", SUBSTR(STR(?confirmed), 1, 10)),
+         IF(?checked, "checked by automation only", "nobody has checked this yet"))),
+         IF(?state = "draft", IF(BOUND(?confirmed), ", reopened", ", still a draft"), ""),
+         IF(COALESCE(?review <= SUBSTR(STR(NOW()), 1, 10), false), CONCAT(", past its review date (", ?review, ")"), ""))) AS ?label)
 }
 ORDER BY ?g ?c
 """,
@@ -1936,7 +1971,6 @@ def downloads(args, tmp: pathlib.Path) -> pathlib.Path:
 
 def _build(args, tmp: pathlib.Path, note_new) -> int:
     import pyoxigraph as ox
-    from lokf.model import load_bundle
     from lokf.registry import REGISTRY_VERSION, Registry, entry_for_bundle
     # lokf 0.8.0 has no allow_foreign_ids parameter, and indexes such ids anyway.
     foreign_ids = {"allow_foreign_ids": True} if "allow_foreign_ids" in inspect.signature(entry_for_bundle).parameters else {}
@@ -2031,6 +2065,9 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     seen: dict[str, Member] = {}  # base_iri -> the member it joined as
     slugs = {"domain"}  # the folder names under bundles/ and export/; "domain" is this bundle's own
     resolved: list[tuple[Member, int | None, pathlib.Path, str]] = []  # member, the size of its file, knowledge dir, verdict
+    # Each bundle as read here, by its folder, so the links between bundles
+    # are found without reading it again.
+    parsed: dict = {}
     while queue:
         member, depth = queue.pop(0)
         if member.base_iri in member.ancestors:
@@ -2120,6 +2157,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
         else:
             kdir = write_out(zip_path, bundle_dir, member) if member.served else unpack(zip_path, bundle_dir)
         sub_bundle, sub_domains, sub_members = read_domain(kdir)
+        parsed[kdir] = sub_bundle
         if sub_bundle.base_iri != member.base_iri:
             raise Failed(f"{member.slug}: the {'served file' if member.served else 'zip'}'s index.md says base_iri {sub_bundle.base_iri!r}, the member concept says {member.base_iri!r}")
         say(f"{member.slug}: {member.version} {verdict}; base_iri checked")
@@ -2192,6 +2230,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     fit: list[str] = []
     domain_copy = work / "domain" / ".lokf" / "knowledge"
     shutil.copytree(knowledge, domain_copy, ignore=shutil.ignore_patterns(".obsidian"))
+    parsed[domain_copy] = bundle
     bundles = [("domain", domain_copy, None)] + [(m.slug, kdir, m) for m, _, kdir, _ in resolved]
     for slug, kdir, member in sorted(bundles, key=lambda b: b[2].base_iri if b[2] else domain_base):
         source_base = member.source_base if member else ""
@@ -2244,7 +2283,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
             "health": "" if args.verify_only else health_line(root, kdir.parent.parent), "kdir": kdir,
         })
         graphs.append((entry.base_iri, out_dir / "graph.nt"))
-        loaded[entry.base_iri] = load_bundle(kdir)
+        loaded[entry.base_iri] = parsed[kdir]
         say(f"{slug}: registered {entry.base_iri} ({entry.void.get('triples', 0)} triples) and exported")
     registry.save()
 

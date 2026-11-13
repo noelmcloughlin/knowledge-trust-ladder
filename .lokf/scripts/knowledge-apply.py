@@ -74,7 +74,7 @@
 # An operation may carry only the keys it reads, which KEYS below lists. Any
 # other key is refused by name, so no key is dropped without a word.
 #
-# Usage: knowledge-apply.py [--dry-run] [--keep] [--handoff <file>] --root <repo-root> [<patch-file>]
+# Usage: knowledge-apply.py [--dry-run [--diff]] [--keep] [--handoff <file>] --root <repo-root> [<patch-file>]
 #        knowledge-apply.py --format
 #   exit 0  applied, or with --dry-run would apply; or the format was printed
 #   exit 1  findings; nothing written
@@ -85,6 +85,7 @@ from __future__ import annotations
 import argparse
 import copy
 import datetime as dt
+import difflib
 import os
 import re
 import shutil
@@ -642,6 +643,7 @@ class Bundle:
         self.feedback_handled: list[str] = []
         self.ledger_lines: list[str] = []
         self.demoted: list[str] = []  # concepts a person confirmed that this run edited
+        self.shared_confirmed: list[str] = []  # those of them the patch's own log line speaks for
         self.base_iri = self.read_base_iri()
 
     def read_base_iri(self) -> str:
@@ -788,23 +790,30 @@ class Bundle:
         if not isinstance(target, str) or not target:
             raise Refused(f"{c.path}: {kind} needs a target string")
         if kind == "replace":
-            n = c.body.count(target)
-            if n != 1:
-                raise Refused(f"{c.path}: replace target occurs {n} times, and must occur exactly once: {target[:60]!r}")
-            i = c.body.index(target)
-            if overlaps(spans, i, i + len(target)):
+            # Only the text this script may edit is searched, so a question
+            # that quotes the target does not make it occur twice.
+            found, at = [], c.body.find(target)
+            while at != -1:
+                found.append(at)
+                at = c.body.find(target, at + len(target))
+            hits = [i for i in found if not overlaps(spans, i, i + len(target))]
+            if not hits and found:
                 raise Refused(f"{c.path}: the target lies in the lokf:related block or under {OPEN_Q}, which this script never edits")
+            if len(hits) != 1:
+                raise Refused(f"{c.path}: replace target occurs {len(hits)} times, and must occur exactly once: {target[:60]!r}")
+            i = hits[0]
             c.body = c.body[:i] + content + c.body[i + len(target):]
             self.check_protected_intact(c, had_q, had_r)
             return
         lines = c.body.split("\n")
-        hits = [k for k, line in enumerate(lines) if target in line]
+        found = [k for k, line in enumerate(lines) if target in line]
+        offsets = [sum(len(line) + 1 for line in lines[:k]) for k in found]
+        hits = [k for k, offset in zip(found, offsets) if not overlaps(spans, offset, offset + len(lines[k]))]
+        if not hits and found:
+            raise Refused(f"{c.path}: the target lies in the lokf:related block or under {OPEN_Q}, which this script never edits")
         if len(hits) != 1:
             raise Refused(f"{c.path}: insert_after target is on {len(hits)} lines, and must be on exactly one: {target[:60]!r}")
         k = hits[0]
-        offset = sum(len(line) + 1 for line in lines[:k])
-        if overlaps(spans, offset, offset + len(lines[k])):
-            raise Refused(f"{c.path}: the target lies in the lokf:related block or under {OPEN_Q}, which this script never edits")
         lines[k + 1 : k + 1] = content.rstrip("\n").split("\n")
         c.body = "\n".join(lines)
         self.check_protected_intact(c, had_q, had_r)
@@ -1144,11 +1153,18 @@ class Bundle:
             raise Refused(f"{op['path']}: {op['op']} needs a log line naming what changed and why, its own or the patch's")
         else:
             text = default
-        if c is not None and c.confirmed_by_person() and "edited since" not in text.lower():
-            # The patch's line speaks for many concepts, so the note names the
-            # one a person had confirmed.
-            text += f" `{c.path}` was edited since a person confirmed it; the label says so until the curator looks again." if shared else " Edited since a person confirmed it; the label says so until the curator looks again."
         fb = op.get("from_feedback")
+        if c is not None and c.confirmed_by_person() and "edited since" not in text.lower():
+            if shared and fb is None:
+                # The patch's line speaks for many concepts. It is written
+                # once, and one sentence after it names each concept a person
+                # had confirmed.
+                if c.path not in self.shared_confirmed:
+                    self.shared_confirmed.append(c.path)
+            elif shared:
+                text += f" `{c.path}` was edited since a person confirmed it; the label says so until the curator looks again."
+            else:
+                text += " Edited since a person confirmed it; the label says so until the curator looks again."
         asked = op.get("asked")
         if asked is not None and fb is None:
             raise Refused(f"{op['path']}: asked goes with from_feedback; it is the reader's question from that entry")
@@ -1158,6 +1174,8 @@ class Bundle:
             fb = fb.rstrip("\n")
             if "\n" in fb or not fb.startswith("- **"):
                 raise Refused(f"{op['path']}: from_feedback is the exact one-line entry as feedback.md holds it")
+            if fb in self.feedback_handled:
+                raise Refused(f"{op['path']}: from_feedback names an entry another operation of this patch already handles; one operation answers each entry")
             self.feedback_handled.append(fb)
             text = "**From reader feedback**: " + re.sub(r"^\*\*[^*]+\*\*: ?", "", text)
             # The entry leaves feedback.md for the ledger: the day, its kind and
@@ -1176,6 +1194,14 @@ class Bundle:
         # A line given by many operations, the patch's own or the same words
         # in each, is written once, where it first appears.
         self.log_lines = list(dict.fromkeys(self.log_lines))
+        if self.shared_confirmed:
+            names = [f"`{path}`" for path in self.shared_confirmed]
+            if len(names) == 1:
+                note = f" {names[0]} was edited since a person confirmed it; the label says so until the curator looks again."
+            else:
+                note = f" {', '.join(names[:-1])} and {names[-1]} were edited since a person confirmed them; each label says so until the curator looks again."
+            plain = "* " + autolinked(self.patch_log)
+            self.log_lines = ["* " + autolinked(self.patch_log + note) if line == plain else line for line in self.log_lines]
         file = self.knowledge / "log.md"
         lines = file.read_text(encoding="utf-8").split("\n") if file.is_file() else ["# Change Log", ""]
         first = next((k for k, line in enumerate(lines) if line.startswith("## ")), None)
@@ -1239,6 +1265,20 @@ def log_line(text, what: str, label: str = "Changed") -> str:
     if not text:
         raise Refused(f"{what} line has no visible characters")
     return text if text.startswith("**") else f"**{label}**: {text}"
+
+
+def print_diff(file: Path, rel: Path, text: str | None) -> None:
+    """The change to one file as a unified diff, the way git shows it, so a reviewer reads it before it is written."""
+    try:
+        before = file.read_text(encoding="utf-8") if file.is_file() else ""
+    except (OSError, UnicodeDecodeError):
+        before = ""
+    after = text or ""
+    old = "/dev/null" if not file.is_file() else f"a/{rel}"
+    new = "/dev/null" if text is None else f"b/{rel}"
+    sys.stdout.writelines(difflib.unified_diff(before.splitlines(keepends=True), after.splitlines(keepends=True), old, new))
+    if after and not after.endswith("\n"):
+        print()
 
 
 def check_keys(op: dict) -> None:
@@ -1348,6 +1388,7 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="knowledge-apply.py", add_help=True)
     ap.add_argument("--root")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--diff", action="store_true", help="with --dry-run, also print each change as a unified diff")
     ap.add_argument("--keep", action="store_true", help="keep the patch file after applying it")
     ap.add_argument("--format", action="store_true", help="print the patch file's shape and exit")
     ap.add_argument("--handoff", metavar="FILE", help="after applying, write the patch's hand-off lines to FILE, or empty it")
@@ -1363,6 +1404,9 @@ def main(argv: list[str]) -> int:
     # the patch file itself once the agent has finished. A write here would
     # delete the file and leave a bundle the wrapper refuses, so the pen only
     # checks, and says so.
+    if a.diff and not a.dry_run:
+        print("--diff goes with --dry-run: it shows a change before it is written", file=sys.stderr)
+        return 2
     deferred = os.environ.get("KNOWLEDGE_PEN_DRY_RUN_ONLY") == "1"
     if deferred and not a.dry_run:
         print("refused: this is the agent's step of a scheduled run, where the pen only checks the patch file (--dry-run). "
@@ -1490,7 +1534,10 @@ def main(argv: list[str]) -> int:
             return 2
     if a.dry_run:
         for file, text in writes:
-            print(f"{'would delete' if text is None else 'would write'} {file.relative_to(root)}")
+            rel = file.relative_to(root)
+            print(f"{'would delete' if text is None else 'would write'} {rel}")
+            if a.diff:
+                print_diff(file, rel, text)
     else:
         # Write every changed file to a temporary file beside it first. Only
         # once all of them are written does the run put them in place, so a

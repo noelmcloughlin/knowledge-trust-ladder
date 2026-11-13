@@ -446,8 +446,41 @@ const licenceMd = (value) => {
 const scriptSafe = (doc) =>
   JSON.stringify(doc).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
 
+/**
+ * What the ingest's committed lock records of each mirror file, by its path
+ * in the repository: where it came from, the source's version and the day it
+ * was fetched. The confidential cache's lock is never read, so no record kept
+ * out of git reaches the site.
+ */
+function readMirrorRecords() {
+  const records = new Map();
+  const file = resolve(REPO_ROOT, ".lokf", "ingest.lock.yaml");
+  if (!existsSync(file)) return records;
+  let lock;
+  try {
+    lock = parseYaml(read(file));
+  } catch {
+    return records;
+  }
+  for (const entry of Object.values(lock?.entries ?? {})) {
+    for (const item of Object.values(entry?.items ?? {})) {
+      if (typeof item?.path !== "string" || !item.path.startsWith(".lokf/mirror/")) continue;
+      const origin = typeof item.origin === "string" ? item.origin : "";
+      if (!origin) continue;
+      records.set(item.path, {
+        origin,
+        ...(/^https?:\/\//.test(origin) ? { href: origin } : {}),
+        ...(item.version !== undefined && item.version !== null && item.version !== "" ? { version: String(item.version) } : {}),
+        ...(item.retrieved_at ? { retrieved: String(item.retrieved_at).slice(0, 10) } : {}),
+      });
+    }
+  }
+  return records;
+}
+
 function buildConcepts(exported, labels) {
   const context = exported.jsonld["@context"];
+  const mirrored = readMirrorRecords();
   const docs = new Map(exported.jsonld["@graph"].map((d) => [d.id ?? d["@id"], d]));
   const nodes = new Map(exported.graph.nodes.map((n) => [n.data.id, n.data]));
   const edges = exported.graph.edges.map((e) => e.data);
@@ -490,6 +523,11 @@ function buildConcepts(exported, labels) {
       .map((s) => ({ at: String(s.at), quote: s.quote }));
     if (sources.length === 0 && c.data.resource) sources.push({ at: String(c.data.resource), quote: "" });
     const event = (e) => ({ by: String(e.by ?? ""), at: String(e.at ?? ""), ...(e.note ? { note: String(e.note) } : {}) });
+    // The events as the toolkit reads them, from the concept's entry in
+    // concepts.jsonld, which gives `verified` as a list even where the file
+    // writes one event as a bare mapping, as OKF allows.
+    const doc = docs.get(c.iri);
+    const verified = Array.isArray(doc?.verified) ? doc.verified : [].concat(c.data.verified ?? []);
     // A concept takes the bundle's licence unless it declares its own.
     const licence = c.data.license ?? root.license;
 
@@ -507,7 +545,7 @@ function buildConcepts(exported, labels) {
       ...(c.data.stale_after ? { reviewBy: String(c.data.stale_after) } : {}),
       tags: (Array.isArray(c.data.tags) ? c.data.tags : []).map(String),
       ...(c.data.generated ? { generated: event(c.data.generated) } : {}),
-      verified: (Array.isArray(c.data.verified) ? c.data.verified : []).map(event),
+      verified: verified.filter((e) => e && typeof e === "object").map(event),
       questions: openQuestions(c.body),
       sources: sources.map(({ at: s, quote }) => {
         const quoted = quote ? { quote } : {};
@@ -517,7 +555,10 @@ function buildConcepts(exported, labels) {
         // The schema's pages are built, never committed, so a source among
         // them links its page on this site.
         if (SCHEMA && (path === SCHEMA.dir || path.startsWith(`${SCHEMA.dir}/`))) return { text: s, href: route(path), ...quoted };
-        return { text: s, href: githubFile(path), ...quoted };
+        // A copy the ingest mirrored names where it came from, the source's
+        // version and the day it was fetched, from the ingest's lock.
+        const mirror = mirrored.get(path);
+        return { text: s, href: githubFile(path), ...quoted, ...(mirror ? { mirror } : {}) };
       }),
       relations: [...out].map(([name, targets]) => ({
         name,
@@ -539,7 +580,6 @@ function buildConcepts(exported, labels) {
       },
     };
 
-    const doc = docs.get(c.iri);
     c.jsonld = doc ? { "@context": context, ...doc } : null;
 
     // A retelling for an audience names its audience, and `derivedFrom`
@@ -592,6 +632,12 @@ function levelsOf(path) {
 // Pages.
 // ---------------------------------------------------------------------------
 
+// The file a page is written to. Astro skips a file whose name starts with
+// "_", so such a name is spelt with "%5F" here. The page's slug gives its
+// address, so the file's name is never seen.
+const contentPath = (id) => id.replace(/(^|\/)_/g, "$1%5F");
+const contentName = (id) => `${contentPath(id)}.md`;
+
 function writeConceptPages(concepts) {
   const byGroup = new Map();
   for (const c of concepts) {
@@ -616,9 +662,13 @@ function writeConceptPages(concepts) {
       write(resolve(PUBLIC_KNOWLEDGE, `${c.id}.jsonld`), JSON.stringify(c.jsonld, null, 2) + "\n");
     }
     page(
-      resolve(CONTENT, "knowledge", `${c.id}.md`),
+      resolve(CONTENT, "knowledge", contentName(c.id)),
       {
         title: c.title,
+        // Astro makes a page's address from its file name, in lower case and
+        // without dots, so a concept whose id holds a capital or a dot would
+        // not be at the address every link gives it. The slug is the id.
+        slug: `knowledge/${c.id}`,
         // Plain words: the description is the page's meta description, which
         // link previews and search engines show as it is.
         ...(c.data.description ? { description: plain(String(c.data.description)) } : {}),
@@ -676,9 +726,10 @@ function writeGroupPages(byGroup) {
       (c) => `- [${c.title}](${BASE}/knowledge/${c.id}/) ${labelSpan(c)}\\\n  ${String(c.data.description ?? "")}`,
     );
     page(
-      resolve(CONTENT, "knowledge", group, "index.md"),
+      resolve(CONTENT, "knowledge", contentPath(group), "index.md"),
       {
         title: groupLabel(group),
+        slug: `knowledge/${group}`,
         description: `The concepts in the knowledge bundle's ${group} folder, with how far each has been checked.`,
         editUrl: false,
         sidebar: { label: "Overview", order: 0 },

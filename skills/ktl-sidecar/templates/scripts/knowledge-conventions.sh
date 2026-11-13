@@ -58,7 +58,11 @@
 #      accepts and a line reader cannot follow, and both gates refuse an event
 #      they cannot read. A comment is read as part of the value: the actor is
 #      then a login nobody holds, and the time one no script can compare, so
-#      the concept never reads as edited since.
+#      the concept never reads as edited since. The report and rules 5 and 11
+#      read `resource` line by line too, so it is held to the same spellings
+#      but for a comment, which they cut. `sources` and `exclusions` hold no
+#      flow form, since a line reader sees no `resource:` inside one: a gone
+#      source would fail no rule 5, never move, and count for no file.
 #  11. No `at:` is later than the commit that first recorded it, or, before
 #      it is committed, than now. A time written ahead of the clock, such as
 #      local time labelled `Z` or a round placeholder, sorts after the edits
@@ -161,31 +165,38 @@
 # This script runs the Python half with the sidecar's .venv when the .venv
 # holds pyyaml and is Python 3.9 or later, and otherwise through `uv run`
 # after uv_ready. knowledge-apply.sh explains both. Without uv, the shell
-# half still runs and says so. When uv cannot install the packages, or a
-# runner cannot start the Python half, the script reports a runner failure,
-# not a finding, and exits 2.
+# half still runs and says so, and exits 0 when it finds nothing. With
+# `--strict` it exits 2 there instead, so a gate never passes rules it did
+# not check: every workflow passes it. When uv cannot install the packages,
+# or a runner cannot start the Python half, the script reports a runner
+# failure, not a finding, and exits 2.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
 # sidecar's `.lokf/.gitattributes` keeps tracked files on LF; rule 9 still
 # reports a BOM, because other readers do not strip it.
 #
-# Usage: knowledge-conventions.sh [bundle-dir] [--since <commit>]   (default:
-# knowledge, i.e. run from .lokf/). Exit 1 with one line per finding; nothing
-# else is written. Exit 2 when the Python half could not run, with the
-# reason on stderr.
-[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [bundle-dir] [--since <commit>]" >&2; exit 2; }
+# Usage: knowledge-conventions.sh [bundle-dir] [--since <commit>] [--strict]
+# (default: knowledge, i.e. run from .lokf/). Exit 1 with one line per
+# finding; nothing else is written. Exit 2 when the Python half could not
+# run, or under --strict when it was skipped, with the reason on stderr.
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [bundle-dir] [--since <commit>] [--strict]" >&2; exit 2; }
 set -euo pipefail
 
+usage() { echo "usage: ${0##*/} [bundle-dir] [--since <commit>] [--strict]" >&2; exit 2; }
 # The bundle directory may be a link, on a host that keeps the real folder as
 # a visible knowledge_bundle/. Handed a link bare, find never enters it, so
 # the trailing slash below is what makes it read the files.
-bundle="${1:-knowledge}"; bundle="${bundle%/}"
-since=""
-if [ $# -gt 1 ]; then
-  { [ $# -eq 3 ] && [ "$2" = "--since" ] && [ -n "$3" ]; } || { echo "usage: ${0##*/} [bundle-dir] [--since <commit>]" >&2; exit 2; }
-  since="$3"
-fi
+bundle=""; since=""; strict=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --since) { [ $# -ge 2 ] && [ -n "$2" ]; } || usage; since="$2"; shift 2 ;;
+    --strict) strict=1; shift ;;
+    -*) usage ;;
+    *) [ -z "$bundle" ] || usage; bundle="$1"; shift ;;
+  esac
+done
+bundle="${bundle:-knowledge}"; bundle="${bundle%/}"
 [ -d "$bundle" ] || { echo "no bundle directory at $bundle" >&2; exit 2; }
 fail=0
 say() { echo "$1"; fail=1; }
@@ -232,9 +243,12 @@ now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # Rule 11's comparison. Times are compared as strings, which is exact once
 # both are in the one UTC shape: a bare date is its midnight, minutes gain
 # `:00`, fractions of a second are dropped. Anything else prints nothing and
-# is not compared. History lines come first: \001 carries a commit's time,
-# `+` lines are what it added. Then \002 carries now, and \003 each `at:` the
-# frontmatter holds today.
+# is not compared. The history of the whole bundle comes first, from one
+# walk: \001 carries a commit's time, a diff header names the file, and `+`
+# lines are what the commit added to it. Then \002 carries now, and each \003
+# line one `at:` a concept's frontmatter holds today, after the concept's
+# number, its path from the top of the work tree and its path here. Out
+# comes the number, a tab and the finding.
 # shellcheck disable=SC2016 # awk's own $0, not the shell's
 rule11='
 function norm(v) {
@@ -249,93 +263,220 @@ function value(line) {
   gsub(/^["'"'"']|["'"'"']$/, "", line)
   return line
 }
+# A flow form, as `- { by: process:ktl-librarian, at: "2026-09-14T00:00:00Z" }`
+# or `verified: [{ by: ..., at: ... }]`, holds its keys inside one line. Each
+# value of the key on a line that opens a flow mapping, as written.
+function flowvals(l, key, out,   n, v, q, j) {
+  n = 0
+  if (!index(l, "{")) return 0
+  while (match(l, "[{,][ \t]*" key ":[ \t]*")) {
+    l = substr(l, RSTART + RLENGTH); q = substr(l, 1, 1)
+    if (q == "\"" || q == "\047") { j = index(substr(l, 2), q); v = (j ? substr(l, 1, j + 1) : l) }
+    else { v = l; sub(/[,}\]].*/, "", v); sub(/[ \t]+$/, "", v) }
+    if (v != "") out[++n] = v
+  }
+  return n
+}
+# A path as a diff header prints it, back to the path itself. Git puts a name
+# that holds a double quote, a backslash or a control character in double
+# quotes, with C escapes, and ends a name that holds a space with a tab.
+function gitname(s,  out, i, c, n) {
+  sub(/\t$/, "", s)
+  if (length(s) < 2 || substr(s, 1, 1) != "\"" || substr(s, length(s), 1) != "\"") return s
+  s = substr(s, 2, length(s) - 2); out = ""
+  for (i = 1; i <= length(s); i++) {
+    c = substr(s, i, 1)
+    if (c != "\\") { out = out c; continue }
+    c = substr(s, ++i, 1)
+    if (c == "t") out = out "\t"
+    else if (c == "n") out = out "\n"
+    else if (c == "r") out = out "\r"
+    else if (c == "a") out = out sprintf("%c", 7)
+    else if (c == "b") out = out sprintf("%c", 8)
+    else if (c == "f") out = out sprintf("%c", 12)
+    else if (c == "v") out = out sprintf("%c", 11)
+    else if (c ~ /[0-7]/) { n = c * 64 + substr(s, i + 1, 1) * 8 + substr(s, i + 2, 1); i += 2; out = out sprintf("%c", n) }
+    else out = out c
+  }
+  return out
+}
 /^\001/ { ct = substr($0, 2); next }
 /^\002/ { now = substr($0, 2); next }
 /^\003/ {
-  v = value(substr($0, 2)); n = norm(v)
-  if (n == "" || v in seen) next
-  seen[v] = 1
-  if (v in first) {
-    if (n > first[v]) print "at \"" v "\" is later than the commit that recorded it (" first[v] ") - take the time from date -u when the event happens"
+  split(substr($0, 2), f, "\t"); i = f[1]; p = f[2]; file = f[3]
+  v = value(substr($0, length(i) + length(p) + length(file) + 5)); n = norm(v)
+  if (n == "" || (i, v) in seen) next
+  seen[i, v] = 1
+  if ((p, v) in first) {
+    if (n > first[p, v]) print i "\t" file ": at \"" v "\" is later than the commit that recorded it (" first[p, v] ") - take the time from date -u when the event happens"
   } else if (n > now) {
-    print "at \"" v "\" is in the future (now " now ") - take the time from date -u when the event happens"
+    print i "\t" file ": at \"" v "\" is in the future (now " now ") - take the time from date -u when the event happens"
   }
   next
 }
-/^[+][ \t]*(- )?at:[ \t]/ { v = value($0); if (!(v in first)) first[v] = ct }
+/^diff --git / { head = 1; cur = ""; next }
+head && /^\+\+\+ / { cur = gitname(substr($0, 5)); sub(/^b\//, "", cur); next }
+/^@@/ { head = 0; next }
+head { next }
+/^[+][ \t]*(- )?at:[ \t]/ { v = value($0); if (!((cur, v) in first)) first[cur, v] = ct; next }
+/^[+]/ { m = flowvals($0, "at", got); for (j = 1; j <= m; j++) { v = value(got[j]); if (!((cur, v) in first)) first[cur, v] = ct } }
 '
-while IFS= read -r f; do
-  # 8. path shape, checked on every Markdown file, reserved ones included
-  rel="${f#"$bundle"/}"; rel="${rel#/}"  # BSD find prints the start point's slash, then its own
-  if ! printf '%s\n' "$rel" | grep -qE '^([a-z0-9][a-z0-9._-]*/)*[a-z0-9][a-z0-9._-]*$'; then
-    say "$f: path is not lowercase a-z, 0-9, '.', '_', '-' - case-insensitive hosts and sync conflict copies are why"
-  fi
-  case "$(basename "$f")" in index.md|log.md|diataxis.md) continue ;; esac
-  # A concept that is a link is rule 9's to report, in the Python half. One
-  # that points nowhere cannot be read, and reading it here would stop this
-  # script before that half ran.
-  [ -L "$f" ] && continue
-  # Frontmatter only, best effort, for 5 and 6: the text between the first two
-  # `---` lines. A missing or malformed block yields nothing here and is
-  # rules 2-4, 7 and 9's job below to report, not this loop's. The awk reads
-  # the whole file rather than exiting at the second `---`: a CI runner that
-  # ignores SIGPIPE (GitHub Actions does) turns an early-closed pipe into a
-  # `tr: write error` that pipefail then makes fatal.
-  fm="$(clean "$f" | awk 'NR==1 {if ($0!="---") stop=1; next} stop {next} $0=="---" {stop=1; next} {print}')"
-  # 5. local resource paths exist: top-level `resource:` and `sources[].resource`
-  while IFS= read -r res; do
-    [ -z "$res" ] && continue
-    case "$res" in *://*) continue ;; esac
-    res="${res#\"}"; res="${res#\'}"
-    # An identifier with a scheme, such as urn:ietf:rfc:9110 or
-    # doi:10.1000/182, names no file, as the toolkit reads it. Two characters
-    # at least, so a Windows drive letter is still a path.
-    [[ "$res" =~ ^[A-Za-z][A-Za-z0-9+.-]+: ]] && continue
-    res="${res%%#*}"
-    res="${res#\"}"; res="${res%\"}"; res="${res#\'}"; res="${res%\'}"
-    res="${res%"${res##*[![:space:]]}"}"
-    [ -z "$res" ] && continue
-    case "$res" in /*) target="$res" ;; *) target="$root/$res" ;; esac
-    [ -e "$target" ] || say "$f: resource not found: $res (looked at $target)"
-  done < <(printf '%s\n' "$fm" | sed -nE 's/^[[:space:]]*(- )?resource:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\2/p')
-  # 6. a commit-shaped `revision` names a commit that holds the concept's own
-  #    local `resource`. Anything with a character outside [0-9a-f], such as
-  #    an ETag, a `sha256:` digest or a version label, pins a URL and is
-  #    skipped, as is every revision on a concept whose `resource` is a URL,
-  #    absolute or absent.
-  res="$(printf '%s\n' "$fm" | sed -nE 's/^resource:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\1/p' | sed -n 1p)"
-  res="${res%%#*}"
-  res="${res#\"}"; res="${res%\"}"; res="${res#\'}"; res="${res%\'}"
-  res="${res%"${res##*[![:space:]]}"}"
-  case "$res" in ""|*://*|/*) res="" ;; esac
-  [[ "$res" =~ ^[A-Za-z][A-Za-z0-9+.-]+: ]] && res=""
-  while IFS= read -r rev; do
-    rev="${rev#\"}"; rev="${rev%\"}"; rev="${rev#\'}"; rev="${rev%\'}"
-    case "$rev" in ""|*[!0-9a-f]*) continue ;; esac
-    if [ "${#rev}" -lt 7 ] || [ -z "$res" ] || [ -z "$gitroot" ]; then continue; fi
-    if [ "$shallow" = true ]; then
-      say "$f: revision $rev cannot be checked in a shallow clone - check out with fetch-depth: 0"
-    elif ! git -C "$root" cat-file -e "$rev:./$res" 2>/dev/null; then
-      say "$f: revision $rev does not hold $res - no such commit, or the path was absent in it"
-    fi
-  done < <(printf '%s\n' "$fm" | sed -nE 's/^[[:space:]]*(- )?revision:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\2/p')
-  # 11. no `at:` later than the commit that first recorded it. One `git log`
-  #     per concept: the times of the commits that touched it, oldest first,
-  #     each followed by the lines it added.
-  if [ -n "$gitroot" ]; then
-    abs="$(cd "$(dirname "$f")" && pwd -P)/$(basename "$f")"
-    while IFS= read -r finding; do
-      say "$f: $finding"
-    done < <(
-      {
-        TZ=UTC git -C "$root" log --reverse --no-color --no-ext-diff --unified=0 -p \
-          --format='%x01%cd' --date=format-local:'%Y-%m-%dT%H:%M:%SZ' -- "$abs" 2>/dev/null | tr -d '\r' || true
-        printf '\002%s\n' "$now"
-        printf '%s\n' "$fm" | sed -nE 's/^[[:space:]]*(- )?at:[[:space:]]*(.*[^[:space:]])[[:space:]]*$/\2/p' | awk '{ print "\003" $0 }'
-      } | awk "$rule11"
-    )
-  fi
-done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | sort)
+# Each finding is held with the number of its file, the rule's place among
+# the four and its own order, and printed in that order at the end, so the
+# findings of one file stay together.
+held=""; seq=0
+hold() {  # <file number> <rank> <finding>
+  seq=$((seq + 1)); held="$held$1"$'\t'"$2"$'\t'"$seq"$'\t'"$3"$'\n'
+}
+# What the shell half reads of the bundle, from one awk over every file. The
+# paths arrive on standard input as find prints them, numbered from 1 in
+# that order, and the links among them in the file KC_LINKS names. Out come
+# tab-separated rows, each with the number and the path of its file:
+#   P  number  path                    a path out of rule 8 shape
+#   E  number  path  target  resource  a local resource rule 5 looks for
+#   W  number  path  revision  resource  a commit-shaped revision rule 6 asks git about
+# and, in the file KC_ATS names, each `at:` the frontmatter holds, after a
+# \003, the number, the path git gives the concept and its path here (rule
+# 11).
+#
+# Rule 8 reads every Markdown file, reserved ones included. The other rules
+# read each concept that is not a link: one that points nowhere cannot be
+# read, and a link is rule 9's to report, in the Python half. They read the
+# frontmatter, the text between the first two `---` lines, with carriage
+# returns and a leading byte order mark removed. A file with no block yields
+# nothing here, and is rules 2-4, 7 and 9's to report.
+#
+# A value is cut as before: for rule 5, a URL, an identifier with a scheme
+# such as urn:ietf:rfc:9110 or doi:10.1000/182 (two characters at least, so
+# a Windows drive letter is still a path), a fragment and the quotes go. For
+# rule 6, anything with a character outside [0-9a-f], such as an ETag, a
+# `sha256:` digest or a version label, pins a URL and is skipped, as is every
+# revision on a concept whose own `resource` is a URL, absolute or absent.
+# shellcheck disable=SC2016 # awk's own $0, not the shell's
+fields='
+# A flow form, as `- { by: process:ktl-librarian, at: "2026-09-14T00:00:00Z" }`
+# or `verified: [{ by: ..., at: ... }]`, holds its keys inside one line. Each
+# value of the key on a line that opens a flow mapping, as written.
+function flowvals(l, key, out,   n, v, q, j) {
+  n = 0
+  if (!index(l, "{")) return 0
+  while (match(l, "[{,][ \t]*" key ":[ \t]*")) {
+    l = substr(l, RSTART + RLENGTH); q = substr(l, 1, 1)
+    if (q == "\"" || q == "\047") { j = index(substr(l, 2), q); v = (j ? substr(l, 1, j + 1) : l) }
+    else { v = l; sub(/[,}\]].*/, "", v); sub(/[ \t]+$/, "", v) }
+    if (v != "") out[++n] = v
+  }
+  return n
+}
+function after(l, key) { sub("^[ \t]*(- )?" key ":[ \t]*", "", l); sub(/[ \t]+$/, "", l); return l }
+function unquote(v) { sub(/^["'"'"']/, "", v); sub(/["'"'"']$/, "", v); return v }
+function scheme(v) { return v ~ /^[A-Za-z][A-Za-z0-9+.-]+:/ }
+function local(v) {
+  if (v ~ /:\/\//) return ""
+  sub(/^["'"'"']/, "", v); if (scheme(v)) return ""
+  sub(/#.*/, "", v); v = unquote(v); sub(/[ \t]+$/, "", v)
+  return v
+}
+BEGIN {
+  BOM = sprintf("%c%c%c", 239, 187, 191); bundle = ENVIRON["KC_BUNDLE"]; pfx = ENVIRON["KC_PREFIX"]; ats = ENVIRON["KC_ATS"]
+  while ((getline l < ENVIRON["KC_LINKS"]) > 0) link[l] = 1
+}
+{
+  f = $0; k = NR; rel = f
+  if (substr(rel, 1, length(bundle) + 1) == bundle "/") rel = substr(rel, length(bundle) + 2)
+  sub(/^\//, "", rel)   # BSD find prints the start point slash, then its own
+  if (rel !~ /^([a-z0-9][a-z0-9._-]*\/)*[a-z0-9][a-z0-9._-]*$/) print "P\t" k "\t" f
+  base = f; sub(/.*\//, "", base)
+  if (base == "index.md" || base == "log.md" || base == "diataxis.md" || (f in link)) next
+  n = 0; top = ""; nr = 0
+  while ((getline l < f) > 0) {
+    n++; gsub(/\r/, "", l)
+    if (n == 1) { if (substr(l, 1, 3) == BOM) l = substr(l, 4); if (l != "---") break; continue }
+    if (l == "---") break
+    if (l ~ /^[ \t]*(- )?resource:[ \t]*[^ \t]/) {
+      v = after(l, "resource"); if (top == "" && l ~ /^resource:/) top = v
+      r = local(v); if (r == "") continue
+      print "E\t" k "\t" f "\t" (r ~ /^\// ? r : ENVIRON["KC_ROOT"] "/" r) "\t" r
+    }
+    else if (l ~ /^[ \t]*(- )?revision:[ \t]*[^ \t]/) rev[++nr] = unquote(after(l, "revision"))
+    else if (l ~ /^[ \t]*(- )?at:[ \t]*[^ \t]/) print "\003" k "\t" pfx rel "\t" f "\t" after(l, "at") > ats
+    else {
+      m = flowvals(l, "revision", got); for (j = 1; j <= m; j++) rev[++nr] = unquote(got[j])
+      m = flowvals(l, "at", got); for (j = 1; j <= m; j++) print "\003" k "\t" pfx rel "\t" f "\t" got[j] > ats
+    }
+  }
+  close(f)
+  r = local(top); if (r ~ /^\//) r = ""
+  for (j = 1; j <= nr; j++) if (r != "" && rev[j] ~ /^[0-9a-f]+$/ && length(rev[j]) >= 7) print "W\t" k "\t" f "\t" rev[j] "\t" r
+}
+END { print "Z" }
+'
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' -type l > "$tmp/links"
+# The awk below reads files and links only: a folder whose name ends in .md
+# is no concept. It ends with a line of its own. Without that line, the awk
+# stopped early, as mawk does on a file it cannot read, and the rules it
+# feeds were not checked.
+read_all=0
+# Where git names each concept: the bundle's real folder from the top of the
+# work tree, then the path inside it.
+kpfx=""
+if [ -n "$gitroot" ]; then
+  top="$(cd "$gitroot" && pwd -P)"
+  case "$real" in "$top") ;; "$top"/*) kpfx="${real#"$top"/}/" ;; *) gitroot="" ;; esac
+fi
+: > "$tmp/ats"
+asks=""; askers=""
+while IFS=$'\t' read -r kind n f val res; do
+  case "$kind" in
+    # 8. path shape
+    P) hold "$n" 0 "$f: path is not lowercase a-z, 0-9, '.', '_', '-' - case-insensitive hosts and sync conflict copies are why" ;;
+    # 5. local resource paths exist: top-level `resource:` and `sources[].resource`
+    E) [ -e "$val" ] || hold "$n" 1 "$f: resource not found: $res (looked at $val)" ;;
+    # 6. a commit-shaped `revision` names a commit that holds the concept's own
+    #    local `resource`. The rule needs the full history.
+    W)
+      [ -n "$gitroot" ] || continue
+      if [ "$shallow" = true ]; then
+        hold "$n" 2 "$f: revision $val cannot be checked in a shallow clone - check out with fetch-depth: 0"
+      else
+        asks="$asks$val:./$res"$'\n'; askers="$askers$n"$'\t'"$f"$'\t'"$val"$'\t'"$res"$'\n'
+      fi
+      ;;
+    Z) read_all=1 ;;
+  esac
+done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' \( -type f -o -type l \) | sort \
+  | KC_BUNDLE="$bundle" KC_ROOT="$root" KC_PREFIX="$kpfx" KC_LINKS="$tmp/links" KC_ATS="$tmp/ats" LC_ALL=C awk "$fields")
+if [ "$read_all" != 1 ]; then
+  echo "the bundle could not be read to its end, so rules 5, 6, 8 and 11 were not checked - the error above names the file" >&2
+  exit 2
+fi
+# Rule 6's answers, from one git call: a line for each question, in order,
+# that ends in "missing" when the commit or the path in it is not there.
+if [ -n "$asks" ]; then
+  while IFS=$'\t' read -r n f rev res answer; do
+    case "$answer" in *" missing"|*" ambiguous"|"") hold "$n" 2 "$f: revision $rev does not hold $res - no such commit, or the path was absent in it" ;; esac
+  done < <(paste <(printf '%s' "$askers") <(printf '%s' "$asks" | git -C "$root" cat-file --batch-check 2>/dev/null || true))
+fi
+# 11. no `at:` later than the commit that first recorded it, from one walk
+#     through the history of the bundle, oldest first.
+if [ -n "$gitroot" ] && [ -s "$tmp/ats" ]; then
+  while IFS=$'\t' read -r k finding; do
+    hold "$k" 3 "$finding"
+  done < <(
+    {
+      TZ=UTC git -C "$root" -c core.quotePath=false log --reverse --no-color --no-ext-diff --no-renames --unified=0 -p \
+        --format='%x01%cd' --date=format-local:'%Y-%m-%dT%H:%M:%SZ' -- "$real" 2>/dev/null | tr -d '\r' || true
+      printf '\002%s\n' "$now"
+      cat "$tmp/ats"
+    } | LC_ALL=C awk "$rule11"
+  )
+fi
+if [ -n "$held" ]; then
+  fail=1
+  printf '%s' "$held" | sort -t "$(printf '\t')" -k1,1n -k2,2n -k3,3n | cut -f4-
+fi
 
 # ---- 2, 3, 4, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18. the Python half ------------
 here="$(dirname "$0")"
@@ -398,6 +539,8 @@ if [ -n "$runner" ]; then
 elif [ "$unrun" -eq 0 ]; then
   skipped="$rules not checked: uv not found"
   echo "$skipped - install uv, or run $py directly with python3 3.9 or later and pyyaml" >&2
+  # Under --strict a rule not checked is no pass.
+  if [ "$strict" = 1 ]; then unrun=1; skipped=""; fi
 fi
 
 if [ "$fail" -eq 0 ] && [ "$unrun" -eq 0 ]; then

@@ -30,7 +30,7 @@ name: Knowledge ingest
 # a person merges this pull request. The skills repository's
 # docs/threat-model.md answers the other findings under "The ingest
 # workflow": content fetched at run time, secrets in a job, and a forced
-# push to this workflow's own branch.
+# push to this workflow's own branch, leased to the commit the run read.
 on:
   schedule:
     - cron: "10 4 * * 0" # Sundays at 04:10 UTC, so the librarian's Monday run follows a merged mirror
@@ -238,14 +238,15 @@ jobs:
           fi
           branch="knowledge-ingest"
           subject="chore(lokf): mirror the sources outside the repository"
-          # This workflow's open pull request, if any, and whether it holds
-          # only this workflow's one commit.
-          open=""; refresh=true
+          # This workflow's open pull request, if any, the commit its branch
+          # is at, and whether it holds only this workflow's one commit.
+          open=""; refresh=true; lease=""
           line="$(gh api "repos/${GITHUB_REPOSITORY}/pulls?head=${GITHUB_REPOSITORY_OWNER}:${branch}&state=open&per_page=5" \
-            --jq '.[] | [.number, (.head.repo.full_name // "-")] | @tsv' \
-            | awk -F'\t' -v repo="$GITHUB_REPOSITORY" '$1 ~ /^[0-9]+$/ && $2 == repo { print $1; exit }')"
+            --jq '.[] | [.number, (.head.repo.full_name // "-"), (.head.sha // "-")] | @tsv' \
+            | awk -F'\t' -v repo="$GITHUB_REPOSITORY" '$1 ~ /^[0-9]+$/ && $2 == repo && $3 ~ /^[0-9a-f]+$/ { print $1 "\t" $3; exit }')"
           if [ -n "$line" ]; then
-            open="$line"
+            open="$(printf '%s' "$line" | cut -f1)"
+            lease="$(printf '%s' "$line" | cut -f2)"
             commits="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/$open/commits?per_page=2" --jq '[length, (.[0].commit.committer.name // "-")] | @tsv')"
             if [ "$commits" != "$(printf '1\tknowledge-ingest[bot]')" ]; then
               refresh=false
@@ -254,6 +255,23 @@ jobs:
           if [ "$refresh" = false ]; then
             echo "::notice::Pull request #$open from this workflow carries a commit a person added, so this run leaves it alone. Merge or close it first; the change is attached to this run as ingest.patch."
             exit 0
+          fi
+          # With no open pull request, the branch may still hold commits: a
+          # person's after a merge, or a branch pushed by hand. It is written
+          # over only when every commit on it that the default branch lacks
+          # is this workflow's own. An empty lease means the branch must not
+          # exist yet.
+          if [ -z "$open" ]; then
+            tip="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/$branch" --jq .object.sha 2>/dev/null || true)"
+            if printf '%s' "$tip" | grep -qE '^[0-9a-f]{40}$'; then
+              base="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .default_branch)"
+              others="$(gh api "repos/${GITHUB_REPOSITORY}/compare/$base...$tip" --jq '[.commits[] | select(.commit.committer.name != "knowledge-ingest[bot]")] | length')"
+              if [ "$others" != 0 ]; then
+                echo "::notice::The branch $branch holds a commit this workflow did not make and has no open pull request, so this run leaves it alone. Merge it or delete the branch first; the change is attached to this run as ingest.patch."
+                exit 0
+              fi
+              lease="$tip"
+            fi
           fi
           # A pull request a person closed without merging is a no. A
           # scheduled run then proposes the mirror again only once
@@ -290,8 +308,13 @@ jobs:
           git config user.email "knowledge-ingest[bot]@users.noreply.github.com"
           git checkout --quiet -b "$branch"
           git commit --quiet -m "$subject"
-          # The branch holds this workflow's one commit; a refresh writes over it.
-          git push --quiet --force origin "HEAD:refs/heads/$branch"
+          # The branch holds this workflow's one commit; a refresh writes over
+          # it. The push is leased to the commit read above, so a commit
+          # pushed since is never written over.
+          if ! git push --quiet --force-with-lease="refs/heads/$branch:$lease" origin "HEAD:refs/heads/$branch"; then
+            echo "::error::The push was refused: the branch $branch moved since this run read it. Run the workflow again; the change is attached to this run as ingest.patch."
+            exit 1
+          fi
           if [ -n "$open" ]; then
             gh pr edit "$open" --title "$subject" --body-file "$body" >/dev/null
             url="$(gh pr view "$open" --json url --jq .url)"

@@ -528,7 +528,7 @@ jobs:
               echo "**Refreshed on $(date -u +%Y-%m-%d).** This pull request proposed ${OPEN_TAG:-an earlier release} before. This run replaced its commits with a sync to $TAG, so read the diff again."
             fi
             if [ -n "$copies" ]; then
-              echo; echo "The release changed these copies:"; echo
+              echo; echo "The sync writes the release's copy over these files. The sync job's summary on the run's page names any that held a local edit:"; echo
               printf '%s\n' "$copies" | sed "s/.*/- ${bt}&${bt}/"
             fi
             if [ -n "$added" ]; then
@@ -571,7 +571,7 @@ jobs:
           # declined pull request. An empty lease means the branch must not
           # exist yet. The token travels in the push address, which GitHub
           # masks in the log.
-          if ! git push --quiet --force-with-lease="refs/heads/$branch:$LEASE" "https://x-access-token:${SYNC_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"; then
+          if ! git push --quiet --force-with-lease="refs/heads/$branch:$LEASE" "https://x-access-token:${SYNC_TOKEN}@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"; then
             echo "::error::The push was refused. Either the branch moved since this run read it, or KNOWLEDGE_SYNC_TOKEN lacks Contents and Workflows set to read and write on this repository; the pin is under .github/workflows/, which needs the second."
             exit 1
           fi
@@ -685,7 +685,7 @@ jobs:
           git config user.name "knowledge-sync[bot]"
           git config user.email "knowledge-sync[bot]@users.noreply.github.com"
           git commit --quiet -m "security(sidecar): sync workflows from $TAG"
-          if ! git push --quiet --force-with-lease="refs/heads/knowledge-sync:$LEASE" "https://x-access-token:${SYNC_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/knowledge-sync"; then
+          if ! git push --quiet --force-with-lease="refs/heads/knowledge-sync:$LEASE" "https://x-access-token:${SYNC_TOKEN}@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/knowledge-sync"; then
             echo "::error::The push was refused: the branch moved since the pull request was opened, or KNOWLEDGE_SYNC_TOKEN cannot write workflows."
             exit 1
           fi

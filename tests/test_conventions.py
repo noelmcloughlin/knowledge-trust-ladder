@@ -24,7 +24,7 @@ import sys
 
 import pytest
 
-from conftest import BOM, SCRIPTS, Git, bash, count_lines, have, matches, mirror_uv, read, write
+from conftest import BOM, SCRIPTS, Git, bash, count_lines, have, matches, mawk_path, mirror_uv, read, stopping_awk, write
 
 CONVENTIONS = SCRIPTS / "knowledge-conventions.sh"
 
@@ -476,6 +476,47 @@ def test_without_uv_the_shell_half_says_what_it_skipped(good):
     ), f"conventions script without uv did not say what it skipped: {result.out}"
 
 
+def test_without_uv_strict_fails_rather_than_pass_rules_it_did_not_check(good):
+    """A gate that forgot uv passed thirteen rules it never checked. With --strict, as every workflow runs it, that is exit 2, and a finding still exit 1."""
+    path = "/usr/bin:/bin"
+    if shutil.which("uv", path=path):
+        pytest.skip("uv is on /usr/bin - the without-uv case cannot be staged here")
+    result = bash(CONVENTIONS, good, "--strict", env={"PATH": path})
+    assert result.rc == 2 and "not checked: uv not found" in result.out and "OK -" not in result.out, (
+        f"conventions script --strict passed without uv (exit {result.rc}): {result.out}"
+    )
+    write(good / "log.md", "# Change Log\n\n## 15 September\n")
+    result = bash(CONVENTIONS, "--strict", good, env={"PATH": path})
+    assert result.rc == 1 and "heading is not a bare ISO date" in result.out, (
+        f"conventions script --strict hid a finding behind the skipped rules (exit {result.rc}): {result.out}"
+    )
+
+
+def test_a_folder_named_like_a_concept_hides_no_finding(good, tmp_path):
+    """mawk stopped at a folder named x.md, and the gate said OK for every rule the shell half reads."""
+    write(good / "x" / "dir.md" / "keep", "")
+    (good / "x" / "linked.md").symlink_to(good / "x" / "dir.md")
+    write(good / "x" / "Upper.md", "---\ntype: Service\ntitle: U\nresource: https://example.invalid/u\n---\n")
+    result = bash(CONVENTIONS, good, env=mawk_path(tmp_path))
+    assert result.rc == 1 and "x/Upper.md: path is not lowercase" in result.out, (
+        f"a folder named like a concept hid a finding (exit {result.rc}): {result.out}"
+    )
+    assert "Traceback" not in result.out and "read error" not in result.out, f"a folder named like a concept was read as one: {result.out}"
+
+
+def test_an_awk_that_stops_early_is_no_pass(good, tmp_path):
+    result = bash(CONVENTIONS, good, env=stopping_awk(tmp_path, "KC_LINKS"))
+    assert result.rc == 2 and "could not be read to its end" in result.out and "OK -" not in result.out, (
+        f"the gate passed rules its awk never finished reading (exit {result.rc}): {result.out}"
+    )
+
+
+@pytest.mark.parametrize("args", [["--strict", "--since"], ["--bogus"], ["a", "b"]])
+def test_a_call_it_cannot_read_is_refused(good, args):
+    result = bash(CONVENTIONS, *args)
+    assert result.rc == 2 and "usage:" in result.out, f"conventions script accepted {args} (exit {result.rc}): {result.out}"
+
+
 def failing_uv(tmp_path):
     """A PATH whose uv fails as uv does behind a package mirror that serves no upload times."""
     fake = write(
@@ -778,3 +819,91 @@ def test_rule_16_reads_one_resource_written_two_ways_as_one(tmp_path):
     k = bundle_of(root, {"one.md": concept("one", "docs/a.md"), "two.md": concept("two", "./docs/a.md")})
     result = bash(CONVENTIONS, k)
     assert "names more than one resource" not in result.out, f"rule 16 read ./docs/a.md and docs/a.md as two resources: {result.out}"
+
+
+@pytest.mark.parametrize(
+    ("spelling", "what"),
+    [
+        ("sources: [{resource: docs/gone.md}]\n", "a flow form inside sources"),
+        ("sources:\n  - {resource: docs/gone.md}\n", "a flow form inside sources"),
+        ("exclusions:\n  - {resource: docs/gone.md, reason: old}\n", "a flow form inside exclusions"),
+        ("resource: >-\n  docs/gone.md\n", "a block scalar for resource"),
+        ("resource:\n  docs/gone.md\n", "a resource on the line below its key"),
+    ],
+)
+def test_rule_10_holds_resource_and_the_lists_that_carry_one_to_a_line_readers_spelling(tmp_path, spelling, what):
+    """A line reader saw no `resource:` in a flow form: a gone source failed no rule 5, never moved, and counted for no file."""
+    own = "" if spelling.startswith("resource") else "resource: https://example.invalid/a\n"
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\n{own}{spelling}{STAMP}---\n"})
+    result = bash(CONVENTIONS, k)
+    assert result.rc == 1 and f"frontmatter uses {what}" in result.out, f"rule 10 passed {spelling!r}: {result.out}"
+
+
+def test_rule_10_lets_a_comment_stand_beside_a_resource(tmp_path):
+    """Every line reader cuts a comment from a resource, as it cuts a fragment."""
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: https://example.invalid/a  # the page\n{STAMP}---\n"})
+    result = bash(CONVENTIONS, k)
+    assert result, f"rule 10 refused a comment beside a resource: {result.out}"
+
+
+def test_rules_6_and_11_read_an_event_written_as_a_flow_mapping(tmp_path):
+    """Rule 11 read `at:` only at the start of a line, so a flow event passed with a time ahead of its commit, and rule 6 never checked its revision."""
+    git = Git(tmp_path)
+    git.init()
+    write(tmp_path / "docs" / "a.md", "a\n")
+    flow = (
+        "---\ntype: Service\nid: https://example.invalid/k/x/{n}\nresource: docs/a.md\n"
+        'generated: {{ by: process:ktl-librarian, at: "2026-09-01T00:00:00Z" }}\n'
+        "verified:\n  - {{ by: human:ada, at: {at}, revision: {rev} }}\n---\n"
+    )
+    k = bundle_of(tmp_path, {"late.md": flow.format(n="late", at='"2031-01-01T00:00:00Z"', rev="0" * 40)})
+    write(k / "x" / "single.md", flow.format(n="single", at="'2031-02-01T00:00:00Z'", rev="1" * 40).replace("verified:\n  - ", "verified: [").replace(" }\n---", " }]\n---"))
+    git("add", "-A")
+    git("commit", "-q", "-m", "stamp", env={"GIT_COMMITTER_DATE": "2026-09-17T00:00:00Z"})
+    out = bash(CONVENTIONS, k).out
+    for want in [
+        'late.md: at "2031-01-01T00:00:00Z" is later than the commit that recorded it (2026-09-17T00:00:00Z)',
+        'single.md: at "2031-02-01T00:00:00Z" is later than the commit that recorded it',
+        f"late.md: revision {'0' * 40} does not hold docs/a.md",
+        f"single.md: revision {'1' * 40} does not hold docs/a.md",
+    ]:
+        assert want in out, f"conventions script missed '{want}' in a flow event:\n{out}"
+
+
+def test_rule_11_finds_the_commit_of_a_path_git_quotes_or_ends_with_a_tab(tmp_path):
+    """The one walk took a path from its diff header as printed, so a folder with a space or a name git quotes lost the commit, and a time between it and now passed."""
+    git = Git(tmp_path)
+    git.init()
+    late = '---\ntype: Service\nid: https://example.invalid/k/x/{n}\nresource: https://example.invalid/a\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-09-18T00:00:00Z"\n---\n'
+    k = bundle_of(tmp_path / "my docs", {"late.md": late.format(n="late"), 'q"t.md': late.format(n="q")})
+    git("add", "-A")
+    git("commit", "-q", "-m", "stamp", env={"GIT_COMMITTER_DATE": "2026-09-17T00:00:00Z"})
+    out = bash(CONVENTIONS, k).out
+    for name in ("late.md", 'q"t.md'):
+        want = f'{name}: at "2026-09-18T00:00:00Z" is later than the commit that recorded it (2026-09-17T00:00:00Z)'
+        assert want in out, f"conventions script missed '{want}':\n{out}"
+
+
+def test_a_larger_bundle_asks_git_no_more_often(tmp_path):
+    """The shell half once started about 24 processes a concept, a `git log -p` among them: 63 seconds at 2,000 concepts."""
+    calls = []
+    for n in (3, 12):
+        root = tmp_path / str(n)
+        root.mkdir()
+        git = Git(root)
+        git.init()
+        write(root / "docs" / "a.md", "a\n")
+        git("add", "-A")
+        git("commit", "-q", "-m", "docs")
+        head = git("rev-parse", "HEAD")
+        k = bundle_of(root, {f"c{i}.md": f"---\ntype: Service\nid: https://example.invalid/k/x/c{i}\nresource: docs/a.md\n{STAMP}verified:\n  - by: human:ada\n    at: \"2026-09-02T00:00:00Z\"\n    revision: {head}\n---\n" for i in range(n)})
+        git("add", "-A")
+        git("commit", "-q", "-m", "concepts", env={"GIT_COMMITTER_DATE": "2026-09-17T00:00:00Z"})
+        shim = tmp_path / f"shim{n}"
+        real = shutil.which("git")
+        write(shim / "git", f'#!/bin/sh\necho git >> "{shim}/calls"\nexec "{real}" "$@"\n')
+        (shim / "git").chmod(0o755)
+        result = bash(CONVENTIONS, k, env={"PATH": f"{shim}{os.pathsep}/usr/bin:/bin"})
+        assert "not checked" in result.out or result, result.out
+        calls.append(read(shim / "calls").count("\n"))
+    assert calls[0] == calls[1], f"the shell half ran git {calls[0]} times for 3 concepts and {calls[1]} for 12"

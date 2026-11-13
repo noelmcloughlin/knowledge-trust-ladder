@@ -315,7 +315,9 @@ def test_a_copy_that_ends_with_a_bare_main_stops_when_it_syncs_the_exit_in(tmp_p
     # copy reads " exit" next when main returns.
     result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--source", skills, "--no-checks", "v1.0.0"], cwd=host, env=IDENT)
     checks.ok(result.rc == 0, "exit 0", result.out)
-    checks.ok(has_line(result.out, "   copied   .lokf/scripts/knowledge-sync.sh"), "the script's own copy is synced", result.out)
+    # The host pins v1.0.0 and its copy differs from v1.0.0's, so the sync
+    # calls it a local edit.
+    checks.ok(matches(result.out, r"^   local    \.lokf/scripts/knowledge-sync\.sh differed from its template at v1\.0\.0"), "the script's own copy is synced", result.out)
     checks.ok(has_line(read(script), 'main "$@"; exit'), "the copy ends with the exit afterwards")
 
 
@@ -474,9 +476,49 @@ def test_a_copy_that_differs_on_another_line_is_not_called_a_pin_bump(tmp_path, 
     git("commit", "-qm", "dependabot bump and an edit")
     result = sync(host, skills)
     checks.ok(result.rc == 0, "exit 0", result.out)
-    checks.ok(has_line(result.out, "   copied   .github/workflows/knowledge-release.yaml"), "the copy is brought back to the template", result.out)
+    checks.ok(matches(result.out, r"^   local    \.github/workflows/knowledge-release\.yaml differed from its template at v1\.0\.0, a local edit"), "the copy is brought back to the template, as a local edit", result.out)
     checks.ok(has_line(result.out, "   copied   .lokf/scripts/knowledge-report.sh"), "the release's own change is copied", result.out)
     checks.ok(not matches(result.out, r"^   pins     "), "neither copy is called a pin bump, since each differs on a line that is not a pin", result.out)
+
+
+def test_a_local_edit_the_sync_overwrites_is_not_blamed_on_the_release(tmp_path, skills, checks):
+    """A copy that differs from its template at the old pin was edited here, and the report says so rather than that the release changed it."""
+    host = make_host(tmp_path, skills)
+    copy = host / ".lokf" / "scripts" / "knowledge-feedback.sh"
+    write(copy, read(copy) + "# a line the host added\n")
+    git = Git(host)
+    git("add", "-A")
+    git("commit", "-qm", "a local edit")
+    report = tmp_path / "report.md"
+    changed = tmp_path / "changed.txt"
+    result = sync(host, skills, "--report", report, "--changed", changed)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    checks.ok(matches(result.out, r"^   local    \.lokf/scripts/knowledge-feedback\.sh differed from its template at v1\.0\.0"), "the edit is named as local", result.out)
+    checks.ok(not has_line(result.out, "   copied   .lokf/scripts/knowledge-feedback.sh"), "and not as copied", result.out)
+    checks.ok("a line the host added" not in read(copy), "the template is written over it")
+    body = read(report)
+    release_part = body.split("The release changed these copies:")[1].split("\n\n", 2)[1] if "The release changed these copies:" in body else ""
+    checks.ok("knowledge-feedback.sh" not in release_part and "A local edit this sync overwrote" in body and "- `.lokf/scripts/knowledge-feedback.sh`" in body,
+              "the report lists it under the local edit, not under the release", body)
+    checks.ok("local edit of `.lokf/scripts/knowledge-feedback.sh`" in read(host / "CHANGELOG.md"), "the entry says so too", read(host / "CHANGELOG.md"))
+    checks.ok(".lokf/scripts/knowledge-feedback.sh" in read(changed).split("\n"), "the overwritten copy is staged with the rest", read(changed))
+
+
+def test_a_host_file_no_manifest_line_names_is_reported_and_left_alone(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    write(host / ".lokf" / "scripts" / "knowledge-old.sh", "#!/usr/bin/env bash\n")
+    write(host / ".github" / "workflows" / "knowledge-old.yaml", "name: old\n")
+    git = Git(host)
+    git("add", "-A")
+    git("commit", "-qm", "a template a release dropped")
+    report = tmp_path / "report.md"
+    result = sync(host, skills, "--report", report)
+    checks.ok(result.rc == 0, "exit 0", result.out)
+    for path in (".lokf/scripts/knowledge-old.sh", ".github/workflows/knowledge-old.yaml"):
+        checks.ok(matches(result.out, rf"^   unlisted {re.escape(path)}: no line of v1\.1\.0's manifest names it"), f"{path} is named", result.out)
+        checks.ok(f"- `{path}`" in read(report), f"{path} is in the report", read(report))
+    checks.ok(not matches(result.out, r"^   unlisted \.lokf/scripts/knowledge-report\.sh"), "a listed copy is not called unlisted", result.out)
+    checks.ok(read(host / ".lokf" / "scripts" / "knowledge-old.sh") == "#!/usr/bin/env bash\n", "the unlisted file is left as it was")
 
 
 WORKFLOW = WORKFLOWS / "knowledge-sync.yaml"

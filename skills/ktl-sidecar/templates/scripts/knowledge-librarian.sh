@@ -20,6 +20,12 @@
 #   - What the pen refuses before it writes is then checked on the result, by
 #     knowledge-provenance.sh --unattended: a run that touched a person's
 #     event, note or text is refused too.
+#   - The pen and that gate run from copies taken out of HEAD before the agent
+#     runs, and a run in which the agent moved HEAD or changed those copies is
+#     refused. The agent shares this job's user, so a file outside git, such
+#     as .lokf/.venv, and a process it leaves running stay within its reach.
+#     The workflow's publish job, on a runner the agent never shared, is the
+#     boundary; these checks only stop a bad run early.
 #   - The lines the patch file holds for the reviewer, its `handoff`, reach
 #     the file KNOWLEDGE_HANDOFF_OUT names through the same script, cleaned.
 #     That file and the retrieval score's are removed once the agent returns,
@@ -307,16 +313,17 @@ restore_git_state() {
   info_snapshot=""
 }
 
-# Everything git can see of the working tree, as one checksum: which paths
+# Everything git can see of the working tree, as one digest: which paths
 # differ from HEAD, how the tracked ones differ, and what the untracked ones
 # hold. Two readings that agree mean nothing in the checkout changed between
-# them.
+# them. Git object ids, not cksum's checksum, which a changed file of the
+# same length can be made to match.
 tree_state() {
   {
     git status --porcelain --untracked-files=all
     git diff HEAD
-    git ls-files --others --exclude-standard | while IFS= read -r f; do cksum "$f"; done
-  } 2>/dev/null | cksum
+    git ls-files --others --exclude-standard | while IFS= read -r f; do printf '%s %s\n' "$(git hash-object --no-filters -- "$f")" "$f"; done
+  } 2>/dev/null | git hash-object --stdin
 }
 
 # The index-only retrieval test (knowledge-report.sh's `retrieval`), run only
@@ -362,6 +369,49 @@ score_retrieval() {
   rm -rf "$scratch"
   echo "knowledge-librarian: $line"
   if [ -n "${KNOWLEDGE_RETRIEVAL_OUT:-}" ]; then rm -f "$KNOWLEDGE_RETRIEVAL_OUT"; printf '%s\n' "$line" > "$KNOWLEDGE_RETRIEVAL_OUT"; fi
+}
+
+# The pen and the provenance gate this script runs once the agent returns.
+# They are copied out of HEAD before the agent runs, and their digests are
+# held in this script's memory, so a script the agent rewrote, or a commit it
+# made to move HEAD, is never what checks its work. File-scope, so the EXIT
+# trap can remove them.
+tools_dir=""
+tools_sum=""
+tools=(knowledge-apply.sh knowledge-apply.py knowledge-provenance.sh)
+take_tools() {
+  local name
+  tools_dir="$(mktemp -d)"
+  for name in "${tools[@]}"; do
+    if ! git show "HEAD:./.lokf/scripts/$name" > "$tools_dir/$name" 2>/dev/null; then
+      rm -f "$tools_dir/$name"
+    fi
+  done
+  if [ ! -f "$tools_dir/knowledge-apply.sh" ] || [ ! -f "$tools_dir/knowledge-apply.py" ]; then
+    echo "knowledge-librarian: HEAD holds no .lokf/scripts/knowledge-apply.sh and knowledge-apply.py, and the patch is applied with HEAD's copies; commit them first" >&2
+    exit 2
+  fi
+  tools_sum="$(tools_digest)"
+}
+# Each copy's git object id, worked out from its bytes alone. A checksum such
+# as cksum's can be matched by a rewritten file of the same length, which an
+# object id cannot. Git runs from the repository, whose settings the wrapper
+# has put back by then, and never from the copies' folder, where the agent
+# could have left a .git of its own.
+tools_digest() {
+  local name
+  for name in "${tools[@]}"; do
+    if [ -f "$tools_dir/$name" ] && [ ! -L "$tools_dir/$name" ]; then
+      printf '%s %s\n' "$(git hash-object --no-filters -- "$tools_dir/$name" 2>/dev/null)" "$name"
+    else
+      printf 'none %s\n' "$name"
+    fi
+  done
+}
+tools_intact() { [ -n "$tools_dir" ] && [ -n "$tools_sum" ] && [ "$(tools_digest)" = "$tools_sum" ]; }
+on_exit() {
+  restore_git_state
+  [ -z "$tools_dir" ] || rm -rf "$tools_dir"
 }
 
 # The files the workflow reads after this script: the hand-off and the
@@ -410,7 +460,10 @@ main() {
   # defence in depth, not the backstop: a person reviewing the pull request
   # before merge is.
   snapshot_git_state
-  trap restore_git_state EXIT
+  trap on_exit EXIT
+  take_tools
+  local head_before
+  head_before="$(git rev-parse HEAD)"
   # A signal caught by a trap does not end the shell, so these turn it into an
   # exit, which runs the EXIT trap above. Bash delivers them only once the
   # foreground agent has itself exited, so the restore never races the agent.
@@ -441,6 +494,20 @@ main() {
   restore_git_state
   clear_outputs
 
+  # The agent may not commit. A commit it made would move what the checks
+  # below compare with, and HEAD's copies of the pen and the gate are the
+  # ones taken before it ran.
+  if [ "$(git rev-parse HEAD)" != "$head_before" ]; then
+    echo "knowledge-librarian: the agent moved HEAD, which the checks compare with - refusing" >&2
+    rm -f .lokf/patch.yaml
+    exit 3
+  fi
+  if ! tools_intact; then
+    echo "knowledge-librarian: the copies of the pen and the gate taken before the agent ran have changed - refusing" >&2
+    rm -f .lokf/patch.yaml
+    exit 3
+  fi
+
   if [ "$(git ls-files -v | grep -v '^H ' || true)" != "$before_flags" ]; then
     echo "knowledge-librarian: the agent changed which files git watches (a skip-worktree or assume-unchanged flag) - refusing:" >&2
     comm -13 <(printf '%s\n' "$before_flags" | sort) <(git ls-files -v | grep -v '^H ' | sort) | sed '/^$/d; s/^/  /' >&2
@@ -462,7 +529,7 @@ main() {
   fi
   if [ -f .lokf/patch.yaml ]; then
     echo "knowledge-librarian: applying .lokf/patch.yaml with knowledge-apply.sh"
-    if ! bash .lokf/scripts/knowledge-apply.sh ${KNOWLEDGE_HANDOFF_OUT:+--handoff "$KNOWLEDGE_HANDOFF_OUT"} .lokf/patch.yaml; then
+    if ! bash "$tools_dir/knowledge-apply.sh" --root "$repo_root" ${KNOWLEDGE_HANDOFF_OUT:+--handoff "$KNOWLEDGE_HANDOFF_OUT"} .lokf/patch.yaml; then
       echo "knowledge-librarian: knowledge-apply.sh refused the patch, so nothing was written" >&2
       rm -f .lokf/patch.yaml
       exit 4
@@ -483,7 +550,7 @@ main() {
   # adds, changes and removes no person's event or note, and rewrites no text
   # a person wrote. The publish job runs the same check on a checkout the
   # agent never shared; this one fails fast.
-  if [ -f .lokf/scripts/knowledge-provenance.sh ] && ! bash .lokf/scripts/knowledge-provenance.sh --unattended; then
+  if [ -f "$tools_dir/knowledge-provenance.sh" ] && ! bash "$tools_dir/knowledge-provenance.sh" --unattended; then
     echo "knowledge-librarian: the change touches a person's record - refusing" >&2
     exit 3
   fi

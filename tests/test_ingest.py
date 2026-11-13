@@ -22,7 +22,7 @@ and pin:
    Cloud and v1 on Data Center. An unchanged page costs no body, and a page
    that leaves the selection is unlisted. --prune removes an uncited file,
    one a concept only lists among its exclusions included, and keeps a cited
-   one;
+   one. A changed authors or license setting writes every page again;
 5. a git path at a ref is mirrored by its commit, with a file that is not
    Markdown kept in a fence. A git older than 2.31 is refused, git reads no
    ~/.netrc, and with a credential git follows no redirect. Only the files
@@ -42,21 +42,25 @@ and pin:
    no title, address or author, unless the entry sets lock_details. A lock of
    another shape stops the run by name;
 8. --patch writes a Reference concept per mirrored item of an entry that asks,
-   and a later patch keeps the sources a person added;
+   and a later patch keeps the sources a person added and the concept that
+   names the item's copy;
 9. --status prints one line with the token names and no value, and names
    each git entry a git older than 2.31 or 2.37 would refuse;
 10. the converter turns Confluence storage format into Markdown blocks, keeps
     the body after head metadata and macro parameters, resolves links,
     honours a declared charset and keeps the joiners. It reads a head left
     open, keeps a link to an http, https or mailto address only, makes a
-    line break in the text a space, and writes no lone surrogate;
+    line break in the text a space, and writes no lone surrogate. A table
+    keeps a code block, a list, a panel or a table in its cell, and its
+    spans; a block left open closes at the end of the page;
 11. the shell half refuses to run under sh;
 12. a redirect to another host, port or scheme drops the credential, of any
     header name, a 503 is retried, and a weak ETag is the version without
     its prefix. A new ETag for the same bytes is recorded only by a run that
     changes the lock anyway. A secret's trailing line break is trimmed, one
     inside it is refused by name, and a body sent a byte at a time fails at
-    a deadline;
+    a deadline. A redirected page's links are read from where it was served,
+    and a redirect from https to http is refused;
 13. a Confluence listing is paged, one page's missing body is that page's
     alone, and an answer of the wrong shape fails the entry and nothing else.
     A title arrives as one clean line, and a listing without end is cut off;
@@ -65,10 +69,13 @@ and pin:
     has is skipped, a name the workflow would not publish is spelled plain,
     and a large file is refused;
 15. an entry that leaves the manifest takes its folder with it, and no run
-    removes or writes a file outside the mirror;
+    removes or writes a file outside the mirror. A file lost or edited by
+    hand, or recorded before the lock kept its digest, is written again;
 16. the mirror cap refuses the item that would pass it;
 17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no
-    other, and a source not fetched or a run cut short is a warning on the run;
+    other, and a source not fetched or a run cut short is a warning on the run.
+    Its push is leased to the commit it read, and a branch a person
+    committed to is left alone;
 18. at its time limit a run starts no more work, and an item or an entry it
     did not reach keeps its record for the next run. A wait the limit cuts
     is the limit's, not the source's.
@@ -77,6 +84,7 @@ and pin:
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import http.server
 import importlib.util
 import json
@@ -88,12 +96,13 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.request
 from pathlib import Path
 
 import pytest
 import yaml
 
-from conftest import REPO, SCRIPTS, TEMPLATES, Git, has_line, matches, mirror_uv, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, Git, bash, has_line, matches, mirror_uv, read, run, write
 
 INGEST = SCRIPTS / "knowledge-ingest.sh"
 INGEST_PY = SCRIPTS / "knowledge-ingest.py"
@@ -748,7 +757,7 @@ def test_a_pdf_text_layer_is_mirrored_and_a_blank_pdf_is_refused(tmp_path, serve
 def test_the_header_pins_the_pypdf_the_tests_install(checks):
     """pypdf reads PDFs from outside the repository, and Dependabot raises it in tests/requirements.txt but cannot read the script's header."""
     header = re.search(r'"pypdf==([^"]+)"', read(INGEST_PY))
-    tests = re.search(r"^pypdf==(\S+)$", read(REPO / "tests" / "requirements.txt"), re.M)
+    tests = re.search(r"^pypdf==([^\s\\]+)", read(REPO / "tests" / "requirements.txt"), re.M)
     checks.ok(header and tests and header.group(1) == tests.group(1),
               "the script's header pins the pypdf the tests run; move exclude-newer past its upload with it",
               f"header {header and header.group(1)}, tests {tests and tests.group(1)}")
@@ -831,6 +840,81 @@ def test_a_confluence_selection_is_listed_fetched_and_kept_current(tmp_path, ser
     checks.ok(result and "was unlisted since 2026-10-18 and no concept cites it; removed" in result.out, "an uncited file is removed by a later --prune", result.out)
     checks.ok(not (root / ".lokf" / "mirror" / "runbooks" / "124.md").exists(), "the file is gone")
     checks.ok("124" not in lock_of(root)["entries"]["runbooks"]["items"], "and so is its lock record")
+
+
+def test_a_changed_header_setting_reaches_a_page_that_did_not_change(tmp_path, server, checks):
+    """authors: false or a new license reached a page only when its source next changed, so account ids stayed in the headers and the lock."""
+    confluence_routes(server, False, {"123": {"title": "Deploy", "version": 1, "storage": "<p>Deploy.</p>"}})
+    manifest = confluence_manifest(server, False)
+    root = host(tmp_path, manifest)
+    ingest(root, "--visibility", "private")
+    path = root / ".lokf" / "mirror" / "runbooks" / "123.md"
+    checks.ok("author: 5b10ac8d" in read(path) and lock_of(root)["entries"]["runbooks"]["items"]["123"].get("author") == "5b10ac8d", "the author is recorded")
+    manifest["entries"][0].update(authors=False, license="https://acme.example/terms")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
+    result = ingest(root, "--visibility", "private")
+    text = read(path)
+    checks.ok(result and "1 fetched" in result.out and "author:" not in text and "license: https://acme.example/terms" in text
+              and "author" not in lock_of(root)["entries"]["runbooks"]["items"]["123"], "the next run writes the page again without the author", result.out + text)
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "1 unchanged" in result.out, "and the run after that fetches nothing", result.out)
+
+
+def test_a_changed_header_setting_outlasts_a_failed_run_that_moved_the_records(tmp_path, server, checks):
+    """A run that moved an entry's records to the other lock and then failed dropped the settings digest, so the next run kept the old headers."""
+    confluence_routes(server, False, {"123": {"title": "Deploy", "version": 1, "storage": "<p>Deploy.</p>"}})
+    manifest = confluence_manifest(server, False)
+    manifest["entries"][0].update(sensitivity="confidential", lock_details=True)
+    root = host(tmp_path, manifest)
+    write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "1 fetched" in result.out, "the page is fetched", result.out)
+    del manifest["entries"][0]["lock_details"]
+    manifest["entries"][0]["license"] = "https://acme.example/terms"
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
+    search = Stub.routes["/rest/api/content/search"]
+    Stub.routes["/rest/api/content/search"] = (403, {"Content-Type": "text/plain"}, b"no")
+    result = ingest(root, "--visibility", "private")
+    checks.ok("- runbooks (confluence, label ktl): failed, 403" in result.out, "the run that moves the records fails", result.out)
+    Stub.routes["/rest/api/content/search"] = search
+    result = ingest(root, "--visibility", "private")
+    text = read(root / ".lokf" / ".cache" / "mirror" / "runbooks" / "123.md")
+    checks.ok(result and "1 fetched" in result.out and "license: https://acme.example/terms" in text, "the next run writes the page again with the license", result.out + text)
+
+
+def test_a_new_converter_version_reaches_every_page(checks):
+    """The settings digest held only the entry's settings, so a converter that wrote other Markdown reached a page only when its source changed."""
+    m = load_module()
+    entry = m.Entry(id="a", kind="http")
+    before = m.settings_digest(entry)
+    m.CONVERTERS["html-markdown"] += 1
+    checks.ok(m.settings_digest(entry) != before, "a raised converter version changes the digest, so the next run writes every file again")
+    checks.ok(m.converter("html-markdown") == f"html-markdown/{m.CONVERTERS['html-markdown']}", "and the header names that version", m.converter("html-markdown"))
+
+
+def test_a_changed_header_setting_reaches_a_page_that_left_the_selection(tmp_path, server, checks):
+    """A page no longer listed cannot be fetched again, so authors: false left its account id in the header and the lock until a prune."""
+    pages = {"123": {"title": "Deploy", "version": 1, "storage": "<p>Deploy.</p>"}, "124": {"title": "Old", "version": 3, "storage": "<p>Old <b>page</b>.</p>"}}
+    confluence_routes(server, False, pages)
+    manifest = confluence_manifest(server, False)
+    root = host(tmp_path, manifest)
+    ingest(root, "--visibility", "private")
+    old = root / ".lokf" / "mirror" / "runbooks" / "124.md"
+    before = read(old)
+    confluence_routes(server, False, {"123": pages["123"]})
+    manifest["entries"][0].update(authors=False, license="https://acme.example/terms")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
+    result = ingest(root, "--visibility", "private")
+    text = read(old)
+    record = lock_of(root)["entries"]["runbooks"]["items"]["124"]
+    checks.ok(result and "1 fetched, 1 unlisted" in result.out and "  - 1 item: not fetched, so only its header was written again for the entry's new settings" in result.out,
+              "the summary says the unlisted page's header was written again", result.out)
+    checks.ok("author:" not in text and "license: https://acme.example/terms" in text and text.split("-->\n\n", 1)[1] == before.split("-->\n\n", 1)[1]
+              and "converted_by: confluence-storage-markdown/2" in text, "its header loses the author and gains the license, and its body stays", text)
+    checks.ok("author" not in record and record["status"] == "unlisted" and record["mirror_sha256"] == "sha256:" + hashlib.sha256(text.encode()).hexdigest(),
+              "its record loses the author and names the file as written", str(record))
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "1 unchanged, 1 unlisted" in result.out and "header" not in result.out and read(old) == text, "the run after that writes nothing", result.out)
 
 
 def test_a_selection_over_max_items_is_refused_whole(tmp_path, server, checks):
@@ -1400,6 +1484,89 @@ def test_patch_writes_a_reference_concept_per_mirrored_item_of_an_entry_that_ask
     checks.ok([s["resource"] for s in op2["set"]["sources"]] == ["docs/notes.md", op["frontmatter"]["sources"][0]["resource"]], "the person's source stays, the ingest's is replaced", str(op2))
 
 
+def test_patch_keeps_each_item_on_the_concept_that_names_its_copy(tmp_path, checks):
+    """Concepts were named by the item's slug, with a digest for the second of two alike in sorted order, so a new item sorting first took an existing concept."""
+    m = load_module()
+    root = tmp_path / "host"
+    (root / ".lokf" / "knowledge" / "references").mkdir(parents=True)
+    entry = m.Entry(id="wiki", kind="git", url="https://example.org/x.git", ref="main", reference=True, sensitivity="public")
+    manifest = m.Manifest(m.MIRROR, 10**7, False, [entry])
+
+    def item(name, version):
+        return {"status": "ok", "path": f".lokf/mirror/wiki/{name}", "origin": f"https://example.org/x.git@{version}:{name}", "title": name,
+                "version": version, "retrieved_at": "2026-11-01T00:00:00Z"}
+
+    lock = {"entries": {"wiki": {"status": "ok", "items": {"runbooks-deploy.md": item("runbooks-deploy.md", "aaa111")}}}}
+    m.write_patch(root, manifest, lock, root / "p1.yaml")
+    op = yaml.safe_load(read(root / "p1.yaml"))["ops"][0]
+    write(root / ".lokf" / "knowledge" / op["path"], "---\n" + yaml.safe_dump(op["frontmatter"]) + "---\n" + op["body"])
+    lock["entries"]["wiki"]["items"]["Runbooks/Deploy.md"] = item("Runbooks/Deploy.md", "bbb222")
+    lock["entries"]["wiki"]["items"]["runbooks-deploy.md"] = item("runbooks-deploy.md", "ccc333")
+    ops = {o["path"]: o for o in yaml.safe_load(read(root / "p2.yaml") if m.write_patch(root, manifest, lock, root / "p2.yaml") else "ops: []")["ops"]}
+    new = [o for o in ops.values() if o["op"] == "create"]
+    checks.ok(ops.get(op["path"], {}).get("op") == "patch" and ops[op["path"]]["set"]["sources"][-1]["resource"] == ".lokf/mirror/wiki/runbooks-deploy.md",
+              "the existing concept is patched for the item it names", str(ops))
+    checks.ok(len(new) == 1 and new[0]["path"] != op["path"] and new[0]["frontmatter"]["sources"][0]["resource"] == ".lokf/mirror/wiki/Runbooks/Deploy.md",
+              "the new item gets a concept of its own", str(new))
+
+
+def test_patch_finds_a_confidential_items_concept_after_its_commit_moves(tmp_path, checks):
+    """A confidential entry's concept names no mirror path and a git origin names the commit, so each new commit drafted a second concept."""
+    m = load_module()
+    for n, url in enumerate(("https://example.org/x.git", "https://github.com/o/r.git")):
+        root = tmp_path / f"host{n}"
+        (root / ".lokf" / "knowledge" / "references").mkdir(parents=True)
+        entry = m.Entry(id="wiki", kind="git", url=url, ref="main", reference=True, sensitivity="confidential")
+        manifest = m.Manifest(m.MIRROR, 10**7, False, [entry])
+        lock = {"entries": {"wiki": {"status": "ok"}}}
+
+        def items(sha):
+            return {"entries": {"wiki": {"status": "ok", "items": {
+                name: {"status": "ok", "path": f".lokf/.cache/mirror/wiki/{name}", "origin": m.git_origin(entry, sha, name), "title": name,
+                       "version": sha, "retrieved_at": "2026-11-01T00:00:00Z"} for name in ("Deploy.md", "deploy.md")}}}}
+
+        m.write_patch(root, manifest, lock, root / "p1.yaml", items("a" * 40))
+        first = {}
+        for op in yaml.safe_load(read(root / "p1.yaml"))["ops"]:
+            write(root / ".lokf" / "knowledge" / op["path"], "---\n" + yaml.safe_dump(op["frontmatter"]) + "---\n" + op["body"])
+            first[op["path"]] = op["frontmatter"]["title"]
+        m.write_patch(root, manifest, lock, root / "p2.yaml", items("b" * 40))
+        ops = yaml.safe_load(read(root / "p2.yaml"))["ops"]
+        second = {o["path"]: o["set"]["description"].split(",")[0].removeprefix("A copy of ") for o in ops if o["op"] == "patch"}
+        checks.ok(len(first) == 2 and len(ops) == 2 and second == first, f"{url}: each item's concept is patched, and none is drafted again", str(ops))
+
+
+def test_patch_moves_a_reference_concept_to_its_items_new_commit(tmp_path, checks):
+    """A Reference concept kept the address of the commit it was drafted at, while its description named each newer version."""
+    m = load_module()
+    root = tmp_path / "host"
+    kb = root / ".lokf" / "knowledge"
+    write(kb / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kb / "log.md", "# Change Log\n")
+    entry = m.Entry(id="wiki", kind="git", url="https://github.com/o/r.git", ref="main", reference=True, sensitivity="public")
+    manifest = m.Manifest(m.MIRROR, 10**7, False, [entry])
+
+    def lock(sha):
+        return {"entries": {"wiki": {"status": "ok", "items": {
+            name: {"status": "ok", "path": f".lokf/mirror/wiki/{name}", "origin": m.git_origin(entry, sha, name), "title": name,
+                   "version": sha, "retrieved_at": "2026-11-01T00:00:00Z"} for name in ("deploy.md", "own.md")}}}}
+
+    for name in ("deploy.md", "own.md"):
+        write(root / ".lokf" / "mirror" / "wiki" / name, "x\n")
+    m.write_patch(root, manifest, lock("a" * 40), root / ".lokf" / "p1.yaml")
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--root", root, root / ".lokf" / "p1.yaml")
+    checks.ok(result, "the pen applies the drafts", result.out)
+    own = kb / "references" / "wiki-own.md"
+    write(own, read(own).replace(f"resource: {m.git_origin(entry, 'a' * 40, 'own.md')}", "resource: https://docs.acme.example/own"))
+    m.write_patch(root, manifest, lock("b" * 40), root / ".lokf" / "p2.yaml")
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--root", root, root / ".lokf" / "p2.yaml")
+    deploy = read(kb / "references" / "wiki-deploy.md")
+    new, old = m.git_origin(entry, "b" * 40, "deploy.md"), m.git_origin(entry, "a" * 40, "deploy.md")
+    checks.ok(result and f"resource: {new}" in deploy and f"A copy of <{new}>" in deploy and old not in deploy,
+              "the concept's resource and body name the new commit", result.out + deploy)
+    checks.ok("resource: https://docs.acme.example/own" in read(own), "a resource a person set stays", read(own))
+
+
 # 9. --status
 
 
@@ -1552,6 +1719,41 @@ def test_the_converter_grows_in_step_with_the_page(checks):
     checks.ok(text == "- one\n  - two\n\n> > q\n", "nesting within the depth keeps its shape", text)
 
 
+def test_a_table_keeps_what_its_cells_hold(checks):
+    """A code block, a panel, a list or a table in a cell was written outside the table, a nested table dropped the rows before it, and spans, a <br> in <pre> and a block left open at the end were lost."""
+    m = load_module()
+    code = '<ac:structured-macro ac:name="code"><ac:plain-text-body><![CDATA[kubectl drain node-1]]></ac:plain-text-body></ac:structured-macro>'
+    panel = '<ac:structured-macro ac:name="warning"><ac:rich-text-body><p>Never on Friday</p></ac:rich-text-body></ac:structured-macro>'
+    text, _ = m.html_to_markdown(f"<table><tr><th>Step</th><th>How</th></tr><tr><td>Drain</td><td>{code}</td></tr>"
+                                 f"<tr><td><ul><li>gateway</li><li>billing</li></ul></td><td>{panel}</td></tr></table>")
+    checks.ok(text == "| Step | How |\n| --- | --- |\n| Drain | `kubectl drain node-1` |\n| - gateway<br>- billing | **Warning**<br>Never on Friday |\n",
+              "a code block, a list and a panel stay in their cells", text)
+    text, _ = m.html_to_markdown("<table><tr><td>A1</td><td>B1</td></tr><tr><td>A2</td><td><table><tr><td>x|y</td><td>z</td></tr><tr><td>w</td></tr></table></td></tr>"
+                                 "<tr><td>A3</td><td>B3</td></tr></table><p>after</p>")
+    checks.ok(text == "| A1 | B1 |\n| --- | --- |\n| A2 | x\\|y; z<br>w |\n| A3 | B3 |\n\nafter\n", "a nested table is written into its cell, a row to a line", text)
+    text, _ = m.html_to_markdown('<table><tr><th>Owner</th><th>Service</th><th>Port</th></tr><tr><td rowspan="2">platform</td><td>gateway</td><td>443</td></tr>'
+                                 '<tr><td>billing</td><td>8443</td></tr><tr><td colspan="2">total</td><td>2</td></tr></table>')
+    checks.ok(text == "| Owner | Service | Port |\n| --- | --- | --- |\n| platform | gateway | 443 |\n|  | billing | 8443 |\n| total |  | 2 |\n",
+              "rowspan and colspan keep each cell in its column", text)
+    text, _ = m.html_to_markdown("<pre>one<br>two<br/>three</pre>")
+    checks.ok(text == "```\none\ntwo\nthree\n```\n", "a <br> in <pre> breaks the line", text)
+    text, _ = m.html_to_markdown("<p>before</p><table><tr><td>kept<pre>open")
+    checks.ok(text == "before\n\n| kept<br>`open` |\n| --- |\n", "a table and a <pre> left open close at the end of the page", text)
+    text, _ = m.html_to_markdown("<ul><li>item<table><tr><td><ul><li>x</li></ul></td></tr></table></li><li>two</li></ul>")
+    checks.ok(text == "- item\n  | - x |\n  | --- |\n- two\n", "a list in a cell of a table in a list item stays in the cell", text)
+    text, _ = m.html_to_markdown("<table><tr><td>A</td><td><ul><li>x</li> stray <li><h3>Title</h3>see<table><tr><td>p</td><td>q</td></tr></table></li></ul></td></tr></table>")
+    checks.ok(text == "| A | stray<br>- x<br>- Title<br>see<br>p; q |\n| --- | --- |\n",
+              "text outside an item, a heading and a table in a list in a cell stay in the cell, plain and a row to a line", text)
+    text, _ = m.html_to_markdown("<table><tr><td>```</td><td>opens a fence</td></tr></table>")
+    checks.ok(text == "| ``` | opens a fence |\n| --- | --- |\n", "backticks no later line closes stay as text", text)
+    for name, page in (("nested tables", "<table><tr><td>x" * 4000),
+                       ("spans", "<table><tr>" + '<td rowspan="9999" colspan="999">a</td>' * 2000 + "</tr>" + "<tr><td>b</td></tr>" * 4000 + "</table>")):
+        started = time.monotonic()
+        text, _ = m.html_to_markdown(page)
+        took = time.monotonic() - started
+        checks.ok(len(text) < 16 * len(page) and took < 5, f"{name}: the Markdown stays in step with the page", f"{len(page)} bytes in, {len(text)} out, {took:.1f} s")
+
+
 # 11. the shell half
 
 
@@ -1624,6 +1826,34 @@ def test_a_redirect_to_another_host_drops_the_credential_and_a_503_is_retried(tm
     checks.ok(len(calls) == 2, "the 503 was retried once", str(calls))
     item = next(iter(lock_of(root)["entries"]["r"]["items"].values()))
     checks.ok(item["version"] == "Wv1" and item["etag"] == 'W/"Wv1"' and "# B" in read(root / item["path"]), "the redirect target is the mirror, and a weak ETag is the version", str(item))
+
+
+def test_a_redirected_page_keeps_its_links_and_names_where_it_was_served(tmp_path, server, checks):
+    """After /docs redirected to /docs/, the page's relative links were read against /docs, and a redirect from https to http was followed."""
+    Stub.routes["/docs"] = (301, {"Location": "/docs/"}, b"")
+    Stub.routes["/docs/"] = (200, {"Content-Type": "text/html"}, b'<p><a href="install.html">Install</a> <img src="img/a.png" alt="a"></p>')
+    root = host(tmp_path, manifest_for([{"id": "d", "kind": "http", "urls": [f"{server}/docs"], "sensitivity": "public"}]))
+    result = ingest(root)
+    item = next(iter(lock_of(root)["entries"]["d"]["items"].values()))
+    text = read(root / item["path"])
+    checks.ok(result and f"[Install]({server}/docs/install.html) ![a]({server}/docs/img/a.png)" in text, "the links are read from where the page was served", text)
+    checks.ok(item["origin"] == f"{server}/docs" and item["redirected_to"] == f"{server}/docs/" and f"redirected_to: {server}/docs/\n" in text,
+              "the origin stays the address the manifest names, and the header and the lock name the redirect", str(item))
+    # A redirect that carries a token in its query is recorded without it.
+    Stub.routes["/docs"] = (301, {"Location": "/docs/?X-Amz-Signature=secret-token-value"}, b"")
+    shutil.rmtree(root / ".lokf" / "mirror")
+    result = ingest(root)
+    item = next(iter(lock_of(root)["entries"]["d"]["items"].values()))
+    text = read(root / item["path"])
+    checks.ok(item["redirected_to"] == f"{server}/docs/" and "secret-token-value" not in read(root / ".lokf" / "ingest.lock.yaml") + text,
+              "a redirect's query is left out of the lock and the header", str(item))
+    m = load_module()
+    request = urllib.request.Request("https://93.184.216.34/a", headers={"User-Agent": "x"})
+    try:
+        m.Redirects(allow_private=True).redirect_request(request, None, 302, "Found", {}, "http://93.184.216.34/a")
+        checks.ok(False, "a redirect from https to http is refused")
+    except m.FetchFailed as e:
+        checks.ok("redirected from https to http" in str(e), "a redirect from https to http is refused", str(e))
 
 
 def test_a_credential_reaches_only_its_own_origin_and_never_the_lock(tmp_path, server, checks):
@@ -1964,6 +2194,31 @@ def test_a_cleared_mirror_is_restored_and_the_status_line_counts_what_is_off(tmp
     checks.ok(result and "1 gone or unlisted, which --prune removes" in result.out, "the status counts what waits for a prune", result.out)
 
 
+def test_a_mirror_file_edited_by_hand_is_noticed_and_written_again(tmp_path, server, checks):
+    """The lock recorded the digest of the bytes fetched only, so an edit of the mirror file stayed until the source next changed."""
+    Stub.routes["/a.md"] = (200, {"Content-Type": "text/markdown", "ETag": '"a1"'}, b"# A\n")
+    root = host(tmp_path, manifest_for([{"id": "a", "kind": "http", "urls": [f"{server}/a.md"], "sensitivity": "public"}]))
+    ingest(root)
+    a_file = next((root / ".lokf" / "mirror" / "a").glob("*.md"))
+    a_text, lock_text = read(a_file), read(root / ".lokf" / "ingest.lock.yaml")
+    record = next(iter(lock_of(root)["entries"]["a"]["items"].values()))
+    checks.ok(record["mirror_sha256"] == "sha256:" + hashlib.sha256(a_text.encode()).hexdigest(), "the lock holds the digest of the file as written", str(record))
+    write(a_file, a_text.replace("# A", "# A, with a hand edit"))
+    result = ingest(root, "--status")
+    checks.ok(result and "1 edited since the ingest wrote them, which a run writes again" in result.out, "the status counts the edited file", result.out)
+    result = ingest(root)
+    checks.ok(result and "1 restored" in result.out and read(a_file) == a_text and read(root / ".lokf" / "ingest.lock.yaml") == lock_text,
+              "the run writes the file again and changes no line of the lock", result.out)
+    # A record from before the digest was kept is written again the same way.
+    lock = lock_of(root)
+    del lock["entries"]["a"]["items"][next(iter(lock["entries"]["a"]["items"]))]["mirror_sha256"]
+    write(root / ".lokf" / "ingest.lock.yaml", yaml.safe_dump(lock))
+    result = ingest(root, "--status")
+    checks.ok(result and "1 written before the lock kept their digest, which a run writes again" in result.out, "the status counts a file from before the digest", result.out)
+    result = ingest(root)
+    checks.ok(result and "1 restored" in result.out and lock_of(root) == yaml.safe_load(lock_text), "the run writes it again, and the lock holds the digest once more", result.out)
+
+
 # 16. the mirror cap
 
 
@@ -2040,6 +2295,78 @@ def test_the_privileged_job_refuses_a_patch_that_renames_links_or_marks_a_file_t
     (plain / "ingest.patch").write_text(g("diff", "--cached", "--binary", "--no-renames") + "\n", encoding="utf-8")
     result = run(["bash", str(script)], cwd=repo, env={"RUNNER_TEMP": str(plain)})
     checks.ok(result.rc == 0 and "passed" in result.out, "a patch that adds a plain file passes", result.out)
+
+
+FAKE_GH = """#!/bin/sh
+case "$*" in
+  *state=open*) printf '%s' "$OPEN_LINE" ;;
+  */git/ref/heads/*) [ -n "$TIP" ] || exit 1; echo "$TIP" ;;
+  */compare/*) echo "$OTHERS" ;;
+  *pulls/*/commits*) printf '1\\tknowledge-ingest[bot]\\n' ;;
+  "api repos/acme/host --jq .default_branch") echo main ;;
+  "pr create"*) echo "https://example.invalid/pull/1" ;;
+  "pr edit"*) ;;
+  "pr view"*) echo "https://example.invalid/pull/7" ;;
+  *) echo "unexpected gh $*" >&2; exit 1 ;;
+esac
+"""
+
+
+def test_the_privileged_job_pushes_leased_to_the_commit_it_read(tmp_path, checks):
+    """A bare --force wrote over a person's commits on the branch when no pull request was open, and over a commit pushed while the run worked."""
+    workflow = read(WORKFLOW)
+    step = workflow[workflow.index('          branch="knowledge-ingest"'):]
+    step = step[:step.index("\n", step.index("GITHUB_STEP_SUMMARY"))]
+    script = write(tmp_path / "publish.sh", "set -euo pipefail\n" + "\n".join(line[10:] for line in step.split("\n")) + "\n")
+    gh = write(tmp_path / "bin" / "gh", FAKE_GH)
+    gh.chmod(0o755)
+    write(tmp_path / "gitconfig", "")
+    remote = tmp_path / "remote.git"
+    run(["git", "init", "-q", "--bare", "-b", "main", remote])
+    seed = tmp_path / "seed"
+    run(["git", "clone", "-q", remote, seed])
+    g = Git(seed)
+    write(seed / "README.md", "# Host\n")
+    g("add", "-A")
+    g("commit", "-q", "-m", "one", env=IDENT)
+    g("push", "-q", "origin", "HEAD:refs/heads/main")
+    main = g("rev-parse", "HEAD").strip()
+    write(seed / ".lokf" / "mirror" / "a" / "x.md", "x\n")
+    g("add", "-A")
+    write(tmp_path / "temp" / "ingest.patch", g("diff", "--cached", "--binary") + "\n")
+    write(tmp_path / "temp" / "summary.md", "- a: 1 fetched\n")
+    g("reset", "-q", "--hard")
+
+    def tip():
+        return run(["git", "--git-dir", remote, "rev-parse", "--verify", "-q", "refs/heads/knowledge-ingest"]).out.strip()
+
+    def person_branch():
+        g("checkout", "-q", "-B", "work", main)
+        write(seed / "notes.md", "a person's note\n")
+        g("add", "-A")
+        g("commit", "-q", "-m", "note", env=IDENT)
+        g("push", "-q", "-f", "origin", "HEAD:refs/heads/knowledge-ingest")
+        return tip()
+
+    def publish(name, **env):
+        work = tmp_path / name
+        run(["git", "clone", "-q", remote, work])
+        full = {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "RUNNER_TEMP": tmp_path / "temp", "GITHUB_REPOSITORY": "acme/host",
+                "GITHUB_REPOSITORY_OWNER": "acme", "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_STEP_SUMMARY": tmp_path / "summary.txt",
+                "GIT_CONFIG_GLOBAL": tmp_path / "gitconfig", "GIT_CONFIG_NOSYSTEM": "1", "OPEN_LINE": "", "TIP": "", "OTHERS": "0", **env}
+        return run(["bash", script], cwd=work, env=full)
+
+    result = publish("first")
+    checks.ok(result and "Opened" in result.out and tip(), "with no branch, the run pushes one", result.out)
+    theirs = person_branch()
+    result = publish("person", TIP=theirs, OTHERS="1")
+    checks.ok(result and "holds a commit this workflow did not make" in result.out and tip() == theirs,
+              "a branch a person committed to, with no pull request, is left alone", result.out)
+    theirs = person_branch()
+    result = publish("moved", TIP=main, OTHERS="0")
+    checks.ok(result.rc == 1 and "moved since this run read it" in result.out and tip() == theirs, "a branch that moved since the run read it is not written over", result.out)
+    result = publish("open", OPEN_LINE=f"7\tacme/host\t{theirs}\n")
+    checks.ok(result and "Refreshed" in result.out and tip() != theirs, "an open pull request's branch is refreshed, leased to its head", result.out)
 
 
 def test_the_workflow_warns_of_a_source_not_fetched_and_of_the_time_limit(checks):

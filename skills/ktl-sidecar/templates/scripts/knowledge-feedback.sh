@@ -27,7 +27,9 @@
 #   kind    Miss or Disagreement, in any letter case, and nothing else: the
 #           two shapes ktl-librarian knows how to consume.
 #   text    the entry itself, one argument. Whitespace is collapsed, so a
-#           multi-line string is still written as one line per entry.
+#           multi-line string is still written as one line per entry. Text
+#           that holds ` - docent` is refused, since it would read as the
+#           attribution.
 #   --for   an authenticated login (gh api user --jq .login, or glab), which
 #           records the entry as `- docent, for human:<login>`. Left out, the
 #           entry is `- docent` alone. It is never a name typed in
@@ -112,7 +114,7 @@ if [ -n "$concept" ]; then
       echo "--concept takes a concept's path in the bundle, in lowercase with no '..' or '.' segment, such as services/orders-api.md, not '$concept'" >&2; exit 2 ;;
   esac
   case "$concept" in *.md) ;; *) echo "--concept takes the concept's file, ending in .md, not '$concept'" >&2; exit 2 ;; esac
-  case "${concept##*/}" in index.md|log.md) echo "--concept takes a concept, not the bundle's $concept" >&2; exit 2 ;; esac
+  case "${concept##*/}" in index.md|log.md|diataxis.md) echo "--concept takes a concept, not the bundle's $concept" >&2; exit 2 ;; esac
 fi
 
 # One entry is one line. Collapse every whitespace run, drop control
@@ -120,6 +122,13 @@ fi
 # the file's shape or forge a second entry with an embedded newline.
 text="$(printf '%s' "$text" | tr -d '\000-\010\013\014\016-\037\177' | tr '\t\n\r' '   ' | sed -e 's/  */ /g' -e 's/^ //' -e 's/ $//')"
 [ -n "$text" ] || { echo "the entry text is empty" >&2; exit 2; }
+# The entry ends in its attribution, ` - docent` and the login, so text that
+# holds those words could pass for an attribution of its own, such as one for
+# a login nobody authenticated. Such text is refused, in any letter case, and
+# the caller words the entry another way.
+case "$(printf ' - %s' "$text" | tr '[:upper:]' '[:lower:]')" in
+  *" - docent"*) echo "the entry text holds ' - docent', which reads as the attribution the script adds - word the entry another way" >&2; exit 2 ;;
+esac
 
 # ---- root ------------------------------------------------------------------
 if [ -z "$root" ]; then

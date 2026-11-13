@@ -125,7 +125,7 @@ jobs:
         run: |
           since=""
           if [ -n "$BASE_SHA" ]; then since="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"; fi
-          bash scripts/knowledge-conventions.sh knowledge ${since:+--since "$since"}
+          bash scripts/knowledge-conventions.sh knowledge --strict ${since:+--since "$since"}
         working-directory: .lokf
 
   provenance:

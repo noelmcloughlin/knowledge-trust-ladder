@@ -4,6 +4,46 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+
+- **`knowledge-apply.sh --dry-run --diff` shows each change as a unified diff before anything is written.**
+- **The whole report prints vocabulary fit and the confirmations not tied to a signed commit.** The curator reads both lines from the report instead of working them out by hand. A confirmation no commit added, as one a merge wrote, is listed with a note.
+- **`knowledge-conventions.sh --strict` fails when it could not check a rule.** Every workflow passes it.
+- **The ingest lock records the digest of each mirror file, and a run writes a hand-edited file again.** `--status` counts edited files. A record from before the digest is written again the same way, so the mirror is rewritten once after the upgrade.
+- **A source mirrored by the ingest shows its origin, version and fetch day on the concept page.**
+
+### Changed
+
+- **Rule 10 keeps `sources`, `exclusions` and `resource` in block form, and rules 6 and 11 read flow-form events.** A flow-form source slipped past rule 5, coverage and the moved check. A bundle that writes `sources` in flow form now fails the gate.
+- **The work list, `quiet` and the conventions shell half ask git a few batched questions, and every report form reads the concepts in one awk.** At 2,000 concepts the work list went from 234 s to 0.9 s, and the conventions shell half from 51 s to 1.4 s.
+- **A concept page carries only its own folder's sidebar.** The site grew with the square of the bundle.
+- **A scheduled run applies and checks the patch with copies of the pen and the gate taken from HEAD before the agent ran.** A run in which the agent moved HEAD or changed those copies is refused. The threat model names the two routes this cannot close.
+- **The skills release runs the contract and the tests in a read-only `verify` job.** The job that holds the write token runs neither. That job and `validate.yml` install the test packages by hash from `tests/requirements.txt`, compiled from `tests/requirements.in`.
+- **A librarian that is switched off skips every job, with no checkout or install each week.**
+- **A sync names a local edit it overwrote, rather than blaming the release, and names a host script no manifest line lists.**
+
+### Fixed
+
+- **The ingest keeps a table cell's code block, list, panel or nested table in the cell.** Spans, a `<br>` in `<pre>`, and a table or `<pre>` left open are kept too.
+- **A changed `authors`, `license` or `convert` setting, or a new converter version, reaches every mirrored page.** Before, it reached a page only when that page next changed. A page that left the selection gets its header written again.
+- **A redirected page's links are resolved against where it was served.** The header names it, without its query, as `redirected_to`, and a redirect from https to http is refused, naming the address to put in the manifest if plain http is meant.
+- **`--patch` keeps each item on the Reference concept that names its copy.** The concept's `resource` follows a git item to its newer commit.
+- **The ingest workflow's push is leased to the commit it read.** A branch a person committed to is left alone.
+- **`labels.rq` shows a passed review date, a retired concept and a draft, one row per concept.** The latest confirmation by a person counts.
+- **Two federation builds sharing a cache write a download file each, a build reads each bundle once, and an unreadable zip is a finding instead of a traceback.** The docs now say the snapshot swap is two renames.
+- **A concept page's address is its id when the id holds a capital, a dot or a leading underscore, and a single `verified` event shows on its card.**
+- **A source is compared with the commit its event names as `revision`.** A source changed while the pull request waited now reads as moved.
+- **The work list names sources git holds no history of.** An ignored file or one inside a submodule was never compared.
+- **The feedback script refuses entry text that reads as an attribution, and `diataxis.md` as a concept.**
+- **The provenance gate reads a sidecar kept in a subfolder.**
+- **The pen writes a shared log line once, and two of its refusals say what is wrong.** A target quoted in an open question, and one feedback entry named twice, misled.
+- **The librarian and sync workflows push to the server they run on, so GitHub Enterprise Server works.**
+- **Check 21 refuses every character the pen treats as invisible.** It missed the Hangul fillers, the variation selectors and the line separators.
+- **The install smoke test's check for leaked installer metadata can fail.**
+- **The gate and the report skip a folder whose name ends in `.md`.** They printed read errors or a traceback over it.
+- **The sync's check no longer reports a pass for the conventions it could not run without `uv`.**
+- **The librarian wrapper compares files by git object id.** A rewritten file of the same length can match a `cksum` checksum.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added

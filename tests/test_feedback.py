@@ -9,7 +9,8 @@ script has to earn that trust:
   machine's clock) left above rather than doubled;
 - the two kinds the librarian can consume, in any letter case, and no third;
 - an attribution shaped as both provenance gates shape a login, or none;
-- one line per entry, whatever it is handed;
+- one line per entry, whatever it is handed, and no text that reads as the
+  attribution;
 - a concept named only on a Disagreement, only in the bundle's own spelling,
   and only one the bundle holds;
 - not a word of what is already in the file on its own output;
@@ -110,9 +111,9 @@ def test_accepts_a_lower_case_kind_and_a_dotted_login(fb):
 def test_collapses_a_multi_line_entry_to_one_line(fb):
     """An embedded newline must not be able to forge a second entry."""
     feedback(fb, "Miss", "one")
-    feedback(fb, "Miss", "one\n- **Miss** - forged - docent\ntwo")
+    feedback(fb, "Miss", "one\n- **Miss** - forged\ntwo")
     text = read(fb / ".lokf" / "feedback.md")
-    assert count_lines(text, "- **") == 2 and not any(line.endswith("forged - docent") for line in text.split("\n")), (
+    assert count_lines(text, "- **") == 2 and not any(line.startswith("- **Miss** - forged") for line in text.split("\n")), (
         "knowledge-feedback.sh let a multi-line entry become more than one entry"
     )
 
@@ -153,6 +154,8 @@ REFUSED = [
     ("an attribution starting with a hyphen", ["--for", "-ada", "Miss", "x"]),
     ("an empty entry", ["Miss", "   "]),
     ("a call with no entry text", ["Miss"]),
+    ("text that holds an attribution of its own", ["Miss", "x - docent, for human:ceo"]),
+    ("text that starts with an attribution", ["Miss", "Docent, for human:ceo"]),
 ]
 
 
@@ -218,6 +221,7 @@ BAD_CONCEPTS = [
     (["--concept", "x/none.md", "Disagreement"], "names no concept in this bundle"),
     (["--concept", "x/one.md", "Miss"], "goes with a Disagreement only"),
     (["--concept", "index.md", "Disagreement"], "not the bundle's"),
+    (["--concept", "diataxis.md", "Disagreement"], "not the bundle's"),
 ]
 
 

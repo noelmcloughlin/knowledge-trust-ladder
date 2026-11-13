@@ -507,3 +507,71 @@ def test_plain_text_keeps_no_tag_after_one_pass(tmp_path):
     got = dict(zip(PLAIN_CASES, json.loads(run(["node", script], stdout_only=True).out)))
     for text, want in PLAIN_CASES.items():
         assert got[text] == want, (text, got[text])
+
+
+def sliced(source, start, end):
+    """The part of a script from one marker up to the next, to run on its own."""
+    return source[source.index(start) : source.index(end)]
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_a_concept_page_s_address_is_its_id_whatever_its_name_holds(tmp_path):
+    """Astro made a page's address from its file name, in lower case and without dots, and skipped a name starting with "_". The slug carries the id, and the file name only has to be one Astro reads."""
+    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
+    assert "slug: `knowledge/${c.id}`," in source and "slug: `knowledge/${group}`," in source
+    assert 'resolve(CONTENT, "knowledge", contentName(c.id))' in source and 'resolve(CONTENT, "knowledge", contentPath(group), "index.md")' in source
+    cases = {"services/_hidden": "services/%5Fhidden.md", "_drafts/a": "%5Fdrafts/a.md", "Releases/v1.2": "Releases/v1.2.md", "a/b_c": "a/b_c.md"}
+    script = write(tmp_path / "check.mjs", sliced(source, "const contentPath", "function writeConceptPages")
+                   + f"\nconsole.log(JSON.stringify({json.dumps(list(cases))}.map(contentName)));\n")
+    got = dict(zip(cases, json.loads(run(["node", script], stdout_only=True).out)))
+    assert got == cases, got
+    card = read(SITE_TEMPLATES / "src" / "pages" / "og" / "[...route].ts")
+    assert "getSlug: (path) => `${path}.png`," in card, "a concept with a dot in its id loses its social card"
+
+
+def test_a_check_written_as_one_mapping_is_read_from_the_concept_s_json_ld():
+    """OKF lets `verified` be one mapping, and the card said "Checks: none recorded" for it."""
+    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
+    assert "const verified = Array.isArray(doc?.verified) ? doc.verified : [].concat(c.data.verified ?? []);" in source
+    assert 'verified: verified.filter((e) => e && typeof e === "object").map(event),' in source
+
+
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_a_mirrored_source_shows_its_origin_version_and_day_from_the_committed_lock(tmp_path):
+    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
+    lock = {
+        "ingest_lock_version": "1",
+        "entries": {
+            "vendor": {"items": {
+                "api": {"path": ".lokf/mirror/vendor/api.md", "origin": "https://vendor.example/api", "version": 4, "retrieved_at": "2026-03-04T05:06:07Z", "status": "ok"},
+                "cmd": {"path": ".lokf/mirror/vendor/cmd.md", "origin": "tools/list.sh", "retrieved_at": "2026-03-05T00:00:00Z", "status": "ok"},
+                "odd": {"path": "README.md", "origin": "https://elsewhere.example/"},
+            }},
+            "secret": {"status": "ok"},
+        },
+    }
+    write(tmp_path / ".lokf" / "ingest.lock.yaml", json.dumps(lock))
+    write(tmp_path / ".lokf" / ".cache" / "ingest.lock.yaml", json.dumps({"entries": {"x": {"items": {"y": {"path": ".lokf/.cache/mirror/x/y.md", "origin": "https://secret.example/"}}}}}))
+    script = write(
+        tmp_path / "check.mjs",
+        "import { existsSync, readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n"
+        f"const REPO_ROOT = {json.dumps(str(tmp_path))};\nconst read = (p) => readFileSync(p, 'utf8');\nconst parseYaml = JSON.parse;\n"
+        + sliced(source, "function readMirrorRecords", "function buildConcepts")
+        + "\nconsole.log(JSON.stringify(Object.fromEntries(readMirrorRecords())));\n",
+    )
+    got = json.loads(run(["node", script], stdout_only=True).out)
+    assert got == {
+        ".lokf/mirror/vendor/api.md": {"origin": "https://vendor.example/api", "href": "https://vendor.example/api", "version": "4", "retrieved": "2026-03-04"},
+        ".lokf/mirror/vendor/cmd.md": {"origin": "tools/list.sh", "retrieved": "2026-03-05"},
+    }, got
+    card = read(SITE_TEMPLATES / "src" / "components" / "ConceptCard.astro")
+    assert "{s.mirror.href ? <a href={s.mirror.href}>{s.mirror.origin}</a> : <code>{s.mirror.origin}</code>}" in card
+
+
+def test_each_group_of_the_bundle_is_a_sidebar_topic_of_its_own():
+    """A sidebar of the whole bundle on every concept page made the site grow with the square of the bundle."""
+    config = read(SITE_TEMPLATES / "astro.config.mjs")
+    bundle_topic = sliced(config, 'label: "Knowledge bundle"', "// Each group of the bundle is a topic")
+    assert "autogenerate" not in bundle_topic, "the bundle's topic still lists every concept"
+    assert "...bundleGroups().map((group) => ({ label: groupLabel(group), link: `/knowledge/${group}/` }))," in bundle_topic
+    assert "items: [{ autogenerate: { directory: `knowledge/${group}` } }]," in sliced(config, "// Each group of the bundle is a topic", "if (SCHEMA)")

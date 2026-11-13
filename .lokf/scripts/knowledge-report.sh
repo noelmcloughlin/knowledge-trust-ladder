@@ -59,6 +59,11 @@
 #   - Worth ten minutes today, the queue itself.
 # "The curator's queue" below says how a relation's target is found.
 #
+# It also prints the two lines ktl-curator once worked out by hand, each
+# defined where it is computed below: Vocabulary fit, and Not tied to a
+# signed commit, which the health line ends with too when git holds the
+# history of the bundle.
+#
 # It also lists each retired concept whose successor no person has confirmed:
 # the concept the newest **Deprecation** line in log.md links after "replaced
 # by", when the bundle holds it, carrying no `verified` event by a human:
@@ -92,6 +97,17 @@
 # invents one. It is the file's history, not its meaning: an edit that
 # changed no fact still counts, and only reading the source says which it
 # was.
+#
+# An event may name the state of the source it checked: a `revision` that is
+# a commit. When this history holds that commit, the source is compared with
+# it rather than with the commit that recorded the event, so a source changed
+# while the pull request that carried the event waited has moved, though the
+# squash merge recorded the event after it. A change in the recording commit
+# itself still has not.
+#
+# A source git holds no history of, an ignored file or one inside a
+# submodule, cannot be compared at all. The work list names it apart, and it
+# never makes a run busy.
 #
 # A concept's own body counts as a source too. The pen stamps every edit it
 # writes, so a body that differs from the one the stamp's commit held was changed
@@ -331,11 +347,13 @@ trap 'rm -rf "$tmp"' EXIT
 #      latest human verified.at  human events  verified events  latest verified.at  open questions
 #      that human time as written  the later of generated.at and verified.at as written
 #      the revision that human event carries, a commit hash cut to seven characters
+#      the revision of the event the work list compares with, and that of the human event, whole
 #   R  path  resource            one per `resource:` line, the concept's own and each source's
 #   X  path  resource            one per exclusion's `resource:` line, which no R line repeats
 #   E  path  index  resource     one per `sources` entry that carries an `excerpt`, with its place in the list from 0
 #   F  path  resource            one per `sources` entry that carries an `id`, a footnote's label, and no `excerpt`
 #   Q  path  date  actor  text   one per bullet under ## Open questions
+#   H  path  at                  one per `verified` event by a human: actor, its time as written
 #   V  path  type  status  stale_after  resource  event  by  at  revision  check
 #                                one per row of `evidence`, and only when `rows` is set
 # Times are normalised to one UTC shape, as conventions rule 11 does, so they
@@ -408,7 +426,7 @@ function emit(  n) {
     n = norm(at)
     if (kind == "generated") { gen_by = by; gen_at = n; gen_raw = at; gen_rev = rev; hasgen = 1 }
     else { vn++; eby[vn] = by; eat[vn] = n; eraw[vn] = at; erev[vn] = rev
-           if (n > check_at) { check_at = n; check_raw = at }
+           if (n > check_at) { check_at = n; check_raw = at; check_rev = rev }
            if (by ~ /^human:/) { hn++; if (n > human_at) { human_at = n; human_raw = at; human_rev = rev } } }
   }
   inev = 0; by = ""; at = ""; rev = ""
@@ -458,9 +476,33 @@ function mention(f, l,  n, items, i, w) { sub(/^[ \t]*(-[ \t]+)*/, "", l)
   if (l ~ /^[A-Za-z_][A-Za-z0-9_-]*:[ \t]/) sub(/^[^:]*:[ \t]*/, "", l)
   if (l ~ /^\[/) { sub(/^\[/, "", l); sub(/\][^]]*$/, "", l); n = split(l, items, ",") } else { n = 1; items[1] = l }
   for (i = 1; i <= n; i++) { w = unq(items[i]); if (w ~ /^[A-Za-z][A-Za-z0-9+.-]*:[^ \t]+$/) link(f, w) } }
-BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source measures memberOf holder isReplacedBy", relnames, " "); split("id type title description resource sources exclusions distribution endpoint documentation license author publisher generated verified status base_iri context stale_after timestamp genre definition version", notlink, " "); for (j in notlink) NOTLINK[notlink[j]] = 1; for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
+# Every value one concept leaves behind, cleared before the next file.
+function reset() {
+  title = ""; status = ""; stale = ""; tstamp = ""; cid = ""; ctype = ""; topres = ""; firstres = ""
+  fm = 0; body = 0; started = 0; skip = 0; top = ""; inv = 0; inev = 0; kind = ""; by = ""; at = ""; rev = ""
+  gen_by = ""; gen_at = ""; gen_raw = ""; gen_rev = ""; hasgen = 0; vn = 0; hn = 0; hm = 0
+  check_at = ""; check_raw = ""; check_rev = ""; human_at = ""; human_raw = ""; human_rev = ""; human_full = ""
+  inflow = 0; flowbuf = ""; flowseq = 0; sidx = -1; kcol = 0; sres = ""; shas = 0; sid = 0; skey = 0
+  rel = ""; rp = ""; rt = ""; inrels = 0; fence = 0; inq = 0; qn = 0
+  split("", eby); split("", eat); split("", eraw); split("", erev); split("", ord); split("", shown); split("", hum); split("", chk)
+}
+BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source measures memberOf holder isReplacedBy", relnames, " "); split("id type title description resource sources exclusions distribution endpoint documentation license author publisher generated verified status base_iri context stale_after timestamp genre definition version", notlink, " "); for (j in notlink) NOTLINK[notlink[j]] = 1; for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191)
+  # Many files at once: the list KR_LIST names, one path to a line, each
+  # read in turn, with its path in the bundle taken from its name. A file
+  # that cannot be opened, such as a link that points nowhere, is left out,
+  # since awk would stop at it.
+  if (ENVIRON["KR_LIST"] != "") { many = 1; prefix = ENVIRON["KR_BUNDLE"] "/"
+    while ((getline l < ENVIRON["KR_LIST"]) > 0) { if ((getline x < l) >= 0) ARGV[ARGC++] = l; close(l) }
+    close(ENVIRON["KR_LIST"]) }
+}
+FNR == 1 {
+  if (NR > 1) finish()
+  reset()
+  if (many) { path = FILENAME; if (substr(path, 1, length(prefix)) == prefix) path = substr(path, length(prefix) + 1); sub(/^\//, "", path) }
+}
 { sub(/\r$/, "") }
-NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else exit }
+FNR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else { skip = 1; next } }
+skip { next }
 fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); if (top == "sources") sflush(); inv = 0; fm = 0; body = 1; next }
 fm {
   if (inflow) { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
@@ -539,8 +581,10 @@ body {
     print "Q\t" path "\t" d "\t" actor "\t" text; qn++
   }
 }
-END {
-  if (!started) exit
+END { if (NR > 0) finish() }
+# One concept ends: its C and I lines, and its V lines when `rows` is set.
+function finish() {
+  if (!started) return
   relend()
   emit()
   if (gen_at == "" && tstamp != "") { gen_at = norm(tstamp); gen_raw = tstamp }
@@ -549,10 +593,12 @@ END {
   # reads it. The specification makes a concept stale from that instant on,
   # and LOKF 0.9.0 types stale_after as a datetime.
   st = norm(stale); if (st != "") st = substr(st, 1, 10); else if (stale ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) st = substr(stale, 1, 10)
+  human_full = human_rev
   if (human_rev ~ /^[0-9a-f]+$/ && length(human_rev) > 7) human_rev = substr(human_rev, 1, 7)
-  printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev
+  printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev, (gen_at > check_at ? gen_rev : check_rev), human_full
   printf "I\t%s\t%s\t%s\t%s\n", path, cid, ctype, (topres != "" ? topres : firstres)
-  if (!rows) exit
+  for (i = 1; i <= vn; i++) if (eby[i] ~ /^human:/ && eraw[i] != "") print "H\t" path "\t" eraw[i]
+  if (!rows) return
   # The evidence rows. The events by a human: actor whose time can be read are
   # put in the order of that time, then of the file. The earliest is the first
   # confirmation, and each later one is by the same person or by a second.
@@ -568,12 +614,17 @@ END {
 }'
 
 facts() {  # every concept in the bundle -> its C, R and Q lines, and its V lines when `rows` is 1
-  local f rel
-  while IFS= read -r f; do
-    rel="${f#"$bundle"/}"; rel="${rel#/}"  # BSD find prints the start point's slash, then its own
-    case "${rel##*/}" in index.md|log.md|diataxis.md) continue ;; esac
-    awk -v path="$rel" -v SQ="'" -v rows="${rows:-0}" "$extract" "$f"
-  done < <(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort)
+  # One awk reads them all. A path from find starts with the bundle, which
+  # is absolute, so awk never takes a file name for an assignment. A folder
+  # whose name ends in .md, or a link to one, is no concept and is left out
+  # by the shell, which starts no process for it: mawk stops at a folder.
+  # The awk's exit status is the function's, so a read that stopped early
+  # is never taken for a bundle with less in it.
+  find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort \
+    | awk '{ n = $0; sub(/.*\//, "", n) } n != "index.md" && n != "log.md" && n != "diataxis.md"' \
+    | while IFS= read -r p; do [ -d "$p" ] || printf '%s\n' "$p"; done > "$tmp/files"
+  [ -s "$tmp/files" ] || return 0
+  KR_LIST="$tmp/files" KR_BUNDLE="$bundle" awk -v SQ="'" -v rows="${rows:-0}" "$extract" < /dev/null
 }
 
 # ---- what a person declined ------------------------------------------------------
@@ -627,101 +678,6 @@ left() {  # <kind> <what was left> <"base number day"> [<count>] -> one D line f
   printf 'D\t%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "${rest%% *}" "${rest##* }" "${4:-1}"
 }
 
-# The open questions a process asked on a concept, one to a line: the commit
-# that first held it, or "new" for one not yet committed, then the unit
-# separator, then the question's text.
-# What a concept says, for comparing two versions of it: the body, with each run
-# of spaces and each line break as one space, and without the two regions the
-# header leaves out.
-said_by() {
-  awk '
-  { sub(/\r$/, "") }
-  NR == 1 { sub(/^\357\273\277/, ""); if ($0 == "---") { fm = 1; next } }
-  fm { if ($0 == "---") fm = 0; next }
-  /^[ \t]*<!-- lokf:related -->[ \t]*$/ { related = 1; next }
-  related { if ($0 ~ /^[ \t]*<!-- \/lokf:related -->[ \t]*$/) related = 0; next }
-  /^(```|~~~)/ { fence = !fence }
-  !fence && /^#+ / { inq = ($0 ~ /^## Open questions[ \t]*$/); if (inq) next }
-  inq { next }
-  { gsub(/[ \t]+/, " "); sub(/^ /, ""); sub(/ $/, ""); if ($0 != "") printf "%s ", $0 }
-  END { print "" }'
-}
-body_moved() {  # <the commit that recorded the event> <concept path> <1 for an edit not yet committed> -> "<hash> <day>" or "edited"; fails when it says the same
-  local last
-  git -C "$kdir" cat-file -e "$1:./$2" 2>/dev/null || return 1
-  if [ "$3" != 1 ]; then
-    last="$(TZ=UTC git -C "$kdir" log -1 --format='%H %cd' --date=format-local:%Y-%m-%d -- "$2" 2>/dev/null || true)"
-    [ -n "$last" ] && [ "${last%% *}" != "$1" ] && git -C "$root" merge-base --is-ancestor "$1" "${last%% *}" 2>/dev/null || return 1
-  fi
-  [ "$(git -C "$kdir" show "$1:./$2" 2>/dev/null | said_by)" != "$(said_by < "$kdir/$2")" ] || return 1
-  if [ "$3" = 1 ]; then echo edited; else printf '%s\n' "$last"; fi
-}
-asked_after() {  # <the commit that changed the body, or empty> <the questions>: a question a process asked at or after it
-  local us c text
-  us="$(printf '\037')"
-  while IFS="$us" read -r c text; do
-    case "$c" in
-      "") ;;
-      new) return 0 ;;
-      *)   if [ -n "$1" ] && { [ "$1" = "$c" ] || git -C "$root" merge-base --is-ancestor "$1" "$c" 2>/dev/null; }; then return 0; fi ;;
-    esac
-  done <<< "$2"
-  return 1
-}
-question_commits() {  # <concept path>
-  local us day actor text c
-  us="$(printf '\037')"
-  while IFS="$us" read -r day actor text; do
-    [ -n "$day" ] || continue
-    c="$(git -C "$kdir" log --format=%H -S"- $day, $actor: $text" -- "$1" 2>/dev/null | tail -1)"
-    printf '%s%s%s\n' "${c:-new}" "$us" "$text"
-  done < <(printf '%s\n' "$all" | awk -F'\t' -v US="$us" -v p="$1" '$1 == "Q" && $2 == p && $4 !~ /^human:/ { print $3 US $4 US $5 }')
-}
-# Whether a text names a path as a word of its own, and not as part of a
-# longer path or name, as `src/a.md` is part of `src/a.md.bak` and of
-# `lib/src/a.md`. The two arrive through the environment, so that awk reads
-# no backslash in them as an escape.
-names() {  # <text> <path>
-  KTL_TEXT="$1" KTL_PATH="$2" awk 'BEGIN {
-    t = ENVIRON["KTL_TEXT"]; p = ENVIRON["KTL_PATH"]; n = length(p)
-    if (n == 0) exit 1
-    off = 0
-    while ((i = index(substr(t, off + 1), p)) > 0) {
-      at = off + i; off = at
-      before = (at > 1) ? substr(t, at - 1, 1) : ""
-      after = substr(t, at + n, 1); beyond = substr(t, at + n + 1, 1)
-      if (before ~ /[A-Za-z0-9._\/~-]/ || after ~ /[A-Za-z0-9_\/~-]/ || (after == "." && beyond ~ /[A-Za-z0-9_]/)) continue
-      exit 0
-    }
-    exit 1
-  }'
-}
-# Whether one of those questions names the source and was asked with this
-# state of it before it: the question is not yet committed, or its commit is
-# the source's last one or comes after it. A source that is gone and that git
-# never held has no commit to order, so any question on file that names it
-# covers it.
-asked_since() {  # <gone|clean> <the source's last commit, or empty> <the source's path> <the questions>
-  local us c text
-  us="$(printf '\037')"
-  while IFS="$us" read -r c text; do
-    if [ -z "$c" ] || ! names "$text" "$3"; then continue; fi
-    case "$c" in
-      new) return 0 ;;
-      *)   if [ -z "$2" ]; then [ "$1" = gone ] && return 0
-           elif [ "$2" = "$c" ] || git -C "$root" merge-base --is-ancestor "$2" "$c" 2>/dev/null; then return 0; fi ;;
-    esac
-  done <<< "$4"
-  return 1
-}
-
-# Which sources moved after an event, by history and not by clock (the header
-# says how). Out come `M w path list` for the work list, against the later of
-# generated.at and the newest verified event, and `M c path list` for the
-# report, against the newest confirmation by a person. For the work list a
-# source the librarian's own question covers goes to `M a path list`, and one
-# a closed pull request had before it to a `D` line, as the header says. A
-# URL is never fetched.
 # ---- the passages a concept quotes ---------------------------------------------
 # The work list asks the lokf toolkit which excerpts their files no longer
 # hold. It asks only when a concept carries one, and only the toolkit in
@@ -767,88 +723,467 @@ quotes_load() {
       if (p != "" && (p, $2) in res) print p "\t" res[p, $2]
     }' | LC_ALL=C sort -u > "$tmp/quote_gone"
 }
-# What the toolkit found of the passage a concept quotes from one resource, as
-# the words a work-list entry ends in, or nothing when the concept quotes
-# nothing from it or the excerpts were not checked.
-quoted_note() {  # <concept path> <resource>
-  [ "$quote_state" = checked ] || return 0
-  awk -F'\t' -v p="$1" -v r="$2" '$1 == p && $3 == r { f = 1 } END { exit !f }' "$tmp/quoted" || return 0
-  if awk -F'\t' -v p="$1" -v r="$2" '$1 == p && $2 == r { f = 1 } END { exit !f }' "$tmp/quote_gone"; then printf ', the quoted passage is gone'
-  else printf ', the quoted passage holds'; fi
-}
-
+# Which sources moved after an event, by history and not by clock (the header
+# says how). Out come `M w path list` for the work list, against the later of
+# generated.at and the newest verified event, and `M c path list` for the
+# report, against the newest confirmation by a person. For the work list a
+# source the librarian's own question covers goes to `M a path list`, one a
+# closed pull request had before it to a `D` line, as the header says, and one
+# git holds no history of to `M u path list`. A URL is never fetched.
+#
+# Git is asked a few questions for the whole bundle, never one for each
+# concept or source, so the cost grows with the history and not with the
+# bundle times the history:
+#   - one `git status` for every file not yet committed;
+#   - one `git log --name-only` over every source, for the last commit of each;
+#   - one `git log -p` over the bundle, for the last commit of each concept and
+#     the commit that first wrote each stamp time and each open question;
+#   - one `git cat-file` for the revisions events carry, and one for the texts
+#     the stamps recorded, where a body may have changed;
+#   - one `git log --ancestry-path` or `git merge-base` for each commit that
+#     history has to order against others.
+# The decisions are made in awk, by `moved_fn` below. It asks for what it
+# cannot yet tell, the order of two commits or whether a body changed, and is
+# run again once git has answered, at most six times.
 moved() {
   [ "$tracked" = 1 ] || return 0
-  local src="$tmp/sources" res p line path ref human hn cdirty which at rec out state hash day entry asked aside dec qc qdone spec
-  printf '%s\n' "$all" | awk -F'\t' '$1 == "R" { print $3 }' | LC_ALL=C sort -u | while IFS= read -r res; do
-    case "$res" in ""|*://*|/*) continue ;; esac
-    # An identifier with a scheme and no slashes after it, such as
-    # urn:ietf:rfc:9110 or doi:10.1000/182, names no file either. Two
-    # characters at least, so a Windows drive letter is still a path.
-    [[ "$res" =~ ^[A-Za-z][A-Za-z0-9+.-]+: ]] && continue
-    p="${res%%#*}"
-    # The root itself, as a source map names it, holds the bundle too. Its
-    # own commits are the librarian's and move no source, so they are left
-    # out; without that, the work list was never quiet after the first run.
-    spec=("$p")
-    case "$p" in .|./) spec=(. ':(exclude).lokf' ':(exclude)knowledge_bundle') ;; esac
-    if [ ! -e "$root/$p" ]; then printf '%s|gone|%s|-\n' "$res" "$(git -C "$root" log -1 --format=%H -- "$p" 2>/dev/null || true)"; continue; fi
-    if [ -n "$(git -C "$root" status --porcelain -- "${spec[@]}" 2>/dev/null | head -1)" ]; then printf '%s|edited|-|-\n' "$res"; continue; fi
-    line="$(TZ=UTC git -C "$root" log -1 --format='%H %cd' --date=format-local:%Y-%m-%d -- "${spec[@]}" 2>/dev/null || true)"
-    [ -n "$line" ] && printf '%s|clean|%s|%s\n' "$res" "${line%% *}" "${line##* }"
-  done > "$src"
-  printf '%s\n' "$all" | awk -F'\t' '$1 == "C" && $4 != "deprecated" { print $2 "|" $14 "|" $13 "|" $9 "|" (($9 > 0 && $7 != "" && $8 != "" && $7 > $8) ? 1 : 0) }' | while IFS='|' read -r path ref human hn wasedited; do
-    cdirty=0
-    [ -n "$(git -C "$kdir" status --porcelain -- "$path" 2>/dev/null | head -1)" ] && cdirty=1
-    dec="$(declined_for "$path")"
-    qc=""; qdone=0
-    for which in w c; do
-      at="$ref"
+  local top rpfx kpfx head n round
+  top="$(git -C "$root" rev-parse --show-toplevel 2>/dev/null)" || return 0
+  rpfx="$(git -C "$root" rev-parse --show-prefix 2>/dev/null || true)"
+  kpfx="$(git -C "$kdir" rev-parse --show-prefix 2>/dev/null || true)"
+  head="$(git -C "$root" rev-parse -q --verify HEAD 2>/dev/null)" || return 0
+  : > "$tmp/anc"; : > "$tmp/bodies"; : > "$tmp/notes"
+  [ -f "$tmp/quoted" ] || : > "$tmp/quoted"
+  [ -f "$tmp/quote_gone" ] || : > "$tmp/quote_gone"
+  git_status
+  sources_load
+  history_load
+  revisions_load
+  round=0
+  while :; do
+    round=$((round + 1))
+    : > "$tmp/need"; : > "$tmp/notes.next"
+    { printf '%s\n' "$all"; cat "$tmp/sources" "$tmp/hist" "$tmp/revs" "$tmp/anc" "$tmp/bodies"
+      awk -F'\t' '{ print "ZT\t" $1 "\t" $2 " " $3 " " $4 }' "$tmp/touched" 2>/dev/null
+      awk -F'\t' '{ print "ZQ\t" $1 "\t" $3 }' "$tmp/quoted"
+      awk -F'\t' '{ print "ZG\t" $1 "\t" $2 }' "$tmp/quote_gone"
+    } | awk -F'\t' -v SQ="'" -v head="$head" -v qstate="$quote_state" -v needfile="$tmp/need" -v notefile="$tmp/notes.next" "$moved_fn" > "$tmp/moved.next"
+    [ -s "$tmp/need" ] && [ "$round" -lt 6 ] || break
+    ancestry_run
+    bodies_run
+  done
+  mv "$tmp/notes.next" "$tmp/notes"
+  cat "$tmp/moved.next"
+}
+
+# A path as git prints it, back to the path itself. Git puts a name that
+# holds a double quote, a backslash or a control character in double quotes,
+# with C escapes, even with core.quotePath off, and ends a name that holds a
+# space with a tab on the `---` and `+++` lines of a diff.
+# shellcheck disable=SC2016 # awk's own variables, not the shell's
+gitname_fn='
+function gitname(s,  out, i, c, n) {
+  sub(/\t$/, "", s)
+  if (length(s) < 2 || substr(s, 1, 1) != "\"" || substr(s, length(s), 1) != "\"") return s
+  s = substr(s, 2, length(s) - 2); out = ""
+  for (i = 1; i <= length(s); i++) {
+    c = substr(s, i, 1)
+    if (c != "\\") { out = out c; continue }
+    c = substr(s, ++i, 1)
+    if (c == "t") out = out "\t"
+    else if (c == "n") out = out "\n"
+    else if (c == "r") out = out "\r"
+    else if (c == "a") out = out sprintf("%c", 7)
+    else if (c == "b") out = out sprintf("%c", 8)
+    else if (c == "f") out = out sprintf("%c", 12)
+    else if (c == "v") out = out sprintf("%c", 11)
+    else if (c ~ /[0-7]/) { n = c * 64 + substr(s, i + 1, 1) * 8 + substr(s, i + 2, 1); i += 2; out = out sprintf("%c", n) }
+    else out = out c
+  }
+  return out
+}
+'
+
+# Every path git reports as changed and not yet committed, from the top of
+# the work tree, as `S path`. An untracked folder comes as one line ending in
+# a slash. A path git quotes is read back to the path itself, and one that
+# holds a tab or a line break, which no row here can carry, is left out.
+git_status() {
+  git -C "$top" -c core.quotePath=false status --porcelain --no-renames 2>/dev/null \
+    | awk "$gitname_fn"'{ p = substr($0, 4); sub(/\r$/, "", p); p = gitname(p); if (p != "" && p !~ /[\t\n]/) print "S\t" p }' > "$tmp/status"
+}
+
+# The sources, each once, as `ZW resource state hash day`. The state is
+#   gone     no file or folder there, with the last commit that touched it,
+#            if git held it;
+#   edited   it carries a change not yet committed;
+#   clean    with the day and the hash of its last commit;
+#   nohist   it is there, and git holds no history of it: an ignored file,
+#            one inside a submodule, or one outside the work tree. Nothing
+#            can say whether it moved.
+# A URL, an absolute path and an identifier with a scheme name no file. Two
+# characters at least before the colon, so a Windows drive letter is still a
+# path. The root itself, as a source map names it, holds the bundle too. Its
+# own commits are the librarian's and move no source, so they are left out;
+# without that, the work list was never quiet after the first run.
+sources_load() {
+  local res p e line rootline=""
+  printf '%s\n' "$all" | awk -F'\t' '$1 == "R" { r = $3
+      if (r == "" || r ~ /:\/\// || r ~ /^\// || r ~ /^[A-Za-z][A-Za-z0-9+.-]+:/ || (r in seen)) next
+      seen[r] = 1; p = r; sub(/#.*/, "", p); print r "\t" p }' > "$tmp/res"
+  # Whether each is there, by the shell, which starts no process for it.
+  while IFS=$'\t' read -r res p; do
+    if [ -e "$root/$p" ]; then e=1; else e=0; fi
+    printf '%s\t%s\t%s\n' "$res" "$p" "$e"
+  done < "$tmp/res" > "$tmp/res.there"
+  # Each path as git names it from the top of the work tree, worked out
+  # without git: a `.` or an empty part dropped, a `..` taking the part
+  # before it away. "R" is the root of the sidecar, with its own rules, and
+  # "O" a path outside the work tree, which git holds nothing of.
+  awk -F'\t' -v pfx="$rpfx" '
+    function norm(p,  n, a, i, k, s, out) {
+      n = split(p, a, "/"); k = 0
+      for (i = 1; i <= n; i++) { s = a[i]; if (s == "" || s == ".") continue; if (s == "..") { if (k == 0) return "\001"; k--; continue } part[++k] = s }
+      out = ""; for (i = 1; i <= k; i++) out = out (i > 1 ? "/" : "") part[i]
+      return out
+    }
+    { rel = norm($2); top = norm(pfx $2); if (top == "\001") { print $1 "\t" $3 "\tO\t"; next }
+      print $1 "\t" $3 "\t" (rel == "" ? "R" : "P") "\t" top }' "$tmp/res.there" > "$tmp/res.top"
+  # One walk through history for the last commit of each path. The walk stops
+  # once every path has one, since git lists the newest first. With renames
+  # found, a commit that moves one source to the name of another lists the
+  # new name alone, and the old one would take an earlier commit as its last.
+  awk -F'\t' '$3 == "P" && !seen[$4]++ { print $4 }' "$tmp/res.top" > "$tmp/specs"
+  if [ -s "$tmp/specs" ]; then
+    local specs=()
+    while IFS= read -r p; do specs+=("$p"); done < "$tmp/specs"
+    TZ=UTC git -C "$top" --literal-pathspecs -c core.quotePath=false log -c --no-renames --name-only \
+      --format='%x01%H %cd' --date=format-local:%Y-%m-%d -- "${specs[@]}" 2>/dev/null \
+      | awk -v want="$tmp/specs" "$gitname_fn"'
+        BEGIN { while ((getline p < want) > 0) { left[p] = 1; n++ } }
+        /^\001/ { c = substr($0, 2); next }
+        $0 == "" { next }
+        { p = gitname($0)
+          while (p != "") {
+            if ((p in left) && !(p in done)) { done[p] = 1; print "L\t" p "\t" c; if (--n == 0) exit }
+            if (!sub(/\/[^\/]*$/, "", p)) break
+          } }' > "$tmp/last"
+  else
+    : > "$tmp/last"
+  fi
+  if awk -F'\t' '$3 == "R" { f = 1 } END { exit !f }' "$tmp/res.top"; then
+    line="$(TZ=UTC git -C "$root" log -1 --format='%H %cd' --date=format-local:%Y-%m-%d -- . ':(exclude).lokf' ':(exclude)knowledge_bundle' 2>/dev/null || true)"
+    [ -z "$line" ] || rootline="$line"
+  fi
+  { cat "$tmp/status" "$tmp/last"; cat "$tmp/res.top"; } | awk -F'\t' -v pfx="$rpfx" -v rootline="$rootline" '
+    function under(s, p) { return s == p || substr(s, 1, length(p) + 1) == p "/" }
+    function dirty(p,  i) {
+      for (i = 1; i <= ns; i++) if (under(st[i], p) || (st[i] ~ /\/$/ && substr(p "/", 1, length(st[i])) == st[i])) return 1
+      return 0
+    }
+    function rootdirty(  i, s, r) {
+      r = pfx; sub(/\/$/, "", r)
+      for (i = 1; i <= ns; i++) {
+        s = st[i]
+        if (r != "" && !under(s, r) && substr(r "/", 1, length(s)) != s) continue
+        s = (r == "" ? s : substr(s, length(r) + 2))
+        if (s == "" || under(s, ".lokf") || under(s, "knowledge_bundle") || s == ".lokf/" || s == "knowledge_bundle/") continue
+        return 1
+      }
+      return 0
+    }
+    $1 == "S" { st[++ns] = $2; next }
+    $1 == "L" { last[$2] = $3; next }
+    {
+      res = $1; there = $2; kind = $3; p = $4
+      if (kind == "R") { c = rootline; d = (there && rootdirty()) }
+      else if (kind == "O") { c = ""; d = 0 }
+      else { c = last[p]; d = (there && dirty(p)) }
+      split(c, cd, " ")
+      if (!there) print "ZW\t" res "\tgone\t" cd[1] "\t-"
+      else if (d) print "ZW\t" res "\tedited\t-\t-"
+      else if (c != "") print "ZW\t" res "\tclean\t" cd[1] "\t" cd[2]
+      else print "ZW\t" res "\tnohist\t-\t-"
+    }' > "$tmp/sources"
+}
+
+# The bundle, from one `git log -p`: `ZH path commit day` for the last commit
+# that touched each concept, `ZF path commit text` for the commit that first
+# added a line holding each stamp time, each time a person confirmed it and
+# each open question a concept carries, as `git log -S` once found them one at a time, and `ZY path` for
+# each concept that carries a change not yet committed. A merge counts as
+# touching a concept it changed from every parent, as `git log -- <path>`
+# shows one, and adds no line of its own.
+history_load() {
+  {
+    printf '%s\n' "$all" | awk -F'\t' -v pfx="$kpfx" '
+      $1 == "C" { print "W\t" pfx $2 "\t" $2 "\t" $14; if ($13 != "") print "W\t" pfx $2 "\t" $2 "\t" $13 }
+      $1 == "Q" { print "W\t" pfx $2 "\t" $2 "\t- " $3 ", " $4 ": " $5 }
+      $1 == "H" { print "W\t" pfx $2 "\t" $2 "\t" $3 }'
+    sed 's/^/X	/' "$tmp/status"
+    TZ=UTC git -C "$kdir" -c core.quotePath=false log -p -c --no-renames --unified=0 --no-color --no-ext-diff \
+      --format='%x01%H %cd' --date=format-local:%Y-%m-%d -- . 2>/dev/null
+  } | awk -F'\t' "$gitname_fn"'
+    $1 == "W" && !head0 { if ($4 != "") { k = ++nw[$2]; want[$2, k] = $4 }; rel[$2] = $3; next }
+    $1 == "X" && $2 == "S" && !head0 { p = substr($0, 5); if (p in rel) print "ZY\t" rel[p]; else if (p ~ /\/$/) xd[++nxd] = p; next }
+    /^\001/ { head0 = 1; split(substr($0, 2), c, " "); commit = c[1]; day = c[2]; cur = ""; merge = 0; next }
+    /^diff --(combined|cc) / { cur = $0; sub(/^diff --(combined|cc) /, "", cur); cur = gitname(cur); merge = 1; if ((cur in rel) && !(cur in last)) { last[cur] = commit; lday[cur] = day }; inhead = 1; next }
+    /^diff --git / { cur = ""; merge = 0; inhead = 1; next }
+    inhead && /^\+\+\+ / { if (!merge) { cur = gitname(substr($0, 5)); sub(/^b\//, "", cur); if ((cur in rel) && !(cur in last)) { last[cur] = commit; lday[cur] = day } } next }
+    inhead && /^@@/ { inhead = 0; next }
+    inhead { next }
+    /^@@/ { next }
+    !merge && /^\+/ && (cur in nw) { for (k = 1; k <= nw[cur]; k++) if (index($0, want[cur, k])) first[cur, k] = commit }
+    END {
+      for (p in rel) for (i = 1; i <= nxd; i++) if (substr(p, 1, length(xd[i])) == xd[i]) print "ZY\t" rel[p]
+      for (p in last) print "ZH\t" rel[p] "\t" last[p] "\t" lday[p]
+      for (p in nw) for (k = 1; k <= nw[p]; k++) if ((p, k) in first) print "ZF\t" rel[p] "\t" first[p, k] "\t" want[p, k]
+    }' > "$tmp/hist"
+}
+
+# The revisions events carry that may name a commit, each as `ZV revision
+# commit` when git holds it as one. The work list compares a source with the
+# commit the event names, when that commit is in this history.
+revisions_load() {
+  printf '%s\n' "$all" | awk -F'\t' '$1 == "C" { if ($16 ~ /^[0-9a-f]+$/ && length($16) >= 7 && !seen[$16]++) print $16; if ($17 ~ /^[0-9a-f]+$/ && length($17) >= 7 && !seen[$17]++) print $17 }' > "$tmp/revq"
+  if [ -s "$tmp/revq" ]; then
+    sed 's/$/^{commit}/' "$tmp/revq" | git -C "$root" cat-file --batch-check='%(objectname) %(objecttype)' 2>/dev/null \
+      | paste "$tmp/revq" - | awk -F'\t' '$2 ~ / commit$/ { split($2, a, " "); print "ZV\t" $1 "\t" a[1] }' > "$tmp/revs"
+  else
+    : > "$tmp/revs"
+  fi
+}
+
+# Whether one commit comes before another in history, for each pair moved_fn
+# asked about, as `ZA first second 1` or `... 0`. A commit with several pairs
+# asks git once for every commit after it; one with a single pair asks
+# merge-base. Every second commit is in the history of HEAD, so the commits
+# after the first one, up to HEAD, are all it can come before.
+ancestry_run() {
+  local x y n
+  awk -F'\t' '$1 == "A" { print $2 "\t" $3 }' "$tmp/need" | LC_ALL=C sort -u > "$tmp/pairs"
+  [ -s "$tmp/pairs" ] || return 0
+  awk -F'\t' '{ n[$1]++; y[$1] = $2 } END { for (x in n) print x "\t" n[x] "\t" y[x] }' "$tmp/pairs" | while IFS=$'\t' read -r x n y; do
+    if [ "$n" -eq 1 ]; then
+      if git -C "$root" merge-base --is-ancestor "$x" "$y" 2>/dev/null; then printf 'ZA\t%s\t%s\t1\n' "$x" "$y"; else printf 'ZA\t%s\t%s\t0\n' "$x" "$y"; fi
+    else
+      git -C "$root" log --format=%H --ancestry-path "$x..HEAD" > "$tmp/after" 2>/dev/null || : > "$tmp/after"
+      awk -F'\t' -v x="$x" -v after="$tmp/after" 'BEGIN { while ((getline l < after) > 0) d[l] = 1 }
+        $1 == x { print "ZA\t" x "\t" $2 "\t" (($2 in d) ? 1 : 0) }' "$tmp/pairs"
+    fi
+  done >> "$tmp/anc"
+}
+
+# Whether a concept says something other than the text the commit that
+# recorded its stamp held, for each `B commit path` moved_fn asked about, as
+# `ZB commit path differs` or `... same`. One `git cat-file --batch` hands
+# over every old text. What a concept says is its body, with each run of
+# spaces and each line break as one space, and without the two regions the
+# header leaves out.
+bodies_run() {
+  awk -F'\t' '$1 == "B" { print $2 "\t" $3 }' "$tmp/need" | LC_ALL=C sort -u > "$tmp/bq"
+  [ -s "$tmp/bq" ] || return 0
+  awk -F'\t' '{ print $1 ":./" $2 }' "$tmp/bq" | git -C "$kdir" cat-file --batch > "$tmp/blobs" 2>/dev/null || : > "$tmp/blobs"
+  awk -F'\t' -v blobs="$tmp/blobs" -v dir="$kdir" '
+    function reset() { fm = 0; related = 0; fence = 0; inq = 0; said = ""; nl = 0 }
+    function feed(l) {
+      sub(/\r$/, "", l); nl++
+      if (nl == 1) { sub(/^\357\273\277/, "", l); if (l == "---") { fm = 1; return } }
+      if (fm) { if (l == "---") fm = 0; return }
+      if (l ~ /^[ \t]*<!-- lokf:related -->[ \t]*$/) { related = 1; return }
+      if (related) { if (l ~ /^[ \t]*<!-- \/lokf:related -->[ \t]*$/) related = 0; return }
+      if (l ~ /^(```|~~~)/) fence = !fence
+      if (!fence && l ~ /^#+ /) { inq = (l ~ /^## Open questions[ \t]*$/); if (inq) return }
+      if (inq) return
+      gsub(/[ \t]+/, " ", l); sub(/^ /, "", l); sub(/ $/, "", l); if (l != "") said = said l " "
+    }
+    # The old texts, in the order asked: a header line, then exactly as many
+    # bytes as it gives, then a line feed. A name git cannot find gives one
+    # line that ends in "missing", and counts as no change.
+    BEGIN {
+      while ((getline l < blobs) > 0) {
+        if (l !~ / blob [0-9]+$/) { old[++nb] = "\001"; continue }
+        size = l; sub(/.* /, "", size); size += 0; got = 0; reset()
+        while (got < size && (getline l < blobs) > 0) { got += length(l) + 1; feed(l) }
+        if (got == size) getline l < blobs
+        old[++nb] = said
+      }
+    }
+    { k++; reset(); f = dir "/" $2
+      while ((getline l < f) > 0) feed(l)
+      close(f)
+      print "ZB\t" $1 "\t" $2 "\t" ((old[k] == "\001" || old[k] == said) ? "same" : "differs") }' "$tmp/bq" >> "$tmp/bodies"
+}
+
+# The decisions, over every concept that is not retired, in the order the
+# bundle lists them. Its input is the facts, then what git said:
+#   ZW  each source: its state, hash and day (sources_load)
+#   ZH  each concept: its last commit and day; ZF the commit that first wrote
+#       a text in it; ZY a concept not yet committed (history_load)
+#   ZV  a revision that names a commit (revisions_load)
+#   ZA  the order of two commits (ancestry_run); ZB whether a body changed
+#       (bodies_run)
+#   ZT  the closed pull request that touched a concept; ZQ a passage a
+#       concept quotes from a source; ZG one its file no longer holds
+# Out come the M and D lines, and the person notes `quiet` counts go to
+# notefile: `new` for each note the librarian has not read since its stamp,
+# or a D line when a closed pull request had it before it. What it cannot
+# tell yet goes to needfile, as `A first second` or `B commit path`, and it
+# reads that as no for this round.
+# shellcheck disable=SC2016 # awk's own fields, not the shell's
+moved_fn='
+function need(s) { if (!(s in sought)) { sought[s] = 1; print s > needfile } }
+function anc(x, y) {
+  if (x == "" || y == "") return 0
+  if (x == y) return 1
+  if ((x, y) in ANC) return ANC[x, y]
+  need("A\t" x "\t" y); return 0
+}
+function upto(c, base) { return c != "" && anc(c, base) }
+function body(c, p) { if ((c, p) in BODY) return BODY[c, p]; need("B\t" c "\t" p); return "same" }
+function first(p, s) { return ((p, s) in FIRST) ? FIRST[p, s] : "" }
+function add(s, e) { return s (s == "" ? "" : ", ") e }
+function quoted(p, r) {
+  if (qstate != "checked" || !((p, r) in QUOTED)) return ""
+  return ((p, r) in QGONE) ? ", the quoted passage is gone" : ", the quoted passage holds"
+}
+# Whether a text names a path as a word of its own, and not as part of a
+# longer path or name, as src/a.md is part of src/a.md.bak and of
+# lib/src/a.md.
+function names(t, p,  n, off, i, at, before, after, beyond) {
+  n = length(p); if (n == 0) return 0
+  off = 0
+  while ((i = index(substr(t, off + 1), p)) > 0) {
+    at = off + i; off = at
+    before = (at > 1) ? substr(t, at - 1, 1) : ""
+    after = substr(t, at + n, 1); beyond = substr(t, at + n + 1, 1)
+    if (before ~ /[A-Za-z0-9._\/~-]/ || after ~ /[A-Za-z0-9_\/~-]/ || (after == "." && beyond ~ /[A-Za-z0-9_]/)) continue
+    return 1
+  }
+  return 0
+}
+# The commit that first held a question a process asked, or "new".
+function asked_at(p, i) { c = first(p, "- " qd[p, i] ", " qa[p, i] ": " qt[p, i]); return c == "" ? "new" : c }
+# A question a process asked, naming the source, with this state of it before
+# it: not yet committed, or first committed at or after the last commit of
+# the source. A source that is gone and that git never held has no commit to
+# order, so any question on file that names it covers it.
+function asked_since(p, state, h, path,  i, c) {
+  for (i = 1; i <= nq[p]; i++) {
+    if (qa[p, i] ~ /^human:/ || !names(qt[p, i], path)) continue
+    c = asked_at(p, i)
+    if (c == "new") return 1
+    if (h == "") { if (state == "gone") return 1 }
+    else if (anc(h, c)) return 1
+  }
+  return 0
+}
+# A question a process asked at or after the commit that changed the body.
+function asked_after(p, h,  i, c) {
+  for (i = 1; i <= nq[p]; i++) {
+    if (qa[p, i] ~ /^human:/) continue
+    c = asked_at(p, i)
+    if (c == "new") return 1
+    if (h != "" && anc(h, c)) return 1
+  }
+  return 0
+}
+$1 == "C" { order[++nc] = $2; C[$2] = $0; next }
+$1 == "R" { if (!(($2, $3) in hasr)) { hasr[$2, $3] = 1; rs[$2, ++nr[$2]] = $3 } next }
+$1 == "Q" { k = ++nq[$2]; qd[$2, k] = $3; qa[$2, k] = $4; qt[$2, k] = $5; next }
+$1 == "ZW" { STATE[$2] = $3; HASH[$2] = ($4 == "-" ? "" : $4); DAY[$2] = $5; next }
+$1 == "ZH" { LAST[$2] = $3; LDAY[$2] = $4; next }
+$1 == "ZF" { FIRST[$2, $4] = $3; next }
+$1 == "ZY" { DIRTY[$2] = 1; next }
+$1 == "ZV" { VALID[$2] = $3; next }
+$1 == "ZA" { ANC[$2, $3] = $4; next }
+$1 == "ZB" { BODY[$2, $3] = $4; next }
+$1 == "ZT" { if (!($2 in DEC)) DEC[$2] = $3; next }
+$1 == "ZQ" { QUOTED[$2, $3] = 1; next }
+$1 == "ZG" { QGONE[$2, $3] = 1; next }
+END {
+  for (ci = 1; ci <= nc; ci++) {
+    p = order[ci]; $0 = C[p]
+    if ($4 == "deprecated") continue
+    ref = $14; human = $13; hn = $9 + 0; wasedited = (hn > 0 && $7 != "" && $8 != "" && $7 > $8)
+    wrev = $16; hrev = $17
+    dirty = (p in DIRTY)
+    dec = (p in DEC) ? DEC[p] : ""; split(dec, dd, " ")
+    # The sources, each once, in byte order.
+    m = nr[p]; for (i = 1; i <= m; i++) srt[i] = rs[p, i]
+    for (i = 2; i <= m; i++) { v = srt[i]; j = i - 1; while (j > 0 && srt[j] > v) { srt[j + 1] = srt[j]; j-- } srt[j + 1] = v }
+    for (wi = 1; wi <= 2; wi++) {
+      which = (wi == 1 ? "w" : "c"); at = ref; rv = wrev
       # The confirmed-source-moved list is for a standing confirmation. A
       # concept edited since that confirmation is already on the work list
       # under its own derivation, so it is counted there, not here as well.
-      if [ "$which" = c ]; then { [ "${hn:-0}" -gt 0 ] && [ "${wasedited:-0}" = 0 ]; } || continue; at="$human"; fi
-      rec=""
-      [ -n "$at" ] && rec="$(git -C "$kdir" log --format=%H -S"$at" -- "$path" 2>/dev/null | tail -1)"
-      out=""; asked=""; aside=""
-      while IFS= read -r res; do
-        line="$(awk -F'|' -v r="$res" '$1 == r { print $2 "|" $3 "|" $4; exit }' "$src")"
-        [ -n "$line" ] || continue
-        state="${line%%|*}"; line="${line#*|}"; hash="${line%%|*}"; day="${line#*|}"
-        entry=""
-        case "$state" in
-          gone)   entry="$res (gone)" ;;
-          edited) [ "$cdirty" = 1 ] || out="${out}${out:+, }$res (edited, not yet committed$(quoted_note "$path" "$res"))" ;;
-          clean)
-            if [ -n "$rec" ] && [ "$hash" != "$rec" ] && git -C "$root" merge-base --is-ancestor "$rec" "$hash" 2>/dev/null; then
-              entry="$res ($day$(quoted_note "$path" "$res"))"
-            fi ;;
-        esac
-        [ -n "$entry" ] || continue
-        if [ "$which" = w ]; then
-          if [ -n "$dec" ] && at_or_before "$hash" "${dec%% *}"; then aside="${aside}${aside:+, }$entry"; continue; fi
-          [ "$qdone" = 1 ] || { qc="$(question_commits "$path")"; qdone=1; }
-          if [ -n "$qc" ] && asked_since "$state" "$hash" "${res%%#*}" "$qc"; then asked="${asked}${asked:+, }$entry"; continue; fi
-        fi
-        out="${out}${out:+, }$entry"
-      done < <(printf '%s\n' "$all" | awk -F'\t' -v p="$path" '$1 == "R" && $2 == p { print $3 }' | LC_ALL=C sort -u)
-      if [ -n "$rec" ] && line="$(body_moved "$rec" "$path" "$cdirty")"; then
-        hash=""; entry="its own body (edited, not yet committed)"
-        if [ "$line" != edited ]; then hash="${line%% *}"; entry="its own body (${line##* })"; fi
-        if [ "$which" = c ]; then out="${out}${out:+, }$entry"
-        elif [ -n "$dec" ] && [ -n "$hash" ] && at_or_before "$hash" "${dec%% *}"; then aside="${aside}${aside:+, }$entry"
-        else
-          [ "$qdone" = 1 ] || { qc="$(question_commits "$path")"; qdone=1; }
-          if [ -n "$qc" ] && asked_after "$hash" "$qc"; then asked="${asked}${asked:+, }$entry"
-          else out="${out}${out:+, }$entry"; fi
-        fi
-      fi
-      [ -z "$out" ] || printf 'M\t%s\t%s\t%s\n' "$which" "$path" "$out"
-      [ -z "$asked" ] || printf 'M\ta\t%s\t%s\n' "$path" "$asked"
-      [ -z "$aside" ] || left source "$path: $aside" "$dec"
-    done
-  done
-}
+      if (which == "c") { if (hn == 0 || wasedited) continue; at = human; rv = hrev }
+      rec = (at != "" ? first(p, at) : "")
+      # The commit the event names as the state it checked, when this
+      # history holds it: a source changed after it moved, even when the
+      # stamp reached this branch later, in a squash merge.
+      base = ""; if ((rv in VALID) && anc(VALID[rv], head)) base = VALID[rv]
+      out = ""; asked = ""; aside = ""; nohist = ""
+      for (i = 1; i <= m; i++) {
+        r = srt[i]; if (!(r in STATE)) continue
+        st = STATE[r]; h = HASH[r]; entry = ""
+        if (st == "gone") entry = r " (gone)"
+        else if (st == "edited") { if (!dirty) out = add(out, r " (edited, not yet committed" quoted(p, r) ")") }
+        else if (st == "clean") {
+          if (base != "") { if (h != rec && h != base && anc(base, h)) entry = r " (" DAY[r] quoted(p, r) ")" }
+          else if (rec != "" && h != rec && anc(rec, h)) entry = r " (" DAY[r] quoted(p, r) ")"
+        }
+        else if (st == "nohist" && which == "w") nohist = add(nohist, r)
+        if (entry == "") continue
+        if (which == "w") {
+          if (dec != "" && upto(h, dd[1])) { aside = add(aside, entry); continue }
+          path = r; sub(/#.*/, "", path)
+          if (asked_since(p, st, h, path)) { asked = add(asked, entry); continue }
+        }
+        out = add(out, entry)
+      }
+      # A concept body counts as a source too: one that says something other
+      # than the text the commit of its stamp held.
+      if (rec != "") {
+        L = LAST[p]; changed = 0
+        if (dirty) changed = (body(rec, p) == "differs")
+        else if (L != "" && L != rec && anc(rec, L)) changed = (body(rec, p) == "differs")
+        if (changed) {
+          h = ""; entry = "its own body (edited, not yet committed)"
+          if (!dirty) { h = L; entry = "its own body (" LDAY[p] ")" }
+          if (which == "c") out = add(out, entry)
+          else if (dec != "" && h != "" && upto(h, dd[1])) aside = add(aside, entry)
+          else if (asked_after(p, h)) asked = add(asked, entry)
+          else out = add(out, entry)
+        }
+      }
+      if (out != "") print "M\t" which "\t" p "\t" out
+      if (asked != "") print "M\ta\t" p "\t" asked
+      if (aside != "") print "D\tsource\t" p ": " aside "\t" dd[2] "\t" dd[3] "\t1"
+      if (nohist != "") print "M\tu\t" p "\t" nohist
+    }
+  }
+  # The notes a person left, not answered by a later confirmation, whose
+  # commit comes after the one that recorded their stamp: the ones the
+  # librarian has not read since.
+  for (ci = 1; ci <= nc; ci++) {
+    p = order[ci]; $0 = C[p]
+    if ($4 == "deprecated") continue
+    dec = (p in DEC) ? DEC[p] : ""; split(dec, dd, " ")
+    rec = ($14 != "" ? first(p, $14) : "")
+    for (i = 1; i <= nq[p]; i++) {
+      if (qa[p, i] !~ /^human:/) continue
+      if ($4 != "draft" && $8 != "" && qd[p, i] <= substr($8, 1, 10)) continue
+      note = first(p, "- " qd[p, i] ", " qa[p, i] ": " qt[p, i])
+      if (note == "") print "new" > notefile
+      else if (rec != "" && note != rec && anc(rec, note)) {
+        if (dec != "" && upto(note, dd[1])) print "D\tnote\t" p ": a person" SQ "s note of " qd[p, i] "\t" dd[2] "\t" dd[3] "\t1" > notefile
+        else print "new" > notefile
+      }
+    }
+  }
+  close(notefile)
+}'
 
 waiting_feedback() {  # the count ktl-curator and knowledge-feedback.sh use; no entry is read
   local n
@@ -887,15 +1222,15 @@ function label(  s, r) {
   return s
 }'
 
-health() {
-  printf '%s\n' "$all" | awk -F'\t' -v today="$today" "$label_fn"'
+health() {  # [<the count of concepts not tied to a signed commit>]
+  printf '%s\n' "$all" | awk -F'\t' -v today="$today" -v unsigned="${1:-}" "$label_fn"'
   $1 != "C" { next }
   { n++; r = rung() }
   r == "retired" { retired++; next }
   { if (r == "edited") was++; else if (r == "person") confirmed++; else if (r == "automation") auto++; else none++
     if ($4 == "draft") { if ($9 > 0) reop++; else drafts++ }
     if ($5 != "" && $5 <= today) past++ }
-  END { printf "Confirmed by a person: %d of %d · Checked by automation only: %d · Nobody has checked: %d · Drafts: %d · Reopened: %d · Past review date: %d · Edited since confirmed: %d · Retired: %d\n", confirmed, n, auto, none, drafts, reop, past, was, retired }'
+  END { printf "Confirmed by a person: %d of %d · Checked by automation only: %d · Nobody has checked: %d · Drafts: %d · Reopened: %d · Past review date: %d · Edited since confirmed: %d · Retired: %d%s\n", confirmed, n, auto, none, drafts, reop, past, was, retired, (unsigned != "" ? " · Not tied to a signed commit: " unsigned : "") }'
 }
 
 # The concept that replaced a retired one, from the newest **Deprecation**
@@ -924,7 +1259,8 @@ successors() {
 # after the kind, `- **Disagreement** (on `<path>`) -`, where no reader's text
 # can stand, and this reads that name and nothing else of the entry. A path
 # counts only in the bundle's own spelling and only while it names a concept,
-# so a line filed by hand meets the same test.
+# and never an index, a log or diataxis.md, so a line filed by hand meets the
+# same test.
 # G is a letter of its own: an X line is a concept's exclusion, which no
 # label reads.
 disputed() {
@@ -932,6 +1268,7 @@ disputed() {
   awk -v dir="$bundle" '
   function held(p,  line, there) {
     if (p !~ /^[a-z0-9][a-z0-9._\/-]*\.md$/ || p ~ /\.\./) return 0
+    if (p ~ /(^|\/)(index|log|diataxis)\.md$/) return 0
     there = (getline line < (dir "/" p)); close(dir "/" p); return there >= 0
   }
   /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ { day = substr($0, 4, 10); next }
@@ -1035,6 +1372,10 @@ lists() {  # mode
       else print "Sources: not compared here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/); re-verify each concept against its source"
       for (i = 1; i <= nc; i++) { p = order[i]; if (("a", p) in moved) { n2++; body2 = body2 "- " p ": " moved["a", p] "\n" } }
       if (git == 1) section("Sources that moved, where your own question has waited for a person since", n2, body2)
+      # A source git holds no history of, an ignored file or one inside a
+      # submodule, was never compared, and says so.
+      for (i = 1; i <= nc; i++) { p = order[i]; if (("u", p) in moved) { n3++; body3 = body3 "- " p ": " moved["u", p] "\n" } }
+      if (git == 1) section("Sources git holds no history of, so not compared (an ignored file, or one inside a submodule)", n3, body3)
       # The concepts `quiet` counts as carrying no stamp, so a run it starts
       # is told which they are.
       for (i = 1; i <= nc; i++) { p = order[i]; if ((p in bare_stamp) && !(p in left_stamp)) { ns++; sbody = sbody "- " p ": no stamp\n" } }
@@ -1209,33 +1550,10 @@ ranked() {  # queue | lists | isolated | isolated-worklist | isolated-count
 # The notes a person left, not answered by a later confirmation, whose commit
 # comes after the one that recorded their concept's stamp: the ones the
 # librarian has not read since. Out comes one line for each: `new`, or a `D`
-# line when a closed pull request had the note before it. Fields are split on
-# the unit separator, since bash's read joins empty fields between tabs.
+# line when a closed pull request had the note before it. `moved` works them
+# out with the sources, from the same answers git gave.
 note_scan() {
-  local us path day actor text ref rec note dec
-  us="$(printf '\037')"
-  while IFS="$us" read -r path day actor text ref; do
-    [ -n "$path" ] || continue
-    rec=""
-    [ -z "$ref" ] || rec="$(git -C "$kdir" log --format=%H -S"$ref" -- "$path" 2>/dev/null | tail -1)"
-    note="$(git -C "$kdir" log --format=%H -S"- $day, $actor: $text" -- "$path" 2>/dev/null | tail -1)"
-    if [ -z "$note" ]; then
-      echo new
-    elif [ -n "$rec" ] && [ "$note" != "$rec" ] && git -C "$root" merge-base --is-ancestor "$rec" "$note" 2>/dev/null; then
-      dec="$(declined_for "$path")"
-      if [ -n "$dec" ] && at_or_before "$note" "${dec%% *}"; then left note "$path: a person's note of $day" "$dec"; else echo new; fi
-    fi
-  done < <(printf '%s\n' "$all" | awk -F'\t' -v US="$us" '
-    $1 == "C" { ref[$2] = $14; status[$2] = $4; human[$2] = $8 }
-    $1 == "Q" && $4 ~ /^human:/ { q[++n] = $2 US $3 US $4 US $5 }
-    END {
-      for (i = 1; i <= n; i++) {
-        split(q[i], f, US); p = f[1]
-        if (status[p] == "deprecated") continue
-        if (status[p] != "draft" && human[p] != "" && f[2] <= substr(human[p], 1, 10)) continue
-        print q[i] US ref[p]
-      }
-    }')
+  [ ! -f "$tmp/notes" ] || cat "$tmp/notes"
 }
 
 # What else a closed pull request had before it, as `D` lines:
@@ -1678,6 +1996,152 @@ sample() {  # <seed> <size of the list for a second person> <size of the list of
   }'
 }
 
+# ---- the two lines the curator once worked out by hand ------------------------
+# Not tied to a signed commit: each concept that is not retired and carries a
+# `verified` event by a human: actor whose commit carries no signature. The
+# commit is the one that first wrote the time of that event in the concept,
+# from the history `moved` read. An event not yet committed has no commit to
+# ask about, and is left out. One that git cannot find, as one a merge commit
+# wrote while resolving a conflict, counts, and its line says so: git holds
+# no signature behind it. A signature
+# here is a `gpgsig` header on the commit, which a checkout can always see. It
+# does not say whose key signed, or that the signature is valid; the gate
+# checks that against the forge. Out comes one path to a line, in the order of
+# the bundle, in $tmp/unsigned, with the note after a tab where git holds no
+# commit that added the confirmation, and the function fails when git holds
+# no full history of the bundle.
+unsigned_load() {
+  : > "$tmp/unsigned"
+  [ "$tracked" = 1 ] && [ -f "$tmp/hist" ] || return 1
+  { printf '%s\n' "$all"; cat "$tmp/hist"; } | awk -F'\t' '
+    $1 == "C" { order[++n] = $2; st[$2] = $4; next }
+    $1 == "H" { k = ++ne[$2]; ev[$2, k] = $3; next }
+    $1 == "ZF" { first[$2, $4] = $3; next }
+    $1 == "ZY" { dirty[$2] = 1; next }
+    END {
+      for (i = 1; i <= n; i++) {
+        p = order[i]; if (st[p] == "deprecated") continue
+        for (k = 1; k <= ne[p]; k++) {
+          c = ((p, ev[p, k]) in first) ? first[p, ev[p, k]] : ""
+          if (c != "") print "S\t" p "\t" c
+          else if (!(p in dirty)) print "N\t" p
+        }
+      }
+    }' > "$tmp/events"
+  awk -F'\t' '$1 == "S" && !seen[$3]++ { print $3 }' "$tmp/events" > "$tmp/commits"
+  if [ -s "$tmp/commits" ]; then
+    git -C "$root" cat-file --batch < "$tmp/commits" > "$tmp/commit.objects" 2>/dev/null || : > "$tmp/commit.objects"
+  else
+    : > "$tmp/commit.objects"
+  fi
+  # Each commit object comes as a header line that gives its size, then that
+  # many bytes and a line feed. Its own headers end at the first empty line.
+  awk -F'\t' -v objects="$tmp/commit.objects" '
+    BEGIN {
+      while ((getline l < objects) > 0) {
+        if (l !~ / commit [0-9]+$/) continue
+        sha = l; sub(/ .*/, "", sha); size = l; sub(/.* /, "", size); size += 0; got = 0; head = 1
+        while (got < size && (getline l < objects) > 0) {
+          got += length(l) + 1
+          if (l == "") head = 0
+          else if (head && l ~ /^gpgsig(-sha256)? /) signed[sha] = 1
+        }
+        if (got == size) getline l < objects
+      }
+    }
+    $1 == "N" && !($2 in why) { order[++n] = $2; why[$2] = "N" }
+    $1 == "S" && !($3 in signed) { if (!($2 in why)) order[++n] = $2; why[$2] = "S" }
+    END { for (i = 1; i <= n; i++) print order[i] "\t" (why[order[i]] == "N" ? "git holds no commit that added this confirmation" : "") }' "$tmp/events" > "$tmp/unsigned"
+}
+unsigned_section() {  # after unsigned_load, whose exit status is in unsigned_ok
+  if [ "${unsigned_ok:-1}" != 0 ]; then
+    echo "Not tied to a signed commit: not checked here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/)"
+    return 0
+  fi
+  awk 'END { print "Not tied to a signed commit: " (NR ? NR : "none") }' "$tmp/unsigned"
+  awk -F'\t' '{ print "- " $1 ($2 != "" ? " (" $2 ")" : "") }' "$tmp/unsigned"
+}
+
+# Vocabulary fit: each concept that is not retired whose `type` is not one of
+# the core classes, nor a class of the domain vocabulary the justfile names,
+# or whose `status` is not draft, stable or deprecated. A type is compared
+# with its spaces removed. The domain vocabulary is the file the `schema`
+# line of .lokf/justfile names, relative to .lokf/, and every schema it
+# imports by a path, but LOKF itself. Its classes count when they descend
+# from Concept or from a core class, through `is_a`, in any of those files.
+# The files are read by awk, as LinkML writes them: a block of classes, each
+# with its `is_a` one level below it.
+core_classes="Dataset Table Metric Service Playbook Tutorial Explanation Policy GlossaryTerm Reference Document Role Person Organization AttestedComputation"
+domain_classes() {
+  local schema="" f dir queue seen=" " line
+  [ -f "$root/.lokf/justfile" ] || return 0
+  IFS= read -r schema < <(sed -n 's/^schema := "\(.*\)"$/\1/p' "$root/.lokf/justfile") || true
+  [ -n "$schema" ] || return 0
+  queue="$root/.lokf/$schema"
+  : > "$tmp/isa"
+  while [ -n "$queue" ]; do
+    f="${queue%%$'\n'*}"; queue="${queue#"$f"}"; queue="${queue#$'\n'}"
+    case "$seen" in *" $f "*) continue ;; esac
+    seen="$seen$f "
+    [ -f "$f" ] || continue
+    dir="${f%/*}"
+    while IFS=$'\t' read -r kind a b; do
+      case "$kind" in
+        C) printf '%s\t%s\n' "$a" "$b" >> "$tmp/isa" ;;
+        I)
+          case "$a" in *:*|lokf|lokf.yaml|*/lokf|*/lokf.yaml) continue ;; esac
+          case "$a" in *.yaml|*.yml) ;; *) a="$a.yaml" ;; esac
+          queue="$queue${queue:+$'\n'}$dir/$a" ;;
+      esac
+    done < <(awk '
+      { sub(/\r$/, "") }
+      /^[^ \t#-]/ { top = $0; sub(/:.*/, "", top); cin = 0; pin = 0; cls = ""; next }
+      /^[ \t]*(#|$)/ { next }
+      { match($0, /^ */); ind = RLENGTH }
+      top == "imports" && /^[ \t]*- / { v = $0; sub(/^[ \t]*- [ \t]*/, "", v); sub(/[ \t]+#.*$/, "", v); gsub(/["\047]/, "", v); print "I\t" v; next }
+      top != "classes" { next }
+      cin == 0 { cin = ind }
+      ind == cin { cls = $0; sub(/^ */, "", cls); sub(/:.*/, "", cls); gsub(/["\047]/, "", cls); pin = 0; print "C\t" cls "\t"; next }
+      ind > cin && pin == 0 { pin = ind }
+      ind == pin && /^ *is_a:/ { v = $0; sub(/^ *is_a:[ \t]*/, "", v); sub(/[ \t]+#.*$/, "", v); gsub(/["\047]/, "", v); print "C\t" cls "\t" v }
+    ' "$f")
+  done
+  # A class fits when its chain of is_a reaches Concept or a core class.
+  awk -F'\t' -v core="$core_classes" '
+    function norm(s) { gsub(/ /, "", s); return s }
+    function fits(c,  d, guard) {
+      for (guard = 0; c != "" && guard < 50; guard++) { if (c == "Concept" || (c in CORE)) return 1; c = (c in parent) ? parent[c] : "" }
+      return 0
+    }
+    BEGIN { n = split(core, a, " "); for (i = 1; i <= n; i++) CORE[a[i]] = 1 }
+    { c = norm($1); if (!(c in parent) || $2 != "") parent[c] = norm($2); cls[c] = 1 }
+    END { for (c in cls) if (fits(c)) print c }' "$tmp/isa"
+}
+vocabulary_fit() {
+  domain_classes > "$tmp/classes"
+  printf '%s\n' "$all" | awk -F'\t' -v core="$core_classes" -v known="$tmp/classes" '
+    function kind(k) { if (!(k in seen)) { seen[k] = 1; kinds = kinds (kinds == "" ? "" : ", ") k } }
+    BEGIN { n = split(core, a, " "); for (i = 1; i <= n; i++) K[a[i]] = 1; while ((getline c < known) > 0) K[c] = 1 }
+    $1 == "C" { st[$2] = $4; next }
+    $1 == "I" { order[++m] = $2; ty[$2] = $4 }
+    END {
+      for (i = 1; i <= m; i++) {
+        p = order[i]; s = st[p]; t = ty[p]; gsub(/ /, "", t)
+        if (s == "deprecated") continue
+        why = ""
+        if (t == "") why = "no type"; else if (!(t in K)) why = "type " ty[p]
+        if (s != "" && s != "draft" && s != "stable") why = why (why == "" ? "" : ", ") "status " s
+        if (why == "") continue
+        nf++; body = body "- " p ": " why "\n"
+        if (t == "") kind("no type"); else if (!(t in K)) kind(ty[p])
+        if (s != "" && s != "draft" && s != "stable") kind("status " s)
+      }
+      if (!nf) { print "Vocabulary fit: fine"; exit }
+      print "Vocabulary fit: " nf " concept" (nf == 1 ? " does" : "s do") " not fit the known vocabulary (" kinds ")"
+      printf "%s", body
+    }'
+}
+
 # ---- the commands ------------------------------------------------------------
 case "$cmd" in
   retrieval) retrieval "$@"; exit 0 ;;
@@ -1687,7 +2151,10 @@ esac
 # The evidence rows are read only for the forms that print or count them.
 rows=0
 case "$cmd" in report|sample|evidence) rows=1 ;; esac
-all="$(facts)"
+if ! all="$(facts)"; then
+  echo "${0##*/}: the bundle could not be read to its end, so no count here would be true - the error above names the file" >&2
+  exit 2
+fi
 times=""
 
 case "$cmd" in
@@ -1722,8 +2189,10 @@ case "$cmd" in
   report)
     [ $# -eq 0 ] || usage
     times="$(moved)"
+    unsigned=""; unsigned_ok=0; unsigned_load || unsigned_ok=1
+    [ "$unsigned_ok" != 0 ] || unsigned="$(awk 'END { print NR }' "$tmp/unsigned")"
     echo "Knowledge bundle report - $today (computed by knowledge-report.sh; nothing here is stored)"
-    health
+    health "$unsigned"
     echo ""
     ranked queue
     echo ""
@@ -1733,6 +2202,9 @@ case "$cmd" in
     lists questions
     echo ""
     lists confirmed-moved
+    echo ""
+    vocabulary_fit
+    unsigned_section
     echo ""
     ranked lists
     ranked isolated-count

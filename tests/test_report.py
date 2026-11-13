@@ -66,7 +66,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from conftest import BOM, SCRIPTS, Git, bash, has_line, have, matches, read, replace_in, run, today_utc, write
+from conftest import BOM, SCRIPTS, Git, bash, has_line, have, matches, mawk_path, read, replace_in, run, stopping_awk, today_utc, write
 
 REPORT = SCRIPTS / "knowledge-report.sh"
 
@@ -990,6 +990,20 @@ def test_an_exclusion_is_not_read_as_a_readers_dispute(tmp_path):
     assert has_line(out, "- Hub (x/hub.md) - nobody has checked this yet, a reader disputed this on 2026-03-04"), f"a reader's dispute was lost: {out}"
     whole = report(tmp_path).out
     assert "x/map.md (docs/old)" not in whole and has_line(whole, "- x/hub.md (2026-03-04)"), f"the whole report listed an exclusion as a dispute: {whole}"
+
+
+def test_a_dispute_filed_on_a_reserved_file_names_no_concept(tmp_path):
+    """index.md, log.md and diataxis.md are files of the bundle and no concept, so a Disagreement filed by hand on one is not listed as a dispute."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "diataxis.md", "# Diataxis\n")
+    write(kk / "x" / "hub.md", "---\ntype: Dataset\ntitle: Hub\n---\n")
+    write(
+        tmp_path / ".lokf" / "feedback.md",
+        "# Feedback\n\n## 2026-03-04\n\n- **Disagreement** (on `diataxis.md`) - x - docent\n- **Disagreement** (on `index.md`) - x - docent\n",
+    )
+    whole = report(tmp_path).out
+    assert has_line(whole, "Disputed by a reader, waiting for the librarian: none"), f"a reserved file was listed as disputed: {whole}"
 
 
 def test_reliance_counts_measures_member_of_and_holder(tmp_path):
@@ -2263,3 +2277,294 @@ def test_no_other_form_runs_the_toolkit(quoting):
     for form in ([], ["health"], ["labels"], ["quiet"], ["evidence"]):
         report(quoting, *form)
     assert not calls.exists(), f"a form other than the work list ran the toolkit: {read(calls)}"
+
+
+# ---- what it costs, as the bundle grows --------------------------------------
+
+
+def counting(tmp_path, *tools):
+    """A PATH on which each of these tools logs one line a call, then runs the real one."""
+    shim = tmp_path / "counting"
+    for tool in tools:
+        real = shutil.which(tool)
+        write(shim / tool, f'#!/bin/sh\necho {tool} >> "{shim}/calls"\nexec "{real}" "$@"\n')
+        (shim / tool).chmod(0o755)
+    return shim, {"PATH": f"{shim}{os.pathsep}{os.environ['PATH']}"}
+
+
+def grown(root, n):
+    """A committed bundle of n concepts, each stamped against a source of its own that moved since."""
+    root.mkdir(parents=True)
+    git = Git(root)
+    git.init()
+    kk = root / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    for i in range(n):
+        write(root / "src" / f"s{i}.md", "one\n")
+        write(
+            kk / "x" / f"c{i}.md",
+            f'---\ntype: Service\ntitle: C{i}\nresource: src/s{i}.md\nsources:\n  - resource: src\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:{i % 60:02d}Z"\n'
+            f'verified:\n  - by: human:ada\n    at: "2026-01-02T00:00:{i % 60:02d}Z"\n---\n\nBody {i}.\n\n## Open questions\n\n- 2026-01-03, process:ktl-librarian: is src/s{i}.md still right?\n',
+        )
+    git("add", "-A")
+    git("commit", "-q", "-m", "concepts")
+    for i in range(0, n, 2):
+        write(root / "src" / f"s{i}.md", "two\n")
+    git("commit", "-q", "-am", "sources")
+    return root
+
+
+@pytest.mark.parametrize(("form", "tool"), [(["labels"], "awk"), (["labels", "x/c1.md"], "awk"), (["evidence"], "awk"), (["worklist"], "git"), (["quiet"], "git"), ([], "git")])
+def test_a_larger_bundle_starts_no_more_processes(tmp_path, form, tool):
+    """Each mode once started an awk for each concept, 3.5 seconds for one label at 2,000 concepts, and the work list asked git about each source of each concept, one question at a time, 208 seconds."""
+    calls = []
+    for n in (3, 12):
+        root = grown(tmp_path / str(n), n)
+        shim, env = counting(tmp_path / f"shim{n}", tool)
+        result = report(root, *form, env=env)
+        assert result.rc in (0, 1), result.out
+        calls.append(read(shim / "calls").count("\n") if (shim / "calls").exists() else 0)
+    assert calls[0] == calls[1], f"{' '.join(form) or 'the whole report'} ran {tool} {calls[0]} times for 3 concepts and {calls[1]} for 12"
+
+
+def test_a_link_that_points_nowhere_hides_no_other_concept(tmp_path):
+    """One awk reads every concept, and awk stops at a file it cannot open."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "t" / "zz.md", "---\ntype: GlossaryTerm\ntitle: A\n---\n")
+    os.symlink("nowhere.md", kk / "t" / "dangling.md")
+    out = report(tmp_path, "labels").out
+    assert has_line(out, "- A (t/zz.md) - nobody has checked this yet"), f"a dangling link hid a concept: {out}"
+
+
+# ---- what the comparison could not see ----------------------------------------
+
+
+def waited(tmp_path, revision):
+    """A source changed on the default branch while the pull request that stamps its concept waited, then the squash merge."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / "docs" / "a.md", "one\n")
+    write(tmp_path / "docs" / "b.md", "one\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "init")
+    base = git("rev-parse", "HEAD")
+    append(tmp_path / "docs" / "a.md", "two\n")
+    git("commit", "-q", "-am", "docs: a.md changes while the pull request waits")
+    rev = {"base": f"\n  revision: {base}", "none": "", "unknown": "\n  revision: " + "0" * 40}[revision]
+    write(
+        kk / "t" / "a.md",
+        f'---\ntype: GlossaryTerm\ntitle: A\nresource: docs/a.md\nsources:\n  - resource: docs/b.md\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-11-01T00:00:00Z"{rev}\n---\n\nSays what docs/a.md said.\n',
+    )
+    append(tmp_path / "docs" / "b.md", "changed in the pull request\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "the librarian pull request, squash-merged")
+    return tmp_path
+
+
+def test_a_source_changed_while_the_pull_request_waited_has_moved_when_the_event_names_its_revision(tmp_path):
+    """The squash merge records the stamp after the change, so the commit that recorded it once hid the move."""
+    out = report(waited(tmp_path, "base"), "worklist").out
+    assert matches(out, r"^- t/a\.md: docs/a\.md \(\d{4}-\d\d-\d\d\)$"), f"a source that changed while the pull request waited did not move: {out}"
+    assert "docs/b.md (" not in out, f"a source changed in the recording commit itself moved: {out}"
+    assert report(tmp_path, "quiet").rc == 1
+
+
+@pytest.mark.parametrize("revision", ["none", "unknown"])
+def test_without_a_revision_this_history_holds_the_recording_commit_decides(tmp_path, revision):
+    out = report(waited(tmp_path, revision), "worklist").out
+    assert has_line(out, "Sources that moved since the concept was derived or last checked: none"), out
+
+
+def test_a_source_git_holds_no_history_of_is_named_and_makes_no_run_busy(tmp_path):
+    """An ignored file never moved, and nothing said it was never compared."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / ".gitignore", "build/\n")
+    write(tmp_path / "build" / "api.md", "generated\n")
+    write(tmp_path / "docs" / "a.md", "a\n")
+    stamp = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(kk / "t" / "ign.md", f"---\ntype: GlossaryTerm\ntitle: Ign\nresource: build/api.md\n{stamp}---\n")
+    write(kk / "t" / "doc.md", f"---\ntype: GlossaryTerm\ntitle: Doc\nresource: docs/a.md\n{stamp}---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    out = report(tmp_path, "worklist").out
+    assert has_line(out, "Sources git holds no history of, so not compared (an ignored file, or one inside a submodule): 1") and has_line(
+        out, "- t/ign.md: build/api.md"
+    ), f"the work list did not name a source git holds no history of: {out}"
+    quiet = report(tmp_path, "quiet")
+    assert quiet.rc == 0, f"a source git holds no history of made a run busy: {quiet.out}"
+
+
+def test_a_folder_named_like_a_concept_hides_no_concept(tmp_path):
+    """mawk stopped at a folder named x.md, and the report read a bundle of none, and quiet called a busy week quiet."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "t" / "zz.md", "---\ntype: GlossaryTerm\ntitle: A\n---\n")
+    write(kk / "t" / "dir.md" / "keep", "")
+    (kk / "t" / "linked.md").symlink_to(kk / "t" / "dir.md")
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    env = mawk_path(tmp_path)
+    out = report(tmp_path, "labels", env=env).out
+    assert has_line(out, "- A (t/zz.md) - nobody has checked this yet") and "read error" not in out, f"a folder named like a concept hid a concept: {out}"
+    quiet = report(tmp_path, "quiet", env=env)
+    assert quiet.rc != 0 and "concepts with no stamp: 1" in quiet.out, f"a folder named like a concept made a busy week quiet: {quiet.out}"
+
+
+def test_a_read_that_stops_early_is_not_a_smaller_bundle(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "t" / "zz.md", "---\ntype: GlossaryTerm\ntitle: A\n---\n")
+    for form in ("health", "quiet"):
+        result = report(tmp_path, form, env=stopping_awk(tmp_path, "KR_LIST"))
+        assert result.rc == 2 and "could not be read to its end" in result.out and "of 0" not in result.out and "Quiet" not in result.out, (
+            f"{form}: a read that stopped early was reported as a bundle (exit {result.rc}): {result.out}"
+        )
+
+
+def test_a_source_renamed_after_the_librarian_asked_has_moved(tmp_path):
+    """Both names were cited, so git paired the rename and the old name took the edit before the question as its last commit."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(tmp_path / "src" / "old.md", "one\ntwo\nthree\n")
+    write(kk / "x" / "ren.md", f"---\ntype: Service\ntitle: Ren\nresource: src/old.md\n{stamp}---\n")
+    write(kk / "x" / "new.md", f"---\ntype: Service\ntitle: New\nresource: src/new.md\n{stamp}---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    append(tmp_path / "src" / "old.md", "four\n")
+    git("commit", "-q", "-am", "old edited")
+    append(kk / "x" / "ren.md", "\n## Open questions\n\n- 2026-01-05, process:ktl-librarian: src/old.md changed, is the claim right?\n")
+    git("commit", "-q", "-am", "the librarian asks")
+    git("mv", "src/old.md", "src/new.md")
+    git("commit", "-q", "-m", "renamed after the question")
+    out = report(tmp_path, "worklist").out
+    assert has_line(out, "- x/ren.md: src/old.md (gone)") and has_line(
+        out, "Sources that moved, where your own question has waited for a person since: none"
+    ), f"a source renamed after the question was filed under it: {out}"
+
+
+def test_a_name_git_quotes_and_a_source_outside_the_work_tree_are_compared(tmp_path):
+    """Git quotes a name with a double quote and ends one with a space with a tab in a diff, and the batched reads once matched neither."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(tmp_path / "docs" / "a.md", "a\n")
+    write(tmp_path / "docs" / 'q"uote.md', "q\n")
+    write(kk / "x" / "sp ace.md", f"---\ntype: Service\ntitle: Space\nresource: docs/a.md\n{stamp}---\n")
+    write(kk / "x" / "quote.md", f"---\ntype: Service\ntitle: Quote\nresource: 'docs/q\"uote.md'\n{stamp}---\n")
+    write(kk / "x" / "up.md", f"---\ntype: Service\ntitle: Up\nresource: ../outside.md\n{stamp}---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    append(tmp_path / "docs" / "a.md", "b\n")
+    append(tmp_path / "docs" / 'q"uote.md', "r\n")
+    git("commit", "-q", "-am", "both sources change")
+    out = report(tmp_path, "worklist").out
+    assert matches(out, r"^- x/sp ace\.md: docs/a\.md \(\d{4}-\d\d-\d\d\)$"), f"a concept whose name holds a space was not compared: {out}"
+    assert matches(out, r'^- x/quote\.md: docs/q"uote\.md \(\d{4}-\d\d-\d\d\)$'), f"a source git quotes was not compared: {out}"
+    assert has_line(out, "- x/up.md: ../outside.md (gone)"), f"a source outside the work tree that is gone went unnamed: {out}"
+
+
+# ---- the two lines the curator once worked out by hand ------------------------
+
+
+def test_the_whole_report_names_each_confirmation_no_signed_commit_stands_behind(tmp_path):
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+
+    def confirmed(name, at):
+        return f'---\ntype: Service\ntitle: {name}\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "{at}"\n---\n'
+
+    write(kk / "x" / "unsigned.md", confirmed("Unsigned", "2026-01-02T00:00:00Z"))
+    write(kk / "x" / "auto.md", '---\ntype: Service\ntitle: Auto\nverified:\n  - by: process:ktl-librarian\n    at: "2026-01-02T00:00:00Z"\n---\n')
+    git("add", "-A")
+    git("commit", "-q", "-m", "unsigned")
+    # A signed commit, as git writes one: a gpgsig header before the message.
+    write(kk / "x" / "signed.md", confirmed("Signed", "2026-01-03T00:00:00Z"))
+    git("add", "-A")
+    tree = git("write-tree")
+    parent = git("rev-parse", "HEAD")
+    obj = f"tree {tree}\nparent {parent}\nauthor a <a@example.invalid> 1767225600 +0000\ncommitter a <a@example.invalid> 1767225600 +0000\ngpgsig -----BEGIN SSH SIGNATURE-----\n U1NIU0lH\n -----END SSH SIGNATURE-----\n\nsigned\n"
+    sha = run(["git", "-C", tmp_path, "hash-object", "-t", "commit", "-w", "--stdin"], stdin=obj).out
+    git("update-ref", "HEAD", sha)
+    # A confirmation not yet committed has no commit to ask about.
+    write(kk / "x" / "new.md", confirmed("New", "2026-01-04T00:00:00Z"))
+    out = report(tmp_path).out
+    assert matches(out, r"^Confirmed by a person: .* · Not tied to a signed commit: 1$"), f"the health line did not end with the count: {out}"
+    assert has_line(out, "Not tied to a signed commit: 1") and has_line(out, "- x/unsigned.md") and "- x/signed.md" not in out and "- x/new.md" not in out, out
+    assert not matches(report(tmp_path, "health").out, "signed"), "the health form gained a field the curator alone reads"
+
+
+def test_a_confirmation_only_a_merge_commit_added_is_listed_with_a_note(tmp_path):
+    """The walk reads no line a merge commit added of its own, so git holds no commit that added such a confirmation: it counts, and its line says so."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    plain = '---\ntype: Service\ntitle: Merged\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(kk / "x" / "merged.md", plain + "---\n")
+    write(tmp_path / "a.txt", "a\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "base")
+    git("checkout", "-q", "-b", "side")
+    write(tmp_path / "b.txt", "b\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "side")
+    git("checkout", "-q", "main")
+    write(tmp_path / "a.txt", "a, again\n")
+    git("commit", "-q", "-am", "main")
+    git("merge", "-q", "--no-ff", "--no-commit", "side")
+    write(kk / "x" / "merged.md", plain + 'verified:\n  - by: human:ada\n    at: "2026-01-05T00:00:00Z"\n---\n')
+    git("add", "-A")
+    git("commit", "-q", "-m", "merge, with a confirmation written in it")
+    out = report(tmp_path).out
+    assert has_line(out, "Not tied to a signed commit: 1") and has_line(out, "- x/merged.md (git holds no commit that added this confirmation)"), out
+
+
+def test_without_git_the_whole_report_says_it_did_not_check_signatures(moved, tmp_path):
+    bare = tmp_path / "bare"
+    shutil.copytree(moved / ".lokf", bare / ".lokf")
+    out = report(bare).out
+    assert has_line(out, "Not tied to a signed commit: not checked here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/)"), out
+    assert "· Not tied to a signed commit" not in out, out
+
+
+def test_vocabulary_fit_counts_a_type_and_a_status_outside_core_and_the_domain_vocabulary(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / ".lokf" / "justfile", 'bundle := "knowledge"\nschema := "schema/acme.yaml"\n')
+    write(
+        tmp_path / ".lokf" / "schema" / "acme.yaml",
+        "id: https://acme.example/schema\nimports:\n  - linkml:types\n  - lokf\n  - ./more\nclasses:\n  Widget:\n    is_a: Concept\n    slot_usage:\n      part:\n        is_a: Gadget\n  Gizmo:\n    is_a: Widget\n  Note:\n    description: no parent\n",
+    )
+    write(tmp_path / ".lokf" / "schema" / "more.yaml", "id: https://acme.example/more\nclasses:\n  Runbook:\n    is_a: Playbook\n")
+    for name, kind, status in [
+        ("a", "Service", ""),
+        ("b", "Widget", ""),
+        ("c", "Gizmo", "status: stable\n"),
+        ("d", "Runbook", ""),
+        ("e", "Attested Computation", ""),
+        ("f", "Note", ""),
+        ("g", "Service", "status: wip\n"),
+        ("h", "Gadget", "status: deprecated\n"),
+    ]:
+        write(kk / "x" / f"{name}.md", f"---\ntype: {kind}\ntitle: {name}\n{status}---\n")
+    out = report(tmp_path).out
+    assert has_line(out, "Vocabulary fit: 2 concepts do not fit the known vocabulary (Note, status wip)"), out
+    assert has_line(out, "- x/f.md: type Note") and has_line(out, "- x/g.md: status wip") and "x/h.md:" not in out, out
+    write(tmp_path / ".lokf" / "justfile", 'bundle := "knowledge"\nschema := ""\n')
+    out = report(tmp_path).out
+    assert has_line(out, "Vocabulary fit: 5 concepts do not fit the known vocabulary (Widget, Gizmo, Runbook, Note, status wip)"), out

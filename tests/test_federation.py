@@ -6,7 +6,9 @@ repository's own sidecar environment (`uv run --project .lokf`), so the lokf
 toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 
 1. a build resolves the members into a lock, loads one named graph per
-   bundle plus the lock graph, gates clean, and writes the same bytes twice;
+   bundle plus the lock graph, gates clean, and writes the same bytes twice.
+   The script reads each bundle once itself, and two downloads that share a
+   cache write a file each;
 
 2. each of these stops the build and leaves the previous snapshot in place:
    - a tampered checksum;
@@ -18,7 +20,7 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    - a checksum that is not 64 hex digits;
    - a namespace that nests with another's;
    - a redirect out of http;
-   - a zip that cannot be read.
+   - a zip that cannot be read, or unpacked.
    The health line runs git on no repository a member's zip could carry,
    and a download that meets a server error is tried again;
 
@@ -172,6 +174,7 @@ GitHub API and the release files from fixture files, and put a stand-in
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import hashlib
 import json
@@ -828,6 +831,65 @@ def test_the_report_on_a_member_reads_no_git_configuration_from_it(tmp_path):
     r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", code], cwd=tmp_path)
     assert r.rc == 0 and "Confirmed by a person" in r.out, r.out
     assert not marker.exists(), "git ran the member's fsmonitor command"
+
+
+def test_labels_rq_reads_review_dates_status_and_the_latest_confirmation(tmp_path):
+    """labels.rq knew no review date and no status, so a retired concept read as confirmed, and it gave a row for each event."""
+    a_iri, d_iri = "https://a.example/knowledge/", "https://d.example/federation/"
+    made = {"by": "process:librarian", "at": "2026-01-01T00:00:00Z"}
+    base = {"type": "GlossaryTerm", "description": "A term.", "resource": "https://example.test/a", "generated": made, "verified": CONFIRMED}
+    a = make_bundle(tmp_path / "a", a_iri, "A", {
+        "glossary/stale.md": {**base, "title": "Past review", "stale_after": "2026-02-01"},
+        "glossary/later.md": {**base, "title": "Review later", "stale_after": "2999-01-01"},
+        "glossary/retired.md": {**base, "title": "Retired", "status": "deprecated"},
+        "glossary/draft.md": {**base, "title": "Draft", "status": "draft", "verified": [{"by": "process:registrar", "at": "2026-01-02T00:00:00Z"}]},
+        "glossary/twice.md": {**base, "title": "Twice", "generated": {"by": "process:librarian", "at": "2026-01-03T00:00:00Z"},
+                              "verified": [*CONFIRMED, {"by": "human:ann", "at": "2026-01-04T00:00:00Z"}]},
+        "glossary/offset.md": {**base, "title": "Offset", "generated": {"by": "process:librarian", "at": "2026-01-01T23:45:00Z"},
+                               "verified": [{"by": "human:ann", "at": "2026-01-02T00:30:00+01:00"}]},
+        "glossary/none.md": {k: v for k, v in base.items() if k != "verified"} | {"title": "Unchecked"},
+    })
+    a_zip = tmp_path / "a.zip"
+    host = make_domain(tmp_path / "host", d_iri, {"a": member("a", a_iri, a_zip, zip_bundle(a, a_zip), d_iri + "domains/federation")})
+    r = federate(host, "build", "--no-attestation")
+    assert r.rc == 0, r.out
+    r = federate(host, "query", "labels.rq")
+    assert r.rc == 0, r.out
+    rows = [line.split("\t")[2:] for line in r.out.splitlines() if "a.example/knowledge/glossary/" in line]
+    assert sorted(rows) == sorted([
+        ["Past review", "confirmed by a person, 2026-01-02, past its review date (2026-02-01)"],
+        ["Review later", "confirmed by a person, 2026-01-02"],
+        ["Retired", "retired"],
+        ["Draft", "checked by automation only, still a draft"],
+        ["Twice", "confirmed by a person, 2026-01-04"],
+        ["Offset", "edited since a person last confirmed it (confirmed 2026-01-02, edited 2026-01-01)"],
+        ["Unchecked", "nobody has checked this yet"],
+    ]), r.out
+
+
+def test_a_build_reads_each_bundle_once_itself(federation, tmp_path):
+    """The script read each bundle for the domain walk and again for the links between bundles. The toolkit's own export and checks read it apart from these."""
+    host = federation["host"]
+    code = (
+        "import collections, importlib.util, pathlib, sys\n"
+        "import lokf.model\n"
+        f"script = {str(SCRIPT)!r}\n"
+        "counts = collections.Counter()\n"
+        "real = lokf.model.load_bundle\n"
+        "def counting(path, *args, **kwargs):\n"
+        "    if sys._getframe(1).f_code.co_filename == script:\n"
+        "        counts[pathlib.Path(path).resolve().parent.parent.name] += 1\n"
+        "    return real(path, *args, **kwargs)\n"
+        "lokf.model.load_bundle = counting\n"
+        "spec = importlib.util.spec_from_file_location('kf', script)\n"
+        "kf = importlib.util.module_from_spec(spec); spec.loader.exec_module(kf)\n"
+        f"rc = kf.main(['--root', {str(host)!r}, '--allow-local', 'build', '--no-attestation'])\n"
+        "print('COUNTS', rc, sorted(counts.items()))\n"
+    )
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", code], cwd=tmp_path)
+    assert r.rc == 0 and "COUNTS 0 " in r.out, r.out
+    counts = dict(ast.literal_eval(r.out.split("COUNTS 0 ", 1)[1].splitlines()[0]))
+    assert counts == {"host": 1, "a": 1, "b": 1}, counts
 
 
 def test_a_member_that_is_a_domain_is_followed(federation, tmp_path):
@@ -1737,6 +1799,51 @@ def test_a_name_that_turns_private_after_the_check_is_refused_at_the_connection(
         monkeypatch.setattr(kf, "private_address", lambda address: False)
         kf.fetch(url, tmp_path / "got.zip")
         assert read(tmp_path / "got.zip") == "zip"
+
+
+def test_two_downloads_sharing_a_cache_write_a_file_each(tmp_path, monkeypatch):
+    """Two runs that share --cache wrote one <sha256>.part, so the second rename found the file gone or the first took the other's bytes."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("knowledge_federate_cache", SCRIPT)
+    kf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kf)
+    sha = hashlib.sha256(b"schema").hexdigest()
+    cache = tmp_path / "cache"
+    parts = []
+
+    def fetched(url, sha256, dest, max_bytes, what, zipped):
+        parts.append(dest)
+        if len(parts) == 1:
+            # A second run asks for the same file while the first downloads it.
+            assert kf.obtain_file(url, sha256, cache, what) == cache / f"{sha}.yaml"
+        dest.write_bytes(b"schema")
+
+    monkeypatch.setattr(kf, "fetch_checked", fetched)
+    got = kf.obtain_file("https://example.org/schema.yaml", sha, cache, "m")
+    assert got == cache / f"{sha}.yaml" and got.read_bytes() == b"schema"
+    assert len(set(parts)) == 2 and all(p.name.endswith(".part") for p in parts), parts
+    assert sorted(p.name for p in cache.iterdir()) == [f"{sha}.yaml"], list(cache.iterdir())
+
+
+def test_a_zip_that_cannot_be_unpacked_is_a_finding_not_a_traceback(tmp_path):
+    """unpack caught BadZipFile only, so an entry Python cannot read, such as an encrypted one, stopped the build with a traceback."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("knowledge_federate_unpack", SCRIPT)
+    kf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kf)
+    zip_path = tmp_path / "a.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("knowledge/index.md", "---\nbase_iri: https://a.example/knowledge/\n---\n")
+    data = bytearray(zip_path.read_bytes())
+    # Mark the entry encrypted, in its local header and in the central directory.
+    for signature, offset in ((b"PK\x03\x04", 6), (b"PK\x01\x02", 8)):
+        at = data.index(signature) + offset
+        data[at] |= 1
+    zip_path.write_bytes(bytes(data))
+    with pytest.raises(kf.Failed, match=r"a.zip: could not be unpacked \(RuntimeError: "):
+        kf.unpack(zip_path, tmp_path / "into")
 
 
 @pytest.mark.parametrize(("address", "refused"), [

@@ -80,14 +80,20 @@ const topics = [
       { label: "About the bundle", link: "/knowledge/" },
       { label: "Bundle health", link: "/health/" },
       { label: "Knowledge graph", link: "/graph/" },
-      ...bundleGroups().map((group) => ({
-        label: groupLabel(group),
-        collapsed: true,
-        items: [{ autogenerate: { directory: `knowledge/${group}` } }],
-      })),
+      ...bundleGroups().map((group) => ({ label: groupLabel(group), link: `/knowledge/${group}/` })),
       { label: "Bundle log", link: "/knowledge/log/" },
     ],
   },
+  // Each group of the bundle is a topic of its own, so a concept page
+  // carries its own group's sidebar and not every concept's. A sidebar of
+  // the whole bundle on every page made the site grow with the square of
+  // the bundle.
+  ...bundleGroups().map((group) => ({
+    label: groupLabel(group),
+    link: `/knowledge/${group}/`,
+    attrs: { class: "ktl-topic-group" },
+    items: [{ autogenerate: { directory: `knowledge/${group}` } }],
+  })),
 ];
 if (SCHEMA) {
   topics.push({ label: "Schema", id: "schema", link: "/schema/", icon: "puzzle", items: schemaSidebar });

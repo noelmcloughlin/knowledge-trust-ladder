@@ -258,7 +258,7 @@ jobs:
 
       - name: Check the conventions lokf validate cannot see
         if: steps.compare.outputs.changed == 'true'
-        run: bash scripts/knowledge-conventions.sh knowledge
+        run: bash scripts/knowledge-conventions.sh knowledge --strict
         working-directory: .lokf
 
       # The same bundle always gives the same bytes. The bundle is copied to
