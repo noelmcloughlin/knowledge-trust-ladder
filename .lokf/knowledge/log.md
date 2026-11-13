@@ -1,5 +1,12 @@
 # Change Log
 
+## 2026-11-13
+
+* **Changed**: Three lines of defence follows `docs/three-lines.md`, as a person's note asked: LOKF 0.9.0 and private federation members are built and no longer listed as remaining, an auditor skill waits for a host with a third line, and the gate's excerpt check is named. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-curator skill quotes the passage behind each of its two footnotes, as a person's note asked, and says how a review session shows an excerpt. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Rewrite**: What Knowledge Trust Ladder is for, and what it is not, now follows `docs/uses.md`, which states the uses, the two readers asked about, and what KTL is not. Until now no source settled it.
+* **Resolved**: `docs/uses.md` answers whether KTL fits DevSecOps and technology governance, and says what KTL is not.
+
 ## 2026-11-12
 
 * **Curation**: human:noelmcloughlin confirmed 3 concepts, corrected 1, sent 2 back, retired 1 and left 1 for later. They cleared their "rewrite as needed" notes on Domain schemas and the ktl-curator skill.

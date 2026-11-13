@@ -2,17 +2,20 @@
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/intended-uses
 title: What Knowledge Trust Ladder is for, and what it is not
-description: "A draft placeholder for a reader's question no source settles: which uses Knowledge Trust Ladder is meant for, such as DevSecOps or technology governance, and which it is not. The README, `docs/architecture.md` and `docs/context-layer.md` state the purpose and name no use case or non-goal, and `docs/skills-repositories.md` answers it only for a repository whose content is Agent Skills."
+description: "Which uses Knowledge Trust Ladder (KTL) fits and which it does not, as `docs/uses.md` says: the nine uses the skills were built for, DevSecOps and technology governance, what KTL is not (a scanner, a judge of truth, a vector store, a live system), and three questions for judging any other use."
 genre: explanation
-resource: README.md
+resource: docs/uses.md
 sources:
+  - resource: docs/uses.md
+    id: uses.md
+    excerpt: KTL keeps knowledge about systems. It does not scan, enforce or run them.
   - resource: README.md
   - resource: docs/architecture.md
   - resource: docs/skills-repositories.md
   - resource: docs/context-layer.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T18:10:56Z"
+  at: "2026-11-13T00:00:06Z"
 status: draft
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
@@ -26,14 +29,37 @@ verified:
 
 # Overview
 
-The README states what the project is. It keeps a repository's scattered knowledge as a collection: catalogued, authenticated and explained, with the trust in every claim visible. The architecture page says what is missing is a **context layer**, and that a knowledge bundle is the catalogue. A context layer is a governed layer between the sources and whoever consumes them, person or agent. The sources are code, documents, diagrams, policies and operational records. The layer persists from one task to the next. The architecture page's term links `docs/context-layer.md`, which sets it beside the industry's and says one bundle is one repository's context layer ([the context layer](context-layer.md)).
+`docs/uses.md` says which uses Knowledge Trust Ladder (KTL) fits and which it does not. KTL keeps what is known about a repository as a catalogue of claims. Each claim names its source and carries a label that says how far it has been checked: by nobody, by automation, or by a named person. KTL keeps knowledge about systems, and does not scan, enforce or run them.[^uses.md]
 
-The architecture page frames it around one question: who is responsible for the quality of this context? An agent derives the bundle, deterministic tools check it, a named person vouches for it, and the bundle records which of the three happened to every claim.
+In every use it does four things. The librarian derives claims and names their sources. The registrar checks what a program can check. The curator records a person's verdict. The next run starts from the concepts whose sources moved.
 
-One page now answers this for one kind of repository. `docs/skills-repositories.md` says that in a repository whose content is Agent Skills, KTL helps with the knowledge around the skills and leaves the skills as they are. It leaves whether a skill works to an evaluation, since KTL's checks cover the form and the provenance of what the bundle says.
+## The uses it was built for
 
-No source says in general which kinds of use KTL fits and which it does not. Two neighbouring concepts cover parts of the ground: [three lines of defence](three-lines-of-defence.md) places the roles in a governance model, and [domain vocabularies](domain-vocabularies.md) covers modelling a regulated domain (AI governance among them). Neither states intended uses or non-goals.
+The page lists nine, each with what carries it:
 
-## Open questions
+- answers about a repository that say how far each was checked, from the docent in any agent and in Microsoft 365 Copilot;
+- context for a coding agent that outlasts one session, from the bundle's `index.md`;
+- documentation that knows when it went stale, from the librarian's work list and the curation policy;
+- a record of who vouched for what, from the curator, the evidence table on each release and [three lines of defence](three-lines-of-defence.md);
+- a typed catalogue of a domain, from LOKF's classes and a [domain vocabulary](domain-vocabularies.md);
+- knowledge kept outside the repository, through the ingest;
+- one layer of context over many repositories, through [federation](context-layer.md);
+- a site and a release that anyone can read, from the website skill and the release workflow;
+- the same knowledge retold for a younger reader.
 
-- 2026-09-24, process:ktl-librarian: Readers asked whether KTL can be used for DevSecOps and for technology governance (ktl-docent feedback, 2026-09-24). No repository source states which uses KTL is meant for and which it is not - for example, that it keeps knowledge about systems rather than scanning or enforcing anything. A maintainer should either write that in a source (README or a docs page) for this concept to follow, or retire this placeholder.
+The bundles that the README lists come from three kinds of repository: a repository of Agent Skills, an application, and a domain of bundles.
+
+## The two uses readers asked about
+
+- **DevSecOps.** KTL fits as the knowledge side. A bundle can hold what a team's pipelines are, which checks a branch requires, which policy asks for them, and who confirmed each claim. A domain vocabulary adds the types a security standard defines, such as those of SLSA or CWE. KTL is not the tooling side: it runs no scanner, stores no secret, writes no bill of materials and decides no deployment, and its gate checks the bundle and never the code.
+- **Technology governance.** KTL fits where governance needs to know who is accountable for a statement. Every confirmation names one person, the gate ties it to that person's signature or approval, and a policy is a concept a person reviews on a date. KTL is not a governance, risk and compliance system: it keeps no risk register, tests no control and tracks no exception.
+
+## What it is not
+
+The page names six things: the source of truth, a judge of truth, a vector store, a live system, a place for secrets or personal data, and a test of whether something works.
+
+## Judging another use
+
+Three questions settle most uses the page does not list. Is there a source to point at? Does it matter who vouched for it? Does it change slowly enough for a person to confirm? A use that passes all three still needs someone to play the curator, a little and regularly.
+
+[^uses.md]: docs/uses.md, the second paragraph

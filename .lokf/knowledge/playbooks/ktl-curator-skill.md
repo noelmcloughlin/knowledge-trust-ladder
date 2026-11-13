@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T18:04:41Z"
+  at: "2026-11-13T00:00:06Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -17,8 +17,10 @@ definedBy:
 sources:
   - resource: skills/ktl-curator/SKILL.md
     id: ktl-curator-skill.md
+    excerpt: the retired concept governs until a person confirms the successor. ... which the curator cannot steer, so never pick or reorder one.
   - resource: skills/ktl-curator/references/review-session.md
     id: review-session.md
+    excerpt: Step 1's report reads the `Independent re-check:` and `Automation re-check:` lines, ktl-docent reads `Evidence first:`, and ktl-librarian and ktl-prose read `Younger readers:`. All four are optional, and absent means off.
   - resource: skills/ktl-curator/references/trust-fields.md
   - resource: skills/ktl-curator/references/portability.md
   - resource: skills/ktl-curator/references/domain-bundle.md
@@ -82,7 +84,7 @@ On a host with no forge, the id is the account the platform's version history sh
 
 **The gate.** When `.lokf/` is git-tracked and `.github/workflows/knowledge-registrar.yaml` exists, the skill checks once, before the first verb, whether `commit.gpgsign` is on and `HEAD` carries a signature. GitHub will not let a person approve their own pull request, so without a signature the `provenance` job rejects every confirmation in a curation pull request that person opens. The skill shows the three `git config` lines and never runs them itself.
 
-**Evidence first, every item.** The skill quotes the lines of the source that matter before it shows the claim, or says plainly that the source is gone. It asks "does the source still say this?" and never answers that itself. Then it takes exactly one verb:
+**Evidence first, every item.** The skill quotes the lines of the source that matter before it shows the claim, or says that the source is gone. It starts with each `excerpt` a `sources` entry carries: it finds the passage in the file as it stands, shows it under its heading with the lines around it, and then shows the sentence that carries the footnote. It says so when the file no longer holds the passage, when the resource is a URL that no program checked, and when it chose the lines itself (`references/review-session.md`, *Showing the evidence*). A passed check is never its answer to whether the source still says this. It asks "does the source still say this?" and never answers that itself. Then it takes exactly one verb:
 
 - **Confirm** (needs an authenticated id): a `verified` event for this person, `status: draft` removed, a review date proposed from the curation policy for the person to accept or edit, and the open questions the person says are resolved cleared.
 - **Wrong, send back** (the default): `status: draft` and the person's note under `## Open questions`, with the content untouched. The librarian fixes it on its next run.

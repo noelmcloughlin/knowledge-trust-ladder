@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T13:38:49Z"
+  at: "2026-11-13T00:00:06Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -49,11 +49,12 @@ An auditor's questions each have a fixed place to look:
 - Provenance: `resource`, `sources[].resource` and `derivedFrom`.
 - Who produced the current text, and when: `generated`.
 - Who confirmed it, and when: `verified[]`.
-- Which state of the source the check was made against: `revision`, a field from lokf 0.9.0. For a file it is the commit hash, which the gate resolves against the tree. For a URL it is an ETag or a digest, which nothing checks. An absent `revision` means unrecorded, never unchanged. With or without it, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
+- Which state of the source the check was made against: `revision`. For a file it is the commit hash, which the gate resolves against the tree. For a URL it is an ETag or a digest, which nothing checks. An absent `revision` means unrecorded, never unchanged. With or without it, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation.
 - Whether the confirmed text is still the one the person saw: the `validate` job's log, where conventions rule 13 fails an edit that leaves `generated` older than the confirmation.
 - Whether that confirmation is really tied to the named person: the `provenance` job's log carries the forge's verdict on the approval or the signature. Locally, the curator's *Not tied to a signed commit* count does the same. Whether a person's record has been removed without them: the same job's log, since a confirmation struck out or gone with its concept needs that person's approval or signature, as an added one does. On the scheduled librarian's pull request, `knowledge-provenance.sh --unattended` checks it in the job that holds the write token.
 - When it must be looked at again, and by what rule: `stale_after`, proposed from `policies/knowledge-curation.md`.
 - What changed, and why: `log.md` and git.
+- Which words of the source a claim rests on: `sources[].excerpt`, joined to the claim by a footnote. The gate finds each one in its file on every change, and fetches no URL.
 - Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which no KTL check runs yet. The bundle projects to RDF and answers SPARQL.
 
 Four limits bound what that evidence proves:
@@ -74,7 +75,7 @@ Three points are met by construction:
 Three are answered in part:
 
 - *process is followed, judgement is absent*, raised by the Commission, with Parasuraman and Manzey (2010), Bansal et al. (2021), Green (2022) and Buçinca et al. (2021) on why. The curator records only what the person says, the review session shows the source first, curation is a reviewed policy, and the docent's evidence-first mode is off by default. Left open: nothing proves the person read, a dynamic page reads as changed on every re-check, and evidence that the oversight works is third-line work KTL should not produce about itself.
-- *the machine invents*, raised by Ji et al. (2023). Every record names its source, and unsettled concepts stay `draft`. Left open by design: the registrar never judges truth, and the librarian's re-check is self-review.
+- *the machine invents*, raised by Ji et al. (2023). Every record names its source, and unsettled concepts stay `draft`. The registrar checks what needs no judgement: a local `resource` that no longer exists, a `revision` that names no commit, and a quoted excerpt its file no longer holds. Left open by design: the registrar never judges truth, and the librarian's re-check is self-review.
 - *the lines do not coordinate in practice*, raised by Bantleon et al. (2021) and by Valkenburg and Bongiovanni (2024). Every hand-off is written down, and no more is claimed.
 
 Three are not KTL's role, and each is the job of the adopting organisation or of a third line:
@@ -83,10 +84,11 @@ Three are not KTL's role, and each is the job of the adopting organisation or of
 - *a fourth line for a weak internal audit*, raised by Arndorfer and Minto.
 - *the model's effectiveness is untested*, raised by Davies and Zhivitskaya and by Schuett.
 
-The page then lists what remains and who owns it, in three lines:
+The page then lists what remains and who owns it, in four lines:
 
-- upstream: OKF adopting `revision` (knowledge-catalog#437) and LOKF releasing it in 0.9.0.
-- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, the approval half of the gate on GitLab and Forgejo, and an auditor skill for the third line, of which the curator's sampling step is the first half. The page links the auditor skill's Microsoft 365 Copilot form to `docs/m365.md`, which holds one instructions file per read-only role under `.lokf/m365/`. The list also names fetching a federation member from a private repository, which `docs/federation.md` says remains a design.
+- upstream: OKF adopting `revision` (knowledge-catalog#437) and `excerpt` (knowledge-catalog#438). LOKF carries both as its own fields until then.
+- this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, and the approval half of the gate on GitLab and Forgejo.
+- an auditor skill: it waits for a host with a third line, a person who audits the bundle and neither derives nor confirms it. Until then that person's tools are `knowledge-report.sh sample` and `evidence`, the `provenance` job's log, and the docent, which reads and never writes. A skill would add a record of the auditor's finding on each sampled concept, kept outside the bundle, and a Microsoft 365 Copilot form, which the page links to `docs/m365.md`.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
 
 ## Open questions
