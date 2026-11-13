@@ -802,6 +802,55 @@ def test_rule_16_reads_one_resource_written_two_ways_as_one(tmp_path):
     assert "names more than one resource" not in result.out, f"rule 16 read ./docs/a.md and docs/a.md as two resources: {result.out}"
 
 
+@pytest.mark.parametrize(
+    ("spelling", "what"),
+    [
+        ("sources: [{resource: docs/gone.md}]\n", "a flow form inside sources"),
+        ("sources:\n  - {resource: docs/gone.md}\n", "a flow form inside sources"),
+        ("exclusions:\n  - {resource: docs/gone.md, reason: old}\n", "a flow form inside exclusions"),
+        ("resource: >-\n  docs/gone.md\n", "a block scalar for resource"),
+        ("resource:\n  docs/gone.md\n", "a resource on the line below its key"),
+    ],
+)
+def test_rule_10_holds_resource_and_the_lists_that_carry_one_to_a_line_readers_spelling(tmp_path, spelling, what):
+    """A line reader saw no `resource:` in a flow form: a gone source failed no rule 5, never moved, and counted for no file."""
+    own = "" if spelling.startswith("resource") else "resource: https://example.invalid/a\n"
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\n{own}{spelling}{STAMP}---\n"})
+    result = bash(CONVENTIONS, k)
+    assert result.rc == 1 and f"frontmatter uses {what}" in result.out, f"rule 10 passed {spelling!r}: {result.out}"
+
+
+def test_rule_10_lets_a_comment_stand_beside_a_resource(tmp_path):
+    """Every line reader cuts a comment from a resource, as it cuts a fragment."""
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: https://example.invalid/a  # the page\n{STAMP}---\n"})
+    result = bash(CONVENTIONS, k)
+    assert result, f"rule 10 refused a comment beside a resource: {result.out}"
+
+
+def test_rules_6_and_11_read_an_event_written_as_a_flow_mapping(tmp_path):
+    """Rule 11 read `at:` only at the start of a line, so a flow event passed with a time ahead of its commit, and rule 6 never checked its revision."""
+    git = Git(tmp_path)
+    git.init()
+    write(tmp_path / "docs" / "a.md", "a\n")
+    flow = (
+        "---\ntype: Service\nid: https://example.invalid/k/x/{n}\nresource: docs/a.md\n"
+        'generated: {{ by: process:ktl-librarian, at: "2026-09-01T00:00:00Z" }}\n'
+        "verified:\n  - {{ by: human:ada, at: {at}, revision: {rev} }}\n---\n"
+    )
+    k = bundle_of(tmp_path, {"late.md": flow.format(n="late", at='"2031-01-01T00:00:00Z"', rev="0" * 40)})
+    write(k / "x" / "single.md", flow.format(n="single", at="'2031-02-01T00:00:00Z'", rev="1" * 40).replace("verified:\n  - ", "verified: [").replace(" }\n---", " }]\n---"))
+    git("add", "-A")
+    git("commit", "-q", "-m", "stamp", env={"GIT_COMMITTER_DATE": "2026-09-17T00:00:00Z"})
+    out = bash(CONVENTIONS, k).out
+    for want in [
+        'late.md: at "2031-01-01T00:00:00Z" is later than the commit that recorded it (2026-09-17T00:00:00Z)',
+        'single.md: at "2031-02-01T00:00:00Z" is later than the commit that recorded it',
+        f"late.md: revision {'0' * 40} does not hold docs/a.md",
+        f"single.md: revision {'1' * 40} does not hold docs/a.md",
+    ]:
+        assert want in out, f"conventions script missed '{want}' in a flow event:\n{out}"
+
+
 def test_a_larger_bundle_asks_git_no_more_often(tmp_path):
     """The shell half once started about 24 processes a concept, a `git log -p` among them: 63 seconds at 2,000 concepts."""
     calls = []

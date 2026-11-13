@@ -58,7 +58,11 @@
 #      accepts and a line reader cannot follow, and both gates refuse an event
 #      they cannot read. A comment is read as part of the value: the actor is
 #      then a login nobody holds, and the time one no script can compare, so
-#      the concept never reads as edited since.
+#      the concept never reads as edited since. The report and rules 5 and 11
+#      read `resource` line by line too, so it is held to the same spellings
+#      but for a comment, which they cut. `sources` and `exclusions` hold no
+#      flow form, since a line reader sees no `resource:` inside one: a gone
+#      source would fail no rule 5, never move, and count for no file.
 #  11. No `at:` is later than the commit that first recorded it, or, before
 #      it is committed, than now. A time written ahead of the clock, such as
 #      local time labelled `Z` or a round placeholder, sorts after the edits
@@ -259,6 +263,20 @@ function value(line) {
   gsub(/^["'"'"']|["'"'"']$/, "", line)
   return line
 }
+# A flow form, as `- { by: process:ktl-librarian, at: "2026-09-14T00:00:00Z" }`
+# or `verified: [{ by: ..., at: ... }]`, holds its keys inside one line. Each
+# value of the key on a line that opens a flow mapping, as written.
+function flowvals(l, key, out,   n, v, q, j) {
+  n = 0
+  if (!index(l, "{")) return 0
+  while (match(l, "[{,][ \t]*" key ":[ \t]*")) {
+    l = substr(l, RSTART + RLENGTH); q = substr(l, 1, 1)
+    if (q == "\"" || q == "\047") { j = index(substr(l, 2), q); v = (j ? substr(l, 1, j + 1) : l) }
+    else { v = l; sub(/[,}\]].*/, "", v); sub(/[ \t]+$/, "", v) }
+    if (v != "") out[++n] = v
+  }
+  return n
+}
 /^\001/ { ct = substr($0, 2); next }
 /^\002/ { now = substr($0, 2); next }
 /^\003/ {
@@ -277,7 +295,8 @@ function value(line) {
 head && /^\+\+\+ / { cur = substr($0, 5); sub(/^b\//, "", cur); next }
 /^@@/ { head = 0; next }
 head { next }
-/^[+][ \t]*(- )?at:[ \t]/ { v = value($0); if (!((cur, v) in first)) first[cur, v] = ct }
+/^[+][ \t]*(- )?at:[ \t]/ { v = value($0); if (!((cur, v) in first)) first[cur, v] = ct; next }
+/^[+]/ { m = flowvals($0, "at", got); for (j = 1; j <= m; j++) { v = value(got[j]); if (!((cur, v) in first)) first[cur, v] = ct } }
 '
 # Each finding is held with the number of its file, the rule's place among
 # the four and its own order, and printed in that order at the end, so the
@@ -312,6 +331,20 @@ hold() {  # <file number> <rank> <finding>
 # revision on a concept whose own `resource` is a URL, absolute or absent.
 # shellcheck disable=SC2016 # awk's own $0, not the shell's
 fields='
+# A flow form, as `- { by: process:ktl-librarian, at: "2026-09-14T00:00:00Z" }`
+# or `verified: [{ by: ..., at: ... }]`, holds its keys inside one line. Each
+# value of the key on a line that opens a flow mapping, as written.
+function flowvals(l, key, out,   n, v, q, j) {
+  n = 0
+  if (!index(l, "{")) return 0
+  while (match(l, "[{,][ \t]*" key ":[ \t]*")) {
+    l = substr(l, RSTART + RLENGTH); q = substr(l, 1, 1)
+    if (q == "\"" || q == "\047") { j = index(substr(l, 2), q); v = (j ? substr(l, 1, j + 1) : l) }
+    else { v = l; sub(/[,}\]].*/, "", v); sub(/[ \t]+$/, "", v) }
+    if (v != "") out[++n] = v
+  }
+  return n
+}
 function after(l, key) { sub("^[ \t]*(- )?" key ":[ \t]*", "", l); sub(/[ \t]+$/, "", l); return l }
 function unquote(v) { sub(/^["'"'"']/, "", v); sub(/["'"'"']$/, "", v); return v }
 function scheme(v) { return v ~ /^[A-Za-z][A-Za-z0-9+.-]+:/ }
@@ -344,6 +377,10 @@ BEGIN {
     }
     else if (l ~ /^[ \t]*(- )?revision:[ \t]*[^ \t]/) rev[++nr] = unquote(after(l, "revision"))
     else if (l ~ /^[ \t]*(- )?at:[ \t]*[^ \t]/) print "\003" k "\t" pfx rel "\t" f "\t" after(l, "at") > ats
+    else {
+      m = flowvals(l, "revision", got); for (j = 1; j <= m; j++) rev[++nr] = unquote(got[j])
+      m = flowvals(l, "at", got); for (j = 1; j <= m; j++) print "\003" k "\t" pfx rel "\t" f "\t" got[j] > ats
+    }
   }
   close(f)
   r = local(top); if (r ~ /^\//) r = ""
