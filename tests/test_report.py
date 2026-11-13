@@ -66,7 +66,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from conftest import BOM, SCRIPTS, Git, bash, has_line, have, matches, read, replace_in, run, today_utc, write
+from conftest import BOM, SCRIPTS, Git, bash, has_line, have, matches, mawk_path, read, replace_in, run, stopping_awk, today_utc, write
 
 REPORT = SCRIPTS / "knowledge-report.sh"
 
@@ -2398,6 +2398,82 @@ def test_a_source_git_holds_no_history_of_is_named_and_makes_no_run_busy(tmp_pat
     ), f"the work list did not name a source git holds no history of: {out}"
     quiet = report(tmp_path, "quiet")
     assert quiet.rc == 0, f"a source git holds no history of made a run busy: {quiet.out}"
+
+
+def test_a_folder_named_like_a_concept_hides_no_concept(tmp_path):
+    """mawk stopped at a folder named x.md, and the report read a bundle of none, and quiet called a busy week quiet."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "t" / "zz.md", "---\ntype: GlossaryTerm\ntitle: A\n---\n")
+    write(kk / "t" / "dir.md" / "keep", "")
+    (kk / "t" / "linked.md").symlink_to(kk / "t" / "dir.md")
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    env = mawk_path(tmp_path)
+    out = report(tmp_path, "labels", env=env).out
+    assert has_line(out, "- A (t/zz.md) - nobody has checked this yet") and "read error" not in out, f"a folder named like a concept hid a concept: {out}"
+    quiet = report(tmp_path, "quiet", env=env)
+    assert quiet.rc != 0 and "concepts with no stamp: 1" in quiet.out, f"a folder named like a concept made a busy week quiet: {quiet.out}"
+
+
+def test_a_read_that_stops_early_is_not_a_smaller_bundle(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "t" / "zz.md", "---\ntype: GlossaryTerm\ntitle: A\n---\n")
+    for form in ("health", "quiet"):
+        result = report(tmp_path, form, env=stopping_awk(tmp_path, "KR_LIST"))
+        assert result.rc == 2 and "could not be read to its end" in result.out and "of 0" not in result.out and "Quiet" not in result.out, (
+            f"{form}: a read that stopped early was reported as a bundle (exit {result.rc}): {result.out}"
+        )
+
+
+def test_a_source_renamed_after_the_librarian_asked_has_moved(tmp_path):
+    """Both names were cited, so git paired the rename and the old name took the edit before the question as its last commit."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(tmp_path / "src" / "old.md", "one\ntwo\nthree\n")
+    write(kk / "x" / "ren.md", f"---\ntype: Service\ntitle: Ren\nresource: src/old.md\n{stamp}---\n")
+    write(kk / "x" / "new.md", f"---\ntype: Service\ntitle: New\nresource: src/new.md\n{stamp}---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    append(tmp_path / "src" / "old.md", "four\n")
+    git("commit", "-q", "-am", "old edited")
+    append(kk / "x" / "ren.md", "\n## Open questions\n\n- 2026-01-05, process:ktl-librarian: src/old.md changed, is the claim right?\n")
+    git("commit", "-q", "-am", "the librarian asks")
+    git("mv", "src/old.md", "src/new.md")
+    git("commit", "-q", "-m", "renamed after the question")
+    out = report(tmp_path, "worklist").out
+    assert has_line(out, "- x/ren.md: src/old.md (gone)") and has_line(
+        out, "Sources that moved, where your own question has waited for a person since: none"
+    ), f"a source renamed after the question was filed under it: {out}"
+
+
+def test_a_name_git_quotes_and_a_source_outside_the_work_tree_are_compared(tmp_path):
+    """Git quotes a name with a double quote and ends one with a space with a tab in a diff, and the batched reads once matched neither."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\n'
+    write(tmp_path / "docs" / "a.md", "a\n")
+    write(tmp_path / "docs" / 'q"uote.md', "q\n")
+    write(kk / "x" / "sp ace.md", f"---\ntype: Service\ntitle: Space\nresource: docs/a.md\n{stamp}---\n")
+    write(kk / "x" / "quote.md", f"---\ntype: Service\ntitle: Quote\nresource: 'docs/q\"uote.md'\n{stamp}---\n")
+    write(kk / "x" / "up.md", f"---\ntype: Service\ntitle: Up\nresource: ../outside.md\n{stamp}---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "one")
+    append(tmp_path / "docs" / "a.md", "b\n")
+    append(tmp_path / "docs" / 'q"uote.md', "r\n")
+    git("commit", "-q", "-am", "both sources change")
+    out = report(tmp_path, "worklist").out
+    assert matches(out, r"^- x/sp ace\.md: docs/a\.md \(\d{4}-\d\d-\d\d\)$"), f"a concept whose name holds a space was not compared: {out}"
+    assert matches(out, r'^- x/quote\.md: docs/q"uote\.md \(\d{4}-\d\d-\d\d\)$'), f"a source git quotes was not compared: {out}"
+    assert has_line(out, "- x/up.md: ../outside.md (gone)"), f"a source outside the work tree that is gone went unnamed: {out}"
 
 
 # ---- the two lines the curator once worked out by hand ------------------------

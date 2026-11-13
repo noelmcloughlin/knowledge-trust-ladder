@@ -615,9 +615,14 @@ function finish() {
 
 facts() {  # every concept in the bundle -> its C, R and Q lines, and its V lines when `rows` is 1
   # One awk reads them all. A path from find starts with the bundle, which
-  # is absolute, so awk never takes a file name for an assignment.
+  # is absolute, so awk never takes a file name for an assignment. A folder
+  # whose name ends in .md, or a link to one, is no concept and is left out
+  # by the shell, which starts no process for it: mawk stops at a folder.
+  # The awk's exit status is the function's, so a read that stopped early
+  # is never taken for a bundle with less in it.
   find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort \
-    | awk '{ n = $0; sub(/.*\//, "", n) } n != "index.md" && n != "log.md" && n != "diataxis.md"' > "$tmp/files"
+    | awk '{ n = $0; sub(/.*\//, "", n) } n != "index.md" && n != "log.md" && n != "diataxis.md"' \
+    | while IFS= read -r p; do [ -d "$p" ] || printf '%s\n' "$p"; done > "$tmp/files"
   [ -s "$tmp/files" ] || return 0
   KR_LIST="$tmp/files" KR_BUNDLE="$bundle" awk -v SQ="'" -v rows="${rows:-0}" "$extract" < /dev/null
 }
@@ -771,13 +776,41 @@ moved() {
   cat "$tmp/moved.next"
 }
 
+# A path as git prints it, back to the path itself. Git puts a name that
+# holds a double quote, a backslash or a control character in double quotes,
+# with C escapes, even with core.quotePath off, and ends a name that holds a
+# space with a tab on the `---` and `+++` lines of a diff.
+# shellcheck disable=SC2016 # awk's own variables, not the shell's
+gitname_fn='
+function gitname(s,  out, i, c, n) {
+  sub(/\t$/, "", s)
+  if (length(s) < 2 || substr(s, 1, 1) != "\"" || substr(s, length(s), 1) != "\"") return s
+  s = substr(s, 2, length(s) - 2); out = ""
+  for (i = 1; i <= length(s); i++) {
+    c = substr(s, i, 1)
+    if (c != "\\") { out = out c; continue }
+    c = substr(s, ++i, 1)
+    if (c == "t") out = out "\t"
+    else if (c == "n") out = out "\n"
+    else if (c == "r") out = out "\r"
+    else if (c == "a") out = out sprintf("%c", 7)
+    else if (c == "b") out = out sprintf("%c", 8)
+    else if (c == "f") out = out sprintf("%c", 12)
+    else if (c == "v") out = out sprintf("%c", 11)
+    else if (c ~ /[0-7]/) { n = c * 64 + substr(s, i + 1, 1) * 8 + substr(s, i + 2, 1); i += 2; out = out sprintf("%c", n) }
+    else out = out c
+  }
+  return out
+}
+'
+
 # Every path git reports as changed and not yet committed, from the top of
 # the work tree, as `S path`. An untracked folder comes as one line ending in
-# a slash, and a path git quotes, for a character it will not print, is left
-# out.
+# a slash. A path git quotes is read back to the path itself, and one that
+# holds a tab or a line break, which no row here can carry, is left out.
 git_status() {
   git -C "$top" -c core.quotePath=false status --porcelain --no-renames 2>/dev/null \
-    | awk '{ p = substr($0, 4); sub(/\r$/, "", p); if (p != "" && substr(p, 1, 1) != "\"") print "S\t" p }' > "$tmp/status"
+    | awk "$gitname_fn"'{ p = substr($0, 4); sub(/\r$/, "", p); p = gitname(p); if (p != "" && p !~ /[\t\n]/) print "S\t" p }' > "$tmp/status"
 }
 
 # The sources, each once, as `ZW resource state hash day`. The state is
@@ -785,8 +818,9 @@ git_status() {
 #            if git held it;
 #   edited   it carries a change not yet committed;
 #   clean    with the day and the hash of its last commit;
-#   nohist   it is there, and git holds no history of it: an ignored file, or
-#            one inside a submodule. Nothing can say whether it moved.
+#   nohist   it is there, and git holds no history of it: an ignored file,
+#            one inside a submodule, or one outside the work tree. Nothing
+#            can say whether it moved.
 # A URL, an absolute path and an identifier with a scheme name no file. Two
 # characters at least before the colon, so a Windows drive letter is still a
 # path. The root itself, as a source map names it, holds the bundle too. Its
@@ -804,7 +838,8 @@ sources_load() {
   done < "$tmp/res" > "$tmp/res.there"
   # Each path as git names it from the top of the work tree, worked out
   # without git: a `.` or an empty part dropped, a `..` taking the part
-  # before it away. "R" is the root of the sidecar, with its own rules.
+  # before it away. "R" is the root of the sidecar, with its own rules, and
+  # "O" a path outside the work tree, which git holds nothing of.
   awk -F'\t' -v pfx="$rpfx" '
     function norm(p,  n, a, i, k, s, out) {
       n = split(p, a, "/"); k = 0
@@ -812,21 +847,23 @@ sources_load() {
       out = ""; for (i = 1; i <= k; i++) out = out (i > 1 ? "/" : "") part[i]
       return out
     }
-    { rel = norm($2); top = norm(pfx $2); if (top == "\001") next
+    { rel = norm($2); top = norm(pfx $2); if (top == "\001") { print $1 "\t" $3 "\tO\t"; next }
       print $1 "\t" $3 "\t" (rel == "" ? "R" : "P") "\t" top }' "$tmp/res.there" > "$tmp/res.top"
   # One walk through history for the last commit of each path. The walk stops
-  # once every path has one, since git lists the newest first.
+  # once every path has one, since git lists the newest first. With renames
+  # found, a commit that moves one source to the name of another lists the
+  # new name alone, and the old one would take an earlier commit as its last.
   awk -F'\t' '$3 == "P" && !seen[$4]++ { print $4 }' "$tmp/res.top" > "$tmp/specs"
   if [ -s "$tmp/specs" ]; then
     local specs=()
     while IFS= read -r p; do specs+=("$p"); done < "$tmp/specs"
-    TZ=UTC git -C "$top" --literal-pathspecs -c core.quotePath=false log -c --name-only \
+    TZ=UTC git -C "$top" --literal-pathspecs -c core.quotePath=false log -c --no-renames --name-only \
       --format='%x01%H %cd' --date=format-local:%Y-%m-%d -- "${specs[@]}" 2>/dev/null \
-      | awk -v want="$tmp/specs" '
+      | awk -v want="$tmp/specs" "$gitname_fn"'
         BEGIN { while ((getline p < want) > 0) { left[p] = 1; n++ } }
         /^\001/ { c = substr($0, 2); next }
         $0 == "" { next }
-        { p = $0
+        { p = gitname($0)
           while (p != "") {
             if ((p in left) && !(p in done)) { done[p] = 1; print "L\t" p "\t" c; if (--n == 0) exit }
             if (!sub(/\/[^\/]*$/, "", p)) break
@@ -860,6 +897,7 @@ sources_load() {
     {
       res = $1; there = $2; kind = $3; p = $4
       if (kind == "R") { c = rootline; d = (there && rootdirty()) }
+      else if (kind == "O") { c = ""; d = 0 }
       else { c = last[p]; d = (there && dirty(p)) }
       split(c, cd, " ")
       if (!there) print "ZW\t" res "\tgone\t" cd[1] "\t-"
@@ -885,13 +923,13 @@ history_load() {
     sed 's/^/X	/' "$tmp/status"
     TZ=UTC git -C "$kdir" -c core.quotePath=false log -p -c --no-renames --unified=0 --no-color --no-ext-diff \
       --format='%x01%H %cd' --date=format-local:%Y-%m-%d -- . 2>/dev/null
-  } | awk -F'\t' '
+  } | awk -F'\t' "$gitname_fn"'
     $1 == "W" && !head0 { if ($4 != "") { k = ++nw[$2]; want[$2, k] = $4 }; rel[$2] = $3; next }
     $1 == "X" && $2 == "S" && !head0 { p = substr($0, 5); if (p in rel) print "ZY\t" rel[p]; else if (p ~ /\/$/) xd[++nxd] = p; next }
     /^\001/ { head0 = 1; split(substr($0, 2), c, " "); commit = c[1]; day = c[2]; cur = ""; merge = 0; next }
-    /^diff --(combined|cc) / { cur = $0; sub(/^diff --(combined|cc) /, "", cur); merge = 1; if ((cur in rel) && !(cur in last)) { last[cur] = commit; lday[cur] = day }; inhead = 1; next }
+    /^diff --(combined|cc) / { cur = $0; sub(/^diff --(combined|cc) /, "", cur); cur = gitname(cur); merge = 1; if ((cur in rel) && !(cur in last)) { last[cur] = commit; lday[cur] = day }; inhead = 1; next }
     /^diff --git / { cur = ""; merge = 0; inhead = 1; next }
-    inhead && /^\+\+\+ / { if (!merge) { cur = substr($0, 5); sub(/^b\//, "", cur); if ((cur in rel) && !(cur in last)) { last[cur] = commit; lday[cur] = day } } next }
+    inhead && /^\+\+\+ / { if (!merge) { cur = gitname(substr($0, 5)); sub(/^b\//, "", cur); if ((cur in rel) && !(cur in last)) { last[cur] = commit; lday[cur] = day } } next }
     inhead && /^@@/ { inhead = 0; next }
     inhead { next }
     /^@@/ { next }
@@ -2109,7 +2147,10 @@ esac
 # The evidence rows are read only for the forms that print or count them.
 rows=0
 case "$cmd" in report|sample|evidence) rows=1 ;; esac
-all="$(facts)"
+if ! all="$(facts)"; then
+  echo "${0##*/}: the bundle could not be read to its end, so no count here would be true - the error above names the file" >&2
+  exit 2
+fi
 times=""
 
 case "$cmd" in
