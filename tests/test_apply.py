@@ -311,11 +311,38 @@ def test_the_patchs_log_line_stands_in_for_each_operation_that_gives_none(applie
     )
     today = read(kb_of(applied) / "log.md").split(f"## {today_utc()}")[1].split("\n## ")[0]
     assert (
-        today.count("* **Changed**: each playbook cites its source by path\n") == 1
-        and "`playbooks/confirmed.md` was edited since a person confirmed it" in today
+        today.count("* **Changed**: each playbook cites its source by path") == 1
+        and has_line(
+            today,
+            "* **Changed**: each playbook cites its source by path `playbooks/confirmed.md` was edited since a person confirmed it; the label says so until the curator looks again.",
+        )
         and "**Added**: Newer" not in today
         and has_line(today, "* **Removal**: New; its source is gone.")
     ), f"the patch's line did not stand in once for the operations without one: {today}"
+
+
+def test_the_patchs_log_line_is_written_once_for_many_confirmed_concepts(applied):
+    """One sentence after the shared line names every concept a person confirmed, rather than one copy of the line for each."""
+    kb = kb_of(applied)
+    second = read(kb / "playbooks" / "confirmed.md").replace("playbooks/confirmed", "playbooks/second").replace("Confirmed", "Second")
+    write(kb / "playbooks" / "second.md", second)
+    write(kb / "playbooks" / "index.md", read(kb / "playbooks" / "index.md") + "* [Second](second.md) - confirmed.\n")
+    write(kb / "index.md", read(kb / "index.md") + "* [Second](playbooks/second.md) - confirmed.\n")
+    applies(
+        applied,
+        lines(
+            "log: each playbook cites its source by path.",
+            "ops:",
+            '  - {op: patch, path: playbooks/confirmed.md, edits: [{append: {content: "One."}}]}',
+            '  - {op: patch, path: playbooks/draft.md, edits: [{append: {content: "Two."}}]}',
+            '  - {op: patch, path: playbooks/second.md, edits: [{append: {content: "Three."}}]}',
+        ),
+    )
+    today = read(kb / "log.md").split(f"## {today_utc()}")[1].split("\n## ")[0]
+    assert today.count("each playbook cites its source by path.") == 1 and has_line(
+        today,
+        "* **Changed**: each playbook cites its source by path. `playbooks/confirmed.md` and `playbooks/second.md` were edited since a person confirmed them; each label says so until the curator looks again.",
+    ), f"the shared line was not written once with one sentence naming both: {today}"
 
 
 def test_a_bare_web_address_in_a_question_and_its_log_line_becomes_an_autolink(applied):
@@ -501,6 +528,39 @@ UNKNOWN_KEY_REFUSED = [
 @pytest.mark.parametrize(("what", "text", "expected"), UNKNOWN_KEY_REFUSED, ids=[w for w, _, _ in UNKNOWN_KEY_REFUSED])
 def test_refuses_a_key_the_operation_does_not_take(applied, what, text, expected):
     refuses(applied, text, what, expected)
+
+
+def test_a_replace_target_quoted_in_an_open_question_is_found_once_in_the_text(applied):
+    """A question that quotes the text it asks about does not make the target occur twice."""
+    applies(applied, lines("ops:", '  - {op: question, path: playbooks/draft.md, text: "is The new text. still right?"}'))
+    applies(applied, lines("ops:", '  - {op: patch, path: playbooks/draft.md, edits: [{replace: {target: "The new text.", content: "Newer text."}}], log: x}'))
+    draft = read(kb_of(applied) / "playbooks" / "draft.md")
+    assert "Newer text." in draft and "is The new text. still right?" in draft, f"the replace missed its one target or edited the question: {draft}"
+    refuses(
+        applied,
+        lines("ops:", '  - {op: patch, path: playbooks/draft.md, edits: [{replace: {target: "still right?", content: "x"}}], log: x}'),
+        "a target found only under Open questions",
+        "the target lies in the lokf:related block or under ## Open questions",
+    )
+
+
+def test_one_feedback_entry_named_by_two_operations_is_refused_as_such(applied):
+    """The second operation used to read as naming an entry the file does not hold."""
+    write(
+        applied / ".lokf" / "feedback.md",
+        read(applied / ".lokf" / "feedback.md") + '- **Miss** - Q: "how?" Answered from here. - docent\n',
+    )
+    entry = """'- **Miss** - Q: "how?" Answered from here. - docent'"""
+    refuses(
+        applied,
+        lines(
+            "ops:",
+            f'  - {{op: patch, path: playbooks/draft.md, edits: [{{append: {{content: "One."}}}}], log: x, from_feedback: {entry}}}',
+            f'  - {{op: patch, path: playbooks/new.md, edits: [{{append: {{content: "Two."}}}}], log: y, from_feedback: {entry}}}',
+        ),
+        "one entry named by two operations",
+        "from_feedback names an entry another operation of this patch already handles",
+    )
 
 
 def test_a_refused_file_applies_none_of_its_operations(applied):

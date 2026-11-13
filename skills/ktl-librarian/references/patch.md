@@ -125,11 +125,11 @@ Any one of these refuses the whole file, and nothing is written:
 - `delete` on a concept with a `human:` event under `verified`, or with a person's note under `## Open questions` (add a `question` saying the source is gone; the curator retires it);
 - `delete` on a concept that an `index.md` links in a sentence, or anywhere but in its own bullet or a comma-separated list of links (a person takes that link out, and the delete can then run);
 - a relation the patch adds that names no concept of the bundle, or a `delete` that leaves another concept's relation pointing at the deleted one (drop or repoint it in the same patch). An IRI outside the bundle, and a relation that was already broken, are left alone. So is a domain vocabulary's own slot, which only `--check-refs` can read;
-- a `replace` target that occurs zero or several times, an `insert_after` target on zero or several lines, or either inside the `lokf:related` block or under `## Open questions`;
+- a `replace` target that occurs zero or several times, or an `insert_after` target on zero or several lines, in the text outside the `lokf:related` block and `## Open questions`, which are never edited;
 - a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
 - a `patch`, `rewrite`, `delete` or `resolve` with no `log` line, its own or the patch's; a `title` with square brackets;
 - a `sources` entry whose `excerpt` is empty, is longer than 500 characters, or is not in its local file;
-- a `from_feedback` line the feedback file does not hold, or more than ten of them in one file; `asked` on an operation with no `from_feedback`, or with no printable text;
+- a `from_feedback` line the feedback file does not hold, one that two operations name, or more than ten of them in one file; `asked` on an operation with no `from_feedback`, or with no printable text;
 - a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once the characters no reader sees are gone. Those are the controls, the format characters, such as a zero-width space, a bidirectional mark or a tag character, and the other characters Unicode calls default ignorable, such as a variation selector. The script takes them out of a reader's question too.
 
 ## Exit codes
