@@ -534,3 +534,12 @@ def test_a_check_written_as_one_mapping_is_read_from_the_concept_s_json_ld():
     source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
     assert "const verified = Array.isArray(doc?.verified) ? doc.verified : [].concat(c.data.verified ?? []);" in source
     assert 'verified: verified.filter((e) => e && typeof e === "object").map(event),' in source
+
+
+def test_each_group_of_the_bundle_is_a_sidebar_topic_of_its_own():
+    """A sidebar of the whole bundle on every concept page made the site grow with the square of the bundle."""
+    config = read(SITE_TEMPLATES / "astro.config.mjs")
+    bundle_topic = sliced(config, 'label: "Knowledge bundle"', "// Each group of the bundle is a topic")
+    assert "autogenerate" not in bundle_topic, "the bundle's topic still lists every concept"
+    assert "...bundleGroups().map((group) => ({ label: groupLabel(group), link: `/knowledge/${group}/` }))," in bundle_topic
+    assert "items: [{ autogenerate: { directory: `knowledge/${group}` } }]," in sliced(config, "// Each group of the bundle is a topic", "if (SCHEMA)")

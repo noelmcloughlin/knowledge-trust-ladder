@@ -201,6 +201,13 @@ h1#_top,
   overflow-wrap: anywhere;
 }
 /* The passage a concept quotes from a source, under that source. */
+/* A group of the bundle is a topic of its own, listed under the bundle's. */
+.starlight-sidebar-topics a.ktl-topic-group {
+  padding-inline-start: 2.6rem;
+  font-size: var(--sl-text-sm);
+  font-weight: 400;
+}
+
 .ktl-card__more blockquote.quote {
   margin: 0.15rem 0 0.4rem;
   padding: 0 0 0 0.7rem;
