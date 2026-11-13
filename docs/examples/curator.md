@@ -200,10 +200,10 @@ $ bash scripts/knowledge-conventions.sh knowledge --since origin/main
 OK - knowledge keeps the conventions lokf validate cannot check
 $ cd ..
 $ bash .lokf/scripts/knowledge-provenance.sh origin/main
-OK - 1 confirmation(s), new, changed or removed, in origin/main..HEAD signed by the key on file for their curator
+OK - 4 concept(s) hold a person's record new, changed or removed in origin/main..HEAD, each signed by the key on file for its curator
 ```
 
-*The provenance script counts each person once per commit, so one signed commit by one curator reads as 1, however many events it adds.*
+*The four are the concepts confirmed or corrected. A send-back and a retirement add no event, so the provenance script does not count them.*
 
 ## Notes
 

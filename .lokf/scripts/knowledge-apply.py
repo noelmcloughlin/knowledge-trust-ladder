@@ -373,7 +373,21 @@ class Dumper(yaml.SafeDumper):
         return super().increase_indent(flow, False)
 
 
+class Quoted(str):
+    """A commit hash, written in double quotes whatever it holds. Unquoted, a short hash such as 1234e56 reads as a number to a YAML 1.2 reader, and the bundle quotes every `revision` so that none does."""
+
+
 Dumper.add_representer(Plain, lambda dumper, text: dumper.represent_scalar(text.tag, str(text)))
+Dumper.add_representer(Quoted, lambda dumper, text: dumper.represent_scalar("tag:yaml.org,2002:str", str(text), style='"'))
+
+
+def quote_revisions(value):
+    """The value with each non-empty string under a `revision` key, at any depth, made Quoted. An empty one, and one written unquoted that YAML reads as a number, go back as the file held them."""
+    if isinstance(value, dict):
+        return {k: Quoted(v) if k == "revision" and isinstance(v, str) and v and not isinstance(v, Plain) else quote_revisions(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [quote_revisions(v) for v in value]
+    return value
 
 
 def split_frontmatter(text: str):
@@ -388,7 +402,7 @@ def split_frontmatter(text: str):
 
 def dump(fm: dict, body: str) -> str:
     """The frontmatter block, then the body as it was read: a blank line after the closing --- stays, and one that was absent stays absent."""
-    fm_text = yaml.dump(fm, Dumper=Dumper, sort_keys=False, allow_unicode=True, default_flow_style=False, width=1_000_000)
+    fm_text = yaml.dump(quote_revisions(fm), Dumper=Dumper, sort_keys=False, allow_unicode=True, default_flow_style=False, width=1_000_000)
     return "---\n" + fm_text + "---\n" + body.rstrip("\n") + "\n"
 
 
