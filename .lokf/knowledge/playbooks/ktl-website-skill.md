@@ -9,6 +9,7 @@ sources:
   - resource: skills/ktl-website/SKILL.md
   - resource: skills/ktl-website/references/customising.md
     id: customising.md
+    excerpt: Browse the bundle, Architecture when the docs folder has `architecture.md`, Schema when the site shows the schema's pages, Bundle health and Knowledge graph as the buttons
   - resource: skills/ktl-website/references/deploy.md
   - resource: skills/ktl-website/references/inputs.md
   - resource: skills/ktl-website/references/prerequisites.md
@@ -18,6 +19,7 @@ sources:
   - resource: docs/architecture.md
   - resource: CHANGELOG.md
     id: changelog.md
+    excerpt: A ktl-website home page offers a Schema button when the site shows a LinkML schema's pages.
   - resource: skills/ktl-website/scripts/website-preflight.sh
   - resource: skills/ktl-website/templates/website/site.config.mjs
 dependsOn:
@@ -31,7 +33,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-13T14:41:35Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -74,6 +76,8 @@ Since 0.54.0 (2026-10-20, `CHANGELOG.md`) the graph page keeps the graph at full
 Since 0.56.1 (`CHANGELOG.md`) a concept's card, its link preview and its social card give the genre beside the type as a plain tag. A genre that repeats the type is left off, and search gains a Genre filter. A type is worded as the bundle's prose spells it, so `SlsaSourceControlSystem` reads "SLSA source control system" on every card and in relation names. The site's host is lowercased, as Astro writes it, so an owner spelt with capitals passes the link check. A page the browser kept from before a deploy reloads once when the deploy removed its stylesheet.
 
 Since 0.57.0 the home page offers a Schema button when the site shows the LinkML schema's pages.[^changelog.md] With `HOME.actions` unset, the buttons are then Browse the bundle, Architecture when the docs folder has `architecture.md`, Schema, Bundle health and Knowledge graph.[^customising.md]
+
+Since 0.64.0 (`CHANGELOG.md`) a concept's page shows, under each source, the passage the concept quotes from it. A source the ingest mirrored shows its origin, its version and the day it was fetched, from the committed `.lokf/ingest.lock.yaml` (`references/inputs.md`). A concept page carries only its own folder's sidebar, and its address is its id when the id holds a capital, a dot or a leading underscore. The website preflight prints no credential that the remote's address carries.
 
 A release page links the repository, the docs and the bundle at the release's tag, which the `RELEASE_TAG` option names. A page and its retelling offer each other as reading levels: a `PAGES` entry's `retells` names the page it retells, and a concept with an `audience` field or an `audience-` tag retells the concept its `derivedFrom` names.
 

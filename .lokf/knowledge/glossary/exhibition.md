@@ -9,12 +9,14 @@ resource: docs/obsidian.md
 sources:
   - resource: docs/obsidian.md
   - resource: README.md
+    id: readme.md
+    excerpt: "`ktl-website` built a site for each of these knowledge bundles:"
 relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/workshop
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-11-13T14:41:35Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -25,10 +27,13 @@ verified:
 
 `docs/obsidian.md` names two vaults. The bundle is the **exhibition**: the checked part of what the [workshop](workshop.md) knows, and the part that teammates, CI and agents read. It opens as a small vault of its own, and the two never index the same file. The vault a person already has is the workshop, and nothing in it is moved or migrated.
 
-Since 0.42.0 the README uses the word for the sites too. Its Exhibitions section lists each site that `ktl-website` builds to show a repository's collection. Since 2026-10-16 it lists five:
+Since 0.42.0 the README uses the word for the sites too. Its Exhibitions section says that `ktl-website` built a site for each of these knowledge bundles:[^readme.md]
 
 - this repository's own bundle, at `https://w3id.org/ktl/knowledge/`;
 - the KTL Curator Obsidian plugin's, at `https://w3id.org/ktl/curator/knowledge/`;
 - the KTL Registrar Obsidian plugin's, at `https://w3id.org/ktl/registrar/knowledge/`;
-- KTL Federation's, the domain that federates member bundles into one workspace as a context layer, at `https://w3id.org/ktl/federation/knowledge/`;
-- AI-LinkMO's.
+- AI-LinkMO's, at `https://noelmcloughlin.github.io/ai-linkmo/knowledge/`.
+
+Under its own heading, *Federation of Bundles (Context Layer)*, the section lists KTL Federation, the domain that federates member bundles into one workspace, as a context layer, at `https://w3id.org/ktl/federation/knowledge/`.
+
+[^readme.md]: README.md, the *Exhibitions* section

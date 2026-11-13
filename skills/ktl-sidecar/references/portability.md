@@ -13,7 +13,7 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | GitLab, Codeberg, Forgejo, Gitea | the sidecar, librarian, docent; the curator with `glab` or the signing-key route | the GitHub Actions workflows, ktl-website's deploy included | the wrapper in that CI, the gate ported per the recipe below, or the forge-free gate |
 | No forge, git only | everything local | the gate, pull requests, the scheduled loop | review by the host's own mechanism; the forge-free gate for confirmations |
 | No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
-| Behind a package mirror or a proxy, or python3 older than 3.9 | everything | `uv run` of the sidecar's scripts; python3 for any script | `.lokf/.venv` after `uv sync`; a lock made where the gate installs from; uv told to trust the proxy's certificate; `uv run` for ktl-prose's check (below) |
+| Behind a package mirror or a proxy, or python3 older than 3.11 | everything | `uv run` of the sidecar's scripts; python3 for any script | `.lokf/.venv` after `uv sync`; a lock made where the gate installs from; uv told to trust the proxy's certificate; `uv run` for ktl-prose's check (below) |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |
 | Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle; the auditor once it exists | the other three skills, source checks, `feedback.md` | the `ktl-docent-m365-<tag>-<repository>.zip` a release carries, or `.lokf/m365/knowledge-m365.sh` on the bundle folder ([m365.md](m365.md)) |
 
@@ -91,7 +91,7 @@ Make the lock where the gate installs from. `.lokf/uv.lock` records the index it
 
 A proxy that inspects TLS signs traffic with the company's own root certificate. Once that is in the system's store, git and curl trust it. uv trusts its own bundled roots until `UV_SYSTEM_CERTS=true` is set (uv 0.11 or later; `UV_NATIVE_TLS=1` before that). `SSL_CERT_FILE` serves too, when it names the system's bundle, such as `/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem` on RHEL. `UV_DEFAULT_INDEX` names the mirror, and git, curl and uv all read `HTTPS_PROXY`.
 
-Every script needs Python 3.9 or later. Where python3 is older, as RHEL 8's 3.6 is, the preflight warns. Run each sidecar script through its `.sh` half, which chooses the interpreter, and ktl-prose's check through `uv run`. Never run a script with bare `python`, which is Python 2 on some hosts, except as last resort.
+Every script needs Python 3.11 or later. Where python3 is older, as RHEL 9's 3.9 and Ubuntu 22.04's 3.10 are, the preflight warns. Where uv cannot download a Python, `dnf install python3.12` and `UV_PYTHON=3.12` give it one to build `.lokf/.venv` on. Run each sidecar script through its `.sh` half, which chooses the interpreter, and ktl-prose's check through `uv run`. Never run a script with bare `python`, which is Python 2 on some hosts, except as last resort.
 
 ### Synced or shared folders: OneDrive, SharePoint, Drive, Dropbox, iCloud
 

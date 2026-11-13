@@ -6,3 +6,6 @@ Written by knowledge-apply.sh each time ktl-librarian handles a reader's feedbac
 - 2026-10-26 Miss playbooks/ktl-sidecar-skill.md: `What command creates the subscription token the scheduled librarian's AGENT_API_KEY secret holds for Claude Code?`
 - 2026-10-26 Disagreement playbooks/ktl-sidecar-skill.md
 - 2026-11-02 Miss playbooks/releasing.md: `Does a released domain schema's version identify the release?`
+- 2026-11-13 Miss explanation/intended-uses.md: `Can schools use KTL?`
+- 2026-11-13 Miss playbooks/ktl-sidecar-skill.md: `What permissions does KNOWLEDGE_SYNC_TOKEN need?`
+- 2026-11-13 Miss playbooks/ktl-sidecar-skill.md: `What settings does KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT need?`

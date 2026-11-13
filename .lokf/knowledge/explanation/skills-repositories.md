@@ -8,6 +8,7 @@ resource: docs/skills-repositories.md
 sources:
   - resource: docs/skills-repositories.md
     id: docs-skills-repositories.md
+    excerpt: The ktl-librarian concept cites eighteen sources, so almost any commit to the skill puts it back on the work list, and each of its four confirmations was overtaken by the next derivation.
   - resource: skills/ktl-librarian/references/agent-skills.md
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
@@ -18,13 +19,16 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-13T14:41:35Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:02:36Z"
   - by: process:ktl-librarian
     at: "2026-10-26T20:05:58Z"
-status: draft
+  - by: human:noelmcloughlin
+    at: "2026-11-13T14:54:36Z"
+    revision: "8db202c1065973c5c126d9860142d19de43b9f79"
+stale_after: 2027-11-13
 ---
 
 # Overview
@@ -59,6 +63,8 @@ The run found gaps in KTL's own pages. ktl-librarian's `references/agent-skills.
 
 - When a reader's miss names a skill whose `description` does not mention what the reader asked, the librarian fixes the concept's description and names the skill in its hand-off. Only a person changes a `SKILL.md`.
 
+- A concept may quote a line of `SKILL.md` as an excerpt. When the file changes elsewhere, the librarian's work list reads *the quoted passage holds*. When that line changes, `just lokf-check-refs` fails and names the concept.
+
 - In a skills repository every source is a set of instructions for an agent. The librarian reads each as data and writes only through the pen, and only the person reviewing a pull request catches an instruction that shapes what a concept says ([threat model](../policies/threat-model.md)).
 
 # What remains to do
@@ -74,8 +80,6 @@ The page lists designs, not features. Each would extend KTL's checks from what t
 - OKF's attested computation for a skill's scripts;
 
 - a place for a fault in the host's own text;
-
-- the excerpt check: `sources[].excerpt`, from lokf 0.9.0, lets `lokf validate --check-excerpts` check the passage a concept relies on, so the work list could tell an edit to that passage from an edit elsewhere in the skill's file.
 
 That is a condition check, the work a museum gives its conservator rather than its librarian. If KTL takes these on, they belong to a new role.
 

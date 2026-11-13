@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T18:04:41Z"
+  at: "2026-11-13T14:41:35Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -24,9 +24,11 @@ sources:
   - resource: .releaserc.json
   - resource: .github/workflows/knowledge-release.yaml
     id: knowledge-release.yaml
+    excerpt: It stops on a name two files define differently
   - resource: scripts/sync-sidecar.sh
   - resource: CHANGELOG.md
     id: changelog.md
+    excerpt: "`.releaserc.json` names the Conventional Commits preset, so a `feat!:` commit no longer releases nothing"
   - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
   - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
   - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-conventionalcommits-v8.0.0/packages/conventional-changelog-conventionalcommits/src/parser.js
@@ -64,7 +66,7 @@ Each `publish.yml` run validates:
 - that the tag does not already exist;
 - that the bare version matches the top released heading in CHANGELOG.md, skipping `## [Unreleased]`, which catches a typed version nobody wrote release notes for.
 
-It then sets up `uv` and re-runs the repository contract, the sidecar scripts' tests under `tests/` (run with pytest) and `gh skill publish --dry-run`, and only then publishes. The version is typed *with* the `v` (`v0.16.0`). The changelog heading never carries one, and the cross-check strips it before comparing.
+Since 0.64.0 these checks, the repository contract and the sidecar scripts' tests under `tests/` (run with pytest) run in a read-only `verify` job, which installs the test packages by hash from `tests/requirements.txt`, compiled from `tests/requirements.in`. The `publish` job holds the write token behind the `release` Environment, needs `verify` and runs neither (`CHANGELOG.md`). It checks again that the tag is still free, since the tag may have been made while the run waited, then runs `gh skill publish --dry-run`, and only then publishes. The version is typed *with* the `v` (`v0.16.0`). The changelog heading never carries one, and the cross-check strips it before comparing.
 
 Since 2026-09-24 it then dispatches `knowledge-release.yaml` for the new tag. That workflow attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle changed since the last release that carries one. The zip is named after the repository, or after the name its `KNOWLEDGE_RELEASE_NAME` variable sets. Beside it (since 2026-09-24) it attaches the docent as a Microsoft 365 Copilot skill, `ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`. It attaches one zip per instructions file under `.lokf/m365/`, each with its own checksum and attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release carries the bundle zip alone.
 

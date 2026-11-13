@@ -10,10 +10,10 @@ generated:
   at: "2026-10-12T16:08:20Z"
 status: draft
 definedBy:
-- https://w3id.org/ktl/knowledge/references/agent-skills-specification
+  - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 verified:
-- by: process:ktl-librarian
-  at: "2026-10-12T03:11:32Z"
+  - by: process:ktl-librarian
+    at: "2026-11-13T14:41:35Z"
 ---
 
 # Overview

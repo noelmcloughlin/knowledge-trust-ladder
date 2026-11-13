@@ -1611,7 +1611,7 @@ def test_status_says_when_git_is_too_old_for_a_git_entry(tmp_path, checks, monke
 # 10. the converter
 
 
-def test_the_converter_turns_storage_format_into_markdown_blocks(checks, monkeypatch):
+def test_the_converter_turns_storage_format_into_markdown_blocks(checks):
     m = load_module()
     text, title = m.html_to_markdown("<html><head><title>T</title></head><body><h2>Two</h2><p>One <i>two</i>  three<br/>four</p><pre>a\n  b</pre><blockquote><p>q</p></blockquote><hr/><ol><li>x</li><li>y</li></ol></body></html>")
     checks.ok(title == "T", "the title", title)
@@ -1620,20 +1620,9 @@ def test_the_converter_turns_storage_format_into_markdown_blocks(checks, monkeyp
     checks.ok(m.utc("2026-10-03T09:12:44.123+01:00") == "2026-10-03T08:12:44Z" and m.utc("Sat, 18 Oct 2026 06:00:00 GMT") == "2026-10-18T06:00:00Z", "timestamps in one UTC shape")
     checks.ok(m.utc("0001-01-01T00:00:00+01:00") == "0001-01-01T00:00:00+01:00", "a time an offset carries past year 1 is kept as given")
 
-    class Before311(m.datetime):
-        """fromisoformat as Python 3.9 and 3.10 read it: a fraction of three or six digits only."""
-
-        @classmethod
-        def fromisoformat(cls, text):
-            fraction = re.search(r"\.(\d+)", text)
-            if fraction and len(fraction.group(1)) not in (3, 6):
-                raise ValueError(f"Invalid isoformat string: {text!r}")
-            return super().fromisoformat(text)
-
-    monkeypatch.setattr(m, "datetime", Before311)
     fractions = ("2026-10-03T09:12:44.5+01:00", "2026-10-03T09:12:44.000+01:00", "2026-10-03T09:12:44.1234567891Z")
     checks.ok([m.utc(t) for t in fractions] == ["2026-10-03T08:12:44Z", "2026-10-03T08:12:44Z", "2026-10-03T09:12:44Z"],
-              "a fraction of any length, which Python before 3.11 reads only in three or six digits", str([m.utc(t) for t in fractions]))
+              "a fraction of any length", str([m.utc(t) for t in fractions]))
 
 
 def test_the_converter_keeps_the_body_after_head_metadata_and_macro_parameters(checks):
@@ -2429,14 +2418,14 @@ def test_behind_a_mirror_without_upload_times_the_ingest_lifts_the_date_round_by
     """The date is lifted for each package uv names, round by round, and for no other."""
     root = tmp_path / "repo"
     (root / ".lokf" / "knowledge").mkdir(parents=True)
-    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz", "pypdf-7.0.1-py3-none-any.whl", "typing_extensions-4.16.0-py3-none-any.whl")
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz", "pypdf-7.0.1-py3-none-any.whl")
     result = run(["bash", INGEST, "--root", root], env={"PATH": path})
     assert "no manifest" in result.out, f"the ingest did not run behind the mirror: {result.out}"
-    assert "exclude-newer is lifted for pyyaml pypdf typing-extensions." in result.out, f"the ingest did not name each package whose date it lifted: {result.out}"
+    assert "exclude-newer is lifted for pyyaml pypdf." in result.out, f"the ingest did not name each package whose date it lifted: {result.out}"
     assert "Run uv add pypdf in .lokf/" in result.out, f"the ingest's hint did not name pypdf, which uv sync in .lokf/ does not install: {result.out}"
     runs = [line for line in read(log).split("\n") if line.startswith("run ")]
     flags = re.findall(r"--exclude-newer-package (\S+)", runs[0]) if runs else []
-    assert flags == ["pyyaml=false", "pypdf=false", "typing-extensions=false"], f"uv run did not get exactly the lifted packages: {read(log)}"
+    assert flags == ["pyyaml=false", "pypdf=false"], f"uv run did not get exactly the lifted packages: {read(log)}"
 
 
 def test_without_uv_a_venv_without_pypdf_still_runs_the_ingest(tmp_path):

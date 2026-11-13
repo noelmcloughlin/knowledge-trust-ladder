@@ -8,6 +8,8 @@ resource: skills/ktl-prose/SKILL.md
 sources:
   - resource: skills/ktl-prose/SKILL.md
   - resource: skills/ktl-prose/references/rules.md
+  - resource: skills/ktl-prose/references/limits.md
+  - resource: skills/ktl-prose/references/sources.md
   - resource: skills/ktl-prose/references/other-files.md
   - resource: skills/ktl-prose/references/young-readers.md
   - resource: skills/ktl-prose/scripts/prose-check.py
@@ -25,7 +27,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-11-13T14:41:35Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -33,7 +35,7 @@ verified:
 ---
 # Overview
 
-A museum edits its labels before the exhibition opens. `ktl-prose` does that for the `.lokf/` knowledge bundle: it rewords what the librarian wrote, in plain English, before a person confirms it. It changes the wording and never a fact. A curator can only confirm a claim they can read. The skill is a copy editor, not an author. The librarian stays the maker of every concept it derived, so `generated` keeps naming it, and `log.md` and git record the rewording. The architecture page calls it the fifth skill, which is not a role, and says the roles lose nothing without it.
+A museum edits its labels before the exhibition opens. `ktl-prose` does that for the `.lokf/` knowledge bundle: it rewords what the librarian wrote, in plain English, before a person confirms it. It changes the wording and never a fact. A curator can only confirm a claim they can read. The skill is a copy editor, not an author. The librarian stays the maker of every concept it derived, so `generated` keeps naming it and keeps its `revision`, and `log.md` and git record the rewording. The architecture page calls it the fifth skill, which is not a role, and says it is optional.
 
 # The rules
 
@@ -63,8 +65,10 @@ It rewords only a body an agent wrote that no person has confirmed. It never rew
 
 - `index.md`, `log.md` or `diataxis.md`;
 - a concept whose `generated.by` starts `human:`;
+- a concept with a `human:` event under `revised`;
 - a concept with a `human:` event under `verified`;
 - a retired concept;
+- a concept with a `refuted` event;
 - a concept whose frontmatter the script cannot read.
 
 A concept with no `generated.by` is reworded only when a person names it. Naming a confirmed concept does not unlock it, because a confirmation is a person's time spent against a source and a rewording must not spend it.
@@ -72,7 +76,7 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 # What a rewording never changes
 
 - A fact, a name, a number, a command or a piece of code.
-- A link target, or a heading.
+- A link target, a wikilink, or a heading.
 - Text in quotation marks.
 - An RFC 2119 keyword, or the strength of an instruction.
 - Any byte of frontmatter.
@@ -81,11 +85,15 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 # Steps
 
 0. **Preflight**: run the preflight and the conventions script first, as every skill that touches the bundle does. The skill never opens `.lokf/feedback.md`.
-1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. Since 0.55.0 `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". The script runs through `uv run`, or a python3 of 3.9 or later, never bare `python`. Then the agent reads every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows.
+1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. Since 0.55.0 `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". The script runs through `uv run`, or a python3 of 3.9 or later, never bare `python`. Then the agent reads every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows. The report quotes in full every sentence the agent would cut, so that the person answers once.
 2. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, lay out what it rewords the way the file's project does, and leave what cannot be fixed.
-3. **Prove** that only the wording changed, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something other than wording that differs, such as a character no reader sees that the rewording added, and the agent undoes it.
+3. **Check** what a script can, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something a rewording never changes, such as a number, a link, a code span or a claim that turned over, and the agent undoes it. A note asks the agent to look again, and never changes the exit status. `references/limits.md` lists every finding and note, and what no script sees.
 4. **Log** one **Prose** line in `log.md`.
-5. **Hand off** a change scoped to `.lokf/`. Give the counts before and after, the words before and after from the script's `OK` line, each sentence left alone, each concept skipped, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
+5. **Hand off** a change scoped to `.lokf/`. Give the counts before and after, the words before and after from the script's `OK` line, each sentence left alone, each concept skipped, each note the script gave with the decision on it, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
+
+Since 0.61.0 the comparison stops a sentence that turned over: a word given way to its opposite, such as `enabled` to `disabled`, or a negative gained or lost with every other word in place. Since 0.63.0 it reads a list item and a table row as a sentence each (`CHANGELOG.md`). It also stops a word given way to the same word with a negating prefix, such as `confirmed` to `unconfirmed`, and one number word given way to another. It stops two runs of words that changed places, and a number, a link or a code span that changed places with one in another sentence or row.
+
+A note gives the line where it can. `strength` names a word of strength that came or went, `word` one word that gave way to another, `order` the same words in a new order, and `link-text` a link whose words changed. `page-words` lists the words the page lost and gained, and `sentence-gone` marks a sentence few of whose words came through. A pass says that what the script reads came through, not that the meaning held. `references/sources.md` holds where the rules come from, and what the sources say about line breaks.
 
 # Outside the bundle
 

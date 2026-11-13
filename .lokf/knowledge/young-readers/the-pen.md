@@ -20,7 +20,7 @@ generated:
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-29T00:48:33Z"
+    at: "2026-11-13T14:41:35Z"
 relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/registrar
 ---
@@ -70,3 +70,4 @@ The pen is the librarian's only way to write the bundle. A person writes the cur
 ## Open questions
 
 - 2026-10-27, human:noelmcloughlin: carry over four things `glossary/the-pen.md` says that this retelling leaves out: the `lokf validate` run (:11); moving feedback into `.lokf/questions.md` (:12); the scheduled-run wrapper and `KNOWLEDGE_PEN_DRY_RUN_ONLY` (:16); the `handoff` lines (:16). The :NN numbers count lines of `glossary/the-pen.md` after its frontmatter.
+- 2026-11-13, human:noelmcloughlin: add exit code, and tell the human to remove release number 0.55.0 as versions in user facing prose are unnecessary

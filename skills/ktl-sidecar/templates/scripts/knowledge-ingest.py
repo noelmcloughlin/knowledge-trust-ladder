@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.10"
-# dependencies = ["pyyaml==6.0.3", "pypdf==7.0.1", "typing-extensions==4.16.0; python_version < '3.11'"]
+# requires-python = ">=3.11"
+# dependencies = ["pyyaml==6.0.3", "pypdf==7.0.1"]
 # [tool.uv]
 # exclude-newer = "2026-11-11T00:00:00Z"
 # ///
@@ -84,11 +84,8 @@
 # manifest or an argument before any write; 2 a tool is missing.
 #
 # The dependency block names one pypdf release, and `exclude-newer` takes no
-# file uploaded after its date. pypdf 7 needs Python 3.10, so the block asks
-# uv for 3.10; the script itself still runs on 3.9, which reads every source
-# but a PDF. Before Python 3.11, pypdf needs typing-extensions, so the block
-# pins that too. Behind a mirror with no upload times, the shell half lifts
-# the date only for a pinned package.
+# file uploaded after its date. Behind a mirror with no upload times, the
+# shell half lifts the date only for a pinned package.
 # When a release fixes a flaw in pypdf, which reads PDFs from outside the
 # repository, move the pins and the date together.
 """The ingest: knowledge outside the repository, mirrored into it."""
@@ -209,12 +206,6 @@ def utc(text: str) -> str:
     if not text:
         return ""
     t = text.strip()
-    if t.endswith("Z"):
-        t = t[:-1] + "+00:00"
-    # The fraction gets six digits, which fromisoformat reads on every Python
-    # from 3.9. Before 3.11 it reads three or six digits only, so .5 and
-    # .000123456 would both stop it.
-    t = re.sub(r"\.(\d+)", lambda m: "." + (m.group(1) + "000000")[:6], t)
     try:
         d = datetime.fromisoformat(t)
     except ValueError:
@@ -276,9 +267,8 @@ def discreet(reason: str) -> str:
 
 
 def write_text(path: Path, text: str) -> None:
-    """Write UTF-8 text with line feeds on every platform. Path.write_text takes newline= only from Python 3.10, and the script runs on 3.9."""
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
+    """Write UTF-8 text with line feeds on every platform."""
+    path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def sha256_hex(data: bytes) -> str:

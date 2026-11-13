@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.9"
+# requires-python = ">=3.11"
 # dependencies = []
 # ///
 # The check ktl-prose runs before and after it rewords a file. A script can
@@ -73,7 +73,7 @@
 #
 # The script reads the files it is given, and the word book in the skill's
 # assets/ folder, and asks git for an earlier version. It writes nothing
-# and opens no network connection. It needs python3 3.9 or later and
+# and opens no network connection. It needs python3 3.11 or later and
 # nothing else. `uv run` reads the empty dependency block above.
 
 from __future__ import annotations
@@ -201,10 +201,17 @@ FIGURES = {
     ("load-bearing",): "say what depends on it",
 }
 WORDS.update((form, advice) for forms, advice in FIGURES.items() for form in forms)
+# A need stated as what happens without the thing: "the build stops without
+# gh" says that the build needs gh, and the reader has to turn the sentence
+# round to find that out (rule 11).
+STOPS_WITHOUT = ("stop without", "stops without", "stopped without")
+WORDS.update((form, 'say what it needs, such as "needs" or "requires"') for form in STOPS_WITHOUT)
 # A listed phrase that is not one when certain words follow it. In "at all
 # of them" and "at all times", "all" belongs to the words after it, and no
-# negative comes before.
+# negative comes before. "Stops without failing" and "stops without notice"
+# say how a thing stops, not what it needs.
 NOT_BEFORE = {"at all": r"(?!\s+(?:of|times|costs|hours|levels|stages|points)\b)"}
+NOT_BEFORE.update((form, r"(?!\s+(?:\w+ing|notice|warning)\b)") for form in STOPS_WITHOUT)
 # A letter, a digit, an underscore or a hyphen on either side makes another
 # word: `arm64`, `wire-format`.
 WORD = re.compile(

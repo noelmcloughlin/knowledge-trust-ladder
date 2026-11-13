@@ -1,6 +1,6 @@
 # The rules: plain English for a knowledge bundle
 
-This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from, and from a fourth over three sibling bundles. A script checks parts of four of the rules, and a reader checks the rest, in the order *Reading a sentence* gives. Two sections apart from the thirteen say what a concept's genre asks, and where a line ends in the source. [sources.md](sources.md) names the books and pages the rules come from.
+This page is for whoever rewords a text with **ktl-prose**, agent or person. It gives each rule with a before and an after, says why the rule holds, and says when it gives way. The pairs come from the three hand passes that set this style, in the repository these skills are published from, and from a fourth over three sibling bundles. A script checks parts of five of the rules, and a reader checks the rest, in the order *Reading a sentence* gives. Two sections apart from the thirteen say what a concept's genre asks, and where a line ends in the source. [sources.md](sources.md) names the books and pages the rules come from.
 
 One rule stands above the thirteen: a rewording changes the wording and never a fact. When a rule and a fact pull apart, the fact wins and the sentence stays as it was.
 
@@ -278,6 +278,15 @@ Before: A large or fast-growing one never quite does, and the report says so ins
 After:  A large or fast-growing one never quite does, and the report says so.
 ```
 
+A need stated as what happens without the thing is the same fault. The reader has to turn the sentence round to find what the thing needs.
+
+```text
+Before: For a GitHub release it checks the attestation too, signed by the member's own release workflow, and stops without `gh`.
+After:  For a GitHub release it checks the attestation too, signed by the member's own release workflow, which needs `gh`.
+```
+
+That pair comes from a pass over this repository's threat model. The script reports "stop without", "stops without" and "stopped without" as `words`. It skips each one before "notice", "warning" or a word ending in "ing", since "stops without failing" says how a thing stops, not what it needs.
+
 It gives way to a prohibition that guards something. "Never write a `human:` event" is the rule itself, and no positive form says it as well. Keep its strength too: `must` stays `must`.
 
 ## 12. Open each page by saying who it is for
@@ -346,5 +355,5 @@ It gives way in a table, frontmatter and a heading, which keep their own lines, 
 
 - **The rules are defaults.** Strunk opens his own rules by observing that "the best writers sometimes disregard the rules of rhetoric". That is why each rule above says when it gives way.
 - **Rules 4, 5 and 6 are house rules, stricter than the books.** The conventions the gate checks are stricter than OKF in the same way. The reason is the same: an agent told a rule in prose breaks it, and a strict rule is one a script can check.
-- **A script sees part of four rules.** `scripts/prose-check.py` reports `long`, `paragraph` and `sentences` for rule 3, `dash` for rule 5, and `words` for rules 9 and 10. Each finding is a candidate, not a verdict. It skips frontmatter, fenced and indented code blocks, code spans, link targets, headings, quotations and a short emphasised label, and reads a prose line that opens with an inline HTML tag. Given a script (`.sh`, `.py`, `.yaml`, `.yml`, `.toml` or a justfile), it reads each `#` comment block as a paragraph, and in Python each docstring. It leaves out a shebang, a directive, a `# /// script` block and the body of a heredoc. The other nine rules need a reader, and so does every figure of speech it does not list.
+- **A script sees part of five rules.** `scripts/prose-check.py` reports `long`, `paragraph` and `sentences` for rule 3, `dash` for rule 5, and `words` for rules 9, 10 and 11. Each finding is a candidate, not a verdict. It skips frontmatter, fenced and indented code blocks, code spans, link targets, headings, quotations and a short emphasised label, and reads a prose line that opens with an inline HTML tag. Given a script (`.sh`, `.py`, `.yaml`, `.yml`, `.toml` or a justfile), it reads each `#` comment block as a paragraph, and in Python each docstring. It leaves out a shebang, a directive, a `# /// script` block and the body of a heredoc. The other eight rules need a reader, and so does every figure of speech it does not list.
 - **The script also reports a character no reader sees, as `unseen`.** That is no rule of style but a hazard. A zero-width space or a byte order mark renders as nothing. A right-to-left override reorders what a reader sees: the "Trojan Source" attack (CVE-2021-42574) uses it to make code read differently from how it runs. An agent that types such a character's escape into a tool call can write the character itself. Delete one from prose you may reword, and report one in code, in a quotation or in a concept you may not touch.

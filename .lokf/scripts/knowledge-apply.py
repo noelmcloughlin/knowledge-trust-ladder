@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.9"
+# requires-python = ">=3.11"
 # dependencies = ["pyyaml==6.0.3"]
 # [tool.uv]
 # exclude-newer = "2025-10-01T00:00:00Z"
@@ -1357,8 +1357,7 @@ def schema_findings(root: Path, files: dict) -> tuple:
         for rel, text in files.items():
             file = staged / rel
             file.parent.mkdir(parents=True, exist_ok=True)
-            with open(file, "w", encoding="utf-8", newline="\n") as f:  # Path.write_text takes newline= only from Python 3.10
-                f.write(text)
+            file.write_text(text, encoding="utf-8", newline="\n")
         done = subprocess.run(cmd + [str(staged)], cwd=str(cwd), capture_output=True, text=True,
                               encoding="utf-8", errors="replace", timeout=600)
     except (OSError, subprocess.TimeoutExpired) as exc:
