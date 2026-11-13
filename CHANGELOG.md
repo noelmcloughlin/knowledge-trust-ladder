@@ -26,7 +26,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The ingest keeps a table cell's code block, list, panel or nested table in the cell.** Spans, a `<br>` in `<pre>`, and a table or `<pre>` left open are kept too.
 - **A changed `authors`, `license` or `convert` setting reaches every mirrored page.** Before, it reached a page only when that page next changed.
-- **A redirected page's links are resolved against where it was served.** The header names it as `redirected_to`, and a redirect from https to http is refused.
+- **A redirected page's links are resolved against where it was served.** The header names it, without its query, as `redirected_to`, and a redirect from https to http is refused.
 - **`--patch` keeps each item on the Reference concept that names its copy.**
 - **The ingest workflow's push is leased to the commit it read.** A branch a person committed to is left alone.
 - **`labels.rq` shows a passed review date, a retired concept and a draft, one row per concept.** The latest confirmation by a person counts.
@@ -40,6 +40,9 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The librarian and sync workflows push to the server they run on, so GitHub Enterprise Server works.**
 - **Check 21 refuses every character the pen treats as invisible.** It missed the Hangul fillers, the variation selectors and the line separators.
 - **The install smoke test's check for leaked installer metadata can fail.**
+- **The gate and the report skip a folder whose name ends in `.md`.** They printed read errors or a traceback over it.
+- **The sync's check no longer reports a pass for the conventions it could not run without `uv`.**
+- **The librarian wrapper compares files by git object id.** A rewritten file of the same length can match a `cksum` checksum.
 
 ## [0.64.0] - 2026-11-13
 
