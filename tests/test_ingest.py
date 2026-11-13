@@ -1627,6 +1627,11 @@ def test_a_table_keeps_what_its_cells_hold(checks):
     checks.ok(text == "before\n\n| kept<br>`open` |\n| --- |\n", "a table and a <pre> left open close at the end of the page", text)
     text, _ = m.html_to_markdown("<ul><li>item<table><tr><td><ul><li>x</li></ul></td></tr></table></li><li>two</li></ul>")
     checks.ok(text == "- item\n  | - x |\n  | --- |\n- two\n", "a list in a cell of a table in a list item stays in the cell", text)
+    text, _ = m.html_to_markdown("<table><tr><td>A</td><td><ul><li>x</li> stray <li><h3>Title</h3>see<table><tr><td>p</td><td>q</td></tr></table></li></ul></td></tr></table>")
+    checks.ok(text == "| A | stray<br>- x<br>- Title<br>see<br>p; q |\n| --- | --- |\n",
+              "text outside an item, a heading and a table in a list in a cell stay in the cell, plain and a row to a line", text)
+    text, _ = m.html_to_markdown("<table><tr><td>```</td><td>opens a fence</td></tr></table>")
+    checks.ok(text == "| ``` | opens a fence |\n| --- | --- |\n", "backticks no later line closes stay as text", text)
     for name, page in (("nested tables", "<table><tr><td>x" * 4000),
                        ("spans", "<table><tr>" + '<td rowspan="9999" colspan="999">a</td>' * 2000 + "</tr>" + "<tr><td>b</td></tr>" * 4000 + "</table>")):
         started = time.monotonic()

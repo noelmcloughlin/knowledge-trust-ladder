@@ -984,7 +984,8 @@ class Markdowner(HTMLParser):
         if self.lists and self.lists[-1][2] is not None and not self.in_cell():
             self.lists[-1][2].append(block)
             return
-        if self.in_cell():
+        # A cell holds what a list inside it holds outside an item, too.
+        if self.cell() is not None:
             self.cell().append(block)
             return
         self.blocks.append("\n".join(self.prefix() + line for line in block.split("\n")))
@@ -995,7 +996,7 @@ class Markdowner(HTMLParser):
         t = self.text()
         if not t:
             return
-        if self.heading and not self.in_cell():
+        if self.heading and self.cell() is None:  # a cell, or a list in one, holds no heading
             self.emit("#" * self.heading + " " + " ".join(t.split()))
         else:
             self.emit(t)
@@ -1343,8 +1344,8 @@ class Markdowner(HTMLParser):
         rows = [r for r in frame["rows"] if r]
         if not rows:
             return
-        if self.in_cell():
-            # A table inside a cell is written into the cell, a row to a line.
+        if self.cell() is not None:
+            # A table inside a cell, or in a list in one, is written into it, a row to a line.
             self.emit("\n".join("; ".join(c for c in r if c) for r in rows))
             return
         # Only the header row is padded to the widest row: a renderer
@@ -1393,11 +1394,13 @@ def cell_text(blocks: list) -> str:
 
     A line break becomes <br>, which GitHub's Markdown shows as a break in a
     cell. A line of a code block becomes inline code, and the fence lines go.
+    A line of text that starts with backticks no later line closes is text.
     """
     out = []
     ticks = ""
-    for line in "\n".join(blocks).split("\n"):
-        bare = line.strip()
+    lines = [line.strip() for line in "\n".join(blocks).split("\n")]
+    last = {bare: i for i, bare in enumerate(lines)}
+    for i, bare in enumerate(lines):
         if ticks:
             if bare == ticks:
                 ticks = ""
@@ -1405,7 +1408,7 @@ def cell_text(blocks: list) -> str:
                 out.append(inline_code(bare))
             continue
         run = re.match(r"`{3,}", bare)
-        if run:
+        if run and last.get(run.group(0), -1) > i:
             ticks = run.group(0)
             continue
         words = " ".join(bare.split())
