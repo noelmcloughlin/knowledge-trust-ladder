@@ -37,7 +37,8 @@
 # Listing comes before fetching, so an unchanged source costs a listing and no body. The
 # mirror and the lock change only when content changes. An entry that leaves
 # the manifest takes its folder with it. A file the lock names and the disk
-# has lost is fetched again and reported as restored. A name the workflow
+# has lost, or that was edited by hand, is fetched again and reported as
+# restored. A name the workflow
 # would not publish, such as one with a space, is spelled in plain
 # characters, with a digest of the name so no two meet. At its time limit
 # the run starts no more work and writes what it has, and what it did not
@@ -2183,6 +2184,22 @@ def settings_digest(entry: Entry) -> str:
     return "sha256:" + sha256_hex(json.dumps(shaping, sort_keys=True).encode("utf-8"))[:16]
 
 
+def mirror_file_digest(path: Path) -> str:
+    """The digest of a mirror file's bytes, or "" when it cannot be read."""
+    try:
+        return "sha256:" + sha256_hex(path.read_bytes())
+    except OSError:
+        return ""
+
+
+def mirrored_as_written(root: Path, record: dict) -> bool:
+    """Whether the file an item's record names is there, as the ingest wrote it. A record from before the digest was kept checks only that the file is there."""
+    path = root / str(record.get("path", ""))
+    if not path.is_file():
+        return False
+    return not record.get("mirror_sha256") or mirror_file_digest(path) == record["mirror_sha256"]
+
+
 def mirror_header(entry: Entry, record: dict, converted_by: str) -> str:
     """The header a mirror file opens with, from the item's lock record."""
     fm = {"origin": record.get("origin", ""), "title": record.get("title", ""), "ingest": entry.id, "kind": entry.kind,
@@ -2349,9 +2366,10 @@ class Run:
         elsewhere = [self.root / str(prior[i]["path"]) for i in moved if self.removable(str(prior[i]["path"]))]
         for i in moved:
             del prior[i]
-        # A file the lock calls current and the disk has lost is handed to the
-        # kind as if new, so it is fetched again instead of skipped as unchanged.
-        lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not (self.root / was["path"]).is_file()}
+        # A file the lock calls current and the disk has lost, or that was
+        # edited by hand, is handed to the kind as if new, so it is fetched
+        # and written again instead of skipped as unchanged.
+        lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not mirrored_as_written(self.root, was)}
         present = {i: was for i, was in prior.items() if i not in lost}
         # A file's header and its Markdown follow the entry's settings too. When
         # they changed since the files were written, every item is fetched and
@@ -2496,9 +2514,12 @@ class Run:
                 for key in ("last_modified", "author", "etag", "blob", "last_modified_header", "redirected_to", "command_sha256", "command_unchecked"):
                     if getattr(it, key):
                         lock_item[key] = getattr(it, key)
+            text = mirror_header(entry, lock_item, it.converted_by) + it.text
+            # The digest of the file as written, so that a hand edit is noticed.
+            lock_item["mirror_sha256"] = "sha256:" + sha256_hex(text.encode("utf-8"))
             new_items[it.item] = lock_item
             counts["restored" if it.item in lost else "fetched"] += 1
-            self.writes.append((target, mirror_header(entry, lock_item, it.converted_by) + it.text))
+            self.writes.append((target, text))
         for item_id, was in prior.items():
             # A file no longer listed is unlisted, and one that was skipped needs its record no more.
             if item_id not in new_items and was.get("status") != "skipped":
@@ -2651,7 +2672,7 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     names = sorted({n for e in manifest.entries for n in e.auth.names()})
     present = [n for n in names if environ.get(n)]
     absent = [n for n in names if not environ.get(n)]
-    files, newest, missing, away, named = 0, "", 0, 0, set()
+    files, newest, missing, edited, away, named = 0, "", 0, 0, 0, set()
     try:
         books = [read_lock(lock_path), read_cache_lock(root / CACHE_LOCK)]
     except Stop:
@@ -2666,6 +2687,8 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
                     newest = max(newest, str(it.get("retrieved_at", "")))
                     if path and not (root / path).is_file():
                         missing += 1
+                    elif path and not mirrored_as_written(root, it):
+                        edited += 1
                 elif it.get("status") in ("gone", "unlisted"):
                     away += 1
     mirror = root / MIRROR
@@ -2673,6 +2696,8 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
     parts = [f"{len(manifest.entries)} entries in .lokf/ingest.yaml", f"{files} mirrored files" + (f", newest {newest[:10]}" if newest else ", no lock yet")]
     if missing:
         parts.append(f"{missing} missing from the mirror, which a run restores")
+    if edited:
+        parts.append(f"{edited} edited since the ingest wrote them, which a run writes again")
     if stray:
         parts.append(f"{stray} files in the mirror the lock does not name")
     if away:

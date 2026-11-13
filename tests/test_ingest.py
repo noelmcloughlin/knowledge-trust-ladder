@@ -69,7 +69,8 @@ and pin:
     has is skipped, a name the workflow would not publish is spelled plain,
     and a large file is refused;
 15. an entry that leaves the manifest takes its folder with it, and no run
-    removes or writes a file outside the mirror;
+    removes or writes a file outside the mirror. A file lost or edited by
+    hand is written again;
 16. the mirror cap refuses the item that would pass it;
 17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no
     other, and a source not fetched or a run cut short is a warning on the run;
@@ -81,6 +82,7 @@ and pin:
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import http.server
 import importlib.util
 import json
@@ -2061,6 +2063,23 @@ def test_a_cleared_mirror_is_restored_and_the_status_line_counts_what_is_off(tmp
     ingest(root)
     result = ingest(root, "--status")
     checks.ok(result and "1 gone or unlisted, which --prune removes" in result.out, "the status counts what waits for a prune", result.out)
+
+
+def test_a_mirror_file_edited_by_hand_is_noticed_and_written_again(tmp_path, server, checks):
+    """The lock recorded the digest of the bytes fetched only, so an edit of the mirror file stayed until the source next changed."""
+    Stub.routes["/a.md"] = (200, {"Content-Type": "text/markdown", "ETag": '"a1"'}, b"# A\n")
+    root = host(tmp_path, manifest_for([{"id": "a", "kind": "http", "urls": [f"{server}/a.md"], "sensitivity": "public"}]))
+    ingest(root)
+    a_file = next((root / ".lokf" / "mirror" / "a").glob("*.md"))
+    a_text, lock_text = read(a_file), read(root / ".lokf" / "ingest.lock.yaml")
+    record = next(iter(lock_of(root)["entries"]["a"]["items"].values()))
+    checks.ok(record["mirror_sha256"] == "sha256:" + hashlib.sha256(a_text.encode()).hexdigest(), "the lock holds the digest of the file as written", str(record))
+    write(a_file, a_text.replace("# A", "# A, with a hand edit"))
+    result = ingest(root, "--status")
+    checks.ok(result and "1 edited since the ingest wrote them, which a run writes again" in result.out, "the status counts the edited file", result.out)
+    result = ingest(root)
+    checks.ok(result and "1 restored" in result.out and read(a_file) == a_text and read(root / ".lokf" / "ingest.lock.yaml") == lock_text,
+              "the run writes the file again and changes no line of the lock", result.out)
 
 
 # 16. the mirror cap

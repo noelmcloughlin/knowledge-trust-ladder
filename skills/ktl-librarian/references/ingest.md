@@ -39,7 +39,7 @@ The manifest is one more source the sweep reads. Give the source map one row per
 
 `.lokf/ingest.lock.yaml` records a status per item, with `since` for one that went away. A confidential entry's items are recorded in `.lokf/.cache/ingest.lock.yaml` instead, beside its copies, unless the entry sets `lock_details: true`. `gone` means the source answered 404 or 410; `unlisted` means the selector no longer returns it. The file stays while a concept cites it. Re-verify each such concept. Delete it when nothing else carries its claim, or add a `question` when a person confirmed it, naming the mirror path and saying the source is gone, as you do for any gone source. Once no concept cites the file, the ingest's next scheduled run removes it with `--prune`, which you may also run yourself in a live session after the concepts are handled, and never unattended. Say in the hand-off how many files wait for that; the preflight's `ingest` line counts them.
 
-Never clear the mirror before a run. Every concept derived from it would read as a gone source, and the gate would fail each one. Refresh it with the ingest instead, which restores any file the disk has lost.
+Never clear the mirror before a run. Every concept derived from it would read as a gone source, and the gate would fail each one. Refresh it with the ingest instead, which restores any file the disk has lost or a hand edit changed.
 
 An entry a person took out of the manifest loses its folder on the ingest's next run, lock record included. The work list then names each concept that cited a file in it as one whose source is gone, and you handle it as above.
 
