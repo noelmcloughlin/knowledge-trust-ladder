@@ -28,6 +28,12 @@ fi
 test_root="$(mktemp -d)"
 trap 'rm -rf "$test_root"' EXIT
 
+# The installer metadata this source repo may already hold, ignored files
+# included: .gitignore ignores all three paths, so a plain status never sees
+# them. The last assertion compares this with the state after the install.
+metadata() { git -C "$repo_root" status --porcelain --ignored --untracked-files=all -- .agents .claude skills-lock.json 2>/dev/null; }
+metadata_before="$(metadata)"
+
 echo "Source:    $source_arg"
 echo "Test root: $test_root"
 
@@ -118,7 +124,7 @@ assert "ktl-website templates/github/knowledge-website.yaml carried along" "[[ -
 assert "the installed website preflight runs on the reader's repository and ends on its summary line" \
   "bash \"$website_dir/scripts/website-preflight.sh\" \"$test_root/reader\" 2>&1 | grep -qE '^Preflight: '"
 assert "no installer metadata leaked back into this source repo" \
-  "[[ -z \"\$(git -C \"\$repo_root\" status --porcelain --untracked-files=all -- .agents .claude skills-lock.json 2>/dev/null)\" ]]"
+  "[[ \"\$(metadata)\" == \"\$metadata_before\" ]]"
 
 echo ""
 if [[ "$fail" -eq 0 ]]; then
