@@ -4,14 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **A federation build exports a large member in seconds, not minutes.** While the lokf toolkit labels blank nodes with rdflib's canonicaliser, which is quadratic in them, `knowledge-federate.py` has its exports use pyoxigraph's RDFC-1.0, as proposed upstream in lokf pull request 187. Each `export/<slug>/graph.nt` changes its blank-node labels once.
-
-### Security
-
-- **The scheduled librarian writes the bundle on a runner the agent never shared.** A new `apply` job in `knowledge-librarian.yaml` runs the default branch's pen on the agent's patch file, with the toolkit `uv.lock` pins, validates the result and hands `publish` the patch. `refresh` hands on the patch file alone, since the agent could replace its `.venv` and change its checkout, and `knowledge-librarian.sh` copies the file out through `KNOWLEDGE_PATCH_OUT`.
-
 ## [0.64.0] - 2026-11-13
 
 ### Added
@@ -45,6 +37,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The skills release runs the contract and the tests in a read-only `verify` job.** The job that holds the write token runs neither. That job and `validate.yml` install the test packages by hash from `tests/requirements.txt`, compiled from `tests/requirements.in`.
 - **A librarian that is switched off skips every job, with no checkout or install each week.**
 - **A sync names a local edit it overwrote, rather than blaming the release, and names a host script no manifest line lists.**
+- **A federation build exports a large member in seconds, not minutes.** While the lokf toolkit labels blank nodes with rdflib's canonicaliser, which is quadratic in them, `knowledge-federate.py` has its exports use pyoxigraph's RDFC-1.0, as proposed upstream in lokf pull request 187. Each `export/<slug>/graph.nt` changes its blank-node labels once.
 
 ### Fixed
 
@@ -80,6 +73,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The gate and the report skip a folder whose name ends in `.md`.** They printed read errors or a traceback over it.
 - **The sync's check no longer reports a pass for the conventions it could not run without `uv`.**
 - **The librarian wrapper compares files by git object id.** A rewritten file of the same length can match a `cksum` checksum.
+
+### Security
+
+- **The scheduled librarian writes the bundle on a runner the agent never shared.** A new `apply` job in `knowledge-librarian.yaml` runs the default branch's pen on the agent's patch file, with the toolkit `uv.lock` pins, validates the result and hands `publish` the patch. `refresh` hands on the patch file alone, since the agent could replace its `.venv` and change its checkout, and `knowledge-librarian.sh` copies the file out through `KNOWLEDGE_PATCH_OUT`.
 
 ## [0.63.0] - 2026-11-12
 
