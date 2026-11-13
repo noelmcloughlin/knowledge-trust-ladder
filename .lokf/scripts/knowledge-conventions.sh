@@ -277,6 +277,29 @@ function flowvals(l, key, out,   n, v, q, j) {
   }
   return n
 }
+# A path as a diff header prints it, back to the path itself. Git puts a name
+# that holds a double quote, a backslash or a control character in double
+# quotes, with C escapes, and ends a name that holds a space with a tab.
+function gitname(s,  out, i, c, n) {
+  sub(/\t$/, "", s)
+  if (length(s) < 2 || substr(s, 1, 1) != "\"" || substr(s, length(s), 1) != "\"") return s
+  s = substr(s, 2, length(s) - 2); out = ""
+  for (i = 1; i <= length(s); i++) {
+    c = substr(s, i, 1)
+    if (c != "\\") { out = out c; continue }
+    c = substr(s, ++i, 1)
+    if (c == "t") out = out "\t"
+    else if (c == "n") out = out "\n"
+    else if (c == "r") out = out "\r"
+    else if (c == "a") out = out sprintf("%c", 7)
+    else if (c == "b") out = out sprintf("%c", 8)
+    else if (c == "f") out = out sprintf("%c", 12)
+    else if (c == "v") out = out sprintf("%c", 11)
+    else if (c ~ /[0-7]/) { n = c * 64 + substr(s, i + 1, 1) * 8 + substr(s, i + 2, 1); i += 2; out = out sprintf("%c", n) }
+    else out = out c
+  }
+  return out
+}
 /^\001/ { ct = substr($0, 2); next }
 /^\002/ { now = substr($0, 2); next }
 /^\003/ {
@@ -292,7 +315,7 @@ function flowvals(l, key, out,   n, v, q, j) {
   next
 }
 /^diff --git / { head = 1; cur = ""; next }
-head && /^\+\+\+ / { cur = substr($0, 5); sub(/^b\//, "", cur); next }
+head && /^\+\+\+ / { cur = gitname(substr($0, 5)); sub(/^b\//, "", cur); next }
 /^@@/ { head = 0; next }
 head { next }
 /^[+][ \t]*(- )?at:[ \t]/ { v = value($0); if (!((cur, v) in first)) first[cur, v] = ct; next }

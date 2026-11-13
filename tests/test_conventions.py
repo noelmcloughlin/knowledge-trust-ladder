@@ -870,6 +870,20 @@ def test_rules_6_and_11_read_an_event_written_as_a_flow_mapping(tmp_path):
         assert want in out, f"conventions script missed '{want}' in a flow event:\n{out}"
 
 
+def test_rule_11_finds_the_commit_of_a_path_git_quotes_or_ends_with_a_tab(tmp_path):
+    """The one walk took a path from its diff header as printed, so a folder with a space or a name git quotes lost the commit, and a time between it and now passed."""
+    git = Git(tmp_path)
+    git.init()
+    late = '---\ntype: Service\nid: https://example.invalid/k/x/{n}\nresource: https://example.invalid/a\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-09-18T00:00:00Z"\n---\n'
+    k = bundle_of(tmp_path / "my docs", {"late.md": late.format(n="late"), 'q"t.md': late.format(n="q")})
+    git("add", "-A")
+    git("commit", "-q", "-m", "stamp", env={"GIT_COMMITTER_DATE": "2026-09-17T00:00:00Z"})
+    out = bash(CONVENTIONS, k).out
+    for name in ("late.md", 'q"t.md'):
+        want = f'{name}: at "2026-09-18T00:00:00Z" is later than the commit that recorded it (2026-09-17T00:00:00Z)'
+        assert want in out, f"conventions script missed '{want}':\n{out}"
+
+
 def test_a_larger_bundle_asks_git_no_more_often(tmp_path):
     """The shell half once started about 24 processes a concept, a `git log -p` among them: 63 seconds at 2,000 concepts."""
     calls = []
