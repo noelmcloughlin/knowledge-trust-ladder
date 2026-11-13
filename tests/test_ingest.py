@@ -2429,7 +2429,7 @@ def test_behind_a_mirror_without_upload_times_the_ingest_lifts_the_date_round_by
     """The date is lifted for each package uv names, round by round, and for no other."""
     root = tmp_path / "repo"
     (root / ".lokf" / "knowledge").mkdir(parents=True)
-    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz", "pypdf-6.21.4-py3-none-any.whl", "typing_extensions-4.16.0-py3-none-any.whl")
+    path, log = mirror_uv(tmp_path, "PyYAML-6.0.3.tar.gz", "pypdf-7.0.1-py3-none-any.whl", "typing_extensions-4.16.0-py3-none-any.whl")
     result = run(["bash", INGEST, "--root", root], env={"PATH": path})
     assert "no manifest" in result.out, f"the ingest did not run behind the mirror: {result.out}"
     assert "exclude-newer is lifted for pyyaml pypdf typing-extensions." in result.out, f"the ingest did not name each package whose date it lifted: {result.out}"
