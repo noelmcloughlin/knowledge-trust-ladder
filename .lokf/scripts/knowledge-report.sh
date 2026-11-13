@@ -1089,6 +1089,7 @@ function asked_after(p, h,  i, c) {
   return 0
 }
 $1 == "C" { order[++nc] = $2; C[$2] = $0; next }
+$1 == "I" { MAIN[$2] = $5; next }
 $1 == "R" { if (!(($2, $3) in hasr)) { hasr[$2, $3] = 1; rs[$2, ++nr[$2]] = $3 } next }
 $1 == "Q" { k = ++nq[$2]; qd[$2, k] = $3; qa[$2, k] = $4; qt[$2, k] = $5; next }
 $1 == "ZW" { STATE[$2] = $3; HASH[$2] = ($4 == "-" ? "" : $4); DAY[$2] = $5; next }
@@ -1120,8 +1121,10 @@ END {
       if (which == "c") { if (hn == 0 || wasedited) continue; at = human; rv = hrev }
       rec = (at != "" ? first(p, at) : "")
       # The commit the event names as the state it checked, when this
-      # history holds it: a source changed after it moved, even when the
-      # stamp reached this branch later, in a squash merge.
+      # history holds it: the resource of the concept changed after it moved,
+      # even when the stamp reached this branch later, in a squash merge.
+      # The revision names the state of that resource alone, so each other
+      # source is compared with the commit that recorded the stamp.
       base = ""; if ((rv in VALID) && anc(VALID[rv], head)) base = VALID[rv]
       out = ""; asked = ""; aside = ""; nohist = ""
       for (i = 1; i <= m; i++) {
@@ -1130,7 +1133,7 @@ END {
         if (st == "gone") entry = r " (gone)"
         else if (st == "edited") { if (!dirty) out = add(out, r " (edited, not yet committed" quoted(p, r) ")") }
         else if (st == "clean") {
-          if (base != "") { if (h != rec && h != base && anc(base, h)) entry = r " (" DAY[r] quoted(p, r) ")" }
+          if (base != "" && r == MAIN[p]) { if (h != rec && h != base && anc(base, h)) entry = r " (" DAY[r] quoted(p, r) ")" }
           else if (rec != "" && h != rec && anc(rec, h)) entry = r " (" DAY[r] quoted(p, r) ")"
         }
         else if (st == "nohist" && which == "w") nohist = add(nohist, r)

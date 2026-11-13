@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+
+- **A confirmation's `revision` is compared with its concept's `resource` alone.** The curator pins the last commit of the resource, so every other source changed after that commit read as moved, even one the person was shown. Each other source is compared with the commit that recorded the confirmation again.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added
