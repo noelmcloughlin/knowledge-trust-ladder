@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **A federation build exports a large member in seconds, not minutes.** While the lokf toolkit labels blank nodes with rdflib's canonicaliser, which is quadratic in them, `knowledge-federate.py` has its exports use pyoxigraph's RDFC-1.0, as proposed upstream in lokf pull request 187. Each `export/<slug>/graph.nt` changes its blank-node labels once.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added
