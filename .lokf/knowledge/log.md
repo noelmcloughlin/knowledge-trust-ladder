@@ -2,6 +2,7 @@
 
 ## 2026-11-13
 
+* **Curation**: human:noelmcloughlin confirmed the ktl-sidecar skill again, after a change merged since their first confirmation today raised the python version its preflight warns on to 3.11.
 * **Curation**: human:noelmcloughlin confirmed 5 concepts, corrected 1, sent 6 back and left 2 for later. They cleared their notes on the ktl-curator skill, Knowledge sources and the ktl-sidecar skill. The same send-back came three times, on the pen retelling, the ktl-docent skill and the ktl-librarian skill: release numbers in user-facing prose are unnecessary, so the librarian's instructions should say to leave them out. Trust label went back because the pen wrote a person's `revision` without quotes.
 * **Changed**: the workspace swap is two renames, not one atomic step, as `docs/federation.md` now says.
 * **Changed**: the excerpt check moved from the designs still to do to what KTL does in a skills repository, as `docs/skills-repositories.md` now says. The footnoted claim now quotes its passage. Edited since a person confirmed it; the label says so until the curator looks again.
