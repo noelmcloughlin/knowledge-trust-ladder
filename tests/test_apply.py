@@ -1831,3 +1831,75 @@ def test_a_root_index_or_a_log_the_pen_cannot_read_is_a_finding_not_a_traceback(
 def applies_not(root, text):
     write(patch_file(root), text)
     return apply(root, patch_file(root))
+
+
+def quoting(excerpt):
+    """A patch that gives the draft one source with an excerpt."""
+    return lines(
+        "ops:",
+        "  - op: patch",
+        "    path: playbooks/draft.md",
+        "    set:",
+        "      sources:",
+        "        - resource: docs/limits.md",
+        f"          excerpt: {excerpt}",
+        '    log: "the draft quotes its source"',
+    )
+
+
+def test_the_pen_has_the_toolkit_look_for_an_excerpt_in_its_file(ka):
+    """The staged copy sits a folder below the bundle, so the pen names the root the gate's recipe finds."""
+    (ka / ".git").mkdir()
+    calls = recording_lokf(ka, "echo 'OK - 2 concepts validate against KnowledgeBundle. Every local excerpt is in its resource.'", 0)
+    result = applies(ka, quoting('"600 requests per minute"'))
+    args = read(calls).strip().partition(" ")[2]
+    assert f"--check-excerpts --root {ka.resolve()} " in args and "Every local excerpt is in its resource" in result.out, (
+        f"the pen did not ask for the excerpt check from the repository root, or did not say what it found: {args} // {result.out}"
+    )
+
+
+def test_a_patch_that_quotes_nothing_is_validated_without_the_excerpt_check(ka):
+    """A toolkit before lokf 0.9.0 does not take the flag, and a host on one writes no excerpt."""
+    calls = recording_lokf(ka, "echo OK", 0)
+    applies(ka, DRAFT_EDIT)
+    assert "--check-excerpts" not in read(calls), f"the pen passed the excerpt check with no excerpt to find: {read(calls)}"
+
+
+def test_an_excerpt_its_file_does_not_hold_writes_nothing(ka):
+    recording_lokf(ka, "echo \"[ERROR] https://acme.example/knowledge/playbooks/draft: \\`sources[0].excerpt\\` ('600 requests') is not in 'docs/limits.md'\" >&2", 1)
+    refuses(ka, quoting('"600 requests"'), "an excerpt its file does not hold", "is not in 'docs/limits.md'")
+
+
+def test_a_toolkit_without_the_excerpt_check_refuses_an_excerpt(ka):
+    """Its schema has no `excerpt` either, so the concept would fail the gate once written."""
+    recording_lokf(ka, "echo 'No such option: --check-excerpts' >&2", 2)
+    refuses(ka, quoting('"600 requests"'), "an excerpt under a toolkit before lokf 0.9.0", "older than lokf 0.9.0")
+
+
+def test_an_excerpt_is_a_passage_and_not_the_page(ka):
+    fake_lokf(ka, 0)
+    refuses(ka, quoting('"' + "word " * 101 + '"'), "an excerpt past the limit", "the pen writes at most 500")
+    refuses(ka, quoting('"   "'), "an excerpt with no text", "holds no text")
+    applies(ka, quoting('"' + "word " * 99 + '"'))
+
+
+def test_create_refuses_an_excerpt_past_the_limit(ka):
+    fake_lokf(ka, 0)
+    refuses(
+        ka,
+        lines(
+            "ops:",
+            "  - op: create",
+            "    path: playbooks/limits.md",
+            "    frontmatter:",
+            "      type: Playbook",
+            "      title: Limits",
+            "      description: The rate limit.",
+            "      sources:",
+            "        - resource: docs/limits.md",
+            '          excerpt: "' + "x" * 501 + '"',
+            '    body: "# Overview"',
+        ),
+        "a new concept whose excerpt is past the limit",
+        "the pen writes at most 500",
+    )

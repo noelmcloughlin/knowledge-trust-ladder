@@ -200,6 +200,14 @@ h1#_top,
   font-size: var(--sl-text-xs);
   overflow-wrap: anywhere;
 }
+/* The passage a concept quotes from a source, under that source. */
+.ktl-card__more blockquote.quote {
+  margin: 0.15rem 0 0.4rem;
+  padding: 0 0 0 0.7rem;
+  border-inline-start: 2px solid var(--sl-color-hairline);
+  color: var(--sl-color-gray-2);
+  font-size: var(--sl-text-sm);
+}
 .ktl-card__files {
   display: flex;
   flex-wrap: wrap;

@@ -19,6 +19,7 @@ KTL helps with the knowledge around a repository's skills, and leaves the skills
 - **It leaves other projects' skills out.** It derives no concept for an installed skill: one a `skills-lock.json` names, or a copy under `.agents/skills/` or `.claude/skills/` whose `SKILL.md` names another repository as its home. It asks a person about any other skill it finds in those folders, since a host may keep project skills of its own in `.claude/skills/`. It derives none for a vendored skill in a dependency, and a skill template gets no concept of its own.
 - **A skill's own deprecation is a fact, not a verdict.** When the repository deprecates a skill, the concept says so, with its source. `status: deprecated` stays the curator's verdict that a concept no longer holds.
 - **A weak description reaches a person.** When a reader's miss names a skill whose `description` does not mention what the reader asked, the librarian fixes the concept's description and names the skill in its hand-off to the reviewer. Only a person changes a `SKILL.md`.
+- **An edit to the passage a concept quotes is told from an edit elsewhere.** A concept may quote a line of `SKILL.md` as an excerpt. When the file changes elsewhere, the librarian's work list reads *the quoted passage holds*. When that line changes, `just lokf-check-refs` fails and names the concept.
 - **The threat model names the case.** In a skills repository every source is a set of instructions for an agent. The librarian reads each as data and writes only through the pen, and only the person reviewing a pull request catches an instruction that shapes what a concept says ([threat model](threat-model.md)).
 
 ## What two runs showed
@@ -42,7 +43,6 @@ These are designs, not features. Each would extend KTL's checks from what the bu
 - **An `AgentSkill` class in a domain vocabulary.** A LinkML class for the six Agent Skills frontmatter fields would let `lokf validate` check a skill's concept against them, and let the docent tell a skill's concept from a how-to.
 - **OKF's attested computation for a skill's scripts.** LOKF's `AttestedComputation` is a sanctioned recipe whose run returns a receipt that an attester compares with it. A skill's deterministic scripts could be described that way.
 - **A place for a fault in the host's own text.** The docent found a guide that names a script without its file extension. Its feedback records gaps in the bundle, so it had nowhere to record a fault in a skill.
-- **The excerpt check.** The `sources[].excerpt` field, from lokf 0.9.0, lets a program check the passage a concept relies on, as `lokf validate --check-excerpts` does. The work list could then tell an edit to that passage from an edit elsewhere in the skill's file.
 
 ## Sources
 

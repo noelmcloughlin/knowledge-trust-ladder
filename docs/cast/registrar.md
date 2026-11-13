@@ -16,8 +16,8 @@ The **registrar** keeps the records in order, as a museum's registrar keeps its 
 
 | Part | Where it works | What it does |
 | --- | --- | --- |
-| `lokf validate` | on every change, and again in continuous integration (CI) | Checks each concept's frontmatter against the schema, and that every typed relation points at a concept that exists |
-| `knowledge-apply.sh`, *the pen* | at the librarian's desk | Applies the librarian's patch, and is the only way the librarian writes the bundle. It refuses an operation that would fake or change a person's record |
+| `lokf validate` | on every change, and again in continuous integration (CI) | Checks each concept's frontmatter against the schema, that every typed relation points at a concept that exists, and that every excerpt is in the file it quotes |
+| `knowledge-apply.sh`, *the pen* | at the librarian's desk | Applies the librarian's patch, and is the only way the librarian writes the bundle. It refuses an operation that would fake or change a person's record, and an excerpt its file does not hold |
 | `knowledge-report.sh` | at the reader's desk and the curator's | Computes every trust label and the bundle's health line, so that neither is a model's arithmetic |
 | `knowledge-registrar.yaml`, *the gate* | on each pull request that touches the bundle | Runs `lokf validate`, the conventions script and the `provenance` job. That job ties each confirmation that is added or removed to that person's approval or signed commit |
 | `knowledge-provenance.sh` | on another forge, or none | Checks each confirmation's signature against the keys under `.lokf/curators/` |

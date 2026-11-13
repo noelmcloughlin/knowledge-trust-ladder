@@ -65,6 +65,17 @@
 # actor. An agent may propose a retirement, but the retired concept governs
 # until a person confirms its successor.
 #
+# The work list also reads each `sources[].excerpt`, the passage a concept
+# quotes from a source. A source moves with every edit to its file, and most
+# edits leave the quoted passage alone, so the list says of each moved source
+# a concept quotes whether the file still holds the passage. It lists each
+# excerpt its file no longer holds first, as the claims whose ground changed,
+# and counts the footnoted sources that carry no excerpt yet. The lokf
+# toolkit in .lokf/.venv finds the passages, by the rule the gate's
+# `lokf validate --check-excerpts` applies, and this script never looks for
+# one itself. With no toolkit there the list says the excerpts were not
+# checked. No other form runs the toolkit.
+#
 # One fact comes from git and not from frontmatter, so a host without git is
 # told it was not computed: whether a source "moved" after an event. The
 # event is the later of `generated.at` and the newest `verified` event for
@@ -322,6 +333,8 @@ trap 'rm -rf "$tmp"' EXIT
 #      the revision that human event carries, a commit hash cut to seven characters
 #   R  path  resource            one per `resource:` line, the concept's own and each source's
 #   X  path  resource            one per exclusion's `resource:` line, which no R line repeats
+#   E  path  index  resource     one per `sources` entry that carries an `excerpt`, with its place in the list from 0
+#   F  path  resource            one per `sources` entry that carries an `id`, a footnote's label, and no `excerpt`
 #   Q  path  date  actor  text   one per bullet under ## Open questions
 #   V  path  type  status  stale_after  resource  event  by  at  revision  check
 #                                one per row of `evidence`, and only when `rows` is set
@@ -419,6 +432,27 @@ function rkv(l,  k, v) { k = l; sub(/:.*/, "", k); sub(/^[ \t]+/, "", k); v = l;
   if (k == "predicate") rp = unq(v); else if (k == "target") rt = v }
 function rflow(s,  n, parts, i) { rflush(); gsub(/[{}]/, "", s); n = split(s, parts, ","); for (i = 1; i <= n; i++) rkv(parts[i]); rflush() }
 function relend() { if (inrels) rflush(); inrels = 0; rel = "" }
+# One entry of `sources` ends: an E line when it quotes its resource, an F
+# line when a footnote cites it and it quotes nothing.
+function sflush() {
+  if (sres != "" && shas) print "E\t" path "\t" sidx "\t" sres
+  else if (sres != "" && sid) print "F\t" path "\t" sres
+  sres = ""; shas = 0; sid = 0
+}
+# One line under `sources`. A dash to the left of the keys of an entry opens
+# the next entry, and a key counts only at the column where the first key of
+# its entry stands, so a line of a block scalar is never read as a key.
+function sline(l,  col, c2, rest, m, key) {
+  col = match(l, /[^ \t]/); if (!col) return
+  c2 = substr(l, col + 1, 1); key = ""
+  if (substr(l, col, 1) == "-" && (c2 == "" || c2 == " " || c2 == "\t") && (sidx < 0 || kcol == 0 || col < kcol)) {
+    sflush(); sidx++; rest = substr(l, col + 1); m = match(rest, /[^ \t]/); kcol = (m ? col + m : 0); if (m) key = substr(rest, m)
+  } else if (sidx < 0 || kcol == 0) { if (sidx < 0) sidx = 0; kcol = col; key = substr(l, col) }
+  else if (col == kcol) key = substr(l, col)
+  if (key ~ /^excerpt:/) shas = 1
+  else if (key ~ /^id:/) sid = 1
+  else if (key ~ /^resource:[ \t]*[^ \t]/) { sub(/^resource:/, "", key); sres = unq(key); skey = 1 }
+}
 function mention(f, l,  n, items, i, w) { sub(/^[ \t]*(-[ \t]+)*/, "", l)
   if (l ~ /^[A-Za-z_][A-Za-z0-9_-]*:$/) return
   if (l ~ /^[A-Za-z_][A-Za-z0-9_-]*:[ \t]/) sub(/^[^:]*:[ \t]*/, "", l)
@@ -427,10 +461,11 @@ function mention(f, l,  n, items, i, w) { sub(/^[ \t]*(-[ \t]+)*/, "", l)
 BEGIN { split("isPartOf hasPart references dependsOn derivedFrom about sameAs relatedTo definedBy source measures memberOf holder isReplacedBy", relnames, " "); split("id type title description resource sources exclusions distribution endpoint documentation license author publisher generated verified status base_iri context stale_after timestamp genre definition version", notlink, " "); for (j in notlink) NOTLINK[notlink[j]] = 1; for (j in relnames) RELF[relnames[j]] = 1; BOM = sprintf("%c%c%c", 239, 187, 191) }
 { sub(/\r$/, "") }
 NR == 1 { if (substr($0, 1, 3) == BOM) $0 = substr($0, 4); if ($0 == "---") { fm = 1; started = 1; next } else exit }
-fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); inv = 0; fm = 0; body = 1; next }
+fm && $0 == "---" { if (inflow) flushflow(); emit(); relend(); if (top == "sources") sflush(); inv = 0; fm = 0; body = 1; next }
 fm {
   if (inflow) { flowbuf = flowbuf " " $0; if (index($0, flowseq ? "]" : "}")) flushflow(); next }
-  if ($0 ~ /^[A-Za-z_][A-Za-z0-9_-]*:/) { top = $0; sub(/:.*/, "", top) }
+  if ($0 ~ /^[A-Za-z_][A-Za-z0-9_-]*:/) { if (top == "sources") sflush(); top = $0; sub(/:.*/, "", top); if (top == "sources") { sidx = -1; kcol = 0 } }
+  else if (top == "sources") { skey = 0; sline($0) }
   if ($0 ~ /^title:/) title = val($0)
   else if ($0 ~ /^status:/) status = val($0)
   else if ($0 ~ /^stale_after:/) stale = val($0)
@@ -439,7 +474,9 @@ fm {
   else if ($0 ~ /^type:/) ctype = val($0)
   # A resource under `exclusions` is a material left out on purpose, never a
   # source, so it comes out as an X line and never stands for the concept.
-  if ($0 ~ /^[ \t]*(- )?resource:[ \t]*[^ \t]/) {
+  # Under `sources` a line counts only where sline read it as an entry key,
+  # so a quoted passage that happens to say `resource:` names no source.
+  if ($0 ~ /^[ \t]*(- )?resource:[ \t]*[^ \t]/ && (top != "sources" || skey)) {
     r = $0; sub(/^[ \t]*(- )?resource:/, "", r); r = unq(r)
     if (r != "" && top == "exclusions" && $0 !~ /^resource:/) print "X\t" path "\t" r
     else if (r != "") { print "R\t" path "\t" r; if ($0 ~ /^resource:/) topres = r; else if (firstres == "") firstres = r }
@@ -685,6 +722,61 @@ asked_since() {  # <gone|clean> <the source's last commit, or empty> <the source
 # source the librarian's own question covers goes to `M a path list`, and one
 # a closed pull request had before it to a `D` line, as the header says. A
 # URL is never fetched.
+# ---- the passages a concept quotes ---------------------------------------------
+# The work list asks the lokf toolkit which excerpts their files no longer
+# hold. It asks only when a concept carries one, and only the toolkit in
+# .lokf/.venv, which needs no network, with the domain vocabulary the
+# justfile names, as the gate's recipe runs it. The toolkit names a failing
+# excerpt by the concept's IRI and the entry's place in `sources`. The I and
+# E lines turn those into the concept's path and the resource. An IRI is
+# matched to a concept by its `id`, else by the path it ends in.
+#
+# The verdict is taken only from what the toolkit says of excerpts: its
+# closing line, or a finding that names one. A run that says neither, as a
+# toolkit before lokf 0.9.0 or a bundle the schema rejects outright gives,
+# leaves `quote_state` saying the excerpts were not checked, and nothing is
+# said to hold. A file left unchecked for its size is read as holding its
+# passage, since nothing says it does not.
+quote_state=""
+quotes_load() {
+  local exe schema="" dir out
+  printf '%s\n' "$all" | awk -F'\t' '$1 == "E" { print $2 "\t" $3 "\t" $4 }' > "$tmp/quoted"
+  : > "$tmp/quote_gone"
+  [ -s "$tmp/quoted" ] || return 0
+  exe="$root/.lokf/.venv/bin/lokf"; [ -x "$exe" ] || exe="$root/.lokf/.venv/Scripts/lokf.exe"
+  if [ ! -x "$exe" ]; then quote_state="not checked here, since .lokf/.venv holds no lokf toolkit: run uv sync in .lokf/, then just lokf-check-refs"; return 0; fi
+  [ ! -f "$root/.lokf/justfile" ] || IFS= read -r schema < <(sed -n 's/^schema := "\(.*\)"$/\1/p' "$root/.lokf/justfile") || true
+  if [ -n "$schema" ] && dir="$(cd "$root/.lokf" 2>/dev/null && cd "$(dirname "$schema")" 2>/dev/null && pwd)"; then
+    out="$(cd "$dir" && "$exe" validate --schema "$(basename "$schema")" --check-excerpts "$bundle" 2>&1 || true)"
+  else
+    out="$(cd "$root/.lokf" && "$exe" validate --check-excerpts "$bundle" 2>&1 || true)"
+  fi
+  printf '%s\n' "$out" | awk '
+    /^\[ERROR\] / && match($0, /: `sources\[[0-9]+\]\.excerpt` /) {
+      iri = substr($0, 9, RSTART - 9); n = substr($0, RSTART, RLENGTH); gsub(/[^0-9]/, "", n); print iri "\t" n }' > "$tmp/quote_iris"
+  if [ ! -s "$tmp/quote_iris" ] && ! printf '%s\n' "$out" | grep -qE '(Every local excerpt|No local excerpt|[0-9]+ local excerpts? checked)'; then
+    quote_state="not checked here, since lokf validate gave no verdict on them: run just lokf-check-refs"; return 0
+  fi
+  quote_state=checked
+  { printf '%s\n' "$all"; cat "$tmp/quote_iris"; } | awk -F'\t' '
+    $1 == "I" { byid[$3] = $2; stem = $2; sub(/\.md$/, "", stem); stems[$2] = stem; next }
+    $1 == "E" { res[$2, $3] = $4; next }
+    NF == 2 && $1 !~ /^[A-Z]$/ {
+      p = ($1 in byid) ? byid[$1] : ""
+      if (p == "") for (c in stems) { t = "/" stems[c]; if (length($1) >= length(t) && substr($1, length($1) - length(t) + 1) == t && length(c) > length(p)) p = c }
+      if (p != "" && (p, $2) in res) print p "\t" res[p, $2]
+    }' | LC_ALL=C sort -u > "$tmp/quote_gone"
+}
+# What the toolkit found of the passage a concept quotes from one resource, as
+# the words a work-list entry ends in, or nothing when the concept quotes
+# nothing from it or the excerpts were not checked.
+quoted_note() {  # <concept path> <resource>
+  [ "$quote_state" = checked ] || return 0
+  awk -F'\t' -v p="$1" -v r="$2" '$1 == p && $3 == r { f = 1 } END { exit !f }' "$tmp/quoted" || return 0
+  if awk -F'\t' -v p="$1" -v r="$2" '$1 == p && $2 == r { f = 1 } END { exit !f }' "$tmp/quote_gone"; then printf ', the quoted passage is gone'
+  else printf ', the quoted passage holds'; fi
+}
+
 moved() {
   [ "$tracked" = 1 ] || return 0
   local src="$tmp/sources" res p line path ref human hn cdirty which at rec out state hash day entry asked aside dec qc qdone spec
@@ -726,10 +818,10 @@ moved() {
         entry=""
         case "$state" in
           gone)   entry="$res (gone)" ;;
-          edited) [ "$cdirty" = 1 ] || out="${out}${out:+, }$res (edited, not yet committed)" ;;
+          edited) [ "$cdirty" = 1 ] || out="${out}${out:+, }$res (edited, not yet committed$(quoted_note "$path" "$res"))" ;;
           clean)
             if [ -n "$rec" ] && [ "$hash" != "$rec" ] && git -C "$root" merge-base --is-ancestor "$rec" "$hash" 2>/dev/null; then
-              entry="$res ($day)"
+              entry="$res ($day$(quoted_note "$path" "$res"))"
             fi ;;
         esac
         [ -n "$entry" ] || continue
@@ -904,6 +996,10 @@ lists() {  # mode
   $1 == "C" { order[++nc] = $2; status[$2] = $4; human[$2] = $8; if ($4 != "deprecated" && $7 == "" && $11 == "") bare_stamp[$2] = 1 }
   $1 == "D" && $2 == "stamp" { k = $3; sub(/: no stamp yet$/, "", k); left_stamp[k] = 1 }
   $1 == "M" { moved[$2, $3] = $4 }
+  $1 == "E" { quoting = 1 }
+  $1 == "F" { if (!($2 in bare)) barepaths[++nbare] = $2; bare[$2] = bare[$2] (bare[$2] == "" ? "" : ", ") $3; nf++ }
+  $1 == "G" { if (!($2 in gone)) gonepaths[++ngp] = $2; gone[$2] = gone[$2] (gone[$2] == "" ? "" : ", ") $3; ng++ }
+  $1 == "N" { quotes = $2 }
   $1 == "D" { declined[++ndec] = "- " $3 "; pull request #" $4 ", closed " $5 }
   $1 == "Q" { q[++nq] = $0 }
   function answered(p, d) { return status[p] != "draft" && human[p] != "" && d <= day(human[p]) }
@@ -928,6 +1024,12 @@ lists() {  # mode
       else print "Sources against confirmations: not compared here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/)"
     }
     if (mode == "worklist") {
+      # A passage its file no longer holds comes first: the claim that rests
+      # on it lost its ground, whatever else moved.
+      if (quoting && quotes == "checked") {
+        for (i = 1; i <= ngp; i++) gbody = gbody "- " gonepaths[i] ": " gone[gonepaths[i]] "\n"
+        section("Excerpts their file no longer holds, each a claim whose ground changed", ng, gbody)
+      } else if (quoting) print "Excerpts: " quotes
       for (i = 1; i <= nc; i++) { p = order[i]; if (("w", p) in moved) { n++; body = body "- " p ": " moved["w", p] "\n" } }
       if (git == 1) section("Sources that moved since the concept was derived or last checked", n, body)
       else print "Sources: not compared here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/); re-verify each concept against its source"
@@ -937,6 +1039,8 @@ lists() {  # mode
       # is told which they are.
       for (i = 1; i <= nc; i++) { p = order[i]; if ((p in bare_stamp) && !(p in left_stamp)) { ns++; sbody = sbody "- " p ": no stamp\n" } }
       section("Concepts with no stamp, neither derived by the pen nor checked", ns, sbody)
+      for (i = 1; i <= nbare; i++) fbody = fbody "- " barepaths[i] ": " bare[barepaths[i]] "\n"
+      section("Footnoted sources that carry no excerpt", nf, fbody)
       section("Notes a person left that still wait", nw, w)
       section("Your own open questions", no, o)
       section("Open questions older than a person'"'"'s later confirmation", na, a)
@@ -1594,7 +1698,9 @@ case "$cmd" in
   worklist)
     [ $# -eq 0 ] || usage
     declined_load
+    quotes_load
     times="$(moved)"
+    [ -z "$quote_state" ] || times="$times"$'\n'"$(printf 'N\t%s\n' "$quote_state"; awk -F'\t' '{ print "G\t" $1 "\t" $2 }' "$tmp/quote_gone")"
     # The notes are looked up in history only when a closed pull request could
     # have had one before it, so a work list with no such record costs no more.
     if [ -s "$tmp/touched" ] || [ -s "$tmp/added" ] || [ -s "$tmp/handled" ]; then
