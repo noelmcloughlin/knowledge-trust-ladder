@@ -833,6 +833,24 @@ def test_a_confluence_selection_is_listed_fetched_and_kept_current(tmp_path, ser
     checks.ok("124" not in lock_of(root)["entries"]["runbooks"]["items"], "and so is its lock record")
 
 
+def test_a_changed_header_setting_reaches_a_page_that_did_not_change(tmp_path, server, checks):
+    """authors: false or a new license reached a page only when its source next changed, so account ids stayed in the headers and the lock."""
+    confluence_routes(server, False, {"123": {"title": "Deploy", "version": 1, "storage": "<p>Deploy.</p>"}})
+    manifest = confluence_manifest(server, False)
+    root = host(tmp_path, manifest)
+    ingest(root, "--visibility", "private")
+    path = root / ".lokf" / "mirror" / "runbooks" / "123.md"
+    checks.ok("author: 5b10ac8d" in read(path) and lock_of(root)["entries"]["runbooks"]["items"]["123"].get("author") == "5b10ac8d", "the author is recorded")
+    manifest["entries"][0].update(authors=False, license="https://acme.example/terms")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
+    result = ingest(root, "--visibility", "private")
+    text = read(path)
+    checks.ok(result and "1 fetched" in result.out and "author:" not in text and "license: https://acme.example/terms" in text
+              and "author" not in lock_of(root)["entries"]["runbooks"]["items"]["123"], "the next run writes the page again without the author", result.out + text)
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "1 unchanged" in result.out, "and the run after that fetches nothing", result.out)
+
+
 def test_a_selection_over_max_items_is_refused_whole(tmp_path, server, checks):
     pages = {str(n): {"title": f"Page {n}", "version": 1, "storage": "<p>x</p>"} for n in range(100, 104)}
     confluence_routes(server, True, pages)

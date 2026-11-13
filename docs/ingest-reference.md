@@ -100,7 +100,7 @@ The lock, `.lokf/ingest.lock.yaml`, records the same per item, with one of these
 - `refused`, with the reason;
 - `skipped` for a binary file that a `git` entry's include matches.
 
-The mirror and the lock change only when content changes.
+The mirror and the lock change only when content changes, or when the entry's `authors`, `license` or `convert` changes. The entry's record keeps a digest of those three, and when it differs the next run fetches and writes every item again.
 
 ## Sensitivity
 

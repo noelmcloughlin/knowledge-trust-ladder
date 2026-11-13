@@ -2167,6 +2167,12 @@ def cache_exposed(root: Path) -> str:
     return ""
 
 
+def settings_digest(entry: Entry) -> str:
+    """A digest of the entry's settings that shape a mirror file besides its source: its header and its conversion."""
+    shaping = {"authors": entry.authors, "license": entry.license, "convert": entry.convert}
+    return "sha256:" + sha256_hex(json.dumps(shaping, sort_keys=True).encode("utf-8"))[:16]
+
+
 def mirror_header(entry: Entry, record: dict, converted_by: str) -> str:
     """The header a mirror file opens with, from the item's lock record."""
     fm = {"origin": record.get("origin", ""), "title": record.get("title", ""), "ingest": entry.id, "kind": entry.kind,
@@ -2337,6 +2343,15 @@ class Run:
         # kind as if new, so it is fetched again instead of skipped as unchanged.
         lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not (self.root / was["path"]).is_file()}
         present = {i: was for i, was in prior.items() if i not in lost}
+        # A file's header and its Markdown follow the entry's settings too. When
+        # they changed since the files were written, every item is fetched and
+        # written again, so that authors: false, say, reaches a page that has
+        # not changed. A record from before the digest was kept takes it as it is.
+        settings = settings_digest(entry)
+        stored = [(lock["entries"].get(entry.id) or {}).get("settings") for lock in (book, other)]
+        stored = next((d for d in stored if d), "")
+        if stored and stored != settings:
+            present = {}
         failure = None
         try:
             if entry.kind == "confluence":
@@ -2374,6 +2389,10 @@ class Run:
             return
         record["status"] = "ok"
         record.pop("reason", None)
+        # Items the time limit left were written under the old settings, so
+        # the old digest stays until a run reaches every item.
+        if not self.ctx.left.get(entry.id):
+            record["settings"] = settings
         new_items: dict = {}
         skipped: list[tuple[str, str]] = []
         total = self.total_mirror_size() - self.entry_mirror_size(self.records(entry))
