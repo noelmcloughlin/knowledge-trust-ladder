@@ -122,9 +122,16 @@ const checker = lastCheck && actor(lastCheck.by);
           <dt>Sources</dt>
           <dd>
             <ul>
-              {concept.sources.map((s: { text: string; href: string; quote?: string }) => (
+              {concept.sources.map((s: { text: string; href: string; quote?: string; mirror?: { origin: string; href?: string; version?: string; retrieved?: string } }) => (
                 <li>
                   <a href={s.href}><code>{s.text}</code></a>
+                  {s.mirror && (
+                    <p class="mirror">
+                      A copy of {s.mirror.href ? <a href={s.mirror.href}>{s.mirror.origin}</a> : <code>{s.mirror.origin}</code>}
+                      {s.mirror.version && <>, version <code>{s.mirror.version}</code></>}
+                      {s.mirror.retrieved && <>, fetched {s.mirror.retrieved}</>}.
+                    </p>
+                  )}
                   {s.quote && <blockquote class="quote" title="The passage this concept quotes from the source">{s.quote}</blockquote>}
                 </li>
               ))}

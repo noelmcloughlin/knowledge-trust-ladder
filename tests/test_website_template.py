@@ -536,6 +536,38 @@ def test_a_check_written_as_one_mapping_is_read_from_the_concept_s_json_ld():
     assert 'verified: verified.filter((e) => e && typeof e === "object").map(event),' in source
 
 
+@pytest.mark.skipif(not have("node"), reason="node is not installed")
+def test_a_mirrored_source_shows_its_origin_version_and_day_from_the_committed_lock(tmp_path):
+    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
+    lock = {
+        "ingest_lock_version": "1",
+        "entries": {
+            "vendor": {"items": {
+                "api": {"path": ".lokf/mirror/vendor/api.md", "origin": "https://vendor.example/api", "version": 4, "retrieved_at": "2026-03-04T05:06:07Z", "status": "ok"},
+                "cmd": {"path": ".lokf/mirror/vendor/cmd.md", "origin": "tools/list.sh", "retrieved_at": "2026-03-05T00:00:00Z", "status": "ok"},
+                "odd": {"path": "README.md", "origin": "https://elsewhere.example/"},
+            }},
+            "secret": {"status": "ok"},
+        },
+    }
+    write(tmp_path / ".lokf" / "ingest.lock.yaml", json.dumps(lock))
+    write(tmp_path / ".lokf" / ".cache" / "ingest.lock.yaml", json.dumps({"entries": {"x": {"items": {"y": {"path": ".lokf/.cache/mirror/x/y.md", "origin": "https://secret.example/"}}}}}))
+    script = write(
+        tmp_path / "check.mjs",
+        "import { existsSync, readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n"
+        f"const REPO_ROOT = {json.dumps(str(tmp_path))};\nconst read = (p) => readFileSync(p, 'utf8');\nconst parseYaml = JSON.parse;\n"
+        + sliced(source, "function readMirrorRecords", "function buildConcepts")
+        + "\nconsole.log(JSON.stringify(Object.fromEntries(readMirrorRecords())));\n",
+    )
+    got = json.loads(run(["node", script], stdout_only=True).out)
+    assert got == {
+        ".lokf/mirror/vendor/api.md": {"origin": "https://vendor.example/api", "href": "https://vendor.example/api", "version": "4", "retrieved": "2026-03-04"},
+        ".lokf/mirror/vendor/cmd.md": {"origin": "tools/list.sh", "retrieved": "2026-03-05"},
+    }, got
+    card = read(SITE_TEMPLATES / "src" / "components" / "ConceptCard.astro")
+    assert "{s.mirror.href ? <a href={s.mirror.href}>{s.mirror.origin}</a> : <code>{s.mirror.origin}</code>}" in card
+
+
 def test_each_group_of_the_bundle_is_a_sidebar_topic_of_its_own():
     """A sidebar of the whole bundle on every concept page made the site grow with the square of the bundle."""
     config = read(SITE_TEMPLATES / "astro.config.mjs")

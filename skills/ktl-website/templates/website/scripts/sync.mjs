@@ -446,8 +446,41 @@ const licenceMd = (value) => {
 const scriptSafe = (doc) =>
   JSON.stringify(doc).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
 
+/**
+ * What the ingest's committed lock records of each mirror file, by its path
+ * in the repository: where it came from, the source's version and the day it
+ * was fetched. The confidential cache's lock is never read, so no record kept
+ * out of git reaches the site.
+ */
+function readMirrorRecords() {
+  const records = new Map();
+  const file = resolve(REPO_ROOT, ".lokf", "ingest.lock.yaml");
+  if (!existsSync(file)) return records;
+  let lock;
+  try {
+    lock = parseYaml(read(file));
+  } catch {
+    return records;
+  }
+  for (const entry of Object.values(lock?.entries ?? {})) {
+    for (const item of Object.values(entry?.items ?? {})) {
+      if (typeof item?.path !== "string" || !item.path.startsWith(".lokf/mirror/")) continue;
+      const origin = typeof item.origin === "string" ? item.origin : "";
+      if (!origin) continue;
+      records.set(item.path, {
+        origin,
+        ...(/^https?:\/\//.test(origin) ? { href: origin } : {}),
+        ...(item.version !== undefined && item.version !== null && item.version !== "" ? { version: String(item.version) } : {}),
+        ...(item.retrieved_at ? { retrieved: String(item.retrieved_at).slice(0, 10) } : {}),
+      });
+    }
+  }
+  return records;
+}
+
 function buildConcepts(exported, labels) {
   const context = exported.jsonld["@context"];
+  const mirrored = readMirrorRecords();
   const docs = new Map(exported.jsonld["@graph"].map((d) => [d.id ?? d["@id"], d]));
   const nodes = new Map(exported.graph.nodes.map((n) => [n.data.id, n.data]));
   const edges = exported.graph.edges.map((e) => e.data);
@@ -522,7 +555,10 @@ function buildConcepts(exported, labels) {
         // The schema's pages are built, never committed, so a source among
         // them links its page on this site.
         if (SCHEMA && (path === SCHEMA.dir || path.startsWith(`${SCHEMA.dir}/`))) return { text: s, href: route(path), ...quoted };
-        return { text: s, href: githubFile(path), ...quoted };
+        // A copy the ingest mirrored names where it came from, the source's
+        // version and the day it was fetched, from the ingest's lock.
+        const mirror = mirrored.get(path);
+        return { text: s, href: githubFile(path), ...quoted, ...(mirror ? { mirror } : {}) };
       }),
       relations: [...out].map(([name, targets]) => ({
         name,

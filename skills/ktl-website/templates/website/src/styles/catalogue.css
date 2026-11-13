@@ -201,6 +201,13 @@ h1#_top,
   overflow-wrap: anywhere;
 }
 /* The passage a concept quotes from a source, under that source. */
+.ktl-card__more p.mirror {
+  margin: 0.1rem 0 0.3rem;
+  color: var(--sl-color-gray-2);
+  font-size: var(--sl-text-sm);
+  overflow-wrap: anywhere;
+}
+
 /* A group of the bundle is a topic of its own, listed under the bundle's. */
 .starlight-sidebar-topics a.ktl-topic-group {
   padding-inline-start: 2.6rem;
