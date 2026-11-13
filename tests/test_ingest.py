@@ -70,7 +70,7 @@ and pin:
     and a large file is refused;
 15. an entry that leaves the manifest takes its folder with it, and no run
     removes or writes a file outside the mirror. A file lost or edited by
-    hand is written again;
+    hand, or recorded before the lock kept its digest, is written again;
 16. the mirror cap refuses the item that would pass it;
 17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no
     other, and a source not fetched or a run cut short is a warning on the run.
@@ -2143,6 +2143,14 @@ def test_a_mirror_file_edited_by_hand_is_noticed_and_written_again(tmp_path, ser
     result = ingest(root)
     checks.ok(result and "1 restored" in result.out and read(a_file) == a_text and read(root / ".lokf" / "ingest.lock.yaml") == lock_text,
               "the run writes the file again and changes no line of the lock", result.out)
+    # A record from before the digest was kept is written again the same way.
+    lock = lock_of(root)
+    del lock["entries"]["a"]["items"][next(iter(lock["entries"]["a"]["items"]))]["mirror_sha256"]
+    write(root / ".lokf" / "ingest.lock.yaml", yaml.safe_dump(lock))
+    result = ingest(root, "--status")
+    checks.ok(result and "1 written before the lock kept their digest, which a run writes again" in result.out, "the status counts a file from before the digest", result.out)
+    result = ingest(root)
+    checks.ok(result and "1 restored" in result.out and lock_of(root) == yaml.safe_load(lock_text), "the run writes it again, and the lock holds the digest once more", result.out)
 
 
 # 16. the mirror cap

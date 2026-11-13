@@ -9,7 +9,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`knowledge-apply.sh --dry-run --diff` shows each change as a unified diff before anything is written.**
 - **The whole report prints vocabulary fit and the confirmations not tied to a signed commit.** The curator reads both lines from the report instead of working them out by hand. A confirmation no commit added, as one a merge wrote, is listed with a note.
 - **`knowledge-conventions.sh --strict` fails when it could not check a rule.** Every workflow passes it.
-- **The ingest lock records the digest of each mirror file, and a run writes a hand-edited file again.** `--status` counts edited files.
+- **The ingest lock records the digest of each mirror file, and a run writes a hand-edited file again.** `--status` counts edited files. A record from before the digest is written again the same way, so the mirror is rewritten once after the upgrade.
 - **A source mirrored by the ingest shows its origin, version and fetch day on the concept page.**
 
 ### Changed
