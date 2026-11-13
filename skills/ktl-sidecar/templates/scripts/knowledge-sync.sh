@@ -23,6 +23,9 @@
 #     never had in two cases only: ktl-sidecar installs it on every host, or
 #     a file the host carries needs it. Any other is reported, not added:
 #     that is ktl-sidecar's Step 5, a decision for the host;
+#   - reports a copy that differed from its template at the old pin as a
+#     local edit it overwrote, not as the release's change, and names a
+#     host script or workflow that no line of the manifest lists;
 #   - moves the pin to the tag and the commit it names;
 #   - writes the changelog entry under "## [Unreleased]" and "### Security",
 #     so no release goes out with the entry missing or mistyped;
@@ -380,19 +383,20 @@ main() {
   done < <(git -C "$source" show "$tag:$templates/$manifest")
   [[ ${#pairs[@]} -gt 0 ]] || die "$tag's $manifest lists nothing to sync"
 
-  at_tag() { git -C "$source" show "$tag:$templates/$1"; }
-  # The template as the host should carry it: <template> <host copy>.
+  # A template at a release, by default the tag being synced: <template> [<ref>].
+  at_tag() { git -C "$source" show "${2:-$tag}:$templates/$1"; }
+  # The template as the host should carry it: <template> <host copy> [<ref>].
   rendered() {
     local t
     for t in ${titled[@]+"${titled[@]}"}; do
       if [[ "$t" == "$1" ]]; then
         head -n 1 "$2"
-        at_tag "$1" | tail -n +2 | OWN="$(grep -m 1 '^schema := ' "$2" || true)" \
+        at_tag "$1" "${3:-}" | tail -n +2 | OWN="$(grep -m 1 '^schema := ' "$2" || true)" \
           awk '/^schema := / && ENVIRON["OWN"] != "" { print ENVIRON["OWN"]; next } { print }'
         return
       fi
     done
-    at_tag "$1"
+    at_tag "$1" "${3:-}"
   }
   # Why the host needs a template it never installed, or nothing when it
   # does not: <template>.
@@ -451,7 +455,26 @@ main() {
     old_pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' "$wf" | head -1 | sed 's/^TRUST_LADDER_SKILLS_REF: //' || true)"
   fi
 
-  local copied=() same=() added=() absent=() pins_only=() pair src dst why want
+  # The release the host pins today, read from the source, so that a copy
+  # that differs from its template there is known for a local edit and not
+  # blamed on the release. The old tag is fetched into the clone this script
+  # made, which is shallow. A clone given as --source is read and never
+  # fetched into: a fetch with --depth would cut a full clone's history.
+  local old_ref=""
+  if [[ -n "$old_pin" ]]; then
+    if [[ -n "${tmp_clone:-}" ]] && ! git -C "$source" rev-parse -q --verify "refs/tags/$old_pin^{commit}" >/dev/null; then
+      git -C "$source" fetch --quiet --depth 1 origin "refs/tags/$old_pin:refs/tags/$old_pin" 2>/dev/null || true
+    fi
+    if git -C "$source" rev-parse -q --verify "refs/tags/$old_pin^{commit}" >/dev/null; then
+      old_ref="refs/tags/$old_pin"
+    fi
+  fi
+  # Whether a host copy differs from what the host's own release laid down:
+  # <host copy> <that release's copy>. A copy that differs only on its pins
+  # is the host's own to move.
+  edited_here() { [[ -n "$old_ref" ]] && ! cmp -s <(unpin < "$2") <(unpin < "$1"); }
+
+  local copied=() same=() added=() absent=() pins_only=() overwrote=() pair src dst why want was
   for pair in "${pairs[@]}"; do
     src="${pair%%:*}"; dst="${pair##*:}"
     if ! git -C "$source" cat-file -e "$tag:$templates/$src" 2>/dev/null; then
@@ -476,6 +499,14 @@ main() {
     if cmp -s <(unpin < "$want") <(unpin < "$host/$dst"); then
       same+=("$dst")
     else
+      # The copy as the host's own release laid it down, or the host's copy
+      # itself when that release did not have the template.
+      was="$(mktemp)"
+      if [[ -n "$old_ref" ]] && git -C "$source" cat-file -e "$old_ref:$templates/$src" 2>/dev/null; then
+        rendered "$src" "$host/$dst" "$old_ref" > "$was"
+      else
+        cat "$host/$dst" > "$was"
+      fi
       # A copy that differs only on its `uses:` lines was bumped by the
       # host's Dependabot ahead of the template. The template's pins win,
       # since the copy must match it, and the report says so: the next
@@ -485,9 +516,14 @@ main() {
       # copy, whichever lines differ.
       if awk '/^[<>]/ { if (/uses: /) pin = 1; else other = 1 } END { exit (pin && !other) ? 0 : 1 }' <(diff <(unpin < "$want") <(unpin < "$host/$dst")); then
         pins_only+=("$dst")
+        copied+=("$dst")
+      elif edited_here "$host/$dst" "$was"; then
+        overwrote+=("$dst")
+      else
+        copied+=("$dst")
       fi
       cat "$want" > "$host/$dst"
-      copied+=("$dst")
+      rm -f "$was"
     fi
     rm -f "$want"
   done
@@ -528,8 +564,13 @@ main() {
       elif cmp -s <(git -C "$source" show "$tag:$tpath") "$host/$dst"; then
         same+=("$dst")
       else
+        if [[ -n "$old_ref" ]] && git -C "$source" cat-file -e "$old_ref:$tpath" 2>/dev/null \
+          && ! cmp -s <(git -C "$source" show "$old_ref:$tpath") "$host/$dst"; then
+          overwrote+=("$dst")
+        else
+          copied+=("$dst")
+        fi
         git -C "$source" show "$tag:$tpath" > "$host/$dst"
-        copied+=("$dst")
       fi
     done < <(git -C "$source" ls-tree -r --name-only "$tag" -- "$website_templates/website")
     local wsrc="$website_templates/github/knowledge-website.yaml" wdst=".github/workflows/knowledge-website.yaml"
@@ -539,19 +580,39 @@ main() {
       elif cmp -s <(git -C "$source" show "$tag:$wsrc") "$host/$wdst"; then
         same+=("$wdst")
       else
+        if [[ -n "$old_ref" ]] && git -C "$source" cat-file -e "$old_ref:$wsrc" 2>/dev/null \
+          && ! cmp -s <(git -C "$source" show "$old_ref:$wsrc") "$host/$wdst"; then
+          overwrote+=("$wdst")
+        else
+          copied+=("$wdst")
+        fi
         git -C "$source" show "$tag:$wsrc" > "$host/$wdst"
-        copied+=("$wdst")
       fi
     fi
   fi
 
-  local f
+  # A host file in the places the templates go, which no line of the
+  # release's manifest names: a template the release dropped or renamed, or
+  # one the host wrote itself. The sync leaves it as it is, and says so.
+  local unlisted=() known=" " f
+  while IFS= read -r line; do
+    line="${line%%#*}"
+    read -r rule a b rest <<< "$line" || true
+    [[ -z "$b" ]] || known+="$b "
+  done < <(git -C "$source" show "$tag:$templates/$manifest")
+  known+=".github/workflows/knowledge-website.yaml "
+  while IFS= read -r f; do
+    case "$known" in *" $f "*) ;; *) unlisted+=("$f") ;; esac
+  done < <(cd "$host" && find .lokf/scripts .github/workflows -maxdepth 1 -type f \( -name 'knowledge-*.sh' -o -name 'knowledge-*.py' -o -name 'knowledge-*.yaml' -o -name 'knowledge-*.yml' \) 2>/dev/null | sed 's#^\./##' | LC_ALL=C sort)
+
   for f in ${copied[@]+"${copied[@]}"}; do echo "   copied   $f"; done
+  for f in ${overwrote[@]+"${overwrote[@]}"}; do echo "   local    $f differed from its template at $old_pin, a local edit; the copy from $tag is written over it"; done
   for f in ${same[@]+"${same[@]}"}; do echo "   same     $f"; done
   for f in ${added[@]+"${added[@]}"}; do echo "   added    $f"; done
   for f in ${absent[@]+"${absent[@]}"}; do echo "   absent   $f (never installed here: ktl-sidecar's Step 5 decides, not this script)"; done
   for f in ${pins_only[@]+"${pins_only[@]}"}; do echo "   pins     $f differed only on its action pins, which Dependabot bumped here first; the template's pins are back until the skills repository bumps them"; done
   for f in ${unknown[@]+"${unknown[@]}"}; do echo "   unknown  $f: a manifest rule this copy of knowledge-sync.sh does not know; it is left for the next sync, once the copy $tag brings is merged"; done
+  for f in ${unlisted[@]+"${unlisted[@]}"}; do echo "   unlisted $f: no line of $tag's manifest names it, so the sync left it as it is"; done
   local pin_line
   if [[ -f "$wf" ]]; then
     if [[ "$pin_moved" -eq 0 ]]; then
@@ -566,16 +627,10 @@ main() {
   fi
   echo "   pin      $pin_line"
   # Whether the skill the librarian runs changed between the two pins. The
-  # old tag is fetched into the clone this script made, which is shallow.
-  # A clone given as --source is read and never fetched into: a fetch with
-  # --depth would cut a full clone's history. The line is left out when
-  # neither tag can be read.
+  # line is left out when the old tag cannot be read.
   local skill_line=""
   if [[ -n "$old_pin" && "$old_pin" != "$tag" ]]; then
-    if [[ -n "${tmp_clone:-}" ]] && ! git -C "$source" rev-parse -q --verify "refs/tags/$old_pin^{commit}" >/dev/null; then
-      git -C "$source" fetch --quiet --depth 1 origin "refs/tags/$old_pin:refs/tags/$old_pin" 2>/dev/null || true
-    fi
-    if git -C "$source" rev-parse -q --verify "refs/tags/$old_pin^{commit}" >/dev/null; then
+    if [[ -n "$old_ref" ]]; then
       local n; n="$(git -C "$source" diff --name-only "$old_pin" "$tag" -- skills/ktl-librarian | wc -l | tr -d ' ')"
       if [[ "$n" -gt 0 ]]; then skill_line="ktl-librarian changed in $n file(s) between $old_pin and $tag"; else skill_line="ktl-librarian unchanged between $old_pin and $tag"; fi
       echo "   skill    $skill_line"
@@ -585,7 +640,7 @@ main() {
     echo "   website  the site's copies are synced; build it there to check: cd website && npm ci --ignore-scripts && npm run build"
   fi
 
-  if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 && "$pin_moved" -eq 0 ]]; then
+  if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 && ${#overwrote[@]} -eq 0 && "$pin_moved" -eq 0 ]]; then
     if [[ "$branch_mode" -eq 1 ]]; then
       git -C "$host" switch --quiet "$previous" && git -C "$host" branch --quiet -D "$branch"
       echo "   nothing to sync; back on $previous, and $branch removed"
@@ -612,18 +667,28 @@ main() {
   if [[ -f "$host/manifest.json" ]] && grep -q '"minAppVersion"' "$host/manifest.json"; then
     tail=" No plugin change."
   fi
-  if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 ]]; then
-    entry="- **The skills pin is at Knowledge Trust Ladder [$tag]($link).** None of the sidecar copies this repository carries changed.$tail"
-  else
-    for f in ${copied[@]+"${copied[@]}"} ${added[@]+"${added[@]}"}; do list+=("\`${f%% (*}\`"); done
-    local joined="${list[0]}"
-    for ((i = 1; i < ${#list[@]}; i++)); do
-      if [[ "$i" -eq $((${#list[@]} - 1)) ]]; then joined+=" and ${list[$i]}"; else joined+=", ${list[$i]}"; fi
+  # A list of paths in code spans, joined with commas and a last "and".
+  joined() {
+    local out="" k=1 n=$#
+    for f in "$@"; do
+      if [[ "$k" -eq 1 ]]; then out="\`$f\`"; elif [[ "$k" -eq "$n" ]]; then out+=" and \`$f\`"; else out+=", \`$f\`"; fi
+      k=$((k + 1))
     done
-    entry="- **The sidecar copies and the skills pin are at Knowledge Trust Ladder [$tag]($link).** The release changed $joined here.$tail"
+    printf '%s' "$out"
+  }
+  local local_tail=""
+  if [[ ${#overwrote[@]} -gt 0 ]]; then
+    local_tail=" The sync also wrote the template over a local edit of $(joined "${overwrote[@]}")."
+  fi
+  if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 ]]; then
+    entry="- **The skills pin is at Knowledge Trust Ladder [$tag]($link).** None of the sidecar copies this repository carries changed.$local_tail$tail"
+    [[ ${#overwrote[@]} -eq 0 ]] || entry="- **The skills pin is at Knowledge Trust Ladder [$tag]($link).**$local_tail$tail"
+  else
+    for f in ${copied[@]+"${copied[@]}"} ${added[@]+"${added[@]}"}; do list+=("${f%% (*}"); done
+    entry="- **The sidecar copies and the skills pin are at Knowledge Trust Ladder [$tag]($link).** The release changed $(joined "${list[@]}") here.$local_tail$tail"
   fi
   local changed=()
-  for f in ${copied[@]+"${copied[@]}"}; do changed+=("$f"); done
+  for f in ${copied[@]+"${copied[@]}"} ${overwrote[@]+"${overwrote[@]}"}; do changed+=("$f"); done
   for f in ${added[@]+"${added[@]}"}; do changed+=("${f%% (*}"); done
   if [[ "$pin_moved" -eq 1 ]]; then
     local listed=0
@@ -699,8 +764,16 @@ main() {
       echo "Brings the sidecar copies and the skills pin of this repository to Knowledge Trust Ladder [$tag]($link)."
     fi
     if [[ ${#copied[@]} -gt 0 ]]; then
-      echo; echo "The release changed these copies:"; echo
+      if [[ -n "$old_ref" ]]; then
+        echo; echo "The release changed these copies:"; echo
+      else
+        echo; echo "These copies differed from the templates at $tag, and the release's copy is written over each; ${old_pin:-the old pin} could not be read to tell a release's change from a local edit:"; echo
+      fi
       for f in "${copied[@]}"; do echo "- \`$f\`"; done
+    fi
+    if [[ ${#overwrote[@]} -gt 0 ]]; then
+      echo; echo "A local edit this sync overwrote, since the copy differed from its template at $old_pin. Restore it from git history if it should stay, and propose it to the skills repository:"; echo
+      for f in "${overwrote[@]}"; do echo "- \`$f\`"; done
     fi
     if [[ ${#added[@]} -gt 0 ]]; then
       echo; echo "Added, because a file here needs it:"; echo
@@ -717,6 +790,10 @@ main() {
     if [[ ${#unknown[@]} -gt 0 ]]; then
       echo; echo "Left for the next sync, since this copy of knowledge-sync.sh does not know their rule:"; echo
       for f in "${unknown[@]}"; do echo "- \`${f//\`/}\`"; done
+    fi
+    if [[ ${#unlisted[@]} -gt 0 ]]; then
+      echo; echo "No line of $tag's manifest names these files, so the sync left them as they are. A release may have dropped or renamed the template:"; echo
+      for f in "${unlisted[@]}"; do echo "- \`${f//\`/}\`"; done
     fi
     echo
     if [[ "$pin_moved" -eq 1 ]]; then

@@ -528,7 +528,7 @@ jobs:
               echo "**Refreshed on $(date -u +%Y-%m-%d).** This pull request proposed ${OPEN_TAG:-an earlier release} before. This run replaced its commits with a sync to $TAG, so read the diff again."
             fi
             if [ -n "$copies" ]; then
-              echo; echo "The release changed these copies:"; echo
+              echo; echo "The sync writes the release's copy over these files. The sync job's summary on the run's page names any that held a local edit:"; echo
               printf '%s\n' "$copies" | sed "s/.*/- ${bt}&${bt}/"
             fi
             if [ -n "$added" ]; then
