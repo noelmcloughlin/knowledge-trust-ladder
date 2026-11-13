@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.9"
+# requires-python = ">=3.11"
 # dependencies = ["pyyaml==6.0.3"]
 # [tool.uv]
 # exclude-newer = "2025-10-01T00:00:00Z"
@@ -43,7 +43,7 @@
 # Same contract as the shell half: one line per finding on stdout, exit 1 if
 # any; "OK" and exit 0 if none. The shell half runs it with the sidecar's
 # .venv, or through `uv run`, which installs what the dependency block above
-# names. Run directly, it needs python3 3.9 or later and pyyaml.
+# names. Run directly, it needs python3 3.11 or later and pyyaml.
 #
 # That block names one PyYAML release, and `exclude-newer` takes no file
 # uploaded after its date. A registry never replaces a file, so every run

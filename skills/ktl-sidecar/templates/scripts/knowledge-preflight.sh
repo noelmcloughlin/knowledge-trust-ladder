@@ -49,14 +49,14 @@ case "$os" in
 esac
 if have sha256sum; then digest="sha256sum"; elif have shasum; then digest="shasum -a 256"; else digest=""; fi
 # Only python3 is probed, because bare `python` is Python 2 on some hosts.
-# The skills' scripts need 3.9 or later, which an enterprise host's python3
+# The skills' scripts need 3.11 or later, which an enterprise host's python3
 # often is not.
 pyv=""
 have python3 && pyv="$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null)"
 printf 'Preflight for %s\n' "$root"
 ok host "$host, bash ${BASH_VERSION%%(*}; digest: ${digest:-none (macOS: install coreutils, or use uv run python)}; python3: ${pyv:-none (use uv run python)}"
 case "$pyv" in
-  2.*|3.[0-8]) warn python "python3 is $pyv and the skills' scripts need 3.9 or later: run each through uv run or the sidecar's .venv, never python3 or python" ;;
+  2.*|3.[0-9]|3.10) warn python "python3 is $pyv and the skills' scripts need 3.11 or later: run each through uv run or the sidecar's .venv, never python3 or python" ;;
 esac
 # The skill's copy of this script, run from the skill's folder or a folder in
 # it, screens the skill, not the host. Step 0 runs it from the host
@@ -423,7 +423,7 @@ fi
 
 # ---- scripts ---------------------------------------------------------------
 # The pen and the conventions script each run a Python half: on the
-# sidecar's .venv when it holds pyyaml on Python 3.9 or later, else through
+# sidecar's .venv when it holds pyyaml on Python 3.11 or later, else through
 # uv after uv_ready, the same function as theirs. Nothing above runs either,
 # so a host whose index uv cannot install from would look ready while
 # ktl-librarian cannot write and the gate cannot check. uv keeps one
@@ -454,13 +454,13 @@ uv_ready() {
 }
 if [ -d "$bundle" ] && [ -f "$root/.lokf/scripts/knowledge-apply.py" ] && [ -f "$root/.lokf/scripts/knowledge-conventions.py" ]; then
   venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
-  if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
+  if [ -x "$venv" ] && "$venv" -c 'import sys; assert sys.version_info >= (3, 11); import yaml' >/dev/null 2>&1; then
     ok scripts "the pen and the conventions script run on .lokf/.venv"
   elif have uv; then
     unready=""; lost=""; pen=""
     for s in apply conventions; do
       uv_ready "$root/.lokf/scripts/knowledge-$s.py" 2>/dev/null && continue
-      if [ "$s" = apply ] && have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; then
+      if [ "$s" = apply ] && have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 11); import yaml' >/dev/null 2>&1; then
         pen="; the pen runs on python3's own pyyaml"; continue
       fi
       unready="${unready}${unready:+ and }knowledge-$s.py"
@@ -478,8 +478,8 @@ if [ -d "$bundle" ] && [ -f "$root/.lokf/scripts/knowledge-apply.py" ] && [ -f "
       [ -n "$why" ] || why="$(printf '%s\n' "$uverr" | grep -v '^[[:space:]]*$' | tail -n 1)"
       miss scripts "uv could not install the packages of $unready${why:+ ($why)}$pen - run uv sync in .lokf/, and both scripts use that .venv" "$lost"
     fi
-  elif ! { have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 9); import yaml' >/dev/null 2>&1; }; then
-    miss scripts "no .lokf/.venv, no uv, and no python3 3.9 or later with pyyaml - the pen cannot start; install uv, or run uv sync in .lokf/" "the pen (ktl-librarian writes nothing)"
+  elif ! { have python3 && python3 -c 'import sys; assert sys.version_info >= (3, 11); import yaml' >/dev/null 2>&1; }; then
+    miss scripts "no .lokf/.venv, no uv, and no python3 3.11 or later with pyyaml - the pen cannot start; install uv, or run uv sync in .lokf/" "the pen (ktl-librarian writes nothing)"
   fi
 fi
 
@@ -497,7 +497,7 @@ if [ -f "$root/.lokf/ingest.yaml" ]; then
     case "$status" in
       "ingest: "*"missing from the mirror"*|"ingest: "*"the lock does not name"*|"ingest: "*"this git is "*) warn ingest "${status#ingest: }" ;;
       "ingest: "*) info ingest "${status#ingest: }" ;;
-      *) info ingest ".lokf/ingest.yaml is here; its status was not read (no .lokf/.venv or python3 3.9 or later with pyyaml, and uv could not run it)" ;;
+      *) info ingest ".lokf/ingest.yaml is here; its status was not read (no .lokf/.venv or python3 3.11 or later with pyyaml, and uv could not run it)" ;;
     esac
   else
     warn ingest ".lokf/ingest.yaml is here but .lokf/scripts/knowledge-ingest.sh is not, so nothing is mirrored - the ktl-sidecar repair lays it down"
