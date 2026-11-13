@@ -882,6 +882,41 @@ def test_a_changed_header_setting_outlasts_a_failed_run_that_moved_the_records(t
     checks.ok(result and "1 fetched" in result.out and "license: https://acme.example/terms" in text, "the next run writes the page again with the license", result.out + text)
 
 
+def test_a_new_converter_version_reaches_every_page(checks):
+    """The settings digest held only the entry's settings, so a converter that wrote other Markdown reached a page only when its source changed."""
+    m = load_module()
+    entry = m.Entry(id="a", kind="http")
+    before = m.settings_digest(entry)
+    m.CONVERTERS["html-markdown"] += 1
+    checks.ok(m.settings_digest(entry) != before, "a raised converter version changes the digest, so the next run writes every file again")
+    checks.ok(m.converter("html-markdown") == f"html-markdown/{m.CONVERTERS['html-markdown']}", "and the header names that version", m.converter("html-markdown"))
+
+
+def test_a_changed_header_setting_reaches_a_page_that_left_the_selection(tmp_path, server, checks):
+    """A page no longer listed cannot be fetched again, so authors: false left its account id in the header and the lock until a prune."""
+    pages = {"123": {"title": "Deploy", "version": 1, "storage": "<p>Deploy.</p>"}, "124": {"title": "Old", "version": 3, "storage": "<p>Old <b>page</b>.</p>"}}
+    confluence_routes(server, False, pages)
+    manifest = confluence_manifest(server, False)
+    root = host(tmp_path, manifest)
+    ingest(root, "--visibility", "private")
+    old = root / ".lokf" / "mirror" / "runbooks" / "124.md"
+    before = read(old)
+    confluence_routes(server, False, {"123": pages["123"]})
+    manifest["entries"][0].update(authors=False, license="https://acme.example/terms")
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
+    result = ingest(root, "--visibility", "private")
+    text = read(old)
+    record = lock_of(root)["entries"]["runbooks"]["items"]["124"]
+    checks.ok(result and "1 fetched, 1 unlisted" in result.out and "  - 1 item: not fetched, so only its header was written again for the entry's new settings" in result.out,
+              "the summary says the unlisted page's header was written again", result.out)
+    checks.ok("author:" not in text and "license: https://acme.example/terms" in text and text.split("-->\n\n", 1)[1] == before.split("-->\n\n", 1)[1]
+              and "converted_by: confluence-storage-markdown/2" in text, "its header loses the author and gains the license, and its body stays", text)
+    checks.ok("author" not in record and record["status"] == "unlisted" and record["mirror_sha256"] == "sha256:" + hashlib.sha256(text.encode()).hexdigest(),
+              "its record loses the author and names the file as written", str(record))
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "1 unchanged, 1 unlisted" in result.out and "header" not in result.out and read(old) == text, "the run after that writes nothing", result.out)
+
+
 def test_a_selection_over_max_items_is_refused_whole(tmp_path, server, checks):
     pages = {str(n): {"title": f"Page {n}", "version": 1, "storage": "<p>x</p>"} for n in range(100, 104)}
     confluence_routes(server, True, pages)

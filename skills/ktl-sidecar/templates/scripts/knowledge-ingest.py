@@ -1487,6 +1487,17 @@ def decode(data: bytes, charset: str = "", html_page: bool = False) -> str:
     return data.decode("latin-1")
 
 
+# The version of each converter, which a mirror file's header names. Raise a
+# number when that converter writes different Markdown from the same source:
+# the settings digest holds these, so the next run writes every file again.
+CONVERTERS = {"confluence-storage-markdown": 2, "git": 1, "html-markdown": 2, "pdf-text": 1, "text": 1}
+
+
+def converter(name: str) -> str:
+    """A converter's name and version, as a header's converted_by names them."""
+    return f"{name}/{CONVERTERS[name]}"
+
+
 def convert(data: bytes, content_type: str, how: str, charset: str = "", base: str = "") -> tuple[str, str, str]:
     """The Markdown, the title it carried and the converter's name, or a Refused."""
     how = how or TEXT_TYPES.get(content_type, "")
@@ -1494,17 +1505,17 @@ def convert(data: bytes, content_type: str, how: str, charset: str = "", base: s
         raise Refused(f"content type {content_type or 'unknown'} is not text; convert: text takes it as text, convert: html-markdown or pdf-text converts it")
     if how == "pdf-text":
         text, title = pdf_to_text(data)
-        return shown(text), one_line(title), "pdf-text/1"
+        return shown(text), one_line(title), converter("pdf-text")
     if how == "html-markdown":
         try:
             text, title = html_to_markdown(decode(data, charset, html_page=True), base)
         except Exception as e:  # noqa: BLE001 - a page the converter cannot read is refused alone, as a broken PDF is, not its whole entry
             raise Refused(f"the page could not be converted ({type(e).__name__})") from e
-        return shown(text), one_line(title), "html-markdown/1"
+        return shown(text), one_line(title), converter("html-markdown")
     text = decode(data, charset).replace("\r\n", "\n")
     if "\x00" in text:
         raise Refused("the content is binary, not text")
-    return shown(text).rstrip("\n") + "\n", "", "text/1"
+    return shown(text).rstrip("\n") + "\n", "", converter("text")
 
 
 # ---- the kinds -----------------------------------------------------------------
@@ -1705,7 +1716,7 @@ def run_confluence(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item],
             continue
         items.append(Item(
             item=pid, origin=origin, title=r["title"] or title, version=r["version"], last_modified=r["when"],
-            author=r["author"] if entry.authors else "", text=text, converted_by="confluence-storage-markdown/1",
+            author=r["author"] if entry.authors else "", text=text, converted_by=converter("confluence-storage-markdown"),
             sha256=sha256_hex(raw),
         ))
     return items, unchanged
@@ -2061,7 +2072,7 @@ def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, u
             if not rel.endswith(".md"):
                 text = fence(text, PurePosixPath(rel).suffix.lstrip(".")) + "\n"
             items.append(Item(item=item_id, origin=git_origin(entry, sha, f), title=rel, version=sha, last_modified=when,
-                              blob=oid, text=text, converted_by="git/1", sha256=digest))
+                              blob=oid, text=text, converted_by=converter("git"), sha256=digest))
     return items, unchanged
 
 
@@ -2190,8 +2201,8 @@ def cache_exposed(root: Path) -> str:
 
 
 def settings_digest(entry: Entry) -> str:
-    """A digest of the entry's settings that shape a mirror file besides its source: its header and its conversion."""
-    shaping = {"authors": entry.authors, "license": entry.license, "convert": entry.convert}
+    """A digest of what shapes a mirror file besides its source: the entry's settings for its header and its conversion, and the converters' versions."""
+    shaping = {"authors": entry.authors, "license": entry.license, "convert": entry.convert, "converters": CONVERTERS}
     return "sha256:" + sha256_hex(json.dumps(shaping, sort_keys=True).encode("utf-8"))[:16]
 
 
@@ -2209,6 +2220,10 @@ def mirrored_as_written(root: Path, record: dict) -> bool:
     if not path.is_file() or not record.get("mirror_sha256"):
         return False
     return mirror_file_digest(path) == record["mirror_sha256"]
+
+
+# The header mirror_header writes, up to the text: its frontmatter, then the comment and a blank line.
+MIRROR_HEADER = re.compile(r"\A---\n(.*?)\n---\n<!-- A mirror of [^\n]* -->\n\n", re.S)
 
 
 def mirror_header(entry: Entry, record: dict, converted_by: str) -> str:
@@ -2384,10 +2399,12 @@ class Run:
         # items a run as its time limit allows, each with its digest.
         lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not mirrored_as_written(self.root, was)}
         present = {i: was for i, was in prior.items() if i not in lost}
-        # A file's header and its Markdown follow the entry's settings too. When
-        # they changed since the files were written, every item is fetched and
-        # written again, so that authors: false, say, reaches a page that has
-        # not changed. A record from before this digest was kept takes it as it
+        # A file's header and its Markdown follow the entry's settings and the
+        # converters too. When they changed since the files were written, every
+        # item is fetched and written again, so that authors: false, say, or a
+        # new converter reaches a page that has not changed. A file whose
+        # source is gone or unlisted gets its header written again below.
+        # A record from before this digest was kept takes it as it
         # is: its items carry no file digest, so they are written again anyway.
         settings = settings_digest(entry)
         stored = [(lock["entries"].get(entry.id) or {}).get("settings") for lock in (book, other)]
@@ -2543,6 +2560,7 @@ class Run:
             if item_id not in new_items and was.get("status") != "skipped":
                 new_items[item_id] = dict(was, status="unlisted", since=self.away_since(was))
                 counts["unlisted"] += 1
+        rewritten = self.rewrite_headers(entry, new_items, folder) if stored and stored != settings else 0
         record["items"] = new_items
         parts = [f"{v} {k}" for k, v in counts.items() if v]
         self.summary.append(f"- {entry.id} ({entry.describe()}): " + (", ".join(parts) if parts else "nothing listed"))
@@ -2550,6 +2568,9 @@ class Run:
             n = counts["not reached"]
             self.summary.append(f"  - {n} item{'s' if n != 1 else ''}: not reached, the run's time limit passed first, so "
                                 f"{'they wait' if n != 1 else 'it waits'} for the next run")
+        if rewritten:
+            self.summary.append(f"  - {rewritten} item{'s' if rewritten != 1 else ''}: not fetched, so only "
+                                f"{'their headers were' if rewritten != 1 else 'its header was'} written again for the entry's new settings")
         for item_id, it in sorted(new_items.items()):
             if it.get("status") == "ok" and it.get("command_unchecked"):
                 self.summary.append(f"  - {item_id}: ran unchecked, {it['command_unchecked']}")
@@ -2570,6 +2591,40 @@ class Run:
             self.summary.extend(f"  - {item_id}: skipped, {reason}" for item_id, reason in skipped)
         if counts["failed"] or counts["refused"]:
             self.failed += 1
+
+    def rewrite_headers(self, entry: Entry, items: dict, folder: Path) -> int:
+        """Write the header again, from its record and the entry's settings, of each file whose item this run did not fetch; how many.
+
+        A source that is gone or unlisted cannot be fetched, and one refused
+        or failed may stay so, so after a change of settings only the header
+        follows: authors: false takes the author out of the record and the
+        file, and a new license goes in. The body stays as its converter wrote
+        it, and so does the converter the header names.
+        """
+        n = 0
+        for was in items.values():
+            if was.get("status") == "ok":
+                continue
+            if not entry.authors:
+                was.pop("author", None)
+            path = str(was.get("path") or "")
+            if not path or not was.get("sha256") or not was.get("retrieved_at") or not self.within(path, folder):
+                continue
+            target = self.root / path
+            try:
+                old = target.read_text(encoding="utf-8")
+                m = MIRROR_HEADER.match(old)
+                head = yaml.safe_load(m.group(1)) if m else None
+            except (OSError, UnicodeDecodeError, yaml.YAMLError):
+                continue
+            if not isinstance(head, dict):
+                continue
+            text = mirror_header(entry, was, str(head.get("converted_by") or "")) + old[m.end():]
+            if text != old:
+                was["mirror_sha256"] = "sha256:" + sha256_hex(text.encode("utf-8"))
+                self.writes.append((target, text))
+                n += 1
+        return n
 
     def away_since(self, was: dict) -> str:
         """When the item first went gone or unlisted: kept from the lock while it stays away, else this run."""

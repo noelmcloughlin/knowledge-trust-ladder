@@ -100,7 +100,7 @@ The lock, `.lokf/ingest.lock.yaml`, records the same per item, with one of these
 - `refused`, with the reason;
 - `skipped` for a binary file that a `git` entry's include matches.
 
-The mirror and the lock change only when content changes, or when the entry's `authors`, `license` or `convert` changes. The entry's record keeps a digest of those three, and when it differs the next run fetches and writes every item again.
+The mirror and the lock change only when content changes, or when the entry's `authors`, `license` or `convert` changes, or the version of a converter, which each header names as `converted_by`. The entry's record keeps a digest of those, and when it differs the next run fetches and writes every item again. A file it cannot fetch, such as one whose page left the selection, gets only its header written again.
 
 Each item's record keeps `mirror_sha256`, the digest of its file as written. A file edited by hand, like one the disk has lost, is fetched and written again, and `--status` counts both. A record from before the digest was kept is treated the same way, so the first runs after that upgrade write the mirror again, as many items a run as the time limit allows.
 
