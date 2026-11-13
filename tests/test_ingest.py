@@ -73,7 +73,9 @@ and pin:
     hand is written again;
 16. the mirror cap refuses the item that would pass it;
 17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no
-    other, and a source not fetched or a run cut short is a warning on the run;
+    other, and a source not fetched or a run cut short is a warning on the run.
+    Its push is leased to the commit it read, and a branch a person
+    committed to is left alone;
 18. at its time limit a run starts no more work, and an item or an entry it
     did not reach keeps its record for the next run. A wait the limit cuts
     is the limit's, not the source's.
@@ -2158,6 +2160,78 @@ def test_the_privileged_job_refuses_a_patch_that_renames_links_or_marks_a_file_t
     (plain / "ingest.patch").write_text(g("diff", "--cached", "--binary", "--no-renames") + "\n", encoding="utf-8")
     result = run(["bash", str(script)], cwd=repo, env={"RUNNER_TEMP": str(plain)})
     checks.ok(result.rc == 0 and "passed" in result.out, "a patch that adds a plain file passes", result.out)
+
+
+FAKE_GH = """#!/bin/sh
+case "$*" in
+  *state=open*) printf '%s' "$OPEN_LINE" ;;
+  */git/ref/heads/*) [ -n "$TIP" ] || exit 1; echo "$TIP" ;;
+  */compare/*) echo "$OTHERS" ;;
+  *pulls/*/commits*) printf '1\\tknowledge-ingest[bot]\\n' ;;
+  "api repos/acme/host --jq .default_branch") echo main ;;
+  "pr create"*) echo "https://example.invalid/pull/1" ;;
+  "pr edit"*) ;;
+  "pr view"*) echo "https://example.invalid/pull/7" ;;
+  *) echo "unexpected gh $*" >&2; exit 1 ;;
+esac
+"""
+
+
+def test_the_privileged_job_pushes_leased_to_the_commit_it_read(tmp_path, checks):
+    """A bare --force wrote over a person's commits on the branch when no pull request was open, and over a commit pushed while the run worked."""
+    workflow = read(WORKFLOW)
+    step = workflow[workflow.index('          branch="knowledge-ingest"'):]
+    step = step[:step.index("\n", step.index("GITHUB_STEP_SUMMARY"))]
+    script = write(tmp_path / "publish.sh", "set -euo pipefail\n" + "\n".join(line[10:] for line in step.split("\n")) + "\n")
+    gh = write(tmp_path / "bin" / "gh", FAKE_GH)
+    gh.chmod(0o755)
+    write(tmp_path / "gitconfig", "")
+    remote = tmp_path / "remote.git"
+    run(["git", "init", "-q", "--bare", "-b", "main", remote])
+    seed = tmp_path / "seed"
+    run(["git", "clone", "-q", remote, seed])
+    g = Git(seed)
+    write(seed / "README.md", "# Host\n")
+    g("add", "-A")
+    g("commit", "-q", "-m", "one", env=IDENT)
+    g("push", "-q", "origin", "HEAD:refs/heads/main")
+    main = g("rev-parse", "HEAD").strip()
+    write(seed / ".lokf" / "mirror" / "a" / "x.md", "x\n")
+    g("add", "-A")
+    write(tmp_path / "temp" / "ingest.patch", g("diff", "--cached", "--binary") + "\n")
+    write(tmp_path / "temp" / "summary.md", "- a: 1 fetched\n")
+    g("reset", "-q", "--hard")
+
+    def tip():
+        return run(["git", "--git-dir", remote, "rev-parse", "--verify", "-q", "refs/heads/knowledge-ingest"]).out.strip()
+
+    def person_branch():
+        g("checkout", "-q", "-B", "work", main)
+        write(seed / "notes.md", "a person's note\n")
+        g("add", "-A")
+        g("commit", "-q", "-m", "note", env=IDENT)
+        g("push", "-q", "-f", "origin", "HEAD:refs/heads/knowledge-ingest")
+        return tip()
+
+    def publish(name, **env):
+        work = tmp_path / name
+        run(["git", "clone", "-q", remote, work])
+        full = {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "RUNNER_TEMP": tmp_path / "temp", "GITHUB_REPOSITORY": "acme/host",
+                "GITHUB_REPOSITORY_OWNER": "acme", "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_STEP_SUMMARY": tmp_path / "summary.txt",
+                "GIT_CONFIG_GLOBAL": tmp_path / "gitconfig", "GIT_CONFIG_NOSYSTEM": "1", "OPEN_LINE": "", "TIP": "", "OTHERS": "0", **env}
+        return run(["bash", script], cwd=work, env=full)
+
+    result = publish("first")
+    checks.ok(result and "Opened" in result.out and tip(), "with no branch, the run pushes one", result.out)
+    theirs = person_branch()
+    result = publish("person", TIP=theirs, OTHERS="1")
+    checks.ok(result and "holds a commit this workflow did not make" in result.out and tip() == theirs,
+              "a branch a person committed to, with no pull request, is left alone", result.out)
+    theirs = person_branch()
+    result = publish("moved", TIP=main, OTHERS="0")
+    checks.ok(result.rc == 1 and "moved since this run read it" in result.out and tip() == theirs, "a branch that moved since the run read it is not written over", result.out)
+    result = publish("open", OPEN_LINE=f"7\tacme/host\t{theirs}\n")
+    checks.ok(result and "Refreshed" in result.out and tip() != theirs, "an open pull request's branch is refreshed, leased to its head", result.out)
 
 
 def test_the_workflow_warns_of_a_source_not_fetched_and_of_the_time_limit(checks):
