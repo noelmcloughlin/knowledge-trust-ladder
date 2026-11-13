@@ -1039,6 +1039,41 @@ def test_an_empty_revision_round_trips_as_empty_not_null(applied):
     )
 
 
+def test_a_person_s_revision_keeps_its_quotes(applied):
+    """A short hash such as 1234e56 reads as a number to a YAML 1.2 reader unless it is quoted."""
+    kb = kb_of(applied)
+    write(
+        kb / "playbooks" / "quotedrev.md",
+        lines(
+            "---",
+            "type: Playbook",
+            "id: https://acme.example/knowledge/playbooks/quotedrev",
+            "title: Quotedrev",
+            "description: qr.",
+            "generated:",
+            "  by: process:ktl-librarian",
+            '  at: "2026-01-01T00:00:00Z"',
+            "verified:",
+            "  - by: human:ada",
+            '    at: "2026-02-02T00:00:00Z"',
+            '    revision: "1234e56"',
+            "  - by: human:ada",
+            '    at: "2026-02-03T00:00:00Z"',
+            '    revision: "7339a7009322e249bf9b04e485cef7e94747a39b"',
+            "---",
+            "",
+            "# Overview",
+            "",
+            "Body.",
+        ),
+    )
+    write(kb / "playbooks" / "index.md", read(kb / "playbooks" / "index.md") + "* [Quotedrev](quotedrev.md) - qr.\n")
+    applies(applied, lines("ops:", "  - {op: recheck, path: playbooks/quotedrev.md}"))
+    quotedrev = read(kb / "playbooks" / "quotedrev.md")
+    for rev in ("1234e56", "7339a7009322e249bf9b04e485cef7e94747a39b"):
+        assert f'revision: "{rev}"' in quotedrev, f"the pen dropped the quotes round {rev}: {quotedrev}"
+
+
 def test_asked_goes_with_from_feedback(applied):
     refuses(
         applied,
