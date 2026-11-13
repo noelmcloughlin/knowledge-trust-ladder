@@ -161,31 +161,38 @@
 # This script runs the Python half with the sidecar's .venv when the .venv
 # holds pyyaml and is Python 3.9 or later, and otherwise through `uv run`
 # after uv_ready. knowledge-apply.sh explains both. Without uv, the shell
-# half still runs and says so. When uv cannot install the packages, or a
-# runner cannot start the Python half, the script reports a runner failure,
-# not a finding, and exits 2.
+# half still runs and says so, and exits 0 when it finds nothing. With
+# `--strict` it exits 2 there instead, so a gate never passes rules it did
+# not check: every workflow passes it. When uv cannot install the packages,
+# or a runner cannot start the Python half, the script reports a runner
+# failure, not a finding, and exits 2.
 #
 # Files are read with carriage returns removed and a leading byte order mark
 # stripped, so a Windows checkout (`core.autocrlf`) reads the same as CI. The
 # sidecar's `.lokf/.gitattributes` keeps tracked files on LF; rule 9 still
 # reports a BOM, because other readers do not strip it.
 #
-# Usage: knowledge-conventions.sh [bundle-dir] [--since <commit>]   (default:
-# knowledge, i.e. run from .lokf/). Exit 1 with one line per finding; nothing
-# else is written. Exit 2 when the Python half could not run, with the
-# reason on stderr.
-[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [bundle-dir] [--since <commit>]" >&2; exit 2; }
+# Usage: knowledge-conventions.sh [bundle-dir] [--since <commit>] [--strict]
+# (default: knowledge, i.e. run from .lokf/). Exit 1 with one line per
+# finding; nothing else is written. Exit 2 when the Python half could not
+# run, or under --strict when it was skipped, with the reason on stderr.
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [bundle-dir] [--since <commit>] [--strict]" >&2; exit 2; }
 set -euo pipefail
 
+usage() { echo "usage: ${0##*/} [bundle-dir] [--since <commit>] [--strict]" >&2; exit 2; }
 # The bundle directory may be a link, on a host that keeps the real folder as
 # a visible knowledge_bundle/. Handed a link bare, find never enters it, so
 # the trailing slash below is what makes it read the files.
-bundle="${1:-knowledge}"; bundle="${bundle%/}"
-since=""
-if [ $# -gt 1 ]; then
-  { [ $# -eq 3 ] && [ "$2" = "--since" ] && [ -n "$3" ]; } || { echo "usage: ${0##*/} [bundle-dir] [--since <commit>]" >&2; exit 2; }
-  since="$3"
-fi
+bundle=""; since=""; strict=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --since) { [ $# -ge 2 ] && [ -n "$2" ]; } || usage; since="$2"; shift 2 ;;
+    --strict) strict=1; shift ;;
+    -*) usage ;;
+    *) [ -z "$bundle" ] || usage; bundle="$1"; shift ;;
+  esac
+done
+bundle="${bundle:-knowledge}"; bundle="${bundle%/}"
 [ -d "$bundle" ] || { echo "no bundle directory at $bundle" >&2; exit 2; }
 fail=0
 say() { echo "$1"; fail=1; }
@@ -398,6 +405,8 @@ if [ -n "$runner" ]; then
 elif [ "$unrun" -eq 0 ]; then
   skipped="$rules not checked: uv not found"
   echo "$skipped - install uv, or run $py directly with python3 3.9 or later and pyyaml" >&2
+  # Under --strict a rule not checked is no pass.
+  if [ "$strict" = 1 ]; then unrun=1; skipped=""; fi
 fi
 
 if [ "$fail" -eq 0 ] && [ "$unrun" -eq 0 ]; then

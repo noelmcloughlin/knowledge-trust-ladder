@@ -393,7 +393,7 @@ jobs:
       - name: Check the conventions lokf validate cannot see
         id: conventions
         continue-on-error: true
-        run: bash scripts/knowledge-conventions.sh knowledge
+        run: bash scripts/knowledge-conventions.sh knowledge --strict
         working-directory: .lokf
 
       - name: Detect changes

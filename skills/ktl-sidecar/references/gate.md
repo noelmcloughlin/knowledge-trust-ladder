@@ -17,7 +17,7 @@ It runs on every pull request touching `.lokf/**` (or the workflow itself), week
 It runs two checks:
 
 1. `just lokf-check-refs`, which runs `lokf validate --check-refs --check-excerpts`: the schema check, every typed relation must point at a concept in the bundle, and every `sources[].excerpt` must be found in its local file. When the justfile's `schema` line names a domain vocabulary, the recipe checks against it too.
-2. `bash scripts/knowledge-conventions.sh knowledge`: the eighteen conventions below, which the toolkit cannot see. On a pull request it adds `--since` and the pull request's base, which conventions 14 and 17 read.
+2. `bash scripts/knowledge-conventions.sh knowledge --strict`: the eighteen conventions below, which the toolkit cannot see. `--strict` fails the step when the script could not check a rule, so a runner without `uv` never passes. On a pull request it adds `--since` and the pull request's base, which conventions 14 and 17 read.
 
 It checks out the full history, because conventions 6, 11, 13, 14 and 17 read the bundle's commits. It installs the toolkit with `uv sync --locked`: what `.lokf/uv.lock` names, each file checked against its recorded hash. A lock that is missing or behind `.lokf/pyproject.toml` fails the job, so the gate never runs a toolkit nobody reviewed.
 
@@ -58,7 +58,7 @@ Rules 2, 3, 8, 10 and 18 are house rules, stricter than the format, which permit
 
 The script is two files. Rules 2, 3, 4, 7, 9, 10, 12, 13 and 18 are questions about a document's YAML, which a real parser decides where grep and awk only approximate. Rules 15, 16 and 17 join that YAML to a body and to `log.md`. `knowledge-conventions.sh` runs `knowledge-conventions.py` beside it for both groups, through `uv run`, which reads the script's own dependency header and needs nothing preinstalled. That header names one PyYAML release and takes no file uploaded after a set date.
 
-Rules 13, 14 and 17 read git too, from the Python half. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
+Rules 13, 14 and 17 read git too, from the Python half. Rules 1, 5, 6, 8 and 11 are git and filesystem facts and stay in the shell script, which runs with bash, grep and awk alone; without `uv` it still runs and says which rules it skipped, and exits 2 under `--strict`. Both read every file with carriage returns and a leading byte order mark stripped, so a Windows checkout gives the verdict CI gives.
 
 ## The `provenance` job
 

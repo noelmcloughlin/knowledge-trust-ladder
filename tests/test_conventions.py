@@ -476,6 +476,28 @@ def test_without_uv_the_shell_half_says_what_it_skipped(good):
     ), f"conventions script without uv did not say what it skipped: {result.out}"
 
 
+def test_without_uv_strict_fails_rather_than_pass_rules_it_did_not_check(good):
+    """A gate that forgot uv passed thirteen rules it never checked. With --strict, as every workflow runs it, that is exit 2, and a finding still exit 1."""
+    path = "/usr/bin:/bin"
+    if shutil.which("uv", path=path):
+        pytest.skip("uv is on /usr/bin - the without-uv case cannot be staged here")
+    result = bash(CONVENTIONS, good, "--strict", env={"PATH": path})
+    assert result.rc == 2 and "not checked: uv not found" in result.out and "OK -" not in result.out, (
+        f"conventions script --strict passed without uv (exit {result.rc}): {result.out}"
+    )
+    write(good / "log.md", "# Change Log\n\n## 15 September\n")
+    result = bash(CONVENTIONS, "--strict", good, env={"PATH": path})
+    assert result.rc == 1 and "heading is not a bare ISO date" in result.out, (
+        f"conventions script --strict hid a finding behind the skipped rules (exit {result.rc}): {result.out}"
+    )
+
+
+@pytest.mark.parametrize("args", [["--strict", "--since"], ["--bogus"], ["a", "b"]])
+def test_a_call_it_cannot_read_is_refused(good, args):
+    result = bash(CONVENTIONS, *args)
+    assert result.rc == 2 and "usage:" in result.out, f"conventions script accepted {args} (exit {result.rc}): {result.out}"
+
+
 def failing_uv(tmp_path):
     """A PATH whose uv fails as uv does behind a package mirror that serves no upload times."""
     fake = write(

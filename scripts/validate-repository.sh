@@ -626,7 +626,7 @@ say "Running knowledge-conventions.sh on this repository's bundle..."
 if ! command -v uv >/dev/null 2>&1; then
   err "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16, 17 and 18 cannot run on this repository's bundle - install uv, or add the setup-uv step to the workflow running this"
 fi
-if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge >/dev/null); then
+if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge --strict >/dev/null); then
   ok "this repository's bundle keeps the conventions"
 else
   err "this repository's bundle breaks a convention knowledge-conventions.sh checks - run it from .lokf/ to see which"
