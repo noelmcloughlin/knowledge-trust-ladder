@@ -8,7 +8,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 1. a build resolves the members into a lock, loads one named graph per
    bundle plus the lock graph, gates clean, and writes the same bytes twice.
    The script reads each bundle once itself, and two downloads that share a
-   cache write a file each;
+   cache write a file each. Each export labels its blank nodes by RDFC-1.0,
+   which the build swaps in while the toolkit labels them with rdflib;
 
 2. each of these stops the build and leaves the previous snapshot in place:
    - a tampered checksum;
@@ -333,10 +334,61 @@ def test_a_build_locks_loads_gates_and_repeats(federation):
     assert "0 typed-relation target(s) lie in no member's namespace" in (snap / "gate-report.md").read_text(encoding="utf-8")
     for name in ("index.md", "llms.txt", "registry.jsonld", "queries/labels.rq", "queries/unowned.rq", "export/a/graph.nt", "export/b/concepts.jsonld", "bundles/a/.lokf/knowledge/index.md", "bundles/domain/.lokf/knowledge/index.md"):
         assert (snap / name).is_file(), name
-    first = (snap / "graph.nq").read_bytes(), (snap / "workspace.lock.yaml").read_bytes()
+    exported = (snap / "export" / "domain" / "graph.nt").read_text(encoding="utf-8")
+    blanks = set(re.findall(r"_:(\S+)", exported))
+    assert blanks and all(re.fullmatch(r"c14n[0-9]+", b) for b in blanks), f"each export labels its blank nodes by RDFC-1.0: {sorted(blanks)[:5]}"
+    first = (snap / "graph.nq").read_bytes(), (snap / "workspace.lock.yaml").read_bytes(), exported
     r = federate(host, "build", "--tag", "v0.2.0", "--snapshot-iri", "https://d.example/snapshots/v0.2.0", "--no-attestation")
     assert r.rc == 0, r.out
-    assert ((snap / "graph.nq").read_bytes(), (snap / "workspace.lock.yaml").read_bytes()) == first, "the same releases give the same bytes"
+    again = (snap / "graph.nq").read_bytes(), (snap / "workspace.lock.yaml").read_bytes(), (snap / "export" / "domain" / "graph.nt").read_text(encoding="utf-8")
+    assert again == first, "the same releases give the same bytes"
+
+
+def test_the_export_labels_blank_nodes_by_rdfc_while_the_toolkit_uses_rdflib(tmp_path):
+    """lokf 0.9.0 labels blank nodes with rdflib's to_canonical_graph, quadratic in blank nodes, so the build swaps in pyoxigraph's RDFC-1.0 until the toolkit does.
+
+    The swapped-in function keeps the graph and gives the same labels however
+    the input labels its nodes, a symmetric cycle included. The guard swaps
+    only a function that names to_canonical_graph, so it steps aside once
+    the lock pins a lokf that carries the change, and never swaps twice.
+    """
+    code = (
+        "import importlib.util, re\n"
+        "import lokf.rdf\n"
+        "from rdflib import BNode, Graph, Literal, URIRef\n"
+        "from rdflib.compare import isomorphic\n"
+        "from rdflib.namespace import XSD\n"
+        f"spec = importlib.util.spec_from_file_location('kf', {str(SCRIPT)!r})\n"
+        "kf = importlib.util.module_from_spec(spec); spec.loader.exec_module(kf)\n"
+        "P = URIRef('https://example.test/p')\n"
+        "def sample(names):\n"
+        "    g = Graph()\n"
+        "    a, b, c, d = (BNode(n) for n in names)\n"
+        "    for s, o in ((a, b), (b, c), (c, d), (d, a)):\n"
+        "        g.add((s, P, o))\n"
+        "    g.add((URIRef('https://example.test/x'), P, a))\n"
+        "    g.add((a, P, Literal('hello', lang='en')))\n"
+        "    g.add((b, P, Literal('2026-01-01T00:00:00Z', datatype=XSD.dateTime)))\n"
+        "    g.add((c, P, Literal('plain')))\n"
+        "    return g\n"
+        "one, two = sample('wxyz'), sample(['n9', 'n1', 'n7', 'n3'])\n"
+        "out1, out2 = kf.relabel_with_rdfc(one), kf.relabel_with_rdfc(two)\n"
+        "labels = sorted(str(t) for tr in out1 for t in tr if isinstance(t, BNode))\n"
+        "print('ISO', isomorphic(one, out1))\n"
+        "print('C14N', all(re.fullmatch(r'c14n[0-9]+', l) for l in labels) and len(set(labels)) == 4)\n"
+        "print('SAME', sorted(out1) == sorted(out2))\n"
+        "stock = 'to_canonical_graph' in lokf.rdf.relabel_bnodes.__code__.co_names\n"
+        "print('SWAP', kf.label_blank_nodes_fast() == stock, (lokf.rdf.relabel_bnodes is kf.relabel_with_rdfc) == stock)\n"
+        "print('TWICE', kf.label_blank_nodes_fast())\n"
+        "def fixed(g):\n"
+        "    return g\n"
+        "lokf.rdf.relabel_bnodes = fixed\n"
+        "print('FIXED', kf.label_blank_nodes_fast(), lokf.rdf.relabel_bnodes is fixed)\n"
+    )
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", code], cwd=tmp_path)
+    assert r.rc == 0, r.out
+    for line in ("ISO True", "C14N True", "SAME True", "SWAP True True", "TWICE False", "FIXED False True"):
+        assert line in r.out.splitlines(), (line, r.out)
 
 
 def test_a_cross_bundle_target_no_member_owns_fails_or_is_reported(federation, tmp_path):

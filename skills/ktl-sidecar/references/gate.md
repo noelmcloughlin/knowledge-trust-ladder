@@ -120,7 +120,7 @@ Mark `validate` and `provenance` as required in branch protection, and `attestat
 
 Add one line to the repository's pull request template for whoever approves a curation pull request: *I opened the sources named by every confirmation I am approving.* An approval then records a task done, not only a click. The gate can prove who approved, never what they read.
 
-One wrinkle follows. The librarian's own pull request never fires this workflow, because GitHub starts no `pull_request` workflow for a pull request opened with the default `GITHUB_TOKEN`. Its `publish` job runs its own checks before opening it, the unattended form of the forge-free gate below among them, so nothing unsafe merges. But a required `validate` or `provenance` sits at "Expected" until a human closes and reopens the pull request or pushes an empty commit. ktl-librarian's [scheduled-task.md](../../ktl-librarian/references/scheduled-task.md) has the detail.
+One wrinkle follows. The librarian's own pull request never fires this workflow, because GitHub starts no `pull_request` workflow for a pull request opened with the default `GITHUB_TOKEN`. Its `apply` and `publish` jobs run their own checks before opening it, the unattended form of the forge-free gate below among them, so nothing unsafe merges. But a required `validate` or `provenance` sits at "Expected" until a human closes and reopens the pull request or pushes an empty commit. ktl-librarian's [scheduled-task.md](../../ktl-librarian/references/scheduled-task.md) has the detail.
 
 ## The forge-free gate: `knowledge-provenance.sh`
 

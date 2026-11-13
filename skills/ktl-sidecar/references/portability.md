@@ -53,7 +53,7 @@ The scaffold is files, so any directory tree works: a local or shared filesystem
 
 ### Not GitHub: GitLab, Codeberg, Forgejo, Gitea, another forge, or none
 
-Step 5's workflow files are GitHub Actions. What ports unchanged: the wrapper script (bash), the conventions and preflight scripts, and `lokf validate` as the gate. The `publish` job's own guards port too: the patch-scope check and the refusal of an added `by: human:` line, both plain shell.
+Step 5's workflow files are GitHub Actions. What ports unchanged: the wrapper script (bash), the conventions and preflight scripts, and `lokf validate` as the gate. The librarian workflow's `apply` job ports as it is, since it runs the pen, `lokf validate` and the conventions script on a clean checkout. The `publish` job's own guards port too: the patch-scope check and the refusal of an added `by: human:` line, both plain shell.
 
 What has to be rewritten is what talks to GitHub:
 

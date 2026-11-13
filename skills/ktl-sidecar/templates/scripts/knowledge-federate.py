@@ -158,7 +158,9 @@
 #     base_iri, so one domain's workspace never stands in for another's.
 #   - Blank nodes are given canonical labels before the graph is written,
 #     because lokf export labels them at random and the same releases must
-#     give the same bytes.
+#     give the same bytes. While the toolkit labels them with rdflib's
+#     canonicaliser, which is quadratic in blank nodes, the export takes
+#     pyoxigraph's RDFC-1.0 instead (label_blank_nodes_fast).
 #
 # gh needs a credential to verify an attestation. The sidecar's librarian
 # wrapper strips every token from the agent's environment, and passes one
@@ -1553,6 +1555,69 @@ def run_lokf(args: list[str], cwd: pathlib.Path | None = None) -> subprocess.Com
     return subprocess.CompletedProcess(["lokf", *args], code, out.getvalue(), err.getvalue())
 
 
+def relabel_with_rdfc(g):
+    """Copy a graph with canonical blank-node labels, preserving its triples.
+
+    The labels come from pyoxigraph's RDFC-1.0, which resolves ties that
+    refinement alone cannot (long paths and symmetric cycles) and runs in
+    near-linear time, where rdflib's ``to_canonical_graph`` is quadratic in
+    blank nodes. ``GraphStore.from_registry`` uses the same algorithm, so a
+    member exported here is already in the form the registry gives it.
+    """
+    import pyoxigraph as ox
+    from rdflib import BNode, Graph, URIRef
+    from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
+
+    blanks: dict = {}
+    terms: dict = {}  # pyoxigraph term -> the rdflib term it came from
+
+    def to_ox(term):
+        if isinstance(term, BNode):
+            return blanks.setdefault(term, ox.BlankNode())
+        if isinstance(term, URIRef):
+            node = ox.NamedNode(str(term))
+        else:
+            datatype = None if term.language or term.datatype is None else ox.NamedNode(str(term.datatype))
+            node = ox.Literal(str(term), language=term.language, datatype=datatype)
+        terms.setdefault(node, term)
+        return node
+
+    def to_rdflib(term):
+        return BNode(term.value) if isinstance(term, ox.BlankNode) else terms[term]
+
+    dataset = ox.Dataset(ox.Quad(to_ox(s), to_ox(p), to_ox(o)) for s, p, o in g)
+    dataset.canonicalize(ox.CanonicalizationAlgorithm.RDFC_1_0)
+
+    out = Graph(identifier=DATASET_DEFAULT_GRAPH_ID)
+    for prefix, ns in g.namespaces():
+        out.bind(prefix, ns)
+    for quad in dataset:
+        out.add((to_rdflib(quad.subject), to_rdflib(quad.predicate), to_rdflib(quad.object)))
+    return out
+
+
+def label_blank_nodes_fast() -> bool:
+    """Have lokf export label blank nodes with relabel_with_rdfc, while the toolkit labels them with rdflib's canonicaliser.
+
+    lokf 0.9.0 writes graph.nt through `lokf.rdf.relabel_bnodes`, which is
+    rdflib's `to_canonical_graph`, quadratic in blank nodes: a bundle of 400
+    concepts took 27 seconds to export, and one of 2,000 would take minutes.
+    The function above is the one proposed upstream in lokf pull request 187,
+    word for word, and labels the same graph in a second or so. The export
+    runs in this process (run_lokf), and `serialize_graph` looks the
+    function up by name each time, so setting the name here is enough. Once
+    the lock pins a lokf whose own function no longer names
+    `to_canonical_graph`, this replaces nothing, and both can go.
+    """
+    import lokf.rdf
+
+    stock = getattr(lokf.rdf, "relabel_bnodes", None)
+    if "to_canonical_graph" not in getattr(getattr(stock, "__code__", None), "co_names", ()):
+        return False
+    lokf.rdf.relabel_bnodes = relabel_with_rdfc
+    return True
+
+
 def public_url(root: pathlib.Path, given: str | None) -> str:
     """Where the snapshot is served: --public-url, else the website's SITE + BASE + /workspace, else nothing."""
     if given is not None:
@@ -2215,6 +2280,8 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     # The lock is written after the gate, which adds the links between members.
 
     # 2. Register and export each bundle, the domain's own first.
+    if label_blank_nodes_fast():
+        say("blank nodes in each export are labelled by pyoxigraph's RDFC-1.0, not by the toolkit's slower rdflib canonicaliser")
     export_root = new / "export"
     export_root.mkdir()
     public = public_url(root, args.public_url)

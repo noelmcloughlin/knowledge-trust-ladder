@@ -81,6 +81,7 @@ INHERITED = (
     "KNOWLEDGE_RETRIEVAL",
     "KNOWLEDGE_RETRIEVAL_OUT",
     "KNOWLEDGE_HANDOFF_OUT",
+    "KNOWLEDGE_PATCH_OUT",
     "KNOWLEDGE_SKIP_QUIET",
     "KNOWLEDGE_DECLINED",
     "MEDDLE",
@@ -263,6 +264,21 @@ else
   [ -z "${PLANT:-}" ] || printf 'planted in the retrieval call\n' > "$PLANT"
   echo "Q1: a.md"
 fi
+""",
+        ),
+        # Writes the patch when PATCH_TEXT holds one, and leaves a link at the patch file's copy.
+        "plant-patch": executable(
+            d / "plant-patch-agent.sh",
+            r"""#!/usr/bin/env bash
+[ -z "${PATCH_TEXT:-}" ] || printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+ln -sf "$PWD/README.md" "$KNOWLEDGE_PATCH_OUT"
+""",
+        ),
+        # Makes the patch file a link to a file of the checkout.
+        "link-patch": executable(
+            d / "link-patch-agent.sh",
+            r"""#!/usr/bin/env bash
+ln -s ../README.md .lokf/patch.yaml
 """,
         ),
         # Writes the patch, plants a hand-off, and leaves a link at the retrieval score's path.
@@ -698,6 +714,54 @@ def test_a_patch_with_no_handoff_leaves_none_whatever_the_retrieval_call_wrote(h
     )
 
 
+def test_the_patch_file_is_handed_on_as_the_agent_wrote_it(host, agents, tmp_path):
+    """The workflow hands on the agent's patch file and nothing the job made from it, so the copy holds the file as written, and a link the agent left at its path is replaced, not followed."""
+    out = tmp_path / "patch.yaml"
+    status = wrapper(host, {"AGENT_CLI": agents["plant-patch"], "PATCH_TEXT": CREATE_OP, "KNOWLEDGE_PATCH_OUT": out})
+    assert (
+        status == 0
+        and not out.is_symlink()
+        and read(out) == CREATE_OP + "\n"
+        and (host / ".lokf" / "knowledge" / "playbooks" / "b.md").is_file()
+        and read(host / "README.md") == "# host\n"
+    ), f"patch file: exit {status}, copy holds: {read(out) if out.is_file() else 'nothing'}"
+    reset(host)
+    status = wrapper(host, {"AGENT_CLI": agents["plant-patch"], "KNOWLEDGE_PATCH_OUT": out})
+    assert status == 0 and not out.exists() and not out.is_symlink(), (
+        f"patch file: exit {status}, and what the agent left at the copy's path survived a run with no patch"
+    )
+
+
+def test_a_refused_run_hands_no_patch_file_on(host, agents, tmp_path):
+    out = tmp_path / "patch.yaml"
+    status = wrapper(host, {"AGENT_CLI": agents["patch"], "PATCH_TEXT": BAD_OP, "KNOWLEDGE_PATCH_OUT": out})
+    assert status == 4 and not out.exists(), f"a patch the pen refused: exit {status}, copy left: {out.exists()}"
+    status = wrapper(host, {"AGENT_CLI": agents["link-patch"], "KNOWLEDGE_PATCH_OUT": out})
+    assert (status, out.exists(), read(host / "README.md")) == (3, False, "# host\n"), (
+        f"a patch file that is a link: exit {status}, copy left: {out.exists()}"
+    )
+
+
+def test_a_retrieval_call_that_writes_the_patch_file_s_copy_is_refused(host, agents, tmp_path):
+    """The retrieval call comes after the copy is made, and its prompt carries readers' words, so the copy must come through it unchanged."""
+    retrieval_host(host)
+    out, score = tmp_path / "patch.yaml", tmp_path / "retrieval.txt"
+    env = {
+        "AGENT_CLI": agents["retrieval"],
+        "PATCH_TEXT": CREATE_OP,
+        "KNOWLEDGE_RETRIEVAL": "true",
+        "KNOWLEDGE_RETRIEVAL_OUT": score,
+        "KNOWLEDGE_PATCH_OUT": out,
+    }
+    status = wrapper(host, env)
+    assert status == 0 and read(out) == CREATE_OP + "\n" and "1 of 1" in read(score), (
+        f"retrieval: exit {status}, copy holds: {read(out) if out.is_file() else 'nothing'}"
+    )
+    reset(host)
+    status = wrapper(host, {**env, "PLANT": out})
+    assert status == 3 and not out.exists(), f"a retrieval call that rewrote the copy: exit {status}, copy left: {out.exists()}"
+
+
 # 2. The librarian workflow's change detection and packaging.
 
 
@@ -754,10 +818,10 @@ LIBRARIAN_LINES = [
         ],
     ),
     (
-        "template runs the conventions script in refresh and reports its outcome on the pull request",
+        "template runs the conventions script in apply and reports its outcome on the pull request",
         [
             "conventions_outcome: ${{ steps.conventions.outcome }}",
-            "CONVENTIONS_OUTCOME: ${{ needs.refresh.outputs.conventions_outcome }}",
+            "CONVENTIONS_OUTCOME: ${{ needs.apply.outputs.conventions_outcome }}",
             "${check(CONVENTIONS_OUTCOME)}",
         ],
     ),
@@ -826,21 +890,41 @@ def test_each_push_goes_to_the_server_the_workflow_runs_on(yaml_path):
 
 def test_the_hand_off_travels_from_the_pen_through_the_artifact_to_the_pull_request():
     text = read(LIBRARIAN_YAML)
-    upload = section(text, r"name: Upload the bundle patch", r"if-no-files-found")
+    apply_job = section(text, r"^  apply:", r"^  publish:")
+    upload = section(apply_job, r"name: Upload the bundle patch", r"if-no-files-found")
     assert (
-        "KNOWLEDGE_HANDOFF_OUT: ${{ runner.temp }}/handoff.txt" in text
+        'knowledge-apply.sh --handoff "$RUNNER_TEMP/handoff.txt" "$RUNNER_TEMP/patch.yaml"' in apply_job
         and "${{ runner.temp }}/handoff.txt" in upload
         and "HANDOFF_FILE: ${{ runner.temp }}/handoff.txt" in text
         and "'```text', ...handoff, '```'" in text
     ), "knowledge-librarian.yaml lost the hand-off's path from the pen to the pull request"
 
 
-def test_the_refresh_job_runs_the_conventions_script():
-    """The registrar's gate does not run on the pull request this workflow opens, so refresh runs the script and the pull request says how it ended."""
-    refresh_to_publish = section(read(LIBRARIAN_YAML), r"^  refresh:", r"^  publish:")
-    assert "run: bash scripts/knowledge-conventions.sh knowledge" in refresh_to_publish, (
-        "knowledge-librarian.yaml no longer runs the conventions script in refresh"
+def test_the_apply_job_runs_the_conventions_script():
+    """The registrar's gate does not run on the pull request this workflow opens, so apply runs the script and the pull request says how it ended."""
+    apply_job = section(read(LIBRARIAN_YAML), r"^  apply:", r"^  publish:")
+    assert "run: bash scripts/knowledge-conventions.sh knowledge" in apply_job, (
+        "knowledge-librarian.yaml no longer runs the conventions script in apply"
     )
+
+
+def test_the_agent_s_job_hands_on_the_patch_file_and_a_clean_job_applies_it():
+    """The pen in refresh runs on a .venv the agent could replace, so what it wrote, validated or packaged goes no further, and a read-only job with no agent runs the pen again."""
+    text = read(LIBRARIAN_YAML)
+    jobs = yaml.safe_load(text)["jobs"]
+    refresh = section(text, r"^  refresh:", r"^  apply:")
+    apply_job = section(text, r"^  apply:", r"^  publish:")
+    refresh_uploads = [s for s in jobs["refresh"]["steps"] if "upload-artifact" in str(s.get("uses", ""))]
+    assert [s["with"]["path"] for s in refresh_uploads] == ["${{ runner.temp }}/patch.yaml"], refresh_uploads
+    assert "KNOWLEDGE_PATCH_OUT: ${{ runner.temp }}/patch.yaml" in refresh, "refresh no longer asks the wrapper for the patch file"
+    for gone in ("git diff", "lokf-check-refs", "knowledge-conventions.sh", "handoff.txt", "validate_outcome"):
+        assert gone not in refresh, f"refresh still hands on what it made from the patch file: {gone}"
+    assert jobs["apply"]["permissions"] == {"contents": "read"} and "environment" not in jobs["apply"], jobs["apply"].get("permissions")
+    assert not re.search(r"AGENT_|secrets\.|github\.token", apply_job), "apply holds an agent setting, a secret or the token"
+    download = next(s for s in jobs["apply"]["steps"] if "download-artifact" in str(s.get("uses", "")))
+    assert download["with"]["name"] == "librarian-patch-file", download
+    assert jobs["apply"]["needs"] == ["earlier", "refresh"] and jobs["publish"]["needs"] == ["earlier", "refresh", "apply"]
+    assert jobs["publish"]["if"] == "needs.apply.outputs.changed == 'true'", jobs["publish"]["if"]
 
 
 def test_a_scheduled_refresh_waits_while_an_earlier_pull_request_is_open():
@@ -850,7 +934,7 @@ def test_a_scheduled_refresh_waits_while_an_earlier_pull_request_is_open():
     assert (
         has_line(refresh_to_steps, "    needs: earlier")
         and has_line(refresh_to_steps, "    if: github.event_name != 'schedule' || needs.earlier.outputs.open == ''")
-        and has_line(publish_to_steps, "    needs: [earlier, refresh]")
+        and has_line(publish_to_steps, "    needs: [earlier, refresh, apply]")
     ), "knowledge-librarian.yaml no longer holds a scheduled refresh back while an earlier pull request is open"
 
 
@@ -1314,6 +1398,39 @@ def test_publish_commits_a_plain_bundle_edit(host, tmp_path):
     assert "Edited." in git(host, "show", "HEAD:.lokf/knowledge/a.md"), "the edit was not committed"
 
 
+def apply_then_publish(h, tmp_path, patch_text):
+    """Hand the patch file to the template's apply steps in the host, as `refresh` would, then run publish's check on the patch they packaged."""
+    temp = tmp_path / "runner-temp"
+    temp.mkdir(exist_ok=True)
+    env = {"RUNNER_TEMP": temp, "GITHUB_OUTPUT": tmp_path / "output", "GITHUB_RUN_ID": "1"}
+    write(temp / "patch.yaml", patch_text)
+    pen = write(tmp_path / "pen.sh", step_body(LIBRARIAN_YAML, "Apply the patch file with the pen", r"^      [#-]"))
+    applied = run(["bash", pen], cwd=h, env=env)
+    if applied.rc != 0:
+        return applied
+    package = write(tmp_path / "package.sh", step_body(LIBRARIAN_YAML, "Package the bundle change", r"^      [#-]"))
+    assert run(["bash", package], cwd=h, env=env).rc == 0, "the template's packaging step failed"
+    git(h, "reset", "-q", "--hard")
+    git(h, "clean", "-qfd")
+    check = write(tmp_path / "check.sh", step_body(LIBRARIAN_YAML, "Check and commit the bundle patch", r"^      [#-]"))
+    return run(["bash", check], cwd=h, env=env)
+
+
+def test_apply_writes_the_patch_file_with_the_pen_and_publish_commits_it(host, tmp_path):
+    result = apply_then_publish(host, tmp_path, HANDOFF_PATCH)
+    assert result.rc == 0 and "branch=knowledge-librarian/" in read(tmp_path / "output"), (
+        f"apply and publish: exit {result.rc}: {result.out}"
+    )
+    assert "Made through the pen." in git(host, "show", "HEAD:.lokf/knowledge/playbooks/b.md"), "the pen's write was not committed"
+    assert read(tmp_path / "runner-temp" / "handoff.txt").rstrip("\n") == "one line for the reviewer, with a 'backtick'"
+
+
+def test_apply_fails_on_a_patch_file_the_pen_refuses_and_writes_nothing(host, tmp_path):
+    result = apply_then_publish(host, tmp_path, BAD_OP)
+    assert result.rc == 1 and "refused the agent's patch file" in result.out, f"apply: exit {result.rc}: {result.out}"
+    assert not git(host, "status", "--porcelain"), "the refused patch file wrote to the checkout"
+
+
 def test_publish_fails_when_the_gate_is_missing(host, tmp_path):
     git(host, "rm", "-q", ".lokf/scripts/knowledge-provenance.sh")
     git(host, "commit", "-q", "-m", "a host with no gate")
@@ -1347,7 +1464,7 @@ def test_every_job_of_each_template_starts_by_hardening_the_runner(yaml_path):
 
 @pytest.mark.parametrize(
     ("yaml_path", "job"),
-    [(LIBRARIAN_YAML, "refresh"), (RELEASE_YAML, "pack"), (REGISTRAR_YAML, "validate")],
+    [(LIBRARIAN_YAML, "refresh"), (LIBRARIAN_YAML, "apply"), (RELEASE_YAML, "pack"), (REGISTRAR_YAML, "validate")],
     ids=lambda v: v.name if hasattr(v, "name") else v,
 )
 def test_the_agent_and_the_jobs_whose_result_is_trusted_share_no_uv_cache(yaml_path, job):

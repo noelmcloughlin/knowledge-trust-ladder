@@ -12,13 +12,16 @@ name: Knowledge Librarian
 # propose again until that changes: the source moves, or a reader asks again.
 # A run a person starts does neither: starting it is the decision to go ahead.
 #
-# Three jobs, for least privilege. `earlier` reads those pull requests under a
+# Four jobs, for least privilege. `earlier` reads those pull requests under a
 # token that can read pull requests and nothing else, and runs no agent. The
 # `refresh` job runs the agent (third-party code) under a read-only token with
-# no git credentials on disk, then hands the proposed bundle change to
-# `publish` as a patch artifact. Only `publish`, which runs no agent code,
-# holds the contents-write / pull-requests-write token used to push the branch
-# and open the PR, so a compromised agent cannot reach it.
+# no git credentials on disk, and hands on the patch file the agent wrote and
+# nothing it made from it. `apply`, on a runner the agent never shared, with
+# a read-only token, applies that file with the default branch's pen and
+# toolkit, validates the result and hands `publish` the bundle change as a
+# patch artifact. Only `publish`, which runs no agent code, holds the
+# contents-write / pull-requests-write token used to push the branch and open
+# the PR, so a compromised agent cannot reach it.
 on:
   schedule:
     - cron: "0 5 * * 1" # Mondays at 05:00 UTC
@@ -156,8 +159,6 @@ jobs:
       copilot-requests: write
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
-      validate_outcome: ${{ steps.validate-lokf.outcome }}
-      conventions_outcome: ${{ steps.conventions.outcome }}
       retrieval: ${{ steps.retrieval.outputs.score }}
     steps:
       # Same audit-mode egress monitor step 5's other templates use; this job
@@ -348,7 +349,7 @@ jobs:
           AGENT_API_KEY_ENV: ${{ vars.AGENT_API_KEY_ENV }}
           KNOWLEDGE_RETRIEVAL: ${{ vars.KNOWLEDGE_RETRIEVAL }}
           KNOWLEDGE_RETRIEVAL_OUT: ${{ runner.temp }}/retrieval.txt
-          KNOWLEDGE_HANDOFF_OUT: ${{ runner.temp }}/handoff.txt
+          KNOWLEDGE_PATCH_OUT: ${{ runner.temp }}/patch.yaml
           KNOWLEDGE_SKIP_QUIET: ${{ github.event_name == 'schedule' }}
         run: |
           if [ "$(date -u +%d)" -le 7 ]; then export KNOWLEDGE_SKIP_QUIET=false; fi
@@ -359,10 +360,10 @@ jobs:
       # around the call, from an EXIT trap, so a failing agent or a cancelled
       # job restores too. That keeps a tampered core.fsmonitor or hooksPath, or
       # an exclude rule the agent added, from defeating either check (see the
-      # wrapper's own comments). This is the second,
-      # independent layer: it runs even when the wrapper did not get to (agent
-      # disarmed, early exit), so no path outside the bundle can reach
-      # `publish` in the patch.
+      # wrapper's own comments). This is the second, independent layer: it
+      # runs even when the wrapper did not get to (agent disarmed, early
+      # exit), so a run that wrote outside the bundle stops here. What goes on
+      # is the patch file alone, which `apply` writes from on a clean runner.
       - name: Enforce the agent's write scope
         if: vars.KNOWLEDGE_LIBRARIAN_ENABLED == 'true'
         run: |
@@ -371,6 +372,115 @@ jobs:
           if [ -n "$out" ]; then
             echo "::error::The librarian run touched files outside .lokf/knowledge/, .lokf/feedback.md and .lokf/questions.md:"
             echo "$out"
+            exit 1
+          fi
+
+      - name: Detect changes
+        id: diff
+        run: |
+          set -euo pipefail
+          # Scope to the bundle so tool artifacts (for example a fresh
+          # .lokf/uv.lock from `uv sync`) never trigger a pull request by
+          # themselves. Both of the bundle's names are listed. With
+          # ktl-sidecar's doorway link the second matches nothing, harmlessly.
+          # It still covers a host rearranged by hand into a real
+          # knowledge_bundle/ with .lokf/knowledge a link onto it, since a git
+          # pathspec never traverses a symlink. A name that does not exist in
+          # this repository is simply ignored. The patch file is what `apply`
+          # writes from, so a run that hands none on has nothing to propose.
+          if [ -n "$(git status --porcelain -- .lokf/knowledge knowledge_bundle)" ] && [ -s "$RUNNER_TEMP/patch.yaml" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # This job ran the agent, so it hands on the agent's patch file and,
+      # besides it, only the retrieval score the wrapper wrote when
+      # KNOWLEDGE_RETRIEVAL is on, of which only two integers go on. `apply`
+      # and `publish` work out the rest of what the pull request says on
+      # checkouts of their own.
+      - name: Read the retrieval score
+        id: retrieval
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          score="$(grep -oE '[0-9]+ of [0-9]+' "$RUNNER_TEMP/retrieval.txt" 2>/dev/null | head -n 1 || true)"
+          echo "score=$score" >> "$GITHUB_OUTPUT"
+
+      # Hand on the patch file as the agent wrote it. The wrapper copied it to
+      # the runner's temporary folder once the agent returned and the
+      # write-scope checks passed, before the pen applied it here, and
+      # refuses the run if the retrieval call changed that copy. Nothing else
+      # this job wrote goes on: the pen in this job ran on a .venv the agent
+      # could replace, so `apply` runs the pen again on a clean runner.
+      - name: Upload the patch file
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: librarian-patch-file
+          path: ${{ runner.temp }}/patch.yaml
+          retention-days: 1
+          if-no-files-found: error
+
+  apply:
+    name: Apply the patch file on a clean runner (read-only, no agent)
+    needs: [earlier, refresh]
+    if: needs.refresh.outputs.changed == 'true'
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+      validate_outcome: ${{ steps.validate-lokf.outcome }}
+      conventions_outcome: ${{ steps.conventions.outcome }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      # The full history, as `refresh` has it: the conventions check looks up
+      # the commit each `revision` names.
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # No uv cache, as in `refresh`, so nothing the agent's job unpacked is
+      # what this job's checks run on.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.12"
+          enable-cache: false
+
+      - name: Install the lokf sidecar
+        id: install-lokf
+        continue-on-error: true
+        run: uv sync --locked
+        working-directory: .lokf
+
+      - name: Download the patch file
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: librarian-patch-file
+          path: ${{ runner.temp }}
+
+      # Trust nothing `refresh` decided. Its pen ran on a .venv the agent could
+      # replace, and a process the agent left running could change its
+      # checkout after the wrapper's checks. What comes from it is the patch
+      # file the agent wrote, which is the agent's output by design. The pen
+      # from this checkout applies it here, on the toolkit installed above,
+      # and writes the hand-off. A file it refuses writes nothing and fails the
+      # run, and the log shows why.
+      - name: Apply the patch file with the pen
+        run: |
+          set -euo pipefail
+          rm -f "$RUNNER_TEMP/handoff.txt"
+          if ! bash .lokf/scripts/knowledge-apply.sh --handoff "$RUNNER_TEMP/handoff.txt" "$RUNNER_TEMP/patch.yaml"; then
+            echo "::error::knowledge-apply.sh refused the agent's patch file on a clean checkout, so nothing was written. Its findings are above."
             exit 1
           fi
 
@@ -386,10 +496,11 @@ jobs:
         working-directory: .lokf
 
       # The registrar's gate does not run on the pull request this workflow
-      # opens (see `publish`), so its second half runs here, and the pull
-      # request says how it ended beside the validation. The pen keeps most of
-      # the conventions by itself. A `resource` that names no file and a
-      # `revision` that names no commit are the two only this script finds.
+      # opens (see `publish`), so its second half runs here, on what this
+      # job's pen wrote, and the pull request says how it ended beside the
+      # validation. The pen keeps most of the conventions by itself. A
+      # `resource` that names no file and a `revision` that names no commit
+      # are the two only this script finds.
       - name: Check the conventions lokf validate cannot see
         id: conventions
         continue-on-error: true
@@ -400,39 +511,18 @@ jobs:
         id: diff
         run: |
           set -euo pipefail
-          # Scope to the bundle so tool artifacts (for example a fresh
-          # .lokf/uv.lock from `uv sync`) never trigger a pull request by
-          # themselves. Both of the bundle's names are listed. With
-          # ktl-sidecar's doorway link the second matches nothing, harmlessly.
-          # It still covers a host rearranged by hand into a real
-          # knowledge_bundle/ with .lokf/knowledge a link onto it, since a git
-          # pathspec never traverses a symlink. A name
-          # that does not exist in this repository is simply ignored.
+          # The pen writes nothing when every operation leaves a file as it
+          # was, so a patch file can change nothing.
           if [ -n "$(git status --porcelain -- .lokf/knowledge knowledge_bundle)" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # This job ran the agent, so it hands on two things besides the patch,
-      # and `publish` computes the rest of what the pull request says on its
-      # own checkout. One is the retrieval score the wrapper wrote when
-      # KNOWLEDGE_RETRIEVAL is on, of which only two integers go on. The other
-      # is the librarian's hand-off, its own words for the reviewer, which is
-      # uploaded beside the patch and which `publish` cleans again and shows as
-      # the agent's.
-      - name: Read the retrieval score
-        id: retrieval
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          set -euo pipefail
-          score="$(grep -oE '[0-9]+ of [0-9]+' "$RUNNER_TEMP/retrieval.txt" 2>/dev/null | head -n 1 || true)"
-          echo "score=$score" >> "$GITHUB_OUTPUT"
-
-      # Hand the proposed change to the privileged job as a patch (captures adds,
-      # edits and deletes under the bundle, plus ktl-docent's feedback.md and the
-      # ledger a handled entry moves into). The agent never sees a write token;
-      # `publish` applies this on a clean checkout.
+      # Hand the change to the privileged job as a patch (captures adds,
+      # edits and deletes under the bundle, plus ktl-docent's feedback.md and
+      # the ledger a handled entry moves into). `publish` checks it again and
+      # applies it on a clean checkout of its own.
       - name: Package the bundle change
         if: steps.diff.outputs.changed == 'true'
         run: |
@@ -452,7 +542,7 @@ jobs:
           # a deletion, which `publish` refuses. `publish` refuses a rename
           # line too, from a patch built some other way.
           git diff --cached --binary --no-renames > "$RUNNER_TEMP/librarian.patch"
-          # The lines the pen took from the patch file's `handoff`, or none.
+          # The lines this job's pen took from the patch file's `handoff`, or none.
           [ -f "$RUNNER_TEMP/handoff.txt" ] || : > "$RUNNER_TEMP/handoff.txt"
 
       - name: Upload the bundle patch
@@ -468,8 +558,8 @@ jobs:
 
   publish:
     name: Open the review PR (privileged, no agent)
-    needs: [earlier, refresh]
-    if: needs.refresh.outputs.changed == 'true'
+    needs: [earlier, refresh, apply]
+    if: needs.apply.outputs.changed == 'true'
     runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
@@ -501,11 +591,10 @@ jobs:
         id: check
         run: |
           set -euo pipefail
-          # Trust nothing the `refresh` job decided on its own. It shared a
-          # workspace with the agent, so its checks can in principle be
-          # defeated or skipped (see the wrapper script's comments). Re-derive
-          # the path check here, on this job's clean checkout, before
-          # anything from the patch touches disk. core.quotePath off, or a
+          # The patch comes from `apply`, which ran no agent and wrote it with
+          # the default branch's pen. Check it again all the same, on this
+          # job's clean checkout, before anything from it touches disk: this
+          # job holds the write token, and its checks cost a second. core.quotePath off, or a
           # concept named with a byte above 0x7f is listed C-quoted and
           # refused as outside the bundle.
           paths="$(git -c core.quotePath=false apply --numstat "$RUNNER_TEMP/librarian.patch" | cut -f3-)"
@@ -589,8 +678,8 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           BRANCH: ${{ steps.check.outputs.branch }}
-          LOKF_OUTCOME: ${{ needs.refresh.outputs.validate_outcome }}
-          CONVENTIONS_OUTCOME: ${{ needs.refresh.outputs.conventions_outcome }}
+          LOKF_OUTCOME: ${{ needs.apply.outputs.validate_outcome }}
+          CONVENTIONS_OUTCOME: ${{ needs.apply.outputs.conventions_outcome }}
           RETRIEVAL: ${{ needs.refresh.outputs.retrieval }}
           HEALTH: ${{ steps.check.outputs.health }}
           CHANGES: ${{ steps.check.outputs.changes }}
@@ -610,14 +699,15 @@ jobs:
               : o === 'failure' ? 'failed (review the run log)'
               : 'skipped';
             // The score comes from the job that ran the agent, so only a line
-            // of exactly two integers is shown. The health line and the list
-            // of changes were computed by this job, by knowledge-report.sh.
+            // of exactly two integers is shown. The two check outcomes come
+            // from `apply`, and the health line and the list of changes were
+            // computed by this job, by knowledge-report.sh.
             const retrieval = /^[0-9]+ of [0-9]+$/.test(RETRIEVAL || '')
               ? [`- Retrieval from the index: ${RETRIEVAL} reader questions reach their concept`]
               : [];
-            // The hand-off is the agent's own words, from the job that ran
-            // it, and is shown as nothing more. The pen cleaned it there; it
-            // is cleaned again here, since that job could be blinded: ten
+            // The hand-off is the agent's own words, which the pen in `apply`
+            // took from its patch file, and is shown as nothing more. The pen
+            // cleaned it; it is cleaned again here, as a second layer: ten
             // lines of 300 characters at most, with no backtick and no
             // character a reader cannot see. Unicode says which those are,
             // as it does in the pen: a control, a format character such as
