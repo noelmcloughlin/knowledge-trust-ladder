@@ -165,6 +165,23 @@ printf '#!/usr/bin/env bash\nprintf planted > .lokf/knowledge/planted.txt\n' > .
 printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
 """,
         ),
+        # Writes the patch, then commits a change of its own, which moves HEAD.
+        "commit": executable(
+            d / "commit-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+printf 'committed by the agent\n' >> README.md
+git -c user.name=agent -c user.email=agent@example.invalid commit -qam "agent commit"
+""",
+        ),
+        # Writes the patch, then rewrites every copy of the pen it finds under TMPDIR.
+        "retool": executable(
+            d / "retool-agent.sh",
+            r"""#!/usr/bin/env bash
+printf '%s\n' "$PATCH_TEXT" > .lokf/patch.yaml
+for f in "$TMPDIR"/*/knowledge-apply.py; do printf 'raise SystemExit(0)\n' > "$f"; done
+""",
+        ),
         # Writes the whole prompt it was handed to PROMPT_OUT.
         "prompt": executable(
             d / "prompt-agent.sh",
@@ -331,6 +348,18 @@ def test_an_agent_that_tells_git_to_stop_watching_a_file_is_refused(host, agents
     status = wrapper(host, {"AGENT_CLI": agents["unwatch"], "PATCH_TEXT": CREATE_OP})
     planted = (host / ".lokf" / "knowledge" / "planted.txt").exists()
     assert (status, planted) == (3, False), f"an agent that hid its edit behind an index flag was not refused (exit {status}, planted {planted})"
+
+
+def test_an_agent_that_moves_head_or_rewrites_the_pen_s_copies_is_refused(host, agents, tmp_path):
+    """The pen and the gate run from copies of HEAD taken before the agent ran, so neither a commit nor a rewritten copy decides what checks the agent's work."""
+    status = wrapper(host, {"AGENT_CLI": agents["commit"], "PATCH_TEXT": CREATE_OP})
+    assert status == 3 and not (host / ".lokf" / "knowledge" / "playbooks" / "b.md").exists(), f"an agent that moved HEAD was not refused (exit {status})"
+    git(host, "reset", "-q", "--hard", "HEAD~1")
+    private = tmp_path / "private-tmp"
+    private.mkdir()
+    status = wrapper(host, {"AGENT_CLI": agents["retool"], "PATCH_TEXT": CREATE_OP, "TMPDIR": private})
+    assert status == 3 and not (host / ".lokf" / "knowledge" / "playbooks" / "b.md").exists(), f"an agent that rewrote the pen's copy was not refused (exit {status})"
+    assert not any(private.iterdir()), f"the copies were left behind: {list(private.iterdir())}"
 
 
 def test_the_skill_the_workflow_installed_is_the_one_the_agent_is_handed(tmp_path, agents):
