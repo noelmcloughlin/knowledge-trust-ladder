@@ -20,7 +20,7 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    - a checksum that is not 64 hex digits;
    - a namespace that nests with another's;
    - a redirect out of http;
-   - a zip that cannot be read.
+   - a zip that cannot be read, or unpacked.
    The health line runs git on no repository a member's zip could carry,
    and a download that meets a server error is tried again;
 
@@ -1824,6 +1824,26 @@ def test_two_downloads_sharing_a_cache_write_a_file_each(tmp_path, monkeypatch):
     assert got == cache / f"{sha}.yaml" and got.read_bytes() == b"schema"
     assert len(set(parts)) == 2 and all(p.name.endswith(".part") for p in parts), parts
     assert sorted(p.name for p in cache.iterdir()) == [f"{sha}.yaml"], list(cache.iterdir())
+
+
+def test_a_zip_that_cannot_be_unpacked_is_a_finding_not_a_traceback(tmp_path):
+    """unpack caught BadZipFile only, so an entry Python cannot read, such as an encrypted one, stopped the build with a traceback."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("knowledge_federate_unpack", SCRIPT)
+    kf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kf)
+    zip_path = tmp_path / "a.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("knowledge/index.md", "---\nbase_iri: https://a.example/knowledge/\n---\n")
+    data = bytearray(zip_path.read_bytes())
+    # Mark the entry encrypted, in its local header and in the central directory.
+    for signature, offset in ((b"PK\x03\x04", 6), (b"PK\x01\x02", 8)):
+        at = data.index(signature) + offset
+        data[at] |= 1
+    zip_path.write_bytes(bytes(data))
+    with pytest.raises(kf.Failed, match=r"a.zip: could not be unpacked \(RuntimeError: "):
+        kf.unpack(zip_path, tmp_path / "into")
 
 
 @pytest.mark.parametrize(("address", "refused"), [

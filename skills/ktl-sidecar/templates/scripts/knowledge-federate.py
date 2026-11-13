@@ -57,9 +57,11 @@
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py mcp
 #   uv run --project .lokf .lokf/scripts/knowledge-federate.py diff OLD NEW
 #
-# `build` writes snapshot.new/ and renames it to snapshot/ in one step, so a
-# reader never sees half a federation; a failed build leaves the previous
-# snapshot in place. Given `--previous`, the workspace the release before
+# `build` writes snapshot.new/, then moves snapshot/ aside and renames
+# snapshot.new/ to snapshot/. These are two renames, not one atomic step, so
+# a reader that opens the workspace in the moment between them finds none and
+# must try again. It never sees half a federation. A failed build leaves the
+# previous snapshot in place. Given `--previous`, the workspace the release before
 # built, a member whose confirmed bytes cannot be fetched (its address does
 # not answer, or serves other bytes now) is held as that workspace holds it.
 # This follows section 11.5, which has an unreachable member degrade to its
@@ -202,6 +204,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+import zlib
 
 import yaml
 
@@ -1263,6 +1266,12 @@ def obtain(member: Member, cache: pathlib.Path, max_bytes: int, attest: bool) ->
     return cached, verdict
 
 
+# What unpacking a zip that passed check_zip may still raise: a corrupt or
+# cut entry, a compression method or an encryption Python cannot read, or a
+# disk that is full or refuses a name.
+UNREADABLE_ZIP = (zipfile.BadZipFile, zipfile.LargeZipFile, zlib.error, EOFError, NotImplementedError, RuntimeError, ValueError, OSError)
+
+
 def unpack(zip_path: pathlib.Path, into: pathlib.Path) -> pathlib.Path:
     """Unpack knowledge/ to into/.lokf/knowledge, the layout the sidecar's scripts read, and return that folder."""
     target = into / ".lokf"
@@ -1270,8 +1279,8 @@ def unpack(zip_path: pathlib.Path, into: pathlib.Path) -> pathlib.Path:
     try:
         with zipfile.ZipFile(zip_path) as zf:
             zf.extractall(target)
-    except zipfile.BadZipFile as e:
-        raise Failed(f"{zip_path.name}: could not be unpacked ({e})") from e
+    except UNREADABLE_ZIP as e:
+        raise Failed(f"{zip_path.name}: could not be unpacked ({type(e).__name__}: {e})") from e
     knowledge = target / "knowledge"
     if not (knowledge / "index.md").is_file():
         raise Failed(f"{zip_path.name}: no knowledge/index.md inside")
