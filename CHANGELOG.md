@@ -24,6 +24,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`knowledge-report.sh` reads a compact offset, a comment beside a quoted value and an identifier with a scheme as a parser does.** An edit written `-0500` hid behind a confirmation, a quoted `status` with a comment was not read, and a `urn:` or `doi:` source was listed as gone. A source map that names `.` no longer moves with the bundle's own commits, and the work list names each concept with no stamp. Conventions rule 10 refuses a comment line among the events, rule 5 takes a `urn:` for no file, and rule 16 reads `./docs/a.md` and `docs/a.md` as one resource.
 - **The preflight counts CRLF files with any `grep`, and finds an SSH signing key given as `key::` or under `~`.**
 - **The librarian's wrapper hands the agent the skill the workflow installed, and refuses an agent that tells git to stop watching a file.** A copy of the skill a host committed under `.claude/skills/` came first, and a `skip-worktree` flag hid a replaced script from the write-scope check. The federation's `labels.rq` and `moved.rq` compare two times as times.
+- **The website refuses a raw-HTML address that holds a control character.** A browser drops a tab from `java<tab>script:` and runs it, and the check saw no scheme there.
 
 ## [0.64.0] - 2026-11-12
 
