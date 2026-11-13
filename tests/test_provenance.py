@@ -740,19 +740,51 @@ def test_keys_behind_a_link_are_not_the_repository_s_own(parity):
     assert result.rc == 1 and "is a symbolic link" in result.out, f"the gate took keys from behind a link: {result.out}"
 
 
-def test_a_sidecar_the_gate_cannot_find_is_not_passed(tmp_path):
-    """The gate reads a sidecar in the repository's top folder. One in a subfolder was once skipped, or passed, whatever changed."""
+@pytest.fixture
+def subfolder(tmp_path):
+    """A repository whose sidecar sits in svc/, with its own copy of the gate, a key on file and a committed draft."""
     side = tmp_path / "svc"
     write(side / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n")
+    write(side / ".lokf" / "knowledge" / "x" / "c.md", concept_with("generated:\n  by: process:ktl-librarian\n  at: \"2026-01-01T00:00:00Z\""))
     write(side / ".lokf" / "curators" / "ada.pub", "ssh-ed25519 AAAA ada\n")
+    write(side / ".lokf" / "scripts" / "knowledge-provenance.sh", read(PROVENANCE))
     git = Git(tmp_path)
     git.init()
     git("add", "-A")
     git("commit", "-q", "-m", "a sidecar in a subfolder")
+    return tmp_path
+
+
+def test_a_sidecar_in_a_subfolder_is_read_from_its_folder_or_by_its_own_copy(subfolder):
+    """The gate once stopped, and before that skipped or passed, whatever changed in a sidecar below the top folder."""
+    side = subfolder / "svc"
     write(side / ".lokf" / "knowledge" / "x" / "c.md", concept_with(HUMAN))
+    result = bash(PROVENANCE, "--unattended", cwd=side)
+    assert result.rc == 1 and "adds or changes a confirmation by human:ada" in result.out, f"the unattended form missed the event: {result.out}"
+    own = side / ".lokf" / "scripts" / "knowledge-provenance.sh"
+    result = bash(own, "--unattended", cwd=subfolder)
+    assert result.rc == 1 and "adds or changes a confirmation by human:ada" in result.out, f"the sidecar's own copy, run from the top, missed it: {result.out}"
+    git = Git(subfolder)
+    git("commit", "-q", "-am", "an unsigned confirmation")
+    for cwd, script in ((side, PROVENANCE), (subfolder, own)):
+        result = bash(script, "HEAD~1", "HEAD", cwd=cwd)
+        assert result.rc == 1 and "confirmation by human:ada but is unsigned" in result.out, f"the signed form passed an unsigned confirmation ({cwd}): {result.out}"
+    git("rm", "-rq", "svc/.lokf/curators")
+    git("commit", "-q", "-m", "keys gone")
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=side)
+    assert result.rc == 0 and "OK - 0 confirmation" in result.out, f"the keys were not read under the prefix: {result.out}"
+
+
+def test_a_sidecar_the_gate_cannot_find_is_not_passed(tmp_path):
+    """With no .lokf/ above the working directory and the gate not in one, it stops and says why."""
+    write(tmp_path / "svc" / "README.md", "no sidecar here\n")
+    git = Git(tmp_path)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "no sidecar")
     for form in (["--unattended"], ["HEAD", "HEAD"]):
-        result = bash(PROVENANCE, *form, cwd=side)
-        assert result.rc == 2 and "no bundle at" in result.out, f"the gate passed a sidecar it cannot read ({form}): {result.out}"
+        result = bash(PROVENANCE, *form, cwd=tmp_path / "svc")
+        assert result.rc == 2 and "no bundle at" in result.out, f"the gate passed a repository with no bundle ({form}): {result.out}"
 
 
 def test_the_gate_passes_nothing_when_a_tool_it_reads_with_is_missing(parity, tmp_path_factory):

@@ -64,6 +64,9 @@
 #        knowledge-provenance.sh origin/main            (a branch, locally)
 #        knowledge-provenance.sh "$BASE_SHA" "$HEAD_SHA"  (in CI)
 #        knowledge-provenance.sh --unattended            (what the librarian workflow runs)
+#   Run it from the sidecar's folder, the one that holds .lokf/, or run that
+#   sidecar's own copy from anywhere in the repository. A sidecar in a
+#   subfolder is read with that folder's prefix on every path.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} <base-ref> [head-ref] | --unattended" >&2; exit 2; }
 set -u
 # A-Z, a-z and 0-9 in a case glob mean the ASCII letters and digits, not
@@ -91,13 +94,41 @@ for tool in awk comm sort cut sed grep mktemp; do
   command -v "$tool" >/dev/null 2>&1 || { echo "$tool is required, and this gate passes nothing it could not check" >&2; exit 2; }
 done
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not inside a git work tree" >&2; exit 2; }
+root="$(cd "$root" && pwd -P)" || exit 2
+# The sidecar may sit in a subfolder of the repository. Its folder is the
+# nearest one that holds .lokf/, from the working directory up to the top of
+# the work tree. Failing that, it is the folder this script sits in as
+# <folder>/.lokf/scripts/, so a workflow may run it from the top. Git names
+# every path from the top of the work tree, so each path below carries the
+# sidecar's folder as a prefix, empty when the sidecar is at the top. A
+# bundle-dir argument is read from the sidecar's folder.
+side=""
+d="$(pwd -P)"
+while :; do
+  if [ -d "$d/.lokf" ]; then side="$d"; break; fi
+  if [ "$d" = "$root" ] || [ "$d" = / ]; then break; fi
+  d="$(dirname "$d")"
+done
+if [ -z "$side" ]; then
+  here="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)"
+  case "$here" in
+    "$root"/.lokf/scripts|"$root"/*/.lokf/scripts) side="${here%/.lokf/scripts}" ;;
+  esac
+fi
+[ -n "$side" ] || side="$root"
+prefix="${side#"$root"}"; prefix="${prefix#/}"
+[ -z "$prefix" ] || prefix="$prefix/"
 cd "$root" || exit 2
-curators=".lokf/curators"
-# The bundle is looked for in the repository's top folder. A sidecar kept in
-# a subfolder is one this gate does not read yet, and saying so is the
-# honest answer: "skipped" or "OK" there would pass whatever changed.
+inner="$bundle"   # the bundle as the sidecar's folder names it
+bundle="$prefix$bundle"
+doorway="${prefix}knowledge_bundle"
+curators="${prefix}.lokf/curators"
+# The first folder of the bundle's path, which is asked about as a link.
+top_dir="$prefix${inner%%/*}"
+# A gate that could not find the bundle says so: "skipped" or "OK" there
+# would pass whatever changed.
 if [ ! -d "$bundle" ] && [ -z "$(git ls-tree "$base" -- "$bundle" 2>/dev/null)" ]; then
-  echo "no bundle at $bundle in the repository's top folder ($root), so this gate has nothing it can read; a sidecar in a subfolder is not checked by it" >&2
+  echo "no bundle at $bundle in $root, so this gate has nothing it can read; run it from the sidecar's folder, the one that holds .lokf/" >&2
   exit 2
 fi
 if [ "$unattended" -eq 0 ]; then
@@ -302,7 +333,7 @@ removed_from() {  # events-before file, events-now file -> the removed events th
 # of the paths this script lists, so no change under it would name it.
 allowed_link() {  # path, the path it points at -> whether this is one of the bundle's two names
   case "$1:$2" in
-    "$bundle:../knowledge_bundle"|"knowledge_bundle:$bundle") return 0 ;;
+    "$bundle:../knowledge_bundle"|"$doorway:$inner") return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -331,15 +362,15 @@ notes_of() {  # path, a concept on stdin -> each line a person's note would be, 
 }
 if [ "$unattended" -eq 1 ]; then
   git rev-parse -q --verify HEAD >/dev/null 2>&1 || { echo "no commit to compare with" >&2; exit 2; }
-  listed="$( { git -c core.quotePath=false diff --no-renames --name-only HEAD -- "$bundle" knowledge_bundle 2>/dev/null
-               git -c core.quotePath=false ls-files --others --exclude-standard -- "$bundle" knowledge_bundle 2>/dev/null; } | sort -u )"
+  listed="$( { git -c core.quotePath=false diff --no-renames --name-only HEAD -- "$bundle" "$doorway" 2>/dev/null
+               git -c core.quotePath=false ls-files --others --exclude-standard -- "$bundle" "$doorway" 2>/dev/null; } | sort -u )"
   quoted="$(printf '%s\n' "$listed" | grep '^"' || true)"
   [ -z "$quoted" ] || say "the change touches a bundle path git has to quote, which this script cannot read - rename it: $(printf '%s' "$quoted" | tr '\n' ' ')"
   while IFS= read -r f; do
     if [ -L "$f" ] && ! allowed_link "$f" "$(readlink "$f")"; then
       say "$f: an unattended change leaves a symbolic link under the bundle, which this gate cannot read - a concept is a file of its own"
     fi
-  done < <(printf '%s\n%s\n' "$listed" "${bundle%%/*}" | grep -v '^"' || true)
+  done < <(printf '%s\n%s\n' "$listed" "$top_dir" | grep -v '^"' || true)
   : > "$home/was.events"; : > "$home/now.events"; : > "$home/was.notes"; : > "$home/now.notes"
   while IFS= read -r f; do
     case "$f" in *.md) ;; *) continue ;; esac
@@ -369,7 +400,7 @@ if [ "$unattended" -eq 1 ]; then
        && [ "$(body_of < "$home/was.file")" != "$(body_of < "$home/now.file")" ]; then
       say "$new: a person wrote this text, which an unattended change rewrites under a new name (was $old)"
     fi
-  done < <(git -c core.quotePath=false diff --name-status -M HEAD -- "$bundle" knowledge_bundle 2>/dev/null | grep -E '^R' || true)
+  done < <(git -c core.quotePath=false diff --name-status -M HEAD -- "$bundle" "$doorway" 2>/dev/null | grep -E '^R' || true)
   for kind in events notes; do sort -u "$home/was.$kind" -o "$home/was.$kind"; sort -u "$home/now.$kind" -o "$home/now.$kind"; done
   while IFS="$(printf '\t')" read -r id by at _; do
     [ -n "$id" ] || continue
@@ -416,13 +447,13 @@ for sha in $commits; do
   # The actor of every event new or changed against every parent, in the
   # concepts this commit touches. A path this script cannot read, like an id
   # it cannot check, is a finding, never a skip.
-  listed="$(changed_paths "$sha" -- "$bundle" knowledge_bundle)"
+  listed="$(changed_paths "$sha" -- "$bundle" "$doorway")"
   quoted="$(printf '%s\n' "$listed" | grep '^"' || true)"
   if [ -n "$quoted" ]; then
     say "$short touches a bundle path git has to quote, which this script cannot read - rename it: $(printf '%s' "$quoted" | tr '\n' ' ')"
     continue
   fi
-  linked="$(printf '%s\n%s\n' "$listed" "${bundle%%/*}" | links_in "$sha")"
+  linked="$(printf '%s\n%s\n' "$listed" "$top_dir" | links_in "$sha")"
   if [ -n "$linked" ]; then
     say "$short leaves a symbolic link under the bundle, which this gate cannot read - a concept is a file of its own: $(printf '%s' "$linked" | tr '\n' ' ')"
     continue
