@@ -7,6 +7,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 ### Fixed
 
 - **The pen writes a `revision` in double quotes.** It dropped the quotes a person had put round one, and a short hash such as `1234e56` then reads as a number to a YAML 1.2 reader. A value written unquoted that YAML reads as a number still goes back as it was.
+- **`knowledge-provenance.sh` counts the concepts a range confirms.** It counted each curator once per commit, so a commit confirming six concepts read as one.
 
 ## [0.64.0] - 2026-11-13
 

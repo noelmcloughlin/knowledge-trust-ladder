@@ -475,6 +475,9 @@ for sha in $commits; do
   gone="$(removed_from "$home/every.events" "$home/sha.events" | cut -f2 | sort -u)"
   ids="$(printf '%s\n%s\n' "$added" "$gone" | sed '/^$/d' | sort -u)"
   [ -n "$ids" ] || continue
+  # One concept and one person count once, however many events of theirs it holds.
+  touched="$({ comm -13 "$home/parent.events" "$home/sha.events"; removed_from "$home/every.events" "$home/sha.events"; } | cut -f1,2 | sort -u | grep -c . || true)"
+  checked=$((checked + touched))
   format="$(sig_format "$sha")"
   status=""; signer=""
   if [ "$format" = pgp ] && [ "$gpg_ok" -eq 1 ]; then
@@ -482,7 +485,6 @@ for sha in $commits; do
     signer="$(printf '%s\n' "$status" | awk '/^\[GNUPG:\] VALIDSIG/ {print $3; exit}')"
   fi
   for id in $ids; do
-    checked=$((checked + 1))
     # What this commit does with that person's record, for the finding's wording.
     does="adds or changes"
     printf '%s\n' "$added" | grep -qxF -- "$id" || does="removes"
@@ -551,6 +553,6 @@ for sha in $commits; do
 done
 
 if [ "$fail" -eq 0 ]; then
-  echo "OK - $checked confirmation(s), new, changed or removed, in $base..$head signed by the key on file for their curator"
+  echo "OK - $checked concept(s) hold a person's record new, changed or removed in $base..$head, each signed by the key on file for its curator"
 fi
 exit "$fail"

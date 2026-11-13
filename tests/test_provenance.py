@@ -112,7 +112,7 @@ def test_signed_confirmations(tmp_path, checks):
     git("commit", "-q", "--no-gpg-sign", "-m", "base")
     write(k / "a.md", confirmed("contract"))
     git("commit", "-q", "-S", "-am", "confirm")
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "pass a confirmation signed by the curator on file")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "pass a confirmation signed by the curator on file")
     # A confirmation is the whole event, not its `by:` line: re-dating an
     # existing one, in a flow-style layout or a block one, is a claim by that
     # curator; moving the concept is not, since events are keyed by its id.
@@ -121,7 +121,14 @@ def test_signed_confirmations(tmp_path, checks):
     expect("HEAD~1", 1, "is unsigned", "report a re-dated confirmation nobody signed")
     replace_in(k / "a.md", "2026-09-18T00:00:00Z", "2026-09-19T00:00:00Z")
     git("commit", "-q", "-S", "-am", "redated by its curator")
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "pass a re-dated confirmation its curator signed")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "pass a re-dated confirmation its curator signed")
+    # One curator confirming two concepts in one commit counts two, not one.
+    write(k / "b.md", confirmed("contract"))
+    write(k / "c.md", confirmed("contract"))
+    git("add", "-A")
+    git("commit", "-q", "-S", "-m", "confirm two")
+    expect("HEAD~1", 0, r"^OK - 2 concept\(s\) hold a person's record", "count each concept one commit confirms")
+    git("reset", "-q", "--hard", "HEAD~1")
     write(
         k / "flow.md",
         '---\ntype: Service\nid: https://example.invalid/k/x/flow\nverified: [{ by: human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n',
@@ -131,7 +138,7 @@ def test_signed_confirmations(tmp_path, checks):
     expect("HEAD~1", 1, "is unsigned", "see a flow-style event that leaves no by: line in the diff")
     git("mv", k / "flow.md", k / "moved.md")
     git("commit", "-q", "--no-gpg-sign", "-m", "moved, unsigned")
-    expect("HEAD~1", 0, r"^OK - 0 confirmation", "let a confirmed concept move under its id without a new claim")
+    expect("HEAD~1", 0, r"^OK - 0 concept\(s\) hold a person's record", "let a confirmed concept move under its id without a new claim")
     write(k / "b.md", confirmed("contract"))
     git("add", "-A")
     git("commit", "-q", "--no-gpg-sign", "-m", "unsigned")
@@ -156,21 +163,21 @@ def test_signed_confirmations(tmp_path, checks):
     write(k / "f.md", confirmed("other"))
     git("add", "-A")
     git("-c", f"user.signingkey={fpr2}", "commit", "-q", "-S", "-m", "confirm after the key landed")
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "pass a confirmation once that key landed in an earlier range")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "pass a confirmation once that key landed in an earlier range")
     write(c / "sub.asc", gpg("--armor", "--export", fpr3).out + "\n")
     git("add", "-A")
     git("commit", "-q", "-S", "-m", "subkey curator")
     write(k / "g.md", confirmed("sub"))
     git("add", "-A")
     git("-c", f"user.signingkey={fpr3}", "commit", "-q", "-S", "-m", "signed with the subkey")
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "accept a signature made with a GPG signing subkey")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "accept a signature made with a GPG signing subkey")
     shutil.copy(pv / "sshcur.pub", c / "sshcur.pub")
     git("add", "-A")
     git("commit", "-q", "-S", "-m", "ssh curator")
     write(k / "h.md", confirmed("sshcur"))
     git("add", "-A")
     git("-c", "gpg.format=ssh", "-c", f"user.signingkey={pv / 'sshcur.pub'}", "commit", "-q", "-S", "-m", "ssh signed")
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "accept an SSH signature by the key on file")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "accept an SSH signature by the key on file")
     write(k / "i.md", confirmed("sshcur"))
     git("add", "-A")
     git(
@@ -189,7 +196,7 @@ def test_signed_confirmations(tmp_path, checks):
     write(k / "j.md", confirmed("contract"))
     git("add", "-A")
     git("commit", "-q", "-S", "-m", "another key lands beside a confirmation")
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "let another curator's key land beside a confirmation")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "let another curator's key land beside a confirmation")
     # Only the frontmatter is a claim: an example event in a body code fence
     # is not, and a human `generated` record, which the curator's Correct
     # writes, is, whatever its layout.
@@ -199,7 +206,7 @@ def test_signed_confirmations(tmp_path, checks):
     )
     git("add", "-A")
     git("commit", "-q", "--no-gpg-sign", "-m", "example in a fence, unsigned")
-    expect("HEAD~1", 0, r"^OK - 0 confirmation", "ignore an example event in a body code fence")
+    expect("HEAD~1", 0, r"^OK - 0 concept\(s\) hold a person's record", "ignore an example event in a body code fence")
     write(
         k / "gen.md",
         '---\ntype: Service\nid: https://example.invalid/k/x/gen\ngenerated: { by: human:contract, at: "2026-09-17T00:00:00Z" }\n---\n',
@@ -229,7 +236,7 @@ def test_signed_confirmations(tmp_path, checks):
     write(k / "café.md", confirmed("contract"))
     git("add", "-A")
     git("commit", "-q", "-S", "-m", "utf-8 name, signed")
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "read a concept whose name holds a byte above 0x7f")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "read a concept whose name holds a byte above 0x7f")
     write(k / 'qu"ote.md', confirmed("contract"))
     git("add", "-A")
     git("commit", "-q", "--no-gpg-sign", "-m", "quoted name, unsigned")
@@ -247,7 +254,7 @@ def test_signed_confirmations(tmp_path, checks):
     git("commit", "-q", "-S", "-m", "confirmed on the trunk")
     git("checkout", "-q", "side")
     git("merge", "-q", "--no-gpg-sign", "--no-edit", trunk)
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "let a merge bring in a confirmation its curator signed")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "let a merge bring in a confirmation its curator signed")
     git("checkout", "-q", trunk)
     write(repo / "more.txt", "more\n")
     git("add", "-A")
@@ -274,7 +281,7 @@ def test_signed_confirmations(tmp_path, checks):
     )
     write(k / "b.md", "---\ntype: Service\n---\n")
     git("commit", "-q", "-S", "-am", "event struck out by its curator")
-    expect("HEAD~1", 0, r"^OK - 1 confirmation", "pass a confirmation its own curator struck out and signed")
+    expect("HEAD~1", 0, r"^OK - 1 concept\(s\) hold a person's record", "pass a confirmation its own curator struck out and signed")
     git("rm", "-q", k / "d.md")
     git("commit", "-q", "--no-gpg-sign", "-m", "confirmed concept deleted, unsigned")
     expect(
@@ -291,7 +298,7 @@ def test_signed_confirmations(tmp_path, checks):
     expect(
         "HEAD~1",
         0,
-        r"^OK - 1 confirmation",
+        r"^OK - 1 concept\(s\) hold a person's record",
         "let one person's generated record give way to another's, signed by the second",
     )
     write(
@@ -324,12 +331,12 @@ def test_signed_confirmations(tmp_path, checks):
     expect(
         "HEAD~1",
         0,
-        r"^OK - 1 confirmation",
+        r"^OK - 1 concept\(s\) hold a person's record",
         "let a person release their own text to the curator's process, signed by them",
     )
     git("rm", "-rq", ".lokf/curators")
     git("commit", "-q", "-S", "-m", "nokeys")
-    expect("HEAD~1", 0, r"^OK - 0 confirmation", "read a range that deletes the keys and records nobody, and pass it")
+    expect("HEAD~1", 0, r"^OK - 0 concept\(s\) hold a person's record", "read a range that deletes the keys and records nobody, and pass it")
     git("commit", "-q", "-S", "--allow-empty", "-m", "still no keys")
     expect("HEAD~1", 0, r"^skipped", "say so and pass with no .lokf/curators/")
 
@@ -772,7 +779,7 @@ def test_a_sidecar_in_a_subfolder_is_read_from_its_folder_or_by_its_own_copy(sub
     git("rm", "-rq", "svc/.lokf/curators")
     git("commit", "-q", "-m", "keys gone")
     result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=side)
-    assert result.rc == 0 and "OK - 0 confirmation" in result.out, f"the keys were not read under the prefix: {result.out}"
+    assert result.rc == 0 and "OK - 0 concept(s) hold" in result.out, f"the keys were not read under the prefix: {result.out}"
 
 
 def test_a_sidecar_the_gate_cannot_find_is_not_passed(tmp_path):
