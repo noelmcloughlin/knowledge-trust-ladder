@@ -4,17 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Added
-
-- **The skills use `sources[].excerpt`.** The librarian copies the passage a footnoted claim rests on, the curator shows it where it sits in the file before the claim, and the docent gives it as what the bundle quotes. The librarian's `references/excerpts.md` says when to write one, how to copy it, and what to do when its file no longer holds it.
-- **The pen looks for each excerpt in its file before it writes.** A quote the file does not hold is refused, with `--dry-run` too, and so is one that is empty or longer than 500 characters.
-- **A concept's page on the website shows the passage it quotes under each source.**
-- **The work list tells a moved file from a moved passage.** `knowledge-report.sh worklist` lists first each excerpt its file no longer holds, marks each moved source a concept quotes as *the quoted passage holds* or *is gone*, and counts the footnoted sources that carry no excerpt. The lokf toolkit in `.lokf/.venv` finds the passages.
-
-### Fixed
-
-- **A line of a block scalar under `sources` no longer reads as a source.** `knowledge-report.sh` took a quoted line that began `resource:` for an entry's own key.
-
 ## [0.64.0] - 2026-11-13
 
 ### Added
@@ -27,6 +16,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **`knowledge-report.sh evidence` prints every `generated` record and `verified` event as a tab-separated table, and marks a second person's re-check.** `knowledge-release.yaml` attaches it to a release as `evidence-<tag>-<name>.tsv`, with its checksum and attestation.
 - **`docs/examples/curator.md` holds a captured `ktl-curator` session on this repository's own bundle.** It shows the report, nine verdicts given one per turn, and the log lines and checks that followed. The nine docent answers asked after it, under `Evidence first: yes`, move to `docs/examples/docent-after-curation.md`.
 - **`docs/uses.md` says what KTL is for, and what it is not.** It lists the uses the skills were built for, answers the two that readers asked about, DevSecOps and technology governance, and gives three questions for judging any other.
+- **The skills use `sources[].excerpt`.** The librarian copies the passage a footnoted claim rests on, the curator shows it where it sits in the file before the claim, and the docent gives it as what the bundle quotes. The librarian's `references/excerpts.md` says when to write one, how to copy it, and what to do when its file no longer holds it.
+- **The pen looks for each excerpt in its file before it writes.** A quote the file does not hold is refused, with `--dry-run` too, and so is one that is empty or longer than 500 characters.
+- **A concept's page on the website shows the passage it quotes under each source.**
+- **The work list tells a moved file from a moved passage.** `knowledge-report.sh worklist` lists first each excerpt its file no longer holds, marks each moved source a concept quotes as *the quoted passage holds* or *is gone*, and counts the footnoted sources that carry no excerpt. The lokf toolkit in `.lokf/.venv` finds the passages.
 
 ### Changed
 
@@ -47,6 +40,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **The preflight counts CRLF files with any `grep`, and finds an SSH signing key given as `key::` or under `~`.**
 - **The librarian's wrapper hands the agent the skill the workflow installed, and refuses an agent that tells git to stop watching a file.** A copy of the skill a host committed under `.claude/skills/` came first, and a `skip-worktree` flag hid a replaced script from the write-scope check. The federation's `labels.rq` and `moved.rq` compare two times as times.
 - **The website refuses a raw-HTML address that holds a control character.** A browser drops a tab from `java<tab>script:` and runs it, and the check saw no scheme there.
+- **A line of a block scalar under `sources` no longer reads as a source.** `knowledge-report.sh` took a quoted line that began `resource:` for an entry's own key.
 
 ## [0.63.0] - 2026-11-12
 
