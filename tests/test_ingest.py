@@ -860,6 +860,28 @@ def test_a_changed_header_setting_reaches_a_page_that_did_not_change(tmp_path, s
     checks.ok(result and "1 unchanged" in result.out, "and the run after that fetches nothing", result.out)
 
 
+def test_a_changed_header_setting_outlasts_a_failed_run_that_moved_the_records(tmp_path, server, checks):
+    """A run that moved an entry's records to the other lock and then failed dropped the settings digest, so the next run kept the old headers."""
+    confluence_routes(server, False, {"123": {"title": "Deploy", "version": 1, "storage": "<p>Deploy.</p>"}})
+    manifest = confluence_manifest(server, False)
+    manifest["entries"][0].update(sensitivity="confidential", lock_details=True)
+    root = host(tmp_path, manifest)
+    write(root / ".lokf" / ".gitignore", read(TEMPLATES / "gitignore"))
+    result = ingest(root, "--visibility", "private")
+    checks.ok(result and "1 fetched" in result.out, "the page is fetched", result.out)
+    del manifest["entries"][0]["lock_details"]
+    manifest["entries"][0]["license"] = "https://acme.example/terms"
+    write(root / ".lokf" / "ingest.yaml", yaml.safe_dump(manifest))
+    search = Stub.routes["/rest/api/content/search"]
+    Stub.routes["/rest/api/content/search"] = (403, {"Content-Type": "text/plain"}, b"no")
+    result = ingest(root, "--visibility", "private")
+    checks.ok("- runbooks (confluence, label ktl): failed, 403" in result.out, "the run that moves the records fails", result.out)
+    Stub.routes["/rest/api/content/search"] = search
+    result = ingest(root, "--visibility", "private")
+    text = read(root / ".lokf" / ".cache" / "mirror" / "runbooks" / "123.md")
+    checks.ok(result and "1 fetched" in result.out and "license: https://acme.example/terms" in text, "the next run writes the page again with the license", result.out + text)
+
+
 def test_a_selection_over_max_items_is_refused_whole(tmp_path, server, checks):
     pages = {str(n): {"title": f"Page {n}", "version": 1, "storage": "<p>x</p>"} for n in range(100, 104)}
     confluence_routes(server, True, pages)

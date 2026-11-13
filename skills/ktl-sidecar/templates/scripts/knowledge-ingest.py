@@ -2411,6 +2411,10 @@ class Run:
             failure = ("failed", f"an error this script did not expect, {type(e).__name__}: {' '.join(str(e).split())[:200]}")
         record = book["entries"].setdefault(entry.id, {"status": "ok", "items": {}})
         other["entries"].pop(entry.id, None)
+        # The digest moves with the records, so that a failure, or a stop at
+        # the time limit, still leaves the next run to write every item again.
+        if stored:
+            record.setdefault("settings", stored)
         self.removals += elsewhere
         if book is self.cache_lock:
             self.settled.add(entry.id)
