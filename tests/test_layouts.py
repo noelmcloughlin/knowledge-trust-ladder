@@ -716,6 +716,20 @@ def test_the_librarian_template_still_holds(what, needles):
     assert not missing, f"knowledge-librarian.yaml no longer contains: {missing} ({what})"
 
 
+@pytest.mark.parametrize("yaml_path", [LIBRARIAN_YAML, WORKFLOWS / "knowledge-sync.yaml"], ids=["librarian", "sync"])
+def test_each_push_goes_to_the_server_the_workflow_runs_on(yaml_path):
+    """A push address that names github.com fails on GitHub Enterprise Server."""
+    pushes = [line for line in read(yaml_path).split("\n") if "git push" in line and "x-access-token" in line]
+    assert pushes, f"{yaml_path.name} has no push with the job token"
+    for line in pushes:
+        assert "@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git" in line and "github.com" not in line, line
+    url = run(
+        ["bash", "-c", 'echo "https://x-access-token:${PUSH_TOKEN}@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git"'],
+        env={"PUSH_TOKEN": "t", "GITHUB_SERVER_URL": "https://ghe.example.com", "GITHUB_REPOSITORY": "acme/app"},
+    )
+    assert url.out == "https://x-access-token:t@ghe.example.com/acme/app.git", url.out
+
+
 def test_the_hand_off_travels_from_the_pen_through_the_artifact_to_the_pull_request():
     text = read(LIBRARIAN_YAML)
     upload = section(text, r"name: Upload the bundle patch", r"if-no-files-found")
