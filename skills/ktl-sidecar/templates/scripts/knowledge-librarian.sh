@@ -24,8 +24,13 @@
 #     runs, and a run in which the agent moved HEAD or changed those copies is
 #     refused. The agent shares this job's user, so a file outside git, such
 #     as .lokf/.venv, and a process it leaves running stay within its reach.
-#     The workflow's publish job, on a runner the agent never shared, is the
-#     boundary; these checks only stop a bad run early.
+#     So these checks only stop a bad run early. The boundary is the
+#     workflow's apply and publish jobs, on runners the agent never shared.
+#   - The patch file reaches the file KNOWLEDGE_PATCH_OUT names, as the agent
+#     wrote it, once the checks above pass and before the pen applies it
+#     here. The workflow hands that file on, and nothing this job made from
+#     it, and its apply job runs the pen on it again. A patch file that is a
+#     link is refused, and a refused run leaves no copy.
 #   - The lines the patch file holds for the reviewer, its `handoff`, reach
 #     the file KNOWLEDGE_HANDOFF_OUT names through the same script, cleaned.
 #     That file and the retrieval score's are removed once the agent returns,
@@ -59,6 +64,8 @@
 #                       it on a scheduled run only, never on one a person
 #                       starts
 #   KNOWLEDGE_HANDOFF_OUT  optional: a file to write the patch's hand-off lines to
+#   KNOWLEDGE_PATCH_OUT optional: a file to copy the agent's patch file to, as
+#                       it wrote it, before the pen applies it here
 #   KNOWLEDGE_RETRIEVAL optional: "true" scores, after the bundle is written,
 #                       whether the index leads an agent to the concept behind
 #                       each question readers asked (one more agent call)
@@ -365,6 +372,11 @@ score_retrieval() {
     rm -rf "$scratch"
     exit 3
   fi
+  if ! patch_out_intact; then
+    echo "knowledge-librarian: the retrieval call changed the copy of the patch file the workflow hands on - refusing" >&2
+    rm -rf "$scratch"
+    exit 3
+  fi
   line="$(bash .lokf/scripts/knowledge-report.sh retrieval "$scratch/reply" 2>/dev/null | sed -n 1p)"
   rm -rf "$scratch"
   echo "knowledge-librarian: $line"
@@ -409,19 +421,45 @@ tools_digest() {
   done
 }
 tools_intact() { [ -n "$tools_dir" ] && [ -n "$tools_sum" ] && [ "$(tools_digest)" = "$tools_sum" ]; }
-on_exit() {
-  restore_git_state
-  [ -z "$tools_dir" ] || rm -rf "$tools_dir"
+
+# The patch file, as the agent wrote it, copied to KNOWLEDGE_PATCH_OUT for
+# the workflow to hand on, with its git object id held in this script's
+# memory. The copy is written beside its path and moved into place, so a
+# link left at the path is replaced, not followed. The retrieval call comes
+# after and could write there too, so the copy must still match the id once
+# that call returns.
+patch_sum=""
+hand_on_patch() {
+  local out="${KNOWLEDGE_PATCH_OUT:-}" tmp
+  [ -n "$out" ] || return 0
+  tmp="$(mktemp "$out.XXXXXX")"
+  cp .lokf/patch.yaml "$tmp"
+  mv -f "$tmp" "$out"
+  patch_sum="$(git hash-object --no-filters -- "$out")"
+}
+patch_out_intact() {
+  [ -z "$patch_sum" ] && return 0
+  [ -f "$KNOWLEDGE_PATCH_OUT" ] && [ ! -L "$KNOWLEDGE_PATCH_OUT" ] \
+    && [ "$(git hash-object --no-filters -- "$KNOWLEDGE_PATCH_OUT" 2>/dev/null)" = "$patch_sum" ]
 }
 
-# The files the workflow reads after this script: the hand-off and the
-# retrieval score. The agent could write anywhere this job can, those paths
-# included, and could leave a link there that sends a later write into the
-# checkout. So each is removed once the agent returns, and what the workflow
-# reads was put there after the agent, by the pen or the retrieval test.
+# A run that ends in a refusal hands nothing on, so the copy goes too.
+on_exit() {
+  local rc=$?
+  restore_git_state
+  [ -z "$tools_dir" ] || rm -rf "$tools_dir"
+  if [ "$rc" -ne 0 ] && [ -n "$patch_sum" ]; then rm -f "$KNOWLEDGE_PATCH_OUT"; fi
+}
+
+# The files the workflow reads after this script: the patch file's copy, the
+# hand-off and the retrieval score. The agent could write anywhere this job
+# can, those paths included, and could leave a link there that sends a later
+# write into the checkout. So each is removed once the agent returns, and
+# what the workflow reads was put there after the agent, by this script, the
+# pen or the retrieval test.
 clear_outputs() {
   local out
-  for out in "${KNOWLEDGE_HANDOFF_OUT:-}" "${KNOWLEDGE_RETRIEVAL_OUT:-}"; do
+  for out in "${KNOWLEDGE_PATCH_OUT:-}" "${KNOWLEDGE_HANDOFF_OUT:-}" "${KNOWLEDGE_RETRIEVAL_OUT:-}"; do
     [ -z "$out" ] || rm -f "$out"
   done
 }
@@ -527,7 +565,13 @@ main() {
     rm -f .lokf/patch.yaml
     exit 3
   fi
+  if [ -L .lokf/patch.yaml ]; then
+    echo "knowledge-librarian: .lokf/patch.yaml is a link, and the agent writes the file itself - refusing" >&2
+    rm -f .lokf/patch.yaml
+    exit 3
+  fi
   if [ -f .lokf/patch.yaml ]; then
+    hand_on_patch
     echo "knowledge-librarian: applying .lokf/patch.yaml with knowledge-apply.sh"
     if ! bash "$tools_dir/knowledge-apply.sh" --root "$repo_root" ${KNOWLEDGE_HANDOFF_OUT:+--handoff "$KNOWLEDGE_HANDOFF_OUT"} .lokf/patch.yaml; then
       echo "knowledge-librarian: knowledge-apply.sh refused the patch, so nothing was written" >&2

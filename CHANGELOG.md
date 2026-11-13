@@ -8,6 +8,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **A federation build exports a large member in seconds, not minutes.** While the lokf toolkit labels blank nodes with rdflib's canonicaliser, which is quadratic in them, `knowledge-federate.py` has its exports use pyoxigraph's RDFC-1.0, as proposed upstream in lokf pull request 187. Each `export/<slug>/graph.nt` changes its blank-node labels once.
 
+### Security
+
+- **The scheduled librarian writes the bundle on a runner the agent never shared.** A new `apply` job in `knowledge-librarian.yaml` runs the default branch's pen on the agent's patch file, with the toolkit `uv.lock` pins, validates the result and hands `publish` the patch. `refresh` hands on the patch file alone, since the agent could replace its `.venv` and change its checkout, and `knowledge-librarian.sh` copies the file out through `KNOWLEDGE_PATCH_OUT`.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added
