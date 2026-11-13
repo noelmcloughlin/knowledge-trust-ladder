@@ -4,10 +4,6 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
-### Changed
-
-- **`ktl-prose` reports "stops without" under rule 11.** "The build stops without `gh`" says that the build needs `gh`, and the reader has to turn the sentence round to find that out.
-
 ## [0.64.0] - 2026-11-13
 
 ### Added
@@ -43,6 +39,7 @@ All notable changes to this repository are documented here. Format follows [Keep
 - **A sync names a local edit it overwrote, rather than blaming the release, and names a host script no manifest line lists.**
 - **A federation build exports a large member in seconds, not minutes.** While the lokf toolkit labels blank nodes with rdflib's canonicaliser, which is quadratic in them, `knowledge-federate.py` has its exports use pyoxigraph's RDFC-1.0, as proposed upstream in lokf pull request 187. Each `export/<slug>/graph.nt` changes its blank-node labels once.
 - **The skills' scripts need Python 3.11 or later.** The headers, the shell halves' interpreter checks, the preflight and the release workflow drop 3.9 and 3.10, and so does the sidecar's `pyproject.toml`. RHEL 9's and Ubuntu 22.04's python3 now run the scripts only through `uv run` or `.lokf/.venv`. The ingest no longer pins typing-extensions.
+- **`ktl-prose` reports "stops without" under rule 11.** "The build stops without `gh`" says that the build needs `gh`, and the reader has to turn the sentence round to find that out.
 
 ### Fixed
 
