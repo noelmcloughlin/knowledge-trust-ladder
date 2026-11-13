@@ -733,9 +733,13 @@ main() {
       else
         echo "lokf validate --check-refs: skipped, uv is not installed; the conventions script runs without its parser's half"
       fi
+      # With uv, as the gate runs it: --strict fails a rule it could not
+      # check. Without uv, the shell half runs alone, and the line says so
+      # rather than pass rules nobody checked.
       if [[ -f scripts/knowledge-conventions.sh ]]; then
-        if out="$(bash scripts/knowledge-conventions.sh knowledge 2>&1)"; then
-          echo "conventions: pass"
+        if command -v uv >/dev/null 2>&1; then strict="--strict"; pass="pass"; else strict=""; pass="the shell half passes; the rules that need uv were not checked, since it is not installed"; fi
+        if out="$(bash scripts/knowledge-conventions.sh knowledge ${strict:+"$strict"} 2>&1)"; then
+          echo "conventions: $pass"
         else
           echo "conventions: failed"; printf '%s\n' "$out" | sed 's/^/    /'; rc=1
         fi
