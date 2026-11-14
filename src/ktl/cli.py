@@ -24,12 +24,15 @@ from pathlib import Path
 # Where each agent reads skills, at project scope (relative to the current
 # folder) and at user scope (relative to the home folder). Each placement
 # was checked against `gh skill install` 2.101. An agent not listed here
-# takes --dest.
+# takes --dest. No one folder serves them all: Claude Code reads only its
+# own, and Copilot and Codex differ at user scope. So, as with `gh skill
+# install`, GitHub Copilot is the agent when none is named.
 AGENTS = {
     "claude-code": (".claude/skills", ".claude/skills"),
     "codex": (".agents/skills", ".agents/skills"),
     "github-copilot": (".agents/skills", ".copilot/skills"),
 }
+DEFAULT_AGENT = "github-copilot"
 
 # Files a copy never needs: bytecode a Python run may have left beside a
 # script.
@@ -138,15 +141,15 @@ def cmd_path(args: argparse.Namespace) -> int:
 
 def cmd_install(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
     if args.dest is not None and (args.agent or args.scope):
-        parser.error("give --dest, or --agent with --scope, not both")
-    if args.dest is None and not (args.agent and args.scope):
-        parser.error("name the agent and the scope (--agent NAME --scope user|project), or a folder with --dest")
+        parser.error("give --dest, or --scope with an optional --agent, not both")
+    if args.dest is None and not args.scope:
+        parser.error("name the scope (--scope user|project), or a folder with --dest")
     available = skill_names()
     names = args.skill or available
     unknown = [n for n in names if n not in available]
     if unknown:
         parser.error(f"no skill named {', '.join(unknown)}; this package carries {', '.join(available)}")
-    dest = args.dest if args.dest is not None else target_folder(args.agent, args.scope)
+    dest = args.dest if args.dest is not None else target_folder(args.agent or DEFAULT_AGENT, args.scope)
     install(names, dest)
     print(f"Installed {len(names)} skill{'s' if len(names) != 1 else ''} from ktl {version()} into {dest}: {', '.join(names)}")
     return 0
@@ -180,9 +183,11 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="Copy the skills into the folder an agent reads, replacing any earlier copy of each.",
         epilog=f"Where each agent reads skills (project scope is relative to the current folder):\n{table}\n\n"
-        "Give --dest for any other agent or folder.",
+        f"With no --agent, the agent is {DEFAULT_AGENT}. Give --dest for any other agent or folder.",
     )
-    install_parser.add_argument("--agent", choices=sorted(AGENTS), help="the agent whose folder to use")
+    install_parser.add_argument(
+        "--agent", choices=sorted(AGENTS), help=f"the agent whose folder to use (default: {DEFAULT_AGENT})"
+    )
     install_parser.add_argument("--scope", choices=["user", "project"], help="the user's folder, or this project's")
     install_parser.add_argument("--dest", type=Path, help="install into this folder instead")
     install_parser.add_argument(

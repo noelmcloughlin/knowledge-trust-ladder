@@ -148,13 +148,24 @@ def test_install_finds_each_agents_folder(tmp_path, agent, scope, folder):
     assert [p for p in tmp_path.rglob("SKILL.md")] == [tmp_path / folder / "ktl-prose" / "SKILL.md"]
 
 
+@pytest.mark.parametrize(("scope", "folder"), [("user", "home/.copilot/skills"), ("project", "project/.agents/skills")])
+def test_install_with_no_agent_named_serves_github_copilot(tmp_path, scope, folder):
+    home, project = tmp_path / "home", tmp_path / "project"
+    home.mkdir()
+    project.mkdir()
+    run = ktl("skills", "install", "--scope", scope, "--skill", "ktl-docent", cwd=project, home=home)
+    assert run.returncode == 0, run.stderr
+    assert [p for p in tmp_path.rglob("SKILL.md")] == [tmp_path / folder / "ktl-docent" / "SKILL.md"]
+
+
 @pytest.mark.parametrize(
     ("args", "says"),
     [
         (["--skill", "ktl-nonesuch", "--dest", "x"], "no skill named ktl-nonesuch"),
-        (["--agent", "codex"], "name the agent and the scope"),
+        (["--agent", "codex"], "name the scope"),
         (["--agent", "codex", "--scope", "user", "--dest", "x"], "not both"),
-        ([], "name the agent and the scope"),
+        (["--scope", "user", "--dest", "x"], "not both"),
+        ([], "name the scope"),
     ],
 )
 def test_install_refuses_what_it_cannot_do_and_writes_nothing(tmp_path, args, says):

@@ -6,19 +6,19 @@ The package has no dependencies, needs Python 3.9 or later, and installs from Py
 
 ## Install the skills
 
-Install all six for your user, naming your agent:
+Install all six for your user:
 
 ```bash
-uvx ktl skills install --agent claude-code --scope user
+uvx ktl skills install --scope user
 ```
 
-`--agent` takes `claude-code`, `codex` or `github-copilot`, and `--scope` takes `user` or `project`. For any other agent, give the folder it reads with `--dest`. To install one skill, add `--skill ktl-docent`. To pin a version, write `ktl@0.64.0` in place of `ktl`. The six skills are released together, so one version pins them all, and installing the next version updates them.
+That installs for GitHub Copilot, as `gh skill install` does. For Claude Code or Codex, add `--agent claude-code` or `--agent codex`. `--scope` takes `user` or `project`. For any other agent, give the folder it reads with `--dest`. To install one skill, add `--skill ktl-docent`. To pin a version, write `ktl@0.64.0` in place of `ktl`. The six skills are released together, so one version pins them all, and installing the next version updates them.
 
 Without uv, install the package with pip, then run the same command:
 
 ```bash
 python3 -m pip install --user ktl
-ktl skills install --agent github-copilot --scope user
+ktl skills install --scope user
 ```
 
 ## Other installers

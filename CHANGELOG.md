@@ -6,7 +6,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ### Added
 
-- **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --agent <name> --scope user` installs the six skills; `pypi.yml` uploads once `PYPI_RELEASE_ENABLED` is set.
+- **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex; `pypi.yml` uploads once `PYPI_RELEASE_ENABLED` is set.
 
 ## [0.64.0] - 2026-11-14
 

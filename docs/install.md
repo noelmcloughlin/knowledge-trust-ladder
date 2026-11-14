@@ -43,10 +43,10 @@ In PowerShell or cmd, type the command on one line without the `\` continuations
 
 ### PyPI
 
-Each release is also the [`ktl`](https://pypi.org/project/ktl/) package on PyPI, which carries the six skills and a command that installs them. It has no dependencies and needs Python 3.9 or later, so it installs through a company mirror of PyPI, such as Nexus or Artifactory, on a machine that cannot reach github.com. Name your agent (`claude-code`, `codex` or `github-copilot`), or give the folder it reads with `--dest`:
+Each release is also the [`ktl`](https://pypi.org/project/ktl/) package on PyPI, which carries the six skills and a command that installs them. It has no dependencies and needs Python 3.9 or later, so it installs through a company mirror of PyPI, such as Nexus or Artifactory, on a machine that cannot reach github.com. It installs for GitHub Copilot unless you add `--agent claude-code` or `--agent codex`, or give the folder your agent reads with `--dest`:
 
 ```bash
-uvx ktl skills install --agent github-copilot --scope user
+uvx ktl skills install --scope user
 ```
 
 Without uv, run `python3 -m pip install --user ktl` and then the same `ktl skills install` command. `ktl skills path` prints the folder that holds the skills, which `gh skill install --from-local` and `npx skills add` take in place of `noelmcloughlin/knowledge-trust-ladder`. The [package's page](https://pypi.org/project/ktl/) gives the Claude Code plugin route from the installed package.
