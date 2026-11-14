@@ -22,9 +22,7 @@
     </p>
     {{ partial "health-tiles.html" (dict "states" true) }}
     <dl>
-      {{- with $c.license }}{{ $cc := findRESubmatch `creativecommons\.org/(?:licenses/([a-z-]+)|publicdomain/(zero))/([0-9.]+)` . 1 }}
-      <dt>Licence</dt><dd><a href="{{ . }}" rel="license">{{ with $cc }}{{ $m := index . 0 }}{{ if index $m 2 }}CC0 {{ index $m 3 }}{{ else }}CC {{ upper (index $m 1) }} {{ index $m 3 }}{{ end }}{{ else }}{{ . }}{{ end }}</a></dd>
-      {{- end }}
+      {{- with $c.license }}<dt>Licence</dt><dd>{{ partial "licence.html" . }}</dd>{{ end }}
       {{- with $c.publisher }}<dt>Publisher</dt><dd>{{ or .name .id }}</dd>{{ end }}
       <dt>As data</dt>
       <dd class="card__files">{{ range $f := slice "concepts.jsonld" "graph.json" "graph.nt" "datasets.jsonld" }}<a class="chip" href="{{ printf "knowledge/%s" $f | relURL }}"><code>{{ $f }}</code></a> {{ end }}</dd>
