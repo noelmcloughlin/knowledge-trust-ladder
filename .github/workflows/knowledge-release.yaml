@@ -3,9 +3,10 @@ name: Knowledge Release
 # Attaches the LOKF knowledge bundle to a GitHub release as a zip file, so a
 # reader can take the bundle as it stood at that release without cloning the
 # repository, and open it with any operating system's own tools. Beside it,
-# when the host has installed .lokf/m365/, one Microsoft 365 Copilot skill
-# zip per instructions file there, for a person with nothing installed to
-# upload to Agent Builder. When the host's .lokf/justfile names a domain
+# when the KNOWLEDGE_M365_ENABLED repository variable is "true" and the host
+# has installed .lokf/m365/, one Microsoft 365 Copilot skill zip per
+# instructions file there, for a person with nothing installed to upload to
+# Agent Builder. When the host's .lokf/justfile names a domain
 # vocabulary on its `schema :=` line, that file goes beside the bundle too, as
 # schema-<tag>-<name>.yaml with its own .sha256, so a federation that admits
 # this bundle can validate it on its own terms. An evidence table goes beside
@@ -525,10 +526,12 @@ jobs:
 
       # Build one Copilot skill per .lokf/m365/*.md with the host's
       # knowledge-m365.sh, dated at the bundle's commit so each zip is
-      # reproducible. If the builder is missing or refuses the bundle, the
-      # step posts a notice and the release carries the bundle zip alone.
+      # reproducible. The Copilot skill is unfinished, so the step runs only
+      # once the KNOWLEDGE_M365_ENABLED repository variable is "true". If the
+      # builder is missing or refuses the bundle, the step posts a notice and
+      # the release carries the bundle zip alone.
       - name: Pack the Copilot skills
-        if: steps.compare.outputs.changed == 'true'
+        if: steps.compare.outputs.changed == 'true' && vars.KNOWLEDGE_M365_ENABLED == 'true'
         env:
           BUNDLE_PATH: ${{ steps.compare.outputs.path }}
           NAME: ${{ steps.pack.outputs.name }}

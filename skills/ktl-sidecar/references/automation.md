@@ -34,6 +34,7 @@ Every variable below is a **repository variable**: Settings, Secrets and variabl
 | `KNOWLEDGE_RETRIEVAL` | variable | `knowledge-librarian.yaml` | optional: `true` scores retrieval on each run that changes the bundle |
 | `KNOWLEDGE_RELEASE_ENABLED` | variable | `knowledge-release.yaml` | `true` attaches the bundle to each published release |
 | `KNOWLEDGE_RELEASE_NAME` | variable | `knowledge-release.yaml` | optional: the name in the zip file when the repository's own name is not the one it publishes under |
+| `KNOWLEDGE_M365_ENABLED` | variable | `knowledge-release.yaml` | optional: `true` attaches a Microsoft 365 Copilot skill zip beside the bundle ([m365.md](m365.md)); leave it unset while that skill is unfinished |
 | `KNOWLEDGE_ATTEST_PRIVATE` | variable | `knowledge-release.yaml`, `knowledge-federation.yaml` | optional: `true` attests the release of a private or internal repository, which needs GitHub Enterprise Cloud; a domain's build verifies each member's attestation |
 | `KNOWLEDGE_WEBSITE_ENABLED` | variable | `knowledge-website.yaml` | `true` publishes the site to GitHub Pages, as ktl-website's [deploy.md](../../ktl-website/references/deploy.md) says |
 | `KNOWLEDGE_FEDERATION_ENABLED` | variable | `knowledge-federation.yaml` | `true` builds the workspace on each release and deploys the site with it; a domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer |
@@ -235,7 +236,7 @@ It starts in two ways:
 - **By hand, always.** Run it from the Actions tab, or `gh workflow run knowledge-release.yaml -f tag=<tag>`, naming an existing release's tag.
 - **On each published release, once turned on.** Set the `KNOWLEDGE_RELEASE_ENABLED` repository variable to `true`, under Repository variables and not on an environment. Unset, each release shows the run as skipped.
 
-`<repository>` is the repository's name. A host that publishes under another name, such as a package renamed for PyPI, sets it in the `KNOWLEDGE_RELEASE_NAME` repository variable: letters, digits, `.`, `_` and `-`. The Copilot skill zips take the same name.
+`<repository>` is the repository's name. A host that publishes under another name, such as a package renamed for PyPI, sets it in the `KNOWLEDGE_RELEASE_NAME` repository variable: letters, digits, `.`, `_` and `-`. The Copilot skill zips take the same name. The release carries them only once the `KNOWLEDGE_M365_ENABLED` repository variable is `true`, and it is unset by default while that skill is unfinished.
 
 GitHub starts no workflow for a release made with the default `GITHUB_TOKEN`, so the release trigger never fires when your release job makes releases that way. Have that job dispatch this workflow after it creates the release, with `actions: write` on the job: `gh workflow run knowledge-release.yaml --ref "$TAG" -f tag="$TAG"`. The skills repository's own `publish.yml` does this.
 

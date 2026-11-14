@@ -13,6 +13,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **The docent eval installs Claude Code from a lockfile, checked by hash.**
 - **The KTL badge reads `n of m`**, without the word "confirmed".
+- **A release carries the Microsoft 365 Copilot skill zip only once `KNOWLEDGE_M365_ENABLED` is `true`**, which is unset by default while that skill is unfinished.
 
 ## [0.65.0] - 2026-11-14
 

@@ -206,6 +206,15 @@
     },
     {
       "kind": "variable",
+      "name": "KNOWLEDGE_M365_ENABLED",
+      "workflows": ["knowledge-release.yaml"],
+      "level": "optional",
+      "switch": {"name": "m365"},
+      "why": "true attaches a Microsoft 365 Copilot skill zip to each release beside the bundle. Leave it unset while that skill is unfinished.",
+      "docs": "automation.md#knowledge-releaseyaml-the-bundle-as-a-release-asset"
+    },
+    {
+      "kind": "variable",
       "name": "KNOWLEDGE_ATTEST_PRIVATE",
       "workflows": ["knowledge-release.yaml", "knowledge-federation.yaml"],
       "level": "optional",
