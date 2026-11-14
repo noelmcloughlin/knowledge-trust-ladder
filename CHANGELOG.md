@@ -7,6 +7,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Added
 
 - **Each release carries its signed provenance as a `provenance-*.intoto.jsonl` asset**, which `gh attestation verify --bundle` reads.
+- **`codeql.yml` scans the Python, the JavaScript and the workflows.**
 
 ## [0.65.0] - 2026-11-14
 
