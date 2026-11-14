@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:28:53Z"
+  at: "2026-11-14T22:33:20Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -27,7 +27,6 @@ sources:
   - resource: .github/workflows/knowledge-release.yaml
     id: knowledge-release.yaml
     excerpt: It stops on a name two files define differently
-  - resource: scripts/sync-sidecar.sh
   - resource: CHANGELOG.md
     id: changelog.md
     excerpt: "`.releaserc.json` names the Conventional Commits preset, so a `feat!:` commit no longer releases nothing"
@@ -92,16 +91,9 @@ Since 0.47.0 each sibling keeps itself current. Its `knowledge-sync.yaml` reads 
 
 A new template goes in the manifest and in ktl-sidecar's Step 5 table, and nowhere else, because the preflight and contract check 11 read the manifest.
 
-To open the pull requests on the day of a release, a maintainer runs `scripts/sync-sidecar.sh --pr <tag> <sibling>...` from this repository once the tag is on origin and its `ktl` package on PyPI. The script:
+To open a sibling's pull request on the day of a release, once its `ktl` package is on PyPI, a maintainer starts the sibling's `knowledge-sync.yaml` by hand with the tag, or runs `.lokf/scripts/knowledge-sync.sh --pr <tag>` in a clone of it.
 
-- refuses anything but a release tag that is on origin and carries `skills/ktl-librarian/SKILL.md`;
-- runs each sibling's own copy of `knowledge-sync.sh`, which reads the release from the sibling's own index, or the tag's copy in a sibling that has none, on a branch of its own, `sync-<tag>`, from origin's default branch;
-- skips a sibling with uncommitted changes;
-- without `--pr`, `--push` or `--commit`, leaves the sync uncommitted on the branch with the commit command printed, so the diff is the review.
-
-Once the pull requests are merged, `scripts/sync-sidecar.sh --finish <tag> <sibling>...` puts each sibling back on its default branch, brings it up to date and removes the branch.
-
-The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so. The template's pin is never bumped by hand, which would cut a pointless release. A tag that is not on origin is refused, because no `ktl` package of it is on any index yet.
+The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so. The template's pin is never bumped by hand, which would cut a pointless release.
 
 Both checks read the `workflow_dispatch` version input through an `env:` variable rather than interpolating `${{ inputs.version }}` straight into the shell script. That hardening change (2026-09-12) closes a script-injection vector without changing what the checks verify.
 

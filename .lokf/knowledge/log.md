@@ -2,6 +2,10 @@
 
 ## 2026-11-14
 
+* **Changed**: Releasing says a maintainer opens a sibling's sync pull request early by starting its `knowledge-sync.yaml` by hand or running its `knowledge-sync.sh --pr <tag>`, as `docs/releasing.md` now says, and no longer cites `scripts/sync-sidecar.sh`, which was removed.
+* **Changed**: Contributing says a sibling's sync pull request is opened sooner from that sibling's own workflow or sync script, as `CONTRIBUTING.md` now does.
+* **Changed**: Repository validation's `test_sync.py` line drops the fan-out test, which went with `scripts/sync-sidecar.sh`.
+* **Changed**: Knowledge sources drops `scripts/sync-sidecar.sh`, which was removed, and says a host's own workflow or a person runs the sync script. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Releasing says the release step moves the `ktl` pin in the sidecar's `templates/pyproject.toml`, which check 15 reads, and that a sibling's sync reads that pin and its own package index. The Copilot zip waits for `KNOWLEDGE_M365_ENABLED`, and each release carries its signed provenance as an `.intoto.jsonl` file.
 * **Changed**: ktl-sidecar skill says the librarian workflow installs its skill from the `ktl` package that `.lokf/pyproject.toml` pins, and the sync moves that pin, relocks and reads the release from the host's index. A private index's credential replaces `KNOWLEDGE_SKILLS_TOKEN`, and the Copilot zips wait for `KNOWLEDGE_M365_ENABLED`. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Security policy says a template fix reaches a host through its sync or a repair, that the sidecar's workflows keep every secret in an Environment but one read-only token, and lists `scorecard.yml` and `codeql.yml` among the workflows, as `SECURITY.md` now does. Edited since a person confirmed it; the label says so until the curator looks again.

@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:28:53Z"
+  at: "2026-11-14T22:33:20Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/playbooks/repository-validation
@@ -51,7 +51,7 @@ Participation is covered by the Contributor Covenant, shared with the sibling KT
 
 Releasing is maintainer-gated. Conventional Commits decide the version, and `[Unreleased]` is the release note. A merge to `main` promotes the changelog but never tags, and a maintainer runs `publish.yml` by hand ([releasing](releasing.md)).
 
-After a release that changes a template or `skills/ktl-librarian/`, each sibling's `knowledge-sync.yaml` opens a pull request that moves its copies and pin to the release within a week. To open those pull requests at once, a maintainer runs `scripts/sync-sidecar.sh --pr <tag> ../obsidian-ktl-curator ../obsidian-ktl-registrar` once the tag is on origin, and `--finish <tag>` once they are merged.
+After a release that changes a template or `skills/ktl-librarian/`, each sibling's `knowledge-sync.yaml` opens a pull request that moves its copies and pin to the release within a week. To open one sooner, a maintainer starts that workflow by hand with the tag, or runs `.lokf/scripts/knowledge-sync.sh --pr <tag>` in the sibling.
 
 The pin and the copies move together because, once a sibling turns on its scheduled librarian, the pin decides which instructions run unattended.
 
