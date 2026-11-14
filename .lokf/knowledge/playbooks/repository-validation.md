@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-14T14:18:56Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -25,7 +25,7 @@ sources:
     excerpt: "def test_the_home_page_has_five_buttons_and_greys_the_one_it_cannot_find():"
   - resource: scripts/smoke-test-website.sh
     id: smoke-test-website.sh
-    excerpt: assert "the home page keeps its five buttons, with the bundle's a link and the schema's, the architecture page's and the quick start's greyed"
+    excerpt: assert "the home page keeps its five buttons, with the schema's and the bundle's links and the architecture page's and the quick start's greyed, and does not lead with LOKF core"
   - resource: tests/test_federation.py
     id: test_federation.py
     excerpt: def test_through_a_proxy_a_member_name_is_checked_once_and_the_proxy_resolves_it
