@@ -77,7 +77,7 @@
 #
 # The dependency block pins pypdf, which reads PDFs from outside the
 # repository, and `exclude-newer` takes no file uploaded after its date.
-# On an index with no upload times, the shell half lifts the date only
+# Behind a mirror with no upload times, the shell half lifts the date only
 # for a pinned package. When a release fixes a flaw in pypdf, move the pins
 # and the date together.
 """The ingest: knowledge outside the repository, mirrored into it."""
@@ -159,7 +159,7 @@ KEPT = "\u200c\u200d"  # the zero-width non-joiner and joiner, which Persian, Ar
 IGNORABLE = re.compile("[\u034f\u115f\u1160\u17b4\u17b5\u180b-\u180f\u2065\u3164\ufe00-\ufe0f\uffa0\ufff0-\ufff8\U000e0000-\U000e0fff]")
 PLAIN_PATH = re.compile(r"[A-Za-z0-9._/@+-]+")  # the characters the workflow's publish job lets a path hold
 PASSED_THROUGH = ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
-                  "SSL_CERT_FILE", "SSL_CERT_DIR", "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "CURL_CA_BUNDLE")  # a proxy and its certificate reach git and a command
+                  "SSL_CERT_FILE", "SSL_CERT_DIR", "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "CURL_CA_BUNDLE")  # a proxy and a company's certificate reach git and a command
 
 
 class Stop(Exception):

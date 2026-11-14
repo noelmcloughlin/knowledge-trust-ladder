@@ -1,10 +1,11 @@
 name: PyPI
 
 # Publishes the `ktl` package, the six skills and the command that installs
-# them, to PyPI by trusted publishing (docs/install.md). Beside it goes
-# `knowledge-trust-ladder`, which holds no code and installs ktl at the same
-# version under the repository's name (alias/). It runs no LLM or agent, and
-# it never commits or pushes.
+# them, to PyPI by trusted publishing, so a machine that reaches a package
+# index and no git host can install the skills (docs/install.md). Beside it
+# goes `knowledge-trust-ladder`, which holds no code and installs ktl at the
+# same version under the repository's name (alias/). It runs no LLM or
+# agent, and it never commits or pushes.
 #
 # publish.yml dispatches it once `gh skill publish` has made the tag, because
 # GitHub starts no workflow for a release made with the default GITHUB_TOKEN.

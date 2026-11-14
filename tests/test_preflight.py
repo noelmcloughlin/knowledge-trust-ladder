@@ -337,8 +337,8 @@ def test_warns_when_the_lock_was_made_against_another_index(tmp_path):
     # runs with neither, and with an empty configuration folder.
     clean = {"unset": ("UV_DEFAULT_INDEX", "UV_INDEX_URL")}
     config = {"XDG_CONFIG_HOME": tmp_path / "config"}
-    result = run(["bash", PREFLIGHT, host], env={**config, "UV_DEFAULT_INDEX": "https://reader:s3cret@index.example/repository/pypi/simple"}, **clean)
-    assert result and matches(result.out, r"^warn    lock         \.lokf/uv\.lock was made against pypi\.org, and uv here reads index\.example "), (
+    result = run(["bash", PREFLIGHT, host], env={**config, "UV_DEFAULT_INDEX": "https://reader:s3cret@nexus.example/repository/pypi/simple"}, **clean)
+    assert result and matches(result.out, r"^warn    lock         \.lokf/uv\.lock was made against pypi\.org, and uv here reads nexus\.example "), (
         f"preflight did not say the lock names another index than uv reads: {result.out}"
     )
     assert "s3cret" not in result.out and "reader" not in result.out, f"preflight printed an index URL's credentials: {result.out}"

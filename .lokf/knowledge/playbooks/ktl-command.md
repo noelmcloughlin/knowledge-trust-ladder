@@ -8,7 +8,7 @@ resource: src/ktl/README.md
 sources:
   - resource: src/ktl/README.md
     id: ktl-readme.md
-    excerpt: The package has no dependencies and needs Python 3.9 or later.
+    excerpt: The package has no dependencies, needs Python 3.9 or later
   - resource: skills/ktl-sidecar/references/repository-settings.md
     id: repository-settings.md
     excerpt: It never loosens.
@@ -29,13 +29,13 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T19:45:34Z"
+  at: "2026-11-14T18:33:42Z"
 status: draft
 ---
 
 # Overview
 
-`ktl` is the PyPI package that carries the six KTL skills and a command of the same name. The package has no dependencies and needs Python 3.9 or later.[^ktl-readme.md] A second package, `knowledge-trust-ladder`, holds no code and installs `ktl` at the same version under the repository's name. The command's code is in `src/ktl/`, and it uses the standard library alone.
+`ktl` is the PyPI package that carries the six KTL skills and a command of the same name. The package has no dependencies and needs Python 3.9 or later.[^ktl-readme.md] It installs from PyPI or any mirror of it, so it serves a machine that cannot reach github.com. A second package, `knowledge-trust-ladder`, holds no code and installs `ktl` at the same version under the repository's name. The command's code is in `src/ktl/`, and it uses the standard library alone.
 
 # Install the skills: `ktl skills`
 

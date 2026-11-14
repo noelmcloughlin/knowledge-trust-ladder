@@ -87,9 +87,9 @@ jobs:
           python-version: "3.12"
 
       # The packages uv.lock pins, checked by hash, so the script runs from
-      # .lokf/.venv in the job that holds the secrets. On an index the lock
-      # was not made against, this fails, and the script installs its own
-      # pinned packages through uv instead.
+      # .lokf/.venv in the job that holds the secrets. Behind a mirror the
+      # lock was not made against, this fails, and the script installs its
+      # own pinned packages through uv instead.
       - name: Install the lokf sidecar
         continue-on-error: true
         run: uv sync --locked

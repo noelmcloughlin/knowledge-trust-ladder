@@ -14,7 +14,7 @@ scripts/build.sh preview  # the site as it will be published, at http://localhos
 
 `PORT=1400 scripts/build.sh serve` uses another port.
 
-Hugo and Pagefind come from PyPI, at the versions `pyproject.toml` names and the hashes `uv.lock` holds. The PyPI package `hugo` is a rebuild of Hugo by another maintainer, [hugo-python-distributions](https://github.com/agriyakhetarpal/hugo-python-distributions). The first build fetches Cytoscape and Mermaid, once, and checks each against the hash in `hugo.toml`.
+Hugo and Pagefind come from PyPI, at the versions `pyproject.toml` names and the hashes `uv.lock` holds. The PyPI package `hugo` is a rebuild of Hugo by another maintainer, [hugo-python-distributions](https://github.com/agriyakhetarpal/hugo-python-distributions). The first build fetches Cytoscape and Mermaid, once, and checks each against the hash in `hugo.toml`. Where PyPI or the CDN is blocked, point uv at a mirror, and give `params.vendor.cytoscape.url` and `params.vendor.mermaid.url` a mirror's address in `site.toml`.
 
 `serve` shows raw HTML as written and leaves the security policy off, since Hugo's reload script would break it, and its search index is the one built when it started.
 

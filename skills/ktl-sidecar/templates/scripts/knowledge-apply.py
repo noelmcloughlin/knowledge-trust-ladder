@@ -48,7 +48,7 @@
 #
 # The dependency block above names one PyYAML release, and `exclude-newer`
 # takes no file uploaded after its date. Move the two together, here and in
-# knowledge-conventions.py. On an index with no upload times,
+# knowledge-conventions.py. Behind a mirror with no upload times,
 # knowledge-apply.sh lifts the date but keeps the version. The sidecar's
 # .venv, which it tries first, holds what uv.lock pins instead.
 #

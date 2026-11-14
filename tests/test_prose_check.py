@@ -363,7 +363,7 @@ TURNED = [
         "The release workflow turns signing on after the gate checks each confirmation. Signing is disabled in the release workflow.",
     ),
     # Notes, each with its line: a reader decides.
-    (0, 'new.md:1: strength: "may" left a sentence that otherwise stayed', "The check may fail on a slow network.", "The check fails on a slow network."),
+    (0, 'new.md:1: strength: "may" left a sentence that otherwise stayed', "The check may fail behind a proxy.", "The check fails behind a proxy."),
     (0, 'new.md:1: strength: "only" left a sentence that otherwise stayed', "The token reads only this repository.", "The token reads this repository."),
     (0, 'new.md:1: strength: "all" left a sentence that otherwise stayed', "All workflows read the runner variable.", "Some workflows read the runner variable."),
     (0, 'new.md:1: word: "curator" became "librarian" once', "The curator confirms each concept against its source.", "The librarian confirms each concept against its source."),

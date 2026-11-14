@@ -14,7 +14,7 @@ sources:
   - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T19:45:34Z"
+  at: "2026-10-26T20:05:58Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -31,7 +31,7 @@ verified:
 The skills are installed from this repository rather than copied into each project that uses them. The optional fifth and sixth skills, `ktl-prose` and `ktl-website`, install the same way. There are three routes to the same set:
 
 - the GitHub CLI, version 2.90.0 or later (`gh skill install noelmcloughlin/knowledge-trust-ladder --all --agent claude-code --scope user`, or a skill's name in place of `--all` to install only that one). It defaults to GitHub Copilot, so `--agent` names the agent. The repository contract keeps every tracked `SKILL.md` under `skills/ktl-*/`, so `--all` installs the ktl- skills only;
-- the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --global --skill <skill>`);
+- the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --global --skill <skill>`), which can fail behind a company proxy or an internal npm registry;
 - a Claude Code plugin that bundles all six (`/plugin marketplace add noelmcloughlin/knowledge-trust-ladder`, then `/plugin install knowledge-trust-ladder@knowledge-trust-ladder`), declared by `.claude-plugin/plugin.json` and `marketplace.json`.
 
 A user install keeps the instructions an agent follows under the user's control. The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A team that wants every member on one version installs into the repository instead: it leaves out `--global`, or passes `--scope project`, and commits the `skills-lock.json` that `npx skills` writes.

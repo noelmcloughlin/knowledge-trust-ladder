@@ -33,7 +33,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **A ktl-website Mermaid diagram opens over the page with a click**, as a figure does, where the wheel or buttons zoom it and a drag moves it.
 - **The bundle page and the health page show their figures on a card**: a bar of the ladder's states and a tile per health figure, each linking to its list.
 - **A concept card names a Creative Commons licence by its short name**, shows each check's person or automation dot, offers its files as chips, rules its record's rows, and shows a genre that repeats the type only once.
-- **Each release is also the `ktl` package on PyPI.** `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex, and `ktl skills status` says whether the copies an agent reads are the release's. `knowledge-trust-ladder` installs the same package under the repository's name. `pypi.yml` uploads both once `PYPI_RELEASE_ENABLED` is set, from a build anyone can repeat byte for byte, and attaches each file's checksum to the release.
+- **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex, and `ktl skills status` says whether the copies an agent reads are the release's. `knowledge-trust-ladder` installs the same package under the repository's name. `pypi.yml` uploads both once `PYPI_RELEASE_ENABLED` is set, from a build anyone can repeat byte for byte, and attaches each file's checksum to the release.
 - **`ktl gh` sets the GitHub settings a repository's workflows need**, from the catalogue each skill carries in `references/repository-settings.json`. `plan` and `check` say what is missing and why, `apply` creates the Environments, branch rules and values without loosening anything, `secrets` asks for each secret without an echo, `enable` turns a switch on once what it needs holds, and `prune` removes retired names such as `KNOWLEDGE_LIBRARIAN_CMD`.
 
 ### Changed
@@ -58,7 +58,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **A ktl-website site with no LinkML schema of its own shows LOKF core in its Schema part**, from `.lokf/schema/lokf.yaml` or the `lokf` package, so the home page's schema button is never greyed. The home page still leads only with a repository's own schema.
 - **The website's home page fills the Quick start button**, so a new reader sees where to begin. A site with no quick start fills the first button found, as before.
 - **The preflight reads a skill that `gh skill install` rewrote as the release it came from**, so a gh copy beside a verbatim copy of one release is no longer reported as stale.
-- **`llms.txt` names the PyPI route.**
+- **`llms.txt` names the PyPI route first**, for an agent at a site that reaches no git host.
 
 ### Removed
 
@@ -118,7 +118,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Added
 
 - **A domain host builds members from private and internal GitHub repositories**, and `gh` fetches their files with the secret `KNOWLEDGE_FEDERATE_TOKEN`, or after `gh auth login` by hand. A public member is fetched without the credential.
-- **`KNOWLEDGE_RUNNER` names the runner every job runs on**, `ubuntu-latest` unless set, so a host with self-hosted runners needs no edit that a sync would undo.
+- **`KNOWLEDGE_RUNNER` names the runner every job runs on**, `ubuntu-latest` unless set, so a host with self-hosted runners needs no edit that a sync would undo. automation.md's Customising section lists what a locked-down organisation sets.
 - **A host can install the skills from its organisation's private copy**, named by `TRUST_LADDER_SKILLS_REPO`, which a sync keeps, and read with the secret `KNOWLEDGE_SKILLS_TOKEN`.
 - **The website and federation workflows warn when a private repository's Pages site is public.**
 - **`KNOWLEDGE_ATTEST_PRIVATE` attests a private repository's release**, which a domain build needs from every member. It needs GitHub Enterprise Cloud.
@@ -140,7 +140,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **`members --add` reads a private repository's release list.**
 - **The release, sync, ingest and federation workflows say what `gh` or git said when they cannot read GitHub.**
 - **The federation build deploys no site without its workspace when the release list cannot be read**, installs `just` for a site that builds with it, and turns Astro's telemetry off.
-- **semantic-release installs from `.github/release/package-lock.json`**, which pins every package by its hash.
+- **semantic-release installs from `.github/release/package-lock.json`**, so a company registry can be given the exact list.
 - **The ingest installs the packages that `uv.lock` pins, checked by hash, in the job that holds its secrets.** The registrar says when `gh` is missing, and the release when python3 is older than 3.9.
 - **The website colours code blocks again after the satteri 0.11 update.**
 
@@ -261,7 +261,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **The sidecar's two example concepts carry a `resource`**, so the skeleton passes rule 15.
 - **`knowledge-report.sh` reads a review date by its day**, so a `stale_after` datetime is due on that day.
-- **The pen, the conventions check and the ingest run on a package index with no upload times**, and the ingest pins typing-extensions.
+- **The pen, the conventions check and the ingest run behind a package mirror with no upload times**, and the ingest pins typing-extensions.
 - **A uv that cannot install a script's packages no longer reads as findings.** The conventions check exits 2, the pen falls back to python3 or exits 2, and the ingest falls back to a `.venv` without pypdf.
 
 ## [0.57.0] - 2026-10-27
@@ -348,7 +348,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ### Fixed
 
-- **The preflight asks the package index uv reads, and prints only its host name.** It warns when `.lokf/uv.lock` was made against another index, since `uv sync --locked` then fails.
+- **The preflight asks the package index uv reads, a company mirror included, and prints only its host name.** It warns when `.lokf/uv.lock` was made against another index, since `uv sync --locked` then fails.
+- **The sidecar's portability page says what a mirror does to the lock**, and how to make uv trust a proxy that inspects TLS.
 
 ## [0.55.1] - 2026-10-22
 
@@ -374,7 +375,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ### Fixed
 
-- **The sidecar's scripts run on a package index that serves no upload times**, by trying `.lokf/.venv` before `uv run`, and none picks a Python older than 3.9.
+- **The sidecar's scripts run behind a package mirror that serves no upload times**, by trying `.lokf/.venv` before `uv run`, and none picks a Python older than 3.9.
 - **When its runner cannot start, the conventions check says so and exits 2**, instead of reporting findings.
 - **A freshly installed skeleton passes its conventions.**
 - **ktl-prose runs its check through `uv run`**, so an old `python3` never runs it.

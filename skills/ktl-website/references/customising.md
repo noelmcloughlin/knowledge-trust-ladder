@@ -17,7 +17,7 @@ The site finds what it shows, so `site.toml` is short: four values every site ne
 | `params.docsGroups` | the docs pages in groups: a list of `label` and `pages`, each page by its path under `docs/` without `.md` | the pages at the top of `docs/` in one group, Guides, by title, and each folder a group named by its `index.md` or by the folder |
 | `params.redirects` | old addresses, each sent on to the page built from a repository file: `"about" = "docs/about.md"`. `"schema/*" = "schema/*"` stands for every page of the schema | none; a site with a schema has `"elements/*" = "schema/*"` with no setting |
 | `params.browse`, `params.browseBuild` | a folder of SQLite databases, from the repository's root, to serve under `browse/` with a page that opens each in Datasette Lite, and the command that writes the folder when it holds no database | no data: the databases go on the public site, so none is served until this is set |
-| `params.vendor.cytoscape.url`, `params.vendor.mermaid.url` | another address for a library the build fetches once and checks against the hash in `hugo.toml` | the public CDN |
+| `params.vendor.cytoscape.url`, `params.vendor.mermaid.url` | a mirror's address for a library the build fetches once and checks against the hash in `hugo.toml` | the public CDN |
 
 With `docsGroups`, the build stops when a group names a page that is not there or a page is in no group, so a new page cannot go missing from the navigation. A retelling is in no group: the page it retells offers it.
 

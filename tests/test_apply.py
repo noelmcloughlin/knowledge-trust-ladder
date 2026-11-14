@@ -1711,7 +1711,7 @@ def test_without_the_toolkit_the_pen_says_the_schema_was_not_checked(ka):
 
 
 def test_the_sidecar_venv_runs_the_pen_before_uv(tmp_path):
-    """A host runs the pen from .lokf/.venv, which uv sync installed from uv.lock."""
+    """A host behind a mirror runs the pen from .lokf/.venv, which uv sync installed from uv.lock."""
     scripts = tmp_path / ".lokf" / "scripts"
     for name in ("knowledge-apply.sh", "knowledge-apply.py"):
         write(scripts / name, (SCRIPTS / name).read_text(encoding="utf-8"))

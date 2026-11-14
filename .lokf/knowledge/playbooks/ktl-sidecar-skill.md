@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T19:45:34Z"
+  at: "2026-11-14T18:33:42Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -160,9 +160,9 @@ It then pushes the branch `knowledge-sync`, leased to the commit the `earlier` j
 
 Since 0.56.1 the ingest checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing unless the manifest allows private addresses (`CHANGELOG.md`). Since 0.57.0 every `git` entry needs git 2.31 or later, and one that names a host, not an IP address, needs 2.37 or later unless the manifest allows private addresses or a proxy resolves the name.[^changelog.md] With an older git the run refuses the entry, and the preflight's `ingest` line warns before a run.[^ktl-sidecar-prerequisites.md] The script starts no work after 25 minutes, inside the job's 30, and leaves what it did not reach to the next run.[^automation.md]
 
-**Script runners (0.55.0).** The pen, the conventions check and the ingest run with `.lokf/.venv` first, which `uv sync` installs from `uv.lock`, and through `uv run` after it. On a package index that serves no upload times, the shell halves lift `exclude-newer` for each package the script's header pins with `==`, and keep the version (`references/automation.md`). No script picks a Python older than 3.9. When its runner cannot start, the conventions check says so and exits 2, rather than reporting findings against the bundle.
+**Behind a package mirror, or with an old python3 (0.55.0).** A company package index, such as Nexus or Artifactory, often serves no upload times, and then `uv run` cannot resolve a script whose header names `exclude-newer`. So the pen, the conventions check and the ingest run with `.lokf/.venv` first, which `uv sync` installs from `uv.lock`, and through `uv run` after it (`references/portability.md`). Behind such a mirror the shell halves lift `exclude-newer` for each package the script's header pins with `==`, and keep the version. No script picks a Python older than 3.9. When its runner cannot start, the conventions check says so and exits 2, rather than reporting findings against the bundle.
 
-Since 0.55.2 the preflight asks the package index uv reads: PyPI, or the index that `UV_DEFAULT_INDEX` or a `uv.toml` names. It prints only that index's host, on the `network` line. Its `lock` line warns when `.lokf/uv.lock` was made against another index, since `uv sync --locked` then fails and `uv sync` rewrites every address in the lock to this machine's index. So the committed lock names the index the gate's runner reads (`references/prerequisites.md`).
+Since 0.55.2 the preflight asks the package index uv reads: PyPI, or the mirror that `UV_DEFAULT_INDEX` or a `uv.toml` names. It prints only that index's host, on the `network` line. Its `lock` line warns when `.lokf/uv.lock` was made against another index, since `uv sync --locked` then fails and `uv sync` rewrites every address in the lock to the mirror's. So the committed lock is made where the gate's runner installs from. A proxy that inspects TLS gets its certificate trusted by uv through `UV_SYSTEM_CERTS=true` (`references/portability.md`, `references/prerequisites.md`).
 
 Since 0.56.1 the sidecar's `pyproject.toml` names `rust-just==1.47.0`, so the workflows run the `just` that `uv.lock` pins, checked by hash. A host that has not added it gets the same version fetched by name, and the preflight's `just-pin` line says to run `uv add rust-just==1.47.0` in `.lokf/`. `references/automation.md` lists the recipe runner as a fourth pin no update tool moves, kept in step with the workflows' `uvx --from rust-just==` fallback.
 
