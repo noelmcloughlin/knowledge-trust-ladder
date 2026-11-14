@@ -11,7 +11,8 @@
 # librarian is turned on, the pin decides which agent instructions run
 # unattended with a credential in the job. So this script:
 #   - takes a release tag and nothing looser, and refuses one that is not on
-#     the remote: release first, then sync;
+#     the remote: release first, then sync. Given --source, it checks that
+#     clone alone, so a tag made there and never pushed passes;
 #   - reads the release's knowledge-sync.manifest out of the tag, never from
 #     a working tree. The release is data: no code from it runs;
 #   - copies every template the host carries, and adds a missing one only
@@ -36,8 +37,9 @@
 # Usage: knowledge-sync.sh [options] <tag>
 #   --host <dir>      the host to sync; by default the nearest parent of the
 #                     working directory that holds .lokf/
-#   --source <dir>    a clone of the skills repository that holds the tag;
-#                     by default the tag is cloned from --repo
+#   --source <dir>    a clone of the skills repository that holds the tag,
+#                     which is not checked against the remote; by default
+#                     the tag is cloned from --repo
 #   --repo <url>      where to clone the tag from; by default the URL the
 #                     host's librarian workflow names, or the published one
 #   --branch          work on sync-<tag>, from origin's default branch
