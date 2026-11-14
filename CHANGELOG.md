@@ -14,8 +14,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **actionlint lints every workflow**, `pypi.yml` included.
 - **Links point to `lmodel/schema-sidecar`**, where `linkml-sidecar` moved.
-- **`llms.txt` lists the install routes in the install page's order**: the GitHub CLI, the Open Skills CLI, then PyPI.
-- **The README links the `ktl` package's page on PyPI, and says where to report a bug and how to contribute.** The issue templates name the `ktl` command and its PyPI install.
+- **`llms.txt` lists the install routes in the install page's order.**
+- **The README links `ktl` on PyPI and says how to report a bug or contribute**; the issue templates name the `ktl` command.
 
 ## [0.64.0] - 2026-11-14
 
