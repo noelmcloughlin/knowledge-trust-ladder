@@ -32,9 +32,10 @@ These tests pin that for the template files that do so, and for the
      hand-off by Unicode category;
    - a scheduled run waits while an earlier pull request is open, and the step
      that reads those pull requests hands on what a person declined;
-   - the install step installs the skill from the pinned tag only while that
-     tag names the pinned commit, hides it from git in .git/info/exclude when
-     the host's .gitignore does not, and stops when git still sees it;
+   - the install step installs the skill with the ktl command of the locked
+     package, stops with the pin's command when .lokf/.venv has none, hides
+     the skill from git in .git/info/exclude when the host's .gitignore does
+     not, and stops when git still sees it;
 3. the registrar workflow triggers on, and diffs, both names, and installs
    the sidecar from its lock. Its provenance step asks the person behind a
    confirmation that is added, changed or removed, and nobody when only a
