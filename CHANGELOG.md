@@ -4,13 +4,23 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.65.0] - 2026-11-14
+
 ### Added
 
+- **`ktl gh check --strict` asks a public repository for a Scorecard workflow**, through the catalogue's new `workflow` kind.
+- **`ktl gh apply` turns back on a catalogued workflow that GitHub turned off for inactivity.**
+- **`scorecard.yml` publishes this repository's OpenSSF Scorecard**, which the README's badge shows.
+- **The website serves `badge.json`, a KTL badge of how many concepts a person confirmed**, for a README to show.
 - **Each release carries its signed provenance as a `provenance-*.intoto.jsonl` asset**, which `gh attestation verify --bundle` reads.
 - **`codeql.yml` scans the Python, the JavaScript and the workflows.**
 
 ### Changed
 
+- **actionlint lints every workflow**, `pypi.yml` included.
+- **Links point to `lmodel/schema-sidecar`**, where `linkml-sidecar` moved.
+- **`llms.txt` lists the install routes in the install page's order.**
+- **The README links `ktl` on PyPI and says how to report a bug or contribute**; the issue templates name the `ktl` command.
 - **The docent eval installs Claude Code from a lockfile, checked by hash.**
 - **The KTL badge reads `n of m`**, without the word "confirmed".
 - **A release carries the Microsoft 365 Copilot skill zip only once `KNOWLEDGE_M365_ENABLED` is `true`**, which is unset by default while that skill is unfinished.
@@ -22,22 +32,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **`scripts/sync-sidecar.sh`**: each host's `knowledge-sync.yaml` opens its own pull request, and `.lokf/scripts/knowledge-sync.sh --pr <tag>` opens one by hand.
 - **`TRUST_LADDER_SKILLS_REF`, `TRUST_LADDER_SKILLS_SHA`, `TRUST_LADDER_SKILLS_REPO` and `KNOWLEDGE_SKILLS_TOKEN`**: a private index's credential is `UV_INDEX_KNOWLEDGE_USERNAME` and `UV_INDEX_KNOWLEDGE_PASSWORD`.
-
-## [0.65.0] - 2026-11-14
-
-### Added
-
-- **`ktl gh check --strict` asks a public repository for a Scorecard workflow**, through the catalogue's new `workflow` kind.
-- **`ktl gh apply` turns back on a catalogued workflow that GitHub turned off for inactivity.**
-- **`scorecard.yml` publishes this repository's OpenSSF Scorecard**, which the README's badge shows.
-- **The website serves `badge.json`, a KTL badge of how many concepts a person confirmed**, for a README to show.
-
-### Changed
-
-- **actionlint lints every workflow**, `pypi.yml` included.
-- **Links point to `lmodel/schema-sidecar`**, where `linkml-sidecar` moved.
-- **`llms.txt` lists the install routes in the install page's order.**
-- **The README links `ktl` on PyPI and says how to report a bug or contribute**; the issue templates name the `ktl` command.
 
 ## [0.64.0] - 2026-11-14
 
