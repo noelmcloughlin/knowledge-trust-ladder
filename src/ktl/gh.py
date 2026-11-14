@@ -689,6 +689,8 @@ def merge(entries: list) -> list:
         key = entry_key(entry)
         if key not in merged:
             merged[key] = dict(entry, workflows=list(entry.get("workflows", [])))
+            if entry.get("reviewers"):
+                merged[key]["reviewers_level"] = entry["level"]
             continue
         into = merged[key]
         into["workflows"] = sorted(set(into["workflows"]) | set(entry.get("workflows", [])))
@@ -699,6 +701,12 @@ def merge(entries: list) -> list:
                 into[listed] = list(dict.fromkeys(list(into.get(listed, [])) + list(entry[listed])))
         if "reviewers" in entry:
             into["reviewers"] = max(into.get("reviewers", 0), entry["reviewers"])
+        if entry.get("reviewers"):
+            # A reviewer keeps the level of the entries that ask for one, so
+            # a required Environment does not make a recommended reviewer
+            # required too.
+            was = into.get("reviewers_level", "optional")
+            into["reviewers_level"] = entry["level"] if RANK[entry["level"]] < RANK[was] else was
     return list(merged.values())
 
 
@@ -844,6 +852,9 @@ class Planner:
         branches = [b.replace("{default}", self.state.default_branch) for b in entry.get("branches", [])]
         tags = list(entry.get("tags", []))
         need = entry.get("reviewers") or 0
+        reviewer_level = entry.get("reviewers_level", entry["level"])
+        if reviewer_level == "optional":
+            reviewer_level = "recommended"
         path = f"repos/{self.repo.slug}/environments/{name}"
         if not self.state.environments_available:
             self.add("note", level, f"Environment {name}: a private repository on GitHub Free has none, so a secret stays a repository secret, which a workflow on any branch can read", entry)
@@ -860,7 +871,7 @@ class Planner:
         rules = [Op("POST", f"{path}/deployment-branch-policies", {"name": b, "type": "branch"}) for b in branches]
         rules += [Op("POST", f"{path}/deployment-branch-policies", {"name": t, "type": "tag"}) for t in tags]
         if env is None:
-            add = self.wanted_reviewers() if need and self.state.reviewers_available else []
+            add = self.wanted_reviewers() if need and self.state.reviewers_available and reviewer_level == level else []
             made = [Op("PUT", path, self.env_body(None, custom if rules else None, add)), *rules]
             limited = f", limited to {refs_text(branches, tags)}" if rules else ""
             who = f", with {', '.join(p['login'] for p in add)} as required reviewer" if add else ""
@@ -892,7 +903,7 @@ class Planner:
             else:
                 add = self.wanted_reviewers()
                 ops = [Op("PUT", path, self.env_body(env, "keep", add))]
-                self.add("apply", level, f"Environment {name}: add {', '.join(p['login'] for p in add)} as required reviewer", entry, ops, STAGE_RULES)
+                self.add("apply", reviewer_level, f"Environment {name}: add {', '.join(p['login'] for p in add)} as required reviewer", entry, ops, STAGE_RULES)
                 made += ops
         elif "reviewers" in entry and not need and reviewers:
             self.add("person", "optional", f"Environment {name} has {len(reviewers)} required reviewer(s), so each of its runs waits for one", entry)

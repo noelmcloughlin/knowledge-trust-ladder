@@ -15,8 +15,8 @@ name: Semantic release (version + changelog only)
 #
 # `plan` previews every pull request into main. `release` runs on push to
 # main behind the `release` GitHub Environment, the same gate `publish.yml`
-# already uses. Configure required reviewers on it once, in this
-# repository's Settings > Environments, and both workflows honor it.
+# already uses. Required reviewers on it wait until releases have
+# downstream users; once added, both workflows honor them.
 # `publish.yml` itself is unchanged in spirit: a maintainer still runs it
 # by hand with an explicit version. But that version must now match what
 # this workflow already promoted into CHANGELOG.md, so a typo can no longer

@@ -6,40 +6,61 @@
   "roles": {
     "skills": {
       "title": "skills publisher",
-      "workflows": ["semantic-release.yml", "publish.yml", "pypi.yml", "docent-eval.yml"]
+      "workflows": [
+        "semantic-release.yml",
+        "publish.yml",
+        "pypi.yml",
+        "docent-eval.yml"
+      ]
     }
   },
   "settings": [
     {
       "kind": "environment",
       "name": "release",
-      "workflows": ["semantic-release.yml", "publish.yml"],
-      "branches": ["{default}"],
-      "reviewers": 1,
-      "why": "Every workflow write to main, and each publication of the skills, waits here for a person.",
+      "workflows": [
+        "semantic-release.yml",
+        "publish.yml"
+      ],
+      "branches": [
+        "{default}"
+      ],
+      "why": "Every workflow write to main, and each publication of the skills, runs here on the default branch alone. A required reviewer waits until releases have downstream users.",
       "docs": "threat-model/#repository-hardening"
     },
     {
       "kind": "environment",
       "name": "pypi",
-      "workflows": ["pypi.yml"],
-      "tags": ["v*"],
+      "workflows": [
+        "pypi.yml"
+      ],
+      "tags": [
+        "v*"
+      ],
       "why": "PyPI's trusted publisher names this Environment and not a ref, so it admits release tags alone.",
       "docs": "releasing/#the-ktl-package-on-pypi"
     },
     {
       "kind": "environment",
       "name": "testpypi",
-      "workflows": ["pypi.yml"],
-      "tags": ["v*"],
+      "workflows": [
+        "pypi.yml"
+      ],
+      "tags": [
+        "v*"
+      ],
       "why": "TestPyPI's trusted publisher names this Environment and not a ref, so it admits release tags alone.",
       "docs": "releasing/#the-ktl-package-on-pypi"
     },
     {
       "kind": "environment",
       "name": "docent-eval",
-      "workflows": ["docent-eval.yml"],
-      "branches": ["{default}"],
+      "workflows": [
+        "docent-eval.yml"
+      ],
+      "branches": [
+        "{default}"
+      ],
       "reviewers": 0,
       "why": "It holds the eval agent's key for the default branch's weekly run alone.",
       "docs": "threat-model/#the-docent-eval"
@@ -47,14 +68,21 @@
     {
       "kind": "variable",
       "name": "PYPI_RELEASE_ENABLED",
-      "workflows": ["pypi.yml"],
+      "workflows": [
+        "pypi.yml"
+      ],
       "level": "optional",
       "job_level": true,
       "switch": {
         "name": "pypi",
-        "values": ["true", "testpypi"],
+        "values": [
+          "true",
+          "testpypi"
+        ],
         "requires": [
-          {"confirm": "the index has a trusted publisher, pending or registered, for both ktl and knowledge-trust-ladder, naming this repository, pypi.yml and the Environment"}
+          {
+            "confirm": "the index has a trusted publisher, pending or registered, for both ktl and knowledge-trust-ladder, naming this repository, pypi.yml and the Environment"
+          }
         ]
       },
       "why": "testpypi uploads each release to TestPyPI, and true to PyPI. Unset, a release builds and checks the packages and uploads nothing.",
@@ -63,7 +91,9 @@
     {
       "kind": "variable",
       "name": "KNOWLEDGE_SYNC_HOSTS",
-      "workflows": ["publish.yml"],
+      "workflows": [
+        "publish.yml"
+      ],
       "level": "optional",
       "check": "repositories",
       "why": "The hosts asked to sync as soon as a release is tagged, as owner/name separated by spaces.",
@@ -73,7 +103,9 @@
       "kind": "secret",
       "name": "KNOWLEDGE_SYNC_DISPATCH_TOKEN",
       "environment": "release",
-      "workflows": ["publish.yml"],
+      "workflows": [
+        "publish.yml"
+      ],
       "level": "optional",
       "why": "A token with Actions write on each sync host. A fine-grained token reaches one owner's repositories alone.",
       "docs": "releasing/#after-a-releasing-merge-to-knowledge-trust-ladder-what-follows"
@@ -81,14 +113,23 @@
     {
       "kind": "variable",
       "name": "KNOWLEDGE_DOCENT_EVAL_ENABLED",
-      "workflows": ["docent-eval.yml"],
+      "workflows": [
+        "docent-eval.yml"
+      ],
       "level": "optional",
       "job_level": true,
       "switch": {
         "name": "docent-eval",
         "requires": [
-          {"variable": "AGENT_API_KEY_ENV", "text": "AGENT_API_KEY_ENV, the name the agent reads its key from"},
-          {"secret": "AGENT_API_KEY", "environment": "docent-eval", "text": "the AGENT_API_KEY secret in Environment docent-eval"}
+          {
+            "variable": "AGENT_API_KEY_ENV",
+            "text": "AGENT_API_KEY_ENV, the name the agent reads its key from"
+          },
+          {
+            "secret": "AGENT_API_KEY",
+            "environment": "docent-eval",
+            "text": "the AGENT_API_KEY secret in Environment docent-eval"
+          }
         ]
       },
       "why": "true runs the docent eval each week: eight paid agent runs under the cost cap.",
@@ -97,7 +138,9 @@
     {
       "kind": "variable",
       "name": "KNOWLEDGE_DOCENT_EVAL_COST",
-      "workflows": ["docent-eval.yml"],
+      "workflows": [
+        "docent-eval.yml"
+      ],
       "level": "optional",
       "pattern": "[0-9]+(\\.[0-9]+)?",
       "why": "The eval's cost cap in US dollars, 5 unless set.",
@@ -106,7 +149,9 @@
     {
       "kind": "variable",
       "name": "AGENT_API_KEY_ENV",
-      "workflows": ["docent-eval.yml"],
+      "workflows": [
+        "docent-eval.yml"
+      ],
       "level": "optional",
       "pattern": "(?!(GITHUB|GH|GIT|RUNNER|ACTIONS)_)[A-Z][A-Z0-9_]*_(API_KEY|TOKEN|KEY)",
       "why": "The name the eval's agent reads its key from. The librarian reads the same variable.",
@@ -116,7 +161,9 @@
       "kind": "secret",
       "name": "AGENT_API_KEY",
       "environment": "docent-eval",
-      "workflows": ["docent-eval.yml"],
+      "workflows": [
+        "docent-eval.yml"
+      ],
       "level": "optional",
       "why": "The eval agent's key, for the eval's job alone.",
       "docs": "threat-model/#the-docent-eval"
@@ -125,8 +172,14 @@
       "kind": "ruleset",
       "name": "default branch",
       "target": "branch",
-      "include": ["~DEFAULT_BRANCH"],
-      "rules": ["deletion", "non_fast_forward", "required_linear_history"],
+      "include": [
+        "~DEFAULT_BRANCH"
+      ],
+      "rules": [
+        "deletion",
+        "non_fast_forward",
+        "required_linear_history"
+      ],
       "level": "required",
       "why": "main blocks deletion and force pushes and requires linear history, and no more: a pull request or status rule would refuse the release job's own push.",
       "docs": "threat-model/#repository-hardening"
@@ -144,7 +197,9 @@
       "name": "security.secret_scanning",
       "value": true,
       "level": "required",
-      "visibility": ["public"],
+      "visibility": [
+        "public"
+      ],
       "why": "Secret scanning is on, as the threat model says, and nothing in CI can assert it.",
       "docs": "threat-model/#repository-hardening"
     },
@@ -153,7 +208,9 @@
       "name": "security.secret_scanning_push_protection",
       "value": true,
       "level": "required",
-      "visibility": ["public"],
+      "visibility": [
+        "public"
+      ],
       "why": "Push protection is on, as the threat model says, and nothing in CI can assert it.",
       "docs": "threat-model/#repository-hardening"
     },
@@ -162,7 +219,9 @@
       "name": "security.private_vulnerability_reporting",
       "value": true,
       "level": "required",
-      "visibility": ["public"],
+      "visibility": [
+        "public"
+      ],
       "why": "SECURITY.md sends reporters to private vulnerability reporting.",
       "docs": "threat-model/#repository-hardening"
     },
