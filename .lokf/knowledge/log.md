@@ -2,6 +2,7 @@
 
 ## 2026-11-14
 
+* **Curation**: human:noelmcloughlin corrected 1 concept, the domain vocabularies explanation: `lokf adapt` reads a published release of a schema the maintainer nominates. They cleared the librarian's question on that wording.
 * **Changed**: Security policy's row on the website templates follows `SECURITY.md`, which now names Hugo and Pagefind from PyPI and the raw-HTML cleaning in place of npm. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Resolved**: the maintainer updated `SECURITY.md`'s website row, so the concept now carries it.
 * **Changed**: the ktl-prose skill rewords a changelog's released sections only when the person asks, as `references/other-files.md` now says, with no example phrasing.

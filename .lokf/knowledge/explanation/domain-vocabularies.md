@@ -20,15 +20,17 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: human:noelmcloughlin
-  at: "2026-11-12T20:37:20Z"
+  at: "2026-11-14T13:03:09Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-11-12T20:37:20Z"
     revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
   - by: process:ktl-librarian
     at: "2026-11-14T12:32:59Z"
+  - by: human:noelmcloughlin
+    at: "2026-11-14T13:03:09Z"
+    revision: "a59f341512edc066c35ae85005e11a47ece3719a"
 stale_after: 2028-11-12
-status: draft
 ---
 
 # Overview
@@ -45,7 +47,7 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 
 The recipe keeps every schema file in `.lokf/schema/`: a pinned copy of `lokf.yaml`, the domain vocabulary and each file it imports. The folder may hold several files, in subfolders too. One variable, `schema`, in the sidecar's justfile names the root: the file whose imports reach `lokf` and every other file, directly or in turn. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes.
 
-A domain schema, which a LinkML project owns, stays in that project. In this repository that is `.linkml/src/<slug>/schema/`, which the linkml-sidecar skill installs, or `src/<slug>/schema/` for a project made with copier at the root; the project may also sit in another repository. Its copy goes into `.lokf/schema/`, adapted with `lokf adapt` or taken from a release that is adapted already, and the variable names the copy, never the project's own file. Until it does, a `.lokf/` beside a schema project is a bundle about the repository.
+A domain schema, which a LinkML project owns, stays in that project. In this repository that is `.linkml/src/<slug>/schema/`, which the linkml-sidecar skill installs, or `src/<slug>/schema/` for a project made with copier at the root; the project may also sit in another repository. Its copy goes into `.lokf/schema/`: `lokf adapt` reads a published release of some schema, nominated by the maintainer, and creates the adapted copy. The variable names the copy, never the project's own file. Until it does, a `.lokf/` beside a schema project is a bundle about the repository.
 
 The two Obsidian plugins are told the new classes through their *Known LOKF types* setting. Neither plugin can read the schema itself, so the same list of classes goes into both.
 
@@ -73,7 +75,3 @@ The shape waits for the curator's write path.
 Where a domain vocabulary binds a slot to an external code list (SNOMED CT, for example), neither LOKF's schema nor `lokf validate` checks that the term still exists. `linkml-term-validator` can, as an optional extra gate whose "service unreachable" counts as not passing.
 
 **Roles stay as they are.** The curator raises the question, as a report line and a conversation. The team decides whether a domain vocabulary, a small piece of governed software, is worth owning. The librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge, since the spec says consumers MUST NOT reject unknown types. It is also still outside what `lokf validate` checks, so the registrar gate stays red.
-
-## Open questions
-
-- 2026-11-14, process:ktl-librarian: `skills/ktl-librarian/references/domain-vocabulary.md` now says to adapt a published release of a domain schema, never the project's working copy, and that the linkml-sidecar skills never write in `.lokf/`. `skills/ktl-curator/references/domain-vocabularies.md` now says those skills install a project at the root of a new repository or beside the bundle, and that `lokf adapt` writes the copy once the schema is published. This concept says the copy is adapted or taken from an adapted release, and that the skills install a project beside the bundle or around a schema the repository holds. Should it carry the new wording?
