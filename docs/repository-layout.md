@@ -19,6 +19,8 @@ skills/
 .github/repository-settings.json  what this repository's own workflows need from GitHub, and the hardening it keeps; `ktl gh` reads it beside the skills' catalogues
 .github/release/
   package.json, package-lock.json  the release tools semantic-release.yml installs with npm ci, every package pinned
+.github/docent-eval/
+  package.json, package-lock.json  Claude Code, which docent-eval.yml installs with npm ci, pinned by hash
 .github/pypi/
   requirements.in, requirements.txt  the build backend of the PyPI packages; pypi.yml and the tests build with --require-hashes
 .github/workflows/

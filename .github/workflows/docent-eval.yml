@@ -94,9 +94,15 @@ jobs:
 
       # Pinned, as the sidecar's automation page pins the agent commands, so
       # a run executes the code that was tried. `claude plugin eval` needs
-      # 2.1.269 or later. A new release reaches this job when the pin moves.
+      # 2.1.269 or later. .github/docent-eval/package-lock.json holds the hash
+      # of the package and of each platform's binary, and npm ci refuses any
+      # other bytes. Its install script sets the platform's binary up, so it
+      # runs. Move the pin in package.json there, then run
+      # `npm install --package-lock-only --ignore-scripts` in that folder.
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code@2.1.310
+        run: |
+          npm ci --prefix .github/docent-eval --no-audit --no-fund
+          echo "$GITHUB_WORKSPACE/.github/docent-eval/node_modules/.bin" >> "$GITHUB_PATH"
 
       # Set these up under Settings -> Secrets and variables -> Actions: the
       # variables on the repository, and the secret on the docent-eval
