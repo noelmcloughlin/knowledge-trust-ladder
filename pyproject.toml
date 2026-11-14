@@ -1,0 +1,69 @@
+# The `ktl` package on PyPI: the six skills and the Claude Code plugin
+# manifest, carried verbatim, and a `ktl` command that installs them. It has
+# no dependencies and uses the standard library alone, so it installs from
+# PyPI or any mirror of it on the oldest Python a supported system ships.
+# The version is the release tag, read from git at build time.
+#
+#   uvx ktl@0.64.0 skills install --agent claude-code --scope user
+#
+# This file builds the package and nothing else. The sidecar's own Python
+# project is .lokf/pyproject.toml, the site's is website/pyproject.toml, and
+# the tests install from tests/requirements.txt.
+[project]
+name = "ktl"
+dynamic = ["version"]
+description = "Knowledge Trust Ladder (KTL): agent skills that keep a LOKF knowledge bundle true, and record who checked each claim."
+readme = "src/ktl/README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Noel McLoughlin" }]
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["agent-skills", "okf", "lokf", "linkml", "knowledge-graph", "provenance", "human-review", "trust-ladder"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Documentation",
+]
+
+[project.urls]
+Homepage = "https://w3id.org/ktl/"
+Documentation = "https://w3id.org/ktl/docs/install/"
+Repository = "https://github.com/noelmcloughlin/knowledge-trust-ladder"
+Changelog = "https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/CHANGELOG.md"
+
+[project.scripts]
+ktl = "ktl.cli:main"
+
+[build-system]
+# Bounded so that a major release of either cannot change what a release
+# builds without a deliberate bump. hatchling 1.27 reads PEP 639's license.
+requires = ["hatchling>=1.27,<2", "uv-dynamic-versioning>=0.8,<1"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "pep440"
+fallback-version = "0.0.0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ktl"]
+
+# The skills and the plugin manifest go in verbatim, beside the code, so the
+# installed package folder is also a Claude Code marketplace: its
+# .claude-plugin/ names the plugin at "./", whose skills are ./skills/.
+[tool.hatch.build.targets.wheel.force-include]
+"skills" = "ktl/skills"
+".claude-plugin" = "ktl/.claude-plugin"
+
+# `uv build` makes the wheel from the source distribution, so that must carry
+# the two folders too. Everything else in the repository stays out of it.
+[tool.hatch.build.targets.sdist]
+only-include = ["src/ktl", "skills", ".claude-plugin", "LICENSE", "pyproject.toml"]
