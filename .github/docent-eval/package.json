@@ -1,0 +1,8 @@
+{
+  "name": "knowledge-trust-ladder-docent-eval",
+  "private": true,
+  "description": "Claude Code, which docent-eval.yml installs with npm ci, the package and each platform's binary pinned by this folder's lockfile.",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.310"
+  }
+}

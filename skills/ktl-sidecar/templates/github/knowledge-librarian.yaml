@@ -185,18 +185,26 @@ jobs:
           python-version: "3.12"
           enable-cache: false
 
+      # The credential of a private index, when .lokf/pyproject.toml names
+      # one `knowledge`; unset, uv reads PyPI or the index with none.
       - name: Install the lokf sidecar
         id: install-lokf
         continue-on-error: true
+        env:
+          UV_INDEX_KNOWLEDGE_USERNAME: ${{ secrets.UV_INDEX_KNOWLEDGE_USERNAME }}
+          UV_INDEX_KNOWLEDGE_PASSWORD: ${{ secrets.UV_INDEX_KNOWLEDGE_PASSWORD }}
         run: uv sync --locked
         working-directory: .lokf
 
-      # Install ktl-librarian fresh on every run, pinned to one release: it is
-      # runtime state, not source, so the checkout does not carry it. A plain
-      # clone of the public tag needs no token. A host that installs from a
-      # private copy of the skills repository names it in
-      # TRUST_LADDER_SKILLS_REPO, which a sync keeps, and stores a read-only
-      # token for it as the secret KNOWLEDGE_SKILLS_TOKEN.
+      # Install ktl-librarian fresh on every run, from the ktl package that
+      # .lokf/pyproject.toml pins and .lokf/uv.lock holds by hash: the skill
+      # is runtime state, not source, so the checkout does not carry it. The
+      # step above put that package in .lokf/.venv with `uv sync --locked`,
+      # from a lock a person merged, so the command that copies the skill out
+      # of it is reviewed code. A host that installs from a private index
+      # names it `knowledge` in .lokf/pyproject.toml, and keeps its
+      # credential in this job's Environment as the secrets
+      # UV_INDEX_KNOWLEDGE_USERNAME and UV_INDEX_KNOWLEDGE_PASSWORD.
       #
       # Hide the install from git, so that neither "Enforce the agent's write
       # scope" nor "Detect changes" sees it. Use .git/info/exclude when the
@@ -204,11 +212,6 @@ jobs:
       # fork whose upstream owns the root .gitignore needs no edit there. Stop
       # before any agent runs when git still sees the install: the host commits
       # another copy, or a rule of its own brings the path back.
-      #
-      # Install nothing unless the tag still names the pinned commit. A tag can
-      # move, and it names the instructions an agent follows unattended. Move
-      # the two pins together, as the skills repository's
-      # scripts/sync-sidecar.sh does.
       #
       # Skip this step in the repository the skill comes from, named again in
       # the `if`. There the skill is source under bare skills/, and an install
@@ -218,35 +221,14 @@ jobs:
       # that develops the skills changes the name in both places.
       - name: Install the pinned ktl-librarian skill
         if: github.repository != 'noelmcloughlin/knowledge-trust-ladder'
-        env:
-          TRUST_LADDER_SKILLS_REPO: https://github.com/noelmcloughlin/knowledge-trust-ladder
-          TRUST_LADDER_SKILLS_REF: v0.64.0 # the one pin; point your docs here instead of repeating it
-          TRUST_LADDER_SKILLS_SHA: a1f661eb560fda72be8c90f8ded9b07649464736 # the commit that tag names
-          KNOWLEDGE_SKILLS_TOKEN: ${{ secrets.KNOWLEDGE_SKILLS_TOKEN }}
         run: |
           set -euo pipefail
-          # git with the read token of a private skills repository, when one is
-          # given, sent as a header to that repository's address alone.
-          skills_git() {
-            local repo="$1"; shift
-            if [ -n "${KNOWLEDGE_SKILLS_TOKEN:-}" ]; then
-              local n="${GIT_CONFIG_COUNT:-0}" auth
-              auth="$(printf 'x-access-token:%s' "$KNOWLEDGE_SKILLS_TOKEN" | base64 | tr -d '\n')"
-              env GIT_CONFIG_COUNT="$((n + 1))" "GIT_CONFIG_KEY_$n=http.${repo%/}.extraheader" "GIT_CONFIG_VALUE_$n=AUTHORIZATION: basic $auth" git "$@"
-            else
-              git "$@"
-            fi
-          }
-          tmp="$(mktemp -d)"
-          skills_git "$TRUST_LADDER_SKILLS_REPO" -c advice.detachedHead=false clone --quiet --depth 1 --branch "$TRUST_LADDER_SKILLS_REF" "$TRUST_LADDER_SKILLS_REPO" "$tmp"
-          got="$(git -C "$tmp" rev-parse HEAD)"
-          if [ "$got" != "$TRUST_LADDER_SKILLS_SHA" ]; then
-            echo "::error::$TRUST_LADDER_SKILLS_REF names commit $got, and this workflow pins $TRUST_LADDER_SKILLS_SHA. Either the tag moved or one pin was edited without the other, so nothing was installed."
+          ktl=.lokf/.venv/bin/ktl
+          if [ ! -x "$ktl" ]; then
+            echo "::error::.lokf/.venv has no ktl command, so the librarian skill cannot be installed. Either the uv sync above failed (its output says why), or .lokf/pyproject.toml pins no ktl: pin it once with uv add --project .lokf \"ktl==X.Y.Z\", the release this host's copies came from, and merge pyproject.toml and uv.lock. The weekly sync moves the pin from then on."
             exit 1
           fi
-          mkdir -p .agents/skills
-          rm -rf .agents/skills/ktl-librarian
-          cp -R "$tmp/skills/ktl-librarian" .agents/skills/
+          "$ktl" skills install --dest .agents/skills --skill ktl-librarian
           test -f .agents/skills/ktl-librarian/SKILL.md
           seen() { git status --porcelain --untracked-files=all -- .agents/skills/ktl-librarian; }
           tracked="$(git ls-files -- .agents/skills/ktl-librarian)"
@@ -263,7 +245,6 @@ jobs:
             echo "::error::A rule in the host's .gitignore makes git see .agents/skills/ktl-librarian/, where the skill is installed, so the write-scope check would fail the run. Remove the rule that brings that path back."
             exit 1
           fi
-          echo "Installed ktl-librarian@$TRUST_LADDER_SKILLS_REF ($TRUST_LADDER_SKILLS_SHA)"
 
       # Both agent commands the sidecar documents run through npx, and Copilot
       # CLI needs Node 22 or newer, which a runner image does not promise. An

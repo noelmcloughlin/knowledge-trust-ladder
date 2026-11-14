@@ -14,7 +14,7 @@ sources:
   - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T20:00:48Z"
+  at: "2026-11-14T22:28:53Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -34,10 +34,10 @@ The skills are installed from this repository rather than copied into each proje
 - the Open Skills CLI (`npx skills add noelmcloughlin/knowledge-trust-ladder --global --skill <skill>`);
 - a Claude Code plugin that bundles all six (`/plugin marketplace add noelmcloughlin/knowledge-trust-ladder`, then `/plugin install knowledge-trust-ladder@knowledge-trust-ladder`), declared by `.claude-plugin/plugin.json` and `marketplace.json`.
 
-A user install keeps the instructions an agent follows under the user's control. The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. A team that wants every member on one version installs into the repository instead: it leaves out `--global`, or passes `--scope project`, and commits the `skills-lock.json` that `npx skills` writes.
+A user install keeps the instructions an agent follows under the user's control. The scheduled librarian run installs `ktl-librarian` from the `ktl` package that `.lokf/pyproject.toml` pins before it starts. A team that wants every member on one version installs into the repository instead: it leaves out `--global`, or passes `--scope project`, and commits the `skills-lock.json` that `npx skills` writes.
 
-All six skills are released together under one `vMAJOR.MINOR.PATCH` tag with one `CHANGELOG.md`, so a set pinned to one tag agrees with itself. To pin it, append the tag to the skill name (`ktl-docent@v0.16.0`) or pass `--pin`. `docs/install.md` carries the commands, the pinning rule, and what each skill needs on the machine.
+All six skills are released together under one `vMAJOR.MINOR.PATCH` tag with one `CHANGELOG.md`, so a set pinned to one tag agrees with itself. To pin it, append the tag to the skill name (`ktl-docent@v0.16.0`) or pass `--pin`. A repository with a sidecar pins the `ktl` package once in `.lokf/pyproject.toml`, and its weekly sync moves the pin. `docs/install.md` carries the commands, the pinning rule, and what each skill needs on the machine.
 
-The repository also carries its own bundle, kept by its own skills, so a reader can install the docent anywhere and ask about this project. The docent answers from this repository's `.lokf/`, saying how far each answer has been checked. Microsoft 365 Copilot is a fourth route for the docent alone. Each release that changes the bundle carries the docent as a zip with a snapshot of the bundle inside, to upload to a declarative agent ([The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
+The repository also carries its own bundle, kept by its own skills, so a reader can install the docent anywhere and ask about this project. The docent answers from this repository's `.lokf/`, saying how far each answer has been checked. Microsoft 365 Copilot is a fourth route for the docent alone. Once the repository's `KNOWLEDGE_M365_ENABLED` variable is `true`, each release that changes the bundle carries the docent as a zip with a snapshot of the bundle inside, to upload to a declarative agent ([The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
 
 The repository was renamed, and GitHub redirects the old clone and `npx skills add` paths, as `CHANGELOG.md` records. The skills themselves took the `ktl-` prefix in 0.22.0. `CHANGELOG.md` lists their old names, and says that a host upgrading from 0.21.0 removes the old copies.

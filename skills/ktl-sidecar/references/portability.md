@@ -15,7 +15,7 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
 | Behind a package mirror or a proxy, or python3 older than 3.11 | everything | `uv run` of the sidecar's scripts; python3 for any script | `.lokf/.venv` after `uv sync`; a lock made where the gate installs from; uv told to trust the proxy's certificate; `uv run` for ktl-prose's check (below) |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |
-| Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle; the auditor once it exists | the other three skills, source checks, `feedback.md` | the `ktl-docent-m365-<tag>-<repository>.zip` a release carries, or `.lokf/m365/knowledge-m365.sh` on the bundle folder ([m365.md](m365.md)) |
+| Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle; the auditor once it exists | the other three skills, source checks, `feedback.md` | the `ktl-docent-m365-<tag>-<repository>.zip` a release carries once `KNOWLEDGE_M365_ENABLED` is `true`, or `.lokf/m365/knowledge-m365.sh` on the bundle folder ([m365.md](m365.md)) |
 
 ## Install all four skills together
 

@@ -7,12 +7,14 @@ genre: how-to
 resource: docs/m365.md
 sources:
   - resource: docs/m365.md
+    id: docs-m365.md
+    excerpt: once the repository's `KNOWLEDGE_M365_ENABLED` variable is `true`. The variable is unset by default while the Copilot skill is unfinished.
   - resource: skills/ktl-sidecar/references/m365.md
   - resource: skills/ktl-sidecar/templates/m365/ktl-docent-m365.md
   - resource: skills/ktl-sidecar/templates/m365/knowledge-m365.sh
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T18:10:56Z"
+  at: "2026-11-14T22:28:53Z"
 status: draft
 isPartOf:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
@@ -37,8 +39,9 @@ Getting it running takes three steps, in this order: get the zip, add it to an a
 
 # 1. Get the zip
 
-**From a release.** The release workflow attaches `ktl-docent-m365-<tag>-<repository>.zip` beside the bundle zip on every release whose bundle changed. `<repository>` is the repository's name, or the name its `KNOWLEDGE_RELEASE_NAME` variable sets. A release with no such asset means one of two things:
+**From a release.** The release workflow attaches `ktl-docent-m365-<tag>-<repository>.zip` beside the bundle zip on every release whose bundle changed, once the repository's `KNOWLEDGE_M365_ENABLED` variable is `true`. The variable is unset by default while the Copilot skill is unfinished.[^docs-m365.md] `<repository>` is the repository's name, or the name its `KNOWLEDGE_RELEASE_NAME` variable sets. A release with no such asset means one of three things:
 
+- the repository's `KNOWLEDGE_M365_ENABLED` variable is unset;
 - the bundle did not change since the last release that carries one, and the reader takes the zip from that earlier release;
 - the repository's sidecar has no `.lokf/m365/`, and its releases carry the bundle zip alone.
 
@@ -85,7 +88,7 @@ The snapshot does not update itself. After each release that changes the bundle,
 
 # If something goes wrong
 
-- **The release has no `ktl-docent-m365-…` asset.** The bundle did not change since the last release that carries one, or the repository's sidecar has no `.lokf/m365/`.
+- **The release has no `ktl-docent-m365-…` asset.** The repository's `KNOWLEDGE_M365_ENABLED` variable is unset, the bundle did not change since the last release that carries one, or the repository's sidecar has no `.lokf/m365/`.
 - **The build exits 1.** The skill breaks one of Copilot's limits, the output names which, and nothing is written.
 - **The build says `zip not found`.** The folder is built but not zipped: install `zip`, or zip the folder by hand before adding it.
 - **`atk add skill` is not a command** (`UnknownCommandError`). Export both `TEAMSFX_AGENT_SKILLS=true` and `ATK_FRONTIER=true`.
@@ -100,6 +103,8 @@ The snapshot does not update itself. After each release that changes the bundle,
 `.lokf/m365/` holds one instructions file per read-only role, named after the skill it becomes: `ktl-docent-m365.md`, not `SKILL.md`, so no installer lists it. The builder packs each file into its own zip. An auditor, the third line, would be `ktl-auditor-m365.md` beside it, with no change to the builder, workflow or checks. The sidecar and librarian need a repository and a shell, so they have no Copilot form. The curator has none yet. It needs a write action the agent can call and an identity that is not a forge login. The curator's `references/domain-vocabularies.md` holds the shape of that identity record (see [domain vocabularies](../explanation/domain-vocabularies.md)).
 
 A host's copy under `.lokf/m365/` is what its releases pack, so a host that edits it changes what its readers' Copilot follows. Its trust labels must match ktl-docent's, and the repository checks enforce that.
+
+[^docs-m365.md]: docs/m365.md, 1. Get the zip
 
 ## Open questions
 

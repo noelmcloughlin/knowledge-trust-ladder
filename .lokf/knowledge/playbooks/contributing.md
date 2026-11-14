@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-14T22:33:20Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/playbooks/repository-validation
@@ -36,7 +36,7 @@ Before a pull request:
 
 The sibling repositories link deep into this repository's files, and their own link checks follow those URLs. `validate-repository.sh` check 9 lists the paths. Move one only together with its links, and when a change in a sibling needs something new in this repository, merge this repository's change first.
 
-A change under a skill's `templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical. The one exception is the skills pin in `knowledge-librarian.yaml`, which the release commit moves in the template only.
+A change under a skill's `templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical.
 
 When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`). A squash merge takes its subject from the title, and the `plan` job refuses a mismatch. Pinned action SHAs are bumped by Dependabot, and CI fails an action that floats on a tag or branch instead of a commit. The pull request template's checklist is the short form of this list.
 
@@ -51,7 +51,7 @@ Participation is covered by the Contributor Covenant, shared with the sibling KT
 
 Releasing is maintainer-gated. Conventional Commits decide the version, and `[Unreleased]` is the release note. A merge to `main` promotes the changelog but never tags, and a maintainer runs `publish.yml` by hand ([releasing](releasing.md)).
 
-After a release that changes a template or `skills/ktl-librarian/`, each sibling's `knowledge-sync.yaml` opens a pull request that moves its copies and pin to the release within a week. To open those pull requests at once, a maintainer runs `scripts/sync-sidecar.sh --pr <tag> ../obsidian-ktl-curator ../obsidian-ktl-registrar` once the tag is on origin, and `--finish <tag>` once they are merged.
+After a release that changes a template or `skills/ktl-librarian/`, each sibling's `knowledge-sync.yaml` opens a pull request that moves its copies and pin to the release within a week. To open one sooner, a maintainer starts that workflow by hand with the tag, or runs `.lokf/scripts/knowledge-sync.sh --pr <tag>` in the sibling.
 
 The pin and the copies move together because, once a sibling turns on its scheduled librarian, the pin decides which instructions run unattended.
 

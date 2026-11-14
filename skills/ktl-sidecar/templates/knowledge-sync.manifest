@@ -2,8 +2,8 @@
 # host carries a copy of, where the copy lives, and the rule for it.
 #
 # The host's own .lokf/scripts/knowledge-sync.sh reads this file out of the
-# release it syncs to, so a release is data to it: this list and the
-# templates it names. The host's preflight reads it from the installed
+# ktl package of the release it syncs to, as data, with the templates it
+# names. The host's preflight reads it from the installed
 # sidecar's templates, and the skills repository's contract from the
 # templates beside it. One entry a line, its fields separated by spaces; a
 # line that starts with # is a comment. The rules:
@@ -67,8 +67,8 @@ always m365/ktl-docent-m365.md         Step 5
 
 # Each workflow runs a script with no check that it is there, the wrapper
 # refuses to start without the pen, and each shell half runs its Python
-# half. The librarian workflow pins a release, and only the sync workflow
-# and the sync script keep that pin current.
+# half. The librarian workflow installs the skill from the ktl pin, and
+# only the sync workflow and the sync script keep that pin current.
 needs scripts/knowledge-librarian.sh        .github/workflows/knowledge-librarian.yaml   cannot run without it
 needs scripts/knowledge-conventions.sh      .github/workflows/knowledge-registrar.yaml   cannot run without it
 needs scripts/knowledge-conventions.py      .github/workflows/knowledge-registrar.yaml   cannot run without it
@@ -81,8 +81,8 @@ needs scripts/knowledge-apply.py            .lokf/scripts/knowledge-apply.sh    
 needs scripts/knowledge-conventions.py      .lokf/scripts/knowledge-conventions.sh       cannot run without it
 needs scripts/knowledge-federate.py         .github/workflows/knowledge-federation.yaml  cannot run without it
 needs domain.yaml                           .github/workflows/knowledge-federation.yaml  cannot run without it
-needs github/knowledge-sync.yaml            .github/workflows/knowledge-librarian.yaml   pins a release, and only this keeps the pin current
-needs scripts/knowledge-sync.sh             .github/workflows/knowledge-librarian.yaml   pins a release, and only this keeps the pin current
+needs github/knowledge-sync.yaml            .github/workflows/knowledge-librarian.yaml   installs the skill from the ktl pin, which only this keeps current
+needs scripts/knowledge-sync.sh             .github/workflows/knowledge-librarian.yaml   installs the skill from the ktl pin, which only this keeps current
 needs scripts/knowledge-sync.sh             .github/workflows/knowledge-sync.yaml        cannot run without it
 needs scripts/knowledge-ingest.sh           .github/workflows/knowledge-ingest.yaml      cannot run without it
 needs scripts/knowledge-ingest.py           .github/workflows/knowledge-ingest.yaml      cannot run without it

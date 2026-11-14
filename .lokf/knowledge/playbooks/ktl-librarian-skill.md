@@ -34,7 +34,7 @@ sources:
   - resource: .lokf/justfile
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-14T22:28:53Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -95,7 +95,7 @@ A patch may carry one `log` line for every operation that gives none, and the pe
 
 ## The scheduled run
 
-A scheduled run installs the pinned `ktl-librarian` release first, except in the repository that publishes the skills, which runs its own source under bare `skills/`. The install step installs nothing unless the release tag still names the commit pinned beside it. When the host's `.gitignore` leaves `.agents/` out, the install step ignores its own install in the checkout's `.git/info/exclude`, so a fork whose upstream owns that file still runs. It stops the run before any agent runs only when a rule of the host's brings the path back or the host commits another copy, and it checks every installed file, not `SKILL.md` alone.
+A scheduled run installs the pinned `ktl-librarian` release first, except in the repository that publishes the skills, which runs its own source under bare `skills/`. It installs the skill from the `ktl` package that `.lokf/pyproject.toml` pins and `.lokf/uv.lock` holds by hash. When the host's `.gitignore` leaves `.agents/` out, the install step ignores its own install in the checkout's `.git/info/exclude`, so a fork whose upstream owns that file still runs. It stops the run before any agent runs only when a rule of the host's brings the path back or the host commits another copy, and it checks every installed file, not `SKILL.md` alone.
 
 The wrapper hands the agent one credential, under the name the `AGENT_API_KEY_ENV` variable gives. That credential is the `AGENT_API_KEY` secret, or, with `AGENT_USE_JOB_TOKEN` set to `true`, the job's own token. The job token serves Copilot CLI, billed to the repository owner's seat, or a domain host's members script, which reads it as `KNOWLEDGE_FEDERATE_TOKEN`. The wrapper refuses a name that does not end `_API_KEY`, `_TOKEN` or `_KEY`, or that starts `GITHUB_`, `GH_`, `GIT_`, `RUNNER_` or `ACTIONS_`. It exports the key into the agent's environment only, never into an argument list or its own git commands. The `AGENT_API_KEY` secret, and `AGENT_CLI` when it is a secret, go in the `knowledge-librarian` Environment, limited to the default branch, so a workflow on any other branch cannot read them. The workflow still reads a repository secret of the same name, so a host keeps working while it moves the secret.
 

@@ -582,7 +582,13 @@ def test_a_retired_name_is_read_by_nothing_and_the_changelog_says_when():
             assert (old["kind"], old["name"]) not in gh.names_read(path.read_text(encoding="utf-8")), f"{path.name} still reads {old['name']}"
         section = changelog.split(f"## [{old['changelog']}]", 1)
         assert len(section) == 2, f"CHANGELOG.md has no release {old['changelog']}"
-        assert old["name"] in section[1].split("\n## [", 1)[0], f"the {old['changelog']} entry does not name {old['name']}"
+        entry = section[1].split("\n## [", 1)[0]
+        # The newest release heading is promoted before its tag, and a merge
+        # until then folds Unreleased into it, so Unreleased counts there.
+        newest = re.search(r"^## \[(\d+\.\d+\.\d+)\]", changelog, re.M).group(1)
+        if old["changelog"] == newest:
+            entry += changelog.split("## [Unreleased]", 1)[-1].split("\n## [", 1)[0]
+        assert old["name"] in entry, f"the {old['changelog']} entry does not name {old['name']}"
 
 
 def preset_rows(heading: str) -> dict:
@@ -984,7 +990,7 @@ def test_secrets_reads_values_from_standard_input_and_sets_each_where_it_belongs
     assert sorted(fake.secrets_set) == [("AGENT_API_KEY", "knowledge-librarian", "sk-y"), ("KNOWLEDGE_SYNC_TOKEN", "knowledge-sync", "github_pat_x")]
     out = capsys.readouterr().out
     assert "github_pat_x" not in out and "sk-y" not in out
-    assert "skipped: KNOWLEDGE_SKILLS_TOKEN" in out
+    assert "skipped: UV_INDEX_KNOWLEDGE_PASSWORD" in out
 
 
 def test_secrets_waits_for_the_environment_and_refuses_a_name_no_workflow_reads(tmp_path, at, capsys):
@@ -1182,7 +1188,7 @@ def test_this_repositorys_own_catalogue_describes_its_switches(tmp_path, at):
     assert "Environment pypi: create it, limited to tags v*" in texts(result, "apply")
     reviewer = [f for f in result["findings"] if f["text"] == "Environment release: add noelmcloughlin as required reviewer"]
     assert [f["level"] for f in reviewer] == ["recommended"], "a reviewer on release waits until releases have downstream users"
-    assert not [t for t in texts(result) if "OpenSSF Scorecard" in t], "scorecard.yml publishes the score the threat model says it does"
+    assert not [t for t in texts(result) if "OpenSSF Scorecard" in t or "CodeQL" in t], "scorecard.yml and codeql.yml run as the threat model says"
 
 
 def test_check_strict_names_a_release_environment_without_a_reviewer(tmp_path, at, capsys):

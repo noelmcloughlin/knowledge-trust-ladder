@@ -325,3 +325,5 @@ jobs:
           # entry point, see ktl-sidecar Step 2), already checked at
           # its real path.
           skip: knowledge_bundle
+          # in-toto's attestation files end .intoto.jsonl.
+          ignore_words_list: intoto

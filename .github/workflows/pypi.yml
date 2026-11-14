@@ -32,9 +32,11 @@ name: PyPI
 # holds) under a read-only token. `upload` holds the OIDC token, runs no
 # build and no repository code, and uploads only the files `build` made. The
 # publish action attaches a PEP 740 attestation to each file. `attach` holds
-# the write token, runs only gh and sha256sum, and adds each file's checksum
-# to the GitHub release, where anyone can compare a file from PyPI, or one
-# they rebuild from the tag, against it.
+# the write token, runs only gh, sha256sum and GitHub's attest action, and
+# adds each file's checksum to the GitHub release, where anyone can compare a
+# file from PyPI, or one they rebuild from the tag, against it. Beside the
+# checksums goes the files' signed build provenance, as
+# provenance-<tag>-packages.intoto.jsonl.
 on:
   workflow_dispatch:
     inputs:
@@ -193,13 +195,15 @@ jobs:
           attestations: true
 
   attach:
-    name: Attach the checksums to the release
+    name: Attach the checksums and the provenance to the release
     needs: upload
     if: vars.PYPI_RELEASE_ENABLED == 'true'
     runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
-      contents: write # gh release upload, and nothing else
+      contents: write # gh release upload
+      id-token: write # sign the build-provenance attestation
+      attestations: write # store the attestation
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -211,14 +215,34 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Write and attach a .sha256 file for each package file
+      # A signed record of the workflow run, commit and tag that built each
+      # file, beside the PEP 740 attestation PyPI holds. Anyone checks a file,
+      # one fetched from PyPI too, with `gh attestation verify <file> -R
+      # noelmcloughlin/knowledge-trust-ladder`, and without GitHub's
+      # attestation API by adding `--bundle` and the release's
+      # provenance-<tag>-packages.intoto.jsonl. The patterns name the
+      # packages, since the attest action also matches the .gitignore uv
+      # writes beside them.
+      - name: Attest build provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/ktl/*.whl
+            dist/ktl/*.tar.gz
+            dist/alias/*.whl
+            dist/alias/*.tar.gz
+
+      - name: Write and attach a .sha256 file for each package file, and the provenance
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
         run: |
           mkdir sums
           for file in dist/ktl/* dist/alias/*; do
             (cd "$(dirname "$file")" && sha256sum "$(basename "$file")") > "sums/$(basename "$file").sha256"
           done
           cat sums/*.sha256
-          gh release upload "$TAG" sums/*.sha256 --clobber --repo "$GITHUB_REPOSITORY"
+          cp -- "$BUNDLE" "sums/provenance-$TAG-packages.intoto.jsonl"
+          gh release upload "$TAG" sums/*.sha256 "sums/provenance-$TAG-packages.intoto.jsonl" --clobber --repo "$GITHUB_REPOSITORY"

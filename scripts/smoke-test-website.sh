@@ -183,7 +183,10 @@ enums:
 YAML
   printf 'name: Knowledge federation\n' > .github/workflows/knowledge-federation.yaml
   printf '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- The platform.\n' > CHANGELOG.md
-  (cd .lokf && UV_EXCLUDE_NEWER="$newest_upload" uv lock -q && UV_EXCLUDE_NEWER="$newest_upload" uv sync -q --locked)
+  # The template pins ktl exactly, often at a release newer than this
+  # repository's lock, so the cutoff leaves ktl out.
+  spare=(--exclude-newer-package "ktl=$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+  (cd .lokf && UV_EXCLUDE_NEWER="$newest_upload" uv lock -q "${spare[@]}" && UV_EXCLUDE_NEWER="$newest_upload" uv sync -q --locked "${spare[@]}")
   git add -A
   git commit -q -m "a host with a bundle"
   git tag v1.0.0
@@ -263,7 +266,7 @@ assert "a release page links the repository, the docs and the bundle at the rele
 assert "llms.txt offers llms-full.txt, the docs pages as Markdown and the schema" \
   "grep -q '/llms-full.txt)' \"$dist/llms.txt\" && grep -q '(https://acme.github.io/acme-platform/docs/guide.md)' \"$dist/llms.txt\" && grep -q '/schema/acme_platform.yaml)' \"$dist/llms.txt\""
 assert "badge.json is a shields.io endpoint badge with KTL's mark and the count of confirmed concepts" \
-  "python3 -I -c 'import json, sys; d = json.load(open(sys.argv[1])); assert d[\"schemaVersion\"] == 1 and d[\"label\"] == \"KTL\" and d[\"message\"].endswith(\" confirmed\") and d[\"logoSvg\"].startswith(\"<svg\")' \"$dist/badge.json\""
+  "python3 -I -c 'import json, re, sys; d = json.load(open(sys.argv[1])); assert d[\"schemaVersion\"] == 1 and d[\"label\"] == \"KTL\" and re.fullmatch(r\"[0-9]+ of [0-9]+\", d[\"message\"]) and d[\"logoSvg\"].startswith(\"<svg\")' \"$dist/badge.json\""
 assert "the log feed is well-formed" "python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' \"$dist/knowledge/log.xml\""
 assert "every page names the log feed" "grep -q 'application/atom+xml[^>]*knowledge/log.xml' \"$dist/index.html\""
 assert "every page carries the policy that stops raw HTML running a script" "grep -q \"Content-Security-Policy.*script-src https://acme.github.io/acme-platform/js/\" \"$dist/docs/guide/index.html\""

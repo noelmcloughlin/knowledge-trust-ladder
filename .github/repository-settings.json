@@ -254,6 +254,14 @@
       ],
       "why": "scorecard.yml publishes the score the README's badge shows, as the threat model says.",
       "docs": "threat-model/#repository-hardening"
+    },
+    {
+      "kind": "workflow",
+      "name": "CodeQL",
+      "uses": "github/codeql-action/analyze",
+      "level": "required",
+      "why": "codeql.yml scans the Python, the JavaScript and the workflows, as the threat model says.",
+      "docs": "threat-model/#repository-hardening"
     }
   ]
 }

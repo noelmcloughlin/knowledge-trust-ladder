@@ -19,6 +19,8 @@ skills/
 .github/repository-settings.json  what this repository's own workflows need from GitHub, and the hardening it keeps; `ktl gh` reads it beside the skills' catalogues
 .github/release/
   package.json, package-lock.json  the release tools semantic-release.yml installs with npm ci, every package pinned
+.github/docent-eval/
+  package.json, package-lock.json  Claude Code, which docent-eval.yml installs with npm ci, pinned by hash
 .github/pypi/
   requirements.in, requirements.txt  the build backend of the PyPI packages; pypi.yml and the tests build with --require-hashes
 .github/workflows/
@@ -32,6 +34,7 @@ skills/
   knowledge-website.yaml     ktl-website's workflow: builds website/ on each PR, publishes the default branch's build to Pages
   docent-eval.yml            the docent holdout, run through `claude plugin eval` weekly and by hand under a cost cap; never on a pull request
   scorecard.yml              OpenSSF Scorecard on each push to main and weekly: publishes the score the README's badge shows, and adds its findings to code scanning
+  codeql.yml                 CodeQL on the Python, the JavaScript and the workflows, on each PR, each push to main and weekly
 docs/
   architecture.md       the architecture the poem, LOKF and LinkML inspired: the catalogue, the five roles and the trust ladder
   architecture.en-simple.md  the architecture page retold for readers aged 13 to 18
@@ -63,7 +66,6 @@ scripts/
   validate-repository.sh   the contract: the checks validate.yml runs on this repository's own files
   smoke-test-install.sh    installs the six skills into a throwaway repo and checks them
   smoke-test-website.sh    copies the website templates into a host built from the dummy bundle and builds the site twice
-  sync-sidecar.sh          runs one release's knowledge-sync.sh in each sibling repository, and finishes the branches
   companion-diagrams.mjs   draws the Archify companions in .assets/companions/ again; a maintainer runs it by hand
 tests/                     the behavioural tests of the sidecar scripts and the prose checker, run with pytest; -n auto runs them in parallel
   conftest.py              the shared helpers, and how to run the tests

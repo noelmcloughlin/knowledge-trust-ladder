@@ -187,18 +187,13 @@ jobs:
           GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
           node .github/scripts/changelog-release.mjs promote "$VERSION" "$(date -u +%Y-%m-%d)"
-          # Move the librarian template's pin to the newest tag a host can
-          # clone, or check 15 fails main one release later. Only the
-          # template: GITHUB_TOKEN may not push a change under
-          # .github/workflows/, so this repository's own copy keeps its old pin, and
-          # check 11 ignores its two values.
-          pinned=skills/ktl-sidecar/templates/github/knowledge-librarian.yaml
+          # Move the sidecar template's ktl pin to the newest tag, whose
+          # package publish.yml put on PyPI, or check 15 fails main one
+          # release later.
+          pinned=skills/ktl-sidecar/templates/pyproject.toml
           latest="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)"
           if [ -n "$latest" ]; then
-            # The tag and the commit it names move together: the install step
-            # refuses a tag that no longer names the commit beside it.
-            sed -i -E -e "s/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1$latest/" \
-                      -e "s/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1$(git rev-parse "$latest^{commit}")/" "$pinned"
+            sed -i -E 's/("ktl==)[0-9]+\.[0-9]+\.[0-9]+"/\1'"${latest#v}"'"/' "$pinned"
           fi
           git add CHANGELOG.md "$pinned"
           git commit -m "chore(release): $VERSION - changelog promoted [skip ci]"
