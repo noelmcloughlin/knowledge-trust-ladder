@@ -7,6 +7,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Added
 
 - **A ktl-website Mermaid diagram opens over the page with a click**, as a figure does, where the wheel or buttons zoom it and a drag moves it.
+- **The bundle page and the health page show their figures on a card**: a bar of the ladder's states and a tile per health figure, each linking to its list.
 
 ### Changed
 
