@@ -2,6 +2,7 @@
 
 ## 2026-11-14
 
+* **Prose**: reworded the body of `playbooks/ktl-command.md` in plain English. No link, number or frontmatter changed.
 * **Added**: The ktl command, from `src/ktl/README.md` and ktl-sidecar's `repository-settings.md`: how `ktl skills` installs the skills and how `ktl gh` sets a repository's GitHub settings from the catalogues.
 * **Changed**: Releasing now says the `release` reviewers wait until releases have downstream users, adds the PyPI upload and its one pending publisher at a time, and names the owner limit of the sync dispatch token, as `docs/releasing.md` says.
 * **Changed**: Security policy's surface table now matches `SECURITY.md`: six surfaces with the `ktl` command, `pypi.yml` among the workflows, and two read-only tokens kept outside an Environment. Edited since a person confirmed it; the label says so until the curator looks again.

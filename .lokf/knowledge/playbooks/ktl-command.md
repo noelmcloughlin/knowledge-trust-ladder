@@ -35,12 +35,12 @@ status: draft
 
 # Overview
 
-`ktl` is the PyPI package that carries the six KTL skills and a command of the same name. The package has no dependencies, needs Python 3.9 or later, and installs from PyPI or any mirror of it, so it serves a machine that cannot reach github.com.[^ktl-readme.md] A second package, `knowledge-trust-ladder`, holds no code and installs `ktl` at the same version under the repository's name. The command's code is in `src/ktl/`, and it uses the standard library alone.
+`ktl` is the PyPI package that carries the six KTL skills and a command of the same name. The package has no dependencies and needs Python 3.9 or later.[^ktl-readme.md] It installs from PyPI or any mirror of it, so it serves a machine that cannot reach github.com. A second package, `knowledge-trust-ladder`, holds no code and installs `ktl` at the same version under the repository's name. The command's code is in `src/ktl/`, and it uses the standard library alone.
 
 # Install the skills: `ktl skills`
 
 - `ktl skills install` copies the six skills into the folder an agent reads. Without `--agent` it installs for GitHub Copilot, as `gh skill install` does. `--agent claude-code` or `--agent codex` installs for those agents, and `--dest` names any other agent's folder. `--scope` takes `user` or `project`, and `--skill` installs one skill.
-- `ktl skills status` says, for each folder an agent reads, whether each KTL skill there is the same as the package's, and exits 1 when a copy differs. A copy that `gh skill install` made counts as the same when only gh's own rewrite of its `SKILL.md` differs.
+- `ktl skills status` checks each folder an agent reads, and says whether each KTL skill there is the same as the package's. It exits 1 when a copy differs. A copy that `gh skill install` made counts as the same when only gh's own rewrite of its `SKILL.md` differs.
 - `ktl skills path` prints the folder that holds the skills, for `gh skill install --from-local`, `npx skills add` or a Claude Code plugin marketplace.
 
 `ktl skills` opens no network connection and runs nothing it copies.
@@ -52,9 +52,9 @@ The workflows the skills install read repository variables, secrets kept in Envi
 - `plan` lists each missing or different item with the verb that deals with it and the reason. It changes nothing.
 - `apply` creates each Environment the workflows name, limited to the refs the catalogue gives. It adds a missing branch rule, required reviewer, ruleset rule or setting. It never loosens a setting and never turns a switch on.[^repository-settings.md] `--recommended` also makes the hardening changes.
 - `secrets` asks for each missing secret without an echo. It hands each value to `gh secret set` on standard input, never in an argument.
-- `enable <switch>` turns one switch on once what it needs holds, and `--run` starts the workflow's first run.
+- `enable <switch>` turns one switch on once everything it needs is in place, and `--run` starts the workflow's first run.
 - `prune` removes a variable or secret a release retired, such as `KNOWLEDGE_LIBRARIAN_CMD`. It also removes a switch set on an Environment, and a repository copy of a secret its Environment now holds.
-- `check` lists the gaps alone, and exits 1 while a required one remains. `--strict` counts the recommended items too.
+- `check` lists only the gaps, and exits 1 while a required one remains. `--strict` counts the recommended items too.
 
 Each verb that changes something prints the changes and asks first, unless `--yes` is given.
 
