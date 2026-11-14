@@ -74,13 +74,18 @@ mediaType = "application/ld+json"
 ugly = true
 isPlainText = true
 notAlternative = true
+[outputFormats.badge]
+mediaType = "application/json"
+baseName = "badge"
+isPlainText = true
+notAlternative = true
 [mediaTypes."application/atom+xml"]
 suffixes = ["xml"]
 [mediaTypes."application/ld+json"]
 suffixes = ["jsonld"]
 
 [outputs]
-home = ["html", "llms", "llmsfull"]
+home = ["html", "llms", "llmsfull", "badge"]
 
 [security.funcs]
 getenv = ["^HUGO_"]
