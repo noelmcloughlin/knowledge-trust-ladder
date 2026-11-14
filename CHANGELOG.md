@@ -9,6 +9,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **`ktl-website` builds a Hugo site in place of the Astro one, and needs uv and no Node.js.** Hugo and Pagefind come from PyPI at hashed versions. The site finds what it shows with no setting, such as the README, the changelog, a LinkML schema's `gen-doc` pages or a domain host's workspace. Its home page has five buttons on every site, and greys the one whose page is missing. `site.toml` holds the four values a site needs, and [customising.md](skills/ktl-website/references/customising.md#from-the-earlier-astro-site) says how to move an Astro site.
 - **A website's schema elements answer at `/elements/<Name>/` with no setting**, the address mkdocs gave each and the one a schema's w3id rules point at.
 - **`ktl-website` installs into `ktl-website/` when `website/` is another site's, and finds the site there on a rerun.** The website and federation workflows and the sidecar's sync look in both folders.
+- **`ktl-prose` rewords a changelog's released sections when a person names them**, and keeps each heading, date, link and excerpt.
 
 ### Removed
 

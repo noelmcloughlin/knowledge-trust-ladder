@@ -8,7 +8,7 @@ Work outside the bundle only on a file the person names in a turn addressed to y
 
 ## What you never touch
 
-- **A record of the past**: the released sections of a changelog, a log, a captured transcript. Rewording it changes what was said.
+- **A record of the past**: the released sections of a changelog, a log, a captured transcript. Rewording it changes what was said. The one exception is a changelog: reword its released sections only when the person names them, as in "the whole CHANGELOG" or "the released entries too". Keep each version heading, date, link and excerpt as it is, and keep every change the entry lists.
 - **Text taken from elsewhere**: a licence, a code of conduct, a quoted specification.
 - **An installed copy**: anything under `.agents/` or `.claude/`. Reword the source it was installed from.
 - **A file ktl-sidecar installed**: everything under `.lokf/` outside `knowledge/`, and the three `knowledge-*.yaml` workflows. Each is a copy of a template, and an edited copy is what the sidecar's next repair replaces.
