@@ -101,7 +101,7 @@ jobs:
     environment: release
     permissions:
       contents: write
-      actions: write # dispatch knowledge-release.yaml for the new tag
+      actions: write # dispatch knowledge-release.yaml and pypi.yml for the new tag
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -148,6 +148,18 @@ jobs:
         run: |
           gh workflow run knowledge-release.yaml --ref "$VERSION" -f tag="$VERSION" \
             || { echo "::error::The skills published under $VERSION, but the bundle zip was not requested. Run the Knowledge Release workflow by hand with tag=$VERSION."; exit 1; }
+
+      # The same skills go to PyPI as the `ktl` package, for a machine that
+      # reaches a package index and no git host. pypi.yml builds from the tag
+      # and uploads where PYPI_RELEASE_ENABLED says; unset, it builds and
+      # checks the package and uploads nothing.
+      - name: Publish the ktl package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          gh workflow run pypi.yml --ref "$VERSION" -f tag="$VERSION" \
+            || { echo "::error::The skills published under $VERSION, but the ktl package was not requested. Run the PyPI workflow by hand on the tag: gh workflow run pypi.yml --ref $VERSION -f tag=$VERSION"; exit 1; }
 
       # Each sibling's knowledge-sync.yaml syncs it to the newest release on
       # its own schedule. This step asks the ones named in the
