@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website Mermaid diagram opens over the page with a click**, as a figure does, where the wheel or buttons zoom it and a drag moves it.
+
 ### Changed
 
 - **A ktl-website site with no LinkML schema of its own shows LOKF core in its Schema part**, from `.lokf/schema/lokf.yaml` or the `lokf` package, so the home page's schema button is never greyed. The home page still leads only with a repository's own schema.
