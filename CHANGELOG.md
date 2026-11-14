@@ -18,6 +18,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Fixed
 
 - **A concept's page no longer lists a retired concept among those that point at it.** The report counts a retired concept for none, and a successor with the same title was listed twice.
+- **Conventions rule 10 says that a tag, an anchor, an alias or a merge key is refused on any frontmatter field**, as the check always did, not only on the fields the gates read.
 
 ## [0.64.0] - 2026-11-13
 

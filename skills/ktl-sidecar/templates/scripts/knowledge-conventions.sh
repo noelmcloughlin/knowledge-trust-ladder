@@ -37,13 +37,15 @@
 #  10. The fields the provenance gates read line by line are spelt so that a
 #      line reader and a parser read the same thing, since both gates refuse
 #      an event they cannot read. They are `id`, `verified`, `generated`, and
-#      `by`, `at` and `revision` on an event. They carry no tag, anchor,
-#      alias, merge key, quoted or explicit key, space before the colon,
-#      escape or block scalar. No value spans lines or sits below its key,
-#      and no comment sits beside one or inside a flow form. The block is not
-#      indented whole or one flow mapping, and holds no line break but a line
-#      feed. `resource` keeps the same spellings, though a comment may stand
-#      beside it, and `sources` and `exclusions` hold no flow form.
+#      `by`, `at` and `revision` on an event. They carry no quoted or explicit
+#      key, space before the colon, escape or block scalar. No value spans
+#      lines or sits below its key, and no comment sits beside one or inside
+#      a flow form. `resource` keeps the same spellings, though a comment may
+#      stand beside it, and `sources` and `exclusions` hold no flow form.
+#      The whole block holds no tag, anchor, alias or merge key, on any field:
+#      a line reader resolves none of them, and an alias can stand in for an
+#      event or a source wherever it sits. The block is not indented whole or
+#      one flow mapping, and holds no line break but a line feed.
 #  11. No `at:` is later than the commit that first recorded it, or, before
 #      it is committed, than now. A time ahead of the clock, such as local
 #      time labelled `Z` or a round placeholder, sorts after the edits and

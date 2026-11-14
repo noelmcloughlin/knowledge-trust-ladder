@@ -100,7 +100,13 @@ AFTER_TITLE = ",.:; "
 
 
 def plain_spellings(fm_text: str) -> list[str]:
-    """Rule 10: what a line reader could not read the way a parser does."""
+    """Rule 10: what a line reader could not read the way a parser does.
+
+    Most checks hold for GATE_FIELDS and EVENT_KEYS alone. A tag, an anchor,
+    an alias and a merge key are refused on any field, because a line reader
+    resolves none of them, and an alias can stand in for an event or a source
+    wherever it sits.
+    """
     findings: list[str] = []
     stack: list[dict] = []  # one entry per open collection
     lines = fm_text.split("\n")
