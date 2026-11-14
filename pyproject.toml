@@ -4,11 +4,13 @@
 # PyPI or any mirror of it on the oldest Python a supported system ships.
 # The version is the release tag, read from git at build time.
 #
-#   uvx ktl@0.64.0 skills install --agent claude-code --scope user
+#   uvx ktl skills install --agent claude-code --scope user
 #
-# This file builds the package and nothing else. The sidecar's own Python
-# project is .lokf/pyproject.toml, the site's is website/pyproject.toml, and
-# the tests install from tests/requirements.txt.
+# This file builds the package and nothing else. alias/pyproject.toml builds
+# knowledge-trust-ladder beside it, and pypi.yml builds both from the build
+# backend at the hashes .github/pypi/requirements.txt holds. The sidecar's
+# own Python project is .lokf/pyproject.toml, the site's is
+# website/pyproject.toml, and the tests install from tests/requirements.txt.
 [project]
 name = "ktl"
 dynamic = ["version"]

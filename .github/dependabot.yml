@@ -68,6 +68,20 @@ updates:
       tests:
         patterns: ["*"]
 
+  # The build backend of the two PyPI packages, pinned by hash in
+  # .github/pypi/requirements.txt, which is compiled from requirements.in
+  # beside it; its header says how. A bump changes how a release is built,
+  # not what it carries.
+  - package-ecosystem: "pip"
+    directory: "/.github/pypi"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(build)"
+    groups:
+      build:
+        patterns: ["*"]
+
   # The toolkit this repository's own bundle runs (.lokf/uv.lock). It ships
   # to no host, so a bump releases nothing. The limit of 0 turns off version
   # updates; security updates still come, and without this entry Dependabot
