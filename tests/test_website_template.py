@@ -191,6 +191,17 @@ def test_the_workflows_and_the_sync_look_in_either_folder():
     assert "for o in website ktl-website; do" in sync
 
 
+def test_both_workflows_that_build_the_site_install_the_just_the_sidecar_pins():
+    """A browseBuild that runs just fails where just is missing, so the federation workflow, a domain host's one site build, installs it as the website workflow does."""
+    pin = re.search(r'"rust-just==([0-9.]+)"', read(TEMPLATES / "pyproject.toml")).group(1)
+    for workflow in (WEBSITE_TEMPLATES / "github" / "knowledge-website.yaml", TEMPLATES / "github" / "knowledge-federation.yaml"):
+        text = read(workflow)
+        assert "grep -q '^browseBuild = \"just ' \"$" in text, workflow.name
+        assert 'ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"' in text, workflow.name
+        assert f"uv tool install rust-just=={pin}" in text, workflow.name
+        assert text.index("Install just, when the") < text.index("/scripts/build.sh"), f"{workflow.name} installs just after the build"
+
+
 def test_the_workspace_folder_is_the_one_the_federation_workflow_serves():
     """The graph page fetches workspace/graph.json, so the workflow copies the snapshot to workspace/ under the site, and the page names that address."""
     workflow = read(TEMPLATES / "github" / "knowledge-federation.yaml")
