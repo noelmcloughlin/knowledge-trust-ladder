@@ -28,7 +28,7 @@ verified:
     at: "2026-11-14T12:32:59Z"
   - by: human:noelmcloughlin
     at: "2026-11-14T10:23:35Z"
-    revision: "47d0426fe0a4ab50d4fee5cd71dd22ed518ef4c8"
+    revision: "5ebcfb7b854f1758f5f57e5f27b14c59a8ebcb8e"
 stale_after: 2027-11-14
 ---
 
