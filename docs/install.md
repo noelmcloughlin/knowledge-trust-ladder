@@ -53,7 +53,7 @@ Without uv, `pipx run ktl skills install --scope user` does the same. `python3 -
 
 ## Install for your user, not into the repository
 
-A user install keeps the instructions that an agent follows under your control ([threat-model.md](threat-model.md)). The scheduled librarian run installs `ktl-librarian` at the pinned tag before it starts. Install into the repository only when a team wants every member on one version: leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
+A user install keeps the instructions that an agent follows under your control ([threat-model.md](threat-model.md)). The scheduled librarian run installs `ktl-librarian` from the `ktl` package that `.lokf/pyproject.toml` pins before it starts. Install into the repository only when a team wants every member on one version: leave out `--global`, or pass `--scope project`, and commit the `skills-lock.json` that `npx skills` writes.
 
 ## Turn on the workflows
 
@@ -63,7 +63,7 @@ The workflows are GitHub Actions. On GitLab, Codeberg, Forgejo or Gitea, [the si
 
 ## Pin to one tag
 
-All six skills are released together under one tag, so pin them to the same one. Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`. From PyPI, the package version is the tag without its `v`: `uvx ktl@X.Y.Z skills install ...` for `vX.Y.Z`. [releasing.md](releasing.md) says what each version level means.
+All six skills are released together under one tag, so pin them to the same one. Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`. From PyPI, the package version is the tag without its `v`: `uvx ktl@X.Y.Z skills install ...` for `vX.Y.Z`. A repository with a sidecar pins it once in `.lokf/pyproject.toml`, with `uv add --project .lokf "ktl==X.Y.Z"`, and its weekly sync moves the pin. [releasing.md](releasing.md) says what each version level means.
 
 ## Microsoft 365 Copilot
 
