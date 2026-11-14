@@ -4,14 +4,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Added
-
-- **`ktl gh` sets the GitHub settings a repository's workflows need**, from the catalogue each skill carries in `references/repository-settings.json`. `plan` and `check` say what is missing and why, `apply` creates the Environments, branch rules and values without loosening anything, `secrets` asks for each secret without an echo, `enable` turns a switch on once what it needs holds, and `prune` removes retired names such as `KNOWLEDGE_LIBRARIAN_CMD`.
-
-### Fixed
-
-- **The docs agree with what the workflows need from GitHub.** automation.md's table names `KNOWLEDGE_CURATION_ENVIRONMENT`, the two secrets that stay on the repository are named, a domain host's `github-pages` Environment admits release tags, the librarian's first run by hand follows its switch, and gate.md says a release job's push rules out required checks.
-
 ## [0.64.0] - 2026-11-14
 
 ### Added
@@ -37,6 +29,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The bundle page and the health page show their figures on a card**: a bar of the ladder's states and a tile per health figure, each linking to its list.
 - **A concept card names a Creative Commons licence by its short name**, shows each check's person or automation dot, offers its files as chips, rules its record's rows, and shows a genre that repeats the type only once.
 - **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex, and `ktl skills status` says whether the copies an agent reads are the release's. `knowledge-trust-ladder` installs the same package under the repository's name. `pypi.yml` uploads both once `PYPI_RELEASE_ENABLED` is set, from a build anyone can repeat byte for byte, and attaches each file's checksum to the release.
+- **`ktl gh` sets the GitHub settings a repository's workflows need**, from the catalogue each skill carries in `references/repository-settings.json`. `plan` and `check` say what is missing and why, `apply` creates the Environments, branch rules and values without loosening anything, `secrets` asks for each secret without an echo, `enable` turns a switch on once what it needs holds, and `prune` removes retired names such as `KNOWLEDGE_LIBRARIAN_CMD`.
 
 ### Changed
 
@@ -108,6 +101,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **`website-preflight.sh` names the file a foreign site folder lacks**, `hugo.toml` as well as `site.toml`.
 - **`knowledge-sync.sh` and the automation page say that `--source` looks for the tag in that clone alone**, not on the remote.
 - **A concept page no longer scrolls sideways on a phone**: a long path or address in its record wraps.
+- **The docs agree with what the workflows need from GitHub.** automation.md's table names `KNOWLEDGE_CURATION_ENVIRONMENT`, the two secrets that stay on the repository are named, a domain host's `github-pages` Environment admits release tags, the librarian's first run by hand follows its switch, and gate.md says a release job's push rules out required checks.
 
 ### Security
 
