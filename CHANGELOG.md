@@ -8,6 +8,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **`ktl gh` sets the GitHub settings a repository's workflows need**, from the catalogue each skill carries in `references/repository-settings.json`. `plan` and `check` say what is missing and why, `apply` creates the Environments, branch rules and values without loosening anything, `secrets` asks for each secret without an echo, `enable` turns a switch on once what it needs holds, and `prune` removes retired names such as `KNOWLEDGE_LIBRARIAN_CMD`.
 
+### Fixed
+
+- **The docs agree with what the workflows need from GitHub.** automation.md's table names `KNOWLEDGE_CURATION_ENVIRONMENT`, the two secrets that stay on the repository are named, a domain host's `github-pages` Environment admits release tags, the librarian's first run by hand follows its switch, and gate.md says a release job's push rules out required checks.
+
 ## [0.64.0] - 2026-11-14
 
 ### Added

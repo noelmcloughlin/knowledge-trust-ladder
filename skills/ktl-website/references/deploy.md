@@ -12,13 +12,15 @@ The workflow has no placeholders and names no branch: it reads the repository's 
 
 It runs on a change to the site's folder, the bundle, the README, `docs/`, `.assets/`, the changelog, a schema under `src/` or `.linkml/`, and every Monday from the default branch. A change anywhere else reaches the site with that weekly run, or at once by hand: `gh workflow run knowledge-website.yaml`.
 
-A domain host, which has `knowledge-federation.yaml`, leaves `KNOWLEDGE_WEBSITE_ENABLED` unset: the federation workflow builds the site the same way and deploys it with the workspace beside it.
+A domain host, which has `knowledge-federation.yaml`, leaves `KNOWLEDGE_WEBSITE_ENABLED` unset: the federation workflow builds the site the same way and deploys it with the workspace beside it, from the release's tag as well as the default branch, so its `github-pages` Environment admits release tags too.
 
 ## Switching Pages on
 
 1. Tell Pages once to take its site from Actions: Settings, Pages, Source, GitHub Actions; or `gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`. A repository whose Pages is already on, from a branch, is switched with `-X PUT` instead.
 2. Set the variable on the repository: Settings, Secrets and variables, Actions, Variables, **Repository variables**; or `gh variable set KNOWLEDGE_WEBSITE_ENABLED --body true`, which sets it there. Do not set it on an environment such as `github-pages`: the deploy job's `if:` is read before any environment applies, and it sees only repository and organization variables, so the deploy stays skipped.
 3. Push to the default branch, or run the workflow by hand, and open the address `site.toml` names. The first deploy can take a minute to appear.
+
+`uvx ktl gh enable website --run` takes the three steps where Pages is off and no other publisher remains, as ktl-sidecar's [repository-settings.md](../../ktl-sidecar/references/repository-settings.md) says.
 
 A private repository publishes Pages only on a paid plan. The build still runs on every pull request.
 
