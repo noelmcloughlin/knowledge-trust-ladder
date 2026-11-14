@@ -8,9 +8,11 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **`ktl gh check --strict` asks a public repository for a Scorecard workflow**, through the catalogue's new `workflow` kind.
 - **`ktl gh apply` turns back on a catalogued workflow that GitHub turned off for inactivity.**
+- **`scorecard.yml` publishes this repository's OpenSSF Scorecard**, which the README's badge shows.
 
 ### Changed
 
+- **actionlint lints every workflow**, `pypi.yml` included.
 - **`llms.txt` lists the install routes in the install page's order**: the GitHub CLI, the Open Skills CLI, then PyPI.
 - **The README links the `ktl` package's page on PyPI, and says where to report a bug and how to contribute.** The issue templates name the `ktl` command and its PyPI install.
 

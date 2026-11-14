@@ -1182,6 +1182,7 @@ def test_this_repositorys_own_catalogue_describes_its_switches(tmp_path, at):
     assert "Environment pypi: create it, limited to tags v*" in texts(result, "apply")
     reviewer = [f for f in result["findings"] if f["text"] == "Environment release: add noelmcloughlin as required reviewer"]
     assert [f["level"] for f in reviewer] == ["recommended"], "a reviewer on release waits until releases have downstream users"
+    assert not [t for t in texts(result) if "OpenSSF Scorecard" in t], "scorecard.yml publishes the score the threat model says it does"
 
 
 def test_check_strict_names_a_release_environment_without_a_reviewer(tmp_path, at, capsys):

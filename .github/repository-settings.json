@@ -240,6 +240,20 @@
       "level": "required",
       "why": "The .lokf entry in .github/dependabot.yml turns version updates off and relies on security updates.",
       "docs": "threat-model/#repository-hardening"
+    },
+    {
+      "kind": "workflow",
+      "name": "OpenSSF Scorecard",
+      "uses": "ossf/scorecard-action",
+      "inputs": {
+        "publish_results": "true"
+      },
+      "level": "required",
+      "visibility": [
+        "public"
+      ],
+      "why": "scorecard.yml publishes the score the README's badge shows, as the threat model says.",
+      "docs": "threat-model/#repository-hardening"
     }
   ]
 }
