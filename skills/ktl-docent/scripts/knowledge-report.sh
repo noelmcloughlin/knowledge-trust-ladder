@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
-# What a program can say about a bundle, so that no model has to work it out.
-#
-# A concept's trust label, the bundle's health line and the librarian's work
-# list are arithmetic over frontmatter, git history and two small files. A
-# skill that has a model do that arithmetic gets a different answer on a
-# different day: two label rules were corrected in prose before this script
-# existed. So the skills run this script and quote what it prints. It reads
-# the bundle and git; it writes nothing, and it prints no reader's words
-# except inside the one prompt `retrieval --prompt` builds.
+# What a program can say about a bundle, so that no model has to work it out:
+# the skills quote what it prints. It reads the bundle and git, writes
+# nothing, and prints no words of a reader except in the prompt that
+# `retrieval --prompt` builds.
 #
 #   knowledge-report.sh                    the whole report: ktl-curator's Step 1 starts from it
 #   knowledge-report.sh health             the one health line
@@ -50,239 +45,106 @@
 #                                when the newest **Deprecation** line in
 #                                log.md links one
 #
-# The whole report also prints what ktl-curator ranks its queue by, so that
-# no model counts or sorts it:
-#   - each review date due within 30 days;
-#   - each concept a person confirmed that is derived from one edited after
-#     that confirmation;
-#   - how many other concepts rely on each concept;
-#   - Worth ten minutes today, the queue itself.
-# "The curator's queue" below says how a relation's target is found.
+# The whole report also prints the queue of ktl-curator, Worth ten minutes
+# today, and what ranks it: review dates due within 30 days, confirmed
+# concepts derived from one edited since, and how many concepts rely on each.
+# It prints Vocabulary fit and Not tied to a signed commit, each defined
+# below, and the health line ends with the second when git holds the history
+# of the bundle. It lists each retired concept whose successor no person has
+# confirmed.
 #
-# It also prints the two lines ktl-curator once worked out by hand, each
-# defined where it is computed below: Vocabulary fit, and Not tied to a
-# signed commit, which the health line ends with too when git holds the
-# history of the bundle.
+# The work list and the report name the sources that moved after an event,
+# by git history (`moved` says how), and say so where git holds no full
+# history of the bundle. The work list names apart a source that git holds
+# no history of, which never makes a run busy. The body of a concept counts
+# as a moved source, "its own body", when it differs from the text in the
+# commit of its stamp, until a `patch` or a `recheck`.
 #
-# It also lists each retired concept whose successor no person has confirmed:
-# the concept the newest **Deprecation** line in log.md links after "replaced
-# by", when the bundle holds it, carrying no `verified` event by a human:
-# actor. An agent may propose a retirement, but the retired concept governs
-# until a person confirms its successor.
+# The work list also marks each moved source that a concept quotes in a
+# `sources[].excerpt` by whether its file still holds the passage. It lists
+# first each excerpt that its file no longer holds, and counts the footnoted
+# sources with no excerpt. Only the work list runs the lokf toolkit in
+# .lokf/.venv for that check, and otherwise says the excerpts were not
+# checked.
 #
-# The work list also reads each `sources[].excerpt`, the passage a concept
-# quotes from a source. A source moves with every edit to its file, and most
-# edits leave the quoted passage alone, so the list says of each moved source
-# a concept quotes whether the file still holds the passage. It lists each
-# excerpt its file no longer holds first, as the claims whose ground changed,
-# and counts the footnoted sources that carry no excerpt yet. The lokf
-# toolkit in .lokf/.venv finds the passages, by the rule the gate's
-# `lokf validate --check-excerpts` applies, and this script never looks for
-# one itself. With no toolkit there the list says the excerpts were not
-# checked. No other form runs the toolkit.
+# `isolated` lists the concepts that no relation joins to another, and the
+# small groups joined only to each other, as the knowledge graph page draws
+# them. It fails no check and makes no run busy. In the work list it shows
+# ten of each, in turns by month, and how many more wait.
 #
-# One fact comes from git and not from frontmatter, so a host without git is
-# told it was not computed: whether a source "moved" after an event. The
-# event is the later of `generated.at` and the newest `verified` event for
-# the work list, and the newest confirmation by a person for the report. Git
-# is asked for the commit that first recorded that event's time in the
-# concept. A source moved when its own last commit comes after that commit in
-# history, or when it carries an edit not yet committed and the concept does
-# not.
-#
-# History orders the two, never a clock, so a source changed in the commit
-# that recorded the event, as a squash merge leaves them, has not moved. An
-# event not yet committed is the newest thing there is, and one git cannot
-# find is left alone: the comparison can miss a moved source and never
-# invents one. It is the file's history, not its meaning: an edit that
-# changed no fact still counts, and only reading the source says which it
-# was.
-#
-# An event may name the state of the source it checked: a `revision` that is
-# a commit. When this history holds that commit, the source is compared with
-# it rather than with the commit that recorded the event, so a source changed
-# while the pull request that carried the event waited has moved, though the
-# squash merge recorded the event after it. A change in the recording commit
-# itself still has not.
-#
-# A source git holds no history of, an ignored file or one inside a
-# submodule, cannot be compared at all. The work list names it apart, and it
-# never makes a run busy.
-#
-# A concept's own body counts as a source too. The pen stamps every edit it
-# writes, so a body that differs from the one the stamp's commit held was changed
-# by something else: a ktl-prose pass, which leaves the stamp alone on purpose,
-# or a hand edit. Nothing has compared that text with its sources, so it goes to
-# the librarian as "its own body", and a `patch` or a `recheck` clears it. Spaces
-# and line breaks do not count, so a paragraph laid out afresh is no change. Nor
-# do the lokf:related block and `## Open questions`, which a plugin and the
-# notes write. A change made in the commit that recorded the stamp is not seen,
-# as with a source, so a rewording squashed into the librarian's change is
-# missed. An open question a process asked since covers it, as it covers a
-# source, except that it need name no path, since the body has none.
-#
-# An open question is "answered" here when a person confirmed the concept on
-# or after the day the question is dated, and the concept is no longer a
-# draft. The person looked again after it was asked. ktl-curator clears a
-# person's note on that person's word, and ktl-librarian withdraws its own
-# with the pen's `resolve`.
-#
-# `isolated` reads the bundle as a graph, the way its knowledge graph page
-# draws it: which concepts no relation joins to another, and which small
-# groups join only each other. Direction does not matter, a retired concept
-# joins nothing, and a relation to another bundle joins nothing here. An
-# Organization or a Person is left out, since only `author` and `publisher`
-# reach one, and neither is a relation. So is the sources map, which describes
-# the bundle and has no source to state a relation from. A concept that stands
-# apart is a gap to look at and not a defect, since its source may state no
-# relation, so it fails no check and makes no run busy.
-#
-# The work list shows ten and says how many more wait, so a run reads ten
-# sources however large the bundle is. The ten take turns by month, since the
-# monthly run is the one that always goes ahead, and a window moved by its own
-# size reaches every concept. No record says whose turn it is, because a stamp
-# for each concept left alone would open a pull request every month that
-# changes nothing a reader sees. The work list also leaves out a concept a
-# person declined by closing a pull request that touched it, until it changes.
-#
-# `quiet` says whether a scheduled run has anything to do, so the wrapper can
-# skip the agent in a week when nothing happened. Work waits when:
-#   - a source moved after its concept's stamp, or its own body changed;
+# `quiet`, for the scheduled wrapper, exits 1 when work waits:
+#   - a source or the body of a concept moved after its stamp;
 #   - a person left a note after the librarian last wrote or checked that
 #     concept;
 #   - reader feedback waits;
-#   - a concept carries no stamp, as in the skeleton ktl-sidecar
-#     installs: no `generated`, no `timestamp` and no `verified` event, so no
-#     history can say what moved for it.
+#   - a concept carries no stamp (`generated`, `timestamp` or `verified`).
+# A bundle that git holds no full history of is never quiet, and a source
+# given as a URL, which is never fetched, never makes a run busy. It prints
+# one line of counts, with no path and no words of a person.
 #
-# A note's commit is compared with the stamp's as a source's is, so a note
-# left in the commit that recorded the stamp is missed, and a note not yet
-# committed is newer than any stamp. A bundle git holds no full history of is
-# never quiet. A source given as a URL is never fetched, so it never makes a
-# run busy: the wrapper's caller decides how often a run goes ahead
-# regardless. It prints one line of counts, with no path and nobody's words.
+# A moved source stops making work, until it moves again, when an open
+# question that a process asked names it (`asked_since` says when), or when
+# a person closed the pull request that changed the concept without merging
+# it. The work list names both apart.
 #
-# A moved source stops making work without a stamp in two cases, since the
-# librarian has no more to do there until something changes again. The work
-# list names both kinds apart from the sources that still wait.
-#   - The concept carries an open question a process asked that names the
-#     source's path, first committed at or after the source's last commit.
-#     The librarian read that state of the source and put it to a person: a
-#     confirmed concept whose source is gone, which only ktl-curator retires,
-#     is the usual one. A question that names no source covers none, since it
-#     may ask about anything. A source that is gone and that git never held
-#     counts once any such question is on file. The source makes work again
-#     when it moves after the question.
-#   - A person closed the pull request that changed the concept, without
-#     merging it.
-#
-# That second case comes from the librarian workflow, which reads what became
-# of the pull requests it opened. It hands a scheduled run one file, named by
-# KNOWLEDGE_DECLINED, holding the ones a person closed without merging,
+# For a scheduled run, the librarian workflow names in KNOWLEDGE_DECLINED a
+# file of the pull requests it opened that a person closed without merging,
 # newest first:
 #   declined <number> <YYYY-MM-DD closed> <the commit it was based on>
 #   touched <path>    a concept that pull request changed or removed
 #   added <path>      a concept it added
 #   handled <hash>    git's blob hash of a feedback entry it handled
 #
-# A person said no to those changes, so nothing that pull request had before
-# it counts as work:
-#   - a source of a touched concept whose last commit is that base commit or
-#     an ancestor of it;
-#   - a note a person left there no later;
-#   - a touched concept with no stamp that has not changed since;
+# Nothing that such a pull request had before it counts as work until it
+# changes:
+#   - a source of a touched concept last committed at or before its base
+#     commit;
+#   - a note that a person left there no later;
+#   - a touched concept that has no stamp or that no relation joins;
 #   - a feedback entry it handled.
-# Each makes work again once it changes: the source moves,
-# a person leaves a new note, a reader asks again. The work list names what
-# was left and the concepts that pull request added, so that none is proposed
-# twice. A run a person starts is handed no such file: starting it is the
-# request to try again. A line in any other shape is skipped, and so is a
-# pull request whose base commit is no ancestor of HEAD in this clone.
+# The work list names what was left and what it added.
 #
-# `retrieval` measures what the index promises: that an agent reading only
-# index.md can tell which concept to open. The questions are the ones readers
-# asked, from the ledger in .lokf/questions.md that knowledge-apply.sh keeps.
-# `--prompt` prints one prompt holding the table of contents and the numbered
-# questions. An agent answers it with no tool, and a program scores the reply
-# here. A question counts when a concept the ledger names for it is among the
-# first three paths the reply gives. A question whose every concept has left
-# the bundle is not asked and not counted, since no index could lead to it,
-# and the score says how many were left out. The reply is read for answers
-# only: what is expected of it comes from the ledger, in a file of its own.
+# `retrieval --prompt` prints the table of contents and the questions of the
+# ledger in .lokf/questions.md as one prompt. `retrieval <reply>` counts a
+# question as reached when the first three paths of the reply hold a
+# concept that the ledger names for it. A question whose concepts have all
+# left the bundle is left out, and the score says how many were.
 #
-# `coverage` counts the files git tracks that no concept names. A file is
-# named when a concept's `resource` or `sources` names it, or a folder above
-# it. A `resource` of `.` names no file. An unnamed file is a gap to look at,
-# not an error: the source map may leave its folder out on purpose and say
-# why.
+# `coverage` counts the tracked files that no concept names in its
+# `resource` or `sources`, by their path or a folder above it, and never
+# makes a scheduled run busy. A file under an `exclusions` path (lokf 0.9.0
+# and later) counts apart, as left out on purpose, unless a concept names
+# it. It skips a deleted file, and the `.lokf/` and `knowledge_bundle` of the
+# sidecar apart from the mirror of the ingest, and lists an untracked file
+# apart. `coverage <dir>` lists the unnamed files under a folder, and
+# `coverage .` all of them. `--why <path>` names the concept that claims each
+# path, or leaves it out. `--strict` exits 1 when a tracked file in scope is
+# named and left out by nobody, a folder given holds no tracked file, the
+# count holds a path it cannot read, or the count cannot run.
 #
-# A concept's `exclusions` (lokf 0.9.0 and later) list what someone looked at
-# and left out on purpose, each with a reason. A file under such a path is
-# counted apart, as left out on purpose, and never as unnamed. A concept that
-# names the file wins, since one concept may use what another leaves out. An
-# exclusion is never a source, so it never moves and never makes work.
-#
-# Three kinds of file are not counted:
-#   - a tracked file deleted from the working tree;
-#   - the sidecar's own `.lokf/` and `knowledge_bundle`, apart from the
-#     ingest's mirror;
-#   - a file git would add but does not track yet. It is listed apart, since
-#     a concept names only a tracked path, and never runtime state such as an
-#     installed skill.
-#
-# `coverage <dir>` lists the unnamed files under a folder, and `coverage .`
-# lists them all. `--why <path>` names the concept that claims each path, so
-# a reviewer can find its entry in the source map, and says apart which
-# concept left it out. It reads frontmatter only.
-#
-# `--strict` exits 1 when:
-#   - a tracked file in scope is named by nobody, and left out by nobody;
-#   - a folder given holds no tracked file, as a mistyped one does;
-#   - the whole count holds a path it cannot read;
-#   - the count cannot run.
-# So a check built on it never passes by default.
-#
-# Without git it says it cannot count. It never makes a scheduled run busy.
-#
-# `sample` draws the lists the curation policy asks for, so that no model
-# sorts one and nobody chooses what is looked at. There are two lists, each
-# drawn from its own concepts:
-#   - for a second person to re-check: the concepts that read as confirmed by
-#     a person. Each line names the people who confirmed the concept, since
-#     none of them is the one to re-check it;
-#   - for a person to check: the concepts checked by automation only, drafts
-#     apart.
-# A list is its concepts in the order of a digest, lowest first, cut at the
-# list's size. The digest is the SHA-256, as hex, of the seed, one space and
-# the concept's path. The seed is `--seed`, where an auditor gives a value the
-# authors could not know beforehand, or else today's date in UTC. The first
-# line states the seed, so anyone can draw the same lists again. A size is
-# `--independent` or `--automation`, or else the number on the policy's
-# `Independent re-check: <n>` or `Automation re-check: <n>` line, in
-# policies/knowledge-curation.md. No line, or 0, draws no list. The whole
-# report prints the same lists, by today's date, when the policy asks for
-# one. The digest needs sha256sum, or shasum where there is none, as on macOS.
-#
-# What counts as a second person's re-check is decided here, once. Take a
-# concept's `verified` events by a human: actor, in the order of `at`. The
-# earliest is the first confirmation. A later one by the same id is that
-# person confirming again, and a later one by any other id is a second
-# person's re-check. An event whose time cannot be read takes no place in
-# that order. The sample counts the confirmed concepts that carry such a
-# re-check. It does not say the re-check came after the concept's last edit.
+# `sample` draws the lists the curation policy asks for: confirmed concepts
+# for a second person to re-check, each line naming who confirmed it, and
+# concepts checked by automation only, drafts apart, for a person to check.
+# A list holds the concepts with the lowest SHA-256, as hex, of the seed, one
+# space and the path, up to its size. The seed is `--seed`, or the date today
+# in UTC, and the first line states it. A size is `--independent` or
+# `--automation`, or else the number on the `Independent re-check: <n>` or
+# `Automation re-check: <n>` line of policies/knowledge-curation.md, and 0
+# draws no list. The whole report draws the lists by the date today when the
+# policy asks for one. Each draw also counts the confirmed concepts that carry
+# a `second-person` event, before or after their last edit. The digest needs
+# sha256sum, or shasum as on macOS.
 #
 # `evidence` prints the record behind every label as a table, for an
 # auditor's spreadsheet: a header row, then one row for a concept's
 # `generated` record and one for each `verified` event. A concept with
 # neither has one row, with no event. Tabs part the columns, which are path,
 # type, status, stale_after, resource, event, by, at, revision and check.
-# `check` says which a person's `verified` event is, by the rule above:
-# first, same-person or second-person. A time is given in UTC, as the labels
-# compare it, and a review date by its day. A value in a shape the script
-# cannot read is given as written. A tab or a line break inside a value is
-# one space, and nothing is quoted. The rows are in the order of path, then
-# `generated` before `verified`, then `at`. It reads frontmatter only, with no
-# git and no clock, so one bundle always gives the same bytes.
+# `check` is first, same-person or second-person for a `verified` event by a
+# person, by the rule in `finish`. Times are in UTC and a review date is its
+# day, a value the script cannot read is given as written, and nothing is
+# quoted. Rows are ordered by path, then `generated` before `verified`, then
+# `at`. It reads only frontmatter, so one bundle always gives the same bytes.
 #
 # Bash 3.2, POSIX awk and git only, so it runs wherever the other sidecar
 # scripts do, and in a workflow job that installs nothing.
@@ -293,11 +155,10 @@
 # with no tool to compute a digest.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|worklist|quiet|changes|retrieval|coverage|sample|evidence] [...]" >&2; exit 2; }
 set -u
-# Byte-oriented awk and sort, so the byte order mark strip, the CRLF strip and
-# every comparison read raw bytes on any awk and in any locale. A gawk under a
-# UTF-8 locale otherwise reads sprintf("%c", 239) as a two-byte character, not
-# the byte the BOM needs, and leaves the mark in place. A title is printed
-# whole, never measured by character, so it still passes through unchanged.
+# Byte-oriented awk and sort, so that the BOM and CRLF strips and every
+# comparison read raw bytes in any awk and locale: under UTF-8, gawk reads
+# sprintf("%c", 239) as a two-byte character and leaves the BOM in place. A
+# title is printed whole, never measured by character.
 export LC_ALL=C
 
 usage() {
@@ -340,7 +201,7 @@ if [ "$have_git" = 1 ] && git -C "$kdir" ls-files --error-unmatch index.md >/dev
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-# ---- one concept -> its facts ------------------------------------------------
+# ---- the facts of one concept ------------------------------------------------
 # A line reader, like the provenance gates: conventions rule 10 keeps the
 # fields read here to spellings a line reader and a parser agree on. Out come
 #   C  path  title  status  stale_after  generated.by  generated.at
@@ -348,8 +209,10 @@ trap 'rm -rf "$tmp"' EXIT
 #      that human time as written  the later of generated.at and verified.at as written
 #      the revision that human event carries, a commit hash cut to seven characters
 #      the revision of the event the work list compares with, and that of the human event, whole
+#   I  path  id  type  resource  one per concept: its `id`, its `type`, and its top `resource`, else its first source
 #   R  path  resource            one per `resource:` line, the concept's own and each source's
 #   X  path  resource            one per exclusion's `resource:` line, which no R line repeats
+#   L  path  field  target       one per relation target, under its slot, or `relations` for a reified one whose predicate is no relation slot
 #   E  path  index  resource     one per `sources` entry that carries an `excerpt`, with its place in the list from 0
 #   F  path  resource            one per `sources` entry that carries an `id`, a footnote's label, and no `excerpt`
 #   Q  path  date  actor  text   one per bullet under ## Open questions
@@ -371,9 +234,9 @@ function endq(s, q,  i, c) {
 }
 function unq(s,  a, z, k) {
   s = trim(s); a = substr(s, 1, 1)
-  # A comment may follow a quoted value, as it may a plain one. Without this
-  # a quoted status or review date with a comment beside it kept its quotes,
-  # and the concept read as neither retired nor past its date.
+  # A comment may follow a quoted value, as it may a plain one. Without this,
+  # a quoted status or review date with a comment beside it would keep its
+  # quotes, and the concept would read as neither retired nor past its date.
   if (a == "\"" || a == SQ) { k = endq(s, a); if (k > 1 && substr(s, k + 1) ~ /^[ \t]+#/) s = substr(s, 1, k) }
   z = substr(s, length(s), 1)
   if (length(s) >= 2 && a == "\"" && z == "\"") { s = substr(s, 2, length(s) - 2); gsub(/\\"/, "\"", s) }
@@ -401,10 +264,10 @@ function norm(v,   off, sign, oh, om, s) {
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/) return v "T00:00:00Z"
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]Z$/) return substr(v, 1, 16) ":00Z"
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9](\.[0-9]+)?Z$/) return substr(v, 1, 19) "Z"
-  # An explicit UTC offset (+00:00, -05:30, or the compact +0000), as the
-  # commands date -u -Iseconds and Python isoformat both write: convert it to
-  # Z, so a time that is really UTC is not dropped and read as no stamp.
-  # Seconds default to 00 when the time omits them, per trust-fields.md.
+  # An explicit UTC offset (+00:00, -05:30, or the compact +0000), as
+  # date -u -Iseconds and Python isoformat write: convert it to Z, so that
+  # such a time is not dropped and read as no stamp. Seconds default to 00
+  # when the time omits them, as trust-fields.md says.
   if (v ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9](:[0-9][0-9])?(\.[0-9]+)?[+-][0-9][0-9]:?[0-9][0-9]$/) {
     # The last six characters are a colon offset whole. A compact one is
     # five, so the six begin with a digit of the time.
@@ -458,8 +321,8 @@ function sflush() {
   sres = ""; shas = 0; sid = 0
 }
 # One line under `sources`. A dash to the left of the keys of an entry opens
-# the next entry, and a key counts only at the column where the first key of
-# its entry stands, so a line of a block scalar is never read as a key.
+# the next entry. A key counts only at the column where the first key of its
+# entry stands, so a line of a block scalar is never read as a key.
 function sline(l,  col, c2, rest, m, key) {
   col = match(l, /[^ \t]/); if (!col) return
   c2 = substr(l, col + 1, 1); key = ""
@@ -535,8 +398,8 @@ fm {
   if (inv && $0 ~ /^[^ \t-]/) { emit(); inv = 0 }
   # The typed relations: the fourteen fields the schema ranges over Concept,
   # each a block list, a one-line flow list or a bare value, and `relations`,
-  # a list of { predicate, target } mappings, block or one-line flow. The
-  # contract in the skills repository holds the list of fields to the schema.
+  # a list of { predicate, target } mappings, block or one-line flow. A check
+  # in the skills repository keeps the list of fields matching the schema.
   # Out comes one L line per target, naming the field and the value as written.
   if (!inv) {
     if ($0 ~ /^[^ \t-]/) relend()
@@ -558,12 +421,10 @@ fm {
     if (inrels && $0 ~ /^[ \t]*-[ \t]*\{/) { rest = $0; sub(/^[ \t]*-[ \t]*/, "", rest); rflow(rest); next }
     if (inrels && $0 ~ /^[ \t]*-[ \t]+/) { rflush(); rest = $0; sub(/^[ \t]*-[ \t]+/, "", rest); rkv(rest); next }
     if (inrels && $0 ~ /^[ \t]+[A-Za-z_]+:/) { rkv($0); next }
-    # The slots of a domain vocabulary hold concepts too, and no list here can name
-    # them, since each host writes its own. So a value that is a whole IRI,
-    # under any field not read as something else, comes out as an L line, and
+    # A domain vocabulary has slots that hold concepts too, so a whole IRI
+    # under any field not read as something else comes out as an L line, and
     # `ranked` keeps it only when it names a concept. A prefixed name or a
-    # relative path in such a slot cannot be told from a plain value, and
-    # stays unread.
+    # relative path in such a slot stays unread.
     if (top != "" && rel == "" && !inrels && !(top in NOTLINK) && !(top in RELF) && top != "relations") mention(top, $0)
   }
   if (inv && $0 ~ /^[ \t]*-[ \t]*(#.*)?$/) { emit(); inev = 1; next }
@@ -582,7 +443,7 @@ body {
   }
 }
 END { if (NR > 0) finish() }
-# One concept ends: its C and I lines, and its V lines when `rows` is set.
+# One concept ends: its C, I and H lines, and its V lines when `rows` is set.
 function finish() {
   if (!started) return
   relend()
@@ -599,10 +460,11 @@ function finish() {
   printf "I\t%s\t%s\t%s\t%s\n", path, cid, ctype, (topres != "" ? topres : firstres)
   for (i = 1; i <= vn; i++) if (eby[i] ~ /^human:/ && eraw[i] != "") print "H\t" path "\t" eraw[i]
   if (!rows) return
-  # The evidence rows. The events by a human: actor whose time can be read are
-  # put in the order of that time, then of the file. The earliest is the first
-  # confirmation, and each later one is by the same person or by a second.
-  # The `verified` rows come out in the order of the time each one shows.
+  # The evidence rows. The `verified` events by a human: actor whose time can
+  # be read go in the order of that time, then of the file. The earliest is
+  # `first`, and each later one is `same-person` when its id is that of the
+  # first, else `second-person`. The `verified` rows come out in the order of
+  # the time each one shows.
   for (i = 1; i <= vn; i++) { ord[i] = i; shown[i] = (eat[i] != "" ? eat[i] : eraw[i]) ""; if (eby[i] ~ /^human:/ && eat[i] != "") hum[++hm] = i }
   for (i = 2; i <= hm; i++) { k = hum[i]; j = i - 1; while (j > 0 && eat[hum[j]] > eat[k]) { hum[j + 1] = hum[j]; j-- } hum[j + 1] = k }
   for (i = 1; i <= hm; i++) chk[hum[i]] = (i == 1 ? "first" : (eby[hum[i]] == eby[hum[1]] ? "same-person" : "second-person"))
@@ -613,13 +475,12 @@ function finish() {
   if (!hasgen && vn == 0) print head "\t\t\t\t"
 }'
 
-facts() {  # every concept in the bundle -> its C, R and Q lines, and its V lines when `rows` is 1
-  # One awk reads them all. A path from find starts with the bundle, which
-  # is absolute, so awk never takes a file name for an assignment. A folder
-  # whose name ends in .md, or a link to one, is no concept and is left out
-  # by the shell, which starts no process for it: mawk stops at a folder.
-  # The awk's exit status is the function's, so a read that stopped early
-  # is never taken for a bundle with less in it.
+facts() {  # every concept in the bundle -> the lines in the table above, V only when `rows` is 1
+  # One awk reads them all. A path from find is absolute, so awk never takes
+  # it for an assignment. The shell leaves out a folder whose name ends in
+  # .md, or a link to one, since mawk stops at a folder. The function returns
+  # the exit status of awk, so a read that stopped early never passes for a
+  # smaller bundle.
   find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort \
     | awk '{ n = $0; sub(/.*\//, "", n) } n != "index.md" && n != "log.md" && n != "diataxis.md"' \
     | while IFS= read -r p; do [ -d "$p" ] || printf '%s\n' "$p"; done > "$tmp/files"
@@ -628,11 +489,12 @@ facts() {  # every concept in the bundle -> its C, R and Q lines, and its V line
 }
 
 # ---- what a person declined ------------------------------------------------------
-# KNOWLEDGE_DECLINED's file (the header gives its lines) as three tables:
+# The KNOWLEDGE_DECLINED file (the header gives its lines) as three tables:
 # touched concepts, added concepts and handled feedback entries, each row
-# ending in the pull request's base commit, number and closing day. The first
-# pull request to name a path or an entry keeps it, and the file lists the
-# newest first.
+# ending in the base commit, number and closing day of the pull request. The
+# first pull request to name a path or an entry, the newest, keeps it. A line
+# in any other shape is skipped, and so is a pull request whose base commit
+# is no ancestor of HEAD.
 declined_load() {
   : > "$tmp/touched"; : > "$tmp/added"; : > "$tmp/handled"
   local file="${KNOWLEDGE_DECLINED:-}" base good=""
@@ -679,20 +541,17 @@ left() {  # <kind> <what was left> <"base number day"> [<count>] -> one D line f
 }
 
 # ---- the passages a concept quotes ---------------------------------------------
-# The work list asks the lokf toolkit which excerpts their files no longer
-# hold. It asks only when a concept carries one, and only the toolkit in
-# .lokf/.venv, which needs no network, with the domain vocabulary the
-# justfile names, as the gate's recipe runs it. The toolkit names a failing
-# excerpt by the concept's IRI and the entry's place in `sources`. The I and
-# E lines turn those into the concept's path and the resource. An IRI is
-# matched to a concept by its `id`, else by the path it ends in.
+# The lokf toolkit runs offline, only when a concept carries an excerpt, as
+# the recipe of the gate runs it, with the domain vocabulary that the
+# justfile names. It names a failing excerpt by the IRI of the concept and
+# the place of the entry in `sources`. An IRI matches a concept by its `id`,
+# else by the path it ends in.
 #
-# The verdict is taken only from what the toolkit says of excerpts: its
-# closing line, or a finding that names one. A run that says neither, as a
-# toolkit before lokf 0.9.0 or a bundle the schema rejects outright gives,
-# leaves `quote_state` saying the excerpts were not checked, and nothing is
-# said to hold. A file left unchecked for its size is read as holding its
-# passage, since nothing says it does not.
+# Only what the toolkit says of excerpts counts: its closing line, or a
+# finding that names one. A run that says neither, as from a toolkit before
+# lokf 0.9.0 or on a bundle the schema rejects, leaves `quote_state` saying
+# the excerpts were not checked. A file left unchecked for its size counts
+# as holding its passage.
 quote_state=""
 quotes_load() {
   local exe schema="" dir out
@@ -723,28 +582,23 @@ quotes_load() {
       if (p != "" && (p, $2) in res) print p "\t" res[p, $2]
     }' | LC_ALL=C sort -u > "$tmp/quote_gone"
 }
-# Which sources moved after an event, by history and not by clock (the header
-# says how). Out come `M w path list` for the work list, against the later of
-# generated.at and the newest verified event, and `M c path list` for the
-# report, against the newest confirmation by a person. For the work list a
-# source the librarian's own question covers goes to `M a path list`, one a
-# closed pull request had before it to a `D` line, as the header says, and one
-# git holds no history of to `M u path list`. A URL is never fetched.
+# Which sources moved after an event, by history and never by a clock: for
+# the work list, `M w path list`, after the later of `generated.at` and the
+# newest `verified` event; for the report, `M c path list`, after the newest
+# confirmation by a person. A source moved when its last commit comes after
+# the commit that first recorded the time of the event in the concept, or
+# when the source, and not the concept, carries an edit not yet committed.
+# A change in that recording commit, as a squash merge makes, is no move. An
+# event not yet committed is newer than any commit, and one that git cannot
+# find is skipped, so a moved source may be missed but is never invented.
 #
-# Git is asked a few questions for the whole bundle, never one for each
-# concept or source, so the cost grows with the history and not with the
-# bundle times the history:
-#   - one `git status` for every file not yet committed;
-#   - one `git log --name-only` over every source, for the last commit of each;
-#   - one `git log -p` over the bundle, for the last commit of each concept and
-#     the commit that first wrote each stamp time and each open question;
-#   - one `git cat-file` for the revisions events carry, and one for the texts
-#     the stamps recorded, where a body may have changed;
-#   - one `git log --ancestry-path` or `git merge-base` for each commit that
-#     history has to order against others.
-# The decisions are made in awk, by `moved_fn` below. It asks for what it
-# cannot yet tell, the order of two commits or whether a body changed, and is
-# run again once git has answered, at most six times.
+# For the work list, a source that a question of the librarian covers is in
+# `M a path list`, one that a closed pull request had before it in a `D`
+# line, and one that git holds no history of in `M u path list`. The
+# functions below ask git a few questions for the whole bundle, never one per
+# concept or source. `moved_fn` decides in awk, asks for what it cannot yet
+# tell (the order of two commits, or whether a body changed), and runs again
+# once git answers, at most six times.
 moved() {
   [ "$tracked" = 1 ] || return 0
   local top rpfx kpfx head n round
@@ -778,7 +632,7 @@ moved() {
 
 # A path as git prints it, back to the path itself. Git puts a name that
 # holds a double quote, a backslash or a control character in double quotes,
-# with C escapes, even with core.quotePath off, and ends a name that holds a
+# with C escapes, even with core.quotePath off. It ends a name that holds a
 # space with a tab on the `---` and `+++` lines of a diff.
 # shellcheck disable=SC2016 # awk's own variables, not the shell's
 gitname_fn='
@@ -819,13 +673,11 @@ git_status() {
 #   edited   it carries a change not yet committed;
 #   clean    with the day and the hash of its last commit;
 #   nohist   it is there, and git holds no history of it: an ignored file,
-#            one inside a submodule, or one outside the work tree. Nothing
-#            can say whether it moved.
+#            one inside a submodule, or one outside the work tree.
 # A URL, an absolute path and an identifier with a scheme name no file. Two
 # characters at least before the colon, so a Windows drive letter is still a
-# path. The root itself, as a source map names it, holds the bundle too. Its
-# own commits are the librarian's and move no source, so they are left out;
-# without that, the work list was never quiet after the first run.
+# path. For the root as a source, the commits to the bundle, which move no
+# source, are left out.
 sources_load() {
   local res p e line rootline=""
   printf '%s\n' "$all" | awk -F'\t' '$1 == "R" { r = $3
@@ -907,13 +759,13 @@ sources_load() {
     }' > "$tmp/sources"
 }
 
-# The bundle, from one `git log -p`: `ZH path commit day` for the last commit
-# that touched each concept, `ZF path commit text` for the commit that first
-# added a line holding each stamp time, each time a person confirmed it and
-# each open question a concept carries, as `git log -S` once found them one at a time, and `ZY path` for
-# each concept that carries a change not yet committed. A merge counts as
-# touching a concept it changed from every parent, as `git log -- <path>`
-# shows one, and adds no line of its own.
+# The bundle, from one `git log -p`. `ZH path commit day` gives the last
+# commit that touched each concept, and `ZY path` each concept that carries a
+# change not yet committed. `ZF path commit text` gives the commit that first
+# added a line holding each stamp time, each time a person confirmed the
+# concept and each open question it carries. A merge counts as touching a
+# concept it changed from every parent, as `git log -- <path>` shows one, and
+# adds no line of its own.
 history_load() {
   {
     printf '%s\n' "$all" | awk -F'\t' -v pfx="$kpfx" '
@@ -956,9 +808,8 @@ revisions_load() {
 
 # Whether one commit comes before another in history, for each pair moved_fn
 # asked about, as `ZA first second 1` or `... 0`. A commit with several pairs
-# asks git once for every commit after it; one with a single pair asks
-# merge-base. Every second commit is in the history of HEAD, so the commits
-# after the first one, up to HEAD, are all it can come before.
+# asks git once for the commits after it up to HEAD, whose history holds the
+# second commit of each pair, and one with a single pair asks merge-base.
 ancestry_run() {
   local x y n
   awk -F'\t' '$1 == "A" { print $2 "\t" $3 }' "$tmp/need" | LC_ALL=C sort -u > "$tmp/pairs"
@@ -974,12 +825,11 @@ ancestry_run() {
   done >> "$tmp/anc"
 }
 
-# Whether a concept says something other than the text the commit that
-# recorded its stamp held, for each `B commit path` moved_fn asked about, as
-# `ZB commit path differs` or `... same`. One `git cat-file --batch` hands
-# over every old text. What a concept says is its body, with each run of
-# spaces and each line break as one space, and without the two regions the
-# header leaves out.
+# Whether a body differs from the text in the commit of its stamp, for each
+# `B commit path` moved_fn asked about, as `ZB commit path differs` or
+# `... same`. Spaces and line breaks do not count, nor do the lokf:related
+# block and `## Open questions`. One `git cat-file --batch` reads every old
+# text.
 bodies_run() {
   awk -F'\t' '$1 == "B" { print $2 "\t" $3 }' "$tmp/need" | LC_ALL=C sort -u > "$tmp/bq"
   [ -s "$tmp/bq" ] || return 0
@@ -1025,11 +875,11 @@ bodies_run() {
 #       (bodies_run)
 #   ZT  the closed pull request that touched a concept; ZQ a passage a
 #       concept quotes from a source; ZG one its file no longer holds
-# Out come the M and D lines, and the person notes `quiet` counts go to
-# notefile: `new` for each note the librarian has not read since its stamp,
-# or a D line when a closed pull request had it before it. What it cannot
-# tell yet goes to needfile, as `A first second` or `B commit path`, and it
-# reads that as no for this round.
+# Out come the M and D lines. The notes of a person that `quiet` counts go
+# to notefile: `new` for each one the librarian has not read since its
+# stamp, or a D line when a closed pull request had it before it. What it
+# cannot tell yet goes to needfile, as `A first second` or `B commit path`,
+# and counts as no for this round.
 # shellcheck disable=SC2016 # awk's own fields, not the shell's
 moved_fn='
 function need(s) { if (!(s in sought)) { sought[s] = 1; print s > needfile } }
@@ -1120,11 +970,10 @@ END {
       # under its own derivation, so it is counted there, not here as well.
       if (which == "c") { if (hn == 0 || wasedited) continue; at = human; rv = hrev }
       rec = (at != "" ? first(p, at) : "")
-      # The commit the event names as the state it checked, when this
-      # history holds it: the resource of the concept changed after it moved,
-      # even when the stamp reached this branch later, in a squash merge.
-      # The revision names the state of that resource alone, so each other
-      # source is compared with the commit that recorded the stamp.
+      # The commit that the `revision` names, when this history holds it. It
+      # applies to the resource of the concept only, where a change in the
+      # recording commit still does not count, and each other source is
+      # compared with the commit that recorded the stamp.
       base = ""; if ((rv in VALID) && anc(VALID[rv], head)) base = VALID[rv]
       out = ""; asked = ""; aside = ""; nohist = ""
       for (i = 1; i <= m; i++) {
@@ -1145,8 +994,7 @@ END {
         }
         out = add(out, entry)
       }
-      # A concept body counts as a source too: one that says something other
-      # than the text the commit of its stamp held.
+      # The body of the concept, as one more source.
       if (rec != "") {
         L = LAST[p]; changed = 0
         if (dirty) changed = (body(rec, p) == "differs")
@@ -1236,11 +1084,10 @@ health() {  # [<the count of concepts not tied to a signed commit>]
   END { printf "Confirmed by a person: %d of %d · Checked by automation only: %d · Nobody has checked: %d · Drafts: %d · Reopened: %d · Past review date: %d · Edited since confirmed: %d · Retired: %d%s\n", confirmed, n, auto, none, drafts, reop, past, was, retired, (unsigned != "" ? " · Not tied to a signed commit: " unsigned : "") }'
 }
 
-# The concept that replaced a retired one, from the newest **Deprecation**
-# line in log.md that links the retired concept, as S<TAB>retired<TAB>successor.
-# ktl-curator writes that line, and links the successor after "replaced by"
-# where the person named one, in the `../` form the KTL Curator plugin writes
-# too. A line with no such link names no successor.
+# The concept that replaced a retired one, as S<TAB>retired<TAB>successor:
+# the link after "replaced by", in the `../` form that ktl-curator and the
+# KTL Curator plugin write, in the newest **Deprecation** line of log.md that
+# links the retired concept. A line with no such link names no successor.
 successors() {
   [ -f "$bundle/log.md" ] || return 0
   awk '
@@ -1257,15 +1104,12 @@ successors() {
   }' "$bundle/log.md"
 }
 
-# A reader's Disagreement that names its concept and still waits, as
-# G<TAB>path<TAB>day, newest first. knowledge-feedback.sh writes the name right
-# after the kind, `- **Disagreement** (on `<path>`) -`, where no reader's text
-# can stand, and this reads that name and nothing else of the entry. A path
-# counts only in the bundle's own spelling and only while it names a concept,
-# and never an index, a log or diataxis.md, so a line filed by hand meets the
-# same test.
-# G is a letter of its own: an X line is a concept's exclusion, which no
-# label reads.
+# Each Disagreement of a reader that names a concept and still waits, as
+# G<TAB>path<TAB>day, newest first. knowledge-feedback.sh writes the name
+# right after the kind, `- **Disagreement** (on `<path>`) -`, where no text
+# of a reader can stand, and `disputed` reads nothing else of the entry. A
+# path counts only in the path spelling of the bundle, only while it names a
+# concept, and never for an index, a log or diataxis.md.
 disputed() {
   [ -f "$root/.lokf/feedback.md" ] || return 0
   awk -v dir="$bundle" '
@@ -1298,11 +1142,9 @@ labels() {  # [<path>...]
   END { for (i = 1; i <= nw; i++) if (!(w[i] in seen)) print "- " w[i] " - no such concept in this bundle" }'
 }
 
-# The retired concepts whose successor no person has confirmed, as one
-# section: the successor is the one `successors` names, when the bundle holds
-# it as a concept, and it carries no `verified` event by a human: actor. Each
-# line names the retired concept, its successor and the successor's label, in
-# the words `labels` prints, so that ktl-curator says what waits on whom.
+# The section of retired concepts whose successor no person has confirmed.
+# Each line names the retired concept, its successor and the label of the
+# successor, as `labels` prints it.
 unconfirmed_successors() {
   { successors; disputed; printf '%s\n' "$all"; } | awk -F'\t' -v today="$today" -v dir="$bundle" "$label_fn"'
   function held(p,  line, there) {
@@ -1329,7 +1171,9 @@ unconfirmed_successors() {
 }
 
 # The join every list below needs: each concept with its resources, their
-# times, and its open questions. `mode` picks what is printed.
+# times, and its open questions. `mode` picks what is printed. An open
+# question counts as answered when a person confirmed the concept on or
+# after its day, and the concept is no longer a draft.
 lists() {  # mode
   { printf '%s\n' "$all"; printf '%s\n' "$times"; } | awk -F'\t' -v mode="$1" -v today="$today" -v git="$tracked" '
   function day(t) { return substr(t, 1, 10) }
@@ -1375,8 +1219,6 @@ lists() {  # mode
       else print "Sources: not compared here, since git holds no full history of this bundle (no git, a shallow clone, or a gitignored .lokf/); re-verify each concept against its source"
       for (i = 1; i <= nc; i++) { p = order[i]; if (("a", p) in moved) { n2++; body2 = body2 "- " p ": " moved["a", p] "\n" } }
       if (git == 1) section("Sources that moved, where your own question has waited for a person since", n2, body2)
-      # A source git holds no history of, an ignored file or one inside a
-      # submodule, was never compared, and says so.
       for (i = 1; i <= nc; i++) { p = order[i]; if (("u", p) in moved) { n3++; body3 = body3 "- " p ": " moved["u", p] "\n" } }
       if (git == 1) section("Sources git holds no history of, so not compared (an ignored file, or one inside a submodule)", n3, body3)
       # The concepts `quiet` counts as carrying no stamp, so a run it starts
@@ -1409,19 +1251,23 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 }
 
 # ---- the curator's queue -----------------------------------------------------
-# What ktl-curator ranks its queue by, so that no model counts or sorts it.
-# A relation's target is resolved as the KTL Curator plugin resolves it:
+# A relation is one of the fourteen fields, `relations`, or a whole IRI in a
+# slot of a domain vocabulary. Its target is resolved as the KTL Curator
+# plugin resolves it:
 #   - an IRI under base_iri, by the path after it;
 #   - any other IRI, as written;
-#   - a relative path, from the bundle's root and then from the citing
-#     concept's folder.
+#   - a relative path, from the root of the bundle and then from the folder
+#     of the citing concept.
 # A concept's id is its `id`, or base_iri and its path without `.md`.
-# A relation is one of the fourteen fields, `relations`, or a whole IRI in a
-# domain vocabulary's own slot. Each concept that names another counts once for
-# it, and a concept never counts for itself. Retired concepts are left out of
-# every list here. `queue` prints Worth ten minutes today, in the order ktl-curator's
-# references/trust-fields.md gives; `lists` prints the rest; the `isolated`
-# forms print what stands apart, whole, as ten for the work list or as counts.
+# Each concept that names another counts once for it, never for itself, and
+# every list here leaves retired concepts out. `queue` prints Worth ten
+# minutes today, in the order that ktl-curator/references/trust-fields.md
+# gives, and `lists` prints the rest.
+#
+# The `isolated` forms ignore direction and relations to another bundle, and
+# leave out an Organization or a Person, which only `author` and `publisher`
+# reach, and the sources map. They print the whole list, ten of each for the
+# work list, moving on by ten each month, or the counts for the report.
 ranked() {  # queue | lists | isolated | isolated-worklist | isolated-count
   local base
   base="$(awk -v SQ="'" '{ sub(/\r$/, "") } NR == 1 { sub(/^\357\273\277/, "") } NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
@@ -1550,21 +1396,17 @@ ranked() {  # queue | lists | isolated | isolated-worklist | isolated-count
 }
 
 # ---- quiet -------------------------------------------------------------------
-# The notes a person left, not answered by a later confirmation, whose commit
-# comes after the one that recorded their concept's stamp: the ones the
-# librarian has not read since. Out comes one line for each: `new`, or a `D`
-# line when a closed pull request had the note before it. `moved` works them
-# out with the sources, from the same answers git gave.
+# The notes of a person that the librarian has not read since the stamp of
+# their concept, which `moved_fn` found. Each is `new`, or a `D` line when a
+# closed pull request had the note before it.
 note_scan() {
   [ ! -f "$tmp/notes" ] || cat "$tmp/notes"
 }
 
-# What else a closed pull request had before it, as `D` lines:
-#   - a concept it touched that still has no stamp and has not changed since;
-#   - a concept it added, which the work list names so that it is not added
-#     again;
-#   - the feedback entries it handled, by their line numbers and never their
-#     words.
+# The rest of what a closed pull request had before it, as `D` lines: each
+# touched concept with no stamp that has not changed since, and each concept
+# it added. The feedback entries it handled are named by their line numbers,
+# never their words.
 declined_rest() {
   local path base num day last us n line lines count prev dec pbase pday
   [ -s "$tmp/touched" ] || [ -s "$tmp/added" ] || [ -s "$tmp/handled" ] || return 0
@@ -1626,14 +1468,12 @@ quiet() {
 }
 
 # ---- changes -----------------------------------------------------------------
-# What the working tree, staged or not, does to the record against HEAD, for
-# a reviewer and for the librarian workflow's pull request. The job holding
-# the write token fills that pull request from a clean checkout, rather than
-# from anything the agent's job reported. A path is printed only when it is made
-# of the characters a concept path may hold. Each confirmed concept the change
-# touches is named with what the change does to its label: a check or a
-# question leaves it confirmed, and an edit the pen stamped turns it to
-# edited since.
+# What the working tree, staged or not, does to the record against HEAD. The
+# job of the librarian workflow that holds the write token fills its pull
+# request with this, from a clean checkout, never from what the agent
+# reported. A path is printed only when it is made of the characters a
+# concept path may hold. Each confirmed concept that the change touches is
+# named with what the change does to its label.
 # shellcheck disable=SC2016 # awk's own fields, not the shell's
 standing_fn='$1 == "C" { if ($9 == 0) print "none"; else if (edited()) print "edited"; else print "confirmed" }'
 changes() {
@@ -1645,9 +1485,8 @@ changes() {
   # Git names each changed path from the top of the work tree, which is above
   # $root when the sidecar sits in a subfolder of a larger repository.
   top="$(git -C "$root" rev-parse --show-toplevel 2>/dev/null)" || top="$root"
-  # The sidecar may sit in a subfolder. Git names each path, and resolves a
-  # HEAD:<path>, from the top of the work tree, so prepend that folder's prefix
-  # (empty when the sidecar is at the top) to reach the bundle and the ledgers.
+  # A HEAD:<path> resolves from the top too, so the prefix of that subfolder,
+  # empty at the top, goes before the paths of the bundle and the ledgers.
   pfx="$(git -C "$root" rev-parse --show-prefix 2>/dev/null || true)"
   while IFS= read -r line; do
     [ -n "$line" ] || continue
@@ -1683,9 +1522,9 @@ changes() {
 }
 
 # ---- retrieval ---------------------------------------------------------------
-# The ledger's questions as `paths<TAB>question`, one per distinct question.
-# A path counts while the bundle holds a concept there. A question left with
-# none is left out, and "$tmp/gone" holds how many were.
+# The questions of the ledger as `paths<TAB>question`, one per distinct
+# question. A path counts while the bundle holds a concept there, and
+# "$tmp/gone" holds the number of questions left with none.
 ledger_questions() {
   : > "$tmp/gone"
   [ -f "$root/.lokf/questions.md" ] || return 0
@@ -1774,9 +1613,8 @@ EOF
 # ---- coverage ----------------------------------------------------------------
 # Each path a concept lists, as `concept<TAB>path<TAB>kind`: every
 # `resource:` value, with a fragment cut off and a leading ./ or a trailing /
-# removed. The kind is N for the concept's own and each source's, which name
-# the path, and X for each exclusion's, which leaves it out. A URL, an
-# absolute path and `.`, the root itself, name no file here.
+# removed. The kind is N for a resource of the concept or a source, and X for
+# an exclusion. A URL, an absolute path and `.` name no file here.
 named_pairs() {
   printf '%s\n' "$all" | awk -F'\t' '$1 == "R" || $1 == "X" { p = $3; sub(/#.*/, "", p); sub(/^\.\//, "", p); sub(/\/+$/, "", p)
     if (p != "" && p != "." && p !~ /:\/\// && p !~ /^[A-Za-z][A-Za-z0-9+.-]+:/ && p !~ /^\//) print $2 "\t" p "\t" ($1 == "R" ? "N" : "X") }' | LC_ALL=C sort -u
@@ -1854,8 +1692,8 @@ coverage() {  # [--strict] [<dir>...] | --why <path>...
   # Out come an A line for every path counted, an F line for each one under
   # no named path, an E line for each one that only an exclusion accounts
   # for, and one S line of counts. Git lists an untracked repository inside
-  # as a folder, so its trailing / is removed. Git quotes a path that holds a
-  # control character. Such a path is counted apart, and never printed or
+  # as a folder, so its trailing / is removed. A path that git quotes, since
+  # it holds a control character, is counted apart and never printed or
   # compared.
   { git -C "$root" -c core.quotePath=false ls-files --deleted 2>/dev/null | awk '{ print "D\t" $0 }'
     git -C "$root" -c core.quotePath=false ls-files 2>/dev/null | awk '{ print "T\t" $0 }'
@@ -1963,10 +1801,9 @@ no_digest="Sample: not drawn here, since the pick needs sha256sum or shasum and 
 sha256() {  # standard input -> its SHA-256 as hex, then what the tool prints after it
   if command -v sha256sum >/dev/null 2>&1; then sha256sum; else shasum -a 256; fi
 }
-# The section itself (the header gives the rule). The seed reaches printf and
-# the digest as it was given, and never awk, which would read a backslash in
-# it as an escape. A list whose size is 0 is not drawn, and its concepts are
-# not hashed.
+# The seed reaches printf and the digest as it was given, and never awk,
+# which would read a backslash in it as an escape. A list whose size is 0 is
+# not drawn, and its concepts are not hashed.
 sample() {  # <seed> <size of the list for a second person> <size of the list of what automation passed>
   local seed="$1" kind path h
   printf '%s\n' "$all" | awk -F'\t' -v n1="$2" -v n2="$3" "$label_fn"'
@@ -1999,20 +1836,16 @@ sample() {  # <seed> <size of the list for a second person> <size of the list of
   }'
 }
 
-# ---- the two lines the curator once worked out by hand ------------------------
+# ---- signed commits and vocabulary fit ---------------------------------------
 # Not tied to a signed commit: each concept that is not retired and carries a
-# `verified` event by a human: actor whose commit carries no signature. The
-# commit is the one that first wrote the time of that event in the concept,
-# from the history `moved` read. An event not yet committed has no commit to
-# ask about, and is left out. One that git cannot find, as one a merge commit
-# wrote while resolving a conflict, counts, and its line says so: git holds
-# no signature behind it. A signature
-# here is a `gpgsig` header on the commit, which a checkout can always see. It
-# does not say whose key signed, or that the signature is valid; the gate
-# checks that against the forge. Out comes one path to a line, in the order of
-# the bundle, in $tmp/unsigned, with the note after a tab where git holds no
-# commit that added the confirmation, and the function fails when git holds
-# no full history of the bundle.
+# `verified` event by a human: actor whose commit has no `gpgsig` header. The
+# commit is the one that first wrote the time of that event, in the history
+# that `moved` read. An event not yet committed is left out, and one whose
+# commit git cannot find counts, with a note after a tab. Out comes one path
+# to a line in $tmp/unsigned, in the order of the bundle, and the function
+# fails when git holds no full history of the bundle. A signature does not
+# say whose key signed or that it is valid: the gate checks that against
+# the forge.
 unsigned_load() {
   : > "$tmp/unsigned"
   [ "$tracked" = 1 ] && [ -f "$tmp/hist" ] || return 1
@@ -2065,15 +1898,14 @@ unsigned_section() {  # after unsigned_load, whose exit status is in unsigned_ok
   awk -F'\t' '{ print "- " $1 ($2 != "" ? " (" $2 ")" : "") }' "$tmp/unsigned"
 }
 
-# Vocabulary fit: each concept that is not retired whose `type` is not one of
-# the core classes, nor a class of the domain vocabulary the justfile names,
-# or whose `status` is not draft, stable or deprecated. A type is compared
-# with its spaces removed. The domain vocabulary is the file the `schema`
-# line of .lokf/justfile names, relative to .lokf/, and every schema it
-# imports by a path, but LOKF itself. Its classes count when they descend
-# from Concept or from a core class, through `is_a`, in any of those files.
-# The files are read by awk, as LinkML writes them: a block of classes, each
-# with its `is_a` one level below it.
+# Vocabulary fit: each concept that is not retired whose `type`, with its
+# spaces removed, is not a core class nor a class of the domain vocabulary,
+# or whose `status` is not draft, stable or deprecated. The domain vocabulary
+# is the file that the `schema` line of .lokf/justfile names, relative to
+# .lokf/, and every schema it imports by a path, except LOKF. Its classes
+# count when their `is_a` chain, in any of those files, reaches Concept or a
+# core class. Awk reads the files as LinkML writes them: a block of classes,
+# each with its `is_a` one level below it.
 core_classes="Dataset Table Metric Service Playbook Tutorial Explanation Policy GlossaryTerm Reference Document Role Person Organization AttestedComputation"
 domain_classes() {
   local schema="" f dir queue seen=" " line
@@ -2109,7 +1941,6 @@ domain_classes() {
       ind == pin && /^ *is_a:/ { v = $0; sub(/^ *is_a:[ \t]*/, "", v); sub(/[ \t]+#.*$/, "", v); gsub(/["\047]/, "", v); print "C\t" cls "\t" v }
     ' "$f")
   done
-  # A class fits when its chain of is_a reaches Concept or a core class.
   awk -F'\t' -v core="$core_classes" '
     function norm(s) { gsub(/ /, "", s); return s }
     function fits(c,  d, guard) {

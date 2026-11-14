@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T14:46:38Z"
+  at: "2026-11-14T10:18:02Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -15,7 +15,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/linkml
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-13T14:41:35Z"
+    at: "2026-11-14T12:32:59Z"
 sources:
   - resource: https://pypi.org/project/lokf/
   - resource: https://github.com/nicholsn/lokf/blob/eab5fe35b99e154bec9aabc03656446b891311f8/src/lokf/cli.py
@@ -39,7 +39,7 @@ The toolkit is the implementation, not the specification. `lokf validate` checks
 
 `lokf validate --check-refs` finds typed-relation targets in the bundle's own namespace with no matching concept, and leaves targets outside its `base_iri` alone. This repository's own `just lokf-check-refs` recipe calls it, with `--check-excerpts`, which finds each `sources[].excerpt` in its local file and counts an excerpt on a URL without fetching it. It takes the relation slots from the schema, so a domain vocabulary's own slots are covered without the recipe restating a predicate list.
 
-Scaffolded bundles depend on `lokf[build]>=0.9.0`, a floor and not a pin. Since 0.56.1 they also depend on `rust-just==1.47.0`, so that `uv.lock` checks the recipe runner by hash and `uv run just` runs it. The `[build]` extra installs the full `linkml` package: the whole generator suite, not just the runtime. So a scaffolded sidecar already has the LinkML generators for a domain vocabulary, with no extra installation.
+Scaffolded bundles depend on `lokf[build]>=0.9.0`, a floor and not a pin. They also depend on `rust-just==1.47.0`, so that `uv.lock` checks the recipe runner by hash and `uv run just` runs it. The `[build]` extra installs the full `linkml` package: the whole generator suite, not just the runtime. So a scaffolded sidecar already has the LinkML generators for a domain vocabulary, with no extra installation.
 
 Where Python is unavailable, the skills fall back to a structural cross-check against the raw schema, which is not a validation run. They read it from the commit tagged `v0.9.0`, which matches the `lokf` floor: `raw.githubusercontent.com/nicholsn/lokf/eab5fe35b99e154bec9aabc03656446b891311f8/lokf.yaml`. Since 2026-10-05 the URL names that commit, never a tag or `main`, because a tag can be moved. The pin moves with the floor, so the fallback cross-checks against the schema the installed toolkit enforces. That file is byte-identical to the schema inside the `lokf` 0.9.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present.
 

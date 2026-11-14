@@ -1,0 +1,68 @@
+# This repository's own values for the knowledge website. hugo.toml beside
+# this file holds everything that is the same on every site. The ktl-website
+# skill wrote this file once and never replaces it.
+
+# The site's address: the owner's GitHub Pages domain and the repository's
+# name under it. A user site (the <owner>.github.io repository) or a custom
+# domain has no name after the domain: "https://docs.example.org/".
+baseURL = "https://noelmcloughlin.github.io/knowledge-trust-ladder/"
+
+# The site's title, in the header and on every social card.
+title = "Knowledge Trust Ladder"
+
+[params]
+# One sentence, for search engines and link previews.
+description = "Agent Skills that keep a repository's knowledge as a catalogued LOKF bundle, with the trust in every claim left visible."
+# The repository. Links to files that are not pages go here.
+repo = "https://github.com/noelmcloughlin/knowledge-trust-ladder"
+
+# Everything below is optional. The site finds the README, the docs, the
+# figures, the changelog, a LinkML schema and a workspace by itself.
+
+# The default branch, when it is not main, and the tag a release carries,
+# when it is not v<version>.
+# branch = "master"
+# releaseTag = "{version}"
+
+# A logo of the repository's own, as files under .assets/. Left out, the
+# site shows the Knowledge Trust Ladder logo.
+# logo = ".assets/logo.svg"
+# logoDark = ".assets/logo-dark.svg"
+
+# More folders under docs/ that are not pages.
+# docsExclude = ["templates-linkml", "elements", "drafts"]
+
+# The docs pages in groups of your choosing, each page by its path under
+# docs/ without .md. Left out, the pages at the top of docs/ are one group
+# and each folder is a group of its own. With groups, the build stops when
+# one names a missing page or a page is in no group.
+[[params.docsGroups]]
+label = "Start here"
+pages = ["first-bundle", "install"]
+[[params.docsGroups]]
+label = "The cast"
+pages = ["cast/sidecar", "cast/librarian", "cast/registrar", "cast/curator", "cast/docent", "cast/prose", "cast/website"]
+[[params.docsGroups]]
+label = "Guides"
+pages = ["obsidian", "m365", "ingest"]
+[[params.docsGroups]]
+label = "Where it fits"
+pages = ["uses", "young-readers", "skills-repositories", "three-lines"]
+[[params.docsGroups]]
+label = "Architecture"
+pages = ["architecture", "how-it-works", "context-layer", "federation"]
+[[params.docsGroups]]
+label = "Reference"
+pages = ["ingest-reference", "context-layer-technology"]
+[[params.docsGroups]]
+label = "Maintaining"
+pages = ["releasing", "signing-commits", "threat-model", "repository-layout"]
+[[params.docsGroups]]
+label = "Captured sessions"
+pages = ["examples/first-bundle", "examples/docent", "examples/curator", "examples/docent-after-curation", "examples/prose"]
+
+# Old addresses, each sent on to the page built from a repository file. One
+# ending in /* stands for every page of the schema.
+[params.redirects]
+"docs/for-the-curious" = "docs/how-it-works.md"
+"simple" = "docs/architecture.en-simple.md"

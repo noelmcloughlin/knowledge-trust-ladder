@@ -26,8 +26,8 @@ patch.yaml
 # .cache/mirror/, which is never committed.
 .cache/
 
-# The knowledge website's sync writes the domain vocabulary's pages here with
-# gen-doc when no other gen-doc recipe exists. They are built, not written.
+# The knowledge website before its move to Hugo wrote the domain vocabulary's
+# pages here with gen-doc. They are built, not written.
 docs/elements/
 
 # knowledge-apply.sh stages the concepts it is about to write here for lokf

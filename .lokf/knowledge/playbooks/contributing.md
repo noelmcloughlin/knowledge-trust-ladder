@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T12:30:15Z"
+  at: "2026-11-14T10:17:06Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/playbooks/repository-validation
@@ -26,7 +26,7 @@ verified:
 
 `CONTRIBUTING.md` is a checklist, not a design log. Each rule is a line or two linking to where its reasoning is written: a code comment, a workflow header, or a page under `docs/`. `scripts/validate-repository.sh` holds it to a word budget so it stays that way.
 
-The skills need no build step: they are Markdown, YAML, shell and Python, and only `website/` builds (`npm run build`). The repository packages and distributes the four skills and two helpers, `ktl-prose` and `ktl-website`, and all six are released together under one tag. Clone, then run `bash scripts/validate-repository.sh`. The sidecar scripts' behavioural tests are under `tests/`, and `conftest.py` there says how to run them. To try a change end-to-end before publishing, install from the local clone (`gh skill install ./knowledge-trust-ladder <skill> --from-local`, or `npx skills add ./knowledge-trust-ladder --skill <skill>`).
+The skills need no build step: they are Markdown, YAML, shell and Python, and only `website/` builds (`bash website/scripts/build.sh`). The repository packages and distributes the four skills and two helpers, `ktl-prose` and `ktl-website`, and all six are released together under one tag. Clone, then run `bash scripts/validate-repository.sh`. The sidecar scripts' behavioural tests are under `tests/`, and `conftest.py` there says how to run them. To try a change end-to-end before publishing, install from the local clone (`gh skill install ./knowledge-trust-ladder <skill> --from-local`, or `npx skills add ./knowledge-trust-ladder --skill <skill>`).
 
 Before a pull request:
 

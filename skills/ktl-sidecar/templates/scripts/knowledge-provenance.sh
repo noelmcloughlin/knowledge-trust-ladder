@@ -1,62 +1,48 @@
 #!/usr/bin/env bash
 # The signature half of the registrar's provenance gate, with no forge.
-#
-# The GitHub `provenance` job asks GitHub whether the person named in a new
-# `by: human:<id>` line approved the pull request or signed its commit. Off
-# GitHub there is no such job, and on GitHub it is the only check. This
-# script does the signature half anywhere git runs.
+# It runs off GitHub, and as a second opinion to the GitHub `provenance` job.
 #
 # The repository carries one public key per curator id under
-# `.lokf/curators/`: `<id>.asc`, a GPG key as `gpg --armor --export` writes
-# it, or `<id>.pub`, an OpenSSH public key as `ssh-keygen` writes it, one key
-# per line. Every commit in a range that adds, changes or removes a
-# `human:<id>` event under the bundle must be signed by a key on file for
-# exactly that id. The event is a `verified` entry, or the `generated` record
-# the curator's Correct writes. A GPG key counts with every subkey it carries,
-# since most keys sign with a subkey. An SSH key is verified with
-# `ssh-keygen -Y verify` (OpenSSH 8.2+) against the commit's own payload.
+# `.lokf/curators/`: `<id>.asc` as `gpg --armor --export` writes it, or
+# `<id>.pub` as `ssh-keygen` writes it, one key per line. Every commit in a
+# range that adds, changes or removes a `human:<id>` event under the bundle,
+# in `verified` or `generated`, must be signed by a key on file for exactly
+# that id. A GPG key counts with every subkey it carries, since most keys
+# sign with a subkey. An SSH signature is checked with `ssh-keygen -Y verify`,
+# which needs OpenSSH 8.2 or later.
 #
-# A removal is a claim too. A person's record is never removed without that
-# person. A `verified` event every parent held and the commit no longer holds,
-# struck out or gone with its concept, needs the same signature as one that
-# was added. A person's `generated` record may be replaced by another
-# person's, which is what the curator's Correct writes, and that second
-# person signs it as an addition. A record replaced by anything else needs
-# the signature of the person it named.
+# A removal needs the same signature. That covers a `verified` event that
+# every parent held, struck out or gone with its concept. It covers a
+# `generated` record by a person too, unless a record by another person
+# replaces it, as Correct in ktl-curator does.
 #
-# `--unattended` is the other half, for a change nobody stands behind: the
-# scheduled librarian's. It compares the working tree, staged or not, with
-# HEAD, and needs no key and no forge. It reports every way such a change
-# touches a person's record:
+# `--unattended` checks a change that nobody stands behind, such as a run of
+# the scheduled librarian, against HEAD, with no key and no forge. It reports
+# every way the working tree, staged or not, touches the record of a person:
 #   - a `human:` event added, changed or removed in a layout it reads;
 #   - frontmatter it cannot read, which may hold one, added, changed or removed;
 #   - a symbolic link left under the bundle;
 #   - a person's note under `## Open questions` added or removed;
 #   - text a person wrote, changed.
-# knowledge-apply.sh refuses each of these before it writes. This is the same
-# refusal, checked on the result, by a job the agent never ran in.
+# knowledge-apply.sh refuses each of these before it writes, and this script
+# checks the result in a job the agent never ran in.
 #
 # Findings, one line each, exit 1:
 #   - the commit is unsigned, or its signature does not verify;
-#   - it is signed by a key other than the one on file for that id, or by a
-#     key that has expired or been revoked;
-#   - the id has no key on file (a stranger, or a curator not yet added), or
-#     is not a login any forge could list;
-#   - the range adds, changes or removes that id's own key file *and* records
-#     a confirmation by them: a key is added in its own reviewed change first,
-#     so nobody registers a key and vouches with it in one step;
-#   - a commit touches a bundle path git has to quote (`"`, `\` or a control
-#     character in the name), which this line reader cannot hold;
-#   - a commit changes frontmatter this reader cannot follow, or leaves a
-#     symbolic link under the bundle, either of which can hold an event it
-#     would not see.
-# With no `.lokf/curators/` directory it says so and exits 0: there is nothing
-# to verify against, and the forge's gate, if any, is the only check.
+#   - it is signed by another key, or by an expired or revoked one;
+#   - the id has no key on file, or is not a login any forge could list;
+#   - the range adds, changes or removes the key file of that id *and*
+#     records a confirmation by them, so nobody registers a key and vouches
+#     with it in one step;
+#   - a commit touches a bundle path that git quotes, changes frontmatter
+#     this reader cannot follow, or leaves a symbolic link under the bundle:
+#     each can hide an event.
+# With no `.lokf/curators/` directory it says so and exits 0.
 #
-# What a pass proves: the holder of that key made that commit. Not that
-# anyone read the source, and not who the person is beyond what the key file's
-# reviewed history says. Bash 3.2 and POSIX tools; needs git, and gpg or
-# ssh-keygen for the kind of key on file.
+# A pass proves only that the holder of that key made that commit: not that
+# anyone read the source, nor who the person is beyond what the reviewed
+# history of the key file says. It needs Bash 3.2 or later, POSIX tools, git,
+# and gpg or ssh-keygen for the kind of key on file.
 #
 # Usage: knowledge-provenance.sh <base-ref> [head-ref] [bundle-dir]
 #        knowledge-provenance.sh --unattended [bundle-dir]
@@ -64,20 +50,17 @@
 #        knowledge-provenance.sh origin/main            (a branch, locally)
 #        knowledge-provenance.sh "$BASE_SHA" "$HEAD_SHA"  (in CI)
 #        knowledge-provenance.sh --unattended            (what the librarian workflow runs)
-#   Run it from the sidecar's folder, the one that holds .lokf/, or run that
-#   sidecar's own copy from anywhere in the repository. A sidecar in a
-#   subfolder is read with that folder's prefix on every path.
+#   Run it from the sidecar folder, the one that holds .lokf/, or run the
+#   copy in its .lokf/scripts/ from anywhere in the repository. A bundle-dir
+#   is read from the sidecar folder.
 [ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} <base-ref> [head-ref] | --unattended" >&2; exit 2; }
 set -u
-# A-Z, a-z and 0-9 in a case glob mean the ASCII letters and digits, not
-# whatever a locale collates between them, so the login check cannot be
-# widened by the host's locale. A no-op where the option is unknown (bash 3.2).
+# Read A-Z, a-z and 0-9 in a case glob as ASCII, so no locale can widen the
+# login check. Bash 3.2 lacks the option and skips it.
 shopt -s globasciiranges 2>/dev/null || :
-# Byte-oriented awk, sort and comm, so this gate reads raw bytes on any awk and
-# in any locale. The frontmatter reader strips a byte order mark by its bytes,
-# since a UTF-8 gawk would otherwise read those three bytes as one character
-# and the strip would miss. And `sort` feeds `comm` a byte order it agrees
-# with.
+# Make awk, sort and comm read bytes, in any locale. The frontmatter reader
+# strips a byte order mark by its three bytes, which a UTF-8 gawk would read
+# as one character, and `comm` needs the byte order that `sort` writes.
 export LC_ALL=C
 
 unattended=0
@@ -95,13 +78,11 @@ for tool in awk comm sort cut sed grep mktemp; do
 done
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not inside a git work tree" >&2; exit 2; }
 root="$(cd "$root" && pwd -P)" || exit 2
-# The sidecar may sit in a subfolder of the repository. Its folder is the
-# nearest one that holds .lokf/, from the working directory up to the top of
-# the work tree. Failing that, it is the folder this script sits in as
-# <folder>/.lokf/scripts/, so a workflow may run it from the top. Git names
-# every path from the top of the work tree, so each path below carries the
-# sidecar's folder as a prefix, empty when the sidecar is at the top. A
-# bundle-dir argument is read from the sidecar's folder.
+# The sidecar folder is the nearest one that holds .lokf/, from the working
+# directory up to the top of the work tree. Failing that, it is the folder
+# that holds this script as .lokf/scripts/, so a workflow may run it from the
+# top. Git names each path from the top, so each path below carries the
+# sidecar folder as a prefix.
 side=""
 d="$(pwd -P)"
 while :; do
@@ -204,50 +185,36 @@ sig_format() {  # commit -> pgp | ssh | none
 }
 
 # The human events of a concept, one per line, as
-# `<id or path>\t<by>\t<at>\t<revision>\t<verified|generated>`. They are its
-# `verified` list and its `generated` record, since the curator's Correct
-# writes `generated.by: human:<id>`. It reads a block list in
-# any key order, a flow-style item, a flow sequence and a bare mapping, and
-# refuses whatever else it meets, as the actor (unreadable). Only the
-# frontmatter is read, so an example event in a body code fence is not a
-# claim. Events are keyed by the concept's `id`, so a renamed concept keeps
-# its events and a confirmation copied into another concept does not.
-#
-# An event present in a commit's tree and absent from every parent's is new or
-# changed, and its actor must stand behind it. A re-dated `at` or a moved
-# `revision` is as much a claim as a new line. Every parent is compared, so a
-# merge that brings in another curator's confirmation claims nothing, and one
-# that adds an event neither side held is read like any other commit.
+# `<id or path>\t<by>\t<at>\t<revision>\t<verified|generated>`. It reads the
+# frontmatter only, so an example in a body code fence is no claim. It reads
+# a block list in any key order, a flow-style item, a flow sequence and a
+# bare mapping, and gives whatever else it meets the actor (unreadable). An
+# event is keyed by the `id` of its concept, so a renamed concept keeps its
+# events and a confirmation copied into another concept does not.
 human_events() {  # path -> events, reading the concept on stdin
   awk -v path="$1" '
   function val(s) { sub(/^[^:]*:[[:space:]]*/, "", s); gsub(/["'"'"']/, "", s); sub(/[[:space:]]+$/, "", s); return s }
-  # Nothing this reader cannot follow is taken for no event. The schema gives
-  # an event `by`, `at` and `revision` and no other key, so any other key is a
-  # spelling it cannot follow: a quoted `by`, a merge, an alias. Such an event,
-  # and one whose actor is outside the shape the schema allows, comes out as the actor
-  # (unreadable), which is no login, so each gate refuses it as it refuses any
-  # id it cannot check.
+  # The schema gives an event only `by`, `at` and `revision`, so another key
+  # (a quoted `by`, a merge, an alias) is a spelling this reader cannot
+  # follow. Such an event, and one with an actor the schema does not allow,
+  # gets the actor (unreadable), which is no login, so each gate refuses it.
   function kv(l,  k) { k = l; sub(/:.*/, "", k); sub(/^[[:space:]]+/, "", k)
     if (k == "by") by = val(l); else if (k == "at") at = val(l); else if (k == "revision") rev = val(l); else odd = 1 }
   function actor(a) { return a !~ /\\/ && (a ~ /^(human|process):[^[:space:]]+$/ || a ~ "^[^[:space:]/]+/[^[:space:]/]+$") }
-  # Two revisions of a file must differ here whenever they differ in what a
-  # parser could read, or an edit inside an unreadable block passes unseen.
-  # So a file holds one unreadable line, and that line carries everything up
-  # to the closing delimiter, with control bytes YAML forbids in place of
-  # its tabs and line ends.
+  # Any edit a parser could read must change the output, so an unreadable
+  # file gives one line that holds everything up to the closing delimiter,
+  # with control bytes YAML forbids in place of its tabs and line ends.
   function unread() { bad = 1 }
   function emit() { if (inev && (odd || !actor(by))) { bad = 1; by = "" }
     if (inev && by ~ /^human:/) { sub(/^human:/, "", by); out = out (cid ? cid : path) "\t" by "\t" at "\t" rev "\t" kind "\n" }
     inev = 0; odd = 0; by = ""; at = ""; rev = "" }
   function flow(s,  n, parts, i) { emit(); inev = 1; gsub(/[{}]/, "", s); n = split(s, parts, ",")
     for (i = 1; i <= n; i++) if (parts[i] !~ /^[[:space:]]*$/) kv(parts[i]); emit() }
-  # A flow verified/generated may span lines: valid YAML that a block-only
-  # reader skips, which would let a forged confirmation past the gate.
-  # Accumulate from the opener to its closing bracket, then parse: a sequence
-  # into its events, a mapping as one event.
-  # A bracket or a quote inside a quoted value would end the form early for
-  # this reader and not for a parser, and what follows the closing bracket
-  # is read by no rule. Either makes the block one this gate cannot read.
+  # A flow `verified` or `generated` may span lines, so collect it up to its
+  # closing bracket, or a forged confirmation would pass. The block is
+  # unreadable when a quoted value holds a bracket or a quote, which would
+  # end the form early here and not for a parser, or when text that no rule
+  # reads follows the closing bracket.
   function flushflow(  b, n, items, i, q, tail) { b = flowbuf
     if (b ~ /(^|[[:space:]])#/) unread()
     q = b; gsub(/"[^"]*"/, "", q); gsub(/'"'"'[^'"'"']*'"'"'/, "", q)
@@ -261,14 +228,12 @@ human_events() {  # path -> events, reading the concept on stdin
     inflow = 0; flowbuf = "" }
   BEGIN { fm = 0; inv = 0; inev = 0; inflow = 0; cid = ""; out = ""; odd = 0; bad = 0; plain = 0; dashes = 0; seen = 0 }
   { sub(/\r$/, ""); line = $0; gsub(/\t/, "\002", line); raw[NR] = line }
-  # A byte order mark or a CRLF on the opener would make a block-only reader see
-  # no "---", read no events, and wave a forged unsigned event past the gate,
-  # though every YAML parser strips both and sees it. Strip them (bytes, under
-  # LC_ALL=C) so the gate reads what the parsers read.
+  # Strip a byte order mark and the CR of a CRLF, as every YAML parser does,
+  # or this reader would see no "---" and pass an unsigned event.
   NR == 1 { sub(/^\357\273\277/, ""); if ($0 == "---") { fm = 1; next } else plain = 1 }
-  # The toolkit opens a block at the first `---` in the file, on any line, with
-  # anything before it. So a file that opens any other way may still hold
-  # events this reader never sees. log.md holds none.
+  # The toolkit opens a block at the first `---` on any line, so a file that
+  # opens any other way may hold events this reader never sees. log.md holds
+  # none.
   plain { dashes += gsub(/---/, "&"); next }
   # A parser ends a line at a bare carriage return, U+0085, U+2028 and U+2029,
   # and this reader does not, so an event can sit inside one line it reads.
@@ -302,35 +267,30 @@ events_in() {  # ref, paths on stdin -> the human events of those paths at that 
     git show "$1:$f" 2>/dev/null | human_events "$f"
   done | sort
 }
-# The paths a commit changes against any of its parents. Without -m, git
-# lists nothing for a merge commit. With core.quotePath on, a name
-# with a byte above 0x7f would come C-quoted and `.md$` would miss it, so it
-# is off. Git still quotes `"`, `\` and control characters, and the caller
-# refuses those.
+# The paths a commit changes against any of its parents, which git lists for
+# a merge only with -m. core.quotePath is off, or git would C-quote a name
+# with a byte above 0x7f and `.md$` would miss it. The caller refuses the
+# names git still quotes: `"`, `\` and control characters.
 changed_paths() {  # commit, pathspecs... -> paths, one per line
   # --root: a commit with no parent, as a history merged in from elsewhere
   # starts with, is compared with the empty tree, so what it adds is read.
   git -c core.quotePath=false diff-tree --root --no-commit-id --name-only -r -m "$@" 2>/dev/null | sort -u
 }
 
-# The events a commit removes: those every parent held that it no longer
-# holds. A `verified` event is never removed without its person. A person's
-# `generated` record may be replaced by another person's, the curator's
-# Correct, which that person signs as an addition. So it counts only when no
-# person's `generated` record stands in its place.
+# The events that every parent held and the commit no longer holds. A
+# `verified` event always counts, and a `generated` record only when the
+# concept no longer holds one by a person.
 removed_from() {  # events-before file, events-now file -> the removed events that need their person
   comm -23 "$1" "$2" | awk -F'\t' -v now="$2" '
     BEGIN { while ((getline line < now) > 0) { split(line, f, "\t"); if (f[5] == "generated") kept[f[1]] = 1 } }
     $5 == "verified" || !($1 in kept)'
 }
 
-# The toolkit reads a symbolic link as the file it points at, and git holds it as
-# the path it names. So a concept that is a link onto a file outside the bundle
-# carries events no reader here sees, and a later edit of that file changes it
-# unseen. The two names of the bundle may be links onto each other, as the
-# doorway and a host rearranged by hand have them, and nothing else may be one.
-# `.lokf` itself is always asked about: as a link it takes the whole bundle out
-# of the paths this script lists, so no change under it would name it.
+# The toolkit follows a symbolic link and git does not, so a link onto a file
+# outside the bundle holds events that no reader here sees, now or after an
+# edit of that file. Only the doorway and the bundle path may be links, each
+# onto the other. `.lokf` is always checked: as a link it takes the whole
+# bundle out of the paths this script lists.
 allowed_link() {  # path, the path it points at -> whether this is one of the bundle's two names
   case "$1:$2" in
     "$bundle:../knowledge_bundle"|"$doorway:$inner") return 0 ;;
@@ -385,11 +345,10 @@ if [ "$unattended" -eq 1 ]; then
       say "$f: a person wrote this text, and an unattended change rewrites it"
     fi
   done < <(printf '%s\n' "$listed" | grep -v '^"' || true)
-  # A rename shows above as a delete and an add, so a person-authored concept
-  # renamed and rewritten in one change slips the per-path check: the new path
-  # has no copy at HEAD. Pair the two by git's rename detection and compare the
-  # old HEAD body with the new one, so the body check follows the concept as
-  # the event check, keyed by id, already does.
+  # The loop above reads a rename as a delete and an add, with no copy of the
+  # new path at HEAD, so a concept a person wrote could be renamed and
+  # rewritten in one change. Pair the two paths by git rename detection, and
+  # compare the old body at HEAD with the new one.
   while IFS="$(printf '\t')" read -r status old new; do
     case "$status" in R*) ;; *) continue ;; esac
     case "$new" in *.md) ;; *) continue ;; esac
@@ -432,9 +391,9 @@ fi
 # removes: a confirmation by one of them in the same range fails before its
 # signature is checked.
 commits="$(git rev-list --reverse "$base..$head" 2>/dev/null)" || { echo "cannot resolve $base..$head" >&2; exit 2; }
-# The two ends are compared, not each commit with each parent: a merge of the
-# default branch, where a key was added in a reviewed change of its own,
-# differs from one parent and brings nothing the base does not hold.
+# Only the two ends of the range are compared, so a merge of the default
+# branch, which brings in a key added in a reviewed change of its own, adds
+# no key file that the base lacks.
 rekeyed=""
 for f in $(git -c core.quotePath=false diff --no-renames --name-only "$base" "$head" -- "$curators" 2>/dev/null); do
   f="${f##*/}"; rekeyed="$rekeyed ${f%.*}"
@@ -444,9 +403,8 @@ rekeyed_said=""
 checked=0
 for sha in $commits; do
   short="$(git rev-parse --short "$sha")"
-  # The actor of every event new or changed against every parent, in the
-  # concepts this commit touches. A path this script cannot read, like an id
-  # it cannot check, is a finding, never a skip.
+  # A path this script cannot read, like an id it cannot check, is a finding,
+  # never a skip.
   listed="$(changed_paths "$sha" -- "$bundle" "$doorway")"
   quoted="$(printf '%s\n' "$listed" | grep '^"' || true)"
   if [ -n "$quoted" ]; then
@@ -460,9 +418,11 @@ for sha in $commits; do
   fi
   files="$(printf '%s\n' "$listed" | grep '\.md$' || true)"
   [ -n "$files" ] || continue
-  # every.events: what every parent holds, so a merge that merely lacks what
-  # one side never had removes nothing. A root commit has no parent and
-  # removes nothing either.
+  # An event in this commit and in no parent is new or changed, and its actor
+  # must sign: a re-dated `at` or a moved `revision` counts too. So a merge
+  # that brings in a confirmation from one side claims nothing. every.events
+  # holds what every parent holds, so a merge that lacks what one side never
+  # had removes nothing, and a root commit removes nothing.
   : > "$home/every.events"; first=1
   for p in $(git rev-parse "$sha^@" 2>/dev/null); do
     printf '%s\n' "$files" | events_in "$p" | sort -u > "$home/one.events"

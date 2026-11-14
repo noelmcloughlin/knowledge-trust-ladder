@@ -8,7 +8,7 @@ This page is for anyone who wants a bundle that people can browse.
 | --- | --- |
 | **Played by** | the [`ktl-website`](../../skills/ktl-website/SKILL.md) skill, an agent |
 | **Runs** | once, after the [sidecar](sidecar.md), and again to repair or update the site |
-| **Writes** | `website/`, an Astro Starlight site, and a workflow that publishes it to GitHub Pages |
+| **Writes** | `website/`, a Hugo site, or `ktl-website/` where `website/` is another site's, and a workflow that publishes it to GitHub Pages |
 | **Never** | writes into the bundle, the README or the docs |
 
 ## Ask it
@@ -19,6 +19,7 @@ This page is for anyone who wants a bundle that people can browse.
 ## Where the rest is written
 
 - **What it needs installed**: [install.md](../install.md#what-each-skill-needs).
-- **Every option the site takes**: the skill's [customising page](../../skills/ktl-website/references/customising.md).
+- **What the site finds by itself**: the skill's [inputs page](../../skills/ktl-website/references/inputs.md).
+- **The few values the site takes**: the skill's [customising page](../../skills/ktl-website/references/customising.md).
 - **Another forge than GitHub**: the skill's [deploy page](../../skills/ktl-website/references/deploy.md#another-forge).
 - **Sites built this way**: [this repository's own](https://w3id.org/ktl/).

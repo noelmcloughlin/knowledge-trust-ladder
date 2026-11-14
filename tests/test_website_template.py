@@ -1,30 +1,28 @@
 """The ktl-website templates install a complete site, and the files a host owns are named alike everywhere.
 
 Step 1 of the skill copies templates/website/ into a host and fills four
-placeholders in two files. The copy must be complete, the bracket file name
-must survive, no placeholder may remain, and `node scripts/config.mjs` must
-settle the options against the host it sits in and refuse a placeholder. It
-finds a LinkML project's schema pages in a justfile of any name just reads,
-and its data only when asked. It trusts no folder name a shell would read as
-a command, and refuses gen-doc's subfolders, two metadata files and a
-database caught mid-write.
+placeholders in two files. The copy must be complete, no placeholder may
+remain, and the build must refuse a site.toml that still holds one. The site
+takes no setting for what it shows: hugo.toml mounts each input from where a
+repository keeps it, and a mount that finds nothing draws nothing, so the
+mounts are the list of what the site can find.
 
-A docs page's address is the one Starlight gives it, DOCS.exclude keeps a
-folder off the site, and REDIRECTS follows the schema's pages. The three
-files a repair never replaces are named in the skill's page, its preflight,
-the contract and the sidecar's knowledge-sync.sh, and the four must agree.
-The build itself is scripts/smoke-test-website.sh, which needs the network.
+The three files a repair never replaces are named in the skill's page, its
+preflight, the contract and the sidecar's knowledge-sync.sh, and the four
+must agree. The site's folder is website/, or ktl-website/ where website/ is
+another site's, and the workflows and the sync look in both. The link check
+is plain Python and is tested here. The build itself is
+scripts/smoke-test-website.sh, which needs the network.
 """
 
 from __future__ import annotations
 
-import json
 import re
 import shutil
+import sys
+import tomllib
 
-import pytest
-
-from conftest import REPO, TEMPLATES, WEBSITE, WEBSITE_TEMPLATES, have, read, run, write
+from conftest import REPO, TEMPLATES, WEBSITE, WEBSITE_TEMPLATES, bash, read, run, write
 
 SITE_TEMPLATES = WEBSITE_TEMPLATES / "website"
 PLACEHOLDERS = {
@@ -34,23 +32,28 @@ PLACEHOLDERS = {
     "PROJ_DESC": "The platform Acme runs.",
 }
 PLACEHOLDER = re.compile(r"<(?:REPO|PROJ)_[A-Z]+>")
+BINARY = {".woff2", ".png"}
+OWNED = {"site.toml", "README.md", "assets/css/custom.css"}
 
 
 def template_files():
     return [p for p in SITE_TEMPLATES.rglob("*") if p.is_file()]
 
 
-def lay_down(host):
-    """Step 1 as the skill gives it: copy, rename the gitignore, substitute as literal text."""
-    site = host / "website"
+def text_files():
+    return [p for p in template_files() if p.suffix not in BINARY]
+
+
+def lay_down(host, folder="website"):
+    """Step 1 as the skill gives it: copy, rename the gitignore, substitute as literal text in the two files."""
+    site = host / folder
     shutil.copytree(SITE_TEMPLATES, site)
     (site / "gitignore").rename(site / ".gitignore")
-    for path in site.rglob("*"):
-        if path.is_file():
-            text = path.read_text(encoding="utf-8")
-            for token, value in PLACEHOLDERS.items():
-                text = text.replace(f"<{token}>", value)
-            path.write_text(text, encoding="utf-8")
+    for name in ("site.toml", "README.md"):
+        text = (site / name).read_text(encoding="utf-8")
+        for token, value in PLACEHOLDERS.items():
+            text = text.replace(f"<{token}>", value)
+        (site / name).write_text(text, encoding="utf-8")
     return site
 
 
@@ -60,518 +63,238 @@ def test_every_template_file_lands_and_no_placeholder_remains(tmp_path):
     expected = {".gitignore" if f == "gitignore" else f for f in expected}
     landed = {p.relative_to(site).as_posix() for p in site.rglob("*") if p.is_file()}
     assert landed == expected
-    assert (site / "src" / "pages" / "og" / "[...route].ts").is_file()
-    leftovers = [p for p in site.rglob("*") if p.is_file() and PLACEHOLDER.search(p.read_text(encoding="utf-8"))]
+    leftovers = [p for p in site.rglob("*") if p.is_file() and p.suffix not in BINARY and PLACEHOLDER.search(p.read_text(encoding="utf-8"))]
     assert not leftovers, leftovers
 
 
 def test_only_the_two_host_owned_text_files_carry_placeholders():
-    carrying = sorted(
-        p.relative_to(SITE_TEMPLATES).as_posix() for p in template_files() if PLACEHOLDER.search(p.read_text(encoding="utf-8"))
-    )
-    assert carrying == ["README.md", "site.config.mjs"]
+    carrying = sorted(p.relative_to(SITE_TEMPLATES).as_posix() for p in text_files() if PLACEHOLDER.search(p.read_text(encoding="utf-8")))
+    assert carrying == ["README.md", "site.toml"]
+
+
+def test_the_template_holds_nothing_of_one_repository_or_of_a_build():
+    """The same files go into every host, so none names this repository, and none is what a build writes."""
+    for path in text_files():
+        text = path.read_text(encoding="utf-8")
+        assert "noelmcloughlin" not in text, path
+    names = {p.relative_to(SITE_TEMPLATES).parts[0] for p in template_files()}
+    assert not names & {"dist", "generated", "resources", ".venv", "public", "node_modules", "data"}, names
+    ignored = read(SITE_TEMPLATES / "gitignore")
+    for folder in ("dist/", "generated/", "resources/", ".venv/", "static/pagefind/"):
+        assert folder in ignored.splitlines(), folder
 
 
 def named_in(text, pattern):
     m = re.search(pattern, text, re.S)
     assert m, pattern
-    return set(re.findall(r"[\w./-]+\.(?:mjs|md|css)", m.group(1)))
+    return set(re.findall(r"[\w./-]+\.(?:toml|md|css)", m.group(1)))
 
 
 def test_the_host_owned_files_are_named_alike_everywhere():
-    expected = {"site.config.mjs", "README.md", "src/styles/custom.css"}
     contract = (REPO / "scripts" / "validate-repository.sh").read_text()
-    sync = (REPO / "skills" / "ktl-sidecar" / "templates" / "scripts" / "knowledge-sync.sh").read_text()
+    sync = (TEMPLATES / "scripts" / "knowledge-sync.sh").read_text()
     preflight = (WEBSITE / "scripts" / "website-preflight.sh").read_text()
     skill = (WEBSITE / "SKILL.md").read_text()
-    assert named_in(contract, r"host_owned=\(([^)]*)\)") == expected
-    assert named_in(sync, r"website_owned=\(([^)]*)\)") == expected
-    assert named_in(preflight, r'case "\$rel" in ([^)]*)\)') == expected
-    assert {f"website/{f}" for f in expected} <= set(re.findall(r"`(website/[\w./-]+)`", skill))
+    assert named_in(contract, r"host_owned=\(([^)]*)\)") == OWNED
+    assert named_in(sync, r"website_owned=\(([^)]*)\)") == OWNED
+    assert named_in(preflight, r'case "\$rel" in ([^)]*)\)') == OWNED
+    assert {f"website/{f}" for f in OWNED} <= set(re.findall(r"`(website/[\w./-]+)`", skill))
+    for name in OWNED:
+        assert (SITE_TEMPLATES / name).is_file(), f"a host-owned file still needs its template: {name}"
 
 
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_settles_the_options_against_the_host(tmp_path):
-    """A host with a bundle, a README and a changelog, and no docs folder or figures."""
-    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
-    write(tmp_path / "README.md", "# Acme\n\nThe platform.\n")
-    write(tmp_path / "CHANGELOG.md", "# Changelog\n\n## [1.0.0] - 2026-01-01\n\n- The platform.\n")
+def test_site_toml_is_valid_toml_once_filled_and_sets_only_what_a_site_must(tmp_path):
     site = lay_down(tmp_path)
-    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
-    assert result, f"config.mjs failed: {result.out}"
-    settled = json.loads(result.out)
-    assert settled["TITLE"] == "Acme Platform"
-    assert settled["REPO"] == "acme/acme-platform"
-    assert settled["BASE"] == "/acme-platform"
-    assert settled["CHANGELOG"] == "CHANGELOG.md"
-    assert settled["DOCS"] is None
-    assert settled["ASSETS"] is None
-    assert settled["LOGO"] == {
-        "light": "website/src/assets/knowledge-trust-ladder-logo.svg",
-        "dark": "website/src/assets/knowledge-trust-ladder-logo-dark.svg",
-        "favicon": "website/src/assets/knowledge-trust-ladder-logo.svg",
-    }
-    assert settled["HOME"]["source"] == "README.md"
-    assert [a["text"] for a in settled["HOME"]["actions"]] == ["Browse the bundle", "Bundle health", "Knowledge graph"]
+    settled = tomllib.loads(read(site / "site.toml"))
+    assert settled == {
+        "baseURL": "https://acme.github.io/acme-platform/",
+        "title": "Acme Platform",
+        "params": {"description": "The platform Acme runs.", "repo": "https://github.com/acme/acme-platform"},
+    }, "every other value is found in the repository or has a default in hugo.toml"
+    shared = tomllib.loads(read(site / "hugo.toml"))
+    assert not {"baseURL", "title"} & set(shared), "hugo.toml is the same on every site"
+    assert not {"description", "repo", "logo", "docsGroups", "redirects"} & set(shared["params"])
+    assert shared["publishDir"] == "dist", "the workflows upload <site>/dist"
 
 
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_the_home_page_offers_the_architecture_page_when_the_docs_have_one(tmp_path):
-    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
-    write(tmp_path / "docs" / "architecture.md", "# Architecture\n\nHow the platform is built.\n")
-    site = lay_down(tmp_path)
-    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
-    assert result, f"config.mjs failed: {result.out}"
-    actions = json.loads(result.out)["HOME"]["actions"]
-    assert [a["text"] for a in actions] == ["Browse the bundle", "Architecture", "Bundle health", "Knowledge graph"]
-    assert actions[1]["link"] == "/docs/architecture/"
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_takes_the_repository_s_own_ktl_logo(tmp_path):
-    """A knowledge-trust-ladder-logo.svg the repository already has wins over the site's copy."""
-    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
-    write(tmp_path / ".assets" / "knowledge-trust-ladder-logo.svg", '<svg xmlns="http://www.w3.org/2000/svg"/>\n')
-    site = lay_down(tmp_path)
-    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
-    assert result, f"config.mjs failed: {result.out}"
-    logo = json.loads(result.out)["LOGO"]
-    assert logo == {
-        "light": ".assets/knowledge-trust-ladder-logo.svg",
-        "dark": ".assets/knowledge-trust-ladder-logo.svg",
-        "favicon": ".assets/knowledge-trust-ladder-logo.svg",
-    }
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_takes_one_logo_path_as_the_light_version(tmp_path):
-    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
-    write(tmp_path / "brand" / "acme.png", "not really a png\n")
-    site = lay_down(tmp_path)
-    config = site / "site.config.mjs"
-    config.write_text(config.read_text(encoding="utf-8").replace('export const LOGO = "auto";', 'export const LOGO = "brand/acme.png";'), encoding="utf-8")
-    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
-    assert result, f"config.mjs failed: {result.out}"
-    assert json.loads(result.out)["LOGO"] == {"light": "brand/acme.png", "dark": "brand/acme.png", "favicon": None}
-
-
-def configure(site, stdout_only=False, **options):
-    """`node scripts/config.mjs` with some options of site.config.mjs replaced, as its result."""
-    config = site / "site.config.mjs"
-    text = config.read_text(encoding="utf-8")
-    for name, value in options.items():
-        text, n = re.subn(rf"^export const {name} = .*$", lambda _: f"export const {name} = {value};", text, flags=re.M)
-        assert n == 1, name
-    config.write_text(text, encoding="utf-8")
-    return run(["node", "scripts/config.mjs"], cwd=site, stdout_only=stdout_only)
-
-
-def settle(site, **options):
-    """`configure`, as the settled JSON."""
-    result = configure(site, stdout_only=True, **options)
-    assert result, f"config.mjs failed: {result.out}"
-    return json.loads(result.out)
-
-
-def bundle(root):
-    write(root / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_takes_the_schema_from_a_gen_doc_recipe_and_leaves_the_data_off(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / "justfile", "# The schema's pages.\n[group('docs')]\ngen-doc: gen-examples\n    gen-doc s.yaml\n\nbuild-browse:\n    python b.py\n")
-    settled = settle(lay_down(tmp_path))
-    assert settled["SCHEMA"] == {"dir": "docs/elements", "build": "just gen-doc"}
-    assert settled["BROWSE"] is None
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_the_home_page_offers_the_schema_s_pages_when_the_site_shows_them(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / "docs" / "architecture.md", "# Architecture\n\nHow the platform is built.\n")
-    write(tmp_path / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
-    actions = settle(lay_down(tmp_path))["HOME"]["actions"]
-    assert [a["text"] for a in actions] == ["Browse the bundle", "Architecture", "Schema", "Bundle health", "Knowledge graph"]
-    assert actions[2] == {"text": "Schema", "link": "/schema/", "variant": "secondary"}
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_finds_a_linkmo_project_and_its_data_when_asked(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / ".copier-answers.linkmo.yml", "_commit: v0.1.0\nlinkmo_dir: acme-linkmo\n")
-    write(tmp_path / "acme-linkmo" / "justfile", "gen-doc: gen-examples\n    gen-doc s.yaml\n\nbuild-browse:\n    python b.py\n")
-    write(tmp_path / ".linkml" / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
-    settled = settle(lay_down(tmp_path), BROWSE='"auto"')
-    assert settled["SCHEMA"] == {"dir": "acme-linkmo/docs/elements", "build": "just --justfile acme-linkmo/justfile gen-doc"}
-    assert settled["BROWSE"] == {"dir": "acme-linkmo/browse", "build": "just --justfile acme-linkmo/justfile build-browse"}
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_takes_the_linkml_sidecar_s_schema_and_no_assignment_for_a_recipe(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / "justfile", 'gen-doc := "docs"\n\nbuild:\n    echo {{gen-doc}}\n')
-    write(tmp_path / ".linkml" / "justfile", "gen-doc: _gen-yaml\n    uv run gen-doc -d docs/elements s.yaml\n")
-    settled = settle(lay_down(tmp_path))
-    assert settled["SCHEMA"] == {"dir": ".linkml/docs/elements", "build": "just --justfile .linkml/justfile gen-doc"}
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_falls_back_to_the_sidecar_s_domain_vocabulary_and_trusts_only_a_plain_path(tmp_path):
-    """A host whose only schema is the sidecar's composite shows it; a name a shell would read as more than a path shows none."""
-    bundle(tmp_path)
-    write(tmp_path / ".lokf" / "gh-workflows.yaml", "id: https://acme.example/schema\nname: acme\n")
-    write(tmp_path / ".lokf" / "justfile", 'schema := "gh-workflows.yaml"\n')
-    site = lay_down(tmp_path)
-    assert settle(site)["SCHEMA"] == {
-        "dir": ".lokf/docs/elements",
-        "build": "cd .lokf && uv run --frozen gen-doc gh-workflows.yaml --directory docs/elements --render-imports",
-    }
-    write(tmp_path / ".linkml" / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
-    assert settle(site)["SCHEMA"]["dir"] == ".linkml/docs/elements", "a gen-doc recipe comes before the sidecar's schema"
-    (tmp_path / ".linkml" / "justfile").unlink()
-    write(tmp_path / ".lokf" / "-d.yaml", "id: https://acme.example/schema\nname: acme\n")
-    for line in ('schema := "x.yaml; rm -rf ~"', 'schema := "../gh-workflows.yaml"', 'schema := ""', 'schema := "absent.yaml"', 'schema := "-d.yaml"'):
-        write(tmp_path / ".lokf" / "justfile", line + "\n")
-        assert settle(site)["SCHEMA"] is None, f"config took {line}"
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_trusts_no_linkmo_folder_a_shell_would_read_as_a_command(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / ".copier-answers.linkmo.yml", "linkmo_dir: 'x;touch pwned'\n")
-    settled = settle(lay_down(tmp_path), BROWSE='"auto"')
-    assert settled["SCHEMA"] is None
-    assert settled["BROWSE"] is None
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_the_docs_pages_leave_the_schema_folder_out(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / "docs" / "guide.md", "# The guide\n")
-    write(tmp_path / "docs" / "elements" / "index.md", "# acme\n")
-    write(tmp_path / "docs" / "elements" / "Action.md", "# Class: Action\n")
-    write(tmp_path / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
-    settled = settle(lay_down(tmp_path))
-    assert settled["docsPages"] == ["guide"]
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_docs_exclude_keeps_a_folder_off_and_refuses_a_path_that_names_nothing(tmp_path):
-    bundle(tmp_path)
-    for name in ("index", "guide", "templates-linkml/README", "notes/draft"):
-        write(tmp_path / "docs" / f"{name}.md", "# A page\n")
-    site = lay_down(tmp_path)
-    assert settle(site)["docsPages"] == ["guide", "index", "notes/draft", "templates-linkml/README"]
-    assert settle(site, DOCS='{ exclude: ["templates-linkml/", "notes/draft.md"] }')["docsPages"] == ["guide", "index"]
-    result = configure(site, DOCS='{ exclude: ["template-linkml"] }')
-    assert not result and "DOCS.exclude names template-linkml" in result.out, f"config.mjs took an exclude that names nothing: {result.out}"
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_a_docs_page_s_address_is_the_one_starlight_gives_it(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / "docs" / "index.md", "# Home\n")
-    write(tmp_path / "docs" / "Getting Started.md", "# Start\n")
-    site = lay_down(tmp_path)
-    names = ["index", "guide", "how-to/index", "templates-linkml/README", "Getting Started"]
-    result = evaluate(site, f"{json.dumps(names)}.map(config.docsRoute)")
-    assert result, f"docsRoute failed: {result.out}"
-    assert value(result) == ["/docs/", "/docs/guide/", "/docs/how-to/", "/docs/templates-linkml/readme/", "/docs/getting-started/"]
-    script = "import { route } from './scripts/routes.mjs'; console.log(JSON.stringify(['docs/index.md', 'docs/Getting Started.md'].map(route)));"
-    result = run(["node", "--input-type=module", "-e", script], cwd=site)
-    assert result and value(result) == ["/acme-platform/docs/", "/acme-platform/docs/getting-started/"], f"a link to a docs page missed it: {result.out}"
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_redirects_take_the_base_and_follow_the_schema_s_pages(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / "docs" / "elements" / "index.md", "# acme\n")
-    write(tmp_path / "docs" / "elements" / "Service.md", "# Class: Service\n")
-    write(tmp_path / "docs" / "elements" / "Status.md", "# Enum: Status\n")
-    write(tmp_path / "justfile", "gen-doc:\n    gen-doc s.yaml\n")
-    site = lay_down(tmp_path)
-    assert settle(site)["redirects"] == {}
-    old = '{ "/elements": "/schema/", "/elements/[...slug]": "/schema/[...slug]", "/about": "/docs/about/" }'
-    assert settle(site, REDIRECTS=old)["redirects"] == {
-        "/elements": "/acme-platform/schema/",
-        "/elements/Service": "/acme-platform/schema/Service/",
-        "/elements/Status": "/acme-platform/schema/Status/",
-        "/about": "/acme-platform/docs/about/",
-    }
-    result = configure(site, REDIRECTS='{ "/elements/[...slug]": "/schema/" }')
-    assert not result and "or neither does" in result.out, f"config.mjs took a slug with one end: {result.out}"
-    result = configure(site, REDIRECTS='{ "/a/[...slug]": "/b/[...slug]" }', SCHEMA="null")
-    assert not result and "shows no schema" in result.out, f"config.mjs took a slug with no schema: {result.out}"
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_takes_a_built_folder_and_refuses_a_missing_one_with_no_command(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / "data" / "acme.sqlite", "not really a database\n")
-    site = lay_down(tmp_path)
-    assert settle(site, BROWSE='"data"')["BROWSE"] == {"dir": "data", "build": None}
-    config = site / "site.config.mjs"
-    config.write_text(re.sub(r"^export const SCHEMA = .*$", 'export const SCHEMA = { dir: "schema" };', config.read_text(encoding="utf-8"), flags=re.M), encoding="utf-8")
-    result = run(["node", "scripts/config.mjs"], cwd=site)
-    assert not result and "no build command" in result.out, f"config.mjs accepted a missing folder: {result.out}"
-
-
-def evaluate(site, expression):
-    """An expression over scripts/config.mjs's exports, as `config.<name>`, run by node; its value is the last line, as JSON."""
-    script = f"import * as config from './scripts/config.mjs'; console.log(JSON.stringify({expression}));"
-    return run(["node", "--input-type=module", "-e", script], cwd=site)
-
-
-def value(result):
-    """The value `evaluate` printed, after whatever git said about a host that is not a repository."""
-    return json.loads(result.out.splitlines()[-1])
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_reads_a_justfile_by_any_name_just_reads_and_a_recipe_with_parameters(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / ".linkml" / ".justfile", 'gen-doc dir="docs/elements": _gen-yaml\n    uv run gen-doc -d {{dir}} s.yaml\n')
-    site = lay_down(tmp_path)
-    assert settle(site)["SCHEMA"] == {"dir": ".linkml/docs/elements", "build": "just --justfile .linkml/.justfile gen-doc"}
-    write(tmp_path / "Justfile", "gen-doc *ARGS:\n    gen-doc {{ARGS}} s.yaml\n")
-    assert settle(site)["SCHEMA"] == {"dir": "docs/elements", "build": "just gen-doc"}
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_the_schema_pages_come_from_one_flat_folder_and_gen_doc_s_subfolders_stop_the_build(tmp_path):
-    bundle(tmp_path)
-    write(tmp_path / "docs" / "elements" / "index.md", "# acme\n")
-    write(tmp_path / "docs" / "elements" / "Service.md", "---\nsearch:\n  boost: 10.0\n---\n\n# Class: Service \n")
-    write(tmp_path / "docs" / "elements" / "String.md", "---\nsearch:\n  boost: 1.0\n---# Type: String \n")
-    write(tmp_path / "docs" / "elements" / "acme.md", "# acme \n")
-    site = lay_down(tmp_path)
-    settle(site, SCHEMA='{ dir: "docs/elements", build: null }')
-    result = evaluate(site, "config.schemaPages().map((p) => [p.name, p.label, p.kind])")
-    assert result, f"schemaPages failed: {result.out}"
-    assert value(result) == [["acme", "acme", None], ["Service", "Service", "Class"], ["String", "String", "Type"]]
-    for name in ("Service.md", "String.md", "acme.md"):
-        (tmp_path / "docs" / "elements" / name).unlink()
-    write(tmp_path / "docs" / "elements" / "classes" / "Service.md", "# Class: Service\n")
-    result = evaluate(site, "config.schemaPages()")
-    assert not result and "--subfolder-type-separation" in result.out, f"schemaPages took gen-doc's subfolders: {result.out}"
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_the_data_is_its_databases_and_one_metadata_file_and_a_torn_copy_stops_the_build(tmp_path):
-    bundle(tmp_path)
-    data = tmp_path / "data"
-    for name in ("acme.sqlite", "audit.db", "notes.txt", "metadata.yaml"):
-        write(data / name, "stand-in\n")
-    site = lay_down(tmp_path)
-    settle(site, BROWSE='"data"')
-    result = evaluate(site, "config.browseFiles()")
-    assert result, f"browseFiles failed: {result.out}"
-    assert value(result) == {
-        "databases": [{"file": "acme.sqlite", "name": "acme"}, {"file": "audit.db", "name": "audit"}],
-        "metadata": "metadata.yaml",
-    }
-    write(data / "acme.sqlite-wal", b"")
-    assert evaluate(site, "config.browseFiles()"), "an empty journal stopped the build"
-    write(data / "acme.sqlite-wal", b"\x37\x7f\x06\x82")
-    result = evaluate(site, "config.browseFiles()")
-    assert not result and "could be torn" in result.out, f"browseFiles copied a database mid-write: {result.out}"
-    (data / "acme.sqlite-wal").unlink()
-    write(data / "metadata.json", "{}\n")
-    result = evaluate(site, "config.browseFiles()")
-    assert not result and "Datasette reads one" in result.out, f"browseFiles chose between two metadata files: {result.out}"
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_lowercases_an_owner_spelt_with_capitals(tmp_path):
-    """Astro lowercases the host in the addresses it writes, so check-links compares against the same spelling."""
-    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
-    site = lay_down(tmp_path)
-    config = site / "site.config.mjs"
-    config.write_text(config.read_text(encoding="utf-8").replace("https://acme.github.io", "https://AcmeCorp.github.io"), encoding="utf-8")
-    result = run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True)
-    assert result, f"config.mjs failed: {result.out}"
-    assert json.loads(result.out)["SITE"] == "https://acmecorp.github.io"
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_refuses_a_placeholder_left_behind(tmp_path):
+def test_the_build_refuses_a_placeholder_left_behind(tmp_path):
     write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
     site = tmp_path / "website"
     shutil.copytree(SITE_TEMPLATES, site)
-    result = run(["node", "scripts/config.mjs"], cwd=site)
-    assert not result and "placeholder" in result.out, f"config.mjs accepted a placeholder: {result.out}"
+    result = bash(site / "scripts" / "build.sh")
+    assert not result and "site.toml still holds a <PLACEHOLDER>" in result.out, f"build.sh took a placeholder: {result.out}"
+    assert not (site / "generated").exists(), "it stopped before it wrote anything"
 
 
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_config_offers_the_workspace_on_a_domain_host_alone(tmp_path):
-    """A host with the knowledge-federation workflow is a domain host, whose graph page offers the workspace the workflow serves."""
-    write(tmp_path / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
-    site = lay_down(tmp_path)
-    settled = json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)
-    assert settled["WORKSPACE"] is None, "a bundle that is no domain has no workspace"
-    write(tmp_path / ".github" / "workflows" / "knowledge-federation.yaml", "name: Knowledge federation\n")
-    settled = json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)
-    assert settled["WORKSPACE"] == "workspace"
-    base = settled["BASE"]
-    assert settled["workspace"] == {"folder": "workspace", "graph": f"{base}/workspace/graph.json", "index": f"{settled['SITE']}{base}/workspace/index.md"}, \
-        "the graph page fetches graph.json under the site's base, where the workflow serves it"
-    config = site / "site.config.mjs"
-    config.write_text(config.read_text(encoding="utf-8").replace('export const WORKSPACE = "auto";', "export const WORKSPACE = null;"), encoding="utf-8")
-    settled = json.loads(run(["node", "scripts/config.mjs"], cwd=site, stdout_only=True).out)
-    assert settled["WORKSPACE"] is None and settled["workspace"] is None
-    config.write_text(config.read_text(encoding="utf-8").replace("export const WORKSPACE = null;", 'export const WORKSPACE = "ws";'), encoding="utf-8")
-    result = run(["node", "scripts/config.mjs"], cwd=site)
-    assert not result and 'WORKSPACE must be "auto", true or null, since the federation workflow serves the workspace at workspace/' in result.out, result.out
+def test_the_site_finds_each_input_through_a_mount_and_takes_no_setting_for_it():
+    """A mount whose source is missing mounts nothing, so each of these appears on a site only where the repository has it."""
+    mounts = {m["source"]: m["target"] for m in tomllib.loads(read(SITE_TEMPLATES / "hugo.toml"))["module"]["mounts"]}
+    for source, target in {
+        "../README.md": "assets/readme/README.md",
+        "../docs": "static/docs",
+        "../.assets": "static/assets",
+        "../CHANGELOG.md": "assets/changelog/CHANGELOG.md",
+        "../.lokf/knowledge": "static/knowledge",
+        "generated/schema": "assets/gendoc",
+        "../.github/workflows/knowledge-federation.yaml": "assets/host/knowledge-federation.yaml",
+        "../.lokf/ingest.lock.yaml": "assets/ingest/ingest.lock.yaml",
+        "generated/browse": "static/browse",
+    }.items():
+        assert mounts.get(source) == target, source
+    assert 'resources.Get "readme/README.md"' in read(SITE_TEMPLATES / "content" / "_content.gotmpl"), "the README is read as data, as the docs are"
+    served = [m for m in tomllib.loads(read(SITE_TEMPLATES / "hugo.toml"))["module"]["mounts"] if m["target"].startswith("static/") and m["source"].startswith("../")]
+    for mount in served:
+        assert "! **.{html,htm,xhtml,xht,xml,xsl,xslt,shtml,mht,mhtml}" in mount.get("files", []), f"{mount['source']} could serve a page that runs on the site's origin"
+    assert 'resources.Match "docs/**.md"' in read(SITE_TEMPLATES / "content" / "docs" / "_content.gotmpl")
+    assert 'resources.Get "host/knowledge-federation.yaml"' in read(SITE_TEMPLATES / "layouts" / "graph.html")
+    prepare = read(SITE_TEMPLATES / "scripts" / "prepare.sh")
+    assert 'for model in "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do' in prepare, "the schema is looked for at the root first, then in the .linkml/ sidecar"
+
+
+def test_the_home_page_has_five_buttons_and_greys_the_one_it_cannot_find():
+    heroes = read(SITE_TEMPLATES / "layouts" / "_partials" / "heroes.html")
+    assert re.findall(r'\(dict "text" "([^"]+)"', heroes) == ["The schema", "The bundle", "Architecture", "Glossary", "Quick start"]
+    assert '"architecture" (slice "/docs/architecture")' in heroes and '"schema" (slice "/schema")' in heroes
+    assert '<span class="button button--missing" role="link" aria-disabled="true" title="{{ .missing }}">' in heroes, "a missing page is a greyed word, never a link"
+
+
+def test_a_retelling_is_found_by_its_file_name_and_has_no_line_in_the_navigation():
+    levels = read(SITE_TEMPLATES / "layouts" / "_partials" / "levels.html")
+    pattern = re.search(r"findRESubmatch `(\^\(\.\+\)[^`]+)` \$file", levels).group(1)
+    assert re.match(pattern, "docs/architecture.en-simple.md").group(1) == "docs/architecture"
+    assert re.match(pattern, "docs/cast/curator.fra-simple.md")
+    assert not re.match(pattern, "docs/simple.md") and not re.match(pattern, "docs/architecture.simple.md")
+    groups = read(SITE_TEMPLATES / "layouts" / "_partials" / "docs-groups.html")
+    assert "(not (index $retold $p.RelPermalink))" in groups, "a retelling is in no group of the navigation"
+
+
+def test_no_file_frontmatter_reaches_hugo():
+    """A docs page or a concept that sets url, draft or layout must change nothing, so each adapter passes frontmatter as data only."""
+    for section in ("docs", "knowledge"):
+        adapter = read(SITE_TEMPLATES / "content" / section / "_content.gotmpl")
+        assert "$.AddPage (merge $page (dict" in adapter
+        assert not re.search(r"AddPage \(merge \$page \$fm|merge \$fm ", adapter), section
+    assert 'target = "content/docs"' not in read(SITE_TEMPLATES / "hugo.toml"), "a mounted docs file would be read with its own frontmatter"
+
+
+def test_the_workflows_and_the_sync_look_in_either_folder():
+    website = read(WEBSITE_TEMPLATES / "github" / "knowledge-website.yaml")
+    assert 'if [ -f ktl-website/site.toml ]; then echo "dir=ktl-website" >> "$GITHUB_OUTPUT"; else echo "dir=website" >> "$GITHUB_OUTPUT"; fi' in website
+    assert "path: ${{ steps.site.outputs.dir }}/dist" in website
+    assert website.count('      - "ktl-website/**"') == 2, "a push and a pull request both start it"
+    assert website == read(REPO / ".github" / "workflows" / "knowledge-website.yaml")
+    assert "npm" not in website and "setup-node" not in website
+    federation = read(TEMPLATES / "github" / "knowledge-federation.yaml")
+    assert "hashFiles('website/site.toml', 'ktl-website/site.toml') != ''" in federation
+    assert "if [ -d ktl-website/dist ]; then dist=ktl-website/dist; elif [ -d website/dist ]; then dist=website/dist;" in federation
+    sync = read(TEMPLATES / "scripts" / "knowledge-sync.sh")
+    assert "for o in website ktl-website; do" in sync
+
+
+def test_both_workflows_that_build_the_site_install_the_just_the_sidecar_pins():
+    """A browseBuild that runs just fails where just is missing, so the federation workflow, a domain host's one site build, installs it as the website workflow does."""
+    pin = re.search(r'"rust-just==([0-9.]+)"', read(TEMPLATES / "pyproject.toml")).group(1)
+    for workflow in (WEBSITE_TEMPLATES / "github" / "knowledge-website.yaml", TEMPLATES / "github" / "knowledge-federation.yaml"):
+        text = read(workflow)
+        assert "grep -q '^browseBuild = \"just ' \"$" in text, workflow.name
+        assert 'ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"' in text, workflow.name
+        assert f"uv tool install rust-just=={pin}" in text, workflow.name
+        assert text.index("Install just, when the") < text.index("/scripts/build.sh"), f"{workflow.name} installs just after the build"
 
 
 def test_the_workspace_folder_is_the_one_the_federation_workflow_serves():
-    """The graph page fetches workspace/graph.json, so the workflow copies the snapshot to workspace/ under the site, and the build names that address."""
+    """The graph page fetches workspace/graph.json, so the workflow copies the snapshot to workspace/ under the site, and the page names that address."""
     workflow = read(TEMPLATES / "github" / "knowledge-federation.yaml")
     assert 'cp -R snapshot "$dist/workspace"' in workflow
     assert '/workspace"' in read(TEMPLATES / "scripts" / "knowledge-federate.py")
+    assert 'data-workspace="{{ "workspace/graph.json" | relURL }}"' in read(SITE_TEMPLATES / "layouts" / "graph.html")
 
 
-def test_the_workspace_view_links_a_node_only_to_an_http_iri():
-    """A member writes its concepts' ids, so the graph page links an id only when it is an http or https address, never javascript: or another scheme."""
-    component = read(SITE_TEMPLATES / "src" / "components" / "KnowledgeGraph.astro")
-    assert "if (workspace ? /^https?:\\/\\//i.test(String(d.id)) : !!d.concept_id) {" in component
-    assert "page.href = workspace ? d.id" in component
+def test_the_federation_reads_the_site_s_address_from_site_toml_in_either_folder(tmp_path):
+    script = f"import sys, pathlib; sys.path.insert(0, {str(TEMPLATES / 'scripts')!r}); import importlib.util\n" \
+             f"spec = importlib.util.spec_from_file_location('federate', {str(TEMPLATES / 'scripts' / 'knowledge-federate.py')!r})\n" \
+             "source = pathlib.Path(spec.origin).read_text()\n" \
+             "start, end = source.index('def public_url('), source.index('def host_schema(')\n" \
+             "scope = {'pathlib': pathlib, 're': __import__('re')}\n" \
+             "exec('from __future__ import annotations\\n' + source[start:end], scope)\n" \
+             "print(scope['public_url'](pathlib.Path(sys.argv[1]), None))\n"
+    for folder in ("website", "ktl-website"):
+        host = tmp_path / folder
+        lay_down(host, folder)
+        result = run([sys.executable, "-c", script, str(host)])
+        assert result and result.out.strip() == "https://acme.github.io/acme-platform/workspace", (folder, result.out)
+    assert run([sys.executable, "-c", script, str(tmp_path)]).out.strip() == "", "a host with no site has no address to give"
 
 
-RAW_HTML_CASES = {
-    # Passed as they are: what the repositories' own pages use.
-    '<picture><source media="(prefers-color-scheme: dark)" srcset="a-dark.svg"><img src="a.svg" alt="A" width="600"></picture>':
-        '<picture><source media="(prefers-color-scheme: dark)" srcset="a-dark.svg"><img src="a.svg" alt="A" width="600"></picture>',
-    '<p align="center"><a href="https://w3id.org/ktl/">KTL</a></p>': '<p align="center"><a href="https://w3id.org/ktl/">KTL</a></p>',
-    "<details>": "<details>",
-    "</details>": "</details>",
-    "<!-- a note -->": "<!-- a note -->",
-    # Kept, with what GitHub drops dropped.
-    '<img src="badge.svg" style="height:20px" onerror="alert(1)">': '<img src="badge.svg">',
-    '<a href="javascript:alert(1)">x</a>': "<a>x</a>",
-    '<a href="jav&#x09;ascript:alert(1)">x</a>': "<a>x</a>",
-    '<a href="java\tscript:alert(1)">x</a>': "<a>x</a>",
-    '<a href="\x01javascript:alert(1)">x</a>': "<a>x</a>",
-    '<img srcset="ok.png 1x, data:image/svg+xml,x 2x">': "<img>",
-    # Shown as text.
-    "<script>alert(1)</script>": None,
-    "<iframe src=https://example.test></iframe>": None,
-    '<img src=x onerror=alert(1)>': None,
-    "<svg onload=alert(1)>": None,
-    "<id>": None,
-    "<!-- open": None,
-}
+def check_links(site, address="https://acme.github.io/acme-platform/"):
+    return run([sys.executable, str(SITE_TEMPLATES / "scripts" / "check-links.py"), str(site), address])
 
 
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_raw_html_passes_only_as_github_renders_it(tmp_path):
-    """A tag GitHub allows keeps the attributes it allows, an unsafe address is dropped, and anything else is shown as text."""
-    cases = write(tmp_path / "cases.json", json.dumps(list(RAW_HTML_CASES)))
-    script = write(tmp_path / "check.mjs",
-                   f"import {{ readFileSync }} from 'node:fs';\n"
-                   f"import {{ cleanRawHtml }} from {json.dumps(str(SITE_TEMPLATES / 'scripts' / 'raw-html.mjs'))};\n"
-                   f"console.log(JSON.stringify(JSON.parse(readFileSync({json.dumps(str(cases))}, 'utf8')).map((f) => cleanRawHtml(f).html)));\n")
-    result = run(["node", script], stdout_only=True)
-    got = dict(zip(RAW_HTML_CASES, json.loads(result.out)))
-    for fragment, want in RAW_HTML_CASES.items():
-        assert got[fragment] == want, (fragment, got[fragment])
+def test_the_link_check_follows_links_and_headings_within_the_site_alone(tmp_path):
+    site = tmp_path / "dist"
+    write(site / "index.html", '<meta property="og:image" content="https://acme.github.io/acme-platform/og/index.png">'
+          '<a href="/acme-platform/docs/guide/#start">g</a> <a href="docs/guide.md">raw</a> <img src="/acme-platform/assets/a.svg">'
+          ' <a href="https://example.org/missing">out</a> <a href="https://acme.github.io/other-site/x">another site</a> <a href="/acme-platform/workspace/graph.json">later</a>')
+    write(site / "og" / "index.png", "png")
+    write(site / "docs" / "guide" / "index.html", '<h2 id="start">Start</h2> <a href="../../">home</a> <a href="#start">here</a>')
+    write(site / "docs" / "guide.md", "# The guide\n\nSee [home](https://acme.github.io/acme-platform/).\n")
+    write(site / "assets" / "a.svg", "<svg/>")
+    write(site / "llms.txt", "- [guide](https://acme.github.io/acme-platform/docs/guide.md)\n")
+    result = check_links(site)
+    assert result and "2 pages, 0 broken link(s)" in result.out, result.out
+    write(site / "docs" / "guide" / "index.html", '<h2 id="begin">Start</h2> <a href="../nowhere/">gone</a>')
+    write(site / "llms.txt", "- [guide](https://acme.github.io/acme-platform/docs/absent.md)\n")
+    write(site / "docs" / "guide.md", "# The guide\n\n[ref]: https://acme.github.io/acme-platform/docs/gone/\n")
+    (site / "og" / "index.png").unlink()
+    write(site / "about" / "index.html", '<a href="/docs/guide.md">from the root</a>')
+    result = check_links(site)
+    assert not result, "a broken link passed"
+    for line in ("index.html: /acme-platform/docs/guide/#start names no heading of that page",
+                 "index.html: https://acme.github.io/acme-platform/og/index.png names no file of the site",
+                 "docs/guide/index.html: ../nowhere/ names no file of the site",
+                 "about/index.html: /docs/guide.md is outside the site's path, /acme-platform/",
+                 "llms.txt: https://acme.github.io/acme-platform/docs/absent.md names no file of the site",
+                 "docs/guide.md: https://acme.github.io/acme-platform/docs/gone/ names no file of the site"):
+        assert line in result.out, (line, result.out)
+    assert "6 broken link(s)" in result.out, result.out
 
 
-def test_the_markdown_plugin_checks_raw_html_on_every_page():
-    plugin = read(SITE_TEMPLATES / "scripts" / "markdown-ktl.mjs")
-    assert 'if (!source) return { name: "ktl-raw-html", html:' in plugin, "a page the sync did not write still gets the raw HTML check"
-    assert "cleanHtmlNode(node, ctx, source, rewriteHtml(source, node.value))" in plugin
-    assert "cleanHtmlNode" in read(SITE_TEMPLATES / "scripts" / "sync.mjs"), "the feed's HTML gets the same check"
+def clean_html(site, mark="0123abcd"):
+    return run([sys.executable, str(SITE_TEMPLATES / "scripts" / "clean-html.py"), str(site), mark])
 
 
-PLAIN_CASES = {
-    "states `<>` as a `none_of`": "states <> as a none_of",
-    "a < b and c > d": "a < b and c > d",
-    "**bold** <em>x</em> <!-- note --> [link](u)": "bold x link",
-    "<<b>script>alert(1)<</b>/script>": "alert(1)",
-    "<scr<i>ipt>x": "x",
-    "<img src=x onerror=alert(1)": "<img src=x onerror=alert(1)",
-}
+def test_the_raw_html_cleaner_keeps_what_github_allows_and_shows_the_rest_as_text(tmp_path):
+    """Between the build's two marks, raw HTML is cleaned as GitHub cleans a README; outside them the page is left alone."""
+    site = tmp_path / "dist"
+    region = ('<h2 id="a">A<a class="anchor" href="#a" data-pagefind-ignore>#</a></h2>'
+              '<meta http-equiv="refresh" content="0;url=https://example.com/"><style>p{display:none}</style><!-- a note -->'
+              '<p onclick="alert(1)" style="color:red" align="center">Hi <a href="javascript:alert(1)">there</a>'
+              ' <img src="/acme-platform/assets/a.svg" onerror="alert(1)" alt="a"> <kbd>Q</kbd></p>'
+              '<table><tr><th style="text-align:left">T</th></tr></table><details open><summary>More</summary><div>'
+              '<input type="checkbox" checked disabled> <input type="text" value="x">')
+    write(site / "index.html", f'<html><head><script src="/acme-platform/js/site.js"></script></head><body><!--# raw 0123abcd -->{region}<!--# /raw 0123abcd --></body></html>')
+    result = clean_html(site)
+    assert result and "1 region(s) of raw HTML cleaned" in result.out, result.out
+    page = (site / "index.html").read_text(encoding="utf-8")
+    assert '<script src="/acme-platform/js/site.js"></script>' in page, "the page around the marks is the site's own, and is left alone"
+    assert "0123abcd" not in page, "the marks go"
+    for kept in ('<h2 id="a">A<a class="anchor" href="#a" data-pagefind-ignore="">#</a></h2>', '<p align="center">Hi <a>there</a>',
+                 '<img src="/acme-platform/assets/a.svg" alt="a">', "<kbd>Q</kbd>", '<th style="text-align:left">T</th>',
+                 '<details open=""><summary>More</summary><div><input type="checkbox" checked="" disabled="">',
+                 '&lt;meta http-equiv="refresh"',
+                 "&lt;style&gt;p{display:none}&lt;/style&gt;", "&lt;input type=\"text\" value=\"x\"&gt;", "</div></details></body>"):
+        assert kept in page, (kept, page)
+    for gone in ("onclick", "onerror", "javascript:", "color:red", "a note"):
+        assert gone not in page, (gone, page)
+    for shown in ('<meta http-equiv="refresh"', "<style>", '<input type="text"'):
+        assert f"index.html: {shown}" in result.out, (shown, result.out)
 
 
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_plain_text_keeps_no_tag_after_one_pass(tmp_path):
-    """plain() removes tags until none is left, so a tag split by another comes out too, and keeps a bracket that opens no tag."""
-    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
-    start, end = source.index("function plain("), source.index("/** The first sentence")
-    cases = write(tmp_path / "cases.json", json.dumps(list(PLAIN_CASES)))
-    script = write(tmp_path / "check.mjs",
-                   "import { readFileSync } from 'node:fs';\n" + source[start:end] +
-                   f"\nconsole.log(JSON.stringify(JSON.parse(readFileSync({json.dumps(str(cases))}, 'utf8')).map(plain)));\n")
-    got = dict(zip(PLAIN_CASES, json.loads(run(["node", script], stdout_only=True).out)))
-    for text, want in PLAIN_CASES.items():
-        assert got[text] == want, (text, got[text])
-
-
-def sliced(source, start, end):
-    """The part of a script from one marker up to the next, to run on its own."""
-    return source[source.index(start) : source.index(end)]
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_a_concept_page_s_address_is_its_id_whatever_its_name_holds(tmp_path):
-    """Astro made a page's address from its file name, in lower case and without dots, and skipped a name starting with "_". The slug carries the id, and the file name only has to be one Astro reads."""
-    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
-    assert "slug: `knowledge/${c.id}`," in source and "slug: `knowledge/${group}`," in source
-    assert 'resolve(CONTENT, "knowledge", contentName(c.id))' in source and 'resolve(CONTENT, "knowledge", contentPath(group), "index.md")' in source
-    cases = {"services/_hidden": "services/%5Fhidden.md", "_drafts/a": "%5Fdrafts/a.md", "Releases/v1.2": "Releases/v1.2.md", "a/b_c": "a/b_c.md"}
-    script = write(tmp_path / "check.mjs", sliced(source, "const contentPath", "function writeConceptPages")
-                   + f"\nconsole.log(JSON.stringify({json.dumps(list(cases))}.map(contentName)));\n")
-    got = dict(zip(cases, json.loads(run(["node", script], stdout_only=True).out)))
-    assert got == cases, got
-    card = read(SITE_TEMPLATES / "src" / "pages" / "og" / "[...route].ts")
-    assert "getSlug: (path) => `${path}.png`," in card, "a concept with a dot in its id loses its social card"
-
-
-def test_a_check_written_as_one_mapping_is_read_from_the_concept_s_json_ld():
-    """OKF lets `verified` be one mapping, and the card said "Checks: none recorded" for it."""
-    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
-    assert "const verified = Array.isArray(doc?.verified) ? doc.verified : [].concat(c.data.verified ?? []);" in source
-    assert 'verified: verified.filter((e) => e && typeof e === "object").map(event),' in source
-
-
-@pytest.mark.skipif(not have("node"), reason="node is not installed")
-def test_a_mirrored_source_shows_its_origin_version_and_day_from_the_committed_lock(tmp_path):
-    source = read(SITE_TEMPLATES / "scripts" / "sync.mjs")
-    lock = {
-        "ingest_lock_version": "1",
-        "entries": {
-            "vendor": {"items": {
-                "api": {"path": ".lokf/mirror/vendor/api.md", "origin": "https://vendor.example/api", "version": 4, "retrieved_at": "2026-03-04T05:06:07Z", "status": "ok"},
-                "cmd": {"path": ".lokf/mirror/vendor/cmd.md", "origin": "tools/list.sh", "retrieved_at": "2026-03-05T00:00:00Z", "status": "ok"},
-                "odd": {"path": "README.md", "origin": "https://elsewhere.example/"},
-            }},
-            "secret": {"status": "ok"},
-        },
-    }
-    write(tmp_path / ".lokf" / "ingest.lock.yaml", json.dumps(lock))
-    write(tmp_path / ".lokf" / ".cache" / "ingest.lock.yaml", json.dumps({"entries": {"x": {"items": {"y": {"path": ".lokf/.cache/mirror/x/y.md", "origin": "https://secret.example/"}}}}}))
-    script = write(
-        tmp_path / "check.mjs",
-        "import { existsSync, readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n"
-        f"const REPO_ROOT = {json.dumps(str(tmp_path))};\nconst read = (p) => readFileSync(p, 'utf8');\nconst parseYaml = JSON.parse;\n"
-        + sliced(source, "function readMirrorRecords", "function buildConcepts")
-        + "\nconsole.log(JSON.stringify(Object.fromEntries(readMirrorRecords())));\n",
-    )
-    got = json.loads(run(["node", script], stdout_only=True).out)
-    assert got == {
-        ".lokf/mirror/vendor/api.md": {"origin": "https://vendor.example/api", "href": "https://vendor.example/api", "version": "4", "retrieved": "2026-03-04"},
-        ".lokf/mirror/vendor/cmd.md": {"origin": "tools/list.sh", "retrieved": "2026-03-05"},
-    }, got
-    card = read(SITE_TEMPLATES / "src" / "components" / "ConceptCard.astro")
-    assert "{s.mirror.href ? <a href={s.mirror.href}>{s.mirror.origin}</a> : <code>{s.mirror.origin}</code>}" in card
-
-
-def test_each_group_of_the_bundle_is_a_sidebar_topic_of_its_own():
-    """A sidebar of the whole bundle on every concept page made the site grow with the square of the bundle."""
-    config = read(SITE_TEMPLATES / "astro.config.mjs")
-    bundle_topic = sliced(config, 'label: "Knowledge bundle"', "// Each group of the bundle is a topic")
-    assert "autogenerate" not in bundle_topic, "the bundle's topic still lists every concept"
-    assert "...bundleGroups().map((group) => ({ label: groupLabel(group), link: `/knowledge/${group}/` }))," in bundle_topic
-    assert "items: [{ autogenerate: { directory: `knowledge/${group}` } }]," in sliced(config, "// Each group of the bundle is a topic", "if (SCHEMA)")
+def test_the_raw_html_cleaner_stops_on_a_mark_with_no_end_and_on_a_build_with_no_mark(tmp_path):
+    site = tmp_path / "dist"
+    write(site / "index.html", "<body><!--# raw 0123abcd --><p>Hi <!-- never closed<!--# /raw 0123abcd --></body>".replace("<!--# /raw 0123abcd -->", ""))
+    result = clean_html(site)
+    assert not result and "index.html holds a mark with no end" in result.out, result.out
+    write(site / "index.html", "<body><p>No mark.</p></body>")
+    result = clean_html(site)
+    assert not result and "no page holds the build's mark" in result.out, result.out

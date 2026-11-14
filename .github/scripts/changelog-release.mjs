@@ -1,39 +1,37 @@
 #!/usr/bin/env node
-// Reads and rewrites this repository's own CHANGELOG.md "## [Unreleased]"
-// section for the semantic-release pipeline in
-// .github/workflows/semantic-release.yml. Plain Node, no dependencies:
-// reviewable in one read, matching this project's preference for a fixed,
-// in-repo script over an inline command string (see knowledge-librarian.sh).
+// Reads and rewrites the "## [Unreleased]" section of this repository's
+// CHANGELOG.md for the semantic-release pipeline in
+// .github/workflows/semantic-release.yml. Plain Node with no dependencies
+// keeps it reviewable in one read, and the project prefers a fixed script to
+// an inline command string (see knowledge-librarian.sh).
 //
 // Usage:
 //   node changelog-release.mjs check [version]
-//       Exits 1 if "## [Unreleased]" is empty. Used as semantic-release's
-//       verifyReleaseCmd, so a release with nothing written up never goes out.
-//       With a version arg, an empty section passes when that version is
-//       already promoted and waits for publish.yml: a push with nothing
-//       to release, such as a docs merge after a feat, still finds the feat
-//       since the last tag, and its notes are already written.
+//       Exits 1 if "## [Unreleased]" is empty. semantic-release runs it as
+//       verifyReleaseCmd, so nothing is released without notes. With a
+//       version, an empty section passes when that version is already
+//       promoted and waits for publish.yml: a push with nothing to release,
+//       such as a docs merge after a feat, still finds the feat since the
+//       last tag, and its notes are already written.
 //
 //   node changelog-release.mjs notes [version]
-//       Prints the Unreleased section's body to stdout; it becomes the
-//       release notes when used as generateNotesCmd. With a version arg,
-//       also appends `next_version=<version>` to $GITHUB_OUTPUT if that
-//       env var is set (a side channel a caller can read even from a
-//       --dry-run invocation, where nothing else is written anywhere).
-//       It appends nothing when the section is empty and that version is
-//       already promoted, so the workflow commits no promotion.
+//       Prints the Unreleased section's body, the release notes when
+//       semantic-release runs this as generateNotesCmd. With a version, it
+//       also appends `next_version=<version>` to $GITHUB_OUTPUT if that is
+//       set, a side channel a caller can read even from a --dry-run. When the
+//       section is empty and that version is already promoted, it prints that
+//       version's notes instead and appends nothing, so the workflow commits
+//       no promotion.
 //
 //   node changelog-release.mjs promote <version> <date>
-//       Retitles "## [Unreleased]" to "## [<version>] - <date>" and
-//       inserts a fresh, empty "## [Unreleased]" above it. The top released
-//       section is still pending when no tag `v<its version>` exists,
-//       because publish.yml has not been run since the last promotion. Then
-//       the Unreleased entries are folded into it, subsection by subsection,
-//       and it takes the new version and date, so two qualifying pushes
-//       between publishes never leave two headings for one release. Used
-//       as semantic-release's prepareCmd (never called in --dry-run). Also
-//       appends `released=true` and `version=<version>` to $GITHUB_OUTPUT
-//       if set.
+//       Retitles "## [Unreleased]" to "## [<version>] - <date>" and puts a
+//       new, empty "## [Unreleased]" above it. When the top released section
+//       is still pending, with no tag v<its version>, it folds the Unreleased
+//       entries into that section instead, subsection by subsection, and
+//       gives it the new version and date. So two qualifying pushes between
+//       publishes never leave two headings for one release. semantic-release
+//       runs it as prepareCmd, never in --dry-run. It appends `released=true`
+//       and `version=<version>` to $GITHUB_OUTPUT if that is set.
 
 import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
@@ -55,8 +53,8 @@ function readUnreleased() {
 }
 
 // The released section directly under Unreleased, when no tag carries its
-// version. publish.yml is this repository's one tag creator, so "no tag" is
-// exactly "promoted, not yet published".
+// version. publish.yml alone creates tags, so no tag means promoted and not
+// yet published.
 function pendingSection(text, from) {
   if (from === text.length) return null;
   const lineEnd = text.indexOf("\n", from + 1);
@@ -104,7 +102,7 @@ const rank = (p) => (p.title === null ? -1 : ORDER.includes(p.title) ? ORDER.ind
 
 // An entry the pending section already holds is left out: a branch stacked
 // on another still carries the other's entries under Unreleased after the
-// first one's promotion, and folding them again listed each one twice.
+// first one's promotion, and folding them again would list each one twice.
 function mergeBodies(older, newer) {
   const merged = subsections(older);
   const held = new Set(merged.flatMap((m) => m.lines).filter((l) => l.startsWith("- ")));

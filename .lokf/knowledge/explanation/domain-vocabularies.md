@@ -20,13 +20,16 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: human:noelmcloughlin
-  at: "2026-11-12T20:37:20Z"
+  at: "2026-11-14T13:03:09Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-11-12T20:37:20Z"
-    revision: 12d91cac03649375c1a0a547cfb4d5987f20c558
+    revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
   - by: process:ktl-librarian
-    at: "2026-11-13T14:41:35Z"
+    at: "2026-11-14T12:32:59Z"
+  - by: human:noelmcloughlin
+    at: "2026-11-14T13:03:09Z"
+    revision: "a59f341512edc066c35ae85005e11a47ece3719a"
 stale_after: 2028-11-12
 ---
 
@@ -44,7 +47,7 @@ LOKF has a small vocabulary: a short list of classes, the typed relations and a 
 
 The recipe keeps every schema file in `.lokf/schema/`: a pinned copy of `lokf.yaml`, the domain vocabulary and each file it imports. The folder may hold several files, in subfolders too. One variable, `schema`, in the sidecar's justfile names the root: the file whose imports reach `lokf` and every other file, directly or in turn. The `lokf-validate`, `lokf-check-refs`, `lokf-convert` and `lokf-serve` recipes pass it as `--schema`, and the registrar, librarian and release workflows run those recipes, so nothing else in the sidecar changes.
 
-A domain schema, which a LinkML project owns, stays in that project. In this repository that is `.linkml/src/<slug>/schema/`, which the linkml-sidecar skill installs, or `src/<slug>/schema/` for a project made with copier at the root; the project may also sit in another repository. Its copy goes into `.lokf/schema/`, adapted with `lokf adapt` or taken from a release that is adapted already, and the variable names the copy, never the project's own file. Until it does, a `.lokf/` beside a schema project is a bundle about the repository.
+A domain schema, which a LinkML project owns, stays in that project. In this repository that is `.linkml/src/<slug>/schema/`, which the linkml-sidecar skill installs, or `src/<slug>/schema/` for a project made with copier at the root; the project may also sit in another repository. Its copy goes into `.lokf/schema/`: `lokf adapt` reads a published release of some schema, nominated by the maintainer, and creates the adapted copy. The variable names the copy, never the project's own file. Until it does, a `.lokf/` beside a schema project is a bundle about the repository.
 
 The two Obsidian plugins are told the new classes through their *Known LOKF types* setting. Neither plugin can read the schema itself, so the same list of classes goes into both.
 

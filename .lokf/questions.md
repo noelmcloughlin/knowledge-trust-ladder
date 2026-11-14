@@ -9,3 +9,4 @@ Written by knowledge-apply.sh each time ktl-librarian handles a reader's feedbac
 - 2026-11-13 Miss explanation/intended-uses.md: `Can schools use KTL?`
 - 2026-11-13 Miss playbooks/ktl-sidecar-skill.md: `What permissions does KNOWLEDGE_SYNC_TOKEN need?`
 - 2026-11-13 Miss playbooks/ktl-sidecar-skill.md: `What settings does KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT need?`
+- 2026-11-14 Miss glossary/obsidian.md: `What is Obsidian?`

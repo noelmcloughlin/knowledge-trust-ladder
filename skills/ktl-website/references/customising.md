@@ -1,46 +1,53 @@
-# Step 1: the options in site.config.mjs, and the files the repository owns
+# Step 1: the values in site.toml, and the files the repository owns
 
-`website/site.config.mjs` holds every value the site takes from the repository: its addresses, its title, and which of its files the site shows beside the knowledge bundle. `scripts/config.mjs` reads it, fills in each option left out, settles each `"auto"` against the repository and checks the required values. `node scripts/config.mjs` prints the result. Three files are the repository's own, and the skill's repair never replaces them: `site.config.mjs`, `README.md` and `src/styles/custom.css`. Every other file under `website/` is a copy of a template.
+The site finds what it shows, so `site.toml` is short: four values every site needs, and a few a repository may add. `hugo.toml` beside it holds what is the same on every site, and `scripts/build.sh` reads both, `site.toml` second, so a value there wins. Three files are the repository's own, and the skill's repair never replaces them: `site.toml`, `README.md` and `assets/css/custom.css`. Every other file in the site's folder is a copy of a template.
 
-## The options
+## The values
 
-| Option | Takes | Left out, or `"auto"` | `null` |
-| --- | --- | --- | --- |
-| `REPO` | `"owner/name"` on GitHub | required | |
-| `SITE`, `BASE` | the Pages domain, `https://<owner>.github.io`, and the path under it, `/<name>` | required | |
-| `TITLE`, `DESCRIPTION` | the site's title, and one sentence for search engines and link previews | required | |
-| `BRANCH` | the branch an "Edit page" link opens | `main` | |
-| `CUSTOM_DOMAIN` | a domain the sync writes to `public/CNAME`; `SITE` and `BASE` follow from it | no custom domain | the same |
-| `LOGO` | `{ light, dark, favicon }`, paths from the repository root, or one path as the light version alone; `dark` defaults to `light`, and `favicon` to `light` when that is an SVG | the Knowledge Trust Ladder (KTL) logo, also the favicon: a `knowledge-trust-ladder-logo.svg` the repository already has, or else the copy in `src/assets/` | the title as text, and the site's own ladder mark as favicon |
-| `ASSETS` | the folder of figures the README and the docs pages show, served under `/assets/` | `.assets/` when there is one | no figures folder; a link to a figure goes to the repository |
-| `DOCS` | `{ dir, groups, exclude }`: the docs folder, the sidebar groups its pages sit in (each page named by its path under the folder, without `.md`), and the paths under the folder that are not pages | `docs/` when there is one, every page in one Guides group by title, `index.md` first | no docs pages |
-| `REDIRECTS` | `{ "/old/": "/page/" }`: old addresses under `BASE`, each redirected to a page of the site; an entry whose key and value both end in `/[...slug]` stands for one redirect per schema page | none | |
-| `CHANGELOG` | a Keep a Changelog file, read as a page per release | `CHANGELOG.md` when it holds a released version | no Releases topic |
-| `RELEASE_TAG` | the tag a release carries, with `{version}` for its number; a release page links the repository, the docs and the bundle at that tag, and the release itself, when git has the tag | `v{version}` | no such links |
-| `PAGES` | `[{ slug, source, label, retells, level }]`: pages from files outside the docs folder, each at `/<slug>/`, listed after Home; `retells` names the file whose page this one retells, and `level` the words for its reading level, the label when left out | none | |
-| `SCHEMA` | `{ dir, build }`: the folder of the LinkML schema's pages that `gen-doc` writes, and the command that writes it, which the sync runs when the folder is missing; a folder alone needs no command | the first of the root, a linkmo project's folder and `.linkml/` whose `justfile` has a `gen-doc` recipe: its `docs/elements`, built with that recipe. Failing those, the domain vocabulary on `.lokf/justfile`'s `schema :=` line: `.lokf/docs/elements`, built with `gen-doc --render-imports` in the sidecar's environment | no Schema topic or button |
-| `BROWSE` | `{ dir, build }`: a folder of SQLite databases and their Datasette metadata, and the command that writes it | `null`, since the databases go on the public site; `"auto"` takes a linkmo project's `browse/` and its `build-browse` recipe | no data page |
-| `HOME` | `{ source, tagline, actions }`: the home page's source file, the tagline under its title, and its buttons | the README when it has a `#` title, else the bundle's own introduction; `DESCRIPTION` as the tagline; Browse the bundle, Architecture when the docs folder has `architecture.md`, Schema when the site shows the schema's pages, Bundle health and Knowledge graph as the buttons | |
-| `WORKSPACE` | whether the graph page offers to draw the workspace a domain host's federation workflow serves at `workspace/` under the site, every bundle the domain names: `"auto"`, `true` or `null` | on when the repository has `.github/workflows/knowledge-federation.yaml` | no workspace view |
+| Value | Takes | Left out |
+| --- | --- | --- |
+| `baseURL` | the site's address, ending in `/`: `https://<owner>.github.io/<name>/` | required |
+| `title` | the site's title, in the header and on every social card | required |
+| `params.description` | one sentence, for search engines and link previews | required |
+| `params.repo` | the repository's address on GitHub; a link to a file that is not a page goes there | required |
+| `params.branch` | the branch an "Edit this page" link opens | `main` |
+| `params.releaseTag` | the tag a release carries, with `{version}` for its number | `v{version}` |
+| `params.logo`, `params.logoDark` | a logo of the repository's own, each a file under `.assets/` | the Knowledge Trust Ladder logo |
+| `params.docsExclude` | folders under `docs/` that are not pages | `templates-linkml` and `elements`, which LinkML's `gen-doc` keeps there |
+| `params.docsGroups` | the docs pages in groups: a list of `label` and `pages`, each page by its path under `docs/` without `.md` | the pages at the top of `docs/` in one group, Guides, by title, and each folder a group named by its `index.md` or by the folder |
+| `params.redirects` | old addresses, each sent on to the page built from a repository file: `"about" = "docs/about.md"`. `"schema/*" = "schema/*"` stands for every page of the schema | none; a site with a schema has `"elements/*" = "schema/*"` with no setting |
+| `params.browse`, `params.browseBuild` | a folder of SQLite databases, from the repository's root, to serve under `browse/` with a page that opens each in Datasette Lite, and the command that writes the folder when it holds no database | no data: the databases go on the public site, so none is served until this is set |
+| `params.vendor.cytoscape.url`, `params.vendor.mermaid.url` | a mirror's address for a library the build fetches once and checks against the hash in `hugo.toml` | the public CDN |
 
-`HOME.tagline` is a string, or `{ boldLineOf: "<file>" }` for the first line of that file that is bold throughout. `HOME.actions` is a list of `{ text, link, icon, variant }` with site-relative links such as `/knowledge/`; the first is the primary button, and `variant: "secondary"` marks the rest.
+With `docsGroups`, the build stops when a group names a page that is not there or a page is in no group, so a new page cannot go missing from the navigation. A retelling is in no group: the page it retells offers it.
 
-With `DOCS.groups`, the sync stops with an error when a group names a page that is not there or a page has no group, so a new page cannot go missing from the sidebar. A page named after its group, such as `docs/guides.md` under a group labelled Guides, becomes that group's overview. The pages git sees count: a folder a generator writes and `.gitignore` names stays out, and so does the `SCHEMA` folder. A path `DOCS.exclude` names stays out, and a path there that names no file or folder stops the build.
+A redirect whose file has no page stops the build.
 
-`REDIRECTS` writes a page for each old address, which redirects the browser to its new page. The link check fails when that new page is missing. Astro cannot point a wildcard at Starlight's pages, so `/[...slug]` is expanded against the schema's pages at build time.
+## What has no value
 
-`SCHEMA` and `BROWSE` each name a folder the repository builds rather than commits. The sync runs the `build` command from the repository root when the folder is missing, which in CI is every time, and stops when the command fails or the folder is still not there. Locally it runs once, so run the command again, or remove the folder, to see a change to the schema or the data. A `build` that starts with `just` makes the workflow install `just`.
+These are found, never set. To change one, change the repository:
 
-## Two configurations
-
-A bare repository, with a bundle and a README, is the template as Step 1 fills it: the five required values, `LOGO`, `ASSETS`, `DOCS`, `CHANGELOG` and `SCHEMA` at `"auto"`, no `PAGES`, no `BROWSE`, and `HOME` at its defaults. Such a site has the KTL logo, a home page from the README, the bundle's pages, the health page, the graph and search. It gains a Guide topic, a Releases topic or a Schema topic once a `docs/` folder, a changelog or a `gen-doc` recipe is added.
-
-The skills repository's own `website/site.config.mjs` sets every option: a logo, four docs groups, a tagline taken from a docs page, four buttons and a page for younger readers. It is the fuller example to copy from.
+- **The home page** is the README. Its five buttons are the same on every site, and one is greyed until its page exists: add `docs/architecture.md`, a `glossary` group in the bundle or `docs/glossary.md`, or a docs page or heading named Quick start.
+- **A retelling** is a docs file named `<page>.<language>-simple.md` beside `<page>.md`. A sentence in it such as "This page is for readers aged 13 to 18." words its button.
+- **The schema** is `src/<name>/schema/<name>.yaml`, at the root first, then under `.linkml/`.
+- **The workspace** appears on the graph page of a repository that has `.github/workflows/knowledge-federation.yaml`.
 
 ## The look
 
-`src/styles/custom.css` is loaded last, so a rule there wins over the house style in `theme.css` and `catalogue.css`. The accent and the trust colours are custom properties at the top of `theme.css`. Copy the ones to change into `custom.css` rather than editing `theme.css`, which a repair replaces.
+`assets/css/custom.css` is loaded last, so a rule there wins over the house style in `assets/css/site.css`. The colours and the trust tones are custom properties at the top of `site.css`. Copy the ones to change into `custom.css` rather than editing `site.css`, which a repair replaces.
+
+## From the earlier Astro site
+
+A `website/` with `site.config.mjs` is the site this skill installed before it moved to Hugo. With the person's agreement:
+
+1. Read `site.config.mjs` and note `TITLE`, `DESCRIPTION`, `SITE`, `BASE`, `BRANCH`, `LOGO`, `DOCS.groups`, `DOCS.exclude`, `REDIRECTS`, `RELEASE_TAG` and `BROWSE`.
+2. Remove the folder: `git rm -r website`, then delete what is left of it (`node_modules/`, `dist/`).
+3. Install as Step 1 says, and write the noted values into `site.toml`. A redirect's target is now the file the page is built from, not its address. `BROWSE`'s `dir` and `build` become `browse` and `browseBuild`.
+4. Drop what the site now finds: `HOME`, `ASSETS`, `CHANGELOG`, `SCHEMA`, `WORKSPACE`, and each `PAGES` retelling whose file is named `<page>.<language>-simple.md`. Rename a retelling that is not.
+5. Change the lint exclusions and the Dependabot entry as Step 2 says: the generated folders have new names, and the packages are uv's, not npm's.
+
+Two things change for readers. A retelling moves from its `PAGES` slug to `/docs/<page>.<language>-simple/`; add a redirect from the old slug. The schema's pages move from `/schema/<Name>/` to a folder per kind, `/schema/classes/<Name>/`; the redirect `"schema/*" = "schema/*"` keeps the old addresses working.
 
 ## What a repair keeps
 
-Repair mode copies each template over a copy that is missing or differs, and never touches the three files above. Each new option has a default in `scripts/config.mjs`, so an older `site.config.mjs` keeps working after a repair, and a person adds the option only to use it.
+Repair mode copies each template over a copy that is missing or differs, and never touches the three files above. A new value always has a default in `hugo.toml`, so an older `site.toml` keeps working after a repair.

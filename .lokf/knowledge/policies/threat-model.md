@@ -7,10 +7,10 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-14T10:17:06Z"
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-29T12:26:25Z"
+    at: "2026-11-14T12:32:59Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:15:05Z"
 references:
@@ -38,9 +38,9 @@ A schema repository's release is a GitHub Release, not a package. `knowledge-rel
 
 **Interactive use is advisory, not enforced.** A skill's `Scope:` line is prose, not a checked permission. An agent run interactively has whatever access its harness grants, and only the scheduled `knowledge-librarian.yaml` enforces its scope, because nothing is watching it run.
 
-The skills ktl-curator, ktl-librarian, ktl-prose, ktl-sidecar and ktl-website also run the repository's scripts from `.lokf/scripts/`. Anyone who can commit to the repository can change those scripts, so a skill runs them as the repository's code. ktl-website's build also runs `site.config.mjs`, the site's files under `website/`, and the commands `site.config.mjs` names, or a `gen-doc` recipe it finds, to build the schema's pages and the data, and they are the repository's code too. The preflight's `copies` line cannot check them, because the preflight is one of them.
+The skills ktl-curator, ktl-librarian, ktl-prose, ktl-sidecar and ktl-website also run the repository's scripts from `.lokf/scripts/`. Anyone who can commit to the repository can change those scripts, so a skill runs them as the repository's code. ktl-website's build also runs the site's files under `website/` (or `ktl-website/`), and LinkML's `gen-doc` on a schema it finds, to build the schema's pages, and they are the repository's code too. The preflight's `copies` line cannot check them, because the preflight is one of them.
 
-Since 2026-10-05, ktl-docent runs none of them. It runs its own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which a check in `knowledge-trust-ladder` holds byte-identical to their templates, so a question runs no code the repository supplies. That holds only where the skill comes from a source the reader trusts, since a repository that holds its own copy of a skill supplies the instructions and the scripts.
+ktl-docent runs none of them. It runs its own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which a check in `knowledge-trust-ladder` holds byte-identical to their templates, so a question runs no code the repository supplies. That holds only where the skill comes from a source the reader trusts, since a repository that holds its own copy of a skill supplies the instructions and the scripts.
 
 **Repository hardening**:
 
@@ -74,9 +74,11 @@ The `earlier` job first reads the committers on the branch, and leaves alone a b
 
 Run by hand, the script copies the workflows too, and runs the sidecar's checks on the synced copies unless given `--no-checks`, so a person who syncs that way runs the release's code on their own machine.
 
-**The website** is built by `knowledge-website.yaml`'s `build` job, which runs npm's packages, the lokf toolkit, `just` and the repository's own code: `site.config.mjs`, the files under `website/`, and the commands that build the schema's pages and the data. It holds a read-only token and no secret. `npm ci --ignore-scripts` runs no package's install script, and Astro's telemetry is off. Its `deploy` job runs harden-runner and GitHub's deploy action, on the default branch alone, once the repository variable is set, in the `github-pages` Environment, which GitHub limits to the default branch. A pull request's build runs that pull request's code, as any check does, and anyone who can read the repository can download its artifact.
+**The website** is built by `knowledge-website.yaml`'s `build` job. It runs Hugo and Pagefind, which uv installs from PyPI at the hashes the site's `uv.lock` holds, the lokf toolkit and LinkML from `.lokf/uv.lock`, and the repository's own code: the files in the site's folder. It holds a read-only token and no secret. The PyPI package `hugo` is a third party's rebuild of Hugo, not Hugo's own release file. The two JavaScript libraries the site serves are fetched once at build time, and refused unless their SHA-256 matches the one `hugo.toml` names. Its `deploy` job runs harden-runner and GitHub's deploy action, on the default branch alone, once the repository variable is set, in the `github-pages` Environment, which GitHub limits to the default branch.
 
-The sync copies a file only when it is inside the repository, and follows a link only when the link ends inside it. An SVG that holds a script, an event handler or a `javascript:` address is left out. Raw HTML in the Markdown passes as GitHub renders a README. A tag GitHub allows keeps the attributes it allows, an address that is not http, https, mailto, a path or a fragment is dropped, and anything else is shown as text. A project site shares its origin with every other project site of its owner, so a script on one would run with all of them. A private repository should set harden-runner's egress policy to `block` in the `build` job, with the package registries allowed. `BROWSE` publishes its databases whole, and is off unless `site.config.mjs` turns it on.
+Raw HTML in the repository's Markdown, a concept a librarian wrote included, is cleaned after the build to the tags GitHub allows in a README. Any other markup, such as a `<meta>` refresh, a `<style>` or a form, is shown as text. An event handler, a style, or an address that is not `http`, `https`, `mailto`, a path or a fragment is dropped. So a page shows no more than GitHub shows a reviewer. Hugo has no hook for raw HTML, so the build sets each page's repository content between two comments that carry a mark made new for each build, and cleans what lies between them. A page whose mark has no end stops the build. A Content-Security-Policy in every page stays as a second guard: a script loads only from the site's own `js/` and `pagefind/` folders, where no repository file is served, so an inline script, an event handler, a `javascript:` address and a frame do not run. The build stops on an SVG that holds a script, an event handler or a `javascript:` address. It serves no HTML or XML document, and no file or folder whose name starts with a dot. Raw HTML that GitHub allows can still mislead, such as a link whose words name another address, so the review of what reaches the default branch still has to catch that. A project site shares its origin with every other project site of its owner, so a script on one would run with all of them.
+
+The site serves no data under `browse/` until `site.toml` names its folder, and its Datasette metadata loses its `plugins` settings, which can hold a credential. A private repository should set harden-runner's egress policy to `block` in the `build` job, with PyPI and the CDN allowed.
 
 **The ingest workflow**, `knowledge-ingest.yaml`, mirrors the sources `.lokf/ingest.yaml` names, from outside the repository, into `.lokf/mirror/`. No LLM, AI agent or AI tool runs in it. What it fetches reaches the scheduled librarian only after a person merges the pull request, so the mirror has the same standing as any other repository content: reviewed before an agent reads it. Its shape answers four findings a reader may raise.[^docs-threat-model.md]
 

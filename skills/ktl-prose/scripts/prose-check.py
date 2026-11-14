@@ -3,10 +3,12 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-# The check ktl-prose runs before and after it rewords a file. A script can
-# answer two questions about prose, and this one answers both. Where does the
-# text break a rule a script can see? Did a rewording change anything but the
-# wording? Whether the meaning held is a question for a reader.
+# The check ktl-prose runs before and after it rewords a file. It reports
+# where the text breaks a rule a script can see, and whether a rewording
+# changed anything but the wording. A pass says only that what the script
+# reads came through: whether the meaning held is for a reader to judge.
+# references/limits.md lists each finding and note, and what the script
+# cannot see.
 #
 #   prose-check.py FILE...                what a script sees: dash, long, paragraph, sentences, words, unseen
 #   prose-check.py --audience BAND FILE...  the same at the limits of a band of readers, with a grade
@@ -15,66 +17,33 @@
 #   prose-check.py --bundle DIR           which files of a bundle ktl-prose may reword, and its readers
 #   prose-check.py --derived-from ADULT YOUNG  what a retelling holds that the text it retells does not
 #
-# A FILE is Markdown, or a script. A `.sh`, `.bash`, `.py`, `.yaml`, `.yml`
-# or `.toml` file, or a justfile, is read as its `#` comments and, in Python,
-# its docstrings: each block of comment lines is a paragraph, and an empty
-# comment line splits one. The shebang, a directive such as `# shellcheck`, a
-# `# /// script` block and the body of a heredoc are left out. Code is never
-# read, so a fact in it is not checked.
+# A FILE is Markdown, or a script: a `.sh`, `.bash`, `.py`, `.yaml`, `.yml`
+# or `.toml` file, or a justfile. A script is read as its `#` comments and,
+# in Python, its docstrings, as script_doc() says. A fact in its code is not
+# checked, and a comparison holds every line that is not prose as it was.
 #
-# A comment's layout is read as a person reads it. An indented line laid out
-# in columns, as a table of options or exit codes is, starts a row. Its first
-# column is a name. The rest of the row, with the lines indented under it, is
-# read as one table cell. An indented line that follows a `Usage` line, a
-# line ending with a colon or an empty line is a command, and is not read. So
-# a table or a command is never taken for one long sentence.
+# A band holds a page to the limits that references/young-readers.md gives
+# for readers aged 8 to 12, aged 13 to 18, or dyslexic. A page whose first
+# paragraph names its readers is held to their band without --audience.
+# Under a band the script also notes the page's Automated Readability Index,
+# a hint and never a finding.
 #
-# A band holds a page to the limits references/young-readers.md gives for
-# readers aged 8 to 12, aged 13 to 18, or dyslexic. A page that opens by
-# naming its readers, as "This page is for readers aged 13 to 18." does, is
-# held to that band with no flag. A band sets its own count of sentences in
-# a paragraph, and the script notes the page's Automated Readability Index
-# with the counts it comes from. The index is a hint, never a finding.
+# `unseen` is a character no reader sees, such as the right-to-left override
+# that the "Trojan Source" attack hides code behind. An agent that types the
+# escape for one into a tool call can write the character itself. A style
+# run reports each line that holds one, code and frontmatter included, and a
+# comparison reports one the rewording added.
 #
-# A retelling may say less than the text it retells, and never more. So
-# --derived-from reports a number, a link, a code span, a quotation, an HTML
-# tag or a fenced block that the retelling holds and the adult text does not,
-# and notes what the retelling left out. The retelling must link the text it
-# retells in its first paragraph, and in a bundle name it under derivedFrom.
+# Each finding is one line on stdout, as `path:line: rule: message`: the
+# contract of knowledge-conventions.sh, with a line number and a rule name
+# added. The script exits 1 if there is any finding. With none it prints one
+# `OK` line and exits 0. A usage error exits 2. A note goes to stderr and
+# never changes the exit status.
 #
-# `unseen` is a character no reader sees: a control character other than a
-# tab, or a format character such as a zero-width space or the right-to-left
-# override that the "Trojan Source" attack hides code behind. An agent that
-# types the escape for one into a tool call can write the character itself.
-# A style run reports each line that holds one, code and frontmatter included,
-# and a comparison reports one the rewording added.
-#
-# The contract is the one knowledge-conventions.sh keeps, with a line number
-# and a rule name added. Each finding is one line on stdout, as
-# `path:line: rule: message`, and the script exits 1 if there is any. With
-# none it prints one `OK` line and exits 0. A usage error exits 2. A note goes
-# to stderr and never changes the exit status.
-#
-# A pass says that what the script reads came through, and not that the meaning
-# held, so its OK line says no more than that. references/limits.md lists what
-# it cannot see.
-#
-# A comparison reads a list item and a table row as a sentence each. In a
-# sentence that otherwise stayed it stops a word given way to its opposite, and
-# a negative gained or lost with every other word in place. It stops one number
-# word given way to another, and two runs of words that changed places. It
-# stops a number, a link or a code span that changed places with one in another
-# sentence or row. It stops the steps of a numbered list in a new order, and a
-# paragraph cut in two inside a sentence. In a script it stops a change to any
-# line that is not prose.
-#
-# A comparison notes, with the line, a word of strength that came or went and
-# one word that gave way to another. It notes the words a page lost or gained.
-#
-# The script reads the files it is given, and the word book in the skill's
-# assets/ folder, and asks git for an earlier version. It writes nothing
-# and opens no network connection. It needs python3 3.11 or later and
-# nothing else. `uv run` reads the empty dependency block above.
+# The script reads the files it is given and the word book in the skill's
+# assets/ folder, and asks git for an earlier version. It writes nothing and
+# opens no network connection. It needs python3 3.11 or later and nothing
+# else, and `uv run` reads the empty dependency block above.
 
 from __future__ import annotations
 
@@ -99,10 +68,9 @@ MAX_PARAGRAPH = 150
 # The top of the same guidelines' "three to eight sentences" for a paragraph.
 # A band sets its own count, and a list item has none.
 MAX_SENTENCES = 8
-# The bands of readers, as references/young-readers.md gives them with their
-# sources: the words in a sentence and in a paragraph, the sentences in a
-# paragraph, and the Automated Readability Index a page should stay at or
-# under. A grade of None notes the index with no target.
+# Each band's limits: the words in a sentence and in a paragraph, the
+# sentences in a paragraph, and the Automated Readability Index a page should
+# stay at or under. A grade of None notes the index with no target.
 Band = namedtuple("Band", "words paragraph sentences grade")
 BANDS = {
     "8-12": Band(15, 50, 3, 7),
@@ -120,11 +88,10 @@ BAND_WORDS = {
 }
 BAND_WORD = re.compile(r"(?<![A-Za-z])i\.e\.|(?<![\w.-])(?:vs|cf|etc|via)\b\.?", re.I)
 # The words a younger reader can be expected to know: the VOA Learning
-# English Word Book, in the skill's assets/ folder, which credits its
-# source. Under a band, a note names the words of a page that fall outside
-# it, most frequent first. A word is known when the book lists it, or a
-# form of it that a suffix, a prefix the book lists as common, or an
-# irregular form leads to.
+# English Word Book in the skill's assets/ folder, which credits its source.
+# Under a band, a note names a page's words outside it, most frequent first.
+# A word is known when the book lists it, or a form that a suffix, a prefix
+# the book lists as common, or an irregular form leads to.
 WORD_BOOK = Path(__file__).resolve().parent.parent / "assets" / "voa-word-book.txt"
 ENDINGS = (
     ("ies", "y"), ("ied", "y"), ("ier", "y"), ("iest", "y"), ("ily", "y"), ("es", ""), ("s", ""),
@@ -174,11 +141,9 @@ NAMES_READERS = re.compile(r"\bfor readers aged (\d{1,2}) to (\d{1,2})\b", re.I)
 # every offset and line number stays true after masking.
 MASK = ""
 
-# The words the first hand pass cut, the stock phrases it replaced, and two a
-# later reading added: an intensifier that points at a comparison the
-# sentence never makes, and the tail of a negative that is already whole.
-# "actually", "really", "simply" and "just" stay off the list on purpose: the
-# second pass kept every one of them.
+# Words that carry nothing, and stock phrases with a plainer form, as
+# references/rules.md gives them. "actually", "really", "simply" and "just"
+# stay off the list: the second pass kept every one of them.
 WORDS = {
     "deliberately": "cut it, or say what was chosen",
     "honestly": "cut it",
@@ -188,9 +153,9 @@ WORDS = {
     "due to the fact that": 'write "because"',
     "e.g.": 'write "for example"',
 }
-# The figures of speech the third pass replaced, each with its forms. Each
-# names an action by a picture, and a reader new to the trade has to turn the
-# picture back into the action. None of them is literal in a technical text.
+# Figures of speech, each with its forms. Each names an action by a picture
+# that a reader new to the trade has to turn back into the action, and none
+# is literal in a technical text.
 FIGURES = {
     ("land", "lands", "landed", "landing"): 'say what happens, such as "is merged", "is added" or "is written"',
     ("mint", "mints", "minted", "minting"): 'say what happens, such as "makes", "builds" or "issues"',
@@ -223,9 +188,8 @@ WORD = re.compile(
     + r")(?![\w-])|(?<![A-Za-z])e\.g\.",
     re.I,
 )
-# The files read as scripts rather than as Markdown, by suffix; a file called
-# justfile is one too. In a script the prose is its whole-line `#` comments,
-# and in Python its docstrings as well.
+# The files read as scripts rather than as Markdown, by suffix. A file called
+# justfile is one too.
 SCRIPT_SUFFIXES = {".sh", ".bash", ".py", ".yaml", ".yml", ".toml"}
 COMMENT_LINE = re.compile(r"^\s*#(.*)$")
 # A comment that is not prose: the shebang, and a directive a tool reads.
@@ -528,7 +492,7 @@ def closes(fence: str, line: str) -> bool:
 
 
 def html_only(content: str) -> bool:
-    """True when a line is HTML markup with nothing a reader reads as prose: tags and whitespace alone. A prose line that merely opens with an inline tag is not HTML-only, and its style is read like any other line's."""
+    """True when a line holds only HTML tags and whitespace. A prose line that opens with an inline tag is not HTML-only, and its style is read like any other line's."""
     return not HTML_TAG.sub("", content).strip()
 
 
@@ -566,12 +530,11 @@ def events(fm: list[str]) -> list[tuple[str, str, str, str]]:
     """The event records of a concept's frontmatter, as (key, by, at, revision).
 
     The keys are `generated`, `verified`, `revised` and `refuted`. This is a
-    port of human_events() in knowledge-provenance.sh, and it keeps to that
-    reading on purpose: the script must see an event exactly where the gates
-    see one. It reads a block list at any indent, a flow item, a flow sequence
-    across lines and a bare mapping. The gates keep only human actors, and this
-    keeps every actor. A shape it cannot follow comes out as the actor
-    UNREADABLE, never as no event.
+    port of human_events() in knowledge-provenance.sh, since the script must
+    see an event exactly where the gates see one. It reads a block list at any
+    indent, a flow item, a flow sequence across lines and a bare mapping. It
+    keeps every actor, where the gates keep only human ones. A shape it cannot
+    follow comes out as the actor UNREADABLE, never as no event.
     """
     out: list[tuple[str, str, str, str]] = []
     key: str | None = None
@@ -795,21 +758,19 @@ def is_script(path: Path) -> bool:
 def script_doc(text: str, python: bool = False) -> Doc:
     """The prose of a script, laid out on the lines it came from.
 
-    Each whole-line `#` comment keeps its text with the mark removed, and in
-    Python each docstring keeps its lines, less the indent of its opening
-    quotes. Every other line is blank, so a block of comments reads as a
-    paragraph, an empty comment line splits one, and a line of code ends one,
-    as a blank line does in Markdown. Left out: the shebang, a directive such
-    as `# shellcheck`, a `# /// script` block, and the body of a heredoc,
-    which is data. A triple-quoted string is a docstring when it opens the
-    module or follows a line that ends with a colon, so a quoted block
-    assigned to a name is data too. Each block of comments and each docstring
-    is then read for its layout, as `laid_out` says.
+    Each whole-line `#` comment keeps its text less the mark, and in Python
+    each docstring keeps its lines less the indent of its opening quotes.
+    Every other line is blank, so a block of comments reads as a paragraph
+    and a line of code ends one, as a blank line does in Markdown. The
+    shebang, a directive such as `# shellcheck`, a `# /// script` block and
+    the body of a heredoc are left out. A triple-quoted string is a docstring
+    when it opens the module or follows a line that ends with a colon, so a
+    quoted block assigned to a name is data. `laid_out` then reads each block
+    for its layout.
 
-    The result also holds, as `apart`, what a rewording of the comments must
-    leave as it was: each line that is not read as prose, and the name that
-    opens each row of a table. That is code, a directive, a heredoc and a
-    command in a comment. An empty comment line is layout, and is left out.
+    As `apart`, the result also holds each line not read as prose and the
+    name that opens each row of a table: what a rewording of the comments
+    must leave as it was. An empty comment line is layout, and is not held.
     """
     out: list[str] = []
     blocks: list[list[int]] = []
@@ -893,20 +854,18 @@ def laid_out(lines: list[str], numbers: list[int], names: list[tuple[int, str]],
     lines whose prose went into a row's cell. The caller needs both to tell a
     line that is not prose from one that was read elsewhere.
 
-    Indent is measured from the block's own text. A line indented further is
-    prose when it is a list item, continues one (an empty line between does
-    not end the item, as in Markdown), or continues the line above it. It is
-    a command, and is blanked, when it follows a `Usage` line, a line that
-    ends with a colon, an empty line or the top of the block, and does not
-    start as a sentence does.
+    Indent is measured from the least indented line. A line indented further
+    is prose when it is a list item, continues one even across an empty line,
+    or continues the line above it. It is a command, and is blanked, when it
+    follows a `Usage` line, a line that ends with a colon, an empty line or
+    the top of the block, and does not start as a sentence does.
 
-    When its words stand in columns, the line starts a row, which becomes one
-    table cell on the row's first line: the first column, a name, is dropped,
+    An indented line whose words stand in columns starts a row, which becomes
+    one table cell on its first line. The first column, a name, is dropped,
     and each line indented under the row is moved into the cell. A line level
     with a row starts the next one, even when its name is too wide to leave a
-    gap. So a table of options or a command line is not read as one long
-    sentence, the prose after a table is not run into its last row, and each
-    row's own text is still read whole.
+    gap. So a table or a command is never read as one long sentence, and the
+    prose after a table stays out of its last row.
     """
     texts = [lines[n] for n in numbers if lines[n].strip()]
     if not texts:
@@ -999,19 +958,18 @@ def prose_blocks(doc: Doc):
         quote = QUOTE_MARK.match(line)
         content = line[quote.end() :] if quote else line
         blank = not content.strip()
-        # An indented code block: a run of lines each indented four spaces or a
-        # tab, begun at a block boundary after a blank line and outside a list,
-        # where the same indent would instead be a list item's own continuation.
-        # Its lines are code, so no style rule reads them; a blank line ends it.
+        # An indented code block: lines indented four spaces or a tab, begun at
+        # a block boundary after a blank line, and outside a list, since in a
+        # list the same indent continues an item. No style rule reads its lines,
+        # and a blank line ends it.
         if indent_code:
             if blank or not INDENT_CODE.match(content):
                 indent_code = False
             else:
                 prev_blank = False
                 continue
-        # A line that is only HTML opens no prose and ends a block, as before. A
-        # line that opens with an inline tag but carries prose is prose: its
-        # style is read, with the tags masked, rather than skipped whole.
+        # A line of HTML only opens no prose and ends a block. A line that opens
+        # with an inline tag and carries prose is read, with its tags masked.
         is_html_block = bool(HTML_LINE.match(content)) and html_only(content)
         breaks = (
             blank
@@ -1188,10 +1146,10 @@ def grade(doc: Doc):
     """The Automated Readability Index of a page, and what it is made of.
 
     ARI = 4.71 x (letters and digits per word) + 0.5 x (words per sentence) - 21.43,
-    read from the paragraphs and list items the style rules read, on the
-    masked text. A table cell is left out: it is a label, not a sentence. The
-    result is (index, words a sentence, letters and digits a word, the share
-    of words of seven letters or more), or None for a page with no prose.
+    read from the masked paragraphs and list items. A table cell is left out:
+    it is a label, not a sentence. The result is (index, words a sentence,
+    letters and digits a word, the share of words of seven letters or more),
+    or None for a page with no prose.
     """
     words = sentences_seen = characters = long_words = 0
     for block in prose_blocks(doc):
@@ -1262,7 +1220,7 @@ def vocabulary(doc: Doc) -> str | None:
 
     It reads the paragraphs and list items, masked as the style rules mask
     them. A word with a capital that the book does not hold is taken for a
-    name, and left out of the count along with every abbreviation in capitals.
+    name, and left out of the count.
     """
     book = word_book()
     if not book:
@@ -1407,9 +1365,9 @@ def replaced(old: Said, new: Said):
 def turned(a: Kept, b: Kept):
     """What a rewording did to each sentence that changed: findings, notes, and the words of strength the notes placed.
 
-    Each changed sentence is compared with the sentence of the new text that
-    shares the largest part of its words. A list item and a table row count as
-    a sentence each. Three in five shared means the rewording kept it.
+    Each changed sentence, list item or table row is matched with the one in
+    the new text that shares the largest part of its words. Three in five
+    shared means the rewording kept it.
 
     In a kept sentence these are findings. A word gave way to its opposite, or
     to itself behind a negating prefix, as `confirmed` to `unconfirmed`. One
@@ -1421,11 +1379,11 @@ def turned(a: Kept, b: Kept):
     only when every other word stayed in its place, since `does not change`
     and `changes nothing` agree.
 
-    The rest are notes, each with its line: the same words in a new order, a
-    word of strength that came or went, and one word that gave way to another.
-    A sentence with too few of its words anywhere near it may have gone. The
-    third value counts each word of strength the notes placed, so that the
-    caller reports only the rest for the page.
+    The rest are notes with a line: the same words in a new order, a word of
+    strength that came or went, and one word that gave way to another. A
+    sentence with few of its words anywhere near may have gone, and gets a
+    note too. The third value counts each word of strength the notes placed,
+    so that the caller reports only the rest for the page.
     """
     findings, notes = [], []
     placed: Counter = Counter()
@@ -1523,9 +1481,8 @@ def turned(a: Kept, b: Kept):
     for (gone, came), count in swaps.items():
         notes.append((first[(gone, came)], "word", f'"{gone}" became "{came}" {times(count)} in a sentence that otherwise stayed; check that both name the same thing'))
 
-    # A number, a link or a code span that changed places with one in another
-    # kept sentence. Each sentence is looked up by what it gained, so the
-    # search does not compare every pair.
+    # A swap between two kept sentences. Each is looked up by what it gained,
+    # so the search does not compare every pair.
     moves = [(old, best, old.tokens - best.tokens, best.tokens - old.tokens) for old, best in kept]
     moves = [move for move in moves if move[2] and move[3]]
     gained_by: dict[str, list[int]] = {}
@@ -1764,9 +1721,9 @@ class Kept:
                 self.steps.append(" ".join(ITEM_TEXT.sub("", content, count=1).split()))
             if is_item and in_order:
                 line = ORDERED_MARK.sub(lambda found: found.group(1) + " " * len(found.group(2)) + found.group(3), line)
-            # A hard line break joins two lines of one block, so it is the kind
-            # of layout a rewording leaves alone; count one where the line before
-            # this one in the block ended with it. Before a new item it breaks nothing.
+            # A hard line break is layout that a rewording keeps. Count one
+            # where the line before this one in the block ended with it, unless
+            # this line opens a list item: there it breaks nothing.
             if block is None:
                 block = Block()
                 block_is_list, block_is_table = is_item, is_row
@@ -1830,10 +1787,9 @@ class Kept:
         take(AUTOLINK, self.links)
         take(HTML_ATTR, self.links)
         # An inline HTML tag carries meaning a rewording must not drop: a <br>, a
-        # <sub>, a colspan. Record it whole, then mask it so it counts as neither
-        # a word nor anything else.
-        # What a reader hears of a tag is wording, and a rewording may change it,
-        # all but the numbers in it.
+        # <sub>, a colspan. Record it whole, then mask it, so nothing else
+        # counts it. Its alt, title and aria-label text is wording that a
+        # rewording may change, all but the numbers in it.
         for found in HTML_TAG.finditer(hidden):
             tag = text[found.start() : found.end()]
             self.html.append((" ".join(TAG_WORDS.sub(r"\1", tag).split()), block.line_at(found.start())))
@@ -1986,10 +1942,10 @@ def page_words(a: Kept, b: Kept) -> str | None:
     """The note on the words a rewording took from the page and brought to it, or None.
 
     A sentence may go when the page states each of its facts elsewhere, and
-    then no word goes with it. So a word that is gone from the whole page is
-    where a cut may have taken a fact, and a new word is where one may have
-    come in. A plainer word for the same thing shows here too, and a reader
-    tells the two apart.
+    then no word leaves the page. So a word gone from the whole page marks
+    where a cut may have taken a fact, and a new word where one may have come
+    in. A plainer word for the same thing shows too, and a reader tells the
+    two apart.
     """
     gone = [word for key, word in a.page_words.items() if key not in b.page_words]
     came = [word for key, word in b.page_words.items() if key not in a.page_words]
@@ -2033,7 +1989,7 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
     """What differs between two versions besides the wording: findings, notes, and the words each version holds.
 
     For a script, OLD and NEW are its prose, and RAW is the whole file twice,
-    which the search for a character no reader sees reads, code included.
+    code included, for the search for a character no reader sees.
 
     A finding is something a rewording never changes. A note is something a
     rewording may change and a reader should look at, such as a link target,
@@ -2169,9 +2125,9 @@ def compare(path: Path, old: Doc, new: Doc, expect_concept: bool, raw: tuple[Doc
     lost_or_gained = page_words(a, b)
     if lost_or_gained:
         notes.append((1, "page-words", lost_or_gained))
-    # A fifth either way, as SKILL.md says: more than a fifth more words, or
-    # fewer than four fifths of them. The earlier 8% growth floor, and the
-    # 40-word floor that hid a third cut of a short text, are gone.
+    # Note a text that grew or lost over a fifth of its words, as
+    # references/limits.md says. No floor of words applies, since a floor
+    # hides a short text that lost a third of its words.
     if b.words > a.words * 1.2:
         notes.append((1, "growth", f"{b.words} words, and the earlier text had {a.words}; a rewording adds no fact"))
     if b.words < a.words * 0.8:
@@ -2226,8 +2182,7 @@ def check_style(
     A file is held to the band --audience names, or else to the band its
     first paragraph names, or else to the adult limits. --max-words,
     --max-paragraph and --max-sentences set their own limit over any band's.
-    A script is read as its comments; the search for a character no reader
-    sees reads its every line.
+    The search for a character no reader sees reads every line of a script.
     """
     findings, notes = [], []
     for path in files:
@@ -2264,9 +2219,8 @@ def check_style(
 def check_pair(label: Path, old_text: str, new_text: str, in_bundle: bool):
     """Compare two versions of one file, with the bundle's reserved files set apart. The third value is the words before and after, which a reserved file does not count towards.
 
-    A script is compared as its comments and docstrings. Every other line
-    must stay as it was, since a rewording of comments changes no code. The
-    search for a character no reader sees reads every line.
+    A script is compared as its comments and docstrings, and every other line
+    must stay as it was, since a rewording of comments changes no code.
     """
     if in_bundle and label.name == "log.md":
         # A line of the earlier log must still be there, and in its order.
@@ -2392,11 +2346,10 @@ def check_derived(adult_path: Path, young_path: Path):
 
     A retelling may leave out anything and add no fact, so each comparison
     runs one way: what is new in the retelling is a finding, and what it left
-    out is a note. Outside a bundle the retelling's first paragraph must link
-    the adult file; in a bundle it must also name the adult concept under
-    derivedFrom. Whether a person wrote or confirmed the retelling is a note
-    here, since this check changes nothing; --before and --against keep the
-    refusals for a rewording.
+    out is a note. The retelling's first paragraph must link the adult file,
+    and in a bundle its derivedFrom must name the adult concept. Whether a
+    person wrote or confirmed the retelling is a note here, since this check
+    changes nothing. --before and --against refuse a rewording of such a body.
     """
     adult, young = Doc(read(adult_path)), Doc(read(young_path))
     root = bundle_root(young_path)

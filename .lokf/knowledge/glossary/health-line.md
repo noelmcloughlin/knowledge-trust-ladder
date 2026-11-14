@@ -20,16 +20,16 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-14T10:18:02Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-02T13:29:19Z"
+    at: "2026-11-14T12:32:59Z"
 ---
 
 # Overview
 
-The **health line** is one line for the whole bundle, which `knowledge-report.sh` computes so that it is not a model's arithmetic. It counts the concepts under eight [trust labels](trust-label.md): confirmed by a person, checked by automation only, nobody has checked, drafts, reopened, past review date, edited since confirmed, and retired. A retired concept is counted once, there. Since 0.45.0 *Drafts* counts the concepts no person has confirmed, and *Reopened* those a person confirmed and a question since put back to `status: draft`. A reopened concept still counts as confirmed, because a question flags a concept and never drops it a rung.
+The **health line** is one line for the whole bundle, which `knowledge-report.sh` computes so that it is not a model's arithmetic. It counts the concepts under eight [trust labels](trust-label.md): confirmed by a person, checked by automation only, nobody has checked, drafts, reopened, past review date, edited since confirmed, and retired. A retired concept is counted once, there. *Drafts* counts the concepts no person has confirmed, and *Reopened* those a person confirmed and a question since put back to `status: draft`. A reopened concept still counts as confirmed, because a question flags a concept and never drops it a rung.
 
 The curator's report opens with the line as the script prints it, for example:
 

@@ -1,6 +1,6 @@
 # Recipes for Knowledge Trust Ladder's own checks. The sidecar's recipes are
-# .lokf/justfile, which `just --justfile .lokf/justfile` runs and which this
-# file leaves as it is. Run `just --list` to see these.
+# in .lokf/justfile, which `just --justfile .lokf/justfile` runs. Run
+# `just --list` to see these.
 
 # List available recipes
 default:
@@ -41,8 +41,6 @@ docent-eval cost="5":
       echo "docent-eval: the run was partial ($(jq -r '.partialReason // "unknown"' evals/results/docent-eval.json)), so not every case ran" >&2
       exit 2
     fi
-    # The bar is the plan's: the expected concept is named for all but one
-    # question, nine of ten there and seven of eight here.
     if [ $((total - passed)) -gt 1 ]; then
       echo "docent-eval: more than one case failed" >&2
       exit 1

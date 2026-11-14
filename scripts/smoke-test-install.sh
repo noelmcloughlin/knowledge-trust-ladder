@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Isolated install smoke test. Installs the six skills into a throwaway
-# "consumer" repo via the open skills CLI, so generated agent directories
-# never contaminate this distribution source.
+# An isolated install smoke test. It installs the six skills into a throwaway
+# "consumer" repository with the open skills CLI, so the agent directories
+# the installer writes never reach this source repository.
 #
 # Usage:
 #   scripts/smoke-test-install.sh                  # source = git origin remote
@@ -28,9 +28,9 @@ fi
 test_root="$(mktemp -d)"
 trap 'rm -rf "$test_root"' EXIT
 
-# The installer metadata this source repo may already hold, ignored files
-# included: .gitignore ignores all three paths, so a plain status never sees
-# them. The last assertion compares this with the state after the install.
+# The installer metadata this source repository may already hold, ignored
+# files included, since .gitignore ignores all three paths. The last
+# assertion compares it with the state after the install.
 metadata() { git -C "$repo_root" status --porcelain --ignored --untracked-files=all -- .agents .claude skills-lock.json 2>/dev/null; }
 # shellcheck disable=SC2034 # read by the last assert, inside an eval
 metadata_before="$(metadata)"
@@ -112,15 +112,15 @@ assert "the installed knowledge-report.sh labels a concept in a reader's reposit
   "[[ \"\$(cd \"$test_root/reader\" && bash \"$docent_dir/scripts/knowledge-report.sh\" labels x/auto.md 2>&1)\" == '- Auto (x/auto.md) - checked by automation only' ]]"
 assert "the installed knowledge-feedback.sh records a gap in that repository" \
   "(cd \"$test_root/reader\" && bash \"$docent_dir/scripts/knowledge-feedback.sh\" Miss 'smoke test gap' >/dev/null) && grep -qxF -- '- **Miss** - smoke test gap - docent' \"$test_root/reader/.lokf/feedback.md\""
-# ktl-website lays a whole site down from its templates and runs its preflight
+# ktl-website copies a whole site from its templates and runs its preflight
 # in place, so both must arrive with the skill, the bracket file name
 # `[...route].ts` included, which an installer could mangle.
 website_dir="$(find "$test_root/consumer" \( -path "*.agents/skills/ktl-website" -o -path "*.claude/skills/ktl-website" \) -type d 2>/dev/null | head -1)"
 assert "ktl-website discovered by name" "[[ -n \"$website_dir\" ]]"
 assert "ktl-website SKILL.md installed" "[[ -f \"$website_dir/SKILL.md\" ]]"
 assert "ktl-website templates/website carried along, the lock file included" \
-  "[[ -f \"$website_dir/templates/website/package.json\" && -f \"$website_dir/templates/website/package-lock.json\" ]]"
-assert "the bracket file name survived the installer" "[[ -f \"$website_dir/templates/website/src/pages/og/[...route].ts\" ]]"
+  "[[ -f \"$website_dir/templates/website/pyproject.toml\" && -f \"$website_dir/templates/website/uv.lock\" ]]"
+assert "the site's binary files survived the installer" "[[ -s \"$website_dir/templates/website/static/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2\" && -s \"$website_dir/templates/website/assets/card.png\" ]]"
 assert "ktl-website templates/github/knowledge-website.yaml carried along" "[[ -f \"$website_dir/templates/github/knowledge-website.yaml\" ]]"
 assert "the installed website preflight runs on the reader's repository and ends on its summary line" \
   "bash \"$website_dir/scripts/website-preflight.sh\" \"$test_root/reader\" 2>&1 | grep -qE '^Preflight: '"

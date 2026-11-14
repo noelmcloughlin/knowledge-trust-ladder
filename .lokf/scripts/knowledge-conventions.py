@@ -6,37 +6,17 @@
 # exclude-newer = "2025-10-01T00:00:00Z"
 # ///
 # The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9, 10, 12,
-# 13, 14, 15, 16, 17 and 18 (see that script's header for the list).
+# 13, 14, 15, 16, 17 and 18. That script's header lists the rules, and the
+# checks below give the detail.
 #
-# Rules 2, 3, 7 and 9 are questions about a document's YAML that a real
-# parser can decide, where grep and awk could only approximate. Is this
-# scalar quoted, is this key a list or a mapping, do two files share an id,
-# does the block even parse? An unquoted `at:` is only visible as a
-# `datetime` once something parses the document. A flow-style
-# `verified: { by: ... }` or a multi-line flow item is where a line-oriented
-# regex used to guess wrong.
-#
-# Rule 4 is a body rule, checked with them. Rule 10 exists because the
-# provenance gates, knowledge-report.sh and the shell half do read the
-# frontmatter line by line: it keeps the fields they read to spellings a line
-# reader and a parser agree on. Rule 12 compares
-# a concept's title and description, which only a parser reads whole, with
-# the index bullets that copy them. Rule 13 asks git for the text a person
-# confirmed and compares it with today's as parsed values, since
-# knowledge-apply.sh writes the whole frontmatter back and a requoted value is
-# no change. Rule 14 walks the commits after a base and compares each concept
-# that gains a person's confirmation with the same file in every parent, as
-# parsed values too. Rule 18 reads each exclusion beside the concept's
-# sources, which a line reader cannot pair. The shell half checks rules 1, 5,
-# 6, 8 and 11: they are git and filesystem facts, and need no uv.
-#
-# Rules 15, 16 and 17 join one parsed thing to another. Rule 15 reads
-# `resource` and `sources` as parsed values, so a key with no value counts as
-# absent. Rule 16 reads each `sources[].id` and its `resource` from the
-# frontmatter and the footnotes from the body, and keeps one table of ids for
-# the whole bundle, since one id names one source node in the graph. Rule 17
-# reads the title of every concept, and then the bullets of log.md, so a
-# logged write is held to a file the bundle holds.
+# These rules need a YAML parser, where grep and awk could only approximate.
+# Rules 2, 3, 7 and 9 ask whether a scalar is quoted, whether a key holds a
+# list or a mapping, whether two files share an id, and whether the block
+# parses. Rule 10 compares what a parser reads with what a line reader
+# reads. Rule 12 reads a title and a description whole, rules 13 and 14
+# compare parsed values, and rule 18 pairs each exclusion with the sources.
+# Rules 15, 16 and 17 join the frontmatter to the body and to log.md. Rule
+# 4, a body rule, is checked with them.
 #
 # Usage: knowledge-conventions.py <bundle-dir> [--since <commit>]
 #
@@ -47,12 +27,11 @@
 #
 # That block names one PyYAML release, and `exclude-newer` takes no file
 # uploaded after its date. A registry never replaces a file, so every run
-# installs the files that were there when the pin was set, and this gate runs
-# what a person reviewed. Behind a mirror with no upload times, the shell
-# half lifts the date but keeps the version. The .venv holds what uv.lock
-# pins, by hash, which a person reviewed too. Move the version and the date
-# together, here and in knowledge-apply.py; the skills repository's contract
-# holds the two equal.
+# installs the files a person reviewed when the pin was set. Behind a mirror
+# with no upload times, the shell half lifts the date but keeps the version.
+# The .venv holds what uv.lock pins, by hash, which a person reviewed too.
+# Move the version and the date together, here and in knowledge-apply.py:
+# the skills repository's contract holds the two equal.
 
 from __future__ import annotations
 
@@ -74,22 +53,23 @@ INDEX_BULLET = re.compile(r"^\* \[([^\]]*)\]\(([^)]+)\) - (.*)$")
 # The fields the provenance gates read line by line: a concept's id, and the
 # actor, time and revision of each event. knowledge-report.sh and the shell
 # half read `resource` line by line too, the concept's own and each source's
-# and exclusion's.
+# and exclusion's, and cut a comment beside it.
 GATE_FIELDS = {"id", "by", "at", "revision", "resource"}
 # The keys those gates find an event under.
 EVENT_KEYS = {"verified", "generated"}
 # The lists those line readers read entry by entry, which must stay in block
-# form: a flow form hides each `resource:` from them, so a source that is
+# form. A flow form hides each `resource:` from them, so a source that is
 # gone fails no rule 5 and never moves, and coverage counts nothing for it.
 BLOCK_LISTS = {"sources", "exclusions"}
 # What a parser ends a line at and a line reader does not.
 UNSEEN_BREAK = re.compile("[\x85\u2028\u2029]")
 # Rule 2's one shape for a time: UTC to the second, as `date -u
-# +%Y-%m-%dT%H:%M:%SZ` writes it, and as every writer here does. In it the
-# federation build reads the moment knowledge-report.sh and rule 11 read, and
-# the workspace's stored queries, which compare times as written, put two of
-# them in order. A time in a shape a script cannot read counts there as no
-# time, so a person's event spelt that way would confirm every later edit.
+# +%Y-%m-%dT%H:%M:%SZ` writes it. In another shape the readers disagree.
+# knowledge-report.sh cannot read a lower-case `t`, which the federation
+# build reads, and no script reads a lower-case `z`. The workspace's stored
+# queries compare times as written, so they put an offset or a fraction out
+# of order. A time no script reads counts as no time, so a person's event
+# spelt that way would confirm every later edit.
 UTC_TIME = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 # What a person's confirmation does not cover, for rule 13. In the
 # frontmatter these are the trust, lifecycle and usage fields, which record
@@ -101,9 +81,8 @@ RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 # A base commit as `--since` may name it: no leading dash, so git never reads
 # it as an option.
 COMMIT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/~^-]*")
-# Rule 16's shape for a `sources[].id`: what rule 8 allows in a path segment.
-# Under LOKF's published context the id becomes the IRI of the source's node
-# under the bundle base, so it is held to the shape a path is.
+# Rule 16's shape for a `sources[].id`: what rule 8 allows in a path segment,
+# since the id becomes the IRI of the source's node under the bundle base.
 SOURCE_ID = re.compile(r"[a-z0-9][a-z0-9._-]*")
 # A footnote reference, and a definition line, which Markdown reads at the
 # start of a line with at most three spaces before it.
@@ -121,7 +100,13 @@ AFTER_TITLE = ",.:; "
 
 
 def plain_spellings(fm_text: str) -> list[str]:
-    """Rule 10: what a line reader could not read the way a parser does."""
+    """Rule 10: what a line reader could not read the way a parser does.
+
+    Most checks hold for GATE_FIELDS and EVENT_KEYS alone. A tag, an anchor,
+    an alias and a merge key are refused on any field, because a line reader
+    resolves none of them, and an alias can stand in for an event or a source
+    wherever it sits.
+    """
     findings: list[str] = []
     stack: list[dict] = []  # one entry per open collection
     lines = fm_text.split("\n")
@@ -371,13 +356,17 @@ def base_iri(text: str | None) -> str:
 def unstamped_edit(path: Path, frontmatter: dict, body: str, bundle: Path) -> str | None:
     """Rule 13: a concept that reads as confirmed by a person still holds the claims they confirmed.
 
-    The text they confirmed is the concept at the newest commit that recorded
-    the time of its latest confirmation. Any later commit can only be an
-    edit after it, so the rule can miss one but never flags a concept that
-    person saw. Outside git, or before that commit exists, there is nothing
-    to compare and nothing is said. A move of the bundle's `base_iri` is no
-    edit: the ids and relation targets it carries along are compared by
-    their paths under the base each commit held.
+    The label holds while `generated.at` is no later than the confirmation,
+    and claims() says what counts as an edit.
+
+    The text the person confirmed is the concept at the newest commit that
+    recorded the time of that confirmation, so the rule can miss an edit but
+    never flags a concept the person saw. Parsed values are compared, since
+    knowledge-apply.sh writes the whole frontmatter back: a requoted value
+    is no change. A move of the bundle's `base_iri` is no edit: the ids and
+    relation targets it carries along are compared by their paths under the
+    base each commit held. Outside git, or before that commit exists,
+    nothing is said.
     """
     if frontmatter.get("status") == "deprecated":
         return None
@@ -451,13 +440,14 @@ def parsed(text: str | None) -> tuple[dict, str] | None:
 def verdict_edits(bundle: Path, since: str) -> list[str]:
     """Rule 14: a commit that records a person's confirmation changes the verdict, not what the concept says.
 
-    Each commit after `since` that touches the bundle is read against every
-    parent, as the provenance job reads one. A person's event that no parent
-    holds is new in that commit. The commit may then change the concept's
-    claims only when `generated.by` names the same person, the shape of
-    Correct now: that person wrote the text as well as confirming it. A merge
-    that brings in a confirmation made elsewhere adds nothing new, so it is
-    never read as one. Outside git, or with no such base, nothing is said.
+    Rule 13 compares with the commit that recorded the confirmation, so an
+    edit made in that same commit would read as confirmed. Each commit after
+    `since` that touches the bundle is read against every parent, as the
+    provenance job reads one. One that adds a `human:` event no parent holds
+    may change the concept's claims only when `generated.by` names that same
+    person, which is how Correct now records an edit the person made. A
+    merge that brings in a confirmation made elsewhere adds nothing new, so
+    it is never read as one. Outside git nothing is said.
     """
     if not COMMIT.fullmatch(since):
         return [f"rule 14: '{since}' is not a commit - pass the base the pull request was opened against"]
@@ -508,9 +498,10 @@ def footnotes(path: Path, frontmatter: dict, body: str, source_ids: dict[str, di
     label has its definition line, and the definition holds the entry's
     `resource` verbatim, so a reader sees the source beside the claim and
     the footnote cannot drift from its entry. A footnote mark in a code
-    fence or a code span is an example, not a reference. Each id is recorded
-    in `source_ids` with its resource, for the check across the bundle in
-    main: one id names one resource.
+    fence or a code span is an example, not a reference. OKF v0.2 section
+    5.1 says a footnote whose label equals `id` attributes the claim to that
+    entry. Each id is recorded in `source_ids` with its resource, for the
+    check across the bundle in main: one id names one resource.
     """
     findings: list[str] = []
     sources = frontmatter.get("sources")
@@ -723,18 +714,15 @@ def check_file(
         findings.append(f"{path}: frontmatter is not a mapping")
         return findings
 
-    # 10. the fields the provenance gates and the report read line by line
-    #     are spelt so a line reader and a parser see the same thing.
+    # 10. plain spellings of the fields that line readers read.
     for what in plain_spellings(fm_text):
         findings.append(f"{path}: frontmatter uses {what} - write it plainly, so a line reader reads what a parser reads")
 
-    # 2. every `at:` a quoted time in one shape: unquoted, YAML resolves it to
-    #    a datetime, a date or a number, and only a string reaches every
-    #    consumer the same. In any other shape not every consumer reads it
-    #    alike, as UTC_TIME says. The finding prints the time as JSON writes
-    #    it, so it stays on one line and shows a character no reader would
-    #    see. The fix respells the same moment, since a new time from the
-    #    clock would re-date the event.
+    # 2. every `at:` a quoted time in UTC_TIME's shape. Unquoted, YAML
+    #    resolves it to a datetime, a date or a number. The finding prints
+    #    the time as JSON writes it, so it stays on one line and shows a
+    #    character no reader would see. The fix respells the same moment,
+    #    since a new time from the clock would re-date the event.
     for where, value in find_odd_at(frontmatter, ""):
         if isinstance(value, str):
             findings.append(
@@ -744,8 +732,8 @@ def check_file(
         else:
             findings.append(f"{path}: unquoted timestamp at {where}")
 
-    # 3. verified is a list, never a bare mapping, and carries at most one
-    #    process:ktl-librarian event.
+    # 3. verified is a list, so a writer appends an event without converting
+    #    the field first. It carries at most one process:ktl-librarian event.
     verified = frontmatter.get("verified")
     if isinstance(verified, dict):
         findings.append(f"{path}: verified is a bare mapping - write a one-item list")
@@ -772,8 +760,10 @@ def check_file(
         if in_section and line.startswith("- ") and not OPEN_QUESTION.match(line):
             findings.append(f"{path}: open question not '- YYYY-MM-DD, <actor>: ...': {line[:60]}")
 
-    # 18. each exclusion says why the material was left out, and no material
-    #     is both a source and an exclusion of one concept.
+    # 18. each exclusion says why the material was left out, since a blank
+    #     reason leaves a reviewer nothing to check. No material is both a
+    #     source and an exclusion of one concept: the toolkit only warns of
+    #     that, and this gate fails it.
     used = {same_material(s.get("resource")) for _, s in listed(frontmatter, "sources")}
     for i, exclusion in listed(frontmatter, "exclusions"):
         reason = exclusion.get("reason")
@@ -799,16 +789,14 @@ def check_file(
     if isinstance(title, str):
         titles.add(" ".join(title.split()))  # for rule 17
 
-    # 13. a concept that reads as confirmed by a person still says what that
-    #     person confirmed: an edit since then restamps `generated`.
+    # 13. an edit since a person's confirmation restamps `generated`.
     finding = unstamped_edit(path, frontmatter, body, bundle)
     if finding:
         findings.append(finding)
 
-    # 15. the concept names where it came from: a `resource`, or a `sources`
-    #     entry. The librarian's refresh follows those back to the origin,
-    #     and the coverage count credits a file to a concept through them, so
-    #     a concept with neither can be neither re-verified nor counted.
+    # 15. a `resource` or a `sources` entry, which the librarian's refresh and
+    #     the coverage count follow: a concept with neither can be neither
+    #     re-verified nor counted.
     resource, sources = frontmatter.get("resource"), frontmatter.get("sources")
     has_resource = isinstance(resource, str) and bool(resource.strip())
     has_sources = isinstance(sources, dict) or (isinstance(sources, list) and bool(sources))
@@ -854,12 +842,10 @@ def main(argv: list[str]) -> int:
             continue
         findings.extend(check_file(path, bundle, ids, entries, titles, source_ids))
 
-    # 12. an index bullet that names a concept says what the concept says. A
-    #     reader chooses from the index before opening anything, so a bullet
-    #     left behind by an edited title or description hides the concept as
-    #     surely as a missing one. Only a bullet that exists is compared, in
-    #     the folder's index.md and in the root's: a concept no index lists
-    #     is a choice this rule leaves alone.
+    # 12. an index bullet that names a concept says what the concept says.
+    #     ktl-docent chooses what to open from the bullets alone, so a bullet
+    #     left behind by an edit hides the concept it names. knowledge-apply.sh
+    #     keeps them equal for every concept it writes.
     cache: dict[Path, dict[str, tuple[str, str]]] = {}
     for path, entry in entries.items():
         places = {path.parent / "index.md": path.name, bundle / "index.md": path.relative_to(bundle).as_posix()}
@@ -891,15 +877,13 @@ def main(argv: list[str]) -> int:
                 "one id names one resource across the bundle, since the id mints one source node under the bundle base"
             )
 
-    # 14. a commit after the base that records a person's confirmation
-    #     changes only the verdict, unless that person also wrote the text.
-    #     Asked for a pull request's commits only: on a branch's whole
-    #     history a squash merge folds an edit and a confirmation into one.
+    # 14. only with a base, which the registrar's gate sets to the pull
+    #     request's: on a branch's whole history a squash merge folds an edit
+    #     and a later confirmation into one commit.
     if since:
         findings.extend(verdict_edits(bundle, since))
 
-    # 17. each Added and Deprecation bullet the latest run logged names a
-    #     concept the bundle holds, read since the base when one is given.
+    # 17. logged writes, read since the base when one is given.
     findings.extend(logged_writes(bundle, titles, since))
 
     for line in findings:

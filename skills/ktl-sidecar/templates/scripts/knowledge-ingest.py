@@ -5,64 +5,56 @@
 # [tool.uv]
 # exclude-newer = "2026-11-11T00:00:00Z"
 # ///
-# The ingest: knowledge outside the repository, mirrored into it.
-#
-# Reads .lokf/ingest.yaml, fetches each source it names, converts it to
-# Markdown and writes it under .lokf/mirror/<entry id>/, one file per page
-# or document, with a header: origin, title, version, digest, retrieval
+# The ingest reads .lokf/ingest.yaml, fetches each source it names, converts
+# it to Markdown and writes it under .lokf/mirror/<entry id>/, one file per
+# page or document, with a header: origin, title, version, digest, retrieval
 # time, converter. The lock, .lokf/ingest.lock.yaml, records the same per
-# item and a status: ok, gone, unlisted, failed, refused or skipped. A mirror file is repository
-# content the librarian reads as any tracked file. It is not knowledge yet.
+# item and a status: ok, gone, unlisted, failed, refused or skipped. A mirror
+# file is repository content the librarian reads as any tracked file, and
+# not knowledge yet.
 #
-# A confidential entry's copies and their records stay out of git: the copies
-# under .lokf/.cache/mirror/ and the records in .lokf/.cache/ingest.lock.yaml.
-# The committed lock holds the entry's status alone, so no title, address or
-# author of a confidential page is committed, unless the entry sets
-# lock_details: true. Records move between the locks on the entry's next run.
+# A confidential entry's copies go to .lokf/.cache/mirror/ and their records
+# to .lokf/.cache/ingest.lock.yaml, both out of git. The committed lock holds
+# only the entry's status, unless the entry sets lock_details: true. Records
+# move between the locks on the entry's next run.
 #
 # Kinds:
-#   - `confluence`: a label, space, page, tree or CQL selection; v1 search
-#     everywhere, v2 body on Cloud and v1 on Data Center; the version number
-#     is the change signal.
+#   - `confluence`: a label, space, page, tree or CQL selection, whose
+#     version number is the change signal.
 #   - `http`: addresses serving HTML, Markdown, text or PDF; ETag and
 #     Last-Modified when the server gives them, else the digest.
-#   - `git`: a path at a ref, over https, or http and a local path where the
-#     manifest allows private addresses; the commit is the version and the
-#     blob id the change signal, so a file is downloaded only when it
-#     changed; a file that is not Markdown is fenced.
-#   - `command`: a tracked command's output; the command's own digest is
-#     recorded too. Where git ignores both the manifest and the command, it
-#     runs and its record says it ran unchecked.
+#   - `git`: a path at a ref, over https, or over http or from a local path
+#     where the manifest allows private addresses. The commit is the version,
+#     and a file that is not Markdown is fenced.
+#   - `command`: a tracked command's output, recorded with the command's
+#     digest. Where git ignores both the manifest and the command, it runs,
+#     and its record says it ran unchecked.
 #
-# Listing comes before fetching, so an unchanged source costs a listing and no body. The
-# mirror and the lock change only when content changes. An entry that leaves
-# the manifest takes its folder with it. A file the lock names and the disk
-# has lost, or that was edited by hand or written before the lock kept its
-# digest, is fetched again and reported as restored. A name the workflow
-# would not publish, such as one with a space, is spelled in plain
-# characters, with a digest of the name so no two meet. At its time limit
-# the run starts no more work and writes what it has, and what it did not
-# reach keeps its record for the next run.
+# Listing comes before fetching, so an unchanged source costs a listing and
+# no body, and the mirror and the lock change only when content changes. An
+# entry that leaves the manifest takes its folder with it. A file the lock
+# names that is missing, edited by hand or recorded without its digest is
+# fetched again and reported as restored. At its time limit the run starts
+# no more work, writes what it has, and leaves the rest for the next run.
 #
 # Refused and recorded:
 #   - a token in the manifest (auth names environment variables starting
 #     KNOWLEDGE_INGEST_);
-#   - an entry the repository's visibility does not allow (internal: a
-#     private repository only; confidential: never committed, kept under
-#     .lokf/.cache/mirror/, and refused where git does not ignore that folder
-#     or tracks a file in it);
+#   - an internal entry in a public repository or one whose visibility is
+#     unknown, and a confidential entry where git would commit its copies or
+#     their records;
 #   - more than max_items;
 #   - a body over max_item_bytes or a mirror over max_total_bytes;
 #   - a private address unless the manifest allows it;
 #   - a git host name outside ASCII, where the manifest refuses private
-#     addresses, and a git address that git's own configuration rewrites;
+#     addresses, and a git address that git's configuration rewrites;
 #   - a path outside the mirror root;
 #   - an unexpected content type;
 #   - a PDF with no text layer.
 #
-# Characters no reader sees are removed, apart from the two joiners
-# some scripts spell with. One entry's failure, expected or not, never stops
-# the others.
+# Characters no reader sees are removed, apart from the two joiners some
+# scripts spell with. One entry's failure, expected or not, never stops the
+# others.
 #
 # Usage, through knowledge-ingest.sh beside it:
 #   knowledge-ingest.py [--root DIR] [--visibility public|private|internal|unknown]
@@ -78,16 +70,16 @@
 #   --status    one line for the preflight
 #   --patch     Reference concepts for entries with `reference: true`, as
 #               operations for knowledge-apply.sh, to .lokf/patch.yaml or FILE
-#   --time-limit  the minutes after which the run starts no more work (25),
-#               so it ends inside the workflow job's 30 with its work written
+#   --time-limit  the time limit in minutes (25), so a run ends inside the
+#               workflow job's 30 with its work written
 # Exit 0 completed (the lock says how each entry fared); 1 stopped by the
 # manifest or an argument before any write; 2 a tool is missing.
 #
-# The dependency block names one pypdf release, and `exclude-newer` takes no
-# file uploaded after its date. Behind a mirror with no upload times, the
-# shell half lifts the date only for a pinned package.
-# When a release fixes a flaw in pypdf, which reads PDFs from outside the
-# repository, move the pins and the date together.
+# The dependency block pins pypdf, which reads PDFs from outside the
+# repository, and `exclude-newer` takes no file uploaded after its date.
+# Behind a mirror with no upload times, the shell half lifts the date only
+# for a pinned package. When a release fixes a flaw in pypdf, move the pins
+# and the date together.
 """The ingest: knowledge outside the repository, mirrored into it."""
 
 from __future__ import annotations
@@ -160,11 +152,10 @@ ATTEMPTS = 3
 TEXT_TYPES = {"text/markdown": "text", "text/x-markdown": "text", "text/plain": "text", "text/html": "html-markdown",
               "application/xhtml+xml": "html-markdown", "application/pdf": "pdf-text"}
 KEPT = "\u200c\u200d"  # the zero-width non-joiner and joiner, which Persian, Arabic and Indic scripts and emoji sequences spell with
-# The characters Unicode calls default ignorable, which a renderer draws as
-# nothing, beyond the format and control characters: variation selectors,
-# which can spell hidden text after a visible character, the Hangul fillers
-# and the combining grapheme joiner, among others. knowledge-apply.py holds
-# the same list.
+# The default ignorable characters beyond the format and control ones, which
+# a renderer draws as nothing: variation selectors, which can spell hidden
+# text after a visible character, the Hangul fillers, the combining grapheme
+# joiner and others. knowledge-apply.py holds the same list.
 IGNORABLE = re.compile("[\u034f\u115f\u1160\u17b4\u17b5\u180b-\u180f\u2065\u3164\ufe00-\ufe0f\uffa0\ufff0-\ufff8\U000e0000-\U000e0fff]")
 PLAIN_PATH = re.compile(r"[A-Za-z0-9._/@+-]+")  # the characters the workflow's publish job lets a path hold
 PASSED_THROUGH = ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
@@ -226,9 +217,8 @@ def utc(text: str) -> str:
 def shown(text: str) -> str:
     """The text without the characters no reader sees, line breaks, tabs and the two joiners kept.
 
-    A lone surrogate, which a server's charset such as unicode_escape can
-    decode to and no UTF-8 file can hold, becomes the replacement character,
-    as a byte that does not decode does.
+    A lone surrogate, which a charset such as unicode_escape can decode to
+    and no UTF-8 file can hold, becomes the replacement character.
     """
     out = []
     for ch in text:
@@ -286,11 +276,11 @@ def md_name(item: str) -> str:
 
 
 def publishable(name: str) -> str:
-    """A mirror path the workflow publishes: the name as it is when it is plain, else each part that is not spelled in plain characters.
+    """A mirror path the workflow publishes: the name as it is when it is plain, else with each part that is not plain spelled again.
 
     Accents are dropped, any other character outside the plain set becomes
-    a hyphen, and a digest of the part as it was is added, so two names
-    that spell alike, such as "a b.md" and "a-b.md", never meet.
+    a hyphen, and a digest of the part is added, so two names that spell
+    alike, such as "a b.md" and "a-b.md", never meet.
     """
     if PLAIN_PATH.fullmatch(name):
         return name
@@ -339,9 +329,9 @@ class Auth:
 def secret(environ: dict, name: str) -> str:
     """A value from the environment, without the spaces or line break a pasted secret can end with.
 
-    A control character inside it is refused by the variable's name. In a
-    header, a line break makes the request fail with an error that quotes
-    the header, and that error would carry the credential into the lock.
+    A control character inside it is refused by the variable's name: in a
+    header, a line break fails the request with an error that quotes the
+    header, and would carry the credential into the lock.
     """
     value = environ.get(name, "").strip()
     if any(unicodedata.category(ch) == "Cc" for ch in value):
@@ -617,7 +607,7 @@ def read_lock(path: Path) -> dict:
     if not isinstance(raw, dict) or str(raw.get("ingest_lock_version", "")) != LOCK_VERSION:
         raise Stop(f"{path.name}: ingest_lock_version is \"{LOCK_VERSION}\" for this script")
     # A lock edited by hand into another shape stops the run here, by name,
-    # and not with a traceback halfway through.
+    # not with a traceback halfway through.
     shape = f"{path.name}: entries maps each entry id to its record, and a record's items map each item id to its record"
     raw["entries"] = raw.get("entries") or {}
     if not isinstance(raw["entries"], dict):
@@ -665,8 +655,8 @@ def proxy_for(url: str, git: bool = False) -> str:
     """The proxy a request to url goes through, as urllib decides it, or "" for none.
 
     urllib reads the environment, and on macOS and Windows the system's
-    settings too. For git, all_proxy counts too: git reads it when no
-    variable names a proxy for the scheme.
+    settings. For git, all_proxy counts too: git reads it when no variable
+    names a proxy for the scheme.
     """
     parts = urllib.parse.urlsplit(url)
     proxies = urllib.request.getproxies()
@@ -713,10 +703,9 @@ def connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_addre
     """Open a connection as socket.create_connection does, to an address that was checked.
 
     http_get checks the host before the request, and the connection resolves
-    the name again. A name whose answer changes between the two (DNS
-    rebinding) would pass the first and reach the second, so the name is
-    resolved once, here, and the socket connects to the address that was
-    checked.
+    the name again, so a name whose answer changes between the two (DNS
+    rebinding) would pass. Here the name is resolved once, and the socket
+    connects to an address that was checked.
     """
     host, port = address
     infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
@@ -787,8 +776,8 @@ class Redirects(urllib.request.HTTPRedirectHandler):
         if not self.allow_private and address_is_private(newurl):
             raise FetchFailed(f"redirected to a private address: {new.hostname}")
         # A page asked for over https is not taken over plain http, whatever
-        # the manifest allows: it names an http address itself where that is
-        # meant, so the step down is a choice a person made and can read.
+        # the manifest allows: a manifest that means http names the http
+        # address, so the step down is a choice a person made and can read.
         if urllib.parse.urlsplit(req.full_url).scheme == "https" and new.scheme == "http":
             raise FetchFailed(f"redirected from https to http://{new.netloc}{new.path} - name that address in the manifest, "
                               "with allow_private_addresses: true, if plain http is meant")
@@ -852,10 +841,10 @@ def http_get(url: str, headers: dict, allow_private: bool, max_bytes: int, timeo
                         raise FetchFailed(f"the body took more than {timeout * BODY_TIMEOUTS} seconds")
                 if len(data) > max_bytes:
                     raise Refused(f"over max_item_bytes ({max_bytes})")
-                # read1 returns what arrived and never says the body was cut
-                # short. `length` counts what the Content-Length still
-                # promises, so a number left there is a broken response: it
-                # is tried again, and never mirrored as the whole page.
+                # read1 never says the body was cut short. `length` counts what
+                # the Content-Length still promises, so a number left there is
+                # a broken response: it is tried again, and never mirrored as
+                # the whole page.
                 if getattr(resp, "length", None):
                     raise http.client.IncompleteRead(bytes(data), resp.length)
                 return Response(resp.status, {k.lower(): v for k, v in resp.headers.items()}, bytes(data), resp.geturl())
@@ -1621,10 +1610,9 @@ class Confluence:
     def listing(self) -> list[dict]:
         """The selector's pages, with the title, version and author the site gives, each title and name as one line a reader sees whole.
 
-        A page of results may hold none and still name a next one, so a
-        listing still going after a page for every result max_items allows
-        is cut off, and an answer that always names a next page cannot keep
-        the run.
+        A page of results may hold none and still name a next one. So the
+        listing is cut off after a page for each result max_items allows, and
+        an answer that always names a next page cannot hold up the run.
         """
         items, start, limit = [], 0, 50
         query = {"cql": self.cql(), "expand": "version", "limit": limit, "start": start}
@@ -1736,9 +1724,8 @@ def run_http(ctx: Context, entry: Entry, prior: dict) -> tuple[list[Item], dict]
             digest = sha256_hex(resp.data)
             if was.get("status") == "ok" and was.get("sha256") == "sha256:" + digest:
                 # A server may give new validators for the same bytes, after
-                # a deploy or on every answer. The run that next changes the
-                # lock records them, so they change no line of a lock that
-                # would not change anyway.
+                # a deploy or on every answer. Run.commit records them only in
+                # a lock that changes anyway.
                 fresh = {"etag": resp.headers.get("etag", ""), "last_modified_header": resp.headers.get("last-modified", "")}
                 if any(fresh[k] != was.get(k, "") for k in fresh):
                     ctx.fresher[(entry.id, item_id)] = fresh
@@ -1821,16 +1808,15 @@ def git_pin(url: str) -> list[tuple[str, str]]:
 
     Git resolves the name again when it connects, so a name that answers a
     public address to the check and a private one to git (DNS rebinding)
-    would pass. http.curloptResolve, which git reads from 2.37 and an older
-    git ignores, hands git the addresses that were checked. A redirect would
-    send git to a name it resolves itself, so none is followed.
+    would pass. http.curloptResolve gives git the checked addresses; git
+    reads it from 2.37, and an older git ignores it. A redirect would send
+    git to a name it resolves itself, so none is followed.
 
-    Git uses the proxy proxy_for chose, or none, whatever its own
-    configuration says, and git_env removes no_proxy, which curl would read
-    to choose again. So the check and the fetch agree on the route. Through
-    a proxy that resolves names, curl does not resolve the name, so a pin
-    would change nothing and git gets none. A name that resolves only at
-    such a proxy is sent to it unchecked.
+    Git uses the proxy proxy_for chose, or none, whatever its configuration
+    says, and git_env removes no_proxy, so the check and the fetch take the
+    same route. Through a proxy that resolves names, curl does not resolve
+    the name, so git gets no pin. A name that resolves only at such a proxy
+    is sent to it unchecked.
     """
     parts = urllib.parse.urlsplit(url)
     host, port = parts.hostname or "", parts.port or (443 if parts.scheme == "https" else 80)
@@ -1859,13 +1845,13 @@ def git_pin(url: str) -> list[tuple[str, str]]:
 
 def git_env(entry: Entry, ctx: Context, home: Path, pinned: list | tuple = ()) -> dict:
     """A clean environment for git: the protocols the manifest allows, the route git_pin checked, and the credential as configuration scoped to the entry's address, so it is never on the command line and never sent to another host."""
-    # The identity is for the reflog of the fetched ref: without one, git looks
-    # the user up, which on a machine with a slow name service waits seconds.
+    # The identity is for the reflog of the fetched ref: without one, git
+    # looks the user up, which waits seconds on a slow name service.
     #
     # HOME is a folder of the run's own: curl sends the credential of a
     # ~/.netrc default entry to any host, and git 2.31, which predates
-    # GIT_CONFIG_GLOBAL and GIT_CONFIG_SYSTEM, reads ~/.gitconfig. With
-    # GIT_CONFIG_NOSYSTEM, no version of git reads /etc/gitconfig.
+    # GIT_CONFIG_GLOBAL and GIT_CONFIG_SYSTEM, reads ~/.gitconfig.
+    # GIT_CONFIG_NOSYSTEM keeps every git from reading /etc/gitconfig.
     env = passed_through({"PATH": os.environ.get("PATH", ""), "HOME": str(home), "GIT_TERMINAL_PROMPT": "0",
                           "GIT_CONFIG_GLOBAL": os.environ.get("GIT_CONFIG_GLOBAL", "/dev/null"), "GIT_CONFIG_NOSYSTEM": "1",
                           "GIT_AUTHOR_NAME": "knowledge-ingest", "GIT_AUTHOR_EMAIL": "knowledge-ingest@localhost",
@@ -1936,7 +1922,7 @@ class FilesRefused(Exception):
 
 
 def named(rel: str, pattern: str) -> bool:
-    """Whether an include or exclude pattern names a file. The pattern is matched against the whole path, where `*` crosses a folder. A pattern with no slash is also matched against the file's own name, as a line of .gitignore is, so `draft-*` leaves a draft out of every folder. Letter case counts on every platform."""
+    """Whether an include or exclude pattern names a file. The pattern is matched against the whole path, where `*` crosses a folder. A pattern with no slash is also matched against the file's name, as a line of .gitignore is, so `draft-*` leaves a draft out of every folder. Letter case counts on every platform."""
     return fnmatch.fnmatchcase(rel, pattern) or ("/" not in pattern and fnmatch.fnmatchcase(rel.rsplit("/", 1)[-1], pattern))
 
 
@@ -2023,8 +2009,7 @@ def mirror_git(ctx: Context, entry: Entry, prior: dict, env: dict, repo: Path, u
             unchanged[item_id] = was
             continue
         wanted.append((f, rel, oid, item_id, was))
-    # The files that changed, a batch at a time, so a run stopped at its
-    # time limit keeps the batches it read.
+    # The files that changed, GIT_BATCH at a time.
     for start in range(0, len(wanted), GIT_BATCH):
         batch = wanted[start:start + GIT_BATCH]
         try:
@@ -2258,8 +2243,8 @@ def frontmatter_of(path: Path) -> dict:
 def cited_paths(root: Path) -> set:
     """Every path a concept names in resource or sources, relative to the root, with a fragment cut off.
 
-    An exclusion cites nothing: a concept that left a mirror file out on
-    purpose does not keep it once its item is gone or unlisted.
+    An exclusion cites nothing: a concept that excludes a mirror file does
+    not keep it once its item is gone or unlisted.
     """
     out = set()
     knowledge = root / ".lokf" / "knowledge"
@@ -2369,35 +2354,30 @@ class Run:
             self.failed += 1
             self.summary.append(f"- {entry.id} ({entry.describe()}): refused, {shown(why)}")
             return
-        # The other lock may hold the entry's records from before: from a run
-        # with lock_details set the other way, or from before the entry was
-        # made confidential or stopped being so. They join this lock's once the
-        # entry has run. Nothing changes before then, so an entry the time
-        # limit stops keeps both locks and its files as they were.
+        # Records the other lock holds join this lock's once the entry has run.
+        # Nothing changes before then, so an entry the time limit stops keeps
+        # both locks and its files as they were.
         prior = self.records(entry)
         folder = self.mirror_root(entry) / entry.id
         # The sensitivity picks the folder, so after a change the entry's files
-        # are in the other mirror. Each is removed there and its record
-        # dropped, and a current one is fetched again into this folder. So an
-        # entry made confidential leaves the committed mirror.
+        # are in the other mirror. Each is removed there, its record dropped,
+        # and a current one fetched again into this folder: an entry made
+        # confidential leaves the committed mirror.
         moved = [i for i, was in prior.items() if was.get("path") and not self.within(str(was["path"]), folder)]
         elsewhere = [self.root / str(prior[i]["path"]) for i in moved if self.removable(str(prior[i]["path"]))]
         for i in moved:
             del prior[i]
-        # A file the lock calls current and the disk has lost, or that was
-        # edited by hand or written before the lock kept its digest, is handed
-        # to the kind as if new, so it is fetched and written again instead of
-        # skipped as unchanged. So an upgrade writes the mirror again, as many
-        # items a run as its time limit allows, each with its digest.
+        # A file the lock calls current that fails mirrored_as_written is
+        # passed to the kind as if new, so it is fetched and written again, not
+        # skipped as unchanged.
         lost = {i for i, was in prior.items() if was.get("status") == "ok" and was.get("path") and not mirrored_as_written(self.root, was)}
         present = {i: was for i, was in prior.items() if i not in lost}
-        # A file's header and its Markdown follow the entry's settings and the
-        # converters too. When they changed since the files were written, every
-        # item is fetched and written again, so that authors: false, say, or a
-        # new converter reaches a page that has not changed. A file whose
-        # source is gone or unlisted gets its header written again below.
-        # A record from before this digest was kept takes it as it
-        # is: its items carry no file digest, so they are written again anyway.
+        # A file's header and Markdown follow the entry's settings and the
+        # converters too. When they changed, every item is fetched and written
+        # again, so that authors: false or a new converter reaches a page that
+        # has not changed; rewrite_headers serves a gone or unlisted source. An
+        # entry recorded before this digest was kept has none stored, and its
+        # items have no file digest either, so they are written again anyway.
         settings = settings_digest(entry)
         stored = [(lock["entries"].get(entry.id) or {}).get("settings") for lock in (book, other)]
         stored = next((d for d in stored if d), "")
@@ -2470,10 +2450,10 @@ class Run:
         for it in items:
             was = prior.get(it.item) or {}
             # A binary file, and one refused for its size, keeps the blob id it
-            # was skipped or refused at, so it is not downloaded again while it
-            # stays so. A file skipped for its name needs no record. A file
-            # mirrored before that is binary now is unlisted, so its copy waits
-            # for --prune, and for no concept to cite it, as any unlisted copy does.
+            # was skipped or refused at, so mirror_git does not download it
+            # again while it stays so. A file skipped for its name needs no
+            # record. A mirrored file that is binary now is unlisted, so its
+            # copy waits for --prune, as any unlisted copy does.
             blob = {"blob": it.blob} if it.blob else {}
             if it.skipped and it.blob and was.get("path"):
                 new_items[it.item] = dict(was, status="unlisted", since=self.away_since(was), reason=f"{it.skipped} now")
@@ -2587,11 +2567,11 @@ class Run:
     def rewrite_headers(self, entry: Entry, items: dict, folder: Path) -> int:
         """Write the header again, from its record and the entry's settings, of each file whose item this run did not fetch; how many.
 
-        A source that is gone or unlisted cannot be fetched, and one refused
-        or failed may stay so, so after a change of settings only the header
-        follows: authors: false takes the author out of the record and the
-        file, and a new license goes in. The body stays as its converter wrote
-        it, and so does the converter the header names.
+        A gone or unlisted source cannot be fetched, and a refused or failed
+        one may stay so. After a change of settings only the header of such a
+        file follows: authors: false takes the author out of the record and
+        the file, and a new license goes in. The body, and the converter the
+        header names, stay as they were.
         """
         n = 0
         for was in items.values():
@@ -2683,10 +2663,9 @@ class Run:
                     self.summary.append(f"- {eid}: no longer in the manifest, so {path} is removed{note}")
                 if not record.get("items"):
                     self.summary.append(f"- {eid}: no longer in the manifest, so its record is dropped")
-        # The committed lock's line for a confidential entry that ran says how
-        # the run went, and nothing of its items, whose records are in the
-        # cache's lock. An entry that did not run keeps its line as it was,
-        # records from before included, until it does.
+        # The committed lock's line for a confidential entry that ran holds its
+        # status and reason only. An entry that did not run keeps its line as
+        # it was, records from before included, until it does.
         for eid in sorted(self.settled):
             record = self.cache_lock["entries"].get(eid) or {}
             self.lock["entries"][eid] = {key: discreet(str(record[key])) if key == "reason" else record[key] for key in ("status", "reason") if key in record}
@@ -2702,9 +2681,7 @@ class Run:
         before = lock_path.read_text(encoding="utf-8") if lock_path.is_file() else None
         text = to_yaml(self.lock)
         if self.ctx.fresher and text != before:
-            # New validators are written only with another change: a lock
-            # that changes anyway takes those a server gave for bytes that
-            # did not change.
+            # The lock changes anyway, so it takes the new validators too.
             for (eid, item_id), fresh in self.ctx.fresher.items():
                 it = ((self.lock["entries"].get(eid) or {}).get("items") or {}).get(item_id)
                 if it and it.get("status") == "ok":
@@ -2775,11 +2752,9 @@ def status_line(root: Path, manifest_path: Path, lock_path: Path, environ: dict)
         parts.append("tokens present: " + ", ".join(present))
     if absent:
         parts.append("tokens absent: " + ", ".join(absent))
-    # Every git entry needs git 2.31, which reads the configuration the run
-    # sets in the environment. An entry that git_pin holds to a checked
-    # address, a host name that no proxy resolves, needs 2.37, which reads
-    # http.curloptResolve. The run refuses either with an older git, so the
-    # preflight warns first.
+    # The run refuses an older git (run_git, git_pin), so the preflight warns
+    # first: every git entry needs 2.31, and one that git_pin holds to a
+    # checked address, a host name that no proxy resolves, needs 2.37.
     gits = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled]
     pinned = [e.id for e in manifest.entries if e.kind == "git" and not e.disabled and pin_needed(e.url, manifest.allow_private)
               and not ip_literal(urllib.parse.urlsplit(e.url).hostname or "") and not proxy_resolves(proxy_for(e.url, git=True))]
@@ -2803,8 +2778,8 @@ def origin_key(origin) -> str:
 def reference_owners(folder: Path) -> dict:
     """The Reference concepts a patch wrote before, by the mirror path of the ingest's source entry and by the origin each names as its resource.
 
-    A confidential entry's concept names no mirror path, so it is found by its
-    origin alone, and a git origin is compared without its commit.
+    A confidential entry's concept names no mirror path, so it is found only
+    by its origin, and a git origin is compared without its commit.
     """
     owners: dict = {}
     if not folder.is_dir():
@@ -2842,7 +2817,7 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
             if it.get("status") != "ok":
                 continue
             # An item keeps the concept that already names its copy or its
-            # origin. A new item takes the name its own slugs to, unless
+            # origin. A new item takes the concept its name slugs to, unless
             # another item has that concept or takes it in this patch.
             concept = owners.get(str(it.get("path", ""))) or owners.get(origin_key(it.get("origin", "")))
             if not concept or concept in used:
@@ -2977,9 +2952,9 @@ def main(argv: list[str]) -> int:
             "Nothing fetched is knowledge yet: the librarian derives concepts from the mirror on its next run.")
     if not changed:
         tail = "Nothing changed since the last run. " + tail
-    # Each line of the summary stays one line, indent kept: a file name or a
-    # reason a source gave may hold a line break, which would start a line of
-    # the pull request's body, or a workflow command in the job's log.
+    # Each line of the summary stays one line, its indent kept. A file name or
+    # a reason a source gave may hold a line break, which would start a line
+    # of the pull request's body, or a workflow command in the job's log.
     summary = [line[: len(line) - len(line.lstrip(" "))] + one_line(line) for line in run.summary]
     lines = [heading, "", *summary, "", tail, ""]
     text = "\n".join(lines)

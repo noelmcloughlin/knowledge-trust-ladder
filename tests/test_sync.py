@@ -211,18 +211,25 @@ def test_a_host_at_the_release_has_nothing_to_sync(tmp_path, skills, checks):
     checks.ok(read(host / "CHANGELOG.md").count(ENTRY_START) == 1, "the entry is written once")
 
 
-def test_a_host_with_a_site_gets_the_site_templates_brackets_and_all(tmp_path, skills, checks):
+@pytest.mark.parametrize("folder", ["website", "ktl-website"])
+def test_a_host_with_a_site_gets_the_site_templates_in_whichever_folder_holds_it(tmp_path, skills, checks, folder):
+    """The site is in website/, or in ktl-website/ where website/ was another site's, which the sync then leaves alone."""
     host = make_host(tmp_path, skills)
-    write(host / "website" / "site.config.mjs", "export const TITLE = 'Acme';\n")
+    write(host / folder / "site.toml", 'title = "Acme"\n')
+    if folder == "ktl-website":
+        write(host / "website" / "index.html", "<p>another site</p>\n")
     git = Git(host)
     git("add", "-A")
     git("commit", "-qm", "a site")
     result = sync(host, skills)
     checks.ok(result.rc == 0, "exit 0", result.out)
-    route = "website/src/pages/og/[...route].ts"
-    checks.ok(has_line(result.out, f"   added    {route} (the site cannot build without it)"), "a route named with brackets is added", result.out)
-    checks.ok(read(host / route) == read(WEBSITE_TEMPLATES / "website" / "src" / "pages" / "og" / "[...route].ts"), "with the template's bytes")
-    checks.ok(read(host / "website" / "site.config.mjs") == "export const TITLE = 'Acme';\n", "the site file the host owns is left alone")
+    adapter = "content/docs/_content.gotmpl"
+    checks.ok(has_line(result.out, f"   added    {folder}/{adapter} (the site cannot build without it)"), "a template the site lacks is added", result.out)
+    checks.ok(read(host / folder / adapter) == read(WEBSITE_TEMPLATES / "website" / adapter), "with the template's bytes")
+    checks.ok((host / folder / ".gitignore").is_file() and not (host / folder / "gitignore").exists(), "the gitignore gets its dot")
+    checks.ok(read(host / folder / "site.toml") == 'title = "Acme"\n', "the site file the host owns is left alone")
+    if folder == "ktl-website":
+        checks.ok(sorted(p.name for p in (host / "website").iterdir()) == ["index.html"], "another site's website/ is left alone")
 
 
 def test_the_entry_joins_an_existing_security_section_at_its_end(tmp_path, skills, checks):
@@ -551,11 +558,11 @@ def test_every_synced_copy_passes_the_publish_jobs_path_check():
     allow = re.search(r"^sync_paths='([^']+)'$", text, re.M).group(1)
     odd = re.search(r"^plain_path='([^']+)'$", text, re.M).group(1)
     owned = re.search(r"^owned_paths='([^']+)'$", text, re.M).group(1)
-    for _, copy in synced_pairs() + [("", "CHANGELOG.md"), ("", "website/src/pages/og/[...route].ts")]:
+    for _, copy in synced_pairs() + [("", "CHANGELOG.md"), ("", "website/content/docs/_content.gotmpl"), ("", "ktl-website/layouts/_partials/route.html")]:
         assert re.search(allow, copy), f"{copy} is outside the paths the publish job allows"
         assert re.search(odd, copy), f"{copy} has a character the publish job refuses"
         assert not re.search(owned, copy), f"{copy} is a site file the host owns"
-    for path in ("website/site.config.mjs", "website/README.md", "website/src/styles/custom.css"):
+    for path in ("website/site.toml", "website/README.md", "website/assets/css/custom.css", "ktl-website/site.toml"):
         assert re.search(owned, path), path
     assert "knowledge-sync.sh --apply" in read(WORKFLOW), "the publish job puts the patch on with the host's own script"
 
@@ -646,7 +653,7 @@ def _outside(host, git):
 
 
 def _owned(host, git):
-    write(host / "website" / "site.config.mjs", "export const TITLE = 'x';\n")
+    write(host / "website" / "site.toml", 'title = "x"\n')
 
 
 @pytest.mark.parametrize(

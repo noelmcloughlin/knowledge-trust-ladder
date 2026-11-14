@@ -23,18 +23,16 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-14T10:18:02Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-02T13:29:19Z"
+    at: "2026-11-14T12:32:59Z"
 ---
 
 # Overview
 
 Much of what a team knows lives outside the repository: a wiki space, a document at an intranet address, a file in another repository, the output of a command. The **ingest** brings a copy in, as `docs/ingest.md` says, and `docs/ingest-reference.md` lists what can be mirrored, every key of the manifest, and what the mirror and the lock record. A manifest names each source, a script writes it as Markdown under `.lokf/mirror/`, and a pull request shows what changed. The librarian then derives concepts from the copy as from any tracked file, citing both the copy and its origin. Nothing in the trust ladder changes: a concept derived from a wiki page is agent-derived until a person confirms it.
-
-The ingest was released in 0.49.0, and 0.50.0 added the restore of lost mirror files and the scheduled prune (`CHANGELOG.md`).
 
 # What can be mirrored
 
@@ -80,7 +78,7 @@ The workflow runs on Sundays and keeps one pull request open on the branch `know
 
 # Security
 
-The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. Since 0.56.1 it checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing, unless the manifest allows private addresses (`CHANGELOG.md`). Since 0.64.0 the ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run (`CHANGELOG.md`). `docs/threat-model.md` covers the ingest workflow.
+The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. It checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing, unless the manifest allows private addresses (`CHANGELOG.md`). The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run (`CHANGELOG.md`). `docs/threat-model.md` covers the ingest workflow.
 
 Behind a proxy, the proxy resolves each name. The script still refuses a name that resolves locally to a private address, but it cannot check a name that resolves only at the proxy, so the proxy must refuse private addresses itself. Where the manifest refuses private addresses, git uses the proxy that `https_proxy` or `all_proxy` names for a `git` entry, and ignores any proxy in git's own configuration.
 

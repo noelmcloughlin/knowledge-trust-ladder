@@ -210,6 +210,11 @@ def findings(tmp_path_factory) -> str:
         x / "t-tag.md",
         '---\ntype: Service\nid: https://example.invalid/k/x/t\nverified: [{ by: !!str human:contract, at: "2026-09-17T00:00:00Z" }]\n---\n',
     )
+    # An anchor and an alias on fields no gate reads: refused all the same.
+    write(
+        x / "t-anchor.md",
+        "---\ntype: Service\nid: https://example.invalid/k/x/t-anchor\ntitle: &t Anchored\ndescription: *t\n---\n",
+    )
     write(
         x / "q2-quotedevent.md",
         '---\ntype: Service\nid: https://example.invalid/k/x/q2-quotedevent\n"verified":\n  - by: human:contract\n    at: "2026-09-17T00:00:00Z"\n---\n',
@@ -371,6 +376,8 @@ REPORTED = [
     "qd-dashes.md: frontmatter holds '---'",
     "qe-link.md: is a symbolic link",
     "t-tag.md: frontmatter uses a tag on",
+    "t-anchor.md: frontmatter uses an anchor (&t)",
+    "t-anchor.md: frontmatter uses an alias (*t)",
     "cm-comment.md: frontmatter uses a comment beside at",
     'r11-late.md: at "2026-09-17T01:00:00Z" is later than the commit that recorded it (2026-09-17T00:00:00Z)',
     'r11-future.md: at "2999-01-01T00:00:00Z" is in the future',

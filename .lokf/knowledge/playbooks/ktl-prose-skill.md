@@ -27,7 +27,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-14T12:46:18Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -55,7 +55,7 @@ A museum edits its labels before the exhibition opens. `ktl-prose` does that for
 12. Open each page by saying who it is for.
 13. Report what you cannot fix.
 
-Since 0.55.0 `references/rules.md` also gives a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion. Since 0.55.1 it names the dead sentence, which repeats what the page already says or gives a reason the reader can supply, and "either way" with no alternatives the reader can find. It also names two cases only the author can settle: a quantity no source on the page gives, and a phrase that stands for a list the text never gives (`CHANGELOG.md`).
+`references/rules.md` also gives a method for a paragraph with two topics, the rule before its exception, pointing words as names, and the quiet figures of motion. It names the dead sentence, which repeats what the page already says or gives a reason the reader can supply, and "either way" with no alternatives the reader can find. It also names two cases only the author can settle: a quantity no source on the page gives, and a phrase that stands for a list the text never gives (`CHANGELOG.md`).
 
 A last section of `references/rules.md`, apart from the thirteen, says where a line ends in the source. In the bundle that is one line for each paragraph and each list item, as ktl-librarian writes it. Outside the bundle the host's layout holds: one line per paragraph, one sentence per line, or a fixed column. A file's layout changes only when the person asks.
 
@@ -85,21 +85,21 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 # Steps
 
 0. **Preflight**: run the preflight and the conventions script first, as every skill that touches the bundle does. The skill never opens `.lokf/feedback.md`.
-1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. Since 0.55.0 `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". The script runs through `uv run`, or a python3 of 3.9 or later, never bare `python`. Then the agent reads every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows. The report quotes in full every sentence the agent would cut, so that the person answers once.
+1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". Under rule 11 the words also include "stops without", which states a need as what happens without the thing; the script skips it before "notice", "warning" or a word ending in "ing". The script runs through `uv run`, or a python3 of 3.11 or later, never bare `python`. Then the agent reads every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows. The report quotes in full every sentence the agent would cut, so that the person answers once.
 2. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, lay out what it rewords the way the file's project does, and leave what cannot be fixed.
 3. **Check** what a script can, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something a rewording never changes, such as a number, a link, a code span or a claim that turned over, and the agent undoes it. A note asks the agent to look again, and never changes the exit status. `references/limits.md` lists every finding and note, and what no script sees.
 4. **Log** one **Prose** line in `log.md`.
 5. **Hand off** a change scoped to `.lokf/`. Give the counts before and after, the words before and after from the script's `OK` line, each sentence left alone, each concept skipped, each note the script gave with the decision on it, and what no script proved: that the meaning held. End with a **For the CURATOR** section.
 
-Since 0.61.0 the comparison stops a sentence that turned over: a word given way to its opposite, such as `enabled` to `disabled`, or a negative gained or lost with every other word in place. Since 0.63.0 it reads a list item and a table row as a sentence each (`CHANGELOG.md`). It also stops a word given way to the same word with a negating prefix, such as `confirmed` to `unconfirmed`, and one number word given way to another. It stops two runs of words that changed places, and a number, a link or a code span that changed places with one in another sentence or row.
+The comparison stops a sentence that turned over: a word given way to its opposite, such as `enabled` to `disabled`, or a negative gained or lost with every other word in place. It reads a list item and a table row as a sentence each (`CHANGELOG.md`). It also stops a word given way to the same word with a negating prefix, such as `confirmed` to `unconfirmed`, and one number word given way to another. It stops two runs of words that changed places, and a number, a link or a code span that changed places with one in another sentence or row.
 
 A note gives the line where it can. `strength` names a word of strength that came or went, `word` one word that gave way to another, `order` the same words in a new order, and `link-text` a link whose words changed. `page-words` lists the words the page lost and gained, and `sentence-gone` marks a sentence few of whose words came through. A pass says that what the script reads came through, not that the meaning held. `references/sources.md` holds where the rules come from, and what the sources say about line breaks.
 
 # Outside the bundle
 
-The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout.
+The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, such as the released sections of a changelog unless the person asks, never on its own, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout.
 
-Since 0.55.0 the script reads a script too. Given a `.sh`, `.bash`, `.py`, `.yaml`, `.yml` or `.toml` file, or a justfile, it reads the `#` comments and, in Python, the docstrings, each block of comment lines as a paragraph. It never reads the code. `references/other-files.md` makes the block a change touches, not the lines it adds, the unit of a comment review. The script also reads a comment's layout as a person does. It reads a table of options row by row, and does not read a command after a colon or a `Usage` line. `--against` compares a script as its comments.
+The script reads a script too. Given a `.sh`, `.bash`, `.py`, `.yaml`, `.yml` or `.toml` file, or a justfile, it reads the `#` comments and, in Python, the docstrings, each block of comment lines as a paragraph. It never reads the code. `references/other-files.md` makes the block a change touches, not the lines it adds, the unit of a comment review. The script also reads a comment's layout as a person does. It reads a table of options row by row, and does not read a command after a colon or a `Usage` line. `--against` compares a script as its comments.
 
 # Younger readers
 

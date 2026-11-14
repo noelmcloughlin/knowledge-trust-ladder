@@ -3,15 +3,13 @@
 # of this repository, each on a branch of its own, and finish the branches
 # once their pull requests are merged.
 #
-# The sync itself is skills/ktl-sidecar/templates/scripts/knowledge-sync.sh,
-# a template every sibling carries as .lokf/scripts/knowledge-sync.sh. That
-# script's header says what a sync copies, adds and refuses, and why the
-# copies and the pin move together from one tag. It reads what to sync out
-# of the release's knowledge-sync.manifest, so the release is data to it.
-# This script runs each sibling's own copy, as the sibling's workflow does,
-# and the tag's copy in a sibling that has none yet. A sibling's own
-# knowledge-sync.yaml workflow does the same on a schedule; this script is
-# for the day of the release, and for a sibling with no workflow.
+# The sync is skills/ktl-sidecar/templates/scripts/knowledge-sync.sh, which
+# every sibling carries as .lokf/scripts/knowledge-sync.sh. Its header says
+# what a sync copies, adds and refuses, and why the copies and the pin move
+# together from one tag. This script runs each sibling's copy, as the
+# sibling's workflow does, or the tag's copy in a sibling that has none yet.
+# The sibling's knowledge-sync.yaml workflow syncs on a schedule; this
+# script is for the day of the release, and for a sibling with no workflow.
 #
 # Usage: scripts/sync-sidecar.sh [--commit | --push | --pr] [--no-checks] [--source <dir>] <tag> <sibling-dir>...
 #        scripts/sync-sidecar.sh --finish <tag> <sibling-dir>...
@@ -138,13 +136,10 @@ git -C "$source" show "$tag:$sync_template" > "$tmp/knowledge-sync.sh"
 for sibling in "${siblings[@]}"; do
   echo ""
   echo "== $sibling"
-  # The sibling's own copy does the sync, as its workflow's run does. A
-  # sibling that has none yet is synced by the tag's copy, which lays the
-  # sibling's own down.
   script="$sibling/.lokf/scripts/knowledge-sync.sh"
   if [[ -f "$script" ]]; then
-    # The sync copies the tag's script over the sibling's own, and bash
-    # reads a script as it runs it, so the sibling's runs from a copy that
+    # The sync copies the tag's script over the sibling's, and bash reads a
+    # script as it runs it, so the sibling's script runs from a copy that
     # nothing overwrites.
     cp "$script" "$tmp/sibling-sync.sh"
     script="$tmp/sibling-sync.sh"
@@ -155,8 +150,8 @@ for sibling in "${siblings[@]}"; do
   fi
   rc=0
   bash "$script" --source "$source" --host "$sibling" --branch ${flags[@]+"${flags[@]}"} "$tag" || rc=$?
-  # The tag was checked above, so a 2 here is the sibling's: a path that
-  # is not there, say. It is reported, and the others go ahead.
+  # The tag was checked above, so an exit 2 here is the sibling's, such as a
+  # missing path. It is reported, and the other siblings go ahead.
   [[ "$rc" -eq 0 ]] || status=1
 done
 echo ""

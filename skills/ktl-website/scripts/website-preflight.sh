@@ -2,10 +2,10 @@
 # What this host can and cannot do for the ktl-website skill: one read-only
 # screen before the site is installed, built or deployed. The skill runs it
 # first and repeats its summary line in the hand-off, so a missing tool
-# disables a step out loud instead of failing a build.
+# disables a named step instead of failing a build.
 #
 # Each line is `ok`, `warn`, `missing` or `info`, then one summary line:
-#   Preflight: <n> missing, <m> warnings. Missing disables: <steps>.
+#   Preflight: <n> missing, <m> warning(s). Missing disables: <steps>.
 # Exit 0 always: the skill reads the lines, and nothing here is a gate.
 #
 # Bash 3.2 and POSIX tools only, as the sidecar's preflight, so it runs on
@@ -69,8 +69,8 @@ if [ -f "$root/.lokf/scripts/knowledge-preflight.sh" ]; then
 else
   info sidecar "no .lokf/scripts/knowledge-preflight.sh: a sidecar older than 0.30.0, or none - the ktl-sidecar repair lays it down"
 fi
-# The concept pages show the labels knowledge-report.sh prints, so the site
-# never works a label out a second way. Without the script there is no page.
+# The concept pages need knowledge-report.sh: they show the labels it prints,
+# so the site never works a label out a second way.
 if [ -f "$root/.lokf/scripts/knowledge-report.sh" ]; then
   health="$(cd "$root" && bash .lokf/scripts/knowledge-report.sh --root "$root" health 2>/dev/null | tail -n 1)"
   if [ -n "$health" ]; then ok report "knowledge-report.sh: $health"; else warn report "knowledge-report.sh printed no health line - run it by hand: bash .lokf/scripts/knowledge-report.sh health"; fi
@@ -79,38 +79,25 @@ else
 fi
 
 # ---- the toolkit -------------------------------------------------------------
-# The sync runs `lokf export` with `uv run --frozen`, and the workflow installs
-# the toolkit with `uv sync --locked`: both need the lock file, and the
-# workflow needs it committed.
+# The build runs `lokf export`, and LinkML's gen-doc for a schema, with
+# `uv run --frozen` from the sidecar's environment, so it needs the lock file,
+# and the workflow needs it committed. Hugo and Pagefind come through uv too,
+# from the site's own lock.
 ingit=0
 if have git && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then ingit=1; fi
 if have uv; then
   if [ ! -f "$root/.lokf/pyproject.toml" ]; then
     miss toolkit "no .lokf/pyproject.toml - run ktl-sidecar first" "Step 4's build"
   elif [ ! -f "$root/.lokf/uv.lock" ]; then
-    miss toolkit "no .lokf/uv.lock - the sync runs lokf export with uv run --frozen; run uv lock in .lokf/ and commit the file" "Step 4's build and Step 5's workflow"
+    miss toolkit "no .lokf/uv.lock - the build runs lokf export with uv run --frozen; run uv lock in .lokf/ and commit the file" "Step 4's build and Step 5's workflow"
   elif [ "$ingit" = 1 ] && [ -z "$(git -C "$root" ls-files .lokf/uv.lock 2>/dev/null | head -n 1)" ]; then
-    warn toolkit "uv $(uv --version 2>/dev/null | awk '{print $2}'); .lokf/uv.lock is not in git - the workflow installs the toolkit with uv sync --locked and fails without it; commit the file"
+    warn toolkit "uv $(uv --version 2>/dev/null | awk '{print $2}'); .lokf/uv.lock is not in git - the workflow runs the toolkit with uv run --frozen and fails without it; commit the file"
   else
     ok toolkit "uv $(uv --version 2>/dev/null | awk '{print $2}'); .lokf/uv.lock present"
   fi
 else
-  miss toolkit "uv not found (docs.astral.sh/uv) - the sync runs lokf export through it" "Step 4's build"
+  miss toolkit "uv not found (docs.astral.sh/uv) - the build runs Hugo, Pagefind and lokf export through it" "Step 4's build"
 fi
-
-# ---- node and npm ------------------------------------------------------------
-if have node; then
-  v="$(node --version 2>/dev/null)"; v="${v#v}"
-  major="${v%%.*}"; rest="${v#*.}"; minor="${rest%%.*}"
-  if [ "${major:-0}" -gt 22 ] || { [ "${major:-0}" -eq 22 ] && [ "${minor:-0}" -ge 12 ]; }; then
-    ok node "node $v"
-  else
-    miss node "node $v is older than 22.12, the oldest Astro runs on - install a newer Node.js (nodejs.org, or nvm)" "Step 4's build"
-  fi
-else
-  miss node "node not found - install Node.js 22.12 or later (nodejs.org, or nvm); the workflow brings its own" "Step 4's build"
-fi
-if have npm; then ok npm "npm $(npm --version 2>/dev/null)"; else miss npm "npm not found - it comes with Node.js" "Step 4's build"; fi
 
 # ---- git and the forge --------------------------------------------------------
 slug=""; branch=""
@@ -127,7 +114,7 @@ if [ "$ingit" = 1 ]; then
   case "$remote" in
     *github.com[:/]*)
       slug="$(printf '%s' "$remote" | sed -E 's#^(https?://[^/]+/|git@[^:]+:|ssh://git@[^/]+/)##; s#\.git$##; s#/$##')"
-      ok git "github.com, $slug, default branch ${branch:-unknown}: REPO, SITE and BASE follow from it" ;;
+      ok git "github.com, $slug, default branch ${branch:-unknown}: the site's address and its repository follow from it" ;;
     "") info git "no origin remote - the site builds; the workflow and the links to files need one" ;;
     # The address may carry a token, as https://user:token@host/ does, and
     # this line goes to the agent and to any job log.
@@ -175,42 +162,66 @@ fi
 # The knowledge site replaces an mkdocs site: Step 0 reads mkdocs.yml once,
 # and Step 5b gives the maintainer the retirement list.
 if [ -f "$root/mkdocs.yml" ]; then
-  info mkdocs "mkdocs.yml at the root - the site replaces it: Step 0 reads its nav and exclude_docs into REDIRECTS and DOCS.exclude, and Step 5b retires it (references/deploy.md)"
+  info mkdocs "mkdocs.yml at the root - the site replaces it: Step 0 reads its nav and exclude_docs into site.toml's redirects and docsExclude, and Step 5b retires it (references/deploy.md)"
 fi
 
-# ---- website/: not yet, this skill's, or someone else's -----------------------
-# The three files the host owns are never compared: site.config.mjs,
-# README.md and src/styles/custom.css. Every other file is a copy of a
-# template, and a difference is a deliberate edit or a bump not yet copied.
-if [ -d "$root/website" ]; then
-  if [ -f "$root/website/site.config.mjs" ]; then
-    drift=""; tdir="$skill_dir/templates/website"
-    if [ ! -d "$tdir" ]; then
-      warn website "website/ installed, but this skill's templates/website folder is missing beside its SKILL.md, so the copies cannot be compared - reinstall the skill"
-    else
-      while IFS= read -r f; do
-        rel="${f#"$tdir"/}"
-        case "$rel" in site.config.mjs|README.md|src/styles/custom.css) continue ;; esac
-        dst="$root/website/$rel"; [ "$rel" = gitignore ] && dst="$root/website/.gitignore"
-        if [ ! -f "$dst" ]; then drift="${drift}${drift:+, }$rel (missing)"
-        elif ! cmp -s "$f" "$dst"; then drift="${drift}${drift:+, }$rel"; fi
-      done < <(find "$tdir" -type f | sort)
-      if [ -z "$drift" ]; then
-        ok website "website/ installed, and its files match this skill's templates"
-      else
-        warn website "website/ installed; differs from the templates: $drift - a deliberate edit, or a template bump not yet copied (repair mode)"
-      fi
-    fi
-    if [ -n "$own_found" ]; then
-      info workflow "$own_found present; the deploy runs once KNOWLEDGE_WEBSITE_ENABLED is true"
-    else
-      info workflow "no .github/workflows/knowledge-website.yaml - Step 5 lays it down"
-    fi
+# ---- the site's folder: not yet, this skill's, or someone else's ---------------
+# The site lives in website/, or in ktl-website/ where website/ is another
+# site's, and a rerun looks in both. A folder is this skill's when it holds
+# site.toml and hugo.toml. The three files the host owns are never compared:
+# site.toml, README.md and assets/css/custom.css. Every other file is a copy
+# of a template, so a difference is a deliberate edit or a bump not yet copied.
+site=""
+# What makes a folder not this skill's, for the messages below.
+lacks() {
+  local gone=""
+  [ -f "$root/$1/site.toml" ] || gone="site.toml"
+  [ -f "$root/$1/hugo.toml" ] || gone="${gone}${gone:+ or }hugo.toml"
+  printf 'no %s' "$gone"
+}
+for d in website ktl-website; do
+  if [ -f "$root/$d/site.toml" ] && [ -f "$root/$d/hugo.toml" ]; then site="$d"; break; fi
+done
+if [ -n "$site" ]; then
+  drift=""; tdir="$skill_dir/templates/website"
+  if [ ! -d "$tdir" ]; then
+    warn website "$site/ installed, but this skill's templates/website folder is missing beside its SKILL.md, so the copies cannot be compared - reinstall the skill"
   else
-    miss website "website/ exists and is not this skill's (no site.config.mjs) - this skill writes nothing into it; ask before going on" "Step 1 and every step after it"
+    while IFS= read -r f; do
+      rel="${f#"$tdir"/}"
+      case "$rel" in site.toml|README.md|assets/css/custom.css) continue ;; esac
+      dst="$root/$site/$rel"; [ "$rel" = gitignore ] && dst="$root/$site/.gitignore"
+      if [ ! -f "$dst" ]; then drift="${drift}${drift:+, }$rel (missing)"
+      elif ! cmp -s "$f" "$dst"; then drift="${drift}${drift:+, }$rel"; fi
+    done < <(find "$tdir" -type f | sort)
+    if [ -z "$drift" ]; then
+      ok website "$site/ installed, and its files match this skill's templates"
+    else
+      warn website "$site/ installed; differs from the templates: $drift - a deliberate edit, or a template bump not yet copied (repair mode)"
+    fi
   fi
+  if grep -qE '<(REPO|PROJ)_[A-Z]+>' "$root/$site/site.toml"; then
+    warn website "$site/site.toml still holds a <PLACEHOLDER> - Step 1 fills it, and the build refuses it until then"
+  fi
+  if [ -f "$root/$site/site.config.mjs" ]; then
+    warn website "$site/ still holds files of the earlier Astro site (site.config.mjs, package.json, src/) - Step 1's move removes them"
+  fi
+elif [ -f "$root/website/site.config.mjs" ]; then
+  site="website"
+  warn website "website/ is this skill's earlier Astro site (site.config.mjs) - Step 1 moves it to Hugo in place: its values go into site.toml and its other files are removed"
+elif [ -d "$root/ktl-website" ]; then
+  miss website "ktl-website/ exists and is not this skill's ($(lacks ktl-website)), and so is website/ or it would be used - this skill writes nothing into either; ask where the site should go" "Step 1 and every step after it"
+elif [ -e "$root/website" ]; then
+  site="ktl-website"
+  info website "website/ exists and is not this skill's ($(lacks website)), so it is left alone - Step 1 installs the site in ktl-website/ instead"
 else
-  ok website "no website/ yet"
+  site="website"
+  ok website "no website/ yet - Step 1 installs the site there"
+fi
+if [ -n "$own_found" ]; then
+  info workflow "$own_found present; the deploy runs once KNOWLEDGE_WEBSITE_ENABLED is true"
+elif [ -n "$site" ] && [ -f "$root/$site/site.toml" ]; then
+  info workflow "no .github/workflows/knowledge-website.yaml - Step 5 lays it down"
 fi
 
 # ---- what the site can show beside the bundle ---------------------------------
@@ -219,7 +230,7 @@ if [ -f "$root/README.md" ]; then
   if [ -n "$title" ]; then
     ok readme "README.md, titled \"$title\": the home page"
   else
-    warn readme "README.md has no '# ' title - the home page opens with the bundle's own introduction instead (HOME.source)"
+    warn readme "README.md has no '# ' title - the home page shows it under no heading; give it one"
   fi
 else
   info readme "no README.md - the home page opens with the bundle's own introduction"
@@ -230,97 +241,50 @@ if [ -d "$root/docs" ]; then
   else
     n="$(find "$root/docs/" -name '*.md' | wc -l | tr -d ' ')"
   fi
-  ok docs "docs/, $n Markdown page(s) as git sees them: the Guide topic"
+  arch="no architecture.md, so the home page's Architecture button is greyed"
+  [ -f "$root/docs/architecture.md" ] && arch="architecture.md, the home page's Architecture button"
+  simple="$(find "$root/docs/" -name '*.*-simple.md' | wc -l | tr -d ' ')"
+  ok docs "docs/, $n Markdown page(s) as git sees them: the Guide part; $arch; $simple retelling(s) named <page>.<language>-simple.md"
 else
-  info docs "no docs/ - the Guide topic lists the home page alone (DOCS)"
+  info docs "no docs/ - the Guide part lists the home page alone, and the home page's Architecture button is greyed"
 fi
 if [ -f "$root/CHANGELOG.md" ]; then
   n="$(grep -cE '^## \[[^]]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}' "$root/CHANGELOG.md" || true)"
   if [ "${n:-0}" -gt 0 ]; then
-    ok changelog "CHANGELOG.md, $n released version(s): the Releases topic"
+    ok changelog "CHANGELOG.md, $n released version(s): a page per release"
   else
-    warn changelog "CHANGELOG.md has no '## [version] - date' heading, so no release page can be made from it (Keep a Changelog form; CHANGELOG)"
+    warn changelog "CHANGELOG.md has no '## [version] - date' heading, so no release page can be made from it (Keep a Changelog form)"
   fi
 else
-  info changelog "no CHANGELOG.md - no Releases topic"
+  info changelog "no CHANGELOG.md - no release pages"
 fi
 if [ -d "$root/.assets" ]; then
   n="$(find "$root/.assets/" -type f | wc -l | tr -d ' ')"
   logos="$(find "$root/.assets/" -maxdepth 1 -type f -iname '*logo*' | sed "s#^$root/##" | sort | tr '\n' ' ')"
   ok assets ".assets/, $n file(s)${logos:+; logo candidates: ${logos% }}"
 else
-  info assets "no .assets/ folder - set ASSETS to the figures folder and LOGO to a logo file, or leave both out"
+  info assets "no .assets/ folder - the site serves no figures, and shows the Knowledge Trust Ladder logo"
 fi
 
-# These lines find the schema's pages and the data as scripts/config.mjs
-# finds them. The schema's pages come from a justfile with a gen-doc recipe,
-# in the root, a linkmo project's folder or .linkml/, else from the domain
-# vocabulary on .lokf/justfile's schema line, a plain YAML path that gen-doc
-# reads in the sidecar's environment. The data comes from a
-# build-browse recipe, and its databases stay off the site until a person
-# sets BROWSE. A justfile goes by any name just reads, and a recipe line may
-# carry parameters and their defaults. An assignment such as
-# `gen-doc := ...` is not a recipe.
-justfile_in() {
-  for f in "$1"/.[Jj][Uu][Ss][Tt][Ff][Ii][Ll][Ee] "$1"/[Jj][Uu][Ss][Tt][Ff][Ii][Ll][Ee]; do
-    if [ -f "$f" ]; then printf '%s\n' "${f##*/}"; return 0; fi
-  done
-}
-has_recipe() { [ -f "$1" ] && grep -qE "^@?$2([[:space:]]+[^:=[:space:]][^:]*)?:([^=]|\$)" "$1"; }
-linkmo=""
-if [ -f "$root/.copier-answers.linkmo.yml" ]; then
-  linkmo="$(sed -n "s/^linkmo_dir:[[:space:]]*[\"']\{0,1\}\([A-Za-z0-9._-]*\).*/\1/p" "$root/.copier-answers.linkmo.yml" | head -n 1)"
-  { [ -n "$linkmo" ] && [ -d "$root/$linkmo" ]; } || linkmo=""
-fi
-schema_cmd=""; schema_dir=""
-for d in . ${linkmo:+"$linkmo"} .linkml; do
-  jf="$(justfile_in "$root/$d")"
-  if [ -n "$jf" ] && has_recipe "$root/$d/$jf" gen-doc; then
-    if [ "$d" = . ]; then schema_dir="docs/elements"; schema_cmd="just gen-doc"
-    else schema_dir="$d/docs/elements"; schema_cmd="just --justfile $d/$jf gen-doc"; fi
-    break
-  fi
+# The schema, as the site's scripts/prepare.sh finds it: a LinkML project's
+# src/<name>/schema/<name>.yaml, at the root first, then in the .linkml/
+# sidecar.
+schema=""
+for f in "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do
+  [ -f "$f" ] || continue
+  name="$(basename "$f" .yaml)"
+  [ "$(basename "${f%/schema/*}")" = "$name" ] || continue
+  schema="${f#"$root"/}"; break
 done
-schema_from="a gen-doc recipe"
-if [ -z "$schema_cmd" ] && [ -f "$root/.lokf/justfile" ]; then
-  s="$(sed -n 's/^schema := "\([^"]*\)"\r\{0,1\}$/\1/p' "$root/.lokf/justfile" | head -n 1)"; s="${s#./}"
-  case "$s" in *..*) s="" ;; esac
-  if printf '%s\n' "$s" | grep -qE '^[A-Za-z0-9_][A-Za-z0-9._/-]*\.ya?ml$' && [ -f "$root/.lokf/$s" ]; then
-    schema_from="the sidecar's domain vocabulary .lokf/$s"; schema_dir=".lokf/docs/elements"
-    schema_cmd="cd .lokf && uv run --frozen gen-doc $s --directory docs/elements --render-imports"
-  fi
-fi
-if [ -n "$schema_cmd" ]; then
-  ok schema "$schema_from: the Schema topic, from $schema_dir, which the sync builds with $schema_cmd (SCHEMA)"
-  # A sidecar installed before its .gitignore named docs/elements/ would
-  # show every page the sync builds there as a change to the bundle.
-  if [ "$schema_dir" = .lokf/docs/elements ] && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
-    && ! git -C "$root" check-ignore -q .lokf/docs/elements/index.md 2>/dev/null; then
-    warn schema "git does not ignore .lokf/docs/elements/, so the pages the sync builds there would show as changes - add docs/elements/ to .lokf/.gitignore, as the sidecar's template does"
-  fi
+if [ -n "$schema" ]; then
+  ok schema "$schema: the Schema part, a page per class, slot, enumeration and type, and the home page leads with it"
 else
-  info schema "no justfile with a gen-doc recipe in the root, a linkmo project or .linkml/, and no domain vocabulary on .lokf/justfile's schema line - no Schema topic (SCHEMA)"
+  info schema "no src/<name>/schema/<name>.yaml at the root or under .linkml/ - no Schema part, and the home page's schema button is greyed"
 fi
-browse_cmd=""
-if [ -n "$linkmo" ]; then
-  jf="$(justfile_in "$root/$linkmo")"
-  if [ -n "$jf" ] && has_recipe "$root/$linkmo/$jf" build-browse; then browse_cmd="just --justfile $linkmo/$jf build-browse"; fi
-fi
-if [ -z "$browse_cmd" ]; then
-  jf="$(justfile_in "$root")"
-  if [ -n "$jf" ] && has_recipe "$root/$jf" build-browse; then browse_cmd="just build-browse"; fi
-fi
-if [ -n "$browse_cmd" ]; then
-  info data "a build-browse recipe ($browse_cmd): the data page shows its databases when BROWSE names the folder it writes; left out, BROWSE is null"
+if [ -f "$root/.github/workflows/knowledge-federation.yaml" ]; then
+  ok workspace ".github/workflows/knowledge-federation.yaml: a domain host, so the graph page offers the workspace"
 else
-  info data "no build-browse recipe - no data page unless BROWSE names a folder of SQLite databases"
-fi
-if [ -n "$schema_cmd" ] || [ -n "$browse_cmd" ]; then
-  if have just; then
-    ok just "just $(just --version 2>/dev/null | awk '{print $2}'): the sync runs the recipes above"
-  else
-    warn just "just not found - the sync builds the schema's pages, and the data once BROWSE is set, through just; install it (uv tool install rust-just), or set SCHEMA to null; the workflow installs its own"
-  fi
+  info workspace "no .github/workflows/knowledge-federation.yaml - the graph page greys the workspace"
 fi
 
 lint=""
@@ -328,7 +292,7 @@ for f in "$root"/.markdownlint* "$root/lychee.toml" "$root/.codespellrc"; do
   [ -e "$f" ] && lint="${lint}${lint:+ }${f#"$root"/}"
 done
 if [ -n "$lint" ]; then
-  info lint "lint configs to exclude website/'s generated folders from (Step 2): $lint"
+  info lint "lint configs to exclude ${site:-website}/'s generated folders from (Step 2): $lint"
 else
   info lint "no Markdown lint config at the root, so Step 2 has nothing to exclude"
 fi
@@ -339,7 +303,7 @@ for v in CI GITHUB_ACTIONS GITLAB_CI TF_BUILD; do
   val="${!v:-}"; [ -n "$val" ] && unattended="${unattended}${unattended:+, }$v"
 done
 if [ -n "$unattended" ]; then
-  info session "unattended ($unattended set): the placeholders and the options need a person's values, so stop after this screen"
+  info session "unattended ($unattended set): the placeholders need a person's values, so stop after this screen"
 else
   info session "attended: a person can answer item by item"
 fi

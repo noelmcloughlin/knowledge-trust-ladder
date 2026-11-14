@@ -1,0 +1,37 @@
+{{ define "main" }}
+{{- $all := partialCached "concepts.html" "concepts" }}
+<article class="prose">
+  {{- if not (and .Params.docName (not .Params.shift)) }}<h1>{{ partial "title.html" . }}</h1>{{ end }}
+  {{- if eq .Path "/knowledge" }}
+  {{- /* The bundle's own page: what its root file declares, then its index as written. */ -}}
+  {{- $c := .Params.concept }}
+  <p class="lead">{{ $c.description }}</p>
+  <dl class="facts">
+    <dt>Health</dt><dd><a href="{{ "health/" | relURL }}">{{ os.ReadFile "generated/health.txt" | strings.TrimSpace }}</a></dd>
+    {{- with $c.base_iri }}<dt>Base IRI</dt><dd><code>{{ . }}</code></dd>{{ end }}
+    {{- with $c.license }}<dt>Licence</dt><dd><a href="{{ . }}" rel="license">{{ . }}</a></dd>{{ end }}
+    {{- with $c.publisher }}<dt>Publisher</dt><dd>{{ or .name .id }}</dd>{{ end }}
+    <dt>As data</dt>
+    <dd>{{ range $f := slice "concepts.jsonld" "graph.json" "graph.nt" "datasets.jsonld" }}<a href="{{ printf "knowledge/%s" $f | relURL }}">{{ $f }}</a> {{ end }}</dd>
+  </dl>
+  {{ partial "content.html" . }}
+  {{- else if hasPrefix .Path "/knowledge/" }}
+  {{- /* A group's page: its concepts by title, each with its trust label and description. */ -}}
+  <ul class="concept-list">
+    {{- range .RegularPages.ByTitle }}
+      {{- $t := (index $all.id .Params.conceptId).trust }}
+      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="label label--{{ $t.tone }}">{{ $t.label }}</span><br><span class="muted">{{ partial "inline.html" (.Params.concept.description | default "") }}</span></li>
+    {{- end }}
+  </ul>
+  {{- else }}
+  {{- /* A docs folder's own page: its index.md when it has one, and for docs/ itself every page by its group. */ -}}
+  {{ partial "content.html" . }}
+  {{- if eq .Path "/docs" }}
+  {{- range (partialCached "docs-groups.html" "docs").list }}
+  <h2>{{ .label }}</h2>
+  <ul>{{ range .pages }}<li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>{{ end }}</ul>
+  {{- end }}
+  {{- end }}
+  {{- end }}
+</article>
+{{ end }}
