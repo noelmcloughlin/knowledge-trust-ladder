@@ -235,7 +235,6 @@ a[data-preview]:is(:hover, :focus-visible)::after { content: attr(data-preview) 
 .mirror { margin: .2rem 0 .4rem; color: var(--muted); font-size: .9em; }
 .concept-list, .releases { padding-left: 0; list-style: none; }
 .concept-list li { margin-bottom: .7rem; }
-.concept-link { text-decoration: none; }
 .tone--person { accent-color: var(--chart-person); }
 .tone--edited { accent-color: var(--chart-edited); }
 .tone--automation { accent-color: var(--chart-automation); }
