@@ -12,14 +12,19 @@ Install all six for your user:
 uvx ktl skills install --scope user
 ```
 
-That installs for GitHub Copilot, as `gh skill install` does. For Claude Code or Codex, add `--agent claude-code` or `--agent codex`. `--scope` takes `user` or `project`. For any other agent, give the folder it reads with `--dest`. To install one skill, add `--skill ktl-docent`. To pin a version, write `ktl@0.64.0` in place of `ktl`. The six skills are released together, so one version pins them all, and installing the next version updates them.
+That installs for GitHub Copilot, as `gh skill install` does. For Claude Code or Codex, add `--agent claude-code` or `--agent codex`. `--scope` takes `user` or `project`, and `project` means the top folder of the repository you are in. For any other agent, give the folder it reads with `--dest`. To install one skill, add `--skill ktl-docent`. To pin a version, write `ktl@X.Y.Z` in place of `ktl`, or `ktl==X.Y.Z` to pip. The six skills are released together, so one version pins them all. To update, run the command again as `uvx ktl@latest`, or `uv tool upgrade ktl` where `uv tool install` put the package.
 
-Without uv, install the package with pip, then run the same command:
+Without uv, pipx does the same:
 
 ```bash
-python3 -m pip install --user ktl
-ktl skills install --scope user
+pipx run ktl skills install --scope user
 ```
+
+`python3 -m pip install --user ktl`, then `python3 -m ktl skills install --scope user`, works where the system lets pip install for a user. Debian, Ubuntu and Homebrew refuse it.
+
+## Check what is installed
+
+`ktl skills status` says, for each folder an agent reads at project and user scope, whether each KTL skill there is the same as this package's, and names each file that differs. A copy `gh skill install` made counts as the same when only gh's own rewrite of its `SKILL.md` differs. It exits 1 when a copy differs, so a script can act on it. `--dest` checks one folder.
 
 ## Other installers
 
@@ -37,4 +42,4 @@ claude plugin marketplace add "$(ktl skills path --marketplace)"
 claude plugin install knowledge-trust-ladder@knowledge-trust-ladder
 ```
 
-`ktl skills list` names the six skills. [The install page](https://w3id.org/ktl/docs/install/) gives every other route, and what each skill needs on the machine.
+`ktl skills` names the six skills. The package also goes by the repository's name: `knowledge-trust-ladder` installs `ktl` at the same version. Each release's files can be rebuilt from its tag and compared byte for byte, as [the release page](https://w3id.org/ktl/docs/releasing/#the-ktl-package-on-pypi) says. [The install page](https://w3id.org/ktl/docs/install/) gives every other route, and what each skill needs on the machine.
