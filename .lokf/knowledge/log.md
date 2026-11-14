@@ -2,6 +2,7 @@
 
 ## 2026-11-14
 
+* **Changed**: the ktl command and the reasons for a distribution repository no longer say the package serves a machine that cannot reach github.com, or that the Open Skills CLI can fail behind a company proxy, since the package's page and the install page no longer do.
 * **Prose**: reworded the body of `playbooks/ktl-command.md` in plain English. No link, number or frontmatter changed.
 * **Added**: The ktl command, from `src/ktl/README.md` and ktl-sidecar's `repository-settings.md`: how `ktl skills` installs the skills and how `ktl gh` sets a repository's GitHub settings from the catalogues.
 * **Changed**: Releasing now says the `release` reviewers wait until releases have downstream users, adds the PyPI upload and its one pending publisher at a time, and names the owner limit of the sync dispatch token, as `docs/releasing.md` says.
