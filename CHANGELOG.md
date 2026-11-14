@@ -8,6 +8,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex; `pypi.yml` uploads once `PYPI_RELEASE_ENABLED` is set.
 
+### Changed
+
+- **The website's home page fills the Quick start button**, so a new reader sees where to begin. A site with no quick start fills the first button found, as before.
+
 ## [0.64.0] - 2026-11-14
 
 ### Added

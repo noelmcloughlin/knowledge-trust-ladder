@@ -251,6 +251,8 @@ assert "the README's link to the guide goes to its page" "grep -q 'href=\"\\?/ac
 assert "the home page leads with the schema" "grep -q 'On exhibit' \"$dist/index.html\" && grep -q 'Acme platform schema' \"$dist/index.html\""
 assert "four buttons are links (schema, bundle, architecture, quick start) and the glossary's, which the bundle lacks, is greyed" \
   "grep -q 'href=\"\\?/acme-platform/schema/>The schema' \"$dist/index.html\" && grep -q 'href=\"\\?/acme-platform/docs/architecture/' \"$dist/index.html\" && grep -q 'href=\"\\?/acme-platform/docs/how-to/first/#quick-start' \"$dist/index.html\" && [[ \$(grep -o 'button--missing' \"$dist/index.html\" | wc -l) -eq 1 ]] && grep -q 'The bundle has no glossary group' \"$dist/index.html\""
+assert "the quick start is the filled button, and the schema's, found first, is not" \
+  "grep -q 'class=\"\\?button\"\\? href=\"\\?/acme-platform/docs/how-to/first/#quick-start' \"$dist/index.html\" && grep -q 'class=\"button button--secondary\" href=\"\\?/acme-platform/schema/' \"$dist/index.html\""
 assert "the header shows the Knowledge Trust Ladder logo" "grep -q 'brand/knowledge-trust-ladder-logo.svg' \"$dist/index.html\""
 assert "a concept page carries its trust label" "grep -qi 'checked' \"$dist/knowledge/services/example-service-a/index.html\""
 assert "a concept page links the graph opened on it" "grep -q 'graph/?concept=services%2fexample-service-a' \"$dist/knowledge/services/example-service-a/index.html\""
@@ -313,6 +315,8 @@ assert "the home page is there, from the bundle's own introduction" "[[ -f \"$di
 assert "no docs pages, no release pages, no schema pages and their old addresses, and no data" "[[ ! -d \"$dist/docs\" && ! -d \"$dist/changelog\" && ! -d \"$dist/schema\" && ! -d \"$dist/elements\" && ! -d \"$dist/browse\" && ! -e \"$dist/index.md\" ]]"
 assert "the home page keeps its five buttons, with the bundle's a link and the schema's, the architecture page's and the quick start's greyed" \
   "[[ \$(grep -o 'button--missing' \"$dist/index.html\" | wc -l) -ge 3 ]] && grep -q 'This repository holds no LinkML schema' \"$dist/index.html\" && grep -q 'This repository has no docs/architecture.md' \"$dist/index.html\" && ! grep -q 'On exhibit' \"$dist/index.html\""
+assert "with no quick start, the bundle's button, the first one found, is filled" \
+  "grep -q 'class=\"\\?button\"\\? href=\"\\?[^ >]*/knowledge/\"\\?>The bundle' \"$dist/index.html\""
 assert "the navigation has no Schema part and no changelog" "! grep -q '>Schema</summary>' \"$dist/index.html\" && ! grep -q 'changelog/' \"$dist/index.html\""
 assert "the graph page greys the workspace" "grep -q 'aria-disabled=\"\\?true\"\\?[^>]*>The workspace' \"$dist/graph/index.html\" && ! grep -q 'graph=workspace' \"$dist/graph/index.html\""
 assert "the bundle's pages, the health page and the graph are still there" \
