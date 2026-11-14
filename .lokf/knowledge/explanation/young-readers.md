@@ -11,6 +11,7 @@ sources:
     excerpt: This page is for a teacher, a youth leader, or anyone who wants knowledge that adults wrote retold for readers aged 8 to 18.
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
+  - https://w3id.org/ktl/knowledge/explanation/intended-uses
 references:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-prose-skill
   - https://w3id.org/ktl/knowledge/policies/knowledge-curation
@@ -22,7 +23,7 @@ references:
   - https://w3id.org/ktl/knowledge/glossary/registrar
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T20:02:46Z"
+  at: "2026-11-14T20:13:07Z"
 status: draft
 ---
 
@@ -74,6 +75,6 @@ This repository has tried retellings on its own pages only: the architecture pag
 
 # The other end of the range
 
-A retelling for a ten-year-old and a policy for a bank's auditor sit on the same ladder. Each says where it came from, what checked it, and who vouched for it. The page names [three lines of defence](three-lines-of-defence.md) as its counterpart for regulated industries.
+A retelling for a ten-year-old and a policy for a bank's auditor sit on the same ladder. Each says where it came from, what checked it, and who vouched for it. The page names [three lines of defence](three-lines-of-defence.md) as its counterpart for regulated industries, and [what KTL is for](intended-uses.md) for the other uses.
 
 [^docs-young-readers.md]: docs/young-readers.md, the note at the top, the table of bands, *How to ask* and *What exists today*
